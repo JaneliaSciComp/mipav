@@ -991,28 +991,28 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
      * @param DicomInfo DOCUMENT ME!
      * @param show boolean that indicates whether or not to show private tags
      */
-    public static void showTags(final ViewTableModel tagsModel, final FileDicomItem DicomInfo, final boolean show) {
-        Iterator<String> e;
+    public static void showTags(final ViewTableModel tagsModel, final FileDicomTagTable DicomInfo, final boolean show) {
+        Iterator<FileDicomKey> e;
         String name;
-        String key;
+        FileDicomKey key;
         @SuppressWarnings("unused")
         String[] tags = null;
         final Object[] rowData = {"", "", ""};
-        final TreeMap<String, FileDicomTag> tagsList = DicomInfo.getDataSet();
+        final Hashtable<FileDicomKey, FileDicomTag> tagsList = DicomInfo.getTagList();
 
         // check preferences to see if any dicom tags were selected for saving
         final String prefTagsString = Preferences.getProperty(Preferences.SAVE_DICOM_TAGS);
         if (prefTagsString != null && ( !prefTagsString.trim().equals(""))) {
             tags = prefTagsString.split(";");
         }
-        final Set<String> set = tagsList.keySet();
+        final Set<FileDicomKey> set = tagsList.keySet();
         // go through the hashlist, and for each element you find, copy it
         // into the table, showing full info if it was coded
         int ii;
 
         for (ii = 0, e = set.iterator(); e.hasNext(); ii++) {
             key = e.next();
-            name = key;
+            name = key.toString();
 
             if ( (tagsList.get(key)).getValue(true) != null) {
                 final String tagName = "(" + name + ")";
@@ -1145,7 +1145,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                     rowData[2] = s;
                 } else if (name.equals("0008,0060")) {
-                    rowData[2] = DicomInfo.getTag("0008,0060");
+                    rowData[2] = DicomInfo.get("0008,0060");
                 } else if (name.equals("0008,0064")) {
                     final String s = ((String) (tagsList.get(key)).getValue(true)).trim();
 

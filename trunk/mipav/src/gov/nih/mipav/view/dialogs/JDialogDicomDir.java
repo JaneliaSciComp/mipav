@@ -2,8 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.file.FileDicom;
-import gov.nih.mipav.model.file.FileDicomItem;
 import gov.nih.mipav.model.file.FileDicomSQ;
+import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileImageXML;
 import gov.nih.mipav.model.file.FileInfoBase;
@@ -256,7 +256,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	TreePath[] currentPath = tree.getSelectionPaths();
     	DefaultMutableTreeNode temp = null;
 
-    	FileDicomItem currentImages[] = new FileDicomItem[currentPath.length];
+    	FileDicomTagTable currentImages[] = new FileDicomTagTable[currentPath.length];
     	for(int i = 0; i < currentPath.length; i++){
     		
     		temp = (DefaultMutableTreeNode) currentPath[i].getLastPathComponent();
@@ -267,17 +267,17 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 				MipavUtil.displayError("Selection must be all images or a single series");
 				return;    			
     		}
-    		currentImages[i] = (FileDicomItem) temp.getUserObject();
+    		currentImages[i] = (FileDicomTagTable) temp.getUserObject();
     	}
     	
     	// if it is only a series, open all images in series
     	if (currentImages.length == 1){
-    		String testIfSeries = currentImages[0].getTag("0004,1430").getValue(true).toString();
+    		String testIfSeries = currentImages[0].get("0004,1430").getValue(true).toString();
     		if (testIfSeries.startsWith("SERIES")){
-    			currentImages = new FileDicomItem[temp.getChildCount()];
+    			currentImages = new FileDicomTagTable[temp.getChildCount()];
     			for (int i = 0; i < temp.getChildCount(); i++){
     				DefaultMutableTreeNode temp2 = (DefaultMutableTreeNode) temp.getChildAt(i);
-    				currentImages[i] = (FileDicomItem) temp2.getUserObject();
+    				currentImages[i] = (FileDicomTagTable) temp2.getUserObject();
     			}
     		}
     	}
@@ -288,11 +288,11 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
         
     	for(int i = 0; i < currentImages.length;i++){
 
-    		String currentItemType = currentImages[i].getTag("0004,1430").getValue(true).toString(); 
+    		String currentItemType = currentImages[i].get("0004,1430").getValue(true).toString(); 
             
 			if(currentItemType.startsWith("IMAGE"))
 			{
-    	    	String fileLoc = currentImages[i].getTag("0004,1500").getValue(true).toString();
+    	    	String fileLoc = currentImages[i].get("0004,1500").getValue(true).toString();
     	    	fileLoc = fileLoc.replace('/', File.separatorChar);
     	    	fileLoc = fileLoc.replace('\\', File.separatorChar);
     	    	int loc = fileLoc.lastIndexOf(File.separatorChar);
@@ -435,7 +435,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    DefaultMutableTreeNode image = null;
     	    
     	    for(int i = 0; i < dirInfo.getSequenceLength(); i++){
-        	    String currentItemType = dirInfo.getItem(i).getTag("0004,1430").getValue(true).toString(); 
+        	    String currentItemType = dirInfo.getItem(i).get("0004,1430").getValue(true).toString(); 
         	    if (currentItemType.startsWith("PATIENT"))
         	    {
         	    	patient = new DefaultMutableTreeNode(dirInfo.getItem(i));
@@ -709,8 +709,8 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 		
 		if(!currentNode.toString().equals("DICOMDIR"))
 		{
-			FileDicomItem currentObject = (FileDicomItem) currentNode.getUserObject();
-    	    String currentItemType = currentObject.getTag("0004,1430").getValue(true).toString(); 
+		    FileDicomTagTable currentObject = (FileDicomTagTable) currentNode.getUserObject();
+    	    String currentItemType = currentObject.get("0004,1430").getValue(true).toString(); 
     	    if (currentItemType.startsWith("PATIENT"))
     	    {
     	    	JDialogFileInfoDICOM.showTags(tagViewer, currentObject, true);
@@ -726,7 +726,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     	    else if(currentItemType.startsWith("IMAGE"))
     	    {
     	    	JDialogFileInfoDICOM.showTags(tagViewer, currentObject, true);
-    	    	String fileLoc = currentObject.getTag("0004,1500").getValue(true).toString();
+    	    	String fileLoc = currentObject.get("0004,1500").getValue(true).toString();
     	    	fileLoc = fileLoc.replace('/', File.separatorChar);
     	    	fileLoc = fileLoc.replace('\\', File.separatorChar);
     	    	int loc = fileLoc.lastIndexOf(File.separatorChar);
