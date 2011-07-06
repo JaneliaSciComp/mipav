@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -6135,6 +6136,15 @@ public class FileMATLAB extends FileBase {
         int dimsWritten;
         int offset;
         double maxValue;
+        
+        if (image.getType() == ModelStorageBase.BOOLEAN) {
+        	Preferences.debug("BOOLEAN is not a legal MATLAB type - converting to UBYTE\n");
+        	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(image, ModelStorageBase.UBYTE, 0, 1, 0, 1,
+                    false);
+		    changeTypeAlgo.run();
+            changeTypeAlgo.finalize();
+            changeTypeAlgo = null;
+        }
          
          if (image.getNDims() >= 3) {
              sBegin = options.getBeginSlice();
