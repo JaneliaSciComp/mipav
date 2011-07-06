@@ -252,7 +252,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             AlgorithmTransform.margins = getImageMargins(srcImage, xfrm, oXres, oYres);
             Preferences.debug("Padding is " + AlgorithmTransform.margins[0] + ", " + AlgorithmTransform.margins[1]
-                    + ".\n");
+                    + ".\n", Preferences.DEBUG_ALGORITHM);
             updateOriginMargins2D();
 
             // System.out.println("Image origin with padding: " +imgOrigin[0] +" " +imgOrigin[1]);
@@ -423,7 +423,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             AlgorithmTransform.margins = getImageMargins(srcImage, xfrm, oXres, oYres);
             Preferences.debug("Padding is " + AlgorithmTransform.margins[0] + ", " + AlgorithmTransform.margins[1]
-                    + ".\n");
+                    + ".\n", Preferences.DEBUG_ALGORITHM);
             updateOriginMargins2D();
 
             // System.out.println("Image origin with padding: " +imgOrigin[0] +" " +imgOrigin[1]);
@@ -619,7 +619,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             AlgorithmTransform.margins = AlgorithmTransform.getImageMargins(srcImage, xfrm, oXres, oYres, oZres);
             Preferences.debug("Padding is " + AlgorithmTransform.margins[0] + ", " + AlgorithmTransform.margins[1]
-                    + " and " + AlgorithmTransform.margins[2] + ".\n");
+                    + " and " + AlgorithmTransform.margins[2] + ".\n", Preferences.DEBUG_ALGORITHM);
             updateOriginMargins();
 
             // System.out.println("Image origin with padding: " +imgOrigin[0] +" " +imgOrigin[1] +" " +imgOrigin[2]);
@@ -786,7 +786,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             AlgorithmTransform.margins = AlgorithmTransform.getImageMargins(srcImage, xfrm, oXres, oYres, oZres);
             Preferences.debug("Padding is " + AlgorithmTransform.margins[0] + ", " + AlgorithmTransform.margins[1]
-                    + " and " + AlgorithmTransform.margins[2] + ".\n");
+                    + " and " + AlgorithmTransform.margins[2] + ".\n", Preferences.DEBUG_ALGORITHM);
             updateOriginMargins();
 
             // System.out.println("Image origin with padding: " +imgOrigin[0] +" " +imgOrigin[1] +" " +imgOrigin[2]);
@@ -7081,7 +7081,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			}
 		}
 
-		Preferences.debug("finished Bspline");
+		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
 
 	}
 
@@ -7229,7 +7229,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			}
 		}
 
-		Preferences.debug("finished Bspline");
+		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
 
 	}
 
@@ -7345,7 +7345,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			}
 		}
 
-		Preferences.debug("finished Bspline");
+		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
 
 	}
 
@@ -7477,7 +7477,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			}
 		}
 
-		Preferences.debug("finished Bspline");
+		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
 	}
 
 	/**
@@ -7614,7 +7614,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			}
 		}
 
-		Preferences.debug("finished Bspline");
+		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
 
 	}
 
@@ -7769,7 +7769,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 				}
 			}
 		}
-		Preferences.debug("finished Bspline");
+		Preferences.debug("finished Bspline", Preferences.DEBUG_ALGORITHM);
 	}
 
     /**
@@ -7846,7 +7846,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -7950,7 +7950,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -8053,7 +8053,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -8186,7 +8186,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -8279,7 +8279,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -8395,7 +8395,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -8514,7 +8514,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -8662,7 +8662,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage.calcMinMax();
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -8753,7 +8753,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -8867,7 +8867,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         CLag.finalize();
         CLag = null;
-        Preferences.debug("finished cubic Lagrangian");
+        Preferences.debug("finished cubic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -8944,7 +8944,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9048,7 +9048,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -9149,7 +9149,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9282,7 +9282,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -9375,7 +9375,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9490,7 +9490,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9608,7 +9608,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9756,7 +9756,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage.calcMinMax();
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9846,7 +9846,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -9960,7 +9960,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         HLag.finalize();
         HLag = null;
-        Preferences.debug("finished heptic Lagrangian");
+        Preferences.debug("finished heptic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -10979,7 +10979,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -11082,7 +11082,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -11183,7 +11183,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -11316,7 +11316,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -11409,7 +11409,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -11528,7 +11528,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -11675,7 +11675,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage.calcMinMax();
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -11794,7 +11794,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -11885,7 +11885,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -12000,7 +12000,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         QLag.finalize();
         QLag = null;
-        Preferences.debug("finished quintic Lagrangian");
+        Preferences.debug("finished quintic Lagrangian", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13267,7 +13267,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13370,7 +13370,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13470,7 +13470,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13603,7 +13603,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13695,7 +13695,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13811,7 +13811,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -13929,7 +13929,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -14077,7 +14077,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage.calcMinMax();
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -14167,7 +14167,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -14281,7 +14281,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         WSinc.finalize();
         WSinc = null;
-        Preferences.debug("finished windowed sinc");
+        Preferences.debug("finished windowed sinc", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
