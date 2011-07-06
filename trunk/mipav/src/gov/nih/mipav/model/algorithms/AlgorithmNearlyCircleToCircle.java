@@ -224,8 +224,8 @@ public class AlgorithmNearlyCircleToCircle extends AlgorithmBase {
         geometricCenter = ((VOIContour)(contours.elementAt(0))).getGeometricCenter();
         xcen = geometricCenter.X;
         ycen = geometricCenter.Y;
-        Preferences.debug("X center = " + xcen + "\n");
-        Preferences.debug("Y center = " + ycen + "\n");
+        Preferences.debug("X center = " + xcen + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Y center = " + ycen + "\n", Preferences.DEBUG_ALGORITHM);
         gon = ((VOIContour)(contours.elementAt(0))).exportPolygon();
         minDist = Double.MAX_VALUE;
         maxDist = -Double.MAX_VALUE;
