@@ -892,7 +892,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         m_kCenter.X = ((m_kCenter.X / fXScale) + (m_iXBound - 1)) / 2;
         m_kCenter.Y = ((m_kCenter.Y / fYScale) + (m_iYBound - 1)) / 2;
         m_kCenter.Z = ((m_kCenter.Z / fZScale) + (m_iZBound - 1)) / 2;
-        Preferences.debug("Object extractor: extimateEllipsoid: Center = " + m_kCenter + "\n");
+        Preferences.debug("Object extractor: extimateEllipsoid: Center = " + m_kCenter + "\n", Preferences.DEBUG_ALGORITHM);
 
         m_afLength[0] *= 1 / fXScale;
         m_afLength[1] *= 1 / fYScale;
@@ -904,9 +904,12 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
         m_afLength[1] *= m_fReductionY;
         m_afLength[2] *= m_fReductionZ;
 
-        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 1 = " + m_afLength[0] + "\n");
-        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n");
-        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n");
+        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 1 = " + m_afLength[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
 
         // Even if some lengths have failed. Estimate unknown axis using others.
         if (!(m_afLength[0] > 0) && (m_afLength[1] > 0) && (m_afLength[2] > 0)) {
@@ -923,9 +926,12 @@ public class AlgorithmObjectExtractor extends AlgorithmBase implements Algorithm
             m_afLength[1] = m_afLength[2] = m_afLength[0];
         } else if (!(m_afLength[0] > 0) && !(m_afLength[1] > 0) && !(m_afLength[2] > 0)) { }
 
-        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 1 = " + m_afLength[0] + "\n");
-        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n");
-        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n");
+        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 1 = " + m_afLength[0] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 2 = " + m_afLength[1] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Object extractor: extimateEllipsoid: ellipse length 3 = " + m_afLength[2] + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
     }
 
     /**
