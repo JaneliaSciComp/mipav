@@ -399,7 +399,7 @@ public abstract class InverseLaplace {
             } // for (iLogT = iMinLogT; iLogT <= iMaxLogT; iLogT++)
         } // try
         catch (final Exception err) {
-            Preferences.debug("driver error: " + err.getMessage());
+            Preferences.debug("driver error: " + err.getMessage(), Preferences.DEBUG_ALGORITHM);
         }
     }
 
