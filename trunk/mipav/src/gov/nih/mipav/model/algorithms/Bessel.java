@@ -6367,13 +6367,13 @@ public class Bessel {
         rm = 0.5 * (alim + elim);
         rm = Math.min(rm, 200.0);
         rm = Math.max(rm, rl + 10.0);
-        Preferences.debug("Quick check routine for the AIRY functions from zairy and zbiry\n");
-        Preferences.debug("tol = " + tol + "\n");
-        Preferences.debug("elim = " + elim + "\n");
-        Preferences.debug("alim = " + alim + "\n");
-        Preferences.debug("rl = " + rl + "\n");
-        Preferences.debug("fnul = " + fnul + "\n");
-        Preferences.debug("dig = " + dig + "\n");
+        Preferences.debug("Quick check routine for the AIRY functions from zairy and zbiry\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("elim = " + elim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("alim = " + alim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rl = " + rl + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("fnul = " + fnul + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("dig = " + dig + "\n", Preferences.DEBUG_ALGORITHM);
         atol = 100.0 * tol;
         con1r = Math.cos(spi);
         con1i = Math.sin(spi);
@@ -6389,7 +6389,7 @@ public class Bessel {
         chii = 0.5;
         cir = 0.0;
         cii = 1.0;
-        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
+        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n", Preferences.DEBUG_ALGORITHM);
 
         /**
          * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI
@@ -6752,25 +6752,26 @@ public class Bessel {
 
                                 if (lflg != 1) {
                                     Preferences.debug("Cases which violate the relative error " + "test with ertol = "
-                                            + ertol + "\n");
-                                    Preferences.debug("OUTPUT FORMAT kode,ir,it,irset,icase\n");
-                                    Preferences.debug("er j z, y[j-1] w[j-1], on the jth test, " + "j = 1,5\n");
+                                            + ertol + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("OUTPUT FORMAT kode,ir,it,irset,icase\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("er j z, y[j-1] w[j-1], on the jth test, " + "j = 1,5\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
                                     lflg = 1;
                                 } // if (lflg != 1)
 
-                                Preferences.debug("kode = " + kode + "\n");
-                                Preferences.debug("ir = " + ir + "\n");
-                                Preferences.debug("it = " + it + "\n");
-                                Preferences.debug("irset = " + irset + "\n");
-                                Preferences.debug("icase = " + icase + "\n");
-                                Preferences.debug("er[" + (j - 1) + "] = " + er[j - 1] + "\n");
-                                Preferences.debug("j = " + j + "\n");
-                                Preferences.debug("zr = " + zr + "\n");
-                                Preferences.debug("zi = " + zi + "\n");
-                                Preferences.debug("yr[" + (j - 1) + "] = " + yr[j - 1] + "\n");
-                                Preferences.debug("yi[" + (j - 1) + "] = " + yi[j - 1] + "\n");
-                                Preferences.debug("wr[" + (j - 1) + "] = " + wr[j - 1] + "\n");
-                                Preferences.debug("wi[" + (j - 1) + "] = " + wi[j - 1] + "\n");
+                                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("ir = " + ir + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("it = " + it + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("irset = " + irset + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("icase = " + icase + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("er[" + (j - 1) + "] = " + er[j - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("j = " + j + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yr[" + (j - 1) + "] = " + yr[j - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yi[" + (j - 1) + "] = " + yi[j - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("wr[" + (j - 1) + "] = " + wr[j - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("wi[" + (j - 1) + "] = " + wi[j - 1] + "\n", Preferences.DEBUG_ALGORITHM);
                             } // for (j = jb; j <= jl; j++)
                         } // for (it = 1; it <= itl; it++)
                     } // for (ir = irb; ir <= 4; ir++)
@@ -6779,7 +6780,7 @@ public class Bessel {
         } // for (icase = 1; icase <= icl; icase++)
 
         if (lflg == 0) {
-            Preferences.debug("AIRY QUICK CHECKS OK\n");
+            Preferences.debug("AIRY QUICK CHECKS OK\n", Preferences.DEBUG_ALGORITHM);
         } // if (lflg == 0)
 
         return;
@@ -6941,15 +6942,15 @@ public class Bessel {
         rm = Math.min(rm, 200.0);
         rm = Math.max(rm, rl + 10.0);
         r2 = Math.min(rm, fnul);
-        Preferences.debug("Quick check routine for the H Bessel function from ZBESH\n");
-        Preferences.debug("tol = " + tol + "\n");
-        Preferences.debug("elim = " + elim + "\n");
-        Preferences.debug("alim = " + alim + "\n");
-        Preferences.debug("rl = " + rl + "\n");
-        Preferences.debug("fnul = " + fnul + "\n");
-        Preferences.debug("dig = " + dig + "\n");
+        Preferences.debug("Quick check routine for the H Bessel function from ZBESH\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("elim = " + elim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("alim = " + alim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rl = " + rl + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("fnul = " + fnul + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("dig = " + dig + "\n", Preferences.DEBUG_ALGORITHM);
         atol = 100.0 * tol;
-        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
+        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n", Preferences.DEBUG_ALGORITHM);
 
         /**
          * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
@@ -7243,29 +7244,30 @@ public class Bessel {
 
                                 if (lflg != 1) {
                                     Preferences.debug("Cases which violate the relative error " + "test with ertol = "
-                                            + ertol + "\n");
-                                    Preferences.debug("OUTPUT FORMAT kode,n,ir,it,icase\n");
-                                    Preferences.debug("aer[k-1], k=1,n z,fnu,v[0],y[0]\n");
+                                            + ertol + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("OUTPUT FORMAT kode,n,ir,it,icase\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("aer[k-1], k=1,n z,fnu,v[0],y[0]\n", Preferences.DEBUG_ALGORITHM);
                                     lflg = 1;
                                 } // if (lflg != 1)
 
-                                Preferences.debug("kode = " + kode + "\n");
-                                Preferences.debug("n = " + n + "\n");
-                                Preferences.debug("ir = " + ir + "\n");
-                                Preferences.debug("it = " + it + "\n");
-                                Preferences.debug("icase = " + icase + "\n");
+                                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("ir = " + ir + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("it = " + it + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("icase = " + icase + "\n", Preferences.DEBUG_ALGORITHM);
 
                                 for (k = 1; k <= n; k++) {
-                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n");
+                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
                                 } // for (k = 1; k <= n; k++)
 
-                                Preferences.debug("zr = " + zr + "\n");
-                                Preferences.debug("zi = " + zi + "\n");
-                                Preferences.debug("fnu = " + fnu + "\n");
-                                Preferences.debug("vr[0] = " + vr[0] + "\n");
-                                Preferences.debug("vi[0] = " + vi[0] + "\n");
-                                Preferences.debug("yr[0] = " + yr[0] + "\n");
-                                Preferences.debug("yi[0] = " + yi[0] + "\n");
+                                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("vr[0] = " + vr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("vi[0] = " + vi[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yr[0] = " + yr[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yi[0] = " + yi[0] + "\n", Preferences.DEBUG_ALGORITHM);
                             } // for (it = 1; it <= itl; it++)
                         } // for (ir = irb; ir <= 3; ir++)
                     } // for (icase = 1; icase <= 3; icase++)
@@ -7274,7 +7276,7 @@ public class Bessel {
         } // for (kode = 1; kode <= 2; kode++)
 
         if (lflg == 0) {
-            Preferences.debug("H QUICK CHECKS OK\n");
+            Preferences.debug("H QUICK CHECKS OK\n", Preferences.DEBUG_ALGORITHM);
         } // if (lflg == 0)
 
         return;
@@ -7435,15 +7437,15 @@ public class Bessel {
         rm = Math.min(rm, 200.0);
         rm = Math.max(rm, rl + 10.0);
         r2 = Math.min(rm, fnul);
-        Preferences.debug("Quick check routine for the I Bessel function from ZBESI\n");
-        Preferences.debug("tol = " + tol + "\n");
-        Preferences.debug("elim = " + elim + "\n");
-        Preferences.debug("alim = " + alim + "\n");
-        Preferences.debug("rl = " + rl + "\n");
-        Preferences.debug("fnul = " + fnul + "\n");
-        Preferences.debug("dig = " + dig + "\n");
+        Preferences.debug("Quick check routine for the I Bessel function from ZBESI\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("elim = " + elim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("alim = " + alim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rl = " + rl + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("fnul = " + fnul + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("dig = " + dig + "\n", Preferences.DEBUG_ALGORITHM);
         atol = 100.0 * tol;
-        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
+        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n", Preferences.DEBUG_ALGORITHM);
 
         /**
          * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
@@ -7677,30 +7679,31 @@ public class Bessel {
 
                                 if (lflg != 1) {
                                     Preferences.debug("Cases which violate the relative error" + " test with ertol = "
-                                            + ertol + "\n");
-                                    Preferences.debug("Output format\n");
-                                    Preferences.debug("kode, n, ir, it, icase kk\n");
-                                    Preferences.debug("aer[k-1], k = 1,n z, fnu, y[kk-1]\n");
-                                    Preferences.debug("kk = index of first non-zero pair\n");
+                                            + ertol + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Output format\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("kode, n, ir, it, icase kk\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("aer[k-1], k = 1,n z, fnu, y[kk-1]\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("kk = index of first non-zero pair\n", Preferences.DEBUG_ALGORITHM);
                                     lflg = 1;
                                 } // if (lflg != 1)
 
-                                Preferences.debug("kode = " + kode + "\n");
-                                Preferences.debug("n = " + n + "\n");
-                                Preferences.debug("ir = " + ir + "\n");
-                                Preferences.debug("it = " + it + "\n");
-                                Preferences.debug("icase = " + icase + "\n");
-                                Preferences.debug("kk = " + kk + "\n");
+                                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("ir = " + ir + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("it = " + it + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("icase = " + icase + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("kk = " + kk + "\n", Preferences.DEBUG_ALGORITHM);
 
                                 for (k = 1; k <= n; k++) {
-                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n");
+                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n",
+                                    		Preferences.DEBUG_ALGORITHM);
                                 } // for (k = 1; k <= n; k++)
 
-                                Preferences.debug("zr = " + zr + "\n");
-                                Preferences.debug("zi = " + zi + "\n");
-                                Preferences.debug("fnu = " + fnu + "\n");
-                                Preferences.debug("yr[" + (kk - 1) + "] = " + yr[kk - 1] + "\n");
-                                Preferences.debug("yi[" + (kk - 1) + "] = " + yi[kk - 1] + "\n");
+                                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yr[" + (kk - 1) + "] = " + yr[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yi[" + (kk - 1) + "] = " + yi[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
                             } // for (it = 1; it <= itl; it++)
                         } // for (ir = irb; ir <= 4; ir++)
                     } // for (icase = 1; icase <= 3; icase++)
@@ -7709,7 +7712,7 @@ public class Bessel {
         } // for (kode = 1; kode <= 2; kode++)
 
         if (lflg == 0) {
-            Preferences.debug("I QUICK CHECKS OK\n");
+            Preferences.debug("I QUICK CHECKS OK\n", Preferences.DEBUG_ALGORITHM);
         } // if (lflg == 0)
 
         if (mqc == 1) {
@@ -7718,7 +7721,7 @@ public class Bessel {
 
         // Checks near underflow limits on series (i=1) and uniform
         // asymptotic expansion (i=2)
-        Preferences.debug("I Checks near underflow and overflow limits\n");
+        Preferences.debug("I Checks near underflow and overflow limits\n", Preferences.DEBUG_ALGORITHM);
         zr = 1.4;
         zi = 1.4;
         iprnt = 0;
@@ -7757,16 +7760,16 @@ public class Bessel {
             if (er >= ertol) {
 
                 if (iprnt != 1) {
-                    Preferences.debug("Output format error, z, fnu, kode, n\n");
+                    Preferences.debug("Output format error, z, fnu, kode, n\n", Preferences.DEBUG_ALGORITHM);
                     iprnt = 1;
                 } // if (iprnt != 1)
 
-                Preferences.debug("er = " + er + "\n");
-                Preferences.debug("zr = " + zr + "\n");
-                Preferences.debug("zi = " + zi + "\n");
-                Preferences.debug("fnu = " + fnu + "\n");
-                Preferences.debug("kode = " + kode + "\n");
-                Preferences.debug("n = " + n + "\n");
+                Preferences.debug("er = " + er + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
             } // if (er >= ertol)
 
             zr = rl + rl;
@@ -7806,20 +7809,20 @@ public class Bessel {
         if (er >= ertol) {
 
             if (iprnt != 1) {
-                Preferences.debug("Output format error, z, fnu, kode, n\n");
+                Preferences.debug("Output format error, z, fnu, kode, n\n", Preferences.DEBUG_ALGORITHM);
                 iprnt = 1;
             } // if (iprnt != 1)
 
-            Preferences.debug("er = " + er + "\n");
-            Preferences.debug("zr = " + zr + "\n");
-            Preferences.debug("zi = " + zi + "\n");
-            Preferences.debug("fnu = " + fnu + "\n");
-            Preferences.debug("kode = " + kode + "\n");
-            Preferences.debug("n = " + n + "\n");
+            Preferences.debug("er = " + er + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
         } // if (er >= ertol)
 
         if (iprnt == 0) {
-            Preferences.debug("I QUICK CHECKS OK ON UNDERFLOW AND OVERFLOW\n");
+            Preferences.debug("I QUICK CHECKS OK ON UNDERFLOW AND OVERFLOW\n", Preferences.DEBUG_ALGORITHM);
         }
 
         return;
@@ -7977,17 +7980,17 @@ public class Bessel {
         rm = Math.min(rm, 200.0);
         rm = Math.max(rm, rl + 10.0);
         r2 = Math.min(rm, fnul);
-        Preferences.debug("Quick check routine for the J Bessel function from ZBESJ\n");
-        Preferences.debug("tol = " + tol + "\n");
-        Preferences.debug("elim = " + elim + "\n");
-        Preferences.debug("alim = " + alim + "\n");
-        Preferences.debug("rl = " + rl + "\n");
-        Preferences.debug("fnul = " + fnul + "\n");
-        Preferences.debug("dig = " + dig + "\n");
+        Preferences.debug("Quick check routine for the J Bessel function from ZBESJ\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("elim = " + elim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("alim = " + alim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rl = " + rl + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("fnul = " + fnul + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("dig = " + dig + "\n", Preferences.DEBUG_ALGORITHM);
         atol = 100.0 * tol;
         conr = 0.0;
         coni = -1.0 / hpi;
-        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
+        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n", Preferences.DEBUG_ALGORITHM);
 
         /**
          * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
@@ -8169,32 +8172,38 @@ public class Bessel {
 
                                 if (lflg != 1) {
                                     Preferences.debug("Cases which violate the relative error " + "test with ertol = "
-                                            + ertol + "\n");
-                                    Preferences.debug("OUTPUT FORMAT kode,n,ir,it,nzj,nzh,icase\n");
+                                            + ertol + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("OUTPUT FORMAT kode,n,ir,it,nzj,nzh,icase\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
                                     Preferences.debug("aer[k-1], k=1,n z,fnu,cj[kk-1],ch[kk-1], "
-                                            + "kk = index of first non-zero y,w pair\n");
+                                            + "kk = index of first non-zero y,w pair\n", Preferences.DEBUG_ALGORITHM);
                                     lflg = 1;
                                 } // if (lflg != 1)
 
-                                Preferences.debug("kode = " + kode + "\n");
-                                Preferences.debug("n = " + n + "\n");
-                                Preferences.debug("ir = " + ir + "\n");
-                                Preferences.debug("it = " + it + "\n");
-                                Preferences.debug("nzj = " + nzj[0] + "\n");
-                                Preferences.debug("nzh = " + nzh[0] + "\n");
-                                Preferences.debug("icase = " + icase + "\n");
+                                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("ir = " + ir + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("it = " + it + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nzj = " + nzj[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nzh = " + nzh[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("icase = " + icase + "\n", Preferences.DEBUG_ALGORITHM);
 
                                 for (k = 1; k <= n; k++) {
-                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n");
+                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
                                 } // for (k = 1; k <= n; k++)
 
-                                Preferences.debug("zr = " + zr + "\n");
-                                Preferences.debug("zi = " + zi + "\n");
-                                Preferences.debug("fnu = " + fnu + "\n");
-                                Preferences.debug("cjr[" + (kk - 1) + "] = " + cjr[kk - 1] + "\n");
-                                Preferences.debug("cji[" + (kk - 1) + "] = " + cji[kk - 1] + "\n");
-                                Preferences.debug("chr[" + (kk - 1) + "] = " + chr[kk - 1] + "\n");
-                                Preferences.debug("chi[" + (kk - 1) + "] = " + chi[kk - 1] + "\n");
+                                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("cjr[" + (kk - 1) + "] = " + cjr[kk - 1] + "\n", 
+                                		Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("cji[" + (kk - 1) + "] = " + cji[kk - 1] + "\n", 
+                                		Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("chr[" + (kk - 1) + "] = " + chr[kk - 1] + "\n", 
+                                		Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("chi[" + (kk - 1) + "] = " + chi[kk - 1] + "\n", 
+                                		Preferences.DEBUG_ALGORITHM);
                             } // for (it = 1; it <= itl; it++)
                         } // for (ir = irb; ir <= 4; ir++)
                     } // for (icase = 1; icase <= 3; icase++)
@@ -8203,7 +8212,7 @@ public class Bessel {
         } // for (kode = 1; kode <= 2; kode++)
 
         if (lflg == 0) {
-            Preferences.debug("J QUICK CHECKS OK\n");
+            Preferences.debug("J QUICK CHECKS OK\n", Preferences.DEBUG_ALGORITHM);
         } // if (lflg == 0)
 
         return;
@@ -8379,16 +8388,16 @@ public class Bessel {
         rm = Math.min(rm, 200.0);
         rm = Math.max(rm, rl + 10.0);
         r2 = Math.min(rm, fnul);
-        Preferences.debug("QUICK CHECK ROUTINE FOR THE K BESSEL FUNCTION FROM\n");
-        Preferences.debug("ZBESK and ZHESK\n");
-        Preferences.debug("tol = " + tol + "\n");
-        Preferences.debug("elim = " + elim + "\n");
-        Preferences.debug("alim = " + alim + "\n");
-        Preferences.debug("rl = " + rl + "\n");
-        Preferences.debug("fnul = " + fnul + "\n");
-        Preferences.debug("dig = " + dig + "\n");
+        Preferences.debug("QUICK CHECK ROUTINE FOR THE K BESSEL FUNCTION FROM\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("ZBESK and ZHESK\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("elim = " + elim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("alim = " + alim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rl = " + rl + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("fnul = " + fnul + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("dig = " + dig + "\n", Preferences.DEBUG_ALGORITHM);
         atol = 100.0 * tol;
-        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
+        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n", Preferences.DEBUG_ALGORITHM);
 
         /**
          * TEST VALUES OF Z IN -PI.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
@@ -8681,29 +8690,30 @@ public class Bessel {
 
                                 if (lflg != 1) {
                                     Preferences.debug("Cases which violate the relative error" + " test with ertol = "
-                                            + ertol + "\n");
-                                    Preferences.debug("Output format kode,n,ir,it,icase,kk\n");
+                                            + ertol + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("Output format kode,n,ir,it,icase,kk\n", Preferences.DEBUG_ALGORITHM);
                                     Preferences.debug("aer[k-1], k=1,n z,fnu,y[kk-1] "
-                                            + "kk = index of first non-zero pair\n");
+                                            + "kk = index of first non-zero pair\n", Preferences.DEBUG_ALGORITHM);
                                     lflg = 1;
                                 } // if (lflg != 1)
 
-                                Preferences.debug("kode = " + kode + "\n");
-                                Preferences.debug("n = " + n + "\n");
-                                Preferences.debug("ir = " + ir + "\n");
-                                Preferences.debug("it = " + it + "\n");
-                                Preferences.debug("icase = " + icase + "\n");
-                                Preferences.debug("kk = " + kk + "\n");
+                                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("ir = " + ir + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("it = " + it + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("icase = " + icase + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("kk = " + kk + "\n", Preferences.DEBUG_ALGORITHM);
 
                                 for (k = 1; k <= n; k++) {
-                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n");
+                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
                                 } // for (k = 1; k <= n; k++)
 
-                                Preferences.debug("zr = " + zr + "\n");
-                                Preferences.debug("zi = " + zi + "\n");
-                                Preferences.debug("fnu = " + fnu + "\n");
-                                Preferences.debug("yr[" + (kk - 1) + "] = " + yr[kk - 1] + "\n");
-                                Preferences.debug("yi[" + (kk - 1) + "] = " + yi[kk - 1] + "\n");
+                                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yr[" + (kk - 1) + "] = " + yr[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("yi[" + (kk - 1) + "] = " + yi[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
                             } // for (it = 1; it <= itl; it++)
                         } // for (ir = irb; ir <= 4; ir++)
                     } // for (icase = 1; icase <= 3; icase++)
@@ -8712,7 +8722,7 @@ public class Bessel {
         } // for (kode = 1; kode <= 2; kode++)
 
         if (lflg == 0) {
-            Preferences.debug("K QUICK CHECKS OK\n");
+            Preferences.debug("K QUICK CHECKS OK\n", Preferences.DEBUG_ALGORITHM);
         } // if (lflg == 0)
 
         return;
@@ -8859,15 +8869,15 @@ public class Bessel {
         rm = Math.min(rm, 200.0);
         rm = Math.max(rm, rl + 10.0);
         r2 = Math.min(rm, fnul);
-        Preferences.debug("Quick check routine for the Y Bessel function from ZBESY\n");
-        Preferences.debug("tol = " + tol + "\n");
-        Preferences.debug("elim = " + elim + "\n");
-        Preferences.debug("alim = " + alim + "\n");
-        Preferences.debug("rl = " + rl + "\n");
-        Preferences.debug("fnul = " + fnul + "\n");
-        Preferences.debug("dig = " + dig + "\n");
+        Preferences.debug("Quick check routine for the Y Bessel function from ZBESY\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("elim = " + elim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("alim = " + alim + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("rl = " + rl + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("fnul = " + fnul + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("dig = " + dig + "\n", Preferences.DEBUG_ALGORITHM);
         atol = 100.0 * tol;
-        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n");
+        Preferences.debug("Checks in the (z,fnu) space with mqc = " + mqc + "\n", Preferences.DEBUG_ALGORITHM);
 
         /**
          * TEST VALUES OF Z IN -PI/2.LT.ARG(Z).LE.PI NEAR FORMULA BOUNDARIES
@@ -9053,34 +9063,37 @@ public class Bessel {
 
                                 if (lflg != 1) {
                                     Preferences.debug("Cases which violate relative error test " + "with ertol = "
-                                            + ertol + "\n");
-                                    Preferences.debug("OUTPUT FORMAT kode,n,ir,it,nz1,nz2,icase\n");
-                                    Preferences.debug("aer[k-1], k = 1,n z,fnu,w[kk-1],v[kk-1]\n");
-                                    Preferences.debug("kk = index of first non-zero w,v pair\n");
+                                            + ertol + "\n", Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("OUTPUT FORMAT kode,n,ir,it,nz1,nz2,icase\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("aer[k-1], k = 1,n z,fnu,w[kk-1],v[kk-1]\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
+                                    Preferences.debug("kk = index of first non-zero w,v pair\n", Preferences.DEBUG_ALGORITHM);
                                     lflg = 1;
                                 } // if (lflg != 1)
 
                                 kk = Math.max(nz1[0], nz2[0]) + 1;
                                 kk = Math.min(n, kk);
-                                Preferences.debug("kode = " + kode + "\n");
-                                Preferences.debug("n = " + n + "\n");
-                                Preferences.debug("ir = " + ir + "\n");
-                                Preferences.debug("it = " + it + "\n");
-                                Preferences.debug("nz1 = " + nz1[0] + "\n");
-                                Preferences.debug("nz2 = " + nz2[0] + "\n");
-                                Preferences.debug("icase = " + icase + "\n");
+                                Preferences.debug("kode = " + kode + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("ir = " + ir + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("it = " + it + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nz1 = " + nz1[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("nz2 = " + nz2[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("icase = " + icase + "\n", Preferences.DEBUG_ALGORITHM);
 
                                 for (k = 1; k <= n; k++) {
-                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n");
+                                    Preferences.debug("aer[" + (k - 1) + "] = " + aer[k - 1] + "\n", 
+                                    		Preferences.DEBUG_ALGORITHM);
                                 } // for (k = 1; k <= n; k++)
 
-                                Preferences.debug("zr = " + zr + "\n");
-                                Preferences.debug("zi = " + zi + "\n");
-                                Preferences.debug("fnu = " + fnu + "\n");
-                                Preferences.debug("wr[" + (kk - 1) + "] = " + wr[kk - 1] + "\n");
-                                Preferences.debug("wi[" + (kk - 1) + "] = " + wi[kk - 1] + "\n");
-                                Preferences.debug("vr[" + (kk - 1) + "] = " + vr[kk - 1] + "\n");
-                                Preferences.debug("vi[" + (kk - 1) + "] = " + vi[kk - 1] + "\n");
+                                Preferences.debug("zr = " + zr + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("zi = " + zi + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("fnu = " + fnu + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("wr[" + (kk - 1) + "] = " + wr[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("wi[" + (kk - 1) + "] = " + wi[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("vr[" + (kk - 1) + "] = " + vr[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
+                                Preferences.debug("vi[" + (kk - 1) + "] = " + vi[kk - 1] + "\n", Preferences.DEBUG_ALGORITHM);
                             } // for (it = 1; it <= itl; it++)
                         } // for (ir = irb; ir <= 4; ir++)
                     } // for (icase = 1; icase <= 3; icase++)
@@ -9089,7 +9102,7 @@ public class Bessel {
         } // for (kode = 1; kode <= 2; kode++)
 
         if (lflg == 0) {
-            Preferences.debug("Y QUICK CHECKS OK\n");
+            Preferences.debug("Y QUICK CHECKS OK\n", Preferences.DEBUG_ALGORITHM);
         } // if (lflg == 0)
 
         return;
