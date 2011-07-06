@@ -488,11 +488,12 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
         } // for (i = 1; i <= numRandomSpheres; i++)
         spheresDrawn = i-1;
         if (spheresDrawn == 1) {
-            Preferences.debug("1 random sphere drawn.  1 random sphere requested.\n");
+            Preferences.debug("1 random sphere drawn.  1 random sphere requested.\n", Preferences.DEBUG_ALGORITHM);
             System.out.println("1 random sphere drawn.  1 random sphere requested.");    
         }
         else {
-            Preferences.debug(spheresDrawn + " random spheres drawn.  " + numSpheres + " random spheres requested.\n");
+            Preferences.debug(spheresDrawn + " random spheres drawn.  " + numSpheres + " random spheres requested.\n", 
+            		Preferences.DEBUG_ALGORITHM);
             System.out.println(spheresDrawn + " random spheres drawn.  " + numSpheres + " random spheres requested.");
         }
         
@@ -567,7 +568,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     }
                 } // for (i = initialRandomSpheres+1; i <= numSpheres; i++)
                 spheresDrawn = i-1; 
-                Preferences.debug(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.\n");
+                Preferences.debug(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 System.out.println(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.");
         } // if ((pattern == AGGREGATED) && (spheresDrawn == initialRandomSpheres))
         
@@ -644,7 +646,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     }
                 } // for (i = 2; i <= numSpheres; i++)
                 spheresDrawn = i-1; 
-                Preferences.debug(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.\n");
+                Preferences.debug(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 System.out.println(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.");    
         } // if (pattern == REGULAR)
         
@@ -728,7 +731,8 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
                     }
                 } // for (i = 2; i <= numSpheres; i++)
                 spheresDrawn = i-1; 
-                Preferences.debug(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.\n");
+                Preferences.debug(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 System.out.println(spheresDrawn + " spheres drawn.  " + numSpheres + " spheres requested.");     
         } // if (pattern == CONSTRAINED)
         
@@ -762,7 +766,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
             }
         }
        Preferences.debug("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
-                         maximumNND + "\n");
+                         maximumNND + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Before removing boundary influenced spheres maximum nearest neighbor distance = " + 
                maximumNND);
        boundaryDistance = (int)Math.ceil(maximumNND);
@@ -788,7 +792,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            }
        }
        Preferences.debug("To avoid boundary effects only " + spheresLeft + " of the " + spheresDrawn + 
-            " spheres drawn will be analyzed\n");
+            " spheres drawn will be analyzed\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("To avoid boundary effects only " + spheresLeft + " of the " + spheresDrawn + 
        " spheres drawn will be analyzed\n");
        nearestNeighborDistance = new double[spheresLeft];
@@ -841,21 +845,21 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            // odd number
            median = nearestNeighborDistance[(spheresLeft - 1)/2];
        }
-       Preferences.debug("Nearest neighbor statistics:\n ");
+       Preferences.debug("Nearest neighbor statistics:\n ", Preferences.DEBUG_ALGORITHM);
        System.out.println("Nearest neighbor statistics: ");
-       Preferences.debug("Smallest distance = " + nearestNeighborDistance[0] + "\n");
+       Preferences.debug("Smallest distance = " + nearestNeighborDistance[0] + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Smallest distance = " + nearestNeighborDistance[0]);
-       Preferences.debug("Mean distance = " + mean + "\n");
+       Preferences.debug("Mean distance = " + mean + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Mean distance = " + mean);
-       Preferences.debug("Median distance = " + median + "\n");
+       Preferences.debug("Median distance = " + median + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Median distance = " + median);
-       Preferences.debug("Largest distance = " + nearestNeighborDistance[spheresLeft-1] + "\n");
+       Preferences.debug("Largest distance = " + nearestNeighborDistance[spheresLeft-1] + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Largest distance = " + nearestNeighborDistance[spheresLeft-1]);
-       Preferences.debug("Standard deviation = " + stdDev + "\n");
+       Preferences.debug("Standard deviation = " + stdDev + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Standard deviation = " + stdDev);
-       Preferences.debug("Skewness = " + skewness + "\n");
+       Preferences.debug("Skewness = " + skewness + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Skewness = " + skewness);
-       Preferences.debug("Kurtosis = " + kurtosis + "\n");
+       Preferences.debug("Kurtosis = " + kurtosis + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Kurtosis = " + kurtosis);
        
        // The probability density function for the nearest neighbor distance when spheres of a 
@@ -884,10 +888,11 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            density += partialVolumeFraction/(double)maskBytesSet[rNum];
        }
        P1 = K1 * Math.pow(density, -1.0/3.0);
-       Preferences.debug("Analytical mean nearest neighbor distance for a point process = " + P1 + "\n");
+       Preferences.debug("Analytical mean nearest neighbor distance for a point process = " + P1 + "\n", 
+    		   Preferences.DEBUG_ALGORITHM);
        
        if ((radiusDistribution == CONSTANT_RADIUS) || (minRadius == maxRadius)) {
-           Preferences.debug("Calculations using Poisson model\n");
+           Preferences.debug("Calculations using Poisson model\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Calculations using Poisson model");
            diameter = 2.0 * radius;
            // Calculate analytical mean
@@ -896,7 +901,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            steps = meanModel.getStepsUsed();
            numInt = meanModel.getIntegral();
            Preferences.debug("In Integration.MIDINF numerical Integral for mean = " + 
-                   numInt + " after " + steps + " steps used\n");*/
+                   numInt + " after " + steps + " steps used\n", Preferences.DEBUG_ALGORITHM);*/
            bound = diameter;
            meanModel2 = new IntModelMean2(bound, routine, inf, epsabs, epsrel, limit, density);
            meanModel2.driver();
@@ -905,21 +910,22 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            absError = meanModel2.getAbserr();
            neval = meanModel2.getNeval();
            Preferences.debug("In Integration2.DQAGIE numerical Integral for mean = " + numInt2 + " after " + neval +
-                             " integrand evaluations used\n");
+                             " integrand evaluations used\n", Preferences.DEBUG_ALGORITHM);
            Preferences.debug("Error status = " + errorStatus +
-                             " with absolute error = " + absError + "\n");
+                             " with absolute error = " + absError + "\n", Preferences.DEBUG_ALGORITHM);
            analyticalMean = diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
-           Preferences.debug("Analytical mean = " + analyticalMean + "\n");
+           Preferences.debug("Analytical mean = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Analytical mean = " + analyticalMean);
            change = ((analyticalMean - mean)/mean) * 100.0;
-           Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n");  
+           Preferences.debug("Percentage increase of analytical mean over observed mean = " + change + "\n", 
+        		   Preferences.DEBUG_ALGORITHM);  
            // Calculate analytical mean squared
            /*meanSquaredModel = new IntModelMeanSquared(diameter, 1.0E30, Integration.MIDINF, eps, density);
            meanSquaredModel.driver();
            steps = meanSquaredModel.getStepsUsed();
            numInt = meanSquaredModel.getIntegral();
            Preferences.debug("In Integration.MIDINF numerical Integral for mean squared = " + 
-                   numInt + " after " + steps + " steps used\n");*/
+                   numInt + " after " + steps + " steps used\n", Preferences.DEBUG_ALGORITHM);*/
            bound = diameter;
            meanSquaredModel2 = new IntModelMeanSquared2(bound, routine, inf, epsabs, epsrel, limit, density);
            meanSquaredModel2.driver();
@@ -928,42 +934,45 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            absError = meanSquaredModel2.getAbserr();
            neval = meanSquaredModel2.getNeval();
            Preferences.debug("In Integration2.DQAGIE numerical Integral for mean squared = " + numInt2 + " after " + neval +
-                             " integrand evaluations used\n");
+                             " integrand evaluations used\n", Preferences.DEBUG_ALGORITHM);
            Preferences.debug("Error status = " + errorStatus +
-                             " with absolute error = " + absError + "\n");
+                             " with absolute error = " + absError + "\n", Preferences.DEBUG_ALGORITHM);
            analyticalMeanSquared = diameter*diameter + Math.exp(density*Math.PI*(4.0/3.0)*diameter*diameter*diameter)*numInt2;
-           Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n");
+           Preferences.debug("Analytical mean squared = " + analyticalMeanSquared + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Analytical mean squared = " + analyticalMeanSquared);
            analyticalVariance = spheresLeft*(analyticalMeanSquared - analyticalMean*analyticalMean)/(spheresLeft - 1);
            analyticalStandardDeviation = Math.sqrt(analyticalVariance);
            analyticalStandardError = analyticalStandardDeviation/Math.sqrt(spheresLeft);
-           Preferences.debug("analyticalStandardError = " + analyticalStandardError + "\n");
+           Preferences.debug("analyticalStandardError = " + analyticalStandardError + "\n", Preferences.DEBUG_ALGORITHM);
            change = ((analyticalStandardError - standardError)/standardError) * 100.0;
-           Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change + "\n");
+           Preferences.debug("Percentage increase of analytical standard error over observed standard error = " + change +
+        		   "\n", Preferences.DEBUG_ALGORITHM);
            z = (mean - analyticalMean)/analyticalStandardError;
            stat = new Statistics(Statistics.GAUSSIAN_PROBABILITY_INTEGRAL, z, spheresLeft-1, percentile);
            stat.run();
            Preferences.debug("Percentile in Gaussian probability integral for measured mean around analytical mean = "
-                             + percentile[0]*100.0 + "\n");
+                             + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Percentile in Gaussian probability integral for measured mean around analytical mean = " +
                                percentile[0]*100.0);
            if (percentile[0] < 0.025) {
                // Measured mean signficantly less than analytical mean of random distribution
-               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", 
+            		   Preferences.DEBUG_ALGORITHM);
                System.out.println("Clumping or aggregation found in nearest neighbor distances");
            }
            else if (percentile[0] > 0.975) {
                // Measured mean significantly greater than analytical mean of random distribution
-               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+            		   Preferences.DEBUG_ALGORITHM);
                System.out.println("Uniform or regular distribution found in nearest neighbor distances");
            }
            else {
              // Measured mean not significantly different from analytical mean of random distribution
-               Preferences.debug("Measured mean consistent with random distribution\n");
+               Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
                System.out.println("Measured mean consistent with random distribution");
            }
            
-           Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n");
+           Preferences.debug("\nCalculations using 1990 Torquato, Lu, and Rubinstein model\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("\nCalculations using 1990 Torquato, Lu, and Rubinstein model");
            // Calculate analytical mean
            meanTorquatoModel = new IntTorquatoModelMean(volumeFraction);
@@ -971,7 +980,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            kIntegrator.setEps(eps);
            numInt = kIntegrator.integrate(1.0, 1.0E30);
            Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato90 model = " + 
-        		   numInt + "\n");
+        		   numInt + "\n", Preferences.DEBUG_ALGORITHM);
            
            
            bound = 1.0;
@@ -982,37 +991,38 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            absError = meanTorquatoModel2.getAbserr();
            neval = meanTorquatoModel2.getNeval();
            Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato90 model = " + numInt2 + " after " + neval +
-                             " integrand evaluations used\n");
+                             " integrand evaluations used\n", Preferences.DEBUG_ALGORITHM);
            Preferences.debug("Error status = " + errorStatus +
-                             " with absolute error = " + absError + "\n");
+                             " with absolute error = " + absError + "\n", Preferences.DEBUG_ALGORITHM);
            analyticalMean = diameter * (1.0 + numInt2);
-           Preferences.debug("Analytical mean from Torquato90 model = " + analyticalMean + "\n");
+           Preferences.debug("Analytical mean from Torquato90 model = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Analytical mean from Torquato90 model = " + analyticalMean);
            t = (mean - analyticalMean)/standardError;
            stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                                  t, spheresLeft-1, percentile);
            stat.run();
            Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
-                             + percentile[0]*100.0 + "\n");
+                             + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
                                percentile[0]*100.0);
            if (percentile[0] < 0.025) {
                // Measured mean signficantly less than analytical mean of random distribution
-               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", Preferences.DEBUG_ALGORITHM);
                System.out.println("Clumping or aggregation found in nearest neighbor distances");
            }
            else if (percentile[0] > 0.975) {
                // Measured mean significantly greater than analytical mean of random distribution
-               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+            		   Preferences.DEBUG_ALGORITHM);
                System.out.println("Uniform or regular distribution found in nearest neighbor distances");
            }
            else {
              // Measured mean not significantly different from analytical mean of random distribution
-               Preferences.debug("Measured mean consistent with random distribution\n");
+               Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
                System.out.println("Measured mean consistent with random distribution");
            }
            
-           Preferences.debug("\nCalculations using 1995 Torquato model\n");
+           Preferences.debug("\nCalculations using 1995 Torquato model\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("\nCalculations using 1995 Torquato model");
            // Calculate analytical mean
            meanTorquato95Model = new IntTorquato95ModelMean(volumeFraction);
@@ -1020,7 +1030,7 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            kIntegrator.setEps(eps);
            numInt = kIntegrator.integrate(1.0, 1.0E30);
            Preferences.debug("In RungeKuttaFehlbergIntegrator numerical Integral for Torquato95 model = " + 
-        		   numInt + "\n");
+        		   numInt + "\n", Preferences.DEBUG_ALGORITHM);
            
            
            bound = 1.0;
@@ -1031,39 +1041,41 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            absError = meanTorquato95Model2.getAbserr();
            neval = meanTorquato95Model2.getNeval();
            Preferences.debug("In Integration2.DQAGIE numerical Integral for Torquato95 model = " + numInt2 + " after " + neval +
-                             " integrand evaluations used\n");
+                             " integrand evaluations used\n", Preferences.DEBUG_ALGORITHM);
            Preferences.debug("Error status = " + errorStatus +
-                             " with absolute error = " + absError + "\n");
+                             " with absolute error = " + absError + "\n", Preferences.DEBUG_ALGORITHM);
            analyticalMean = diameter * (1.0 + numInt2);
-           Preferences.debug("Analytical mean from Torquato95 model = " + analyticalMean + "\n");
+           Preferences.debug("Analytical mean from Torquato95 model = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Analytical mean from Torquato95 model = " + analyticalMean);
            t = (mean - analyticalMean)/standardError;
            stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                                  t, spheresLeft-1, percentile);
            stat.run();
            Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
-                             + percentile[0]*100.0 + "\n");
+                             + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
                                percentile[0]*100.0);
            if (percentile[0] < 0.025) {
                // Measured mean signficantly less than analytical mean of random distribution
-               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+               Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", 
+            		   Preferences.DEBUG_ALGORITHM);
                System.out.println("Clumping or aggregation found in nearest neighbor distances");
            }
            else if (percentile[0] > 0.975) {
                // Measured mean significantly greater than analytical mean of random distribution
-               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+               Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+            		   Preferences.DEBUG_ALGORITHM);
                System.out.println("Uniform or regular distribution found in nearest neighbor distances");
            }
            else {
              // Measured mean not significantly different from analytical mean of random distribution
-               Preferences.debug("Measured mean consistent with random distribution\n");
+               Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
                System.out.println("Measured mean consistent with random distribution");
            }
        } // if ((radiusDistribution == CONSTANT_RADIUS) || (minRadius == maxRadius))
        
        
-       Preferences.debug("\nCalculations using Tewari Gokhale model\n");
+       Preferences.debug("\nCalculations using Tewari Gokhale model\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("\nCalculations using Tewari Gokhale model");
        analyticalMean = (1.0 + B1 * Math.pow(volumeFraction/closePackedVolumeFraction, 2.0/3.0)) * P1;
        if ((radiusDistribution != CONSTANT_RADIUS) && (minRadius != maxRadius)) {
@@ -1084,29 +1096,30 @@ public class AlgorithmSphereGeneration extends AlgorithmBase {
            cv = sphereStdDev/meanSphereVolume;
            analyticalMean -= (1.0 - Math.exp(-cv * volumeFraction)) * Math.pow(density, -1.0/3.0);
        } // if ((radiusDistribution != CONSTANT_RADIUS) && (minRadius != maxRadius))
-       Preferences.debug("Analytical mean = " + analyticalMean + "\n");
+       Preferences.debug("Analytical mean = " + analyticalMean + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Analytical mean = " + analyticalMean);
        t = (mean - analyticalMean)/standardError;
        stat = new Statistics(Statistics.STUDENTS_T_DISTRIBUTION_CUMULATIVE_DISTRIBUTION_FUNCTION,
                              t, spheresLeft-1, percentile);
        stat.run();
        Preferences.debug("Percentile in Students t cumulative distribution function for measured mean around analytical mean = "
-                         + percentile[0]*100.0 + "\n");
+                         + percentile[0]*100.0 + "\n", Preferences.DEBUG_ALGORITHM);
        System.out.println("Percentile in Students t cumulative distribution function for measured mean around analytical mean = " +
                            percentile[0]*100.0);
        if (percentile[0] < 0.025) {
            // Measured mean signficantly less than analytical mean of random distribution
-           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n");
+           Preferences.debug("Clumping or aggregation found in nearest neighbor distances\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Clumping or aggregation found in nearest neighbor distances");
        }
        else if (percentile[0] > 0.975) {
            // Measured mean significantly greater than analytical mean of random distribution
-           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n");
+           Preferences.debug("Uniform or regular distribution found in nearest neighbor distances\n", 
+        		   Preferences.DEBUG_ALGORITHM);
            System.out.println("Uniform or regular distribution found in nearest neighbor distances");
        }
        else {
          // Measured mean not significantly different from analytical mean of random distribution
-           Preferences.debug("Measured mean consistent with random distribution\n");
+           Preferences.debug("Measured mean consistent with random distribution\n", Preferences.DEBUG_ALGORITHM);
            System.out.println("Measured mean consistent with random distribution");
        }
        
