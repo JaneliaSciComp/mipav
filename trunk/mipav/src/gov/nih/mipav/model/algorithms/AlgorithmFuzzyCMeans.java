@@ -692,7 +692,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                         } // for (oldX = xLow, x = 0; oldX <= xHigh;oldX++,x++)
                     } // for (oldY = yLow, y = 0; oldY <= yHigh;oldY++,y++)
                 } catch (ArrayIndexOutOfBoundsException e) {
-                    Preferences.debug("error = " + e);
+                    Preferences.debug("error = " + e, Preferences.DEBUG_ALGORITHM);
                 }
 
                 try {
