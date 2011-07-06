@@ -2072,7 +2072,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
                                 if ((Z >= 0) && (Z <= (zDimB - 1))) {
 
-                                    // Preferences.debug(X+", "+Y+", "+Z);
+                                    // Preferences.debug(X+", "+Y+", "+Z, Preferences.DEBUG_ALGORITHM);
                                     // set intensity of i,j,k to new transformed coordinate if
                                     // x,y,z is w/in dimensions of image
                                     x0 = X - (int) (X);
@@ -2208,7 +2208,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
                                     if ((Z >= 0) && (Z <= (zDimB - 1))) {
 
-                                        // Preferences.debug(X+", "+Y+", "+Z);
+                                        // Preferences.debug(X+", "+Y+", "+Z, Preferences.DEBUG_ALGORITHM);
                                         // set intensity of i,j,k to new transformed coordinate if
                                         // x,y,z is w/in dimensions of image
                                         x0 = X - (int) (X);
@@ -2378,7 +2378,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
                                     if ((Z >= 0) && (Z <= (zDimB - 1))) {
 
-                                        // Preferences.debug(X+", "+Y+", "+Z);
+                                        // Preferences.debug(X+", "+Y+", "+Z, Preferences.DEBUG_ALGORITHM);
                                         // set intensity of i,j,k to new transformed coordinate if
                                         // x,y,z is w/in dimensions of image
                                         x0 = X - (int) (X);
