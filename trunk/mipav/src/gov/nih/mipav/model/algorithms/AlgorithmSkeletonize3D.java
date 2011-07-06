@@ -401,7 +401,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         } // if (skPoints == null)
 
         fireProgressStateChanged("Making volume solid");
-        Preferences.debug("Making volume solid\n");
+        Preferences.debug("Making volume solid\n", Preferences.DEBUG_ALGORITHM);
         makeSolidVolume();
         /*boolean test;
          * test = false; if (test) { solidImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
@@ -413,7 +413,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
         if (sliceHoleFilling) {
             fireProgressStateChanged("Slice by slice hole filling");
-            Preferences.debug("Slice by slice hole filling\n");
+            Preferences.debug("Slice by slice hole filling\n", Preferences.DEBUG_ALGORITHM);
             extents2D = new int[2];
             extents2D[0] = srcImage.getExtents()[0];
             extents2D[1] = srcImage.getExtents()[1];
@@ -469,7 +469,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         } // if (sliceHoleFilling)
 
         fireProgressStateChanged("Delete all but the largest object\n");
-        Preferences.debug("Delete all but the largest object\n");
+        Preferences.debug("Delete all but the largest object\n", Preferences.DEBUG_ALGORITHM);
         idImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), srcImage.getImageName() + "_id");
 
         try {
@@ -573,7 +573,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             // compute the potential field
             if (distCharges > 0) {
                 fireProgressStateChanged("Padding the object");
-                Preferences.debug("Padding the object\n");
+                Preferences.debug("Padding the object\n", Preferences.DEBUG_ALGORITHM);
 
                 // First layer attaches itself to the SURF voxels
                 if (!expandVolume(SURF, PADDING_MIN)) {
@@ -600,7 +600,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             } // if (distCharges > 0)
             else if (distCharges < 0) {
                 fireProgressStateChanged("Peeling the object");
-                Preferences.debug("Peeling the object\n");
+                Preferences.debug("Peeling the object\n", Preferences.DEBUG_ALGORITHM);
 
                 for (i = 0; i > distCharges; i--) {
                     peelVolume();
@@ -608,7 +608,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             } // else if (distCharges <0)
 
             fireProgressStateChanged("Calculating potential field");
-            Preferences.debug("Calculating potential field\n");
+            Preferences.debug("Calculating potential field\n", Preferences.DEBUG_ALGORITHM);
 
             // Check volume padding - fast version
             if (!quickCheckVolumePadding()) {
@@ -628,7 +628,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
             if (saveVF) {
                 fireProgressStateChanged("Saving potential field");
-                Preferences.debug("Saving potential field\n");
+                Preferences.debug("Saving potential field\n", Preferences.DEBUG_ALGORITHM);
                 gvfImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_xvf");
 
                 try {
@@ -736,7 +736,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
             fireProgressStateChanged("Detecting critical points\n");
             fireProgressStateChanged(92);
-            Preferences.debug("Detecting critical points\n");
+            Preferences.debug("Detecting critical points\n", Preferences.DEBUG_ALGORITHM);
 
             if (!getCriticalPoints()) {
 
@@ -748,7 +748,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             // Generating the skeleton
             fireProgressStateChanged("Generating level 1 skeleton");
             fireProgressStateChanged(94);
-            Preferences.debug("Generating level1 skeleton\n");
+            Preferences.debug("Generating level1 skeleton\n", Preferences.DEBUG_ALGORITHM);
 
             // Allocate skeleton structure
             try {
@@ -773,7 +773,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
             if (saveVF) {
                 fireProgressStateChanged("Saving level 1 skeleton\n");
-                Preferences.debug("Saving level 1 skeleton\n");
+                Preferences.debug("Saving level 1 skeleton\n", Preferences.DEBUG_ALGORITHM);
                 file = new File(srcImage.getFileInfo(0).getFileDirectory() + srcImage.getImageName() + ".skf");
 
                 try {
@@ -856,7 +856,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         if (perHDPoints > 0.0f) {
             fireProgressStateChanged("Getting high divergence points");
             fireProgressStateChanged(96);
-            Preferences.debug("Getting high divergence points\n");
+            Preferences.debug("Getting high divergence points\n", Preferences.DEBUG_ALGORITHM);
 
             // Get top perHDPoints fraction of highest negative divergence points
             if (!getHighDivergencePoints()) {
@@ -866,14 +866,14 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 return;
             }
 
-            Preferences.debug("Number of high divergence points = " + numHDPoints + "\n");
+            Preferences.debug("Number of high divergence points = " + numHDPoints + "\n", Preferences.DEBUG_ALGORITHM);
             /*for (i = 0; i < numHDPoints; i++) {
              *  Preferences.debug(i + " = " + hdPoints[i][0] + "  " + hdPoints[i][1] + "  " +
-             * hdPoints[i][2] + "\n");}*/
+             * hdPoints[i][2] + "\n", Preferences.DEBUG_ALGORITHM);}*/
 
             fireProgressStateChanged("Computing level 2 skeleton");
             fireProgressStateChanged(92);
-            Preferences.debug("Computing level 2 skeleton\n");
+            Preferences.debug("Computing level 2 skeleton\n", Preferences.DEBUG_ALGORITHM);
 
             if (!getLevel2Skeleton()) {
 
@@ -1027,8 +1027,8 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             } // for (i = 0; i < skelNumSegments; i++)
         } // else
 
-        Preferences.debug("Segments output = " + skelNumSegments + "\n");
-        Preferences.debug("Points output = " + ptNum + "\n");
+        Preferences.debug("Segments output = " + skelNumSegments + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Points output = " + ptNum + "\n", Preferences.DEBUG_ALGORITHM);
         srcImage.notifyImageDisplayListeners();
 
         setCompleted(true);
@@ -1223,17 +1223,17 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             } // for (y = 1; y < ym1; y++)
         } // for (z = 1; z < zm1; z++)
 
-        Preferences.debug("Found  " + numBound + " boundary voxels\n");
+        Preferences.debug("Found  " + numBound + " boundary voxels\n", Preferences.DEBUG_ALGORITHM);
 
         // Sort the boundary array
         sortBoundaryArray(numBound, bound);
 
         // Compute the potential field
-        Preferences.debug("Computing potential field\n");
+        Preferences.debug("Computing potential field\n", Preferences.DEBUG_ALGORITHM);
         idx = -1;
 
         for (z = 0; z < zDim; z++) {
-            Preferences.debug("Processing plane " + z + " out of " + (zDim - 1) + "\n");
+            Preferences.debug("Processing plane " + z + " out of " + (zDim - 1) + "\n", Preferences.DEBUG_ALGORITHM);
             fireProgressStateChanged(z * 90 / (zDim - 1));
 
             // Find the boundary voxels that will influence this point
@@ -1852,9 +1852,9 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             }
         }
 
-        Preferences.debug("checkVolumePadding\n");
-        Preferences.debug("minX = " + minX + " minY = " + minY + " minZ = " + minZ + "\n");
-        Preferences.debug("maxX = " + maxX + " maxY = " + maxY + " maxZ = " + maxZ + "\n");
+        Preferences.debug("checkVolumePadding\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("minX = " + minX + " minY = " + minY + " minZ = " + minZ + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("maxX = " + maxX + " maxY = " + maxY + " maxZ = " + maxZ + "\n", Preferences.DEBUG_ALGORITHM);
 
         if (((minX - distCharges) <= 0) || ((minY - distCharges) <= 0) || ((minZ - distCharges) <= 0) ||
                 ((maxX + distCharges) >= (xDim - 1)) || ((maxY + distCharges) >= (yDim - 1)) ||
@@ -3048,7 +3048,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         numCritPoints = 0;
 
         for (z = 1; z < (zDim - 1); z++) {
-            Preferences.debug("Processing plane " + z + " out of " + (zDim - 1) + "\n");
+            Preferences.debug("Processing plane " + z + " out of " + (zDim - 1) + "\n", Preferences.DEBUG_ALGORITHM);
 
             for (y = 1; y < (yDim - 1); y++) {
 
@@ -3120,7 +3120,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             } // for (y = 1; y < yDim-1; y++)
         } // for (z = 1; z < zDim-1; z++)
 
-        Preferences.debug("Number of critical points is: " + numCritPoints + "\n");
+        Preferences.debug("Number of critical points is: " + numCritPoints + "\n", Preferences.DEBUG_ALGORITHM);
 
         // Classify the critical points as: attracting nodes, repelling nodes, or
         // saddles.
@@ -3283,7 +3283,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         double minVal, tmp;
         int minPos;
 
-        Preferences.debug("Finding high divergence points 1\n");
+        Preferences.debug("Finding high divergence points 1\n", Preferences.DEBUG_ALGORITHM);
 
         for (k = 1; k < (zDim - 1); k++) {
 
@@ -3342,7 +3342,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         threshold = perHDPoints * threshold;
         threshold = minDiv + threshold;
 
-        Preferences.debug("Finding high divergence points 2\n");
+        Preferences.debug("Finding high divergence points 2\n", Preferences.DEBUG_ALGORITHM);
 
         for (k = 1; k < (zDim - 1); k++) {
 
@@ -3747,21 +3747,21 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         }
 
         volFloat = null;
-        Preferences.debug("Floodfill z planes\n");
+        Preferences.debug("Floodfill z planes\n", Preferences.DEBUG_ALGORITHM);
 
         // Floodfill the outside of the object with OUTSIDE_1 in the z direction
         for (i = 0; i < zDim; i++) {
             floodFillZPlane(i);
         }
 
-        Preferences.debug("Floodfill y planes\n");
+        Preferences.debug("Floodfill y planes\n", Preferences.DEBUG_ALGORITHM);
 
         // Floodfill the outside of the object with OUTSIDE_2 in the y direction
         for (i = 0; i < yDim; i++) {
             floodFillYPlane(i);
         }
 
-        Preferences.debug("floodfill x planes\n");
+        Preferences.debug("floodfill x planes\n", Preferences.DEBUG_ALGORITHM);
 
         // Floodfill the outside of the object with OUTSIDE_3 in the x direction
         for (i = 0; i < xDim; i++) {
