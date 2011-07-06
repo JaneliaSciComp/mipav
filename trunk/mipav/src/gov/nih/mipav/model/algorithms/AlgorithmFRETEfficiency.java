@@ -458,14 +458,16 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
         denom = 1.0 - (AFPintoDFP * DFPintoAFP);
         nf = NumberFormat.getNumberInstance();
         nf.setMaximumFractionDigits(6);
-        Preferences.debug("Image with DFP filter\t" + "Image with FRET filter\t" + "Image with AFP filter\n");
+        Preferences.debug("Image with DFP filter\t" + "Image with FRET filter\t" + "Image with AFP filter\n",
+        		Preferences.DEBUG_ALGORITHM);
         Preferences.debug(srcImage.getImageName() + "\t\t" + FRETImage.getImageName() + "\t\t" +
-                          acceptorImage.getImageName() + "\n\n");
+                          acceptorImage.getImageName() + "\n\n", Preferences.DEBUG_ALGORITHM);
         UI.setDataText("Image with DFP filter\t" + "Image with FRET filter\t" + "Image with AFP filter\n");
         UI.setDataText(srcImage.getImageName() + "\t\t" + FRETImage.getImageName() + "\t\t" +
                        acceptorImage.getImageName() + "\n\n");
 
-        Preferences.debug("VOI \t\t FRET efficiency \tDonor intensity \tAcceptor intensity \tEfficiency * Donor\n");
+        Preferences.debug("VOI \t\t FRET efficiency \tDonor intensity \tAcceptor intensity \tEfficiency * Donor\n", 
+        		Preferences.DEBUG_ALGORITHM);
         UI.setDataText("VOI \t\t FRET efficiency \tDonor intensity \tAcceptor intensity \tEfficiency * Donor\n");
         totalActivePixels = 0;
         averageAdjustedDonor = 0.0;
@@ -490,14 +492,14 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             Preferences.debug(activeNumber[i] + "\t\t" + String.valueOf(nf.format(efficiency)) + "\t\t" +
                               String.valueOf(nf.format(adjustedDonor)) + "\t\t" +
                               String.valueOf(nf.format(adjustedAcceptor)) + "t\t" +
-                              String.valueOf(nf.format(efficiency * adjustedDonor)) + "\n");
+                              String.valueOf(nf.format(efficiency * adjustedDonor)) + "\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText(activeNumber[i] + "\t\t" + String.valueOf(nf.format(efficiency)) + "\t\t" +
                            String.valueOf(nf.format(adjustedDonor)) + "\t\t" +
                            String.valueOf(nf.format(adjustedAcceptor)) + "\t\t" +
                            String.valueOf(nf.format(efficiency * adjustedDonor)) + "\n");
 
             if (nBoundingVOIs <= 2) {
-                Preferences.debug("\n");
+                Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
                 UI.setDataText("\n");
             }
         }
@@ -510,7 +512,8 @@ public class AlgorithmFRETEfficiency extends AlgorithmBase {
             Preferences.debug("WeightedAverage\t" + String.valueOf(nf.format(efficiency)) + "\t\t" +
                               String.valueOf(nf.format(averageAdjustedDonor)) + "\t\t" +
                               String.valueOf(nf.format(averageAdjustedAcceptor)) + "\t\t" +
-                              String.valueOf(nf.format(efficiency * averageAdjustedDonor)) + "\n\n");
+                              String.valueOf(nf.format(efficiency * averageAdjustedDonor)) + "\n\n", 
+                              Preferences.DEBUG_ALGORITHM);
             UI.setDataText("WeightedAverage\t" + String.valueOf(nf.format(efficiency)) + "\t\t" +
                            String.valueOf(nf.format(averageAdjustedDonor)) + "\t\t" +
                            String.valueOf(nf.format(averageAdjustedAcceptor)) + "\t\t" +
