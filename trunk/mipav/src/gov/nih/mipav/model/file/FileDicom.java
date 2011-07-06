@@ -117,9 +117,6 @@ public class FileDicom extends FileDicomBase {
     /** Reference to the image read into the application. */
     private ModelImage image;
 
-    /** True if in a sequence tag. */
-    private boolean inSQ = false;
-
     /** The tag table for the base FileInfoDicom */
     private FileDicomTagTable tagTable;
 
@@ -673,7 +670,7 @@ public class FileDicom extends FileDicomBase {
                 }
             }
             FileDicomKey key = getNextTag(endianess);
-            flag = processNextTag(key, endianess);
+            flag = processNextTag(tagTable, key, endianess);
             
             if (getFilePointer() == fLength) { // for dicom files that contain no image information, the image tag will never be encountered
                 flag = false;
@@ -704,7 +701,15 @@ public class FileDicom extends FileDicomBase {
         return key;
     }
     
-    private boolean processNextTag(FileDicomKey key, boolean endianess) throws IOException {
+    /**
+     * 
+     * @param tagTable The tag table where this key will be stored
+     * @param key The key that is being processed
+     * @param endianess 
+     * @return
+     * @throws IOException
+     */
+    private boolean processNextTag(FileDicomTagTable tagTable, FileDicomKey key, boolean endianess) throws IOException {
         String strValue = null;
         Object data = null;
         VR vr; // value representation of data
@@ -973,33 +978,32 @@ public class FileDicom extends FileDicomBase {
         if (name.equals("5200,9230")) {
             int numSlices = 0;
             sq = getSequence(endianess, len);
-            final Vector<FileDicomItem> v = ((FileDicomSQ) sq).getSequence();
+            final Vector<FileDicomTagTable> v = ((FileDicomSQ) sq).getSequence();
             int elemLength;
             FileDicomKey fdKey;
             for (int i = 0; i < v.size(); i++) {
-                final FileDicomItem item = v.get(i);
-                final TreeMap<String, FileDicomTag> dataSet = item.getDataSet();
-                final Set<String> keySet = dataSet.keySet();
-                final Iterator<String> iter = keySet.iterator();
+                final FileDicomTagTable item = v.get(i);
+                final Hashtable<FileDicomKey, FileDicomTag> dataSet = item.getTagList();
+                final Set<FileDicomKey> keySet = dataSet.keySet();
+                final Iterator<FileDicomKey> iter = keySet.iterator();
                 while (iter.hasNext()) {
-                    final String k = iter.next();
+                    final FileDicomKey k = iter.next();
                     final FileDicomTag entry = dataSet.get(k);
                     final VR entryVr = entry.getValueRepresentation();
                     if (entryVr.equals(VR.SQ)) {
                         elemLength = entry.getLength();
-                        final Vector<FileDicomItem> vSeq = ((FileDicomSQ) entry.getValue(true))
+                        final Vector<FileDicomTagTable> vSeq = ((FileDicomSQ) entry.getValue(true))
                                 .getSequence();
                         for (int m = 0; m < vSeq.size(); m++) {
-                            final FileDicomItem subItem = vSeq.get(m);
-                            final TreeMap<String, FileDicomTag> subDataSet = subItem.getDataSet();
-                            final Set<String> subKeySet = subDataSet.keySet();
-                            final Iterator<String> subIter = subKeySet.iterator();
+                            final FileDicomTagTable subItem = vSeq.get(m);
+                            final Hashtable<FileDicomKey, FileDicomTag> subDataSet = subItem.getTagList();
+                            final Set<FileDicomKey> subKeySet = subDataSet.keySet();
+                            final Iterator<FileDicomKey> subIter = subKeySet.iterator();
                             while (subIter.hasNext()) {
-                                final String kSub = subIter.next();
-                                final FileDicomTag subEntry = subDataSet.get(kSub);
+                                fdKey = subIter.next();
+                                final FileDicomTag subEntry = subDataSet.get(fdKey);
                                 elemLength = subEntry.getLength();
-                                fdKey = new FileDicomKey(kSub);
-                                if (kSub.equals("0020,9057")) {
+                                if (fdKey.toString().equals("0020,9057")) {
                                     // OK...so we should be relying on 0020,9056 (Stack ID)
                                     // to tell us the number of volumes in the dataet
                                     // but we find that it is not being implemented in the dataset we have
@@ -1027,7 +1031,7 @@ public class FileDicom extends FileDicomBase {
                         }
                     } else {
                         elemLength = entry.getLength();
-                        fdKey = new FileDicomKey(k);
+                        fdKey = k;
                         if (i == 0) {
                             tagTable.setValue(fdKey, entry.getValue(false), elemLength);
                         } else {
@@ -2439,8 +2443,6 @@ public class FileDicom extends FileDicomBase {
 
             throw new IOException("Image Data tag not found.  Cannot extract encapsulated image data.");
         }
-
-        inSQ = true;
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
 
@@ -2532,8 +2534,6 @@ public class FileDicom extends FileDicomBase {
 
             throw new IOException("Image Data tag not found.  Cannot extract encapsulated image data.");
         }
-
-        inSQ = true;
         getNextElement(endianess);
         name = convertGroupElement(groupWord, elementWord);
 
@@ -2610,21 +2610,15 @@ public class FileDicom extends FileDicomBase {
                     imageData[count++] = element;
                 }
             }
-
-            inSQ = false;
-
             return imageData;
 
         } else {
 
             if (lossy == true) {
-                inSQ = false;
                 return extractLossyJPEGImage(v.elementAt(0));
             } else {
                 final FileDicomJPEG fileReader = new FileDicomJPEG(v.elementAt(0), fileInfo.getExtents()[0], fileInfo
                         .getExtents()[1]);
-                inSQ = false;
-
                 return fileReader.extractJPEGImage();
             }
         }
@@ -2868,250 +2862,18 @@ public class FileDicom extends FileDicomBase {
      * 
      * @see FileDicomItem
      */
-    private Object getDataSet(int itemLength, final boolean endianess) throws IOException {
-        final FileDicomItem item = new FileDicomItem();
-
-        VR type = VR.UN;
-        int iValue = 0;
-        float fValue = 0;
-        double dValue = 0;
-        boolean nullEntry = false;
-
-        if ( (itemLength == UNDEFINED_LENGTH) || (itemLength == ILLEGAL_LENGTH)) {
-            itemLength = Integer.MAX_VALUE;
-        }
-
-        if (itemLength == 0) {
-            itemLength = elementLength; // use the length of the SQ tag
-        }
+    private FileDicomTagTable getDataSet(int itemLength, final boolean endianess) throws IOException {
+        final FileDicomTagTable table = new FileDicomTagTable(null);
 
         final int startfptr = getFilePointer();
-
-        // preread the next tag, because we do not want to store the
-        if ( (getFilePointer() - startfptr) <= itemLength) {
-
-            // Sequence ITEM delimiter tags
-            final boolean oldSQ = inSQ;
-            inSQ = true;
-            getNextElement(endianess);
-            nameSQ = convertGroupElement(groupWord, elementWord);
-
-            // System.err.println("nameSQ " + nameSQ);
-            inSQ = oldSQ;
+        boolean flag = true; //whether dicom header processing should continue
+        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr <= itemLength)) {
+            FileDicomKey key = getNextTag(endianess);
+            nameSQ = key.toString();
+            flag = processNextTag(table, key, endianess);
         }
-        // Preferences.debug("Item: "+Integer.toString(groupWord, 0x10)+","+
-        // Integer.toString(elementWord, 0x10)+
-        // " for " + Integer.toString(elementLength, 0x10) +
-        // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
-
-        // either there's an "item end" or we've read the entire element length
-        while ( !nameSQ.equals(FileDicom.SEQ_ITEM_END) && ( (getFilePointer() - startfptr) < itemLength)
-                && (getFilePointer() < raFile.length())) {
-            // The following is almost exactly the same as the code in readHeader. The main difference is the
-            // information is stored in a hashtable in DicomItem that is initially empty.
-
-            FileDicomTag entry;
-
-            if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
-                FileDicomTagInfo info;
-
-                if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
-                    FileDicomKey key = null;
-
-                    info = DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord));
-                    // is is required if DicomDictionary contains wild card characters
-                    info.setKey(key);
-                    entry = new FileDicomTag(info);
-                    type = entry.getType();
-                } else {
-
-                    // the tag was not found in the dictionary..
-                    entry = new FileDicomTag(new FileDicomTagInfo(new FileDicomKey(groupWord, elementWord), null, 0,
-                            "PrivateTag", "Private tag"));
-                    type = VR.UN;
-                }
-            } else {
-                FileDicomTagInfo info;
-
-                if (DicomDictionary.containsTag(new FileDicomKey(groupWord, elementWord))) {
-                    FileDicomKey key = null;
-                    info = (FileDicomTagInfo) DicomDictionary.getInfo(key = new FileDicomKey(groupWord, elementWord))
-                            .clone();
-                    // this is required if DicomDictionary contains wild card characters
-                    info.setKey(key);
-                    entry = new FileDicomTag(info);
-                    entry.setValueRepresentation(type);
-                } else {
-                    info = new FileDicomTagInfo(new FileDicomKey(groupWord, elementWord), type, 0,
-                            "PrivateTag", "Private tag");
-                    entry = new FileDicomTag(info);
-                }
-
-                if (fileInfo.isCurrentTagSQ) {
-                    type = VR.SQ;
-                } else {
-                    type = entry.getType();
-                }
-
-                nullEntry = true;
-            }
-
-            try {
-
-                // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
-                if (type.equals(VR.UN) && (elementLength != -1)) {
-                    final FileDicomTagInfo info = entry.getInfo();
-
-                    entry = new FileDicomTag(info, readUnknownData());
-
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                } else if (type.getType().equals(StringType.STRING) || type.equals(VR.OW)) {
-
-                    if (elementLength == UNDEFINED_LENGTH) {
-                        elementLength = 0;
-                    }
-
-                    final String strValue = getString(elementLength);
-                    entry.setValue(strValue, elementLength);
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("aaaaaaString Tag: (" + nameSQ + ");\t" + type + "; value = " + strValue + ";
-                    // element length = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.equals(VR.OB)) {
-
-                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else if (elementLength >= 2) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    }
-
-                    entry.setValueRepresentation(VR.OB);
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
-                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.getType().equals(NumType.SHORT)) {
-
-                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else if (elementLength > 2) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else {
-                        iValue = getUnsignedShort(endianess);
-                        entry.setValue(new Short((short) iValue), elementLength);
-                    }
-
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
-                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.getType().equals(NumType.LONG)) {
-
-                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else if (elementLength > 4) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else {
-                        iValue = getInt(endianess);
-                        entry.setValue(new Integer(iValue), elementLength);
-                    }
-
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + iValue + "; element length
-                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.getType().equals(NumType.FLOAT)) {
-
-                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else if (elementLength > 4) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else {
-                        fValue = getFloat(endianess);
-                        entry.setValue(new Float(fValue), elementLength);
-                    }
-
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + fValue + "; element length
-                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.getType().equals(NumType.DOUBLE)) {
-
-                    if ( !nullEntry && (DicomDictionary.getVM(new FileDicomKey(nameSQ)) > 1)) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else if (elementLength % 8 == 0 && elementLength != 8) {
-                        final Double[] dArr = new Double[elementLength / 8];
-                        for (int i = 0; i < dArr.length; i++) {
-                            dArr[i] = getDouble(endianess);
-                        }
-                        entry.setValue(dArr, elementLength);
-                    } else if (elementLength > 8) {
-                        entry.setValue(readUnknownData(), elementLength);
-                    } else {
-                        dValue = getDouble(endianess);
-                        entry.setValue(new Double(dValue), elementLength);
-                    }
-
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type + "; value = " + dValue + "; element length
-                    // = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                }
-                // (type == "typeUnknown" && elementLength == -1) Implicit sequence tag if not in DICOM dictionary.
-                else if (type.equals(VR.SQ)
-                        || ( (type == VR.UN) && (elementLength == -1))) {
-                    final int len = elementLength;
-                    final String name = nameSQ;
-                    final Object sq2 = getSequence(endianess, len);
-                    entry.setValue(sq2, len);
-                    item.putTag(name, entry);
-                    item.setLength(name, len);
-                    // Preferences.debug("Tag: (" + nameSQ + ");\t" + type +
-                    // "; element length = "+ elementLength + "\n", Preferences.DEBUG_FILEIO);
-                } else if (type.equals(VR.AT)) {
-                    int groupWord = getUnsignedShort(fileInfo.getEndianess());
-                    int elementWord = getUnsignedShort(fileInfo.getEndianess());
-                    String tagName = convertGroupElement(groupWord, elementWord);
-                    entry.setValue(tagName, elementLength);
-                    item.putTag(nameSQ, entry);
-                    item.setLength(nameSQ, elementLength);
-                }
-            } catch (final OutOfMemoryError e) {
-
-                if ( !isQuiet()) {
-
-                    // Must add back Matt/Dave 11/2003
-                    MipavUtil.displayError("Out of memory in FileDicom.getDataSet");
-                    // yup, done.... Dave, 04-2004
-                } else {
-                    Preferences.debug("Out of memory in FileDicom.getDataSet\n", Preferences.DEBUG_FILEIO);
-                    // System.err.println("Out of memory in FileDicom.getDataSet");
-                }
-
-                throw new IOException();
-            }
-
-            if ( ( (getFilePointer() - startfptr) < itemLength) && (getFilePointer() < raFile.length())) {
-                // preread the next tag, because we have yet to see the
-                // end-sequence tag because we don't want to accidently
-                // read the next new-item tag.
-
-                // except that SQ is undef-len, and def-len items get an
-                // extra tag read out. // 30-jun-2004
-                getNextElement(endianess);
-                nameSQ = convertGroupElement(groupWord, elementWord);
-
-                // Preferences.debug("Item: "+Integer.toString(groupWord, 0x10)+","+
-                // Integer.toString(elementWord, 0x10)+
-                // " for " + Integer.toString(elementLength, 0x10) +
-                // " # readfrom: " + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
-
-            }
-        }
-
-        // System.err.println("\t\t\tItem done.");
-        return item;
+        
+        return table;
     }
 
     /**
@@ -3485,103 +3247,26 @@ public class FileDicom extends FileDicomBase {
         // hold on to where the sequence is before items for measuring
         // distance from beginning of sequence
         final int seqStart = getFilePointer();
-        inSQ = true;
 
         getNextElement(endianess); // gets the first ITEM tag
         Preferences.debug("Item: " + Integer.toString(groupWord, 0x10) + "," + Integer.toString(elementWord, 0x10)
                 + " for " + Integer.toString(elementLength, 0x10) + " # readfrom: "
                 + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
 
-        inSQ = false;
         nameSQ = convertGroupElement(groupWord, elementWord);
+        
+        if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) {
 
-        // Preferences.debug("getSquence: nameSQ = " + nameSQ +
-        // " fptr = " + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
-        try {
-
-            if ( (seqLength == UNDEFINED_LENGTH) || (seqLength == ILLEGAL_LENGTH)) {
-
-                while ( !nameSQ.equals(FileDicom.SEQ_ITEM_UNDEF_END)) {
-
-                    if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) {
-
-                        // elementLength here is the length of the
-                        // item as it written into the File
-                        if (elementLength == 0) {
-                            final FileDicomItem item = new FileDicomItem();
-                            sq.addItem(item);
-                        } else {
-                            sq.addItem((FileDicomItem) getDataSet(elementLength, endianess));
-                        }
-                    } else if (nameSQ.equals(FileDicom.SEQ_ITEM_END)) {
-
-                        // possibility of getting here when subsequence tag length == -1
-                        // end of sub-sequence tag
-                        Preferences.debug("End of sub-sequence " + FileDicom.SEQ_ITEM_END + " found; nothing done.\n",
-                        		Preferences.DEBUG_FILEIO);
-                    } else { // should never get here
-                        Preferences.debug("getSequence(): sub-sequence tags not starting with "
-                                + FileDicom.SEQ_ITEM_BEGIN + "\n", Preferences.DEBUG_FILEIO);
-                    }
-
-                    inSQ = true; // don't add the element length to the location
-                    getNextElement(endianess); // skipping the tag-length???
-                    nameSQ = convertGroupElement(groupWord, elementWord);
-                    inSQ = false; // may now add element length to location
-
-                    // Preferences.debug("Next item of seq. "+
-                    // "nameSQ: " + nameSQ +
-                    // " fpr: " + Long.toString(getFilePointer(), 0x10) + " \n", Preferences.DEBUG_FILEIO);
-                }
-            } else { // sequence length is explicitly defined:
-
-                // MUST be "<", rather than "<=" because when
-                // fptr - seqStart == seqLength we want to move along to
-                // other tags; it indicates that we are done with this
-                // sequence.
-
-                //check to make sure that sequence delimination tag has not shown up, although it shouldn't for a defined length sequence
-                while ( (getFilePointer() - seqStart) < seqLength && !nameSQ.equals(FileDicom.SEQ_ITEM_UNDEF_END)) { 
-
-                    // loop is meant to read out each sub-sequence tag from the sequence.
-                    // Must make it able to read out the
-                    Preferences.debug(nameSQ + "; len:" + (getFilePointer() - seqStart) + "\n", Preferences.DEBUG_FILEIO);
-
-                    if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) { // this should always be true
-
-                        // int offset = (int)raFile.getFilePointer(); // where the data set begins for this item
-                        // elementLength here is the length of the
-                        // item as it written into the File
-                        // System.out.println("Special ele length = " + Integer.toString(elementLength, 0x10));
-                        sq.addItem((FileDicomItem) getDataSet(seqLength, endianess));
-                    } else { // should never get here
-                        Preferences.debug("getSequence(): sub-sequence tags not starting with "
-                                + FileDicom.SEQ_ITEM_BEGIN + "\n", Preferences.DEBUG_FILEIO);
-                        // System.err.println("getSequence(): sub-sequence tags not starting with FFFE,E000");
-                    }
-
-                    if ( (getFilePointer() - seqStart) < seqLength) { // '<=' or just '<'??
-                        inSQ = true; // don't add the element length to the location
-                        Preferences.debug("[FileDicom.getSequence():]" + Integer.toString(groupWord, 0x10) + "-"
-                                + Integer.toString(elementWord, 0x10) + " -- ", Preferences.DEBUG_FILEIO);
-                        getNextElement(endianess); // skipping the tag-length???
-                        Preferences.debug("  the length: " + Integer.toString(elementLength, 0x10) + "\n",
-                        		Preferences.DEBUG_FILEIO);
-                        nameSQ = convertGroupElement(groupWord, elementWord);
-                        Preferences.debug("after converting group-element: " + nameSQ + "!!!!\n",
-                        		Preferences.DEBUG_FILEIO);
-                        inSQ = false; // may now add element length to location
-
-                        // System.err.println("pulled out next item of seq. nameSQ: " +nameSQ);
-                    }
-                }
+            // elementLength here is the length of the
+            // item as it written into the File
+            if (elementLength == 0) {
+                final FileDicomTagTable item = new FileDicomTagTable(null);
+                sq.addItem(item);
+            } else {
+                sq.addItem((FileDicomTagTable) getDataSet(elementLength, endianess));
             }
-        } catch (final Exception error) {
-            error.printStackTrace();
-            Preferences.debug("Exception caught; Problem in FileDicom.getSequence\n", Preferences.DEBUG_FILEIO);
-            Preferences.debug(error.toString() + "\n", Preferences.DEBUG_FILEIO);
         }
-
+        
         return sq;
     }
 
@@ -4065,7 +3750,7 @@ public class FileDicom extends FileDicomBase {
      */
     private void writeSequence(final RandomAccessFile outputFile, final boolean vr_type, final FileDicomSQ sq,
             final boolean endianess) throws IOException {
-        FileDicomItem item;
+        FileDicomTagTable item;
 
         if ( (sq == null) || (sq.getSequenceLength() < 1)) {
             return;
@@ -4073,8 +3758,8 @@ public class FileDicom extends FileDicomBase {
 
         for (int i = 0; i < sq.getSequenceLength(); i++) {
             item = sq.getItem(i);
-
-            if (item.getNumberOfElements() > 0) {
+            
+            if (item.getDataLength() > 0) {
 
                 // write item-start tag
                 writeShort((short) 0xFFFE, endianess);
@@ -4082,7 +3767,7 @@ public class FileDicom extends FileDicomBase {
                 writeInt(0xFFFFFFFF, endianess); // data-length (we'll get it to spit out real length later!)
             }
 
-            final Iterator<FileDicomTag> dataSetItr = item.getDataSet().values().iterator();
+            final Iterator<FileDicomTag> dataSetItr = item.getTagList().values().iterator();
 
             while (dataSetItr.hasNext()) {
 
