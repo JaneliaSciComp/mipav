@@ -375,21 +375,23 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
 
         differenceVar = differenceVar / ((double) meanCount - 1.0);
         differenceStdDev = Math.sqrt(differenceVar);
-        Preferences.debug("Image difference standard deviation = " + nf.format(differenceStdDev) + "\n");
+        Preferences.debug("Image difference standard deviation = " + nf.format(differenceStdDev) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         UI.setDataText("Image difference standard deviation = " + nf.format(differenceStdDev) + "\n");
 
         mean = mean / meanCount;
         snr = Math.sqrt(2.0) * mean / differenceStdDev;
-        Preferences.debug("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
+        Preferences.debug("SNR for signal 1 VOI = " + nf.format(snr) + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
         UI.setDataText("SNR for signal 1 VOI = " + nf.format(snr) + "\n");
 
         if (signal2Index >= 0) {
             mean2 = mean2 / mean2Count;
             snr2 = Math.sqrt(2.0) * mean2 / differenceStdDev;
-            Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
+            Preferences.debug("SNR for signal 2 VOI = " + nf.format(snr2) + "\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText("SNR for signal 2 VOI = " + nf.format(snr2) + "\n");
             cnr = snr - snr2;
-            Preferences.debug("Contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
+            Preferences.debug("Contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText("Contrast to noise ratio for 1 - 2 = " + nf.format(cnr) + "\n");
         } // if (signal2Index >= 0)
 
