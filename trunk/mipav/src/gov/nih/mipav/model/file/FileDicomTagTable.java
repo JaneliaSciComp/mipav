@@ -7,8 +7,9 @@ import java.util.*;
 
 
 /**
- * A table containing tags unique to a particular file info in an image. Common tags are not stored here and instead
- * should be stored in the reference tag table (unless this is the reference tag table; then they will be here).
+ * A table containing dicom tags. Common tags are not stored here and instead
+ * should be stored in the reference tag table.  The reference tag table may refer
+ * to another table within a FileInfoDicom or another table within a series of a dicom sequence.
  */
 public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
@@ -392,99 +393,29 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * Sets the value of the DicomTag in the tag table with the same hexadecimal tag name. The tag names are unique and
-     * that's why they are the keys to the Hashtable.
+     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
+     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
+     * file information. Should not be used for the values of private tags, unless they are already in the tag table
+     * (through a call to putPrivateTagValue()).
      *
-     * <p>Uses the FileDicomTag method <code>setValue(obj)</code> to automagically:</p>
-     *
-     * <ul>
-     *   <li>determine the length of the tag's value,</li>
-     *   <li>convert a 'human-readable' string value into a DICOM compliant code,</li>
-     *   <li>and when value is a string, but the key specifies some other type of data element.</li>
-     * </ul>
-     *
-     * <p>Private tags are ignored, as are 'sequence' and 'unknown' tags. Throws an exception when the value is too
-     * large for the given tag type.</p>
-     *
-     * <p>Should not be used for the values of private tags, unless they are already in the tag table (through a call to
-     * putPrivateTagValue()).</p>
-     *
-     * @param  name   the key string for the FileDicomTag in the tag table -- 'group,element'
-     * @param  value  the value to set the DicomTag to
+     * @param  key     the key for the DicomTag in tagsList
+     * @param  value   the value to set the DicomTag to
      */
     public final void setValue(String name, Object value) {
         this.setValue(new FileDicomKey(name), value);
     }
 
     /**
-     * Sets the value of the DicomTag in the tag table with the same hexadecimal tag name. The tag names are unique and
-     * that's why they are the keys to the Hashtable.
+     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
+     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
+     * file information. Should not be used for the values of private tags, unless they are already in the tag table
+     * (through a call to putPrivateTagValue()).
      *
-     * <p>Uses the FileDicomTag method <code>setValue(obj)</code> to automagically:</p>
-     *
-     * <ul>
-     *   <li>determine the length of the tag's value,</li>
-     *   <li>convert a 'human-readable' string value into a DICOM compliant code,</li>
-     *   <li>and when value is a string, but the key specifies some other type of data element.</li>
-     * </ul>
-     *
-     * <p>Private tags are ignored, as are 'sequence' and 'unknown' tags. Throws an exception when the value is too
-     * large for the given tag type.</p>
-     *
-     * <p>Should not be used for the values of private tags, unless they are already in the tag table (through a call to
-     * putPrivateTagValue()).</p>
-     *
-     * @param  key    the key for the FileDicomTag in the tag table
-     * @param  value  the value to set the DicomTag to
+     * @param  key     the key for the DicomTag in tagsList
+     * @param  value   the value to set the DicomTag to
      */
     public void setValue(FileDicomKey key, Object value) {
-
-        // has problems when saving!  Don't use until this line is removed (and prob fixed)
-        // Is the above statement still valid ? 3/3/2003. It is being used by others and appears to work.
-        FileDicomTag tag = (FileDicomTag) tagTable.get(key.getKey());
-
-        // no need to add the value to the tag table if it is the same as the reference table; just set the file info
-        // data
-        if ((tag != null) && isTagSameAsReferenceTag(tag)) {
-            parentFileInfo.setInfoFromTag(tag);
-
-            return;
-        }
-
-        if (tag == null) {
-            FileDicomTagInfo info = DicomDictionary.getInfo(key);
-
-            if (info == null) {
-
-                // TODO: might want to display an error message... the key is not in the dicom dictionary.  how should
-                // private, unknown, and sequence tags be handled?
-                return;
-            } else {
-                //is is required if DicomDictionary contains wild card characters
-                info.setKey(key);
-            }
-
-            tag = new FileDicomTag(info, value);
-
-            put(tag);
-        }
-
-        FileDicomTagInfo info = tag.getInfo();
-
-        if (info.getType().equals("typeSequence") || info.getType().equals("typeUnknown") ||
-                (info.getKeyword() == null) || (tag.getValueRepresentation() == null)) {
-            return;
-        }
-
-        tag.setValue(value);
-
-        parentFileInfo.setInfoFromTag(tag);
-
-        // we may have added the tag as an explicit/private tag before setting the value.  remove unneccessary
-        // duplication..
-        if (isTagSameAsReferenceTag(tag)) {
-            this.tagTable.remove(key);
-        }
+        this.setValue(key, value, -1);
     }
 
     /**
@@ -513,50 +444,31 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      */
     public final void setValue(FileDicomKey key, Object value, int length) {
 
-        // Key is the hash key and can have values 60xx where xx yet undefined.
-        // However the tag defaults to 6000 until change in FileInfoDicom.setvalue()
         FileDicomTag tag = (FileDicomTag) tagTable.get(key.getKey());
 
-        // no need to add the value to the tag table if it is the same as the reference table; just set the file info
-        // data
-        if ((tag != null) && isTagSameAsReferenceTag(tag)) {
-            parentFileInfo.setInfoFromTag(tag);
+        if (tag != null) {
+            Preferences.debug("Tag "+key+": has already been set, overwriting", Preferences.DEBUG_FILEIO);
+        }
 
+        FileDicomTagInfo info = DicomDictionary.getInfo(key);
+        
+        if (info == null) {
+            MipavUtil.displayError("Tag not in dicom dictionary");
             return;
+        } else {
+            info.setKey(key);
         }
 
-        if (tag == null) {
-            FileDicomTagInfo info = DicomDictionary.getInfo(key);
-            
-
-            if (info == null) {
-
-                // TODO: might want to display an error message... the key is not in the dicom dictionary.  how should
-                // private, unknown, and sequence tags be handled?
-                return;
-            } else {
-                //is is required if DicomDictionary contains wild card characters
-                info.setKey(key);
-            }
-
-            tag = new FileDicomTag(info);
-            tag.setValue(value, length);
-
-            put(tag);
+        tag = new FileDicomTag(info, value);
+        if(length != -1) {
+            tag.setLength(length);
         }
 
-        if (!key.getGroup().equals("7FE0")) {
-            String strGroup = key.getGroup();
-
-            // name.substring(0,4);
-            tag.setGroup(Integer.valueOf(strGroup, 16).intValue());
-        }
+        put(tag);
 
         tag.setValue(value, length);
 
-        parentFileInfo.setInfoFromTag(tag);
-
-        // we may have added the tag as an explicit/private tag before setting the value.  remove unneccessary
+        // we may have added the tag as an explicit/private tag before setting the value.  remove unnecessary
         // duplication..
         if (isTagSameAsReferenceTag(tag)) {
             this.tagTable.remove(key);

@@ -120,6 +120,7 @@ public class FileDicom extends FileDicomBase {
     /** True if in a sequence tag. */
     private boolean inSQ = false;
 
+    /** The tag table for the base FileInfoDicom */
     private FileDicomTagTable tagTable;
 
     /** Holds sequence of files described in DICOMDIR * */
@@ -797,12 +798,6 @@ public class FileDicom extends FileDicomBase {
                 if(name.equals("0028,1201") || name.equals("0028,1202") || name.equals("0028,1203")) {
                     getColorPallete(new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
                 } 
-                if(name.equals(FileDicom.IMAGE_TAG)) { //can be either OW or OB
-                    return processImageData(extents); //finished reading image tags and all image data
-                }
-                data = getByte(tagVM, elementLength, endianess);
-                tagTable.setValue(key, data, elementLength);
-                break;
             case OB:
                 if(name.equals(FileDicom.IMAGE_TAG)) { //can be either OW or OB
                     return processImageData(extents); //finished reading image tags and all image data
@@ -814,8 +809,6 @@ public class FileDicom extends FileDicomBase {
                 if(elementLength != -1) {
                     processUnknownVR(strValue, key, tagVM, strValue);
                 } //else is implicit sequence, so continue
-                processSequence(key, strValue, endianess);
-                break;
             case SQ:
                 processSequence(key, strValue, endianess);
                 break;
