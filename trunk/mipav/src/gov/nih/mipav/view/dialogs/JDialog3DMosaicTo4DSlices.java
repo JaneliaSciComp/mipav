@@ -635,8 +635,8 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
             textZDim.selectAll();
 
             return false;
-        } else if (subZDim > image.getExtents()[2]) {
-            MipavUtil.displayError("New ZDIM cannot exceed " + image.getExtents()[2]);
+        } else if (subZDim > subXDim*subYDim) {
+            MipavUtil.displayError("New ZDIM cannot exceed cannot exceed (newXDim) * (newYDim)");
             textZDim.requestFocus();
             textZDim.selectAll();
 
@@ -655,13 +655,13 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
             return false;
         }
         if (subTDim  < 1) {
-            MipavUtil.displayError("New numberOfImagesInMosaic must be at least 1");
+            MipavUtil.displayError("New TDim must be at least 1");
             textTDim.requestFocus();
             textTDim.selectAll();
 
             return false;
-        } else if (subTDim > (subXDim*subYDim*subZDim)) {
-            MipavUtil.displayError("New TDIM cannot exceed (newXDim) * (newYDim) * (newZDim)");
+        } else if (subTDim > (image.getExtents()[2])) {
+            MipavUtil.displayError("New TDIM cannot exceed srcImage ZDim");
             textTDim.requestFocus();
             textTDim.selectAll();
 
