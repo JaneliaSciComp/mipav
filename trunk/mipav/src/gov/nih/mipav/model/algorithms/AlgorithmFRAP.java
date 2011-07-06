@@ -370,10 +370,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // new Bessel(Bessel.AIRY_BI,2.0,0.0,0,Bessel.UNSCALED_FUNCTION,cyr,cyi,nz,errorFlag);
             /*Bessel testBessel =
              * new Bessel(Bessel.BESSEL_I,0.0,1.5,1.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);
-             * testBessel.run(); Preferences.debug("I1(1.5i) = " + cyr[0] + " i*" + cyi[0] + "\n");
+             * testBessel.run(); Preferences.debug("I1(1.5i) = " + cyr[0] + " i*" + cyi[0] + "\n", 
+             * Preferences.DEBUG_ALGORITHM);
              *
              * testBessel = new Bessel(Bessel.BESSEL_J,1.5,0.0,1.0,Bessel.UNSCALED_FUNCTION,1,cyr,cyi,nz,errorFlag);
-             * testBessel.run();Preferences.debug("J1(1.5) = " + cyr[0] + " i*" + cyi[0] + "\n");*/
+             * testBessel.run();Preferences.debug("J1(1.5) = " + cyr[0] + " i*" + cyi[0] + "\n", 
+             * Preferences.DEBUG_ALGORITHM);*/
 
 
             // runLapTest2();*/
@@ -1022,7 +1024,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         photoBleachedWidthX = Math.abs(newResX * (xBounds[1] - xBounds[0]));
         photoBleachedWidthY = Math.abs(newResY * (yBounds[1] - yBounds[0]));
         photoBleachedWidth = Math.min(photoBleachedWidthX, photoBleachedWidthY);
-        Preferences.debug("photobleached region width = " + photoBleachedWidth + " microns\n");
+        Preferences.debug("photobleached region width = " + photoBleachedWidth + " microns\n", Preferences.DEBUG_ALGORITHM);
         ViewUserInterface.getReference().setDataText("photobleached region width = " + nf.format(photoBleachedWidth) +
                                                      " microns\n");
         dataString += "photobleached region width = " + nf.format(photoBleachedWidth) + " microns\n";
@@ -1036,7 +1038,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 wholeOrganLength = Math.abs(newResX * (xBounds[1] - xBounds[0]));
             }
 
-            Preferences.debug("whole organ length = " + wholeOrganLength + " microns\n");
+            Preferences.debug("whole organ length = " + wholeOrganLength + " microns\n", Preferences.DEBUG_ALGORITHM);
             ViewUserInterface.getReference().setDataText("whole organ length = " + nf.format(wholeOrganLength) +
                                                          " microns\n");
             dataString += "whole organ length = " + nf.format(wholeOrganLength) + " microns\n";
@@ -1115,7 +1117,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             backgroundConstant = backgroundIntensity / backgroundCount;
-            Preferences.debug("Background constant = " + backgroundConstant + "\n");
+            Preferences.debug("Background constant = " + backgroundConstant + "\n", Preferences.DEBUG_ALGORITHM);
             ViewUserInterface.getReference().setDataText("background constant = " + nf.format(backgroundConstant) +
                                                          "\n");
             dataString += "background constant = " + nf.format(backgroundConstant) + "\n";
@@ -1218,8 +1220,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             ViewUserInterface.getReference().setDataText("bleaching to before bleaching = " +
                                                          nf.format(afterBeforeRatio) + "\n");
             dataString += "bleaching to before bleaching = " + nf.format(afterBeforeRatio) + "\n";
-            Preferences.debug("The ratio of the whole organ region fluorescence after\n");
-            Preferences.debug("bleaching to before bleaching = " + afterBeforeRatio + "\n");
+            Preferences.debug("The ratio of the whole organ region fluorescence after\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("bleaching to before bleaching = " + afterBeforeRatio + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Correct the photobleached region for the total loss of fluorescence by dividing
             // by the wholeOrganIntensity
@@ -1243,8 +1245,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
          *
          * initial = new double[2]; initial[0] = wholeOrganIntensity[firstSliceNum]; initial[1] =
          * Math.log(wholeOrganIntensity[zDim - 1]/ wholeOrganIntensity[0])/(zDim - firstSliceNum - 1);
-         * Preferences.debug("Whole organ initial[0] = " + initial[0] + "\n"); Preferences.debug("Whole organ initial[1]
-         * = " + initial[1] + "\n");
+         * Preferences.debug("Whole organ initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM); 
+         * Preferences.debug("Whole organ initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
          *
          *
          * // Multiply the photobleached data by exp(-params[1]*t) to compensate for // the photobleaching loss over the
@@ -1255,8 +1257,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
          *
          * } // if (refIntensity[0] > refIntensity[zDim - 1]) else { UI.setDataText("Whole organ VOI exponential
          * correction could not be used\n"); UI.setDataText("Did not find decrease in whole organ region intensity\n");
-         * Preferences.debug("Whole organ VOI exponential correction could not be used\n"); Preferences.debug("Did not
-         * find decrease in whole organ region intensity\n"); }*/
+         * Preferences.debug("Whole organ VOI exponential correction could not be used\n", Preferences.DEBUG_ALGORITHM);
+         *  Preferences.debug("Did not find decrease in whole organ region intensity\n", Preferences.DEBUG_ALGORITHM); }*/
 
         // If whole organ normalization is used, divide photobleached intensity
         // values by the photobleached VOI intensity just before bleaching so
@@ -1358,11 +1360,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 initial[3] = pMin; // bottom guess
                 initial[4] = pMax - pMin; // span guess
-                Preferences.debug("gamma guess initial[0] = " + initial[0] + "\n");
-                Preferences.debug("alpha guess initial[1] = " + initial[1] + "\n");
-                Preferences.debug("beta guess initial[2] = " + initial[2] + "\n");
-                Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n");
-                Preferences.debug("span guess initial[4] = " + initial[4] + "\n");
+                Preferences.debug("gamma guess initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("alpha guess initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("beta guess initial[2] = " + initial[2] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("span guess initial[4] = " + initial[4] + "\n", Preferences.DEBUG_ALGORITHM);
 
                 fdem = new FitDoubleExponentialModel(zDim - firstSliceNum, tValues, pIntensity, initial);
                 fdem.driver();
@@ -1411,10 +1413,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 initial[3] = pMin; // bottom guess
-                Preferences.debug("gamma guess initial[0] = " + initial[0] + "\n");
-                Preferences.debug("alpha guess initial[1] = " + initial[1] + "\n");
-                Preferences.debug("beta guess initial[2] = " + initial[2] + "\n");
-                Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n");
+                Preferences.debug("gamma guess initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("alpha guess initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("beta guess initial[2] = " + initial[2] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n", Preferences.DEBUG_ALGORITHM);
 
                 fdemnw = new FitDoubleExponentialNoWholeModel(zDim - firstSliceNum, tValues, pIntensity, initial);
                 fdemnw.driver();
@@ -1451,9 +1453,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                           nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                           nf.format(params[0]) + "\n";
             Preferences.debug("In the recovery curve\n" +
-                              "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                              "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n",
+                              Preferences.DEBUG_ALGORITHM);
             Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + params[1] + " beta = " +
-                              params[2] + " gamma = " + params[0] + "\n");
+                              params[2] + " gamma = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
 
             mf = (float) (bottom + span);
 
@@ -1465,7 +1468,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             ViewUserInterface.getReference().setDataText("Mobile fraction = " + nf.format(mf) + "\n");
             dataString += "Mobile fraction = " + nf.format(mf) + "\n";
-            Preferences.debug("Mobile fraction = " + mf + "\n");
+            Preferences.debug("Mobile fraction = " + mf + "\n", Preferences.DEBUG_ALGORITHM);
 
             // From equation (20) s1 = -(alpha + beta)/2, s2 = (alpha - beta)/2
             s1 = -(params[1] + params[2]) / 2.0;
@@ -1503,14 +1506,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
             dataString += "Dissociation rate = " + nf.format(kd) + "\n";
             ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) + "\n");
             dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n";
-            Preferences.debug("Association rate = " + ka + "\n");
-            Preferences.debug("Dissociation rate = " + kd + "\n");
-            Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n");
+            Preferences.debug("Association rate = " + ka + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Dissociation rate = " + kd + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n", Preferences.DEBUG_ALGORITHM);
             Deff = Dt * photoBleachedWidth * (wholeOrganLength - photoBleachedWidth) / 4.0;
             ViewUserInterface.getReference().setDataText("Effective diffusion constant = " + nf.format(Deff) +
                                                          " um**2/sec\n\n");
             dataString += "Effective diffusion constant = " + nf.format(Deff) + " um**2/sec\n\n";
-            Preferences.debug("Effective diffusion constant = " + Deff + " um**2/sec\n\n");
+            Preferences.debug("Effective diffusion constant = " + Deff + " um**2/sec\n\n", Preferences.DEBUG_ALGORITHM);
 
             /*s1 = ((ka + kd)*(2 - afterBeforeRatio) + 2*Dt)/(2*(2 - afterBeforeRatio));
              * s2 = Math.sqrt(s1*s1 - 2*kd*Dt/(2 - afterBeforeRatio)); double alpha = -s1 + s2; double beta =  -s1 - s2;
@@ -1710,31 +1713,33 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 } // for (z = 2; z <= 98; z++)
 
                 Preferences.debug("alpha and beta are incremented in multiplicative factors of " +
-                                  Math.pow(400.0, 0.005) + "\n");
-                Preferences.debug("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
+                                  Math.pow(400.0, 0.005) + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("from 1/20 * original alpha and beta to 20 * original alpha and beta\n", 
+                		Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("alpha and beta are incremented in multiplicative factors of " +
                                                              nf.format(Math.pow(400.0, 0.005)) + "\n");
                 dataString += "alpha and beta are incremented in multiplicative factors of " +
                               nf.format(Math.pow(400.0, 0.005)) + "\n";
                 ViewUserInterface.getReference().setDataText("from 1/20 * original alpha and beta to 20 * original alpha and beta\n");
                 dataString += "from 1/20 * original alpha and beta to 20 * original alpha and beta\n";
-                Preferences.debug("gamma is additively incremented by 0.01 from 0 to 1\n");
+                Preferences.debug("gamma is additively incremented by 0.01 from 0 to 1\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("gamma is additively incremented by 0.01 from 0 to 1\n");
                 dataString += "gamma is additively incremented by 0.01 from 0 to 1\n";
 
                 if (indexmin != indexOriginal) {
-                    Preferences.debug("sse original parameters = " + buffer[indexOriginal] + "\n");
+                    Preferences.debug("sse original parameters = " + buffer[indexOriginal] + "\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("sse original parameters = " + buffer[indexOriginal] +
                                                                  "\n");
                     dataString += "sse original parameters = " + buffer[indexOriginal] + "\n";
                 } // if (indexmin != indexOriginal)
 
-                Preferences.debug("sse global min = " + ssemin + "\n");
+                Preferences.debug("sse global min = " + ssemin + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("sse global min = " + ssemin + "\n");
                 dataString += "sse global min = " + ssemin + "\n";
                 alphaScale = 0.05 * Math.pow(400.0, 0.005 * xmin);
                 Preferences.debug("x = " + xmin + " or new alpha = " + alphaScale + " * original alpha = " +
-                                  (alphaScale * params[1]) + "\n");
+                                  (alphaScale * params[1]) + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("x = " + xmin + " or new alpha = " +
                                                              nf.format(alphaScale) + " * original alpha = " +
                                                              nf.format(alphaScale * params[1]) + "\n");
@@ -1742,14 +1747,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
                               nf.format(alphaScale * params[1]) + "\n";
                 betaScale = 0.05 * Math.pow(400.0, 0.005 * ymin);
                 Preferences.debug("y = " + ymin + " or new beta = " + betaScale + " * original beta = " +
-                                  (betaScale * params[2]) + "\n");
+                                  (betaScale * params[2]) + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("y = " + ymin + " or new beta = " + nf.format(betaScale) +
                                                              " * original beta = " + nf.format(betaScale * params[2]) +
                                                              "\n");
                 dataString += "y = " + ymin + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                               nf.format(betaScale * params[2]) + "\n";
                 Preferences.debug("slice = " + (zmin + 1) + " or new gamma = " + nf.format(0.01 * zmin) +
-                                  " while original gamma = " + params[0] + "\n\n");
+                                  " while original gamma = " + params[0] + "\n\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("slice = " + (zmin + 1) + " or new gamma = " +
                                                              nf.format(0.01 * zmin) + " while original gamma = " +
                                                              nf.format(params[0]) + "\n\n");
@@ -1757,16 +1762,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
                               " while original gamma = " + nf.format(params[0]) + "\n\n";
 
                 if (localMinNumber >= 1) {
-                    Preferences.debug("In addition to the global minimum\n");
+                    Preferences.debug("In addition to the global minimum\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("In addition to the global minimum\n");
                     dataString += "In addition to the global minimum\n";
 
                     if (localMinNumber == 1) {
-                        Preferences.debug("1 local minimum was located at:\n");
+                        Preferences.debug("1 local minimum was located at:\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("1 local minimum was located at:\n");
                         dataString += "1 local minimum was located at:\n";
                     } else {
-                        Preferences.debug(localMinNumber + " local minima were located at:\n");
+                        Preferences.debug(localMinNumber + " local minima were located at:\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText(localMinNumber +
                                                                      " local minima were located at:\n");
                         dataString += localMinNumber + " local minima were located at:\n";
@@ -1777,12 +1782,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         z = index / xydim;
                         y = (index % xydim) / 201;
                         x = (index % xydim) % 201;
-                        Preferences.debug("sse local min  = " + buffer[index] + "\n");
+                        Preferences.debug("sse local min  = " + buffer[index] + "\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("sse local min min = " + buffer[index] + "\n");
                         dataString += "sse local min min = " + buffer[index] + "\n";
                         alphaScale = 0.05 * Math.pow(400.0, 0.005 * x);
                         Preferences.debug("x = " + x + " or new alpha = " + alphaScale + " * original alpha = " +
-                                          (alphaScale * params[1]) + "\n");
+                                          (alphaScale * params[1]) + "\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("x = " + x + " or new alpha = " +
                                                                      nf.format(alphaScale) + " * original alpha = " +
                                                                      nf.format(alphaScale * params[1]) + "\n");
@@ -1790,14 +1795,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                       nf.format(alphaScale * params[1]) + "\n";
                         betaScale = 0.05 * Math.pow(400.0, 0.005 * y);
                         Preferences.debug("y = " + y + " or new beta = " + betaScale + " * original beta = " +
-                                          (betaScale * params[2]) + "\n");
+                                          (betaScale * params[2]) + "\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("y = " + y + " or new beta = " +
                                                                      nf.format(betaScale) + " * original beta = " +
                                                                      nf.format(betaScale * params[2]) + "\n");
                         dataString += "y = " + y + " or new beta = " + nf.format(betaScale) + " * original beta = " +
                                       nf.format(betaScale * params[2]) + "\n";
                         Preferences.debug("slice = " + (z + 1) + " or new gamma = " + (0.01 * z) +
-                                          " while original gamma = " + params[0] + "\n\n");
+                                          " while original gamma = " + params[0] + "\n\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("slice = " + (z + 1) + " or new gamma = " +
                                                                      (0.01 * z) + " while original gamma = " +
                                                                      nf.format(params[0]) + "\n\n");
@@ -1949,9 +1954,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             initial[0] = initial_kon[kmin];
             initial[1] = initial_koff[kmin];
-            Preferences.debug("Best of 26 trials yields initial guesses of:\n");
-            Preferences.debug("Best initial kon guess = " + initial[0] + "\n");
-            Preferences.debug("Best initial koff guess = " + initial[1] + "\n");
+            Preferences.debug("Best of 26 trials yields initial guesses of:\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Best initial kon guess = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Best initial koff guess = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
 
             fireProgressStateChanged("Performing NL2sol nonlinear fit");
             double xp[] = new double[3];
@@ -1971,9 +1976,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
             dataString += "NL2sol nonlinear fit\n";
             dataString += "kon = " + xp[1] + "\n";
             dataString += "koff = " + xp[2] + "\n";
-            Preferences.debug("NL2sol nonlinear fit\n");
-            Preferences.debug("kon = " + xp[1] + "\n");
-            Preferences.debug("koff = " + xp[2] + "\n");
+            Preferences.debug("NL2sol nonlinear fit\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("kon = " + xp[1] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("koff = " + xp[2] + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Plot the intensity of the photobleached region with time
             tfValues = new float[2][zDim];
@@ -2020,9 +2025,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
             dataString += "ELSUNC nonlinear fit\n";
             dataString += "kon = " + params[0] + "\n";
             dataString += "koff = " + params[1] + "\n";
-            Preferences.debug("ELSUNC nonlinear fit\n");
-            Preferences.debug("kon = " + params[0] + "\n");
-            Preferences.debug("koff = " + params[1] + "\n");
+            Preferences.debug("ELSUNC nonlinear fit\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("kon = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("koff = " + params[1] + "\n", Preferences.DEBUG_ALGORITHM);
 
             pfValues2 = new float[2][zDim];
 
@@ -2144,18 +2149,18 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 } // for (y = 2; y <= 198; y++)
 
                 if (indexmin != indexOriginal) {
-                    Preferences.debug("sse original parameters = " + sses[indexOriginal] + "\n");
+                    Preferences.debug("sse original parameters = " + sses[indexOriginal] + "\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("sse original parameters = " + sses[indexOriginal] +
                                                                  "\n");
                     dataString += "sse original parameters = " + sses[indexOriginal] + "\n";
                 } // if (indexmin != indexOriginal)
 
-                Preferences.debug("sse global min = " + ssemin + "\n");
+                Preferences.debug("sse global min = " + ssemin + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("sse global min = " + ssemin + "\n");
                 dataString += "sse global min = " + ssemin + "\n";
                 konScale = 0.02 * Math.pow(2500.0, 0.005 * xmin);
                 Preferences.debug("x = " + xmin + " or new kon = " + konScale + " * original kon = " +
-                                  (konScale * params[0]) + "\n");
+                                  (konScale * params[0]) + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("x = " + xmin + " or new kon = " + nf.format(konScale) +
                                                              " * original kon = " + nf.format(konScale * params[0]) +
                                                              "\n");
@@ -2163,7 +2168,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                               nf.format(konScale * params[0]) + "\n";
                 koffScale = 0.02 * Math.pow(2500.0, 0.005 * ymin);
                 Preferences.debug("y = " + ymin + " or new koff = " + koffScale + " * original koff = " +
-                                  (koffScale * params[1]) + "\n");
+                                  (koffScale * params[1]) + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("y = " + ymin + " or new koff = " + nf.format(koffScale) +
                                                              " * original koff = " + nf.format(koffScale * params[1]) +
                                                              "\n");
@@ -2171,16 +2176,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
                               nf.format(koffScale * params[1]) + "\n";
 
                 if (localMinNumber >= 1) {
-                    Preferences.debug("In addition to the global minimum\n");
+                    Preferences.debug("In addition to the global minimum\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("In addition to the global minimum\n");
                     dataString += "In addition to the global minimum\n";
 
                     if (localMinNumber == 1) {
-                        Preferences.debug("1 local minimum was located at:\n");
+                        Preferences.debug("1 local minimum was located at:\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("1 local minimum was located at:\n");
                         dataString += "1 local minimum was located at:\n";
                     } else {
-                        Preferences.debug(localMinNumber + " local minima were located at:\n");
+                        Preferences.debug(localMinNumber + " local minima were located at:\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText(localMinNumber +
                                                                      " local minima were located at:\n");
                         dataString += localMinNumber + " local minima were located at:\n";
@@ -2190,12 +2195,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         index = localMinIndex[i];
                         y = index / 201;
                         x = index % 201;
-                        Preferences.debug("sse local min  = " + sses[index] + "\n");
+                        Preferences.debug("sse local min  = " + sses[index] + "\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("sse local min min = " + sses[index] + "\n");
                         dataString += "sse local min min = " + sses[index] + "\n";
                         konScale = 0.02 * Math.pow(2500.0, 0.005 * x);
                         Preferences.debug("x = " + x + " or new kon = " + konScale + " * original kon = " +
-                                          (konScale * params[0]) + "\n");
+                                          (konScale * params[0]) + "\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("x = " + x + " or new kon = " +
                                                                      nf.format(konScale) + " * original kon = " +
                                                                      nf.format(konScale * params[0]) + "\n");
@@ -2203,7 +2208,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                       nf.format(konScale * params[0]) + "\n";
                         koffScale = 0.02 * Math.pow(2500.0, 0.005 * y);
                         Preferences.debug("y = " + y + " or new koff = " + koffScale + " * original koff = " +
-                                          (koffScale * params[1]) + "\n");
+                                          (koffScale * params[1]) + "\n", Preferences.DEBUG_ALGORITHM);
                         ViewUserInterface.getReference().setDataText("y = " + y + " or new koff = " +
                                                                      nf.format(koffScale) + " * original koff = " +
                                                                      nf.format(koffScale * params[1]) + "\n");
@@ -2336,9 +2341,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
                 }
 
-                Preferences.debug("D/w**2 guess initial[0] = " + initial[0] + "\n");
-                Preferences.debug("bottom guess initial[1] = " + initial[1] + "\n");
-                Preferences.debug("span guess initial[2] = " + initial[2] + "\n");
+                Preferences.debug("D/w**2 guess initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom guess initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("span guess initial[2] = " + initial[2] + "\n", Preferences.DEBUG_ALGORITHM);
                 fp1D = new FitPure1DModel(zDim - firstSliceNum, tValues, pIntensity, initial);
                 fp1D.driver();
                 fp1D.dumpResults();
@@ -2381,8 +2386,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
                 }
 
-                Preferences.debug("D/w**2 guess initial[0] = " + initial[0] + "\n");
-                Preferences.debug("bottom guess initial[1] = " + initial[1] + "\n");
+                Preferences.debug("D/w**2 guess initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom guess initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
                 double x[] = new double[3];
                 x[1] = initial[0];
                 x[2] = initial[1];
@@ -2413,11 +2418,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
             ViewUserInterface.getReference().setDataText("D/w**2 = " + nf.format(params[0]) + "\n");
             Deff = params[0] * photoBleachedWidth * photoBleachedWidth;
             ViewUserInterface.getReference().setDataText("Deff = " + nf.format(Deff) + " um**2/sec\n");
-            Preferences.debug("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
-            Preferences.debug("bottom = " + bottom + "\n");
-            Preferences.debug("span = " + span + "\n");
-            Preferences.debug("D/w**2 = " + params[0] + "\n");
-            Preferences.debug("Deff = " + Deff + " um**2/sec\n");
+            Preferences.debug("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n",
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("span = " + span + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("D/w**2 = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Deff = " + Deff + " um**2/sec\n", Preferences.DEBUG_ALGORITHM);
             mf = (float) (bottom + span);
 
             if (mf > 1.0f) {
@@ -2427,7 +2433,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             ViewUserInterface.getReference().setDataText("Mobile fraction = " + nf.format(mf) + "\n");
-            Preferences.debug("Mobile fraction = " + mf + "\n");
+            Preferences.debug("Mobile fraction = " + mf + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Plot the intensity of the photobleached region with time
             tfValues = new float[2][zDim];
@@ -2491,19 +2497,19 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         xmin = x;
                     }
 
-                    Preferences.debug("D/w**2 = " + dw2 + " sse = " + sse + "\n");
+                    Preferences.debug("D/w**2 = " + dw2 + " sse = " + sse + "\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("D/w**2 = " + nf.format(dw2) + " sse = " + sse + "\n");
                 } // for (x = 0; x <= 200; x++)
 
                 Preferences.debug("D/w**2 is incremented in multiplicative factors of " + Math.pow(400.0, 0.005) +
-                                  "\n");
-                Preferences.debug("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("from 1/20 * original D/w**2 to 20 * original D/w**2\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("D/w**2 is incremented in multiplicative factors of " +
                                                              nf.format(Math.pow(400.0, 0.005)) + "\n");
                 ViewUserInterface.getReference().setDataText("from 1/20 * original D/w**2 to 20 * original D/w**2\n");
                 Preferences.debug("ssemin = " + ssemin + " found at new D/w**2 = " +
                                   (0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original D/w**2 = " +
-                                  (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
+                                  (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("ssemin = " + ssemin + " found at new D/w**2 = " +
                                                              nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) +
                                                              " * original D/w**2 = " +
@@ -2547,9 +2553,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 initial[1] = pMin;
                 initial[2] = pMax - pMin;
-                Preferences.debug("thalf = initial[0] = " + initial[0] + "\n");
-                Preferences.debug("bottom = initial[1] = " + initial[1] + "\n");
-                Preferences.debug("span = initial[2] = " + initial[2] + "\n");
+                Preferences.debug("thalf = initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom = initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("span = initial[2] = " + initial[2] + "\n", Preferences.DEBUG_ALGORITHM);
                 fsem = new FitSingleExponentialModel(zDim - firstSliceNum, tValues, pIntensity, initial);
                 fsem.driver();
                 fsem.dumpResults();
@@ -2585,8 +2591,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 initial[1] = pMin;
-                Preferences.debug("thalf = initial[0] = " + initial[0] + "\n");
-                Preferences.debug("bottom = initial[1] = " + initial[1] + "\n");
+                Preferences.debug("thalf = initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom = initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
                 double x[] = new double[3];
                 x[1] = initial[0];
                 x[2] = initial[1];
@@ -2608,10 +2614,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
             ViewUserInterface.getReference().setDataText("bottom  = " + nf.format(bottom) + "\n");
             ViewUserInterface.getReference().setDataText("span = " + nf.format(span) + "\n");
             ViewUserInterface.getReference().setDataText("thalf = " + nf.format(params[0]) + "\n");
-            Preferences.debug("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
-            Preferences.debug("bottom = " + bottom + "\n");
-            Preferences.debug("span = " + span + "\n");
-            Preferences.debug("thalf = " + params[0] + "\n");
+            Preferences.debug("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("span = " + span + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("thalf = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
             mf = (float) (bottom + span);
 
             if (mf > 1.0f) {
@@ -2621,7 +2627,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             ViewUserInterface.getReference().setDataText("Mobile fraction = " + nf.format(mf) + "\n");
-            Preferences.debug("Mobile fraction = " + mf + "\n");
+            Preferences.debug("Mobile fraction = " + mf + "\n", Preferences.DEBUG_ALGORITHM);
 
             // Plot the intensity of the photobleached region with time
             tfValues = new float[2][zDim];
@@ -2681,19 +2687,20 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         xmin = x;
                     }
 
-                    Preferences.debug("thalf = " + thalf + " sse = " + sse + "\n");
+                    Preferences.debug("thalf = " + thalf + " sse = " + sse + "\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("thalf = " + nf.format(thalf) + " sse = " + sse +
                                                                  "\n");
                 } // for (x = 0; x <= 200; x++)
 
-                Preferences.debug("thalf is incremented in multiplicative factors of " + Math.pow(400.0, 0.005) + "\n");
-                Preferences.debug("from 1/20 * original thalf to 20 * original thalf\n");
+                Preferences.debug("thalf is incremented in multiplicative factors of " + Math.pow(400.0, 0.005) + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("from 1/20 * original thalf to 20 * original thalf\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("thalf is incremented in multiplicative factors of " +
                                                              nf.format(Math.pow(400.0, 0.005)) + "\n");
                 ViewUserInterface.getReference().setDataText("from 1/20 * original thalf to 20 * original thalf\n");
                 Preferences.debug("ssemin = " + ssemin + " found at new thalf = " +
                                   (0.05 * Math.pow(400.0, 0.005 * xmin)) + " * original thalf = " +
-                                  (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n");
+                                  (0.05 * params[0] * Math.pow(400.0, 0.005 * xmin)) + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("ssemin = " + ssemin + " found at new thalf = " +
                                                              nf.format(0.05 * Math.pow(400.0, 0.005 * xmin)) +
                                                              " * original thalf = " +
@@ -2982,35 +2989,35 @@ public class AlgorithmFRAP extends AlgorithmBase {
             i = 0;
 
             if (i == 0) {
-                Preferences.debug("Data Set A\n");
+                Preferences.debug("Data Set A\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set A\n");
                 dataString += "Data Set A\n";
             } else if (i == 1) {
-                Preferences.debug("Data Set B\n");
+                Preferences.debug("Data Set B\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set B\n");
                 dataString += "Data Set B\n";
             } else if (i == 2) {
-                Preferences.debug("Data Set C\n");
+                Preferences.debug("Data Set C\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set C\n");
                 dataString += "Data Set C\n";
             } else if (i == 3) {
-                Preferences.debug("Data Set D\n");
+                Preferences.debug("Data Set D\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set D\n");
                 dataString += "Data Set D\n";
             } else if (i == 4) {
-                Preferences.debug("Data Set E\n");
+                Preferences.debug("Data Set E\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set E\n");
                 dataString += "Data Set E\n";
             } else if (i == 5) {
-                Preferences.debug("Data Set F\n");
+                Preferences.debug("Data Set F\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set F\n");
                 dataString += "Data Set F\n";
             } else if (i == 6) {
-                Preferences.debug("Data Set G\n");
+                Preferences.debug("Data Set G\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set G\n");
                 dataString += "Data Set G\n";
             } else {
-                Preferences.debug("Data Set H\n");
+                Preferences.debug("Data Set H\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Data Set H\n");
                 dataString += "Data Set H\n";
             }
@@ -3032,7 +3039,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // timeFunction = new double[tValuesWithZero.length];
             // time = System.currentTimeMillis();
             // for (k = 0; k < 401*401; k++) {
-            // Preferences.debug("k = " + k + "\n");
+            // Preferences.debug("k = " + k + "\n", Preferences.DEBUG_ALGORITHM);
             // sses[k] = 0.0;
             // lmodWeeks = new FitFullModelWeeks(tOne, nLaguerre, sig0, sigmax,
             // bmax, tols, tolb,
@@ -3072,8 +3079,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // timeFunction[j] = 1 - part1 - part2;
 
             // Preferences.debug("j = " + j + " pIntensity = " + pIntensity[j] +
-            // " timeFunction = " + timeFunction[j] + "\n");
-            // Preferences.debug("part1 = " + part1 + " part2 = " + part2 + "\n");
+            // " timeFunction = " + timeFunction[j] + "\n", Preferences.DEBUG_ALGORITHM);
+            // Preferences.debug("part1 = " + part1 + " part2 = " + part2 + "\n", Preferences.DEBUG_ALGORITHM);
             // fitR[j] = timeFunction[j+1] - pIntensity[j];
             // fitR[j] = timeFunction[j] - pIntensity[j];
             // sses[k] = sses[k] + fitR[j] * fitR[j];
@@ -3087,14 +3094,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             /*initial[0] = initial_kon[kmin];
              * initial[1] = initial_koff[kmin]; Preferences.debug("Best of 401*401 trials yields initial guesses
-             * of:\n"); Preferences.debug("Best initial kon guess = " + initial[0] + "\n"); Preferences.debug("Best
-             * initial koff guess = " + initial[1] + "\n"); UI.setDataText("Best of 401*401 trials yields initial
+             * of:\n", Preferences.DEBUG_ALGORITHM); 
+             * Preferences.debug("Best initial kon guess = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM); 
+             * Preferences.debug("Best initial koff guess = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM); 
+             * UI.setDataText("Best of 401*401 trials yields initial
              * guesses of:\n"); UI.setDataText("Best initial kon guess = " + initial[0] + "\n"); UI.setDataText("Best
              * initial koff guess = " + initial[1] + "\n"); dataString += "Best of 401*401 trials yields initial guesses
              * of:\n"; dataString += "Best initial kon guess = " + initial[0] + "\n"; dataString += "Best initial koff
              * guess = " + initial[1] + "\n"; time = System.currentTimeMillis() - time; UI.setDataText("Time in minutes
              * = " + time/(1000.0 * 60.0) + "\n"); dataString += "Time in minutes = " + time/(1000.0 * 60.0) +
-             * "\n";Preferences.debug("Time in minutes = " + time/(1000.0 * 60.0) + "\n");*/
+             * "\n";Preferences.debug("Time in minutes = " + time/(1000.0 * 60.0) + "\n", Preferences.DEBUG_ALGORITHM);*/
 
             initial[0] = 2.0 * 0.01;
             initial[1] = 0.5 * 0.01;
@@ -3102,12 +3111,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                                                          " is twice the actual value\n");
             ViewUserInterface.getReference().setDataText("initial koff = " + initial[1] +
                                                          " is half the actual value\n");
-            Preferences.debug("initial kon = " + initial[0] + " is twice the actual value\n");
-            Preferences.debug("initial koff = " + initial[1] + " is half the actual value\n");
+            Preferences.debug("initial kon = " + initial[0] + " is twice the actual value\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("initial koff = " + initial[1] + " is half the actual value\n", Preferences.DEBUG_ALGORITHM);
             // lmod2 = new FitFullModel2(tValues, abscissa, relEps, absEps, result, estErr, evaluations, errStatus,
             // initial_kon[kmin], initial_koff[kmin]); lmod2.driver(); for (j = 0; j < result.length; j++) { if
             // (errStatus[j] == 1) { Preferences.debug("time[" + j + "] did not converge after maximum  allowed
-            // iterations\n"); } } // for (j = 0; j < result.length; j++)
+            // iterations\n", Preferences.DEBUG_ALGORITHM); } } // for (j = 0; j < result.length; j++)
 
             
             time = System.currentTimeMillis();
@@ -3128,13 +3137,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
             dataString += "NL2sol nonlinear fit\n";
             dataString += "kon = " + x[1] + "\n";
             dataString += "koff = " + x[2] + "\n";
-            Preferences.debug("NL2sol nonlinear fit\n");
-            Preferences.debug("kon = " + x[1] + "\n");
-            Preferences.debug("koff = " + x[2] + "\n");
+            Preferences.debug("NL2sol nonlinear fit\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("kon = " + x[1] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("koff = " + x[2] + "\n", Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis() - time;
             ViewUserInterface.getReference().setDataText("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
             dataString += "Time in minutes = " + (time / (1000.0 * 60.0)) + "\n";
-            Preferences.debug("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
+            Preferences.debug("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n", Preferences.DEBUG_ALGORITHM);
 
             // nlinmod2 = new FitWholeNLConModel(tValues.length, tValues, pIntensity,
             // initial, largestPole, tol);
@@ -3172,13 +3181,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
             dataString += "ELSUNC nonlinear fit\n";
             dataString += "kon = " + params[0] + "\n";
             dataString += "koff = " + params[1] + "\n";
-            Preferences.debug("ELSUNC nonlinear fit\n");
-            Preferences.debug("kon = " + params[0] + "\n");
-            Preferences.debug("koff = " + params[1] + "\n");
+            Preferences.debug("ELSUNC nonlinear fit\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("kon = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("koff = " + params[1] + "\n", Preferences.DEBUG_ALGORITHM);
             time = System.currentTimeMillis() - time;
             ViewUserInterface.getReference().setDataText("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
             dataString += "Time in minutes = " + (time / (1000.0 * 60.0)) + "\n";
-            Preferences.debug("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n");
+            Preferences.debug("Time in minutes = " + (time / (1000.0 * 60.0)) + "\n", Preferences.DEBUG_ALGORITHM);
 
 
             /*paramVary = false;
@@ -3211,26 +3220,36 @@ public class AlgorithmFRAP extends AlgorithmBase {
              *  } // if (index != indexmin)   } // for (x = 2; x <= 198; x++) } // for (y = 2; y <= 198; y++)
              *
              *
-             * Preferences.debug( "sse global min = " + ssemin + "\n" ); UI.setDataText( "sse global min = " + ssemin +
+             * Preferences.debug( "sse global min = " + ssemin + "\n", Preferences.DEBUG_ALGORITHM ); 
+             * UI.setDataText( "sse global min = " + ssemin +
              * "\n" ); dataString += "sse global min = " + ssemin + "\n"; kon = 1.0E-5 * Math.pow( 1.0E10, 0.0025 * xmin
-             * ); Preferences.debug("kon = " + kon + "\n" ); UI.setDataText(         "kon = " + nf.format( kon )  + "\n"
+             * ); Preferences.debug("kon = " + kon + "\n", Preferences.DEBUG_ALGORITHM );
+             *  UI.setDataText(         "kon = " + nf.format( kon )  + "\n"
              * ); dataString += "kon = " + nf.format( kon ) + "\n"; koff = 1.0E-5 * Math.pow( 1.0E10, 0.0025 * ymin );
-             * Preferences.debug(         "koff = " + koff + "\n" ); UI.setDataText(         "koff = " + nf.format( koff
+             * Preferences.debug(         "koff = " + koff + "\n", Preferences.DEBUG_ALGORITHM );
+             *  UI.setDataText(         "koff = " + nf.format( koff
              * ) + "\n" ); dataString += "koff = " + nf.format( koff ) + "\n";
              *
-             * if (localMinNumber >= 1) {   Preferences.debug("In addition to the global minimum\n");   UI.setDataText("In
+             * if (localMinNumber >= 1) {   
+             * Preferences.debug("In addition to the global minimum\n", Preferences.DEBUG_ALGORITHM);   
+             * UI.setDataText("In
              * addition to the global minimum\n");   dataString += "In addition to the global minimum\n";   if
-             * (localMinNumber == 1) {     Preferences.debug("1 local minimum was located at:\n");     UI.setDataText("1
+             * (localMinNumber == 1) {     Preferences.debug("1 local minimum was located at:\n", Preferences.DEBUG_ALGORITHM);    
+             *  UI.setDataText("1
              * local minimum was located at:\n");     dataString += "1 local minimum was located at:\n";   }   else {
-             * Preferences.debug(localMinNumber +                       " local minima were located at:\n");
+             * Preferences.debug(localMinNumber +                       " local minima were located at:\n", 
+             * Preferences.DEBUG_ALGORITHM);
              * UI.setDataText(localMinNumber + " local minima were located at:\n");     dataString += localMinNumber + "
              * local minima were located at:\n";   }   for (j = 0; j < localMinNumber; j++) {     index =
              * localMinIndex[j];     y = index / 401;     x = index % 401;     Preferences.debug("sse local min  = " +
-             * sses[index] + "\n");     UI.setDataText("sse local min min = " + sses[index] + "\n");     dataString +=
+             * sses[index] + "\n", Preferences.DEBUG_ALGORITHM);     UI.setDataText("sse local min min = " + sses[index] +
+             *  "\n");     dataString +=
              * "sse local min min = " + sses[index] + "\n";     kon = 1.0E-5 * Math.pow(1.0E10, 0.0025 * x);
-             * Preferences.debug(         "kon = " + kon + "\n");     UI.setDataText(         "kon = " + nf.format(kon)
+             * Preferences.debug(         "kon = " + kon + "\n", Preferences.DEBUG_ALGORITHM);     
+             * UI.setDataText(         "kon = " + nf.format(kon)
              * + "\n");     dataString += "kon = " +         nf.format(kon) + "\n";     koff = 1.0E-5 * Math.pow(1.0E10,
-             * 0.0025 * y);     Preferences.debug(         "koff = " + koff + "\n");     UI.setDataText(         "koff =
+             * 0.0025 * y);     Preferences.debug(         "koff = " + koff + "\n", Preferences.DEBUG_ALGORITHM);    
+             *  UI.setDataText(         "koff =
              * " + nf.format(koff) + "\n");     dataString += "koff = " + nf.format(koff) + "\n";   } // for (i = 0; i <
              * localMinNumber; i++) } // if (localMinNumber >= 1) errorImage = new ModelImage(ModelStorageBase.FLOAT,
              * errExtents,                             srcImage.getImageName() + "_err", UI); try {
@@ -3289,8 +3308,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
      * absError; int neval; double eps = 5.0e-7; int steps; imod = new
      * IntModel2(lower, upper, routine, breakPoints, epsabs, epsrel, limit); imod.driver(); numInt = imod.getIntegral();
      * errorStatus = imod.getErrorStatus(); absError = imod.getAbserr(); neval = imod.getNeval();
-     * Preferences.debug("Numerical Integral = " + numInt + " after " + neval +" integrand evaluations used\n");
-     * Preferences.debug("Error status = " + errorStatus +" with absolute error = " + absError + "\n"); 
+     * Preferences.debug("Numerical Integral = " + numInt + " after " + neval +" integrand evaluations used\n", 
+     * Preferences.DEBUG_ALGORITHM);
+     * Preferences.debug("Error status = " + errorStatus +" with absolute error = " + absError + "\n", 
+     * Preferences.DEBUG_ALGORITHM); 
      */
     @SuppressWarnings("unused")
     private void runIntegrationTest2() {
@@ -3312,8 +3333,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
         errorStatus = imod.getErrorStatus();
         absError = imod.getAbserr();
         neval = imod.getNeval();
-        Preferences.debug("Numerical Integral = " + numInt + " after " + neval + " integrand evaluations used\n");
-        Preferences.debug("Error status = " + errorStatus + " with absolute error = " + absError + "\n");
+        Preferences.debug("Numerical Integral = " + numInt + " after " + neval + " integrand evaluations used\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Error status = " + errorStatus + " with absolute error = " + absError + "\n", 
+        		Preferences.DEBUG_ALGORITHM);
     }
 
     /**
@@ -3359,7 +3382,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
         for (i = 0; i < n; i++) {
             Preferences.debug("time = " + t[i] + " routineFunction = " + timeFunction[i] + " trueFunction = " +
-                              ftrue[i] + "\n");
+                              ftrue[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
     }
@@ -3393,13 +3416,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
         for (i = 0; i < time.length; i++) {
 
             if (errStatus[i] == 2) {
-                Preferences.debug("time[" + i + "] is illegally <= 0\n");
+                Preferences.debug("time[" + i + "] is illegally <= 0\n", Preferences.DEBUG_ALGORITHM);
             } else if (errStatus[i] == 1) {
-                Preferences.debug("time[" + i + "] had computations terminated\n");
-                Preferences.debug("The maximum bound on Laplace evaluations was reached\n");
+                Preferences.debug("time[" + i + "] had computations terminated\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The maximum bound on Laplace evaluations was reached\n", Preferences.DEBUG_ALGORITHM);
             } else {
                 Preferences.debug("time = " + time[i] + " routineFunction = " + result[i] + " trueFunction = " +
-                                  Math.sin(time[i]) + "\n");
+                                  Math.sin(time[i]) + "\n", Preferences.DEBUG_ALGORITHM);
 
             }
         }
@@ -3447,15 +3470,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
             ftrue[i] = Math.exp(a * t[i]);
         }
 
-        Preferences.debug("matrixSizeParameter = " + matrixSizeParameter + "\n");
-        Preferences.debug("tol = " + tol + "\n");
+        Preferences.debug("matrixSizeParameter = " + matrixSizeParameter + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
         lmod = new FitExpModelqd(n, t[n - 1], largestPole, tol, matrixSizeParameter);
         lmod.driver();
         timeFunction = lmod.getTimeFunction();
 
         for (i = 0; i < n; i++) {
             Preferences.debug("time = " + t[i] + " routineFunction = " + timeFunction[i] + " trueFunction = " +
-                              ftrue[i] + "\n");
+                              ftrue[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         sse = 0.0;
@@ -3466,7 +3489,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         }
 
         rms = Math.sqrt(sse / (n - 1));
-        Preferences.debug("rms error = " + rms + "\n");
+        Preferences.debug("rms error = " + rms + "\n", Preferences.DEBUG_ALGORITHM);
 
     }
 
@@ -3550,35 +3573,35 @@ public class AlgorithmFRAP extends AlgorithmBase {
             for (i = 0; i < 8; i++) {
 
                 if (i == 0) {
-                    Preferences.debug("Data Set A\n");
+                    Preferences.debug("Data Set A\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set A\n");
                     dataString += "Data Set A\n";
                 } else if (i == 1) {
-                    Preferences.debug("Data Set B\n");
+                    Preferences.debug("Data Set B\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set B\n");
                     dataString += "Data Set B\n";
                 } else if (i == 2) {
-                    Preferences.debug("Data Set C\n");
+                    Preferences.debug("Data Set C\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set C\n");
                     dataString += "Data Set C\n";
                 } else if (i == 3) {
-                    Preferences.debug("Data Set D\n");
+                    Preferences.debug("Data Set D\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set D\n");
                     dataString += "Data Set D\n";
                 } else if (i == 4) {
-                    Preferences.debug("Data Set E\n");
+                    Preferences.debug("Data Set E\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set E\n");
                     dataString += "Data Set E\n";
                 } else if (i == 5) {
-                    Preferences.debug("Data Set F\n");
+                    Preferences.debug("Data Set F\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set F\n");
                     dataString += "Data Set F\n";
                 } else if (i == 6) {
-                    Preferences.debug("Data Set G\n");
+                    Preferences.debug("Data Set G\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set G\n");
                     dataString += "Data Set G\n";
                 } else {
-                    Preferences.debug("Data Set H\n");
+                    Preferences.debug("Data Set H\n", Preferences.DEBUG_ALGORITHM);
                     ViewUserInterface.getReference().setDataText("Data Set H\n");
                     dataString += "Data Set H\n";
                 }
@@ -3599,7 +3622,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 ViewUserInterface.getReference().setDataText("NL2sol fitting engine pure 1D diffusion\n");
-                Preferences.debug("NL2sol fitting engine pure 1D diffusion\n");
+                Preferences.debug("NL2sol fitting engine pure 1D diffusion\n", Preferences.DEBUG_ALGORITHM);
                 dataString += "NL2sol fitting engine pure 1D diffusion\n";
                 pMin = Float.MAX_VALUE;
                 pMax = -Float.MAX_VALUE;
@@ -3629,8 +3652,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
                 }
 
-                Preferences.debug("D/w**2 guess initialPure[0] = " + initialPure[0] + "\n");
-                Preferences.debug("bottom guess initial[1] = " + initialPure[1] + "\n");
+                Preferences.debug("D/w**2 guess initialPure[0] = " + initialPure[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom guess initial[1] = " + initialPure[1] + "\n", Preferences.DEBUG_ALGORITHM);
                 double x[] = new double[3];
                 x[1] = initialPure[0];
                 x[2] = initialPure[1];
@@ -3656,19 +3679,20 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ViewUserInterface.getReference().setDataText("bottom = " + nf.format(bottom) + "\n");
                 ViewUserInterface.getReference().setDataText("span = " + nf.format(span) + "\n");
                 ViewUserInterface.getReference().setDataText("D/w**2 = " + nf.format(params[0]) + "\n");
-                Preferences.debug("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n");
-                Preferences.debug("bottom = " + bottom + "\n");
-                Preferences.debug("span = " + span + "\n");
-                Preferences.debug("D/w**2 = " + params[0] + "\n");
+                Preferences.debug("In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("span = " + span + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("D/w**2 = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
                 dataString += "In the recovery curve bottom + span*[1 - (1/sqrt(1 + 4*PI*D*t/w**2))]\n";
                 dataString += "bottom = " + nf.format(bottom) + "\n";
                 dataString += "D/w**2 = " + nf.format(params[0]) + "\n";
                 ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n\n");
                 dataString += "Mobile fraction = 1.0\n\n";
-                Preferences.debug("Mobile fraction = 1.0\n\n");
+                Preferences.debug("Mobile fraction = 1.0\n\n", Preferences.DEBUG_ALGORITHM);
 
                 ViewUserInterface.getReference().setDataText("NL2sol fitting engine single exponential\n");
-                Preferences.debug("NL2sol fitting engine single exponential\n");
+                Preferences.debug("NL2sol fitting engine single exponential\n", Preferences.DEBUG_ALGORITHM);
                 dataString += "NL2sol fitting engine single exponential\n";
 
                 pMin = Float.MAX_VALUE;
@@ -3697,8 +3721,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 initialSingle[1] = pMin;
-                Preferences.debug("thalf = initialSingle[0] = " + initialSingle[0] + "\n");
-                Preferences.debug("bottom = initialSingle[1] = " + initialSingle[1] + "\n");
+                Preferences.debug("thalf = initialSingle[0] = " + initialSingle[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom = initialSingle[1] = " + initialSingle[1] + "\n", Preferences.DEBUG_ALGORITHM);
                 x = new double[3];
                 x[1] = initialSingle[0];
                 x[2] = initialSingle[1];
@@ -3719,13 +3743,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 dataString += "bottom  = " + nf.format(bottom) + "\n";
                 dataString += "span = " + nf.format(span) + "\n";
                 dataString += "thalf = " + nf.format(x[1]) + "\n";
-                Preferences.debug("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n");
-                Preferences.debug("bottom = " + bottom + "\n");
-                Preferences.debug("span = " + span + "\n");
-                Preferences.debug("thalf = " + x[1] + "\n");
+                Preferences.debug("In the recovery curve bottom + span*[1 - exp(-ln(2)*t/thalf)]\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("span = " + span + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("thalf = " + x[1] + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n\n");
                 dataString += "Mobile fraction = 1.0\n\n";
-                Preferences.debug("Mobile fraction = 1.0\n\n");
+                Preferences.debug("Mobile fraction = 1.0\n\n", Preferences.DEBUG_ALGORITHM);
 
                 initial[0] = 0.5; // gamma
 
@@ -3759,13 +3783,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 }
 
                 initial[3] = pMin; // bottom guess
-                Preferences.debug("gamma guess initial[0] = " + initial[0] + "\n");
-                Preferences.debug("alpha guess initial[1] = " + initial[1] + "\n");
-                Preferences.debug("beta guess initial[2] = " + initial[2] + "\n");
-                Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n");
+                Preferences.debug("gamma guess initial[0] = " + initial[0] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("alpha guess initial[1] = " + initial[1] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("beta guess initial[2] = " + initial[2] + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("bottom guess initial[3] = " + initial[3] + "\n", Preferences.DEBUG_ALGORITHM);
                 
                 ViewUserInterface.getReference().setDataText("NL2sol fitting engine double exponential\n");
-                Preferences.debug("Nl2sol fitting engine double exponential\n");
+                Preferences.debug("Nl2sol fitting engine double exponential\n", Preferences.DEBUG_ALGORITHM);
                 dataString += "NL2sol fitting engine double exponential\n";
                 x = new double[5];
                 x[1] = initial[0];
@@ -3805,12 +3829,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                               nf.format(x[2]) + " beta = " + nf.format(x[3]) + " gamma = " +
                               nf.format(x[1]) + "\n";
                 Preferences.debug("In the recovery curve\n" +
-                                  "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                                  "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + x[2] +
-                                  " beta = " + x[3] + " gamma = " + x[1] + "\n");
+                                  " beta = " + x[3] + " gamma = " + x[1] + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n");
                 dataString += "Mobile fraction = 1.0\n";
-                Preferences.debug("Mobile fraction = 1.0\n");
+                Preferences.debug("Mobile fraction = 1.0\n", Preferences.DEBUG_ALGORITHM);
 
                 // From equation (20) s1 = -(alpha + beta)/2, s2 = (alpha - beta)/2
                 s1 = -(x[2] + x[3]) / 2.0;
@@ -3837,12 +3861,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) +
                                                              "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
-                Preferences.debug("Association rate = " + ka + "\n");
-                Preferences.debug("Dissociation rate = " + kd + "\n");
-                Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n");
+                Preferences.debug("Association rate = " + ka + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Dissociation rate = " + kd + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n", Preferences.DEBUG_ALGORITHM);
 
                 ViewUserInterface.getReference().setDataText("ELSUNC fitting engine double exponential\n");
-                Preferences.debug("ELSUNC fitting engine double exponential\n");
+                Preferences.debug("ELSUNC fitting engine double exponential\n", Preferences.DEBUG_ALGORITHM);
                 dataString += "ELSUNC fitting engine double exponential\n";
                 fdemConstrainednw = new FitDoubleExponentialNoWholeConstrainedModel(200, tValues, pIntensity, initial);
                 fdemConstrainednw.driver();
@@ -3873,12 +3897,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
                               nf.format(params[1]) + " beta = " + nf.format(params[2]) + " gamma = " +
                               nf.format(params[0]) + "\n";
                 Preferences.debug("In the recovery curve\n" +
-                                  "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n");
+                                  "bottom + span*[1 - gamma*exp(alpha*t) - (1 - gamma)*exp(beta*t)]\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("bottom = " + bottom + " span = " + span + "\n" + "alpha = " + params[1] +
-                                  " beta = " + params[2] + " gamma = " + params[0] + "\n");
+                                  " beta = " + params[2] + " gamma = " + params[0] + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("Mobile fraction = 1.0\n");
                 dataString += "Mobile fraction = 1.0\n";
-                Preferences.debug("Mobile fraction = 1.0\n");
+                Preferences.debug("Mobile fraction = 1.0\n", Preferences.DEBUG_ALGORITHM);
 
                 // From equation (20) s1 = -(alpha + beta)/2, s2 = (alpha - beta)/2
                 s1 = -(params[1] + params[2]) / 2.0;
@@ -3905,9 +3929,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ViewUserInterface.getReference().setDataText("Diffusion transfer coefficient = " + nf.format(Dt) +
                                                              "\n\n");
                 dataString += "Diffusion transfer coefficient = " + nf.format(Dt) + "\n\n";
-                Preferences.debug("Association rate = " + ka + "\n");
-                Preferences.debug("Dissociation rate = " + kd + "\n");
-                Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n");
+                Preferences.debug("Association rate = " + ka + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Dissociation rate = " + kd + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("Diffusion transfer coefficient = " + Dt + "\n\n", Preferences.DEBUG_ALGORITHM);
             } // for (i = 0; i < 8; i++)
 
             file = new File("C:/images/Sample_results.txt");
@@ -3993,12 +4017,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -4037,7 +4061,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 /* else if (ctrl == 2) {
                  * ctrlMat[0] = 0; } */
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -4098,15 +4122,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
 
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
-            Preferences.debug("a3 " + String.valueOf(a[3]) + "\n");
-            Preferences.debug("a4 " + String.valueOf(a[4]) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a3 " + String.valueOf(a[3]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a4 " + String.valueOf(a[4]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         /** 
@@ -4121,8 +4145,9 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
-                Preferences.debug("a[3] = " + a[3] + " a[4] = " + a[4] + "\n");
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                //Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("a[3] = " + a[3] + " a[4] = " + a[4] + "\n", Preferences.DEBUG_ALGORITHM);
                 if ( (ctrl == -1) || (ctrl == 1)) {
                     
                     // evaluate the residuals[j] = ymod - yData[j]
@@ -4130,7 +4155,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     	ymod = a[3] + (a[4] * (1 - (a[0] * Math.exp(a[1] * xData[j])) -
                                      ((1 - a[0]) * Math.exp(a[2] * xData[j]))));
                         residuals[j] = ymod - yData[j];
-                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -4148,7 +4173,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 // ctrlMat[0] = 0;
                 // }
             } catch (final Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -4184,7 +4209,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     // atry[0])*Math.exp(atry[2]*x1);
                 }
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return ymod;
@@ -4260,13 +4285,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
-            Preferences.debug("a3 " + String.valueOf(a[3]) + "\n");
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a3 " + String.valueOf(a[3]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -4309,7 +4334,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
                 } // else if (ctrl == 2)
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -4368,13 +4393,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponentialNoWholeNL2solModel ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n");
-            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(x[3]) + "\n");
-            Preferences.debug("a3 " + String.valueOf(x[4]) + "\n");
+            Preferences.debug(" ******* FitDoubleExponentialNoWholeNL2solModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(x[3]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a3 " + String.valueOf(x[4]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
@@ -4388,7 +4413,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             	ymod = x[4] + ((1 - x[4]) * (1 - (x[1] * Math.exp(x[2] * xData[j])) -
                           ((1 - x[1]) * Math.exp(x[3] * xData[j]))));
                 r[j+1] = ymod - yData[j];
-                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n");
+                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
         }
@@ -4461,13 +4486,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitDoubleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
-            Preferences.debug("a3 " + String.valueOf(a[3]) + "\n");
+            Preferences.debug(" ******* FitDoubleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a3 " + String.valueOf(a[3]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         /**
@@ -4510,7 +4535,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
                 } // else if (ctrl == 2)
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -5790,12 +5815,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying pure 1D fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitPure1D ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("D/w**2 = " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("bottom = " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("span = " + String.valueOf(a[2]) + "\n");
+            Preferences.debug(" ******* FitPure1D ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("D/w**2 = " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("bottom = " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("span = " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         /**
@@ -5812,7 +5837,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n",
+                // Preferences.DEBUG_ALGORITHM);
                 if ( (ctrl == -1) || (ctrl == 1)) {
                     
                     // evaluate the residuals[j] = ymod - yData[j]
@@ -5820,7 +5846,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     	term = (1.0 + (4.0 * Math.PI * a[0] * xData[j]));
                         ymod = a[1] + (a[2] * (1 - (1 / Math.sqrt(term))));
                         residuals[j] = ymod - yData[j];
-                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -5896,11 +5922,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying pure 1D no whole organ normalization fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitPure1DNoWhole ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n");
-            Preferences.debug("D/w**2 = " + String.valueOf(x[1]) + "\n");
-            Preferences.debug("bottom = " + String.valueOf(x[2]) + "\n");
+            Preferences.debug(" ******* FitPure1DNoWhole ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("D/w**2 = " + String.valueOf(x[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("bottom = " + String.valueOf(x[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
@@ -6028,13 +6054,13 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitSingleExponential ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
+            Preferences.debug(" ******* FitSingleExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
 
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n");
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         /** 
@@ -6050,14 +6076,15 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
             try {
                 ctrl = ctrlMat[0];
-                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+                // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+                // Preferences.DEBUG_ALGORITHM);
                 if ( (ctrl == -1) || (ctrl == 1)) {
                     
                     // evaluate the residuals[j] = ymod - yData[j]
                     for (j = 0; j < nPts; j++) {
                     	ymod = a[1] + (a[2] * (1.0 - Math.exp(-Math.log(2.0) * xData[j] / a[0])));
                         residuals[j] = ymod - yData[j];
-                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                        // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                     }
                 } // if ((ctrl == -1) || (ctrl == 1))
                 else if (ctrl == 2) {
@@ -6073,7 +6100,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 // ctrlMat[0] = 0;
                 // }
             } catch (final Exception exc) {
-                Preferences.debug("function error: " + exc.getMessage() + "\n");
+                Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -6133,11 +6160,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters in the case of no whole organ normalization.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* FitSingleExponentialNoWholeModel ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(2.0*v[10]) + "\n");
-            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n");
+            Preferences.debug(" ******* FitSingleExponentialNoWholeModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0*v[10]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
@@ -6232,11 +6259,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit Whole NL2sol Int2 ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(2.0*v[10]) + "\n");
-            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n");
+            Preferences.debug(" ******* Fit Whole NL2sol Int2 ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0*v[10]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
@@ -6255,14 +6282,14 @@ public class AlgorithmFRAP extends AlgorithmBase {
             	imods = new FitFullIntModel2s(xData[j], x[1], x[2], lower, x[2], Integration2.DQAGSE, epsabs,
             			epsrel, limit);
                 imods.driver();
-                Preferences.debug("imdos error = " + imods.getErrorStatus() + "\n");
+                Preferences.debug("imdos error = " + imods.getErrorStatus() + "\n", Preferences.DEBUG_ALGORITHM);
                 imodi = new FitFullIntModel2i(xData[j], x[1], x[2], x[1] + x[2], Integration2.DQAGIE, inf,
                         epsabs, epsrel, limit);
                 imodi.driver();
-                Preferences.debug("imodi error = " + imodi.getErrorStatus() + "\n");
+                Preferences.debug("imodi error = " + imodi.getErrorStatus() + "\n", Preferences.DEBUG_ALGORITHM);
                 ymod = 1.0 - imods.getIntegral() - imodi.getIntegral();
                 r[j+1] = ymod - yData[j];
-                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n");
+                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM);
             }
             
         }
@@ -6330,11 +6357,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit NL2sol Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n");
-            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n");
+            Preferences.debug(" ******* Fit NL2sol Whole Diffusion-Reaction Model ********* \n\n",
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(x[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(x[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
         
         public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
@@ -6349,7 +6377,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             // evaluate the residuals[j] = ymodel[j] - ySeries[j]
             for (j = 0; j < meqn; j++) {
                 r[j+1] = timeFunction[j] - yData[j];
-                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n");
+                // Preferences.debug("residuals["+ (j+1) + "] = " + r[j+1] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
         }
@@ -6440,11 +6468,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -6469,11 +6497,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
                         imods = new FitFullIntModel2s(xData[i], a[0], a[1], lower, a[1], Integration2.DQAGSE, epsabs,
                                                       epsrel, limit);
                         imods.driver();
-                        Preferences.debug("imods error = " + imods.getErrorStatus() + "\n");
+                        Preferences.debug("imods error = " + imods.getErrorStatus() + "\n", Preferences.DEBUG_ALGORITHM);
                         imodi = new FitFullIntModel2i(xData[i], a[0], a[1], a[0] + a[1], Integration2.DQAGIE, inf,
                                                       epsabs, epsrel, limit);
                         imodi.driver();
-                        Preferences.debug("imodi error = " + imodi.getErrorStatus() + "\n");
+                        Preferences.debug("imodi error = " + imodi.getErrorStatus() + "\n", Preferences.DEBUG_ALGORITHM);
                         result[i] = 1.0 - imods.getIntegral() - imodi.getIntegral();
                         residuals[i] = result[i] - yData[i];
                     }
@@ -6484,7 +6512,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     ctrlMat[0] = 0;
                 }
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -6556,11 +6584,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -6594,7 +6623,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     ctrlMat[0] = 0;
                 }
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -6691,11 +6720,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n",
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -6728,7 +6758,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     ctrlMat[0] = 0;
                 }
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -6809,11 +6839,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -6847,7 +6878,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     ctrlMat[0] = 0;
                 }
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -6908,11 +6939,12 @@ public class AlgorithmFRAP extends AlgorithmBase {
          * Display results of displaying exponential fitting parameters.
          */
         public void dumpResults() {
-            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n");
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
-            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n");
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n");
+            Preferences.debug(" ******* Fit Elsunc Whole Diffusion-Reaction Model ********* \n\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -6954,7 +6986,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     ctrlMat[0] = 0;
                 }
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
