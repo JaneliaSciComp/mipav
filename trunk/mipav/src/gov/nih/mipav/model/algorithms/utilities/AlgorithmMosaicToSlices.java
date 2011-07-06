@@ -219,7 +219,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     subZDim = destImage.getExtents()[2];
                     subTDim = destImage.getExtents()[3];
                     subLength = cFactor * subXDim * subYDim * subZDim;
-                    subBuffer = new double[subLength/subTDim]; 
+                    subBuffer = new double[subLength/subZDim]; 
+                    System.err.println("tdim:" +subTDim );
                     //int volumeNum = 0;
                     sliceNum = 0;
                     zs = 0;
@@ -241,7 +242,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                 bufferSliceCount++;
                                 try {
                                     
-                                    destImage.importData((bufferSliceCount*(subLength/subTDim)), subBuffer, false);
+                                    destImage.importData((bufferSliceCount*(subLength/subZDim)), subBuffer, false);
                                 }
                                 catch (IOException error) {
                                     buffer = null;
