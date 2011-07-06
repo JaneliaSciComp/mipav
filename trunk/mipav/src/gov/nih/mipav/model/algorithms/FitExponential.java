@@ -149,14 +149,16 @@ public class FitExponential extends NLFittedFunction {
      * Display results of displaying exponential fitting parameters.
      */
     public void displayResults() {
-        Preferences.debug(" ******* FitExponential ********* \n\n");
-        Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-        Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
+        Preferences.debug(" ******* FitExponential ********* \n\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
 
-        // Preferences.debug("Final lamda: " + String.valueOf(flamda));
-        Preferences.debug("a0 " + String.valueOf(a[0]) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[0][0])));
-        Preferences.debug("a1 " + String.valueOf(a[1]) + "\n"); // + " +/- " + String.valueOf(Math.sqrt(covar[1][1])));
-        Preferences.debug("a2 " + String.valueOf(a[2]) + "\n\n"); // + " +/- " +
+        // Preferences.debug("Final lamda: " + String.valueOf(flamda) + "\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM); 
+        // + " +/- " + String.valueOf(Math.sqrt(covar[0][0])));
+        Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM); 
+        // + " +/- " + String.valueOf(Math.sqrt(covar[1][1])));
+        Preferences.debug("a2 " + String.valueOf(a[2]) + "\n\n", Preferences.DEBUG_ALGORITHM); // + " +/- " +
                                                                   // String.valueOf(Math.sqrt(covar[2][2])));
         
     }
@@ -174,14 +176,15 @@ public class FitExponential extends NLFittedFunction {
 
         try {
             ctrl = ctrlMat[0];
-            // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n");
+            // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + " a[2] = " + a[2] + "\n", 
+            // Preferences.DEBUG_ALGORITHM);
             if ( (ctrl == -1) || (ctrl == 1)) {
                 
                 // evaluate the residuals[j] = ymod - yData[j]
                 for (j = 0; j < nPts; j++) {
                 	ymod = a[0] + (a[1] * Math.exp(a[2] * xSeries[j]));
                     residuals[j] = ymod - ySeries[j];
-                    // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n");
+                    // Preferences.debug("residuals["+ j + "] = " + residuals[j] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
             } // if ((ctrl == -1) || (ctrl == 1))
             else if (ctrl == 2) {
@@ -197,7 +200,7 @@ public class FitExponential extends NLFittedFunction {
             // ctrlMat[0] = 0;
             // }
         } catch (final Exception exc) {
-            Preferences.debug("function error: " + exc.getMessage() + "\n");
+            Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         return;
