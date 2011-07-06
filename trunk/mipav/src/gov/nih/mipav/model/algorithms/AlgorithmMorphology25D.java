@@ -691,7 +691,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         try {
             String str = new String();
 
-            Preferences.debug("\n Morphology25D - structuring element. \n");
+            Preferences.debug("\n Morphology25D - structuring element. \n", Preferences.DEBUG_ALGORITHM);
 
             for (y = 0; y < kDimXY; y++) {
 
@@ -704,7 +704,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                     }
                 }
 
-                Preferences.debug(str + "\n");
+                Preferences.debug(str + "\n", Preferences.DEBUG_ALGORITHM);
                 str = new String();
             }
 
@@ -1362,7 +1362,7 @@ kernelLoop:
             kDim = 3;
         }
 
-        Preferences.debug("# Morph25d.makeCircularKernel: kernel size = " + kDim + "\n");
+        Preferences.debug("# Morph25d.makeCircularKernel: kernel size = " + kDim + "\n", Preferences.DEBUG_ALGORITHM);
 
         length = kDim * kDim;
         kernel = new BitSet(length);
