@@ -7,6 +7,7 @@ import de.jtem.numericalMethods.calculus.function.RealFunctionOfSeveralVariables
 import de.jtem.numericalMethods.calculus.minimizing.BrentOnLine;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.ThreadUtil;
+import gov.nih.mipav.view.Preferences;
 
 import java.util.Hashtable;
 import java.util.Vector;
@@ -508,7 +509,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                         final int index = k;
                         // Preferences.debug("Calling lineMinimization for
                         // dimension
-                        // "+i +".\n");
+                        // "+i +".\n", Preferences.DEBUG_ALGORITHM);
                         Runnable task = new Runnable() {
                             public void run() {
                                 lineMinimization(v.getPoint(), pts[index], directions,
@@ -598,7 +599,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                     directions[i] = 1;
 
                     // Preferences.debug("Calling lineMinimization for dimension
-                    // "+i +".\n");
+                    // "+i +".\n", Preferences.DEBUG_ALGORITHM);
                     lineMinimization(v.getPoint(), point, directions, cost);
                     min = cost[0];
                     if (Math.abs(point[i] - originalPoint[i]) > tolerance[i]) {
