@@ -191,73 +191,73 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	    
 		    switch (test) {
 		    case 1:
-	    	    Preferences.debug("F1(s) = (s*s + 1)**-1/2\n");
-		        Preferences.debug("f1(t) = J0(t)\n\n");
+	    	    Preferences.debug("F1(s) = (s*s + 1)**-1/2\n", Preferences.DEBUG_ALGORITHM);
+		        Preferences.debug("f1(t) = J0(t)\n\n", Preferences.DEBUG_ALGORITHM);
 		        break;
 		    case 2:
-		    	Preferences.debug("F2(s) = (s**-1/2)*exp(-p**-1)\n");
-		    	Preferences.debug("f2(t) = cos(2*sqrt(t))/sqrt(PI*t)\n");
+		    	Preferences.debug("F2(s) = (s**-1/2)*exp(-p**-1)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f2(t) = cos(2*sqrt(t))/sqrt(PI*t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 3:
-		    	Preferences.debug("F3(s) = 1.0/(s + 0.5)\n");
-		    	Preferences.debug("f3(t) = exp(-0.5*t)\n");
+		    	Preferences.debug("F3(s) = 1.0/(s + 0.5)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f3(t) = exp(-0.5*t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 4:
-		    	Preferences.debug("F4(s) = 1.0/((s + 0.2)**2 + 1)\n");
-		    	Preferences.debug("f4(t) = exp(-0.2*t)*sin(t)\n");
+		    	Preferences.debug("F4(s) = 1.0/((s + 0.2)**2 + 1)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f4(t) = exp(-0.2*t)*sin(t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 5:
-		    	Preferences.debug("F5(s) = 1.0/s\n");
-		    	Preferences.debug("f5(t) = 1.0\n");
+		    	Preferences.debug("F5(s) = 1.0/s\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f5(t) = 1.0\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 6:
-		    	Preferences.debug("F6(s) = 1/(s*s)\n");
-		    	Preferences.debug("f6(t) = t\n");
+		    	Preferences.debug("F6(s) = 1/(s*s)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f6(t) = t\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 7:
-		    	Preferences.debug("F7(s) = (s + 1)**-2\n");
-		    	Preferences.debug("f7(t) = t*exp(-t)\n");
+		    	Preferences.debug("F7(s) = (s + 1)**-2\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f7(t) = t*exp(-t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 8:
-		    	Preferences.debug("F8(s) = 1.0/(s*s + 1)\n");
-		    	Preferences.debug("f8(t) = sin(t)\n");
+		    	Preferences.debug("F8(s) = 1.0/(s*s + 1)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f8(t) = sin(t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 9:
-		    	Preferences.debug("F9(s) = 1.0/sqrt(s)\n");
-		    	Preferences.debug("f9(t) = 1.0/sqrt(PI*t)\n");
+		    	Preferences.debug("F9(s) = 1.0/sqrt(s)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f9(t) = 1.0/sqrt(PI*t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 10:
-		    	Preferences.debug("F10(s) = (s**-1)*exp(-5*s)\n");
-		    	Preferences.debug("f10(t) = step from 0 to 1 at t = 5\n");
+		    	Preferences.debug("F10(s) = (s**-1)*exp(-5*s)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f10(t) = step from 0 to 1 at t = 5\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 11:
-		    	Preferences.debug("F11(s) = (s**-1)*ln(s)\n");
-		    	Preferences.debug("f11(t) = -gamma - ln(t)\n");
+		    	Preferences.debug("F11(s) = (s**-1)*ln(s)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f11(t) = -gamma - ln(t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 12:
-		    	Preferences.debug("F12(s) = (s*(1 + exp(-s)))**-1\n");
-		    	Preferences.debug("f12(t) = square wave = 1 for 2*n < t < 2*n + 1\n");
-		    	Preferences.debug("f12(t) = 0 for 2*n + 1 < t < 2*n + 2\n");
+		    	Preferences.debug("F12(s) = (s*(1 + exp(-s)))**-1\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f12(t) = square wave = 1 for 2*n < t < 2*n + 1\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f12(t) = 0 for 2*n + 1 < t < 2*n + 2\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 13:
-		    	Preferences.debug("F13(s) = (s*s - 1.0)*((s*s + 1.0)**-2)\n");
-		    	Preferences.debug("f13(t) = t*cos(t)\n");
+		    	Preferences.debug("F13(s) = (s*s - 1.0)*((s*s + 1.0)**-2)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f13(t) = t*cos(t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 14:
-		    	Preferences.debug("F14(s) = sqrt(s + 0.5) - sqrt(s + 0.25)\n");
-		    	Preferences.debug("f14(t) = (exp(-0.25*t) - exp(-0.5*t))/sqrt(4.0*PI*t*t*t)\n");
+		    	Preferences.debug("F14(s) = sqrt(s + 0.5) - sqrt(s + 0.25)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f14(t) = (exp(-0.25*t) - exp(-0.5*t))/sqrt(4.0*PI*t*t*t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 15:
-		    	Preferences.debug("F15(s) = exp(-4.0*sqrt(s))\n");
-		    	Preferences.debug("f15(t) = 2.0*exp(-4.0/t)/sqrt(PI*t*t*t)\n");
+		    	Preferences.debug("F15(s) = exp(-4.0*sqrt(s))\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f15(t) = 2.0*exp(-4.0/t)/sqrt(PI*t*t*t)\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    case 16:
-		    	Preferences.debug("F16(s) = arctan(1.0/s)\n");
-		    	Preferences.debug("f16(t) = sin(t)/t\n");
+		    	Preferences.debug("F16(s) = arctan(1.0/s)\n", Preferences.DEBUG_ALGORITHM);
+		    	Preferences.debug("f16(t) = sin(t)/t\n", Preferences.DEBUG_ALGORITHM);
 		    	break;
 		    } // switch (test)
 		    
-		    Preferences.debug("deHoog algorithm\n");
+		    Preferences.debug("deHoog algorithm\n", Preferences.DEBUG_ALGORITHM);
 		    // test 1: L = 1.695E-8 Le = 1.493E-10
 		    // test 2: L = 4.744E-9 Le = 3.864E-10
 		    // test 3: L = 2.255E-10 Le = 6.113E-10
@@ -363,7 +363,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        expsum = 0.0;
 	        for (i = 0; i < n; i++) {
 	            Preferences.debug("time = " + t[i] + " inverseLaplaceFunction = " + timeFunction[i] + " trueFunction = " +
-	                              ftrue[test-1][i] + "\n");
+	                              ftrue[test-1][i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            diff = ftrue[test-1][i] - timeFunction[i];
 	            square = diff * diff;
 	            sum = sum + square;
@@ -371,10 +371,10 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        } 
 	        L = Math.sqrt(sum/n);
 	        Le = Math.sqrt(expsum/ledenom);
-	        Preferences.debug("Root mean square error = " + L + "\n");
-	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n");
+	        Preferences.debug("Root mean square error = " + L + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n", Preferences.DEBUG_ALGORITHM);
 	        
-	        Preferences.debug("Piessens algorithm\n");
+	        Preferences.debug("Piessens algorithm\n", Preferences.DEBUG_ALGORITHM);
 	        // test 1: L = 3.905E-14 Le = 3.216E-14
 	        // test 2: L = 1.069E-13 Le = 6.240E-14
 	        // test 3: L = 4.066E-14 Le = 5.748E-14
@@ -482,13 +482,13 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        for (i = 0; i < n; i++) {
 	
 	            if (errStatusPiessens[i] == 2) {
-	                Preferences.debug("time[" + i + "] is illegally <= 0\n");
+	                Preferences.debug("time[" + i + "] is illegally <= 0\n", Preferences.DEBUG_ALGORITHM);
 	            } else if (errStatusPiessens[i] == 1) {
-	                Preferences.debug("time[" + i + "] had computations terminated\n");
-	                Preferences.debug("The maximum bound on Laplace evaluations was reached\n");
+	                Preferences.debug("time[" + i + "] had computations terminated\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("The maximum bound on Laplace evaluations was reached\n", Preferences.DEBUG_ALGORITHM);
 	            } else {
 	                Preferences.debug("time = " + t[i] + " inverseLaplaceFunction = " + resultPiessens[i] + " trueFunction = " +
-	                                  ftrue[test-1][i] + "\n");
+	                                  ftrue[test-1][i] + "\n", Preferences.DEBUG_ALGORITHM);
 	                diff = ftrue[test-1][i] - resultPiessens[i];
 	                square = diff * diff;
 	                sum = sum + square;
@@ -498,10 +498,10 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        } // for (i = 0; i < n; i++)
 	        L = Math.sqrt(sum/n);
 	        Le = Math.sqrt(expsum/ledenom);
-	        Preferences.debug("Root mean square error = " + L + "\n");
-	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n");
+	        Preferences.debug("Root mean square error = " + L + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n", Preferences.DEBUG_ALGORITHM);
 	        
-	        Preferences.debug("Brancik algorithm\n");
+	        Preferences.debug("Brancik algorithm\n", Preferences.DEBUG_ALGORITHM);
 	        
 	        // Include tqd[0] = 0 in calculation
 	        // Increase number of time points from 30 to 301.
@@ -614,7 +614,7 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        expsum = 0.0;
 	        for (i = 0; i < n; i++) {
 	            Preferences.debug("time = " + t[i] + " inverseLaplaceFunction = " + timeFunction[10*(i+1)] + " trueFunction = " +
-	                              ftrue[test-1][i] + "\n");
+	                              ftrue[test-1][i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            diff = ftrue[test-1][i] - timeFunction[10*(i+1)];
 	            square = diff * diff;
 	            sum = sum + square;
@@ -622,8 +622,8 @@ public class InverseLaplaceTest extends AlgorithmBase {
 	        } 
 	        L = Math.sqrt(sum/n);
 	        Le = Math.sqrt(expsum/ledenom);
-	        Preferences.debug("Root mean square error = " + L + "\n");
-	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n");
+	        Preferences.debug("Root mean square error = " + L + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("Exponential weighted root mean square error = " + Le + "\n", Preferences.DEBUG_ALGORITHM);
 	        
 		   
 	        
