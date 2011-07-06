@@ -6138,7 +6138,7 @@ public class FileMATLAB extends FileBase {
         double maxValue;
         
         if (image.getType() == ModelStorageBase.BOOLEAN) {
-        	Preferences.debug("BOOLEAN is not a legal MATLAB type - converting to UBYTE\n");
+        	Preferences.debug("BOOLEAN is not a legal MATLAB type - converting to UBYTE\n", Preferences.DEBUG_FILEIO);
         	AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(image, ModelStorageBase.UBYTE, 0, 1, 0, 1,
                     false);
 		    changeTypeAlgo.run();
