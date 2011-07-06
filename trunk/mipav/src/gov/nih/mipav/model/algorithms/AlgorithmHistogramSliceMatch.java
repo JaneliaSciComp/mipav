@@ -432,7 +432,7 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
         findBufferMinMax(srcBuffer, 0, srcBuffer.length); // calculates largest and smallest pixel values for equalized slice
         srcMin = bufMin;
         idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
-        Preferences.debug("idealBins = " + idealBins + "\n");
+        Preferences.debug("idealBins = " + idealBins + "\n", Preferences.DEBUG_ALGORITHM);
 
         int type = srcImage.getType();
 
@@ -465,13 +465,14 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
                 brightnessLevel = (int) ((srcBuffer[i] - bufMin) / (unitSize));
                 hist[brightnessLevel]++;
             } catch (ArrayIndexOutOfBoundsException aioobe) {
-                Preferences.debug("<HALT>\n");
-                Preferences.debug("i= " + i + "\n");
+                Preferences.debug("<HALT>\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("i= " + i + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("srcbuffer: " + srcBuffer[i] + "; bufMin: " + bufMin + "; unitSize: " + unitSize +
-                                  "\n");
-                Preferences.debug("at hist: " + ((int) (srcBuffer[i] - bufMin) / unitSize) + "\n");
-                Preferences.debug("totalbins: " + totalBins + "\n");
-                Preferences.debug("</HALT>\n");
+                                  "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("at hist: " + ((int) (srcBuffer[i] - bufMin) / unitSize) + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("totalbins: " + totalBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("</HALT>\n", Preferences.DEBUG_ALGORITHM);
                 MipavUtil.displayError("Algorithm Slice Histogram match reports: out of bounds");
                 setCompleted(false);
 
@@ -519,13 +520,14 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
                 brightnessLevel = (int) ((baseBuffer[i] - baseOffset) / (baseUnitSize));
                 hist[brightnessLevel]++;
             } catch (ArrayIndexOutOfBoundsException aioobe) {
-                Preferences.debug("<HALT>\n");
-                Preferences.debug("i= " + i + "\n");
+                Preferences.debug("<HALT>\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("i= " + i + "\n", Preferences.DEBUG_ALGORITHM);
                 Preferences.debug("basebuffer: " + baseBuffer[i] + "; offset: " + baseOffset + ";baseUnitSize: " +
-                                  baseUnitSize + "\n");
-                Preferences.debug("at hist: " + ((int) (baseBuffer[i] - baseOffset) / baseUnitSize) + "\n");
-                Preferences.debug("totalbins: " + totalBins + "\n");
-                Preferences.debug("</HALT>\n");
+                                  baseUnitSize + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("at hist: " + ((int) (baseBuffer[i] - baseOffset) / baseUnitSize) + "\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("totalbins: " + totalBins + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("</HALT>\n", Preferences.DEBUG_ALGORITHM);
                 MipavUtil.displayError("Algorithm Slice Histogram match reports: out of bounds");
                 setCompleted(false);
 
