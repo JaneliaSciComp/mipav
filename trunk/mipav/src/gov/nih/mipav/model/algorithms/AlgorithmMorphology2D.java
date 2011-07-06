@@ -359,7 +359,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } while (((index != startIndex) || (resultGon.npoints < 4)) && (resultGon.npoints < 10000));
 
         if (resultGon.npoints == 10000) {
-            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000\n");
+            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         return resultGon;
@@ -459,7 +460,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } while (((index != startIndex) || (resultGon.npoints < 4)) && (resultGon.npoints < 10000));
 
         if (resultGon.npoints == 10000) {
-            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000\n");
+            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         return resultGon;
@@ -586,7 +588,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         if (resultGon.npoints == 10000) {
-            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000");
+            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         return resultGon;
@@ -687,7 +690,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } while (((index != startIndex) || (resultGon.npoints < 4)) && (resultGon.npoints < 10000));
 
         if (resultGon.npoints == 10000) {
-            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000\n");
+            Preferences.debug("Error - genContour has not completed at resultGon.npoints = 10,000\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         return resultGon;
@@ -1391,8 +1395,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         /*
-         *      Preferences.debug( "pixArray : " );     for ( int k = 0; k < pixArray.length; k++ ) { Preferences.debug(
-         * k + " = " + pixArray[k] );     }
+         *      Preferences.debug( "pixArray : ", Preferences.DEBUG_ALGORITHM );     for ( int k = 0; k < pixArray.length; k++ ) { Preferences.debug(
+         * k + " = " + pixArray[k], Preferences.DEBUG_ALGORITHM );     }
          */
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
@@ -1761,7 +1765,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         try {
             String str = new String();
 
-            Preferences.debug("\n Morphology2D - structuring element. \n");
+            Preferences.debug("\n Morphology2D - structuring element. \n", Preferences.DEBUG_ALGORITHM);
 
             for (y = 0; y < kDimXY; y++) {
 
@@ -1774,7 +1778,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                     }
                 }
 
-                Preferences.debug(str + "\n");
+                Preferences.debug(str + "\n", Preferences.DEBUG_ALGORITHM);
                 str = new String();
             }
 
@@ -3520,7 +3524,7 @@ kernelLoop:
             kDim = 3;
         }
 
-        Preferences.debug("# Morph2d.makeCircularKernel: kernel size = " + kDim + "\n");
+        Preferences.debug("# Morph2d.makeCircularKernel: kernel size = " + kDim + "\n", Preferences.DEBUG_ALGORITHM);
 
         length = kDim * kDim;
         kernel = new BitSet(length);
