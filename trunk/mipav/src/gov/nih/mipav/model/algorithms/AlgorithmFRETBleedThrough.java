@@ -428,21 +428,21 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         nf.setMaximumFractionDigits(6);
 
         if (acceptorRun) {
-            Preferences.debug("Acceptor dye only run\n");
+            Preferences.debug("Acceptor dye only run\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText("Acceptor dye only run\n");
         } else {
-            Preferences.debug("Donor dye only run\n");
+            Preferences.debug("Donor dye only run\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText("Donor dye only run\n");
         }
 
         Preferences.debug("1FP image with 1FP filter\t" + "1FP image with FRET filter\t" +
-                          "1FP image with 2FP filter\n");
+                          "1FP image with 2FP filter\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug(srcImage.getImageName() + "\t\t" + FRETImage.getImageName() + "\t\t" +
-                          FP2Image.getImageName() + "\n\n");
+                          FP2Image.getImageName() + "\n\n", Preferences.DEBUG_ALGORITHM);
         UI.setDataText("1FP image with 1FP filter\t" + "1FP image with FRET filter\t" + "1FP image with 2FP filter\n");
         UI.setDataText(srcImage.getImageName() + "\t\t" + FRETImage.getImageName() + "\t\t" + FP2Image.getImageName() +
                        "\n\n");
-        Preferences.debug("VOI \t\tFRET bleed thru \tFP2 bleed thru\n");
+        Preferences.debug("VOI \t\tFRET bleed thru \tFP2 bleed thru\n", Preferences.DEBUG_ALGORITHM);
         UI.setDataText("VOI \t\tFRET bleed thru \tFP2 bleed thru\n");
         totalActivePixels = 0;
         averageFRETBleed = 0.0;
@@ -459,12 +459,12 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             FP2Bleed[i] = (FP2Bleed[i] - FP2Back) / denom;
             averageFP2Bleed = averageFP2Bleed + (FP2Bleed[i] * activePixels[i]);
             Preferences.debug(activeNumber[i] + "\t\t" + String.valueOf(nf.format(FRETBleed[i])) + "\t\t" +
-                              String.valueOf(nf.format(FP2Bleed[i])) + "\n");
+                              String.valueOf(nf.format(FP2Bleed[i])) + "\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText(activeNumber[i] + "\t\t" + String.valueOf(nf.format(FRETBleed[i])) + "\t\t" +
                            String.valueOf(nf.format(FP2Bleed[i])) + "\n");
 
             if (nBoundingVOIs <= 2) {
-                Preferences.debug("\n");
+                Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
                 UI.setDataText("\n");
             }
         }
@@ -538,7 +538,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
 
         if (nBoundingVOIs > 2) {
             Preferences.debug("Weighted average\t" + String.valueOf(nf.format(averageFRETBleed)) + "\t\t" +
-                              String.valueOf(nf.format(averageFP2Bleed)) + "\n\n");
+                              String.valueOf(nf.format(averageFP2Bleed)) + "\n\n", Preferences.DEBUG_ALGORITHM);
             UI.setDataText("Weighted average\t" + String.valueOf(nf.format(averageFRETBleed)) + "\t\t" +
                            String.valueOf(nf.format(averageFP2Bleed)) + "\n\n");
         } // if (nBoundingVOIs > 2)
