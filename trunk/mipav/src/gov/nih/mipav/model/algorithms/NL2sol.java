@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
+
 import java.util.Calendar;
 import java.util.Formatter;
 
@@ -204,7 +205,7 @@ private boolean testMode = false;
 		String version;
 		int xscal1;
 		int xscal2;
-	    Preferences.debug("Test the NL2sol package\n");
+	    Preferences.debug("Test the NL2sol package\n", Preferences.DEBUG_ALGORITHM);
 	    timestamp();
 	    rstart = false;
 	    jtyp[1] = " ";
@@ -1002,30 +1003,30 @@ private boolean testMode = false;
 	    nltest("Brown", rstart, xscal1, xscal2);
 	    
 	    // Print summary
-	    Preferences.debug(version + "\n");
-	    Preferences.debug("Summary of test runs\n");
+	    Preferences.debug(version + "\n", Preferences.DEBUG_ALGORITHM);
+	    Preferences.debug("Summary of test runs\n", Preferences.DEBUG_ALGORITHM);
 	    for (k = 1; k <= nprob; k++) {
 	    	j = is[6][k];
 	    	if (j == 1) {
-	    		Preferences.debug("Problem = " + name[k] + "     analytic jacobian\n");
+	    		Preferences.debug("Problem = " + name[k] + "     analytic jacobian\n", Preferences.DEBUG_ALGORITHM);
 	    	}
 	    	else {
-	    		Preferences.debug("Problem = " + name[k] + "     finite difference jacobian\n");
+	    		Preferences.debug("Problem = " + name[k] + "     finite difference jacobian\n", Preferences.DEBUG_ALGORITHM);
 	    	}
-	    	Preferences.debug("n = " + is[1][k] + "\n");
-	    	Preferences.debug("p = " + is[2][k] + "\n");
-	    	Preferences.debug("niter = " + is[3][k] + "\n");
-	    	Preferences.debug("nf = " + is[4][k] + "\n");
-	    	Preferences.debug("ng = " + is[5][k] + "\n");
-	    	Preferences.debug("iv1 = " + irc[k] + "\n");
-	    	Preferences.debug("x0scal = " + rs[1][k] + "\n");
-	    	Preferences.debug("final f = " + rs[2][k] + "\n");
-	    	Preferences.debug("preldf = " + rs[3][k] + "\n");
-	    	Preferences.debug("nreldf = " + rs[4][k] + "\n");
-	    	Preferences.debug("reldx = " + rs[5][k] + "\n\n\n");
+	    	Preferences.debug("n = " + is[1][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("p = " + is[2][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("niter = " + is[3][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("nf = " + is[4][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("ng = " + is[5][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("iv1 = " + irc[k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("x0scal = " + rs[1][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("final f = " + rs[2][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("preldf = " + rs[3][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("nreldf = " + rs[4][k] + "\n", Preferences.DEBUG_ALGORITHM);
+	    	Preferences.debug("reldx = " + rs[5][k] + "\n\n\n", Preferences.DEBUG_ALGORITHM);
 	    } // for (k = 1; k <= nprob; k++)
 	    
-	    Preferences.debug("Normal end of execution\n");
+	    Preferences.debug("Normal end of execution\n", Preferences.DEBUG_ALGORITHM);
 	    timestamp();
 	    
 	} // main
@@ -1114,7 +1115,8 @@ private boolean testMode = false;
 	  if ( ! rstrt ) {
 	    pu = iv[prunit];
 	    if ( pu != 0 ) {
-	      Preferences.debug("nl2s" + alg[jac] + " on problem " + title + "      " + version + "\n" );
+	      Preferences.debug("nl2s" + alg[jac] + " on problem " + title + "      " + version + "\n", 
+	    		  Preferences.DEBUG_ALGORITHM );
 	      
 	    }
 	  } // if (!rstrt)
@@ -1179,26 +1181,26 @@ private boolean testMode = false;
 	    if ( nout != 0 ) {
 
 	      if (nprob == 1) {
-	          Preferences.debug(version + "\n");
+	          Preferences.debug(version + "\n", Preferences.DEBUG_ALGORITHM);
 	      }
-	      Preferences.debug("Problem = " + title + "  test summary\n");
+	      Preferences.debug("Problem = " + title + "  test summary\n", Preferences.DEBUG_ALGORITHM);
 	      if (useAnalyticJacobian) {
-              Preferences.debug("Analytic jacobian\n");
+              Preferences.debug("Analytic jacobian\n", Preferences.DEBUG_ALGORITHM);
 	      }
 	      else {
-	    	  Preferences.debug("Finite difference jacobian\n");
+	    	  Preferences.debug("Finite difference jacobian\n", Preferences.DEBUG_ALGORITHM);
 	      }
-	      Preferences.debug("n = " + is[1][nprob] + "\n");
-	      Preferences.debug("p = " + is[2][nprob] + "\n");
-	      Preferences.debug("niter = " + is[3][nprob] + "\n");
-	      Preferences.debug("nf = " + is[4][nprob] + "\n");
-	      Preferences.debug("ng = " + is[5][nprob] + "\n");
-	      Preferences.debug("iv1 = " + irc[nprob] + "\n");
-	      Preferences.debug("x0scal = " + rs[1][nprob] + "\n");
-	      Preferences.debug("final f = " + rs[2][nprob] + "\n");
-	      Preferences.debug("preldf = " + rs[3][nprob] + "\n");
-	      Preferences.debug("nreldf = " + rs[4][nprob] + "\n");
-	      Preferences.debug("reldx = " + rs[5][nprob] + "\n");
+	      Preferences.debug("n = " + is[1][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("p = " + is[2][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("niter = " + is[3][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("nf = " + is[4][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("ng = " + is[5][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("iv1 = " + irc[nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("x0scal = " + rs[1][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("final f = " + rs[2][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("preldf = " + rs[3][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("nreldf = " + rs[4][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
+	      Preferences.debug("reldx = " + rs[5][nprob] + "\n", Preferences.DEBUG_ALGORITHM);
 	    } // if (nout != 0)
 
 	  } // for (irun = xscal1; irun <= xscal2; irun++)
@@ -1496,9 +1498,9 @@ private boolean testMode = false;
 	//
 	  else {
         System.out.println("XINIT - fatal error");
-        Preferences.debug("XINIT - fatal error\n");
+        Preferences.debug("XINIT - fatal error\n", Preferences.DEBUG_ALGORITHM);
         System.out.println("Illegal index nex = " + nex);
-        Preferences.debug("Illegal index nex = " + nex + "\n");
+        Preferences.debug("Illegal index nex = " + nex + "\n", Preferences.DEBUG_ALGORITHM);
         System.exit(-1);
 	  }
 
@@ -3740,9 +3742,9 @@ private boolean testMode = false;
 		  else {
 
 		    System.out.println("calcjTest - fatal error");
-		    Preferences.debug("calcjTest - fatal error\n");
+		    Preferences.debug("calcjTest - fatal error\n", Preferences.DEBUG_ALGORITHM);
 		    System.out.println("Illegal index nex = " + nex);
-		    Preferences.debug("Illegal index nex = " + nex + "\n");
+		    Preferences.debug("Illegal index nex = " + nex + "\n", Preferences.DEBUG_ALGORITHM);
 		    System.exit(-1);
 
 		  }
@@ -4254,9 +4256,9 @@ private boolean testMode = false;
 		  else {
 
 		    System.out.println("calcrTest - Fatal error");
-		    Preferences.debug("calcrTest - Fatal error\n");
+		    Preferences.debug("calcrTest - Fatal error\n", Preferences.DEBUG_ALGORITHM);
 		    System.out.println("Illegal problem index nex = " + nex);
-		    Preferences.debug("Illegal problem index nex = " + nex + "\n");
+		    Preferences.debug("Illegal problem index nex = " + nex + "\n", Preferences.DEBUG_ALGORITHM);
 		    System.exit(-1);
 
 		  }
@@ -6182,7 +6184,7 @@ private boolean testMode = false;
 	  ol = iv[outlev];
 
 	  if ( iv1 < 2 || 15 < iv1 ) {
-	    Preferences.debug( "IV(1) = " +  iv1 + "\n");
+	    Preferences.debug( "IV(1) = " +  iv1 + "\n", Preferences.DEBUG_ALGORITHM);
 	    return;
 	  }
 
@@ -6211,12 +6213,12 @@ private boolean testMode = false;
 	//
 	      if ( ol <= 0 ) {
 	         iv[needhd] = 0;
-	         Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n");
-	         Preferences.debug("nf = " + nf + "\n");
-	         Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n");
-	         Preferences.debug("reldf = " + reldf + "\n");
-	         Preferences.debug("preldf = " + preldf + "\n");
-	         Preferences.debug("v[reldx] = v["+ reldx + "] = " + v[reldx] + "\n");
+	         Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("nf = " + nf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("reldf = " + reldf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("preldf = " + preldf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("v[reldx] = v["+ reldx + "] = " + v[reldx] + "\n", Preferences.DEBUG_ALGORITHM);
 	      } // if (ol <= 0)
 	//
     //  Print long summary line.
@@ -6231,17 +6233,17 @@ private boolean testMode = false;
 		        nreldf = 0.0;
 		      }
 	
-		      Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n");
-		      Preferences.debug("nf = " + nf + "\n");
-		      Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n");
-		      Preferences.debug("reldf = " + reldf + "\n");
-	          Preferences.debug("preldf = " + preldf + "\n");
-	          Preferences.debug("v[reldx] = v["+ reldx + "] = " + v[reldx] + "\n");
-	          Preferences.debug("model[m] = model["+m+"] = " + model[m] + "\n");
-	          Preferences.debug("v[stppar] = v["+stppar+"] = " + v[stppar] + "\n");
-	          Preferences.debug("v[size] = v["+size+"] = " + v[size] + "\n");
-	          Preferences.debug("v[dstnrm] = v["+dstnrm+"] = " + v[dstnrm] + "\n");
-	          Preferences.debug("nreldf = " + nreldf + "\n");
+		      Preferences.debug("iv[niter] = iv["+niter+"] = " + iv[niter] + "\n", Preferences.DEBUG_ALGORITHM);
+		      Preferences.debug("nf = " + nf + "\n", Preferences.DEBUG_ALGORITHM);
+		      Preferences.debug("v[f] = v["+f+"] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
+		      Preferences.debug("reldf = " + reldf + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("preldf = " + preldf + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("v[reldx] = v["+ reldx + "] = " + v[reldx] + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("model[m] = model["+m+"] = " + model[m] + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("v[stppar] = v["+stppar+"] = " + v[stppar] + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("v[size] = v["+size+"] = " + v[size] + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("v[dstnrm] = v["+dstnrm+"] = " + v[dstnrm] + "\n", Preferences.DEBUG_ALGORITHM);
+	          Preferences.debug("nreldf = " + nreldf + "\n", Preferences.DEBUG_ALGORITHM);
 	      } // else print the long summary line
 	  } // if ((ol != 0) && (iv1 < 12)  && ((iv1 < 10) || (iv[prntit] != 0)))
 
@@ -6254,34 +6256,34 @@ private boolean testMode = false;
 	    return;
 	  }
 	  else if ( iv1 == 3) {
-	    Preferences.debug("X-convergence.\n");
+	    Preferences.debug("X-convergence.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 4 ) {
-	    Preferences.debug("Relative function convergence.\n");
+	    Preferences.debug("Relative function convergence.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 5 ) {
-	    Preferences.debug("X- and relative function convergence.\n");
+	    Preferences.debug("X- and relative function convergence.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 6 ) {
-	    Preferences.debug("Absolute function convergence.\n");
+	    Preferences.debug("Absolute function convergence.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 7 ) {
-	    Preferences.debug("Singular convergence.\n");
+	    Preferences.debug("Singular convergence.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 8 ) {
-	    Preferences.debug("False convergence.\n");
+	    Preferences.debug("False convergence.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 9 ) {
-	    Preferences.debug("Function evaluation limit.\n");
+	    Preferences.debug("Function evaluation limit.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 10 ) {
-	    Preferences.debug("Iteration limit.\n");
+	    Preferences.debug("Iteration limit.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 11 ) {
-	    Preferences.debug("Stopx.\n");
+	    Preferences.debug("Stopx.\n", Preferences.DEBUG_ALGORITHM);
 	  }
 	  else if ( iv1 == 14 ) {
-	    Preferences.debug("Bad parameters to ASSESS.\n");
+	    Preferences.debug("Bad parameters to ASSESS.\n", Preferences.DEBUG_ALGORITHM);
 	    return;
 	  }
 	//
@@ -6290,7 +6292,7 @@ private boolean testMode = false;
 	  else if ( iv1 == 12 || iv1 == 13 || iv1 == 15 ) {
         loop1: while(true) {
 	    if ( iv1 == 15 ) {
-	      Preferences.debug("J could not be computed.\n");
+	      Preferences.debug("J could not be computed.\n", Preferences.DEBUG_ALGORITHM);
 	      if ( 0 < iv[niter] ) {
 	        do180 = false;
 	        break loop1;
@@ -6298,12 +6300,13 @@ private boolean testMode = false;
 	    }
 
 	    if ( iv1 == 13 ) {
-	      Preferences.debug("Initial sum of squares overflows.\n");
+	      Preferences.debug("Initial sum of squares overflows.\n", Preferences.DEBUG_ALGORITHM);
 	    }
 
 	    if ( iv[x0prt] != 0 ) {
 	      for (i = 1; i <= p; i++) {
-	    	  Preferences.debug("i = " + i + " initial x[" + i + "] = " + x[i] + " d[" + i + "] = " + d[i] + "\n");
+	    	  Preferences.debug("i = " + i + " initial x[" + i + "] = " + x[i] + " d[" + i + "] = " + d[i] + "\n", 
+	    			  Preferences.DEBUG_ALGORITHM);
 	      }
 	    }
 
@@ -6318,9 +6321,9 @@ private boolean testMode = false;
 	    if ( ol == 0 ) {
 	      return;
 	    }
-        Preferences.debug("it = 0\n");
-	    Preferences.debug("nf = 1\n");
-	    Preferences.debug("v[" + f + "] = " + v[f] + "\n");
+        Preferences.debug("it = 0\n", Preferences.DEBUG_ALGORITHM);
+	    Preferences.debug("nf = 1\n", Preferences.DEBUG_ALGORITHM);
+	    Preferences.debug("v[" + f + "] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
 	    return;
         } //loop1: while(true)
 	  } // else if ( iv1 == 12 || iv1 == 13 || iv1 == 15 )
@@ -6350,19 +6353,21 @@ private boolean testMode = false;
 
 	         nf = iv[nfcall] - iv[nfcov];
 	         ng = iv[ngcall] - iv[ngcov];
-	         Preferences.debug("function v[f] = v["+f+"] = " + v[f] + "\n");
-	         Preferences.debug("v[reldx] = v[" + reldx + "] = " + v[reldx] + "\n");
-	         Preferences.debug("func evals nf = " + nf + "\n");
-	         Preferences.debug("grad evals ng = " + ng + "\n");
-	         Preferences.debug("preldf = " + preldf + "\n");
-	         Preferences.debug("nreldf = " + nreldf + "\n");
+	         Preferences.debug("function v[f] = v["+f+"] = " + v[f] + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("v[reldx] = v[" + reldx + "] = " + v[reldx] + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("func evals nf = " + nf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("grad evals ng = " + ng + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("preldf = " + preldf + "\n", Preferences.DEBUG_ALGORITHM);
+	         Preferences.debug("nreldf = " + nreldf + "\n", Preferences.DEBUG_ALGORITHM);
 
 	         if ( 0 < iv[nfcov] ) {
-	           Preferences.debug("Extra function evaluations for covariance iv[nfcov] = iv[" + nfcov + "] = " + iv[nfcov] + "\n");
+	           Preferences.debug("Extra function evaluations for covariance iv[nfcov] = iv[" + nfcov + "] = " +
+	        		   iv[nfcov] + "\n", Preferences.DEBUG_ALGORITHM);
 	         }
 
 	         if ( 0 < iv[ngcov] ) {
-	           Preferences.debug("Extra gradient evaluations for covariance = iv[ngcov] = iv[" + ngcov + "] = " + iv[ngcov] + "\n");
+	           Preferences.debug("Extra gradient evaluations for covariance = iv[ngcov] = iv[" + ngcov + "] = " +
+	        		   iv[ngcov] + "\n", Preferences.DEBUG_ALGORITHM);
 	         }
 	      } // if (iv[statpr] != 0)
 	} // if (do180)
@@ -6373,7 +6378,8 @@ private boolean testMode = false;
 	         g1 = iv[g];
 
 	         for (i = 1; i <= p; i++) {
-	           Preferences.debug("i = " + i + " final x[" + i + "] = " + x[i] + " d[" + i + "] = " + d[i] + " v[" + g1 + "] = " + v[g1] + "\n");
+	           Preferences.debug("i = " + i + " final x[" + i + "] = " + x[i] + " d[" + i + "] = " + d[i] +
+	        		   " v[" + g1 + "] = " + v[g1] + "\n", Preferences.DEBUG_ALGORITHM);
 	           g1 = g1 + 1;
 	         } // for (i = 1; i <= p; i++)
 
@@ -6389,26 +6395,26 @@ private boolean testMode = false;
 	      if ( cov1 < 0 ) {
 
 	        if ( -1 == cov1 ) {
-	          Preferences.debug("Indefinite covariance matrix\n");
+	          Preferences.debug("Indefinite covariance matrix\n", Preferences.DEBUG_ALGORITHM);
 	        }
 	        else if (-2 == cov1) {
-	          Preferences.debug("Oversize steps in computing covariance\n");
+	          Preferences.debug("Oversize steps in computing covariance\n", Preferences.DEBUG_ALGORITHM);
 	        }
 	      } // if (cov1 < 0)
 	      else if ( cov1 == 0 ) {
-	        Preferences.debug("Covariance matrix not computed\n");
+	        Preferences.debug("Covariance matrix not computed\n", Preferences.DEBUG_ALGORITHM);
 	      }
 	      else if ( 0 < cov1 ) {
 
 	        i = Math.abs ( iv[covreq] );
 	        if ( i <= 1 ) {
-	          Preferences.debug("Covariance = scale * H**-1 * (J'' * J) * H**-1\n");
+	          Preferences.debug("Covariance = scale * H**-1 * (J'' * J) * H**-1\n", Preferences.DEBUG_ALGORITHM);
 	        }
 	        else if ( i == 2 ) {
-	          Preferences.debug("Covariance = scale * inverse ( H )\n");
+	          Preferences.debug("Covariance = scale * inverse ( H )\n", Preferences.DEBUG_ALGORITHM);
 	        }
 	        else if ( 3 <= i ) {
-	          Preferences.debug("Covariance = scale * inverse ( J'' * J )\n");
+	          Preferences.debug("Covariance = scale * inverse ( J'' * J )\n", Preferences.DEBUG_ALGORITHM);
 	        }
 
 	        ii = cov1 - 1;
@@ -6416,9 +6422,9 @@ private boolean testMode = false;
 	          for (i = 1; i <= p; i++) {
 	            i1 = ii + 1;
 	            ii = ii + i;
-	            Preferences.debug("row i = " + i + "\n");
+	            Preferences.debug("row i = " + i + "\n", Preferences.DEBUG_ALGORITHM);
 	            for (j = i1; j <= ii; j++) {
-	            	Preferences.debug("v[" + j + "] = " + v[j] + "\n");
+	            	Preferences.debug("v[" + j + "] = " + v[j] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
 	          }
 	        } // if (o1 <= 0)
@@ -6427,9 +6433,9 @@ private boolean testMode = false;
 	          for ( i = 1;i <= p; i++) {
 	            i1 = ii + 1;
 	            ii = ii + i;
-	            Preferences.debug("row i = " + i + "\n");
+	            Preferences.debug("row i = " + i + "\n", Preferences.DEBUG_ALGORITHM);
 	            for (j = i1; j <= ii; j++) {
-	            	Preferences.debug("v[" + j + "] = " + v[j] + "\n");
+	            	Preferences.debug("v[" + j + "] = " + v[j] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
 	          }
 
@@ -9226,7 +9232,7 @@ private boolean testMode = false;
 	    if ( nn < n || n < p || p < 1) {
 	      iv[1] = 16;
 	      if ( pu != 0 ) {
-	        Preferences.debug("Bad nn, n or p: nn = " +  nn + " n = " + n + " p = " + p + "\n");
+	        Preferences.debug("Bad nn, n or p: nn = " +  nn + " n = " + n + " p = " + p + "\n", Preferences.DEBUG_ALGORITHM);
 	      }
 	      return;
 	    }
@@ -9264,10 +9270,11 @@ private boolean testMode = false;
 	      iv[1] = 17;
 
 	      if ( pu != 0 ) {
-	        Preferences.debug("(NN,N,P) changed from:\n");
-	        Preferences.debug("NN = " +  iv[oldnn] + " N = " +  iv[oldn] + " P = " + iv[oldp] + "\n");
-	        Preferences.debug("to:\n");
-	        Preferences.debug("NN = " +  nn + " N = " +  n + " P = " +  p + "\n");
+	        Preferences.debug("(NN,N,P) changed from:\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("NN = " +  iv[oldnn] + " N = " +  iv[oldn] + " P = " + iv[oldp] + "\n", 
+	        		Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("to:\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("NN = " +  nn + " N = " +  n + " P = " +  p + "\n", Preferences.DEBUG_ALGORITHM);
 	      } // if (pu != 0)
 	      return;
 
@@ -9276,7 +9283,7 @@ private boolean testMode = false;
 	    if ( iv1 < 1 || 11 < iv1 ) {
 	      iv[1] = 50;
 	      if (pu != 0) {
-	        Preferences.debug("iv1 = " + iv1 + " should be >=1 and <= 11\n");
+	        Preferences.debug("iv1 = " + iv1 + " should be >=1 and <= 11\n", Preferences.DEBUG_ALGORITHM);
 	      } // if (pu != 0)
 	      return;
 	    } // if ( iv1 < 1 || 11 < iv1 )
@@ -9311,7 +9318,7 @@ private boolean testMode = false;
 	  if (iv[inits] < 0 || iv[inits] > 2) {
 	         m = 18;
 	         if (pu != 0) {
-	         Preferences.debug("iv[inits] = " + iv[inits] + " should be >= 0 and <= 2\n");
+	         Preferences.debug("iv[inits] = " + iv[inits] + " should be >= 0 and <= 2\n", Preferences.DEBUG_ALGORITHM);
 	         }
 	  } // if (iv[inits] < 0 || iv[inits] > 2)
 	  
@@ -9322,7 +9329,8 @@ private boolean testMode = false;
 	    if (vk < vm[i] || vk > vx[i]) {
 	      m = k;
 	      if (pu != 0) {
-	    	  Preferences.debug(vn[i] + ".. v[" + k + "] = " + vk + " should be between " + vm[i] + " and " + vx[i] + "\n");
+	    	  Preferences.debug(vn[i] + ".. v[" + k + "] = " + vk + " should be between " + vm[i] +
+	    			  " and " + vx[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	      }
 	    } // if (vk < vm[i] || vk > vx[i])
 	    k = k + 1;
@@ -9338,7 +9346,8 @@ private boolean testMode = false;
 	      if ( v[i] <= 0.0 ) {
 	        k = i - jtol0;
 	        if (pu != 0)  {
-	        	Preferences.debug("jtol[" + k + "] = v[" + i + "] = " + v[i] + " should be positive\n");
+	        	Preferences.debug("jtol[" + k + "] = v[" + i + "] = " + v[i] +
+	        			" should be positive\n", Preferences.DEBUG_ALGORITHM);
 	        }
 	        m = i;
 	      } // if ( v[i] <= 0.0 )
@@ -9357,15 +9366,15 @@ private boolean testMode = false;
 
 	  if ( iv1 == 12 && iv[inits] != 0) {
 	    m = 1;
-	    Preferences.debug("nondefault values....inits..... iv(25) = " + iv[inits] + "\n");
+	    Preferences.debug("nondefault values....inits..... iv(25) = " + iv[inits] + "\n", Preferences.DEBUG_ALGORITHM);
 	  }
 
 	  if ( iv[dtype] != iv[dtype0] ) {
 	    if (m == 0) {
-	    	Preferences.debug(which[1]+which[2]+which[3]+"alues....\n");
+	    	Preferences.debug(which[1]+which[2]+which[3]+"alues....\n", Preferences.DEBUG_ALGORITHM);
 	    }
 	    m = 1;
-	    Preferences.debug("DTYPE..... IV(16) = " +  iv[dtype] + "\n");
+	    Preferences.debug("DTYPE..... IV(16) = " +  iv[dtype] + "\n", Preferences.DEBUG_ALGORITHM);
 	  }
 
 	  k = epslon;
@@ -9375,10 +9384,10 @@ private boolean testMode = false;
 
 	    if ( v[k] != v[l] ) {
 	      if (m == 0){
-	    	  Preferences.debug(which[1]+which[2]+which[3]+"alues....\n");	 
+	    	  Preferences.debug(which[1]+which[2]+which[3]+"alues....\n", Preferences.DEBUG_ALGORITHM);	 
 	      }
 	      m = 1;
-	      Preferences.debug(vn[i] + "..v[" + k + "] = " + v[k] + "\n");
+	      Preferences.debug(vn[i] + "..v[" + k + "] = " + v[k] + "\n", Preferences.DEBUG_ALGORITHM);
 	    } // if ( v[k] != v[l] )
 
 	    k = k + 1;
@@ -9396,17 +9405,17 @@ private boolean testMode = false;
 	  }
 
 	  if ( v[jtinit] <= 0.0 ) {
-	    Preferences.debug("(Initial) JTOL array\n");
+	    Preferences.debug("(Initial) JTOL array\n", Preferences.DEBUG_ALGORITHM);
 	    for (j = jtol1; j <= jtol0+p; j++) {
-	        Preferences.debug(v[j] + "\n");
+	        Preferences.debug(v[j] + "\n", Preferences.DEBUG_ALGORITHM);
 	    }
 	  }
 
 	  if ( v[d0init] <= 0.0 ) {
 	    k = jtol1 + p;
-	    Preferences.debug("(Initial) D0 array\n");
+	    Preferences.debug("(Initial) D0 array\n", Preferences.DEBUG_ALGORITHM);
 	    for (j = 0; j <= p-1; j++) {
-	        Preferences.debug(v[k+j] + "\n");
+	        Preferences.debug(v[k+j] + "\n", Preferences.DEBUG_ALGORITHM);
 	    }
 	  }
 
@@ -10109,7 +10118,7 @@ private boolean testMode = false;
 	    // M Display minute with a leading zero as necessary
 	    // S Display second with a leading zero as necessary
 	    formatter.format("%1$tB %1$td, %1$tY    %1$tZ %1$tH:%1$tM:%1$tS\n", dateTime);
-	    Preferences.debug(formatter.toString());
+	    Preferences.debug(formatter.toString(), Preferences.DEBUG_ALGORITHM);
 	}
 	
 	private double v2norm ( int p, double x[] ) {
