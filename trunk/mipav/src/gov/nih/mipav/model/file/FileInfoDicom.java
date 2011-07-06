@@ -544,7 +544,7 @@ public class FileInfoDicom extends FileInfoBase {
      * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
      */
     public final void setInfoFromTags() {
-
+        //TODO: This is not used but should be
         Iterator<FileDicomKey> itr = tagTable.getTagList().keySet().iterator();
         while(itr.hasNext()) {
             setInfoFromTag(tagTable.get(itr.next()));
