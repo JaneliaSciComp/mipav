@@ -362,7 +362,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			    	} // if (indexTable[i] == -1)
 			    } // for (i = 0; i < length; i++)	
 	        } // else if ((greenBuffer != null) && (blueBuffer != null))
-		    Preferences.debug("Colors found = " + colorsFound + "\n");
+		    Preferences.debug("Colors found = " + colorsFound + "\n", Preferences.DEBUG_ALGORITHM);
 		    pos = new double[2][colorsFound];
 		    groupNum = new int[colorsFound];
 		    if (useColorHistogram) {
@@ -473,9 +473,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		groupNum[i] = -1;
 	    	}
 	    	randomGen = new RandomNumberGen();
-	    	Preferences.debug("\n");
+	    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
 	    	for (i = 0; i < numberClusters; i++) {
-	    		Preferences.debug("Starting centroid " + (i+1) + "\n");
+	    		Preferences.debug("Starting centroid " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
 	    		do {
 	    			alreadyUsed = false;
 	    		    possibleStart = randomGen.genUniformRandomNum(0, nPoints - 1);
@@ -489,7 +489,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		groupNum[possibleStart] = i;
 	    		for (j = 0; j < nDims; j++) {
 	    		    centroidPos[j][i] = (double)pos[j][possibleStart];
-	    		    Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+	    		    Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", Preferences.DEBUG_ALGORITHM);
 	    		}
 	    	} // for (i = 0; i < numberClusters; i++)
 	    	startingPointIndex = null;
@@ -509,9 +509,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		startingPointIndex[i] = -1;
 	    	}
 	    	randomGen = new RandomNumberGen();
-	    	Preferences.debug("\n");
+	    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
 	    	for (i = 0; i < numberClusters; i++) {
-	    		Preferences.debug("Starting centroid " + (i+1) + "\n");
+	    		Preferences.debug("Starting centroid " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
 	    		do {
 	    			alreadyUsed = false;
 	    		    possibleStart = randomGen.genUniformRandomNum(0, nPoints - 1);
@@ -524,7 +524,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		startingPointIndex[i] = possibleStart;
 	    		for (j = 0; j < nDims; j++) {
 	    		    centroidStartPos[j][i] = (double)pos[j][possibleStart];
-	    		    Preferences.debug("Dimension " + (j+1) + " at " + centroidStartPos[j][i] + "\n");
+	    		    Preferences.debug("Dimension " + (j+1) + " at " + centroidStartPos[j][i] + "\n", 
+	    		    		Preferences.DEBUG_ALGORITHM);
 	    		}
 	    	} // for (i = 0; i < numberClusters; i++)
     		for (i = 0; i < subsampleNumber; i++) {
@@ -560,7 +561,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 iteration = 1;
                 while (changeOccurred){
                 	fireProgressStateChanged("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
-                	Preferences.debug("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
+                	Preferences.debug("Iteration = " + iteration + " on part 1 subsample number " + (i+1), 
+                			Preferences.DEBUG_ALGORITHM);
                 	iteration++;
                 	changeOccurred = false;
                 	for (j = 0; j < numberClusters; j++) {
@@ -658,20 +660,21 @@ public class AlgorithmKMeans extends AlgorithmBase {
         	    	clustersWithoutPoints = 0;
         	    	for (j = 0; j < numberClusters; j++) {
         	    		if (pointsInCluster[j] == 0) {
-        	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n");
+        	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
         	    			clustersWithoutPoints++;
         	    		}
         	    		else {
-	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
+	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n", Preferences.DEBUG_ALGORITHM);
 	        	    		for (k = 0; k < nDims; k++) {
 	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
-	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n");
+	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n", 
+	        	    					Preferences.DEBUG_ALGORITHM);
 	        	    		}
         	    		} // else 
         	    	}
                 } // while (changeOccurred)
                 Preferences.debug("There are " + clustersWithoutPoints +
-                		          " clusters without points on subsample number " + (i+1) + "\n");
+                		          " clusters without points on subsample number " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
                 s = -1;
                 for (j = 0; j < clustersWithoutPoints; j++) {
                 	s++;
@@ -741,12 +744,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     }
                 } // for (j = 0; j < clustersWithoutPoints; j++)
                 if (clustersWithoutPoints > 0) {
-                    	Preferences.debug("Redoing k means on subsample number " + (i+1) + "\n");
+                    	Preferences.debug("Redoing k means on subsample number " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
                     	changeOccurred = true;
                         iteration = 1;
                         while (changeOccurred){
                         	fireProgressStateChanged("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
-                        	Preferences.debug("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
+                        	Preferences.debug("Iteration = " + iteration + " on part 1 subsample number " + (i+1), 
+                        			Preferences.DEBUG_ALGORITHM);
                         	iteration++;
                         	changeOccurred = false;
                         	for (j = 0; j < numberClusters; j++) {
@@ -844,20 +848,23 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	    	clustersWithoutPoints = 0;
                 	    	for (j = 0; j < numberClusters; j++) {
                 	    		if (pointsInCluster[j] == 0) {
-                	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n");
+                	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n", 
+                	    					Preferences.DEBUG_ALGORITHM);
                 	    			clustersWithoutPoints++;
                 	    		}
                 	    		else {
-        	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
+        	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n", Preferences.DEBUG_ALGORITHM);
         	        	    		for (k = 0; k < nDims; k++) {
         	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
-        	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n");
+        	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n", 
+        	        	    					Preferences.DEBUG_ALGORITHM);
         	        	    		}
                 	    		} // else 
                 	    	}
                         } // while (changeOccurred)
                         Preferences.debug("There are " + clustersWithoutPoints +
-                        		          " clusters without points on subsample number " + (i+1) + "\n");
+                        		          " clusters without points on subsample number " + (i+1) + "\n", 
+                        		          Preferences.DEBUG_ALGORITHM);
                 } // if (clustersWithoutPoints > 0)
                 for (j = 0; j < numberClusters; j++) {
                 	for (k = 0; k < nDims; k++) {
@@ -900,7 +907,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 iteration = 1;
                 while (changeOccurred){
                 	fireProgressStateChanged("Iteration = " + iteration + " on part 2 subsample number " + (i+1));
-                	Preferences.debug("Iteration = " + iteration + " on part 2 subsample number " + (i+1));
+                	Preferences.debug("Iteration = " + iteration + " on part 2 subsample number " + (i+1), 
+                			Preferences.DEBUG_ALGORITHM);
                 	iteration++;
                 	changeOccurred = false;
                 	for (j = 0; j < numberClusters; j++) {
@@ -961,20 +969,22 @@ public class AlgorithmKMeans extends AlgorithmBase {
         	    	clustersWithoutPoints = 0;
         	    	for (j = 0; j < numberClusters; j++) {
         	    		if (pointsInCluster[j] == 0) {
-        	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n");
+        	    			Preferences.debug("Cluster centroid " + (j+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
         	    			clustersWithoutPoints++;
         	    		}
         	    		else {
-	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n");
+	        	    		Preferences.debug("Cluster centroid " + (j+1) + ":\n", Preferences.DEBUG_ALGORITHM);
 	        	    		for (k = 0; k < nDims; k++) {
 	        	    			centroidPos[k][j] = centroidPos[k][j]/pointsInCluster[j];
-	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n");
+	        	    			Preferences.debug("Dimension " + (k+1) + " at " + centroidPos[k][j] + "\n", 
+	        	    					Preferences.DEBUG_ALGORITHM);
 	        	    		}
         	    		} // else 
         	    	}
                 } // while (changeOccurred)
                 Preferences.debug("There are " + clustersWithoutPoints +
-                		          " clusters without points on subsample number " + (i+1) + "\n");	
+                		          " clusters without points on subsample number " + (i+1) + "\n", 
+                		          Preferences.DEBUG_ALGORITHM);	
                 for (j = 0; j < numberClusters; j++) {
                 	for (k = 0; k < nDims; k++) {
                 	    localFM[k][j][i] = centroidPos[k][j];
@@ -1029,13 +1039,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                }
 	            } // for (i = 0; i < subsampleNumber; i++)
             } // else not equalScale
-            Preferences.debug("Refinement algorithm returns inital centroids at:\n");
+            Preferences.debug("Refinement algorithm returns inital centroids at:\n", Preferences.DEBUG_ALGORITHM);
             
             for (i = 0; i < numberClusters; i++) {
-            	Preferences.debug("Initial centroid " + (i+1) + "\n");
+            	Preferences.debug("Initial centroid " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
             	for (j = 0; j < nDims; j++) {
             		centroidPos[j][i] = localFM[j][i][bestFMIndex];
-            		Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+            		Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", Preferences.DEBUG_ALGORITHM);
             	}
             }
                
@@ -1293,10 +1303,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	
     	changeOccurred = true;
     	iteration = 1;
-    	Preferences.debug("\n");
+    	Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
     	while (changeOccurred) {
     		fireProgressStateChanged("Iteration = " + iteration);
-    		Preferences.debug("Iteration = " + iteration + "\n");
+    		Preferences.debug("Iteration = " + iteration + "\n", Preferences.DEBUG_ALGORITHM);
     		iteration++;
     		changeOccurred = false;
     		for (i = 0; i < numberClusters; i++) {
@@ -1399,14 +1409,15 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    	clustersWithoutPoints = 0;
 		    	for (i = 0; i < numberClusters; i++) {
 		    		if (pointsInCluster[i] == 0) {
-		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
 		    			clustersWithoutPoints++;
 		    		}
 		    		else {
-			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
+			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
 			    		for (j = 0; j < nDims; j++) {
 			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
+			    					Preferences.DEBUG_ALGORITHM);
 			    		}
 		    		} // else
 		    	}	
@@ -1420,23 +1431,24 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    	clustersWithoutPoints = 0;
 		    	for (i = 0; i < numberClusters; i++) {
 		    		if (pointsInCluster[i] == 0) {
-		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
 		    			clustersWithoutPoints++;
 		    		}
 		    		else {
-			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n");
+			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
 			    		for (j = 0; j < nDims; j++) {
 			    			centroidPos[j][i] = centroidPos[j][i]/pointsInCluster[i];
-			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n");
+			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
+			    					Preferences.DEBUG_ALGORITHM);
 			    		}
 		    		} // else
 		    	}
 	    	} // else no colorHistogram
     	} // while (changeOccurred)
-    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");
+    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n", Preferences.DEBUG_ALGORITHM);
     	break;
     	case GLOBAL_K_MEANS:
-    		Preferences.debug("Finding centroid for 1 cluster\n");
+    		Preferences.debug("Finding centroid for 1 cluster\n", Preferences.DEBUG_ALGORITHM);
     		for (i = 0; i < nPoints; i++) {
 	    		groupNum[i] = 0;
 	    	}
@@ -1468,7 +1480,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		}
 	    	} // else no colorHistogram
 	    	for (presentClusters = 2; presentClusters <= numberClusters; presentClusters++) {
-	    		Preferences.debug("Present cluster number = " + presentClusters + "\n");
+	    		Preferences.debug("Present cluster number = " + presentClusters + "\n", Preferences.DEBUG_ALGORITHM);
 	    		fireProgressStateChanged("Present cluster number = " + presentClusters);
 	    		bestTotalMinDistSquared = Double.MAX_VALUE;
 	    	    for (initialClusterLocation = 0; initialClusterLocation < nPoints; initialClusterLocation++) {
@@ -1586,7 +1598,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    			    	clustersWithoutPoints = 0;
 	    			    	for (i = 0; i < presentClusters; i++) {
 	    			    		if (pointsInCluster[i] == 0) {
-	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
+	    			    					Preferences.DEBUG_ALGORITHM);
 	    			    			clustersWithoutPoints++;
 	    			    		}
 	    			    		else {
@@ -1605,7 +1618,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    			    	clustersWithoutPoints = 0;
 	    			    	for (i = 0; i < presentClusters; i++) {
 	    			    		if (pointsInCluster[i] == 0) {
-	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
+	    			    					Preferences.DEBUG_ALGORITHM);
 	    			    			clustersWithoutPoints++;
 	    			    		}
 	    			    		else {
@@ -1616,7 +1630,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    			    	}
 	    		    	} // else no colorHistogram
 	    	    	} // while (changeOccurred)
-	    	    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");	
+	    	    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n", 
+	    	    			Preferences.DEBUG_ALGORITHM);	
 	    	    	if (totalMinDistSquared < bestTotalMinDistSquared) {
 	    	    	    bestTotalMinDistSquared = totalMinDistSquared;
 	    	    	    for (i = 0; i < nDims; i++) {
@@ -1634,7 +1649,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	    }
     	break;
     	case FAST_GLOBAL_K_MEANS:
-    		Preferences.debug("Finding centroid for 1 cluster\n");
+    		Preferences.debug("Finding centroid for 1 cluster\n", Preferences.DEBUG_ALGORITHM);
     		for (i = 0; i < nPoints; i++) {
 	    		groupNum[i] = 0;
 	    	}
@@ -1682,7 +1697,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    	} // for (i = 0; i < nPoints; i++)	
 	    	}
 	    	for (presentClusters = 2; presentClusters <= numberClusters; presentClusters++) {
-	    		Preferences.debug("Present cluster number = " + presentClusters + "\n");
+	    		Preferences.debug("Present cluster number = " + presentClusters + "\n", Preferences.DEBUG_ALGORITHM);
 	    		fireProgressStateChanged("Present cluster number = " + presentClusters);
 	    		bnMax = -Double.MAX_VALUE;
 	    	    for (initialClusterLocation = 0; initialClusterLocation < nPoints; initialClusterLocation++) {
@@ -1819,7 +1834,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		    	clustersWithoutPoints = 0;
 	    		    	for (i = 0; i < presentClusters; i++) {
 	    		    		if (pointsInCluster[i] == 0) {
-	    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
+	    		    					Preferences.DEBUG_ALGORITHM);
 	    		    			clustersWithoutPoints++;
 	    		    		}
 	    		    		else {
@@ -1838,7 +1854,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		    	clustersWithoutPoints = 0;
 	    		    	for (i = 0; i < presentClusters; i++) {
 	    		    		if (pointsInCluster[i] == 0) {
-	    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n");
+	    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
+	    		    					Preferences.DEBUG_ALGORITHM);
 	    		    			clustersWithoutPoints++;
 	    		    		}
 	    		    		else {
@@ -1867,7 +1884,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    	    	}	
 	    	    	}
 	        	} // while (changeOccurred)
-	        	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n");
+	        	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n", 
+	        			Preferences.DEBUG_ALGORITHM);
 	    	    
 	    	} // for (presentClusters = 2; presentClusters <= numberClusters; presentClusters++)
 	    	
@@ -1889,7 +1907,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		}
     	    new ViewJFrameImage(image);
     	    
-    	    Preferences.debug("Putting results in " + resultsFileName + "\n");
+    	    Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
         	System.out.println("Putting results in " + resultsFileName);
     	    file = new File(resultsFileName);
         	try {
@@ -1999,7 +2017,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	} // if ((image != null) && (nDims >= 2) && (nDims <= 3) && (numberClusters <= 9)
  
     	
-    	Preferences.debug("Putting results in " + resultsFileName + "\n");
+    	Preferences.debug("Putting results in " + resultsFileName + "\n", Preferences.DEBUG_ALGORITHM);
     	System.out.println("Putting results in " + resultsFileName);
     	file = new File(resultsFileName);
     	try {
