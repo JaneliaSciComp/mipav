@@ -499,7 +499,7 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
                 slicesDone++;
                 fireProgressStateChanged(slicesDone * 100 / sliceNum);
                 nPts = tempContour.size();
-                Preferences.debug(" Points = " + nPts);
+                Preferences.debug(" Points = " + nPts, Preferences.DEBUG_ALGORITHM);
 
                 if (nPts < 8) {
                     break;
@@ -526,7 +526,7 @@ public class AlgorithmGVF extends AlgorithmBase implements AlgorithmInterface {
         tempContour = new VOIContour(resultContour, -1);
         slicesDone = sliceNum - stSlice;
         fireProgressStateChanged(slicesDone * 100 / sliceNum);
-        Preferences.debug("Going down");
+        Preferences.debug("Going down", Preferences.DEBUG_ALGORITHM);
 
         if (slice >= 0) {
 
