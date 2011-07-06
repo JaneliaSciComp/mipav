@@ -2270,7 +2270,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++)
 
         if (threadStopped) {
-            Preferences.debug("Stopped after iteration " + (iters - 1) + " due to cancellation\n");
+            Preferences.debug("Stopped after iteration " + (iters - 1) + " due to cancellation\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         fireProgressStateChanged("Last iteration was = " + (iters - 1));
@@ -2984,7 +2985,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         } // for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++)
 
         if (threadStopped) {
-            Preferences.debug("Stopped during iteration " + (iters - 1) + " due to cancellation\n");
+            Preferences.debug("Stopped during iteration " + (iters - 1) + " due to cancellation\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         fireProgressStateChanged("Last iteration was = " + (iters - 1));
