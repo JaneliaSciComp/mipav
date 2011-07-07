@@ -120,7 +120,7 @@ public class BoundingBoxEffect extends ShaderEffect
         	kCProgram.GetUC("AvgColor").GetData()[2] = (color.B + background.B)/2f;        	
         }		
 	}
-
+/*
 	private boolean method = false;
 	public void toggleMethod()
 	{
@@ -130,5 +130,5 @@ public class BoundingBoxEffect extends ShaderEffect
         {
         	kCProgram.GetUC("METHOD").GetData()[0] = method ? 1 : 0;
         }
-	}
+	} */
 }

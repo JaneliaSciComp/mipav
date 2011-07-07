@@ -11,6 +11,7 @@ import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
+import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -19,6 +20,9 @@ public class SquareClassificationWidget extends ClassificationWidget
 
 	private static final long serialVersionUID = -4180814068815939724L;
 
+	private float m_fCenterX = 0.5f;
+	private float m_fCenterY = 0.5f;
+	
 	public SquareClassificationWidget(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
     {
         super( kTMin, kTMax, iWidth, iHeight );
@@ -29,10 +33,9 @@ public class SquareClassificationWidget extends ClassificationWidget
     {
         super(kWidget);
 
-        m_kBottomOutline = new TriMesh(new VertexBuffer(kWidget.m_kBottomOutline.VBuffer),
-                new IndexBuffer(kWidget.m_kBottomOutline.IBuffer));
         m_kBottomTri = new TriMesh(new VertexBuffer(kWidget.m_kBottomTri.VBuffer),
                 new IndexBuffer(kWidget.m_kBottomTri.IBuffer));
+        m_kOutline = new Polyline( m_kBottomTri.VBuffer, true, true );
         
         m_kBottomTriEffect = new ClassificationWidgetEffect( kWidget.m_kBottomTriEffect ); 
 
@@ -45,33 +48,44 @@ public class SquareClassificationWidget extends ClassificationWidget
                 new IndexBuffer(kWidget.m_kLowerSphere.IBuffer));
     }
     
+	public boolean Pick( int iX, int iY )
+	{
+		boolean bPicked = false;
+		m_kPicked = null;
+		float fX = calcObjX(iX);
+		float fY = calcObjY(iY);
+		if ( (fX >= m_kBottomTri.VBuffer.GetPosition3fX(0)) && (fX <= m_kBottomTri.VBuffer.GetPosition3fX(1)) &&
+				(fY >= m_kBottomTri.VBuffer.GetPosition3fY(0)) && (fY <= m_kBottomTri.VBuffer.GetPosition3fY(2)) )
+		{
+			m_kPicked = m_kBottomTri;
+			//System.err.println( "Picked Square" );
+			bPicked = true;
+		}
+		return super.Pick(iX,iY,bPicked);
+	}
+    
     @Override
 	public boolean processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e ) 
     {        
-        float fXOld = ((float)iX0ld/(float)m_iWidth);
-        float fYOld = ((float)m_iHeight-(float)iYOld)/m_iHeight;
-        float fX = ((float)e.getX()/(float)m_iWidth);
-        float fY = ((float)m_iHeight-(float)e.getY())/m_iHeight;
         if ( iButton == MouseEvent.BUTTON1 )
         {
-            if ( (m_kPicked == m_kBottomOutline) || (m_kPicked == m_kBottomTri) )
+            if ( m_kPicked == m_kBottomTri )
             {
-                ShiftSquare( fX-fXOld, fY-fYOld );
+                ShiftSquare( e );
             }
             else if ( (m_kPicked == m_kLowerSphere) || (m_kPicked == m_kUpperSphere) )
             {
-                //ScaleRectangle( fX-fXOld, fY-fYOld, (m_kPicked == m_kLowerSphere) );
-                ScaleRectangle( e.getX()/(float)m_iWidth, (m_iHeight - e.getY())/(float)m_iHeight, (m_kPicked == m_kLowerSphere) );
+                ScaleRectangle( e, (m_kPicked == m_kLowerSphere) );
             }
             else if ( m_kPicked == m_kMiddleSphere )
             {
-                ShiftMid(fX-fXOld, fY-fYOld);
+                ShiftMid(e);
             }
             return false;
         }
         return false;
     }
-
+/*
     public void ScaleRectangle( TriMesh kShape, TriMesh kOutline )
     {
         float fThickness = 1.0f/m_iWidth;
@@ -119,7 +133,7 @@ public class SquareClassificationWidget extends ClassificationWidget
 
         m_kWidget.UpdateGS();
     }
-
+*/
 
     @Override
 	public void updateDisplay()
@@ -131,20 +145,18 @@ public class SquareClassificationWidget extends ClassificationWidget
             float fY1 = kMidLine.Y;
             float fX2 = fX1;
             float fY2 = fY1;
-            float fTX = m_kTMin.X + fX1 * (m_kTMax.X - m_kTMin.X);
-            float fTY = m_kTMin.Y + fY1 * (m_kTMax.Y - m_kTMin.Y);
-            m_kBottomTriEffect.SetMidLine( fTX, fTY, fTX, fTY );
+            m_kBottomTriEffect.SetMidLine( calcTCoordX(fX1), calcTCoordY(fY1), calcTCoordX(fX1), calcTCoordY(fY1) );
 
             fX1 = m_kBottomTri.VBuffer.GetTCoord2fX(0,0);
             fY1 = m_kBottomTri.VBuffer.GetTCoord2fY(0,0);
-            fX2 = m_kBottomTri.VBuffer.GetTCoord2fX(0,2);
-            fY2 = m_kBottomTri.VBuffer.GetTCoord2fY(0,2);
+            fX2 = m_kBottomTri.VBuffer.GetTCoord2fX(0,3);
+            fY2 = m_kBottomTri.VBuffer.GetTCoord2fY(0,3);
             m_kBottomTriEffect.SetLeftLine( fX1, fY1, fX2, fY2 );
 
             fX1 = m_kBottomTri.VBuffer.GetTCoord2fX(0,1);
             fY1 = m_kBottomTri.VBuffer.GetTCoord2fY(0,1);
-            fX2 = m_kBottomTri.VBuffer.GetTCoord2fX(0,3);
-            fY2 = m_kBottomTri.VBuffer.GetTCoord2fY(0,3);
+            fX2 = m_kBottomTri.VBuffer.GetTCoord2fX(0,2);
+            fY2 = m_kBottomTri.VBuffer.GetTCoord2fY(0,2);
             m_kBottomTriEffect.SetRightLine( fX1, fY1, fX2, fY2 );
             
             m_kBottomTriEffect.UpdateColor();
@@ -160,20 +172,15 @@ public class SquareClassificationWidget extends ClassificationWidget
         
         IndexBuffer kIBuffer = (IndexBuffer)in.readObject();
         VertexBuffer kVBuffer = (VertexBuffer)in.readObject();
-        m_kBottomOutline = new TriMesh( kVBuffer, kIBuffer );
-        m_kBottomOutline.AttachEffect( new VertexColor3Effect() );
-        m_kBottomOutline.SetName("BottomOutline");
-        m_kWidget.AttachChild(m_kBottomOutline);
-
-        kIBuffer = (IndexBuffer)in.readObject();
-        kVBuffer = (VertexBuffer)in.readObject();
         m_kBottomTri = new TriMesh( kVBuffer, kIBuffer );
         m_kBottomTriEffect = (ClassificationWidgetEffect)in.readObject();
         m_kBottomTri.AttachEffect( m_kBottomTriEffect );
         m_kBottomTri.SetName("BottomTri");
         m_kWidget.AttachChild(m_kBottomTri);
 
-        ScaleRectangle( m_kBottomTri, m_kBottomOutline );
+        m_kOutline = new Polyline( m_kBottomTri.VBuffer, true, true );
+        m_kOutline.AttachEffect( new VertexColor3Effect() );
+        m_kWidget.AttachChild(m_kOutline);
         
 
         kIBuffer = (IndexBuffer)in.readObject();
@@ -182,7 +189,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(3));
+        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
 
         kIBuffer = (IndexBuffer)in.readObject();
         kVBuffer = (VertexBuffer)in.readObject();
@@ -203,120 +210,76 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kMiddleSphere.Local.SetTranslate( kTranslate );
     }
     
-    private void ShiftMid( float fX, float fY )
+    private void ShiftMid( MouseEvent e )
     {      
-        Vector3f kCenter = m_kMiddleSphere.Local.GetTranslate();
-        if ( fX < 0 )
-        {
-            if ( (kCenter.X + fX) < m_kBottomTri.VBuffer.GetPosition3fX(0) )
-            {
-                kCenter.X = m_kBottomTri.VBuffer.GetPosition3fX(0);
-            }
-            else
-            {
-                kCenter.X += fX;
-            }
-        }
-        if ( fX > 0 )
-        {
-            if ( (kCenter.X + fX) > m_kBottomTri.VBuffer.GetPosition3fX(1) )
-            {
-                kCenter.X = m_kBottomTri.VBuffer.GetPosition3fX(1);
-            }
-            else
-            {
-                kCenter.X += fX;
-            }
-        }  
-        if ( fY < 0 )
-        {
-            if ( (kCenter.Y + fY) < m_kBottomTri.VBuffer.GetPosition3fY(0) )
-            {
-                kCenter.Y = m_kBottomTri.VBuffer.GetPosition3fY(0);
-            }
-            else
-            {
-                kCenter.Y += fY;
-            }
-        }
-        if ( fY > 0 )
-        {
-            if ( (kCenter.Y + fY) > m_kBottomTri.VBuffer.GetPosition3fY(2) )
-            {
-                kCenter.Y = m_kBottomTri.VBuffer.GetPosition3fY(2);
-            }
-            else
-            {
-                kCenter.Y += fY;
-            }
-        }
+    	float fX = calcObjX(e.getX()); 
+    	float fY = calcObjY(e.getY()); 
+    	Vector3f kCenter = m_kMiddleSphere.Local.GetTranslate();
+        fX = Math.max( fX, m_kBottomTri.VBuffer.GetPosition3fX(0) );
+        fX = Math.min( fX, m_kBottomTri.VBuffer.GetPosition3fX(1) );
+        fY = Math.max( fY, m_kBottomTri.VBuffer.GetPosition3fY(0) );
+        fY = Math.min( fY, m_kBottomTri.VBuffer.GetPosition3fY(2) );
+        kCenter.X = fX;
+        kCenter.Y = fY;
+        m_fCenterX = (fX - m_kBottomTri.VBuffer.GetPosition3fX(0)) / 
+        (m_kBottomTri.VBuffer.GetPosition3fX(1) - m_kBottomTri.VBuffer.GetPosition3fX(0));
+        m_fCenterY = (fY - m_kBottomTri.VBuffer.GetPosition3fY(0)) / 
+        (m_kBottomTri.VBuffer.GetPosition3fY(2) - m_kBottomTri.VBuffer.GetPosition3fY(0));
         m_kWidget.UpdateGS();
     }
     
-    private void writeObject(java.io.ObjectOutputStream out)
-    throws IOException 
-    {
-        out.writeObject( m_kBottomOutline.IBuffer );
-        out.writeObject( m_kBottomOutline.VBuffer );
-
-        out.writeObject( m_kBottomTri.IBuffer );
-        out.writeObject( m_kBottomTri.VBuffer );
-        out.writeObject(m_kBottomTriEffect); 
-
-        out.writeObject( m_kUpperSphere.IBuffer );
-        out.writeObject( m_kUpperSphere.VBuffer );
-
-        out.writeObject( m_kLowerSphere.IBuffer );
-        out.writeObject( m_kLowerSphere.VBuffer );
-
-        out.writeObject( m_kMiddleSphere.IBuffer );
-        out.writeObject( m_kMiddleSphere.VBuffer );
-        out.writeObject( m_kMiddleSphere.Local.GetTranslate() );
-    }
     
     protected void CreateSquare(float fX, float fY, String kTexName)
     {
-        float fSize = .1f;
+        float fSize = .2f;
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
-        StandardMesh kSM = new StandardMesh(kAttributes);
-        m_kBottomOutline = kSM.Rectangle(2,2,1.0f,1.0f);
+        kAttributes.SetTChannels(0,2);
+        IndexBuffer kIBuffer = new IndexBuffer(6);
+        int[] aiIndexData = kIBuffer.GetData();
+        aiIndexData[0] = 0;
+        aiIndexData[1] = 1;
+        aiIndexData[2] = 2;
+        aiIndexData[3] = 0;
+        aiIndexData[4] = 2;
+        aiIndexData[5] = 3;        
 
-        VertexBuffer kVBuffer = m_kBottomOutline.VBuffer;
+        VertexBuffer kVBuffer = new VertexBuffer(kAttributes, 4 );
         kVBuffer.SetPosition3(0, fX-fSize, fY-fSize, 0.1f);
         kVBuffer.SetColor3( 0, 0, 1.0f, 0.01f, 0.01f );
+        kVBuffer.SetTCoord2(0, 0, calcTCoordX(fX-fSize), calcTCoordY(fY-fSize));
 
         kVBuffer.SetPosition3(1, fX+fSize, fY-fSize, 0.1f);
         kVBuffer.SetColor3( 0, 1, 1.0f, 0.01f, 0.01f  );
+        kVBuffer.SetTCoord2(0, 1, calcTCoordX(fX+fSize), calcTCoordY(fY-fSize));
 
-        kVBuffer.SetPosition3(2, fX-fSize, fY+fSize, 0.1f);
-        kVBuffer.SetColor3( 0, 2, 1.0f, 0.01f, 0.01f  );
+        kVBuffer.SetPosition3(2, fX+fSize, fY+fSize, 0.1f);
+        kVBuffer.SetColor3( 0, 2, 0f, 0f, 1f  );
+        kVBuffer.SetTCoord2(0, 2, calcTCoordX(fX+fSize), calcTCoordY(fY+fSize));
 
-        kVBuffer.SetPosition3(3, fX+fSize, fY+fSize, 0.1f);
+        kVBuffer.SetPosition3(3, fX-fSize, fY+fSize, 0.1f);
         kVBuffer.SetColor3( 0, 3, 1.0f, 0.01f, 0.01f  );
-
-        m_kBottomOutline.AttachEffect( new VertexColor3Effect() );
-        m_kBottomOutline.SetName("BottomOutline");
-        m_kWidget.AttachChild(m_kBottomOutline);
-
-        kAttributes = new Attributes();
-        kAttributes.SetPChannels(3);
-        kAttributes.SetTChannels(0,2);
-        kSM = new StandardMesh(kAttributes);
-        m_kBottomTri = kSM.Rectangle(2,2,1.0f,1.0f);
+        kVBuffer.SetTCoord2(0, 3, calcTCoordX(fX-fSize), calcTCoordY(fY+fSize));
+        
+        m_kBottomTri = new TriMesh( kVBuffer, kIBuffer );
+        
         m_kBottomTriEffect = new ClassificationWidgetEffect( kTexName );
         m_kBottomTri.AttachEffect( m_kBottomTriEffect );
         m_kBottomTri.SetName("BottomTri");
         m_kWidget.AttachChild(m_kBottomTri);
-
-        ScaleRectangle( m_kBottomTri, m_kBottomOutline );
+        
+        m_kOutline = new Polyline( m_kBottomTri.VBuffer, true, true );
+        m_kOutline.AttachEffect( new VertexColor3Effect() );
+        m_kWidget.AttachChild(m_kOutline);
+        
+        
         
         kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
-        kSM = new StandardMesh(kAttributes);
-        m_kUpperSphere = kSM.Sphere(10,10,0.02f);
+        StandardMesh kSM = new StandardMesh(kAttributes);
+        m_kUpperSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kUpperSphere.VBuffer.GetVertexQuantity(); i++ )
         {
             m_kUpperSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
@@ -324,10 +287,11 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(3));
+        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
+        m_kUpperSphere.UpdateGS( );
         
 
-        m_kLowerSphere = kSM.Sphere(10,10,0.02f);
+        m_kLowerSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kLowerSphere.VBuffer.GetVertexQuantity(); i++ )
         {
             m_kLowerSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
@@ -336,13 +300,13 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
         m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
+        m_kLowerSphere.UpdateGS( );
 
-        m_kMiddleSphere = kSM.Sphere(10,10,0.02f);
+        m_kMiddleSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kMiddleSphere.VBuffer.GetVertexQuantity(); i++ )
         {
             m_kMiddleSphere.VBuffer.SetColor3(0, i, 0f, 1f, 0f);
         }
-        //m_kMiddleSphere.Local.SetScale(.01f, .01f, .01f);
         m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );
@@ -351,148 +315,149 @@ public class SquareClassificationWidget extends ClassificationWidget
         float fYPos = (m_kBottomTri.VBuffer.GetPosition3fY(0) + m_kBottomTri.VBuffer.GetPosition3fY(2))/2.0f;
         float fZPos = m_kBottomTri.VBuffer.GetPosition3fZ(0);
         m_kMiddleSphere.Local.SetTranslate( fXPos, fYPos, fZPos );
+        m_kMiddleSphere.UpdateGS( );
+        
+        m_kWidget.UpdateGS();
     }
     
-    protected void ScaleRectangle(float fX, float fY, boolean bLower)
+    protected void ScaleRectangle(MouseEvent e, boolean bLower)
     {
-
-        float fCenterX = (m_kBottomTri.VBuffer.GetPosition3fX(0) + m_kBottomTri.VBuffer.GetPosition3fX(1))/2.0f;
-        float fCenterY = (m_kBottomTri.VBuffer.GetPosition3fY(0) + m_kBottomTri.VBuffer.GetPosition3fY(2))/2.0f;
-        Vector3f kStart;
-        if ( bLower )
-        {
-            kStart = m_kLowerSphere.Local.GetTranslate();
-        }
+    	float fX = calcObjX(e.getX()); 
+    	float fY = calcObjY(e.getY()); 
+    	fX = Math.max( fX, m_kBottomTri.VBuffer.GetPosition3fX(0) );
+    	fX = Math.min( fX, RIGHT_EDGE );
+        float centerX = (m_kBottomTri.VBuffer.GetPosition3fX( 0 ) + m_kBottomTri.VBuffer.GetPosition3fX( 1 ))/2f;
+        float centerY = (m_kBottomTri.VBuffer.GetPosition3fY( 0 ) + m_kBottomTri.VBuffer.GetPosition3fY( 2 ))/2f;
+        float diffX = fX - centerX;
+        float diffY = fY - centerY;
+    	if ( bLower )
+    	{
+        	fY = Math.max( fY, BOTTOM_EDGE );
+        	fY = Math.min( fY, m_kBottomTri.VBuffer.GetPosition3fY(2) );
+        	diffY = centerY - fY;
+    	}
         else
         {
-            kStart = m_kUpperSphere.Local.GetTranslate();
+        	fY = Math.min( fY, TOP_EDGE );
+        	fY = Math.max( fY, m_kBottomTri.VBuffer.GetPosition3fY(0) );
+        	diffY = fY - centerY;
         }
 
-		float fScaleX = (fX-fCenterX) / (kStart.X-fCenterX);
-		float fScaleY = (fY-fCenterY) / (kStart.Y-fCenterY);
-		
-		if ( (fScaleX == 1) && (fScaleY == 1) )
-		{
-			return;
-		}
-		if( (fScaleX <= 0.001) || (fScaleY <= 0.001) )
-		{
-			return;
-		}
-        
-        
-        float fNewX, fNewY;
-        for ( int i = 0; i < 4; i++ )
+        if ( centerX - diffX < LEFT_EDGE )
         {
-            fNewX = m_kBottomOutline.VBuffer.GetPosition3fX(i) - fCenterX;
-            fNewY = m_kBottomOutline.VBuffer.GetPosition3fY(i) - fCenterY;
-            fNewX *= fScaleX;
-            fNewY *= fScaleY;
-            fNewX += fCenterX;
-            fNewY += fCenterY;
-            fNewX = Math.max( fNewX, 0 );
-            fNewX = Math.min( fNewX, 1 );
-            fNewY = Math.max( fNewY, 0 );
-            fNewY = Math.min( fNewY, 1 );
-            m_kBottomOutline.VBuffer.SetPosition3( i, fNewX, fNewY,
-                    m_kBottomOutline.VBuffer.GetPosition3fZ(i) );
+        	diffX = centerX - LEFT_EDGE;
         }
+        if ( centerX + diffX > RIGHT_EDGE )
+        {
+        	diffX = RIGHT_EDGE - centerX;
+        }
+        if ( centerY - diffY < BOTTOM_EDGE )
+        {
+        	diffY = centerY - BOTTOM_EDGE;
+        }
+        if ( centerY + diffY > TOP_EDGE )
+        {
+        	diffY = TOP_EDGE - centerY;
+        }
+
         
-        ScaleRectangle( m_kBottomTri, m_kBottomOutline );        
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(3));
+        Vector3f kPos = m_kBottomTri.VBuffer.GetPosition3(0);
+		kPos.X = centerX - diffX;
+		kPos.Y = centerY - diffY;
+		m_kBottomTri.VBuffer.SetPosition3(0, kPos);
+		m_kBottomTri.VBuffer.SetTCoord2(0, 0, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+
+		kPos.X = centerX + diffX;
+		kPos.Y = centerY - diffY;
+		m_kBottomTri.VBuffer.SetPosition3(1, kPos);
+		m_kBottomTri.VBuffer.SetTCoord2(0, 1, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		
+		kPos.X = centerX + diffX;
+		kPos.Y = centerY + diffY;
+		m_kBottomTri.VBuffer.SetPosition3(2, kPos);
+		m_kBottomTri.VBuffer.SetTCoord2(0, 2, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		
+		kPos.X = centerX - diffX;
+		kPos.Y = centerY + diffY;
+		m_kBottomTri.VBuffer.SetPosition3(3, kPos);
+		m_kBottomTri.VBuffer.SetTCoord2(0, 3, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+        m_kBottomTri.VBuffer.Release();
+		
+              
+        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
         m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
 
+        fX = m_kBottomTri.VBuffer.GetPosition3fX(0) + m_fCenterX * 
+        (m_kBottomTri.VBuffer.GetPosition3fX(1) - m_kBottomTri.VBuffer.GetPosition3fX(0));
+        fY = m_kBottomTri.VBuffer.GetPosition3fY(0) + m_fCenterY * 
+        (m_kBottomTri.VBuffer.GetPosition3fY(2) - m_kBottomTri.VBuffer.GetPosition3fY(0));
+
         Vector3f kCenter = m_kMiddleSphere.Local.GetTranslate();
-        kCenter.X -= fCenterX;
-        kCenter.Y -= fCenterY;
-        kCenter.X *= fScaleX;
-        kCenter.Y *= fScaleY;
-        kCenter.X += fCenterX;
-        kCenter.Y += fCenterY;
-
-        if ( kCenter.X < m_kBottomTri.VBuffer.GetPosition3fX(0) )
-        {
-            kCenter.X = m_kBottomTri.VBuffer.GetPosition3fX(0);
-        }
-        if ( kCenter.X > m_kBottomTri.VBuffer.GetPosition3fX(1) )
-        {
-            kCenter.X = m_kBottomTri.VBuffer.GetPosition3fX(1);
-        }
-        if ( kCenter.Y < m_kBottomTri.VBuffer.GetPosition3fY(0) )
-        {
-            kCenter.Y = m_kBottomTri.VBuffer.GetPosition3fY(0);
-        }
-        if ( kCenter.Y > m_kBottomTri.VBuffer.GetPosition3fY(2) )
-        {
-            kCenter.Y = m_kBottomTri.VBuffer.GetPosition3fY(2);
-        }
-
+        kCenter.X = fX;
+        kCenter.Y = fY;
         
-        m_kBottomOutline.VBuffer.Release();
-        m_kBottomTri.VBuffer.Release();
-        m_kUpperSphere.VBuffer.Release();
-        m_kLowerSphere.VBuffer.Release();
-        m_kMiddleSphere.VBuffer.Release();
+        m_kWidget.UpdateGS();
     }
 
-    protected void ShiftSquare(float fX, float fY)
+    protected void ShiftSquare( MouseEvent e )
     {
-        
-        float fNewXR = m_kBottomOutline.VBuffer.GetPosition3fX(1);
-        float fNewXL = m_kBottomOutline.VBuffer.GetPosition3fX(0);
-        if ( fX < 0 )
+        float fX = 0, fY = 0;
+        for ( int i = 0; i < m_kBottomTri.VBuffer.GetVertexQuantity(); i++ )
         {
-            if ( (fNewXL + fX) < 0 )
-            {
-                fX = 0 - fNewXL;
-            }
+        	fX += m_kBottomTri.VBuffer.GetPosition3fX(i);
+        	fY += m_kBottomTri.VBuffer.GetPosition3fY(i);
         }
-        if ( fX > 0 )
+        fX /= m_kBottomTri.VBuffer.GetVertexQuantity();
+        fY /= m_kBottomTri.VBuffer.GetVertexQuantity();
+
+        float fNewGCX = e.getX() + m_kMouseOffset.X;
+        fNewGCX = calcObjX( fNewGCX );
+        float fNewGCY = e.getY() + m_kMouseOffset.Y;
+        fNewGCY = calcObjY( fNewGCY );
+
+        float fDiffX = fNewGCX - fX;
+        float fDiffY = fNewGCY - fY;
+
+        float fNewXL = m_kBottomTri.VBuffer.GetPosition3fX(0);
+        float fNewXR = m_kBottomTri.VBuffer.GetPosition3fX(1);
+        if ( fNewXR + fDiffX > RIGHT_EDGE )
         {
-            if ( (fNewXR + fX) > 1 )
-            {
-                fX = 1 - fNewXR;
-            }
-        }     
-        
-        float fNewYU = m_kBottomOutline.VBuffer.GetPosition3fY(2);
-        float fNewYL = m_kBottomOutline.VBuffer.GetPosition3fY(0);
-        if ( fY < 0 )
-        {
-            if ( (fNewYL + fY) < 0 )
-            {
-                fY = 0 - fNewYL;
-            }
+        	fDiffX = RIGHT_EDGE - fNewXR;
         }
-        if ( fY > 0 )
+        if ( fNewXL + fDiffX < LEFT_EDGE )
         {
-            if ( (fNewYU + fY) > 1 )
-            {
-                fY = 1 - fNewYU;
-            }
-        }   
+        	fDiffX = LEFT_EDGE - fNewXL;
+        }
+
+        float fNewYB = m_kBottomTri.VBuffer.GetPosition3fY(0);
+        float fNewYT = m_kBottomTri.VBuffer.GetPosition3fY(2);
+        if ( fNewYB + fDiffY < BOTTOM_EDGE )
+        {
+        	fDiffY = BOTTOM_EDGE - fNewYB;
+        }
+        if ( fNewYT + fDiffY > TOP_EDGE )
+        {
+        	fDiffY = TOP_EDGE - fNewYT;
+        }
         
         float fNewX, fNewY;
-        for ( int i = 0; i < m_kBottomOutline.VBuffer.GetVertexQuantity(); i++ )
+        for ( int i = 0; i < m_kBottomTri.VBuffer.GetVertexQuantity(); i++ )
         {
-            fNewX = m_kBottomOutline.VBuffer.GetPosition3fX(i) + fX;
-            fNewY = m_kBottomOutline.VBuffer.GetPosition3fY(i) + fY;
-            m_kBottomOutline.VBuffer.SetPosition3( i, fNewX, fNewY,
-                m_kBottomOutline.VBuffer.GetPosition3fZ(i) );
+            fNewX = m_kBottomTri.VBuffer.GetPosition3fX(i) + fDiffX;
+            fNewY = m_kBottomTri.VBuffer.GetPosition3fY(i) + fDiffY;
+            m_kBottomTri.VBuffer.SetPosition3( i, fNewX, fNewY,
+            		m_kBottomTri.VBuffer.GetPosition3fZ(i) );
+            m_kBottomTri.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
         }
-        
-        ScaleRectangle( m_kBottomTri, m_kBottomOutline );        
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(3));
+             
+        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
         m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
 
         Vector3f kTranslate = m_kMiddleSphere.Local.GetTranslate(); 
-        m_kMiddleSphere.Local.SetTranslate( kTranslate.X + fX, kTranslate.Y + fY, kTranslate.Z );
+        m_kMiddleSphere.Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
         
-        m_kBottomOutline.VBuffer.Release();
         m_kBottomTri.VBuffer.Release();
-        m_kUpperSphere.VBuffer.Release();
-        m_kLowerSphere.VBuffer.Release();
-        m_kMiddleSphere.VBuffer.Release();
+        m_kWidget.UpdateGS();
     }   
     
 }

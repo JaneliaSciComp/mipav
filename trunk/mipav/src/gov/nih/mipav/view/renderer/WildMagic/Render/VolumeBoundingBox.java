@@ -128,14 +128,14 @@ public class VolumeBoundingBox extends VolumeObject
             m_akBoundingBoxEffect[i].setBackground( kColor );
         }
     } 
-    
+    /*
 	public void toggleMethod()
 	{
         for ( int i = 0; i < 6; i++ )
         {
             m_akBoundingBoxEffect[i].toggleMethod( );
         }
-	}
+	}*/
     
     /** Creates the bounding box Polylines. */
     private void CreateBox()
