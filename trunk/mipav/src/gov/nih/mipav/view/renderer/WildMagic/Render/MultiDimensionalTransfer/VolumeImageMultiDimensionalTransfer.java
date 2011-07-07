@@ -241,12 +241,12 @@ implements GLEventListener, KeyListener
 			currentTime = System.currentTimeMillis();
 			mod = MouseEvent.BUTTON1;
 			MouseEvent evt3 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_PRESSED, currentTime, mod, 150, 150, 1, false, MouseEvent.BUTTON1);
-			//GetCanvas().dispatchEvent(evt3);
+			GetCanvas().dispatchEvent(evt3);
 
 			currentTime = System.currentTimeMillis();
 			mod = MouseEvent.BUTTON1;
 			MouseEvent evt4 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_DRAGGED, currentTime, mod, 210, 210, 1, false, MouseEvent.BUTTON1);
-			//GetCanvas().dispatchEvent(evt4);
+			GetCanvas().dispatchEvent(evt4);
 		}
 	}
 
