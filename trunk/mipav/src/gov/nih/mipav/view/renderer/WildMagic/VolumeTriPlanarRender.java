@@ -1204,12 +1204,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  super.keyPressed(e);
 		  switch (ucKey)
 		  {
-		  case 'a':
-			  if ( m_kVolumeBox != null )
-			  {
-				  m_kVolumeBox.toggleMethod( );
-			  }
-			  return;
 		  case 'b':
 			  m_bDisplaySecond = !m_bDisplaySecond;
 			  return;
