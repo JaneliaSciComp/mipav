@@ -285,11 +285,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calcultes max
+	 * @param xytBuff
+	 * @return
+	 */
 	private byte[] doByteMax(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		byte[] sliceBuff = new byte[xDim * yDim];
@@ -318,11 +321,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		return sliceBuff;
 	}
 	
-	
+	/**
+	 * calculates min
+	 * @param xytBuff
+	 * @return
+	 */
 	private byte[] doByteMin(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		byte[] sliceBuff = new byte[xDim * yDim];
@@ -351,11 +357,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		return sliceBuff;
 	}
 	
-	
+	/**
+	 * calculates average
+	 * @param xytBuff
+	 * @return
+	 */
 	private byte[] doByteAverage(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		byte[] sliceBuff = new byte[xDim * yDim];
@@ -382,11 +391,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private byte[] doByteNormClip(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		byte[] sliceBuff = new byte[xDim * yDim];
@@ -421,11 +433,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doByteNormPromote(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -459,11 +474,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates std deviation
+	 * @param xytBuff
+	 * @return
+	 */
 	private byte[] doByteStdDev(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		byte[] sliceBuff = new byte[xDim * yDim];
@@ -504,11 +522,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		return sliceStdDevBuff;
 	}
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private byte[] doByteAddClip(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		byte[] sliceBuff = new byte[xDim * yDim];
@@ -540,11 +561,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doByteAddPromote(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -574,11 +598,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates max
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doShortMax(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -608,10 +635,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
+	/**
+	 * calculates min
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doShortMin(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -641,10 +672,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
+	/**
+	 * calculates average
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doShortAverage(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -671,11 +706,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doShortNormClip(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -710,11 +748,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doShortNormPromote(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -748,11 +789,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates std devialtion
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doShortStdDev(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -799,11 +843,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private short[] doShortAddClip(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		short[] sliceBuff = new short[xDim * yDim];
@@ -840,11 +887,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doShortAddPromote(short[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -884,11 +934,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates max
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doIntMax(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -918,10 +971,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
+	/**
+	 * calculates min
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doIntMin(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -951,10 +1008,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
+	/**
+	 * calculates average
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doIntAverage(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -981,11 +1042,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doIntNormClip(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -1019,11 +1083,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private long[] doIntNormPromote(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		long[] sliceBuff = new long[xDim * yDim];
@@ -1057,11 +1124,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates std deviation
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doIntStdDev(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -1104,11 +1174,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private int[] doIntAddClip(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		int[] sliceBuff = new int[xDim * yDim];
@@ -1146,11 +1219,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private long[] doIntAddPromote(int[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		long[] sliceBuff = new long[xDim * yDim];
@@ -1196,11 +1272,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates max
+	 * @param xytBuff
+	 * @return
+	 */
 	private float[] doFloatMax(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		float[] sliceBuff = new float[xDim * yDim];
@@ -1229,11 +1308,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		return sliceBuff;
 	}
 	
-	
+	/**
+	 * calculates min
+	 * @param xytBuff
+	 * @return
+	 */
 	private float[] doFloatMin(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		float[] sliceBuff = new float[xDim * yDim];
@@ -1262,11 +1344,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		return sliceBuff;
 	}
 	
-	
+	/**
+	 * calculates average
+	 * @param xytBuff
+	 * @return
+	 */
 	private float[] doFloatAverage(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		float[] sliceBuff = new float[xDim * yDim];
@@ -1294,11 +1379,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private float[] doFloatNormClip(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		float[] sliceBuff = new float[xDim * yDim];
@@ -1333,11 +1421,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates norm
+	 * @param xytBuff
+	 * @return
+	 */
 	private double[] doFloatNormPromote(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		double[] sliceBuff = new double[xDim * yDim];
@@ -1367,11 +1458,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	
-	
+	/**
+	 * calculates std deviation
+	 * @param xytBuff
+	 * @return
+	 */
 	private float[] doFloatStdDev(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		float[] sliceBuff = new float[xDim * yDim];
@@ -1412,11 +1506,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		return sliceStdDevBuff;
 	}
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private float[] doFloatAddClip(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		float[] sliceBuff = new float[xDim * yDim];
@@ -1448,11 +1545,14 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
-	
+	/**
+	 * calculates add
+	 * @param xytBuff
+	 * @return
+	 */
 	private double[] doFloatAddPromote(float[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
-		int zDim = image.getExtents()[2];
 		int tDim = image.getExtents()[3];
 		int sliceLength = xDim * yDim;
 		double[] sliceBuff = new double[xDim * yDim];
