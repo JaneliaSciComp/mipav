@@ -671,8 +671,8 @@ public abstract class NLConstrainedEngine {
     	// Norman R. Draper and Harry Smith */
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
-    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n");
-    	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n");
+    	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
     	testCase = DRAPER24D;
     	nPts = 5;
@@ -721,9 +721,9 @@ public abstract class NLConstrainedEngine {
     	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
     	// Variant of test example 25 from Hock and Schittkowski
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
-        Preferences.debug("Test example 25 from Hock and Schittkowski constrained\n");
-        Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n");
-        Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n");
+        Preferences.debug("Test example 25 from Hock and Schittkowski constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = (a0 * log(0.01*i)**(a1) + a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HOCK25;
         nPts = 99;
@@ -765,10 +765,10 @@ public abstract class NLConstrainedEngine {
         // because a[1] is a root in the denominator and so with unconstrained for large
         // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
         // works at 10.0 * starting point and at 100.0 * starting point.
-        Preferences.debug("Bard function standard starting point unconstrained\n");
-        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n");
-        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
-        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n");
+        Preferences.debug("Bard function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BARD;
         nPts = 15;
@@ -800,10 +800,10 @@ public abstract class NLConstrainedEngine {
         // because a[1] is a root in the denominator and so with unconstrained for large
         // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
         // works at 10.0 * starting point and at 100.0 * starting point.
-        Preferences.debug("Bard function 10 * standard starting point constrained\n");
-        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n");
-        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
-        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n");
+        Preferences.debug("Bard function 10 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BARD;
         nPts = 15;
@@ -841,10 +841,10 @@ public abstract class NLConstrainedEngine {
         // because a[1] is a root in the denominator and so with unconstrained for large
         // ranges a[1] = 0 will result in an infinity.  Constrained with a[1] >= 0.1
         // works at 10.0 * starting point and at 100.0 * starting point.
-        Preferences.debug("Bard function 100 * standard starting point constrained\n");
-        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n");
-        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n");
-        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n");
+        Preferences.debug("Bard function 100 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + x/(a1*(16-x) + a2*min(x,16-x))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.08241, a1 = 1.133, a2 = 2.344\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BARD;
         nPts = 15;
@@ -878,10 +878,11 @@ public abstract class NLConstrainedEngine {
         driverCalls(); 
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Kowalik and Osborne function standard starting point unconstrained\n");
-        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
-        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
-        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n");
+        Preferences.debug("Kowalik and Osborne function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = KOWALIK_AND_OSBORNE;
         nPts = 11;
@@ -907,10 +908,12 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Kowalik and Osborne function 10 * standard starting point constrained\n");
-        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
-        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
-        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n");
+        Preferences.debug("Kowalik and Osborne function 10 * standard starting point constrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = KOWALIK_AND_OSBORNE;
         nPts = 11;
@@ -944,10 +947,12 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Kowalik and Osborne function 100 * standard starting point constrained\n");
-        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n");
-        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n");
-        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n");
+        Preferences.debug("Kowalik and Osborne function 100 * standard starting point constrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.1928, a1 = 0.1913, a2 = 0.1231, a3 = 0.1361\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = KOWALIK_AND_OSBORNE;
         nPts = 11;
@@ -982,10 +987,10 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
         //                            y(1) = 1.0 - a[0]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Rosenbrock function standard starting point unconstrained\n");
-        Preferences.debug("y(0) = 10*(a1 - a0**2)\n");
-        Preferences.debug("y(1) = 1.0 - a0\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        Preferences.debug("Rosenbrock function standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = ROSENBROCK;
         nPts = 2;
@@ -1005,10 +1010,10 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
         //                            y(1) = 1.0 - a[0]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Rosenbrock function at 10 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = 10*(a1 - a0**2)\n");
-        Preferences.debug("y(1) = 1.0 - a0\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        Preferences.debug("Rosenbrock function at 10 * standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = ROSENBROCK;
         nPts = 2;
@@ -1028,10 +1033,11 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
         //                            y(1) = 1.0 - a[0]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Rosenbrock function at 100 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = 10*(a1 - a0**2)\n");
-        Preferences.debug("y(1) = 1.0 - a0\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        Preferences.debug("Rosenbrock function at 100 * standard starting point unconstrained\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = ROSENBROCK;
         nPts = 2;
@@ -1051,12 +1057,13 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
         //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n");
-        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
-        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n");
-        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
-        Preferences.debug("Second solution obtained by original ELSUNC\n");
+        Preferences.debug("Freudenstein and Roth function at standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = FREUDENSTEIN_AND_ROTH;
         nPts = 2;
@@ -1076,12 +1083,13 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
         //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Freudenstein and Roth function at 10 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
-        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
-        Preferences.debug("One correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n");
-        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
-        Preferences.debug("Second solution obtained by original ELSUNC\n");
+        Preferences.debug("Freudenstein and Roth function at 10 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("One correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = FREUDENSTEIN_AND_ROTH;
         nPts = 2;
@@ -1101,12 +1109,13 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
         //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Freudenstein and Roth function at 100 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n");
-        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n");
-        Preferences.debug("One correct answer is Chi-squared = 0 at a0 = 5, a1 = 4\n");
-        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n");
-        Preferences.debug("Second solution obtained by original ELSUNC\n");
+        Preferences.debug("Freudenstein and Roth function at 100 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("One correct answer is Chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = FREUDENSTEIN_AND_ROTH;
         nPts = 2;
@@ -1130,15 +1139,15 @@ public abstract class NLConstrainedEngine {
         //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
         //                    = 0.25 if a0 = 0 and a1 >= 0
         //                    = -0.25 if a0 = 0 and a1 < 0
-        Preferences.debug("Helical valley function at standard starting point unconstrained\n");
-        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
-        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
-        Preferences.debug("y(2) = a2\n");
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
-        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
-        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        Preferences.debug("Helical valley function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HELICAL_VALLEY;
         nPts = 3;
@@ -1164,15 +1173,16 @@ public abstract class NLConstrainedEngine {
         //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
         //                    = 0.25 if a0 = 0 and a1 >= 0
         //                    = -0.25 if a0 = 0 and a1 < 0
-        Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
-        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
-        Preferences.debug("y(2) = a2\n");
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
-        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
-        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        Preferences.debug("Helical valley function at 10 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HELICAL_VALLEY;
         nPts = 3;
@@ -1197,15 +1207,16 @@ public abstract class NLConstrainedEngine {
         //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
         //                    = 0.25 if a0 = 0 and a1 >= 0
         //                    = -0.25 if a0 = 0 and a1 < 0
-        Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n");
-        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n");
-        Preferences.debug("y(2) = a2\n");
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n");
-        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n");
-        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n");
-        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n");
+        Preferences.debug("Helical valley function at 100 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HELICAL_VALLEY;
         nPts = 3;
@@ -1226,10 +1237,12 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
         // for i = 1 to 10
-        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n");
-        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n");
-        Preferences.debug("for i = 1 to 10\n");
-        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n");
+        Preferences.debug("Jennrich and Sampson function at standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("for i = 1 to 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = JENNRICH_AND_SAMPSON;
         nPts = 10;
@@ -1249,10 +1262,10 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Meyer function at standard starting point unconstrained\n");
-        Preferences.debug("y = a0*exp[a1/(x + a2)]\n");
-        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
-        Preferences.debug("Correct answer has Chi-squared = 87.9458\n");
+        Preferences.debug("Meyer function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*exp[a1/(x + a2)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 87.9458\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = MEYER;
         nPts = 16;
@@ -1278,10 +1291,10 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Meyer function 10 * standard starting point constrained\n");
-        Preferences.debug("Y = a0*exp[a1/(x + a2)]\n");
-        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n");
-        Preferences.debug("Correct answer has Chi-squared = 87.9458\n");
+        Preferences.debug("Meyer function 10 * standard starting point constrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Y = a0*exp[a1/(x + a2)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 87.9458\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = MEYER;
         nPts = 16;
@@ -1314,12 +1327,12 @@ public abstract class NLConstrainedEngine {
         // Below is an expample to fit y(i) = exp(-ti*a0) - exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))
         // For ti = 0.1*i for i = 1 to 10
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Box three-dimensional function unconstrained\n");
-        Preferences.debug("y(i) = exp(-ti*a0) = exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))\n");
-        Preferences.debug("For ti = 0.1*i for i = 1 to 10\n");
-        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1\n");
-        Preferences.debug("Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1\n");
-        Preferences.debug("Also chi-squared = 0 wherever a0 = a1 and a2 = 0\n");
+        Preferences.debug("Box three-dimensional function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = exp(-ti*a0) = exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.1*i for i = 1 to 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also chi-squared = 0 wherever a0 = a1 and a2 = 0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BOX_3D;
         nPts = 10;
@@ -1342,12 +1355,13 @@ public abstract class NLConstrainedEngine {
         //                            y(2) = (a1 - 2*a2)**2
         //                            y(3) = sqrt(10)*(a0 - a3)**2
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Powell singular function at standard starting point unconstrained\n");
-        Preferences.debug("y(0) = a0 + 10*a1\n");
-        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
-        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
-        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
-        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        Preferences.debug("Powell singular function at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = POWELL_SINGULAR;
         nPts = 4;
@@ -1371,12 +1385,14 @@ public abstract class NLConstrainedEngine {
         //                            y(2) = (a1 - 2*a2)**2
         //                            y(3) = sqrt(10)*(a0 - a3)**2
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Powell singular function at 10 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = a0 + 10*a1\n");
-        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
-        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
-        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
-        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        Preferences.debug("Powell singular function at 10 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = POWELL_SINGULAR;
         nPts = 4;
@@ -1400,12 +1416,14 @@ public abstract class NLConstrainedEngine {
         //                            y(2) = (a1 - 2*a2)**2
         //                            y(3) = sqrt(10)*(a0 - a3)**2
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Powell singular function at 100 * standard starting point unconstrained\n");
-        Preferences.debug("y(0) = a0 + 10*a1\n");
-        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n");
-        Preferences.debug("y(2) = (a1 - 2*a2)**2\n");
-        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n");
-        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n");
+        Preferences.debug("Powell singular function at 100 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n",
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = POWELL_SINGULAR;
         nPts = 4;
@@ -1427,11 +1445,14 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown and Dennis function at standard starting point unconstrained\n");
-        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n");
-        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n");
-        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n");
-        Preferences.debug("Correct answer has chi-squared = 85822.2\n");
+        Preferences.debug("Brown and Dennis function at standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_AND_DENNIS;
         nPts = 20;
@@ -1453,11 +1474,13 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown and Dennis function at 10 * standard starting point unconstrained\n");
-        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n");
-        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n");
-        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n");
-        Preferences.debug("Correct answer has chi-squared = 85822.2\n");
+        Preferences.debug("Brown and Dennis function at 10 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_AND_DENNIS;
         nPts = 20;
@@ -1479,11 +1502,13 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown and Dennis function at 100 * standard starting point unconstrained\n");
-        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n");
-        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n");
-        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n");
-        Preferences.debug("Correct answer has chi-squared = 85822.2\n");
+        Preferences.debug("Brown and Dennis function at 100 * standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_AND_DENNIS;
         nPts = 20;
@@ -1504,10 +1529,11 @@ public abstract class NLConstrainedEngine {
         driverCalls();
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Osborne 1 function unconstrained\n");
-        Preferences.debug("y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)\n");
-        Preferences.debug("Correct answer is a0 = 0.37541, a1 = 1.9358, a2 = -1.4647, a3 = 0.012868, a4 = 0.022123\n");
-        Preferences.debug("Correct answer has Chi-squared = 5.46489E-5\n");
+        Preferences.debug("Osborne 1 function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.37541, a1 = 1.9358, a2 = -1.4647, a3 = 0.012868, a4 = 0.022123\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 5.46489E-5\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = OSBORNE1;
         nPts = 33;
@@ -1539,10 +1565,10 @@ public abstract class NLConstrainedEngine {
         // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
         // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Osborne 2 function unconstrained\n");
-        Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n");
-        Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n");
-        Preferences.debug("Correct answer has Chi-squared = 4.01377E-2\n");
+        Preferences.debug("Osborne 2 function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 4.01377E-2\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = OSBORNE2;
         nPts = 65;
@@ -1583,8 +1609,8 @@ public abstract class NLConstrainedEngine {
     	
         // Below is an example to fit the Watson function with 6 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Watson with 6 parameters at standard starting point unconstrained\n");
-        Preferences.debug("Correct chi-squared = 2.28767E-3\n");
+        Preferences.debug("Watson with 6 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 2.28767E-3\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = WATSON;
         nPts = 31;
@@ -1603,8 +1629,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Watson function with 9 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Watson with 9 parameters at standard starting point unconstrained\n");
-        Preferences.debug("Correct chi-squared = 1.39976E-6\n");
+        Preferences.debug("Watson with 9 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 1.39976E-6\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = WATSON;
         nPts = 31;
@@ -1623,8 +1649,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Watson function with 12 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n");
-        Preferences.debug("Correct chi-squared = 4.72238E-10\n");
+        Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 4.72238E-10\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = WATSON;
         nPts = 31;
@@ -1643,11 +1669,12 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n");
-        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
-        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
-        Preferences.debug("in particular , alpha = 1\n");
-        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        Preferences.debug("Brown almost linear with 10 parameters at standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_ALMOST_LINEAR;
         nPts = 10;
@@ -1669,11 +1696,12 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n");
-        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
-        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
-        Preferences.debug("in particular , alpha = 1\n");
-        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        Preferences.debug("Brown almost linear with 10 parameters at 10 * standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_ALMOST_LINEAR;
         nPts = 10;
@@ -1695,11 +1723,12 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n");
-        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
-        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
-        Preferences.debug("in particular , alpha = 1\n");
-        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        Preferences.debug("Brown almost linear with 10 parameters at 100 * standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_ALMOST_LINEAR;
         nPts = 10;
@@ -1721,11 +1750,12 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Brown almost linear function with 30 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n");
-        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
-        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
-        Preferences.debug("in particular , alpha = 1\n");
-        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        Preferences.debug("Brown almost linear with 30 parameters at standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_ALMOST_LINEAR;
         nPts = 30;
@@ -1747,11 +1777,12 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Brown almost linear function with 40 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n");
-        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n");
-        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n");
-        Preferences.debug("in particular , alpha = 1\n");
-        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n");
+        Preferences.debug("Brown almost linear with 40 parameters at standard staring point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 0 at (alpha, ..., alpha, alpha**(1 - n)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("where alpha satisfies n*alpha**n - (n+1)*alpha**(n-1) + 1 = 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("in particular , alpha = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = 1 at (0,...,0,n+1)\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = BROWN_ALMOST_LINEAR;
         nPts = 40;
@@ -1773,8 +1804,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Linear full rank with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Linear full rank function with 5 parameters and 10 points\n");
-        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n");
+        Preferences.debug("Linear full rank function with 5 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_FULL_RANK;
         nPts = 10;
@@ -1796,8 +1827,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Linear full rank with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Linear full rank function with 5 parameters and 50 points\n");
-        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n");
+        Preferences.debug("Linear full rank function with 5 parameters and 50 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts - param at all parameters = -1\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_FULL_RANK;
         nPts = 50;
@@ -1819,9 +1850,10 @@ public abstract class NLConstrainedEngine {
         
         // Below is the test to fit the Linear rank 1 function with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n");
-        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
-        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n");
+        Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1;
         nPts = 10;
@@ -1843,9 +1875,10 @@ public abstract class NLConstrainedEngine {
         
         // Below is the test to fit the Linear rank 1 function with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n");
-        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n");
-        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n");
+        Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1;
         nPts = 50;
@@ -1867,9 +1900,11 @@ public abstract class NLConstrainedEngine {
         
         // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n");
-        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
-        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n");
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
         nPts = 10;
@@ -1891,9 +1926,11 @@ public abstract class NLConstrainedEngine {
         
         // Below is the test to fit the Linear rank 1 function with zero columns and rows with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n");
-        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n");
-        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n");
+        Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
         nPts = 50;
@@ -1915,8 +1952,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Chebyquad function with 1 parameter and 8 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Chebyquad function with 1 parameter and 8 points\n");
-        Preferences.debug("Correct chi-squared equals about 3.55 variable a0\n");
+        Preferences.debug("Chebyquad function with 1 parameter and 8 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared equals about 3.55 variable a0\n", Preferences.DEBUG_ALGORITHM);
         // gues[0] = 0.0 -> chi-squared = 3.550 a0 = 0.01827
         // gues[0] = 0.05 -> chi-squared = 3.491 a0 = 0.102
         // gues[0] = 0.5 -> chi-squared = 3.558 a0 = 0.5
@@ -1940,8 +1977,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Chebyquad function with 8 parameters and 8 points\n");
-        Preferences.debug("Correct chi-squared = 3.51687E-3\n");
+        Preferences.debug("Chebyquad function with 8 parameters and 8 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 3.51687E-3\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = CHEBYQUAD;
         nPts = 8;
@@ -1965,8 +2002,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Chebyquad function with 9 parameters and 9 points\n");
-        Preferences.debug("Correct chi-squared = 0.0\n");
+        Preferences.debug("Chebyquad function with 9 parameters and 9 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 0.0\n", Preferences.DEBUG_ALGORITHM);
         // Actual chi-squared values were 8.213E-17, 7.413E-17, 8.016E-17, and 6.340E-17
         testMode = true;
         testCase = CHEBYQUAD;
@@ -1991,8 +2028,8 @@ public abstract class NLConstrainedEngine {
         
         // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
-        Preferences.debug("Chebyquad function with 10 parameters and 10 points\n");
-        Preferences.debug("Correct chi-squared = 6.50395E-3\n");
+        Preferences.debug("Chebyquad function with 10 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 6.50395E-3\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = CHEBYQUAD;
         nPts = 10;
@@ -2014,10 +2051,11 @@ public abstract class NLConstrainedEngine {
         }
         driverCalls();
         
-        Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n");
-        Preferences.debug("y(0) = ((1.0 - a0)*(1.0 - a0) + 105.0*(a1 - a0*a0)*(a1 - a0*a0));\n");
-        Preferences.debug("y(1) = y(0)\n");
-        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n");
+        Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = ((1.0 - a0)*(1.0 - a0) + 105.0*(a1 - a0*a0)*(a1 - a0*a0));\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = y(0)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LEVMAR_ROSENBROCK;
         nPts = 2;
@@ -2034,10 +2072,10 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-        Preferences.debug("Powell's 2 parameter function\n");
-        Preferences.debug("y(0) = a0\n");
-        Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n");
-        Preferences.debug("Correct answer a0 = 0 a1 = 0\n");
+        Preferences.debug("Powell's 2 parameter function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10.0*a0/(a0 + 0.1) + 2*a1*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer a0 = 0 a1 = 0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = POWELL_2_PARAMETER;
         nPts = 2;
@@ -2054,8 +2092,8 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-    	Preferences.debug("Modified Rosenbrock function unconstrained\n");
-        Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n");
+    	Preferences.debug("Modified Rosenbrock function unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = MODIFIED_ROSENBROCK;
         nPts = 3;
@@ -2072,8 +2110,8 @@ public abstract class NLConstrainedEngine {
         bl = new double[param];
         bu = new double[param];
         driverCalls();
-    	Preferences.debug("Wood's function\n");
-    	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n");
+    	Preferences.debug("Wood's function\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
     	testCase = WOOD;
         nPts = 6;
@@ -2093,8 +2131,8 @@ public abstract class NLConstrainedEngine {
         bu = new double[param];
         driverCalls();
     	
-    	Preferences.debug("Hock - Schittkowski problem #1\n");
-    	Preferences.debug("Correct answer has a0 = a1 = 1\n");
+    	Preferences.debug("Hock - Schittkowski problem #1\n", Preferences.DEBUG_ALGORITHM);
+    	Preferences.debug("Correct answer has a0 = a1 = 1\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
     	testCase = HOCK1;
     	nPts = 2;
@@ -2116,8 +2154,8 @@ public abstract class NLConstrainedEngine {
         bu[1] = Double.MAX_VALUE;
         driverCalls();
         
-        Preferences.debug("Hock - Schittkowski problem #21 modified\n");
-        Preferences.debug("Correct answer has a0 = 2.0 a1 = 0.0\n");
+        Preferences.debug("Hock - Schittkowski problem #21 modified\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 2.0 a1 = 0.0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HOCK21_MODIFIED;
         nPts = 2;
@@ -2139,8 +2177,8 @@ public abstract class NLConstrainedEngine {
         bu[1] = 50.0;
         driverCalls();
         
-        Preferences.debug("hatfldb problem\n");
-        Preferences.debug("Correct answer has a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n");
+        Preferences.debug("hatfldb problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 0.947214 a1 = 0.8 a2 = 0.64 a3 = 0.4096\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HATFLDB;
         nPts = 4;
@@ -2168,8 +2206,8 @@ public abstract class NLConstrainedEngine {
         bu[3] = Double.MAX_VALUE;
         driverCalls();
         
-        Preferences.debug("hatfldc problem\n");
-        Preferences.debug("Correct answer has a0 = 1.0 a1 = 1.0 a2 = 1.0 a3 = 1.0\n");
+        Preferences.debug("hatfldc problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 1.0 a1 = 1.0 a2 = 1.0 a3 = 1.0\n", Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = HATFLDC;
         nPts = 4;
@@ -2197,8 +2235,9 @@ public abstract class NLConstrainedEngine {
         bu[3] = 10.0;
         driverCalls();
         
-        Preferences.debug("Equilibrium combustion problem\n");
-        Preferences.debug("Correct answer has a0 = 0.0034 a1 = 31.3265 a2 = 0.0684 a3 = 0.8595 a4 = 0.0370\n");
+        Preferences.debug("Equilibrium combustion problem\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 0.0034 a1 = 31.3265 a2 = 0.0684 a3 = 0.8595 a4 = 0.0370\n", 
+        		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = EQUILIBRIUM_COMBUSTION;
         nPts = 5;
@@ -3257,7 +3296,7 @@ public abstract class NLConstrainedEngine {
                 	break;
                 } // switch (testCase)
             } catch (Exception e) {
-                Preferences.debug("function error: " + e.getMessage() + "\n");
+                Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             return;
@@ -3437,447 +3476,558 @@ public abstract class NLConstrainedEngine {
         private void dumpTestResults() {
         	int i;
         	if (analyticalJacobian) {
-        	    Preferences.debug("Internal scaling = " + internalScaling + " Analytical Jacobian used\n");
+        	    Preferences.debug("Internal scaling = " + internalScaling + " Analytical Jacobian used\n", 
+        	    		Preferences.DEBUG_ALGORITHM);
         	}
         	else {
-        		Preferences.debug("Internal scaling = " + internalScaling + " Numerical Jacobian used\n");
+        		Preferences.debug("Internal scaling = " + internalScaling + " Numerical Jacobian used\n", 
+        				Preferences.DEBUG_ALGORITHM);
         	}
-            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n");
-            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n");
+            Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
             for (i = 0; i < param; i++) {
-                Preferences.debug("a" + i + " = " + String.valueOf(a[i]) + "\n");
+                Preferences.debug("a" + i + " = " + String.valueOf(a[i]) + "\n", Preferences.DEBUG_ALGORITHM);
             }
             if (exitStatus == 12340) { 	
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12341) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12342) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12343) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-            	Preferences.debug("because we are computing at noise level\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12344) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The steplength was not unit in both the last two steps\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12300) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12301) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12302) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12303) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12304) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");	
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);	
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12040) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12041) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12042) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12043) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12044) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The steplength was not unit in both the last two steps\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 12000) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12001) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12002) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12003) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 12004) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");	
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);	
             }
             else if (exitStatus == 10340) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10341) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10342) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10343) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-            	Preferences.debug("because we are computing at noise level\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 10344) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10300) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10301) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10302) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10303) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10304) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10040) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 10041) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10042) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10043) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-            	Preferences.debug("because we are computing at noise level\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }  
             else if (exitStatus == 10044) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10000) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10001) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10002) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10003) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 10004) {
-            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n");
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2340) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2341) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2  and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }  
             else if (exitStatus == 2342) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }  
             else if (exitStatus == 2343) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-            	Preferences.debug("because we are computing at noise level\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2344) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 2300) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");	
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);	
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2301) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2302) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2303) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2304) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because the relative change in x is less than epsx\n");	
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);	
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2040) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }   
             else if (exitStatus == 2041) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2  and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2  and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 2042) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2043) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-            	Preferences.debug("because we are computing at noise level\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2044) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2000) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 2001) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2002) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2003) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n");	
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            			Preferences.DEBUG_ALGORITHM);	
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 2004) {
-            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n");
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 340) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }  
             else if (exitStatus == 341) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx  and\n");
-                Preferences.debug("because we are computing at noise level\n");	
-                Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);	
+                Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+                		Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 342) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 343) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");  
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);  
             }
             else if (exitStatus == 344) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n");
-                Preferences.debug("because we are computing at noise level\n");
-                Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 300) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 301) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 302) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 303) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n");	
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");  
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            			Preferences.DEBUG_ALGORITHM);	
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);  
             }
             else if (exitStatus == 304) {
-            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n");
-                Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            			Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 40) {
-            	Preferences.debug("Normal termination because we are computing at noise level\n");
-            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n");
+            	Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == 41) {
-            	Preferences.debug("Normal termination because we are computing at noise level\n");
-            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n");
+            	Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 42) {
-            	Preferences.debug("Normal termination because we are computing at noise level\n");
-            	Preferences.debug("The method of Newton was used (at least) in the last step\n");
+            	Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == 43) {
-            	Preferences.debug("Normal termination because we are computing at noise level\n");
-            	Preferences.debug("The 2nd but last step was subspace minimization but\n");
-                Preferences.debug("the last two were Gauss-Newton steps \n");  
+            	Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);  
             }
             else if (exitStatus == 44) {
-            	Preferences.debug("Normal termination because we are computing at noise level\n");
-            	Preferences.debug("The steplength was not unit in both the last two steps\n");
+            	Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == -1) {
-                Preferences.debug("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n");
-                Preferences.debug("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry\n");
+                Preferences.debug("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n", 
+                		Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry\n", 
+                		Preferences.DEBUG_ALGORITHM);
             } 
             else if (exitStatus == -2) {
-            	Preferences.debug("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations\n");
+            	Preferences.debug("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == -3) {
-            	Preferences.debug("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite\n");
+            	Preferences.debug("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == -4) {
-            	Preferences.debug("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that\n");
+            	Preferences.debug("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == -5) {
-            	Preferences.debug("Abnormal termination because an undamped step with Newtons method is a failure\n");
+            	Preferences.debug("Abnormal termination because an undamped step with Newtons method is a failure\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == -6) {
-            	Preferences.debug("Abnormal termination because the latest search direction computed using subspace minimization\n");
-            	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian)\n");
+            	Preferences.debug("Abnormal termination because the latest search direction computed using subspace minimization\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian)\n", 
+            			Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == -7) {
-            	Preferences.debug("Abnormal termination because there is only one feasible point,\n");
-            	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n");
+            	Preferences.debug("Abnormal termination because there is only one feasible point,\n", 
+            			Preferences.DEBUG_ALGORITHM);
+            	Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n", Preferences.DEBUG_ALGORITHM);
             }
             else if (exitStatus == -8) {
-            	Preferences.debug("Abnormal termination due to driver error\n");
+            	Preferences.debug("Abnormal termination due to driver error\n", Preferences.DEBUG_ALGORITHM);
             }
             else {
-            	Preferences.debug("Exit status = " + exitStatus + "\n");
+            	Preferences.debug("Exit status = " + exitStatus + "\n", Preferences.DEBUG_ALGORITHM);
             }
-            Preferences.debug("\n");
+            Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
         }
         
         private void driverCalls() {
@@ -3902,7 +4052,7 @@ public abstract class NLConstrainedEngine {
             fitTestModel();
             driver();
             dumpTestResults();
-            Preferences.debug("\n");	
+            Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);	
         }
     /**
      * fitToFunction communicates with 3 protected variables param, nPts, and ctrlMat ctrlMat is used as a wrapper for
@@ -3955,7 +4105,7 @@ public abstract class NLConstrainedEngine {
 
             if (exitStatus < 0) {
             	if (outputMes) {
-                    Preferences.debug("exitStatus after lsunc() call = " + exitStatus + "\n");
+                    Preferences.debug("exitStatus after lsunc() call = " + exitStatus + "\n", Preferences.DEBUG_ALGORITHM);
             	}
 
                 return;
@@ -3968,10 +4118,12 @@ public abstract class NLConstrainedEngine {
                     System.out.println("A run with internalScaling = true might " + "give another solution\n");
                 }
 
-                Preferences.debug("Pseudo-rank of the Jacobian is not full < (param - constraintAct)\n");
+                Preferences.debug("Pseudo-rank of the Jacobian is not full < (param - constraintAct)\n", 
+                		Preferences.DEBUG_ALGORITHM);
 
                 if (!internalScaling) {
-                    Preferences.debug("A run with internalScaling = true might " + "give another solution\n");
+                    Preferences.debug("A run with internalScaling = true might " + "give another solution\n", 
+                    		Preferences.DEBUG_ALGORITHM);
                 }
             }
 
@@ -4001,7 +4153,7 @@ public abstract class NLConstrainedEngine {
 
             return;
         } catch (Exception e) {
-            Preferences.debug("driver error: " + e.getMessage() + "\n");
+            Preferences.debug("driver error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
             exitStatus = -8;
         }
     }
@@ -5029,7 +5181,7 @@ mainLoop:
 
         if (restart) {
         	if (outputMes) {
-                Preferences.debug("In evreuc: restart\n");
+                Preferences.debug("In evreuc: restart\n", Preferences.DEBUG_ALGORITHM);
         	}
             itotal++;
             icount++;
@@ -5038,7 +5190,7 @@ mainLoop:
         } // if restart
         else if (errorStatus == -5) {
         	if (outputMes) {
-                Preferences.debug("Undamped Newton  does not work: Try GN\n");
+                Preferences.debug("Undamped Newton  does not work: Try GN\n", Preferences.DEBUG_ALGORITHM);
         	}
             ifree = 5;
             indic = 3;
@@ -5164,14 +5316,14 @@ mainLoop:
         }
         lctrl = ctrlMat[0];
         if (outputMes) {
-	        Preferences.debug("xnew and fnew inside fsumsq\n");
+	        Preferences.debug("xnew and fnew inside fsumsq\n", Preferences.DEBUG_ALGORITHM);
 	
 	        for (i = 0; i < param; i++) {
-	            Preferences.debug("xnew[" + i + "] = " + xnew[i] + "\n");
+	            Preferences.debug("xnew[" + i + "] = " + xnew[i] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 	        
 	        for (i = 0; i < nPts; i++) {
-	        	Preferences.debug("fnew[" + i + "] = " + fnew[i] + "\n");
+	        	Preferences.debug("fnew[" + i + "] = " + fnew[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	        }
         }
 
@@ -5183,7 +5335,7 @@ mainLoop:
             }
             
             if (outputMes) {
-                Preferences.debug("fn_val[0] when ctrl[0] != 1 = " + fn_val[0] + "\n");
+                Preferences.debug("fn_val[0] when ctrl[0] != 1 = " + fn_val[0] + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (lctrl < -10) {
@@ -5199,7 +5351,7 @@ mainLoop:
         }
       
         if (outputMes) {
-            Preferences.debug("fn_val[0] when ctrl[0]= 1 = " + fn_val[0] + "\n");
+            Preferences.debug("fn_val[0] when ctrl[0]= 1 = " + fn_val[0] + "\n", Preferences.DEBUG_ALGORITHM);
         }
         ctrl[0] = lctrl;
 
@@ -5251,7 +5403,7 @@ mainLoop:
             gaucCtrl[0] = -1;
             fsumsq(x, gmod, residuals, phix, gaucCtrl);
             if (outputMes) {
-                Preferences.debug("In GAUC: phix[0] = " + phix[0] + " x = " + x + "\n");
+                Preferences.debug("In GAUC: phix[0] = " + phix[0] + " x = " + x + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             // POSSIBLY THE USER CAN TERMINATE
@@ -5895,7 +6047,8 @@ mainLoop:
         lineucCtrl[0] = 1;
         fsumsq(alfk[0], gmod, fnew, phik, lineucCtrl);
         if (outputMes) {
-            Preferences.debug("In lineuc no. 1: phik[0] = " + phik[0] + " alfk[0] = " + alfk[0] + "\n");
+            Preferences.debug("In lineuc no. 1: phik[0] = " + phik[0] + " alfk[0] = " + alfk[0] + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
         k[0]++;
         iev = k[0];
@@ -6009,7 +6162,8 @@ mainLoop:
         lineucCtrl[0] = -1;
         fsumsq(alfk[0], gmod, fnew, phik,lineucCtrl);
         if (outputMes) {
-            Preferences.debug("In LINEUC no.2: phik[0] = " + phik[0] + " alfk[0] = " + alfk[0] + "\n");
+            Preferences.debug("In LINEUC no.2: phik[0] = " + phik[0] + " alfk[0] = " + alfk[0] + "\n", 
+            		Preferences.DEBUG_ALGORITHM);
         }
 
         if (lineucCtrl[0] < -10) {
@@ -6375,17 +6529,17 @@ mainLoop:
             // Analyze the past and sometimes recompute the search direction
             analuc(prank);
             if (outputMes) {
-	            Preferences.debug("POINT\n");
+	            Preferences.debug("POINT\n", Preferences.DEBUG_ALGORITHM);
 	
 	            for (i = 0; i < param; i++) {
-	                Preferences.debug(a[i] + "\n");
+	                Preferences.debug(a[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
 	
-	            Preferences.debug("prank[0] = " + prank[0] + "\n");
-	            Preferences.debug("DIRECTION\n");
+	            Preferences.debug("prank[0] = " + prank[0] + "\n", Preferences.DEBUG_ALGORITHM);
+	            Preferences.debug("DIRECTION\n", Preferences.DEBUG_ALGORITHM);
 	
 	            for (i = 0; i < param; i++) {
-	                Preferences.debug(dx[i] + "\n");
+	                Preferences.debug(dx[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
             }
 
@@ -6405,8 +6559,8 @@ mainLoop:
             	if (outputMes) {
                     System.out.println("Hessian matrix not positive definite\n");
                     System.out.println("Try Gauss-Newton\n");
-                    Preferences.debug("Hessian matrix not positive definite\n");
-                    Preferences.debug("Try Gauss-Newton\n");
+                    Preferences.debug("Hessian matrix not positive definite\n", Preferences.DEBUG_ALGORITHM);
+                    Preferences.debug("Try Gauss-Newton\n", Preferences.DEBUG_ALGORITHM);
             	}
                 ifree = 5;
                 indic = -3;
@@ -6865,24 +7019,24 @@ mainLoop:
         ac = Math.min(1.0, aupkm1);
         pred = ac * (2.0 - ac) * d1km1;
         if (outputMes) {
-	        Preferences.debug("Collected information for iteration steps\n");
-	        Preferences.debug("itno = " + itno + "\n");
-	        Preferences.debug("fsqkm1 = " + fsqkm1 + "\n");
-	        Preferences.debug("gnorm = " + gnorm + "\n");
-	        Preferences.debug("dxnkm1 = " + dxnkm1 + "\n");
-	        Preferences.debug("kodkm1 = " + kodkm1 + "\n");
-	        Preferences.debug("rngkm1 = " + rngkm1 + "\n");
-	        Preferences.debug("alfkm1 = " + alfkm1 + "\n");
-	        Preferences.debug("eval = " + eval + "\n");
-	        Preferences.debug("pred = " + pred + "\n");
-	        Preferences.debug("speed = " + speed + "\n");
-	        Preferences.debug("phi = " + phi + "\n");
-	        Preferences.debug("reduc = " + reduc + "\n");
+	        Preferences.debug("Collected information for iteration steps\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("itno = " + itno + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("fsqkm1 = " + fsqkm1 + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("gnorm = " + gnorm + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("dxnkm1 = " + dxnkm1 + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("kodkm1 = " + kodkm1 + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("rngkm1 = " + rngkm1 + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("alfkm1 = " + alfkm1 + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("eval = " + eval + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("pred = " + pred + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("speed = " + speed + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("phi = " + phi + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("reduc = " + reduc + "\n", Preferences.DEBUG_ALGORITHM);
 	
 	        if (constraintAct > 0) {
 	
 	            for (i = 0; i < param; i++) {
-	                Preferences.debug("aset[" + i + "] = " + aset[i] + "\n");
+	                Preferences.debug("aset[" + i + "] = " + aset[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
 	        }
         }
@@ -7114,8 +7268,8 @@ mainLoop:
         // restart IS SET = TRUE IF THE LATEST STEPLENGTH IS TOO SHORT
 
         if (outputMes) {
-    	    Preferences.debug("In reavuc: alpha = " + alpha + "\n");
-            Preferences.debug("In reavuc: alphup = " + alphup + "\n");
+    	    Preferences.debug("In reavuc: alpha = " + alpha + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("In reavuc: alphup = " + alphup + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         if ((lattry == 0) && (bestpg > 0.0)) {
@@ -7183,7 +7337,7 @@ mainLoop:
         reducCtrl[0] = -1;
         fsumsq(alfk, gmod, fnew, phik, reducCtrl);
         if (outputMes) {
-            Preferences.debug("In REDUC: phik[0] = " + phik[0] + " alfk = " + alfk + "\n");
+            Preferences.debug("In REDUC: phik[0] = " + phik[0] + " alfk = " + alfk + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         if (reducCtrl[0] < -10) {
@@ -7710,9 +7864,10 @@ mainLoop:
         // FORM  covarMat = R *R
 
         jtrj(nn);
-        /*Preferences.debug("R(tr)*R\n");
-         * for (i = 0; i < nn; i++) { for (j = 0; j < nn; j++) {     Preferences.debug(covarMat[i][j] + " "); }
-         * Preferences.debug("\n");}*/
+        /*Preferences.debug("R(tr)*R\n", Preferences.DEBUG_ALGORITHM);
+         * for (i = 0; i < nn; i++) { for (j = 0; j < nn; j++) {     Preferences.debug(covarMat[i][j] + " ", 
+         * Preferences.DEBUG_ALGORITHM); }
+         * Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);}*/
 
         // COMPUTE HESSIANS G   AND FORM FINAL MATRIX gmat OF SYSTEM (2)
         // K
@@ -7743,10 +7898,10 @@ mainLoop:
             }
 
             if (outputMes) {
-	            Preferences.debug("The nonlinear part.Only the upper triangular.\n");
-	            Preferences.debug("Row - wize written.I.e.the first 4values make\n");
-	            Preferences.debug("up the 1st row.The following 3 values make up\n");
-	            Preferences.debug("the 2nd row starting at the diagonal elem.\n");
+	            Preferences.debug("The nonlinear part.Only the upper triangular.\n", Preferences.DEBUG_ALGORITHM);
+	            Preferences.debug("Row - wize written.I.e.the first 4values make\n", Preferences.DEBUG_ALGORITHM);
+	            Preferences.debug("up the 1st row.The following 3 values make up\n", Preferences.DEBUG_ALGORITHM);
+	            Preferences.debug("the 2nd row starting at the diagonal elem.\n", Preferences.DEBUG_ALGORITHM);
             }
 
         } // if (internalScaling)
@@ -7841,10 +7996,10 @@ mainLoop:
         double[] w2Part;
 
         if (outputMes) {
-	        Preferences.debug("Current point in soliuc\n");
+	        Preferences.debug("Current point in soliuc\n", Preferences.DEBUG_ALGORITHM);
 	
 	        for (i = 0; i < param; i++) {
-	            Preferences.debug(a[i] + "\n");
+	            Preferences.debug(a[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	        }
         }
 
@@ -7871,8 +8026,8 @@ mainLoop:
         scaunc();
         gnorm = dnrm2(param, g, 1) / cnorm;
         if (outputMes) {
-            Preferences.debug("cnorm = " + cnorm + "\n");
-            Preferences.debug("gnorm = " + gnorm + "\n");
+            Preferences.debug("cnorm = " + cnorm + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("gnorm = " + gnorm + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         // MAKE A QR-DECOMPOSITION OF (POSSIBLY SCALED) JACOBIAN
@@ -7892,10 +8047,10 @@ mainLoop:
         // SPACE OF THE JACOBIAN J
         d1sqs = gndunc(internalScaling, prank, work);
         if (outputMes) {
-	        Preferences.debug("The right hand side\n");
+	        Preferences.debug("The right hand side\n", Preferences.DEBUG_ALGORITHM);
 	
 	        for (i = 0; i < nPts; i++) {
-	            Preferences.debug(w1[i] + "\n");
+	            Preferences.debug(w1[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	        }
         }
 
@@ -7916,9 +8071,9 @@ mainLoop:
         // Delete the constraint that causes the largest predicted
         // reduction in the objective
         if (outputMes) {
-	        Preferences.debug("constraintAct = " + constraintAct + "\n");
-	        Preferences.debug("prank[0] = " + prank[0] + "\n");
-	        Preferences.debug("imax = " + imax + "\n");
+	        Preferences.debug("constraintAct = " + constraintAct + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("prank[0] = " + prank[0] + "\n", Preferences.DEBUG_ALGORITHM);
+	        Preferences.debug("imax = " + imax + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         if ((constraintAct == 0) || (imax != -1)) {
@@ -7952,7 +8107,7 @@ mainLoop:
                 k = 0;
                 kk = 0;
                 if (outputMes) {
-                    Preferences.debug("Not full rank: prank[0] = " + prank[0] + "\n");
+                    Preferences.debug("Not full rank: prank[0] = " + prank[0] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
                 inds = aset[i];
                 aset[i] = 0;
@@ -7964,14 +8119,14 @@ mainLoop:
 
                 triunc(tol, constraintAct - 1,lprank);
                 if (outputMes) {
-                    Preferences.debug("lprank[0] = " + lprank[0] + "\n");
+                    Preferences.debug("lprank[0] = " + lprank[0] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
                 d1new = gndunc(false, lprank, work);
                 if (outputMes) {
-	                Preferences.debug("New search direction\n");
+	                Preferences.debug("New search direction\n", Preferences.DEBUG_ALGORITHM);
 	
 	                for (jj = 0; jj < param; jj++) {
-	                    Preferences.debug(dx[jj] + "\n");
+	                    Preferences.debug(dx[jj] + "\n", Preferences.DEBUG_ALGORITHM);
 	                }
                 }
 
@@ -8029,9 +8184,9 @@ mainLoop:
 
                 // Determine the kkth element in dy
                 if (outputMes) {
-	                Preferences.debug("SOLIUC: work[kk] = " + work[kk] + "\n");
-	                Preferences.debug("SOLIUC:tol = " + tol + "\n");
-	                Preferences.debug("SOLIUC:covarMat[0][0] = " + covarMat[0][0] + "\n");
+	                Preferences.debug("SOLIUC: work[kk] = " + work[kk] + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("SOLIUC:tol = " + tol + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("SOLIUC:covarMat[0][0] = " + covarMat[0][0] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if (Math.abs(work[kk]) <= (tol * Math.abs(covarMat[0][0]))) {
@@ -8040,11 +8195,11 @@ mainLoop:
 
                 dykk[0] = w2[kk] / work[kk];
                 if (outputMes) {
-	                Preferences.debug("In soliuc: dykk[0] = " + dykk[0] + "\n");
-	                Preferences.debug("i = " + i + "\n");
-	                Preferences.debug("aset[i] = " + aset[i] + "\n");
-	                Preferences.debug("bu[i] = " + bu[i] + "\n");
-	                Preferences.debug("bl[i] = " + bl[i] + "\n");
+	                Preferences.debug("In soliuc: dykk[0] = " + dykk[0] + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("i = " + i + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("aset[i] = " + aset[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("bu[i] = " + bu[i] + "\n", Preferences.DEBUG_ALGORITHM);
+	                Preferences.debug("bl[i] = " + bl[i] + "\n", Preferences.DEBUG_ALGORITHM);
                 }
 
                 if ((dykk[0] * aset[i] * (bu[i] - bl[i])) <= 0.0) {
@@ -8055,8 +8210,8 @@ mainLoop:
             } // else
 
             if (outputMes) {
-                Preferences.debug("In soliuc: d1new = " + d1new + "\n");
-                Preferences.debug("In soliuc: d1sqs = " + d1sqs + "\n");
+                Preferences.debug("In soliuc: d1new = " + d1new + "\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("In soliuc: d1sqs = " + d1sqs + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (d1new < (factor * d1sqs)) {
@@ -8064,7 +8219,7 @@ mainLoop:
             }
 
             if (outputMes) {
-                Preferences.debug("Delete a fixed variable\n");
+                Preferences.debug("Delete a fixed variable\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if (d1new < d1max) {
@@ -8186,10 +8341,10 @@ mainLoop:
             // back transform
             btrunc(prank, internalScaling, w2);
             if (outputMes) {
-	            Preferences.debug("Full rank new search direction\n");
+	            Preferences.debug("Full rank new search direction\n", Preferences.DEBUG_ALGORITHM);
 	
 	            for (i = 0; i < param; i++) {
-	                Preferences.debug(dx[i] + "\n");
+	                Preferences.debug(dx[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
             }
         } // else if (kmax != -1)
@@ -8992,16 +9147,16 @@ mainLoop:
 
         if (bounds != 0) {
         	if (outputMes) {
-	            Preferences.debug("aset\n");
+	            Preferences.debug("aset\n", Preferences.DEBUG_ALGORITHM);
 	
 	            for (i = 0; i < param; i++) {
-	                Preferences.debug(aset[i] + "\n");
+	                Preferences.debug(aset[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
 	
-	            Preferences.debug("dx\n");
+	            Preferences.debug("dx\n", Preferences.DEBUG_ALGORITHM);
 	
 	            for (i = 0; i < param; i++) {
-	                Preferences.debug(dx[i] + "\n");
+	                Preferences.debug(dx[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	            }
         	}
 
@@ -9041,9 +9196,9 @@ mainLoop:
 
             alpha = Math.min(1.0, Math.min(magfy * alfkm1, alphup));
             if (outputMes) {
-	            Preferences.debug("In stepuc: alpha = " + alpha + "\n");
-	            Preferences.debug("In stepuc: alfkm1 = " + alfkm1 + "\n");
-	            Preferences.debug("In stepuc: alphup = " + alphup + "\n");
+	            Preferences.debug("In stepuc: alpha = " + alpha + "\n", Preferences.DEBUG_ALGORITHM);
+	            Preferences.debug("In stepuc: alfkm1 = " + alfkm1 + "\n", Preferences.DEBUG_ALGORITHM);
+	            Preferences.debug("In stepuc: alphup = " + alphup + "\n", Preferences.DEBUG_ALGORITHM);
             }
 
             if ((ifree > 0) && (indic < 0)) {
@@ -9391,7 +9546,7 @@ mainLoop:
         }
 
         if (outputMes) {
-            Preferences.debug("In TERMUC:\n");
+            Preferences.debug("In TERMUC:\n", Preferences.DEBUG_ALGORITHM);
         }
 
         // CRITERIUM NO. 1
@@ -9441,10 +9596,10 @@ mainLoop:
         // CHECK LAGRANGE MULTIPLIERS
 
         if (outputMes) {
-	        Preferences.debug("Checking Lagrange mult. in TERMUC\n");
+	        Preferences.debug("Checking Lagrange mult. in TERMUC\n", Preferences.DEBUG_ALGORITHM);
 	
 	        for (i = 0; i < param; i++) {
-	            Preferences.debug(g[i] + "\n");
+	            Preferences.debug(g[i] + "\n", Preferences.DEBUG_ALGORITHM);
 	        }
         }
 
