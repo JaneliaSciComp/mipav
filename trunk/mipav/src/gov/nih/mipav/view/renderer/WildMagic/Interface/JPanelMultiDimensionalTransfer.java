@@ -27,23 +27,19 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
-import WildMagic.LibFoundation.Mathematics.Vector2f;
 
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.media.opengl.*;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
+/**
+ * This panel contains the display panel for the 2D Histogram user-interface.
+ *
+ */
 public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements ChangeListener {
 
 
@@ -52,8 +48,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 	/** Color button for changing color. */
 	protected JButton colorButton;
+	/** Alpha blend slider. */
 	protected JSlider alphaSlider;
+	/** Boundary emphasis slider slider. */
 	private JSlider boundaryEmphasisSlider;
+	/** Button group for the widget type: */
 	private ButtonGroup m_kGroup = new ButtonGroup();
 
 	/** The scroll pane holding the panel content. Useful when the screen is small. */
@@ -62,11 +61,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	/** Scroll panel that holding the all the control components. */
 	private JPanel scrollPanel;
 
-	private Animator m_kAnimator;
+	/** Displays the 2D Histogram and widgets: */
 	private VolumeImageMultiDimensionalTransfer m_kMultiHistogram;
-
+	/** Panel containing the 2D Histogram display canvas: */
 	private JPanel histogramPanel;
-
+	/** Graph axes helper classes for displaying the axes of the 2D Histogram:  */
 	private ViewJComponentGraphAxes imageAxis;
 	private ViewJComponentGraphAxes gmAxis;
 	private JPanel helpPanel = new JPanel(new GridBagLayout());
@@ -79,17 +78,16 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	public JPanelMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface parent,
 			Animator kAnimator, VolumeImage kVolumeImage) {
 		m_kVolumeViewer = parent;
-		m_kAnimator = kAnimator;
-		//m_kAnimator = new Animator();
 		m_kMultiHistogram = new VolumeImageMultiDimensionalTransfer( canvas, parent, kVolumeImage);
-		m_kMultiHistogram.SetAnimator(m_kAnimator);
+		m_kMultiHistogram.SetAnimator(kAnimator);
 		m_kMultiHistogram.SetInterface(this);
 
-		//VolumeImageHistogram.main(parent, kVolumeImage, true);
 		init();
-
 	}
 
+	/* (non-Javadoc)
+	 * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+	 */
 	public void actionPerformed(ActionEvent event) {
 		Object source = event.getSource();
 		if ( source == colorButton )
@@ -120,12 +118,19 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kGroup = null;
 		scroller = null;
 		scrollPanel = null;
-		m_kAnimator = null;
 		m_kMultiHistogram.dispose();
 		m_kMultiHistogram = null;
 		super.dispose();
 	}
 
+	/**
+	 * Sets the minimum and maximum values of the ModelImage and the Gradient Magnitude image
+	 * for displaying the graph axes of the 2D Histogram. 
+	 * @param imageMin
+	 * @param imageMax
+	 * @param gmMin
+	 * @param gmMax
+	 */
 	public void setMinMax( float imageMin, float imageMax, float gmMin, float gmMax )
 	{
 		imageAxis.setMinMax( imageMin, imageMax );
@@ -133,6 +138,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	}
 
 
+	/**
+	 * Access to the 2D Histogram display class so it can be updated from outside this class.
+	 * @return
+	 */
 	public VolumeImageMultiDimensionalTransfer getHistogram()
 	{
 		return m_kMultiHistogram;
@@ -153,6 +162,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		histogramPanel.setSize(new Dimension(iWidth, histogramPanel.getHeight()));
 	}
 
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#setButtonColor(javax.swing.JButton, java.awt.Color)
+	 */
 	public void setButtonColor(JButton _button, Color _color)
 	{
 		super.setButtonColor( _button, _color );
@@ -160,6 +172,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kMultiHistogram.setColor( new ColorRGBA( _color.getRed()/255.0f, _color.getGreen()/255.0f, _color.getBlue()/255.0f, fAlpha ) );
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+	 */
 	public void stateChanged(ChangeEvent e) {
 		Object source = e.getSource();
 
@@ -176,6 +191,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		}
 	}
 
+	/**
+	 * Calls update display on the 2D Histogram class.
+	 */
 	public void update()
 	{
 		float fAlpha = boundaryEmphasisSlider.getValue()/100.0f;
@@ -187,14 +205,15 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kMultiHistogram.display();
 	}
 
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase#updateColorButton(float[], float)
+	 */
 	public void updateColorButton( float[] afColor, float fColor )
 	{
 		colorButton.setBackground( new Color( afColor[0], afColor[1], afColor[2]) );
 		alphaSlider.setValue( (int)(afColor[3] * 100) );
 		boundaryEmphasisSlider.setValue( (int)(fColor * 100) );
 	}
-
-
 
 
 	public synchronized VolumeImageMultiDimensionalTransfer getM_kMultiHistogram() {
@@ -277,27 +296,12 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		histogramPanel.add( gmAxis, BorderLayout.EAST );
 		histogramPanel.add( new ViewJComponentGraphAxes( ViewJComponentGraphAxes.Y_AXIS, ViewJComponentGraphAxes.RIGHT, 
 				80, 256, null, 0 ), BorderLayout.WEST);
-		//panel.add(colorButton, BorderLayout.CENTER);
-		//panel.setPreferredSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
-		//panel.setMinimumSize(new Dimension(m_kMultiHistogram.GetWidth(), m_kMultiHistogram.GetHeight()));
 
 		// Scroll panel that hold the control panel layout in order to use JScrollPane
-
-		GridBagLayout gbLayout = new GridBagLayout();
-		GridBagConstraints gbConstraints = new GridBagConstraints();
-
 		scrollPanel = new JPanel(new BorderLayout());
-		//scrollPanel.setLayout(gbLayout);
-		//gbConstraints.gridx = 0;
-		// gbConstraints.gridy = 0;
-		//scrollPanel.add(panel, BorderLayout.CENTER);   
-		//scrollPanel.add(buttonPanel, BorderLayout.SOUTH);   
-		// scrollPanel.add(histogramPanel, gbConstraints);   
-		//gbConstraints.gridy++;
-		//scrollPanel.add(buttonPanel, gbConstraints);   
 
-		scroller = new JScrollPane(scrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scroller = new JScrollPane(scrollPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+				ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		mainPanel = new JPanel(new BorderLayout());
 
 		helpPanel.setBorder(buildTitledBorder("Help"));

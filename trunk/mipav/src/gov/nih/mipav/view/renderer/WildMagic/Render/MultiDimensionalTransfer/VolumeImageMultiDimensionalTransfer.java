@@ -17,36 +17,71 @@ import javax.media.opengl.awt.GLCanvas;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.Collision.Picker;
 import WildMagic.LibGraphics.Effects.TextureEffect;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
 
+/**
+ * This class implements the 2D Histogram display and user-interaction widget in the JPanelMultiDimensionalTransfer class.
+ * The widget is displayed with a GLCanvas with a screen-space polygon displaying the 2D Histogram texture as the background.
+ * The user can add ClassificationWidgets to the canvas and change their location and size as well as color and blending parameters.
+ * This class provides the display and user-interaction for those widgets.
+ * 
+ * The widget parameters are then passed to the Volume Renderer GLSL program in the VolumeRayCast class where they
+ * determine how the volume is displayed.
+ *
+ */
+/**
+ * @author Alexandra
+ *
+ */
+/**
+ * @author Alexandra
+ *
+ */
 public class VolumeImageMultiDimensionalTransfer extends VolumeImageViewer
 implements GLEventListener, KeyListener
 {
 
 	private static final long serialVersionUID = 401740242306942355L;
+	/** The maximum number of widgets that can be added to the display. 
+	 * More can be added, but then the Volume Renderer GLSL program should be changed to add the new widgets. */
 	public int MAX_WIDGETS = 6;
-	/** For processing picking: */
-	protected Picker m_kPicker = new Picker();
+	/** Stores which button was pressed during mouse drag. */
 	private int m_iMouseButton;
+	/** Stores the mouse position for picking. */
 	private int m_iMouseX, m_iMouseY;
+	/** The bounds on the 2D Histogram texture coordinates used to display the 2D Histogram.
+	 * The texture coordinates are clamped to show only the portions of the texture that are above a threshold value. */
 	private Vector2f m_kTMin = new Vector2f(0,0);
 	private Vector2f m_kTMax = new Vector2f(1,1);
-	private Vector<ClassificationWidget> m_akLev = new Vector<ClassificationWidget>();
-	private int m_iCurrent = -1;
+	/** The list of widgets displayed on the 2D Histogram. */
+	private Vector<ClassificationWidget> m_akWidgets = new Vector<ClassificationWidget>();
+	/** The ID of the active and previously active widget. */
+	private int m_iCurrent = -1, m_iPrevious = -1;
+	/** The ID of the  */
 	private int m_iPicked = -1;
+	/** When true there is a pending mouse pick to process. */
 	private boolean m_bPickPending = false;
+	/** The current color to use to create a new Widget. */
 	private ColorRGBA m_kCurrentColor = new ColorRGBA(ColorRGBA.WHITE);
+	/** When true a new Widget was added with the mouse. */
 	private boolean m_bAdded = false;
+	/** Reference to the containing JPanel. */
 	private JInterfaceBase m_kInterface = null;
+	/** Defines the current selected widget type. */
 	private String m_kWidgetType = new String( "Square" );
 	private boolean m_bFirstAdded = false;
 	private boolean m_bUpdateLev = false;
 
+	/**
+	 * Create a new VolumeImageMultiDimensionalTranfer display.
+	 * @param canvas The canvas to use for the display. The canvas shares a context with the VolumeTriPlanarRenderer.
+	 * @param kParentFrame parent frame.
+	 * @param kVolumeImage the VolumeImage with the associated 2D Histogram.
+	 */
 	public VolumeImageMultiDimensionalTransfer( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
 	{
 		super( canvas, kParentFrame, kVolumeImage );
@@ -54,74 +89,63 @@ implements GLEventListener, KeyListener
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );  
 		m_bDisplay = true;
 	}
+	
 	/**
-	 * @param args
-    public static void main( VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, boolean bShowFrame )
-    {
-        final VolumeImageMultiDimensionalTransfer kWorld = new VolumeImageMultiDimensionalTransfer(kParentFrame, kVolumeImage);
-        final Frame frame = new Frame(kWorld.GetWindowTitle());
-        frame.add( kWorld.GetCanvas() );
-        final Animator animator = new Animator( kWorld.GetCanvas() );    
-        frame.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                // Run this on another thread than the AWT event queue to
-                // avoid deadlocks on shutdown on some platforms
-                new Thread(new Runnable() {
-                    public void run() {
-                        animator.stop();
-                    }
-                }).start();
-                frame.setVisible(false);
-            }
-        });
-        // setting the frame to be undecorated removes the frame title bar and edges
-        // this prevents flashing on-screen.
-        frame.setUndecorated(!bShowFrame);
-        // frame must be set to visible for the gl canvas to be properly initialized.
-        frame.setVisible(true);
-        frame.setBounds(0,0,
-                kWorld.GetWidth(), kWorld.GetHeight() );
-        frame.setVisible(bShowFrame);
-        kWorld.SetAnimator(animator);
-        kWorld.SetFrame(frame);
-        animator.start();
-    }
+	 * Set the display to true and call GLCanvas.display;
 	 */
-
 	public void display()
 	{
 		m_bDisplay = true;
 		GetCanvas().display();
 	}
-
-	@Override
+	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#display(javax.media.opengl.GLAutoDrawable)
+	 */
 	public void display(GLAutoDrawable arg0) {
+		// return early if not displaying:
 		if ( !m_bDisplay )
 		{
 			return;
 		}
+		// return early if the animator is null:
 		if ( m_kAnimator == null )
 		{
 			return;
 		}      
+		// Set the drawable in the renderer:
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+		// if dispose, call the dispose function and return.
+		if ( m_bDispose )
+		{
+			dispose(arg0);
+			return;
+		}
+		// Update the widgets:
 		if ( m_bUpdateLev )
 		{
 			m_bUpdateLev = false;
 			updateLev();
 		}
-		for ( int i = 0; i < m_akLev.size(); i++ )
+		// Set the current widget as selected if the current has changed:
+		if ( m_iCurrent != m_iPrevious )
 		{
-			m_akLev.get(i).clearPicked(i == m_iCurrent);
+			for ( int i = 0; i < m_akWidgets.size(); i++ )
+			{
+				m_akWidgets.get(i).setPicked(i == m_iCurrent);
+			}
+			m_iPrevious = m_iCurrent;
 		}
+		// Update the parent with the widet parameters so
+		// the Volume Renderer GLSL program can be updated:
 		for ( int i = 0; i < MAX_WIDGETS; i++ )
 		{
-			if ( i < m_akLev.size() )
+			if ( i < m_akWidgets.size() )
 			{
-				m_akLev.get(i).updateDisplay();
+				m_akWidgets.get(i).updateDisplay();
 				if ( m_kParent != null )
 				{
-					m_kParent.updateLevWidgetState( m_akLev.get(i).getState(), i );
+					m_kParent.updateLevWidgetState( m_akWidgets.get(i).getState(), i );
 				}
 			}
 			else
@@ -129,10 +153,9 @@ implements GLEventListener, KeyListener
 				m_kParent.updateLevWidgetState( ClassificationWidgetState.ZERO_STATE, i );
 			}            
 		}
+		// Call picking to see if the selected widget has changed:
 		Pick();    
-		//m_pkPlane.DetachAllEffects();
-		//m_pkPlane.AttachEffect(m_spkEffect);
-		// m_pkPlane.UpdateGS();
+		// Draw the widgets on the 2D Histogram background"
 		m_spkScene.UpdateGS();
 		m_kCuller.ComputeVisibleSet(m_spkScene);
 		m_pkRenderer.ClearBuffers();
@@ -143,11 +166,11 @@ implements GLEventListener, KeyListener
 		}
 		m_pkRenderer.DisplayBackBuffer();    
 
-
+		// If a widget was added rendering needs to be called a 2nd time after setting the color:
 		if ( m_bAdded ) 
 		{
 			m_bAdded = false;
-			m_akLev.get(m_iCurrent).setColor(m_kCurrentColor);
+			m_akWidgets.get(m_iCurrent).setColor(m_kCurrentColor);
 			m_bFirstAdded = true;
 			GetCanvas().display();
 		}
@@ -157,33 +180,57 @@ implements GLEventListener, KeyListener
 		}
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#dispose()
+	 */
 	public void dispose()
 	{
-		m_kPicker = null;
+		m_bDispose = true;
+		GetCanvas().display();
+	}
+
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#dispose(javax.media.opengl.GLAutoDrawable)
+	 */
+	public void dispose(GLAutoDrawable arg0)
+	{
+		// All OpenGL objects must be disposed through the Renderer class, when
+		// the OpenGL Context is active:
+		for ( int i = m_akWidgets.size(); i > 0; i-- )
+		{
+			ClassificationWidget kWidget = m_akWidgets.remove(0);
+			// Releases the GPU resources:
+			m_pkRenderer.ReleaseAllResources( kWidget.getWidget() );
+			kWidget.dispose();
+		}
+		m_akWidgets = null;
 		m_kTMin = null;
 		m_kTMax = null;
-		m_akLev.clear();
-		m_akLev = null;
 		m_kCurrentColor = null;
 		m_kInterface = null;
 		m_kWidgetType = null;
-		super.dispose(GetCanvas());
+		super.dispose(arg0);
 	}
 
-
+	/**
+	 * Returns the ID of the currently picked Widget. 
+	 * @return the ID of the currently picked Widget. 
+	 */
 	public int getPicked()
 	{
 		return m_iCurrent;
 	}
 
-
+	/**
+	 * Returns a Copy of the current Widgets.
+	 * @return a Copy of the current Widgets.
+	 */
 	public Vector<ClassificationWidget> getWidgets()
 	{
 		Vector<ClassificationWidget> kWidgetList = new Vector<ClassificationWidget>();
-		for ( int i = 0; i < m_akLev.size(); i++ )
+		for ( int i = 0; i < m_akWidgets.size(); i++ )
 		{
-			ClassificationWidget kWidget = m_akLev.get(i);
+			ClassificationWidget kWidget = m_akWidgets.get(i);
 			if ( kWidget instanceof SquareClassificationWidget )
 			{
 				kWidgetList.add( new SquareClassificationWidget((SquareClassificationWidget)kWidget) );
@@ -196,7 +243,9 @@ implements GLEventListener, KeyListener
 		return kWidgetList;
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#init(javax.media.opengl.GLAutoDrawable)
+	 */
 	public void init(GLAutoDrawable arg0) {
 
 		m_bDisplay = true;
@@ -207,8 +256,7 @@ implements GLEventListener, KeyListener
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
 		super.init(arg0);
 
-
-        // set up camera
+        // set up camera for rendering the screen-space quad:
         Vector3f kCLoc = new Vector3f(0.0f,0.0f,2.0f);
         Vector3f kCDir = Vector3f.UNIT_Z_NEG;
         Vector3f kCUp = Vector3f.UNIT_Y;
@@ -218,7 +266,7 @@ implements GLEventListener, KeyListener
         m_spkCamera.SetFrustum(-1,1,-1,1,1f,10.0f);
         m_pkRenderer.OnFrustumChange();
 		
-		
+		// Update the scene graph:
 		m_spkScene.UpdateGS();
 		m_spkScene.UpdateRS();
 		m_kAnimator.add( GetCanvas() );
@@ -254,45 +302,47 @@ implements GLEventListener, KeyListener
 	 * keyPressed callback.
 	 * @param kKey the KeyEvent triggering the callback.
 	 */
-	@Override
 	public void keyPressed(KeyEvent kKey)
 	{
 		char ucKey = kKey.getKeyChar();            
 		int iKey = kKey.getKeyCode();
 		if ( m_iCurrent != -1 )
 		{
+			// Delete the current widget:
 			if ( ucKey == KeyEvent.VK_DELETE )
 			{
-				ClassificationWidget kDeleted = m_akLev.remove(m_iCurrent);
+				ClassificationWidget kDeleted = m_akWidgets.remove(m_iCurrent);
 				m_spkScene.DetachChild( kDeleted.getWidget() );
 				kDeleted.dispose();
-				m_iCurrent = m_akLev.size() -1;
+				m_iCurrent = m_akWidgets.size() -1;
 				m_spkScene.UpdateGS();
 			}
 			else if ((iKey == KeyEvent.VK_RIGHT) || (iKey == KeyEvent.VK_KP_RIGHT))
 			{
+				// Change the selected widget with the arrow keys:
 				m_iCurrent++;
-				if ( m_iCurrent >= m_akLev.size() )
+				if ( m_iCurrent >= m_akWidgets.size() )
 				{
 					m_iCurrent = 0;
 				}
-				m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
-						m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
-				m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
-				m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+				m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+						m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+				m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
+				m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 				m_spkScene.UpdateGS();
 			}
 			else if ((iKey == KeyEvent.VK_LEFT) || (iKey == KeyEvent.VK_KP_LEFT))
 			{
+				// Change the selected widget with the arrow keys:
 				m_iCurrent--;
 				if ( m_iCurrent < 0 )
 				{
-					m_iCurrent = m_akLev.size()-1;
+					m_iCurrent = m_akWidgets.size()-1;
 				}
-				m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
-						m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
-				m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
-				m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+				m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+						m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+				m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
+				m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 				m_spkScene.UpdateGS();
 			}
 		}
@@ -300,14 +350,16 @@ implements GLEventListener, KeyListener
 		GetCanvas().display();
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseDragged(java.awt.event.MouseEvent)
+	 */
 	public void mouseDragged(MouseEvent e)
 	{
 		if ( m_iCurrent == -1 )
 		{
 			return; 
 		}
-		m_akLev.get(m_iCurrent).processMouseDrag( m_iMouseX, m_iMouseY, m_iMouseButton, e );
+		m_akWidgets.get(m_iCurrent).processMouseDrag( m_iMouseX, m_iMouseY, m_iMouseButton, e );
 		m_spkScene.UpdateGS();
 		m_bDisplay = true;
 		GetCanvas().display();
@@ -316,14 +368,18 @@ implements GLEventListener, KeyListener
 		m_iMouseY = e.getY();
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseMoved(java.awt.event.MouseEvent)
+	 */
 	public void mouseMoved(MouseEvent e)
 	{
 		m_bDisplay = true;
 		GetCanvas().display();
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mousePressed(java.awt.event.MouseEvent)
+	 */
 	public void mousePressed(MouseEvent e)
 	{
 		m_iMouseButton = e.getButton();
@@ -339,45 +395,51 @@ implements GLEventListener, KeyListener
 		GetCanvas().display();
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see WildMagic.LibApplications.OpenGLApplication.JavaApplication3D#mouseReleased(java.awt.event.MouseEvent)
+	 */
 	public void mouseReleased(MouseEvent e)
 	{   
 		if ( e.getButton() == MouseEvent.BUTTON3 )
 		{	
-			if ( m_akLev.size() < MAX_WIDGETS )
+			// Create a new Widget on right-mouse button release:
+			if ( m_akWidgets.size() < MAX_WIDGETS )
 			{
-				float fX = 2.0f * (((float)e.getX()/(float)m_iWidth) - .5f);
-				float fY = 2.0f * (((float)m_iHeight-(float)e.getY())/m_iHeight - .5f);
-
 				m_iCurrent++;
 				ClassificationWidget kLev = null;
 				if ( m_kWidgetType.equals( "Square" ) )
 				{
-					kLev = new SquareClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
+					// new Square widget:
+					kLev = new SquareClassificationWidget(e.getX(),e.getY(), m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
 				}
 				else
 				{
-					kLev = new TriangleClassificationWidget(fX,fY, m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
+					// new Triangle widget:
+					kLev = new TriangleClassificationWidget(e.getX(),e.getY(), m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
 				}
-
+				// Attach the widget scene-graph to the main scene-graph:
 				m_spkScene.AttachChild(  kLev.getWidget() );
 				m_spkScene.UpdateGS();
-				m_akLev.add(kLev);
+				// Save the widget in the list:
+				m_akWidgets.add(kLev);
 				m_bAdded = true;
 			}
 		}
-		if ( (m_akLev.size() > 0) && (m_iCurrent != -1) )
+		if ( (m_akWidgets.size() > 0) && (m_iCurrent != -1) )
 		{
-			m_akLev.get(m_iCurrent).clearPicked( );
+			m_akWidgets.get(m_iCurrent).clearPicked( );
 		}
 		m_bDisplay = true;
 		GetCanvas().display();
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#reshape(javax.media.opengl.GLAutoDrawable, int, int, int, int)
+	 */
 	public void reshape(GLAutoDrawable arg0, int iX, int iY, int iWidth, int iHeight)
 	{      
 		((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+		// The size of this canvas is constant:
 		m_iWidth = 256;
 		m_iHeight = 256;
         m_spkCamera.Perspective = false;
@@ -388,63 +450,86 @@ implements GLEventListener, KeyListener
 		m_bDisplay = true;
 	}
 
-
+	/**
+	 * Sets the contribution of the 2nd derivative on the volume rendering for this widget.
+	 * @param fAlpha the contribution of the 2nd derivative on the volume rendering for this widget.
+	 */
 	public void setBoundary( float fAlpha )
 	{
 		if (  m_iCurrent != -1 )
 		{
-			m_akLev.get(m_iCurrent).setBoundary( fAlpha );
+			m_akWidgets.get(m_iCurrent).setBoundary( fAlpha );
 			m_bDisplay = true;
 			GetCanvas().display();
 		}
 	}
-
+	/**
+	 * Sets the color of the color transfer function for this widget.
+	 * @param kColor the color of the color transfer function for this widget.
+	 */
 	public void setColor( ColorRGBA kColor )
 	{
 		m_kCurrentColor.Copy(kColor);
 		if (  m_iCurrent != -1 )
 		{
-			m_akLev.get(m_iCurrent).setColor( kColor );
+			m_akWidgets.get(m_iCurrent).setColor( kColor );
 		}
 		m_bDisplay = true;
 		GetCanvas().display();
 	}
 
-
-
+	/**
+	 * Sets the parent container panel:
+	 * @param kInterface
+	 */
 	public void SetInterface( JInterfaceBase kInterface )
 	{
 		m_kInterface = kInterface;
 	}
 
+	/**
+	 * Sets the current picked ID.
+	 * @param value
+	 */
 	public void setPicked( int value )
 	{
 		m_iPicked = value;
 	}
 
+	/**
+	 * Sets the widget type for new widgets.
+	 * @param kWidgetType
+	 */
 	public void setWidget( String kWidgetType )
 	{
 		m_kWidgetType = new String(kWidgetType);
 	}
 
+	/**
+	 * Sets the list of Widgets.
+	 * @param kWidgetList
+	 */
 	public void setWidgets(Vector<ClassificationWidget> kWidgetList)
 	{
-		m_akLev = kWidgetList;
+		m_akWidgets = kWidgetList;
 		m_bUpdateLev = true;        
 	}
 
+	/**
+	 * Updates the scene graph after a new list of widgets is added.
+	 */
 	private void updateLev()
 	{
-		for ( int i = 0; i < m_akLev.size(); i++ )
+		for ( int i = 0; i < m_akWidgets.size(); i++ )
 		{
 			m_iCurrent++;
-			ClassificationWidget kLev = m_akLev.get(i);
+			ClassificationWidget kLev = m_akWidgets.get(i);
 			m_spkScene.AttachChild( kLev.getWidget() );
-			setColor( m_akLev.get(m_iCurrent).getColor() );
-			m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
-					m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
-			m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
-			m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+			setColor( m_akWidgets.get(m_iCurrent).getColor() );
+			m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+					m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+			m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
+			m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 			m_spkScene.UpdateGS();
 			m_bAdded = true;
 			m_bDisplay = true;
@@ -452,19 +537,23 @@ implements GLEventListener, KeyListener
 		m_iCurrent = m_iPicked;
 		if ( m_bAdded )
 		{
-			setColor( m_akLev.get(m_iCurrent).getColor() );
-			m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
-					m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
-			m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
-			m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+			setColor( m_akWidgets.get(m_iCurrent).getColor() );
+			m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+					m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+			m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
+			m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 			m_spkScene.UpdateGS();
 		}
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#CreatePlaneNode()
+	 */
 	protected void CreatePlaneNode()
 	{
+		// Create the new scene-graph node:
 		m_spkScene = new Node();
+		// create the screen-space quad:
 		Attributes kAttributes = new Attributes();
 		kAttributes.SetPChannels(3);
 		kAttributes.SetTChannels(0,2);
@@ -477,6 +566,8 @@ implements GLEventListener, KeyListener
         float fY0 = -1f;
         float fY1 =  1f;
 
+        // Set the positions and texture coordinates.
+        // The texture coordinates are clamped to the input values m_kTMin and m_kTMax:
 		Vector2f[] akTCoords = m_kVolumeImage.GetHistoTCoords();
 		m_kTMin.X = akTCoords[0].X;
 		m_kTMin.Y = akTCoords[0].Y;
@@ -502,41 +593,46 @@ implements GLEventListener, KeyListener
 		m_spkScene.AttachChild(m_pkPlane);
 	}
 
-	@Override
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer#CreateScene()
+	 */
 	protected void CreateScene ()
 	{
 		CreatePlaneNode();
+		// Attach the 2D Histogram texture as a texture effect to the 
+		// screen-space quad:
 		m_spkEffect = new TextureEffect( m_kVolumeImage.GetHistoName() );
 		m_pkPlane.AttachEffect(m_spkEffect);
 		m_pkRenderer.LoadResources(m_pkPlane);
 	}    
 
+	/**
+	 * Determine which widget is selected with the mouse/
+	 */
 	protected void Pick()
 	{
-
-		//Vector3f kPos = new Vector3f(0,0,10);
-		//Vector3f kDir = new Vector3f(0,0,1);  // the pick ray
-
-
 		if (m_bPickPending)
 		{
 			m_bPickPending = false;
 			if ( m_iCurrent != -1 )
 			{
-				if ( m_akLev.get(m_iCurrent).Pick(m_iMouseX, m_iMouseY ) )
+				// Test the currently selected widget first:
+				if ( m_akWidgets.get(m_iCurrent).Pick(m_iMouseX, m_iMouseY ) )
 				{
 					return;
 				}
 			}
-			for ( int i = 0; i < m_akLev.size(); i++ )
+			// If the currently selected widget was not picked, 
+			// attempt to find which widget, and which component of the widget is selected:
+			for ( int i = 0; i < m_akWidgets.size(); i++ )
 			{
-				if ( m_akLev.get(i).Pick(m_iMouseX, m_iMouseY ) )
+				if ( m_akWidgets.get(i).Pick(m_iMouseX, m_iMouseY ) )
 				{
 					m_iCurrent = i;
-					m_kInterface.updateColorButton( m_akLev.get(m_iCurrent).getState().Color,
-							m_akLev.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
-					m_spkScene.DetachChild( m_akLev.get(m_iCurrent).getWidget() );
-					m_spkScene.AttachChild( m_akLev.get(m_iCurrent).getWidget() );
+					m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+							m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+					m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
+					m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 					m_spkScene.UpdateGS();
 					return;
 				}
@@ -545,9 +641,6 @@ implements GLEventListener, KeyListener
 	}
 
 	public synchronized Vector<ClassificationWidget> getM_akLev() {
-		return m_akLev;
+		return m_akWidgets;
 	}
-
-
-
 }
