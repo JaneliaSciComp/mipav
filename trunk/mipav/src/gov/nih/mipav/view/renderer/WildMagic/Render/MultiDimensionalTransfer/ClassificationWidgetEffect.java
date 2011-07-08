@@ -8,14 +8,24 @@ import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
+/**
+ * This class sets up and communicates with the GLSL shader program used to render the
+ * interior of the widget in the multi-histogram panel. The parameters that control how the widget is rendered
+ * in the multi-histogram panel are also used to determine how the widget is applied to the volume rendered data
+ * in the GLSL volume renderer shader program. Those parameters are encapsulated in the ClassificationWidgetState class
+ * which is used to pass the information on to the volume render GLSL program.
+ * 
+ * This class sets up the histogram tool GLSL shader programs for rendering the widgets directly.
+ */
 public class ClassificationWidgetEffect extends TextureEffect
 {
     /**  */
     private static final long serialVersionUID = -7141385452679118672L;
+    /** Current state of the widget encapsulated in the GLSL parameters needed for the Volume renderer GLSL program: */
     private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
 
-    /** Creates a new LevWidgetEffect with the texture specified.
-     * @param rkBaseName the name of the texture image.
+    /** Creates a new ClassificationWidgetEffect with the texture specified.
+     * @param rkBaseName the name of the 2D Histogram texture image.
      */
     public ClassificationWidgetEffect (final String rkBaseName)
     {
@@ -29,6 +39,11 @@ public class ClassificationWidgetEffect extends TextureEffect
     }
 
 
+    /**
+     * Creates a new ClassificationWidgetEffect based on the input ClassificationWidgetEffect
+     * @param kEffect ClassificationWidgetEffect, used to provide the name of the 2D Histogram texture,
+     * as well as the current state of the Widget parameters.
+     */
     public ClassificationWidgetEffect (ClassificationWidgetEffect kEffect)
     {
         SetPassQuantity(1);
@@ -41,6 +56,9 @@ public class ClassificationWidgetEffect extends TextureEffect
         m_kWidgetState.Copy(kEffect.m_kWidgetState);
     }
     
+    /* (non-Javadoc)
+     * @see WildMagic.LibGraphics.Effects.ShaderEffect#dispose()
+     */
     public void dispose()
     {
         m_kWidgetState.dispose();
@@ -48,11 +66,19 @@ public class ClassificationWidgetEffect extends TextureEffect
         super.dispose();
     }
     
+    /**
+     * Returns the current ClassificationWidgetState GLSL Shader program parameters.
+     * @return the current ClassificationWidgetState GLSL Shader program parameters.
+     */
     public ClassificationWidgetState getState()
     {
         return m_kWidgetState;
     }
     
+    /**
+     * Sets the ClassificationWidgetState, representing the GLSL shader program parameters.
+     * @param kState ClassificationWidgetState, representing the GLSL shader program parameters.
+     */
     public void setState(ClassificationWidgetState kState)
     {
         m_kWidgetState = kState;
@@ -68,7 +94,6 @@ public class ClassificationWidgetEffect extends TextureEffect
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
         {
             pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
-            //System.err.println( fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevRightLine") != null) ) 
         {
@@ -81,6 +106,10 @@ public class ClassificationWidgetEffect extends TextureEffect
         computeUniformVariables();
     }
 
+    /**
+     * Returns the color of the widget color transfer function.
+     * @return the color of the widget color transfer function.
+     */
     public ColorRGBA GetColor( ) 
     {
         return new ColorRGBA (
@@ -90,6 +119,10 @@ public class ClassificationWidgetEffect extends TextureEffect
                 m_kWidgetState.Color[3] );
     }
 
+    /**
+     * Sets the color of the widget color transfer function.
+     * @param the color of the widget color transfer function.
+     */
     public void SetColor( float fR, float fG, float fB, float fA ) 
     {
         m_kWidgetState.Color[0] = fR;
@@ -99,6 +132,9 @@ public class ClassificationWidgetEffect extends TextureEffect
         UpdateColor();
     }
 
+    /**
+     * Updates the color in the GLSL shader program used to render the ClassificationWidget. 
+     */
     public void UpdateColor( ) 
     {
         Program pkCProgram = GetCProgram(0);
@@ -109,6 +145,13 @@ public class ClassificationWidgetEffect extends TextureEffect
     }
     
 
+    /**
+     * Sets the mid-line parameter to the GLSL Shader Program.
+     * @param fX1 bottom x-coordinate in Texture Coordinates.
+     * @param fY1 bottom y-coordinate in Texture Coordinates.
+     * @param fX2 top x-coordinate in Texture Coordinates.
+     * @param fY2 top y-coordinate in Texture Coordinates.
+     */
     public void SetMidLine( float fX1, float fY1, float fX2, float fY2 ) 
     {
         m_kWidgetState.MidLine[0] = fX1;
@@ -124,6 +167,13 @@ public class ClassificationWidgetEffect extends TextureEffect
     }
     
 
+    /**
+     * Sets the left-line parameter to the GLSL Shader Program.
+     * @param fX1 bottom x-coordinate in Texture Coordinates.
+     * @param fY1 bottom y-coordinate in Texture Coordinates.
+     * @param fX2 top x-coordinate in Texture Coordinates.
+     * @param fY2 top y-coordinate in Texture Coordinates.
+     */
     public void SetLeftLine( float fX1, float fY1, float fX2, float fY2 ) 
     {
         m_kWidgetState.LeftLine[0] = fX1;
@@ -134,12 +184,18 @@ public class ClassificationWidgetEffect extends TextureEffect
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
         {
             pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
-            //System.err.println( fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
         }
         computeUniformVariables();
     }
     
 
+    /**
+     * Sets the right-line parameter to the GLSL Shader Program.
+     * @param fX1 bottom x-coordinate in Texture Coordinates.
+     * @param fY1 bottom y-coordinate in Texture Coordinates.
+     * @param fX2 top x-coordinate in Texture Coordinates.
+     * @param fY2 top y-coordinate in Texture Coordinates.
+     */
     public void SetRightLine( float fX1, float fY1, float fX2, float fY2 ) 
     {
         m_kWidgetState.RightLine[0] = fX1;
@@ -155,6 +211,10 @@ public class ClassificationWidgetEffect extends TextureEffect
     }
     
     
+    /**
+     * Sets the contribution of the 2nd derivative to the volume rendering.
+     * @param fAlpha the contribution of the 2nd derivative to the volume rendering.
+     */
     public void setBoundary( float fAlpha )
     {
         m_kWidgetState.BoundaryEmphasis[0] = fAlpha;
@@ -165,9 +225,12 @@ public class ClassificationWidgetEffect extends TextureEffect
         }
     }
     
+    /**
+     * Computes the input parameters to the GLSL shader program based on the ClassificationWidgetState and passes
+     * them to the program to render the widget in the multi-histogram panel.
+     */
     private void computeUniformVariables()
     {
-
         float fShiftL = 0;
         float fShiftR = 0;
         if ( m_kWidgetState.MidLine[1] == m_kWidgetState.MidLine[3] )
@@ -199,6 +262,11 @@ public class ClassificationWidgetEffect extends TextureEffect
         }
     }
 
+    /**
+     * Stream this object to disk.
+     * @param out
+     * @throws IOException
+     */
     public void writeObject(java.io.ObjectOutputStream out)
     throws IOException 
     {
@@ -207,6 +275,12 @@ public class ClassificationWidgetEffect extends TextureEffect
     }
     
 
+    /**
+     * Read this object from disk.
+     * @param in
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     public void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
     {

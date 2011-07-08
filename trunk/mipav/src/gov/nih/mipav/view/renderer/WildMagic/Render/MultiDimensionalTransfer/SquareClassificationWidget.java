@@ -15,29 +15,53 @@ import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
+/**
+ * This class implements a 2D Square-shaped ClassficiationWidget. The code implements the rendering of the widget
+ * in the 2D Multi-histogram panel, as well as the user mouse-interaction with the widget.
+ * 
+ * The parameters that define the widget are then passed to the Volume Renderer GLSL shader program and determine
+ * how the Volume is displayed. *
+ */
 public class SquareClassificationWidget extends ClassificationWidget
 {
 
 	private static final long serialVersionUID = -4180814068815939724L;
 
+	/** Current parameterized coordinates for the center control point in X 
+	 * (used to maintain relative position when resizing the widget). */
 	private float m_fCenterX = 0.5f;
+	/** Current parameterized coordinates for the center control point in Y 
+	 * (used to maintain relative position when resizing the widget). */
 	private float m_fCenterY = 0.5f;
 	
-	public SquareClassificationWidget(float fX, float fY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
+	/**
+	 * @param iX location in MouseEvent Coordinates.
+	 * @param iY location in MouseEvent Coordinates.
+	 * @param kTMin minimum texture coordinates for the 2D histogram, used for the image background. (Defaults 0-1)
+	 * @param kTMax maximum texture coordinates for the 2D histogram, used for the image background. (Defaults 0-1)
+	 * @param kTexName 2D Histogram texture name.
+	 * @param iWidth canvas width (default 256)
+	 * @param iHeight canvas height (default 256)
+	 */
+	public SquareClassificationWidget(int iX, int iY, Vector2f kTMin, Vector2f kTMax, String kTexName, int iWidth, int iHeight)
     {
         super( kTMin, kTMax, iWidth, iHeight );
-        CreateSquare( fX, fY, kTexName );
+        CreateSquare( iX, iY, kTexName );
     }
 
+    /**
+     * Copy constructor.
+     * @param kWidget
+     */
     public SquareClassificationWidget ( SquareClassificationWidget kWidget )
     {
         super(kWidget);
 
-        m_kBottomTri = new TriMesh(new VertexBuffer(kWidget.m_kBottomTri.VBuffer),
-                new IndexBuffer(kWidget.m_kBottomTri.IBuffer));
-        m_kOutline = new Polyline( m_kBottomTri.VBuffer, true, true );
+        m_kWidgetMesh = new TriMesh(new VertexBuffer(kWidget.m_kWidgetMesh.VBuffer),
+                new IndexBuffer(kWidget.m_kWidgetMesh.IBuffer));
+        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
         
-        m_kBottomTriEffect = new ClassificationWidgetEffect( kWidget.m_kBottomTriEffect ); 
+        m_kWidgetEfect = new ClassificationWidgetEffect( kWidget.m_kWidgetEfect ); 
 
         m_kUpperSphere = new TriMesh(new VertexBuffer(kWidget.m_kUpperSphere.VBuffer),
                 new IndexBuffer(kWidget.m_kUpperSphere.IBuffer));
@@ -48,123 +72,91 @@ public class SquareClassificationWidget extends ClassificationWidget
                 new IndexBuffer(kWidget.m_kLowerSphere.IBuffer));
     }
     
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#Pick(int, int)
+	 */
 	public boolean Pick( int iX, int iY )
 	{
 		boolean bPicked = false;
 		m_kPicked = null;
+		// translate the MouseEvent coordinates into world coordinates.
 		float fX = calcObjX(iX);
 		float fY = calcObjY(iY);
-		if ( (fX >= m_kBottomTri.VBuffer.GetPosition3fX(0)) && (fX <= m_kBottomTri.VBuffer.GetPosition3fX(1)) &&
-				(fY >= m_kBottomTri.VBuffer.GetPosition3fY(0)) && (fY <= m_kBottomTri.VBuffer.GetPosition3fY(2)) )
+		// check the mouse world coordinates with the square world coordinates:
+		if ( (fX >= m_kWidgetMesh.VBuffer.GetPosition3fX(0)) && (fX <= m_kWidgetMesh.VBuffer.GetPosition3fX(1)) &&
+				(fY >= m_kWidgetMesh.VBuffer.GetPosition3fY(0)) && (fY <= m_kWidgetMesh.VBuffer.GetPosition3fY(2)) )
 		{
-			m_kPicked = m_kBottomTri;
-			//System.err.println( "Picked Square" );
+			m_kPicked = m_kWidgetMesh;
 			bPicked = true;
 		}
 		return super.Pick(iX,iY,bPicked);
 	}
     
-    @Override
-	public boolean processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e ) 
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#processMouseDrag(int, int, int, java.awt.event.MouseEvent)
+     */
+	public void processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e ) 
     {        
         if ( iButton == MouseEvent.BUTTON1 )
         {
-            if ( m_kPicked == m_kBottomTri )
+            if ( m_kPicked == m_kWidgetMesh )
             {
+            	// If the square is picked, translate it:
                 ShiftSquare( e );
             }
             else if ( (m_kPicked == m_kLowerSphere) || (m_kPicked == m_kUpperSphere) )
             {
+            	// if one of the corner control-points is picked, scale the square:
                 ScaleRectangle( e, (m_kPicked == m_kLowerSphere) );
             }
             else if ( m_kPicked == m_kMiddleSphere )
             {
+            	// the middle control-point was picked, so shift the mid-line:
                 ShiftMid(e);
             }
-            return false;
         }
-        return false;
     }
-/*
-    public void ScaleRectangle( TriMesh kShape, TriMesh kOutline )
-    {
-        float fThickness = 1.0f/m_iWidth;
-        fThickness *= 2;
-        Vector3f kPos0 = kOutline.VBuffer.GetPosition3(0);
-        Vector3f kPos1 = kOutline.VBuffer.GetPosition3(1);
-        Vector3f kPos2 = kOutline.VBuffer.GetPosition3(2);
-        Vector3f kPos3 = kOutline.VBuffer.GetPosition3(3);
-
-        float fNewX = kPos0.X + fThickness;
-        float fNewY = kPos0.Y + fThickness;
-        kShape.VBuffer.SetPosition3(0, fNewX, fNewY, 0.11f);
-        float fTX = fNewX;
-        float fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kShape.VBuffer.SetTCoord2(0, 0, fTX, fTY);
-
-        fNewX = kPos1.X - fThickness;
-        fNewY = kPos1.Y + fThickness;
-        kShape.VBuffer.SetPosition3(1, fNewX, fNewY, 0.11f);
-        fTX = fNewX;
-        fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kShape.VBuffer.SetTCoord2(0, 1, fTX, fTY);
-
-        fNewX = kPos2.X + fThickness;
-        fNewY = kPos2.Y - fThickness;
-        kShape.VBuffer.SetPosition3(2, fNewX, fNewY, 0.11f);
-        fTX = fNewX;
-        fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kShape.VBuffer.SetTCoord2(0, 2, fTX, fTY);
-
-        fNewX = kPos3.X - fThickness;
-        fNewY = kPos3.Y - fThickness;
-        kShape.VBuffer.SetPosition3(3, fNewX, fNewY, 0.11f);
-        fTX = fNewX;
-        fTY = fNewY;
-        fTX = m_kTMin.X + fTX * (m_kTMax.X - m_kTMin.X);
-        fTY = m_kTMin.Y + fTY * (m_kTMax.Y - m_kTMin.Y);
-        kShape.VBuffer.SetTCoord2(0, 3, fTX, fTY);
-
-        m_kWidget.UpdateGS();
-    }
-*/
-
-    @Override
+	
+	/* (non-Javadoc)
+	 * @see gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget#updateDisplay()
+	 */
 	public void updateDisplay()
     {
-        if ( m_kBottomTriEffect != null )
+		// Update the ClassificationWidgetEffect based on the position of the square and the mid-line control-point.
+        if ( m_kWidgetEfect != null )
         {
             Vector3f kMidLine = m_kMiddleSphere.Local.GetTranslate();
             float fX1 = kMidLine.X;
             float fY1 = kMidLine.Y;
             float fX2 = fX1;
             float fY2 = fY1;
-            m_kBottomTriEffect.SetMidLine( calcTCoordX(fX1), calcTCoordY(fY1), calcTCoordX(fX1), calcTCoordY(fY1) );
+            // set mid-line in texture coordinates:
+            m_kWidgetEfect.SetMidLine( calcTCoordX(fX1), calcTCoordY(fY1), calcTCoordX(fX1), calcTCoordY(fY1) );
 
-            fX1 = m_kBottomTri.VBuffer.GetTCoord2fX(0,0);
-            fY1 = m_kBottomTri.VBuffer.GetTCoord2fY(0,0);
-            fX2 = m_kBottomTri.VBuffer.GetTCoord2fX(0,3);
-            fY2 = m_kBottomTri.VBuffer.GetTCoord2fY(0,3);
-            m_kBottomTriEffect.SetLeftLine( fX1, fY1, fX2, fY2 );
+            fX1 = m_kWidgetMesh.VBuffer.GetTCoord2fX(0,0);
+            fY1 = m_kWidgetMesh.VBuffer.GetTCoord2fY(0,0);
+            fX2 = m_kWidgetMesh.VBuffer.GetTCoord2fX(0,3);
+            fY2 = m_kWidgetMesh.VBuffer.GetTCoord2fY(0,3);
+            // set left line in texture coordinates:
+            m_kWidgetEfect.SetLeftLine( fX1, fY1, fX2, fY2 );
 
-            fX1 = m_kBottomTri.VBuffer.GetTCoord2fX(0,1);
-            fY1 = m_kBottomTri.VBuffer.GetTCoord2fY(0,1);
-            fX2 = m_kBottomTri.VBuffer.GetTCoord2fX(0,2);
-            fY2 = m_kBottomTri.VBuffer.GetTCoord2fY(0,2);
-            m_kBottomTriEffect.SetRightLine( fX1, fY1, fX2, fY2 );
+            fX1 = m_kWidgetMesh.VBuffer.GetTCoord2fX(0,1);
+            fY1 = m_kWidgetMesh.VBuffer.GetTCoord2fY(0,1);
+            fX2 = m_kWidgetMesh.VBuffer.GetTCoord2fX(0,2);
+            fY2 = m_kWidgetMesh.VBuffer.GetTCoord2fY(0,2);
+            // set right-line in texture coordinates:
+            m_kWidgetEfect.SetRightLine( fX1, fY1, fX2, fY2 );
             
-            m_kBottomTriEffect.UpdateColor();
+            m_kWidgetEfect.UpdateColor();
         }
     }
-    
 
-
+    /**
+     * Read this object from disk:
+     * @param in
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
     private void readObject(java.io.ObjectInputStream in)
     throws IOException, ClassNotFoundException
     {
@@ -172,13 +164,13 @@ public class SquareClassificationWidget extends ClassificationWidget
         
         IndexBuffer kIBuffer = (IndexBuffer)in.readObject();
         VertexBuffer kVBuffer = (VertexBuffer)in.readObject();
-        m_kBottomTri = new TriMesh( kVBuffer, kIBuffer );
-        m_kBottomTriEffect = (ClassificationWidgetEffect)in.readObject();
-        m_kBottomTri.AttachEffect( m_kBottomTriEffect );
-        m_kBottomTri.SetName("BottomTri");
-        m_kWidget.AttachChild(m_kBottomTri);
+        m_kWidgetMesh = new TriMesh( kVBuffer, kIBuffer );
+        m_kWidgetEfect = (ClassificationWidgetEffect)in.readObject();
+        m_kWidgetMesh.AttachEffect( m_kWidgetEfect );
+        m_kWidgetMesh.SetName("BottomTri");
+        m_kWidget.AttachChild(m_kWidgetMesh);
 
-        m_kOutline = new Polyline( m_kBottomTri.VBuffer, true, true );
+        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
         
@@ -189,7 +181,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
+        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
 
         kIBuffer = (IndexBuffer)in.readObject();
         kVBuffer = (VertexBuffer)in.readObject();
@@ -197,7 +189,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
-        m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
+        m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
         
         kIBuffer = (IndexBuffer)in.readObject();
         kVBuffer = (VertexBuffer)in.readObject();
@@ -206,32 +198,75 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );     
 
-        Vector3f kTranslate = (Vector3f)in.readObject();
-        m_kMiddleSphere.Local.SetTranslate( kTranslate );
+        m_fCenterX = in.readFloat();
+        m_fCenterY = in.readFloat();
+        
+        // reposition mid-line control-point:
+        float fX = m_kWidgetMesh.VBuffer.GetPosition3fX(0) + m_fCenterX * 
+        (m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(0));
+        float fY = m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_fCenterY * 
+        (m_kWidgetMesh.VBuffer.GetPosition3fY(2) - m_kWidgetMesh.VBuffer.GetPosition3fY(0));
+
+        Vector3f kCenter = m_kMiddleSphere.Local.GetTranslate();
+        kCenter.X = fX;
+        kCenter.Y = fY;
     }
     
+	/**
+	 * Stream this object to disk.
+	 * @param out
+	 * @throws IOException
+	 */
+	private void writeObject(java.io.ObjectOutputStream out)
+	throws IOException 
+	{
+		out.writeFloat(m_fCenterX);
+		out.writeFloat(m_fCenterY);
+	}
+    
+    /**
+     * Moves the mid-line control-point. Repositions the mid-line of the transfer function
+     * inside this widget.
+     * @param e MouseEvent
+     */
     private void ShiftMid( MouseEvent e )
     {      
+    	// calculate the coordinates in world space:
     	float fX = calcObjX(e.getX()); 
     	float fY = calcObjY(e.getY()); 
     	Vector3f kCenter = m_kMiddleSphere.Local.GetTranslate();
-        fX = Math.max( fX, m_kBottomTri.VBuffer.GetPosition3fX(0) );
-        fX = Math.min( fX, m_kBottomTri.VBuffer.GetPosition3fX(1) );
-        fY = Math.max( fY, m_kBottomTri.VBuffer.GetPosition3fY(0) );
-        fY = Math.min( fY, m_kBottomTri.VBuffer.GetPosition3fY(2) );
+    	// clamp the new position to the square edges:
+        fX = Math.max( fX, m_kWidgetMesh.VBuffer.GetPosition3fX(0) );
+        fX = Math.min( fX, m_kWidgetMesh.VBuffer.GetPosition3fX(1) );
+        fY = Math.max( fY, m_kWidgetMesh.VBuffer.GetPosition3fY(0) );
+        fY = Math.min( fY, m_kWidgetMesh.VBuffer.GetPosition3fY(2) );
+        // set the center of the control-point sphere:
         kCenter.X = fX;
         kCenter.Y = fY;
-        m_fCenterX = (fX - m_kBottomTri.VBuffer.GetPosition3fX(0)) / 
-        (m_kBottomTri.VBuffer.GetPosition3fX(1) - m_kBottomTri.VBuffer.GetPosition3fX(0));
-        m_fCenterY = (fY - m_kBottomTri.VBuffer.GetPosition3fY(0)) / 
-        (m_kBottomTri.VBuffer.GetPosition3fY(2) - m_kBottomTri.VBuffer.GetPosition3fY(0));
+        // update the parameterized value of the control-point location for repositioning after scaling.
+        m_fCenterX = (fX - m_kWidgetMesh.VBuffer.GetPosition3fX(0)) / 
+        (m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(0));
+        m_fCenterY = (fY - m_kWidgetMesh.VBuffer.GetPosition3fY(0)) / 
+        (m_kWidgetMesh.VBuffer.GetPosition3fY(2) - m_kWidgetMesh.VBuffer.GetPosition3fY(0));
+        // update the scene graph:
         m_kWidget.UpdateGS();
     }
     
     
-    protected void CreateSquare(float fX, float fY, String kTexName)
+    /**
+     * Creates the square widget and control points:
+     * @param iX mouse x-position in MouseEvent coordinates.
+     * @param iY mouse y-position in MouseEvent coordinates.
+     * @param kTexName 2D Histogram texture name.
+     */
+    protected void CreateSquare(int iX, int iY, String kTexName)
     {
+    	// calculate the position in world coordinates:
+    	float fX = calcObjX(iX);
+    	float fY = calcObjY(iY);
+    	// the size of the square:
         float fSize = .2f;
+        // create the TriMesh Attributes: position, color, texture:
         Attributes kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
@@ -244,7 +279,7 @@ public class SquareClassificationWidget extends ClassificationWidget
         aiIndexData[3] = 0;
         aiIndexData[4] = 2;
         aiIndexData[5] = 3;        
-
+        // Set up the VertexBuffer positions, colors, texture coordinates:
         VertexBuffer kVBuffer = new VertexBuffer(kAttributes, 4 );
         kVBuffer.SetPosition3(0, fX-fSize, fY-fSize, 0.1f);
         kVBuffer.SetColor3( 0, 0, 1.0f, 0.01f, 0.01f );
@@ -262,33 +297,38 @@ public class SquareClassificationWidget extends ClassificationWidget
         kVBuffer.SetColor3( 0, 3, 1.0f, 0.01f, 0.01f  );
         kVBuffer.SetTCoord2(0, 3, calcTCoordX(fX-fSize), calcTCoordY(fY+fSize));
         
-        m_kBottomTri = new TriMesh( kVBuffer, kIBuffer );
+        // new square TriMesh:
+        m_kWidgetMesh = new TriMesh( kVBuffer, kIBuffer );
         
-        m_kBottomTriEffect = new ClassificationWidgetEffect( kTexName );
-        m_kBottomTri.AttachEffect( m_kBottomTriEffect );
-        m_kBottomTri.SetName("BottomTri");
-        m_kWidget.AttachChild(m_kBottomTri);
+        // Create the ClassificationWidgetEffect, pass in the texture name:
+        m_kWidgetEfect = new ClassificationWidgetEffect( kTexName );
+        m_kWidgetMesh.AttachEffect( m_kWidgetEfect );
+        m_kWidgetMesh.SetName("BottomTri");
+        m_kWidget.AttachChild(m_kWidgetMesh);
         
-        m_kOutline = new Polyline( m_kBottomTri.VBuffer, true, true );
+        // Outline for the square, uses the same VertexBuffer as the square:
+        m_kOutline = new Polyline( m_kWidgetMesh.VBuffer, true, true );
         m_kOutline.AttachEffect( new VertexColor3Effect() );
         m_kWidget.AttachChild(m_kOutline);
         
         
-        
+        // Attributes for the sphere control points:
         kAttributes = new Attributes();
         kAttributes.SetPChannels(3);
         kAttributes.SetCChannels(0,3);
         StandardMesh kSM = new StandardMesh(kAttributes);
+        // Sphere with radius set in parent class:
         m_kUpperSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kUpperSphere.VBuffer.GetVertexQuantity(); i++ )
         {
+        	// set the color:
             m_kUpperSphere.VBuffer.SetColor3(0, i, 0f, 0f, 1f);
         }
         m_kUpperSphere.AttachEffect( new VertexColor3Effect() );
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
-        m_kUpperSphere.UpdateGS( );
+        // move the sphere to the upper-right corner of the square widget:
+        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
         
 
         m_kLowerSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
@@ -299,8 +339,8 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
         m_kLowerSphere.SetName("LowerSphere");
         m_kWidget.AttachChild( m_kLowerSphere );
-        m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
-        m_kLowerSphere.UpdateGS( );
+        // move the sphere to the lower-right corner of the square widget:
+        m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
 
         m_kMiddleSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kMiddleSphere.VBuffer.GetVertexQuantity(); i++ )
@@ -310,39 +350,53 @@ public class SquareClassificationWidget extends ClassificationWidget
         m_kMiddleSphere.AttachEffect( new VertexColor3Effect() );
         m_kMiddleSphere.SetName("MiddleSphere");
         m_kWidget.AttachChild( m_kMiddleSphere );
-        
-        float fXPos = (m_kBottomTri.VBuffer.GetPosition3fX(0) + m_kBottomTri.VBuffer.GetPosition3fX(1))/2.0f;
-        float fYPos = (m_kBottomTri.VBuffer.GetPosition3fY(0) + m_kBottomTri.VBuffer.GetPosition3fY(2))/2.0f;
-        float fZPos = m_kBottomTri.VBuffer.GetPosition3fZ(0);
+
+        // position the middle control-point in the center:
+        float fXPos = (m_kWidgetMesh.VBuffer.GetPosition3fX(0) + m_kWidgetMesh.VBuffer.GetPosition3fX(1))/2.0f;
+        float fYPos = (m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_kWidgetMesh.VBuffer.GetPosition3fY(2))/2.0f;
+        float fZPos = m_kWidgetMesh.VBuffer.GetPosition3fZ(0);
         m_kMiddleSphere.Local.SetTranslate( fXPos, fYPos, fZPos );
-        m_kMiddleSphere.UpdateGS( );
         
         m_kWidget.UpdateGS();
     }
     
+    /**
+     * Scale the rectangle, based on the control points
+     * @param e MouseEvent position
+     * @param bLower when true the lower control point is being dragged, false when the upper control-point is dragged.
+     */
     protected void ScaleRectangle(MouseEvent e, boolean bLower)
     {
+    	// Calculate the position in world-coordinates:
     	float fX = calcObjX(e.getX()); 
-    	float fY = calcObjY(e.getY()); 
-    	fX = Math.max( fX, m_kBottomTri.VBuffer.GetPosition3fX(0) );
+    	float fY = calcObjY(e.getY());
+    	// the x-position is clamped to the left-edge of the square and RIGHT_EDGE:
+    	fX = Math.max( fX, m_kWidgetMesh.VBuffer.GetPosition3fX(0) );
     	fX = Math.min( fX, RIGHT_EDGE );
-        float centerX = (m_kBottomTri.VBuffer.GetPosition3fX( 0 ) + m_kBottomTri.VBuffer.GetPosition3fX( 1 ))/2f;
-        float centerY = (m_kBottomTri.VBuffer.GetPosition3fY( 0 ) + m_kBottomTri.VBuffer.GetPosition3fY( 2 ))/2f;
+    	// Calculate the center and difference:
+        float centerX = (m_kWidgetMesh.VBuffer.GetPosition3fX( 0 ) + m_kWidgetMesh.VBuffer.GetPosition3fX( 1 ))/2f;
+        float centerY = (m_kWidgetMesh.VBuffer.GetPosition3fY( 0 ) + m_kWidgetMesh.VBuffer.GetPosition3fY( 2 ))/2f;
         float diffX = fX - centerX;
         float diffY = fY - centerY;
     	if ( bLower )
     	{
+    		// if the lower control-point is moved clamp to the top of the square and the
+    		// BOTTOM_EDGE of the world:
         	fY = Math.max( fY, BOTTOM_EDGE );
-        	fY = Math.min( fY, m_kBottomTri.VBuffer.GetPosition3fY(2) );
+        	fY = Math.min( fY, m_kWidgetMesh.VBuffer.GetPosition3fY(2) );
         	diffY = centerY - fY;
     	}
         else
         {
+        	// if the upper control-point is moved, clamp to the bottom of the square
+        	// and the TOP_EDGE of the world:
         	fY = Math.min( fY, TOP_EDGE );
-        	fY = Math.max( fY, m_kBottomTri.VBuffer.GetPosition3fY(0) );
+        	fY = Math.max( fY, m_kWidgetMesh.VBuffer.GetPosition3fY(0) );
         	diffY = fY - centerY;
         }
-
+    	// The square is expanded equally in all directions:
+    	// Check that the expansion doesn't put the square edges out of bounds
+    	// and clamp if necessary:
         if ( centerX - diffX < LEFT_EDGE )
         {
         	diffX = centerX - LEFT_EDGE;
@@ -360,66 +414,70 @@ public class SquareClassificationWidget extends ClassificationWidget
         	diffY = TOP_EDGE - centerY;
         }
 
-        
-        Vector3f kPos = m_kBottomTri.VBuffer.GetPosition3(0);
+        // re-scale the square positions and texture coordinates:
+        Vector3f kPos = m_kWidgetMesh.VBuffer.GetPosition3(0);
 		kPos.X = centerX - diffX;
 		kPos.Y = centerY - diffY;
-		m_kBottomTri.VBuffer.SetPosition3(0, kPos);
-		m_kBottomTri.VBuffer.SetTCoord2(0, 0, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kWidgetMesh.VBuffer.SetPosition3(0, kPos);
+		m_kWidgetMesh.VBuffer.SetTCoord2(0, 0, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
 
 		kPos.X = centerX + diffX;
 		kPos.Y = centerY - diffY;
-		m_kBottomTri.VBuffer.SetPosition3(1, kPos);
-		m_kBottomTri.VBuffer.SetTCoord2(0, 1, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kWidgetMesh.VBuffer.SetPosition3(1, kPos);
+		m_kWidgetMesh.VBuffer.SetTCoord2(0, 1, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
 		
 		kPos.X = centerX + diffX;
 		kPos.Y = centerY + diffY;
-		m_kBottomTri.VBuffer.SetPosition3(2, kPos);
-		m_kBottomTri.VBuffer.SetTCoord2(0, 2, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+		m_kWidgetMesh.VBuffer.SetPosition3(2, kPos);
+		m_kWidgetMesh.VBuffer.SetTCoord2(0, 2, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
 		
 		kPos.X = centerX - diffX;
 		kPos.Y = centerY + diffY;
-		m_kBottomTri.VBuffer.SetPosition3(3, kPos);
-		m_kBottomTri.VBuffer.SetTCoord2(0, 3, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
-        m_kBottomTri.VBuffer.Release();
+		m_kWidgetMesh.VBuffer.SetPosition3(3, kPos);
+		m_kWidgetMesh.VBuffer.SetTCoord2(0, 3, calcTCoordX(kPos.X), calcTCoordY(kPos.Y));
+        m_kWidgetMesh.VBuffer.Release();
 		
-              
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
-        m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
+        // Move the upper and lower spheres based on the square corners:
+        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
+        m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
 
-        fX = m_kBottomTri.VBuffer.GetPosition3fX(0) + m_fCenterX * 
-        (m_kBottomTri.VBuffer.GetPosition3fX(1) - m_kBottomTri.VBuffer.GetPosition3fX(0));
-        fY = m_kBottomTri.VBuffer.GetPosition3fY(0) + m_fCenterY * 
-        (m_kBottomTri.VBuffer.GetPosition3fY(2) - m_kBottomTri.VBuffer.GetPosition3fY(0));
-
+        // reposition the center sphere based on the stored relative position
+        // using the parameterized coordinates:
+        fX = m_kWidgetMesh.VBuffer.GetPosition3fX(0) + m_fCenterX * 
+        (m_kWidgetMesh.VBuffer.GetPosition3fX(1) - m_kWidgetMesh.VBuffer.GetPosition3fX(0));
+        fY = m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_fCenterY * 
+        (m_kWidgetMesh.VBuffer.GetPosition3fY(2) - m_kWidgetMesh.VBuffer.GetPosition3fY(0));
         Vector3f kCenter = m_kMiddleSphere.Local.GetTranslate();
         kCenter.X = fX;
         kCenter.Y = fY;
         
+        // update the scene graph:
         m_kWidget.UpdateGS();
     }
 
+    /**
+     * Translate the square in the 2D Histogram panel.
+     * @param e MouseEvent
+     */
     protected void ShiftSquare( MouseEvent e )
     {
-        float fX = 0, fY = 0;
-        for ( int i = 0; i < m_kBottomTri.VBuffer.GetVertexQuantity(); i++ )
-        {
-        	fX += m_kBottomTri.VBuffer.GetPosition3fX(i);
-        	fY += m_kBottomTri.VBuffer.GetPosition3fY(i);
-        }
-        fX /= m_kBottomTri.VBuffer.GetVertexQuantity();
-        fY /= m_kBottomTri.VBuffer.GetVertexQuantity();
+    	// get the current center of the square:
+    	Vector2f kCurrentCenter = getCenter();
 
+    	// get the mouse relative position:
         float fNewGCX = e.getX() + m_kMouseOffset.X;
         fNewGCX = calcObjX( fNewGCX );
         float fNewGCY = e.getY() + m_kMouseOffset.Y;
         fNewGCY = calcObjY( fNewGCY );
 
-        float fDiffX = fNewGCX - fX;
-        float fDiffY = fNewGCY - fY;
+        // calculate the difference in the current center and the mouse position:
+        float fDiffX = fNewGCX - kCurrentCenter.X;
+        float fDiffY = fNewGCY - kCurrentCenter.Y;
 
-        float fNewXL = m_kBottomTri.VBuffer.GetPosition3fX(0);
-        float fNewXR = m_kBottomTri.VBuffer.GetPosition3fX(1);
+        // X check that moving the square doesn't move it out of bounds,
+        // clamp if necessary:
+        float fNewXL = m_kWidgetMesh.VBuffer.GetPosition3fX(0);
+        float fNewXR = m_kWidgetMesh.VBuffer.GetPosition3fX(1);
         if ( fNewXR + fDiffX > RIGHT_EDGE )
         {
         	fDiffX = RIGHT_EDGE - fNewXR;
@@ -429,8 +487,10 @@ public class SquareClassificationWidget extends ClassificationWidget
         	fDiffX = LEFT_EDGE - fNewXL;
         }
 
-        float fNewYB = m_kBottomTri.VBuffer.GetPosition3fY(0);
-        float fNewYT = m_kBottomTri.VBuffer.GetPosition3fY(2);
+        // Y check that moving the square doesn't move it out of bounds,
+        // clamp if necessary:
+        float fNewYB = m_kWidgetMesh.VBuffer.GetPosition3fY(0);
+        float fNewYT = m_kWidgetMesh.VBuffer.GetPosition3fY(2);
         if ( fNewYB + fDiffY < BOTTOM_EDGE )
         {
         	fDiffY = BOTTOM_EDGE - fNewYB;
@@ -440,23 +500,27 @@ public class SquareClassificationWidget extends ClassificationWidget
         	fDiffY = TOP_EDGE - fNewYT;
         }
         
+        // Move the square: position and texture coordinates:
         float fNewX, fNewY;
-        for ( int i = 0; i < m_kBottomTri.VBuffer.GetVertexQuantity(); i++ )
+        for ( int i = 0; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
         {
-            fNewX = m_kBottomTri.VBuffer.GetPosition3fX(i) + fDiffX;
-            fNewY = m_kBottomTri.VBuffer.GetPosition3fY(i) + fDiffY;
-            m_kBottomTri.VBuffer.SetPosition3( i, fNewX, fNewY,
-            		m_kBottomTri.VBuffer.GetPosition3fZ(i) );
-            m_kBottomTri.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
+            fNewX = m_kWidgetMesh.VBuffer.GetPosition3fX(i) + fDiffX;
+            fNewY = m_kWidgetMesh.VBuffer.GetPosition3fY(i) + fDiffY;
+            m_kWidgetMesh.VBuffer.SetPosition3( i, fNewX, fNewY,
+            		m_kWidgetMesh.VBuffer.GetPosition3fZ(i) );
+            m_kWidgetMesh.VBuffer.SetTCoord2(0, i, calcTCoordX(fNewX), calcTCoordY(fNewY));
         }
-             
-        m_kUpperSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(2));
-        m_kLowerSphere.Local.SetTranslate( m_kBottomTri.VBuffer.GetPosition3(1));
+        m_kWidgetMesh.VBuffer.Release();
 
+        // Move the upper and lower spheres based on the square corners:
+        m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(2));
+        m_kLowerSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
+
+        // Move the center sphere by translating it the same amount as the square:
         Vector3f kTranslate = m_kMiddleSphere.Local.GetTranslate(); 
         m_kMiddleSphere.Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
         
-        m_kBottomTri.VBuffer.Release();
+        // Update the scene-graph
         m_kWidget.UpdateGS();
     }   
     

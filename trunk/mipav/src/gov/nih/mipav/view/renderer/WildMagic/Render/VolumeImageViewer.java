@@ -84,6 +84,7 @@ public class VolumeImageViewer extends JavaApplication3D
 
     
     protected boolean m_bInit = false;
+    protected boolean m_bDispose = false;
     
     public VolumeImageViewer( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage )
     {
