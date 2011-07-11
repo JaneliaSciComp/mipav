@@ -2173,7 +2173,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                 triImage[image].setCenter(i, j, k);
             }
         }
-
         if (checkLinkedScroll && linkedScrolling) {
 
             final Enumeration<String> names = userInterface.getRegisteredImageNames();
@@ -2256,6 +2255,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
                                         img.getTriImageFrame().setCenter(x, y, z);
                                     }
                                 } // else if (talairachPanel.isShowing())
+                                else {
+                                	  img.getTriImageFrame().setCenter(i, j, k, false);
+                                }
                                 img.getTriImageFrame().setTimeSlice(tSlice, false);
                             } // if (sameDims == true)
                         }
