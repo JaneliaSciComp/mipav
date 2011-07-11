@@ -179,12 +179,15 @@ public class FileDicom extends FileDicomBase {
     private int enhancedNumVolumes;
 
     private Byte[] bytesV;
+    
+    /** Whether private siemens tags have been found and are being processed */
+    private boolean isSiemensMRI, isSiemensMRI2;
 
-    private boolean isSiemensMRI;
-
-    private boolean isSiemensMRI2;
-
+    /**The currently known extents of the image, as indicated by the header */
     private int[] extents;
+
+    /** Stores the endianess of the header, used for processing sequence tags */
+    private boolean endianess;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -630,7 +633,7 @@ public class FileDicom extends FileDicomBase {
      */
     public boolean readHeader(final boolean loadTagBuffer) throws IOException {
 
-        boolean endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
+        endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         boolean flag = true;
 
         if (loadTagBuffer == true) {
