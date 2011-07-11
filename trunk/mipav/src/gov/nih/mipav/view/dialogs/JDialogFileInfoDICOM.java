@@ -498,7 +498,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 } else if (vr.equals(VR.SQ)) {
 
                     // System.err.println("Key = " + key);
-                    final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                    final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                     final Vector<String> display = sq.getSequenceDisplay();
 
                     rowData[3] = "";
