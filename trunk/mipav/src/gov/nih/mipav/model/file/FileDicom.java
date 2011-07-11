@@ -184,7 +184,7 @@ public class FileDicom extends FileDicomBase {
     private boolean isSiemensMRI, isSiemensMRI2;
 
     /**The currently known extents of the image, as indicated by the header */
-    private int[] extents;
+    private int[] extents = new int[2];
 
     /** Stores the endianess of the header, used for processing sequence tags */
     private boolean endianess;
@@ -665,7 +665,7 @@ public class FileDicom extends FileDicomBase {
                 // syntax group has been read in
                 if (getFilePointer() >= (ID_OFFSET + 4 + metaGroupLength)) {
                     endianess = fileInfo.getEndianess();
-                    // Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("endianess = " + endianess + "\n", Preferences.DEBUG_FILEIO);
                 }
             } else {
                 if (getFilePointer() >= metaGroupLength) {
@@ -673,9 +673,14 @@ public class FileDicom extends FileDicomBase {
                 }
             }
             FileDicomKey key = getNextTag(endianess);
+            int bPtrOld = getFilePointer();
             flag = processNextTag(tagTable, key, endianess);
+            if(bPtrOld+elementLength > getFilePointer()) {
+                seek(bPtrOld+elementLength); //processing tag was likely not successful, report error but continue parsing
+                Preferences.debug("Error parsing tag: "+key, Preferences.DEBUG_FILEIO);
+            }
             
-            if (getFilePointer() == fLength) { // for dicom files that contain no image information, the image tag will never be encountered
+            if (getFilePointer() >= fLength) { // for dicom files that contain no image information, the image tag will never be encountered
                 flag = false;
             }
 
@@ -700,6 +705,9 @@ public class FileDicom extends FileDicomBase {
         // ******* Gets the next element
         getNextElement(endianess); // gets group, element, length
         final String name = convertGroupElement(groupWord, elementWord);
+        if(name.equals("0008,1140")) {
+            System.out.println("Here");
+        }
         final FileDicomKey key = new FileDicomKey(name);
         return key;
     }
@@ -818,7 +826,7 @@ public class FileDicom extends FileDicomBase {
                     processUnknownVR(strValue, key, tagVM, strValue);
                 } //else is implicit sequence, so continue
             case SQ:
-                processSequence(key, strValue, endianess);
+                processSequence(key, name, endianess);
                 break;
             }
             
@@ -881,11 +889,11 @@ public class FileDicom extends FileDicomBase {
                 return false;
             }
             
-        } else if (name.equals("0028,0010")) { // Set the extents, used for reading the image
-            extents[1] = ((Short) tagTable.getValue(name)).intValue();
+        } else if (name.equals("0028,0010")) { // Set the extents, used for reading the image in FileInfoDicom's processTags
+            extents[1] = ((Short) data).intValue();
             // fileInfo.columns = extents[1];
         } else if (name.equals("0028,0011")) {
-            extents[0] = ((Short) tagTable.getValue(name)).intValue();
+            extents[0] = ((Short) data).intValue();
             // fileInfo.rows = extents[0];
         } else if (!isEnhanced && name.equals("0002,0002")) {                           // need to determine if this is enhanced dicom
             if (strValue.trim().equals(DICOM_Constants.UID_EnhancedMRStorage)           // if it is, set up all the additional fileinfos needed and attach
@@ -1112,6 +1120,8 @@ public class FileDicom extends FileDicomBase {
     }
 
     private boolean processImageData(int[] extents) throws IOException {
+        fileInfo.setInfoFromTags();
+        
         final int imageLength = extents[0] * extents[1] * fileInfo.bitsAllocated / 8;
 
         Preferences.debug("File Dicom: readHeader - Data tag = " + FileDicom.IMAGE_TAG + "\n",
@@ -2870,7 +2880,8 @@ public class FileDicom extends FileDicomBase {
 
         final int startfptr = getFilePointer();
         boolean flag = true; //whether dicom header processing should continue
-        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr <= itemLength)) {
+        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength)) {
+            Preferences.debug("Processed seq amount: "+(getFilePointer() - startfptr), Preferences.DEBUG_FILEIO);
             FileDicomKey key = getNextTag(endianess);
             nameSQ = key.toString();
             flag = processNextTag(table, key, endianess);
