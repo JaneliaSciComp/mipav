@@ -1171,7 +1171,7 @@ public class FileDicom extends FileDicomBase {
      */
     private void processSiemensMRI2Tag(String name, FileDicomKey key, VR vr,
             int tagVM) {
-        byte b = (byte) Integer.parseInt(name.substring(7, 9));
+        byte b = (byte) Integer.parseInt(name.substring(7, 9), 16);
         switch(b) {
         case 0x08:
             tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
@@ -1247,7 +1247,7 @@ public class FileDicom extends FileDicomBase {
      * Handles useful private siemens mri tags in the 0019 group
      */
     private void processSiemensMRITag(String keyStr, FileDicomKey key, VR vr, int tagVM) {
-        byte b = (byte) Integer.parseInt(keyStr.substring(7, 9));
+        byte b = (byte) Integer.parseInt(keyStr.substring(7, 9), 16);
         switch(b) {
         case 0x08:
             tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
