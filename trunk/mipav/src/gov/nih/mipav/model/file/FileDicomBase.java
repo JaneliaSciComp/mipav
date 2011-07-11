@@ -64,7 +64,6 @@ public class FileDicomBase {
     /** The buffer that holds the tags of the DICOM image. */
     protected byte[] tagBuffer = null;
 
-
     /** Integer variable used to read/write in data so that they don't need to be allocated with each read/write. */
     private int b1, b2, b3, b4, b5, b6, b7, b8;
 
