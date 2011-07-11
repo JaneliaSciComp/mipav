@@ -321,6 +321,9 @@ public class FileDicomTag extends ModelSerialCloneable {
         if (parse && vr != null && keyword != null) {
             
             String returnValue = "";
+            if(value == null) {
+                return returnValue;
+            }
             
             switch(vr) {
             case AS:
@@ -333,9 +336,7 @@ public class FileDicomTag extends ModelSerialCloneable {
                 returnValue = fromTMtoVisibleString();
                 break;
             default:
-                if (value == null) {
-                    returnValue = "";
-                } else if (value instanceof Object[]) {
+                if (value instanceof Object[]) {
                     for(int i=0; i<((Object[])value).length; i++) {
                         returnValue += ((Object[])value)[i].toString()+"\\"; //dicom uses slash to separate elements
                     }
