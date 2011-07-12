@@ -783,7 +783,7 @@ public class FileDicom extends FileDicomBase {
 
         try {
 
-            if (vr.getType().equals(StringType.STRING)) {
+            if (vr.getType().equals(StringType.STRING) || vr.getType().equals(StringType.DATE)) {
                 strValue = getString(elementLength);
 
                 tagTable.setValue(key, strValue, elementLength);
@@ -2877,11 +2877,13 @@ public class FileDicom extends FileDicomBase {
 
         final int startfptr = getFilePointer();
         boolean flag = true; //whether dicom header processing should continue
-        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength)) {
+        while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength || itemLength == -1)) {
             Preferences.debug("Processed seq amount: "+(getFilePointer() - startfptr), Preferences.DEBUG_FILEIO);
             FileDicomKey key = getNextTag(endianess);
             nameSQ = key.toString();
-            flag = processNextTag(table, key, endianess);
+            if(!nameSQ.equals(FileDicom.SEQ_ITEM_END)) {
+                flag = processNextTag(table, key, endianess);
+            }
         }
         
         return table;
@@ -3254,7 +3256,7 @@ public class FileDicom extends FileDicomBase {
         if (seqLength == 0) {
             return sq;
         }
-
+        
         // hold on to where the sequence is before items for measuring
         // distance from beginning of sequence
         final int seqStart = getFilePointer();
