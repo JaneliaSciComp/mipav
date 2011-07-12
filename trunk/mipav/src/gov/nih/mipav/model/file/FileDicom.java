@@ -705,9 +705,6 @@ public class FileDicom extends FileDicomBase {
         // ******* Gets the next element
         getNextElement(endianess); // gets group, element, length
         final String name = convertGroupElement(groupWord, elementWord);
-        if(name.equals("7FE0,0010")) {
-            System.out.println("Here");
-        }
         final FileDicomKey key = new FileDicomKey(name);
         return key;
     }
