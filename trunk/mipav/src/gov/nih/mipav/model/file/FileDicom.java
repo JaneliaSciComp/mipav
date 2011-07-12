@@ -680,7 +680,7 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("Error parsing tag: "+key, Preferences.DEBUG_FILEIO);
             }
             
-            if (getFilePointer() >= fLength) { // for dicom files that contain no image information, the image tag will never be encountered
+            if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().equals(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
                 flag = false;
             }
 
@@ -705,6 +705,9 @@ public class FileDicom extends FileDicomBase {
         // ******* Gets the next element
         getNextElement(endianess); // gets group, element, length
         final String name = convertGroupElement(groupWord, elementWord);
+        if(name.equals("7FE0,0010")) {
+            System.out.println("Here");
+        }
         final FileDicomKey key = new FileDicomKey(name);
         return key;
     }
@@ -3266,20 +3269,36 @@ public class FileDicom extends FileDicomBase {
 
         nameSQ = convertGroupElement(groupWord, elementWord);
         
-        if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) {
-
-            // elementLength here is the length of the
-            // item as it written into the File
-            if (elementLength == 0) {
-                final FileDicomTagTable item = new FileDicomTagTable(null);
-                sq.addItem(item);
+        while(!nameSQ.equals(FileDicom.SEQ_ITEM_UNDEF_END)) {
+            if (nameSQ.equals(FileDicom.SEQ_ITEM_BEGIN)) {
+    
+                // elementLength here is the length of the
+                // item as it written into the File
+                if (elementLength == 0) {
+                    final FileDicomTagTable item = new FileDicomTagTable(null);
+                    sq.addItem(item);
+                } else {
+                    sq.addItem((FileDicomTagTable) getDataSet(elementLength, endianess));
+                }
+            }
+            
+            //if defined sequence length, will not read next tag once length has been reached
+            if(seqLength == -1 || seqStart + seqLength > getFilePointer()) {  
+                getNextElement(endianess); // gets the first ITEM tag
+                Preferences.debug("Item: " + Integer.toString(groupWord, 0x10) + "," + Integer.toString(elementWord, 0x10)
+                        + " for " + Integer.toString(elementLength, 0x10) + " # readfrom: "
+                        + Long.toString(getFilePointer(), 0x10) + "\n", Preferences.DEBUG_FILEIO);
+    
+                nameSQ = convertGroupElement(groupWord, elementWord);
             } else {
-                sq.addItem((FileDicomTagTable) getDataSet(elementLength, endianess));
+                return sq;
             }
         }
         
         return sq;
     }
+    
+    
 
     @SuppressWarnings("unused")
     private void setPerFrameEnhancedSequenceTags(final boolean endianess) {
