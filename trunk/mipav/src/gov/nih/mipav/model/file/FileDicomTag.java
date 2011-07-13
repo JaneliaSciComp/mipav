@@ -337,9 +337,11 @@ public class FileDicomTag extends ModelSerialCloneable {
                 break;
             default:
                 if (value instanceof Object[]) {
+                    StringBuilder bu = new StringBuilder();
                     for(int i=0; i<((Object[])value).length; i++) {
-                        returnValue += ((Object[])value)[i].toString()+"\\"; //dicom uses slash to separate elements
+                        bu.append(((Object[])value)[i].toString()).append("\\"); //dicom uses slash to separate elements
                     }
+                    returnValue = bu.toString();
                 } else if (keyword.equals("PatientSex")) {
                     returnValue = fromPatientSexToVisibleString();
                 } else if (keyword.equals("PatientOrientation")) {
