@@ -396,7 +396,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
      */
     private void init() {
     	if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-        	FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
+        	/*FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
         	FileDicomTagTable tagTable = dicomInfo.getTagTable();
         	if (tagTable.getValue("0018,1310") != null) {
         	    // Acquisition matrix
@@ -434,7 +434,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         			Preferences.debug("Number of images in mosaic = " + numberOfImagesInMosaic + "\n");
         		}	
         	} // if (tagTable.getValue("0019,100A") != null)
-    	} // if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
+    	} // if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)*/
         setForeground(Color.black);
         setTitle("Mosaic To 3D Volume");
 
@@ -529,6 +529,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
+    	}
     }
 
     /**
