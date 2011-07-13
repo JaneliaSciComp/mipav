@@ -370,94 +370,13 @@ public class FileDicomTag extends ModelSerialCloneable {
 
             if(value == null) {
             	stuff[0] = null;
-            } else if (type.equals("typeString")) {
-
-                // split by '\' separator chars--
-                // so we do not use java 1.4 req meth:
-                final StringTokenizer backslash = new StringTokenizer((String) value, "\\");
-                final int quantity = backslash.countTokens();
-                stuff = new Object[quantity];
-
-                for (int i = 0; i < quantity; i++) {
-                    stuff[i] = backslash.nextElement();
-                }
-            } else if (type.equals("typeFloat")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-                    stuff = (Float[]) value;
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                }
-            } else if (type.equals("typeShort")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-                    stuff = (Short[]) value;
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                } 
-            } else if (type.equals("typeInt")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-                    stuff = (Integer[]) value;
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                }
-            } else if (type.equals("typeDouble")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-                    stuff = (Double[]) value;
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                }
-            } else if (type.equals("otherByteString")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-
-                    if (value instanceof Byte[]) {
-                        stuff = (Byte[]) value;
-                    }
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                }
-            } else if (type.equals("otherWordString")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-
-                	if (value instanceof Byte[]) {
-                        stuff = (Byte[]) value;
-                    } else if (value instanceof Short[]) {
-                        stuff = (Short[]) value;
-                    } else if (value instanceof Integer[]) {
-                        stuff = (Integer[]) value;
-                    } else if (value instanceof String) {
-                        stuff[0] = value;
-                    }
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                }
-            } else if (type.equals("typeUnknown")) {
-
-                // cast items into array, if they can't be, use as array of one.
-                try {
-
-                    if (value instanceof Byte[]) {
-                        stuff = (Byte[]) value;
-                    } else if (value instanceof Short[]) {
-                        stuff = (Short[]) value;
-                    } else if (value instanceof Integer[]) {
-                        stuff = (Integer[]) value;
-                    } else {
-                        stuff = (Float[]) value;
-                    }
-                } catch (final ClassCastException cce) {
-                    stuff[0] = value;
-                }
+            } else if(value instanceof Object[]) {
+                return (Object[]) value;
+            } else if(type.getType() instanceof StringType) {
+                return ((String)value).split("\\\\");
+            } else {
+                stuff[0] = value;
+                return stuff;
             }
         } catch (final NullPointerException npe) {
             System.out
