@@ -397,6 +397,7 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
         scriptParameters.getParams().put(ParameterFactory.newParameter("sub_y_dim", subYDim));
         scriptParameters.getParams().put(ParameterFactory.newParameter("sub_z_dim", subZDim));
         scriptParameters.getParams().put(ParameterFactory.newParameter("sub_t_dim", subTDim));
+        
     }
 
     
@@ -404,47 +405,7 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
-    private void init() {
-        if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-            FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
-            FileDicomTagTable tagTable = dicomInfo.getTagTable();
-            if (tagTable.getValue("0018,1310") != null) {
-                // Acquisition matrix
-                FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1310"));
-                Object[] values = tag.getValueList();
-                int valNumber = values.length;  
-                if ((valNumber == 4) && (values instanceof Short[])) {
-                    int frequencyRows = ((Short) values[0]).intValue();
-                    Preferences.debug("frequencyRows = " + frequencyRows + "\n");
-                    int frequencyColumns = ((Short) values[1]).intValue();
-                    Preferences.debug("frequencyColumns = " + frequencyColumns + "\n");
-                    int phaseRows = ((Short) values[2]).intValue();
-                    Preferences.debug("phaseRows = " + phaseRows + "\n");
-                    int phaseColumns = ((Short) values[3]).intValue();
-                    Preferences.debug("phaseColumns = " + phaseColumns + "\n");
-                    if ((frequencyRows > 0) && (phaseRows == 0)) {
-                        subYDim = frequencyRows;
-                    }
-                    else if ((frequencyRows == 0) && (phaseRows > 0)) {
-                        subYDim = phaseRows;
-                    }
-                    if ((frequencyColumns > 0) && (phaseColumns == 0)) {
-                        subXDim = frequencyColumns;
-                    }
-                    else if ((frequencyColumns == 0) && (phaseColumns > 0)) {
-                        subXDim = phaseColumns;
-                    }
-                }
-            } // if (tagTable.getValue("0018,1310") != null)
-            if (tagTable.getValue("0019,100A") != null) {
-                FileDicomTag tag = tagTable.get(new FileDicomKey("0019,100A"));
-                Object value = tag.getValue(false);
-                if (value instanceof Short) {
-                    subTDim = ((Short) value).intValue();
-                    Preferences.debug("subTDim = " + subTDim + "\n");
-                }   
-            } // if (tagTable.getValue("0019,100A") != null)
-        } // if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
+    private void init() {          
         setForeground(Color.black);
         setTitle("Mosaic To 4D Volume");
 
@@ -522,7 +483,7 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
         textTDim.setFont(serif12);
         textTDim.setForeground(Color.black);
         
-        
+ 
 
         
         gbc.gridx = 0;
@@ -558,7 +519,8 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
-    }
+        }
+    
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
