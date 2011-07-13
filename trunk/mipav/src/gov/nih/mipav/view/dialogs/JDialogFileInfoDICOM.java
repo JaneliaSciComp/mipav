@@ -496,7 +496,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         rowData[3] = s;
                     }
                 } else if (vr.equals(VR.SQ)) {
-
+                    //TODO: Implement JTable view for sequences
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                     final Vector<String> display = sq.getSequenceDisplay();
