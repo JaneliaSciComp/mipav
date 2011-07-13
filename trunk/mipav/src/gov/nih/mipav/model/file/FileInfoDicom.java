@@ -75,7 +75,7 @@ public class FileInfoDicom extends FileInfoBase {
         "0010,21F0", // patient religious preference
         "0010,4000", // patient comments.
 
-    "0008,0014", // instance creator UID
+        "0008,0014", // instance creator UID
         "0008,0018", // SOP instance UID
         "0008,0050", // accession number
         "0008,0080", // institution name
@@ -95,23 +95,23 @@ public class FileInfoDicom extends FileInfoBase {
         "0008,1155", // Referenced SOP instance UID
         "0008,2111", // derivation description
 
-    "0018,1000", // device serial number
+        "0018,1000", // device serial number
         "0018,1030", // protocol name
 
-    "0020,000D", // study instance UID
+        "0020,000D", // study instance UID
         "0020,000E", // series instance UID
         "0020,0010", // study ID
         "0020,0052", // frame of reference UID
         "0020,0200", // synchronization frame of reference UID
         "0020,4000", // image comments
 
-    // "0040,0275",// request attributes sequence
+        // "0040,0275",// request attributes sequence
         "0040,A124", // UID
         "0040,A730", // content sequence
+        
+        "0088,0140", // storage media file-set UID
 
-    "0088,0140", // storage media file-set UID
-
-    "3006,0024", // referenced frame of reference UID
+        "3006,0024", // referenced frame of reference UID
         "3006,00C2", // related frame of reference UID
     };
 
