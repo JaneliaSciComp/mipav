@@ -45,6 +45,7 @@ public class MipavGraphXMLWriter extends GraphXMLWriter {
 		{
 			kColorString = new String( "#" + Integer.toHexString(kColor.getRGB()).substring(2) );	
 		}
+		String kNotes = (String)attrMgr.getAttribute( "ANNOTATION", node );	
 			
         writer.write(
                      "    <node " + 
@@ -58,6 +59,10 @@ public class MipavGraphXMLWriter extends GraphXMLWriter {
         if ( node.getLabel() != null )
         {
         	writer.write("label=\"" + node.getLabel() + "\" ");
+        }
+        if ( kNotes != null )
+        {
+        	writer.write("ANNOTATION=\"" + kNotes + "\" ");
         }
         writer.write(">\n");
         writer.write("    </node>\n");

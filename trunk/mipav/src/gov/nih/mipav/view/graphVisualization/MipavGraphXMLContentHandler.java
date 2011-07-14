@@ -238,6 +238,7 @@ public class MipavGraphXMLContentHandler extends DefaultHandler {
         Group group = null;
         String color = null;
         String label = null;
+        String notes = null;
         for (int i=0; i<atts.getLength(); i++) {
             if (atts.getQName(i).equals("name")) {
                 name = atts.getValue(i);
@@ -264,6 +265,10 @@ public class MipavGraphXMLContentHandler extends DefaultHandler {
             	label = atts.getValue(i);
                 continue;
             }
+            if (atts.getQName(i).equals("ANNOTATION")) {
+            	notes = atts.getValue(i);
+                continue;
+            }
         }
         try {
             // the node may already exist because it has been created when an edge is defined.
@@ -281,6 +286,11 @@ public class MipavGraphXMLContentHandler extends DefaultHandler {
             if ( label != null )
             {
             	((Node)currentElement).setLabel(label);
+            }
+            if ( notes != null )
+            {
+        		AttributeManager attrMgr = graph.getAttributeManager();
+				attrMgr.setAttribute( "ANNOTATION", currentElement, notes );		            	
             }
         } catch (GraphException ge) {
             ge.printStackTrace();
