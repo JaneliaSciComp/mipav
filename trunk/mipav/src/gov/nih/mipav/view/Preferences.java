@@ -349,6 +349,9 @@ public class Preferences {
 
     /** Constant that indicates the active image color. */
     public static final String PREF_ACTIVE_IMAGE_COLOR = "ActiveImageColor";
+    
+    /** Constant that indicates the active image color border size */
+    public static final String PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE = "ActiveImageColorBorderSize";
 
     /** number of recently used images to store in quicklist. */
     public static final String PREF_QUICKLIST_NUMBER = "QuickListNumber";
@@ -618,6 +621,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_APP_TITLE, "MIPAV: " + " v" + MipavUtil.getVersion());
         Preferences.defaultProps.setProperty(Preferences.PREF_APP_ICON, "divinci.gif");
         Preferences.defaultProps.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, "ff0000"); // red
+        Preferences.defaultProps.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE, "1");
         Preferences.defaultProps.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, "default");
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_FLAG, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_SHOW_SPLASH, "true");

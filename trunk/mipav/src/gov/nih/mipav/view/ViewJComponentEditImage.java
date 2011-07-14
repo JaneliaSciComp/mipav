@@ -3267,8 +3267,31 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 // paint the on-top notifier for the user when this component is on the top of the user-interface
                 offscreenGraphics2d.setColor(toppedColor);
-                offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1,
-                        visibleRect.height - 1);
+                String preferredSize = Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE);
+                int prefSize = Integer.valueOf(preferredSize);
+                if(prefSize == 5) {
+                	offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1, visibleRect.height - 1);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 1, visibleRect.y + 1, visibleRect.width - 3, visibleRect.height - 3);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 2, visibleRect.y + 2, visibleRect.width - 5, visibleRect.height - 5);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 3, visibleRect.y + 3, visibleRect.width - 7, visibleRect.height - 7);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 4, visibleRect.y + 4, visibleRect.width - 9, visibleRect.height - 9);
+                }else if(prefSize == 4) {
+                	offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1, visibleRect.height - 1);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 1, visibleRect.y + 1, visibleRect.width - 3, visibleRect.height - 3);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 2, visibleRect.y + 2, visibleRect.width - 5, visibleRect.height - 5);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 3, visibleRect.y + 3, visibleRect.width - 7, visibleRect.height - 7);
+                }else if(prefSize == 3) {
+                	offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1, visibleRect.height - 1);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 1, visibleRect.y + 1, visibleRect.width - 3, visibleRect.height - 3);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 2, visibleRect.y + 2, visibleRect.width - 5, visibleRect.height - 5);
+                }else if(prefSize == 2) {
+                	offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1, visibleRect.height - 1);
+                    offscreenGraphics2d.drawRect(visibleRect.x + 1, visibleRect.y + 1, visibleRect.width - 3, visibleRect.height - 3);
+                }else {
+                	offscreenGraphics2d.drawRect(visibleRect.x, visibleRect.y, visibleRect.width - 1, visibleRect.height - 1);
+                }
+                
+
             }
 
             graphics.drawImage(offscreenImage, 0, 0, null);
