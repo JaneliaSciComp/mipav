@@ -414,7 +414,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 currDir = chooser.getSelectedFile().getAbsolutePath();
-
+                readBValGradientFile(currDir);
             }
 
         } else if (command.equals("bValue")) {
