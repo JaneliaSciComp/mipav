@@ -1,17 +1,24 @@
 package gov.nih.mipav.view.graphVisualization;
 
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.components.*;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-import java.awt.*;
-import java.awt.event.*;
-
-import javax.swing.*;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.plaf.basic.BasicBorders;
 
+/** Dialog used by the MipavGraphPanel to add a node to the graph, or to modify the Notes 
+ * attribute of a node.
+ * */
 public class JDialogAddNode extends JDialogBase implements ActionListener {
 
 	private static final long serialVersionUID = 3937866689552181956L;
@@ -28,8 +35,11 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
     /** NoteField for providing a note about this marker. Note only displayed when clicked. */
     private JTextArea noteField;
     
+    /** Parent graph panel to update on 'OK' */
     private MipavGraphPanel parent;
+    /** Current notes for the node. */
     private String notes;
+    /** When true the dialog creates a new node, otherwise it is used to edit the Notes. */
     private boolean addNode;
     
     public JDialogAddNode(MipavGraphPanel kParent, String kNotes, boolean bAdd) {
@@ -43,11 +53,10 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
     }
 
     /**
-     * Catches action events: Okay, Cancel, Help and ChooseColor.
-     *
+     * Catches action events: Okay, Cancel.     *
      * @param  event  ActionEvent
      */
-    public void actionPerformed(ActionEvent event) {
+	public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
         if (command.equals("OK")) {
@@ -57,14 +66,15 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
                 if(!noteField.getText().equals(DEFAULT_NOTES) && noteField.getText().length() > 0)
                 {
                 	notes = noteField.getText();
-                	System.err.println( notes );
                 }
                 if ( addNode )
                 {
+                	// add a new node to the graph:
                 	parent.addNode(nameField.getText(), notes);
                 }
-                else
+                else if ( notes != null )
                 {
+                	// pass in the edited notes field:
                 	parent.editNotes(notes);
                 }
 
@@ -90,6 +100,7 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
 
         if ( addNode )
         {
+        	// create a text field for the new name:
         	nameField = new JTextField(25);        
         	namePanel.setBorder(buildTitledBorder("Name"));
         	namePanel.add(nameField);        
@@ -110,6 +121,7 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         noteField.setWrapStyleWord(true);
         if ( notes != null )
         {
+        	// set the notes field whatever the existing Notes were for the node:
         	noteField.setText(notes);
         }
         else {
