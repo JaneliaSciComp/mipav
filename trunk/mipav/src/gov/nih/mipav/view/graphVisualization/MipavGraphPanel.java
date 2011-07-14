@@ -1,34 +1,25 @@
 package gov.nih.mipav.view.graphVisualization;
 
-import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJFrameImage;
 import hypergraph.graphApi.AttributeManager;
 import hypergraph.graphApi.Edge;
 import hypergraph.graphApi.Element;
 import hypergraph.graphApi.Graph;
-import hypergraph.graphApi.GraphException;
 import hypergraph.graphApi.Node;
-import hypergraph.graphApi.io.CSSColourParser;
 import hypergraph.visualnet.DefaultNodeRenderer;
 import hypergraph.visualnet.GraphPanel;
 
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.Iterator;
+import java.util.Vector;
 
-import javax.swing.JComponent;
-import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
-
-import java.util.Vector;
 
 /**
  * Displays the Mipav HyperGraph.
@@ -42,6 +33,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 
 	/** ColorChooser for changing graph colors. */
 	protected ViewJColorChooser colorChooser;
+	/** Current Node to color. */
+	protected Node colorNode;
 	/** Current selected Node. */
 	protected Node pickedNode;
 	/** previously selected Node. */
@@ -53,7 +46,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	/** If there is no Root node, this is the Node with the smallest number of parent nodes, 
 	 * and serves as a default Root for the Graph. */
 	private Node m_kMinDegree = null;
-
+	/** Default color to highlight the selected nodes on control- mouse-click: */
 	private Color pickedColor = Color.red;
 
 	/**
@@ -85,6 +78,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				refreshProperties();
 			}
 			if (m_kLastCommand.equalsIgnoreCase("Set node color")) {     
+				pickedNode = colorNode;
 				if ( pickedNode != null )
 				{
 					AttributeManager attrMgr = getGraph().getAttributeManager();
@@ -92,6 +86,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				}
 			}
 			if (m_kLastCommand.equalsIgnoreCase("Set tree level color")) {  
+				pickedNode = colorNode;
 				if ( pickedNode != null )
 				{
 					AttributeManager attrMgr = getGraph().getAttributeManager();
@@ -142,15 +137,18 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			colorChooser = new ViewJColorChooser(null, "Pick color", this, this );
 		}
 		if (command.equalsIgnoreCase("Set node color")) {     
+			colorNode = pickedNode;
 			colorChooser = new ViewJColorChooser(null, "Pick color", this, this );
 		}
-		if (command.equalsIgnoreCase("Set tree level color")) {     
+		if (command.equalsIgnoreCase("Set tree level color")) {  
+			colorNode = pickedNode;   
 			colorChooser = new ViewJColorChooser(null, "Pick color", this, this );
 		}
 		if (command.equalsIgnoreCase("Delete edge")) {     
 			if ( pickedEdge != null )
 			{
 				Node target = pickedEdge.getTarget();
+				// Iterate over the edges connected to the target node at the end of the picked edge:
 				Iterator iter = getGraph().getEdges(target).iterator();
 				boolean otherParents = false;
 				while (iter.hasNext()) {
@@ -167,15 +165,23 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				}
 				if ( !otherParents )
 				{
+					// the target node attached to the picked edge
+					// has no other incoming edges, delete the node so
+					// it is not orphaned:
 					deleteNode( target );
 				}
 				else
 				{
+					// the target node is connected to the rest of the
+					// graph with another incoming edge, it will not
+					// be orphaned when the selected edge is deleted, so
+					// just delete the selected edge:
 					getGraph().removeElement(pickedEdge);
 				}
 			}
 		}
-		if (command.equalsIgnoreCase("Add child node")) {     
+		if (command.equalsIgnoreCase("Add child node")) {  
+			// Launch add node dialog:
 			new JDialogAddNode(this, null, true);
 		}
 		if (command.equalsIgnoreCase("Delete node")) {
@@ -187,7 +193,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				synchronized ( getGraph() ) {
 					getGraph().createEdge( pickedNodePrev, pickedNode );
 				}
-				
+				// Reset the selected nodes to their original colors:
 				AttributeManager attrMgr = getGraph().getAttributeManager();			
 				Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNode );	
 				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, original );	
@@ -198,6 +204,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			}
 		}
 		if ( command.equalsIgnoreCase("Edit Notes") && (pickedNode != null)) {
+			// launch the add node/ edit notes dialog, pass in the current Annotation for the 
+			// selected node:
 			AttributeManager attrMgr = getGraph().getAttributeManager();	
 			String kNotes = (String)attrMgr.getAttribute( "ANNOTATION", pickedNode );	
 			new JDialogAddNode(this, kNotes, false);
@@ -213,56 +221,16 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 	}
 
-	private void deleteNode( Node node )
-	{
-		if ( node == null )
-		{
-			return;
-		}
-		AttributeManager attrMgr = getGraph().getAttributeManager();
-		Node root = (Node)attrMgr.getAttribute( AttributeManager.GRAPH_ROOT, node );
-		if ( root == null )
-		{
-			root = findMinRoot();
-		}
-		if ( node == root )
-		{
-			MipavUtil.displayError( "Cannot delete the root ndoe" );
-			return;
-		}
-
-		Vector<Node> deleteList = new Vector<Node>();
-		deleteList.add(node);
-		deleteNode( node, node, root, deleteList );
-		
-		for ( int i = deleteList.size() -1; i >= 0; i-- )
-		{
-			getGraph().removeElement(deleteList.elementAt(i));
-		}		
-	}
-
-	private void deleteNode( Node node, Node start, Node root, Vector<Node> deleteList )
-	{		
-		// get all outgoing edges in the original graph.
-		Iterator iter = getGraph().getEdges(node).iterator();
-		while (iter.hasNext()) {
-			Edge edge = (Edge) iter.next();
-			if (edge.getSource() != node)
-				continue; // only outgoing edges
-			Node target = edge.getOtherNode(node);
-			if ( (target != start) && (target != root) && !deleteList.contains( target ) )
-			{
-				deleteList.add(target);
-				deleteNode( target, start, root, deleteList );
-			}
-		}
-	}
-
-
+	/**
+	 * Add a new node under the picked node.
+	 * @param name The name of the new node.
+	 * @param notes Any notes to add to the node's Annotation field.
+	 */
 	public void addNode( String name, String notes )
 	{
 		if ( (name != null) && (name.length() > 0) && (pickedNode != null) )
 		{
+			// Find the root node and the level of the pickedNode:
 			AttributeManager attrMgr = getGraph().getAttributeManager();
 			Node root = (Node)attrMgr.getAttribute( AttributeManager.GRAPH_ROOT, pickedNode );
 			Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", pickedNode );
@@ -277,27 +245,22 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 					level = findLevel( root, pickedNode, 0 );
 				}
 			}		
-
+			// Add the new node:
 			synchronized ( getGraph() ) {
 				Graph tree = getGraph();
 				Node newNode = tree.createNode();
 				newNode.setLabel( name );
-				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, newNode, getNodeColor(root, level+1) ); 
+				// set the node color to match others at the same level in the tree
+				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, newNode, getNodeColor(root, level+1) );
+				// set the root attribute:
 				attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, newNode, root ); 
-				attrMgr.setAttribute( "TreeLevel", newNode, level+1 ); 
-				attrMgr.setAttribute( "ANNOTATION", newNode, notes ); 
+				attrMgr.setAttribute( "TreeLevel", newNode, level+1 );
+				// Set the notes as the annotation for the node:
+				attrMgr.setAttribute( "ANNOTATION", newNode, notes );
+				// create an edge from the pickedNode to the new node:
 				tree.createEdge( pickedNode, newNode );
 			}
 			pickedNode = null;
-		}
-	}
-	
-	public void editNotes( String notes )
-	{
-		if ( pickedNode != null )
-		{
-			AttributeManager attrMgr = getGraph().getAttributeManager();
-			attrMgr.setAttribute( "ANNOTATION", pickedNode, notes );
 		}
 	}
 
@@ -313,6 +276,20 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 	}
 
+
+	/**
+	 * Modify the Annotation field of the selected node.
+	 * @param notes new annotation to add to the picked Node.
+	 */
+	public void editNotes( String notes )
+	{
+		if ( pickedNode != null )
+		{
+			AttributeManager attrMgr = getGraph().getAttributeManager();
+			attrMgr.setAttribute( "ANNOTATION", pickedNode, notes );
+		}
+	}
+	
 	/**
 	 * Finds the depth, or level of the target node from the Root node.
 	 * @param root Root node of the Graph.
@@ -348,7 +325,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		return null;
 	}
 
-
 	/**
 	 * Returns the node with the smallest number of 'parent' nodes. If the tree has a true Root node,
 	 * with zero parents, the Root is returned. Otherwise the node with the smallest number of inputs is returned.
@@ -360,7 +336,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		findRoot();
 		return m_kMinDegree;
 	}
-
 
 	/**
 	 * Finds the Root of the tree. If there is no true Root (with zero inputs), returns null.
@@ -401,6 +376,38 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 
 
 	/**
+	 * Finds the current color for the input level of the tree.
+	 * @param root the tree root node.
+	 * @param iTreeLevel the level to querery the color of.
+	 * @return The node color at the given tree depth.
+	 */
+	public Color getNodeColor( Node root, int iTreeLevel )
+	{
+		// First check if the level is set as an attribute of the nodes:
+		AttributeManager attrMgr = getGraph().getAttributeManager();
+		Iterator iterator = getGraph().getNodes().iterator();
+		while( iterator.hasNext() )
+		{
+			Node kNode = (Node)iterator.next();
+			Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", kNode );
+			if ( (level != null) && (level.intValue() == iTreeLevel) )
+			{
+				return (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, kNode );				
+			}
+		}
+		// No level attribute was set, so recursively search the tree until the depth is found
+		// and return the color:
+		Color kReturn = findNodeColor( root, 0, iTreeLevel );
+		if ( kReturn == null )
+		{
+			// there were no nodes at the requested tree depth, return the root node color as default:
+			kReturn = (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, root );	
+		}
+		return kReturn;
+	}
+
+
+	/**
 	 * Increases or decreases the displayed text size.
 	 * @param bBigger when true increases the size, when false decreases the size.
 	 */
@@ -417,97 +424,14 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		repaint();
 	}
 
-	public void mousePressed(MouseEvent e) {
-		if ( e.isControlDown() )
-		{
-			Element element = getHoverElement();
-			if ( element instanceof Node )
-			{
-				if ( element == pickedNode )
-				{
-					return;
-				}
-				AttributeManager attrMgr = getGraph().getAttributeManager();
-				if ( pickedNodePrev != null  )
-				{
-					Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNodePrev );	
-					attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev, original );	
-				}
-				pickedNodePrev = pickedNode;
-				
-				pickedNode = (Node)element;	
-				Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNode );
-				if ( original == null )
-				{
-					original = (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, pickedNode );	
-					attrMgr.setAttribute( "OriginalColor", pickedNode, original );	
-				}
-				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, pickedColor );	
-				
-				if ( pickedNodePrev != null )
-				{
-					//System.err.println( pickedNodePrev.getLabel() + " " + pickedNode.getLabel() );			
-					original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNodePrev );
-					if ( original == null )
-					{
-						original = (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev );	
-						attrMgr.setAttribute( "OriginalColor", pickedNodePrev, original );	
-					}	
-					attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev, pickedColor );	
-				}	
-				repaint();
-			}
-		}
-		else if ( !e.isControlDown() )
-		{
-			resetPicked();
-			super.mousePressed(e);
-		}
-	}
-	
-	private void resetPicked()
-	{
-		if ( pickedNodePrev != null )
-		{
-			//System.err.println( "ResetPicked PREV" );
-			AttributeManager attrMgr = getGraph().getAttributeManager();	
-			Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNodePrev );	
-			if ( original != null )
-			{
-				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev, original );	
-			}
-			pickedNodePrev = null;
-			repaint();
-		}
-		if ( pickedNode != null )
-		{
-			//System.err.println( "ResetPicked" );
-			AttributeManager attrMgr = getGraph().getAttributeManager();		
-			Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNode );
-			if ( original != null )
-			{
-				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, original );
-			}
-			pickedNode = null;
-			repaint();
-		}
-	}
-	
-	public void mouseReleased(MouseEvent e) {
-		if ( !e.isControlDown() )
-		{
-			resetPicked();
-		}
-		super.mouseReleased(e);
-	}
 
 	/* (non-Javadoc)
 	 * @see hypergraph.visualnet.GraphPanel#mouseClicked(java.awt.event.MouseEvent)
 	 */
-	@Override
 	public void mouseClicked(MouseEvent e) {
 		if ( e.getButton() == MouseEvent.BUTTON3 )
 		{
+			// Popup a menu on right-click:
 			pickedNode = null;
 			setHoverElement(null, false);
 			Element element = getElement(e.getPoint());
@@ -524,11 +448,13 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		else if ( !e.isControlDown() )
 		{
+			// reset the picked nodes:
 			resetPicked();
 			super.mouseClicked(e);
 		}
 	}
 
+	@Override
 	public void mouseMoved(MouseEvent e) {
 		if ( !e.isControlDown() )
 		{
@@ -537,11 +463,78 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		super.mouseMoved(e);
 	}
 	
+	@Override
+	public void mousePressed(MouseEvent e) {
+		if ( e.isControlDown() )
+		{
+			// When the control-key is down, the selected nodes are
+			// stored for linking:
+			Element element = getHoverElement();
+			if ( element instanceof Node )
+			{
+				if ( element == pickedNode )
+				{
+					return;
+				}
+				AttributeManager attrMgr = getGraph().getAttributeManager();
+				if ( pickedNodePrev != null  )
+				{
+					// two nodes were already selected, reset the first node to it's original
+					// color and before moving on to the next selected node
+					Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNodePrev );	
+					attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev, original );	
+				}
+				// set the previous node:
+				pickedNodePrev = pickedNode;
+				
+				// set the current picked node:
+				pickedNode = (Node)element;	
+				// save the original color:
+				Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNode );
+				if ( original == null )
+				{
+					original = (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, pickedNode );	
+					attrMgr.setAttribute( "OriginalColor", pickedNode, original );	
+				}
+				// set the picked node picked color:
+				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, pickedColor );	
+				
+				if ( pickedNodePrev != null )
+				{
+					//System.err.println( pickedNodePrev.getLabel() + " " + pickedNode.getLabel() );
+					// save the original color:
+					original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNodePrev );
+					if ( original == null )
+					{
+						original = (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev );	
+						attrMgr.setAttribute( "OriginalColor", pickedNodePrev, original );	
+					}	
+					// set the picked color:
+					attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev, pickedColor );	
+				}	
+				repaint();
+			}
+		}
+		else if ( !e.isControlDown() )
+		{
+			resetPicked();
+			super.mousePressed(e);
+		}
+	}
+	
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		if ( !e.isControlDown() )
+		{
+			resetPicked();
+		}
+		super.mouseReleased(e);
+	}
+
 	/** Called if the node is clicked.
 	 * @param iClickCount The number of clicks on the node.
 	 * @param kNode The node that has been clicked on.
 	 */
-	@Override
 	public void nodeClicked(int iClickCount, Node kNode)
 	{
 		super.nodeClicked(iClickCount, kNode);
@@ -579,53 +572,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			((DefaultNodeRenderer)getNodeRenderer()).setTextRenderer(null);
 		}
 	}
-
-
-
-	public Color getNodeColor( Node root, int iTreeLevel )
-	{
-		AttributeManager attrMgr = getGraph().getAttributeManager();
-		Iterator iterator = getGraph().getNodes().iterator();
-		while( iterator.hasNext() )
-		{
-			Node kNode = (Node)iterator.next();
-			Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", kNode );
-			if ( (level != null) && (level.intValue() == iTreeLevel) )
-			{
-				return (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, kNode );				
-			}
-		}
-		Color kReturn = findNodeColor( root, 0, iTreeLevel );
-		if ( kReturn == null )
-		{
-			kReturn = (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, root );	
-		}
-		return kReturn;
-	}
-
-	private Color findNodeColor(Node root, int iLevel, int iTargetLevel)
-	{
-		AttributeManager attrMgr = getGraph().getAttributeManager();
-		if ( iLevel == iTargetLevel )
-		{
-			return (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, root );	
-		}
-		Color kReturn = null;
-		for (Iterator iter = getGraph().getEdges(root).iterator(); iter.hasNext();) {
-			Edge edge = (Edge) iter.next();
-			if (edge.getSource().equals(root) )
-			{
-				Color kResult = findNodeColor( edge.getTarget(), iLevel+1, iTargetLevel );
-				if ( kResult != null )
-				{
-					kReturn = kResult;
-				}
-			}
-		}
-		return kReturn;
-	}
-
-
+	
 	/**
 	 * Sets the node color for all the nodes at the given level of the Graph. Uses the 
 	 * "TreeLevel" node Attribute.
@@ -652,7 +599,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		return true;
 	}
-
 
 	/**
 	 * Uses recursion to set the node color for all the nodes at a given level of the Graph.
@@ -685,6 +631,101 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}		
 	}
 
+
+
+	/**
+	 * Delete the input node and it's children nodes:
+	 * Cannot delete the root node.
+	 * @param node
+	 */
+	private void deleteNode( Node node )
+	{
+		if ( node == null )
+		{
+			return;
+		}
+		AttributeManager attrMgr = getGraph().getAttributeManager();
+		Node root = (Node)attrMgr.getAttribute( AttributeManager.GRAPH_ROOT, node );
+		if ( root == null )
+		{
+			root = findMinRoot();
+		}
+		if ( node == root )
+		{
+			MipavUtil.displayError( "Cannot delete the root ndoe" );
+			return;
+		}
+		// Add the node to delete to the delete list:
+		Vector<Node> deleteList = new Vector<Node>();
+		deleteList.add(node);
+		// recursively add children nodes to the delete list:
+		deleteNode( node, node, root, deleteList );
+		
+		// delete the nodes on the list:
+		for ( int i = deleteList.size() -1; i >= 0; i-- )
+		{
+			getGraph().removeElement(deleteList.elementAt(i));
+		}		
+	}
+
+	/**
+	 * Recursively deletes children from the tree. The original node to delete is the start node. The
+	 * recursion stops when the root node is reached, or if the start node is reached (for example when
+	 * it is part of a loop with it's children) or when all the children have been added to the delete list.
+	 * @param node current node to delete.
+	 * @param start original parent node that triggered the delete.
+	 * @param root the root of the graph (cannot be deleted)
+	 * @param deleteList the list of nodes to be deleted. Prevents infinite recursion when nodes are in a loop.
+	 */
+	private void deleteNode( Node node, Node start, Node root, Vector<Node> deleteList )
+	{		
+		// get all outgoing edges in the original graph.
+		Iterator iter = getGraph().getEdges(node).iterator();
+		while (iter.hasNext()) {
+			Edge edge = (Edge) iter.next();
+			if (edge.getSource() != node)
+				continue; // only outgoing edges
+			Node target = edge.getOtherNode(node);
+			// if the target is not the original start node, or the root, or alread on the deleteList:
+			if ( (target != start) && (target != root) && !deleteList.contains( target ) )
+			{
+				deleteList.add(target);
+				deleteNode( target, start, root, deleteList );
+			}
+		}
+	}
+
+
+	/**
+	 * Recursively finds the node color at a target level of the tree.
+	 * @param node the current node (root of the subtree).
+	 * @param iLevel the current recursion level.
+	 * @param iTargetLevel the target level of the tree.
+	 * @return the color of the Node at the target level.
+	 */
+	private Color findNodeColor(Node node, int iLevel, int iTargetLevel)
+	{
+		AttributeManager attrMgr = getGraph().getAttributeManager();
+		if ( iLevel == iTargetLevel )
+		{
+			return (Color)attrMgr.getAttribute( GraphPanel.NODE_FOREGROUND, node );	
+		}
+		Color kReturn = null;
+		for (Iterator iter = getGraph().getEdges(node).iterator(); iter.hasNext();) {
+			Edge edge = (Edge) iter.next();
+			if (edge.getSource().equals(node) )
+			{
+				Color kResult = findNodeColor( edge.getTarget(), iLevel+1, iTargetLevel );
+				if ( kResult != null )
+				{
+					kReturn = kResult;
+				}
+			}
+		}
+		return kReturn;
+	}
+
+
 	/**
 	 * Opens up the background popup menu.
 	 * @param mouseEvent
@@ -710,6 +751,26 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
 		menuItem.setActionCommand("Decrease Font Size" );
+
+		popupMenu.show(this, mouseEvent.getX(), mouseEvent.getY() );
+	}
+
+	/**
+	 * Opens the node popup menu.
+	 * @param mouseEvent
+	 * @param node
+	 */
+	private void popupEdge(MouseEvent mouseEvent, Edge edge) {
+		pickedEdge = edge;
+
+		// build VOI intensity popup menu
+		JPopupMenu popupMenu = new JPopupMenu();
+
+		JMenuItem menuItem = new JMenuItem("Delete edge");
+		popupMenu.add(menuItem);
+		menuItem.addActionListener(this);
+		menuItem.setActionCommand("Delete edge" );
+
 
 		popupMenu.show(this, mouseEvent.getX(), mouseEvent.getY() );
 	}
@@ -764,22 +825,33 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 
 	/**
-	 * Opens the node popup menu.
-	 * @param mouseEvent
-	 * @param node
+	 * Resets the colors of the picked nodes to the original colors.
 	 */
-	private void popupEdge(MouseEvent mouseEvent, Edge edge) {
-		pickedEdge = edge;
-
-		// build VOI intensity popup menu
-		JPopupMenu popupMenu = new JPopupMenu();
-
-		JMenuItem menuItem = new JMenuItem("Delete edge");
-		popupMenu.add(menuItem);
-		menuItem.addActionListener(this);
-		menuItem.setActionCommand("Delete edge" );
-
-
-		popupMenu.show(this, mouseEvent.getX(), mouseEvent.getY() );
+	private void resetPicked()
+	{
+		if ( pickedNodePrev != null )
+		{
+			//System.err.println( "ResetPicked PREV" );
+			AttributeManager attrMgr = getGraph().getAttributeManager();	
+			Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNodePrev );	
+			if ( original != null )
+			{
+				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNodePrev, original );	
+			}
+			pickedNodePrev = null;
+			repaint();
+		}
+		if ( pickedNode != null )
+		{
+			//System.err.println( "ResetPicked" );
+			AttributeManager attrMgr = getGraph().getAttributeManager();		
+			Color original = (Color)attrMgr.getAttribute( "OriginalColor", pickedNode );
+			if ( original != null )
+			{
+				attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, original );
+			}
+			pickedNode = null;
+			repaint();
+		}
 	}
 }
