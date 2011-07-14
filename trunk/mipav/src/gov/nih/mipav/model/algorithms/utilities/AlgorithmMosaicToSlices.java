@@ -101,6 +101,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         int numberOfImagesInMosaic;
         double xOrient[] = new double[3];
         double yOrient[] = new double[3];
+        double zOrient[] = new double[3];
         double Q[][] = new double[3][2];
         Matrix matQ;
         double rc[][] = new double[2][1];
@@ -217,19 +218,22 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     bufferSliceCount = -1;
                     for (z = 0; z < subTDim; z++) {  
                         sliceNum=0;
-                        for (y = 0; ((y + subYDim - 1) < yDim) && (sliceNum < subTDim); y += subYDim) {
-                            for (x = 0; ((x + subXDim - 1) < xDim) && (sliceNum < subTDim); x += subXDim) {
+                        for (y = 0; ((y + subYDim - 1) < yDim) && (sliceNum < subZDim); y += subYDim) {
+                            for (x = 0; ((x + subXDim - 1) < xDim) && (sliceNum < subZDim); x += subXDim) {
                                 for (ys = 0; ys < subYDim; ys++) {
                                     for (xs = 0; xs <  subXDim; xs++) {
                                           for (c = 0; c < cFactor; c++) {
                                               subIndex = c + cFactor*(xs+ys*subXDim);
                                               orgIndex = (c + cFactor*(x + xs + (y + ys)*xDim))+(((subLength-1)*zs)+zs);
-                                              subBuffer[subIndex] = buffer[orgIndex];                                                                
+                                              subBuffer[subIndex] = buffer[orgIndex];    
+                                              
                                         } // for (c = 0; c < cFactor; c++)
                                     }// for (xs = 0; xs <  subXDim; xs++)
                                 }// for (ys = 0; ys < subYDim; ys++)
                                 
                                 bufferSliceCount++;
+                               
+                           
                                 try {
                                     
                                     destImage.importData((bufferSliceCount*(subLength/subZDim)), subBuffer, false);
@@ -242,10 +246,12 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
 
                                     return;
                                 }
-                                sliceNum++;                                                                
+                                sliceNum++; 
+                               
                             }    
                         }  
-                        zs++;                                                                                                          
+                        zs++; 
+                     
                     }
             }            
                        
@@ -261,6 +267,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                         resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                         resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
                         resolutions[2] = (float)sliceResolution;
+                      
+                        
                         fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2]];
                         final float[] imageOrg = srcImage.getFileInfo(0).getOrigin();
                         final double dicomOrigin[] = new double[imageOrg.length];
@@ -465,6 +473,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                         destImage.setFileInfo(fileInfoDicom);
                         fileInfoDicom = null;
                     } // if (srcImage.getFileInfo()[0] instanceof FileInfoDicom)
+
                     else {
                         fileInfo = destImage.getFileInfo();
                         
