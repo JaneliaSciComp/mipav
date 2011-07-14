@@ -25,6 +25,13 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
             Color back = c.getBackground();
             setBackground(new Color(back.getRed(), back.getGreen(), back.getBlue(), 224));
         }
-        setFont(getFont().deriveFont(Font.BOLD));
+        if ( getFont() == null )
+        {
+        	setFont(c.getFont().deriveFont(Font.BOLD));
+        }
+        else
+        {
+        	setFont(getFont().deriveFont(Font.BOLD));
+        }
     }
 }

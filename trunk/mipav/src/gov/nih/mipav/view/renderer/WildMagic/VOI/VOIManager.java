@@ -5253,12 +5253,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 					if ( !m_bSelected )
 					{
 						m_kCurrentVOI = null;
+						return null;
 					}
 					m_kCurrentVOI.setPlane(m_iPlane);
-
-
-
-
 
 					// Determine if the mouse is near any of the contour points or lines:
 					if ( nearBoundPoint( m_kCurrentVOI, iX, iY, m_kDrawingContext.getSlice() ) )

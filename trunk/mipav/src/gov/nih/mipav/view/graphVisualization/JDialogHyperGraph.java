@@ -84,7 +84,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	private String m_kFileName = null;
 
 	/** set of colors for tree nodes, based on the mipav striped lut */
-	private Color[] fixedColor = new Color[255];
+	private static Color[] fixedColor = new Color[255];
 
 	/** current font */
 	private PDFont m_kCurrentFont = null;
@@ -256,6 +256,13 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			ioe.printStackTrace();
 			return ioe.toString();
 		}
+	}
+	
+	public static Color getNodeColor( int level )
+	{
+		level = Math.max(level, 0);
+		level = Math.min( fixedColor.length -1, level );
+		return fixedColor[level];
 	}
 
 	/**
