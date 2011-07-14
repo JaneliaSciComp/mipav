@@ -231,6 +231,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** The checkbox to indicate whether images are displayed using the log of their magnitude */
     private JCheckBox displayLogMag;
+    
+    /** border size for active image color **/
+    private JComboBox activeImageColorBorderSize;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -290,6 +293,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeVOILineAngleOptions(gbc, gbl);
         makeCrosshairOptions(gbc, gbl);
         makeActiveColorOptions(gbc, gbl);
+        makeActiveColorBorderSizeOptions(gbc,gbl);
         makeIntensityLabelColorOptions(gbc, gbl);
         makeVOIDrawColorOptions(gbc, gbl);
         makeVOIColorOptions(gbc, gbl);
@@ -474,6 +478,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR, MipavUtil
                     .makeColorString(preferredActiveColor));
+            Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE, (String)activeImageColorBorderSize.getSelectedItem());
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
                     .getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
@@ -908,7 +913,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(l1, gbc);
-        displayColorPanel.add(l1);
+        displayColorPanel.add(l1,gbc);
 
         activeColor = new JButton();
         activeColor.setActionCommand("active color");
@@ -917,7 +922,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(activeColor, gbc);
-        displayColorPanel.add(activeColor);
+        displayColorPanel.add(activeColor,gbc);
+
 
         // preset the choices.
         if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR) == null) {
@@ -928,6 +934,37 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else {
             preferredActiveColor = MipavUtil.extractColor(Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR));
             activeColor.setBackground(preferredActiveColor);
+        }
+    }
+    
+    
+    
+    protected void makeActiveColorBorderSizeOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
+        final JLabel l1 = new JLabel("Active image border color size:");
+        l1.setFont(MipavUtil.font12);
+        l1.setForeground(Color.black);
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(l1, gbc);
+        displayColorPanel.add(l1,gbc);
+
+        
+        String[] borderSizes = {"1", "2", "3", "4", "5"};
+        activeImageColorBorderSize = new JComboBox(borderSizes);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(activeImageColorBorderSize, gbc);
+        displayColorPanel.add(activeImageColorBorderSize,gbc);
+
+
+        // preset the choices.
+        if (Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE) == null) {
+        	activeImageColorBorderSize.setSelectedIndex(0);
+        } else {
+        	String preferredSize = Preferences.getProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE);
+        	activeImageColorBorderSize.setSelectedItem(preferredSize);
         }
     }
 

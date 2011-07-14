@@ -4306,7 +4306,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         setTitle(str);
         
-        
         userInterface.getMainFrame().setTitle(ViewUserInterface.getReference().getAppTitle() + "     " + str);
     }
 
