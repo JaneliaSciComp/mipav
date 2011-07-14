@@ -78,7 +78,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * run algorithm
+	 * Run algorithm
 	 */
 	public void runAlgorithm() {
 		
@@ -286,7 +286,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calcultes max
+	 * Calculates the max between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -322,7 +322,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	/**
-	 * calculates min
+	 * Calculates the minimum between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -358,7 +358,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	/**
-	 * calculates average
+	 * Calculates the average between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -392,7 +392,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -434,7 +434,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -475,7 +475,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates std deviation
+	 * Calculates the standard deviation between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -523,7 +523,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -562,7 +562,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -599,7 +599,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates max
+	 * Calculates the max between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -636,7 +636,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates min
+	 * Calculates the minimum between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -673,7 +673,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates average
+	 * Calculates the average between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -707,7 +707,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -749,7 +749,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -790,7 +790,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates std devialtion
+	 * Calculates the standard deviation between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -844,7 +844,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -888,7 +888,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -935,7 +935,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates max
+	 * Calculates the max between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -972,7 +972,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates min
+	 * Calculates the minimum between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1009,7 +1009,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates average
+	 * Calculates the average between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1043,7 +1043,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1084,7 +1084,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1125,7 +1125,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates std deviation
+	 * Calculates the standard deviation between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1175,7 +1175,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1220,7 +1220,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1273,7 +1273,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates max
+	 * Calculates the max between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1309,7 +1309,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	/**
-	 * calculates min
+	 * Calculates the minimum between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1345,7 +1345,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	/**
-	 * calculates average
+	 * Calculates the average between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1380,7 +1380,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1422,7 +1422,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates norm
+	 * Calculates the norm between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1459,7 +1459,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates std deviation
+	 * Calculates the standard deviation between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1507,7 +1507,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	}
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
@@ -1546,7 +1546,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * calculates add
+	 * Calculates addition between 2 images
 	 * @param xytBuff
 	 * @return
 	 */
