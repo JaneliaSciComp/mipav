@@ -25,6 +25,7 @@ import java.io.*;
      which expands space outward for a > 0 or moves it out from the r = g = b line
      and compresses space for a < 0 or moves it in towards the r = g = b line.
      Using a = -1 sets r = g = b at every pixel.
+     Using a = -2 complements the image in an opposing color sense.
      
      If need be, decrease the magnitude of a applied to a particular pixel so that the 3 equations
      can be satisfied for legal values of r, g, and b.
