@@ -835,7 +835,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 
 
-		m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip, false );
+		m_kLocalImage = m_kImageActive.export( aiAxisOrder, abAxisFlip, false, null );
 		ModelImage.updateFileInfo( m_kLocalImage, m_kImageActive, aiAxisOrder, abAxisFlip );
 
 		if ( m_kLocalImage != m_kImageActive )
