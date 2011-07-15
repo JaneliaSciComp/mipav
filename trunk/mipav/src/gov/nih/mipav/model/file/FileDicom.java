@@ -767,7 +767,19 @@ public class FileDicom extends FileDicomBase {
                 tagVM = 0;
             }
         } else { // Explicit VR
-            vr = VR.valueOf(new String(vrBytes));
+            try {
+                vr = VR.valueOf(new String(vrBytes));
+            } catch(Exception e) {
+                if(key.equals(FileDicom.IMAGE_TAG)) {
+                    vr = VR.OB;
+                } else {
+                    vr = DicomDictionary.getType(key);
+                    if(vr == null) {
+                        vr = VR.UN;
+                        Preferences.debug("Unknown vr for tag "+key, Preferences.DEBUG_FILEIO);
+                    }
+                }
+            }
 
             if ( !DicomDictionary.containsTag(key)) {
                 tagVM = 0;
