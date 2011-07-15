@@ -396,7 +396,7 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
      */
     private void init() {
     	if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-        	/*FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
+        	FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
         	FileDicomTagTable tagTable = dicomInfo.getTagTable();
         	if (tagTable.getValue("0018,1310") != null) {
         	    // Acquisition matrix
@@ -530,7 +530,8 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
         pack();
         setVisible(true);
     	}
-    }
+    
+
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
