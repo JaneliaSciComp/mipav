@@ -769,7 +769,8 @@ public class ModelImage extends ModelStorageBase {
      * 
      * @return A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
      */
-    public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut, boolean bClone) {
+    public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut, boolean bClone,
+    	         ViewJProgressBar progressBar) {
 
         boolean bMatched = matched( axisOrderOut, axisFlipOut );
         if (bMatched) {
@@ -810,6 +811,7 @@ public class ModelImage extends ModelStorageBase {
             final int jBound = (iDims > 1) ? getExtents()[axisOrderOut[1]] : 1;
             final int kBound = (iDims > 2) ? getExtents()[axisOrderOut[2]] : 1;
             final int tBound = (iDims > 3) ? getExtents()[axisOrderOut[3]] : 1;
+            final int ktProd = kBound * tBound;
 
             /*
              * Get the loop multiplication factors for indexing into the 1D array with 3 index variables: based on the
@@ -834,7 +836,9 @@ public class ModelImage extends ModelStorageBase {
             for (int t = 0; t < tBound; t++) {
 
                 for (int k = 0; k < kBound; k++) {
-
+                	if (progressBar != null) {
+                	    progressBar.updateValueImmed((100 * (k + t*kBound)) / ktProd);
+                	}
                     for (int j = 0; j < jBound; j++) {
 
                         for (int i = 0; i < iBound; i++) {
