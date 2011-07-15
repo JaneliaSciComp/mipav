@@ -477,9 +477,13 @@ public class FileDicomBase {
                 bufferLoc += fLength;
             }
             
-        } catch (IOException ioE) { }
+        } catch (IOException ioE) { 
+            ioE.printStackTrace();
+            return -1;
+        }
         if(!isImage) {
-            MipavUtil.displayError("No image tag was found for this DICOM image");
+            Preferences.debug("No image tag was found for this DICOM image", Preferences.DEBUG_FILEIO);
+            return -1;
         } 
         return tagSize;
     }

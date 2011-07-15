@@ -180,9 +180,13 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 rowData[1] = tagName;
                 rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
 
-                final VR vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
-                final int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
+                VR vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+                int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
 
+                if(vr == null) {
+                   vr = VR.UN;
+                }
+                
                 if (rowData[2].equals("Private Tag") || vr.equals(VR.OB)) {
 
                     // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
