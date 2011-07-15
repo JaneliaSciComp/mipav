@@ -1635,7 +1635,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
         AlgorithmTransform.updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), image
-                .getFileInfo()[0].getUnitsOfMeasure(), trans, false);
+                .getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         final int mod = Math.max(1, oYdim / 50);
         final int imgLength = iXdim * iYdim;
@@ -1784,7 +1784,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         oYres = transformedImg.getFileInfo(0).getResolutions()[1];
 
         AlgorithmTransform.updateFileInfo(image, transformedImg, transformedImg.getFileInfo(0).getResolutions(), image
-                .getFileInfo()[0].getUnitsOfMeasure(), trans, false);
+                .getFileInfo()[0].getUnitsOfMeasure(), trans, false, null);
 
         final int mod = Math.max(1, oYdim / 50);
         final int imgLength = iXdim * iYdim;
@@ -2239,7 +2239,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         final float[] resolutions = new float[] {oXres, oYres};
 
         AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false);
+                .getUnitsOfMeasure(), trans, false, null);
 
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -2378,7 +2378,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         final float[] resolutions = new float[] {oXres, oYres};
 
         AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false);
+                .getUnitsOfMeasure(), trans, false, null);
 
         float temp1, temp2;
         float T00, T01, T02, T10, T11, T12;
@@ -3940,7 +3940,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         final float[] resolutions = new float[] {oXres, oYres, oZres};
 
         AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false);
+                .getUnitsOfMeasure(), trans, false, null);
 
         for (i = 0; i < oXdim; i++) {
             imm = i * oXres;
@@ -4146,7 +4146,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         final float[] resolutions = new float[] {oXres, oYres, oZres};
 
         AlgorithmTransform.updateFileInfo(image, transformedImg, resolutions, image.getFileInfo()[0]
-                .getUnitsOfMeasure(), trans, false);
+                .getUnitsOfMeasure(), trans, false, null);
 
         for (i = 0; i < oXdim; i++) {
             imm = i * oXres;
@@ -4656,7 +4656,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         // BEN: fix this so the origin is updated correctly
         AlgorithmTransform
-                .updateFileInfo(srcImage, destImage, destResolutions, oUnits, this.transMatrix, isSATransform);
+                .updateFileInfo(srcImage, destImage, destResolutions, oUnits, this.transMatrix, isSATransform, this);
 
         transform();
 
@@ -4795,9 +4795,10 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param units DOCUMENT ME!
      * @param matrix DOCUMENT ME!
      * @param useSATransform DOCUMENT ME!
+     * @param m 
      */
     private static void updateFileInfo(final ModelImage image, final ModelImage resultImage, final float[] resolutions,
-            final int[] units, final TransMatrix matrix, final boolean useSATransform) {
+            final int[] units, final TransMatrix matrix, final boolean useSATransform, AlgorithmBase srcAlg) {
 
     	final FileInfoBase[] fileInfo = resultImage.getFileInfo();
     	float firstPos[] = null;
@@ -4870,6 +4871,9 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                     ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010", new Short((short) resultImage.getExtents()[1]), 2);
                     ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011", new Short((short) resultImage.getExtents()[0]), 2);
+                    if(srcAlg != null) {
+                        srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
+                    }
                 }
 
                 ((FileInfoDicom) fileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
@@ -4881,6 +4885,10 @@ public class AlgorithmTransform extends AlgorithmBase {
                         fileInfo[i] = (FileInfoBase) image.getFileInfo(i).clone();
                     } else {
                         fileInfo[i] = (FileInfoBase) image.getFileInfo(0).clone();
+                    }
+                    
+                    if(srcAlg != null) {
+                        srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
                     }
                 }
             }
