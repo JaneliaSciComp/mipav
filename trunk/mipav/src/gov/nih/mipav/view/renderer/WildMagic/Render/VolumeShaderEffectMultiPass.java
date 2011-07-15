@@ -520,6 +520,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     public void setVolumeSamples( float fSample )
     {
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
+        //System.err.println( "Samples " + m_iPasses );
         SetPassQuantity(m_iPasses);
         Program pkCProgram = GetCProgram(0);
         for ( int i = 0; i < m_iPasses; i++ )

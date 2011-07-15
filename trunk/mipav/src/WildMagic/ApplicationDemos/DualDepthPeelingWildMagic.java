@@ -120,6 +120,7 @@ public class DualDepthPeelingWildMagic extends DemoBase
     	}
     	
         ((OpenGLRenderer)m_pkRenderer).SetDrawable( arg0 );
+		MeasureTime();
         
         m_pkRenderer.SetCamera( m_spkCamera );
         if (MoveCamera())
@@ -178,9 +179,11 @@ public class DualDepthPeelingWildMagic extends DemoBase
         m_pkRenderer.SetBackgroundColor( ColorRGBA.BLACK );
 		m_pkRenderer.ClearBuffers();
         m_pkRenderer.Draw( m_pkPlane );               
-        
+
+		DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
         // Swap buffers:
         m_pkRenderer.DisplayBackBuffer();
+		UpdateFrameCount();
     }
 	
     @Override

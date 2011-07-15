@@ -84,7 +84,7 @@ implements GLEventListener, KeyListener
         frame.setVisible(true);
         animator.start();
 	}
-final int iBound = 63;
+final int iBound = 256;
 
 
 	private WireframeState m_spkWireframe;
@@ -125,7 +125,7 @@ final int iBound = 63;
 		if (m_pkRenderer.BeginScene())
 		{
 			m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
-			DrawFrameRate(8,GetHeight()-8,ColorRGBA.WHITE);
+			DrawFrameRate(8,GetHeight()-8,ColorRGBA.BLACK);
 			m_pkRenderer.EndScene();
 		}
 		m_pkRenderer.DisplayBackBuffer();
