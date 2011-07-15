@@ -44,6 +44,10 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
     
     private JLabel mainLabel2;
     
+    private JLabel mainLabel3;
+    
+    private JLabel mainLabel4;
+    
     private JLabel aLabel;
     
     private JTextField aText;
@@ -294,7 +298,7 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
         gbc.gridy = 0;
         paramsPanel.add(mainLabel, gbc);
         
-        mainLabel2 = new JLabel("a > 0 to increase saturation or move away from r = g = b line");
+        mainLabel2 = new JLabel("a = -1 sets r = g = b");
         mainLabel2.setForeground(Color.black);
         mainLabel2.setFont(serif12);
         mainLabel2.setEnabled(true);
@@ -303,14 +307,23 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
         gbc.gridy = 1;
         paramsPanel.add(mainLabel2, gbc);
         
-        mainLabel2 = new JLabel("Hue and intensity remain constant");
-        mainLabel2.setForeground(Color.black);
-        mainLabel2.setFont(serif12);
-        mainLabel2.setEnabled(true);
+        mainLabel3 = new JLabel("a > 0 to increase saturation or move away from r = g = b line");
+        mainLabel3.setForeground(Color.black);
+        mainLabel3.setFont(serif12);
+        mainLabel3.setEnabled(true);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        paramsPanel.add(mainLabel2, gbc);
+        paramsPanel.add(mainLabel3, gbc);
+        
+        mainLabel4 = new JLabel("Hue and intensity remain constant");
+        mainLabel4.setForeground(Color.black);
+        mainLabel4.setFont(serif12);
+        mainLabel4.setEnabled(true);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        paramsPanel.add(mainLabel4, gbc);
         
         aLabel = new JLabel("a  ");
         aLabel.setForeground(Color.black);
@@ -318,7 +331,7 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
         aLabel.setEnabled(true);
         
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         paramsPanel.add(aLabel, gbc);
         
         aText = new JTextField(10);
@@ -328,7 +341,7 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
         aText.setEnabled(true);
         
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         paramsPanel.add(aText, gbc);
 
         getContentPane().add(paramsPanel, BorderLayout.CENTER);
