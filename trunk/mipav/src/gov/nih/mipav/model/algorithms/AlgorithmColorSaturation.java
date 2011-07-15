@@ -23,6 +23,9 @@ import java.io.*;
      Radial dilation around gray line = ((a + 2)/2)*(r*i + g*j + b*k)
                        + (a/2)*((i + j + k)/sqrt(3))*(r*i + g*j + b*k)*((i + j + k)/sqrt(3))
      which expands space outward for a > 0 and compresses space for a < 0.
+     
+     If need be, decrease the magnitude of a applied to a particular pixel so that the 3 equations
+     can be satisfied for legal values of r, g, and b.
      References:
      1.) Multivariate Image Processing, Christopher Collet, Jocelyn Chanussot, and Kacem Chehdi, editors,
      Chapter 13, Hypercomplex Models and Processing of Vector Images by S. J. Sangwine, T. A. Ell, and
@@ -93,6 +96,7 @@ public class AlgorithmColorSaturation extends AlgorithmBase {
         float rNew;
         float gNew;
         float bNew;
+        float aMod;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -147,36 +151,49 @@ public class AlgorithmColorSaturation extends AlgorithmBase {
 		        }
 		        
 		        for (index = 0; index < sliceSize; index++) {
+		        	aMod = a;
 	                rOld = srcBuffer[4 * index + 1];
 	                gOld = srcBuffer[4 * index + 2];
 	                bOld = srcBuffer[4 * index + 3];
 	                
-	                rNew = (float)((2.0 * a * rOld + 3.0 * rOld - a * gOld - a * bOld )/3.0);
-	                gNew = (float)((2.0 * a * gOld + 3.0 * gOld - a * rOld - a * bOld)/3.0);
-	                bNew = (float)((2.0 * a * bOld + 3.0 * bOld - a * rOld - a * gOld)/3.0);
-	                
+	                rNew = (float)((2.0 * aMod * rOld + 3.0 * rOld - aMod * gOld - aMod * bOld )/3.0);
 	                if (rNew < imageMin) {
 	                	rNew = imageMin;
+	                	aMod = (float)(3.0*(imageMin - rOld)/(2.0 * rOld - gOld - bOld));
 	                }
 	                if (rNew > imageMax) {
 	                	rNew = imageMax;
+	                	aMod = (float)(3.0*(imageMax - rOld)/(2.0 * rOld - gOld - bOld));
 	                }
-	                destBuffer[4 * index + 1] = rNew;
 	                
+	                gNew = (float)((2.0 * aMod * gOld + 3.0 * gOld - aMod * rOld - aMod * bOld)/3.0);
 	                if (gNew < imageMin) {
 	                	gNew = imageMin;
+	                	aMod = (float)(3.0*(imageMin - gOld)/(2.0 * gOld - rOld - bOld));
+	                	rNew = (float)((2.0 * aMod * rOld + 3.0 * rOld - aMod * gOld - aMod * bOld )/3.0);
 	                }
 	                if (gNew > imageMax) {
 	                	gNew = imageMax;
+	                	aMod = (float)(3.0*(imageMax - gOld)/(2.0 * gOld - rOld - bOld));
+	                	rNew = (float)((2.0 * aMod * rOld + 3.0 * rOld - aMod * gOld - aMod * bOld )/3.0);
 	                }
-	                destBuffer[4 * index + 2] = gNew;
-                
+	                
+	                bNew = (float)((2.0 * aMod * bOld + 3.0 * bOld - aMod * rOld - aMod * gOld)/3.0);
 	                if (bNew < imageMin) {
 	                	bNew = imageMin;
+	                	aMod = (float)(3.0*(imageMin - bOld)/(2.0 * bOld - rOld - gOld));
+	                	rNew = (float)((2.0 * aMod * rOld + 3.0 * rOld - aMod * gOld - aMod * bOld )/3.0);
+	                	gNew = (float)((2.0 * aMod * gOld + 3.0 * gOld - aMod * rOld - aMod * bOld)/3.0);
 	                }
 	                if (bNew > imageMax) {
 	                	bNew = imageMax;
+	                	aMod = (float)(3.0*(imageMax - bOld)/(2.0 * bOld - rOld - gOld));
+	                	rNew = (float)((2.0 * aMod * rOld + 3.0 * rOld - aMod * gOld - aMod * bOld )/3.0);
+	                	gNew = (float)((2.0 * aMod * gOld + 3.0 * gOld - aMod * rOld - aMod * bOld)/3.0);
 	                }
+	                
+	                destBuffer[4 * index + 1] = rNew;
+	                destBuffer[4 * index + 2] = gNew; 
 	                destBuffer[4 * index + 3] = bNew;
 	            } // for (index = 0; index < sliceSize; index++) 
 		        try {
