@@ -771,10 +771,16 @@ public class FileDicom extends FileDicomBase {
 
             if ( !DicomDictionary.containsTag(key)) {
                 tagVM = 0;
-
-                // put private tags with explicit VRs in file info hashtable
-                tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, "PrivateTag",
-                        "Private Tag"));
+                
+                if(isSiemensMRI && name.startsWith("0019")) {
+                    processSiemensMRITag(name, key, vr, tagVM);
+                } else if(isSiemensMRI2 && name.startsWith("0051")) {
+                    processSiemensMRI2Tag(name, key, vr, tagVM);
+                } else {
+                    // put private tags with explicit VRs in file info hashtable
+                    tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, "PrivateTag",
+                            "Private Tag"));
+                }
             } else {
                 final FileDicomTagInfo info = DicomDictionary.getInfo(key);
                 // this is required if DicomDictionary contains wild card characters
@@ -811,17 +817,13 @@ public class FileDicom extends FileDicomBase {
                         + strValue + "; element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
             } 
             
-            if(name.startsWith("0019")) {
-                if (!isSiemensMRI && name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+            if(!isSiemensMRI && name.startsWith("0019")) {
+                if (name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                     isSiemensMRI = true;
-                } else if(isSiemensMRI){
-                    processSiemensMRITag(name, key, vr, tagVM);
                 }
-            } else if(name.startsWith("0051")) {
-                if (!isSiemensMRI2 && name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+            } else if(!isSiemensMRI2 && name.startsWith("0051")) {
+                if (name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
                     isSiemensMRI2 = true;
-                } else if(isSiemensMRI2) {
-                    processSiemensMRI2Tag(name, key, vr, tagVM);
                 }
             }
             
