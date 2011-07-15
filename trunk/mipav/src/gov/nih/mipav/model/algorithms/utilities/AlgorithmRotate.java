@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ViewJProgressBar;
 
 
 /**
@@ -47,6 +48,7 @@ public class AlgorithmRotate extends AlgorithmBase {
     /* axisOrder and axisFlip changed to match the rotateAxis value: */
     private int[] axisOrder = { 0, 1, 2, 3 };
     private boolean[] axisFlip = { false, false, false, false };
+    ViewJProgressBar progressBar;
 
     //private TransMatrix rotMatrix = new TransMatrix(4);
     /**
@@ -126,8 +128,10 @@ public class AlgorithmRotate extends AlgorithmBase {
             return;
         }
 
-        
+        progressBar = new ViewJProgressBar("Rotating image ",
+                "Rotating image...", 0, 100, true);
         calcInPlace();
+        progressBar.dispose();
     }
 
 
@@ -186,7 +190,8 @@ public class AlgorithmRotate extends AlgorithmBase {
      * Calculates the rotated image and replaces the source image with the rotated image.
      */
     private void calcInPlace() {
-        destImage = srcImage.export( axisOrder, axisFlip, true );
+    	boolean updateProgressBar = true;
+        destImage = srcImage.export( axisOrder, axisFlip, true, progressBar );
         destImage.setImageName( srcImage.getImageName() );
         
         destImage.calcMinMax();
