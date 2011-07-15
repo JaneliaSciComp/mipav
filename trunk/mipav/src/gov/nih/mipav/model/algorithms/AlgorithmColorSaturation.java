@@ -22,7 +22,9 @@ import java.io.*;
      For radial dilation around the gray line where r = g = b, set u = (i + j + k)/sqrt(3)
      Radial dilation around gray line = ((a + 2)/2)*(r*i + g*j + b*k)
                        + (a/2)*((i + j + k)/sqrt(3))*(r*i + g*j + b*k)*((i + j + k)/sqrt(3))
-     which expands space outward for a > 0 and compresses space for a < 0.
+     which expands space outward for a > 0 or moves it out from the r = g = b line
+     and compresses space for a < 0 or moves it in towards the r = g = b line.
+     Using a = -1 sets r = g = b at every pixel.
      
      If need be, decrease the magnitude of a applied to a particular pixel so that the 3 equations
      can be satisfied for legal values of r, g, and b.
