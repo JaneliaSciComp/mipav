@@ -677,8 +677,10 @@ public class FileDicom extends FileDicomBase {
                 }
             }
             FileDicomKey key = null;
+            int tagElementLength = 0;
             try {
                 key = getNextTag(endianess);
+                tagElementLength = elementLength;
             } catch(ArrayIndexOutOfBoundsException aie) {
                 aie.printStackTrace();
                 Preferences.debug("Reached end of file while attempting to read: "+getFilePointer()+"\n", Preferences.DEBUG_FILEIO);
@@ -691,8 +693,8 @@ public class FileDicom extends FileDicomBase {
                 e.printStackTrace();
                 Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
             }
-            if(bPtrOld+elementLength > getFilePointer()) {
-                seek(bPtrOld+elementLength); //processing tag was likely not successful, report error but continue parsing
+            if(tagElementLength != -1 && bPtrOld+tagElementLength != getFilePointer()) {
+                seek(bPtrOld+tagElementLength); //processing tag was likely not successful, report error but continue parsing
                 Preferences.debug("Skipping tag due to file corruption (or image tag reached): "+key+"\n", Preferences.DEBUG_FILEIO);
             }
             
@@ -744,13 +746,12 @@ public class FileDicom extends FileDicomBase {
         Object data = null;
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
-        if(name.startsWith("0019,1008")) {
+        if(name.startsWith("0008,1111")) {
             System.out.println("Here");
         }
 
         int tagVM;
-        // Should be removed
-        // final int dirLength;
+        
 
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
