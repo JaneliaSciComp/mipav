@@ -189,6 +189,10 @@ public class FileDicom extends FileDicomBase {
     /** Stores the endianess of the header, used for processing sequence tags */
     private boolean endianess;
 
+    /**Whether adequate processing of the file has occurred to allowed image to be extracted, this includes getting offset
+     * and pixel representation. */
+    private boolean imageLoadReady = false;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -672,16 +676,34 @@ public class FileDicom extends FileDicomBase {
                     endianess = fileInfo.getEndianess();
                 }
             }
-            FileDicomKey key = getNextTag(endianess);
+            FileDicomKey key = null;
+            try {
+                key = getNextTag(endianess);
+            } catch(ArrayIndexOutOfBoundsException aie) {
+                aie.printStackTrace();
+                Preferences.debug("Reached end of file while attempting to read: "+getFilePointer()+"\n", Preferences.DEBUG_FILEIO);
+                key = new FileDicomKey("7FE0,0010"); //process image tag
+            }
             int bPtrOld = getFilePointer();
-            flag = processNextTag(tagTable, key, endianess);
+            try {
+                flag = processNextTag(tagTable, key, endianess);
+            } catch(Exception e) {
+                e.printStackTrace();
+                Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
+            }
             if(bPtrOld+elementLength > getFilePointer()) {
                 seek(bPtrOld+elementLength); //processing tag was likely not successful, report error but continue parsing
-                Preferences.debug("Error parsing tag: "+key, Preferences.DEBUG_FILEIO);
+                Preferences.debug("Skipping tag due to file corruption (or image tag reached): "+key+"\n", Preferences.DEBUG_FILEIO);
             }
             
             if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().equals(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
-                flag = false;
+                int imageLoc = locateImageTag(0);
+                if(imageLoc != -1 && !imageLoadReady) {
+                    seek(imageLoc);
+                    flag = true; //image tag exists but has not been processed yet
+                } else {
+                    flag = false;
+                }
             }
 
         }
@@ -722,6 +744,9 @@ public class FileDicom extends FileDicomBase {
         Object data = null;
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
+        if(name.startsWith("0019,1008")) {
+            System.out.println("Here");
+        }
 
         int tagVM;
         // Should be removed
@@ -771,14 +796,8 @@ public class FileDicom extends FileDicomBase {
         }
 
         if ( (getFilePointer() & 1) != 0) { // The file location pointer is at an odd byte number
-
-            if ( !isQuiet()) {
-                MipavUtil.displayError("Error:  Input file corrupted.  Unable to load image.");
-            }
-
-            // System.err.println("name: "+ name + " , len: " + Integer.toString(elementLength, 0x10));
-            Preferences.debug("ERROR CAUSED BY READING IMAGE ON ODD BYTE" + "\n", Preferences.DEBUG_FILEIO);
-            throw new IOException("Error while reading header");
+            Preferences.debug("PARSING ERROR LIKELY CAUSED READING TAG ON ODD BYTE, check image carefully\n", 
+                                    Preferences.DEBUG_FILEIO);
         }
 
         try {
@@ -1133,8 +1152,27 @@ public class FileDicom extends FileDicomBase {
         } else {
             fileInfo.displayType = fileInfo.getDataType();
         }
+        
 
         if ( !encapsulated) {
+            int imageTagLoc = locateImageTag(0);
+
+            if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
+                Preferences.debug("Implicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
+                fileInfo.setOffset(imageTagLoc-4 > 0 ? imageTagLoc-4 : imageTagLoc); // no image length, subtract 4
+            }
+            // for explicit tags - see Part 5 page 27 1998
+            else {
+                Preferences.debug("Explicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
+                fileInfo.setOffset(imageTagLoc);
+            } 
+        } else { // encapsulated
+            int imageTagLoc = locateImageTag(0);
+            Preferences.debug("Encapsulated image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
+            fileInfo.setOffset(imageTagLoc-12 > 0 ? imageTagLoc-12 : imageTagLoc);
+        }
+        
+        /*if ( !encapsulated) {
 
             long fileEnd = raFile.length();
 
@@ -1157,10 +1195,15 @@ public class FileDicom extends FileDicomBase {
             }
         } else { // encapsulated
             fileInfo.setOffset(getFilePointer() - 12);
-        }
+        }*/
+        
+        seek(fileInfo.getOffset());
+        System.out.println("The offset: "+fileInfo.getOffset()+" file pointer "+getFilePointer());
 
         fileInfo.setExtents(extents);
-        return true;
+        
+        imageLoadReady = true;
+        return imageLoadReady;
     }
 
     /**
