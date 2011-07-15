@@ -228,10 +228,6 @@ public class PlaneRender_WM extends GPURenderBase
         ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );   
         
         m_kAnimator = kAnimator;
-        if ( m_kAnimator != null )
-        {
-        	m_kAnimator.add( GetCanvas() );
-        }
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;
@@ -513,15 +509,6 @@ public class PlaneRender_WM extends GPURenderBase
     @Override
     public Vector3f fileToScreenVOI(Vector3f kFile) {
         return fileToScreen(kFile);
-    }
-    
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.renderer.WildMagic.GPURenderBase#GetCanvas()
-     */
-    @Override
-	public GLCanvas GetCanvas()
-    {
-        return ((OpenGLRenderer)m_pkRenderer).GetCanvas();
     }
     
 

@@ -446,6 +446,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	  */
 	 @Override
 	 public void display(GLAutoDrawable arg0) {
+		 MeasureTime();
+		 
 		 if ( m_kVolumeImageA == null ) {
 			 return;
 		 }           
@@ -486,7 +488,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 updateCenterOnDisplay();
 		 }
 
-		 MeasureTime();
 		 Move();
 		 Pick();
 
@@ -2896,6 +2897,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
 	  private void updateVOIs( VOIVector kVOIs )
 	  {
+		  boolean bUpdateVOIs = false;
 		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
 		  {
 			  if ( m_kDisplayList.get(i) instanceof VolumeVOI )
@@ -2912,10 +2914,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			  {
 				  VOIBase kVOI3D = kCurves.get(k);
 				  drawVOI( kVOI3D, this, m_kVolumeImageA, m_kTranslate );
+				  bUpdateVOIs = true;
 			  }
+		  } 
+		  if ( bUpdateVOIs )
+		  {
+			  UpdateSceneRotation();
+			  m_kParent.setModified();
 		  }
-		  UpdateSceneRotation();
-		  m_kParent.setModified();
 	  }
 
 

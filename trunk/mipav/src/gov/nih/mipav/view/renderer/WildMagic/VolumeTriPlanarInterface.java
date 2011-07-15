@@ -441,6 +441,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         
 
         raycastRenderWM.setVisible(true);
+        m_kAnimator.setRunAsFastAsPossible(true);
     	m_kAnimator.start();
     }
 
