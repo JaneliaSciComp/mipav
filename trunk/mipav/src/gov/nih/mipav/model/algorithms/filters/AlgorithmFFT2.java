@@ -292,7 +292,18 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
         AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_YZ);
         for (i = 0; i < nthreads; i++) {
-            final int nslices = zdim / nthreads;
+        	final int nslices;
+        	if (zdim < nthreads) {
+        	   if (i < zdim) {
+        		   nslices = 1;
+        	   }
+        	   else {
+        		   nslices = 0;
+        	   }
+        	}
+        	else {
+                nslices = zdim / nthreads;
+        	}   
             final int sliceLen = xdim * ydim;
             final int start = i * nslices * sliceLen;
             final int end = start + 1;
