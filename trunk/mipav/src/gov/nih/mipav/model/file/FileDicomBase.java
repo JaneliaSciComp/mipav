@@ -431,13 +431,25 @@ public class FileDicomBase {
     public void loadTagBuffer() {
 
         try {
-            bPtr = 0;
+            tagBuffer = new byte[locateImageTag(0)]; //tagBuffer now guaranteed to contain all necessary header information
+            raFile.seek(0);
+            raFile.readFully(tagBuffer);
+        } catch (IOException ioE) { }
+    }
+    
+    public int locateImageTag(int offset) {
+        int tagSize = 0;
+        boolean isImage = false;
+        try {
+
+            bPtr = offset;
+            raFile.seek(bPtr);
             long raFileLength = 0;
             if (raFile != null) {
                 raFileLength = raFile.length();
                 fLength = raFile.length() < BUFFER_SIZE ? raFile.length() : BUFFER_SIZE;
             }
-
+            
             byte b0 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(0, 2), 16);
             byte b1 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(2, 4), 16);
             byte b2 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(5, 7), 16);
@@ -446,10 +458,9 @@ public class FileDicomBase {
             byte[] littleEndianImageTag = {b1, b0, b3, b2}; 
             byte[] bigEndianImageTag = {b0, b1, b2, b3};
             int bufferLoc = 4;
-            int tagSize = 0;
-            boolean isImage = false;
+
             byte[] tempTagBuffer = new byte[(int) fLength];
-imageSearch:while(bufferLoc < raFileLength && !isImage) {
+    imageSearch:while(bufferLoc < raFileLength && !isImage) {
                 raFile.readFully(tempTagBuffer, bufferLoc != 4 ? -4 : 0, ((int)fLength)); //offset of 4 bytes to capture image tag overlap
                 for(int i=0; i<tempTagBuffer.length-4; i++) {
                     isImage = searchForImageTag(tempTagBuffer, littleEndianImageTag, i);
@@ -466,14 +477,11 @@ imageSearch:while(bufferLoc < raFileLength && !isImage) {
                 bufferLoc += fLength;
             }
             
-            if(!isImage) {
-                MipavUtil.displayError("No image tag was found for this DICOM image");
-            } 
-            
-            tagBuffer = new byte[tagSize]; //tagBuffer now guaranteed to contain all necessary header information
-            raFile.seek(0);
-            raFile.readFully(tagBuffer);
         } catch (IOException ioE) { }
+        if(!isImage) {
+            MipavUtil.displayError("No image tag was found for this DICOM image");
+        } 
+        return tagSize;
     }
 
     /**
