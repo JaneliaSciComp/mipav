@@ -337,6 +337,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Barrel distortion correction", "Barrel", 0, null, false),
                         menuBuilder.buildMenuItem("Circle to rectangle", "CircleToRec", 0, null, false),
                         menuBuilder.buildMenuItem("Circular sector to rectangle", "CirToRec", 0, null, false),
+                        menuBuilder.buildMenuItem("Color saturation", "ColorSaturation", 0, null, false),
                         menuBuilder.buildMenuItem("Nearly circle to circle", "NearlyCircleToCircle", 0, null, false),
                         menuBuilder.buildMenuItem("Reslice - isotropic voxels", null, 0, null, false),
                         menuBuilder.buildMenuItem("Subsample", "subsample", 0, null, false),
@@ -1143,6 +1144,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("RGB -> Grays", false);
             menuBuilder.setMenuItemEnabled("RGB -> HSB", false);
             menuBuilder.setMenuItemEnabled("Color edge", false);
+            menuBuilder.setMenuItemEnabled("Color saturation", false);
 
             if (numberOfDimensions == 2) {
                 menuBuilder.setMenuItemEnabled("Principal component", false);
