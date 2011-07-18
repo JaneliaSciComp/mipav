@@ -167,7 +167,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     private int filterType; // LOWPASS, HIGHPASS, BANDPASS, or BANDSTOP
 
     /** DOCUMENT ME! */
-    private float[] finalData; // final data
+    private float[] finalRData; // final data
+    private float[] finalGData;
+    private float[] finalBData;
 
     /** Variables used in Gabor filter. */
     private float freqU; // Frequency along U axis before rotation by theta range -1 to 1
@@ -261,6 +263,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     private boolean zeroPad; // true if zero padding actually performed
     
     private ModelImage gaborImage = null ;
+    
+    private int originalDataType;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -641,6 +645,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         FileInfoBase[] fileInfo;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
+        
+        originalDataType = srcImage.getType();
 
         makeHyperComplexData();
 
@@ -651,7 +657,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             // The filter FFT is created
             transformDir = FILTER;
-            exec(realKernelData, imagKernelData, 0);
+            exec(realKernelData, imagKernelData, 0, 1);
 
             if (threadStopped) {
                 finalize();
@@ -678,8 +684,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     imagkSubsetData[i] = imagkData[(z * newSliceSize) + i];
                 }
 
-                exec(realSubsetData, imagiSubsetData, z);
-                exec(imagjSubsetData, imagkSubsetData, z);
+                exec(realSubsetData, imagiSubsetData, z, 1);
+                exec(imagjSubsetData, imagkSubsetData, z, 2);
 
                 fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
                                          "Running forward FFTs ...");
@@ -694,8 +700,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             } // for (z = 0; z < newDimLengths[2]; z++)
         } // if (image25D)
         else { // not image25D
-            exec(realData, imagiData, 0);
-            exec(imagjData, imagkData, 0);
+            exec(realData, imagiData, 0, 1);
+            exec(imagjData, imagkData, 0, 2);
         } // else not image25D
 
         if (threadStopped) {
@@ -735,6 +741,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         imagiData[(z * newSliceSize) + i] = (imagiData[(z * newSliceSize) + i] * realKernelData[i]) +
                                                            (realData[(z * newSliceSize) + i] * imagKernelData[i]);
                         realData[(z * newSliceSize) + i] = tempR;
+                        tempR = (imagjData[(z * newSliceSize) + i] * realKernelData[i]) -
+                        (imagkData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        imagkData[(z * newSliceSize) + i] = (imagkData[(z * newSliceSize) + i] * realKernelData[i]) +
+                                                   (imagjData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        imagjData[(z * newSliceSize) + i] = tempR;
                     }
                 }
             } // if (image25D)
@@ -744,6 +755,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     tempR = (realData[i] * realKernelData[i]) - (imagiData[i] * imagKernelData[i]);
                     imagiData[i] = (imagiData[i] * realKernelData[i]) + (realData[i] * imagKernelData[i]);
                     realData[i] = tempR;
+                    tempR = (imagjData[i] * realKernelData[i]) - (imagkData[i] * imagKernelData[i]);
+                    imagkData[i] = (imagkData[i] * realKernelData[i]) + (imagjData[i] * imagKernelData[i]);
+                    imagjData[i] = tempR;
                 }
             } // else not image25D
         } // end of if (constructionMethod == WINDOW)
@@ -767,8 +781,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     imagkSubsetData[i] = imagkData[(z * newSliceSize) + i];
                 }
 
-                exec(realSubsetData, imagiSubsetData, z);
-                exec(imagjSubsetData, imagkSubsetData, z);
+                exec(realSubsetData, imagiSubsetData, z, 1);
+                exec(imagjSubsetData, imagkSubsetData, z, 2);
 
                 fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
                                          "Running inverse FFTs ...");
@@ -782,12 +796,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             imagkSubsetData = null;
         } // if (image25D)
         else { // not image25D
-            exec(realData, imagiData, 0);
-            exec(imagjData, imagkData, 0);
+            exec(realData, imagiData, 0, 1);
+            exec(imagjData, imagkData, 0, 2);
         } // else not image25D
 
         if (filterType == HOMOMORPHIC) {
-            restoreFinalData();
+            restoreFinalData(finalRData);
+            restoreFinalData(finalGData);
+            restoreFinalData(finalBData);
         } // if (filterType == HOMOMORPHIC)
 
         if (threadStopped) {
@@ -801,7 +817,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         //        fireProgressStateChanged("Storing inverse FFT in source image...");
         // back in the spatial domain so only realData is now present
         try {
-            srcImage.reallocate(ModelStorageBase.FLOAT, dimLengths);
+            srcImage.reallocate(originalDataType, dimLengths);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on srcImage.reallocate");
 
@@ -818,7 +834,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         }
 
         try {
-            srcImage.importData(0, finalData, true);
+            srcImage.importRGBData(1, 0, finalRData, true);
+            srcImage.importRGBData(2, 0, finalGData, true);
+            srcImage.importRGBData(3, 0, finalBData, true);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on source image import data");
 
@@ -859,6 +877,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         int z;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
+        
+        originalDataType = srcImage.getType();
 
         makeHyperComplexData();
 
@@ -869,7 +889,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             // The filter FFT is created
             transformDir = FILTER;
-            exec(realKernelData, imagKernelData, 0);
+            exec(realKernelData, imagKernelData, 0, 1);
 
             if (threadStopped) {
                 finalize();
@@ -896,8 +916,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     imagkSubsetData[i] = imagkData[(z * newSliceSize) + i];
                 }
 
-                exec(realSubsetData, imagiSubsetData, z);
-                exec(imagjSubsetData, imagkSubsetData, z);
+                exec(realSubsetData, imagiSubsetData, z, 1);
+                exec(imagjSubsetData, imagkSubsetData, z, 2);
                 fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
                                          "Running forward FFTs ...");
                 // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
@@ -911,8 +931,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             } // for (z = 0; z < newDimLengths[2]; z++)
         } // if (image25D)
         else { // not image25D
-            exec(realData, imagiData, 0);
-            exec(imagjData, imagkData, 0);
+            exec(realData, imagiData, 0, 1);
+            exec(imagjData, imagkData, 0, 2);
         } // else not image25D
 
         if (threadStopped) {
@@ -951,6 +971,12 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         imagiData[(z * newSliceSize) + i] = (imagiData[(z * newSliceSize) + i] * realKernelData[i]) +
                                                            (realData[(z * newSliceSize) + i] * imagKernelData[i]);
                         realData[(z * newSliceSize) + i] = tempR;
+                        tempR = (imagjData[(z * newSliceSize) + i] * realKernelData[i]) -
+                        (imagkData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        imagkData[(z * newSliceSize) + i] = (imagkData[(z * newSliceSize) + i] * realKernelData[i]) +
+                                                   (imagjData[(z * newSliceSize) + i] * imagKernelData[i]);
+                        imagjData[(z * newSliceSize) + i] = tempR;
+
                     }
                 }
             } // if (image25D)
@@ -960,6 +986,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     tempR = (realData[i] * realKernelData[i]) - (imagiData[i] * imagKernelData[i]);
                     imagiData[i] = (imagiData[i] * realKernelData[i]) + (realData[i] * imagKernelData[i]);
                     realData[i] = tempR;
+                    tempR = (imagjData[i] * realKernelData[i]) - (imagkData[i] * imagKernelData[i]);
+                    imagkData[i] = (imagkData[i] * realKernelData[i]) + (imagjData[i] * imagKernelData[i]);
+                    imagjData[i] = tempR;
                 }
             } // else not image25D
         } // if (constructionMethod == WINDOW)
@@ -983,8 +1012,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     imagkSubsetData[i] = imagkData[(z * newSliceSize) + i];
                 }
 
-                exec(realSubsetData, imagiSubsetData, z);
-                exec(imagjSubsetData, imagkSubsetData, z);
+                exec(realSubsetData, imagiSubsetData, z, 1);
+                exec(imagjSubsetData, imagkSubsetData, z, 2);
                 fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
                                          "Running inverse FFTs ...");
                 // fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
@@ -996,12 +1025,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             imagkSubsetData = null;
         } // if (image25D)
         else { // not image25D
-            exec(realData, imagiData, 0);
-            exec(imagjData, imagkData, 0);
+            exec(realData, imagiData, 0, 1);
+            exec(imagjData, imagkData, 0, 2);
         } // else not image25D
 
         if (filterType == HOMOMORPHIC) {
-            restoreFinalData();
+            restoreFinalData(finalRData);
+            restoreFinalData(finalGData);
+            restoreFinalData(finalBData);
         } // if (filterType == HOMOMORPHIC)
 
         if (threadStopped) {
@@ -1015,7 +1046,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
         // back in the spatial domain so only realData is now present
         try {
-            destImage.reallocate(ModelStorageBase.FLOAT, dimLengths);
+            destImage.reallocate(originalDataType, dimLengths);
         } catch (IOException error) {
             displayError("AlgorithmFrequencyFilter: IOException on destImage.reallocate");
 
@@ -1032,9 +1063,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         }
 
         try {
-            destImage.importData(0, finalData, true);
+            destImage.importRGBData(1, 0, finalRData, true);
+            destImage.importRGBData(2, 0, finalGData, true);
+            destImage.importRGBData(3, 0, finalBData, true);
         } catch (IOException error) {
-            displayError("AlgorithmFrequencyFilter: IOException on destination image import data");
+            displayError("AlgorithmFrequencyFilterColor: IOException on destination image import data");
 
             setCompleted(false);
 
@@ -1606,7 +1639,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  rData  DOCUMENT ME!
      * @param  z      DOCUMENT ME!
      */
-    private void edgeStrip(float[] rData, int z) {
+    private void edgeStrip(float[] rData, int z, int colorIndex) {
         int i, j, k, m, n;
         float[] tempData;
         int sliceSize = dimLengths[0] * dimLengths[1];
@@ -1720,24 +1753,66 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                 }
             }
         }
-
-        try {
-
-            if ((!image25D) || (z == 0)) {
-                finalData = new float[arrayLength];
-            }
-        } catch (OutOfMemoryError e) {
-            finalData = null;
-            System.gc();
-            displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
-
-            setCompleted(false);
-
-            return;
+        
+        if (colorIndex == 1) {
+	        try {
+	
+	            if ((!image25D) || (z == 0)) {
+	                finalRData = new float[arrayLength];
+	            }
+	        } catch (OutOfMemoryError e) {
+	            finalRData = null;
+	            System.gc();
+	            displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
+	
+	            setCompleted(false);
+	
+	            return;
+	        }
+	
+	        for (i = 0; i < aLength; i++) {
+	            finalRData[(z * sliceSize) + i] = tempData[i];
+	        }
         }
-
-        for (i = 0; i < aLength; i++) {
-            finalData[(z * sliceSize) + i] = tempData[i];
+        else if (colorIndex == 2) {
+        	try {
+        		
+	            if ((!image25D) || (z == 0)) {
+	                finalGData = new float[arrayLength];
+	            }
+	        } catch (OutOfMemoryError e) {
+	            finalGData = null;
+	            System.gc();
+	            displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
+	
+	            setCompleted(false);
+	
+	            return;
+	        }
+	
+	        for (i = 0; i < aLength; i++) {
+	            finalGData[(z * sliceSize) + i] = tempData[i];
+	        }	
+        }
+        else {
+        	try {
+        		
+	            if ((!image25D) || (z == 0)) {
+	                finalBData = new float[arrayLength];
+	            }
+	        } catch (OutOfMemoryError e) {
+	            finalBData = null;
+	            System.gc();
+	            displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
+	
+	            setCompleted(false);
+	
+	            return;
+	        }
+	
+	        for (i = 0; i < aLength; i++) {
+	            finalBData[(z * sliceSize) + i] = tempData[i];
+	        }
         }
     }
 
@@ -1749,8 +1824,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  rData  real data buffer
      * @param  iData  imaginary data buffer
      * @param  z      slice number in image25D processing, 0 otherwise
+     * @param complexHalf = 1 for first half, 2 for second half
      */
-    private void exec(float[] rData, float[] iData, int z) {
+    private void exec(float[] rData, float[] iData, int z, int complexHalf) {
 
         double TWO_PI = 2 * java.lang.Math.PI;
         double wt1Imag, wt1Real;
@@ -1901,7 +1977,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         }
 
         if (transformDir == INVERSE) {
-
+        
             for (i = 0; i < newLength; i++) {
                 rData[i] = rData[i] / newLength;
                 iData[i] = iData[i] / newLength;
@@ -1911,6 +1987,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
                 // shift each dimension back to the start by (kDim - 1)/2
                 shiftBack(rData);
+                shiftBack(iData);
             }
 
             // Do edge stripping to restore the original dimensions the source image had
@@ -1921,25 +1998,59 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                 fireProgressStateChanged(-1, null, "Zero stripping data after inverse FFT ...");
             }
 
-            edgeStrip(rData, z);
+            if (complexHalf == 1) {
+               edgeStrip(iData, z, 1);
+            }
+            else {
+            	edgeStrip(rData, z, 2);
+            	edgeStrip(iData, z, 3);
+            }
 
             if ((!image25D) || (z == (dimLengths[2] - 1))) {
 
                 if (doCrop) {
-                    zeroAround();
+                	if (complexHalf == 1) {
+                        zeroAround(finalRData);
+                	}
+                	else {
+                		zeroAround(finalGData);
+                		zeroAround(finalBData);
+                	}
                 }
 
                 if (filterType != HOMOMORPHIC) {
 
-                    for (i = 0; i < arrayLength; i++) {
-
-                        if (finalData[i] > maximum) {
-                            finalData[i] = maximum;
-                        }
-
-                        if (finalData[i] < minimum) {
-                            finalData[i] = minimum;
-                        }
+                    if (complexHalf == 1) {
+	                	for (i = 0; i < arrayLength; i++) {
+	
+	                        if (finalRData[i] > maximum) {
+	                            finalRData[i] = maximum;
+	                        }
+	
+	                        if (finalRData[i] < minimum) {
+	                            finalRData[i] = minimum;
+	                        }
+	                    }
+                    } // if (complexHalf == 1)
+                    else {
+                    	for (i = 0; i < arrayLength; i++) {
+                    		
+	                        if (finalGData[i] > maximum) {
+	                            finalGData[i] = maximum;
+	                        }
+	
+	                        if (finalGData[i] < minimum) {
+	                            finalGData[i] = minimum;
+	                        }
+	                        
+	                        if (finalBData[i] > maximum) {
+	                            finalBData[i] = maximum;
+	                        }
+	
+	                        if (finalBData[i] < minimum) {
+	                            finalBData[i] = minimum;
+	                        }
+	                    }	
                     }
                 } // if (filterType != HOMOMORPHIC)
             } // if ((!image25D) || (z == dimLengths[2] - 1))
@@ -2602,7 +2713,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      */
     private void makeButterworthFilter(float fr1, float fr2) {
         int x, y, z, pos;
-        float distsq, width, centersq, coeff, num, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        float distsq, width, centersq, coeff, num, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
         xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
         ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
@@ -2629,6 +2740,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), butterworthOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
                         }
                     }
                 }
@@ -2645,6 +2758,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
                         }
                     }
                 }
@@ -2664,6 +2779,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * butterworthOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
                         }
                     }
                 }
@@ -2683,90 +2800,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                             coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
                         }
                     }
                 }
             } // else if (filterType == BANDSTOP)
         } // if ((ndim == 2) || (image25D))
-        else if (ndim == 3) {
-            zcenter = (newDimLengths[2] - 1.0f) / 2.0f;
-            znorm = zcenter * zcenter;
-
-            if (filterType == LOWPASS) {
-
-                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
-                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
-                                     ((z - zcenter) * (z - zcenter) / znorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow(distsq / (fr1 * fr1), butterworthOrder)));
-                            realData[pos] *= coeff;
-                            imagiData[pos] *= coeff;
-                        }
-                    }
-                }
-            } // end of if (filterType == LOWPASS)
-            else if (filterType == HIGHPASS) {
-
-                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
-                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
-                                     ((z - zcenter) * (z - zcenter) / znorm);
-                            coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
-                            realData[pos] *= coeff;
-                            imagiData[pos] *= coeff;
-                        }
-                    }
-                }
-            } // end of if (filterType == HIGHPASS)
-            else if (filterType == BANDPASS) {
-                width = fr2 - fr1;
-                centersq = fr1 * fr2;
-
-                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
-                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
-                                     ((z - zcenter) * (z - zcenter) / znorm);
-                            num = (float) Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow((distsq - centersq), 2.0 * butterworthOrder)));
-                            realData[pos] *= coeff;
-                            imagiData[pos] *= coeff;
-                        }
-                    }
-                }
-            } // end of if (filterType == BANDPASS)
-            else if (filterType == BANDSTOP) {
-                width = fr2 - fr1;
-                centersq = fr1 * fr2;
-
-                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                            pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
-                            distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
-                                     ((z - zcenter) * (z - zcenter) / znorm);
-                            num = (float) Math.pow((distsq - centersq), 2.0 * butterworthOrder);
-                            coeff = (float) (num / (num + Math.pow(Math.sqrt(distsq) * width, 2.0 * butterworthOrder)));
-                            realData[pos] *= coeff;
-                            imagiData[pos] *= coeff;
-                        }
-                    }
-                }
-            } // end of else if (filterType == BANDSTOP)
-        } // end of else if (ndim == 3)
+        
     }
 
 
@@ -3851,6 +3892,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     coeff = (float) Math.exp(-((u * u / xDenom) + (v * v / yDenom)));
                     realData[pos] *= coeff;
                     imagiData[pos] *= coeff;
+                    imagjData[pos] *= coeff;
+                    imagkData[pos] *= coeff;
 
                     if (createGabor) {
 
@@ -3884,10 +3927,10 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      * @param  rmsFreq  DOCUMENT ME!
      */
     private void makeGaussianFilter(float rmsFreq) {
-        double xexpDenom, yexpDenom, zexpDenom;
+        double xexpDenom, yexpDenom;
         int x, y, z, pos;
         int upperZ;
-        float coeff, xcenter, ycenter, zcenter;
+        float coeff, xcenter, ycenter;
 
         xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
         ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
@@ -3915,6 +3958,8 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                                                  Math.exp(-(y - ycenter) * (y - ycenter) / yexpDenom));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
                         }
                     }
                 }
@@ -3932,51 +3977,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                                                   Math.exp(-(y - ycenter) * (y - ycenter) / yexpDenom)));
                             realData[pos] *= coeff;
                             imagiData[pos] *= coeff;
+                            imagjData[pos] *= coeff;
+                            imagkData[pos] *= coeff;
                         }
                     }
                 }
             } // end of if (filterType == HIGHPASS)
         } // end of if ((ndim == 2) || (image25D))
-        else if (ndim == 3) {
-            zcenter = (newDimLengths[2] - 1.0f) / 2.0f;
-            zexpDenom = 2.0 * rmsFreq * rmsFreq * zcenter * zcenter;
-
-            if (filterType == LOWPASS) {
-
-                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
-                            coeff = (float) (Math.exp(-(x - xcenter) * (x - xcenter) / xexpDenom) *
-                                                 Math.exp(-(y - ycenter) * (y - ycenter) / yexpDenom) *
-                                                 Math.exp(-(z - zcenter) * (z - zcenter) / zexpDenom));
-                            realData[pos] *= coeff;
-                            imagiData[pos] *= coeff;
-                        }
-                    }
-                }
-            } // end of if (filterType == LOWPASS)
-            else if (filterType == HIGHPASS) {
-
-                for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                    for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                        for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                            pos = (z * newSliceSize) + (y * newDimLengths[0]) + x;
-                            coeff = (float) (1.0 -
-                                             (Math.exp(-(x - xcenter) * (x - xcenter) / xexpDenom) *
-                                                  Math.exp(-(y - ycenter) * (y - ycenter) / yexpDenom) *
-                                                  Math.exp(-(z - zcenter) * (z - zcenter) / zexpDenom)));
-                            realData[pos] *= coeff;
-                            imagiData[pos] *= coeff;
-                        }
-                    }
-                }
-            } // end of if (filterType == HIGHPASS)
-        } // end of else if (ndim == 3)
+        
     }
 
     /**
@@ -3986,7 +3994,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
      */
     private void makeHomomorphicFilter(float fr1) {
         int x, y, z, pos;
-        float distsq, coeff, xnorm, ynorm, znorm, xcenter, ycenter, zcenter;
+        float distsq, coeff, xnorm, ynorm, xcenter, ycenter;
         int upperZ;
         xcenter = (newDimLengths[0] - 1.0f) / 2.0f;
         ycenter = (newDimLengths[1] - 1.0f) / 2.0f;
@@ -4011,29 +4019,13 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                         coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
                         realData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                         imagiData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
+                        imagjData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
+                        imagkData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
                     }
                 }
             }
         } // if ((ndim == 2) || (image25D))
-        else if (ndim == 3) {
-            zcenter = (newDimLengths[2] - 1.0f) / 2.0f;
-            znorm = zcenter * zcenter;
-
-            for (z = 0; z <= (newDimLengths[2] - 1); z++) {
-
-                for (y = 0; y <= (newDimLengths[1] - 1); y++) {
-
-                    for (x = 0; x <= (newDimLengths[0] - 1); x++) {
-                        pos = (z * newDimLengths[0] * newDimLengths[1]) + (y * newDimLengths[0]) + x;
-                        distsq = ((x - xcenter) * (x - xcenter) / xnorm) + ((y - ycenter) * (y - ycenter) / ynorm) +
-                                 ((z - zcenter) * (z - zcenter) / znorm);
-                        coeff = (float) (1.0 / (1.0 + Math.pow((fr1 * fr1) / distsq, butterworthOrder)));
-                        realData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
-                        imagiData[pos] *= (((highGain - lowGain) * coeff) + lowGain);
-                    }
-                }
-            }
-        } // end of else if (ndim == 3)
+        
     }
 
     /* l'Hopitals rule if f(a) = g(a) = 0 and if the limit of the ratio f'(t)/g'(t) as t approaches a exists,
@@ -4223,7 +4215,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     /**
      * DOCUMENT ME!
      */
-    private void restoreFinalData() {
+    private void restoreFinalData(float finalData[]) {
         int i;
         float[] finalData2;
 
@@ -4489,7 +4481,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     /**
      * If a cropping operation was performed, shift the data back to the center and put zeros around the edges.
      */
-    private void zeroAround() {
+    private void zeroAround(float finalData[]) {
         int i, j, k, m, n;
         float[] tempData;
 
