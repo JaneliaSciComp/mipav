@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ViewJProgressBar;
 
@@ -190,13 +191,29 @@ public class AlgorithmRotate extends AlgorithmBase {
      * Calculates the rotated image and replaces the source image with the rotated image.
      */
     private void calcInPlace() {
-    	boolean updateProgressBar = true;
-        destImage = srcImage.export( axisOrder, axisFlip, true, progressBar );
+    	int startValue = 0;
+    	int finalValue;
+    	if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
+    		finalValue = 100;
+    	}
+    	else {
+    		finalValue = 90;
+    	}
+        destImage = srcImage.export( axisOrder, axisFlip, true, progressBar, startValue, finalValue );
         destImage.setImageName( srcImage.getImageName() );
         
         destImage.calcMinMax();
+        if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
+        	startValue = 100;
+    		finalValue = 100;
+    	}
+    	else {
+    		startValue = 90;
+    		finalValue = 100;
+    	}
         
-        if ( !ModelImage.updateFileInfo( destImage, srcImage, axisOrder, axisFlip ) )
+        if ( !ModelImage.updateFileInfo( destImage, srcImage, axisOrder, axisFlip, progressBar,
+        		startValue, finalValue) )
         {
             errorCleanUp("Algorithm Rotate: Out of memory", true);
             return;
