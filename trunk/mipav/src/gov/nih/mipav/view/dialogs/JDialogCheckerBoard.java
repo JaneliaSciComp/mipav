@@ -344,7 +344,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
      *
      * @param  e  Event that triggered this function.
      */
-    public void stateChanged(ChangeEvent e) {
+    public  void stateChanged(ChangeEvent e) {
         int rowNumber, columnNumber;
         Object source = e.getSource();
         int type = checkerboardTypesCB.getSelectedIndex();
@@ -398,111 +398,701 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
         	if(value == 1) {
         		
-        		setNegativeSpeed(true);
-        		setAnimateTime(10);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(10);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(10);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(10);
+           		}
         		
         	}else if(value == 2) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(20);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(20);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(20);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(20);
+           		}
         		
         	}else if(value == 3) {
  
-        		setNegativeSpeed(true);
-        		setAnimateTime(30);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(30);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(30);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(30);
+           		}
         		
         	}else if(value == 4) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(40);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(40);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(40);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(40);
+           		}
         		
         	}else if(value == 5) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(50);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(50);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(50);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(50);
+           		}
         		
         	}else if(value == 6) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(60);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(60);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(60);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(60);
+           		}
         		
         	}else if(value == 7) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(70);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(70);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(70);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(70);
+           		}
         		
         	}else if(value == 8) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(80);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(80);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(80);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(80);
+           		}
         		
         	}else if(value == 9) {
 
-        		setNegativeSpeed(true);
-        		setAnimateTime(90);
+        		   if(isNegativeSpeed() == false) {
+           			if(isAnimating()) {
+           				setAnimating(false);
+                   		compImage.setCheckerboardAnimate(false);
+                   		while(!isThreadStopped()) {
+                   			//do nothing
+                   		}
+                   		
+
+                   		setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(90);
+                   		
+                   		setAnimating(true);
+                   		compImage.setCheckerboardAnimate(true);
+
+                   		animateThread = new Animate();
+               	    	try {
+               	    		animateThread.start();
+               	    	}catch (Exception ec) {
+               				ec.printStackTrace();
+               				return;
+               			}
+           			}else {
+           				setCc(getCc() - 1);
+               			setNegativeSpeed(true);
+                   		setAnimateTime(90);
+           			}	
+           		}else {	
+           			setNegativeSpeed(true);
+               		setAnimateTime(90);
+           		}
         		
         	}else if(value == 10) {
-        		if(isNegativeSpeed() == false) {
-        			setCc(getCc() - 1);
+        	   if(isNegativeSpeed() == false) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() - 1);
+            			setNegativeSpeed(true);
+                		setAnimateTime(100);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() - 1);
+            			setNegativeSpeed(true);
+                		setAnimateTime(100);
+        			}	
+        		}else {	
+        			setNegativeSpeed(true);
+            		setAnimateTime(100);
         		}
-        		setNegativeSpeed(true);
-        		setAnimateTime(100);
-        		
-        	}
-        	
-        	
-        	
-        	if(value == 11) {
+        	}else if(value == 11) {
         		if(isNegativeSpeed() == true) {
-        			setCc(getCc() + 1);
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(100);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(100);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(100);
         		}
-        		setNegativeSpeed(false);
-        		setAnimateTime(100);
+        		
         		
         	}else if(value == 12) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(90);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(90);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(90);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(90);
+        		}
         		
         	}else if(value == 13) {
  
-        		setNegativeSpeed(false);
-        		setAnimateTime(80);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(80);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(80);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(80);
+        		}
         		
         	}else if(value == 14) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(70);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(70);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(70);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(70);
+        		}
         		
         	}else if(value == 15) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(60);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(60);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(60);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(60);
+        		}
         		
         	}else if(value == 16) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(50);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(50);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(50);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(50);
+        		}
         		
         	}else if(value == 17) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(40);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(40);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(40);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(40);
+        		}
         		
         	}else if(value == 18) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(30);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(30);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(30);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(30);
+        		}
         		
         	}else if(value == 19) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(20);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(20);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(20);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(20);
+        		}
         		
         	}else if(value == 20) {
 
-        		setNegativeSpeed(false);
-        		setAnimateTime(10);
+        		if(isNegativeSpeed() == true) {
+        			if(isAnimating()) {
+        				setAnimating(false);
+                		compImage.setCheckerboardAnimate(false);
+                		while(!isThreadStopped()) {
+                			//do nothing
+                		}
+                		
+
+                		setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(10);
+                		
+                		setAnimating(true);
+                		compImage.setCheckerboardAnimate(true);
+
+                		animateThread = new Animate();
+            	    	try {
+            	    		animateThread.start();
+            	    	}catch (Exception ec) {
+            				ec.printStackTrace();
+            				return;
+            			}
+        			}else {
+        				setCc(getCc() + 1);
+            			setNegativeSpeed(false);
+                		setAnimateTime(10);
+        			}	
+        		}else {
+        			setNegativeSpeed(false);
+            		setAnimateTime(10);
+        		}
         		
         	}
         	
@@ -805,14 +1395,24 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 
 
 	
-
-	public synchronized boolean isThreadStopped() {
+	
+	 public synchronized boolean isThreadStopped() {
 		return isStopped;
 	}
-	
-	
-	
-	 public synchronized boolean isAnimating() {
+
+
+
+
+
+	public synchronized void setThreadStopped(boolean isStopped) {
+		this.isStopped = isStopped;
+	}
+
+
+
+
+
+	public synchronized boolean isAnimating() {
 		return animating;
 	}
 
@@ -917,7 +1517,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 		
 		
 		
-		public void run() {
+		public synchronized void run() {
 
 			pixBufferB = compImage.getPixBufferB();
 			cleanImageBufferB = compImage.getCleanImageBufferB();
@@ -929,7 +1529,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 			xMod = compImage.getxMod();
 
 			maxExtents = compImage.getMaxExtents();
-			isStopped = false;
+			//isStopped = false;
+			setThreadStopped(false);
 
 
     		while(isAnimating()) {
@@ -1012,10 +1613,6 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         			}
     			}
     			
-    			
-    			
-    			
-    			
     			animateCheckerboard();
     			compImage.paintComponent(compImage.getGraphics());
     			
@@ -1037,7 +1634,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
     			}
     		}
     		
-    		isStopped = true;
+    		//isStopped = true;
+    		setThreadStopped(true);
 
     		
 		}
@@ -1050,7 +1648,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 		 * @param y
 		 * @param dim
 		 */
-		 private void flip(int x, int y, int dim) {
+		 private synchronized void flip(int x, int y, int dim) {
 
 		    	if(pixBufferB[x + (y * dim)] == 0) {
 		        	pixBufferB[x + (y * dim)] = cleanImageBufferB[x + (y * dim)];
@@ -1063,7 +1661,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
 		 
 		 
 		 
-		    private void animateCheckerboard() {
+		    private synchronized void animateCheckerboard() {
 		    	int xDim, yDim;
 		    	xDim = maxExtents[0];
 		        yDim = maxExtents[1];
