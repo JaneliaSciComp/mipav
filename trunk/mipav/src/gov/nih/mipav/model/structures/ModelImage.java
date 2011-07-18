@@ -770,7 +770,7 @@ public class ModelImage extends ModelStorageBase {
      * @return A new ModelImage. Extents, resolutions, units, origins and orientations are all updated.
      */
     public final ModelImage export(final int[] axisOrderOut, final boolean[] axisFlipOut, boolean bClone,
-    	         ViewJProgressBar progressBar) {
+    	         ViewJProgressBar progressBar, int startValue, int finalValue) {
 
         boolean bMatched = matched( axisOrderOut, axisFlipOut );
         if (bMatched) {
@@ -796,6 +796,10 @@ public class ModelImage extends ModelStorageBase {
         final ModelImage kReturn = new ModelImage(getType(), extentsOut, "");
         if (kReturn.fileInfo != null) {
             for (int i = 0; i < kReturn.getFileInfo().length; i++) {
+            	if (progressBar != null) {
+            	    progressBar.updateValueImmed(( startValue + 
+            	    		((finalValue - startValue) * i) / (10 * kReturn.getFileInfo().length)));
+            	}
             	kReturn.fileInfo[i] = (FileInfoBase)this.getFileInfo(0).clone();
             	kReturn.fileInfo[i].setExtents(extentsOut);
                 kReturn.fileInfo[i].setResolutions(resolutionsOut);
@@ -837,7 +841,8 @@ public class ModelImage extends ModelStorageBase {
 
                 for (int k = 0; k < kBound; k++) {
                 	if (progressBar != null) {
-                	    progressBar.updateValueImmed((100 * (k + t*kBound)) / ktProd);
+                	    progressBar.updateValueImmed( startValue + (finalValue - startValue)/10 +
+                	    		(9*(finalValue - startValue) * (k + t*kBound)) / (10* ktProd));
                 	}
                     for (int j = 0; j < jBound; j++) {
 
@@ -4352,7 +4357,8 @@ public class ModelImage extends ModelStorageBase {
         voiVector.removeElement(voi);
     }
     
-    public static boolean updateFileInfo( ModelImage destImage, ModelImage srcImage, final int[] axisOrder, final boolean[] axisFlip )
+    public static boolean updateFileInfo( ModelImage destImage, ModelImage srcImage, final int[] axisOrder, 
+    		final boolean[] axisFlip, ViewJProgressBar progressBar, int startValue, int finalValue )
     {
 
         int orientation = destImage.getImageOrientation();
@@ -4433,6 +4439,10 @@ public class ModelImage extends ModelStorageBase {
             // first create all of the new file infos (reference and children) and fill them with tags from the old
             // file info.  some of these tag values will be overridden in the next loop
             for (int i = 0; i < newDimExtents[2]; i++) {
+            	if (progressBar != null) {
+            	    progressBar.updateValueImmed(( startValue + 
+            	    		((finalValue - startValue) * i) / (2 * newDimExtents[2])));
+            	}
 
                 if (i == 0) {
 
@@ -4468,6 +4478,10 @@ public class ModelImage extends ModelStorageBase {
 
             
             for (int i = 0; i < newDimExtents[2]; i++) {
+            	if (progressBar != null) {
+            	    progressBar.updateValueImmed(( startValue + (finalValue - startValue)/2 +
+            	    		((finalValue - startValue) * i) / (2 * newDimExtents[2])));
+            	}
 
                 newDicomInfo[i] = (FileInfoDicom) srcImage.getFileInfo(0).clone();
                 newDicomInfo[i].setExtents(newDimExtents);
