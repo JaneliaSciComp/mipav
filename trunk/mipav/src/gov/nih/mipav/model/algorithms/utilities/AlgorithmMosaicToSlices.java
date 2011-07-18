@@ -71,6 +71,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         int subXDim;
         int subYDim;
         int subZDim;
+        int compSubZDim;
         int subTDim;
         int cFactor = 1;
         double buffer[] = null;
@@ -101,7 +102,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         int numberOfImagesInMosaic;
         double xOrient[] = new double[3];
         double yOrient[] = new double[3];
-        double zOrient[] = new double[3];
         double Q[][] = new double[3][2];
         Matrix matQ;
         double rc[][] = new double[2][1];
@@ -210,51 +210,53 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     subXDim = destImage.getExtents()[0];
                     subYDim = destImage.getExtents()[1];
                     subZDim = destImage.getExtents()[2];
+                    compSubZDim = (yDim/(subYDim))*((xDim/subXDim));
                     subTDim = destImage.getExtents()[3];
-                    subLength = cFactor * subXDim * subYDim * subZDim;
-                    subBuffer = new double[subLength/subZDim]; 
+                    subLength = cFactor * subXDim * subYDim * compSubZDim;
+                    subBuffer = new double[subLength/compSubZDim]; 
                     sliceNum = 0;
                     zs = 0;
                     bufferSliceCount = -1;
                     for (z = 0; z < subTDim; z++) {  
                         sliceNum=0;
-                        for (y = 0; ((y + subYDim - 1) < yDim) && (sliceNum < subZDim); y += subYDim) {
-                            for (x = 0; ((x + subXDim - 1) < xDim) && (sliceNum < subZDim); x += subXDim) {
+                        for (y = 0; ((y + subYDim - 1) < yDim) && (sliceNum < compSubZDim); y += subYDim) {
+                            for (x = 0; ((x + subXDim - 1) < xDim) && (sliceNum < compSubZDim); x += subXDim) {
                                 for (ys = 0; ys < subYDim; ys++) {
                                     for (xs = 0; xs <  subXDim; xs++) {
                                           for (c = 0; c < cFactor; c++) {
                                               subIndex = c + cFactor*(xs+ys*subXDim);
                                               orgIndex = (c + cFactor*(x + xs + (y + ys)*xDim))+(((subLength-1)*zs)+zs);
-                                              subBuffer[subIndex] = buffer[orgIndex];    
-                                              
+                                              subBuffer[subIndex] = buffer[orgIndex];       
                                         } // for (c = 0; c < cFactor; c++)
                                     }// for (xs = 0; xs <  subXDim; xs++)
                                 }// for (ys = 0; ys < subYDim; ys++)
                                 
-                                bufferSliceCount++;
-                               
-                           
+                               if (sliceNum <subZDim){ 
+                                   bufferSliceCount++;
                                 try {
-                                    
-                                    destImage.importData((bufferSliceCount*(subLength/subZDim)), subBuffer, false);
-                                }
+                                    destImage.importData((bufferSliceCount*(subLength/compSubZDim)), subBuffer, false);
+                                    }
                                 catch (IOException error) {
+                                    //error.printStackTrace();
                                     buffer = null;
                                     destImage.disposeLocal(); // Clean up memory of result image
                                     destImage = null;
                                     errorCleanUp("AlgorithmMosaicToSlicess destImage locked", true);
 
                                     return;
-                                }
-                                sliceNum++; 
-                               
+                                     }
+                               }
+                               else{
+                               }
+                               sliceNum++;                               
                             }    
                         }  
                         zs++; 
                      
                     }
-            }            
-                       
+                      
+             } 
+     
                            
                   destImage.calcMinMax();
                     if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
@@ -435,12 +437,19 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                         }
                   
                         slLoc = dicomOrigin[2];
-
+                        int j; 
+                        //for (j = 0; (j < destImage.getExtents()[3]); j++) {
                         for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
                             fireProgressStateChanged((100 * i)/destImage.getExtents()[2]);
                             fileInfoDicom[i] = (FileInfoDicom) (dicomInfo.clone());
                             fileInfoDicom[i].getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
                             fileInfoDicom[i].getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows
+                            fileInfoDicom[i].getTagTable().setValue("0019,0010","");
+                            if (srcImage.is3DImage()) {
+                            fileInfoDicom[i].getTagTable().removeTag("0019,1012");
+                            }
+                            else{                      
+                            }
                             fileInfoDicom[i].setExtents(destImage.getExtents());
                             fileInfoDicom[i].setResolutions(resolutions);
                             fileInfoDicom[i].getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
@@ -469,11 +478,11 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                             dicomOrigin[ISIndex] += matrix.get(2, 2)*sliceResolution;
 
                         }
-
+                        //}
                         destImage.setFileInfo(fileInfoDicom);
                         fileInfoDicom = null;
                     } // if (srcImage.getFileInfo()[0] instanceof FileInfoDicom)
-
+                    
                     else {
                         fileInfo = destImage.getFileInfo();
                         
@@ -488,8 +497,9 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                             resolutions[2] = 1.0f;
                             resolutions[3] = 1.0f;
                         }
-
-                        for (i = 0; (i < (destImage.getExtents()[2]) && !threadStopped); i++) {
+                        //int j;    
+                        //for (j = 0; (j < destImage.getExtents()[3]); j++) {
+                            for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
                             fireProgressStateChanged((100 * i)/destImage.getExtents()[2]);
                             fileInfo[i].setModality(srcImage.getFileInfo()[0].getModality());
                             fileInfo[i].setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
@@ -505,8 +515,10 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                             fileInfo[i].setAxisOrientation(srcImage.getAxisOrientation());
                             fileInfo[i].setOrigin(srcImage.getOrigin());
                         }
+                       // }      
                         fileInfo = null;
-                    }
+                    
+                    }       
                     setCompleted(true);
                     
                 }
