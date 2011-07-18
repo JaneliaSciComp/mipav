@@ -314,7 +314,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     }
 
                     if (xmlLinked && (linkedImage != null)) {
-                    	System.out.println("aaa"); 
                         imageFrame.setAndLoad(linkedImage);
 
                         if (LUT2 != null) {
