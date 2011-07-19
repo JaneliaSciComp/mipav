@@ -746,13 +746,8 @@ public class FileDicom extends FileDicomBase {
         Object data = null;
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
-        if(name.startsWith("7FE0,0010")) {
-            System.out.println("Here");
-        }
-
         int tagVM;
         
-
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
 
@@ -1169,7 +1164,6 @@ public class FileDicom extends FileDicomBase {
         }
         
         int imageTagLoc = locateImageTag(0);
-        System.out.println("Image tag loc: "+imageTagLoc);
         if ( !encapsulated) {
             if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
                 Preferences.debug("Implicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
