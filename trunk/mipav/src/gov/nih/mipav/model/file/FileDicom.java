@@ -56,7 +56,7 @@ public class FileDicom extends FileDicomBase {
     // -------------------------------------------------------------------------------------
 
     /** The tag marking the start of the image data. */
-    public static final String IMAGE_TAG = "7FE0,0010";
+    public static final String IMAGE_TAG = "7F[0-9A-F][0-9A-F],0010";
 
     /** The tag marking the beginning of a dicom sequence. */
     public static final String SEQ_ITEM_BEGIN = "FFFE,E000";
@@ -685,6 +685,7 @@ public class FileDicom extends FileDicomBase {
                 aie.printStackTrace();
                 Preferences.debug("Reached end of file while attempting to read: "+getFilePointer()+"\n", Preferences.DEBUG_FILEIO);
                 key = new FileDicomKey("7FE0,0010"); //process image tag
+                vrBytes = new byte[]{'O','W'};
             }
             int bPtrOld = getFilePointer();
             try {
@@ -698,7 +699,7 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("Skipping tag due to file corruption (or image tag reached): "+key+"\n", Preferences.DEBUG_FILEIO);
             }
             
-            if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().equals(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
+            if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().matches(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
                 int imageLoc = locateImageTag(0);
                 if(imageLoc != -1 && !imageLoadReady) {
                     seek(imageLoc);
@@ -766,7 +767,7 @@ public class FileDicom extends FileDicomBase {
             try {
                 vr = VR.valueOf(new String(vrBytes));
             } catch(Exception e) {
-                if(key.equals(FileDicom.IMAGE_TAG)) {
+                if(key.toString().matches(FileDicom.IMAGE_TAG)) {
                     vr = VR.OB;
                 } else {
                     vr = DicomDictionary.getType(key);
@@ -841,7 +842,7 @@ public class FileDicom extends FileDicomBase {
                     getColorPallete(new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
                 } 
             case OB:
-                if(name.equals(FileDicom.IMAGE_TAG)) { //can be either OW or OB
+                if(name.matches(FileDicom.IMAGE_TAG)) { //can be either OW or OB
                     return processImageData(extents); //finished reading image tags and all image data
                 }
                 data = getByte(tagVM, elementLength, endianess);
@@ -2477,7 +2478,7 @@ public class FileDicom extends FileDicomBase {
 
         String name = convertGroupElement(groupWord, elementWord);
 
-        if ( !name.equals(FileDicom.IMAGE_TAG)) {
+        if ( !name.matches(FileDicom.IMAGE_TAG)) {
 
             if ( !isQuiet()) {
                 MipavUtil.displayError("FileDicom: Image Data tag not found.  Cannot extract encapsulated image data.");
@@ -2568,7 +2569,7 @@ public class FileDicom extends FileDicomBase {
 
         String name = convertGroupElement(groupWord, elementWord);
 
-        if ( !name.equals(FileDicom.IMAGE_TAG)) {
+        if ( !name.matches(FileDicom.IMAGE_TAG)) {
 
             if ( !isQuiet()) {
                 MipavUtil.displayError("FileDicom: Image Data tag not found.  Cannot extract encapsulated image data.");
