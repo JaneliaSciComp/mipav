@@ -424,7 +424,7 @@ public class FileIO {
             imageFile.setQuiet(quiet); // if we want quiet, we tell the reader, too.
             imageFile.readHeader(true); // can we read the header?
             final String modality = getModality(imageFile);
-            if (modality.equals("SR")) {
+            if (modality != null && modality.equals("SR")) {
                 // TODO:Structured report handling would be implemented here (since the rest of this method reads the
                 // image file
                 fileList = removeFromImageList(selectedFileName, fileList);
