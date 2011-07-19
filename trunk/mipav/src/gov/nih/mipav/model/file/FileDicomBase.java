@@ -440,47 +440,7 @@ public class FileDicomBase {
     public int locateImageTag(int offset) {
         int tagSize = 0;
         boolean isImage = false;
-        long time = System.currentTimeMillis();
         try {
-
-            /*bPtr = offset;
-            raFile.seek(bPtr);
-            long raFileLength = 0;
-            if (raFile != null) {
-                raFileLength = raFile.length();
-                fLength = raFile.length() < BUFFER_SIZE ? raFile.length() : BUFFER_SIZE;
-            }
-            
-            byte b0 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(0, 2), 16);
-            byte b1 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(2, 4), 16);
-            byte b2 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(5, 7), 16);
-            byte b3 = (byte) Integer.parseInt(FileDicom.IMAGE_TAG.substring(7, 9), 16);
-            
-            byte[] littleEndianImageTag = {b1, b0, b3, b2}; 
-            byte[] bigEndianImageTag = {b0, b1, b2, b3};
-            int bufferLoc = 4;
-
-            byte[] tempTagBuffer = new byte[(int) fLength];
-    imageSearch:while(bufferLoc < raFileLength && !isImage) {
-                raFile.readFully(tempTagBuffer, bufferLoc != 4 ? -4 : 0, ((int)fLength)); //offset of 4 bytes to capture image tag overlap
-                for(int i=0; i<tempTagBuffer.length-4; i++) {
-                    isImage = searchForImageTag(tempTagBuffer, littleEndianImageTag, i);
-                    if(!isImage) {
-                        isImage = searchForImageTag(tempTagBuffer, bigEndianImageTag, i);
-                    }
-                    if(isImage) {
-                        Preferences.debug("Image tag found for dicom image", Preferences.DEBUG_FILEIO);
-                        tagSize += i+12; //Algorithm stops at byte when image is seen, capture entire image tag and length
-                        break imageSearch;
-                    }
-                }
-                tagSize += fLength;
-                bufferLoc += fLength;
-            }*/
-            
-            
-            
-            
             bPtr = offset;
             raFile.seek(bPtr);
             long raFileLength = 0;
