@@ -47,25 +47,8 @@ public class VolumeVOI extends VolumeObject
 	private float m_fAnnotationScale = 0.02f;
 	private Vector3f m_kBillboardPos = null;
 	private boolean m_bShowText = false;
+	private boolean m_bUpdateDisplay = true;
 
-	/**
-	 * Constructor for the VolumeVOI object.
-	 * @param kImageA
-	 * @param kTranslate
-	 * @param fX
-	 * @param fY
-	 * @param fZ
-	 * @param kVOI
-	 */
-	public VolumeVOI ( VolumeImage kImageA, Vector3f kTranslate, float fX, float fY, float fZ, VOIBase kVOI )
-	{
-		super(kImageA,kTranslate,fX,fY,fZ);
-		m_kAlphaTransparency.BlendEnabled = false;
-		m_kZBufferTransparency.Enabled = false;
-		m_kVOI = kVOI;
-		scaleVOI();
-		m_bDisplay = true;
-	}
 
 	/**
 	 * Constructor for the VolumeVOI object.
@@ -148,6 +131,11 @@ public class VolumeVOI extends VolumeObject
 	public String GetName()
 	{
 		return m_kVOI.getName();
+	}
+	
+	public boolean needsUpdate()
+	{
+		return m_bUpdateDisplay;
 	}
 
 
@@ -244,6 +232,7 @@ public class VolumeVOI extends VolumeObject
 						new ColorRGBA( m_kColor.R, m_kColor.G, m_kColor.B, m_fOpacity),acText);
 			}
 		}
+		m_bUpdateDisplay = false;
 	}
 
 	/**
@@ -309,6 +298,7 @@ public class VolumeVOI extends VolumeObject
 		{
 			setVOI(kVOI);
 		}
+		m_bUpdateDisplay = true;
 	}
 
 	/**
@@ -367,6 +357,7 @@ public class VolumeVOI extends VolumeObject
 			textAnnotations( m_kVOI.get(1), m_kVOI.get(0) );
 			m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
 		}
+		m_bUpdateDisplay = true;
 	}
 
 	/**
