@@ -265,7 +265,11 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
     private ModelImage gaborImage = null ;
     
     private int originalDataType;
-
+    
+    private double sqrt2 = Math.sqrt(2.0);
+    private double sqrt3 = Math.sqrt(3.0);
+    private double sqrt6 = Math.sqrt(6.0);
+ 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -643,6 +647,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         float[] imagkSubsetData;
         int z;
         FileInfoBase[] fileInfo;
+        float lum;
+        float chr1;
+        float chr2;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
         
@@ -832,6 +839,47 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             return;
         }
+        
+        for (i = 0; i < finalRData.length; i++) {
+            lum = finalRData[i];
+            chr1 = finalGData[i];
+            chr2 = finalBData[i];
+            finalRData[i] = (float)(lum/sqrt3 - 2.0*chr2/sqrt6);
+            finalGData[i] = (float)(lum/sqrt3 + chr1/sqrt2 + chr2/sqrt6);
+            finalBData[i] = (float)(lum/sqrt3 - chr1/sqrt2 + chr2/sqrt6);
+        }
+        
+        if (filterType != HOMOMORPHIC) {
+
+            
+        	for (i = 0; i < arrayLength; i++) {
+
+                if (finalRData[i] > maximum) {
+                    finalRData[i] = maximum;
+                }
+
+                if (finalRData[i] < minimum) {
+                    finalRData[i] = minimum;
+                }
+           
+        		
+                if (finalGData[i] > maximum) {
+                    finalGData[i] = maximum;
+                }
+
+                if (finalGData[i] < minimum) {
+                    finalGData[i] = minimum;
+                }
+                
+                if (finalBData[i] > maximum) {
+                    finalBData[i] = maximum;
+                }
+
+                if (finalBData[i] < minimum) {
+                    finalBData[i] = minimum;
+                }	
+           }
+        } // if (filterType != HOMOMORPHIC)
 
         try {
             srcImage.importRGBData(1, 0, finalRData, true);
@@ -875,6 +923,9 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         float[] imagjSubsetData;
         float[] imagkSubsetData;
         int z;
+        float lum;
+        float chr1;
+        float chr2;
 
         fireProgressStateChanged(0, null, "Running frequency filter ...");
         
@@ -1011,7 +1062,6 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                     imagjSubsetData[i] = imagjData[(z * newSliceSize) + i];
                     imagkSubsetData[i] = imagkData[(z * newSliceSize) + i];
                 }
-
                 exec(realSubsetData, imagiSubsetData, z, 1);
                 exec(imagjSubsetData, imagkSubsetData, z, 2);
                 fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null,
@@ -1061,6 +1111,47 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
             return;
         }
+        
+        for (i = 0; i < finalRData.length; i++) {
+            lum = finalRData[i];
+            chr1 = finalGData[i];
+            chr2 = finalBData[i];
+            finalRData[i] = (float)(lum/sqrt3 - 2.0*chr2/sqrt6);
+            finalGData[i] = (float)(lum/sqrt3 + chr1/sqrt2 + chr2/sqrt6);
+            finalBData[i] = (float)(lum/sqrt3 - chr1/sqrt2 + chr2/sqrt6);
+        }
+        
+        if (filterType != HOMOMORPHIC) {
+
+            
+        	for (i = 0; i < arrayLength; i++) {
+
+                if (finalRData[i] > maximum) {
+                    finalRData[i] = maximum;
+                }
+
+                if (finalRData[i] < minimum) {
+                    finalRData[i] = minimum;
+                }
+           
+        		
+                if (finalGData[i] > maximum) {
+                    finalGData[i] = maximum;
+                }
+
+                if (finalGData[i] < minimum) {
+                    finalGData[i] = minimum;
+                }
+                
+                if (finalBData[i] > maximum) {
+                    finalBData[i] = maximum;
+                }
+
+                if (finalBData[i] < minimum) {
+                    finalBData[i] = minimum;
+                }	
+           }
+        } // if (filterType != HOMOMORPHIC)
 
         try {
             destImage.importRGBData(1, 0, finalRData, true);
@@ -1982,6 +2073,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                 rData[i] = rData[i] / newLength;
                 iData[i] = iData[i] / newLength;
             }
+            
 
             if (constructionMethod == WINDOW) {
 
@@ -2018,41 +2110,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
                 	}
                 }
 
-                if (filterType != HOMOMORPHIC) {
-
-                    if (complexHalf == 1) {
-	                	for (i = 0; i < arrayLength; i++) {
-	
-	                        if (finalRData[i] > maximum) {
-	                            finalRData[i] = maximum;
-	                        }
-	
-	                        if (finalRData[i] < minimum) {
-	                            finalRData[i] = minimum;
-	                        }
-	                    }
-                    } // if (complexHalf == 1)
-                    else {
-                    	for (i = 0; i < arrayLength; i++) {
-                    		
-	                        if (finalGData[i] > maximum) {
-	                            finalGData[i] = maximum;
-	                        }
-	
-	                        if (finalGData[i] < minimum) {
-	                            finalGData[i] = minimum;
-	                        }
-	                        
-	                        if (finalBData[i] > maximum) {
-	                            finalBData[i] = maximum;
-	                        }
-	
-	                        if (finalBData[i] < minimum) {
-	                            finalBData[i] = minimum;
-	                        }
-	                    }	
-                    }
-                } // if (filterType != HOMOMORPHIC)
+                
             } // if ((!image25D) || (z == dimLengths[2] - 1))
 
 
@@ -2818,6 +2876,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 
         int i, j, k, m, n, dimTest;
         float[] tempData;
+        float red, green, blue;
 
         ndim = srcImage.getNDims();
         dimLengths = srcImage.getExtents();
@@ -3027,6 +3086,45 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             setCompleted(false);
 
             return;
+        }
+        
+        minimum = Float.MAX_VALUE;
+        maximum = -Float.MAX_VALUE;
+
+        for (i = 0; i < arrayLength; i++) {
+
+            if (imagiData[i] > maximum) {
+                maximum = imagiData[i];
+            }
+
+            if (imagiData[i] < minimum) {
+                minimum = imagiData[i];
+            }
+            
+            if (imagjData[i] > maximum) {
+                maximum = imagjData[i];
+            }
+
+            if (imagjData[i] < minimum) {
+                minimum = imagjData[i];
+            }
+            
+            if (imagkData[i] > maximum) {
+                maximum = imagkData[i];
+            }
+
+            if (imagkData[i] < minimum) {
+                minimum = imagkData[i];
+            }
+        }
+        
+        for (i = 0; i < arrayLength; i++) {
+        	red = imagiData[i];
+        	green = imagjData[i];
+        	blue = imagkData[i];
+        	imagiData[i] = (float)((red + green + blue)/sqrt3);
+        	imagjData[i] = (float)((green - blue)/sqrt2);
+        	imagkData[i] = (float)((-2.0*red + green + blue)/sqrt6);
         }
 
         if (filterType == HOMOMORPHIC) {
