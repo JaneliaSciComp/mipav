@@ -440,9 +440,10 @@ public class FileDicomBase {
     public int locateImageTag(int offset) {
         int tagSize = 0;
         boolean isImage = false;
+        long time = System.currentTimeMillis();
         try {
 
-            bPtr = offset;
+            /*bPtr = offset;
             raFile.seek(bPtr);
             long raFileLength = 0;
             if (raFile != null) {
@@ -475,8 +476,60 @@ public class FileDicomBase {
                 }
                 tagSize += fLength;
                 bufferLoc += fLength;
+            }*/
+            
+            
+            
+            
+            bPtr = offset;
+            raFile.seek(bPtr);
+            long raFileLength = 0;
+            int bufferLength = (int) (raFile.length() < BUFFER_SIZE ? raFile.length() : BUFFER_SIZE);
+            byte[] raBuffer = new byte[bufferLength];
+            if (raFile != null) {
+                raFileLength = raFile.length();
+                fLength = raFile.length();
+                raFile.readFully(raBuffer);
             }
             
+            int b0 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(0, 2), 16);
+            int b1 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(2, 4), 16);
+            int b2 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(5, 7), 16);
+            int b3 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(7, 9), 16);
+            
+            int first, second, third, fourth;
+            int num = 0, numRepeats = 0;
+imageSearch:while(num < raFileLength-5 && !isImage) {
+                if(num == raBuffer.length-5) {
+                    numRepeats++; //every repeat of buffer reading has a 4 bit preceding overlap
+                    Preferences.debug("Rescanning raFile starting at location "+(raBuffer.length*numRepeats - numRepeats*4), Preferences.DEBUG_FILEIO);
+                    raFile.seek(raBuffer.length*numRepeats - numRepeats*4);
+                    raFile.readFully(raBuffer);
+                    num = 0;
+                }
+                first = raBuffer[num];
+                second = raBuffer[num+1];
+                third = raBuffer[num+2];
+                fourth = raBuffer[num+3];
+                if(first == b0) { //second bit is wildcard
+                    if(third == b2) {
+                        if(fourth == b3) {
+                            isImage = true;
+                            break imageSearch;
+                        }
+                    }
+                }
+                if(second == b0) { //first bit is wildcard
+                    if(fourth == b2) {
+                        if(third == b3) {
+                            isImage = true;
+                            break imageSearch;
+                        }
+                    }
+                }
+                num++;
+            }
+            tagSize = raBuffer.length*(numRepeats) + (num+12) - numRepeats*4; //include any possible length and vr fields
         } catch (IOException ioE) { 
             ioE.printStackTrace();
             return -1;
