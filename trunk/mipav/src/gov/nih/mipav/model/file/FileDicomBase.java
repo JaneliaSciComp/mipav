@@ -452,10 +452,9 @@ public class FileDicomBase {
                 raFile.readFully(raBuffer);
             }
             
-            int b0 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(0, 2), 16);
-            int b1 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(2, 4), 16);
-            int b2 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(5, 7), 16);
-            int b3 = Integer.parseInt(FileDicom.IMAGE_TAG.substring(7, 9), 16);
+            int b0 = Integer.parseInt("7F", 16);
+            int b2 = Integer.parseInt("00", 16);
+            int b3 = Integer.parseInt("10", 16);
             
             int first, second, third, fourth;
             int num = 0, numRepeats = 0;
@@ -490,6 +489,7 @@ imageSearch:while(num < raFileLength-5 && !isImage) {
                 num++;
             }
             tagSize = raBuffer.length*(numRepeats) + (num+12) - numRepeats*4; //include any possible length and vr fields
+            Preferences.debug("Image tag located near byte "+tagSize, Preferences.DEBUG_FILEIO);
         } catch (IOException ioE) { 
             ioE.printStackTrace();
             return -1;
