@@ -57,6 +57,8 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
 
     /** DOCUMENT ME! */
     private AlgorithmFrequencyFilter FrequencyFilterAlgo = null;
+    
+    private AlgorithmFrequencyFilterColor FrequencyFilterColorAlgo = null;
 
     /** DOCUMENT ME! */
     private float freqV;
@@ -158,7 +160,12 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
         if (command.equals("OK")) {
 
             if (setVariables()) {
-                callAlgorithm();
+            	if (image.isColorImage()) {
+            		callColorAlgorithm();
+            	}
+            	else {
+                    callAlgorithm();
+            	}
             }
         } else if (command.equals("Cancel")) {
             dispose();
@@ -233,11 +240,74 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 insertScriptLine();
             }
         }
-     // save the completion status for later
-        setComplete(FrequencyFilterAlgo.isCompleted());
+        if (algorithm instanceof AlgorithmFrequencyFilterColor) {
 
-        FrequencyFilterAlgo.finalize();
-        FrequencyFilterAlgo = null;
+            if ((algorithm.isCompleted() == true) && (resultImage != null)) {
+
+                updateFileTypeInfo(image, resultImage, image.getType());
+
+                // resultImage is the same or smaller than image.
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+                	if(createGabor){
+                		gaborImage = FrequencyFilterColorAlgo.getGabor();
+                	}
+                    // resultImage.setImageName("Frequency Filtered image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame(parentFrame);
+                    ((ViewJFrameImage) parentFrame).getComponentImage().setLogMagDisplay(true);
+                }
+
+                updateFileTypeInfo(image, image.getType());
+                image.notifyImageDisplayListeners(null, true);
+            	if(createGabor){
+            		gaborImage = FrequencyFilterColorAlgo.getGabor();
+            	}
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        }
+     // save the completion status for later
+        if (FrequencyFilterAlgo != null) {
+	        setComplete(FrequencyFilterAlgo.isCompleted());
+	
+	        FrequencyFilterAlgo.finalize();
+	        FrequencyFilterAlgo = null;
+        }
+        if (FrequencyFilterColorAlgo != null) {
+	        setComplete(FrequencyFilterColorAlgo.isCompleted());
+	
+	        FrequencyFilterColorAlgo.finalize();
+	        FrequencyFilterColorAlgo = null;
+        }
         dispose();
     }
 
@@ -453,6 +523,103 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                     }
                 } else {
                     FrequencyFilterAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
+    
+    /**
+     * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callColorAlgorithm() {
+        String name = makeImageName(image.getImageName(), "_gaborFilter");
+
+        if (displayLoc == NEW) {
+
+            try {
+                resultImage = (ModelImage) image.clone();
+                resultImage.setImageName(name);
+                resultImage.resetVOIs();
+
+                // Make algorithm
+                FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(resultImage, image, freqU, freqV, sigmaU, sigmaV,
+                                                                   theta, createGabor);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FrequencyFilterColorAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), FrequencyFilterColorAlgo);
+
+                // Hide dialog since the algorithm is about to run
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (FrequencyFilterColorAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    FrequencyFilterColorAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else {
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(image, freqU, freqV, sigmaU, sigmaV, theta,
+                                                                   createGabor);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FrequencyFilterColorAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), FrequencyFilterColorAlgo);
+                
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (FrequencyFilterColorAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+                    FrequencyFilterColorAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
