@@ -754,7 +754,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		 kVolumeVOI.showTextBox(true);
 		 kVolumeVOI.setZCompare(true);
 		 kDisplay.addVolumeVOI( kVolumeVOI );
-		 return bReturn;
+		 return bReturn | kVolumeVOI.needsUpdate();
 	 }
 
 	 /**
@@ -2913,8 +2913,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			  for ( int k = 0; k < kCurves.size(); k++ )
 			  {
 				  VOIBase kVOI3D = kCurves.get(k);
-				  drawVOI( kVOI3D, this, m_kVolumeImageA, m_kTranslate );
-				  bUpdateVOIs = true;
+				  bUpdateVOIs |= drawVOI( kVOI3D, this, m_kVolumeImageA, m_kTranslate );
 			  }
 		  } 
 		  if ( bUpdateVOIs )
