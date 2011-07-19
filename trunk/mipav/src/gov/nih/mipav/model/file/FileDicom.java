@@ -746,7 +746,7 @@ public class FileDicom extends FileDicomBase {
         Object data = null;
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
-        if(name.startsWith("0008,1111")) {
+        if(name.startsWith("7FE0,0010")) {
             System.out.println("Here");
         }
 
@@ -1168,10 +1168,9 @@ public class FileDicom extends FileDicomBase {
             fileInfo.displayType = fileInfo.getDataType();
         }
         
-
+        int imageTagLoc = locateImageTag(0);
+        System.out.println("Image tag loc: "+imageTagLoc);
         if ( !encapsulated) {
-            int imageTagLoc = locateImageTag(0);
-
             if (fileInfo.vr_type == FileInfoDicom.IMPLICIT) {
                 Preferences.debug("Implicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setOffset(imageTagLoc-4 > 0 ? imageTagLoc-4 : imageTagLoc); // no image length, subtract 4
@@ -1182,7 +1181,6 @@ public class FileDicom extends FileDicomBase {
                 fileInfo.setOffset(imageTagLoc);
             } 
         } else { // encapsulated
-            int imageTagLoc = locateImageTag(0);
             Preferences.debug("Encapsulated image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
             fileInfo.setOffset(imageTagLoc-12 > 0 ? imageTagLoc-12 : imageTagLoc);
         }
