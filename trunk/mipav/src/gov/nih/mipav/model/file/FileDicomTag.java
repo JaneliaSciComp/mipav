@@ -109,10 +109,14 @@ public class FileDicomTag extends ModelSerialCloneable {
                 // allow for both values to be null
                 if ( (thisVal == null) && (otherVal == null)) {
                     return true;
+                } else if(thisVal == null || otherVal == null) {
+                    return false;
                 }
-
+                
+                
                 if (this.length == tag.length) {
-
+                    
+                    
                     if (thisVal.equals(otherVal)) {
                         return true;
                     } else {
@@ -169,20 +173,11 @@ public class FileDicomTag extends ModelSerialCloneable {
     public final int getDataLength() {
         int dataItems = 0;
 
-        if (tagInfo.getType().getType() instanceof FileDicomTagInfo.StringType) {
-            dataItems = value.toString().length();
-        //TODO: the following statements do not handle multiple data elements correctly
-        //} else if (tagInfo.getType().equalsIgnoreCase("otherWordString")) {
-          //  dataItems = getValueList().length;
-        //} else if (tagInfo.getType().equalsIgnoreCase("otherByteString")) {
-        //    dataItems = getValueList().length;
-        } else { // ????
-        	Object[] obj = getValueList();
-        	for(int i=0; i<obj.length; i++) {
-        		if(obj[i] != null) {
-        			dataItems++;
-        		}
-        	}
+        Object[] obj = getValueList();
+        for(int i=0; i<obj.length; i++) {
+            if(obj[i] != null) {
+                dataItems++;
+            }
         }
 
         return (dataItems * sizeof());
@@ -374,6 +369,8 @@ public class FileDicomTag extends ModelSerialCloneable {
             	stuff[0] = null;
             } else if(value instanceof Object[]) {
                 return (Object[]) value;
+            } else if(value instanceof FileDicomSQ) { 
+                return ((FileDicomSQ) value).getSequenceDisplay().toArray();
             } else if(type.getType() instanceof StringType) {
                 return ((String)value).split("\\\\");
             } else {
