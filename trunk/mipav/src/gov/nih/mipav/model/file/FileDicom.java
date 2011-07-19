@@ -1293,6 +1293,11 @@ public class FileDicom extends FileDicomBase {
         case 0x19:
             tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM,
                     "ScanOptions2", "Scan Options 2"));
+            break;
+        default:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
+                    "Private tag", "Private tag"));
+            break;
         } 
     }
 
@@ -1430,6 +1435,9 @@ public class FileDicom extends FileDicomBase {
             tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
                     "BandwidthPerPixelPhaseEncode", "Bandwidth Per Pixel Phase Encode"));
             break;
+        default:
+            tagTable.putPrivateTagValue(new FileDicomTagInfo(key, vr, tagVM, 
+                    "Private tag", "Private tag"));
         }
     }
 
