@@ -102,6 +102,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
     /** DOCUMENT ME! */
     private AlgorithmFrequencyFilter FrequencyFilterAlgo = null;
+    
+    private AlgorithmFrequencyFilterColor FrequencyFilterColorAlgo = null;
 
     /** DOCUMENT ME! */
     private JRadioButton gaussianFilter;
@@ -223,7 +225,12 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         if (command.equals("OK")) {
 
             if (setVariables()) {
-                callAlgorithm();
+            	if (!image.isColorImage()) {
+                    callAlgorithm();
+            	}
+            	else {
+            		callColorAlgorithm();
+            	}
             }
         } else if (source == windowFilter) {
             imageCropCheckbox.setEnabled(true);
@@ -293,7 +300,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
 
-                updateFileTypeInfo(image, resultImage, ModelStorageBase.FLOAT);
+            	updateFileTypeInfo(image, resultImage, ModelStorageBase.FLOAT);
 
                 // resultImage is the same or smaller than image.
                 // The algorithm has completed and produced a new image to be displayed.
@@ -340,11 +347,69 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
                 insertScriptLine();
             }
         }
+        
+        if (algorithm instanceof AlgorithmFrequencyFilterColor) {
+
+            if ((algorithm.isCompleted() == true) && (resultImage != null)) {
+
+            	updateFileTypeInfo(image, resultImage, image.getType());
+
+                // resultImage is the same or smaller than image.
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    // resultImage.setImageName("Frequency Filtered image");
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame(parentFrame);
+                    ((ViewJFrameImage) parentFrame).getComponentImage().setLogMagDisplay(true);
+                }
+
+                updateFileTypeInfo(image, image.getType());
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        }
      // save the completion status for later
         setComplete(algorithm.isCompleted());
 
-        FrequencyFilterAlgo.finalize();
-        FrequencyFilterAlgo = null;
+        if (FrequencyFilterAlgo != null) {
+            FrequencyFilterAlgo.finalize();
+            FrequencyFilterAlgo = null;
+        }
+        if (FrequencyFilterColorAlgo != null) {
+            FrequencyFilterColorAlgo.finalize();
+            FrequencyFilterColorAlgo = null;
+        }
         dispose();
     }
 
@@ -538,6 +603,109 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
 
 
                     FrequencyFilterAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
+    
+    /**
+     * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callColorAlgorithm() {
+        image.setOriginalCropCheckbox(imageCrop);
+
+        String name = makeImageName(image.getImageName(), "_freqFilter");
+
+        if (displayLoc == NEW) {
+
+            try {
+                resultImage = (ModelImage) image.clone();
+                resultImage.setImageName(name);
+                resultImage.resetVOIs();
+
+                // Make algorithm
+                FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(resultImage, image, image25D, imageCrop,
+                                                                   kernelDiameter, filterType, freq1, freq2,
+                                                                   constructionMethod, butterworthOrder);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FrequencyFilterColorAlgo.addListener(this);
+                createProgressBar(image.getImageName(), FrequencyFilterColorAlgo);
+
+                // Hide dialog since the algorithm is about to run
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (FrequencyFilterColorAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    FrequencyFilterColorAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else {
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                FrequencyFilterColorAlgo = new AlgorithmFrequencyFilterColor(image, image25D, imageCrop, kernelDiameter,
+                                                                   filterType, freq1, freq2, constructionMethod,
+                                                                   butterworthOrder);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                FrequencyFilterColorAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), FrequencyFilterColorAlgo);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (FrequencyFilterColorAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+
+                    FrequencyFilterColorAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog FFT: unable to allocate enough memory");
