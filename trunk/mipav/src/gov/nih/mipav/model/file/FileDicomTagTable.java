@@ -480,14 +480,17 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         FileDicomTagInfo info = DicomDictionary.getInfo(key);
         
-        if (info == null) {
+        if (info == null && tag != null) {
             info = tag.getInfo();
+        } else {
+            Preferences.debug("Not populating value for key: "+key, Preferences.DEBUG_FILEIO);
+            //return;
         }
             
         if(info != null) {
             info.setKey(key);
         } else {
-            MipavUtil.displayError("Key "+key+" is not a valid dicom tag.");
+            Preferences.debug("Key "+key+" has not been previously set as a private tag.", Preferences.DEBUG_FILEIO);
             return;
         }
         

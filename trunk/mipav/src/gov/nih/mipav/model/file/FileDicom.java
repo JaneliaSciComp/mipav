@@ -751,7 +751,7 @@ public class FileDicom extends FileDicomBase {
         
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
-
+        
         if ( (fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
             // implicit VR means VR is based on tag as defined in dictionary
@@ -850,10 +850,10 @@ public class FileDicom extends FileDicomBase {
                 break;
             case UN:
                 if(elementLength != -1) {
-                    processUnknownVR(strValue, key, tagVM, strValue);
+                    processUnknownVR(tagTable, strValue, key, tagVM, strValue);
                 } //else is implicit sequence, so continue
             case SQ:
-                processSequence(key, name, endianess);
+                processSequence(tagTable, key, name, endianess);
                 break;
             }
             
@@ -1003,7 +1003,7 @@ public class FileDicom extends FileDicomBase {
         return true;
     }
 
-    private void processSequence(FileDicomKey key, String name, boolean endianess) throws IOException {
+    private void processSequence(FileDicomTagTable tagTable, FileDicomKey key, String name, boolean endianess) throws IOException {
         final int len = elementLength;
 
         // save these values because they'll change as the sequence is read in below.
@@ -1030,7 +1030,8 @@ public class FileDicom extends FileDicomBase {
                     final VR entryVr = entry.getValueRepresentation();
                     if (entryVr.equals(VR.SQ)) {
                         elemLength = entry.getLength();
-                        final Vector<FileDicomTagTable> vSeq = ((FileDicomSQ) entry.getValue(true))
+                        Object obj = (FileDicomSQ) entry.getValue(false);
+                        final Vector<FileDicomTagTable> vSeq = ((FileDicomSQ) entry.getValue(false))
                                 .getSequence();
                         for (int m = 0; m < vSeq.size(); m++) {
                             final FileDicomTagTable subItem = vSeq.get(m);
@@ -1051,7 +1052,7 @@ public class FileDicom extends FileDicomBase {
                                     // we will get the number of slices in a volumne. Then determine
                                     // number of volumes by taking total num slices / num slices per volume
                                     // ftp://medical.nema.org/medical/dicom/final/cp583_ft.pdf
-                                    final int currNum = ((Integer) subEntry.getValue(true)).intValue();
+                                    final int currNum = ((Integer) subEntry.getValue(false)).intValue();
                                     if (currNum == numSlices) {
                                         isEnhanced4D = true;
                                     }
@@ -1108,7 +1109,7 @@ public class FileDicom extends FileDicomBase {
         Preferences.debug("Finished sequence tags.\n\n", Preferences.DEBUG_FILEIO);
     }
 
-    private void processUnknownVR(String name, FileDicomKey key, int tagVM, String strValue) throws IOException {
+    private void processUnknownVR(FileDicomTagTable tagTable, String name, FileDicomKey key, int tagVM, String strValue) throws IOException {
         try {
             // set the value if the tag is in the dictionary (which means it isn't private..) or has already
             // been put into the tag table without a value (private tag with explicit vr)
