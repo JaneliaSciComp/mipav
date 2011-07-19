@@ -779,7 +779,11 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         image25DCheckbox.setFont(serif12);
         image25DCheckbox.setForeground(Color.black);
 
-        if ((image.getNDims() == 3) && (image.getType() != ModelStorageBase.COMPLEX)) {
+        if ((image.getNDims() == 3) && (image.isColorImage())) {
+            image25DCheckbox.setEnabled(false);
+            image25DCheckbox.setSelected(true);
+        }
+        else if ((image.getNDims() == 3) && (image.getType() != ModelStorageBase.COMPLEX)) {
             image25DCheckbox.setEnabled(true);
             image25DCheckbox.setSelected(false);
         } else if ((image.getNDims() == 3) && (image.getType() == ModelStorageBase.COMPLEX)) {
