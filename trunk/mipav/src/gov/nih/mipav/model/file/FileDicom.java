@@ -1185,33 +1185,7 @@ public class FileDicom extends FileDicomBase {
             fileInfo.setOffset(imageTagLoc-12 > 0 ? imageTagLoc-12 : imageTagLoc);
         }
         
-        /*if ( !encapsulated) {
-
-            long fileEnd = raFile.length();
-
-            if ( (imageLength + getFilePointer()) <= fileEnd) {
-                fileInfo.setOffset(getFilePointer()); // Mark where the image is
-            }
-            // for explicit tags - see Part 5 page 27 1998
-            else if ( (imageLength + getFilePointer() + 4) <= fileEnd) {
-                fileInfo.setOffset(getFilePointer() + 4);
-            } else {
-
-                // Preferences.debug( "File Dicom: readHeader: xDim = " + extents[0] + " yDim = " + extents[1] +
-                // " Bits allocated = " + fileInfo.bitsAllocated, Preferences.DEBUG_FILEIO);
-                if ( !isQuiet()) {
-                    MipavUtil.displayError("Image not at expected offset.");
-                }
-                
-                Preferences.debug("Error while reading header", Preferences.DEBUG_FILEIO);
-                return false;
-            }
-        } else { // encapsulated
-            fileInfo.setOffset(getFilePointer() - 12);
-        }*/
-        
         seek(fileInfo.getOffset());
-        System.out.println("The offset: "+fileInfo.getOffset()+" file pointer "+getFilePointer());
 
         fileInfo.setExtents(extents);
         
