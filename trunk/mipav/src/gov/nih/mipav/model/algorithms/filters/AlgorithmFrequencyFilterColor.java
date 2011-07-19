@@ -14,7 +14,26 @@ import java.util.Arrays;
 
 
 /**
- * AlgorithmFrequencyFilter.java.
+ * AlgorithmFrequencyFilterColor.java.
+ * 
+ *          AlgorithmFrequencyFilterColor only works for 2D and 25D for color.  Quaternion Fourier transforms are
+ *          used. 
+ *          imagiData[i] = (float)((red + green + blue)/sqrt(3));
+        	imagjData[i] = (float)((green - blue)/sqrt(2));
+        	imagkData[i] = (float)((-2.0*red + green + blue)/sqrt(6));
+        	imagi corresponds corresponds to luminance information and imagj and imagk correspond to
+        	chrominance information.
+        	u1 = (i + j + k)/sqrt(3)
+        	u2 = (j - k)/sqrt(2)
+        	where u1 and u2 are two unit pure quaternions that are orthogonal to each other.
+        	u3 = u1 * u2 = (-2*i + j + k)/sqrt(6)
+        	The zero valued real array and the imagiData are used for one complex FFT.  The imagjData and 
+        	imagkData are used for a second complex FFT.  In the Butterworth and Gaussian filters the same
+        	coefficient is multiplied by realData, imagiData, imagjData, and imagkData.  After inverse filtering
+        	red, green, and blue are formed form the processed luminance and chrominance data:
+        	finalRData[i] = (lum/sqrt(3) - 2.0*chr2/sqrt(6));
+            finalGData[i] = (lum/sqrt(3) + chr1/sqrt(2) + chr2/sqrt(6));
+            finalBData[i] = (float)(lum/sqrt(3) - chr1/sqrt(2) + chr2/sqrt(6));
  *
  * @author  William Gandler and Matthew J. McAuliffe Processing images by filtering in the frequency domain is a 3 step
  *          process: 1.) Performing a forward fast fourier transform to convert a spatial image into its frequency
@@ -42,6 +61,12 @@ import java.util.Arrays;
  *          Woods, Prentice-Hall, Inc., 2002, Chapter 4.5, pp. 191-194. 2.) "Butterworth equations for homomorphic
  *          filtering of images" by Holger. G. Adelmann, Computers in Medicine and Biology, Vol. 28, 1998, pp. 169-181.
  *          </p>
+ *          3.) "Efficient Implementation of Quanternion Fourier Transform, Convolution, and Correlation by 2-D
+ *          Complex FFT" by Soo-Chang Pei, Jian-Jiun Ding, and Ja-Han Chang, IEEE Transactions on Signal Processing,
+ *          Vol. 49, No. 11, November, 2001, pp. 2783-2797.
+ *          4.) "Frequency Domain Filtering of Colour Images using Quaternion Fourier Transforms" by
+ *          B.D. Venkatramana Redd and Dr. T. Jaychandra Prasad, IJSCT, VOl. 1, Issue 2, December, 2010,
+ *          pp. 46-52.
  *
  *          <p>The core algorithm of this module, the fast fourier transform algorithm found in exec(), requires that
  *          all the dimensions of an N-dimensional dataset be powers of 2. To be able to use this algorithm on datasets
@@ -826,14 +851,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         try {
             srcImage.reallocate(originalDataType, dimLengths);
         } catch (IOException error) {
-            displayError("AlgorithmFrequencyFilter: IOException on srcImage.reallocate");
+            displayError("AlgorithmFrequencyFilterColor: IOException on srcImage.reallocate");
 
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
-            displayError("AlgorithmFrequencyFilter: Out of memory on srcImage.reallocate");
+            displayError("AlgorithmFrequencyFilterColor: Out of memory on srcImage.reallocate");
 
             setCompleted(false);
 
@@ -886,14 +911,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             srcImage.importRGBData(2, 0, finalGData, true);
             srcImage.importRGBData(3, 0, finalBData, true);
         } catch (IOException error) {
-            displayError("AlgorithmFrequencyFilter: IOException on source image import data");
+            displayError("AlgorithmFrequencyFilterColor: IOException on source image import data");
 
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
-            displayError("AlgorithmFrequencyFilter: Out of memory on source image import data");
+            displayError("AlgorithmFrequencyFilterColor: Out of memory on source image import data");
 
             setCompleted(false);
 
@@ -1098,14 +1123,14 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         try {
             destImage.reallocate(originalDataType, dimLengths);
         } catch (IOException error) {
-            displayError("AlgorithmFrequencyFilter: IOException on destImage.reallocate");
+            displayError("AlgorithmFrequencyFilterColor: IOException on destImage.reallocate");
 
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
-            displayError("AlgorithmFrequencyFilter: Out of memory on destImage.reallocate");
+            displayError("AlgorithmFrequencyFilterColor: Out of memory on destImage.reallocate");
 
             setCompleted(false);
 
@@ -1165,7 +1190,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
-            displayError("AlgorithmFrequencyFilter: Out of memory on destination image import data");
+            displayError("AlgorithmFrequencyFilterColor: Out of memory on destination image import data");
 
             setCompleted(false);
 
@@ -1213,7 +1238,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 centerData = null;
                 System.gc();
-                displayError("AlgorithmFFT: Out of memory creating centerData");
+                displayError("AlgorithmFrequencyFilterColor: Out of memory creating centerData");
 
                 setCompleted(false);
 
@@ -1264,7 +1289,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 centerData = null;
                 System.gc();
-                displayError("AlgorithmFFT: Out of memory creating centerData");
+                displayError("AlgorithmFrequencyFilterColor: Out of memory creating centerData");
 
                 setCompleted(false);
 
@@ -1375,7 +1400,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 centerData = null;
                 System.gc();
-                displayError("AlgorithmFFT: Out of memory creating centerData");
+                displayError("AlgorithmFrequencyFilterColor: Out of memory creating centerData");
 
                 setCompleted(false);
 
@@ -1750,7 +1775,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             tempData = null;
             System.gc();
-            displayError("AlgorithmFrequencyFilter: Out of memory creating tempData in edgeStrip routine");
+            displayError("AlgorithmFrequencyFilterColor: Out of memory creating tempData in edgeStrip routine");
 
             setCompleted(false);
 
@@ -1874,7 +1899,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 	        } catch (OutOfMemoryError e) {
 	            finalGData = null;
 	            System.gc();
-	            displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
+	            displayError("AlgorithmFrequencyFilterColor: Out of memory creating finalData in edgeStrip routine");
 	
 	            setCompleted(false);
 	
@@ -1894,7 +1919,7 @@ public class AlgorithmFrequencyFilterColor extends AlgorithmBase {
 	        } catch (OutOfMemoryError e) {
 	            finalBData = null;
 	            System.gc();
-	            displayError("AlgorithmFrequencyFilter: Out of memory creating finalData in edgeStrip routine");
+	            displayError("AlgorithmFrequencyFilterColor: Out of memory creating finalData in edgeStrip routine");
 	
 	            setCompleted(false);
 	
