@@ -136,9 +136,11 @@ public class FileDicomSQ extends ModelSerialCloneable {
         Vector<String> display = new Vector<String>();
 
         for (int i = 0; i < sequence.size(); i++) {
-
-            // call the item's version of this method.
-            String itemDisplay = getItem(i).toString();
+            display.add("Sequence Element");
+            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(sequence.get(i).getTagList());
+            for(int j=0; j<tagList.length; j++) {
+                display.add(tagList[j].getKey()+": "+tagList[j].getKeyword()+"\t"+tagList[j].getValue(true));
+            }
         }
 
         return display;
@@ -159,7 +161,13 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * @return  The string 'Sequence' (without the quotes).
      */
     public String toString() {
-        return "Sequence";
+        Vector<String> display = getSequenceDisplay();
+        StringBuffer str = new StringBuffer();
+        for (int i = 0; i <display.size(); i++) {
+            str.append(display.get(i)).append("\n");
+        }
+        
+        return str.toString();
     }
 
 	public Vector<FileDicomTagTable> getSequence() {
