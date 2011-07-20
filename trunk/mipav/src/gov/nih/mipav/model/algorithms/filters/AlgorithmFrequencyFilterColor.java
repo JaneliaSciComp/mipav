@@ -29,8 +29,11 @@ import java.util.Arrays;
         	u3 = u1 * u2 = (-2*i + j + k)/sqrt(6)
         	The zero valued real array and the imagiData are used for one complex FFT.  The imagjData and 
         	imagkData are used for a second complex FFT.  In the Butterworth and Gaussian filters the same
-        	coefficient is multiplied by realData, imagiData, imagjData, and imagkData.  After inverse filtering
-        	red, green, and blue are formed form the processed luminance and chrominance data:
+        	coefficient is multiplied by realData, imagiData, imagjData, and imagkData.  This works
+        	because when h(x,y) = h(-x,-y), the quaternion convolution operation in the space domain
+        	corresponds to the product operation in the frequency domain.  This is the same as the
+        	case of the conventional convolution.  After inverse filtering red, green, and blue are formed
+            form the processed luminance and chrominance data:
         	finalRData[i] = (lum/sqrt(3) - 2.0*chr2/sqrt(6));
             finalGData[i] = (lum/sqrt(3) + chr1/sqrt(2) + chr2/sqrt(6));
             finalBData[i] = (float)(lum/sqrt(3) - chr1/sqrt(2) + chr2/sqrt(6));
