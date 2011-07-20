@@ -422,6 +422,8 @@ public class FileIO {
             // use the selectedFileName as the reference slice for the file info tag tables
             imageFile = new FileDicom(selectedFileName, fileDir);
             imageFile.setQuiet(quiet); // if we want quiet, we tell the reader, too.
+            createProgressBar(null, FileUtility.trimNumbersAndSpecial(selectedFileName)
+                    + FileUtility.getExtension(selectedFileName), FileIO.FILE_READ);
             imageFile.readHeader(true); // can we read the header?
             final String modality = getModality(imageFile);
             if (modality != null && modality.equals("SR")) {
@@ -552,9 +554,6 @@ public class FileIO {
                 seriesNoMaster = "";
                 seriesNoRef = "";
             }
-
-            createProgressBar(null, FileUtility.trimNumbersAndSpecial(selectedFileName)
-                    + FileUtility.getExtension(selectedFileName), FileIO.FILE_READ);
 
         } catch (final OutOfMemoryError error) {
 
