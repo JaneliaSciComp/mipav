@@ -818,7 +818,7 @@ public class FileDicom extends FileDicomBase {
         try {
 
             if (vr.getType().equals(StringType.STRING) || vr.getType().equals(StringType.DATE)) {
-                strValue = getString(elementLength);
+                strValue = getString(elementLength).trim();
 
                 tagTable.setValue(key, strValue, elementLength);
 
