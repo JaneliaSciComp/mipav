@@ -1012,74 +1012,23 @@ public class FileDicom extends FileDicomBase {
 
         Object sq;
 
-        // ENHANCED DICOM per frame stuff
+        // ENHANCED DICOM per frame
         if (name.equals("5200,9230")) {
             int numSlices = 0;
             sq = getSequence(endianess, len);
             final Vector<FileDicomTagTable> v = ((FileDicomSQ) sq).getSequence();
-            int elemLength;
-            FileDicomKey fdKey;
-            for (int i = 0; i < v.size(); i++) {
-                final FileDicomTagTable item = v.get(i);
-                final Hashtable<FileDicomKey, FileDicomTag> dataSet = item.getTagList();
-                final Set<FileDicomKey> keySet = dataSet.keySet();
-                final Iterator<FileDicomKey> iter = keySet.iterator();
-                while (iter.hasNext()) {
-                    final FileDicomKey k = iter.next();
-                    final FileDicomTag entry = dataSet.get(k);
-                    final VR entryVr = entry.getValueRepresentation();
-                    if (entryVr.equals(VR.SQ)) {
-                        elemLength = entry.getLength();
-                        Object obj = (FileDicomSQ) entry.getValue(false);
-                        final Vector<FileDicomTagTable> vSeq = ((FileDicomSQ) entry.getValue(false))
-                                .getSequence();
-                        for (int m = 0; m < vSeq.size(); m++) {
-                            final FileDicomTagTable subItem = vSeq.get(m);
-                            final Hashtable<FileDicomKey, FileDicomTag> subDataSet = subItem.getTagList();
-                            final Set<FileDicomKey> subKeySet = subDataSet.keySet();
-                            final Iterator<FileDicomKey> subIter = subKeySet.iterator();
-                            while (subIter.hasNext()) {
-                                fdKey = subIter.next();
-                                final FileDicomTag subEntry = subDataSet.get(fdKey);
-                                elemLength = subEntry.getLength();
-                                if (fdKey.toString().equals("0020,9057")) {
-                                    // OK...so we should be relying on 0020,9056 (Stack ID)
-                                    // to tell us the number of volumes in the dataet
-                                    // but we find that it is not being implemented in the dataset we have
-                                    // Thefore, we will look at 0020.9057 (In-Stack Pos ID).
-                                    // These should all be unique for 1 volume. If we find that there
-                                    // are duplicates, then that means we are dealing with a 4D datset
-                                    // we will get the number of slices in a volumne. Then determine
-                                    // number of volumes by taking total num slices / num slices per volume
-                                    // ftp://medical.nema.org/medical/dicom/final/cp583_ft.pdf
-                                    final int currNum = ((Integer) subEntry.getValue(false)).intValue();
-                                    if (currNum == numSlices) {
-                                        isEnhanced4D = true;
-                                    }
-                                    if (currNum > numSlices) {
-                                        numSlices = currNum;
-                                    }
-                                }
-                                if (i == 0) {
-                                    tagTable.setValue(fdKey, subEntry.getValue(false), elemLength);
-                                } else {
-                                    childrenTagTables[i - 1].setValue(fdKey, subEntry.getValue(false),
-                                            elemLength);
-                                }
-                            }
-                        }
-                    } else {
-                        elemLength = entry.getLength();
-                        fdKey = k;
-                        if (i == 0) {
-                            tagTable.setValue(fdKey, entry.getValue(false), elemLength);
-                        } else {
-                            childrenTagTables[i - 1].setValue(fdKey, entry.getValue(false), elemLength);
-                        }
-                    }
-                }
+            Iterator<FileDicomTag> itr = v.get(0).getTagList().values().iterator();
+            TreeSet<Integer> sliceInt = new TreeSet<Integer>(); //keeps track of which slices have already been seen
+            while(itr.hasNext()) { //put tags in base FileInfoDicom
+                tagTable.put(itr.next());
+            }
+            numSlices = checkMaxSlice(tagTable, numSlices, sliceInt);
+            for(int i=1; i<v.size(); i++) { //each entire children tag table is just what's in v
+                childrenTagTables[i-1] = v.get(i);
+                numSlices = checkMaxSlice(childrenTagTables[i-1], numSlices, sliceInt);
             }
             enhancedNumSlices = numSlices;
+            
             // remove tag 5200,9230 if its there
             final FileDicomTag removeTag = tagTable.get(key);
             if (removeTag != null) {
@@ -1107,6 +1056,36 @@ public class FileDicom extends FileDicomBase {
 
         // fileInfo.setLength(name, len);
         Preferences.debug("Finished sequence tags.\n\n", Preferences.DEBUG_FILEIO);
+    }
+
+    /**
+     * Helper method for enhanced dicom which finds the maximum slice number in the dataset.
+     * Also determines whether the dataset is a 4D enhanced dataset.
+     * @param tagTable2 
+     */
+    private int checkMaxSlice(FileDicomTagTable tagTable, int numSlices, TreeSet<Integer> sliceInt) {
+        FileDicomTag frameTag = tagTable.get("0020,9111");
+        int currNum = 0;
+        if(frameTag != null) {
+            // OK...so we should be relying on 0020,9056 (Stack ID)
+            // to tell us the number of volumes in the dataet
+            // but we find that it is not being implemented in the dataset we have
+            // Look at 0020.9057 (In-Stack Pos ID), to get numSlices since
+            // these should all be unique for 1 volume. If we find that there
+            // are duplicates, then that means we are dealing with a 4D datset
+            // we will get the number of slices in a volumne. Then determine
+            // number of volumes by taking total num slices / num slices per volume
+            // ftp://medical.nema.org/medical/dicom/final/cp583_ft.pdf
+            currNum = ((Number)((FileDicomSQ)frameTag.getValue(false)).getItem(0).get("0020,9057").getValue(false)).intValue();
+        }
+        if (!isEnhanced4D) {
+            isEnhanced4D = !sliceInt.add(currNum); //if slice already existed, sliceInt returns false, sets isEnhanced4D to true
+        }
+        if (currNum > numSlices) {
+            numSlices = currNum;
+            System.out.println("Found slice "+numSlices);
+        }
+        return numSlices;
     }
 
     private void processUnknownVR(FileDicomTagTable tagTable, String name, FileDicomKey key, int tagVM, String strValue) throws IOException {
@@ -3307,11 +3286,14 @@ public class FileDicom extends FileDicomBase {
     
                 // elementLength here is the length of the
                 // item as it written into the File
+                FileDicomTagTable item = null;
                 if (elementLength == 0) {
-                    final FileDicomTagTable item = new FileDicomTagTable(null);
-                    sq.addItem(item);
+                    item = new FileDicomTagTable(null);
                 } else {
-                    sq.addItem((FileDicomTagTable) getDataSet(elementLength, endianess));
+                    item = getDataSet(elementLength, endianess);
+                }
+                if(item != null) {
+                    sq.addItem(item);
                 }
             }
             
