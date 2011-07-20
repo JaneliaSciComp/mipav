@@ -91,7 +91,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         for (e = tagList.keys(); e.hasMoreElements();) {
 
-            if (tagList.get(e.nextElement()).getValue(true) != null) {
+            if (tagList.get(e.nextElement()).getValue(false) != null) {
                 count++;
             }
         }
@@ -109,7 +109,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         for (e = tagList.keys(); e.hasMoreElements();) {
             FileDicomTag tag = tagList.get(e.nextElement());
 
-            if (tag.getValue(true) != null) {
+            if (tag.getValue(false) != null) {
                 dicomTags[i] = tag;
                 i++;
             }
