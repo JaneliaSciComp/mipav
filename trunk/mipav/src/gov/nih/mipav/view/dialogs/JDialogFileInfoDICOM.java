@@ -163,8 +163,8 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             key = e.nextElement();
             
             name = key.getKey();
-
-            if ( ((FileDicomTag) tagsList.get(key)).getValue(true) != null) {
+            
+            if ( ((FileDicomTag) tagsList.get(key)).getValue(false) != null) {
                 final String tagName = "(" + name + ")";
                 if (tags != null) {
                     for (final String element : tags) {
@@ -215,33 +215,34 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             }
                         }
                     } else if (vr.equals(VR.SQ)) {
+                      //TODO: Implement JTable view for sequences
+                        // System.err.println("Key = " + key);
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
-                        final Vector<String> display = sq.getSequenceDisplay();
+                        
+                        final Vector<FileDicomTagTable> display = sq.getSequence();
 
                         rowData[3] = "";
-
-                        for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
-                            if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                        
+                        JDialogFileInfoDICOM.addRow(rowData, show);
+                        FileDicomTag tag = null;
+                        
+                        for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                            rowData[2] = "Sequence element";
+                            rowData[3] = "";
+                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
-
-                                final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
-
-                                rowData[2] = st.nextToken();
-
-                                if (st.hasMoreTokens()) {
-                                    String s = st.nextToken();
-                                    if (s.length() > 0) {
-                                        final char c = s.charAt(s.length() - 1);
-                                        if (c == '\0') {
-                                            s = s.substring(0, s.indexOf(c));
-                                        }
-                                    }
-                                    rowData[3] = s;
+                            }
+                            for(int i=0; i<tagList.length; i++) {
+                                tag = tagList[i];
+                                rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                                rowData[3] = tag.getValue(true);
+                                if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                                    tagsModel.addRow(rowData);
                                 }
-                            } else {
-                                f.nextElement();
                             }
                         }
+                        tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
                     } else {
 
                         FileDicomTag t;
@@ -503,34 +504,31 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     //TODO: Implement JTable view for sequences
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
-                    final Vector<String> display = sq.getSequenceDisplay();
+                    
+                    final Vector<FileDicomTagTable> display = sq.getSequence();
 
                     rowData[3] = "";
-
-                    for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
-                        if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                    
+                    JDialogFileInfoDICOM.addRow(rowData, show);
+                    FileDicomTag tag = null;
+                    
+                    for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                        FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                        rowData[2] = "Sequence element";
+                        rowData[3] = "";
+                        if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
-
-                           StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
-
-                            rowData[2] = st.nextToken();
-
-                            if (st.hasMoreTokens()) {
-                                String s = st.nextToken();
-                                if (s.length() > 0) {
-                                    final char c = s.charAt(s.length() - 1);
-                                    if (c == '\0') {
-                                        s = s.substring(0, s.indexOf(c));
-                                    }
-                                }
-                                rowData[3] = s;
+                        }
+                        for(int i=0; i<tagList.length; i++) {
+                            tag = tagList[i];
+                            rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                            rowData[3] = tag.getValue(true);
+                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                                tagsModel.addRow(rowData);
                             }
-                        } else {
-                           // f.nextElement();   
-                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
-                            rowData[2] = st.nextToken();
                         }
                     }
+                    tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
                 } // standard tag. add tag.get(key).getValue(true) as-is to the table
                 else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
 
@@ -644,33 +642,34 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             }
                         }
                     } else if (vr.equals(VR.SQ)) {
-                        final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                        final Vector<String> display = sq.getSequenceDisplay();
+                      //TODO: Implement JTable view for sequences
+                        // System.err.println("Key = " + key);
+                        final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                        
+                        final Vector<FileDicomTagTable> display = sq.getSequence();
 
-                        rowData[2] = "";
-
-                        for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
-                            if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                        rowData[3] = "";
+                        
+                        JDialogFileInfoDICOM.addRow(rowData, show);
+                        FileDicomTag tag = null;
+                        
+                        for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                            rowData[2] = "Sequence element";
+                            rowData[3] = "";
+                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
-
-                                final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
-
-                                rowData[1] = st.nextToken();
-
-                                if (st.hasMoreTokens()) {
-                                    String s = st.nextToken();
-                                    if (s.length() > 0) {
-                                        final char c = s.charAt(s.length() - 1);
-                                        if (c == '\0') {
-                                            s = s.substring(0, s.indexOf(c));
-                                        }
-                                    }
-                                    rowData[2] = s;
+                            }
+                            for(int i=0; i<tagList.length; i++) {
+                                tag = tagList[i];
+                                rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                                rowData[3] = tag.getValue(true);
+                                if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                                    tagsModel.addRow(rowData);
                                 }
-                            } else {
-                                f.nextElement();
                             }
                         }
+                        tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
                     } else {
 
                         FileDicomTag t;
@@ -920,27 +919,34 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                 } else if (vr.equals(VR.SQ)) {
 
+                  //TODO: Implement JTable view for sequences
                     // System.err.println("Key = " + key);
-                    final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                    final Vector<String> display = sq.getSequenceDisplay();
+                    final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                    
+                    final Vector<FileDicomTagTable> display = sq.getSequence();
 
-                    rowData[2] = "";
-
-                    for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
-                        if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                    rowData[3] = "";
+                    
+                    JDialogFileInfoDICOM.addRow(rowData, show);
+                    FileDicomTag tag = null;
+                    
+                    for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                        FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                        rowData[2] = "Sequence element";
+                        rowData[3] = "";
+                        if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
-
-                            final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
-
-                            rowData[1] = st.nextToken();
-
-                            if (st.hasMoreTokens()) {
-                                rowData[1] = st.nextToken();
+                        }
+                        for(int i=0; i<tagList.length; i++) {
+                            tag = tagList[i];
+                            rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                            rowData[3] = tag.getValue(true);
+                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                                tagsModel.addRow(rowData);
                             }
-                        } else {
-                            f.nextElement();
                         }
                     }
+                    tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
                 } // standard tag. add tag.get(key).getValue(true) as-is to the table
                 else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
 
@@ -1018,7 +1024,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             key = e.next();
             name = key.toString();
 
-            if ( (tagsList.get(key)).getValue(true) != null) {
+            if ( (tagsList.get(key)).getValue(false) != null) {
                 final String tagName = "(" + name + ")";
                 rowData[0] = tagName;
                 rowData[1] = (tagsList.get(key)).getName();
@@ -1054,33 +1060,34 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                             }
                         }
                     } else if (vr.equals(VR.SQ)) {
-                        final FileDicomSQ sq = (FileDicomSQ) (tagsList.get(key)).getValue(true);
-                        final Vector<String> display = sq.getSequenceDisplay();
+                      //TODO: Implement JTable view for sequences
+                        // System.err.println("Key = " + key);
+                        final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                        
+                        final Vector<FileDicomTagTable> display = sq.getSequence();
 
-                        rowData[2] = "";
-
-                        for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
-                            if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                        rowData[3] = "";
+                        
+                        JDialogFileInfoDICOM.addRow(rowData, show);
+                        FileDicomTag tag = null;
+                        
+                        for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                            rowData[2] = "Sequence element";
+                            rowData[3] = "";
+                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
-
-                                final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
-
-                                rowData[1] = st.nextToken();
-
-                                if (st.hasMoreTokens()) {
-                                    String s = st.nextToken();
-                                    if (s.length() > 0) {
-                                        final char c = s.charAt(s.length() - 1);
-                                        if (c == '\0') {
-                                            s = s.substring(0, s.indexOf(c));
-                                        }
-                                    }
-                                    rowData[2] = s;
+                            }
+                            for(int i=0; i<tagList.length; i++) {
+                                tag = tagList[i];
+                                rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                                rowData[3] = tag.getValue(true);
+                                if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                                    tagsModel.addRow(rowData);
                                 }
-                            } else {
-                                f.nextElement();
                             }
                         }
+                        tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
                     } else {
 
                         FileDicomTag t;
@@ -1185,37 +1192,34 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         rowData[2] = s;
                     }
                 } else if (vr.equals(VR.SQ)) {
-
+                    //TODO: Implement JTable view for sequences
                     // System.err.println("Key = " + key);
-                    final FileDicomSQ sq = (FileDicomSQ) (tagsList.get(key)).getValue(true);
-                    final Vector<String> display = sq.getSequenceDisplay();
+                    final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                    
+                    final Vector<FileDicomTagTable> display = sq.getSequence();
 
-                    rowData[2] = "";
-
-                    for (final Enumeration<String> f = display.elements(); f.hasMoreElements();) {
-                        if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                    rowData[3] = "";
+                    
+                    JDialogFileInfoDICOM.addRow(rowData, show);
+                    FileDicomTag tag = null;
+                    
+                    for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                        FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                        rowData[2] = "Sequence element";
+                        rowData[3] = "";
+                        if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
-
-                            final StringTokenizer st = new StringTokenizer(f.nextElement(), ";;;");
-
-                            rowData[1] = st.nextToken();
-
-                            if (st.hasMoreTokens()) {
-                                String s = st.nextToken();
-                                if (s.length() > 0) {
-                                    final char c = s.charAt(s.length() - 1);
-                                    if (c == '\0') {
-                                        s = s.substring(0, s.indexOf(c));
-                                    }
-                                }
-                                rowData[2] = s;
+                        }
+                        for(int i=0; i<tagList.length; i++) {
+                            tag = tagList[i];
+                            rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                            rowData[3] = tag.getValue(true);
+                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                                tagsModel.addRow(rowData);
                             }
-                        } else {
-                            // f.nextElement();   
-                            StringTokenizer st = new StringTokenizer((String) f.nextElement(), ";;;");
-                            rowData[2] = st.nextToken();
                         }
                     }
+                    tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
                 } // standard tag. add tag.get(key).getValue(true) as-is to the table
                 else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
 
@@ -2342,17 +2346,23 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         }
     }
 
-    private class TagReferenceRenderer extends DefaultTableCellRenderer {
+    private class TagReferenceRenderer extends JTextArea implements TableCellRenderer {
 
+        public TagReferenceRenderer() {
+            setLineWrap(true);
+            setWrapStyleWord(true);
+        }
+        
         public Component getTableCellRendererComponent(final JTable table, final Object value,
                 final boolean isSelected, final boolean hasFocus, final int row, final int column) {
 
-            final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            //final Component cell = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            setText(value.toString());
 
             final TableCellRenderer refRenderer = table.getCellRenderer(row, 1);
             if (refRenderer instanceof TagCodeRenderer && ((TagCodeRenderer) refRenderer).hasValidTag()
                     && row > 16 + (imageA.getNDims() - 1) * 2) {
-                cell.setBackground( ((TagCodeRenderer) refRenderer).getBackground());
+                setBackground( ((TagCodeRenderer) refRenderer).getBackground());
             } else {
                 final int[] rows = table.getSelectedRows();
                 boolean rowSelected = false;
@@ -2363,10 +2373,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                 }
                 if ( !rowSelected) {
-                    cell.setBackground(Color.white);
+                    setBackground(Color.white);
                 }
             }
-            return cell;
+            return this;
         }
 
     }
