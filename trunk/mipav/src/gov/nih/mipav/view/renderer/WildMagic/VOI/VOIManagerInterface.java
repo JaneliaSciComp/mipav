@@ -4800,10 +4800,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             boolean frameRefTimeFound = false;
             fileInfo = (FileInfoDicom) kImage.getFileInfo(0);
             frameRefTimeString = ((String) fileInfo.getTagTable().getValue(
-            "0054,1300")).trim();
+            "0054,1300"));
             if (frameRefTimeString != null) {
                 try {
-                    frameReferenceTime = new Integer(frameRefTimeString)
+                    frameReferenceTime = new Integer(frameRefTimeString.trim())
                     .intValue();
                     frameRefTimeFound = true;
                     Preferences.debug("Frame reference time = "
@@ -4811,22 +4811,27 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 } catch (NumberFormatException e) {
                     Preferences
                     .debug("Number format excepton from frame Reference Time String = "
-                            + frameRefTimeString + "\n");
+                            + frameRefTimeString.trim() + "\n");
                 }
+                
+                
 
                 if (frameRefTimeFound) {
-                    int response = JOptionPane.showConfirmDialog(
-                            UI.getMainFrame(),
-                            new String(
-                            "Do you wish to use the frame reference time for the graph x axis?"),
-                            "Frame Reference Time?",
-                            JOptionPane.YES_NO_OPTION,
-                            JOptionPane.QUESTION_MESSAGE);
-                    if (response == JOptionPane.YES_OPTION) {
-                        useFrameRefTime = true;
-                    }
+                    
                 } // if (frameRefTimeFound)
             } // if (frameRefTimeString != null)
+            
+            frameRefTimeString = JOptionPane.showInputDialog("Enter value for the graph x axis:", 
+                                                            frameRefTimeFound ? frameReferenceTime : 1);
+            try {
+                frameReferenceTime = new Integer(frameRefTimeString.trim());
+                useFrameRefTime = true;
+            } catch (NumberFormatException e) {
+                Preferences
+                .debug("Number format excepton from frame Reference Time String = "
+                        + frameRefTimeString.trim() + "\n");
+                useFrameRefTime = false;
+            }
         } // if if ((compImage.getActiveImage().getNDims() == 4)
 
         for (int i = 0; i < nVOI; i++) {
