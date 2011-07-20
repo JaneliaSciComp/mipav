@@ -1178,7 +1178,7 @@ public class FileDicom extends FileDicomBase {
      * Helper method for dicom files that do not specify a valid extents
      */
     private int[] guessImageLength(int[] extents) throws IOException {
-        int possImageLength = (int) (raFile.length() - fileInfo.getOffset() * (fileInfo.bitsAllocated / 8.0));
+        int possImageLength = (int) ((raFile.length() - fileInfo.getOffset()) * (fileInfo.bytesPerPixel));
         if(possImageLength % ((int)Math.sqrt(possImageLength)) == 0) { //most likely for squares unless enhanced dicom and no extents have been found
             extents[0] = (int)Math.sqrt(possImageLength);
             extents[1] = extents[0];
