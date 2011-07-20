@@ -636,7 +636,6 @@ public class FileDicom extends FileDicomBase {
      * @see #convertGroupElement(int, int)
      */
     public boolean readHeader(final boolean loadTagBuffer) throws IOException {
-
         endianess = FileBase.LITTLE_ENDIAN; // all DICOM files start as little endian (tags 0002)
         boolean flag = true;
 
