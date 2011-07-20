@@ -1125,6 +1125,9 @@ public class FileDicom extends FileDicomBase {
         }
     }
 
+    /**
+     * Processes image data returning whether the header should continue to be read.
+     */
     private boolean processImageData(int[] extents) throws IOException {
         fileInfo.setInfoFromTags();
         
@@ -1158,13 +1161,51 @@ public class FileDicom extends FileDicomBase {
             Preferences.debug("Encapsulated image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
             fileInfo.setOffset(imageTagLoc-12 > 0 ? imageTagLoc-12 : imageTagLoc);
         }
+        if(extents[0] == 0 || extents[1] == 0) {
+            extents = guessImageLength(extents);
+        }
         
         seek(fileInfo.getOffset());
 
         fileInfo.setExtents(extents);
         
         imageLoadReady = true;
-        return imageLoadReady;
+        return !imageLoadReady;
+    }
+
+    
+    /**
+     * Helper method for dicom files that do not specify a valid extents
+     */
+    private int[] guessImageLength(int[] extents) throws IOException {
+        int possImageLength = (int) (raFile.length() - fileInfo.getOffset() * (fileInfo.bitsAllocated / 8.0));
+        if(possImageLength % ((int)Math.sqrt(possImageLength)) == 0) { //most likely for squares unless enhanced dicom and no extents have been found
+            extents[0] = (int)Math.sqrt(possImageLength);
+            extents[1] = extents[0];
+        } else {
+            ArrayList<Integer> factor = new ArrayList<Integer>();
+   sqSearch:for(int i=possImageLength-1; i>1; i--) {
+                if(possImageLength % i == 0) {
+                    factor.add(i);
+                    if(possImageLength/i == i) { //located square 3D sequence
+                        extents[0] = i;
+                        extents[1] = i;
+                        break sqSearch;
+                    }
+                }
+            }
+            if(extents[0] == 0 || extents[1] == 0) { //no square factors found, so just use middle divisors
+                if(factor.size() > 1) {
+                    int middle = factor.size()/2;
+                    extents[0] = factor.get(middle-1);
+                    extents[1] = factor.get(middle);
+                } else { //no factors found, so just use image length and 1
+                    extents[0] = possImageLength;
+                    extents[1] = 1;
+                }
+            }
+        }
+        return extents;
     }
 
     /**
