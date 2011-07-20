@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.ModelSerialCloneable;
 import gov.nih.mipav.view.Preferences;
 
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 
 /**
@@ -329,6 +330,14 @@ public class FileDicomTag extends ModelSerialCloneable {
                 break;
             case TM:
                 returnValue = fromTMtoVisibleString();
+                break;
+            case SQ:
+                StringBuilder sq = new StringBuilder();
+                Vector<String> v = ((FileDicomSQ)value).getSequenceDisplay();
+                for(int i=0; i<v.size(); i++) {
+                    sq.append(v.get(i)).append("\n");
+                }
+                returnValue = sq.toString();
                 break;
             default:
                 if (value instanceof Object[]) {
