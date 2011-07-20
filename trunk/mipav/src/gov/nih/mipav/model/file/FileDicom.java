@@ -817,7 +817,10 @@ public class FileDicom extends FileDicomBase {
         try {
 
             if (vr.getType().equals(StringType.STRING) || vr.getType().equals(StringType.DATE)) {
-                strValue = getString(elementLength).trim();
+                strValue = getString(elementLength);
+                if(strValue != null) {
+                    strValue = strValue.trim();
+                }
 
                 tagTable.setValue(key, strValue, elementLength);
 
@@ -826,11 +829,11 @@ public class FileDicom extends FileDicomBase {
             } 
             
             if(!isSiemensMRI && name.startsWith("0019")) {
-                if (name.equals("0019,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+                if (name.equals("0019,0010") && strValue != null && strValue.equals("SIEMENS MR HEADER")) {
                     isSiemensMRI = true;
                 }
             } else if(!isSiemensMRI2 && name.startsWith("0051")) {
-                if (name.equals("0051,0010") && strValue.trim().equals("SIEMENS MR HEADER")) {
+                if (name.equals("0051,0010") && strValue != null && strValue.equals("SIEMENS MR HEADER")) {
                     isSiemensMRI2 = true;
                 }
             }
