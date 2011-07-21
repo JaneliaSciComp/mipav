@@ -347,89 +347,76 @@ vec4 computeColor( vec3 kModelPosition, vec3 kModelNormal, vec3 CameraWorldPosit
                    vec4 color)
 {
     vec4 kResult = vec4(0.0,0.0,0.0,0.0);
-    if ( LightType == -1.0 )
+    vec3 local_normal = ((2.0,2.0,2.0)* kModelNormal.xyz) - (1.0, 1.0, 1.0);
+    local_normal = normalize( local_normal );
+    
+    vec3 LocalMaterialAmbient = MaterialAmbient;
+    vec4 LocalMaterialDiffuse = MaterialDiffuse;
+    vec3 LocalMaterialEmissive = MaterialEmissive;
+    vec4 LocalMaterialSpecular = MaterialSpecular;
+    
+    if ( Composite != 0.0 )
     {
-//         kResult.r = kModelNormal.x;
-//         kResult.g = kModelNormal.y;
-//         kResult.b = kModelNormal.z;
-        kResult.r = 0.0;
-        kResult.g = 0.0;
-        kResult.b = 0.0;
+        LocalMaterialAmbient = color.xyz * MaterialAmbient;
+        LocalMaterialDiffuse = color * MaterialDiffuse;
+        LocalMaterialEmissive = color.xyz * MaterialEmissive;
+        LocalMaterialSpecular = color * MaterialSpecular;
+    }
+    
+    if ( LightType == 0.0 )
+    {
+        kResult = AmbientLight( LocalMaterialEmissive.xyz,
+                                LocalMaterialAmbient.xyz,
+                                LightAmbient.xyz,
+                                LightAttenuation.xyzw );
+    }
+    else if ( LightType == 1.0 )
+    {
+        kResult = DirectionalLight(  kModelPosition.xyz,
+                                     local_normal.xyz,
+                                     CameraWorldPosition.xyz,
+                                     LocalMaterialEmissive.xyz,
+                                     LocalMaterialAmbient.xyz,
+                                     LocalMaterialDiffuse.xyz,
+                                     LocalMaterialSpecular.xyzw,
+                                     LightWorldDirection.xyz,
+                                     LightAmbient.xyz,
+                                     LightDiffuse.xyz,
+                                     LightSpecular.xyz,
+                                     LightAttenuation.xyzw);
+        
+    }
+    else if ( LightType == 2.0 )
+    {
+        kResult = PointLight( kModelPosition.xyz,
+                              local_normal.xyz,
+                              CameraWorldPosition,
+                              LocalMaterialEmissive.xyz,
+                              LocalMaterialAmbient.xyz,
+                              LocalMaterialDiffuse.xyzw,
+                              LocalMaterialSpecular.xyzw,
+                              LightWorldPosition.xyz,
+                              LightAmbient.xyz,
+                              LightDiffuse.xyz,
+                              LightSpecular.xyz,
+                              LightAttenuation.xyzw);
     }
     else
     {
-        //vec3 local_normal = kModelNormal.xyz - (0.5, 0.5, 0.5);
-        vec3 local_normal = ((2.0,2.0,2.0)* kModelNormal.xyz) - (1.0, 1.0, 1.0);
-        local_normal = normalize( local_normal );
-
-        vec3 LocalMaterialAmbient = MaterialAmbient;
-        vec4 LocalMaterialDiffuse = MaterialDiffuse;
-        vec3 LocalMaterialEmissive = MaterialEmissive;
-        vec4 LocalMaterialSpecular = MaterialSpecular;
-
-        if ( Composite != 0.0 )
-        {
-            LocalMaterialAmbient = color.xyz * MaterialAmbient;
-            LocalMaterialDiffuse = color * MaterialDiffuse;
-            LocalMaterialEmissive = color.xyz * MaterialEmissive;
-            LocalMaterialSpecular = color * MaterialSpecular;
-        }
-
-        if ( LightType == 0.0 )
-        {
-            kResult = AmbientLight( LocalMaterialEmissive.xyz,
-                                         LocalMaterialAmbient.xyz,
-                                         LightAmbient.xyz,
-                                         LightAttenuation.xyzw );
-        }
-        else if ( LightType == 1.0 )
-        {
-            kResult = DirectionalLight(  kModelPosition.xyz,
-                                              local_normal.xyz,
-                                              CameraWorldPosition.xyz,
-                                              LocalMaterialEmissive.xyz,
-                                              LocalMaterialAmbient.xyz,
-                                              LocalMaterialDiffuse.xyz,
-                                              LocalMaterialSpecular.xyzw,
-                                              LightWorldDirection.xyz,
-                                              LightAmbient.xyz,
-                                              LightDiffuse.xyz,
-                                              LightSpecular.xyz,
-                                              LightAttenuation.xyzw);
-
-        }
-        else if ( LightType == 2.0 )
-        {
-            kResult = PointLight( kModelPosition.xyz,
-                                       local_normal.xyz,
-                                       CameraWorldPosition,
-                                       LocalMaterialEmissive.xyz,
-                                       LocalMaterialAmbient.xyz,
-                                       LocalMaterialDiffuse.xyzw,
-                                       LocalMaterialSpecular.xyzw,
-                                       LightWorldPosition.xyz,
-                                       LightAmbient.xyz,
-                                       LightDiffuse.xyz,
-                                       LightSpecular.xyz,
-                                       LightAttenuation.xyzw);
-        }
-        else
-        {
-            kResult = SpotLight( kModelPosition.xyz,
-                                      local_normal.xyz,
-                                      CameraWorldPosition.xyz,
-                                      LocalMaterialEmissive.xyz,
-                                      LocalMaterialAmbient.xyz,
-                                      LocalMaterialDiffuse.xyzw,
-                                      LocalMaterialSpecular.xyzw,
-                                      LightWorldPosition.xyz,
-                                      LightWorldDirection.xyz,
-                                      LightAmbient.xyz,
-                                      LightDiffuse.xyz,
-                                      LightSpecular.xyz,
-                                      LightSpotCutoff.xyzw,
-                                      LightAttenuation.xyzw);
-        }
+        kResult = SpotLight( kModelPosition.xyz,
+                             local_normal.xyz,
+                             CameraWorldPosition.xyz,
+                             LocalMaterialEmissive.xyz,
+                             LocalMaterialAmbient.xyz,
+                             LocalMaterialDiffuse.xyzw,
+                             LocalMaterialSpecular.xyzw,
+                             LightWorldPosition.xyz,
+                             LightWorldDirection.xyz,
+                             LightAmbient.xyz,
+                             LightDiffuse.xyz,
+                             LightSpecular.xyz,
+                             LightSpotCutoff.xyzw,
+                             LightAttenuation.xyzw);
     }
     return kResult;
 }
@@ -634,32 +621,25 @@ void p_VolumeShaderMultiPass()
     // axis-aligned clipping:
     if ( DoClip != 0.0 )
     {
-        if ( position.x > clipX )
-        {
+        if ( position.x > clipX ) {
             bClipped = 1.0;
         }
-        else if ( position.x < clipXInv )
-        {
+        else if ( position.x < clipXInv ) {
             bClipped = 1.0;
         }
-        else if ( position.y > clipY )
-        {
+        else if ( position.y > clipY ) {
             bClipped = 1.0;
         }
-        else if ( position.y < clipYInv )
-        {
+        else if ( position.y < clipYInv ) {
             bClipped = 1.0;
         }
-        else if ( position.z > clipZ )
-        {
+        else if ( position.z > clipZ ) {
             bClipped = 1.0;
         }
-        else if ( position.z < clipZInv )
-        {
+        else if ( position.z < clipZInv ) {
             bClipped = 1.0;
         } 
-        else 
-        {
+        else {
             bClipped = 0.0;
         }
 

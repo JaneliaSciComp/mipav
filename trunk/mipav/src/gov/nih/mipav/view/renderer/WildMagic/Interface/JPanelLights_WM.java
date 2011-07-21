@@ -77,7 +77,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
     public static final int LIGHT_INDEX_MODEL_X1Y1Z1 = 9;
 
     /** Max number of light. */
-    public static final int LIGHT_INDEX_MAX = 10;
+    public static final int LIGHT_INDEX_MAX = 8;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -258,7 +258,7 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
         m_aiLightScale[LIGHT_INDEX_AMBIENT] = 1;
 
         // Model lights at corners of the volume.
-        for (int i = 0; i < 8; i++) {
+        for (int i = 0; i < LIGHT_INDEX_MAX - LIGHT_INDEX_MODEL_X0Y0Z0; i++) {
             float fX = ((0 != (i & 1)) ? +1.0f : -1.0f);
             float fY = ((0 != (i & 2)) ? +1.0f : -1.0f);
             float fZ = ((0 != (i & 4)) ? +1.0f : -1.0f);
