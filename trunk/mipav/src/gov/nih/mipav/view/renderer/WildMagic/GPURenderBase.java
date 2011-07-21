@@ -612,8 +612,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             {
                 String kLightType = new String("Light"+(i)+"Type");
                 float[] afType = new float[]{0,0,0,0};
-                //if ( i < m_pkRenderer.GetMaxLights() )
-                if ( i < 4 )
+                if ( i < 8 )
                 {
                     if ( akGLights[i].On )
                     {

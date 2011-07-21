@@ -177,5 +177,9 @@ public abstract class VolumeClipEffect extends ShaderEffect
         }
         m_afDoClip[0] = (bEnable) ? 1 : 0;
     }
-
+    
+    public boolean isClipAE()
+    {
+    	return (m_afClipAll[8] | m_afClipAll[7] | m_afClipAll[6]);
+    }    
 }
