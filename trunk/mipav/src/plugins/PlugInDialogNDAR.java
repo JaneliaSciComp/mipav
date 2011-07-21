@@ -1552,14 +1552,41 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             }
             
-            TreeSet sortedNamesSet = new TreeSet(new AlphabeticalComparator());
+            TreeSet<String> sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
             for(int i=0;i<shortNameAL.size();i++) {
             	sortedNamesSet.add(shortNameAL.get(i));
             }
             
+            
+            
+            //we only want to list the most recent versions
+            //so remove the less recent versions from this list
+            String[] sortedNamesArray = (String[])(sortedNamesSet.toArray(new String[0]));
+            for(int i=sortedNamesArray.length-1;i>0;i--) {
+            	String name = sortedNamesArray[i];
+            	if(!name.equals("")) {
+            		String nameWithoutVersion = name.substring(0, name.length()-2);
+            		for(int k=i-1;k>=0;k--) {
+                		String checkName = sortedNamesArray[k];
+                		String checkNameWithoutVersion = checkName.substring(0, checkName.length()-2);
+                		if(nameWithoutVersion.equals(checkNameWithoutVersion)) {
+                			sortedNamesArray[k] = "";
+                		}
+                	}
+            	}
+            }
+            sortedNamesSet = new TreeSet(new AlphabeticalComparator());
+            for(int i=0;i<sortedNamesArray.length;i++) {
+            	if(!sortedNamesArray[i].equals("")) {
+            		sortedNamesSet.add(sortedNamesArray[i]);
+            	}
+            }	
+            //now we only have the most recent versions
         	
         	
         	
+            
+            
             
 
             final Object[] rowData = new Object[numColumns];
@@ -1711,7 +1738,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final JPanel panel = new JPanel(new GridBagLayout());
             tabScrollPane = new JScrollPane(panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             tabScrollPane.setPreferredSize(new Dimension(600, 200));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
 
@@ -1982,7 +2009,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                         labelsAndComps.put(l, cb);
                     } else {
-                        final JTextField tf = new JTextField(30);
+                        final JTextField tf = new JTextField(20);
                         tf.setName(n);
 
                         String tooltip = "Type: " + t;
