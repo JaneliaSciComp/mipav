@@ -162,16 +162,14 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             destFileInfo = new FileInfoBase[numInfos];
             oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
             childTagTables = new FileDicomTagTable[numInfos - 1];
-            for (t = 0; t < tDim; t++) {
-
-                for (z = 0; z < zDim; z++) {
-                   i = (t * zDim) + z;
+           for (t = 0; t < tDim; t++) {
+               for (z = 0; z < zDim; z++) {
+                   i = (t * zDim) + z;                  
                    if (i == 0) {
-
                        // create a new reference file info
                        destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                        oldDicomInfo.getFileFormat());
-                       ((FileInfoDicom)destFileInfo[0]).vr_type = oldDicomInfo.vr_type;
+                       ((FileInfoDicom)destFileInfo[0]).vr_type = oldDicomInfo.vr_type;    
                    } else {
 
                        // all other slices are children of the first file info..
@@ -185,9 +183,12 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 }
             }
             ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+            destImage.setFileInfo(destFileInfo);
         } // if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
-
+ 
+        else{
         for (t = 0; t < tDim; t++) {
+
 
             for (z = 0; z < zDim; z++) {
                 sliceNumSrcImg = (t * zDim) + z;
@@ -207,6 +208,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 zStartLoc = (float) fileInfo[sliceNumSrcImg].getOrigin(2);
 
                 if ((resolUnit3 >= 2) && (resolUnit3 <= 10)) {
+                    System.err.println("xmlres");
 
                     // 3rd dimension is a length dimension
                     startLocs[2] = zStartLoc;
@@ -247,9 +249,10 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             }
 
         }
+        
         destImage.calcMinMax();
         destImage.setImageOrientation(srcImage.getImageOrientation());
-        
+        }   
         setCompleted(true);
     }
 
