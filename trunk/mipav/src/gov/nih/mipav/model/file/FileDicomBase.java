@@ -16,10 +16,6 @@ public class FileDicomBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    
-    
-    
-    
     /** Byte order. Rightmost byte is most significant. */
     public static final boolean LITTLE_ENDIAN = false;
 
@@ -69,6 +65,9 @@ public class FileDicomBase {
 
     /** Buffer pointer (aka file pointer). */
     private int bPtr = 0;
+    
+    /** If file is a DICOMDIR this is false * */
+    protected boolean notDir = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -427,20 +426,26 @@ public class FileDicomBase {
     /**
      * Setups the allocation of memory for the byte buffer to load tags. This tag buffer is a cache to speed the loading
      * of the images.
+     * @throws IOException 
      */
-    public void loadTagBuffer() {
+    public void loadTagBuffer() throws IOException {
 
         try {
             tagBuffer = new byte[locateImageTag(0)]; //tagBuffer now guaranteed to contain all necessary header information
-            raFile.seek(0);
-            raFile.readFully(tagBuffer);
-        } catch (IOException ioE) { }
+        } catch(NegativeArraySizeException ex) { //file is probably dicomdir, but not known for sure until tagBuffer has been parsed
+            tagBuffer = new byte[(int) raFile.length()];
+        }
+        raFile.seek(0);
+        raFile.readFully(tagBuffer);
     }
     
     public int locateImageTag(int offset) {
         int tagSize = 0;
         boolean isImage = false;
         try {
+            if(!notDir) {
+                return (int) raFile.length();
+            }
             bPtr = offset;
             raFile.seek(bPtr);
             long raFileLength = 0;
