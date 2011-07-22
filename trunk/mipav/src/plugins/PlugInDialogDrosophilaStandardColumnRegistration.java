@@ -160,7 +160,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v4.7");
+        setTitle("Drosophila Standard Column Registration v4.8");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -821,7 +821,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
             int counter = 1;
             while((line = raFile.readLine()) != null) {
             		arr = line.trim().split(",");
-            		if(arr.length == 3) {
+            		if(arr.length == 4) {
                     	x = new Float(arr[0]).floatValue();
                     	y = new Float(arr[1]).floatValue();
                     	z = new Float(arr[2]).floatValue();
