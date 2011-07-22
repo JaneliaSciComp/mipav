@@ -197,6 +197,9 @@ public class TriangleClassificationWidget extends ClassificationWidget
             // set left right in texture coordinates:
             m_kWidgetEfect.SetRightLine( fRight_TX, fRight_TY,
                     fRightTexX1, fRightTexY1);
+
+            m_kWidgetEfect.UpdateColor();
+            m_kWidgetEfect.computeUniformVariables();
         }
     }
 

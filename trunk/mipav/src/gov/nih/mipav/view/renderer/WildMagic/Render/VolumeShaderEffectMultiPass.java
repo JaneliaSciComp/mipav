@@ -1,8 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 
+import java.util.Vector;
+
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.ObjectSystem.StringTree;
@@ -63,8 +66,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     protected Texture m_kSceneTarget;
     protected float[][] m_aafLight = new float[ms_MaxLights][4];
     protected ClassificationWidgetState[] m_akLevWidget = new ClassificationWidgetState[ms_iNumLev];
+    protected int m_iUsedWidgets = 0;
 
-    protected boolean[] m_abLevWidgetInit = new boolean[ms_iNumLev];
     protected int m_iPasses = 1;
 
     protected VertexShader m_pkVShader;
@@ -78,6 +81,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     protected float[] m_afBlendParam = new float[]{1f,0f,0f,0f};
     protected ModelRGB m_kRGBT;
     protected boolean m_bGradientMag = false;
+    protected float m_fSamples;
     
     /** 
      * Creates a new VolumeShaderEffect object.
@@ -95,12 +99,14 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
         m_iPasses = 1;
         super.SetPassQuantity(m_iPasses);
+        m_fSamples = (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f;
 
+		for ( int i = 0; i < m_akLevWidget.length; i++ )
+		{
+			m_akLevWidget[i] = new ClassificationWidgetState();
+		}
+		
         CreateVolumeTexture();
-        for ( int i = 0; i < ms_iNumLev; i++ )
-        {
-            m_abLevWidgetInit[i] = false;
-        }
     }
 
     /**
@@ -180,7 +186,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             m_akLevWidget[i] = null;
         }
         m_akLevWidget = null;
-        m_abLevWidgetInit = null;
 
         m_pkVShader.dispose();
         m_pkVShader = null;
@@ -209,6 +214,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             m_kAlphaState.set(i, new AlphaState());
             m_kAlphaState.get(i).BlendEnabled = true;
+            //m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_ONE;
             m_kAlphaState.get(i).SrcBlend = AlphaState.SrcBlendMode.SBF_CONSTANT_ALPHA;
             //m_kAlphaState.get(i).DstBlend = AlphaState.DstBlendMode.DBF_CONSTANT_ALPHA;
             m_kAlphaState.get(i).ConstantColor = new ColorRGBA(1.0f,1.0f,1.0f,
@@ -316,7 +322,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         SetColorImage(pkCProgram);
         setABBlend(1.0f);
         setRGBTA(m_kRGBT);
-        setVolumeSamples( (m_kVolumeImageA.GetImage().getExtents()[2]*2.0f)/1000.0f );
+        setVolumeSamples( m_fSamples );
         if ( m_kVolumeImageB.GetImage() != null )
         {
             setABBlend(0.5f);
@@ -334,8 +340,12 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
                 pkCProgram.GetUC(kLightType).SetDataSource(m_aafLight[i]);
             }
         }
+        if ( m_bMultiHisto )
+        {
+        	updateLevWidgetState( m_akLevWidget );
+        }
 
-        super.OnLoadPrograms ( 0,  pkVProgram, pkPProgram, pkCProgram );
+        super.OnLoadPrograms ( 0,  pkVProgram, pkPProgram, pkCProgram );    
     }
 
     /**
@@ -539,17 +549,16 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 
     public void setVolumeSamples( float fSample )
     {
+    	m_fSamples = fSample;    	
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
         //System.err.println( "Samples " + m_iPasses );
         SetPassQuantity(m_iPasses);
         Program pkCProgram = GetCProgram(0);
-        //for ( int i = 0; i < m_iPasses; i++ )
-        {
-            SetVShader(0,m_pkVShader);
-            /* The pixel shader defaults to CMP: */
-            SetPShader(0,m_kPShaderCMP);
-            SetCProgram(0,pkCProgram);
-        }
+        SetVShader(0,m_pkVShader);
+        /* The pixel shader defaults to CMP: */
+        SetPShader(0,m_kPShaderCMP);
+        SetCProgram(0,pkCProgram);
+            
         setCurrentShader();
         
         pkCProgram = GetCProgram(0);
@@ -570,7 +579,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             return;
         }
         m_iWhichShader = SUR;
-        for (int i = 1; i < (int)m_kAlphaState.size(); i++)
+        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
         {
             m_kAlphaState.set(i, new AlphaState());
             m_kAlphaState.get(i).BlendEnabled = true;
@@ -618,7 +627,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
 
         m_iWhichShader = CMP_SUR;
-        for (int i = 1; i < (int)m_kAlphaState.size(); i++)
+        for (int i = 0; i < (int)m_kAlphaState.size(); i++)
         {
             m_kAlphaState.set(i, new AlphaState());
             m_kAlphaState.get(i).BlendEnabled = true;
@@ -652,88 +661,150 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             kCProgram.GetUC("MULTIHISTO").GetData()[0] = 0;
         }
     }
-    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
+    
+
+    private void updateLevWidgetState( ClassificationWidgetState[] kLWS )
     {
-        if ( iState >= ms_iNumLev )
-        {
-            return;
-        }
-        if ( m_akLevWidget[iState] == null )
-        {
-            m_akLevWidget[iState] = new ClassificationWidgetState();
-        }
-        
-        m_akLevWidget[iState].Copy( kLWS );
-        if ( !m_abLevWidgetInit[iState] )
-        {
-            //m_abLevWidgetInit[iState] = true;
-            
-            float fShiftL = 0;
-            float fShiftR = 0;
-            if ( m_akLevWidget[iState].MidLine[1] == m_akLevWidget[iState].MidLine[3] )
-            {
-                float fIncr = (m_akLevWidget[iState].MidLine[1] - m_akLevWidget[iState].LeftLine[1]) /
-                (m_akLevWidget[iState].LeftLine[3] - m_akLevWidget[iState].LeftLine[1]);
+    	for ( int i = 0; i < m_iUsedWidgets; i++ )
+    	{
+			float fShiftL = 0;
+			float fShiftR = 0;
+			if ( m_akLevWidget[i].MidLine[1] == m_akLevWidget[i].MidLine[3] )
+			{
+				float fIncr = (m_akLevWidget[i].MidLine[1] - m_akLevWidget[i].LeftLine[1]) /
+				(m_akLevWidget[i].LeftLine[3] - m_akLevWidget[i].LeftLine[1]);
 
-                fIncr = fIncr * (m_akLevWidget[iState].RightLine[0] - m_akLevWidget[iState].LeftLine[0]);
+				fIncr = fIncr * (m_akLevWidget[i].RightLine[0] - m_akLevWidget[i].LeftLine[0]);
 
-                float fShiftX = (m_akLevWidget[iState].MidLine[0] - m_akLevWidget[iState].LeftLine[0]) /
-                (m_akLevWidget[iState].RightLine[0] - m_akLevWidget[iState].LeftLine[0]);
-                fShiftL = (fShiftX)*fIncr;
-                fShiftR = (1.0f-fShiftX)*fIncr;
-            }
-            
-            //for ( int i = 0; i < m_iPasses; i++ )
-            {
-                Program pkCProgram = GetCProgram(0);
-                if ( pkCProgram.GetUC("UseWidget"+iState) != null ) 
-                {
-                    pkCProgram.GetUC("UseWidget"+iState).SetDataSource(m_akLevWidget[iState].UseWidget);
-                    //System.err.println( "UseWidget"+iState + " " + m_akLevWidget[iState].UseWidget[0]);
-                }
-                if ( pkCProgram.GetUC("LevColor"+iState) != null ) 
-                {
-                    pkCProgram.GetUC("LevColor"+iState).SetDataSource(m_akLevWidget[iState].Color);
-                    //System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
-                }
-                if ( pkCProgram.GetUC("LevMidLine"+iState) != null ) 
-                {
-                    pkCProgram.GetUC("LevMidLine"+iState).SetDataSource(m_akLevWidget[iState].MidLine);
-                    //System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
-                }
-                if ( pkCProgram.GetUC("LevLeftLine"+iState) != null ) 
-                {
-                    pkCProgram.GetUC("LevLeftLine"+iState).SetDataSource(m_akLevWidget[iState].LeftLine);
-                    //System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
-                }
-                if ( pkCProgram.GetUC("LevRightLine"+iState) != null ) 
-                {
-                    pkCProgram.GetUC("LevRightLine"+iState).SetDataSource(m_akLevWidget[iState].RightLine);
-                    //System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
-                }
-                if ( pkCProgram.GetUC("BoundaryEmphasis"+iState) != null ) 
-                {
-                    pkCProgram.GetUC("BoundaryEmphasis"+iState).SetDataSource(m_akLevWidget[iState].BoundaryEmphasis);
-                }
-                if ( pkCProgram.GetUC("Shift"+iState) != null ) 
-                {
-                    //System.err.println( "Shift" + iState );
-                    pkCProgram.GetUC("Shift"+iState).GetData()[0] = fShiftL;
-                    pkCProgram.GetUC("Shift"+iState).GetData()[1] = fShiftR;
-                }
-                if ( pkCProgram.GetUC("InvY0MY1"+iState) != null ) 
-                {            
-                    //System.err.println( "InvY0MY1" + iState );
-                    float fLeftInvY0MY1 = 1.0f / (m_akLevWidget[iState].LeftLine[1] - m_akLevWidget[iState].LeftLine[3]);
-                    float fMidInvY0MY1 = 1.0f / (m_akLevWidget[iState].MidLine[1] - m_akLevWidget[iState].MidLine[3]);
-                    float fRightInvY0MY1 = 1.0f / (m_akLevWidget[iState].RightLine[1] - m_akLevWidget[iState].RightLine[3]);
-                    pkCProgram.GetUC("InvY0MY1"+iState).GetData()[0] = fLeftInvY0MY1;
-                    pkCProgram.GetUC("InvY0MY1"+iState).GetData()[1] = fMidInvY0MY1;
-                    pkCProgram.GetUC("InvY0MY1"+iState).GetData()[2] = fRightInvY0MY1;
-  }
-                
-            }
-        }
+				float fShiftX = (m_akLevWidget[i].MidLine[0] - m_akLevWidget[i].LeftLine[0]) /
+				(m_akLevWidget[i].RightLine[0] - m_akLevWidget[i].LeftLine[0]);
+				fShiftL = (fShiftX)*fIncr;
+				fShiftR = (1.0f-fShiftX)*fIncr;
+			}
+			Program pkCProgram = GetCProgram(0);
+			if ( pkCProgram.GetUC("UseWidget"+i) != null ) 
+			{
+				pkCProgram.GetUC("UseWidget"+i).SetDataSource(m_akLevWidget[i].UseWidget);
+				//System.err.println( "UseWidget"+iState + " " + m_akLevWidget[iState].UseWidget[0]);
+			}
+			if ( pkCProgram.GetUC("LevColor"+i) != null ) 
+			{
+				pkCProgram.GetUC("LevColor"+i).SetDataSource(m_akLevWidget[i].Color);
+				//System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
+			}
+			if ( pkCProgram.GetUC("LevMidLine"+i) != null ) 
+			{
+				pkCProgram.GetUC("LevMidLine"+i).SetDataSource(m_akLevWidget[i].MidLine);
+				//System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+			}
+			if ( pkCProgram.GetUC("LevLeftLine"+i) != null ) 
+			{
+				pkCProgram.GetUC("LevLeftLine"+i).SetDataSource(m_akLevWidget[i].LeftLine);
+				//System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+			}
+			if ( pkCProgram.GetUC("LevRightLine"+i) != null ) 
+			{
+				pkCProgram.GetUC("LevRightLine"+i).SetDataSource(m_akLevWidget[i].RightLine);
+				//System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+			}
+			if ( pkCProgram.GetUC("BoundaryEmphasis"+i) != null ) 
+			{
+				pkCProgram.GetUC("BoundaryEmphasis"+i).SetDataSource(m_akLevWidget[i].BoundaryEmphasis);
+			}
+			if ( pkCProgram.GetUC("Shift"+i) != null ) 
+			{
+				//System.err.println( "Shift" + iState );
+				pkCProgram.GetUC("Shift"+i).GetData()[0] = fShiftL;
+				pkCProgram.GetUC("Shift"+i).GetData()[1] = fShiftR;
+			}
+			if ( pkCProgram.GetUC("InvY0MY1"+i) != null ) 
+			{            
+				//System.err.println( "InvY0MY1" + iState );
+				float fLeftInvY0MY1 = 1.0f / (m_akLevWidget[i].LeftLine[1] - m_akLevWidget[i].LeftLine[3]);
+				float fMidInvY0MY1 = 1.0f / (m_akLevWidget[i].MidLine[1] - m_akLevWidget[i].MidLine[3]);
+				float fRightInvY0MY1 = 1.0f / (m_akLevWidget[i].RightLine[1] - m_akLevWidget[i].RightLine[3]);
+				pkCProgram.GetUC("InvY0MY1"+i).GetData()[0] = fLeftInvY0MY1;
+				pkCProgram.GetUC("InvY0MY1"+i).GetData()[1] = fMidInvY0MY1;
+				pkCProgram.GetUC("InvY0MY1"+i).GetData()[2] = fRightInvY0MY1;
+			}
+		}
+	}
+    
+    public boolean updateLevWidgetState( Vector<ClassificationWidget> kLWS )
+    {
+		m_iUsedWidgets = kLWS.size();
+    	boolean bChanged = false;
+    	for ( int i = 0; i < kLWS.size(); i++ )
+    	{
+    		if ( !m_akLevWidget[i].equals( kLWS.elementAt(i).getState() ) )
+    		{
+    			m_akLevWidget[i].Copy( kLWS.elementAt(i).getState() );
+    			bChanged = true;
+
+    			float fShiftL = 0;
+    			float fShiftR = 0;
+    			if ( m_akLevWidget[i].MidLine[1] == m_akLevWidget[i].MidLine[3] )
+    			{
+    				float fIncr = (m_akLevWidget[i].MidLine[1] - m_akLevWidget[i].LeftLine[1]) /
+    				(m_akLevWidget[i].LeftLine[3] - m_akLevWidget[i].LeftLine[1]);
+
+    				fIncr = fIncr * (m_akLevWidget[i].RightLine[0] - m_akLevWidget[i].LeftLine[0]);
+
+    				float fShiftX = (m_akLevWidget[i].MidLine[0] - m_akLevWidget[i].LeftLine[0]) /
+    				(m_akLevWidget[i].RightLine[0] - m_akLevWidget[i].LeftLine[0]);
+    				fShiftL = (fShiftX)*fIncr;
+    				fShiftR = (1.0f-fShiftX)*fIncr;
+    			}
+
+    			Program pkCProgram = GetCProgram(0);
+    			if ( pkCProgram.GetUC("UseWidget"+i) != null ) 
+    			{
+    				pkCProgram.GetUC("UseWidget"+i).SetDataSource(m_akLevWidget[i].UseWidget);
+    				//System.err.println( "UseWidget"+iState + " " + m_akLevWidget[iState].UseWidget[0]);
+    			}
+    			if ( pkCProgram.GetUC("LevColor"+i) != null ) 
+    			{
+    				pkCProgram.GetUC("LevColor"+i).SetDataSource(m_akLevWidget[i].Color);
+    				//System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
+    			}
+    			if ( pkCProgram.GetUC("LevMidLine"+i) != null ) 
+    			{
+    				pkCProgram.GetUC("LevMidLine"+i).SetDataSource(m_akLevWidget[i].MidLine);
+    				//System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+    			}
+    			if ( pkCProgram.GetUC("LevLeftLine"+i) != null ) 
+    			{
+    				pkCProgram.GetUC("LevLeftLine"+i).SetDataSource(m_akLevWidget[i].LeftLine);
+    				//System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+    			}
+    			if ( pkCProgram.GetUC("LevRightLine"+i) != null ) 
+    			{
+    				pkCProgram.GetUC("LevRightLine"+i).SetDataSource(m_akLevWidget[i].RightLine);
+    				//System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+    			}
+    			if ( pkCProgram.GetUC("BoundaryEmphasis"+i) != null ) 
+    			{
+    				pkCProgram.GetUC("BoundaryEmphasis"+i).SetDataSource(m_akLevWidget[i].BoundaryEmphasis);
+    			}
+    			if ( pkCProgram.GetUC("Shift"+i) != null ) 
+    			{
+    				//System.err.println( "Shift" + iState );
+    				pkCProgram.GetUC("Shift"+i).GetData()[0] = fShiftL;
+    				pkCProgram.GetUC("Shift"+i).GetData()[1] = fShiftR;
+    			}
+    			if ( pkCProgram.GetUC("InvY0MY1"+i) != null ) 
+    			{            
+    				//System.err.println( "InvY0MY1" + iState );
+    				float fLeftInvY0MY1 = 1.0f / (m_akLevWidget[i].LeftLine[1] - m_akLevWidget[i].LeftLine[3]);
+    				float fMidInvY0MY1 = 1.0f / (m_akLevWidget[i].MidLine[1] - m_akLevWidget[i].MidLine[3]);
+    				float fRightInvY0MY1 = 1.0f / (m_akLevWidget[i].RightLine[1] - m_akLevWidget[i].RightLine[3]);
+    				pkCProgram.GetUC("InvY0MY1"+i).GetData()[0] = fLeftInvY0MY1;
+    				pkCProgram.GetUC("InvY0MY1"+i).GetData()[1] = fMidInvY0MY1;
+    				pkCProgram.GetUC("InvY0MY1"+i).GetData()[2] = fRightInvY0MY1;
+    			}
+    		}
+    	}
+        return bChanged;
     }
 
 

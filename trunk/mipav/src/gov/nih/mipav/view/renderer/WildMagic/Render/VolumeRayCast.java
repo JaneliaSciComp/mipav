@@ -1,7 +1,10 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import java.util.Vector;
+
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 
 import javax.media.opengl.GLAutoDrawable;
 
@@ -284,10 +287,10 @@ public class VolumeRayCast extends VolumeObject
     	}
     	else
     	{    		
-    		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-                    targetTexture);
-    		//m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB,
-    		//		targetTexture);
+    		//m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
+            //        targetTexture);
+    		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB,
+    				targetTexture);
     	}
         kRenderer.LoadResources(m_kVolumeShaderEffect);
         kRenderer.LoadResources(m_kMesh);
@@ -435,9 +438,9 @@ public class VolumeRayCast extends VolumeObject
         m_kVolumeShaderEffect.SURMode();
     }
     
-    public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
+    public void updateLevWidgetState( Vector<ClassificationWidget> kLWS )
     {
-        m_kVolumeShaderEffect.updateLevWidgetState( kLWS, iState );
+        m_kVolumeShaderEffect.updateLevWidgetState( kLWS );
     }
 
 

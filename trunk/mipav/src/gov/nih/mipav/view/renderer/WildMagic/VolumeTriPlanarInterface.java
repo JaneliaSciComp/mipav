@@ -43,6 +43,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeNode;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeObject;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
@@ -2254,8 +2255,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         return true;
     }
 
-    public void updateLevWidgetState(final ClassificationWidgetState kLWS, final int iState) {
-        raycastRenderWM.updateLevWidgetState(kLWS, iState);
+    public void updateLevWidgetState(final Vector<ClassificationWidget> kLWS) {
+        raycastRenderWM.updateLevWidgetState(kLWS);
     }
 
     public void updateLighting(final Light[] akGLights) {

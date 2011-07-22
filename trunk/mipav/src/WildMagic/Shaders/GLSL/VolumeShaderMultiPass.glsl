@@ -867,11 +867,12 @@ void p_VolumeShaderMultiPass()
 
     if ( DRRA != 0.0 )
     {
-        color.rgb *= DRRA;
+        //color.rgb *= DRRA * opacity * Blend;
+        color.rgb *= opacity * Blend;
     }
     if ( MIP != 0.0 )
     {
-        color.rgb *= opacity;
+        color.rgb *= opacity * Blend;
     }
     if ( (ColorLUTOnA.x == 0.0) && (ColorLUTOnA.y == 0.0) && (ColorLUTOnA.z == 0.0) )
     {

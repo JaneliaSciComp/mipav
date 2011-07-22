@@ -136,23 +136,14 @@ implements GLEventListener, KeyListener
 			}
 			m_iPrevious = m_iCurrent;
 		}
-		// Update the parent with the widet parameters so
+		// Update the parent with the widget parameters so
 		// the Volume Renderer GLSL program can be updated:
-		for ( int i = 0; i < MAX_WIDGETS; i++ )
+		for ( int i = 0; i < m_akWidgets.size(); i++ )
 		{
-			if ( i < m_akWidgets.size() )
-			{
-				m_akWidgets.get(i).updateDisplay();
-				if ( m_kParent != null )
-				{
-					m_kParent.updateLevWidgetState( m_akWidgets.get(i).getState(), i );
-				}
-			}
-			else
-			{
-				m_kParent.updateLevWidgetState( ClassificationWidgetState.ZERO_STATE, i );
-			}            
-		}
+			m_akWidgets.elementAt(i).updateDisplay();
+		}		
+		m_kParent.updateLevWidgetState( m_akWidgets );
+		
 		// Call picking to see if the selected widget has changed:
 		Pick();    
 		// Draw the widgets on the 2D Histogram background"

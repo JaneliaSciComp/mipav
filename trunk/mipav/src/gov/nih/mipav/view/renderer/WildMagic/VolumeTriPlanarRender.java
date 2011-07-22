@@ -25,6 +25,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeRayCast;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
+import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 
 import java.awt.Cursor;
@@ -2452,9 +2453,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	  }
 
 
-	  public void updateLevWidgetState( ClassificationWidgetState kLWS, int iState )
+	  public void updateLevWidgetState( Vector<ClassificationWidget> kLWS )
 	  {
-		  m_kVolumeRayCast.updateLevWidgetState( kLWS, iState );
+		  m_kVolumeRayCast.updateLevWidgetState( kLWS );
 	  }
 
 	  /**
