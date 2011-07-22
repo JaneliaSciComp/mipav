@@ -925,22 +925,22 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     
                     final Vector<FileDicomTagTable> display = sq.getSequence();
 
-                    rowData[3] = "";
+                    rowData[2] = "";
                     
                     JDialogFileInfoDICOM.addRow(rowData, show);
                     FileDicomTag tag = null;
                     
                     for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
                         FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
-                        rowData[2] = "Sequence element";
-                        rowData[3] = "";
+                        rowData[1] = "Sequence element";
+                        rowData[2] = "";
                         if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                             tagsModel.addRow(rowData);
                         }
                         for(int i=0; i<tagList.length; i++) {
                             tag = tagList[i];
-                            rowData[2] = tag.getKey()+": "+tag.getKeyword();
-                            rowData[3] = tag.getValue(true);
+                            rowData[1] = tag.getKey()+": "+tag.getKeyword();
+                            rowData[2] = tag.getValue(true);
                             if(JDialogFileInfoDICOM.addRow(rowData, show)) {
                                 tagsModel.addRow(rowData);
                             }

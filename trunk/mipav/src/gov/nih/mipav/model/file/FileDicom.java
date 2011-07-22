@@ -84,9 +84,6 @@ public class FileDicom extends FileDicomBase {
 
     private boolean encapsulatedJP2 = false;
 
-    /** If file is a DICOMDIR this is false * */
-    private boolean notDir = true;
-
     /** Directory of the image file. */
     private String fileDir;
 
@@ -700,7 +697,9 @@ public class FileDicom extends FileDicomBase {
             
             if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().matches(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
                 int imageLoc = locateImageTag(0);
-                if(imageLoc != -1 && !imageLoadReady) {
+                if(!notDir) { // Done reading tags, if DICOMDIR then don't do anything else
+                    flag = false;
+                } else if(imageLoc != -1 && !imageLoadReady) {
                     seek(imageLoc);
                     flag = true; //image tag exists but has not been processed yet
                 } else {
@@ -709,8 +708,7 @@ public class FileDicom extends FileDicomBase {
             }
 
         }
-        // Done reading tags, if DICOMDIR then don't do anything else
-
+        
         if (notDir) {
             hasHeaderBeenRead = true;
 
