@@ -583,8 +583,7 @@ public class DicomDictionary {
 
         if (dictionaryReference == null) {
             Preferences.debug("Failed to read DICOM dictionary file from " + filename, Preferences.DEBUG_FILEIO);
-            MipavUtil.displayWarning("Failed to read DICOM dictionary file from " + filename);
-
+            Preferences.debug("If saving a dicom image, no tags will be saved.", Preferences.DEBUG_FILEIO);
             return;
         }
 
