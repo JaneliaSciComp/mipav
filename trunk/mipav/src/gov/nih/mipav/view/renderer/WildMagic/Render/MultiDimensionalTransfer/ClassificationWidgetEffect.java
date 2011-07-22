@@ -163,7 +163,6 @@ public class ClassificationWidgetEffect extends TextureEffect
         {
             pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine);
         }
-        computeUniformVariables();
     }
     
 
@@ -185,7 +184,6 @@ public class ClassificationWidgetEffect extends TextureEffect
         {
             pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
         }
-        computeUniformVariables();
     }
     
 
@@ -207,7 +205,6 @@ public class ClassificationWidgetEffect extends TextureEffect
         {
             pkCProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
         }
-        computeUniformVariables();
     }
     
     
@@ -229,7 +226,7 @@ public class ClassificationWidgetEffect extends TextureEffect
      * Computes the input parameters to the GLSL shader program based on the ClassificationWidgetState and passes
      * them to the program to render the widget in the multi-histogram panel.
      */
-    private void computeUniformVariables()
+    protected void computeUniformVariables()
     {
         float fShiftL = 0;
         float fShiftR = 0;

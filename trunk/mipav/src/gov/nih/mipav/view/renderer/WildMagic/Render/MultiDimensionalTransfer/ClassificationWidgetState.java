@@ -74,4 +74,21 @@ public class ClassificationWidgetState implements Serializable
         BoundaryEmphasis = null;
         UseWidget = null;
     }
+    
+    public boolean equals( ClassificationWidgetState kIn )
+    {
+        for ( int i = 0; i < 4; i++ )
+        {
+        	if ( (Color[i] != kIn.Color[i]) || 
+        			(MidLine[i] != kIn.MidLine[i]) ||
+        			(LeftLine[i] != kIn.LeftLine[i] ) ||
+        			(RightLine[i] != kIn.RightLine[i]) )
+        		return false;
+        }
+        if ( BoundaryEmphasis[0] != kIn.BoundaryEmphasis[0])
+        	return false;
+        if ( UseWidget[0] != kIn.UseWidget[0])
+        	return false;
+        return true;
+    }
 }

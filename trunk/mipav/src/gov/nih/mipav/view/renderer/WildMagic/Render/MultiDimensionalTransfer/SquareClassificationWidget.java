@@ -148,6 +148,7 @@ public class SquareClassificationWidget extends ClassificationWidget
             m_kWidgetEfect.SetRightLine( fX1, fY1, fX2, fY2 );
             
             m_kWidgetEfect.UpdateColor();
+            m_kWidgetEfect.computeUniformVariables();
         }
     }
 
