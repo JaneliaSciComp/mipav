@@ -745,7 +745,7 @@ public class FileDicom extends FileDicomBase {
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
         int tagVM;
-        
+               
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
         
@@ -851,6 +851,7 @@ public class FileDicom extends FileDicomBase {
             case UN:
                 if(elementLength != -1) {
                     processUnknownVR(tagTable, strValue, key, tagVM, strValue);
+                    break;
                 } //else is implicit sequence, so continue
             case SQ:
                 processSequence(tagTable, key, name, endianess);
