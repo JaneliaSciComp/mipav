@@ -137,7 +137,7 @@ public class JDialogSaveSlices extends JDialogBase {
     private boolean stampSecondary = true;
 
     /** Whether 3D or higher dimensionality dicom images should be saved as a single file */
-    private boolean saveEnhancedDicom;
+    private boolean saveEnhancedDicom = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -342,7 +342,9 @@ public class JDialogSaveSlices extends JDialogBase {
             }
             saveAsEncapJP2 = encapJP2Checkbox.isSelected();
             stampSecondary = stampSecondaryCheckbox.isSelected();
-            saveEnhancedDicom = saveEnhancedDicomCheckbox.isSelected();
+            if(saveEnhancedDicomCheckbox != null) {
+                saveEnhancedDicom = saveEnhancedDicomCheckbox.isSelected();
+            }
             options.setWritePackBit(packBitCheckbox.isSelected());
 
             dispose();
