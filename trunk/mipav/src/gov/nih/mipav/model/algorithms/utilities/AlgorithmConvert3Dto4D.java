@@ -152,9 +152,13 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         int[] units = new int[4];
         float[] startLocs = new float[4];
         int numInfos = zDim * tDim;
+        System.err.println("zDim:" +zDim);
+        System.err.println("tDim:" +tDim);
         FileInfoDicom oldDicomInfo = null;
         FileDicomTagTable[] childTagTables = null;
         int i;
+        double sliceResolution = 1.0;
+        float resolutions[];
         
 
         fileInfo = srcImage.getFileInfo();
@@ -164,8 +168,10 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             childTagTables = new FileDicomTagTable[numInfos - 1];
            for (t = 0; t < tDim; t++) {
                for (z = 0; z < zDim; z++) {
-                   i = (t * zDim) + z;                  
+                   i = (t * zDim) + z;      
                    if (i == 0) {
+                      
+                       
                        // create a new reference file info
                        destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                        oldDicomInfo.getFileFormat());
@@ -179,6 +185,24 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                        ((FileInfoDicom)destFileInfo[i]).vr_type = oldDicomInfo.vr_type;
                        childTagTables[i - 1] = ((FileInfoDicom) destFileInfo[i]).getTagTable();
                    }
+                   FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[t]).getTagTable();
+                   if (newTagTable.getValue("0018,0088") != null) {
+                       String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
+                       sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                   }
+                   resolutions= new float[5];
+                       resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
+                       resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
+                       resolutions[2] = 1.0f;
+                       resolutions[3] = 1.0f;
+                       resolutions[4] = 1;
+                       destFileInfo[t].setResolutions(resolutions);
+                       ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
+                       ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows
+                       destFileInfo[t].setExtents(destImage.getExtents());
+              
+                       ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
+                                                                Short.toString((short) (t + 1)).length()); // instance number
                    ((FileInfoDicom) destFileInfo[i]).getTagTable().importTags((FileInfoDicom) fileInfo[i]);
                 }
             }
@@ -187,6 +211,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         } // if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
  
         else{
+            System.err.println("hello");
         for (t = 0; t < tDim; t++) {
 
 
