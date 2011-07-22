@@ -27,6 +27,7 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 	}
 
 	
+	
 	public int parseArguments(String[] args, int initArg) {
 		for(int i=0;i<args.length;i++) {
 			String varName = args[i];
