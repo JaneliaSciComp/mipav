@@ -15,6 +15,8 @@ import java.io.*;
  * are specified by the user).
  *  
  *
+ * @version  0.2 July 25, 2011
+ * @author   Beth Tyrie
  * @version  0.1 September 2, 2010
  * @author   William Gandler
  * @see      
@@ -108,6 +110,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         double rc[][] = new double[2][1];
         Matrix matRC;
         Matrix matDicom;
+        
         if (srcImage == null) {
             displayError("Original Image is null");
             setCompleted(false);
@@ -128,7 +131,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
         }
         else if (srcImage.isColorImage()) {
             cFactor = 4;
-            //System.err.println( "cFactor" );
         }
         
     if (srcImage.is2DImage()) {
@@ -210,13 +212,13 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                    
                     subXDim = destImage.getExtents()[0];
                     subYDim = destImage.getExtents()[1];
-                    subZDim = destImage.getExtents()[2];
-                    compSubZDim = (yDim/(subYDim))*((xDim/subXDim));
+                    subZDim = destImage.getExtents()[2]; //User specified Z-Dim
+                    compSubZDim = (yDim/(subYDim))*((xDim/subXDim)); //Sets for loop Z-Dim based on subX and subY dims  
                     subTDim = destImage.getExtents()[3];
                     subLength = cFactor * subXDim * subYDim * compSubZDim;
-                    subBuffer = new double[subLength/compSubZDim]; 
+                    subBuffer = new double[subLength/compSubZDim]; //Creates buffer for each z-slice
                     sliceNum = 0;
-                    zs = 0;
+                    zs = 0;// Keeps track of Z-Dim to be used in orgIndex equation
                     bufferSliceCount = -1;
                     for (z = 0; z < subTDim; z++) {  
                         sliceNum=0;
@@ -233,12 +235,11 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                 }// for (ys = 0; ys < subYDim; ys++)
                                 
                                if (sliceNum <subZDim){ 
-                                   bufferSliceCount++;
+                                   bufferSliceCount++;// Keeps track of user specified Z-Dim
                                 try {
                                     destImage.importData((bufferSliceCount*(subLength/compSubZDim)), subBuffer, false);
                                     }
                                 catch (IOException error) {
-                                    //error.printStackTrace();
                                     buffer = null;
                                     destImage.disposeLocal(); // Clean up memory of result image
                                     destImage = null;
@@ -260,11 +261,9 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
      
                            
                   destImage.calcMinMax();
-
-                  
-
                   fileInfo = srcImage.getFileInfo();
                   if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
+                      //4-D Destination dicom images
                       if (srcImage.is3DImage()) {
                           FileInfoBase destFileInfo[] = null;
                           int numInfos = destImage.getExtents()[3]*destImage.getExtents()[2];
@@ -274,10 +273,9 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
 
                       destFileInfo = new FileInfoBase[numInfos];
                       oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
-                      FileDicomTagTable tagTable = oldDicomInfo.getTagTable();
                       childTagTables = new FileDicomTagTable[numInfos - 1];
 
-                         
+                     // Most efficient way of creating DICOM tags for 4-D. Uses pointers based on srcimage dicom tags    
                      for (t = 0; t < destImage.getExtents()[3]; t++) {
                          for (z = 0; z <destImage.getExtents()[2] ; z++) {
                              j = (t*destImage.getExtents()[2]) + z;
@@ -302,24 +300,27 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                   String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
                                   sliceResolution = new Double(sliceGapString.trim()).doubleValue();
                               }
+                                  fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                                   resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                                   resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
                                   resolutions[2] = 1.0f;
                                   resolutions[3] = 1.0f;
-                                  resolutions[4] = 1;
-                                  destFileInfo[t].setResolutions(resolutions);
+                                  //resolutions[4] = 1;
+                                  ((FileInfoDicom) destFileInfo[t]).setResolutions(resolutions);
                                   ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
-                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows
+                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows                 
                                   destFileInfo[t].setExtents(destImage.getExtents());
-                         
+
                                   ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
                                                                            Short.toString((short) (t + 1)).length()); // instance number
                              ((FileInfoDicom) destFileInfo[t]).getTagTable().importTags((FileInfoDicom) fileInfo[t]);
+                             ((FileInfoDicom) destFileInfo[t]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
                           }
                      }
                       ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
                       destImage.setFileInfo(destFileInfo);
                   }
+                      //3-D Destination dicom images
                       else{
                       FileInfoDicom dicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
                       FileDicomTagTable tagTable = dicomInfo.getTagTable();
@@ -336,67 +337,6 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                       final float[] imageOrg = srcImage.getFileInfo(0).getOrigin();
                       final double dicomOrigin[] = new double[imageOrg.length];
                       
-                      // DICOM (20,32) is incorrect for mosaics.  The value in this field gives where the
-                      // origin of an image the size of the mosaic would have been had such an image been
-                      // collected.  This puts the origin outside of the scanner.
-                      
-                      // Define a flipped version of 'ImageOrientationPatient (20,37)', F, that has flipped columns.
-                      // Thus if the vector of 6 values in 'ImageOrientationPatient', are j,i2,i3,i4,i5,i6, then F =
-                      // [i4 j]
-                      // [i5 i2]
-                      // [i6 i3]
-                      // Now the first column of F contains what the DICOM docs call the 'column(Y) direction cosine',
-                      // and second column contains the 'row(X) direction cosine.'  We prefer to think of these as 
-                      // (respectively) the row index direction cosine.
-                      
-                      // We can think of the affine A as the (3,3) component, RS, and a (3,1) translation vector t.
-                      // RS can in turn be thought of as the dot product of a (3,3) rotation matrix R and a scaling
-                      // matrix S, where S = diag(s) and s a is (3,) vector of voxel sizes.  t is a (3,1) translation
-                      // vector, defining the coordinate in millimeters of the first voxel in the voxel volume(the
-                      // voxel given by the voxel_array[0,0,0]).
-                      
-                      // In the case of the mosaic, we have the first two columns of R from the F - the left/right
-                      // flipped version of the ImageOrientationPatient DICOM field described in DICOM affines again.
-                      // To make a full rotation matrix, we can generate the last column from the cross product of the
-                      // first two.  However, Siemens defines, in its private CSA header, a SliceNormalVector which gives
-                      // the third column, but possibly with a z flip, so that R is orthogonal, but not a rotation 
-                      // matrix (it has a determinant of < 0).
-                      
-                      // The first two values of s(s1,s2) are given by the PixelSpacing field.  We get s3(the slice
-                      // scaling value) from SpacingBetweenSlices.
-                      
-                      // The SPM DICOM conversion code has a comment saying that mosaic DICOM images have an incorrect
-                      // ImagePositionPatient field.  The ImagePositionPatient field gives the t vector.  The comments
-                      // imply that Siemens has derived ImagePositionPatient from the (correct) position of the center
-                      // of the first slice (once the mosaic has been unpacked), but has then adjusted the vector to 
-                      // point to the top left voxel, where the slice size used for this adjustment is the size of the
-                      // mosaic, before it has been unpacked.  Let's call the correct position in millimeters of the
-                      // center of the first slice c = [cx,cy,cz].  We have derived the RS matrix from the calculations
-                      // above.  The unpacked (eventual, real) slice dimensions are (rdrows, rdcols) and the mosaic
-                      // dimensions are (mdrows,mdcols).  The ImagePositionPatient  vector i resulted from:
-                      
-                      //           [-(mdrows - 1)/2] 
-                      // i = c + RS[-(mdcols - 1)/2]
-                      //           [       0       ]
-                      
-                      // To correct the faulty translation, we reverse it, and add the correct translation for the unpacked
-                      // slice size (rdrows, rdcols), giving the true image position t:
-                      
-                      //             [-(mdrows - 1)/2]       [-(rdrows - 1)/2]
-                      // t = i - (RS [-(mdcols - 1)/2]) + (RS[-(rdcols - 1)/2])
-                      //             [       0       ]       [       0       ]
-                      
-                      // Because of the final zero in the voxel translations, this simplifies to:
-                      
-                      
-                      // t = i + Q[(mdrows - rdrows)/2]
-                      //          [(mdcols - rdcols)/2]
-                      
-                      // where:
-                      
-                      //      [r11*s1 r12*s2]
-                      //  Q = [r21*s1 r22*s2]
-                      //      [r31*s1 r32*s2]
                       
                       if (tagTable.getValue("0020,0037") != null) {
                           String orientation = (String) tagTable.getValue("0020,0037");
@@ -538,6 +478,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                   } // if (srcImage.getFileInfo()[0] instanceof FileInfoDicom)
 
  }
+               // Non-Dicom Images
                   else {
                       fileInfo = destImage.getFileInfo();
                       
@@ -578,4 +519,66 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
               
   }
 
+// *****************************************NOTE*****************************************************************
+// DICOM (20,32) is incorrect for mosaics.  The value in this field gives where the
+// origin of an image the size of the mosaic would have been had such an image been
+// collected.  This puts the origin outside of the scanner.
+
+// Define a flipped version of 'ImageOrientationPatient (20,37)', F, that has flipped columns.
+// Thus if the vector of 6 values in 'ImageOrientationPatient', are j,i2,i3,i4,i5,i6, then F =
+// [i4 j]
+// [i5 i2]
+// [i6 i3]
+// Now the first column of F contains what the DICOM docs call the 'column(Y) direction cosine',
+// and second column contains the 'row(X) direction cosine.'  We prefer to think of these as 
+// (respectively) the row index direction cosine.
+
+// We can think of the affine A as the (3,3) component, RS, and a (3,1) translation vector t.
+// RS can in turn be thought of as the dot product of a (3,3) rotation matrix R and a scaling
+// matrix S, where S = diag(s) and s a is (3,) vector of voxel sizes.  t is a (3,1) translation
+// vector, defining the coordinate in millimeters of the first voxel in the voxel volume(the
+// voxel given by the voxel_array[0,0,0]).
+
+// In the case of the mosaic, we have the first two columns of R from the F - the left/right
+// flipped version of the ImageOrientationPatient DICOM field described in DICOM affines again.
+// To make a full rotation matrix, we can generate the last column from the cross product of the
+// first two.  However, Siemens defines, in its private CSA header, a SliceNormalVector which gives
+// the third column, but possibly with a z flip, so that R is orthogonal, but not a rotation 
+// matrix (it has a determinant of < 0).
+
+// The first two values of s(s1,s2) are given by the PixelSpacing field.  We get s3(the slice
+// scaling value) from SpacingBetweenSlices.
+
+// The SPM DICOM conversion code has a comment saying that mosaic DICOM images have an incorrect
+// ImagePositionPatient field.  The ImagePositionPatient field gives the t vector.  The comments
+// imply that Siemens has derived ImagePositionPatient from the (correct) position of the center
+// of the first slice (once the mosaic has been unpacked), but has then adjusted the vector to 
+// point to the top left voxel, where the slice size used for this adjustment is the size of the
+// mosaic, before it has been unpacked.  Let's call the correct position in millimeters of the
+// center of the first slice c = [cx,cy,cz].  We have derived the RS matrix from the calculations
+// above.  The unpacked (eventual, real) slice dimensions are (rdrows, rdcols) and the mosaic
+// dimensions are (mdrows,mdcols).  The ImagePositionPatient  vector i resulted from:
+
+//           [-(mdrows - 1)/2] 
+// i = c + RS[-(mdcols - 1)/2]
+//           [       0       ]
+
+// To correct the faulty translation, we reverse it, and add the correct translation for the unpacked
+// slice size (rdrows, rdcols), giving the true image position t:
+
+//             [-(mdrows - 1)/2]       [-(rdrows - 1)/2]
+// t = i - (RS [-(mdcols - 1)/2]) + (RS[-(rdcols - 1)/2])
+//             [       0       ]       [       0       ]
+
+// Because of the final zero in the voxel translations, this simplifies to:
+
+
+// t = i + Q[(mdrows - rdrows)/2]
+//          [(mdcols - rdcols)/2]
+
+// where:
+
+//      [r11*s1 r12*s2]
+//  Q = [r21*s1 r22*s2]
+//      [r31*s1 r32*s2]
 
