@@ -274,6 +274,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                       destFileInfo = new FileInfoBase[numInfos];
                       oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
                       childTagTables = new FileDicomTagTable[numInfos - 1];
+                      int sliceCounter = 0; //Keeps track of every slice to populate tag
 
                      // Most efficient way of creating DICOM tags for 4-D. Uses pointers based on srcimage dicom tags    
                      for (t = 0; t < destImage.getExtents()[3]; t++) {
@@ -300,23 +301,28 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                   String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
                                   sliceResolution = new Double(sliceGapString.trim()).doubleValue();
                               }
+  
+                                        
                                   fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                                   resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                                   resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
                                   resolutions[2] = 1.0f;
                                   resolutions[3] = 1.0f;
-                                  //resolutions[4] = 1;
-                                  ((FileInfoDicom) destFileInfo[t]).setResolutions(resolutions);
+                                  resolutions[4] = 1;
+                                  destFileInfo[sliceCounter].setResolutions(resolutions);
+                                  destFileInfo[sliceCounter].setExtents(destImage.getExtents());
                                   ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
                                   ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows                 
-                                  destFileInfo[t].setExtents(destImage.getExtents());
-
                                   ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
                                                                            Short.toString((short) (t + 1)).length()); // instance number
-                             ((FileInfoDicom) destFileInfo[t]).getTagTable().importTags((FileInfoDicom) fileInfo[t]);
-                             ((FileInfoDicom) destFileInfo[t]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().importTags((FileInfoDicom) fileInfo[t]);
+                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                                   
+                                   sliceCounter++;  
                           }
+                         
                      }
+                     
                       ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
                       destImage.setFileInfo(destFileInfo);
                   }
