@@ -318,13 +318,27 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @see     FileDicomTag#getValue(boolean)
      */
     public final Object getValue(String keyStr) {
+        return getValue(keyStr, true);
+    }
+    
+    /**
+     * Returns the value matching the key as a Java data element
+     * <code>get(keyStr).getValue(parse)</code>.
+     *
+     * @param   keyStr  the hexidecimal key to search for -- 'group,element'
+     *
+     * @return  the value that this key matches to as a String for output
+     *
+     * @see     FileDicomTag#getValue(boolean)
+     */
+    public final Object getValue(String keyStr, boolean parse) {
         FileDicomTag tag = get(keyStr);
 
         if (tag == null) {
             return null;
         }
 
-        return tag.getValue(true);
+        return tag.getValue(parse);
     }
 
     /**
