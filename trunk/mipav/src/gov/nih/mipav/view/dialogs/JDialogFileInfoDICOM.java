@@ -538,7 +538,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     t = (FileDicomTag) tagsList.get(key);
                     tagVals = t.getValueList();
 
-                    String dispString = "";
+                    StringBuilder dispStringBuffer = new StringBuilder();
                     final int num = t.getNumberOfValues();
 
                     if (num == 0) {
@@ -548,15 +548,16 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
                     for (int q = 0; q < num; q++) {
                         try {
-                            dispString += tagVals[q].toString();
+                            dispStringBuffer.append(tagVals[q].toString());
                         } catch (final NullPointerException e1) {
-                            dispString += "";
+                            dispStringBuffer.append("");
                         }
 
                         if ( (q + 1) < num) {
-                            dispString += ", ";
+                            dispStringBuffer.append(", ");
                         }
                     }
+                    String dispString = dispStringBuffer.toString();
                     if (dispString.length() > 0) {
                         final char c = dispString.charAt(dispString.length() - 1);
                         if (c == '\0') {
