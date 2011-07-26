@@ -152,14 +152,12 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         int[] units = new int[4];
         float[] startLocs = new float[4];
         int numInfos = zDim * tDim;
-        System.err.println("zDim:" +zDim);
-        System.err.println("tDim:" +tDim);
         FileInfoDicom oldDicomInfo = null;
         FileDicomTagTable[] childTagTables = null;
         int i;
         double sliceResolution = 1.0;
         float resolutions[];
-        
+   
 
         fileInfo = srcImage.getFileInfo();
         if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
@@ -191,19 +189,20 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                        sliceResolution = new Double(sliceGapString.trim()).doubleValue();
                    }
                    resolutions= new float[5];
+                       fireProgressStateChanged(((100 * t))/(destImage.getExtents()[3]-1));
                        resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                        resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
                        resolutions[2] = 1.0f;
                        resolutions[3] = 1.0f;
                        resolutions[4] = 1;
-                       destFileInfo[t].setResolutions(resolutions);
-                       ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
-                       ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows
-                       destFileInfo[t].setExtents(destImage.getExtents());
-              
-                       ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
-                                                                Short.toString((short) (t + 1)).length()); // instance number
-                   ((FileInfoDicom) destFileInfo[i]).getTagTable().importTags((FileInfoDicom) fileInfo[i]);
+                       destFileInfo[i].setResolutions(resolutions);
+                       destFileInfo[i].setExtents(destImage.getExtents());
+                       ((FileInfoDicom) destFileInfo[i]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
+                       ((FileInfoDicom) destFileInfo[i]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows
+                       ((FileInfoDicom) destFileInfo[i]).getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
+                                                                Short.toString((short) (i + 1)).length()); // instance number
+                       ((FileInfoDicom) destFileInfo[i]).getTagTable().importTags((FileInfoDicom) fileInfo[i]);
+    
                 }
             }
             ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
