@@ -380,6 +380,9 @@ public class FileDicomTag extends ModelSerialCloneable {
                 return (Object[]) value;
             } else if(value instanceof FileDicomSQ) { 
                 return ((FileDicomSQ) value).getSequenceDisplay().toArray();
+            } else if(value instanceof FileDicomKey) { 
+                stuff[0] = value;
+                return stuff;
             } else if(type.getType() instanceof StringType) {
                 return ((String)value).split("\\\\");
             } else {

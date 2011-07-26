@@ -126,9 +126,6 @@ public class FileDicom extends FileDicomBase {
     /** JPEG compression may be lossy or lossless. */
     private boolean lossy = false;
 
-    /** Reference to the LUT (if one is stored with the image). */
-    private ModelLUT lut;
-
     /**
      * Number of bytes following this File Meta Element (end of the Value field) up to and including the last File Meta
      * Element of the Group 2 File Meta Information.
@@ -368,16 +365,6 @@ public class FileDicom extends FileDicomBase {
      */
     public final FileDicomSQ getDirFileInfo() {
         return dirInfo;
-    }
-
-    /**
-     * returns the ModelLUT, if there, which might be specified by the <code>0028,1201</code>, <code>0028,1202</code>,
-     * <code>0028,1203</code> tags.
-     * 
-     * @return DOCUMENT ME!
-     */
-    public final ModelLUT getLUT() {
-        return lut;
     }
 
     /**
@@ -844,7 +831,7 @@ public class FileDicom extends FileDicomBase {
                 break;
             case OW:
                 if(name.equals("0028,1201") || name.equals("0028,1202") || name.equals("0028,1203")) {
-                    getColorPallete(new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
+                    return getColorPallete(tagTable, new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
                 } 
             case OB:
                 if(name.matches(FileDicom.IMAGE_TAG)) { //can be either OW or OB
@@ -2867,7 +2854,7 @@ public class FileDicom extends FileDicomBase {
      * 
      * @see "DICOM PS 3.3, Information Object Definitions"
      */
-    private void getColorPallete(final FileDicomKey palleteKey) throws IllegalArgumentException, IOException {
+    private boolean getColorPallete(final FileDicomTagTable tagTable, final FileDicomKey palleteKey) throws IllegalArgumentException, IOException {
 
         try {
 
@@ -2900,7 +2887,8 @@ public class FileDicom extends FileDicomBase {
                 data = getShort(numberOfLUTValues, elementLength, true);
             }
 
-            fileInfo.getTagTable().setValue(palleteKey.getKey(), data, numberOfLUTValues);
+            tagTable.setValue(palleteKey.getKey(), data, numberOfLUTValues);
+            return true;
         } catch (final NullPointerException npe) {
             final FileDicomTag t = fileInfo.getTagTable().get(palleteKey);
             MipavUtil.displayError("This image carries " + t.getName() + ", but specifies it incorrectly.\n"
@@ -2918,6 +2906,7 @@ public class FileDicom extends FileDicomBase {
             Preferences.debug("Error reading color LUT channel.  This Channel will be ignored.\n", Preferences.DEBUG_FILEIO);
             // System.err.println("Error reading color LUT channel. This Channel will be ignored.");
         }
+        return false;
     }
 
     /**

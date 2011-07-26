@@ -369,6 +369,16 @@ public class FileInfoDicom extends FileInfoBase {
 
         super.finalize();
     }
+    
+    /**
+     * returns the ModelLUT, if there, which might be specified by the <code>0028,1201</code>, <code>0028,1202</code>,
+     * <code>0028,1203</code> tags.
+     * 
+     * @return DOCUMENT ME!
+     */
+    public final ModelLUT getLUT() {
+        return lut;
+    }
 
     /**
      * This method extracts directional cosines from the DICOM image header (tag = "0020, 0037"). Since the third row of
@@ -833,6 +843,8 @@ public class FileInfoDicom extends FileInfoBase {
                 }
             } else if (tagKey.equals("0028,0120")) { // type 3
                 pixelPaddingValue = (Short) tag.getValue(false);
+            } else if (tagKey.equals("0028,0006")) {
+                planarConfig = ((Number)tag.getValue(false)).shortValue();
             } else if(tagKey.equals("0028,0004")) { //requires bitsAllocated(0028,0100) and pixelRepresentation(0028,0103) to be set
                 setInfoFromTag(tagTable.get(new FileDicomKey("0028,0100")));
                 setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
@@ -872,26 +884,16 @@ public class FileInfoDicom extends FileInfoBase {
                     setDataType(ModelStorageBase.SHORT);
                     displayType = ModelStorageBase.SHORT;
                     bytesPerPixel = 2;
-                } else if (photometricInterp.equals("RGB") && (bitsAllocated == 8)) {
+                } else if (photometricInterp.equals("RGB") && (bitsAllocated == 8)) { //requires 0028,0006 to be set
+                    setInfoFromTag(tagTable.get(new FileDicomKey("0028,0006")));
                     setDataType(ModelStorageBase.ARGB);
                     displayType = ModelStorageBase.ARGB;
                     bytesPerPixel = 3;
-    
-                    if (tagTable.getValue("0028,0006") != null) {
-                        planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
-                    } else {
-                        planarConfig = 0; // rgb, rgb, rgb
-                    }
-                } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {
+                } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {  //requires 0028,0006 to be set
+                    setInfoFromTag(tagTable.get(new FileDicomKey("0028,0006")));
                     setDataType(ModelStorageBase.ARGB);
                     displayType = ModelStorageBase.ARGB;
                     bytesPerPixel = 3;
-    
-                    if (tagTable.getValue("0028,0006") != null) {
-                        planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
-                    } else {
-                        planarConfig = 0; // rgb, rgb, rgb
-                    }
                 } else if (photometricInterp.equals("PALETTE COLOR")
                         && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
                         && (bitsAllocated == 8)) {
@@ -912,10 +914,10 @@ public class FileInfoDicom extends FileInfoBase {
                     Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
                             Preferences.DEBUG_FILEIO);
                 }
-            } else if(tagKey.equals("0028, 1201") || tagKey.equals("0028, 1202") || tagKey.equals("0028, 1203")) {
+            } else if(tagKey.equals("0028,1201") || tagKey.equals("0028,1202") || tagKey.equals("0028,1203")) {
             //for keyNum, from dicom standard, 1 is red, 2 is green, 3 is blue
                 int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
-                Object data = tagTable.getValue(tagKey);
+                Object data = tag.getValue(false);
                 if (data instanceof Number[]) {
                     final int lutVals = ((Number[])data).length;
                     for (int qq = 0; qq < lutVals; qq++) {

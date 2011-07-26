@@ -1454,7 +1454,7 @@ public class FileIO {
         // That the image contains this tag, means that the image contains it's own
         // LUT, and that we should use it.
         if (firstSliceTagTable.get("0028,1201") != null) {
-            LUT = imageFile.getLUT();
+            LUT = ((FileInfoDicom)image.getFileInfo(0)).getLUT();
         }
 
         if (progressBar != null) {
