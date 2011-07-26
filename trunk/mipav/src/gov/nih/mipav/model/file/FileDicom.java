@@ -1089,7 +1089,7 @@ public class FileDicom extends FileDicomBase {
                 tagTable.setValue(key, readUnknownData(), elementLength);
             } else {
                 tagTable
-                        .putPrivateTagValue(new FileDicomTagInfo(key, null, tagVM, "PrivateTag", "Private Tag"));
+                        .putPrivateTagValue(new FileDicomTagInfo(key, VR.UN, tagVM, "PrivateTag", "Private Tag"));
 
                 tagTable.setValue(key, readUnknownData(), elementLength);
 
@@ -3789,11 +3789,11 @@ public class FileDicom extends FileDicomBase {
         int samplesPerPixel = 1;
 
         if (fileInfo.getTagTable().getValue("0028,0002") != null) {
-            samplesPerPixel = ((Short) fileInfo.getTagTable().getValue("0028,0002")).shortValue();
+            samplesPerPixel = ((Short) fileInfo.getTagTable().getTagList().get("0028,0002").getValue(false)).shortValue();
         }
 
         final int imageLength = image.getSliceSize()
-                * ((Short) fileInfo.getTagTable().getValue("0028,0100")).shortValue() / 8 * // bits per pixel
+                * ((Short) fileInfo.getTagTable().getValue("0028,0100", false)).shortValue() / 8 * // bits per pixel
                 samplesPerPixel; // samples per pixel (i.e RGB = 3)
 
         if (fileInfo.isMultiFrame()) {
