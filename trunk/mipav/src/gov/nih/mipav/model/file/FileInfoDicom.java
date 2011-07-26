@@ -675,294 +675,265 @@ public class FileInfoDicom extends FileInfoBase {
      */
     protected final void setInfoFromTag(FileDicomTag tag) {
         FileDicomKey tagKey = tag.getInfo().getKey();
-
+        //TODO: JDK7 allows this to turn into switch statements
         // ordering by type 1 tags first.  Then in numerical order.
-        if (tagKey.equals("0008,0060")) {
-            // type 1
-
-            setModalityFromDicomStr((String) tag.getValue(false));
-
-            // setModalityFromDicomStr() covers the possibility of value == ""
-        } else if (tagKey.equals("0018,0088")) {
-            // type 1
-
-            super.setResolutions(Float.parseFloat((String) tag.getValue(false)), 2);
-        } else if (tagKey.equals("0028,0100")) {
-            // type 1
-
-            bitsAllocated = ((Short) tag.getValue(false)).shortValue();
-        } else if (tagKey.equals("0028,0103")) {
-            // type 1
-
-            pixelRepresentation = ((Short) tag.getValue(false)).shortValue();
-        } else if (tagKey.equals("0028,1052")) {
-            // type 1
-
-            super.setRescaleIntercept(Double.valueOf((String) tag.getValue(false)).doubleValue());
-
-            // only used in CT images, so don't notify that not found
-        } else if (tagKey.equals("0028,1053")) {
-            // type 1
-
-            super.setRescaleSlope(Double.valueOf((String) tag.getValue(false)).doubleValue());
-
-            // only used in CT and PET images, so don't notify that not found
-        }
-
-        // any variables whose value depends on a type 2 or type 3 tag
-        if (tagKey.equals("0018,0050")) {
-            // type 2
-
-            setSliceThickness(Float.parseFloat(((String) tag.getValue(false)).trim()));
-        } else if (tagKey.equals("0018,602C")) {
-            setResolutions(((Double) tag.getValue(false)).floatValue(), 0);
-        } else if (tagKey.equals("0018,602E")) {
-            setResolutions(((Double) tag.getValue(false)).floatValue(), 1);
-        } else if (tagKey.equals("0020,0032")) { // type 2c
-            orientation = ((String) tag.getValue(false)).trim();
-
-            int index1 = -1, index2 = -1;
-
-            for (int i = 0; i < orientation.length(); i++) {
-
-                if (orientation.charAt(i) == '\\') {
-
-                    if (index1 == -1) {
-                        index1 = i;
-                    } else {
-                        index2 = i;
+        try {
+            if (tagKey.equals("0008,0060")) {
+                setModalityFromDicomStr((String) tag.getValue(false)); // type 1
+                // setModalityFromDicomStr() covers the possibility of value == ""
+            } else if (tagKey.equals("0018,0088")) {
+                super.setResolutions(Float.parseFloat(tag.getValue(false).toString()), 2); // type 1
+            } else if (tagKey.equals("0028,0100")) {
+                bitsAllocated = ((Short) tag.getValue(false)).shortValue(); // type 1
+            } else if (tagKey.equals("0028,0103")) {
+                pixelRepresentation = ((Short) tag.getValue(false)).shortValue(); // type 1
+            } else if (tagKey.equals("0028,1052")) {
+                super.setRescaleIntercept(Double.valueOf((String) tag.getValue(false)).doubleValue());  // type 1
+                // only used in CT images, so don't notify that not found
+            } else if (tagKey.equals("0028,1053")) {
+                super.setRescaleSlope(Double.valueOf((String) tag.getValue(false)).doubleValue()); // type 1
+                // only used in CT and PET images, so don't notify that not found
+            } else if (tagKey.equals("0018,0050")) {
+                
+    
+                setSliceThickness(Float.parseFloat(((String) tag.getValue(false)).trim())); // type 2
+            } else if (tagKey.equals("0018,602C")) {
+                setResolutions(((Double) tag.getValue(false)).floatValue(), 0);
+            } else if (tagKey.equals("0018,602E")) {
+                setResolutions(((Double) tag.getValue(false)).floatValue(), 1);
+            } else if (tagKey.equals("0020,0032")) { // type 2c
+                orientation = ((String) tag.getValue(false)).trim();
+                int index1 = -1, index2 = -1;
+                for (int i = 0; i < orientation.length(); i++) {
+    
+                    if (orientation.charAt(i) == '\\') {
+    
+                        if (index1 == -1) {
+                            index1 = i;
+                        } else {
+                            index2 = i;
+                        }
                     }
                 }
-            }
-            
-            if (index1 != -1)
-            	xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
-            if (index1 != -1 && index2 != -1)
-            	yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
-            if (index2 != -1)
-            	zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
-            
-            if (index1 == -1 || index2 == -1)
-            	Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
-            
-        } else if (tagKey.equals("0020,0013")) { // type 2
-
-            try {
-                instanceNumber = Integer.parseInt(((String) tag.getValue(false)).trim());
-            } catch (NumberFormatException e) {
-                MipavUtil.displayError("FileInfoDicom: Number format error: Instance Number.");
-            }
-        } else if (tagKey.equals("0020,1041")) { // type 3
-
-            String s = ((String) tag.getValue(false)).trim();
-
-            try {
-                Float temp;
-                temp = new Float(s);
-                sliceLocation = temp.floatValue();
-            } catch (NumberFormatException e) {
-                MipavUtil.displayError("Number format error: Slice Location = " + s);
-            }
-        } else if (tagKey.equals("0028,0030") &&
-                       ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
-        	// y resolution followed by x resolution
-
-            String valueStr = (String) tag.getValue(false);
-            String firstHalf, secondHalf;
-            int index = 0;
-
-            for (int i = 0; i < valueStr.length(); i++) {
-
-                if (valueStr.charAt(i) == '\\') {
-                    index = i;
+                if (index1 != -1)
+                	xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                if (index1 != -1 && index2 != -1)
+                	yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                if (index2 != -1)
+                	zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+              
+                if (index1 == -1 || index2 == -1)
+                	Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
+                
+            } else if (tagKey.equals("0020,0013")) { // type 2
+                instanceNumber = Integer.parseInt(tag.getValue(false).toString());
+            } else if (tagKey.equals("0020,1041")) { // type 3
+                sliceLocation =  Float.valueOf(tag.getValue(true).toString()).floatValue();
+            } else if (tagKey.equals("0028,0030") &&
+                           ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
+            	// y resolution followed by x resolution
+    
+                String valueStr = (String) tag.getValue(false);
+                String firstHalf, secondHalf;
+                int index = 0;
+    
+                for (int i = 0; i < valueStr.length(); i++) {
+    
+                    if (valueStr.charAt(i) == '\\') {
+                        index = i;
+                    }
                 }
-            }
-
-            firstHalf = valueStr.substring(0, index).trim();
-            secondHalf = valueStr.substring(index + 1, valueStr.length()).trim();
-
-            Float f1 = null;
-            Float f2 = null;
-
-            if ((firstHalf != null) && (firstHalf.length() > 0)) {
-
-                try {
-                    f1 = new Float(firstHalf);
-                } catch (NumberFormatException e) {
+    
+                firstHalf = valueStr.substring(0, index).trim();
+                secondHalf = valueStr.substring(index + 1, valueStr.length()).trim();
+    
+                Float f1 = null;
+                Float f2 = null;
+    
+                if ((firstHalf != null) && (firstHalf.length() > 0)) {
+    
+                    try {
+                        f1 = new Float(firstHalf);
+                    } catch (NumberFormatException e) {
+                        setResolutions(1.0f, 1);
+                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                    }
+    
+                    if (f1 != null) {
+                        setResolutions(f1.floatValue(), 1);
+                    }
+                } else {
                     setResolutions(1.0f, 1);
-                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                 }
-
-                if (f1 != null) {
-                    setResolutions(f1.floatValue(), 1);
-                }
-            } else {
-                setResolutions(1.0f, 1);
-            }
-
-            if ((secondHalf != null) && (secondHalf.length() > 0)) {
-
-                try {
-                    f2 = new Float(secondHalf);
-                } catch (NumberFormatException e) {
-                    setResolutions(getResolution(1), 0);
-                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                }
-
-                if (f2 != null) {
-                    setResolutions(f2.floatValue(), 0);
-                }
-            } else {
-                setResolutions(1.0f, 0);
-            }
-        } else if (tagKey.equals("0018,1164")) { // type 2
-
-            String valueStr = (String) tag.getValue(false);
-            String firstHalf, secondHalf;
-            int index = 0;
-
-            for (int i = 0; i < valueStr.length(); i++) {
-
-                if (valueStr.charAt(i) == '\\') {
-                    index = i;
-                }
-            }
-
-            firstHalf = valueStr.substring(0, index).trim();
-            secondHalf = valueStr.substring(index + 1, valueStr.length()).trim();
-
-            Float f1 = null;
-            Float f2 = null;
-
-            if ((firstHalf != null) && (firstHalf.length() > 0)) {
-
-                try {
-                    f1 = new Float(firstHalf);
-                } catch (NumberFormatException e) {
+    
+                if ((secondHalf != null) && (secondHalf.length() > 0)) {
+    
+                    try {
+                        f2 = new Float(secondHalf);
+                    } catch (NumberFormatException e) {
+                        setResolutions(getResolution(1), 0);
+                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                    }
+    
+                    if (f2 != null) {
+                        setResolutions(f2.floatValue(), 0);
+                    }
+                } else {
                     setResolutions(1.0f, 0);
-                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                 }
-
-                if (f1 != null) {
-                    setResolutions(f1.floatValue(), 0);
+            } else if (tagKey.equals("0018,1164")) { // type 2
+    
+                String valueStr = (String) tag.getValue(false);
+                String firstHalf, secondHalf;
+                int index = 0;
+    
+                for (int i = 0; i < valueStr.length(); i++) {
+    
+                    if (valueStr.charAt(i) == '\\') {
+                        index = i;
+                    }
                 }
-            } else {
-                setResolutions(1.0f, 0);
-            }
-
-            if ((secondHalf != null) && (secondHalf.length() > 0)) {
-
-                try {
-                    f2 = new Float(secondHalf);
-                } catch (NumberFormatException e) {
-                    setResolutions(getResolution(0), 1);
-                    // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
-                }
-
-                if (f2 != null) {
-                    setResolutions(f2.floatValue(), 1);
-                }
-            } else {
-                setResolutions(1.0f, 1);
-            }
-        } else if (tagKey.equals("0028,0120")) { // type 3
-            pixelPaddingValue = (Short) tag.getValue(false);
-        } else if(tagKey.equals("0028,0004")) {
-            photometricInterp = (String) tag.getValue(false);
-            
-            if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (bitsAllocated == 1)) {
-                setDataType(ModelStorageBase.BOOLEAN);
-                displayType = ModelStorageBase.BOOLEAN;
-                bytesPerPixel = 1;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (bitsAllocated == 8)) {
-                setDataType(ModelStorageBase.UBYTE);
-                displayType = ModelStorageBase.UBYTE;
-                bytesPerPixel = 1;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP)
-                    && (bitsAllocated == 8)) {
-                setDataType(ModelStorageBase.BYTE);
-                displayType = ModelStorageBase.BYTE;
-                bytesPerPixel = 1;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (bitsAllocated > 16)) {
-                setDataType(ModelStorageBase.UINTEGER);
-                displayType = ModelStorageBase.UINTEGER;
-                bytesPerPixel = 4;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (bitsAllocated > 8)) {
-                setDataType(ModelStorageBase.USHORT);
-                displayType = ModelStorageBase.USHORT;
-                bytesPerPixel = 2;
-            } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
-                    && (pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (bitsAllocated > 8)) {
-                setDataType(ModelStorageBase.SHORT);
-                displayType = ModelStorageBase.SHORT;
-                bytesPerPixel = 2;
-            } else if (photometricInterp.equals("RGB") && (bitsAllocated == 8)) {
-                setDataType(ModelStorageBase.ARGB);
-                displayType = ModelStorageBase.ARGB;
-                bytesPerPixel = 3;
-
-                if (tagTable.getValue("0028,0006") != null) {
-                    planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+    
+                firstHalf = valueStr.substring(0, index).trim();
+                secondHalf = valueStr.substring(index + 1, valueStr.length()).trim();
+    
+                Float f1 = null;
+                Float f2 = null;
+    
+                if ((firstHalf != null) && (firstHalf.length() > 0)) {
+    
+                    try {
+                        f1 = new Float(firstHalf);
+                    } catch (NumberFormatException e) {
+                        setResolutions(1.0f, 0);
+                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                    }
+    
+                    if (f1 != null) {
+                        setResolutions(f1.floatValue(), 0);
+                    }
                 } else {
-                    planarConfig = 0; // rgb, rgb, rgb
+                    setResolutions(1.0f, 0);
                 }
-            } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {
-                setDataType(ModelStorageBase.ARGB);
-                displayType = ModelStorageBase.ARGB;
-                bytesPerPixel = 3;
-
-                if (tagTable.getValue("0028,0006") != null) {
-                    planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+    
+                if ((secondHalf != null) && (secondHalf.length() > 0)) {
+    
+                    try {
+                        f2 = new Float(secondHalf);
+                    } catch (NumberFormatException e) {
+                        setResolutions(getResolution(0), 1);
+                        // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
+                    }
+    
+                    if (f2 != null) {
+                        setResolutions(f2.floatValue(), 1);
+                    }
                 } else {
-                    planarConfig = 0; // rgb, rgb, rgb
+                    setResolutions(1.0f, 1);
                 }
-            } else if (photometricInterp.equals("PALETTE COLOR")
-                    && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
-                    && (bitsAllocated == 8)) {
-                setDataType(ModelStorageBase.UBYTE);
-                displayType = ModelStorageBase.UBYTE;
-                bytesPerPixel = 1;
-
-                final int[] dimExtents = new int[2];
-                dimExtents[0] = 4;
-                dimExtents[1] = 256;
-                lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
-
-                for (int q = 0; q < dimExtents[1]; q++) {
-                    lut.set(0, q, 1); // the alpha channel is preloaded.
+            } else if (tagKey.equals("0028,0120")) { // type 3
+                pixelPaddingValue = (Short) tag.getValue(false);
+            } else if(tagKey.equals("0028,0004")) { //requires bitsAllocated(0028,0100) and pixelRepresentation(0028,0103) to be set
+                setInfoFromTag(tagTable.get(new FileDicomKey("0028,0100")));
+                setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
+                photometricInterp = (String) tag.getValue(false);
+                
+                if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                        && (bitsAllocated == 1)) {
+                    setDataType(ModelStorageBase.BOOLEAN);
+                    displayType = ModelStorageBase.BOOLEAN;
+                    bytesPerPixel = 1;
+                } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                        && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                        && (bitsAllocated == 8)) {
+                    setDataType(ModelStorageBase.UBYTE);
+                    displayType = ModelStorageBase.UBYTE;
+                    bytesPerPixel = 1;
+                } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                        && (pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP)
+                        && (bitsAllocated == 8)) {
+                    setDataType(ModelStorageBase.BYTE);
+                    displayType = ModelStorageBase.BYTE;
+                    bytesPerPixel = 1;
+                } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                        && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                        && (bitsAllocated > 16)) {
+                    setDataType(ModelStorageBase.UINTEGER);
+                    displayType = ModelStorageBase.UINTEGER;
+                    bytesPerPixel = 4;
+                } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                        && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                        && (bitsAllocated > 8)) {
+                    setDataType(ModelStorageBase.USHORT);
+                    displayType = ModelStorageBase.USHORT;
+                    bytesPerPixel = 2;
+                } else if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
+                        && (pixelRepresentation == FileInfoDicom.SIGNED_PIXEL_REP) && (bitsAllocated > 8)) {
+                    setDataType(ModelStorageBase.SHORT);
+                    displayType = ModelStorageBase.SHORT;
+                    bytesPerPixel = 2;
+                } else if (photometricInterp.equals("RGB") && (bitsAllocated == 8)) {
+                    setDataType(ModelStorageBase.ARGB);
+                    displayType = ModelStorageBase.ARGB;
+                    bytesPerPixel = 3;
+    
+                    if (tagTable.getValue("0028,0006") != null) {
+                        planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+                    } else {
+                        planarConfig = 0; // rgb, rgb, rgb
+                    }
+                } else if (photometricInterp.equals("YBR_FULL_422") && (bitsAllocated == 8)) {
+                    setDataType(ModelStorageBase.ARGB);
+                    displayType = ModelStorageBase.ARGB;
+                    bytesPerPixel = 3;
+    
+                    if (tagTable.getValue("0028,0006") != null) {
+                        planarConfig = ((Short) (tagTable.getValue("0028,0006"))).shortValue();
+                    } else {
+                        planarConfig = 0; // rgb, rgb, rgb
+                    }
+                } else if (photometricInterp.equals("PALETTE COLOR")
+                        && (pixelRepresentation == FileInfoDicom.UNSIGNED_PIXEL_REP)
+                        && (bitsAllocated == 8)) {
+                    setDataType(ModelStorageBase.UBYTE);
+                    displayType = ModelStorageBase.UBYTE;
+                    bytesPerPixel = 1;
+    
+                    final int[] dimExtents = new int[2];
+                    dimExtents[0] = 4;
+                    dimExtents[1] = 256;
+                    lut = new ModelLUT(ModelLUT.GRAY, 256, dimExtents);
+    
+                    for (int q = 0; q < dimExtents[1]; q++) {
+                        lut.set(0, q, 1); // the alpha channel is preloaded.
+                    }
+    
+                } else {
+                    Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
+                            Preferences.DEBUG_FILEIO);
                 }
-
-            } else {
-                Preferences.debug("File DICOM: readImage() - Unsupported pixel Representation" + "\n",
-                        Preferences.DEBUG_FILEIO);
-            }
-        } else if(tagKey.equals("0028, 1201") || tagKey.equals("0028, 1202") || tagKey.equals("0028, 1203")) {
-        //for keyNum, from dicom standard, 1 is red, 2 is green, 3 is blue
-            int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
-            Object data = tagTable.getValue(tagKey);
-            if (data instanceof Number[]) {
-                final int lutVals = ((Number[])data).length;
-                for (int qq = 0; qq < lutVals; qq++) {
-                    lut.set(keyNum, qq, (((Number[]) data)[qq]).intValue());
+            } else if(tagKey.equals("0028, 1201") || tagKey.equals("0028, 1202") || tagKey.equals("0028, 1203")) {
+            //for keyNum, from dicom standard, 1 is red, 2 is green, 3 is blue
+                int keyNum = Integer.valueOf(tagKey.getElement().substring(tagKey.getElement().length()-1));
+                Object data = tagTable.getValue(tagKey);
+                if (data instanceof Number[]) {
+                    final int lutVals = ((Number[])data).length;
+                    for (int qq = 0; qq < lutVals; qq++) {
+                        lut.set(keyNum, qq, (((Number[]) data)[qq]).intValue());
+                    }
                 }
-            }
-            if(lut.get(1) != null && lut.get(2) != null && lut.get(3) != null) {
-                lut.makeIndexedLUT(null);
-                //TODO: store this in file for display
-            }
-        } else if (tagKey.equals("0018,602C")) {
-            setUnitsOfMeasure(Unit.CENTIMETERS, 0);
-        } else if (tagKey.equals("0018,602E")) {
-            setUnitsOfMeasure(Unit.CENTIMETERS, 1);
-        } 
+                if(lut.get(1) != null && lut.get(2) != null && lut.get(3) != null) {
+                    lut.makeIndexedLUT(null);
+                    //TODO: store this in file for display
+                }
+            } else if (tagKey.equals("0018,602C")) {
+                setUnitsOfMeasure(Unit.CENTIMETERS, 0);
+            } else if (tagKey.equals("0018,602E")) {
+                setUnitsOfMeasure(Unit.CENTIMETERS, 1);
+            } 
+        } catch(NumberFormatException ex) {
+            Preferences.debug("Tag "+tag.getKey().toString()+" does not contain a number.", Preferences.DEBUG_FILEIO);
+        }
     }
 
     public boolean isEnhancedDicom() {
