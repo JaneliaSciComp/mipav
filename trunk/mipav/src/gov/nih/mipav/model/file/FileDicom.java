@@ -745,10 +745,9 @@ public class FileDicom extends FileDicomBase {
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
         int tagVM;
-               
+        
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
-        
         if ( (fileInfo.vr_type == FileInfoDicom.IMPLICIT) || (groupWord == 2)) {
 
             // implicit VR means VR is based on tag as defined in dictionary
@@ -837,6 +836,12 @@ public class FileDicom extends FileDicomBase {
             }
             
             switch(vr) {
+            case AT:
+                int groupWord = getUnsignedShort(fileInfo.getEndianess());
+                int elementWord = getUnsignedShort(fileInfo.getEndianess());
+                FileDicomKey innerKey = new FileDicomKey(groupWord, elementWord);
+                tagTable.setValue(key, innerKey, elementLength);
+                break;
             case OW:
                 if(name.equals("0028,1201") || name.equals("0028,1202") || name.equals("0028,1203")) {
                     getColorPallete(new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
