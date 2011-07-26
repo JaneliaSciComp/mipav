@@ -482,10 +482,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         
         if (info == null && tag != null) {
             info = tag.getInfo();
-        } else {
-            Preferences.debug("Not populating value for key: "+key, Preferences.DEBUG_FILEIO);
-            //return;
-        }
+        } 
             
         if(info != null) {
             info.setKey(key);
