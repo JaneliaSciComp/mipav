@@ -15,12 +15,6 @@ import java.io.*;
  unit vectors, the filter only responds to the color or chromaticity information and
  ignores the luminance information.
  
-     One major change was made from the article. Evans and Sangwine subtract (127.5,
- 127.5, 127.5), for midGray at the center of the color space from every color, so that
- every color has nonzero magnitude and a well defined orientation.  I changed the
- value of midGray from 127.5 to 0.001.  This stops 0 being as colored as 255 and prevents
- a nonzero magnitude from occurring.
- 
      In this case hypercomplex filters is really just a fancy way of saying that dot 
  products and cross products of colors are used.
  */
@@ -154,12 +148,10 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         
         
         if (srcImage.getType() == ModelStorageBase.ARGB) {
-            //midGray = 127.5;
-            midGray = 0.001;
+            midGray = 127.5;
         }
         else { // ModelStorageBase.ARGB_USHORT
-            //midGray = 32767.5;
-            midGray = 0.001;
+            midGray = (srcImage.getMin() + srcImage.getMax())/2.0;
         }
       
         red1 -= midGray;
