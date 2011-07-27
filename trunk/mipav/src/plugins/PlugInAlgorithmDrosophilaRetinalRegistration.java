@@ -468,7 +468,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                     }
                     // Now either do averaging or closest-Z
                     int floorPointIndex1 = 0, floorPointIndex2 = 0;
-                    if (doAverageRadio.isSelected() || doSqRtRadio.isSelected()) {
+                    //if (doAverageRadio.isSelected() || doSqRtRadio.isSelected()) {
                         // get linear interpolated values from both transformed points
                         if (tPt1[0] < 0 || tPt1[1] < 0 || tPt1[2] < 0 || tPt1[0] > imageX.getExtents()[0] - 1
                                 || tPt1[1] > imageX.getExtents()[1] - 1 || tPt1[2] > imageX.getExtents()[2] - 1) {
@@ -642,7 +642,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 avgG = (byte) Math.round( ( (rgb1_short[1] + rgb2_short[1]) / 2.0f));
                                 avgB = (byte) Math.round( ( (rgb1_short[2] + rgb2_short[2]) / 2.0f));
                             }
-                        } else {
+                        } else if (doSqRtRadio.isSelected()) {
                             // dont do combining if other point is all background
                             if (ignoreBGRadio.isSelected()) {
                                 if (rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
@@ -665,6 +665,96 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 avgG = (byte) Math.sqrt(rgb1_short[1] * rgb2_short[1]);
                                 avgB = (byte) Math.sqrt(rgb1_short[2] * rgb2_short[2]);
                             }
+                        }else {
+                        	//doing weighted
+                        	if (ignoreBGRadio.isSelected()) {
+                                if (rgb1_short[0] == 0 && rgb1_short[1] == 0 && rgb1_short[2] == 0) {
+                                    avgR = (byte) rgb2_short[0];
+                                    avgG = (byte) rgb2_short[1];
+                                    avgB = (byte) rgb2_short[2];
+                                } else if (rgb2_short[0] == 0 && rgb2_short[1] == 0 && rgb2_short[2] == 0) {
+                                    avgR = (byte) rgb1_short[0];
+                                    avgG = (byte) rgb1_short[1];
+                                    avgB = (byte) rgb1_short[2];
+                                } else {
+                                    // doing weighted ((IntensityX/IntensityX+IntensityY)*IntensityX   +   (IntensityY/IntensityX+IntensityY)*IntensityY
+                                	float weightR1;
+                                	float weightR2;
+                                	float weightG1;
+                                	float weightG2;
+                                	float weightB1;
+                                	float weightB2;
+                                	
+                                	if(rgb1_short[0] == 0 && rgb2_short[0] == 0) {
+                                		weightR1 = 0;
+                                		weightR2 = 0;
+                                	}else {
+                                		weightR1 = rgb1_short[0] / (float)(rgb1_short[0] + rgb2_short[0]);
+                                		weightR2 = rgb2_short[0] / (float)(rgb1_short[0] + rgb2_short[0]);
+                                	}
+                                	
+                                	if(rgb1_short[1] == 0 && rgb2_short[1] == 0) {
+                                		weightG1 = 0;
+                                		weightG2 = 0;
+                                	}else {
+                                		weightG1 = rgb1_short[1] / (float)(rgb1_short[1] + rgb2_short[1]);
+                                		weightG2 = rgb2_short[1] / (float)(rgb1_short[1] + rgb2_short[1]);
+                                	}
+                                    
+                                	if(rgb1_short[2] == 0 && rgb2_short[2] == 0) {
+                                		weightB1 = 0;
+                                		weightB2 = 0;
+                                	}else {
+                                		weightB1 = rgb1_short[2] / (float)(rgb1_short[2] + rgb2_short[2]);
+                                		weightB2 = rgb2_short[2] / (float)(rgb1_short[2] + rgb2_short[2]);
+                                	}
+                                    
+                                    
+                                	
+                                	avgR = (byte)((weightR1 * rgb1_short[0]) + (weightR2 * rgb2_short[0]));
+                                    avgG = (byte)((weightG1 * rgb1_short[1]) + (weightG2 * rgb2_short[1]));
+                                    avgB = (byte)((weightB1 * rgb1_short[2]) + (weightB2 * rgb2_short[2]));
+                                }
+                            } else {
+                            	// doing weighted ((IntensityX/IntensityX+IntensityY)*IntensityX   +   (IntensityY/IntensityX+IntensityY)*IntensityY
+                            	float weightR1;
+                            	float weightR2;
+                            	float weightG1;
+                            	float weightG2;
+                            	float weightB1;
+                            	float weightB2;
+                            	
+                            	if(rgb1_short[0] == 0 && rgb2_short[0] == 0) {
+                            		weightR1 = 0;
+                            		weightR2 = 0;
+                            	}else {
+                            		weightR1 = rgb1_short[0] / (float)(rgb1_short[0] + rgb2_short[0]);
+                            		weightR2 = rgb2_short[0] / (float)(rgb1_short[0] + rgb2_short[0]);
+                            	}
+                            	
+                            	if(rgb1_short[1] == 0 && rgb2_short[1] == 0) {
+                            		weightG1 = 0;
+                            		weightG2 = 0;
+                            	}else {
+                            		weightG1 = rgb1_short[1] / (float)(rgb1_short[1] + rgb2_short[1]);
+                            		weightG2 = rgb2_short[1] / (float)(rgb1_short[1] + rgb2_short[1]);
+                            	}
+                                
+                            	if(rgb1_short[2] == 0 && rgb2_short[2] == 0) {
+                            		weightB1 = 0;
+                            		weightB2 = 0;
+                            	}else {
+                            		weightB1 = rgb1_short[2] / (float)(rgb1_short[2] + rgb2_short[2]);
+                            		weightB2 = rgb2_short[2] / (float)(rgb1_short[2] + rgb2_short[2]);
+                            	}
+                                
+                                
+                            	
+                            	avgR = (byte)((weightR1 * rgb1_short[0]) + (weightR2 * rgb2_short[0]));
+                                avgG = (byte)((weightG1 * rgb1_short[1]) + (weightG2 * rgb2_short[1]));
+                                avgB = (byte)((weightB1 * rgb1_short[2]) + (weightB2 * rgb2_short[2]));
+                            }
+                        	
                         }
 
                         // alpha
@@ -679,7 +769,8 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                         index = index + 1;
                         resultBuffer[index] = avgB;
                         index = index + 1;
-                    } else { // CLOSEST Z
+                    //}
+                    /* else { // CLOSEST Z
                         // look at z transformed points
                         double diff1, diff2;
 
@@ -735,7 +826,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb1_short[0] = (short) (tempValues[1]);
                                 rgb1_short[1] = (short) (tempValues[2]);
                                 rgb1_short[2] = (short) (tempValues[3]);
-                            	/*
+                            	
                                 r1_float = splineAlgX_R.interpolatedValue(imageX_R_coeff, tX1_floor, tY1_floor,
                                         tZ1_floor, extents1[0], extents1[1], extents1[2], 3);
                                 if (r1_float > 255) {
@@ -763,7 +854,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb1_short[0] = (short) (r1_float);
                                 rgb1_short[1] = (short) (g1_float);
                                 rgb1_short[2] = (short) (b1_float);
-                                */
+                                
                             }
                         }
 
@@ -802,7 +893,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb2_short[0] = (short) (tempValues[1]);
                                 rgb2_short[1] = (short) (tempValues[2]);
                                 rgb2_short[2] = (short) (tempValues[3]);
-                                /*
+                                
                                 r2_float = splineAlgY_R.interpolatedValue(imageY_R_coeff, tX2_floor, tY2_floor,
                                         tZ2_floor, extents2[0], extents2[1], extents2[2], 3);
                                 if (r2_float > 255) {
@@ -830,7 +921,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                                 rgb2_short[0] = (short) (r2_float);
                                 rgb2_short[1] = (short) (g2_float);
                                 rgb2_short[2] = (short) (b2_float);
-                                */
+                                
                             }
                         }
 
@@ -860,7 +951,7 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
                         index = index + 1;
                         resultBuffer[index] = b;
                         index = index + 1;
-                    }
+                    }*/
                 }
             }
         }
@@ -1037,8 +1128,10 @@ public class PlugInAlgorithmDrosophilaRetinalRegistration extends AlgorithmBase 
         String processString, interpString, rescaleString, bgString;
         if (doSqRtRadio.isSelected()) {
             processString = "_sqrRt";
-        } else {
+        } else if(doAverageRadio.isSelected()){
             processString = "_avg";
+        } else {
+        	processString = "_weighted";
         }
         if (doTrilinearRadio.isSelected()) {
             interpString = "_trilinear";

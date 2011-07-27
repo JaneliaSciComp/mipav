@@ -69,7 +69,7 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
 
     /** radio buttons * */
     private JRadioButton doAverageRadio, doClosestZRadio, doSqRtRadio, doTrilinearRadio, doBsplineRadio,
-            doRescaleRadio, noRescaleRadio, ignoreBGRadio, includeBGRadio, createMirroredImgRadio, doNotCreateMirroredImgRadio;
+            doRescaleRadio, noRescaleRadio, ignoreBGRadio, includeBGRadio, createMirroredImgRadio, doNotCreateMirroredImgRadio, doWeightingRadio;
 
     /** 2.5 d */
     private boolean have25D = false;
@@ -200,8 +200,13 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         doClosestZRadio.addActionListener(this);
         doClosestZRadio.setActionCommand("closestZ");
         doAverageRadio.setSelected(true);
+        doWeightingRadio = new JRadioButton("Weighted");
+        doWeightingRadio.addActionListener(this);
+        doWeightingRadio.setActionCommand("weighted");
+        
         processGroup.add(doAverageRadio);
         processGroup.add(doSqRtRadio);
+        processGroup.add(doWeightingRadio);
         // processGroup.add(doClosestZRadio);
 
         interpGroup = new ButtonGroup();
@@ -259,10 +264,12 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         rescalePanel.setBorder(new TitledBorder("Rescale H to F"));
         averagingOptionsPanel.setBorder(new TitledBorder("Averaging Options"));
         mirroredImgPanel.setBorder(new TitledBorder("Mirrored Image"));
-        
+         
         processPanel.add(doAverageRadio, gbc);
         gbc.gridy = 1;
         processPanel.add(doSqRtRadio, gbc);
+        gbc.gridy = 2;
+        processPanel.add(doWeightingRadio, gbc);
         gbc.gridy = 0;
         interpPanel.add(doTrilinearRadio, gbc);
         gbc.gridy = 1;
@@ -370,7 +377,10 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
         } else if (command.equalsIgnoreCase("sqrRt")) {
             ignoreBGRadio.setEnabled(true);
             includeBGRadio.setEnabled(true);
-        } else if (command.equalsIgnoreCase("closestZ")) {
+        }  else if (command.equalsIgnoreCase("weighted")) {
+            ignoreBGRadio.setEnabled(true);
+            includeBGRadio.setEnabled(true);
+        }else if (command.equalsIgnoreCase("closestZ")) {
             ignoreBGRadio.setEnabled(false);
             includeBGRadio.setEnabled(false);
         } else if (command.equalsIgnoreCase("imageXBrowse")) {
