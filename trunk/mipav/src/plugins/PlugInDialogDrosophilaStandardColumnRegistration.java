@@ -160,7 +160,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration v4.8");
+        setTitle("Drosophila Standard Column Registration v5.0");
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
         
@@ -822,17 +822,22 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
             while((line = raFile.readLine()) != null) {
             		arr = line.trim().split(",");
             		if(arr.length == 4) {
-                    	x = new Float(arr[0]).floatValue();
-                    	y = new Float(arr[1]).floatValue();
-                    	z = new Float(arr[2]).floatValue();
-                    	float[] f = {x,y,z};
-                    	pointsMap.put(new Integer(counter), f);
+            			if(arr[0].trim().equals("") && arr[1].trim().equals("") && arr[2].trim().equals("")) {
+            				pointsMap.put(new Integer(counter), null);
+	            		}else {
+	                    	x = new Float(arr[0]).floatValue();
+	                    	y = new Float(arr[1]).floatValue();
+	                    	z = new Float(arr[2]).floatValue();
+	                    	float[] f = {x,y,z};
+	                    	pointsMap.put(new Integer(counter), f);
+	            		}
                     }else {
-                    	if(arr.length == 0) {
+                    	return false;
+                    	/*if(arr.length == 1) {
                     		pointsMap.put(new Integer(counter), null);
                     	}else {
                     		return false;
-                    	}
+                    	}*/
                     }
             		counter++;
             	
