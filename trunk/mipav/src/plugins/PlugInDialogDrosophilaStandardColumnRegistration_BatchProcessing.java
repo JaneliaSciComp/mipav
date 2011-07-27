@@ -51,8 +51,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 	 
 	 
 	
-	
-	
+
 	
 	/**
 	 * constructor
