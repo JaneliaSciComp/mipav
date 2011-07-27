@@ -17,6 +17,8 @@ import java.io.*;
  
      In this case hypercomplex filters is really just a fancy way of saying that dot 
  products and cross products of colors are used.
+ 
+ FLAG_T24.tif is an excellent test file for this algorithm.
  */
 public class AlgorithmColorEdge extends AlgorithmBase {
 
