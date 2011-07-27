@@ -51,6 +51,20 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         setVisible(true);
         setResizable(false);
     }
+    
+    
+    
+    public JDialogAddNode(MipavGraphPanel kParent, String kNotes, boolean bAdd, boolean setVisible) {
+        super(true);
+        parent = kParent;
+        notes = kNotes;
+        addNode = bAdd;
+        init("Annotation");
+        if(setVisible) {
+        	setVisible(true);
+        	setResizable(false);
+        }
+    }
 
     /**
      * Catches action events: Okay, Cancel.     *

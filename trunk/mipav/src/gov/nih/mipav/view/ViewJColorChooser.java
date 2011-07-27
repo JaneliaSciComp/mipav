@@ -25,7 +25,7 @@ public class ViewJColorChooser extends JColorChooser {
 
     /** DOCUMENT ME! */
     private JDialog colorDialog;
-
+ 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -45,9 +45,42 @@ public class ViewJColorChooser extends JColorChooser {
         colorDialog.setResizable(false);
         colorDialog.setVisible(true);
     }
+    
+    
+    
+    
+    
+    /**
+     * Constructor Constructs the color chooser panel and dialog.
+     *
+     * @param  parent          the array of x coordinates to be plotted in the graph
+     * @param  title           the title of the frame
+     * @param  OKListener      class that will respond to the user pressing OK
+     * @param  CancelListener  class that will respond to the user pressing Cancel
+     */
+    public ViewJColorChooser(Component parent, String title, ActionListener OKListener, ActionListener CancelListener,boolean setVisible) {
+        super();
+
+        colorDialog = JColorChooser.createDialog(parent, title, false, this, OKListener, CancelListener);
+        this.setPreviewPanel(new JPanel());
+        if(setVisible) {
+	        colorDialog.setSize(450, 310);
+	        colorDialog.setResizable(false);
+	        colorDialog.setVisible(true);
+        }
+    }
+    
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    
+    
+    
+    
+    
+    
+    
     /**
      * DOCUMENT ME!
      *
@@ -62,7 +95,15 @@ public class ViewJColorChooser extends JColorChooser {
         }
     }
 
-    /**
+    public synchronized JDialog getColorDialog() {
+		return colorDialog;
+	}
+
+
+
+
+
+	/**
      * DOCUMENT ME!
      *
      * @param  vis  DOCUMENT ME!

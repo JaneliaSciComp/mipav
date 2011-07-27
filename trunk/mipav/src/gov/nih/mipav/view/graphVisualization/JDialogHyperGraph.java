@@ -12,6 +12,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewToolBarBuilder;
 import hypergraph.graphApi.AttributeManager;
 import hypergraph.graphApi.Edge;
 import hypergraph.graphApi.Graph;
@@ -24,9 +25,14 @@ import hypergraph.graphApi.io.GraphXMLWriter;
 import hypergraph.visualnet.ArrowLineRenderer;
 import hypergraph.visualnet.GraphPanel;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics2D;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -46,12 +52,14 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
 import org.apache.pdfbox.exceptions.COSVisitorException;
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -97,6 +105,12 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	
 	/** Displays the graph. */
 	private MipavGraphPanel graphPanel;
+	
+	private JPanel toolbarPanel,mainPanel, graphPanel2;
+	
+	private JButton centerRootNodeButton, saveGraphButton;
+	
+	private ViewToolBarBuilder toolbarBuilder;
 
 	/**
 	 * Default Constructor.
@@ -144,8 +158,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		if ( m_kCurrentDir != null && m_kFileName != null )
 		{
 			init();      
-			buildMenu();
-			setSize( 900, 600 );
+			//buildMenu();
+			//setSize( 900, 600 );
+			pack();
+			this.setMinimumSize(this.getSize());
+			setResizable(false);
 			setVisible(true);
 		}
 	}
@@ -170,8 +187,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		ModelLUT lut = new ModelLUT(ModelLUT.STRIPED, 256, new int[] {4, 256});		
 		for (int n=0;n<255;n++) fixedColor[n] = lut.getColor(n+1);
 		initImage(kParent);   
-		buildMenu();   
-		setSize( 900, 600 );
+		//buildMenu();   
+		//setSize( 900, 600 );
+		pack();
+		this.setMinimumSize(this.getSize());
+		setResizable(false);
 		setVisible(true);
 	}
 
@@ -180,7 +200,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	 */
 	public void actionPerformed(ActionEvent e) {
 		final String command = e.getActionCommand();
-		if ( command.equals("CenterGraph") ) {
+		if ( command.equals("centerRootNode") ) {
 			graphPanel.centerRootNode();
 		}
 		//else if (command.equals("SetProperties")) {
@@ -189,7 +209,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		else if (command.equals("SaveProperties")) {
 			savePreferences();
 		}
-		else if (command.equals("SaveGraph")) {
+		else if (command.equals("saveGraph")) {
 			final JFileChooser chooser = new JFileChooser();
 
 			if (m_kCurrentDir != null) {
@@ -616,15 +636,38 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			graph = GraphUtilities.createTree(graphSystem, 2, 3);
 		}
 
-		graphPanel = new MipavGraphPanel(graph, null);
+		graphPanel = new MipavGraphPanel(graph, null,this);
 
 		loadPreferences();
 
-
 		graphPanel.setLineRenderer(new ArrowLineRenderer());
 
-		getContentPane().add(graphPanel);
-
+		toolbarPanel = new JPanel(new GridBagLayout());
+	     toolbarBuilder = new ViewToolBarBuilder(this);
+	     centerRootNodeButton = toolbarBuilder.buildButton("centerRootNode", "Center Root Node", "bullseye");
+	     saveGraphButton = toolbarBuilder.buildButton("saveGraph", "Save graph as...", "save");
+	     
+	     GridBagConstraints gbc = new GridBagConstraints();
+	     gbc.anchor = GridBagConstraints.WEST;
+	     gbc.gridx = 0;
+	     gbc.gridy = 0;
+	     toolbarPanel.add(centerRootNodeButton, gbc);
+	     gbc.gridx = 1;
+	     toolbarPanel.add(saveGraphButton, gbc);
+	
+	     graphPanel.setMinimumSize(new Dimension(900,600));
+	     graphPanel.setPreferredSize(new Dimension(900,600));
+	     
+	     mainPanel = new JPanel(new GridBagLayout());
+	     gbc.anchor = GridBagConstraints.WEST;
+	     gbc.gridx = 0;
+	     gbc.gridy = 0;
+	     mainPanel.add(toolbarPanel,gbc);
+	     gbc.gridy = 1;
+	     mainPanel.add(graphPanel,gbc);
+	
+	
+		getContentPane().add(mainPanel);
 	}
 
 	/**
@@ -663,13 +706,43 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			addSubTree( tree, root, menu, kMenu.getMenu(i).getMenuComponents(), 2 );
 		}
 
-		graphPanel = new MipavGraphPanel(tree, kParent);
+		graphPanel = new MipavGraphPanel(tree, kParent,this);
+		
 
 		loadPreferences();
 
 		graphPanel.setLineRenderer(new ArrowLineRenderer());
 
-		getContentPane().add(graphPanel);
+		toolbarPanel = new JPanel(new GridBagLayout());
+	     toolbarBuilder = new ViewToolBarBuilder(this);
+	     centerRootNodeButton = toolbarBuilder.buildButton("centerRootNode", "Center Root Node", "bullseye");
+	     saveGraphButton = toolbarBuilder.buildButton("saveGraph", "Save graph as...", "save");
+	     
+	     GridBagConstraints gbc = new GridBagConstraints();
+	     gbc.anchor = GridBagConstraints.WEST;
+	     gbc.gridx = 0;
+	     gbc.gridy = 0;
+	     toolbarPanel.add(centerRootNodeButton, gbc);
+	     gbc.gridx = 1;
+	     toolbarPanel.add(saveGraphButton, gbc);
+	
+	     graphPanel.setMinimumSize(new Dimension(900,600));
+	     graphPanel.setPreferredSize(new Dimension(900,600));
+	     
+	     mainPanel = new JPanel(new GridBagLayout());
+	     gbc.anchor = GridBagConstraints.WEST;
+	     gbc.gridx = 0;
+	     gbc.gridy = 0;
+	     mainPanel.add(toolbarPanel,gbc);
+	     gbc.gridy = 1;
+	     mainPanel.add(graphPanel,gbc);
+	
+	
+		getContentPane().add(mainPanel);
+	     
+	     
+
+		
 	}
 
 	/**
