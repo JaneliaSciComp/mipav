@@ -2851,6 +2851,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         /** Should be either NDAR_SERVER_PROD or NDAR_SERVER_DEMO. Removed storage/retrieval from preferences. */
         String ndarServer = NDARServer.PROD.name;
+        //String ndarServer = NDARServer.DEMO.name;
 
        // String ndarDataStructName;
 
