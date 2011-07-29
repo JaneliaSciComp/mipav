@@ -2757,14 +2757,15 @@ parse:  while (i < args.length) {
                         } else {
                             MipavUtil.displayError("Plugin " + plugInName
                                     + " must implement the PlugInGeneric interface in order to be run from the command line.");
-                        }  
+                        }
                     } catch (final ClassNotFoundException e) {
                         MipavUtil.displayError("PlugIn not found: " + plugInName);
+                        printUsageAndExit(c);
                     } catch (final InstantiationException e) {
                         MipavUtil.displayError("Unable to load plugin (ins)");
+                        printUsageAndExit(c);
                     } catch (final IllegalAccessException e) {
                         MipavUtil.displayError("Unable to load plugin (acc)");
-                    } finally {
                         printUsageAndExit(c);
                     }
                     break;

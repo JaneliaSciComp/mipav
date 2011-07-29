@@ -341,7 +341,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private void init() {
-        setTitle("NDAR Image Submission Package Creation Tool v1.0");
+        setTitle("NDAR Image Submission Package Creation Tool v1.1");
 
         dataStructures = new ArrayList<DataStruct>();
 
