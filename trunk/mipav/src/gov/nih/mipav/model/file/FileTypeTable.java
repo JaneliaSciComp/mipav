@@ -99,12 +99,15 @@ public class FileTypeTable {
         // .hdr used by analyze, interfile and nifti
         FileTypeTable.FILE_EXT_TABLE.put(".hdr", FileUtility.UNDEFINED);
         FileTypeTable.FILE_EXT_TABLE.put(".HDR", FileUtility.UNDEFINED);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.BMP, new FileTypeInfo("BMP", ".bmp"));
+        FileTypeTable.FILE_EXT_TABLE.put(".bmp", FileUtility.BMP);
+        FileTypeTable.FILE_EXT_TABLE.put(".BMP", FileUtility.BMP);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.JIMI, new FileTypeInfo("JIMI",
-                ".jpg,.jpeg,.bmp,.gif,.pict,.png,.psd,.dib,.tga,.xbm,.xpm,.pcx,.ico,.cur"));
+                ".jpg,.jpeg,.gif,.pict,.png,.psd,.dib,.tga,.xbm,.xpm,.pcx,.ico,.cur"));
         FileTypeTable.FILE_EXT_TABLE.put(".jpeg", FileUtility.JIMI);
-        FileTypeTable.FILE_EXT_TABLE.put(".jpg", FileUtility.JIMI);
-        FileTypeTable.FILE_EXT_TABLE.put(".bmp", FileUtility.JIMI);
+        FileTypeTable.FILE_EXT_TABLE.put(".jpg", FileUtility.JIMI); 
         FileTypeTable.FILE_EXT_TABLE.put(".gif", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".pict", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".png", FileUtility.JIMI);
@@ -117,7 +120,6 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".cur", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".JPEG", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".JPG", FileUtility.JIMI);
-        FileTypeTable.FILE_EXT_TABLE.put(".BMP", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".GIF", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".PICT", FileUtility.JIMI);
         FileTypeTable.FILE_EXT_TABLE.put(".PNG", FileUtility.JIMI);
