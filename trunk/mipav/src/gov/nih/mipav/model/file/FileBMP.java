@@ -341,7 +341,13 @@ public class FileBMP extends FileBase {
             }
             
             // The number of bytes per row is rounded up to a multiple of 4
-            bytesPerRow = (4*((imageExtents[0] * biBitCount + 7)/8) + 3)/4;
+            bytesPerRow = (imageExtents[0] * biBitCount)/8;
+            if (((imageExtents[0] * biBitCount) % 8) != 0) {
+            	bytesPerRow++;
+            }
+            if ((bytesPerRow % 4) != 0) {
+            	bytesPerRow = bytesPerRow + (4 - (bytesPerRow % 4));
+            }
             bufferSize = bytesPerRow * imageExtents[1];
             if (biSize >= 40) {
                 biCompression = getUInt(endianess);
@@ -666,7 +672,7 @@ public class FileBMP extends FileBase {
             	raFile.read(byteBuffer);
             	if (bottomUp) {
 	            	for (j = 8*bytesPerRow*(imageExtents[1]-1), jstart = 8*bytesPerRow*(imageExtents[1]-1),
-	            			y = imageExtents[1]-1; y >= 0; y--, j = jstart - 8*bytesPerRow) {
+	            			y = 0; y < imageExtents[1]; y++, j = jstart - 8*bytesPerRow) {
 	                    for (x = 0, jstart = j, k = 0x80; x < imageExtents[0]; x++) {
 	                        index = x + y*imageExtents[0];
 	                        
@@ -714,7 +720,7 @@ public class FileBMP extends FileBase {
                 raFile.read(byteBuffer);
                 if (bottomUp) {
                 	for (j = 2*bytesPerRow*(imageExtents[1]-1), jstart = 2*bytesPerRow*(imageExtents[1]-1),
-                			y = imageExtents[1]-1; y >= 0; y--, j = jstart - 2*bytesPerRow) {
+                			y = 0; y < imageExtents[1]; y++, j = jstart - 2*bytesPerRow) {
                         for (x = 0, jstart = j, k = 0; x < imageExtents[0]; x++) {
                             index = x + y*imageExtents[0];
                             if (k == 0) {
@@ -749,11 +755,9 @@ public class FileBMP extends FileBase {
             	byteBuffer2 = new byte[sliceSize];
                 byteBuffer = new byte[bufferSize];
                 raFile.read(byteBuffer);
-                System.out.println("bytesPerRow = " + bytesPerRow);
-                System.out.println("imageExtents[0] = " + imageExtents[0]);
                 if (bottomUp) {
                 	for (j = bytesPerRow*(imageExtents[1]-1), jstart = bytesPerRow*(imageExtents[1]-1),
-                			y = imageExtents[1]-1; y >=0; y--, j = jstart - bytesPerRow) {
+                			y = 0; y < imageExtents[1]; y++, j = jstart - bytesPerRow) {
                         for (x = 0, jstart = j; x < imageExtents[0]; x++) {
                             index = x + y*imageExtents[0];
                             byteBuffer2[index] = byteBuffer[j++];
@@ -776,15 +780,15 @@ public class FileBMP extends FileBase {
                 raFile.read(byteBuffer);
                 if (bottomUp) {
                 	for (j = bytesPerRow*(imageExtents[1]-1), jstart = bytesPerRow*(imageExtents[1]-1),
-                			y = imageExtents[1]-1; y >= 0; y--, j = jstart - bytesPerRow) {
+                			y = 0; y < imageExtents[1]; y++, j = jstart - bytesPerRow) {
                         for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 2) {
                         	index = x + y*imageExtents[0];
                             byteBuffer2[4*index] = (byte)255;
                             shortColor = (short) (((byteBuffer[j] & 0xff)) |
                                                (byteBuffer[j + 1] & 0xff)  << 8);
-                        byteBuffer2[4*index+1] = (byte)((shortColor & 0x7C00) >>> 7);
-                        byteBuffer2[4*index+2] = (byte)((shortColor & 0x03E0) >>> 2);
-                        byteBuffer2[4*index+3] = (byte)((shortColor & 0x001F) << 3);
+                            byteBuffer2[4*index+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                            byteBuffer2[4*index+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                            byteBuffer2[4*index+3] = (byte)((shortColor & 0x001F) << 3);
                         }
                 	}	
                 } // if (bottomUp)
@@ -795,14 +799,43 @@ public class FileBMP extends FileBase {
                             byteBuffer2[4*index] = (byte)255;
                             shortColor = (short) (((byteBuffer[j] & 0xff)) |
                                                (byteBuffer[j + 1] & 0xff)  << 8);
-                        byteBuffer2[4*index+1] = (byte)((shortColor & 0x7C00) >>> 7);
-                        byteBuffer2[4*index+2] = (byte)((shortColor & 0x03E0) >>> 2);
-                        byteBuffer2[4*index+3] = (byte)((shortColor & 0x001F) << 3);
+                            byteBuffer2[4*index+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                            byteBuffer2[4*index+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                            byteBuffer2[4*index+3] = (byte)((shortColor & 0x001F) << 3);
                         }
                 	}
                 } // else topDown
                 image.importData(0, byteBuffer2, true);
             } // else if ((biBitCount == 16) && (biCompression == BI_RGB))
+            else if ((biBitCount == 24) && (biCompression == BI_RGB)) {
+                byteBuffer2 = new byte[4*sliceSize];
+                byteBuffer = new byte[bufferSize];
+                raFile.read(byteBuffer);
+                if (bottomUp) {
+                	for (j = bytesPerRow*(imageExtents[1]-1), jstart = bytesPerRow*(imageExtents[1]-1),
+                			y = 0; y < imageExtents[1]; y++, j = jstart - bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 3) {
+                        	index = x + y*imageExtents[0];
+                            byteBuffer2[4*index] = (byte)255;
+                            byteBuffer2[4*index+1] = byteBuffer[j+2];
+                            byteBuffer2[4*index+2] = byteBuffer[j+1];
+                            byteBuffer2[4*index+3] = byteBuffer[j];
+                        }
+                	}	
+                } // if (bottomUp)
+                else { // topDown
+                	for (j = 0, jstart = 0,y = 0; y < imageExtents[1]; y++, j = jstart + bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 3) {
+                        	index = x + y*imageExtents[0];
+                            byteBuffer2[4*index] = (byte)255;
+                            byteBuffer2[4*index+1] = byteBuffer[j+2];
+                            byteBuffer2[4*index+2] = byteBuffer[j+1];
+                            byteBuffer2[4*index+3] = byteBuffer[j];
+                        }
+                	}
+                } // else topDown
+                image.importData(0, byteBuffer2, true);
+            } // else if ((biBitCount == 24) && (biCompression == BI_RGB))
             
             image.calcMinMax();
             fireProgressStateChanged(100);
