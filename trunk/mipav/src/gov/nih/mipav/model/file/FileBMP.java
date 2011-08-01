@@ -174,10 +174,10 @@ public class FileBMP extends FileBase {
         long colorsImportant; // Number of significant colors in the palette, determined by their
                              // frequency of appearance in the bitmap data.  colorsImportant is 0
                              // if all of the colors in the palette are considered to be important.
-        int redMask; // Mask identifying bits of red component
-        int greenMask; // Mask identifying bits of green component
-        int blueMask; // Mask identifying bits of blue component
-        int alphaMask; // Mask identifying bits of alpha component
+        int redMask = 0; // Mask identifying bits of red component
+        int greenMask = 0; // Mask identifying bits of green component
+        int blueMask = 0; // Mask identifying bits of blue component
+        int alphaMask = 0; // Mask identifying bits of alpha component
         long colorSpaceType; // colorSpaceType is used by the bitmap data.  DEVICE_DEPENDENT_RGB is
                              // the default color space.  CALIBRATED_RGB is defined by the 1931
                              // CIE XYZ standard.
@@ -205,6 +205,28 @@ public class FileBMP extends FileBase {
         long presentLocation;
         int maximumColorsUsed;
         int imageType;
+        int test;
+        int redStartBit = -1;
+        int redEndBit = -1;
+        int numberRedBits = 0;
+        int greenStartBit = -1;
+        int greenEndBit = -1;
+        int numberGreenBits = 0;
+        int blueStartBit = -1;
+        int blueEndBit = -1;
+        int numberBlueBits = 0;
+        int alphaStartBit = -1;
+        int alphaEndBit = -1;
+        int numberAlphaBits = 0;
+        int bufferSize;
+        byte byteBuffer[];
+        boolean booleanBuffer[];
+        int x;
+        int y;
+        int jstart;
+        int index;
+        byte byteBuffer2[];
+        short shortColor;
 
         try {
             
@@ -317,17 +339,10 @@ public class FileBMP extends FileBase {
             	Preferences.debug("biBitCount, bits per pixel = " + biBitCount + "\n",
             			Preferences.DEBUG_FILEIO);
             }
-            if (biBitCount == 1) {
-            	imageType = ModelStorageBase.BOOLEAN;
-            }
-            else if ((biBitCount == 4) || (biBitCount == 8)) {
-            	imageType = ModelStorageBase.UBYTE;
-            }
-            else if ((biBitCount == 16) || (biBitCount == 24)){
-            	imageType = ModelStorageBase.ARGB;
-            }
+            
             // The number of bytes per row is rounded up to a multiple of 4
-            bytesPerRow = (((imageExtents[0] * biBitCount + 7)/8) + 3)/4;
+            bytesPerRow = (4*((imageExtents[0] * biBitCount + 7)/8) + 3)/4;
+            bufferSize = bytesPerRow * imageExtents[1];
             if (biSize >= 40) {
                 biCompression = getUInt(endianess);
                 if ((biCompression != BI_RGB) && (biCompression != BI_RLE8) && (biCompression != BI_RLE4) &&
@@ -527,16 +542,92 @@ public class FileBMP extends FileBase {
                 }	
             } // biSize == 12 OS2
             
+            if ((redMask != 0) || (greenMask != 0) || (blueMask != 0) || (alphaMask != 0)) {
+                if (redMask != 0) {
+                	test = 1;
+                	redStartBit = 0;
+                	redEndBit = 0;
+                	while (((test & redMask) == 0) && (test != 0)) {
+                		test = test << 1;
+                		redStartBit++;
+                	}
+                	redEndBit = redStartBit;
+                	while (((test & redMask) != 0) && (test != 0)) {
+                	   	test = test << 1;
+                	   	redEndBit++;
+                	}
+                    numberRedBits = redEndBit - redStartBit + 1;
+                } // if (redMask != 0)
+                if (greenMask != 0) {
+                	test = 1;
+                	greenStartBit = 0;
+                	greenEndBit = 0;
+                	while (((test & greenMask) == 0) && (test != 0)) {
+                		test = test << 1;
+                		greenStartBit++;
+                	}
+                	greenEndBit = greenStartBit;
+                	while (((test & greenMask) != 0) && (test != 0)) {
+                	   	test = test << 1;
+                	   	greenEndBit++;
+                	}
+                    numberGreenBits = greenEndBit - greenStartBit + 1;
+                } // if (greenMask != 0)
+                if (blueMask != 0) {
+                	test = 1;
+                	blueStartBit = 0;
+                	blueEndBit = 0;
+                	while (((test & blueMask) == 0) && (test != 0)) {
+                		test = test << 1;
+                		blueStartBit++;
+                	}
+                	blueEndBit = blueStartBit;
+                	while (((test & blueMask) != 0) && (test != 0)) {
+                	   	test = test << 1;
+                	   	blueEndBit++;
+                	}
+                    numberBlueBits = blueEndBit - blueStartBit + 1;
+                } // if (blueMask != 0)
+                if (alphaMask != 0) {
+                	test = 1;
+                	alphaStartBit = 0;
+                	alphaEndBit = 0;
+                	while (((test & alphaMask) == 0) && (test != 0)) {
+                		test = test << 1;
+                		alphaStartBit++;
+                	}
+                	alphaEndBit = alphaStartBit;
+                	while (((test & alphaMask) != 0) && (test != 0)) {
+                	   	test = test << 1;
+                	   	alphaEndBit++;
+                	}
+                    numberAlphaBits = alphaEndBit - alphaStartBit + 1;
+                } // if (alphaMask != 0)
+            } // if ((redMask != 0) || (greenMask != 0) || (blueMask != 0) || (alphaMask != 0))
+            
             if (biBitCount == 1) {
             	imageType = ModelStorageBase.BOOLEAN;
+            	Preferences.debug("imageType = BOOLEAN\n", Preferences.DEBUG_FILEIO);
             }
             else if ((biBitCount == 4) || (biBitCount == 8)) {
             	imageType = ModelStorageBase.UBYTE;
+            	Preferences.debug("imageType = UBYTE\n", Preferences.DEBUG_FILEIO);
             }
             else if ((biBitCount == 16) || (biBitCount == 24)){
             	imageType = ModelStorageBase.ARGB;
+            	Preferences.debug("imageType = ARGB\n", Preferences.DEBUG_FILEIO);
             }
-            
+            // biBitCount == 32
+            else if ((numberRedBits <= 8) && (numberGreenBits <= 8) && (numberBlueBits <= 8) && (numberAlphaBits <= 8)) {
+            	imageType = ModelStorageBase.ARGB;
+            	Preferences.debug("imageType = ARGB\n", Preferences.DEBUG_FILEIO);
+            }
+            else {
+            	imageType = ModelStorageBase.ARGB_USHORT;
+            	Preferences.debug("imageType = ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
+            }
+            image = new ModelImage(imageType, imageExtents, fileName);
+            image.setFileInfo(fileInfo, 0);
             //Read the color palette
             if (colorsUsed > 0) {
             	 // read the color table into a LUT
@@ -566,6 +657,152 @@ public class FileBMP extends FileBase {
                 } // for (j = colorsUsed; j < 256; j++)
                 LUT.makeIndexedLUT(null); 
             } // if (colorsUsed > 0)
+            
+            raFile.seek(bfOffBits);
+            if (biBitCount == 1) {
+            	// The most significant bitfield represents the leftmost pixel
+            	booleanBuffer = new boolean[sliceSize];
+            	byteBuffer = new byte[bufferSize];
+            	raFile.read(byteBuffer);
+            	if (bottomUp) {
+	            	for (j = 8*bytesPerRow*(imageExtents[1]-1), jstart = 8*bytesPerRow*(imageExtents[1]-1),
+	            			y = imageExtents[1]-1; y >= 0; y--, j = jstart - 8*bytesPerRow) {
+	                    for (x = 0, jstart = j, k = 0x80; x < imageExtents[0]; x++) {
+	                        index = x + y*imageExtents[0];
+	                        
+	                        if ((byteBuffer[(j++) >>> 3] & k) != 0) {
+	                            booleanBuffer[index] = true;
+	                        }
+	                        else {
+	                            booleanBuffer[index] = false;
+	                        }
+	                        if (k == 0x01) {
+	                            k = 0x80;
+	                        }
+	                        else {
+	                            k = k >>> 1;
+	                        }
+	                    }
+	                }
+            	} // if (bottomUp)
+            	else { // topDown
+            		for (j = 0, jstart = 0, y = 0; y < imageExtents[1]; y++, j = jstart + 8*bytesPerRow) {
+	                    for (x = 0, jstart = j, k = 0x80; x < imageExtents[0]; x++) {
+	                        index = x + y*imageExtents[0];
+	                        
+	                        if ((byteBuffer[(j++) >>> 3] & k) != 0) {
+	                            booleanBuffer[index] = true;
+	                        }
+	                        else {
+	                            booleanBuffer[index] = false;
+	                        }
+	                        if (k == 0x01) {
+	                            k = 0x80;
+	                        }
+	                        else {
+	                            k = k >>> 1;
+	                        }
+	                    }
+	                }	
+            	} // topDown
+                image.importData(0, booleanBuffer, true);
+            } // if (biBitCount == 1)
+            else if ((biBitCount == 4)  && (biCompression == BI_RGB)) {
+            	// The most significant bitfield represents the leftmost pixel
+            	byteBuffer2 = new byte[sliceSize];
+                byteBuffer = new byte[bufferSize];
+                raFile.read(byteBuffer);
+                if (bottomUp) {
+                	for (j = 2*bytesPerRow*(imageExtents[1]-1), jstart = 2*bytesPerRow*(imageExtents[1]-1),
+                			y = imageExtents[1]-1; y >= 0; y--, j = jstart - 2*bytesPerRow) {
+                        for (x = 0, jstart = j, k = 0; x < imageExtents[0]; x++) {
+                            index = x + y*imageExtents[0];
+                            if (k == 0) {
+                                byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
+                                k = 1;
+                            }
+                            else if (k == 1) {
+                                byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);  
+                                k = 0;
+                            }
+                        }
+                    }	
+                } // if (bottomUp)
+                else { // topDown
+                	for (j = 0, jstart = 0,y = 0; y < imageExtents[1]; y++, j = jstart + 2*bytesPerRow) {
+                        for (x = 0, jstart = j, k = 0; x < imageExtents[0]; x++) {
+                            index = x + y*imageExtents[0];
+                            if (k == 0) {
+                                byteBuffer2[index] = (byte)((byteBuffer[(j++) >> 1] & 0xf0) >>> 4);
+                                k = 1;
+                            }
+                            else if (k == 1) {
+                                byteBuffer2[index] = (byte)(byteBuffer[(j++) >> 1] & 0x0f);  
+                                k = 0;
+                            }
+                        }
+                    }
+                } // else topDown
+                image.importData(0, byteBuffer2, true);
+            } // else if ((biBitCount == 4)  && (biCompression == BI_RGB))
+            else if ((biBitCount == 8) && (biCompression == BI_RGB)) {
+            	byteBuffer2 = new byte[sliceSize];
+                byteBuffer = new byte[bufferSize];
+                raFile.read(byteBuffer);
+                System.out.println("bytesPerRow = " + bytesPerRow);
+                System.out.println("imageExtents[0] = " + imageExtents[0]);
+                if (bottomUp) {
+                	for (j = bytesPerRow*(imageExtents[1]-1), jstart = bytesPerRow*(imageExtents[1]-1),
+                			y = imageExtents[1]-1; y >=0; y--, j = jstart - bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++) {
+                            index = x + y*imageExtents[0];
+                            byteBuffer2[index] = byteBuffer[j++];
+                        }
+                    }		
+                } // if (bottomUp)
+                else { // topDown
+                	for (j = 0, jstart = 0,y = 0; y < imageExtents[1]; y++, j = jstart + bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++) {
+                            index = x + y*imageExtents[0];
+                            byteBuffer2[index] = byteBuffer[j++];
+                        }
+                    }	
+                } // else topDown
+                image.importData(0, byteBuffer2, true);
+            } // else if ((biBitCount == 8) && (biCompression == BI_RGB))
+            else if ((biBitCount == 16) && (biCompression == BI_RGB)) {
+                byteBuffer2 = new byte[4*sliceSize];
+                byteBuffer = new byte[bufferSize];
+                raFile.read(byteBuffer);
+                if (bottomUp) {
+                	for (j = bytesPerRow*(imageExtents[1]-1), jstart = bytesPerRow*(imageExtents[1]-1),
+                			y = imageExtents[1]-1; y >= 0; y--, j = jstart - bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 2) {
+                        	index = x + y*imageExtents[0];
+                            byteBuffer2[4*index] = (byte)255;
+                            shortColor = (short) (((byteBuffer[j] & 0xff)) |
+                                               (byteBuffer[j + 1] & 0xff)  << 8);
+                        byteBuffer2[4*index+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                        byteBuffer2[4*index+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                        byteBuffer2[4*index+3] = (byte)((shortColor & 0x001F) << 3);
+                        }
+                	}	
+                } // if (bottomUp)
+                else { // topDown
+                	for (j = 0, jstart = 0,y = 0; y < imageExtents[1]; y++, j = jstart + bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 2) {
+                        	index = x + y*imageExtents[0];
+                            byteBuffer2[4*index] = (byte)255;
+                            shortColor = (short) (((byteBuffer[j] & 0xff)) |
+                                               (byteBuffer[j + 1] & 0xff)  << 8);
+                        byteBuffer2[4*index+1] = (byte)((shortColor & 0x7C00) >>> 7);
+                        byteBuffer2[4*index+2] = (byte)((shortColor & 0x03E0) >>> 2);
+                        byteBuffer2[4*index+3] = (byte)((shortColor & 0x001F) << 3);
+                        }
+                	}
+                } // else topDown
+                image.importData(0, byteBuffer2, true);
+            } // else if ((biBitCount == 16) && (biCompression == BI_RGB))
             
             image.calcMinMax();
             fireProgressStateChanged(100);
