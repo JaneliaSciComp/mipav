@@ -235,9 +235,9 @@ public class FileBMP extends FileBase {
             raFile = new RandomAccessFile(file, "r");
             
             fileLength = raFile.length();
-            Preferences.debug("raFile.length = " + raFile.length(), Preferences.DEBUG_FILEIO);
+            Preferences.debug("raFile.length = " + raFile.length() + "\n", Preferences.DEBUG_FILEIO);
             
-            fileInfo = new FileInfoBMP(fileName, fileDir, FileUtility.LIFF); // dummy fileInfo
+            fileInfo = new FileInfoBMP(fileName, fileDir, FileUtility.BMP); // dummy fileInfo
             endianess = FileBase.LITTLE_ENDIAN;
             fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
             
@@ -632,6 +632,7 @@ public class FileBMP extends FileBase {
             	imageType = ModelStorageBase.ARGB_USHORT;
             	Preferences.debug("imageType = ARGB_USHORT\n", Preferences.DEBUG_FILEIO);
             }
+            fileInfo.setDataType(imageType);
             image = new ModelImage(imageType, imageExtents, fileName);
             image.setFileInfo(fileInfo, 0);
             //Read the color palette
