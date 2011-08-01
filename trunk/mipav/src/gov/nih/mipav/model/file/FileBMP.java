@@ -370,12 +370,6 @@ public class FileBMP extends FileBase {
                 else if (biCompression == BI_BITFIELDS) {
                 	Preferences.debug("Compression type = BI_BITFIELDS\n", Preferences.DEBUG_FILEIO);
                 }
-                if (((biBitCount == 16) || (biBitCount == 32)) && (biCompression != BI_BITFIELDS)) {
-                	Preferences.debug("Error! Only BI_BITFIELDS compression is supported for biBitCount = 16 or 32\n",
-                			Preferences.DEBUG_FILEIO);
-                	raFile.close();
-                	throw new IOException("Only BI_BITFIEDLS compression is supported for biBitCount = 16 or 32");
-                }
                 sizeOfBitmap = getUInt(endianess); // Size of the stored bitmap in bytes
                                                    // The value is typically zero when the bitmap data is uncompressed
                 if (sizeOfBitmap != 0) {
@@ -837,6 +831,35 @@ public class FileBMP extends FileBase {
                 } // else topDown
                 image.importData(0, byteBuffer2, true);
             } // else if ((biBitCount == 24) && (biCompression == BI_RGB))
+            else if ((biBitCount == 32) && (biCompression == BI_RGB)) {
+                byteBuffer2 = new byte[4*sliceSize];
+                byteBuffer = new byte[bufferSize];
+                raFile.read(byteBuffer);
+                if (bottomUp) {
+                	for (j = bytesPerRow*(imageExtents[1]-1), jstart = bytesPerRow*(imageExtents[1]-1),
+                			y = 0; y < imageExtents[1]; y++, j = jstart - bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 4) {
+                        	index = x + y*imageExtents[0];
+                            byteBuffer2[4*index] = byteBuffer[j+3];
+                            byteBuffer2[4*index+1] = byteBuffer[j+2];
+                            byteBuffer2[4*index+2] = byteBuffer[j+1];
+                            byteBuffer2[4*index+3] = byteBuffer[j];
+                        }
+                	}	
+                } // if (bottomUp)
+                else { // topDown
+                	for (j = 0, jstart = 0,y = 0; y < imageExtents[1]; y++, j = jstart + bytesPerRow) {
+                        for (x = 0, jstart = j; x < imageExtents[0]; x++, j += 4) {
+                        	index = x + y*imageExtents[0];
+                            byteBuffer2[4*index] = byteBuffer[j+3];
+                            byteBuffer2[4*index+1] = byteBuffer[j+2];
+                            byteBuffer2[4*index+2] = byteBuffer[j+1];
+                            byteBuffer2[4*index+3] = byteBuffer[j];
+                        }
+                	}
+                } // else topDown
+                image.importData(0, byteBuffer2, true);
+            } // else if ((biBitCount == 32) && (biCompression == BI_RGB))
             
             image.calcMinMax();
             fireProgressStateChanged(100);
