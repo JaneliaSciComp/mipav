@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.graphVisualization;
 
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import hypergraph.graphApi.Node;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -42,6 +43,9 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
     /** When true the dialog creates a new node, otherwise it is used to edit the Notes. */
     private boolean addNode;
     
+    
+    private Node pickedNode;
+    
     public JDialogAddNode(MipavGraphPanel kParent, String kNotes, boolean bAdd) {
         super(true);
         parent = kParent;
@@ -54,11 +58,12 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
     
     
     
-    public JDialogAddNode(MipavGraphPanel kParent, String kNotes, boolean bAdd, boolean setVisible) {
+    public JDialogAddNode(MipavGraphPanel kParent, Node pickedNode, String kNotes, boolean bAdd, boolean setVisible) {
         super(true);
         parent = kParent;
         notes = kNotes;
         addNode = bAdd;
+        this.pickedNode = pickedNode;
         init("Annotation");
         if(setVisible) {
         	setVisible(true);
@@ -84,22 +89,48 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
                 if ( addNode )
                 {
                 	// add a new node to the graph:
-                	parent.addNode(nameField.getText(), notes);
+                	parent.addNode(nameField.getText().trim(), notes);
                 }
-                else if ( notes != null )
-                {
+                else{
                 	// pass in the edited notes field:
-                	parent.editNotes(notes);
+                	if ( notes != null ) {
+                		parent.editNotes(notes);
+                	}
+                	if(pickedNode != null) {
+                		pickedNode.setLabel(nameField.getText().trim());
+                	}
                 }
 
         	}
+        	parent.repaint();
         	windowClosing(null);
         } else if (command.equals("Cancel")) {
             windowClosing(null);
         }
     }
+	
+	
+	
 
-    /**
+    public synchronized JTextField getNameField() {
+		return nameField;
+	}
+
+
+
+	public synchronized JTextArea getNoteField() {
+		return noteField;
+	}
+
+
+
+	public synchronized String getNotes() {
+		return notes;
+	}
+
+
+
+	/**
      * Initializes the dialog box and adds the components.
      *
      * @param  title  Title of the dialog box.
@@ -111,24 +142,29 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
 
         JPanel namePanel = new JPanel();
         buttonPanel = this.buildButtons();
+        OKButton.setText("BLAH");
+        OKButton.addActionListener(parent);
+        OKButton.setActionCommand("notesNode");
 
-        if ( addNode )
-        {
+        //if ( addNode )
+        //{
         	// create a text field for the new name:
         	nameField = new JTextField(25);        
         	namePanel.setBorder(buildTitledBorder("Name"));
         	namePanel.add(nameField);        
         	nameField.setBorder(BasicBorders.getTextFieldBorder());
-        	nameField.setText("Enter name here");
+        	if(!addNode && pickedNode != null) {
+        		nameField.setText(pickedNode.getLabel());
+        	}
         	nameField.setMinimumSize(new Dimension(229, 26));
         	nameField.setPreferredSize(new Dimension(229, 26));
         	nameField.setMaximumSize(new Dimension(229, 26));
-        }
+        //}
         
         JPanel notePanel = new JPanel();
         notePanel.setBorder(buildTitledBorder("Notes Section"));
        
-        noteField = new JTextArea(DEFAULT_NOTES);
+        noteField = new JTextArea();
         noteField.setRows(4);
         noteField.setEditable(true);
         noteField.setLineWrap(true);
@@ -139,9 +175,9 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         	noteField.setText(notes);
         }
         else {
-        	noteField.setText(DEFAULT_NOTES);
+        	//noteField.setText(DEFAULT_NOTES);
         }
-        
+        System.out.println("aaa"); 
         JScrollPane containerPane = new JScrollPane(noteField);
         containerPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         containerPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
@@ -161,10 +197,10 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 1;
-		if ( addNode )
-		{
+		//if ( addNode )
+		//{
 			centerPanel.add(namePanel, c);
-		}
+		//}
         c.fill = GridBagConstraints.BOTH;
         c.gridx = 0;
         c.gridy = 2;

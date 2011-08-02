@@ -62,7 +62,8 @@ public class ViewJColorChooser extends JColorChooser {
         super();
 
         colorDialog = JColorChooser.createDialog(parent, title, false, this, OKListener, CancelListener);
-        this.setPreviewPanel(new JPanel());
+
+        //this.setPreviewPanel(prevPanel);
         if(setVisible) {
 	        colorDialog.setSize(450, 310);
 	        colorDialog.setResizable(false);
