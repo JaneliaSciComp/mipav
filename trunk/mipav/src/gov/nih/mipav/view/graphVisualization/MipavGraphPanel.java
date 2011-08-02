@@ -4,6 +4,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.components.WidgetFactory;
 import hypergraph.graphApi.AttributeManager;
 import hypergraph.graphApi.Edge;
 import hypergraph.graphApi.Element;
@@ -27,12 +28,17 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
 
+import javax.swing.BorderFactory;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -67,6 +73,12 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	private JDialogHyperGraph ownerDialog;
 	
 	private PropertiesDialog propertiesDialog;
+	
+	private JDialogAddNode addNodeDialog;
+	
+	private boolean addNode = false;
+	
+	private JCheckBox treeCheckBox;
 
 
 	/**
@@ -101,7 +113,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			}
 			if (m_kLastCommand.equalsIgnoreCase("Set node color")) {
 				pickedNode = colorNode;
-				if ( pickedNode != null )
+				/*if ( pickedNode != null )
 				{
 					AttributeManager attrMgr = getGraph().getAttributeManager();
 					attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, nodeColorChooser.getColor() );
@@ -110,18 +122,26 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 					propertiesDialog.dispose();
 					propertiesDialog = null;
 				}
+				repaint();*/
+				setProperties();
 				repaint();
 			}
 			if (m_kLastCommand.equalsIgnoreCase("Set tree level color")) { 
-				pickedNode = colorNode;
+				System.out.println("ccc");
+			    pickedNode = colorNode;
 				if ( pickedNode != null )
 				{
 					AttributeManager attrMgr = getGraph().getAttributeManager();
 					Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", pickedNode );
 					if ( level != null )
 					{
+						if(treeLevelColorChooser.getColor()  == null) {
+							System.out.println("nulll");
+						}
 						if ( setNodeColor( level.intValue(), treeLevelColorChooser.getColor() ) )
 						{
+							
+							System.out.println("bn");
 							return;
 						}
 					}
@@ -139,7 +159,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 						}
 						if ( level != null )
 						{
-							setNodeColor( root, 0, level.intValue(), colorChooser.getColor() );
+							setNodeColor( root, 0, level.intValue(), treeLevelColorChooser.getColor() );
 						}
 					}
 					else
@@ -147,11 +167,14 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 						MipavUtil.displayError( "Must specify root node." );
 					}
 				}
+				System.out.println("ht");
 				if(propertiesDialog != null) {
 					propertiesDialog.dispose();
 					propertiesDialog = null;
 				}
 				repaint();
+				//setProperties();
+				//repaint();
 			}
 		}
 		if (command.equalsIgnoreCase("Center root node")) {   
@@ -217,10 +240,17 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		if (command.equalsIgnoreCase("Add child node")) {  
 			// Launch add node dialog:
-			new JDialogAddNode(this, null, true);
+			//new JDialogAddNode(this, null, true);
+			addNode = true;
+			propertiesDialog = new PropertiesDialog(ownerDialog, this,addNode);
 		}
 		if (command.equalsIgnoreCase("Delete node")) {
 			deleteNode(pickedNode);
+		}
+		if (command.equals("notesNode")) {
+			System.out.println("here");
+			 pickedNode = colorNode;
+			setProperties();
 		}
 		if (command.equalsIgnoreCase("Link nodes")) {
 			if ( (pickedNodePrev != null) && (pickedNodePrev != pickedNode) )
@@ -240,16 +270,17 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		if(command.equalsIgnoreCase("Properties") && (pickedNode != null)) {
 			colorNode = pickedNode;
-			propertiesDialog = new PropertiesDialog(ownerDialog, this);
+			addNode = false;
+			propertiesDialog = new PropertiesDialog(ownerDialog, this, addNode);
 
 		}
-		if ( command.equalsIgnoreCase("Edit Notes") && (pickedNode != null)) {
+		/*if ( command.equalsIgnoreCase("Edit Notes") && (pickedNode != null)) {
 			// launch the add node/ edit notes dialog, pass in the current Annotation for the 
 			// selected node:
 			AttributeManager attrMgr = getGraph().getAttributeManager();	
 			String kNotes = (String)attrMgr.getAttribute( "ANNOTATION", pickedNode );	
 			new JDialogAddNode(this, kNotes, false);
-		}
+		}*/
 		if ( command.equalsIgnoreCase("Set as root")) {
 			AttributeManager attrMgr = getGraph().getAttributeManager();		
 			attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, pickedNode, pickedNode );
@@ -263,7 +294,90 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	
-	
+	private void setProperties() {
+		//first do the add node/edit node name/edit node notes part
+		String notes = null;
+        if(addNodeDialog.getNoteField().getText().length() > 0)
+        {
+        	notes = addNodeDialog.getNoteField().getText();
+        }
+        if ( addNode )
+        {
+        	// add a new node to the graph:
+        	addNode(addNodeDialog.getNameField().getText().trim(), notes);
+        }
+        else{
+        	// pass in the edited notes field:
+        	if ( notes != null ) {
+        		editNotes(notes);
+        	}
+        	if(pickedNode != null) {
+        		pickedNode.setLabel(addNodeDialog.getNameField().getText().trim());
+        	}
+        }
+        
+        //now do node color
+        if ( pickedNode != null )
+		{
+        	System.out.println("mmm");
+			AttributeManager attrMgr = getGraph().getAttributeManager();
+			attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, nodeColorChooser.getColor() );
+		}
+        if(treeCheckBox.isSelected()) {
+        	 //now do tree color
+            if ( pickedNode != null )
+     		{
+             	System.out.println("nnn");
+     			AttributeManager attrMgr = getGraph().getAttributeManager();
+     			Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", pickedNode );
+     			if ( level != null )
+     			{
+     				if ( setNodeColor( level.intValue(), nodeColorChooser.getColor() ) )
+     				{
+     					if(propertiesDialog != null) {
+     						propertiesDialog.dispose();
+     						propertiesDialog = null;
+     					}
+     					repaint();
+     					return;
+     				}
+     			}
+
+     			Node root = (Node)attrMgr.getAttribute( AttributeManager.GRAPH_ROOT, pickedNode );
+     			if ( root == null )
+     			{
+     				root = findRoot();
+     			}
+     			if ( root != null )
+     			{
+     				if ( level == null )
+     				{
+     					level = findLevel( root, pickedNode, 0 );
+     				}
+     				if ( level != null )
+     				{
+     					setNodeColor( root, 0, level.intValue(), nodeColorChooser.getColor() );
+     				}
+     			}
+     			else
+     			{
+     				MipavUtil.displayError( "Must specify root node." );
+     			}
+     		}
+        }
+        
+       
+        
+        
+        if(propertiesDialog != null) {
+			propertiesDialog.dispose();
+			propertiesDialog = null;
+		}
+		repaint();
+		
+		
+        
+	}
 	
 
 	/**
@@ -956,35 +1070,65 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
         private JPanel mainPanel;
 
         private GridBagConstraints gbc;
+        
+        private boolean addNode;
 
 
         
-        public PropertiesDialog(JDialogHyperGraph owner, MipavGraphPanel mgp) {
+        public PropertiesDialog(JDialogHyperGraph owner, MipavGraphPanel mgp, boolean addNode) {
         	super(owner,false);
         	this.owner = owner;
         	this.mgp = mgp;
+        	this.addNode = addNode;
         	m_kLastCommand = "Edit Notes";
         	init();
         }
         
         public void init() {
-        	
-        	setTitle("Properties for " + pickedNode.getLabel() + " node");
+        	if(addNode) {
+        		setTitle("Add Child Node");
+        	}else {
+        		setTitle("Properties for " + pickedNode.getLabel() + " node");
+        	}
         	
         	AttributeManager attrMgr = getGraph().getAttributeManager();	
 			String kNotes = (String)attrMgr.getAttribute( "ANNOTATION", pickedNode );	
-			JDialogAddNode addNodeDialog = new JDialogAddNode(mgp, kNotes, false, false);
+			Color currentColor = (Color)attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, pickedNode);
+			addNodeDialog = new JDialogAddNode(mgp, pickedNode, kNotes, addNode, false);
 			
 			nodeColorChooser = new ViewJColorChooser(null, "Pick color", mgp, mgp, false );
+			/*JPanel prevPanel = new JPanel();
+			treeCheckBox = new JCheckBox("Set nodes at same tree level to chosen color");
+			prevPanel.add(treeCheckBox);
+			prevPanel.add(new JLabel("TESTING"));
+			nodeColorChooser.setPreviewPanel(prevPanel);*/
+			
+			JPanel prevPanel = new JPanel();
+			treeCheckBox = new JCheckBox("Set nodes at same tree level to chosen color");
+			prevPanel.add(treeCheckBox);
+			prevPanel.setSize(prevPanel.getPreferredSize()); 
+			prevPanel.setBorder(BorderFactory.createEmptyBorder(0,0,1,0));
+			
+			//prevPanel.setBorder(WidgetFactory.buildTitledBorder("Testing"));
+
+			nodeColorChooser.setPreviewPanel(prevPanel);
+
+			
+			
+					
+			nodeColorChooser.setColor(currentColor);
 			JDialog nodeColorDialog = nodeColorChooser.getColorDialog();
+			System.out.println(nodeColorDialog.getComponentCount());
+			System.out.println(((JRootPane)nodeColorDialog.getComponent(0)).getComponentCount());
+			//((JRootPane)nodeColorDialog.getComponent(0)).getComponent(1).setVisible(false);
 			
 			treeLevelColorChooser = new ViewJColorChooser(null, "Pick color", mgp, mgp, false );
 			JDialog treeLevelColorDialog = treeLevelColorChooser.getColorDialog();
 			
 			tabbedPane.addChangeListener(this);
-        	tabbedPane.addTab("Edit Notes", addNodeDialog.getRootPane());
+        	tabbedPane.addTab("Edit Name/Notes", addNodeDialog.getRootPane());
         	tabbedPane.addTab("Node Color", nodeColorDialog.getRootPane());
-        	tabbedPane.addTab("Tree Level Color", treeLevelColorDialog.getRootPane());
+        	//tabbedPane.addTab("Tree Level Color", treeLevelColorDialog.getRootPane());
         	
              mainPanel = new JPanel(new GridBagLayout());
              
