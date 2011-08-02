@@ -163,7 +163,7 @@ public class FileBMP extends FileBase {
         int biBitCount; // Bits per pixel - 1, 4, 8, 16, 24, or 32
         long biCompression = BI_RGB; // Compression type - BI_RGB = 0 (uncompressed), BI_RLE8 = 1,
                                     //                    BI_RLE4 = 2, or BI_BITFIELDS = 3
-        long sizeOfBitmap; // Size of the stored bitmap in bytes.  This value is typically
+        long sizeOfBitmap = 0; // Size of the stored bitmap in bytes.  This value is typically
                            // zero when the bitmap data is uncompressed
         int biXPelsPerMeter; // Horizontal pixels per meter
         int biYPelsPerMeter; // Vertical pixels per meter
@@ -770,6 +770,153 @@ public class FileBMP extends FileBase {
                 } // else topDown
                 image.importData(0, byteBuffer2, true);
             } // else if ((biBitCount == 8) && (biCompression == BI_RGB))
+            else if ((biBitCount == 8) && (biCompression == BI_RLE8)) {
+            	byteBuffer2 = new byte[sliceSize];
+                byteBuffer = new byte[(int)sizeOfBitmap];	
+                raFile.read(byteBuffer);
+                if (bottomUp) {
+                	x = 0;
+                	y = imageExtents[1] - 1;
+                    for (j = 0; j < sizeOfBitmap;) {
+
+                        if (byteBuffer[j] != 0) {
+
+                            for (k = 0; k < (byteBuffer[j] & 0x000000ff); k++) {
+                                byteBuffer2[x + (imageExtents[0] * y)] = byteBuffer[j + 1];
+                                x++;
+
+                                if ((x == imageExtents[0]) && (y > 0)) {
+                                    x = 0;
+                                    y--;
+                                } // if ((x == imgExtents[0]) && (y > 0))
+                                else if ((x == imageExtents[0]) && (y == 0)) {
+                                    x = 0;
+                                    y = imageExtents[1] - 1;
+                                } // else if ((x == imgExtents[0]) && (y == 0))
+                            } // for (k = 0; k < (fileBuffer[j] & 0x000000ff); k++)
+
+                            j = j + 2;
+                        } // if (byteBuffer[j] != 0)
+                        else if ((byteBuffer[j] == 0) && ((byteBuffer[j + 1] & 0x000000ff) > 2)) {
+
+                            for (k = 0; k < (byteBuffer[j + 1] & 0x000000ff); k++) {
+                                byteBuffer2[x + (imageExtents[0] * y)] = byteBuffer[j + k + 2];
+                                x++;
+
+                                if ((x == imageExtents[0]) && (y > 0)) {
+                                    x = 0;
+                                    y--;
+                                } // if ((x == imageExtents[0]) && (y > 0))
+                                else if ((x == imageExtents[0]) && (y == 0)) {
+                                    x = 0;
+                                    y = imageExtents[1] - 1;
+                                } // else if ((x == imageExtents[0]) && (y == 0))
+                            } // for (k = 0; k < (fileBuffer[j+1] & 0x000000ff); k++)
+
+                            j = j + 2 + (byteBuffer[j + 1] & 0x000000ff) +
+                            ((byteBuffer[j + 1] & 0x000000ff) % 2);
+	                    } // else if ((byteBuffer[j] == 0) && ((byteBuffer[j+1] & 0x000000ff) > 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 2)) {
+	                        x = x + (byteBuffer[j + 2] & 0x000000ff);
+	                        y = y - (byteBuffer[j + 3] & 0x000000ff);
+	                        j = j + 4;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 0)) {
+	
+	                        // end of a line
+	                        if (x != 0) {
+	                            x = 0;
+	
+	                            if (y > 0) {
+	                                y = y - 1;
+	                            } else {
+	                                y = imageExtents[1] - 1;
+	                            }
+	                        } // if (x != 0)
+	
+	                        j = j + 2;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 0))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 1)) {
+	
+	                        // end of RLE bitmap
+	                    	image.importData(0, byteBuffer2, true);
+	                    	j = j + 2;
+	                        
+	                    } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 1))
+                    } // for (j = 0; j < sizeOfBitmap;)  
+                } // if (bottomUp)
+                else { // topDown
+                	x = 0;
+                	y = 0;
+                    for (j = 0; j < sizeOfBitmap;) {
+
+                        if (byteBuffer[j] != 0) {
+
+                            for (k = 0; k < (byteBuffer[j] & 0x000000ff); k++) {
+                                byteBuffer2[x + (imageExtents[0] * y)] = byteBuffer[j + 1];
+                                x++;
+
+                                if ((x == imageExtents[0]) && (y < imageExtents[1]-1)) {
+                                    x = 0;
+                                    y++;
+                                } // if ((x == imgExtents[0]) && (y < imageExtents[1]-1))
+                                else if ((x == imageExtents[0]) && (y == imageExtents[1]-1)) {
+                                    x = 0;
+                                    y = 0;
+                                } // else if ((x == imgExtents[0]) && (y == imageExtents[1]-1))
+                            } // for (k = 0; k < (fileBuffer[j] & 0x000000ff); k++)
+
+                            j = j + 2;
+                        } // if (byteBuffer[j] != 0)
+                        else if ((byteBuffer[j] == 0) && ((byteBuffer[j + 1] & 0x000000ff) > 2)) {
+
+                            for (k = 0; k < (byteBuffer[j + 1] & 0x000000ff); k++) {
+                                byteBuffer2[x + (imageExtents[0] * y)] = byteBuffer[j + k + 2];
+                                x++;
+
+                                if ((x == imageExtents[0]) && (y < imageExtents[1]-1)) {
+                                    x = 0;
+                                    y++;
+                                } // if ((x == imageExtents[0]) && (y < imageExtents[1]-1))
+                                else if ((x == imageExtents[0]) && (y == imageExtents[1]-1)) {
+                                    x = 0;
+                                    y = 0;
+                                } // else if ((x == imageExtents[0]) && (y == imageExtents[1]-1))
+                            } // for (k = 0; k < (fileBuffer[j+1] & 0x000000ff); k++)
+
+                            j = j + 2 + (byteBuffer[j + 1] & 0x000000ff) +
+                            ((byteBuffer[j + 1] & 0x000000ff) % 2);
+	                    } // else if ((byteBuffer[j] == 0) && ((byteBuffer[j+1] & 0x000000ff) > 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 2)) {
+	                        x = x + (byteBuffer[j + 2] & 0x000000ff);
+	                        y = y + (byteBuffer[j + 3] & 0x000000ff);
+	                        j = j + 4;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 0)) {
+	
+	                        // end of a line
+	                        if (x != 0) {
+	                            x = 0;
+	
+	                            if (y < imageExtents[1]-1) {
+	                                y = y + 1;
+	                            } else {
+	                                y = 0;
+	                            }
+	                        } // if (x != 0)
+	
+	                        j = j + 2;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 0))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 1)) {
+	
+	                        // end of RLE bitmap
+	                    	image.importData(0, byteBuffer2, true);
+	                    	j = j + 2;
+	                        
+	                    } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 1))
+                    } // for (j = 0; j < sizeOfBitmap;)  	
+                } // topDown
+            } // else if ((biBitCount == 8) && (biCompression == BI_RLE8))
             else if ((biBitCount == 16) && (biCompression == BI_RGB)) {
                 byteBuffer2 = new byte[4*sliceSize];
                 byteBuffer = new byte[bufferSize];
@@ -938,7 +1085,15 @@ public class FileBMP extends FileBase {
                                     ((byteBuffer[j + 2] & 0xff) << 16) |
                                     ((byteBuffer[j + 3] & 0xff) << 24));
                
-                            byteBuffer2[4*index] = (byte)255;
+                        	if ((alphaEndBit - 7) >= 0) {
+                                byteBuffer2[4*index] = (byte)((intColor & alphaMask) >>> (alphaEndBit - 7));
+                            }
+                            else if (alphaEndBit != -1){
+                            	byteBuffer2[4*index] = (byte)((intColor & alphaMask) << (7 - redEndBit));	
+                            }
+                            else {
+                        	    byteBuffer2[4*index] = (byte)255;
+                            }
                             
                             if ((redEndBit - 7) >= 0) {
                                 byteBuffer2[4*index+1] = (byte)((intColor & redMask) >>> (redEndBit - 7));
@@ -970,7 +1125,15 @@ public class FileBMP extends FileBase {
                                     ((byteBuffer[j + 2] & 0xff) << 16) |
                                     ((byteBuffer[j + 3] & 0xff) << 24));
                
-                            byteBuffer2[4*index] = (byte)255;
+                        	if ((alphaEndBit - 7) >= 0) {
+                                byteBuffer2[4*index] = (byte)((intColor & alphaMask) >>> (alphaEndBit - 7));
+                            }
+                            else if (alphaEndBit != -1){
+                            	byteBuffer2[4*index] = (byte)((intColor & alphaMask) << (7 - redEndBit));	
+                            }
+                            else {
+                        	    byteBuffer2[4*index] = (byte)255;
+                            }
                             
                             if ((redEndBit - 7) >= 0) {
                                 byteBuffer2[4*index+1] = (byte)((intColor & redMask) >>> (redEndBit - 7));
