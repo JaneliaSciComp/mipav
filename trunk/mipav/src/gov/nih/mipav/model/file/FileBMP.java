@@ -228,6 +228,11 @@ public class FileBMP extends FileBase {
         byte byteBuffer2[];
         short shortColor;
         int intColor;
+        int m;
+        byte firstVal;
+        byte secondVal;
+        int usedBytes;
+        int mod2;
 
         try {
             
@@ -747,6 +752,218 @@ public class FileBMP extends FileBase {
                 } // else topDown
                 image.importData(0, byteBuffer2, true);
             } // else if ((biBitCount == 4)  && (biCompression == BI_RGB))
+            else if ((biBitCount == 4)&& (biCompression == BI_RLE4)) {
+            	byteBuffer2 = new byte[sliceSize];
+                byteBuffer = new byte[(int)sizeOfBitmap];	
+                raFile.read(byteBuffer);
+                if (bottomUp) {
+                	x = 0;
+                	y = imageExtents[1] - 1;
+                    for (j = 0; j < sizeOfBitmap;) {
+
+                        if (byteBuffer[j] != 0) {
+                        	firstVal = (byte)((byteBuffer[j+1] & 0x000000f0) >>> 4);
+                        	secondVal = (byte)(byteBuffer[j+1] & 0x0000000f);
+                            for (k = 0, m = 0; k < (byteBuffer[j] & 0x000000ff); k++) {
+                            	
+                            	if (m == 0) {
+                            		if (x < imageExtents[0]) {
+                                        byteBuffer2[x + (imageExtents[0] * y)] = firstVal;
+                            		}
+                                    m = 1;
+                            	}
+                            	else {
+                            		if (x < imageExtents[0]) {
+                            		    byteBuffer2[x + (imageExtents[0] * y)] = secondVal;
+                            		}
+                            		m = 0;
+                            	}
+                                x++;
+
+                                if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y > 0)) {
+                                    x = 0;
+                                    y--;
+                                } // if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y > 0))
+                                else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == 0)) {
+                                    x = 0;
+                                    y = imageExtents[1] - 1;
+                                } // else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == 0))
+                            } // for (k = 0; k < (fileBuffer[j] & 0x000000ff); k++)
+                           
+                            j = j + 2;
+                        } // if (byteBuffer[j] != 0)
+                        else if ((byteBuffer[j] == 0) && ((byteBuffer[j + 1] & 0x000000ff) > 2)) {
+
+                            for (k = 0, m = 0; k < (byteBuffer[j + 1] & 0x000000ff); k++) {
+                            	if (m == 0) {
+                            		if (x < imageExtents[0]) {
+                                        byteBuffer2[x + (imageExtents[0] * y)] = 
+                                    	    (byte)((byteBuffer[j + k/2 + 2] & 0x000000f0) >>> 4);
+                            		}
+                                    m = 1;
+                            	}
+                            	else {
+                            		if (x < imageExtents[0]) {
+                            		    byteBuffer2[x + (imageExtents[0] * y)] = 
+                                    	    (byte)(byteBuffer[j + k/2 + 2] & 0x0000000f);
+                            		}
+                                    m = 0;	
+                            	}
+                                x++;
+
+                                if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y > 0)) {
+                                    x = 0;
+                                    y--;
+                                } // if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y > 0))
+                                else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == 0)) {
+                                    x = 0;
+                                    y = imageExtents[1] - 1;
+                                } // else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == 0))
+                            } // for (k = 0; k < (fileBuffer[j+1] & 0x000000ff); k++)
+                            usedBytes = (byteBuffer[j+1] & 0x000000ff)/2 + ((byteBuffer[j+1] & 0x000000ff) % 2);
+                            mod2 = usedBytes % 2;
+                            
+                            if (mod2 == 1) {
+                               j = j + 3 + usedBytes;
+                            }
+                            else {
+                            	j = j + 2 + usedBytes;
+                            }
+                            
+	                    } // else if ((byteBuffer[j] == 0) && ((byteBuffer[j+1] & 0x000000ff) > 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 2)) {
+	                        x = x + (byteBuffer[j + 2] & 0x000000ff);
+	                        y = y - (byteBuffer[j + 3] & 0x000000ff);
+	                        j = j + 4;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 0)) {
+	
+	                        // end of a line
+	                        if (x != 0) {
+	                            x = 0;
+	
+	                            if (y > 0) {
+	                                y = y - 1;
+	                            } else {
+	                                y = imageExtents[1] - 1;
+	                            }
+	                        } // if (x != 0)
+	
+	                        j = j + 2;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 0))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 1)) {
+	
+	                        // end of RLE bitmap
+	                    	image.importData(0, byteBuffer2, true);
+	                    	j = j + 2;
+	                        
+	                    } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 1))
+                    } // for (j = 0; j < sizeOfBitmap;)  
+                } // if (bottomUp)
+                else { // topDown
+                	x = 0;
+                	y = 0;
+                    for (j = 0; j < sizeOfBitmap;) {
+                    	if (byteBuffer[j] != 0) {
+                        	firstVal = (byte)((byteBuffer[j+1] & 0x000000f0) >>> 4);
+                        	secondVal = (byte)(byteBuffer[j+1] & 0x0000000f);
+                            for (k = 0, m = 0; k < (byteBuffer[j] & 0x000000ff); k++) {
+                            	
+                            	if (m == 0) {
+                            		if (x < imageExtents[0]) {
+                                        byteBuffer2[x + (imageExtents[0] * y)] = firstVal;
+                            		}
+                                    m = 1;
+                            	}
+                            	else {
+                            		if (x < imageExtents[0]) {
+                            		    byteBuffer2[x + (imageExtents[0] * y)] = secondVal;
+                            		}
+                            		m = 0;
+                            	}
+                                x++;
+
+                                if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y < imageExtents[1]-1)) {
+                                    x = 0;
+                                    y++;
+                                } // if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y < imageExtents[1]-1))
+                                else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == imageExtents[1]-1)) {
+                                    x = 0;
+                                    y = 0;
+                                } // else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == imageExtents[1]-1))
+                            } // for (k = 0; k < (fileBuffer[j] & 0x000000ff); k++)
+                           
+                            j = j + 2;
+                        } // if (byteBuffer[j] != 0)
+                        else if ((byteBuffer[j] == 0) && ((byteBuffer[j + 1] & 0x000000ff) > 2)) {
+
+                            for (k = 0, m = 0; k < (byteBuffer[j + 1] & 0x000000ff); k++) {
+                            	if (m == 0) {
+                            		if (x < imageExtents[0]) {
+                                        byteBuffer2[x + (imageExtents[0] * y)] = 
+                                    	    (byte)((byteBuffer[j + k/2 + 2] & 0x000000f0) >>> 4);
+                            		}
+                                    m = 1;
+                            	}
+                            	else {
+                            		if (x < imageExtents[0]) {
+                            		    byteBuffer2[x + (imageExtents[0] * y)] = 
+                                    	    (byte)(byteBuffer[j + k/2 + 2] & 0x0000000f);
+                            		}
+                                    m = 0;	
+                            	}
+                                x++;
+
+                                if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y < imageExtents[1]-1)) {
+                                    x = 0;
+                                    y++;
+                                } // if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y < imageExtents[1]-1))
+                                else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == imageExtents[1]-1)) {
+                                    x = 0;
+                                    y = 0;
+                                } // else if ((x == (imageExtents[0] + (imageExtents[0] % 2))) && (y == imageExtents[1]-1))
+                            } // for (k = 0; k < (fileBuffer[j+1] & 0x000000ff); k++)
+                            usedBytes = (byteBuffer[j+1] & 0x000000ff)/2 + ((byteBuffer[j+1] & 0x000000ff) % 2);
+                            mod2 = usedBytes % 2;
+                            
+                            if (mod2 == 1) {
+                               j = j + 3 + usedBytes;
+                            }
+                            else {
+                            	j = j + 2 + usedBytes;
+                            }
+                            
+	                    } // else if ((byteBuffer[j] == 0) && ((byteBuffer[j+1] & 0x000000ff) > 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 2)) {
+	                        x = x + (byteBuffer[j + 2] & 0x000000ff);
+	                        y = y - (byteBuffer[j + 3] & 0x000000ff);
+	                        j = j + 4;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 2))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 0)) {
+	
+	                        // end of a line
+	                        if (x != 0) {
+	                            x = 0;
+	
+	                            if (y < imageExtents[1]-1) {
+	                                y = y + 1;
+	                            } else {
+	                                y = 0;
+	                            }
+	                        } // if (x != 0)
+	
+	                        j = j + 2;
+	                    } // else if ((byteBuffer[j] == 0) && (byteBuffer[j+1] == 0))
+	                    else if ((byteBuffer[j] == 0) && (byteBuffer[j + 1] == 1)) {
+	
+	                        // end of RLE bitmap
+	                    	image.importData(0, byteBuffer2, true);
+	                    	j = j + 2;
+	                        
+	                    } // else if ((fileBuffer[j] == 0) && (fileBuffer[j+1] == 1))
+                    } // for (j = 0; j < sizeOfBitmap;)  	
+                } // topDown	
+            } // else if ((biBitCount == 4)&& (biCompression == BI_RLE4))
             else if ((biBitCount == 8) && (biCompression == BI_RGB)) {
             	byteBuffer2 = new byte[sliceSize];
                 byteBuffer = new byte[bufferSize];
