@@ -4872,7 +4872,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0010", new Short((short) resultImage.getExtents()[1]), 2);
                     ((FileInfoDicom) fileInfo[i]).getTagTable().setValue("0028,0011", new Short((short) resultImage.getExtents()[0]), 2);
                     if(srcAlg != null) {
-                        srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
+                        //srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
                     }
                 }
 
@@ -4888,7 +4888,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                     
                     if(srcAlg != null) {
-                        srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
+                        //srcAlg.fireProgressStateChanged((float).7*(i/((float)resultImage.getExtents()[2])), "Reorient", "Reorient on slice "+i);
                     }
                 }
             }
