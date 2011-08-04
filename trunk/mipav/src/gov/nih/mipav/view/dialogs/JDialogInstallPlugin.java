@@ -183,11 +183,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         Object source = event.getSource();
 
         if(source == OKButton) {
-        	//TODO: Install plugins
         	JList selected = selectorPanel.getSelectedFiles();
-        	for(int i=0; i<selected.getModel().getSize(); i++) {
-        		//System.out.println(selected.getModel().getElementAt(i));
-        	}
         	installPlugins();
         } else if (source == cancelButton) {
         	dispose();
@@ -759,6 +755,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         // make the plugins directory if it does not exist
         if (!new File(pluginDir).isDirectory()) {
             new File(pluginDir).mkdirs();
+            MipavUtil.displayError("The MIPAV plugin directory was just created, please restart MIPAV before installing plugins.");
         }
 
         FileOutputStream fw = null; // for outputting copied file
@@ -775,26 +772,21 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             File currentFile = (File) files.elementAt(i);
 
             if (currentFile.getName().endsWith(".class")) {
+            	int readStatus = -1;
+            	byte[] byteBuff = null;
+            	int fileLength = 0;
 
-            	allFiles.add(new File(pluginDir+currentFile.getName()));
-            	
                 try {
                     fr = new FileInputStream(currentFile); // sets the fileinput to the directory chosen from the
                                                            // browse option
-                    fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the location to be copied is MIPAV's class path
-
                     br = new BufferedInputStream(fr);
-                    bw = new BufferedOutputStream(fw);
+                    
+                    fileLength = (int) currentFile.length();
 
-                    int fileLength = (int) currentFile.length();
-
-                    byte[] byteBuff = new byte[fileLength];
+                    byteBuff = new byte[fileLength];
 
                     if (fileLength != 0) {
-
-                        while (br.read(byteBuff, 0, fileLength) != -1) {
-                            bw.write(byteBuff, 0, fileLength);
-                        }
+                    	readStatus = br.read(byteBuff, 0, fileLength);
                     }
 
                 } catch (FileNotFoundException fnfe) {
@@ -803,7 +795,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
                     return null;
                 } catch (IOException ioe) {
-                    MipavUtil.displayError("Error reading/writing plugin files.  Try manually copying .class files to " +
+                    MipavUtil.displayError("Error reading plugin files.  Try manually copying .class files to " +
                                            pluginDir);
                     dispose();
 
@@ -815,12 +807,32 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                         if (br != null) {
                             br.close();
                         }
-
-                        if (bw != null) {
-                            bw.close();
-                        }
                     } catch (IOException ioe) {
                         ioe.printStackTrace();
+                    }
+                }
+                
+                if(readStatus != -1) {
+                	try {
+	                	//TODO: Populate files here based on derived class name (found by searching clas file). 
+	                	allFiles.add(new File(pluginDir+File.separatorChar+currentFile.getName()));
+		                fw = new FileOutputStream(pluginDir + File.separatorChar + currentFile.getName()); // the location to be copied is MIPAV's class path
+		                bw = new BufferedOutputStream(fw);
+		                bw.write(byteBuff, 0, fileLength);
+                	}catch (IOException ioe) {
+                        MipavUtil.displayError("Error writing plugin files.  Try manually copying .class files to " +
+                                pluginDir);
+				         dispose();
+				
+				         return null;
+				     } 
+                	
+                	if (bw != null) {
+                        try {
+							bw.close();
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
                     }
                 }
             }
