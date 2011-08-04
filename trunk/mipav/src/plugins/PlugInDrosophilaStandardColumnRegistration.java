@@ -13,8 +13,6 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 	
 	
 
-	
-	
 	public void run() {
 		
 		/*if(GraphicsEnvironment.isHeadless()) {
@@ -25,6 +23,9 @@ public class PlugInDrosophilaStandardColumnRegistration implements PlugInGeneric
 
 	}
 
+	
+	
+	
 	
 	
 	public int parseArguments(String[] args, int initArg) {

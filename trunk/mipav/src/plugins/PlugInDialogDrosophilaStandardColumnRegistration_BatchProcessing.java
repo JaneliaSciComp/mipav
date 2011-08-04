@@ -78,7 +78,7 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 	 */
 	public void init() {
 		setForeground(Color.black);
-        setTitle("Drosophila Standard Column Registration - Batch Processing   v1.3");
+        setTitle("Drosophila Standard Column Registration - Batch Processing   v1.5");
         
         mainPanel = new JPanel(new GridBagLayout());
         gbc = new GridBagConstraints();
@@ -376,28 +376,52 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 				plugin.flipYCB.setSelected(true);
 				plugin.flipZCB.setSelected(true);
 			}
-			if(vars[5].equalsIgnoreCase("LVRD")) {
+			
+			if(vars[5].equalsIgnoreCase("27_Points")) {
+				plugin._27PointsRadio.setSelected(true);
+				plugin._75PointsRadio.setSelected(false);
+				plugin._147PointsRadio.setSelected(false);
+			}else if(vars[5].equalsIgnoreCase("75_Points")) {
+				plugin._27PointsRadio.setSelected(false);
+				plugin._75PointsRadio.setSelected(true);
+				plugin._147PointsRadio.setSelected(false);
+			}else if(vars[5].equalsIgnoreCase("147_Points")) {
+				plugin._27PointsRadio.setSelected(false);
+				plugin._75PointsRadio.setSelected(false);
+				plugin._147PointsRadio.setSelected(true);
+			}
+			if(plugin._27PointsRadio.isSelected()) {
+				plugin.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._27POINTS);
+			}else if (plugin._75PointsRadio.isSelected()) {
+				plugin.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._75POINTS);
+			}else if (plugin._147PointsRadio.isSelected()) {
+				plugin.setNumPoints(PlugInDialogDrosophilaStandardColumnRegistration._147POINTS);
+			}
+			
+			
+			
+			if(vars[6].equalsIgnoreCase("LVRD")) {
 				plugin.lvrdRadio.setSelected(true);
 				plugin.rvldRadio.setSelected(false);
-			}else if(vars[5].equalsIgnoreCase("RVLD")) {
+			}else if(vars[6].equalsIgnoreCase("RVLD")) {
 				plugin.lvrdRadio.setSelected(false);
 				plugin.rvldRadio.setSelected(true);
 			}
 			
-			if(vars[6].equalsIgnoreCase("RigidTPS")) {
+			if(vars[7].equalsIgnoreCase("RigidTPS")) {
 				plugin.rigTPSRadio.setSelected(true);
 				plugin.rigRadio.setSelected(false);
-			}else if(vars[6].equalsIgnoreCase("Rigid")) {
+			}else if(vars[7].equalsIgnoreCase("Rigid")) {
 				plugin.rigTPSRadio.setSelected(false);
 				plugin.rigRadio.setSelected(true);
 			}
 			
 			
-			if(vars.length > 7) {
-				plugin.greenValueRadiusThresholdTextField.setText(vars[7]);
-				plugin.greenThreshold = Float.valueOf(vars[7]).floatValue();
-				plugin.subsamplingDistanceTextField.setText(vars[8]);
-				plugin.subsamplingDistance = Float.valueOf(vars[8]).floatValue();
+			if(vars.length > 8) {
+				plugin.greenValueRadiusThresholdTextField.setText(vars[8]);
+				plugin.greenThreshold = Float.valueOf(vars[8]).floatValue();
+				plugin.subsamplingDistanceTextField.setText(vars[9]);
+				plugin.subsamplingDistance = Float.valueOf(vars[9]).floatValue();
 				plugin.swcCB.setSelected(true);
 				plugin.doSWC = true;
 				
