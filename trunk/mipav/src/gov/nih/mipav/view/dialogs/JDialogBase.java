@@ -1228,7 +1228,7 @@ public abstract class JDialogBase extends JDialog
     }
     
     /**
-     * Tests that the entered parameter is in range.
+     * Tests that the entered parameter is in range from [minValue, maxValue].
      *
      * @param   str       The value entered by the user.
      * @param   minValue  The minimum value this variable may be set to.
