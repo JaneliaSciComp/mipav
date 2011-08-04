@@ -401,6 +401,101 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         // hertz, ppm, radians per second:
         1, 1, 0.159154943274 };
     
+    public enum Modality {
+    	/** Image modality unknown. */
+    	UNKNOWN_MODALITY(0, "Unknown Modality"),
+    	/** Image modality biomagnetic imaging. */
+        BIOMAGNETIC_IMAGING(1, "Biomagnetic Imaging"),
+        /** Image modality color flow doppler. */
+        COLOR_FLOW_DOPPLER(2, "Color Flow Doppler"),
+        /** Image modality CR. */
+        COMPUTED_RADIOGRAPHY(3, "Computed Radiography"),
+        /** Image modality CT. */
+        COMPUTED_TOMOGRAPHY(4, "Computed Tomography"),
+        /** Image modality duplex doppler. */
+        DUPLEX_DOPPLER(5, "Duplex Doppler"),
+        /** Image modality diaphanography. */
+        DIAPHANOGRAPHY(6, "Diaphanography"),
+        /** Image modality digital radiography. */
+        DIGITAL_RADIOGRAPHY(7, "Digital Radiography"),
+        /** Image modality endoscopy. */
+        ENDOSCOPY(8, "Endoscopy"),
+        /** Image modality general microscopy. */
+        GENERAL_MICROSCOPY(9, "General Microscopy"),
+        /** Image modality hard copy. */
+        HARDCOPY(10, "Hardcopy"),
+        /** Image modality intraoral radiography. */
+        INTRAORAL_RADIOGRAPH(11, "Intraoral Radiography"),
+        /** Image modality laser surface scan. */
+        LASER_SURFACE_SCAN(12, "Laser Surface Scan"),
+        /** Image modality MR angiography. */
+        MAGNETIC_RESONANCE_ANGIOGRAPHY(13, "Magnetic Resonance Angiography"),
+        /** Image modality mammography. */
+        MAMMOGRAPHY(14, "Mammography"),
+        /** Image modality MR. */
+        MAGNETIC_RESONANCE(15, "Magnetic Resonance"),
+        /** Image modality MR SPECT. */
+        MAGNETIC_RESONANCE_SPECTROSCOPY(16, "Magnetic Resonance Spectroscopy"),
+        /** Image modality nuclear medicine. */
+        NUCLEAR_MEDICINE(17, "Nuclear Medicine"),
+        /** Image modality other. */
+        OTHER(18, "Other"),
+        /** Image modality PET. */
+        POSITRON_EMISSION_TOMOGRAPHY(19, "Positron Emission Tomography"),
+        /** Image modality panoramtic X ray. */
+        PANORAMIC_XRAY(20, "Panoramic XRay"),
+        /** Image modality radio fluoroscopy. */
+        RADIO_FLUOROSCOPY(21, "Radio Fluoroscopy"),
+        /** Image modality radiographic imaging. */
+        RADIOGRAPHIC_IMAGING(22, "Radiographic Imaging"),
+        /** Image modality radiotherapy dose. */
+        RADIOTHERAPY_DOSE(23, "Radiotherapy Dose"),
+        /** Image modality radiotherapy image. */
+        RADIOTHERAPY_IMAGE(24, "Radiotherapy Image"),
+        /** Image modality radiotherapy plan. */
+        RADIOTHERAPY_PLAN(25, "Radiotherapy Plan"),
+        /** Image modality radiotherapy record. */
+        RADIOTHERAPY_RECORD(26, "Radiotherapy Record"),
+        /** Image modality radiotherapy structure set. */
+        RADIOTHERAPY_STRUCTURE_SET(27, "Radiotherapy Structure Set"),
+        /** Image modality slide microscopy. */
+        SLIDE_MICROSCOPY(28, "Slide Microscopy"),
+        /** Image modality SPECT. */
+        SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY(29, "Single Photon Emission Computed Tomography"),
+        /** Image modality thermography. */
+        THERMOGRAPHY(30, "Thermography"),
+        /** Image modality ultrasound. */
+        ULTRASOUND(31, "Ultrasound"),
+        /** Image modality X ray angiography. */
+        XRAY_ANGIOGRAPHY(32, "XRay Angiography"),
+        /** Image modality external camera photography. */
+        EXTERNAL_CAMERA_PHOTOGRAPHY(33, "External Camera Photography"),
+        /** Image modality Red Free. */
+        RED_FREE(34, "Red Free"),
+        /** Image modality Fluorescein Angiography. */
+        FA(35, "FA"),
+        /** Image modality IndoCyanine Green. */
+        ICG(36, "ICG");
+    	
+    	/** The legacy number that can be used to reference a modality. */
+    	private int leagacyNum;
+    	/** The way this modality will be displayed to the user. */
+		private String printDisp;
+
+		Modality(int leagacyNum, String printDisp) {
+    		this.leagacyNum = leagacyNum;
+    		this.printDisp = printDisp;
+    	}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Enum#toString()
+		 */
+		public String toString() {
+			return printDisp;
+		}
+    	
+    }
+    
     /** Image modality unknown. */
     public static final int UNKNOWN_MODALITY = 0;
 
@@ -512,7 +607,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Image modality IndoCyanine Green. */
     public static final int ICG = 36;
 
-    /** Array of modality strings -- again, numbering starts at 1, not 0. */
+    /** Array of modality strings -- again, numbering starts at 1, not 0. 
+     * @deprecated No longer needed since enum works now*/
     private static final String[] modalityStr = {"Unknown Modality", "Biomagnetic Imaging", "Color Flow Doppler",
             "Computed Radiography", "Computed Tomography", "Duplex Doppler", "Diaphanography", "Digital Radiography",
             "Endoscopy", "General Microscopy", "Hardcopy", "Intraoral Radiography", "Laser Surface Scan",
@@ -523,6 +619,38 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             "Single Photon Emission Computed Tomography", "Thermography", "Ultrasound", "XRay Angiography",
             "External Camera Photography", "Red Free", "FA", "ICG"};
 
+    public enum AxisOrientation {
+    	/** Axis orientation unknown. */
+    	ORI_UNKNOWN_TYPE(0, "Unknown"),
+    	/** Axis orientation Right to Left. */
+    	ORI_R2L_TYPE(1, "Right to Left"),
+    	/** Axis orientation Left to Right. */
+    	ORI_L2R_TYPE(2, "Left to Right"),
+    	/** Axis orientation Posterior to Anterior. */
+    	ORI_P2A_TYPE(3, "Posterior to Anterior"),
+    	/** Axis orientation Anterior to Posterior. */
+    	ORI_A2P_TYPE(4, "Anterior to Posterior"),
+    	/** Axis orientation Inferior to Superior. */
+    	ORI_I2S_TYPE(5, "Inferior to Superior"),
+    	/** Axis orientation Superior to Inferior. */
+    	ORI_S2I_TYPE(6, "Superior to Inferior");
+    	
+    	private int legacyNum;
+		private String dispString;
+
+		AxisOrientation(int legacyNum, String dispString) {
+    		this.legacyNum = legacyNum;
+    		this.dispString = dispString;
+    	}
+
+		/* (non-Javadoc)
+		 * @see java.lang.Enum#toString()
+		 */
+		public String toString() {
+			return dispString;
+		}
+    }
+    
     /** Axis orientation unknown. */
     public static final int ORI_UNKNOWN_TYPE = 0;
 
@@ -548,6 +676,25 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public static final String[] axisOrientationStr = {"Unknown", "Right to Left", "Left to Right",
             "Posterior to Anterior", "Anterior to Posterior", "Inferior to Superior", "Superior to Inferior"};
 
+    public enum ImageOrientation {
+    	AXIAL(0, AxisOrientation.ORI_R2L_TYPE, AxisOrientation.ORI_A2P_TYPE, AxisOrientation.ORI_I2S_TYPE),
+    	CORONAL(1, AxisOrientation.ORI_R2L_TYPE, AxisOrientation.ORI_S2I_TYPE, AxisOrientation.ORI_A2P_TYPE),
+    	SAGITTAL(2, AxisOrientation.ORI_A2P_TYPE, AxisOrientation.ORI_S2I_TYPE, AxisOrientation.ORI_L2R_TYPE),  //TODO: Add dicom orientations
+    	UNKNOWN(3, AxisOrientation.ORI_UNKNOWN_TYPE, AxisOrientation.ORI_UNKNOWN_TYPE, AxisOrientation.ORI_UNKNOWN_TYPE);
+    	
+    	private int legacyNum;
+    	private AxisOrientation xAxis;
+    	private AxisOrientation yAxis;
+    	private AxisOrientation zAxis;
+    	
+    	ImageOrientation(int legacyNum, AxisOrientation xAxis, AxisOrientation yAxis, AxisOrientation zAxis) {
+    		this.legacyNum = legacyNum;
+    		this.xAxis = xAxis;
+    		this.yAxis = yAxis;
+    		this.zAxis = zAxis;
+    	}
+    }
+    
     /** Axial orientation. */
     public static final int AXIAL = 0;
 
