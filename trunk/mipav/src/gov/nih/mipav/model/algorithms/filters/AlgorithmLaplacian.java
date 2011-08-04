@@ -260,7 +260,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
             return;
         }
 
-        fireProgressStateChanged(0, null, "Calculation the laplacian ...");
+        fireProgressStateChanged(0, null, "Calculating the laplacian ...");
 
         convolver = new AlgorithmConvolver(srcImage, GxxData, kExtents,entireImage, image25D);
         convolver.setMinProgressValue(0);
