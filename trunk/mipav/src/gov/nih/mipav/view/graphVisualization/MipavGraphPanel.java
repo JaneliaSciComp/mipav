@@ -10,13 +10,18 @@ import hypergraph.graphApi.Edge;
 import hypergraph.graphApi.Element;
 import hypergraph.graphApi.Graph;
 import hypergraph.graphApi.Node;
+import hypergraph.hyperbolic.ModelPoint;
 import hypergraph.visualnet.DefaultNodeRenderer;
+import hypergraph.visualnet.GraphLayoutModel;
 import hypergraph.visualnet.GraphPanel;
 
 import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -79,6 +84,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	private boolean addNode = false;
 	
 	private JCheckBox treeCheckBox;
+	
+	private Graph kGraph;
 
 
 	/**
@@ -89,6 +96,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	public MipavGraphPanel( Graph kGraph, ViewJFrameImage kImageFrame, JDialogHyperGraph ownerDialog )
 	{
 		super(kGraph);
+		this.kGraph = kGraph;
 		m_kImageFrame = kImageFrame;
 		this.ownerDialog = ownerDialog;
 		setNodeRenderer(new MipavNodeRenderer());
@@ -106,8 +114,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			if ( m_kLastCommand.equalsIgnoreCase("Set background color" ) )
 			{
 				String kColorString = new String( "#" + Integer.toHexString(colorChooser.getColor().getRGB()).substring(2) );
-				getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",
-						kColorString );
+				getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
 				refreshProperties();
 				savePreferences();
 			}
@@ -127,7 +134,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				repaint();
 			}
 			if (m_kLastCommand.equalsIgnoreCase("Set tree level color")) { 
-				System.out.println("ccc");
 			    pickedNode = colorNode;
 				if ( pickedNode != null )
 				{
@@ -135,13 +141,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 					Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", pickedNode );
 					if ( level != null )
 					{
-						if(treeLevelColorChooser.getColor()  == null) {
-							System.out.println("nulll");
-						}
+						
 						if ( setNodeColor( level.intValue(), treeLevelColorChooser.getColor() ) )
 						{
-							
-							System.out.println("bn");
+
 							return;
 						}
 					}
@@ -167,7 +170,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 						MipavUtil.displayError( "Must specify root node." );
 					}
 				}
-				System.out.println("ht");
+
 				if(propertiesDialog != null) {
 					propertiesDialog.dispose();
 					propertiesDialog = null;
@@ -248,7 +251,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			deleteNode(pickedNode);
 		}
 		if (command.equals("notesNode")) {
-			System.out.println("here");
 			 pickedNode = colorNode;
 			setProperties();
 		}
@@ -319,7 +321,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
         //now do node color
         if ( pickedNode != null )
 		{
-        	System.out.println("mmm");
 			AttributeManager attrMgr = getGraph().getAttributeManager();
 			attrMgr.setAttribute( GraphPanel.NODE_FOREGROUND, pickedNode, nodeColorChooser.getColor() );
 		}
@@ -327,7 +328,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
         	 //now do tree color
             if ( pickedNode != null )
      		{
-             	System.out.println("nnn");
      			AttributeManager attrMgr = getGraph().getAttributeManager();
      			Integer level = (Integer)attrMgr.getAttribute( "TreeLevel", pickedNode );
      			if ( level != null )
@@ -1050,6 +1050,67 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	
+	public void paint(Graphics g) {
+		synchronized (kGraph) {
+			checkLayout();
+			Graphics2D g2 = (Graphics2D) g;
+
+			if (getUI().isDraft()) {
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+									RenderingHints.VALUE_ANTIALIAS_OFF);
+				g2.setRenderingHint(RenderingHints.KEY_RENDERING,
+									RenderingHints.VALUE_RENDER_SPEED);
+				g2.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+									RenderingHints.VALUE_FRACTIONALMETRICS_OFF);
+			} else {
+				g2.setRenderingHint(
+					RenderingHints.KEY_ANTIALIASING,
+					RenderingHints.VALUE_ANTIALIAS_ON);
+			}
+			super.paint(g);
+			GraphLayoutModel glm;
+			glm = getGraphLayout().getGraphLayoutModel();
+
+			for (Iterator i = getVisibleEdgeIterator(); i.hasNext();) {
+				Edge edge = (Edge) i.next();
+				if (edge != getHoverElement()) {
+					getEdgeRenderer().configure(this, edge);
+					paintRenderer(g, getEdgeRenderer());
+				}
+			}
+			for (Iterator i = getVisibleNodeIterator(); i.hasNext();) { 
+				Node node = (Node) i.next();
+				if (node != getHoverElement()) {
+					ModelPoint mp = glm.getNodePosition(node);
+					getNodeRenderer().configure(this, mp, node);
+					paintRenderer(g, getNodeRenderer());
+				}
+			}
+			if (getHoverElement() != null) {
+				if (getHoverElement().getElementType() == Element.EDGE_ELEMENT) {
+					getEdgeRenderer().configure(this, (Edge) getHoverElement());
+					paintRenderer(g, getEdgeRenderer());
+				}
+				if (getHoverElement().getElementType() == Element.NODE_ELEMENT) {
+					ModelPoint mp = glm.getNodePosition((Node) getHoverElement());
+					getNodeRenderer().configure(this, mp, (Node) getHoverElement());
+					paintRenderer(g, getNodeRenderer());
+				}
+			}
+		}
+		/*if (getWidth() > 300 && getHeight() > 300) {
+			if (logo != null)
+				g.drawImage(logo, getWidth() - logo.getWidth(this),
+								  getHeight() - logo.getHeight(this), this);
+		} else {
+			if (smallLogo != null)
+				g.drawImage(smallLogo, getWidth() - smallLogo.getWidth(this),
+									   getHeight() - smallLogo.getHeight(this), this);
+		}*/
+	}
+	
+	
+	
 	
 	
 	
@@ -1118,8 +1179,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 					
 			nodeColorChooser.setColor(currentColor);
 			JDialog nodeColorDialog = nodeColorChooser.getColorDialog();
-			System.out.println(nodeColorDialog.getComponentCount());
-			System.out.println(((JRootPane)nodeColorDialog.getComponent(0)).getComponentCount());
+
 			//((JRootPane)nodeColorDialog.getComponent(0)).getComponent(1).setVisible(false);
 			
 			treeLevelColorChooser = new ViewJColorChooser(null, "Pick color", mgp, mgp, false );

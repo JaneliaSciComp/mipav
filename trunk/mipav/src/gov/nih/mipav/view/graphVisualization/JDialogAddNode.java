@@ -142,7 +142,6 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
 
         JPanel namePanel = new JPanel();
         buttonPanel = this.buildButtons();
-        OKButton.setText("BLAH");
         OKButton.addActionListener(parent);
         OKButton.setActionCommand("notesNode");
 
@@ -181,9 +180,9 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         JScrollPane containerPane = new JScrollPane(noteField);
         containerPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         containerPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
-        containerPane.setMinimumSize(new Dimension(505, 93));
-        containerPane.setMaximumSize(new Dimension(505, 93));
-        containerPane.setPreferredSize(new Dimension(505, 93));
+        containerPane.setMinimumSize(new Dimension(505, 193));
+        containerPane.setMaximumSize(new Dimension(505, 193));
+        containerPane.setPreferredSize(new Dimension(505, 193));
         containerPane.setBorder(BasicBorders.getTextFieldBorder());
 
         notePanel.add(containerPane);        

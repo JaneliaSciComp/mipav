@@ -33,17 +33,20 @@ import java.awt.FlowLayout;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
 import java.awt.print.PageFormat;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.net.MalformedURLException;
@@ -52,6 +55,7 @@ import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
 
+import javax.imageio.ImageIO;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -707,6 +711,34 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		}
 
 		graphPanel = new MipavGraphPanel(tree, kParent,this);
+		
+		
+		
+		//setting background image
+		Image image = null;
+		/*try {
+		    // Read from a file
+		    File file = new File("C:\\nish\\oval4.jpg");
+		    image = ImageIO.read(file);
+
+		    // Read from an input stream
+		    InputStream is = new BufferedInputStream(
+		        new FileInputStream("C:\\nish\\oval4.jpg"));
+		    image = ImageIO.read(is);
+		}catch(Exception e) {
+			e.printStackTrace();
+		}*/
+		try {
+			image = MipavUtil.getIconImage("oval4.jpg");
+		}catch(FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		graphPanel.setLogo(image);
+		Color color = new Color(10,10,10,0);
+		String kColorString = new String( "#" + Integer.toHexString(color.getRGB()).substring(2) );
+		graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
+		
+		
 		
 
 		loadPreferences();
