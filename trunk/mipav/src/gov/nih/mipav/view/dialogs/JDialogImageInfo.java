@@ -2700,7 +2700,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textRes1.getText();
 
-            if (JDialogBase.testParameter(tmpStr, 0, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, Double.MAX_VALUE)) {
                 tmpResolutions[0] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textRes1.requestFocus();
@@ -2711,7 +2711,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textRes2.getText();
 
-            if (JDialogBase.testParameter(tmpStr, 0, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, Double.MAX_VALUE)) {
                 tmpResolutions[1] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textRes2.requestFocus();
@@ -2722,7 +2722,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textRes3.getText();
 
-            if (JDialogBase.testParameter(tmpStr, 0, 10000000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, Double.MAX_VALUE)) {
                 tmpResolutions[2] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textRes3.requestFocus();
@@ -2733,7 +2733,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textRes4.getText();
 
-            if (JDialogBase.testParameter(tmpStr, 0, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, Double.MAX_VALUE)) {
                 tmpResolutions[3] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textRes4.requestFocus();
@@ -2744,7 +2744,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textRes5.getText();
 
-            if (JDialogBase.testParameter(tmpStr, 0, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, 0, Double.MAX_VALUE)) {
                 tmpResolutions[4] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textRes5.requestFocus();
@@ -2782,7 +2782,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textSt1.getText();
 
-            if (JDialogBase.testParameter(tmpStr, -10000, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
                 tmpOrigin[0] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textSt1.requestFocus();
@@ -2793,7 +2793,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textSt2.getText();
 
-            if (JDialogBase.testParameter(tmpStr, -10000, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
                 tmpOrigin[1] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textSt2.requestFocus();
@@ -2804,7 +2804,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             tmpStr = textSt3.getText();
 
-            if (JDialogBase.testParameter(tmpStr, -10000, 10000)) {
+            if (JDialogBase.testParameter(tmpStr, -Double.MAX_VALUE, Double.MAX_VALUE)) {
                 tmpOrigin[2] = Double.valueOf(tmpStr).floatValue();
             } else {
                 textSt3.requestFocus();
