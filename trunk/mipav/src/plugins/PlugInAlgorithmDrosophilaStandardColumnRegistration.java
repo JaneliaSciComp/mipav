@@ -207,6 +207,10 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
     
     private boolean rvld;
     
+    private int numPoints;
+    
+    
+    
     //private boolean doLeftEye;
 	
 	
@@ -222,7 +226,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
             final TreeMap<Integer, float[]> pointsMap, final ArrayList<ArrayList<float[]>> allFilamentCoords,
             final File oldSurfaceFile, final float samplingRate, final ModelImage cityBlockImage,
             final File pointsFile, final JTextArea outputTextArea, final boolean flipX, final boolean flipY,
-            final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean doSWC, boolean rvld) {
+            final boolean flipZ,float greenThreshold, float subsamplingDistance, boolean rigidOnly,boolean doSWC, boolean rvld, int numPoints) {
     	
     	
         this.neuronImage = neuronImage;
@@ -274,6 +278,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 	    }
 		this.doRigidOnly = rigidOnly;
 		this.rvld = rvld;
+		this.numPoints = numPoints;
 		
 
     }
@@ -283,7 +288,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v5.0" + "\n");
+        outputTextArea.append("Running Algorithm v5.4" + "\n");
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -445,14 +450,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         
 
         
-        
+        //27 Points: 9 per layer
         //8.74*2 = 17.48
         //17.48 / res[0] =  155.4
         //512 - 155.4 = 356.6
         //356.6/2 = 178 
         //512-178 = 334  
-        
-        
+
         //4.37*2 = 8.74
         //8.74 / res[0] = 77.7
         //512 - 77.7 = 434.3
@@ -461,21 +465,15 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         
         
         
-        //NEW NEW STUFF
+        //75 points: 25 per layer
         //17.48 * 2 = 34.96
         //34.96 / res[0] = 310.8
         //512 - 310.8 = 201.2
         //201.2/2 = 100.6
         //512 - 100.6 = 411.4
-        
-        
+
         //256 - 100.6 = 155.4   155.4/4 = 38.85
         
-        
-        
-        
-        
-        //new new stuff 25 points per layer
         //rvld points
         
         //101, 256
@@ -512,1489 +510,3702 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         
         //256, 256
         
-        //new new  25 points
-        if(rvld) {
-        	// top
-	        //A
-	        standardColumnImage.set(101, 256, zStart, 100);
-	        x[0] = 101;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //B
-	        standardColumnImage.set(139, 295, zStart, 100);
-	        x[0] = 139;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	        standardColumnImage.set(178, 334, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //D
-	        standardColumnImage.set(217, 373, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 373;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(256, 411, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 411;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	        standardColumnImage.set(295, 373, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 373;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //G
-	        standardColumnImage.set(334, 334, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-	        standardColumnImage.set(373, 295, zStart, 100);
-	        x[0] = 373;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //I
-	        standardColumnImage.set(411, 256, zStart, 100);
-	        x[0] = 411;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //J
-	        standardColumnImage.set(373, 217, zStart, 100);
-	        x[0] = 373;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //K
-	        standardColumnImage.set(334, 178, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //L
-	        standardColumnImage.set(295, 139, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 139;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //M
-	        standardColumnImage.set(256, 101, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 101;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //N
-	        standardColumnImage.set(217, 139, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 139;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //O
-	        standardColumnImage.set(178, 178, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //P
-	        standardColumnImage.set(139, 217, zStart, 100);
-	        x[0] = 139;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //Q
-	        standardColumnImage.set(178, 256, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //R
-	        standardColumnImage.set(217, 295, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //S
-	        standardColumnImage.set(256, 334, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //T
-	        standardColumnImage.set(295, 295, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //U
-	        standardColumnImage.set(334, 256, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //V
-	        standardColumnImage.set(295, 217, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //W
-	        standardColumnImage.set(256, 178, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //X
-	        standardColumnImage.set(217, 217, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //Y
-	        standardColumnImage.set(256, 256, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
+        
+        
+        
+        //147 points: 49 per layer
+        //26.22 * 2 = 52.44
+        //52.44 / res[0] = 466.2
+        //512 - 466.2 - 45.8
+        //45.8/2 = 22.9
+        //
+        //466.2 / 2 = 233.1    233.1/6 = 38.85
+        
+        //rvld points
 
-	        
-	        // r8
-	        //A
-	        standardColumnImage.set(101, 256, zMiddle, 100);
-	        x[0] = 101;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //B
-	        standardColumnImage.set(139, 295, zMiddle, 100);
-	        x[0] = 139;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	        standardColumnImage.set(178, 334, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //D
-	        standardColumnImage.set(217, 373, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 373;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(256, 411, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 411;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	        standardColumnImage.set(295, 373, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 373;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //G
-	        standardColumnImage.set(334, 334, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-	        standardColumnImage.set(373, 295, zMiddle, 100);
-	        x[0] = 373;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //I
-	        standardColumnImage.set(411, 256, zMiddle, 100);
-	        x[0] = 411;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //J
-	        standardColumnImage.set(373, 217, zMiddle, 100);
-	        x[0] = 373;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //K
-	        standardColumnImage.set(334, 178, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //L
-	        standardColumnImage.set(295, 139, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 139;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //M
-	        standardColumnImage.set(256, 101, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 101;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //N
-	        standardColumnImage.set(217, 139, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 139;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //O
-	        standardColumnImage.set(178, 178, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //P
-	        standardColumnImage.set(139, 217, zMiddle, 100);
-	        x[0] = 139;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //Q
-	        standardColumnImage.set(178, 256, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //R
-	        standardColumnImage.set(217, 295, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //S
-	        standardColumnImage.set(256, 334, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //T
-	        standardColumnImage.set(295, 295, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //U
-	        standardColumnImage.set(334, 256, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //V
-	        standardColumnImage.set(295, 217, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //W
-	        standardColumnImage.set(256, 178, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //X
-	        standardColumnImage.set(217, 217, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //Y
-	        standardColumnImage.set(256, 256, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
-
-	        // r7
-	        //A
-	        standardColumnImage.set(101, 256, zEnd, 100);
-	        x[0] = 101;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //B
-	        standardColumnImage.set(139, 295, zEnd, 100);
-	        x[0] = 139;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	        standardColumnImage.set(178, 334, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //D
-	        standardColumnImage.set(217, 373, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 373;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(256, 411, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 411;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	        standardColumnImage.set(295, 373, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 373;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //G
-	        standardColumnImage.set(334, 334, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-	        standardColumnImage.set(373, 295, zEnd, 100);
-	        x[0] = 373;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //I
-	        standardColumnImage.set(411, 256, zEnd, 100);
-	        x[0] = 411;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //J
-	        standardColumnImage.set(373, 217, zEnd, 100);
-	        x[0] = 373;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //K
-	        standardColumnImage.set(334, 178, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //L
-	        standardColumnImage.set(295, 139, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 139;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //M
-	        standardColumnImage.set(256, 101, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 101;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //N
-	        standardColumnImage.set(217, 139, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 139;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //O
-	        standardColumnImage.set(178, 178, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //P
-	        standardColumnImage.set(139, 217, zEnd, 100);
-	        x[0] = 139;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //Q
-	        standardColumnImage.set(178, 256, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //R
-	        standardColumnImage.set(217, 295, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //S
-	        standardColumnImage.set(256, 334, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //T
-	        standardColumnImage.set(295, 295, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //U
-	        standardColumnImage.set(334, 256, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //V
-	        standardColumnImage.set(295, 217, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //W
-	        standardColumnImage.set(256, 178, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //X
-	        standardColumnImage.set(217, 217, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //Y
-	        standardColumnImage.set(256, 256, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
+        //23, 256
+        //62, 295
+        //101, 334
+        //139, 373
+        //178, 411
+        //217, 450
+        //256, 489
+        
+        //295, 450
+        //334, 411
+        //373, 373
+        //411, 334
+        //450, 295
+        //489, 256
+        
+        //450, 217
+        //411, 178
+        //373, 139
+        //334, 101
+        //295, 62
+        //256, 23
+        
+        //217, 62
+        //178, 101
+        //139, 139
+        //101, 178
+        //62, 217
+        
+        //101, 256
+        //139, 295
+        //178, 334
+        //217, 373
+        //256, 411
+        
+        //295, 373
+        //334, 334
+        //373, 295
+        //411, 256
+        
+        //373, 217
+        //334, 178
+        //295, 139
+        //256, 101
+        
+        //217, 139
+        //178, 178
+        //139, 217
+      
+        //178, 256
+        //217, 295
+        //256, 334
+        
+        //295, 295
+        //334, 256
+        
+        //295, 217
+        //256, 178
+        
+        //217, 217
+        
+        //256, 256
+        
+        
+        
+        if(numPoints == PlugInDialogDrosophilaStandardColumnRegistration._147POINTS) {
         	
-        }else {
+        	if(rvld) {
+			        	// top
+				        //A
+				        standardColumnImage.set(23, 256, zStart, 100);
+				        x[0] = 23;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //B
+				        standardColumnImage.set(62, 295, zStart, 100);
+				        x[0] = 62;
+				        y[0] = 295;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //C
+				        standardColumnImage.set(101, 334, zStart, 100);
+				        x[0] = 101;
+				        y[0] = 334;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //D
+				        standardColumnImage.set(139, 373, zStart, 100);
+				        x[0] = 139;
+				        y[0] = 373;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //E
+				        standardColumnImage.set(178, 411, zStart, 100);
+				        x[0] = 178;
+				        y[0] = 411;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //F
+				        standardColumnImage.set(217, 450, zStart, 100);
+				        x[0] = 217;
+				        y[0] = 450;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //G
+				        standardColumnImage.set(256, 489, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 489;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+			
+				        
+				        
+				        //H
+				        standardColumnImage.set(295, 450, zStart, 100);
+				        x[0] = 295;
+				        y[0] = 450;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //I
+				        standardColumnImage.set(334, 411, zStart, 100);
+				        x[0] = 334;
+				        y[0] = 411;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //J
+				        standardColumnImage.set(373, 373, zStart, 100);
+				        x[0] = 373;
+				        y[0] = 373;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //K
+				        standardColumnImage.set(411, 334, zStart, 100);
+				        x[0] = 411;
+				        y[0] = 334;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //L
+				        standardColumnImage.set(450, 295, zStart, 100);
+				        x[0] = 450;
+				        y[0] = 295;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //M
+				        standardColumnImage.set(489, 256, zStart, 100);
+				        x[0] = 489;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        
+				        
+				        //N
+				        standardColumnImage.set(450, 217, zStart, 100);
+				        x[0] = 450;
+				        y[0] = 217;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //O
+				        standardColumnImage.set(411, 178, zStart, 100);
+				        x[0] = 411;
+				        y[0] = 178;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //P
+				        standardColumnImage.set(373, 139, zStart, 100);
+				        x[0] = 373;
+				        y[0] = 139;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Q
+				        standardColumnImage.set(334, 101, zStart, 100);
+				        x[0] = 334;
+				        y[0] = 101;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //R
+				        standardColumnImage.set(295, 62, zStart, 100);
+				        x[0] = 295;
+				        y[0] = 62;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //S
+				        standardColumnImage.set(256, 23, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 23;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        
+				        
+				        //T
+				        standardColumnImage.set(217, 62, zStart, 100);
+				        x[0] = 217;
+				        y[0] = 62;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //U
+				        standardColumnImage.set(178, 101, zStart, 100);
+				        x[0] = 178;
+				        y[0] = 101;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //V
+				        standardColumnImage.set(139, 139, zStart, 100);
+				        x[0] = 139;
+				        y[0] = 139;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //W
+				        standardColumnImage.set(101, 178, zStart, 100);
+				        x[0] = 101;
+				        y[0] = 178;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //X
+				        standardColumnImage.set(62, 217, zStart, 100);
+				        x[0] = 62;
+				        y[0] = 217;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        
+				        
+				        //A
+				        standardColumnImage.set(101, 256, zStart, 100);
+				        x[0] = 101;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //B
+				        standardColumnImage.set(139, 295, zStart, 100);
+				        x[0] = 139;
+				        y[0] = 295;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //C
+				        standardColumnImage.set(178, 334, zStart, 100);
+				        x[0] = 178;
+				        y[0] = 334;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //D
+				        standardColumnImage.set(217, 373, zStart, 100);
+				        x[0] = 217;
+				        y[0] = 373;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //E
+				        standardColumnImage.set(256, 411, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 411;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //F
+				        standardColumnImage.set(295, 373, zStart, 100);
+				        x[0] = 295;
+				        y[0] = 373;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //G
+				        standardColumnImage.set(334, 334, zStart, 100);
+				        x[0] = 334;
+				        y[0] = 334;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //H
+				        standardColumnImage.set(373, 295, zStart, 100);
+				        x[0] = 373;
+				        y[0] = 295;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //I
+				        standardColumnImage.set(411, 256, zStart, 100);
+				        x[0] = 411;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //J
+				        standardColumnImage.set(373, 217, zStart, 100);
+				        x[0] = 373;
+				        y[0] = 217;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //K
+				        standardColumnImage.set(334, 178, zStart, 100);
+				        x[0] = 334;
+				        y[0] = 178;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //L
+				        standardColumnImage.set(295, 139, zStart, 100);
+				        x[0] = 295;
+				        y[0] = 139;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //M
+				        standardColumnImage.set(256, 101, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 101;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //N
+				        standardColumnImage.set(217, 139, zStart, 100);
+				        x[0] = 217;
+				        y[0] = 139;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //O
+				        standardColumnImage.set(178, 178, zStart, 100);
+				        x[0] = 178;
+				        y[0] = 178;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //P
+				        standardColumnImage.set(139, 217, zStart, 100);
+				        x[0] = 139;
+				        y[0] = 217;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Q
+				        standardColumnImage.set(178, 256, zStart, 100);
+				        x[0] = 178;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //R
+				        standardColumnImage.set(217, 295, zStart, 100);
+				        x[0] = 217;
+				        y[0] = 295;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //S
+				        standardColumnImage.set(256, 334, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 334;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //T
+				        standardColumnImage.set(295, 295, zStart, 100);
+				        x[0] = 295;
+				        y[0] = 295;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //U
+				        standardColumnImage.set(334, 256, zStart, 100);
+				        x[0] = 334;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //V
+				        standardColumnImage.set(295, 217, zStart, 100);
+				        x[0] = 295;
+				        y[0] = 217;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //W
+				        standardColumnImage.set(256, 178, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 178;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //X
+				        standardColumnImage.set(217, 217, zStart, 100);
+				        x[0] = 217;
+				        y[0] = 217;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Y
+				        standardColumnImage.set(256, 256, zStart, 100);
+				        x[0] = 256;
+				        y[0] = 256;
+				        z[0] = zStart;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        
+			
+				        //r8
+				        //A
+				        standardColumnImage.set(23, 256, zMiddle, 100);
+				        x[0] = 23;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //B
+				        standardColumnImage.set(62, 295, zMiddle, 100);
+				        x[0] = 62;
+				        y[0] = 295;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //C
+				        standardColumnImage.set(101, 334, zMiddle, 100);
+				        x[0] = 101;
+				        y[0] = 334;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //D
+				        standardColumnImage.set(139, 373, zMiddle, 100);
+				        x[0] = 139;
+				        y[0] = 373;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //E
+				        standardColumnImage.set(178, 411, zMiddle, 100);
+				        x[0] = 178;
+				        y[0] = 411;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //F
+				        standardColumnImage.set(217, 450, zMiddle, 100);
+				        x[0] = 217;
+				        y[0] = 450;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //G
+				        standardColumnImage.set(256, 489, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 489;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+			
+				        
+				        
+				        //H
+				        standardColumnImage.set(295, 450, zMiddle, 100);
+				        x[0] = 295;
+				        y[0] = 450;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //I
+				        standardColumnImage.set(334, 411, zMiddle, 100);
+				        x[0] = 334;
+				        y[0] = 411;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //J
+				        standardColumnImage.set(373, 373, zMiddle, 100);
+				        x[0] = 373;
+				        y[0] = 373;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //K
+				        standardColumnImage.set(411, 334, zMiddle, 100);
+				        x[0] = 411;
+				        y[0] = 334;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //L
+				        standardColumnImage.set(450, 295, zMiddle, 100);
+				        x[0] = 450;
+				        y[0] = 295;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //M
+				        standardColumnImage.set(489, 256, zMiddle, 100);
+				        x[0] = 489;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //N
+				        standardColumnImage.set(450, 217, zMiddle, 100);
+				        x[0] = 450;
+				        y[0] = 217;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //O
+				        standardColumnImage.set(411, 178, zMiddle, 100);
+				        x[0] = 411;
+				        y[0] = 178;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //P
+				        standardColumnImage.set(373, 139, zMiddle, 100);
+				        x[0] = 373;
+				        y[0] = 139;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Q
+				        standardColumnImage.set(334, 101, zMiddle, 100);
+				        x[0] = 334;
+				        y[0] = 101;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //R
+				        standardColumnImage.set(295, 62, zMiddle, 100);
+				        x[0] = 295;
+				        y[0] = 62;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //S
+				        standardColumnImage.set(256, 23, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 23;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //T
+				        standardColumnImage.set(217, 62, zMiddle, 100);
+				        x[0] = 217;
+				        y[0] = 62;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //U
+				        standardColumnImage.set(178, 101, zMiddle, 100);
+				        x[0] = 178;
+				        y[0] = 101;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //V
+				        standardColumnImage.set(139, 139, zMiddle, 100);
+				        x[0] = 139;
+				        y[0] = 139;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //W
+				        standardColumnImage.set(101, 178, zMiddle, 100);
+				        x[0] = 101;
+				        y[0] = 178;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //X
+				        standardColumnImage.set(62, 217, zMiddle, 100);
+				        x[0] = 62;
+				        y[0] = 217;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //A
+				        standardColumnImage.set(101, 256, zMiddle, 100);
+				        x[0] = 101;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //B
+				        standardColumnImage.set(139, 295, zMiddle, 100);
+				        x[0] = 139;
+				        y[0] = 295;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //C
+				        standardColumnImage.set(178, 334, zMiddle, 100);
+				        x[0] = 178;
+				        y[0] = 334;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //D
+				        standardColumnImage.set(217, 373, zMiddle, 100);
+				        x[0] = 217;
+				        y[0] = 373;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //E
+				        standardColumnImage.set(256, 411, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 411;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //F
+				        standardColumnImage.set(295, 373, zMiddle, 100);
+				        x[0] = 295;
+				        y[0] = 373;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //G
+				        standardColumnImage.set(334, 334, zMiddle, 100);
+				        x[0] = 334;
+				        y[0] = 334;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //H
+				        standardColumnImage.set(373, 295, zMiddle, 100);
+				        x[0] = 373;
+				        y[0] = 295;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //I
+				        standardColumnImage.set(411, 256, zMiddle, 100);
+				        x[0] = 411;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //J
+				        standardColumnImage.set(373, 217, zMiddle, 100);
+				        x[0] = 373;
+				        y[0] = 217;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //K
+				        standardColumnImage.set(334, 178, zMiddle, 100);
+				        x[0] = 334;
+				        y[0] = 178;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //L
+				        standardColumnImage.set(295, 139, zMiddle, 100);
+				        x[0] = 295;
+				        y[0] = 139;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //M
+				        standardColumnImage.set(256, 101, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 101;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //N
+				        standardColumnImage.set(217, 139, zMiddle, 100);
+				        x[0] = 217;
+				        y[0] = 139;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //O
+				        standardColumnImage.set(178, 178, zMiddle, 100);
+				        x[0] = 178;
+				        y[0] = 178;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //P
+				        standardColumnImage.set(139, 217, zMiddle, 100);
+				        x[0] = 139;
+				        y[0] = 217;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Q
+				        standardColumnImage.set(178, 256, zMiddle, 100);
+				        x[0] = 178;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //R
+				        standardColumnImage.set(217, 295, zMiddle, 100);
+				        x[0] = 217;
+				        y[0] = 295;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //S
+				        standardColumnImage.set(256, 334, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 334;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //T
+				        standardColumnImage.set(295, 295, zMiddle, 100);
+				        x[0] = 295;
+				        y[0] = 295;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //U
+				        standardColumnImage.set(334, 256, zMiddle, 100);
+				        x[0] = 334;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //V
+				        standardColumnImage.set(295, 217, zMiddle, 100);
+				        x[0] = 295;
+				        y[0] = 217;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //W
+				        standardColumnImage.set(256, 178, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 178;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //X
+				        standardColumnImage.set(217, 217, zMiddle, 100);
+				        x[0] = 217;
+				        y[0] = 217;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Y
+				        standardColumnImage.set(256, 256, zMiddle, 100);
+				        x[0] = 256;
+				        y[0] = 256;
+				        z[0] = zMiddle;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        
+				        
+				        
+				        //--
+				     // r7
+				        //A
+				        standardColumnImage.set(23, 256, zEnd, 100);
+				        x[0] = 23;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //B
+				        standardColumnImage.set(62, 295, zEnd, 100);
+				        x[0] = 62;
+				        y[0] = 295;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //C
+				        standardColumnImage.set(101, 334, zEnd, 100);
+				        x[0] = 101;
+				        y[0] = 334;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //D
+				        standardColumnImage.set(139, 373, zEnd, 100);
+				        x[0] = 139;
+				        y[0] = 373;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //E
+				        standardColumnImage.set(178, 411, zEnd, 100);
+				        x[0] = 178;
+				        y[0] = 411;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //F
+				        standardColumnImage.set(217, 450, zEnd, 100);
+				        x[0] = 217;
+				        y[0] = 450;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //G
+				        standardColumnImage.set(256, 489, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 489;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+			
+				        
+				        
+				        //H
+				        standardColumnImage.set(295, 450, zEnd, 100);
+				        x[0] = 295;
+				        y[0] = 450;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //I
+				        standardColumnImage.set(334, 411, zEnd, 100);
+				        x[0] = 334;
+				        y[0] = 411;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //J
+				        standardColumnImage.set(373, 373, zEnd, 100);
+				        x[0] = 373;
+				        y[0] = 373;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //K
+				        standardColumnImage.set(411, 334, zEnd, 100);
+				        x[0] = 411;
+				        y[0] = 334;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //L
+				        standardColumnImage.set(450, 295, zEnd, 100);
+				        x[0] = 450;
+				        y[0] = 295;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //M
+				        standardColumnImage.set(489, 256, zEnd, 100);
+				        x[0] = 489;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //N
+				        standardColumnImage.set(450, 217, zEnd, 100);
+				        x[0] = 450;
+				        y[0] = 217;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //O
+				        standardColumnImage.set(411, 178, zEnd, 100);
+				        x[0] = 411;
+				        y[0] = 178;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //P
+				        standardColumnImage.set(373, 139, zEnd, 100);
+				        x[0] = 373;
+				        y[0] = 139;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Q
+				        standardColumnImage.set(334, 101, zEnd, 100);
+				        x[0] = 334;
+				        y[0] = 101;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //R
+				        standardColumnImage.set(295, 62, zEnd, 100);
+				        x[0] = 295;
+				        y[0] = 62;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //S
+				        standardColumnImage.set(256, 23, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 23;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //T
+				        standardColumnImage.set(217, 62, zEnd, 100);
+				        x[0] = 217;
+				        y[0] = 62;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //U
+				        standardColumnImage.set(178, 101, zEnd, 100);
+				        x[0] = 178;
+				        y[0] = 101;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //V
+				        standardColumnImage.set(139, 139, zEnd, 100);
+				        x[0] = 139;
+				        y[0] = 139;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //W
+				        standardColumnImage.set(101, 178, zEnd, 100);
+				        x[0] = 101;
+				        y[0] = 178;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //X
+				        standardColumnImage.set(62, 217, zEnd, 100);
+				        x[0] = 62;
+				        y[0] = 217;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //A
+				        standardColumnImage.set(101, 256, zEnd, 100);
+				        x[0] = 101;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //B
+				        standardColumnImage.set(139, 295, zEnd, 100);
+				        x[0] = 139;
+				        y[0] = 295;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //C
+				        standardColumnImage.set(178, 334, zEnd, 100);
+				        x[0] = 178;
+				        y[0] = 334;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //D
+				        standardColumnImage.set(217, 373, zEnd, 100);
+				        x[0] = 217;
+				        y[0] = 373;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //E
+				        standardColumnImage.set(256, 411, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 411;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //F
+				        standardColumnImage.set(295, 373, zEnd, 100);
+				        x[0] = 295;
+				        y[0] = 373;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //G
+				        standardColumnImage.set(334, 334, zEnd, 100);
+				        x[0] = 334;
+				        y[0] = 334;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //H
+				        standardColumnImage.set(373, 295, zEnd, 100);
+				        x[0] = 373;
+				        y[0] = 295;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //I
+				        standardColumnImage.set(411, 256, zEnd, 100);
+				        x[0] = 411;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //J
+				        standardColumnImage.set(373, 217, zEnd, 100);
+				        x[0] = 373;
+				        y[0] = 217;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //K
+				        standardColumnImage.set(334, 178, zEnd, 100);
+				        x[0] = 334;
+				        y[0] = 178;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //L
+				        standardColumnImage.set(295, 139, zEnd, 100);
+				        x[0] = 295;
+				        y[0] = 139;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //M
+				        standardColumnImage.set(256, 101, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 101;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //N
+				        standardColumnImage.set(217, 139, zEnd, 100);
+				        x[0] = 217;
+				        y[0] = 139;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //O
+				        standardColumnImage.set(178, 178, zEnd, 100);
+				        x[0] = 178;
+				        y[0] = 178;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //P
+				        standardColumnImage.set(139, 217, zEnd, 100);
+				        x[0] = 139;
+				        y[0] = 217;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Q
+				        standardColumnImage.set(178, 256, zEnd, 100);
+				        x[0] = 178;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //R
+				        standardColumnImage.set(217, 295, zEnd, 100);
+				        x[0] = 217;
+				        y[0] = 295;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //S
+				        standardColumnImage.set(256, 334, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 334;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //T
+				        standardColumnImage.set(295, 295, zEnd, 100);
+				        x[0] = 295;
+				        y[0] = 295;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //U
+				        standardColumnImage.set(334, 256, zEnd, 100);
+				        x[0] = 334;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //V
+				        standardColumnImage.set(295, 217, zEnd, 100);
+				        x[0] = 295;
+				        y[0] = 217;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //W
+				        standardColumnImage.set(256, 178, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 178;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //X
+				        standardColumnImage.set(217, 217, zEnd, 100);
+				        x[0] = 217;
+				        y[0] = 217;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+				        
+				        //Y
+				        standardColumnImage.set(256, 256, zEnd, 100);
+				        x[0] = 256;
+				        y[0] = 256;
+				        z[0] = zEnd;
+				        newPtVOI.importCurve(x, y, z);
+        	}else {
+        		
+        		// top
+		        //A
+		        standardColumnImage.set(23, 256, zStart, 100);
+		        x[0] = 23;
+		        y[0] = 256;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //X
+		        standardColumnImage.set(62, 217, zStart, 100);
+		        x[0] = 62;
+		        y[0] = 217;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+
+		        
+		        //W
+		        standardColumnImage.set(101, 178, zStart, 100);
+		        x[0] = 101;
+		        y[0] = 178;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //V
+		        standardColumnImage.set(139, 139, zStart, 100);
+		        x[0] = 139;
+		        y[0] = 139;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //U
+		        standardColumnImage.set(178, 101, zStart, 100);
+		        x[0] = 178;
+		        y[0] = 101;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //T
+		        standardColumnImage.set(217, 62, zStart, 100);
+		        x[0] = 217;
+		        y[0] = 62;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //S
+		        standardColumnImage.set(256, 23, zStart, 100);
+		        x[0] = 256;
+		        y[0] = 23;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //R
+		        standardColumnImage.set(295, 62, zStart, 100);
+		        x[0] = 295;
+		        y[0] = 62;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //Q
+		        standardColumnImage.set(334, 101, zStart, 100);
+		        x[0] = 334;
+		        y[0] = 101;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //P
+		        standardColumnImage.set(373, 139, zStart, 100);
+		        x[0] = 373;
+		        y[0] = 139;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //O
+		        standardColumnImage.set(411, 178, zStart, 100);
+		        x[0] = 411;
+		        y[0] = 178;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //N
+		        standardColumnImage.set(450, 217, zStart, 100);
+		        x[0] = 450;
+		        y[0] = 217;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //M
+		        standardColumnImage.set(489, 256, zStart, 100);
+		        x[0] = 489;
+		        y[0] = 256;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //L
+		        standardColumnImage.set(450, 295, zStart, 100);
+		        x[0] = 450;
+		        y[0] = 295;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //K
+		        standardColumnImage.set(411, 334, zStart, 100);
+		        x[0] = 411;
+		        y[0] = 334;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //J
+		        standardColumnImage.set(373, 373, zStart, 100);
+		        x[0] = 373;
+		        y[0] = 373;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //I
+		        standardColumnImage.set(334, 411, zStart, 100);
+		        x[0] = 334;
+		        y[0] = 411;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //H
+		        standardColumnImage.set(295, 450, zStart, 100);
+		        x[0] = 295;
+		        y[0] = 450;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //G
+		        standardColumnImage.set(256, 489, zStart, 100);
+		        x[0] = 256;
+		        y[0] = 489;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      
+		        
+		        
+		        
+		        //F
+		        standardColumnImage.set(217, 450, zStart, 100);
+		        x[0] = 217;
+		        y[0] = 450;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //E
+		        standardColumnImage.set(178, 411, zStart, 100);
+		        x[0] = 178;
+		        y[0] = 411;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //D
+		        standardColumnImage.set(139, 373, zStart, 100);
+		        x[0] = 139;
+		        y[0] = 373;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //C
+		        standardColumnImage.set(101, 334, zStart, 100);
+		        x[0] = 101;
+		        y[0] = 334;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        //B
+		        standardColumnImage.set(62, 295, zStart, 100);
+		        x[0] = 62;
+		        y[0] = 295;
+		        z[0] = zStart;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        //A
+    	        standardColumnImage.set(101, 256, zStart, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zStart, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //N
+    	        standardColumnImage.set(217, 139, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zStart, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zStart, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zStart, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //B
+    	        standardColumnImage.set(139, 295, zStart, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Q
+    	        standardColumnImage.set(178, 256, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //V
+    	        standardColumnImage.set(295, 217, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //U
+    	        standardColumnImage.set(334, 256, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //R
+    	        standardColumnImage.set(217, 295, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Y
+    	        standardColumnImage.set(256, 256, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        
+		        
+		        //--
+    	     // r8
+		        //A
+		        standardColumnImage.set(23, 256, zMiddle, 100);
+		        x[0] = 23;
+		        y[0] = 256;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //X
+		        standardColumnImage.set(62, 217, zMiddle, 100);
+		        x[0] = 62;
+		        y[0] = 217;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+
+		        
+		        //W
+		        standardColumnImage.set(101, 178, zMiddle, 100);
+		        x[0] = 101;
+		        y[0] = 178;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //V
+		        standardColumnImage.set(139, 139, zMiddle, 100);
+		        x[0] = 139;
+		        y[0] = 139;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //U
+		        standardColumnImage.set(178, 101, zMiddle, 100);
+		        x[0] = 178;
+		        y[0] = 101;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //T
+		        standardColumnImage.set(217, 62, zMiddle, 100);
+		        x[0] = 217;
+		        y[0] = 62;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //S
+		        standardColumnImage.set(256, 23, zMiddle, 100);
+		        x[0] = 256;
+		        y[0] = 23;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //R
+		        standardColumnImage.set(295, 62, zMiddle, 100);
+		        x[0] = 295;
+		        y[0] = 62;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //Q
+		        standardColumnImage.set(334, 101, zMiddle, 100);
+		        x[0] = 334;
+		        y[0] = 101;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //P
+		        standardColumnImage.set(373, 139, zMiddle, 100);
+		        x[0] = 373;
+		        y[0] = 139;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //O
+		        standardColumnImage.set(411, 178, zMiddle, 100);
+		        x[0] = 411;
+		        y[0] = 178;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //N
+		        standardColumnImage.set(450, 217, zMiddle, 100);
+		        x[0] = 450;
+		        y[0] = 217;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //M
+		        standardColumnImage.set(489, 256, zMiddle, 100);
+		        x[0] = 489;
+		        y[0] = 256;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //L
+		        standardColumnImage.set(450, 295, zMiddle, 100);
+		        x[0] = 450;
+		        y[0] = 295;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //K
+		        standardColumnImage.set(411, 334, zMiddle, 100);
+		        x[0] = 411;
+		        y[0] = 334;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //J
+		        standardColumnImage.set(373, 373, zMiddle, 100);
+		        x[0] = 373;
+		        y[0] = 373;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //I
+		        standardColumnImage.set(334, 411, zMiddle, 100);
+		        x[0] = 334;
+		        y[0] = 411;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //H
+		        standardColumnImage.set(295, 450, zMiddle, 100);
+		        x[0] = 295;
+		        y[0] = 450;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //G
+		        standardColumnImage.set(256, 489, zMiddle, 100);
+		        x[0] = 256;
+		        y[0] = 489;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      
+		        
+		        
+		        
+		        //F
+		        standardColumnImage.set(217, 450, zMiddle, 100);
+		        x[0] = 217;
+		        y[0] = 450;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //E
+		        standardColumnImage.set(178, 411, zMiddle, 100);
+		        x[0] = 178;
+		        y[0] = 411;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //D
+		        standardColumnImage.set(139, 373, zMiddle, 100);
+		        x[0] = 139;
+		        y[0] = 373;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //C
+		        standardColumnImage.set(101, 334, zMiddle, 100);
+		        x[0] = 101;
+		        y[0] = 334;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        //B
+		        standardColumnImage.set(62, 295, zMiddle, 100);
+		        x[0] = 62;
+		        y[0] = 295;
+		        z[0] = zMiddle;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        //A
+    	        standardColumnImage.set(101, 256, zMiddle, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zMiddle, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //N
+    	        standardColumnImage.set(217, 139, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zMiddle, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zMiddle, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zMiddle, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //B
+    	        standardColumnImage.set(139, 295, zMiddle, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Q
+    	        standardColumnImage.set(178, 256, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //V
+    	        standardColumnImage.set(295, 217, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //U
+    	        standardColumnImage.set(334, 256, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //R
+    	        standardColumnImage.set(217, 295, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Y
+    	        standardColumnImage.set(256, 256, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        //--
+    	     // r7
+		        //A
+		        standardColumnImage.set(23, 256, zEnd, 100);
+		        x[0] = 23;
+		        y[0] = 256;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //X
+		        standardColumnImage.set(62, 217, zEnd, 100);
+		        x[0] = 62;
+		        y[0] = 217;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+
+		        
+		        //W
+		        standardColumnImage.set(101, 178, zEnd, 100);
+		        x[0] = 101;
+		        y[0] = 178;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //V
+		        standardColumnImage.set(139, 139, zEnd, 100);
+		        x[0] = 139;
+		        y[0] = 139;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //U
+		        standardColumnImage.set(178, 101, zEnd, 100);
+		        x[0] = 178;
+		        y[0] = 101;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //T
+		        standardColumnImage.set(217, 62, zEnd, 100);
+		        x[0] = 217;
+		        y[0] = 62;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //S
+		        standardColumnImage.set(256, 23, zEnd, 100);
+		        x[0] = 256;
+		        y[0] = 23;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //R
+		        standardColumnImage.set(295, 62, zEnd, 100);
+		        x[0] = 295;
+		        y[0] = 62;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //Q
+		        standardColumnImage.set(334, 101, zEnd, 100);
+		        x[0] = 334;
+		        y[0] = 101;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //P
+		        standardColumnImage.set(373, 139, zEnd, 100);
+		        x[0] = 373;
+		        y[0] = 139;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //O
+		        standardColumnImage.set(411, 178, zEnd, 100);
+		        x[0] = 411;
+		        y[0] = 178;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //N
+		        standardColumnImage.set(450, 217, zEnd, 100);
+		        x[0] = 450;
+		        y[0] = 217;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //M
+		        standardColumnImage.set(489, 256, zEnd, 100);
+		        x[0] = 489;
+		        y[0] = 256;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //L
+		        standardColumnImage.set(450, 295, zEnd, 100);
+		        x[0] = 450;
+		        y[0] = 295;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        //K
+		        standardColumnImage.set(411, 334, zEnd, 100);
+		        x[0] = 411;
+		        y[0] = 334;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //J
+		        standardColumnImage.set(373, 373, zEnd, 100);
+		        x[0] = 373;
+		        y[0] = 373;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+
+		        //I
+		        standardColumnImage.set(334, 411, zEnd, 100);
+		        x[0] = 334;
+		        y[0] = 411;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //H
+		        standardColumnImage.set(295, 450, zEnd, 100);
+		        x[0] = 295;
+		        y[0] = 450;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //G
+		        standardColumnImage.set(256, 489, zEnd, 100);
+		        x[0] = 256;
+		        y[0] = 489;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      
+		        
+		        
+		        
+		        //F
+		        standardColumnImage.set(217, 450, zEnd, 100);
+		        x[0] = 217;
+		        y[0] = 450;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //E
+		        standardColumnImage.set(178, 411, zEnd, 100);
+		        x[0] = 178;
+		        y[0] = 411;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //D
+		        standardColumnImage.set(139, 373, zEnd, 100);
+		        x[0] = 139;
+		        y[0] = 373;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		      //C
+		        standardColumnImage.set(101, 334, zEnd, 100);
+		        x[0] = 101;
+		        y[0] = 334;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        //B
+		        standardColumnImage.set(62, 295, zEnd, 100);
+		        x[0] = 62;
+		        y[0] = 295;
+		        z[0] = zEnd;
+		        newPtVOI.importCurve(x, y, z);
+		        
+		        
+		        //A
+    	        standardColumnImage.set(101, 256, zEnd, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zEnd, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //N
+    	        standardColumnImage.set(217, 139, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zEnd, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zEnd, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zEnd, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //B
+    	        standardColumnImage.set(139, 295, zEnd, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Q
+    	        standardColumnImage.set(178, 256, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //V
+    	        standardColumnImage.set(295, 217, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //U
+    	        standardColumnImage.set(334, 256, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //R
+    	        standardColumnImage.set(217, 295, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Y
+    	        standardColumnImage.set(256, 256, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+        	}
+	
+        }else if(numPoints == PlugInDialogDrosophilaStandardColumnRegistration._75POINTS) {
         	
         	
-        	// top
-	        //A
-	        standardColumnImage.set(101, 256, zStart, 100);
-	        x[0] = 101;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //P
-	        standardColumnImage.set(139, 217, zStart, 100);
-	        x[0] = 139;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //O
-	        standardColumnImage.set(178, 178, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+        	if(rvld) {
+            	// top
+    	        //A
+    	        standardColumnImage.set(101, 256, zStart, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //B
+    	        standardColumnImage.set(139, 295, zStart, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zStart, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zStart, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zStart, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //N
+    	        standardColumnImage.set(217, 139, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zStart, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //Q
+    	        standardColumnImage.set(178, 256, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //R
+    	        standardColumnImage.set(217, 295, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //U
+    	        standardColumnImage.set(334, 256, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //V
+    	        standardColumnImage.set(295, 217, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //Y
+    	        standardColumnImage.set(256, 256, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
 
-	        //N
-	        standardColumnImage.set(217, 139, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 139;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //M
-	        standardColumnImage.set(256, 101, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 101;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //L
-	        standardColumnImage.set(295, 139, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 139;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //K
-	        standardColumnImage.set(334, 178, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //J
-	        standardColumnImage.set(373, 217, zStart, 100);
-	        x[0] = 373;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //I
-	        standardColumnImage.set(411, 256, zStart, 100);
-	        x[0] = 411;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-	        standardColumnImage.set(373, 295, zStart, 100);
-	        x[0] = 373;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //G
-	        standardColumnImage.set(334, 334, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	        standardColumnImage.set(295, 373, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 373;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(256, 411, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 411;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //D
-	        standardColumnImage.set(217, 373, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 373;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	        standardColumnImage.set(178, 334, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        // r8
+    	        //A
+    	        standardColumnImage.set(101, 256, zMiddle, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //B
+    	        standardColumnImage.set(139, 295, zMiddle, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zMiddle, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zMiddle, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zMiddle, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //N
+    	        standardColumnImage.set(217, 139, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zMiddle, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //Q
+    	        standardColumnImage.set(178, 256, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //R
+    	        standardColumnImage.set(217, 295, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //U
+    	        standardColumnImage.set(334, 256, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //V
+    	        standardColumnImage.set(295, 217, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //Y
+    	        standardColumnImage.set(256, 256, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
 
-	        //B
-	        standardColumnImage.set(139, 295, zStart, 100);
-	        x[0] = 139;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+    	        // r7
+    	        //A
+    	        standardColumnImage.set(101, 256, zEnd, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //B
+    	        standardColumnImage.set(139, 295, zEnd, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zEnd, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zEnd, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zEnd, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //N
+    	        standardColumnImage.set(217, 139, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zEnd, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //Q
+    	        standardColumnImage.set(178, 256, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //R
+    	        standardColumnImage.set(217, 295, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //U
+    	        standardColumnImage.set(334, 256, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //V
+    	        standardColumnImage.set(295, 217, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //Y
+    	        standardColumnImage.set(256, 256, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+            	
+            }else {
+            	
+            	
+            	// top
+    	        //A
+    	        standardColumnImage.set(101, 256, zStart, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zStart, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //Q
-	        standardColumnImage.set(178, 256, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //X
-	        standardColumnImage.set(217, 217, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //W
-	        standardColumnImage.set(256, 178, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+    	        //N
+    	        standardColumnImage.set(217, 139, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zStart, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zStart, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zStart, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //V
-	        standardColumnImage.set(295, 217, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+    	        //B
+    	        standardColumnImage.set(139, 295, zStart, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //U
-	        standardColumnImage.set(334, 256, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //T
-	        standardColumnImage.set(295, 295, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //S
-	        standardColumnImage.set(256, 334, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+    	        //Q
+    	        standardColumnImage.set(178, 256, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //R
-	        standardColumnImage.set(217, 295, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
+    	        //V
+    	        standardColumnImage.set(295, 217, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //Y
-	        standardColumnImage.set(256, 256, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
-	        
-	        
-	        
-	        
-	        // r8
-	        //A
-	        standardColumnImage.set(101, 256, zMiddle, 100);
-	        x[0] = 101;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //P
-	        standardColumnImage.set(139, 217, zMiddle, 100);
-	        x[0] = 139;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //O
-	        standardColumnImage.set(178, 178, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //U
+    	        standardColumnImage.set(334, 256, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //N
-	        standardColumnImage.set(217, 139, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 139;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //M
-	        standardColumnImage.set(256, 101, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 101;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //L
-	        standardColumnImage.set(295, 139, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 139;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //K
-	        standardColumnImage.set(334, 178, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //J
-	        standardColumnImage.set(373, 217, zMiddle, 100);
-	        x[0] = 373;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //I
-	        standardColumnImage.set(411, 256, zMiddle, 100);
-	        x[0] = 411;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-	        standardColumnImage.set(373, 295, zMiddle, 100);
-	        x[0] = 373;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //G
-	        standardColumnImage.set(334, 334, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	        standardColumnImage.set(295, 373, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 373;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(256, 411, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 411;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //D
-	        standardColumnImage.set(217, 373, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 373;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	        standardColumnImage.set(178, 334, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //R
+    	        standardColumnImage.set(217, 295, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //B
-	        standardColumnImage.set(139, 295, zMiddle, 100);
-	        x[0] = 139;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //Y
+    	        standardColumnImage.set(256, 256, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        // r8
+    	        //A
+    	        standardColumnImage.set(101, 256, zMiddle, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zMiddle, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //Q
-	        standardColumnImage.set(178, 256, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //X
-	        standardColumnImage.set(217, 217, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //W
-	        standardColumnImage.set(256, 178, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //N
+    	        standardColumnImage.set(217, 139, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zMiddle, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zMiddle, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zMiddle, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //V
-	        standardColumnImage.set(295, 217, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //B
+    	        standardColumnImage.set(139, 295, zMiddle, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //U
-	        standardColumnImage.set(334, 256, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //T
-	        standardColumnImage.set(295, 295, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //S
-	        standardColumnImage.set(256, 334, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //Q
+    	        standardColumnImage.set(178, 256, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //R
-	        standardColumnImage.set(217, 295, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
+    	        //V
+    	        standardColumnImage.set(295, 217, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //Y
-	        standardColumnImage.set(256, 256, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
-	        
-	        
-	        
-	        
-	        
-	        // r7
-	        //A
-	        standardColumnImage.set(101, 256, zEnd, 100);
-	        x[0] = 101;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //P
-	        standardColumnImage.set(139, 217, zEnd, 100);
-	        x[0] = 139;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //O
-	        standardColumnImage.set(178, 178, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //U
+    	        standardColumnImage.set(334, 256, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //N
-	        standardColumnImage.set(217, 139, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 139;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //M
-	        standardColumnImage.set(256, 101, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 101;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //L
-	        standardColumnImage.set(295, 139, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 139;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //K
-	        standardColumnImage.set(334, 178, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //J
-	        standardColumnImage.set(373, 217, zEnd, 100);
-	        x[0] = 373;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //I
-	        standardColumnImage.set(411, 256, zEnd, 100);
-	        x[0] = 411;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-	        standardColumnImage.set(373, 295, zEnd, 100);
-	        x[0] = 373;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //G
-	        standardColumnImage.set(334, 334, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	        standardColumnImage.set(295, 373, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 373;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(256, 411, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 411;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //D
-	        standardColumnImage.set(217, 373, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 373;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	        standardColumnImage.set(178, 334, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //R
+    	        standardColumnImage.set(217, 295, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //B
-	        standardColumnImage.set(139, 295, zEnd, 100);
-	        x[0] = 139;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //Y
+    	        standardColumnImage.set(256, 256, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        
+    	        // r7
+    	        //A
+    	        standardColumnImage.set(101, 256, zEnd, 100);
+    	        x[0] = 101;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //P
+    	        standardColumnImage.set(139, 217, zEnd, 100);
+    	        x[0] = 139;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //O
+    	        standardColumnImage.set(178, 178, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //Q
-	        standardColumnImage.set(178, 256, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //X
-	        standardColumnImage.set(217, 217, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //W
-	        standardColumnImage.set(256, 178, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //N
+    	        standardColumnImage.set(217, 139, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 139;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //M
+    	        standardColumnImage.set(256, 101, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 101;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //L
+    	        standardColumnImage.set(295, 139, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 139;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //K
+    	        standardColumnImage.set(334, 178, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //J
+    	        standardColumnImage.set(373, 217, zEnd, 100);
+    	        x[0] = 373;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //I
+    	        standardColumnImage.set(411, 256, zEnd, 100);
+    	        x[0] = 411;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    	        standardColumnImage.set(373, 295, zEnd, 100);
+    	        x[0] = 373;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //G
+    	        standardColumnImage.set(334, 334, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	        standardColumnImage.set(295, 373, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 373;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(256, 411, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 411;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //D
+    	        standardColumnImage.set(217, 373, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 373;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	        standardColumnImage.set(178, 334, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //V
-	        standardColumnImage.set(295, 217, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //B
+    	        standardColumnImage.set(139, 295, zEnd, 100);
+    	        x[0] = 139;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //U
-	        standardColumnImage.set(334, 256, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //T
-	        standardColumnImage.set(295, 295, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //S
-	        standardColumnImage.set(256, 334, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //Q
+    	        standardColumnImage.set(178, 256, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //X
+    	        standardColumnImage.set(217, 217, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //W
+    	        standardColumnImage.set(256, 178, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //R
-	        standardColumnImage.set(217, 295, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
+    	        //V
+    	        standardColumnImage.set(295, 217, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
 
-	        //Y
-	        standardColumnImage.set(256, 256, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
+    	        //U
+    	        standardColumnImage.set(334, 256, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //T
+    	        standardColumnImage.set(295, 295, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //S
+    	        standardColumnImage.set(256, 334, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //R
+    	        standardColumnImage.set(217, 295, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //Y
+    	        standardColumnImage.set(256, 256, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
+            	
+            	
+            	
+            }
         	
-        	
-        	
+        }else if(numPoints == PlugInDialogDrosophilaStandardColumnRegistration._27POINTS) {
+        	if(rvld) {
+    	        // top
+    	        //A
+    	        standardColumnImage.set(178, 256, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //B
+    	    	standardColumnImage.set(217, 295, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //C
+    	    	standardColumnImage.set(256, 334, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //D
+    	    	standardColumnImage.set(295, 295, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(334, 256, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	    	standardColumnImage.set(295, 217, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //G
+    	    	standardColumnImage.set(256, 178, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //H
+    			standardColumnImage.set(217, 217, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    		    //I
+    	        standardColumnImage.set(256, 256, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        
+    	        
+    	        // r8
+    	        //A
+    	        standardColumnImage.set(178, 256, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	    	//B
+    	    	standardColumnImage.set(217, 295, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //C
+    	    	standardColumnImage.set(256, 334, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //D
+    			standardColumnImage.set(295, 295, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(334, 256, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	    	//F
+    	    	standardColumnImage.set(295, 217, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //G
+    	    	standardColumnImage.set(256, 178, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //H
+    	    	standardColumnImage.set(217, 217, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //I
+    	        standardColumnImage.set(256, 256, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        
+    	        
+    	        
+    	        // r7
+    	        //A
+    	        standardColumnImage.set(178, 256, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	    	//B
+    	    	standardColumnImage.set(217, 295, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //C
+    	    	standardColumnImage.set(256, 334, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //D
+    	    	standardColumnImage.set(295, 295, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(334, 256, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	    	//F
+    	    	standardColumnImage.set(295, 217, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //G
+    	    	standardColumnImage.set(256, 178, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //H
+    	    	standardColumnImage.set(217, 217, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        //I
+    	        standardColumnImage.set(256, 256, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+            }else {
+            	// top
+    	        //A
+    	        standardColumnImage.set(178, 256, zStart, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    			standardColumnImage.set(217, 217, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //G
+    	    	standardColumnImage.set(256, 178, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	    	standardColumnImage.set(295, 217, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(334, 256, zStart, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //D
+    	    	standardColumnImage.set(295, 295, zStart, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	    	standardColumnImage.set(256, 334, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //B
+    	    	standardColumnImage.set(217, 295, zStart, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+
+    		    //I
+    	        standardColumnImage.set(256, 256, zStart, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zStart;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
+    	        // r8
+    	        //A
+    	        standardColumnImage.set(178, 256, zMiddle, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    			standardColumnImage.set(217, 217, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //G
+    	    	standardColumnImage.set(256, 178, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	    	standardColumnImage.set(295, 217, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(334, 256, zMiddle, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //D
+    	    	standardColumnImage.set(295, 295, zMiddle, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	    	standardColumnImage.set(256, 334, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //B
+    	    	standardColumnImage.set(217, 295, zMiddle, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+
+    		    //I
+    	        standardColumnImage.set(256, 256, zMiddle, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zMiddle;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        
+    	        // r7
+    	        //A
+    	        standardColumnImage.set(178, 256, zEnd, 100);
+    	        x[0] = 178;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //H
+    			standardColumnImage.set(217, 217, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //G
+    	    	standardColumnImage.set(256, 178, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 178;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //F
+    	    	standardColumnImage.set(295, 217, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 217;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //E
+    	        standardColumnImage.set(334, 256, zEnd, 100);
+    	        x[0] = 334;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //D
+    	    	standardColumnImage.set(295, 295, zEnd, 100);
+    	        x[0] = 295;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	        
+    	        //C
+    	    	standardColumnImage.set(256, 334, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 334;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    	        //B
+    	    	standardColumnImage.set(217, 295, zEnd, 100);
+    	        x[0] = 217;
+    	        y[0] = 295;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+
+    		    //I
+    	        standardColumnImage.set(256, 256, zEnd, 100);
+    	        x[0] = 256;
+    	        y[0] = 256;
+    	        z[0] = zEnd;
+    	        newPtVOI.importCurve(x, y, z);
+    	
+    	        
+            }
         }
         
         
+    
+
+        
+        
+        
         
         
 
         
-        /*if(rvld) {
-	        // top
-	        //A
-	        standardColumnImage.set(178, 256, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //B
-	    	standardColumnImage.set(217, 295, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //C
-	    	standardColumnImage.set(256, 334, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //D
-	    	standardColumnImage.set(295, 295, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(334, 256, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	    	standardColumnImage.set(295, 217, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //G
-	    	standardColumnImage.set(256, 178, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //H
-			standardColumnImage.set(217, 217, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	
-		    //I
-	        standardColumnImage.set(256, 256, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        
-	        
-	        // r8
-	        //A
-	        standardColumnImage.set(178, 256, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	    	//B
-	    	standardColumnImage.set(217, 295, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //C
-	    	standardColumnImage.set(256, 334, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //D
-			standardColumnImage.set(295, 295, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(334, 256, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	    	//F
-	    	standardColumnImage.set(295, 217, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //G
-	    	standardColumnImage.set(256, 178, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //H
-	    	standardColumnImage.set(217, 217, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //I
-	        standardColumnImage.set(256, 256, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        
-	        
-	        
-	        // r7
-	        //A
-	        standardColumnImage.set(178, 256, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	    	//B
-	    	standardColumnImage.set(217, 295, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //C
-	    	standardColumnImage.set(256, 334, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //D
-	    	standardColumnImage.set(295, 295, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(334, 256, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	    	//F
-	    	standardColumnImage.set(295, 217, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //G
-	    	standardColumnImage.set(256, 178, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //H
-	    	standardColumnImage.set(217, 217, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        //I
-	        standardColumnImage.set(256, 256, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-        }else {
-        	// top
-	        //A
-	        standardColumnImage.set(178, 256, zStart, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-			standardColumnImage.set(217, 217, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //G
-	    	standardColumnImage.set(256, 178, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	    	standardColumnImage.set(295, 217, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(334, 256, zStart, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //D
-	    	standardColumnImage.set(295, 295, zStart, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	    	standardColumnImage.set(256, 334, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //B
-	    	standardColumnImage.set(217, 295, zStart, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-
-		    //I
-	        standardColumnImage.set(256, 256, zStart, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zStart;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
-	        // r8
-	        //A
-	        standardColumnImage.set(178, 256, zMiddle, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-			standardColumnImage.set(217, 217, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //G
-	    	standardColumnImage.set(256, 178, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	    	standardColumnImage.set(295, 217, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(334, 256, zMiddle, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //D
-	    	standardColumnImage.set(295, 295, zMiddle, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	    	standardColumnImage.set(256, 334, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //B
-	    	standardColumnImage.set(217, 295, zMiddle, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-
-		    //I
-	        standardColumnImage.set(256, 256, zMiddle, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zMiddle;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        
-	        // r7
-	        //A
-	        standardColumnImage.set(178, 256, zEnd, 100);
-	        x[0] = 178;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //H
-			standardColumnImage.set(217, 217, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //G
-	    	standardColumnImage.set(256, 178, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 178;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //F
-	    	standardColumnImage.set(295, 217, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 217;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //E
-	        standardColumnImage.set(334, 256, zEnd, 100);
-	        x[0] = 334;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //D
-	    	standardColumnImage.set(295, 295, zEnd, 100);
-	        x[0] = 295;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	        
-	        //C
-	    	standardColumnImage.set(256, 334, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 334;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-
-	        //B
-	    	standardColumnImage.set(217, 295, zEnd, 100);
-	        x[0] = 217;
-	        y[0] = 295;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-
-		    //I
-	        standardColumnImage.set(256, 256, zEnd, 100);
-	        x[0] = 256;
-	        y[0] = 256;
-	        z[0] = zEnd;
-	        newPtVOI.importCurve(x, y, z);
-	
-	        
-        }*/
+        /**/
 
         
         

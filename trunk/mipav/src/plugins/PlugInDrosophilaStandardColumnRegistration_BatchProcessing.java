@@ -13,8 +13,8 @@ public class PlugInDrosophilaStandardColumnRegistration_BatchProcessing implemen
 		
 	}
 
-
 	
+
 
 	
 	public void run() {
