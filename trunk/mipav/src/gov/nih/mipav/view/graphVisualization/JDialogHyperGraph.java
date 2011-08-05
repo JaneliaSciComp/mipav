@@ -734,13 +734,11 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			e.printStackTrace();
 		}
 		graphPanel.setLogo(image);
-		Color color = new Color(10,10,10,0);
+		Color color = new Color(32,32,126);
 		String kColorString = new String( "#" + Integer.toHexString(color.getRGB()).substring(2) );
 		graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
-		
-		
-		
 
+        savePreferences();
 		loadPreferences();
 
 		graphPanel.setLineRenderer(new ArrowLineRenderer());

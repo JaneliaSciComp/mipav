@@ -14,12 +14,14 @@ import hypergraph.hyperbolic.ModelPoint;
 import hypergraph.visualnet.DefaultNodeRenderer;
 import hypergraph.visualnet.GraphLayoutModel;
 import hypergraph.visualnet.GraphPanel;
+import hypergraph.visualnet.NodeRenderer;
 
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
@@ -27,6 +29,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Enumeration;
@@ -87,6 +90,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	private Graph kGraph;
 
+	private Image logo;
+	
+	private Node 			lastMouseClickNode;
 
 	/**
 	 * Creates the GraphPanel display.
@@ -113,6 +119,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		{
 			if ( m_kLastCommand.equalsIgnoreCase("Set background color" ) )
 			{
+				setLogo(null);
 				String kColorString = new String( "#" + Integer.toHexString(colorChooser.getColor().getRGB()).substring(2) );
 				getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
 				refreshProperties();
@@ -195,6 +202,36 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		m_kLastCommand = new String(command);
 		if (command.equalsIgnoreCase("Set background color")) {     
 			colorChooser = new ViewJColorChooser(null, "Pick color", this, this );
+		}
+		if (command.equalsIgnoreCase("Set background image")) {  
+
+			Image image = null;
+			/*try {
+			    // Read from a file
+			    File file = new File("C:\\nish\\oval4.jpg");
+			    image = ImageIO.read(file);
+
+			    // Read from an input stream
+			    InputStream is = new BufferedInputStream(
+			        new FileInputStream("C:\\nish\\oval4.jpg"));
+			    image = ImageIO.read(is);
+			}catch(Exception e) {
+				e.printStackTrace();
+			}*/
+			try {
+				image = MipavUtil.getIconImage("oval4.jpg");
+			}catch(FileNotFoundException ex) {
+				ex.printStackTrace();
+			}
+			setLogo(image);
+			Color color = new Color(32,32,126);
+			String kColorString = new String( "#" + Integer.toHexString(color.getRGB()).substring(2) );
+			getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
+			
+			refreshProperties();
+			savePreferences();
+
+			repaint();
 		}
 		if (command.equalsIgnoreCase("Set node color")) {     
 			colorNode = pickedNode;
@@ -296,7 +333,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	
-	private void setProperties() {
+	public void setProperties() {
 		//first do the add node/edit node name/edit node notes part
 		String notes = null;
         if(addNodeDialog.getNoteField().getText().length() > 0)
@@ -636,19 +673,67 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		else if ( !e.isControlDown() )
 		{
+
 			// reset the picked nodes:
 			resetPicked();
-			super.mouseClicked(e);
+			
+			/*if (isOnLogo(e.getPoint())) {
+				logoClicked(e);
+				return;
+			}*/
+			setHoverElement(null, false);
+			Element element = getElement(e.getPoint());
+			if (element != null && element.getElementType() == Element.NODE_ELEMENT) {
+				if (e.getClickCount() == 1) {
+					nodeClicked(1, (Node) element);
+					return;
+				}
+				if (e.getClickCount() == 2 && lastMouseClickNode != null) {
+					nodeClicked(2, lastMouseClickNode);
+					return;
+				}
+				NodeRenderer nr = getNodeRenderer();
+				GraphLayoutModel glm = getGraphLayout().getGraphLayoutModel();
+				nr.configure(this, glm.getNodePosition((Node) element), (Node) element);
+			}
+
+//			if (node != null) {
+//				if (!e.isShiftDown())
+//					getSelectionModel().clearSelection();
+//				if ( getSelectionModel().isElementSelected(node) )
+//					getSelectionModel().removeSelectionElement(node);
+//				else
+//					getSelectionModel().addSelectionElement(node);
+//				return;
+//			}
+//			getSelectionModel().clearSelection();
+			//super.mouseClicked(e);
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			//super.mouseClicked(e);
 		}
 	}
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-		/*if ( !e.isControlDown() )
+		if ( !e.isControlDown() )
 		{
 			resetPicked();
 		}
-		super.mouseMoved(e);*/
+		super.mouseMoved(e);
 	}
 	
 	@Override
@@ -725,7 +810,14 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	 */
 	public void nodeClicked(int iClickCount, Node kNode)
 	{
-		super.nodeClicked(iClickCount, kNode);
+		//super.nodeClicked(iClickCount, kNode);
+		
+		if (iClickCount == 1) {
+			lastMouseClickNode = kNode;
+			if (lastMouseClickNode != null)
+				centerNode(lastMouseClickNode);
+		}
+		
 		/*
         System.err.println( kNode.getLabel() );
 		AttributeManager attrMgr = getGraph().getAttributeManager();
@@ -931,6 +1023,12 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
 		menuItem.setActionCommand("Set background color" );
+		
+		menuItem = new JMenuItem("Set background image");
+		popupMenu.add(menuItem);
+		menuItem.addActionListener(this);
+		menuItem.setActionCommand("Set background image" );
+		
 		menuItem = new JMenuItem("Increase Font Size");
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
@@ -1050,10 +1148,18 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	
+	public void setLogo(Image l) {
+		super.setLogo(l);
+		logo = l;
+	}
+	
+	
 	public void paint(Graphics g) {
 		synchronized (kGraph) {
 			checkLayout();
 			Graphics2D g2 = (Graphics2D) g;
+			
+			
 
 			if (getUI().isDraft()) {
 				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
@@ -1067,7 +1173,16 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 					RenderingHints.KEY_ANTIALIASING,
 					RenderingHints.VALUE_ANTIALIAS_ON);
 			}
-			super.paint(g);
+			//super.paint(g);
+			
+			
+			if (getWidth() > 300 && getHeight() > 300) {
+				if (logo != null)
+					g.drawImage(logo, getWidth() - logo.getWidth(this),
+									  getHeight() - logo.getHeight(this), this);
+			}
+			
+			
 			GraphLayoutModel glm;
 			glm = getGraphLayout().getGraphLayoutModel();
 
