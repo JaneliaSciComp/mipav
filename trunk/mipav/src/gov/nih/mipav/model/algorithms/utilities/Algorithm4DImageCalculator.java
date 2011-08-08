@@ -286,9 +286,9 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * Calculates the max between 2 images
-	 * @param xytBuff
-	 * @return
+	 * Calculates the max between 2 4d-byte-images by doing math on an xyt buffer that is built from both images
+	 * @param xytBuff - the input
+	 * @return - the xy result slice
 	 */
 	private byte[] doByteMax(byte[] xytBuff) {
 		int xDim = image.getExtents()[0];
@@ -749,8 +749,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	/**
-	 * Calculates the norm between 2 images
-	 * @param xytBuff
+	 * Calculates the norm between 2 short images
+	 * @param xytBuff - the xyt
 	 * @return
 	 */
 	private int[] doShortNormPromote(short[] xytBuff) {

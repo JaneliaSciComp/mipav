@@ -93,6 +93,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	private Image logo;
 	
 	private Node 			lastMouseClickNode;
+	
+	private boolean isBGImageShowing = true;
 
 	/**
 	 * Creates the GraphPanel display.
@@ -124,6 +126,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
 				refreshProperties();
 				savePreferences();
+				isBGImageShowing = false;
+				repaint();
 			}
 			if (m_kLastCommand.equalsIgnoreCase("Set node color")) {
 				pickedNode = colorNode;
@@ -230,7 +234,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			
 			refreshProperties();
 			savePreferences();
-
+			isBGImageShowing = true;
 			repaint();
 		}
 		if (command.equalsIgnoreCase("Set node color")) {     
@@ -1155,6 +1159,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	public void paint(Graphics g) {
+		if(!isBGImageShowing) {
+			super.paint(g);
+			return;
+		}
 		synchronized (kGraph) {
 			checkLayout();
 			Graphics2D g2 = (Graphics2D) g;
