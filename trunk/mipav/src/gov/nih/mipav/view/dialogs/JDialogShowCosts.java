@@ -2,6 +2,12 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterBoolean;
+import gov.nih.mipav.model.scripting.parameters.ParameterExternalImage;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.ParameterInt;
+import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +24,7 @@ import javax.swing.*;
  * Calculate costs for various voxel similarity cost functions that are used in registration and output them to the data
  * window. Algorithm is executed in its own thread.
  */
-public class JDialogShowCosts extends JDialogBase {
+public class JDialogShowCosts extends JDialogScriptableBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -31,16 +37,13 @@ public class JDialogShowCosts extends JDialogBase {
     private AlgorithmOptimizeFunctionBase algoCost = null;
 
     /** Number of bins for each image */
-    private int bin1, bin2;
+    private int bin1;
 
     /** User input of bins */
-    private JTextField bin1Text, bin2Text;
+    private JTextField bin1Text;
 
     /** The current cost function */
     private String currentCostFunct;
-
-    /** Result of checkbox for linear rescaling of selected image */
-    private boolean doLinearRescale = true;
 
     /** Active image when algorithm is called. */
     private ModelImage firstImage;
@@ -50,16 +53,21 @@ public class JDialogShowCosts extends JDialogBase {
 
     /** The registered image */
     private JLabel labelImage;
-
-    /** Whether linear scaling of selected image should be performed. */
-    private JCheckBox linearCheckbox;
     
     /** Whether the available cost functions should be performed */
     private JCheckBox doCorrelationRatioSmoothed, doMutualInfoSmoothed,
     					doNormMutualInfoSmoothed, doNormXCorr;
+    
+    private boolean correlationRatioSmoothed = true;
+    
+    private boolean mutualInfoSmoothed = true;
+    
+    private boolean normMutualInfoSmoothed = true;
+    
+    private boolean normXCorr = true;
 
     /** Initial guesses for bin values */
-    private double possibleIntValues1, possibleIntValues2;
+    private double possibleIntValues1;
 
     /** The registered image as specified by user through gui */
     private ModelImage secondImage = null;
@@ -77,6 +85,12 @@ public class JDialogShowCosts extends JDialogBase {
     private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    /**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+    public JDialogShowCosts() { }
+
 
     /**
      * Creates new dialog.
@@ -99,75 +113,88 @@ public class JDialogShowCosts extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        ViewJProgressBar progressBar;
 
         if (command.equals("OK")) {
 
             if (setVariables()) {
                 dispose();
-
-                progressBar = new ViewJProgressBar("Calculating costs", " ", 0, 100, false, this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-
-                if(doCorrelationRatioSmoothed.isSelected()) {
-                	progressBar.setMessage("Calculating correlation ratio");
-                    currentCostFunct = "Correlation Ratio Smoothed";
-	                if (firstImage.getNDims() > 2) {
-	                    callAlgorithm(AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED);
-	                } else {
-	                    callAlgorithm(AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED);
-	                }
-                }
-
-                progressBar.updateValueImmed(25);
-
-                if(doMutualInfoSmoothed.isSelected()) {
-                	progressBar.setMessage("Calculating mutual information");
-                	currentCostFunct = "Mutual Information Smoothed";
-	                if (firstImage.getNDims() > 2) {
-	                    callAlgorithm(AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED);
-	                } else {
-	                    callAlgorithm(AlgorithmCostFunctions2D.MUTUAL_INFORMATION_SMOOTHED);
-	                }
-                }
-
-                progressBar.updateValueImmed(50);
-
-                if(doNormMutualInfoSmoothed.isSelected()) {
-                	progressBar.setMessage("Calculating normalized mutual information");
-                	currentCostFunct = "Normalized Mutual Information Smoothed";
-	                if (firstImage.getNDims() > 2) {
-	                    callAlgorithm(AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
-	                } else {
-	                    callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
-	                }
-                }
-
-                progressBar.setMessage("Calculating normalized cross correlation");
-                progressBar.updateValueImmed(75);
-                currentCostFunct = "Normalized Cross Correlation Smoothed";
-
-                if(doNormXCorr.isSelected()) {
-	                if (firstImage.getNDims() > 2) {
-	                    callAlgorithm(AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED);
-	                } else {
-	                    callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_XCORRELATION_SMOOTHED);
-	                }
-                }
-
-                progressBar.updateValue(100, true);
-                MipavUtil.displayInfo("Calculations are complete.  " +
-                                      "Select the data tab in the output window to see results.");
-                progressBar.dispose();
+                callAlgorithm();
             }
         } else if (command.equals("Cancel")) {
             dispose();
         }
     }
+    
+    
+    
+    /**
+     * Calls the algorithm with the set-up parameters.
+     */
+    protected void callAlgorithm() {
+    	ViewJProgressBar progressBar;
+    	progressBar = new ViewJProgressBar("Calculating costs", " ", 0, 100, false, this, this);
+
+        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
+        int yScreen = 100; // Toolkit.getDefaultToolkit().getScreenSize().height;
+        progressBar.setLocation(xScreen / 2, yScreen / 2);
+        progressBar.setVisible(true);
+
+        if(correlationRatioSmoothed) {
+        	progressBar.setMessage("Calculating correlation ratio");
+            currentCostFunct = "Correlation Ratio Smoothed";
+            if (firstImage.getNDims() > 2) {
+                callAlgorithm(AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED);
+            } else {
+                callAlgorithm(AlgorithmCostFunctions2D.CORRELATION_RATIO_SMOOTHED);
+            }
+        }
+
+        progressBar.updateValueImmed(25);
+
+        if(mutualInfoSmoothed) {
+        	progressBar.setMessage("Calculating mutual information");
+        	currentCostFunct = "Mutual Information Smoothed";
+            if (firstImage.getNDims() > 2) {
+                callAlgorithm(AlgorithmCostFunctions.MUTUAL_INFORMATION_SMOOTHED);
+            } else {
+                callAlgorithm(AlgorithmCostFunctions2D.MUTUAL_INFORMATION_SMOOTHED);
+            }
+        }
+
+        progressBar.updateValueImmed(50);
+
+        if(normMutualInfoSmoothed) {
+        	progressBar.setMessage("Calculating normalized mutual information");
+        	currentCostFunct = "Normalized Mutual Information Smoothed";
+            if (firstImage.getNDims() > 2) {
+                callAlgorithm(AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
+            } else {
+                callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED);
+            }
+        }
+
+        progressBar.setMessage("Calculating normalized cross correlation");
+        progressBar.updateValueImmed(75);
+        currentCostFunct = "Normalized Cross Correlation Smoothed";
+
+        if(normXCorr) {
+            if (firstImage.getNDims() > 2) {
+                callAlgorithm(AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED);
+            } else {
+                callAlgorithm(AlgorithmCostFunctions2D.NORMALIZED_XCORRELATION_SMOOTHED);
+            }
+        }
+        insertScriptLine();
+
+        progressBar.updateValue(100, true);
+        if (!isScriptRunning()) {
+            MipavUtil.displayInfo("Calculations are complete.  " +
+                                  "Select the data tab in the output window to see results.");
+        }
+        progressBar.dispose();	
+    }
+    
+    
 
 
     // ************************* Item Events ****************************
@@ -180,7 +207,6 @@ public class JDialogShowCosts extends JDialogBase {
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        String tmpStr;
 
         if (source == imageComboBox) {
             UI = ViewUserInterface.getReference();
@@ -188,54 +214,8 @@ public class JDialogShowCosts extends JDialogBase {
             String selectedName = (String) imageComboBox.getSelectedItem();
             secondImage = UI.getRegisteredImageByName(selectedName);
 
-            possibleIntValues2 = secondImage.getMax() - secondImage.getMin() + 1;
-
-            if (secondImage.getMax() == secondImage.getMin()) {
-                linearCheckbox.setSelected(false);
-                linearCheckbox.setEnabled(false);
-            } else {
-                linearCheckbox.setEnabled(true);
-            }
-
-            doLinearRescale = linearCheckbox.isSelected();
-            tmpStr = bin2Text.getText();
-            bin2 = Integer.parseInt(tmpStr);
-
-            if ((bin2 > Math.round(possibleIntValues2)) && (!doLinearRescale) &&
-                    ((secondImage.getType() == ModelStorageBase.BYTE) ||
-                         (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                         (secondImage.getType() == ModelStorageBase.SHORT) ||
-                         (secondImage.getType() == ModelStorageBase.USHORT) ||
-                         (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                         (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                         (secondImage.getType() == ModelStorageBase.LONG))) {
-                bin2 = (int) Math.round(possibleIntValues2);
-            }
-
-            bin2Text.setText(String.valueOf(bin2));
-
         } // if ( source == imageComboBox)
-        else if (source == linearCheckbox) {
-            doLinearRescale = linearCheckbox.isSelected();
-            possibleIntValues2 = secondImage.getMax() - secondImage.getMin() + 1;
-            tmpStr = bin2Text.getText();
-            bin2 = Integer.parseInt(tmpStr);
-
-            if ((!doLinearRescale) &&
-                    ((secondImage.getType() == ModelStorageBase.BYTE) ||
-                         (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                         (secondImage.getType() == ModelStorageBase.SHORT) ||
-                         (secondImage.getType() == ModelStorageBase.USHORT) ||
-                         (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                         (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                         (secondImage.getType() == ModelStorageBase.LONG))) {
-                bin2 = (int) Math.round(possibleIntValues2);
-            } else if (doLinearRescale) {
-                bin2 = bin1;
-            }
-
-            bin2Text.setText(String.valueOf(bin2));
-        } // else if (source == linearCheckbox)
+       
     }
 
     /**
@@ -246,25 +226,7 @@ public class JDialogShowCosts extends JDialogBase {
     public void setBin1(int bin1) {
         this.bin1 = bin1;
     }
-
-    /**
-     * Accessor that sets bin2.
-     *
-     * @param  bin2  DOCUMENT ME!
-     */
-    public void setBin2(int bin2) {
-        this.bin2 = bin2;
-    }
-
-    /**
-     * Accessor that sets whether or not linear rescaling occurs.
-     *
-     * @param  doLinearRescale  DOCUMENT ME!
-     */
-    public void setDoLinearRescale(boolean doLinearRescale) {
-        this.doLinearRescale = doLinearRescale;
-    }
-
+   
     /**
      * Accessor to set the secondImage.
      *
@@ -428,37 +390,20 @@ public class JDialogShowCosts extends JDialogBase {
 
         /* Set up the grid bag */
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 2;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
 
         /* Set up rescale panel */
         JPanel rescalePanel = new JPanel(new GridBagLayout());
         rescalePanel.setForeground(Color.black);
-        rescalePanel.setBorder(buildTitledBorder("Linear rescaling"));
-        linearCheckbox = new JCheckBox("Linearly rescale 2nd image");
-        linearCheckbox.setFont(serif12);
-        linearCheckbox.setForeground(Color.black);
-
-        if (secondImage.getMax() == secondImage.getMin()) {
-            linearCheckbox.setSelected(false);
-            linearCheckbox.setEnabled(false);
-        } else {
-            linearCheckbox.setSelected(true);
-            linearCheckbox.setEnabled(true);
-        }
-
-        linearCheckbox.addItemListener(this);
-        rescalePanel.add(linearCheckbox, gbc);
+        rescalePanel.setBorder(buildTitledBorder("Bin panel"));
 
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 0;
 
         /* Initialize the number of bins */
         bin1 = 256;
@@ -473,12 +418,6 @@ public class JDialogShowCosts extends JDialogBase {
             bin1 = (int) Math.round(possibleIntValues1);
         }
 
-        if (secondImage.getMax() == secondImage.getMin()) {
-            bin2 = 1;
-        } else {
-            bin2 = bin1;
-        }
-
         /* Set up interface for changing number of bins - bin labels and text */
         JLabel bin1Label = new JLabel("Image 1 bin number ");
         bin1Label.setForeground(Color.black);
@@ -486,25 +425,11 @@ public class JDialogShowCosts extends JDialogBase {
         rescalePanel.add(bin1Label, gbc);
 
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 0;
         bin1Text = new JTextField();
         bin1Text.setText(String.valueOf(bin1));
         bin1Text.setFont(serif12);
         rescalePanel.add(bin1Text, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        JLabel bin2Label = new JLabel("Image 2 bin number ");
-        bin2Label.setForeground(Color.black);
-        bin2Label.setFont(serif12);
-        rescalePanel.add(bin2Label, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridy = 2;
-        bin2Text = new JTextField();
-        bin2Text.setText(String.valueOf(bin2));
-        bin2Text.setFont(serif12);
-        rescalePanel.add(bin2Text, gbc);
 
         /* Set up button panel */
         buildOKButton();
@@ -557,9 +482,6 @@ public class JDialogShowCosts extends JDialogBase {
         simpleImg2 = new ModelSimpleImage(secondImage.getExtents(), secondImage.getFileInfo(0).getResolutions(),
                                           secondImage);
 
-        /* Linear rescale */
-        doLinearRescale = linearCheckbox.isSelected();
-
         /* Bins */
         String tmpStr;
         tmpStr = bin1Text.getText();
@@ -585,32 +507,97 @@ public class JDialogShowCosts extends JDialogBase {
 
             return false;
         }
-
-        possibleIntValues2 = secondImage.getMax() - secondImage.getMin() + 1;
-        tmpStr = bin2Text.getText();
-        bin2 = Integer.parseInt(tmpStr);
-
-        if (bin2 < 1) {
-            MipavUtil.displayError("Image 2 must have at least 1 bin");
-            bin2Text.requestFocus();
-            bin2Text.selectAll();
-
-            return false;
-        } else if ((bin2 > Math.round(possibleIntValues2)) && (!doLinearRescale) &&
-                       ((secondImage.getType() == ModelStorageBase.BYTE) ||
-                            (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                            (secondImage.getType() == ModelStorageBase.SHORT) ||
-                            (secondImage.getType() == ModelStorageBase.USHORT) ||
-                            (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                            (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                            (secondImage.getType() == ModelStorageBase.LONG))) {
-            MipavUtil.displayError("Image 2 must not have more than " + Math.round(possibleIntValues2) + " bins");
-            bin2Text.requestFocus();
-            bin2Text.selectAll();
-
-            return false;
-        }
+        
+        correlationRatioSmoothed = doCorrelationRatioSmoothed.isSelected();
+        mutualInfoSmoothed = doMutualInfoSmoothed.isSelected();
+        normMutualInfoSmoothed = doNormMutualInfoSmoothed.isSelected();
+        normXCorr = doNormXCorr.isSelected();
 
         return true;
+    }
+    
+    public void setCorrelationRatioSmoothed(boolean correlationRatioSmoothed) {
+    	this.correlationRatioSmoothed = correlationRatioSmoothed;
+    }
+    
+    public void setMutualInfoSmoothed(boolean mutualInfoSmoothed) {
+    	this.mutualInfoSmoothed = mutualInfoSmoothed;
+    }
+    public void setNormMutualInfoSmoothed(boolean normMutualInfoSmoothed) {
+    	this.normMutualInfoSmoothed = normMutualInfoSmoothed;
+    }
+    
+    public void setNormXCorr(boolean normXCorr) {
+    	this.normXCorr = normXCorr;
+    }
+    
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+    public ParameterTable createInputParameters() {
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+            
+            table.put(new ParameterBoolean("correlation_ratio_smoohted", true));
+            table.put(new ParameterBoolean("mutual_info_smoothed", true));
+            table.put(new ParameterBoolean("norm_mutual_info_smoothed", true));
+            table.put(new ParameterBoolean("norm_x_corr", true));
+            table.put(new ParameterInt("bin_1",256));
+
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        firstImage = scriptParameters.retrieveInputImage();
+        setSecondImage(scriptParameters.retrieveInputImage(2));
+        simpleImg1 = new ModelSimpleImage(firstImage.getExtents(), firstImage.getFileInfo(0).getResolutions(),
+                firstImage);
+
+        simpleImg2 = new ModelSimpleImage(secondImage.getExtents(), secondImage.getFileInfo(0).getResolutions(),
+                secondImage);
+        if (firstImage.getNDims() > 2) {
+            tMatrix = new TransMatrix(4);
+        } else {
+            tMatrix = new TransMatrix(3);
+
+        }
+        UI = ViewUserInterface.getReference();
+        
+        setCorrelationRatioSmoothed(scriptParameters.getParams().getBoolean("correlation_ratio_smoothed"));
+        setMutualInfoSmoothed(scriptParameters.getParams().getBoolean("mututal_info_smoothed"));
+        setNormMutualInfoSmoothed(scriptParameters.getParams().getBoolean("norm_mutual_info_smoothed"));
+        setNormXCorr(scriptParameters.getParams().getBoolean("norm_x_corr"));
+        setBin1(scriptParameters.getParams().getInt("bin_1"));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(firstImage);
+        scriptParameters.storeInputImage(secondImage);
+    
+        scriptParameters.getParams().put(ParameterFactory.newParameter("correlation_ratio_smoothed", 
+        		correlationRatioSmoothed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("mututal_info_smoothed", 
+        		mutualInfoSmoothed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("norm_mutual_info_smoothed", 
+        		normMutualInfoSmoothed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("norm_x_corr", normXCorr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bin_1", bin1));
     }
 }
