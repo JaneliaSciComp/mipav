@@ -70,10 +70,12 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
 			setLocation(textComponent.getX() - borderx / 2, textComponent.getY() - bordery / 2);
 			textComponent.setLocation(getX() + iconWidth, getY() + (getHeight() - textComponent.getHeight()) / 2);
  			if (((GraphPanel) c).getHoverElement() == node) {
- 				if (getBackground() == null) {
+ 				/*if (getBackground() == null) {
  					Color back = c.getBackground();
  					setBackground(new Color(back.getRed(), back.getGreen(), back.getBlue(), 224));
- 				}
+ 				}*/
+ 				setBackground(Color.white);
+ 				getTextRenderer().setColor(Color.blue);
 				setFont(getFont().deriveFont(Font.BOLD));
  			}
 		}
