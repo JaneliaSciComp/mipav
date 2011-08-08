@@ -18,6 +18,7 @@ import gov.nih.mipav.view.dialogs.JDialogDicomDir;
 import java.awt.image.*;
 import java.io.*;
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.imageio.ImageIO;
 
@@ -3488,6 +3489,215 @@ public class FileDicom extends FileDicomBase {
         fileInfo.getTagTable().setValue("0018,1019", MipavUtil.getVersion());
     }
 
+    private void writeNextTag(FileDicomTag element, RandomAccessFile outputFile) throws IOException {
+        Preferences.debug("Processing tag "+element.getKey()+" with VR "+element.getValueRepresentation(), Preferences.DEBUG_FILEIO);
+    	
+    	VR vr = element.getValueRepresentation();
+
+        // System.out.println("w = " + dicomTags[i].toString());
+        try {
+
+            if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
+                // explicit VRs may be difference from implicit; in this case use the explicit
+            } else {
+                vr = element.getType();
+            }
+        } catch (final NullPointerException e) {
+            vr = VR.UN;
+        }
+
+        // System.out.println(" Name = " + dicomTags[i].toString());
+        final int gr = element.getGroup();
+        final int el = element.getElement();
+
+        // Returns the current length of the value of the dicom tag
+        int length = 0;
+        if(vr.equals(VR.SQ)) {
+        	length = ((FileDicomSQ) element.getValue(false)).getLength();
+        } else {
+        	length = element.getLength();
+        }
+        if(length%2 != 0) {
+        	length++; //an odd length tag is appended
+        }
+
+        final int nValues = element.getNumberOfValues();
+
+        final int vm = element.getValueMultiplicity();
+        // Not sure if I need this - efilm adds it - also efilm has tag, 0000 lengths (meta lengths)for tag groups
+        // (02, 08, ....) if (gr==2 && fileInfo.getVRType() == fileInfo.IMPLICIT){
+        // fileInfo.setVRType(fileInfo.EXPLICIT); } else if (gr > 2){ fileInfo.setVRType(fileInfo.IMPLICIT); }
+
+        if ( (gr == 2) && (el == 0)) {
+
+            // length of the transfer syntax group; after this group is written, need to change endianess
+            metaGroupLength = ((Integer) element.getValue(false)).intValue();
+        }
+
+        if (fileInfo.containsDICM) {
+
+            // after transfer syntax group is read in
+            if (raFile.getFilePointer() >= (ID_OFFSET + metaGroupLength)) {
+
+                // set endianess to whatever the transfer group defined it as
+                endianess = fileInfo.getEndianess();
+            }
+        } else {
+
+            if (raFile.getFilePointer() >= metaGroupLength) {
+                endianess = fileInfo.getEndianess();
+            }
+        }
+
+        writeShort((short) gr, endianess); // write group
+        writeShort((short) el, endianess); // write element
+
+        if ( ( (fileInfo.vr_type == FileInfoDicom.EXPLICIT) || (gr == 2)) && (vr != null)) {
+            outputFile.writeBytes(vr.toString()); // write explicit vr
+
+            if (vr.equals(VR.SQ)) {
+
+                // explicit VR 32 bit length
+                outputFile.writeShort(0); // skip two reserved bytes
+                
+                Preferences.debug("SQ Length: "+ length, Preferences.DEBUG_FILEIO);
+                
+                if (length == -1) {
+                    writeInt(0xFFFFFFFF, endianess); // write undefined length
+                } else {
+                    writeInt(length, endianess);
+                }
+            } else if (vr.equals(VR.OB) || vr.equals(VR.OW) || vr.equals(VR.UN)) {
+
+                // explicit vr 32 bit length
+                outputFile.writeShort(0); // skip two reserved bytes
+                writeInt(length, endianess);
+            }
+            // explicit vr 16 bit length
+            else {
+                writeShort((short) length, endianess); // write length as a short
+            }
+        } else { // IMPLICIT VR
+
+            try {
+
+                if (vr.equals(VR.SQ)) {
+                    Preferences.debug("SQ Length: "+ length, Preferences.DEBUG_FILEIO);
+                    
+                    if (length == -1) {
+                        writeInt(0xFFFFFFFF, endianess); // write undefined length
+                    } else {
+                        writeInt(length, endianess);
+                    }
+                } else {
+                    writeInt(length, endianess); // implicit vr, 32 bit length
+                }
+            } catch (final NullPointerException noVRtypeException) {
+
+                // System.err.println("Found a tag ("+
+                // Integer.toString(gr, 0x10)+","+Integer.toString(el, 0x10) +
+                // ") without a TAG VR! whoops.");
+                writeInt(length, endianess); // implicit vr, 32 bit length
+            }
+        }
+        
+        long currentFilePointer = raFile.getFilePointer();
+        Object obj = element.getValue(false);
+        
+        switch(vr) {
+        case US:
+        case SS:
+        	if ( (vm > 1) || (nValues > 1)) {   
+	            if(obj instanceof Short[]) {
+	                final Short[] data = (Short[]) obj;
+	
+	                for (int vmI = 0; vmI < nValues; vmI++) {
+	                    writeShort(data[vmI].shortValue(), endianess);
+	                }
+	            } 
+            } else {
+                writeShort( ((Short) obj).shortValue(), endianess);
+            }
+        	break;
+        	
+        case SL:
+        case UL:
+        	if ( (vm > 1) || (nValues > 1)) {
+                if(obj instanceof Integer[]) {
+                    final Integer[] data = (Integer[]) obj;
+
+                    for (int vmI = 0; vmI < nValues; vmI++) {
+                        writeInt(data[vmI].intValue(), endianess);
+                    }
+                    
+                } 
+            } else {
+                writeInt( ((Integer) obj).intValue(), endianess);
+            }
+        	break;
+        	
+        case FL:
+        	if ( (vm > 1) || (nValues > 1)) {
+                final Float[] data = (Float[]) obj;
+
+                for (int vmI = 0; vmI < nValues; vmI++) {
+                    writeFloat(data[vmI].floatValue(), endianess);
+                }
+            } else {
+                writeFloat( ((Float) obj).floatValue(), endianess);
+            }
+        	break;
+        	
+        case FD:
+        	if ( (vm > 1) || (nValues > 1)) {
+                final Double[] data = (Double[]) obj;
+
+                for (int vmI = 0; vmI < nValues; vmI++) {
+                    writeDouble(data[vmI].doubleValue(), endianess);
+                }
+            } else {
+                writeDouble( ((Double) obj).doubleValue(), endianess);
+            }
+        	break;
+        	
+        case SQ:
+        	final FileDicomSQ sq = (FileDicomSQ) element.getValue(false);
+            writeSequence(outputFile, fileInfo.vr_type, sq, endianess);
+        	break;
+        
+        default:
+        	byte appendByte = 0;
+        	
+        	if(obj instanceof Byte[]) {
+        		bytesV = (Byte[]) obj;
+        		
+                final byte[] bytesValue = new byte[bytesV.length+(bytesV.length%2)];
+
+                for (int k = 0; k < bytesV.length; k++) {
+                    bytesValue[k] = bytesV[k].byteValue();
+                }
+                
+                if((bytesV.length%2) != 0) {
+                	bytesValue[bytesV.length] = appendByte;
+                }
+
+                outputFile.write(bytesValue);
+        	} else if(obj instanceof String) {
+        		if(((String)obj).length()%2 != 0) {
+        			obj = obj + new String(new byte[]{appendByte});
+        		}
+        		
+        		outputFile.writeBytes(obj.toString());
+        	}
+        }
+        
+        if(raFile.getFilePointer() == currentFilePointer) {
+        	Preferences.debug("No data was written for tag "+element.getKey().toString(), Preferences.DEBUG_FILEIO);
+        } else {
+        	Preferences.debug("Wrote value for key "+element.getKey().toString()+" of length "+length+" with value "+obj.toString(), Preferences.DEBUG_FILEIO);
+        }
+    }
+    
     /**
      * Writes the tags of the DICOM header.
      * 
@@ -3503,8 +3713,8 @@ public class FileDicom extends FileDicomBase {
 
         // all DICOM files start out as little endian
         boolean endianess = FileBase.LITTLE_ENDIAN;
-        FileDicomTag[] dicomTags = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
-        int metaGroupLength = 0;
+        FileDicomTag element;
+        FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
 
         if (fileInfo.containsDICM) {
 
@@ -3518,239 +3728,15 @@ public class FileDicom extends FileDicomBase {
             outputFile.write(skip);
             outputFile.writeBytes("DICM");
         }
-
-        for (final FileDicomTag element : dicomTags) {
-
-            VR type = VR.XX;
-            final VR vr = element.getValueRepresentation();
-
-            // System.out.println("w = " + dicomTags[i].toString());
-            try {
-
-                if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
-
-                    // explicit VRs may be difference from implicit; in this case use the explicit
-                    type = vr;
-                } else {
-                    type = element.getType();
-                }
-            } catch (final NullPointerException e) {
-                type = VR.UN;
-            }
-
-            // System.out.println(" Name = " + dicomTags[i].toString());
-            final int gr = element.getGroup();
-            final int el = element.getElement();
-
-            // In the future, getLength should calculate the length instead of retrieveing a stored version
-            // I think Dave already solved part of this problem with getNumberOfValues (just multiply by size_of_type.
-            final int length = element.getLength();
-
-            final int nValues = element.getNumberOfValues();
-
-            final int vm = element.getValueMultiplicity();
-            // Not sure if I need this - efilm adds it - also efilm has tag, 0000 lengths (meta lengths)for tag groups
-            // (02, 08, ....) if (gr==2 && fileInfo.getVRType() == fileInfo.IMPLICIT){
-            // fileInfo.setVRType(fileInfo.EXPLICIT); } else if (gr > 2){ fileInfo.setVRType(fileInfo.IMPLICIT); }
-
-            if ( (gr == 2) && (el == 0)) {
-
-                // length of the transfer syntax group; after this group is written, need to change endianess
-                metaGroupLength = ((Integer) element.getValue(false)).intValue();
-            }
-
-            if (fileInfo.containsDICM) {
-
-                // after transfer syntax group is read in
-                if (raFile.getFilePointer() >= (ID_OFFSET + metaGroupLength)) {
-
-                    // set endianess to whatever the transfer group defined it as
-                    endianess = fileInfo.getEndianess();
-                }
-            } else {
-
-                if (raFile.getFilePointer() >= metaGroupLength) {
-                    endianess = fileInfo.getEndianess();
-                }
-            }
-
-            writeShort((short) gr, endianess); // write group
-            writeShort((short) el, endianess); // write element
-
-            if ( ( (fileInfo.vr_type == FileInfoDicom.EXPLICIT) || (gr == 2)) && (vr != null)) {
-                outputFile.writeBytes(vr.toString()); // write explicit vr
-
-                if (vr.equals("SQ")) {
-
-                    // explicit VR 32 bit length
-                    outputFile.writeShort(0); // skip two reserved bytes
-                    int sqLength = ((FileDicomSQ) element.getValue(false)).getLength();
-                    System.out.println("SQ Length: "+ sqLength);
-                    
-                    if ( ((FileDicomSQ) element.getValue(false)).getLength() == 0) {
-                        writeInt(0, endianess); // write length of 0.
-                    } else {
-                        writeInt(sqLength, endianess);
-                        //writeInt(0xFFFFFFFF, endianess); // write undefined length
-                    }
-                } else if (vr.equals("OB") || vr.equals("OW") || vr.equals("UN")) {
-
-                    // explicit vr 32 bit length
-                    outputFile.writeShort(0); // skip two reserved bytes
-                    writeInt(length, endianess);
-                }
-                // explicit vr 16 bit length
-                else {
-                    writeShort((short) length, endianess); // write length as a short
-                }
-            } else { // IMPLICIT VR
-
-                try {
-
-                    if (vr.equals("SQ")) {
-
-                        if ( ((FileDicomSQ) element.getValue(false)).getLength() == 0) {
-                            writeInt(0, endianess); // write length of 0.
-                        } else {
-                            writeInt(0xFFFFFFFF, endianess); // write undefined length
-                        }
-                    } else {
-                        writeInt(length, endianess); // implicit vr, 32 bit length
-                    }
-                } catch (final NullPointerException noVRtypeException) {
-
-                    // System.err.println("Found a tag ("+
-                    // Integer.toString(gr, 0x10)+","+Integer.toString(el, 0x10) +
-                    // ") without a TAG VR! whoops.");
-                    writeInt(length, endianess); // implicit vr, 32 bit length
-                }
-            }
-            // Preferences.debug( "this is "+dicomTags[i] + "\n", Preferences.DEBUG_FILEIO);
-
-            // write as a string if string, unknown (private), or vm > 1
-            // The VM part is consistent with how we're reading it in; hopefully
-            // once we have test images we'll have a better way of reading & writing
-            if ( (length == 0) && !type.equals(VR.SQ)) {
-                // NOP to prevent other types from getting values being
-                // written when no-length, non-sequences.
-            } else if (type.equals(VR.UN) || type.equals(VR.OB)) {
-
-                // Unknowns are stored as an array of Bytes. VM does not apply ?
-                Byte[] bytesV = null;
-                bytesV = (Byte[]) element.getValue(false);
-
-                final byte[] bytesValue = new byte[bytesV.length];
-
-                for (int k = 0; k < bytesV.length; k++) {
-                    bytesValue[k] = bytesV[k].byteValue();
-                    // System.err.print(" [" + bytesV[k].toString()+"]");
-                }
-
-                outputFile.write(bytesValue);
-                // System.err.println();
-            } else if (type.equals(VR.OW)) { // OW -- word = 2 bytes
-
-                final Object[] data = (Object[]) element.getValue(false);
-
-                // We are not sure that that LUT endianess is always BIG
-                // but the example images we have are.
-                // Book 3 C.7.6.3.1.6 says to swap byte of OW.
-                if ( ( (gr == 0x28) && (el == 0x1201)) || ( (gr == 0x28) && (el == 0x1202))
-                        || ( (gr == 0x28) && (el == 0x1203))) {
-
-                    // data is guaranteed to be short for these tags
-                    for (final Short element2 : (Short[]) data) {
-                        writeShort(element2.shortValue(), true);
-                    }
-                } else {
-
-                    if (data instanceof Short[]) {
-                        for (final Short element2 : (Short[]) data) {
-                            writeShort(element2.shortValue(), endianess);
-                        }
-                    } else if (data instanceof Byte[]) {
-                        for (final Byte element2 : (Byte[]) data) {
-                            writeByte(element2.byteValue());
-                        }
-                    }
-
-                }
-
-            } else if (type.getType().equals(StringType.STRING)) {
-
-                // VM - I don't think applies
-                outputFile.writeBytes(element.getValue(false).toString());
-
-                if ( (element.getValue(false).toString().length() % 2) != 0) {
-                    outputFile.writeBytes("\0");
-                }
-            } else if (type.equals(NumType.FLOAT)) {
-
-                if ( (vm > 1) || (nValues > 1)) {
-                    final Float[] data = (Float[]) element.getValue(false);
-
-                    for (int vmI = 0; vmI < nValues; vmI++) {
-                        writeFloat(data[vmI].floatValue(), endianess);
-                    }
-                } else {
-                    writeFloat( ((Float) element.getValue(false)).floatValue(), endianess);
-                }
-            } else if (type.equals(NumType.DOUBLE)) {
-
-                if ( (vm > 1) || (nValues > 1)) {
-                    final Double[] data = (Double[]) element.getValue(false);
-
-                    for (int vmI = 0; vmI < nValues; vmI++) {
-                        writeDouble(data[vmI].doubleValue(), endianess);
-                    }
-                } else {
-                    writeDouble( ((Double) element.getValue(false)).doubleValue(), endianess);
-                }
-            } else if (type.equals(NumType.SHORT)) {
-
-                if ( (vm > 1) || (nValues > 1)) {
-                    Object[] obj = (Object[]) element.getValue(false);
-                    if(obj instanceof Short[]) {
-                        final Short[] data = (Short[]) element.getValue(false);
-
-                        for (int vmI = 0; vmI < nValues; vmI++) {
-                            writeShort(data[vmI].shortValue(), endianess);
-                        }
-                    } else {
-                        final Byte[] data = (Byte[]) element.getValue(false);
-
-                        for (int vmI = 0; vmI < nValues; vmI++) {
-                            writeByte(data[vmI].byteValue());
-                        } 
-                    }
-                } else {
-                    writeShort( ((Short) element.getValue(false)).shortValue(), endianess);
-                }
-            } else if (type.equals(NumType.LONG)) {
-
-                if ( (vm > 1) || (nValues > 1)) {
-                    Object[] obj = (Object[]) element.getValue(false);
-                    if(obj instanceof Integer[]) {
-                        final Integer[] data = (Integer[]) element.getValue(false);
-    
-                        for (int vmI = 0; vmI < nValues; vmI++) {
-                            writeInt(data[vmI].intValue(), endianess);
-                        }
-                        
-                    } else {
-                        final Byte[] data = (Byte[]) element.getValue(false);
-    
-                        for (int vmI = 0; vmI < nValues; vmI++) {
-                            writeByte(data[vmI].byteValue());
-                        } 
-                    }
-                } else {
-                    writeInt( ((Integer) element.getValue(false)).intValue(), endianess);
-                }
-            } else if (type.equals(VR.SQ)) {
-                final FileDicomSQ sq = (FileDicomSQ) element.getValue(false);
-                writeSequence(outputFile, fileInfo.vr_type, sq, endianess);
-            }
+        
+       for(int i=0; i<tagArray.length; i++) {
+        	element = tagArray[i];
+        	if(!element.getKey().toString().matches(FileDicom.IMAGE_TAG)) {
+        		writeNextTag(element, outputFile);
+        	} else {
+        		Preferences.debug("Image tag reached", Preferences.DEBUG_FILEIO);
+        		break; //image tag reached
+        	}
         }
 
         writeShort((short) 0x7FE0, endianess); // the image
@@ -3761,25 +3747,11 @@ public class FileDicom extends FileDicomBase {
             // writeShort((short) 0x574F, endianess);
             writeShort((short) 0x0000, endianess);
             writeInt(0xFFFFFFFF, endianess);
-            if (dicomTags != null) {
-                for (int i = 0; i < dicomTags.length; i++) {
-                    if (dicomTags[i] != null) {
-                        dicomTags[i] = null;
-                    }
-                }
-                dicomTags = null;
-            }
             return;
         }
 
         if (fileInfo.vr_type == FileInfoDicom.EXPLICIT) {
-            VR imageTagVR;
-
-            if (fileInfo.getTagTable().get(FileDicom.IMAGE_TAG) != null) {
-                imageTagVR = fileInfo.getTagTable().get(FileDicom.IMAGE_TAG).getValueRepresentation();
-            } else {
-                imageTagVR = DicomDictionary.getVR(new FileDicomKey(FileDicom.IMAGE_TAG));
-            }
+            VR imageTagVR = DicomDictionary.getVR(new FileDicomKey("7FE0,0010"));
 
             // write VR and two reserved bytes
             outputFile.writeBytes(imageTagVR.toString());
@@ -3807,15 +3779,6 @@ public class FileDicom extends FileDicomBase {
         } else {
             writeInt(imageLength, endianess);
         }
-
-        if (dicomTags != null) {
-            for (int i = 0; i < dicomTags.length; i++) {
-                if (dicomTags[i] != null) {
-                    dicomTags[i] = null;
-                }
-            }
-            dicomTags = null;
-        }
     }
 
     /**
@@ -3831,181 +3794,24 @@ public class FileDicom extends FileDicomBase {
      */
     private void writeSequence(final RandomAccessFile outputFile, final boolean vr_type, final FileDicomSQ sq,
             final boolean endianess) throws IOException {
-        FileDicomTagTable item;
 
-        if ( (sq == null) || (sq.getSequenceLength() < 1)) {
-            return;
-        }
-
-        for (int i = 0; i < sq.getSequenceLength(); i++) {
-            item = sq.getItem(i);
-            
-            if (item.getDataLength() > 0) {
+        for (int i = 0; i < sq.getSequence().size(); i++) {
+            FileDicomTagTable table = sq.getSequence().get(i);
+            FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(table.getTagList());
+            int dataLength = table.getDataLength();
+            if (dataLength > 0) {
 
                 // write item-start tag
                 writeShort((short) 0xFFFE, endianess);
                 writeShort((short) 0xE000, endianess);
-                writeInt(0xFFFFFFFF, endianess); // data-length (we'll get it to spit out real length later!)
+                writeInt(dataLength, endianess); // data-length (we'll get it to spit out real length later!)
             }
 
-            final Iterator<FileDicomTag> dataSetItr = item.getTagList().values().iterator();
+            final Iterator<Entry<FileDicomKey,FileDicomTag>> itr = table.getTagList().entrySet().iterator();
 
-            while (dataSetItr.hasNext()) {
-
-                // System.err.println(" Counter = " + j);
-                VR type = VR.UN;
-                final FileDicomTag entry = dataSetItr.next();
-
-                final VR vr = entry.getValueRepresentation();
-                final int length = entry.getLength();
-
-                // System.out.println("adadadfad length = " + length + " group = " + entry.getGroup() + " element = " +
-                // entry.getElement());
-                try {
-
-                    if ( (vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
-                        type = vr;
-                    } else {
-                        type = entry.getType();
-                    }
-                } catch (final NullPointerException error) {
-                    type = VR.UN;
-                }
-
-                writeShort((short) entry.getGroup(), endianess);
-                writeShort((short) entry.getElement(), endianess);
-
-                if ( (vr_type == FileInfoDicom.EXPLICIT) && (vr != null)) {
-                    outputFile.writeBytes(vr.toString());
-
-                    if (vr.equals("SQ") || vr.equals("OB") || vr.equals("OW") || vr.equals("UN")) {
-
-                        // if (vr.equals("SQ") || vr.equals("UN")) {
-                        outputFile.writeShort(0);
-                    } else {
-                        writeShort((short) length, endianess);
-                    }
-                }
-
-                if (length == UNDEFINED_LENGTH) {
-                    writeShort((short) 0xFFFF, endianess);
-                } else if ( ( (vr_type == FileInfoDicom.EXPLICIT) && (vr != null) && (vr.equals("SQ")
-                        || vr.equals("OB") || vr.equals("OW") || vr.equals("UN")))) {
-
-                    if ( (length == 0) && vr.equals("SQ")) {
-                        // Do nothing because we only write ____Dave need help___ sequence tags
-                    } else {
-                        writeInt(length, endianess);
-                    }
-                } else if ( (vr_type == FileInfoDicom.IMPLICIT) && !type.equals(VR.UN)
-                        && !type.equals(VR.SQ)) {
-                    writeInt(length, endianess);
-                }
-
-                if (type.getType().equals(StringType.STRING) || type.equals(VR.OW)) {
-                    outputFile.writeBytes(entry.getValue(false).toString());
-
-                    if ( (entry.getValue(false).toString().length() % 2) != 0) {
-                        outputFile.writeBytes("\0");
-                    }
-                } else if (type.equals(VR.UN)) {
-
-                    // Unknowns are stored as an array of Bytes.
-                    // VM does not apply?
-                    Byte[] bytesV = null;
-                    bytesV = (Byte[]) entry.getValue(false);
-
-                    final byte[] bytesValue = new byte[bytesV.length];
-
-                    for (int k = 0; k < bytesV.length; k++) {
-                        bytesValue[k] = bytesV[k].byteValue();
-                        // System.err.print(" [" + bytesV[k].toString()+"]");
-                    }
-
-                    writeInt(bytesV.length, endianess);
-                    outputFile.write(bytesValue);
-                } else if (type.equals(VR.OB)) {
-                    Byte[] bytesV = null;
-                    bytesV = (Byte[]) entry.getValue(false);
-
-                    final byte[] bytesValue = new byte[bytesV.length];
-
-                    for (int k = 0; k < bytesV.length; k++) {
-                        bytesValue[k] = bytesV[k].byteValue();
-                        // System.err.print(" [" + bytesV[k].toString()+"]");
-                    }
-
-                    // writeInt(bytesV.length, endianess);
-                    outputFile.write(bytesValue);
-                } else if (type.getType().equals(NumType.FLOAT)) {
-                    Float[] f = null;
-                    if(entry.getValue(false) instanceof Float[]) {
-                        f = (Float[]) entry.getValue(false);
-                        for(int j=0; j<f.length; j++) {
-                            writeFloat(f[j], endianess);
-                        }
-                    } else {
-                        writeFloat( ((Float) entry.getValue(false)).floatValue(), endianess);
-                    }
-                } else if (type.getType().equals(NumType.DOUBLE)) {
-                    if (entry.getValue(false) instanceof Double[]) {
-                        final Double[] dArr = (Double[]) entry.getValue(false);
-                        for (final Double element : dArr) {
-                            writeDouble(element, endianess);
-                        }
-                    } else {
-                        writeDouble( ((Double) entry.getValue(false)).doubleValue(), endianess);
-                    }
-                } else if (type.getType().equals(NumType.SHORT)) {
-                    try {
-                        Short[] f = null;
-                        if(entry.getValue(false) instanceof Short[]) {
-                            f = (Short[]) entry.getValue(false);
-                            for(int j=0; j<f.length; j++) {
-                                writeShort(f[j], endianess);
-                            }
-                        } else {
-                            writeShort( ((Short) entry.getValue(false)).shortValue(), endianess);
-                        }
-                    } catch(ClassCastException e) {
-                        bytesV = (Byte[]) entry.getValue(false);
-
-                        final byte[] bytesValue = new byte[bytesV.length];
-
-                        for (int k = 0; k < bytesV.length; k++) {
-                            bytesValue[k] = bytesV[k].byteValue();
-                            // System.err.print(" [" + bytesV[k].toString()+"]");
-                        }
-                        outputFile.write(bytesValue);
-                    }
-                    
-                } else if (type.getType().equals(NumType.LONG)) {
-                    try {
-                        Integer[] f = null;
-                        if(entry.getValue(false) instanceof Integer[]) {
-                            f = (Integer[]) entry.getValue(false);
-                            for(int j=0; j<f.length; j++) {
-                                writeInt(f[j], endianess);
-                            }
-                        } else {
-                            writeInt( ((Integer) entry.getValue(false)).intValue(), endianess);
-                        }
-                    } catch(ClassCastException e) {
-                        bytesV = (Byte[]) entry.getValue(false);
-    
-                        final byte[] bytesValue = new byte[bytesV.length];
-    
-                        for (int k = 0; k < bytesV.length; k++) {
-                            bytesValue[k] = bytesV[k].byteValue();
-                            // System.err.print(" [" + bytesV[k].toString()+"]");
-                        }
-                        outputFile.write(bytesValue);
-                    }
-                } else if (type.equals(VR.SQ)) {
-                    final FileDicomSQ sq2 = (FileDicomSQ) entry.getValue(false);
-                    writeInt(0xFFFFFFFF, endianess);
-                    writeSequence(outputFile, vr_type, sq2, endianess);
-                }
+            for(int j=0; j<tagArray.length; j++) {
+            	FileDicomTag tag = tagArray[j];
+                writeNextTag(tag, outputFile);
             }
 
             // write end-item tag:
@@ -4014,10 +3820,10 @@ public class FileDicom extends FileDicomBase {
             writeInt(0, endianess);
         }
 
+        //write end-sequence tag
         writeShort((short) 0xFFFE, endianess);
         writeShort((short) 0xE0DD, endianess);
         writeInt(0, endianess);
-        // System.err.println("3333pointer = " + outputFile.getFilePointer());
     }
 
     public void doEnhanced(boolean doEnhanced, int[] extents) {

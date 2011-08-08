@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.util.*;
 
@@ -95,14 +96,15 @@ public class FileDicomSQ extends ModelSerialCloneable {
 
             // call the item's version of this method for each item:
             for (int j = 0; j < sequence.size(); j++) {
-                datasize += sequence.get(j).getDataLength();
-            }
-
-            // item end delimiter: FE FF 0D E0 00 00 00 00 (item end)
-            datasize += 8;
+                datasize += sequence.get(j).getDataLength(); 
+            }  
+            
+        	// item end delimiter: FE FF 0D E0 00 00 00 00 (item end)
+            // not included: datasize += 8;
+            Preferences.debug("Sequence element has length "+datasize, Preferences.DEBUG_FILEIO);
         }
-
-        // we do not include sequence beginning and ending delimiters.
+        
+        //do not include sequence beginning and ending delimiters
         return datasize;
     }
 
