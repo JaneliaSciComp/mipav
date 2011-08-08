@@ -176,7 +176,6 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         else {
         	//noteField.setText(DEFAULT_NOTES);
         }
-        System.out.println("aaa"); 
         JScrollPane containerPane = new JScrollPane(noteField);
         containerPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         containerPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
