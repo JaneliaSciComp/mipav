@@ -55,7 +55,6 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
         referenceTagTable = null;
         isReferenceTagTable = true;
-
         parentFileInfo = parent;
     }
 
@@ -240,9 +239,18 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         //TODO: this should not return an odd number, allow for appending      
         Iterator<FileDicomTag> tagsItr = tagTable.values().iterator();
         int datasize = 0;
-        
+        int nextLength = 0;
+        FileDicomTag nextTag;
         while(tagsItr.hasNext()) {
-            datasize += tagsItr.next().getLength();
+        	nextTag = tagsItr.next();
+        	nextLength = nextTag.getLength();
+        	if(nextLength%2 != 0) {
+        		Preferences.debug("Appending length within sequence tag", Preferences.DEBUG_FILEIO);
+        		nextLength++;
+        	}
+            datasize += nextLength;
+            Preferences.debug("Tag "+nextTag.getKey()+" inside SQ has length "+nextLength, Preferences.DEBUG_FILEIO);
+            datasize += 8; //include size of header information for tag, assuming explicit VR
         }
 
         return datasize;

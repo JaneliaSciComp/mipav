@@ -7,6 +7,7 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 
 /**
@@ -554,10 +555,9 @@ public class FileInfoDicom extends FileInfoBase {
      * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
      */
     public final void setInfoFromTags() {
-        //TODO: This is not used but should be
-        Iterator<FileDicomKey> itr = tagTable.getTagList().keySet().iterator();
+    	Iterator<Entry<FileDicomKey,FileDicomTag>> itr = tagTable.getTagList().entrySet().iterator();
         while(itr.hasNext()) {
-            setInfoFromTag(tagTable.get(itr.next()));
+            setInfoFromTag(itr.next().getValue());
         }
         
         if (getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {

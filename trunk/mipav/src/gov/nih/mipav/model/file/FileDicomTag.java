@@ -177,7 +177,14 @@ public class FileDicomTag extends ModelSerialCloneable {
         Object[] obj = getValueList();
         for(int i=0; i<obj.length; i++) {
             if(obj[i] != null) {
-                dataItems++;
+                if(obj[i] instanceof String) {
+                	dataItems += ((String)obj[i]).length();
+                	if(i != obj.length-1) {
+                		dataItems++; //increment for vm placeholder
+                	}
+                } else {
+                	dataItems++;
+                }
             }
         }
 

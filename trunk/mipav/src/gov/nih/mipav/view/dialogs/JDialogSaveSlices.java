@@ -560,7 +560,7 @@ public class JDialogSaveSlices extends JDialogBase {
         if(maxValue != 0) { //image is 3D or greater in dimensions
             saveEnhancedDicomCheckbox = new JCheckBox("Save as enhanced dicom");
             saveEnhancedDicomCheckbox.setFont(serif12);
-            saveEnhancedDicomCheckbox.setSelected(true);
+            saveEnhancedDicomCheckbox.setSelected(false);
             saveEnhancedDicomCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
             dicomInfoPanel.add(saveEnhancedDicomCheckbox, BorderLayout.SOUTH);
         }
