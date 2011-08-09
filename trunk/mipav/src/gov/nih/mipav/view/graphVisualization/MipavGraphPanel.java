@@ -108,6 +108,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		m_kImageFrame = kImageFrame;
 		this.ownerDialog = ownerDialog;
 		setNodeRenderer(new MipavNodeRenderer());
+		setEdgeRenderer(new MipavEdgeRenderer());
 		getEdgeRenderer().setLabelVisible(true);
 		setSmallLogo(null);
 		setLogo(null);
