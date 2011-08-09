@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.utilities;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoImageXML;
@@ -24,7 +25,7 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmBase {
 	
 	
 	/**
-	 * comstructor
+	 * constructor
 	 * @param images
 	 * @param destImage
 	 */
@@ -92,28 +93,101 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmBase {
 	        FileInfoDicom[] fileInfoDicom = null;
 	        
 
-	        if (isFileInfoDicom) {
-	            fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2] * destImage.getExtents()[3]];
-	            
-	            counter = 0;
-		        for(int i=0;i<images.length;i++) {
-		        	ModelImage img = images[i];
-		        	for(int k=0;k<img.getExtents()[2];k++) {
-		        		fileInfoDicom[counter] = (FileInfoDicom) (((FileInfoDicom) img.getFileInfo()[k]).clone());
-		        		fileInfoDicom[counter].setResolutions(resols);
-		                fileInfoDicom[counter].setOrigin(origins);
-		        		
-		        		
-		        		counter++;
-		        	}
-		        }
+	        
 
-	            destImage.setFileInfo(fileInfoDicom);
+	        if (isFileInfoDicom) {
+
+
+
+
+	        fileInfo = images[1].getFileInfo();
+	            
+            FileInfoBase destFileInfo[] = null;
+            int numInfos = destImage.getExtents()[3]*destImage.getExtents()[2];
+            FileInfoDicom oldDicomInfo = null;
+            FileDicomTagTable[] childTagTables = null;
+            int j;
+
+            destFileInfo = new FileInfoBase[numInfos];
+            oldDicomInfo = (FileInfoDicom) images[1].getFileInfo(0);
+            childTagTables = new FileDicomTagTable[numInfos - 1];
+            int sliceCounter = 0; //Keeps track of every slice to populate tag
+            double sliceResolution = 1.0;
+
+           // Most efficient way of creating DICOM tags for 4-D. Uses parentTagTables based on srcimage dicom tags    
+           for (int t = 0; t < destImage.getExtents()[3]; t++) {
+               for (int z = 0; z <destImage.getExtents()[2] ; z++) {
+                   j = (t*destImage.getExtents()[2]) + z;
+                   if (j == 0) {
+                       // create a new reference file info
+                       destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                       oldDicomInfo.getFileFormat());
+                       ((FileInfoDicom)destFileInfo[0]).vr_type = oldDicomInfo.vr_type;    
+                   }
+                   else {
+
+                       // all other slices are children of the first file info..
+                       destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                       oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[0]);
+                       
+                       ((FileInfoDicom)destFileInfo[j]).vr_type = oldDicomInfo.vr_type;
+                       childTagTables[j - 1] = ((FileInfoDicom) destFileInfo[j]).getTagTable();
+                   }
+                    
+                    FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[t]).getTagTable();
+                    if (newTagTable.getValue("0018,0088") != null) {
+                        String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
+                        sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                    }
+
+                              
+                    fireProgressStateChanged(((100 * t))/(destImage.getExtents()[3]-1));
+                        resols[0] = images[1].getFileInfo(0).getResolutions()[0];
+                        resols[1] = images[1].getFileInfo(0).getResolutions()[1];
+                        resols[2] = 1.0f;
+                        resols[3] = 1.0f;
+                        //resols[4] = 1;
+                        destFileInfo[sliceCounter].setResolutions(resols);
+                        destFileInfo[sliceCounter].setExtents(destImage.getExtents());
+                        ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
+                        ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows                 
+                        ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
+                                                                 Short.toString((short) (t + 1)).length()); // instance number
+                        ((FileInfoDicom) destFileInfo[t]).getTagTable().importTags((FileInfoDicom) fileInfo[t]);
+                        ((FileInfoDicom) destFileInfo[t]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                         
+                         sliceCounter++;  
+                }
+               
+           }
+           
+            ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+            destImage.setFileInfo(destFileInfo);
+            
+            /*Old algorithm to get all dicom tags for each slice
+             * fileInfoDicom = new FileInfoDicom[destImage.getExtents()[2] * destImage.getExtents()[3]];
+            
+            counter = 0;
+            for(int i=0;i<images.length;i++) {
+                ModelImage img = images[i];
+                for(int k=0;k<img.getExtents()[2];k++) {
+                    fileInfoDicom[counter] = (FileInfoDicom) (((FileInfoDicom) img.getFileInfo()[k]).clone());
+                    fileInfoDicom[counter].setResolutions(resols);
+                    fileInfoDicom[counter].setOrigin(origins);
+                    
+                    
+                    counter++;
+                }
+            }
+
+            destImage.setFileInfo(fileInfoDicom);*/
+        
 
 	        } else {
 	            fileInfo = destImage.getFileInfo();
 
 	            for (int i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])); i++) {
+	                fireProgressStateChanged((100 * i)/(destImage.getExtents()[3]));
 	                fileInfo[i].setModality(images[0].getFileInfo()[0].getModality());
 	                fileInfo[i].setFileDirectory(images[0].getFileInfo()[0].getFileDirectory());
 	                fileInfo[i].setEndianess(images[0].getFileInfo()[0].getEndianess());
