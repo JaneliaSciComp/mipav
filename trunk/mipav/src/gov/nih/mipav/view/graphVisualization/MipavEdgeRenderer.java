@@ -60,7 +60,7 @@ public class MipavEdgeRenderer extends DefaultEdgeRenderer {
 					c1 = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 255);
 					getLineRenderer().setColor(c1);
 				}else {
-					c1 = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 180);
+					c1 = new Color(colour.getRed(), colour.getGreen(), colour.getBlue(), 120);
 					getLineRenderer().setColor(c1);
 				}
 				

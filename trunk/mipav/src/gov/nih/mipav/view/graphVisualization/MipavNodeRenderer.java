@@ -85,7 +85,9 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
 				
 				
 				if(kNotes != null && !(kNotes.trim().equals(""))) {
+
 					c.setToolTipText(kNotes);
+			
 				}else {
 					c.setToolTipText(null);
 				}
@@ -164,13 +166,7 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
         
         
         
-        
-        
-        
-        
-        
-        
-        
+  
         
     }
 }
