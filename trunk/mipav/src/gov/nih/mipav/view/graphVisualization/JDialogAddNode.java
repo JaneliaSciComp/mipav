@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.graphVisualization;
 
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.graphVisualization.MipavGraphPanel.PropertiesDialog;
+
 import hypergraph.graphApi.Node;
 
 import java.awt.BorderLayout;
@@ -42,6 +44,8 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
     private String notes;
     /** When true the dialog creates a new node, otherwise it is used to edit the Notes. */
     private boolean addNode;
+    
+  
     
     
     private Node pickedNode;
@@ -105,7 +109,12 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         	parent.repaint();
         	windowClosing(null);
         } else if (command.equals("Cancel")) {
-            windowClosing(null);
+        	if(parent.getPropertiesDialog() != null) {
+        		parent.getPropertiesDialog() .dispose();
+        	
+			
+			}
+         
         }
     }
 	

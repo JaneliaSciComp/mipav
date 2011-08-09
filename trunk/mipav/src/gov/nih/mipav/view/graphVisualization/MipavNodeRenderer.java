@@ -47,9 +47,9 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
 			// reading some attributes for the node
 			Graph graph = ((GraphPanel) c).getGraph();
 			AttributeManager attrMgr = graph.getAttributeManager();
-			Color textColour = (Color) attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, node);
-			if (textColour != null)
-				getTextRenderer().setColor(textColour);
+			//Color textColour = (Color) attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, node);
+			//if (textColour != null)
+				//getTextRenderer().setColor(textColour);
 			Color fillColour = (Color) attrMgr.getAttribute(GraphPanel.NODE_BACKGROUND, node);
 			getTextRenderer().setBackground(fillColour);
 			setBackground(fillColour);
@@ -75,14 +75,48 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
  					Color back = c.getBackground();
  					setBackground(new Color(back.getRed(), back.getGreen(), back.getBlue(), 224));
  				}*/
- 				setBackground(Color.white);
- 				getTextRenderer().setColor(Color.blue);
+ 				//setBackground(Color.white);
+ 				//getTextRenderer().setColor(Color.blue);
 				setFont(getFont().deriveFont(Font.BOLD));
 				
 				c.setCursor(new Cursor(Cursor.HAND_CURSOR));
 				
+				String kNotes = (String)attrMgr.getAttribute( "ANNOTATION", node );	
+				
+				
+				if(kNotes != null && !(kNotes.trim().equals(""))) {
+					c.setToolTipText(kNotes);
+				}else {
+					c.setToolTipText(null);
+				}
+				
+				
+				
+				Color textColour = (Color) attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, node);
+				if (textColour != null) {
+
+					Color hoverColour = new Color(textColour.getRed(), textColour.getGreen() , textColour.getBlue(), 255);
+					getTextRenderer().setColor(hoverColour);
+					
+
+				}
+				
+				
+				
  			}else {
  				c.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+ 				
+ 				Color cl = (Color) attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, node);
+ 				Color textColour = new Color(cl.getRed(), cl.getGreen(), cl.getBlue(), 180);
+ 			
+				if (textColour != null) {
+					
+					getTextRenderer().setColor(textColour);
+				}
+				
+				c.setToolTipText(null);
+				
+				
  			}
 		}
         
