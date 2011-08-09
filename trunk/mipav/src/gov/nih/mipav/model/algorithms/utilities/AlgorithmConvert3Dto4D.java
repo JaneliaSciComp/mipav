@@ -161,6 +161,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
         fileInfo = srcImage.getFileInfo();
         if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+         // Most efficient way of creating DICOM tags for 4-D. Uses parentTagTables based on srcimage dicom tags    
             destFileInfo = new FileInfoBase[numInfos];
             oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
             childTagTables = new FileDicomTagTable[numInfos - 1];
@@ -210,7 +211,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         } // if (srcImage.getFileInfo(0).getFileFormat() == FileUtility.DICOM)
  
         else{
-            System.err.println("hello");
+          
         for (t = 0; t < tDim; t++) {
 
 
@@ -232,7 +233,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 zStartLoc = (float) fileInfo[sliceNumSrcImg].getOrigin(2);
 
                 if ((resolUnit3 >= 2) && (resolUnit3 <= 10)) {
-                    System.err.println("xmlres");
+                    
 
                     // 3rd dimension is a length dimension
                     startLocs[2] = zStartLoc;
