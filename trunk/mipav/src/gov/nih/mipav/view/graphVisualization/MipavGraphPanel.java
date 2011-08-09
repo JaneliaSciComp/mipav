@@ -333,6 +333,13 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				attrMgr.setAttribute( AttributeManager.GRAPH_ROOT, next, pickedNode );
 			}
 		}
+		if ( command.equalsIgnoreCase("cancel")) {
+			if(propertiesDialog != null) {
+					propertiesDialog.dispose();
+					propertiesDialog = null;
+				}
+			
+		}
 	}
 	
 	
@@ -740,6 +747,14 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		super.mouseMoved(e);
 	}
 	
+	
+	
+	
+	public synchronized PropertiesDialog getPropertiesDialog() {
+		return propertiesDialog;
+	}
+
+
 	@Override
 	public void mousePressed(MouseEvent e) {
 		if ( e.isControlDown() )
@@ -1243,7 +1258,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
      * @author pandyan
      * 
      */
-    private class PropertiesDialog extends JDialog implements ChangeListener{
+    public class PropertiesDialog extends JDialog implements ChangeListener{
     	
     	private JDialogHyperGraph owner;
     	
