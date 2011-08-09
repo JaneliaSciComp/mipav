@@ -9,6 +9,7 @@ import hypergraph.visualnet.GraphPanel;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 
@@ -77,24 +78,17 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
  				setBackground(Color.white);
  				getTextRenderer().setColor(Color.blue);
 				setFont(getFont().deriveFont(Font.BOLD));
+				
+				c.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				
+ 			}else {
+ 				c.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
  			}
 		}
         
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+
         
         
         
