@@ -84,6 +84,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	private JDialogAddNode addNodeDialog;
 	
+	private JDialogAction actionDialog;
+	
 	private boolean addNode = false;
 	
 	private JCheckBox treeCheckBox;
@@ -297,6 +299,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			 //pickedNode = colorNode;
 			setProperties();
 		}
+		if(command.equals("actionNode")) {
+			System.out.println("yo");
+			setProperties();
+		}
 		if (command.equalsIgnoreCase("Link nodes")) {
 			if ( (pickedNodePrev != null) && (pickedNodePrev != pickedNode) )
 			{
@@ -367,6 +373,18 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
         		pickedNode.setLabel(addNodeDialog.getNameField().getText().trim());
         	}
         }
+        
+        
+        //edit action
+        String action = actionDialog.getActionField().getText();
+        System.out.println("hey");
+        System.out.println(action);
+        if(action != null) {
+        	editAction(action.trim());
+        }
+        
+        
+        
         
         //now do node color
         if ( pickedNode != null )
@@ -528,12 +546,40 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			AttributeManager attrMgr = getGraph().getAttributeManager();
 			attrMgr.setAttribute( "ANNOTATION", pickedNode, notes );
 			
-			if(propertiesDialog != null) {
+			/*if(propertiesDialog != null) {
 				propertiesDialog.dispose();
 				propertiesDialog = null;
-			}
+			}*/
 		}
 	}
+	
+	
+	
+ 
+	/**
+	 * Modify the Annotation field of the selected node.
+	 * @param notes new annotation to add to the picked Node.
+	 */
+	public void editAction( String action )
+	{
+		
+		System.out.println("editAction");
+		if ( pickedNode != null )
+		{
+			AttributeManager attrMgr = getGraph().getAttributeManager();
+			attrMgr.setAttribute( "ACTION", pickedNode, action );
+			
+			String act = (String)attrMgr.getAttribute( "ACTION", pickedNode );
+			System.out.println("act is " + action);
+			
+			/*if(propertiesDialog != null) {
+				propertiesDialog.dispose();
+				propertiesDialog = null;
+			}*/
+		}
+	}
+	
+	
 	
 	/**
 	 * Finds the depth, or level of the target node from the Root node.
@@ -862,8 +908,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		 */
 		if ( (iClickCount >= 2) && (m_kImageFrame != null) && (kNode != null) )
 		{
+			System.out.println("nodeClicked >= 2");
+			System.out.println(getGraph().getEdges(kNode).size());
 			if ( getGraph().getEdges(kNode).size() == 1 &&  kNode.getLabel() != null )
 			{
+				System.out.println(kNode.getLabel());
 				m_kImageFrame.actionPerformed( new ActionEvent( kNode, 0, kNode.getLabel() ) );
 			}
 		}
@@ -1306,6 +1355,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			Color currentColor = (Color)attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, pickedNode);
 			addNodeDialog = new JDialogAddNode(mgp, pickedNode, kNotes, addNode, false);
 			
+			String action = (String)attrMgr.getAttribute( "ACTION", pickedNode );
+			actionDialog = new JDialogAction(mgp,pickedNode,action, false);
+			
 			nodeColorChooser = new ViewJColorChooser(null, "Pick color", mgp, mgp, false );
 			/*JPanel prevPanel = new JPanel();
 			treeCheckBox = new JCheckBox("Set nodes at same tree level to chosen color");
@@ -1337,6 +1389,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			tabbedPane.addChangeListener(this);
         	tabbedPane.addTab("Edit Name/Notes", addNodeDialog.getRootPane());
         	tabbedPane.addTab("Node Color", nodeColorDialog.getRootPane());
+        	tabbedPane.addTab("Action", actionDialog.getRootPane());
         	//tabbedPane.addTab("Tree Level Color", treeLevelColorDialog.getRootPane());
         	
              mainPanel = new JPanel(new GridBagLayout());
