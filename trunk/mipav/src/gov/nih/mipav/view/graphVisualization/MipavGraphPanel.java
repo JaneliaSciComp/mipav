@@ -286,6 +286,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		if (command.equalsIgnoreCase("Add child node")) {  
 			// Launch add node dialog:
 			//new JDialogAddNode(this, null, true);
+
 			addNode = true;
 			propertiesDialog = new PropertiesDialog(ownerDialog, this,addNode);
 		}
@@ -293,7 +294,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			deleteNode(pickedNode);
 		}
 		if (command.equals("notesNode")) {
-			 pickedNode = colorNode;
+			 //pickedNode = colorNode;
 			setProperties();
 		}
 		if (command.equalsIgnoreCase("Link nodes")) {
@@ -344,7 +345,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 	
 	
-	
+	 
 	public void setProperties() {
 		//first do the add node/edit node name/edit node notes part
 		String notes = null;
@@ -460,8 +461,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	 */
 	public void addNode( String name, String notes )
 	{
+
+
 		if ( (name != null) && (name.length() > 0) && (pickedNode != null) )
 		{
+
 			// Find the root node and the level of the pickedNode:
 			AttributeManager attrMgr = getGraph().getAttributeManager();
 			Node root = (Node)attrMgr.getAttribute( AttributeManager.GRAPH_ROOT, pickedNode );
@@ -476,7 +480,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				{
 					level = findLevel( root, pickedNode, 0 );
 				}
-			}		
+			}
+
 			// Add the new node:
 			synchronized ( getGraph() ) {
 				Graph tree = getGraph();
@@ -494,6 +499,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			}
 			pickedNode = null;
 		}
+		
+		repaint();
+
 	}
 
 	/**
@@ -1175,6 +1183,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	public void paint(Graphics g) {
+
 		if(!isBGImageShowing) {
 			super.paint(g);
 			return;
@@ -1219,6 +1228,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			}
 			for (Iterator i = getVisibleNodeIterator(); i.hasNext();) { 
 				Node node = (Node) i.next();
+		
 				if (node != getHoverElement()) {
 					ModelPoint mp = glm.getNodePosition(node);
 					getNodeRenderer().configure(this, mp, node);
