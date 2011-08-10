@@ -211,7 +211,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Hyperbola detection", "HoughHyperbola", 0, null, false),
                         menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
-                menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
+                //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
                         new JMenuItem[] {
                                 menuBuilder.makeMenu("Colocalization", false, new JMenuItem[] {

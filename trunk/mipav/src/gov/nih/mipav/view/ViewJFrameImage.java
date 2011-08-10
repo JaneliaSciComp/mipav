@@ -5091,8 +5091,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setVisible(false);
         }
 
-        final JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
-        m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
+        // removing the ITK menu items until the Java binding situation is worked out
+        //final JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
+        //m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
 
         updateImages(true);
 
