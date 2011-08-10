@@ -1107,9 +1107,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Edge detection", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("FFT", false);
-            //menuBuilder.setMenuItemEnabled("High/lowpass", false);
             menuBuilder.setMenuItemEnabled("SWI", false);
-            //menuBuilder.setMenuItemEnabled("Filters (Gabor)", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Grays -> RGB", false);
