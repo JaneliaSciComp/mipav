@@ -525,14 +525,15 @@ public class ViewMenuBar {
         }
 
         return menuBuilder.makeMenu("Image", 'I', false, new JComponent[] {
-                menuBuilder.makeMenu("Views", true, new JMenuItem[] {
+                menuBuilder.makeMenu("Viewers", true, new JMenuItem[] {   
                         menuBuilder.buildMenuItem("Animate", "Animate", 0, "movie.gif", true),
                         menuBuilder.buildMenuItem("Cine (movie)", "Cine (movie)", 0, "movie.gif", true),
                         menuBuilder.buildMenuItem("Light box", "Light box", 0, "lightbox_16x16.gif", true),
                         menuBuilder.buildMenuItem("Link to another image", "LinkFrame", 0, null, true),
                         menuBuilder.buildMenuItem("Surface plotter", "Surface plotter", 0, null, true),
                         menuBuilder.buildMenuItem("Triplanar", "Tri-planar", 0, "3plane_16x16.gif", true),
-                        menuBuilder.buildMenuItem("Volume renderers", "VolTriplanar", 0, "4plane_16x16.gif", true)}),
+                        menuBuilder.buildMenuItem("Volume renderer (J3D)", "VolTriplanar", 0, "java3d.gif", true),
+                        menuBuilder.buildMenuItem("Volume renderer (GPU)", "WMVolTriplanar", 0, "wm.gif", true)}),
                 menuBuilder.makeMenu("Attributes", true, new JMenuItem[] {
                         menuBuilder.buildMenuItem("View header", "AboutImage", 0, "header.gif", false),
                         menuBuilder.buildMenuItem("Edit attributes", "EditImageInfo", 0, "attributes.gif", false),
