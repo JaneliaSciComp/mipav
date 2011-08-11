@@ -1375,14 +1375,14 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         }
 
         if (doRotateCenter) {
-            Preferences.debug("useSACenter = " + useSACenter + "\n");
+            Preferences.debug("useSACenter = " + useSACenter + "\n", Preferences.DEBUG_SCRIPTING);
             center = resampleImage.getImageCentermm(useSACenter);
         }
 
         if ( (image.getNDims() == 2) || (do25D)) {
-            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
-            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
-            Preferences.debug("xfrm = " + xfrm);
+            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres, Preferences.DEBUG_SCRIPTING);
+            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n", Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("xfrm = " + xfrm, Preferences.DEBUG_SCRIPTING);
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, units, doVOI, doClip,
                     doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
@@ -3998,7 +3998,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } // if (userDefinedMatrix.isSelected())
         else if (storedMatrix.isSelected()) { // use image's stored matrix
             spline = null;
-            Preferences.debug("Image's stored matrix = \n" + image.getMatrix());
+            Preferences.debug("Image's stored matrix = \n" + image.getMatrix(), Preferences.DEBUG_SCRIPTING);
 
             if (image.getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
                 isSATransform = true;
@@ -4057,12 +4057,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             }
         }
 
-        if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (image.getNDims() == 3)) {
-            Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim);
-            Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
+        if (image.getNDims() == 3) {
+            Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim, Preferences.DEBUG_SCRIPTING);
+            Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres, Preferences.DEBUG_SCRIPTING);
         }
 
-        Preferences.debug(xfrm + "\n");
+        Preferences.debug(xfrm + "\n", Preferences.DEBUG_SCRIPTING);
 
          if (tabbedPane.getSelectedComponent() == resamplePanel) {
              doRotateCenter = false;
