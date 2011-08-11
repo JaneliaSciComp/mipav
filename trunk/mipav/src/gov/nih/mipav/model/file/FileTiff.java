@@ -16318,7 +16318,15 @@ public class FileTiff extends FileBase {
             writeIFD(PLANAR_CONFIG, SHORT, 1, 1, 0); // chucky format (rgb,rgb,rgb ...) baseline tiff
         }
 
-        writeIFD(RESOLUTION_UNIT, SHORT, 1, resXYUnit, 0);
+        if (resXYUnit == Unit.INCHES.getLegacyNum()) {
+            writeIFD(RESOLUTION_UNIT, SHORT, 1, 2, 0);
+        }
+        else if (resXYUnit == Unit.CENTIMETERS.getLegacyNum()) {
+        	writeIFD(RESOLUTION_UNIT, SHORT, 1, 3, 0);	
+        }
+        else {
+        	writeIFD(RESOLUTION_UNIT, SHORT, 1, 1, 0);		
+        }
 
         if ((LUT != null) && ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE)) &&
                 (image.getFileInfo(index).getPhotometric() == 3)) {
