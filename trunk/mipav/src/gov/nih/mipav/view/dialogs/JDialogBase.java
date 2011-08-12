@@ -1078,7 +1078,7 @@ public abstract class JDialogBase extends JDialog
                 // MipavUtil.displayError("There was a problem with the supplied name.\n" );
                 Preferences.debug("Illegal Argument Exception in " + "JDialogBase.buildImageComboBox(). " +
                                   "Somehow the Image list sent an incorrect name to " + "the image image hashtable. " +
-                                  "\n", 1);
+                                  "\n", Preferences.DEBUG_ALGORITHM);
                 System.out.println("Bad argument.");
             }
         }
