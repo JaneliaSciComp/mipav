@@ -31,19 +31,19 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7969114857894881595L;
 
-    /** DOCUMENT ME! */
+    /** FFT will run in inverse direction, producing spatial domain image */
     public static final int INVERSE = -1;
 
     /** DOCUMENT ME! */
     public static final int FILTER = 0;
 
-    /** DOCUMENT ME! */
+    /** FFT will run in forward direction, producing frequency domain image */
     public static final int FORWARD = 1;
 
-    /** DOCUMENT ME! */
+    /** A lowpass filter will be applied to the source image */
     public static final int LOWPASS = 1;
 
-    /** DOCUMENT ME! */
+    /** A highpass filter will be applied to the source image */
     public static final int HIGHPASS = 2;
 
     /** DOCUMENT ME! */
@@ -103,9 +103,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     private int displayLoc; // Flag indicating if a new image is to be generated
                             // or if the source image is to be replaced
 
-    /** DOCUMENT ME! */
+    /** Float precision default, openCL enabled FFT algorithm */
     private AlgorithmFFT FFTAlgo = null;
     
+    /** Double precision, openCL enabled FFT algroithm */
     private AlgorithmFFT2 FFTAlgo2 = null;
 
     /** DOCUMENT ME! */
@@ -117,7 +118,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     /** DOCUMENT ME! */
     private ButtonGroup filterTypeGroup;
 
-    /** DOCUMENT ME! */
+    /** User selects to indicate forward FFT processing should occur, resulting in frequency image */
     private JRadioButton forwardFFT;
 
     /** DOCUMENT ME! */
@@ -138,10 +139,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
-    /** DOCUMENT ME! */
+    /** Whether algorithm should run seperately on each slice of a 3D image */
     private boolean image25D = false;
 
-    /** DOCUMENT ME! */
+    /** User can indicate whether the FFT of each slice of a 3D image is computed seperately */
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
@@ -207,21 +208,25 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     /** DOCUMENT ME! */
     private int transformDir;
 
-    /** DOCUMENT ME! */
+    /** Whether FFT algorithm can return non-equal x,y dimensions  */
     private boolean unequalDim;
 
-    /** DOCUMENT ME! */
+    /** Indicates whether user wants FFT to return non-equal x,y dimensions */
     private JCheckBox unequalDimCheckbox;
 
     /** DOCUMENT ME! */
     private JRadioButton windowFilter;
     
+    /** Whether a complex inverse FFT should be computed */
     private boolean complexInverse;
     
+    /** Whether the inverse FFT should return a complex image (appropriate when only when source image is complex) */
     private JCheckBox complexInverseCheckbox;
     
+    /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
     
+    /** True when double precision testing should be performed, default is float. */
     private boolean testDouble = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
