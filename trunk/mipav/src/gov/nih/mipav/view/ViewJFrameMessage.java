@@ -70,8 +70,6 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
 
     /** DOCUMENT ME! */
     private JToolBar tBar;
-    
-    private static String VERSION = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -84,9 +82,8 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
         super(title);
 
         setResizable(true);
-        setVersion();
         init(title);
-        append(getVersion()+"\n",1);
+        append("MIPAV Version: " + MipavUtil.getVersion() + "\n", DEBUG);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -273,7 +270,7 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
             }
             
             if(getTabbedPane().getSelectedIndex()==1){
-            	append(getVersion()+"\n",1);
+                append("MIPAV Version: " + MipavUtil.getVersion() + "\n", DEBUG);
             }
             
         } else if (event.getActionCommand().equals("Copy")) {
@@ -647,34 +644,6 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
-
-    public static void setVersion() {
-
-    	try {
-        	URL fileURL = ViewUserInterface.class.getClassLoader().getResource("about.txt");
-        	File aboutFile = new File(fileURL.getFile());
-        	
-    		if (aboutFile.exists()){
-			Scanner find = new Scanner(aboutFile).useDelimiter("Version:\\s*\\S*\\s*\\S*\\s");
-			find.next();
-			ViewJFrameMessage.VERSION = "MIPAV "+ find.nextLine();
-    		}
-    		else{
-    			ViewJFrameMessage.VERSION="Can't locate version number.";
-    		}
-		} catch (FileNotFoundException e) {
-			ViewJFrameMessage.VERSION="Can't locate version number.";
-		}
-		catch (NullPointerException e) {
-			ViewJFrameMessage.VERSION="Can't locate version number.";
-		}
-    }
-	
-	
-
-	public static String getVersion() {
-		return VERSION;
-	}
 
 	/**
      * DOCUMENT ME!
