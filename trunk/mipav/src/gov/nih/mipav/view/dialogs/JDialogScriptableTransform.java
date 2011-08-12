@@ -1647,6 +1647,12 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 final String transformSource = scriptParameters.getParams().getString("transform_source");
                 if (transformSource.equals("file")) {
                     final String matrixFile = scriptParameters.getParams().getString("transform_file");
+                    boolean levels[] = Preferences.getDebugLevels();
+                    if (levels != null) {
+                    	for (int i = 0; i < levels.length; i++) {
+                    		System.err.println("levels[" + i + "] = " + levels[i]);
+                    	}
+                    }
                     if (matrixFile == null) {
                     	Preferences.debug("matrixFile is null\n", Preferences.DEBUG_SCRIPTING);
                     	System.err.println("matrixFile is null");
