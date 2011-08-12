@@ -1,9 +1,12 @@
 package gov.nih.mipav.model.algorithms.filters;
 
 
+import static java.lang.System.nanoTime;
 import gov.nih.mipav.util.*;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+//import gov.nih.mipav.model.algorithms.OpenCL.filters.OpenCLAlgorithmFFT;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.IOException;
@@ -120,7 +123,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
     private int[] dimLengths;
 
     /** Imaginary data. */
-    private double[] imagData;
+    private float[] imagData;
 
     /** If true process each slice one at a time in 3D image. */
     private boolean image25D;
@@ -129,7 +132,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
     private final boolean logMagDisplay;
 
     /** DOCUMENT ME! */
-    private double minimum, maximum;
+    private float minimum, maximum;
 
     /** Number of dimensions. */
     private int ndim; //
@@ -144,7 +147,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
     private int[] originalDimLengths;
 
     /** Real data. */
-    private double[] realData;
+    private float[] realData;
 
     /** Transform direction. */
     private final int transformDir;
@@ -157,7 +160,9 @@ public class AlgorithmFFT2 extends AlgorithmBase {
     /** True if zero padding actually performed. */
     private boolean zeroPad;
 
-    private double[] finalData;
+    private float[] finalData;
+    
+    private boolean useOCL = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -175,7 +180,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         this.transformDir = transformDir;
         this.logMagDisplay = logMagDisplay;
 
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
             this.unequalDim = unequalDim;
             if (destImage == null) {
                 srcImage.setUnequalDim(unequalDim);
@@ -185,7 +190,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                 destImage.setImage25D(image25D);
             }
             this.image25D = image25D;
-        } else if (transformDir == AlgorithmFFT.INVERSE) {
+        } else if (transformDir == AlgorithmFFT2.INVERSE) {
             this.unequalDim = srcImage.getUnequalDim();
             this.image25D = srcImage.getImage25D();
             this.complexInverse = complexInverse;
@@ -209,7 +214,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
      * 
      * @return the reference the the imaginary datat array
      */
-    public double[] getImaginaryData() {
+    public float[] getImaginaryData() {
         return imagData;
     }
 
@@ -218,7 +223,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
      * 
      * @return the reference the the real datat array
      */
-    public double[] getRealData() {
+    public float[] getRealData() {
         return realData;
     }
 
@@ -226,15 +231,26 @@ public class AlgorithmFFT2 extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        final long startTime = System.currentTimeMillis();
 
         if (srcImage == null) {
             displayError("Source Image is null");
             return;
         }
-        beforeExecute();
-        execute();
-        afterExecute();
+
+        final long startTime = System.currentTimeMillis();
+        if ( useOCL )
+        {
+        	OpenCLAlgorithmFFT oclFFT = 
+        		new OpenCLAlgorithmFFT( destImage, srcImage, transformDir, logMagDisplay, unequalDim, image25D, complexInverse );
+        	oclFFT.run();
+        	setCompleted(false);
+        }
+        else
+        {
+        	beforeExecute();
+        	execute();
+        	afterExecute();
+        }
         System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
@@ -254,7 +270,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         int newSliceSize = 1;
         int originalVolumeSize;
         int newVolumeSize;
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
             direction = 1;
         } else {
             direction = -1;
@@ -269,14 +285,14 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         final int xdim = newDimLengths[0];
         final int ydim = newDimLengths[1];
         final int zdim = (newDimLengths.length == 3) ? newDimLengths[2] : 1;
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
             fireProgressStateChanged( -1, null, "Centering data before FFT algorithm ...");
             center(realData, imagData);
         }
 
         fireProgressStateChanged( -1, null, "Running FFT algorithm ...");
 
-        System.out.println("Number of Threads: " + nthreads);
+        //System.out.println("Number of Threads: " + nthreads);
         if (threadStopped) {
             return;
         }
@@ -290,7 +306,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         }
 
         final CountDownLatch doneSignalX = new CountDownLatch(nthreads);
-        AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_YZ);
+        AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT2.SLICE_YZ);
         for (i = 0; i < nthreads; i++) {
         	final int nslices;
         	if (zdim < nthreads) {
@@ -327,7 +343,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         }
 
         final CountDownLatch doneSignalY = new CountDownLatch(nthreads);
-        AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_ZX);
+        AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT2.SLICE_ZX);
         for (i = 0; i < nthreads; i++) {
             final int nslices = ydim / nthreads;
             final int start = i * nslices;
@@ -352,7 +368,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 
         if (dimNumber == 3) {
             final CountDownLatch doneSignalZ = new CountDownLatch(nthreads);
-            AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT.SLICE_XY);
+            AlgorithmFFT2.swapSlices(realData, imagData, xdim, ydim, zdim, AlgorithmFFT2.SLICE_XY);
             for (i = 0; i < nthreads; i++) {
                 final int nslices = ydim / nthreads;
                 final int start = i * nslices * xdim;
@@ -376,14 +392,14 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             return;
         }
 
-        if (transformDir == AlgorithmFFT.INVERSE) {
+        if (transformDir == AlgorithmFFT2.INVERSE) {
             fireProgressStateChanged( -1, null, "Centering data after inverse FFT ...");
 
             center(realData, imagData);
         }
 
         
-        if (transformDir == AlgorithmFFT.INVERSE) {
+        if (transformDir == AlgorithmFFT2.INVERSE) {
         	if (ndim >= 2) {
         		newSliceSize = newDimLengths[0]*newDimLengths[1];
         	}
@@ -400,7 +416,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
-	            finalData = new double[2 * AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            finalData = new float[2 * AlgorithmBase.calculateImageSize(originalDimLengths)];
 	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
 	                if (ndim == 1) {
 	                    for (i = 0; i < originalDimLengths[0]; i++) {
@@ -466,7 +482,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
-	            finalData = new double[AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            finalData = new float[AlgorithmBase.calculateImageSize(originalDimLengths)];
 	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
 	                if (ndim == 1) {
 	                    System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
@@ -485,12 +501,12 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 	                System.arraycopy(realData, 0, finalData, 0, newLength);
 		        }
         	} // else !complexInverse
-        } // if (transformDir == AlgorithmFFT.INVERSE)
+        } // if (transformDir == AlgorithmFFT2.INVERSE)
 
 
     } // end of exec()
 
-    private void center(final double[] rdata, final double[] idata) {
+    private void center(final float[] rdata, final float[] idata) {
         final int xdim = newDimLengths[0];
         final int ydim = newDimLengths[1];
         if (ndim == 2) {
@@ -546,7 +562,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
      * @param endDist the end distance between two adjacent pixels from the FFT algorithm
      * @param length the length for each slice.
      */
-    private void doFFT(final double[] rdata, final double[] idata, final int start, final int end, final int startDist,
+    private void doFFT(final float[] rdata, final float[] idata, final int start, final int end, final int startDist,
             final int endDist, final int length, final int direction) {
         if (threadStopped) {
             return;
@@ -566,10 +582,10 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                             return;
                         }
                         final int k = p + l;
-                        final double tempReal = rdata[k];
-                        final double tempImag = idata[k];
-                        final double imag = ( (tempImag * wtReal) - (tempReal * wtImag));
-                        final double real = ( (tempReal * wtReal) + (tempImag * wtImag));
+                        final float tempReal = rdata[k];
+                        final float tempImag = idata[k];
+                        final float imag = (float) ( (tempImag * wtReal) - (tempReal * wtImag));
+                        final float real = (float) ( (tempReal * wtReal) + (tempImag * wtImag));
                         rdata[k] = rdata[p] - real;
                         idata[k] = idata[p] - imag;
                         rdata[p] = rdata[p] + real;
@@ -586,7 +602,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
      * Make the dimension be the power of two, and zero pad them.
      */
     public void beforeExecute() {
-        double[] tempData;
+        float[] tempData;
 
         ndim = srcImage.getNDims();
         dimLengths = srcImage.getExtents();
@@ -641,11 +657,11 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         }
 
         try {
-            realData = new double[arrayLength];
-            imagData = new double[arrayLength];
+            realData = new float[arrayLength];
+            imagData = new float[arrayLength];
         } catch (final OutOfMemoryError e) {
             realData = null;
-            displayError("AlgorithmFFT: Out of memory creating realData");
+            displayError("AlgorithmFFT2: Out of memory creating realData");
 
             setCompleted(false);
 
@@ -661,10 +677,10 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                 // fill it with zeros.
                 Arrays.fill(imagData, 0.0f);
             } else {
-                srcImage.exportDComplexData(0, arrayLength, realData, imagData);
+                srcImage.exportComplexData(0, arrayLength, realData, imagData);
             }
         } catch (final IOException error) {
-            displayError("AlgorithmFFT: Source image is locked");
+            displayError("AlgorithmFFT2: Source image is locked");
 
             setCompleted(false);
 
@@ -672,14 +688,14 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         } catch (final OutOfMemoryError e) {
             realData = null;
             imagData = null;
-            displayError("AlgorithmFFT: Out of memory");
+            displayError("AlgorithmFFT2: Out of memory");
 
             setCompleted(false);
 
             return;
         }
 
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
             maximum = MipavMath.max(realData);
             minimum = MipavMath.min(realData);
         }
@@ -690,11 +706,11 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             fireProgressStateChanged( -1, null, "Zero padding source data ...");
 
             try {
-                tempData = new double[newArrayLength];
+                tempData = new float[newArrayLength];
             } catch (final OutOfMemoryError e) {
                 tempData = null;
                 System.gc();
-                displayError("AlgorithmFFT: Out of memory creating tempData for zero padding");
+                displayError("AlgorithmFFT2: Out of memory creating tempData for zero padding");
 
                 setCompleted(false);
 
@@ -716,10 +732,10 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             realData = tempData;
 
             try {
-                tempData = new double[newArrayLength];
+                tempData = new float[newArrayLength];
             } catch (final OutOfMemoryError e) {
                 tempData = null;
-                displayError("AlgorithmFFT: Out of memory creating imagData in zero padding routine");
+                displayError("AlgorithmFFT2: Out of memory creating imagData in zero padding routine");
 
                 setCompleted(false);
 
@@ -761,7 +777,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         final double TWO_PI = 2 * java.lang.Math.PI;
         double wt1Imag, wt1Real;
         double angle, delta;
-        double imag, real, fTemp, fReal, fImag;
+        float imag, real, fTemp, fReal, fImag;
         int i, j, k, m, index1, index2, index3;
         int j1, j2, j3;
         int k1, k1Double;
@@ -774,7 +790,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         int originalVolumeSize;
         int newVolumeSize;
 
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
             direction = 1;
         } else {
             direction = -1;
@@ -787,7 +803,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         }
         newLength = newArrayLength;
 
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
 
             if ( !image25D) {
                 fireProgressStateChanged( -1, null, "Centering data after FFT algorithm ...");
@@ -845,8 +861,8 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                             index = index3 + k1;
                             fReal = realData[index];
                             fImag = imagData[index];
-                            imag = ( (fImag * wt1Real) - (fReal * wt1Imag));
-                            real = ( (fReal * wt1Real) + (fImag * wt1Imag));
+                            imag = (float) ( (fImag * wt1Real) - (fReal * wt1Imag));
+                            real = (float) ( (fReal * wt1Real) + (fImag * wt1Imag));
                             imagData[index] = imagData[index3] - imag;
                             realData[index] = realData[index3] - real;
                             imagData[index3] = imagData[index3] + imag;
@@ -865,7 +881,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             return;
         }
 
-        if (transformDir == AlgorithmFFT.INVERSE) {
+        if (transformDir == AlgorithmFFT2.INVERSE) {
 
             if ( !image25D) {
                 fireProgressStateChanged( -1, null, "Centering data before inverse FFT ...");
@@ -874,7 +890,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             center(realData, imagData);
         }
 
-        if (transformDir == AlgorithmFFT.INVERSE) {
+        if (transformDir == AlgorithmFFT2.INVERSE) {
         	if (ndim >= 2) {
         		newSliceSize = newDimLengths[0]*newDimLengths[1];
         	}
@@ -891,7 +907,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
-	            finalData = new double[2 * AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            finalData = new float[2 * AlgorithmBase.calculateImageSize(originalDimLengths)];
 	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
 	                if (ndim == 1) {
 	                    for (i = 0; i < originalDimLengths[0]; i++) {
@@ -957,7 +973,7 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 	            }
 	
 	            originalDimLengths = srcImage.getOriginalExtents();
-	            finalData = new double[AlgorithmBase.calculateImageSize(originalDimLengths)];
+	            finalData = new float[AlgorithmBase.calculateImageSize(originalDimLengths)];
 	            if ( !hasSameDimension(newDimLengths, originalDimLengths)) {
 	                if (ndim == 1) {
 	                    System.arraycopy(realData, 0, finalData, 0, originalDimLengths[0]);
@@ -976,30 +992,30 @@ public class AlgorithmFFT2 extends AlgorithmBase {
 	                System.arraycopy(realData, 0, finalData, 0, newLength);
 		        }
         	} // else !complexInverse
-        } // if (transformDir == AlgorithmFFT.INVERSE)
+        } // if (transformDir == AlgorithmFFT2.INVERSE)
 
     }
 
     public void afterExecute() {
         fireProgressStateChanged( -1, null, "Storing FFT in source image ...");
 
-        if (transformDir == AlgorithmFFT.FORWARD) {
+        if (transformDir == AlgorithmFFT2.FORWARD) {
 
             // In the frequency domain so complex data is needed
             try {
                 if (destImage == null) {
-                    srcImage.reallocate(ModelStorageBase.DCOMPLEX, newDimLengths);
+                    srcImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
                 } else {
-                    destImage.reallocate(ModelStorageBase.DCOMPLEX, newDimLengths);
+                    destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
                 }
             } catch (final IOException error) {
-                displayError("AlgorithmFFT: IOException on srcImage.reallocate");
+                displayError("AlgorithmFFT2: IOException on srcImage.reallocate");
 
                 setCompleted(false);
 
                 return;
             } catch (final OutOfMemoryError e) {
-                displayError("AlgorithmFFT: Out of memory on srcImage.reallocate");
+                displayError("AlgorithmFFT2: Out of memory on srcImage.reallocate");
 
                 setCompleted(false);
 
@@ -1012,19 +1028,19 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                 // if logMagDisplay is false or the log10(1 + magnitude) if logMagDisplay
                 // is true
                 if (destImage == null) {
-                    srcImage.importDComplexData(0, realData, imagData, true, logMagDisplay);
+                    srcImage.importComplexData(0, realData, imagData, true, logMagDisplay);
                 } else {
-                    destImage.importDComplexData(0, realData, imagData, true, logMagDisplay);
+                    destImage.importComplexData(0, realData, imagData, true, logMagDisplay);
                 }
             } catch (final IOException error) {
-                displayError("AlgorithmFFT: IOException on source image import complex data");
+                displayError("AlgorithmFFT2: IOException on source image import complex data");
 
                 setCompleted(false);
 
                 return;
             } catch (final OutOfMemoryError e) {
                 System.gc();
-                displayError("AlgorithmFFT: Out of memory on source image import complex data");
+                displayError("AlgorithmFFT2: Out of memory on source image import complex data");
 
                 setCompleted(false);
 
@@ -1032,42 +1048,42 @@ public class AlgorithmFFT2 extends AlgorithmBase {
             }
             if (destImage == null) {
                 srcImage.setOriginalExtents(dimLengths);
-                srcImage.setOriginalMinimum((float)minimum);
-                srcImage.setOriginalMaximum((float)maximum);
+                srcImage.setOriginalMinimum(minimum);
+                srcImage.setOriginalMaximum(maximum);
             } else {
                 destImage.setOriginalExtents(dimLengths);
-                destImage.setOriginalMinimum((float)minimum);
-                destImage.setOriginalMaximum((float)maximum);
+                destImage.setOriginalMinimum(minimum);
+                destImage.setOriginalMaximum(maximum);
             }
-        } else if (transformDir == AlgorithmFFT.INVERSE) {
+        } else if (transformDir == AlgorithmFFT2.INVERSE) {
             fireProgressStateChanged( -1, null, "Storing inverse FFT in source image ...");
 
             // back in the spatial domain so only realData is now present
             try {
                 if (destImage == null) {
                 	if (complexInverse) {
-                		srcImage.reallocate(ModelStorageBase.DCOMPLEX, originalDimLengths);
+                		srcImage.reallocate(ModelStorageBase.COMPLEX, originalDimLengths);
                 	}
                 	else {
-                        srcImage.reallocate(ModelStorageBase.DOUBLE, originalDimLengths);
+                        srcImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
                 	}
                 } else {
                 	if (complexInverse) {
-                		destImage.reallocate(ModelStorageBase.DCOMPLEX, originalDimLengths);
+                		destImage.reallocate(ModelStorageBase.COMPLEX, originalDimLengths);
                 	}
                 	else {
-                        destImage.reallocate(ModelStorageBase.DOUBLE, originalDimLengths);
+                        destImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
                 	}
                 }
             } catch (final IOException error) {
-                displayError("AlgorithmFFT: IOException on srcImage.reallocate");
+                displayError("AlgorithmFFT2: IOException on srcImage.reallocate");
 
                 setCompleted(false);
 
                 return;
             } catch (final OutOfMemoryError e) {
                 System.gc();
-                displayError("AlgorithmFFT: Out of memory on srcImage.reallocate");
+                displayError("AlgorithmFFT2: Out of memory on srcImage.reallocate");
 
                 setCompleted(false);
 
@@ -1081,13 +1097,13 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                     destImage.importData(0, finalData, true);
                 }
             } catch (final IOException error) {
-                displayError("AlgorithmFFT: IOException on source image import data");
+                displayError("AlgorithmFFT2: IOException on source image import data");
 
                 setCompleted(false);
 
                 return;
             } catch (final OutOfMemoryError e) {
-                displayError("AlgorithmFFT: Out of memory on source image import data");
+                displayError("AlgorithmFFT2: Out of memory on source image import data");
 
                 setCompleted(false);
 
@@ -1139,6 +1155,15 @@ public class AlgorithmFFT2 extends AlgorithmBase {
         }
         return indices;
     }
+    
+    /**
+     * Turns on/off using OpenCL to compute the FFT.
+     * @param on
+     */
+    public void useOCL( boolean on )
+    {
+    	useOCL = on;
+    }
 
     /**
      * Swap slices in order to apply FFT algorithm.
@@ -1150,14 +1175,14 @@ public class AlgorithmFFT2 extends AlgorithmBase {
      * @param zdim
      * @param plane
      */
-    public static void swapSlices(final double[] rdata, final double[] idata, final int xdim, final int ydim,
+    public static void swapSlices(final float[] rdata, final float[] idata, final int xdim, final int ydim,
             final int zdim, final int plane) {
         int[] indices = null;
         final int sliceLength = xdim * ydim;
 
-        if (plane == AlgorithmFFT.SLICE_XY) {
-            indices = AlgorithmFFT.generateFFTIndices(zdim);
-            double rtemp, itemp;
+        if (plane == AlgorithmFFT2.SLICE_XY) {
+            indices = AlgorithmFFT2.generateFFTIndices(zdim);
+            float rtemp, itemp;
             for (int i = 0; i < indices.length; i++) {
                 if (indices[i] < 0 || indices[indices[i]] == indices[i]) {
                     continue;
@@ -1173,9 +1198,9 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                 indices[indices[i]] = -1;
                 indices[i] = -1;
             }
-        } else if (plane == AlgorithmFFT.SLICE_YZ) {
-            indices = AlgorithmFFT.generateFFTIndices(xdim);
-            double rtemp, itemp;
+        } else if (plane == AlgorithmFFT2.SLICE_YZ) {
+            indices = AlgorithmFFT2.generateFFTIndices(xdim);
+            float rtemp, itemp;
             final int step = xdim;
             for (int i = 0; i < indices.length; i++) {
                 if (indices[i] < 0 || indices[indices[i]] == indices[i]) {
@@ -1197,9 +1222,9 @@ public class AlgorithmFFT2 extends AlgorithmBase {
                     index2 += step;
                 }
             }
-        } else if (plane == AlgorithmFFT.SLICE_ZX) {
-            indices = AlgorithmFFT.generateFFTIndices(ydim);
-            double rtemp, itemp;
+        } else if (plane == AlgorithmFFT2.SLICE_ZX) {
+            indices = AlgorithmFFT2.generateFFTIndices(ydim);
+            float rtemp, itemp;
             for (int i = 0; i < indices.length; i++) {
                 if (indices[i] < 0 || indices[indices[i]] == indices[i]) {
                     continue;
