@@ -1649,12 +1649,15 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                     final String matrixFile = scriptParameters.getParams().getString("transform_file");
                     if (matrixFile == null) {
                     	Preferences.debug("matrixFile is null\n", Preferences.DEBUG_SCRIPTING);
+                    	System.err.println("matrixFile is null");
                     }
                     if (matrixFile != null) {
                         Preferences.debug("matrixFile.length() = " + matrixFile.length() + "\n",
                     		    Preferences.DEBUG_SCRIPTING);
+                        System.err.println("matrixFile.length() = " + matrixFile.length());
                         if (matrixFile.length() != 0) {
                             Preferences.debug("matrixFile = " + matrixFile + "\n", Preferences.DEBUG_SCRIPTING);
+                            System.err.println("matrixFile = " + matrixFile);
                         }
                     }
                     readTransformMatrixFile(matrixFile);
