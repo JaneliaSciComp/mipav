@@ -1647,24 +1647,63 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 final String transformSource = scriptParameters.getParams().getString("transform_source");
                 if (transformSource.equals("file")) {
                     final String matrixFile = scriptParameters.getParams().getString("transform_file");
+                    String dataString = "";
+                    File file = new File("debugme.txt");
+                    RandomAccessFile raFile = null;
+                    try {
+                        raFile = new RandomAccessFile(file, "rw");
+                    }
+                    catch (IOException e) {
+                        System.err.println("Error creating RandomAccessFile");	
+                    }
+                    if (raFile != null) {
+                    	try {
+                            raFile.setLength(0);
+                    	}
+                    	catch (IOException e) {
+                    		System.err.println("Error on raFile.setLength(0)");
+                    	}
+                    }
                     boolean levels[] = Preferences.getDebugLevels();
+                    if (levels == null) {
+                    	System.out.println("levels is null");
+                    	dataString += "levels is null\n";
+                    }
                     if (levels != null) {
                     	for (int i = 0; i < levels.length; i++) {
-                    		System.err.println("levels[" + i + "] = " + levels[i]);
+                    		System.out.println("levels[" + i + "] = " + levels[i]);
+                    		dataString += "levels[" + i + "] = " + levels[i] + "\n";
                     	}
                     }
                     if (matrixFile == null) {
                     	Preferences.debug("matrixFile is null\n", Preferences.DEBUG_SCRIPTING);
-                    	System.err.println("matrixFile is null");
+                    	System.out.println("matrixFile is null");
+                    	dataString += "matrixFile is null\n";
                     }
                     if (matrixFile != null) {
                         Preferences.debug("matrixFile.length() = " + matrixFile.length() + "\n",
                     		    Preferences.DEBUG_SCRIPTING);
-                        System.err.println("matrixFile.length() = " + matrixFile.length());
+                        System.out.println("matrixFile.length() = " + matrixFile.length());
+                        dataString += "matrixFile.length() = " + matrixFile.length() + "\n";
                         if (matrixFile.length() != 0) {
                             Preferences.debug("matrixFile = " + matrixFile + "\n", Preferences.DEBUG_SCRIPTING);
-                            System.err.println("matrixFile = " + matrixFile);
+                            System.out.println("matrixFile = " + matrixFile);
+                            dataString += "matrixFile = " + matrixFile + "\n";
                         }
+                    }
+                    if (raFile != null) {
+                    	try {
+                    	    raFile.write(dataString.getBytes());
+                    	}
+                    	catch (IOException e) {
+                    		System.err.println("Error on raFile.write");
+                    	}
+                    	try {
+                    	    raFile.close();
+                    	}
+                    	catch (IOException e) {
+                    		System.err.println("Error on raFile.close()");
+                    	}
                     }
                     readTransformMatrixFile(matrixFile);
                     transMat.MakeIdentity();
