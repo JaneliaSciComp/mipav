@@ -395,6 +395,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         double E1[];
         double E2;
         double wpTwj;
+        Matrix matW;
+        Matrix matWWT;
+        double WWT[][];
+        double wslast[][];
 
         if (haveColor) {
 
@@ -830,7 +834,159 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 	        } // for (p = 0; p < icNumber; p++)
         } // if (orthogonalization == DEFLATIONARY)
         else { // orthogonalization == SYMMETRIC
-        	
+        	for (p = 0; p < icNumber; p++) {
+	        	// Choose an initial value of unit norm for w[p], e.g., randomly
+	        	sumSquares = 0.0;
+	        	for (i = 0; i < nPlanes; i++) {
+	        		w[p][i] = randomGen.genUniformRandomNum(-1.0, 1.0);
+	        		sumSquares += w[p][i]*w[p][i];
+	        	}
+	        	norm = Math.sqrt(sumSquares);
+	        	for (i = 0; i < nPlanes; i++) {
+	        		w[p][i] = w[p][i]/norm;
+	        	}
+        	} // for (p = 0; p < icNumber; p++)
+        	matW = new Matrix(w);
+        	matWWT = matW.times(matW.transpose());
+        	WWT = matWWT.getArray();
+        	try {
+                eigenvalue = new double[icNumber];
+                D = new double[icNumber][icNumber];
+                V = new double[icNumber][icNumber];
+                e1 = new double[icNumber];
+            } catch (OutOfMemoryError e) {
+                System.gc();
+                displayError("Algorithm Independent component: Out of memory allocating eig");
+                setCompleted(false);
+                setThreadStopped(true);
+                return;
+            }
+            // WWT = V * (diagonal eigenvalues) * V'
+            // In EigevalueDecomposition the columns of V represent the eigenvectors
+            // WWT**(-1/2) = v * 1/sqrt(diagonal eigenvalues) * V'
+            Eigenvalue.decompose( WWT, V, eigenvalue, e1 );
+            for (i = 0; i < covar.length; i++) {
+            	D[i][i] = 1.0/Math.sqrt(eigenvalue[i]);
+            }
+            matV = new Matrix(V);
+            matD = new Matrix(D);
+            matWh = (matV.times(matD)).times(matV.transpose());  
+            matW = matWh.times(matW);
+            w = matW.getArray();
+            wMaxDiff = 1.0;
+            wslast = new double[icNumber][nPlanes];
+            for (p = 0 ; p < icNumber; p++) {
+            	for (i = 0; i < nPlanes; i++) {
+            		wslast[p][i] = w[p][i];
+            	}
+            }
+        	while (wMaxDiff >= epsilon) {
+        		for (p = 0; p < icNumber; p++) {
+        			for (i = 0; i < nPlanes; i++) {
+	        	    	E1[i] = 0.0;
+	        	    }
+	        	    E2 = 0.0;
+		        	// g1(y) = tanh(a1*y) where 1 <= a1 <= 2, often taken as a1 = 1.
+		        	// g1'(y) = a1*(1 - tanh(a1*y)*tanh(a1*y))
+		        	// g2(y) = y*exp(-y*y/2)
+		        	// g2'(y) = (1 - y*y)exp(-y*y/2)
+		        	// g3(y) = y*y*y
+		        	// g3'(y) = 3*y*y
+		        	// wp <- E{zg(wpTz)} - E{g'(wpTz)}wp
+		        	if (haveColor) {
+		
+		                for (j = 0; j < samples; j++) {
+		                    wpTz = 0;
+		                    for (z = 0; z < zDim; z++) {
+		
+		                        for (i = 1; i < 4; i++) {
+		                        	index = (i - 1) + (3 * z);
+		                        	wpTz += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
+		                        	
+		                        }
+		                    } // for (z = 0; z < zDim; z++)
+		                    if (gnum == 1) {
+		                    	g = Math.tanh(a1*wpTz);
+		                    	gp = a1*(1.0 - g*g);
+		                    }
+		                    else if (gnum == 2) {
+		                    	ex = Math.exp(-wpTz*wpTz/2.0);
+		                    	g = wpTz*ex;
+		                    	gp = (1.0 - wpTz*wpTz)*ex;
+		                    }
+		                    else {
+		                    	g = wpTz * wpTz * wpTz;
+		                    	gp = 3.0 * wpTz * wpTz;
+		                    }
+		                    for (z = 0; z < zDim; z++) {
+		                    	
+		                        for (i = 1; i < 4; i++) {
+		                        	index = (i - 1) + (3 * z);
+		                        	E1[index] += zvalues[(4 * z * samples) + (4 * j) + i] * g;
+		                        }
+		                    } // for (z = 0; z < zDim; z++)
+		                    E2 += gp;
+		                } // for (j = 0; j < samples; j++)
+		            } // if haveColor
+		            else { // not color
+		
+		                for (j = 0; j < samples; j++) {
+		                    wpTz = 0;
+		                    for (z = 0; z < zDim; z++) {
+		                    	wpTz += w[p][z] * zvalues[(z * samples) + j];
+		                    } // for (z = 0; z < zDim; z++)
+		                    if (gnum == 1) {
+		                    	g = Math.tanh(a1*wpTz);
+		                    	gp = a1*(1.0 - g*g);
+		                    }
+		                    else if (gnum == 2) {
+		                    	ex = Math.exp(-wpTz*wpTz/2.0);
+		                    	g = wpTz*ex;
+		                    	gp = (1.0 - wpTz*wpTz)*ex;
+		                    }
+		                    else {
+		                    	g = wpTz * wpTz * wpTz;
+		                    	gp = 3.0 * wpTz * wpTz;
+		                    }
+		                    for (z = 0; z < zDim; z++) {
+		                    	E1[z] += zvalues[(z * samples) + j];
+		                    }
+		                    E2 += gp;
+		                } // for (j = 0; j < samples; j++)
+		            } // else not color
+		        	for (i = 0; i < nPlanes; i++) {
+	                	E1[i] = E1[i]/samples;
+	                }
+	                E2 = E2/samples;
+	                for (i = 0; i < nPlanes; i++) {
+	                	w[p][i] = E1[i] - E2*w[p][i];
+	                }	
+        		} // for (p = 0; p < icNumber; p++)
+        		matW = new Matrix(w);
+            	matWWT = matW.times(matW.transpose());
+            	WWT = matWWT.getArray();
+            	// WWT = V * (diagonal eigenvalues) * V'
+                // In EigevalueDecomposition the columns of V represent the eigenvectors
+                // WWT**(-1/2) = v * 1/sqrt(diagonal eigenvalues) * V'
+                Eigenvalue.decompose( WWT, V, eigenvalue, e1 );
+                for (i = 0; i < covar.length; i++) {
+                	D[i][i] = 1.0/Math.sqrt(eigenvalue[i]);
+                }
+                matV = new Matrix(V);
+                matD = new Matrix(D);
+                matWh = (matV.times(matD)).times(matV.transpose());  
+                matW = matWh.times(matW);
+                w = matW.getArray();
+        		wMaxDiff = 0;
+        		for (p = 0; p < icNumber; p++) {
+		        	for (i = 0; i < nPlanes; i++) {
+		        		if (Math.abs(w[p][i] - wslast[p][i]) > wMaxDiff) {
+		        		    wMaxDiff = Math.abs(w[p][i] - wslast[p][i]);	
+		        		}
+		        		wslast[p][i] = w[p][i];
+		        	}
+        		}
+        	} // while (wMaxDiff >= epsilon)
         } // else orthogonalization == SYMMETRIC
 
         fireProgressStateChanged(90);
