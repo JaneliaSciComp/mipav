@@ -1630,6 +1630,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
 
         if (str != null) {
+        	if (str.charAt(str.length()-1) != File.separatorChar) {
+        		final String str2 = str +  File.separatorChar;
+        		return str2;
+        	}
             return str;
         } else {
             return (System.getProperties().getProperty("user.dir"));
