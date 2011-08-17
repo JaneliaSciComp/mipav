@@ -56,7 +56,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
     private JButton OKButton;
 
     /** number of independent components to be retained. */
-    private int pNumber;
+    private int icNumber;
 
     /** DOCUMENT ME! */
     private JDialog iNumberDialog;
@@ -69,6 +69,20 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 
     /** DOCUMENT ME! */
     private JTextField textNumber;
+    
+    private int gnum = 1; // g1(y) = tanh(a1*y)
+                          // g2(y) = y*exp(-y*y/2)
+                          // g3(y) = y*y*y
+    
+    private double a1 = 1.0;
+    
+    private double epsilon = 1.0E-6;
+    
+    private int orthogonalization; // 1 = deflationary
+                                   // 2 = symmetric
+    private final int DEFLATIONARY = 1;
+    
+    private final int SYMMETRIC = 2;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -80,7 +94,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
      * @param  doFilter       if true create a filtered version of the original image
      * @param  doAveraging    if true create an image averaging together the slices in the filtered version
      * @param  displayAndAsk  if true display independent component images and ask how many to retain
-     * @param  pNumber        if displayAndAsk if false pNumber is the number of independent component images to retain
+     * @param  icNumber        if displayAndAsk if false icNumber is the number of independent component images to retain
      */
     public AlgorithmIndependentComponents(ModelImage[] destImg, ModelImage srcImg, boolean doFilter, boolean doAveraging,
                                         boolean displayAndAsk, int pNumber) {
@@ -90,7 +104,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         this.doFilter = doFilter;
         this.doAveraging = doAveraging;
         this.displayAndAsk = displayAndAsk;
-        this.pNumber = pNumber;
+        this.icNumber = icNumber;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -110,15 +124,15 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 
         if (source == OKButton) {
             tmpStr = textNumber.getText();
-            pNumber = Integer.parseInt(tmpStr);
+            icNumber = Integer.parseInt(tmpStr);
 
-            if (pNumber < 1) {
+            if (icNumber < 1) {
                 MipavUtil.displayError("Number must be at least 1");
                 textNumber.requestFocus();
                 textNumber.selectAll();
 
                 return;
-            } else if (pNumber > nPlanes) {
+            } else if (icNumber > nPlanes) {
                 MipavUtil.displayError("Number must not exceed number of image planes");
                 textNumber.requestFocus();
                 textNumber.selectAll();
@@ -348,7 +362,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         int index;
         double temp;
         double[] tempRow;
-        float[][] p;
+        int p;
         ModelImage[] pImage = null;
         int[] pExtents;
         ViewJFrameImage[] imageFrame = null;
@@ -368,6 +382,19 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         int index2;
         int i2;
         int z2;
+        double w[][];
+        RandomNumberGen randomGen;
+        double sumSquares;
+        double norm;
+        double wpTz;
+        double wlast[];
+        double wMaxDiff;
+        double g;
+        double gp;
+        double ex;
+        double E1[];
+        double E2;
+        double wpTwj;
 
         if (haveColor) {
 
@@ -602,8 +629,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         double[][] D;
         Matrix matV;
         Matrix matD;
-        Matrix matW; // Whitening matrix
-        double w[][];
+        Matrix matWh; // Whitening matrix
+        double wh[][];
         try {
             eigenvalue = new double[covar.length];
             D = new double[covar.length][covar.length];
@@ -625,8 +652,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         }
         matV = new Matrix(V);
         matD = new Matrix(D);
-        matW = (matV.times(matD)).times(matV.transpose());  
-        w = matW.getArray();
+        matWh = (matV.times(matD)).times(matV.transpose());  
+        wh = matWh.getArray();
         try {
             zvalues = new double[totalLength];
         } catch (OutOfMemoryError e) {
@@ -656,7 +683,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
                     		for (i2 = 1; i2 < 4; i2++) {
                     			index2 = (i2 - 1) + (3 * z2);
                                 zvalues[(4 * z * samples) + (4 * j) + i] += 
-                                	w[index][index2] * values[(4 * z2 * samples) + (4 * j) + i2];
+                                	wh[index][index2] * values[(4 * z2 * samples) + (4 * j) + i2];
                     		}
                     	}
                     }
@@ -669,13 +696,142 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 
                 for (z = 0; z < zDim; z++) {
                 	for (z2 = 0; z2 < zDim; z2++) {
-                        zvalues[(z * samples) + j] += w[z][z2] * values[(z2 * samples) + j];
+                        zvalues[(z * samples) + j] += wh[z][z2] * values[(z2 * samples) + j];
                 	}
                 }
             }
         } // else not color
         
-       
+        w = new double[icNumber][nPlanes];
+        wlast = new double[nPlanes];
+        E1 = new double[nPlanes];
+        randomGen = new RandomNumberGen();
+        if (orthogonalization == DEFLATIONARY) {
+	        for (p = 0; p < icNumber; p++) {
+	        	// Choose an initial value of unit norm for w[p], e.g., randomly
+	        	sumSquares = 0.0;
+	        	for (i = 0; i < nPlanes; i++) {
+	        		w[p][i] = randomGen.genUniformRandomNum(-1.0, 1.0);
+	        		sumSquares += w[p][i]*w[p][i];
+	        	}
+	        	norm = Math.sqrt(sumSquares);
+	        	for (i = 0; i < nPlanes; i++) {
+	        		w[p][i] = w[p][i]/norm;
+	        		wlast[i] = w[p][i];
+	        	}
+	        	wMaxDiff = 1.0;
+	        	while (wMaxDiff >= epsilon) {
+	        	    for (i = 0; i < nPlanes; i++) {
+	        	    	E1[i] = 0.0;
+	        	    }
+	        	    E2 = 0.0;
+		        	// g1(y) = tanh(a1*y) where 1 <= a1 <= 2, often taken as a1 = 1.
+		        	// g1'(y) = a1*(1 - tanh(a1*y)*tanh(a1*y))
+		        	// g2(y) = y*exp(-y*y/2)
+		        	// g2'(y) = (1 - y*y)exp(-y*y/2)
+		        	// g3(y) = y*y*y
+		        	// g3'(y) = 3*y*y
+		        	// wp <- E{zg(wpTz)} - E{g'(wpTz)}wp
+		        	if (haveColor) {
+		
+		                for (j = 0; j < samples; j++) {
+		                    wpTz = 0;
+		                    for (z = 0; z < zDim; z++) {
+		
+		                        for (i = 1; i < 4; i++) {
+		                        	index = (i - 1) + (3 * z);
+		                        	wpTz += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
+		                        	
+		                        }
+		                    } // for (z = 0; z < zDim; z++)
+		                    if (gnum == 1) {
+		                    	g = Math.tanh(a1*wpTz);
+		                    	gp = a1*(1.0 - g*g);
+		                    }
+		                    else if (gnum == 2) {
+		                    	ex = Math.exp(-wpTz*wpTz/2.0);
+		                    	g = wpTz*ex;
+		                    	gp = (1.0 - wpTz*wpTz)*ex;
+		                    }
+		                    else {
+		                    	g = wpTz * wpTz * wpTz;
+		                    	gp = 3.0 * wpTz * wpTz;
+		                    }
+		                    for (z = 0; z < zDim; z++) {
+		                    	
+		                        for (i = 1; i < 4; i++) {
+		                        	index = (i - 1) + (3 * z);
+		                        	E1[index] += zvalues[(4 * z * samples) + (4 * j) + i] * g;
+		                        }
+		                    } // for (z = 0; z < zDim; z++)
+		                    E2 += gp;
+		                } // for (j = 0; j < samples; j++)
+		            } // if haveColor
+		            else { // not color
+		
+		                for (j = 0; j < samples; j++) {
+		                    wpTz = 0;
+		                    for (z = 0; z < zDim; z++) {
+		                    	wpTz += w[p][z] * zvalues[(z * samples) + j];
+		                    } // for (z = 0; z < zDim; z++)
+		                    if (gnum == 1) {
+		                    	g = Math.tanh(a1*wpTz);
+		                    	gp = a1*(1.0 - g*g);
+		                    }
+		                    else if (gnum == 2) {
+		                    	ex = Math.exp(-wpTz*wpTz/2.0);
+		                    	g = wpTz*ex;
+		                    	gp = (1.0 - wpTz*wpTz)*ex;
+		                    }
+		                    else {
+		                    	g = wpTz * wpTz * wpTz;
+		                    	gp = 3.0 * wpTz * wpTz;
+		                    }
+		                    for (z = 0; z < zDim; z++) {
+		                    	E1[z] += zvalues[(z * samples) + j];
+		                    }
+		                    E2 += gp;
+		                } // for (j = 0; j < samples; j++)
+		            } // else not color
+		        	for (i = 0; i < nPlanes; i++) {
+	                	E1[i] = E1[i]/samples;
+	                }
+	                E2 = E2/samples;
+	                for (i = 0; i < nPlanes; i++) {
+	                	w[p][i] = E1[i] - E2*w[p][i];
+	                }
+	                // Orthogonalize
+	                for (j = 0; j < p; j++) {
+	                    wpTwj = 0.0;
+	                    for (i = 0; i < nPlanes; i++) {
+	                    	wpTwj += w[p][i]*w[j][i];
+	                    }
+	                    for (i = 0; i < nPlanes; i++) {
+	                    	w[p][i] = w[p][i] - wpTwj * w[j][i];
+	                    }
+	                } // for (j = 0; j < p; j++)
+	                // Normalize
+	                sumSquares = 0.0;
+	                for (i = 0; i < nPlanes; i++) {
+	            		sumSquares += w[p][i]*w[p][i];
+	            	}
+	            	norm = Math.sqrt(sumSquares);
+	            	for (i = 0; i < nPlanes; i++) {
+	            		w[p][i] = w[p][i]/norm;
+	            	}
+		        	wMaxDiff = 0;
+		        	for (i = 0; i < nPlanes; i++) {
+		        		if (Math.abs(w[p][i] - wlast[i]) > wMaxDiff) {
+		        		    wMaxDiff = Math.abs(w[p][i] - wlast[i]);	
+		        		}
+		        		wlast[i] = w[p][i];
+		        	}
+	        	} // while (wMaxDiff >= epsilon)
+	        } // for (p = 0; p < icNumber; p++)
+        } // if (orthogonalization == DEFLATIONARY)
+        else { // orthogonalization == SYMMETRIC
+        	
+        } // else orthogonalization == SYMMETRIC
 
         fireProgressStateChanged(90);
         fireProgressStateChanged("Importing averaged destination data");
