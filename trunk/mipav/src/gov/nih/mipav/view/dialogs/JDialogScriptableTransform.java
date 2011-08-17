@@ -1074,33 +1074,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      * @param fileName name of the matrix file.
      */
     public void readTransformMatrixFile(final String fileName) {
-    	String dataString = "";
-        File dfile = new File("debugme.txt");
-        RandomAccessFile draFile = null;
-        try {
-            draFile = new RandomAccessFile(dfile, "rw");
-        }
-        catch (IOException e) {
-            System.err.println("Error creating RandomAccessFile");	
-        }
-        if (draFile != null) {
-        	try {
-                draFile.setLength(0);
-        	}
-        	catch (IOException e) {
-        		System.err.println("Error on draFile.setLength(0)");
-        	}
-        }
-        dataString += "readTransformMatrixFile entered with fileName = " + fileName + "\n";
-        System.out.println("readTransformMatrixFile entered with fileName = " + fileName);
-        dataString += "image.getNDims() = " + image.getNDims() + "\n";
-        System.out.println("image.getNDims() = " + image.getNDims());
+    	
         final TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
-        dataString += "Performed final TransMatrix matrix = new TransMatrix(image.getNDims() + 1)\n";
-        System.out.println("Performed final TransMatrix matrix = new TransMatrix(image.getNDims() + 1)");
         matrix.MakeIdentity();
-        dataString += "Performed matrix.MakeIdentity\n";
-        System.out.println("Performed matrix.MakeIdentity");
 
         if (fileName == null) {
             MipavUtil.displayError("filename = null");
@@ -1109,41 +1085,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         try {
             // search for file name relative to image first, then relative to MIPAV default, then absolute path
             File file;
-            dataString += "image.getImageDirectory() + fileName = " + image.getImageDirectory() + fileName + "\n";
-            System.out.println("image.getImageDirectory() + fileName = " + image.getImageDirectory() + fileName);
             file = new File(image.getImageDirectory() + fileName);
-            dataString += "Performed new File(image.getImageDirectory() + fileName)\n";
-            System.out.println("Performed new File(image.getImageDirectory() + fileName)");
             if ( !file.exists()) {
-            	dataString += "file did not exist\n";
-            	System.out.println("file did not exist");
-            	dataString += "ViewUserInterface.getReference().getDefaultDirectory() + fileName = " +
-            	ViewUserInterface.getReference().getDefaultDirectory() + fileName + "\n";
-            	System.out.println("ViewUserInterface.getReference().getDefaultDirectory() + fileName = " +
-            	ViewUserInterface.getReference().getDefaultDirectory() + fileName);
                 file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
-                dataString += " Performed file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName)\n";
-                System.out.println(" Performed file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName)");
             }
             if ( !file.exists()) {
-            	dataString += "file did not exist\n";
-            	System.out.println("file did not exist");
                 file = new File(fileName);
-                dataString += "Performed file = new File(fileName)\n";
-                System.out.println("Performed file = new File(fileName)");
-                if (!file.exists()) {
-                	dataString += "file did not exist\n";
-                	System.out.println("file did not exist");	
-                }
             }
 
             final RandomAccessFile raFile = new RandomAccessFile(file, "r");
-            dataString += "Performed final RandomAccessFile raFile = new RandomAccessFile(file, r)\n";
-            System.out.println("Performed final RandomAccessFile raFile = new RandomAccessFile(file, r)");
             
             final String extension = FileUtility.getExtension(file.getAbsolutePath()).toLowerCase();
-            dataString += "extension = " + extension + "\n";
-            System.out.println("extension = " + extension);
             if (extension.equals(".tps")) {
                 spline = new AlgorithmTPSpline(image);
                 spline.readMatrix(raFile);
@@ -1151,14 +1103,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             } else {
                 spline = null;
                 matrix.readMatrix(raFile, false);
-                dataString += "Performed matrix.readMatrix(raFile, false)\n";
-                System.out.println("Performed matrix.readMatrix(raFile, false)");
                 raFile.close();
-                dataString += "Performed raFile.close()\n";
-                System.out.println("Performed raFile.close()");
                 fileTransMatrix = matrix;
-                dataString += "Performed finalTransMatrix = matrix\n";
-                System.out.println("Performed finalTransMatrix = matrix");
             }
 
             // We don't know the coordinate system that the transformation represents. Therefore
@@ -1166,20 +1112,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             // world coordinate and/or the "left-hand" coordinate system!
             // new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
         } catch (final IOException error) {
-        	if (draFile != null) {
-            	try {
-            	    draFile.write(dataString.getBytes());
-            	}
-            	catch (IOException e) {
-            		System.err.println("Error on draFile.write");
-            	}
-            	try {
-            	    draFile.close();
-            	}
-            	catch (IOException e) {
-            		System.err.println("Error on draFile.close()");
-            	}
-            }
             MipavUtil.displayError("Matrix read error");
             fileTransMatrix.MakeIdentity();
         }
