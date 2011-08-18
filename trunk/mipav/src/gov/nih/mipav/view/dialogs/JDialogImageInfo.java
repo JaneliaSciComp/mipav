@@ -18,6 +18,8 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.text.JTextComponent;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -40,6 +42,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
 
+    /** grid bag constraints * */
+    private GridBagConstraints gbc, gbc2, gbc3;
+    /** main panel * */
+    private JPanel mainPanel;
+    /** table to display the src image names. */
+    private JTable srcImagesTable;
+
     /** DOCUMENT ME! */
     private JTextField[] acpcACFields;
 
@@ -57,6 +66,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JTextField acpcResField;
+    
+    /** DOCUMENT ME! */
+    private JTextField bValueTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField gradientTextField;
 
     /** Add as New/Replace button (depending on selected matrix type). */
     private JButton addReplaceMatrix;
@@ -144,6 +159,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private String newImageName;
+    
+    /** current directory * */
+    private String currDir = null;
+    
+    /** table model for the srcimages. */
+    private DefaultTableModel srcTableModel;
+
 
     /** DOCUMENT ME! */
     private int orient;
@@ -552,6 +574,40 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else if (command.equals("PasteMatrix")) {
             updateMatrixFields(ViewUserInterface.getReference().getClippedMatrix());
         }
+          else if (command.equals("bvalGradBrowse")) {
+            final JFileChooser chooser = new JFileChooser();
+            
+            if (currDir != null) {
+            chooser.setCurrentDirectory(new File(currDir));
+            }
+            chooser.setDialogTitle("Choose File");
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            
+            final int returnValue = chooser.showOpenDialog(this);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+            currDir = chooser.getSelectedFile().getAbsolutePath();
+            readBValGradientFile(currDir);
+        }
+
+       }
+            else if (command.equals("bValue")) {
+            final int[] selectedRows = srcImagesTable.getSelectedRows();
+            final String bValue = bValueTextField.getText();
+            for (final int element : selectedRows) {
+            srcTableModel.setValueAt(bValue, element, 0);
+            }
+             bValueTextField.setText("");
+    }
+        
+            else if (command.equals("gradient")) {
+             final int[] selectedRows = srcImagesTable.getSelectedRows();
+             final int selectedColumn = srcImagesTable.getSelectedColumn();
+             final String gradient = gradientTextField.getText();
+             for (final int element : selectedRows) {
+             srcTableModel.setValueAt(gradient, element, selectedColumn);
+              }
+             gradientTextField.setText("");
+    }
     }
 
     /**
@@ -2156,6 +2212,110 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         return scrollPane;
     }
+    /**
+     * Builds the panels which is edited in the tabbed pane "DTI".
+     * 
+     * @return The DTI panel.
+     */
+    private JScrollPane buildDTIPanel() {
+        //setForeground(Color.black);
+        //setTitle("Estimate Tensor");
+
+        gbc = new GridBagConstraints();
+        gbc2 = new GridBagConstraints();
+        gbc3 = new GridBagConstraints();
+        mainPanel = new JPanel(new GridBagLayout());
+
+        final JPanel srcPanel = new JPanel(new GridBagLayout());
+        srcTableModel = new DefaultTableModel() {
+            public boolean isCellEditable(final int row, final int column) {
+                return false;
+            }
+        };
+        //srcTableModel.addColumn("Image");
+        srcTableModel.addColumn("B-Value");
+        srcTableModel.addColumn("X Gradient");
+        srcTableModel.addColumn("Y Gradient");
+        srcTableModel.addColumn("Z Gradient");
+
+        srcImagesTable = new JTable(srcTableModel) {
+           
+            public String getToolTipText(final MouseEvent e) {
+                String tip = null;
+                final java.awt.Point p = e.getPoint();
+                final int rowIndex = rowAtPoint(p);
+                final int columnIndex = columnAtPoint(p);
+                if (columnIndex == 0) {
+                    final String inputField = (String) srcTableModel.getValueAt(rowIndex, 0);
+                    tip = inputField;
+                    return tip;
+
+                } else {
+                    return null;
+                }
+
+            }
+        };
+        srcImagesTable.setPreferredScrollableViewportSize(new Dimension(800, 150));
+        //srcImagesTable.getColumn("Image").setMinWidth(800);
+        
+     
+
+        final JLabel bValueLabel = new JLabel(" Apply B-Value to selected rows:");
+        bValueTextField = new JTextField(5);
+        final JButton bValueButton = new JButton("Apply");
+        //bValueButton.setPreferredSize(new Dimension(65, 30));
+        bValueButton.addActionListener(this);
+        bValueButton.setActionCommand("bValue");
+        final JPanel bValuePanel = new JPanel();
+        bValuePanel.add(bValueLabel);
+        bValuePanel.add(bValueTextField);
+        bValuePanel.add(bValueButton);
+        
+        final JLabel gradientLabel = new JLabel(" Apply Gradient to selected rows:");
+        gradientTextField = new JTextField(5);
+        final JButton gradientButton = new JButton("Apply");
+        //gradientButton.setPreferredSize(new Dimension(65, 20));
+        gradientButton.addActionListener(this);
+        gradientButton.setActionCommand("gradient");
+        final JPanel gradientPanel = new JPanel();
+        gradientPanel.add(gradientLabel);
+        gradientPanel.add(gradientTextField);
+        gradientPanel.add(gradientButton);
+        
+        
+        
+        final JPanel DWIButtonPanel = new JPanel();
+        final JButton loadBValGradFileButton = new JButton("Load B-Value/Grad File");
+        //loadBValGradFileButton.setPreferredSize(new Dimension(16, 30));
+        loadBValGradFileButton.addActionListener(this);
+        loadBValGradFileButton.setActionCommand("bvalGradBrowse");;
+        DWIButtonPanel.add(loadBValGradFileButton);
+        DWIButtonPanel.add(bValuePanel);
+        DWIButtonPanel.add(gradientPanel);
+       
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.insets = new Insets(15, 5, 5, 15);
+        gbc2.gridwidth = 1;
+        gbc2.anchor = GridBagConstraints.CENTER;
+        final JScrollPane srcImagesScrollPane = new JScrollPane(srcImagesTable);
+        // srcImagesTable.addMouseListener(new MouseHandler());
+        srcPanel.add(srcImagesScrollPane, gbc2);
+        gbc2.gridy = 1;
+        srcPanel.add(DWIButtonPanel, gbc2);
+      
+        final JScrollPane scrollPane = new JScrollPane(srcPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(850, 200));
+
+        return scrollPane;
+       
+        //return DWIButtonPanel;
+      
+
+    }
+
 
     /**
      * Initializes the dialog box and adds the components.
@@ -2172,6 +2332,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         tabbedPane.addTab("Orientations\\Origin", null, buildOrientPanel());
         tabbedPane.addTab("Transform matrix", null, buildMatrixPanel());
         tabbedPane.addTab("Talairach", null, buildTalairachPanel());
+        tabbedPane.addTab("DTI", null, buildDTIPanel());
 
         /**
          * if (((String)transformIDBox.getSelectedItem()).equals("Talairach Tournoux")) { showTalairachTab(true); }
@@ -3717,5 +3878,209 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         } else {
             System.err.println("THIS IS NOT AN XML FILE!!!");
         }
+    }
+  
+    /**
+     * reads the bval/gradient file...both dti studio format and fsl format are accepted
+     * 
+     * @param gradientFilePath
+     * @return
+     */
+    public boolean readBValGradientFile(final String gradientFilePath) {
+
+        try {
+            String str;
+            final File file = new File(gradientFilePath);
+            final RandomAccessFile raFile = new RandomAccessFile(file, "r");
+
+            String firstLine = raFile.readLine();
+            if (firstLine.contains(":")) {
+                String line;
+                int lineCount = 0;
+                //counts number of lines in file
+                while ((line = raFile.readLine())!= null){
+                    lineCount++;
+                }
+                lineCount = lineCount +1;
+                
+                raFile.seek(0);
+                // this is DTI Studio
+                for (int j =0; j < lineCount; j++){
+                final Vector<String> rowData = new Vector<String>();
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+                rowData.add("");
+                srcTableModel.addRow(rowData);
+                }
+                final int numRows = srcTableModel.getRowCount();
+
+                for (int i = 0; i < numRows; i++) {
+                    if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
+                        str = raFile.readLine();
+                        if (str != null) {
+                            final String[] arr = str.split(":");
+                           
+                            if (arr.length == 2) {
+                                final String grads = arr[1].trim();
+                                final String[] arr2 = grads.split("\\s+");
+                                srcTableModel.setValueAt(arr2[0], i, 1);
+                                srcTableModel.setValueAt(arr2[1], i, 2);
+                                srcTableModel.setValueAt(arr2[2], i, 3);
+                            }
+                        }
+
+                    }
+
+                }
+
+           } else {
+               // this is FSL
+               
+                //String line;
+               
+               int decimalCount = 0;
+               StringBuffer buffFirstLine = new StringBuffer(firstLine);
+               int length = buffFirstLine.length();
+               //count number of decimal points in first line
+               for (int i = 0; i < length; i++) {
+                   char index = buffFirstLine.charAt(i);
+                   if (index == '.') {
+                       decimalCount++;
+                   }
+               
+                   
+               }
+                 
+                   if (decimalCount > 4){
+                       raFile.seek(0);
+              
+                       for (int j =0; j < decimalCount; j++){
+                           final Vector<String> rowData = new Vector<String>();
+                           rowData.add("");
+                           rowData.add("");
+                           rowData.add("");
+                           rowData.add("");
+                           srcTableModel.addRow(rowData);
+                       }
+               
+ 
+                       final int numRows = srcTableModel.getRowCount();
+                       int start = 0;
+
+                       for (int i = 0; i < numRows; i++) {
+                           if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
+                               start = i;
+                               break;
+                           }
+                       }
+     
+                       int k = start;
+                       String firstline = raFile.readLine();
+                       firstline = firstline.trim();
+                
+                       String []arr = firstline.split("\\s+");
+                
+                
+                       for (final String element : arr) {
+                           if (k < numRows) {
+                               srcTableModel.setValueAt(element, k, 1);
+                               k = k + 1;
+                           } else {
+                               break;
+                           }
+                       }
+
+                       k = start;
+                       String secondLine = raFile.readLine();
+                       secondLine = secondLine.trim();
+                       arr = secondLine.split("\\s+");
+                       for (final String element : arr) {
+                           if (k < numRows) {
+                               srcTableModel.setValueAt(element, k, 2);
+                               k = k + 1;
+                           } else {
+                               break;
+                           }
+                       }
+
+                       k = start;
+                       String thirdlLine = raFile.readLine();
+                       thirdlLine = thirdlLine.trim();
+                       arr = thirdlLine.split("\\s+");
+                       for (final String element : arr) {
+                           if (k < numRows) {
+                               srcTableModel.setValueAt(element, k, 3);
+                               k = k + 1;
+                           } else {
+                               break;
+                           }
+                       }
+                
+
+                       k = start;
+                       String fourthLine = raFile.readLine();
+                       fourthLine = fourthLine.trim();
+                       arr = fourthLine.split("\\s+");
+                       for (final String element : arr) {
+                           if (k < numRows) {
+                               srcTableModel.setValueAt(element, k, 0);
+                               k = k + 1;
+                           } else {
+                               break;
+                           }
+                       }
+
+                   }
+                   
+                   else{
+                       String line;
+                       int lineCount = 0;
+                       //counts number of lines in file
+                       while ((line = raFile.readLine())!= null){
+                           lineCount++;
+                       }
+                       lineCount = lineCount +1;
+                       raFile.seek(0);
+                       // this is DTI Studio
+                       for (int j =0; j < lineCount; j++){
+                       final Vector<String> rowData = new Vector<String>();
+                       rowData.add("");
+                       rowData.add("");
+                       rowData.add("");
+                       rowData.add("");
+                       srcTableModel.addRow(rowData);
+                       }
+                       final int numRows = srcTableModel.getRowCount();
+                       
+                       for (int i = 0; i < numRows; i++) {
+                           if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
+                               str = raFile.readLine();
+                               if (str != null) {
+                                   final String[] arr = str.split("\\s+");
+                                       srcTableModel.setValueAt(arr[1], i, 1);
+                                       srcTableModel.setValueAt(arr[2], i, 2);
+                                       srcTableModel.setValueAt(arr[3], i, 3);
+                                   
+                               }
+
+                           }
+
+                       }
+                       
+                       
+                   }
+            
+               
+           }
+            raFile.close();
+            
+        } catch (final Exception e) {
+
+            MipavUtil.displayError("Error reading B-Value/Grad File...DTI Studio, FSL, and .txt formats are accepted");
+            return false;
+        }
+
+        return true;
     }
 }
