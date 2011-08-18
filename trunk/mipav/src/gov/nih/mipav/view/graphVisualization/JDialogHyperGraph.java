@@ -34,6 +34,7 @@ import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Image;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
@@ -111,8 +112,8 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	private MipavGraphPanel graphPanel;
 	
 	private JPanel toolbarPanel,mainPanel, graphPanel2;
-	
-	private JButton centerRootNodeButton, saveGraphButton;
+	 
+	private JButton centerRootNodeButton, saveGraphButton, increaseFontButton, decreaseFontButton, sep;
 	
 	private ViewToolBarBuilder toolbarBuilder;
 
@@ -210,8 +211,15 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		//else if (command.equals("SetProperties")) {
 		//	new JDialogGraphProperties(this);
 		//}
-		else if (command.equals("SaveProperties")) {
+		else if(command.equals("increasefont")) {
+			graphPanel.increaseTextSize(true);
+			graphPanel.savePreferences();
+		}else if(command.equals("decreasefont")) {
+			graphPanel.increaseTextSize(false);
+			graphPanel.savePreferences();
+		}else if (command.equals("SaveProperties")) {
 			savePreferences();
+			graphPanel.savePreferences();
 		}
 		else if (command.equals("saveGraph")) {
 			final JFileChooser chooser = new JFileChooser();
@@ -650,6 +658,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	     toolbarBuilder = new ViewToolBarBuilder(this);
 	     centerRootNodeButton = toolbarBuilder.buildButton("centerRootNode", "Center Root Node", "bullseye");
 	     saveGraphButton = toolbarBuilder.buildButton("saveGraph", "Save graph as...", "save");
+	     increaseFontButton = toolbarBuilder.buildButton("increaseFont", "Increase Font", "increasefont");
+	     decreaseFontButton = toolbarBuilder.buildButton("decreaseFont", "Decrease Font", "decreasefont");
+	     
+	     sep = new JButton(MipavUtil.getIcon("separator.gif"));
+	     sep.setMargin(new Insets(0, 0, 0, 0));
+	     sep.setBorderPainted(false);
+	     sep.setFocusPainted(false);
+	     
 	     
 	     GridBagConstraints gbc = new GridBagConstraints();
 	     gbc.anchor = GridBagConstraints.WEST;
@@ -658,6 +674,13 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	     toolbarPanel.add(centerRootNodeButton, gbc);
 	     gbc.gridx = 1;
 	     toolbarPanel.add(saveGraphButton, gbc);
+	     gbc.gridx = 2;
+	     toolbarPanel.add(sep, gbc);
+	     gbc.gridx = 3;
+	     toolbarPanel.add(increaseFontButton, gbc);
+	     gbc.gridx = 4;
+	     toolbarPanel.add(decreaseFontButton, gbc);
+	     
 	
 	     graphPanel.setMinimumSize(new Dimension(900,600));
 	     graphPanel.setPreferredSize(new Dimension(900,600));
@@ -738,8 +761,10 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		String kColorString = new String( "#" + Integer.toHexString(color.getRGB()).substring(2) );
 		graphPanel.getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
 
-        savePreferences();
+        //savePreferences();
 		loadPreferences();
+		
+		
 
 		graphPanel.setLineRenderer(new ArrowLineRenderer());
 
@@ -747,6 +772,14 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	     toolbarBuilder = new ViewToolBarBuilder(this);
 	     centerRootNodeButton = toolbarBuilder.buildButton("centerRootNode", "Center Root Node", "bullseye");
 	     saveGraphButton = toolbarBuilder.buildButton("saveGraph", "Save graph as...", "save");
+	     increaseFontButton = toolbarBuilder.buildButton("increasefont", "Increase Font", "increasefont");
+	     decreaseFontButton = toolbarBuilder.buildButton("decreasefont", "Decrease Font", "decreasefont");
+	     
+	     sep = new JButton(MipavUtil.getIcon("separator.gif"));
+	     sep.setMargin(new Insets(0, 0, 0, 0));
+	     sep.setBorderPainted(false);
+	     sep.setFocusPainted(false);
+	     
 	     
 	     GridBagConstraints gbc = new GridBagConstraints();
 	     gbc.anchor = GridBagConstraints.WEST;
@@ -755,6 +788,12 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	     toolbarPanel.add(centerRootNodeButton, gbc);
 	     gbc.gridx = 1;
 	     toolbarPanel.add(saveGraphButton, gbc);
+	     gbc.gridx = 2;
+	     toolbarPanel.add(sep, gbc);
+	     gbc.gridx = 3;
+	     toolbarPanel.add(increaseFontButton, gbc);
+	     gbc.gridx = 4;
+	     toolbarPanel.add(decreaseFontButton, gbc);
 	
 	     graphPanel.setMinimumSize(new Dimension(900,600));
 	     graphPanel.setPreferredSize(new Dimension(900,600));
@@ -781,6 +820,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	 */
 	private void loadPreferences()
 	{
+
 		String file = new String("mipavGraphLayout.prop");
 		File graphPreferencesFile = new File(Preferences.getPreferencesDir(), file);
 		URL codeBase = null;
@@ -788,17 +828,17 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		try {
 			codeBase = graphPreferencesFile.toURI().toURL();
 		} catch (MalformedURLException e1) {
-			System.err.println( "Cannot read file " + graphPreferencesFile );
+			System.out.println( "Cannot read file " + graphPreferencesFile );
 			savePreferences();
 		}
 		try {
 			url = new URL(codeBase, file);
 			graphPanel.loadProperties(url.openStream());
 		} catch (FileNotFoundException fnfe) {
-			System.err.println( "Cannot read file " + graphPreferencesFile );
+			System.out.println( "Cannot read file " + graphPreferencesFile );
 			savePreferences();
 		} catch (Exception e) {
-			System.err.println( "Cannot read file " + graphPreferencesFile );
+			System.out.println( "Cannot read file " + graphPreferencesFile );
 			savePreferences();
 		}
 

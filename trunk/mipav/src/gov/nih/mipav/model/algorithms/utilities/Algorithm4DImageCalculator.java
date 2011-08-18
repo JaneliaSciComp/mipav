@@ -77,6 +77,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	
 	
 	
+	
+	
 	/**
 	 * Run algorithm
 	 */

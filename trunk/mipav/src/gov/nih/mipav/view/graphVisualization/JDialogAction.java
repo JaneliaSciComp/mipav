@@ -10,6 +10,7 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -32,7 +33,9 @@ public class JDialogAction extends JDialogBase implements ActionListener {
     private Node pickedNode;
     
     /** NoteField for providing a note about this marker. Note only displayed when clicked. */
-    private JTextArea actionField;
+    private JTextField actionField;
+    
+   // private JLabel actionLabel;
 	
 	
 	  public JDialogAction(MipavGraphPanel kParent, Node pickedNode, String Action, boolean setVisible) {
@@ -68,14 +71,26 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 	        OKButton.setActionCommand("actionNode");
 
 
-	        JPanel actionPanel = new JPanel();
-	        actionPanel.setBorder(buildTitledBorder("Action"));
+	        JPanel actionPanel = new JPanel(new GridBagLayout());
+	        GridBagConstraints gbc = new GridBagConstraints();
+	        //actionPanel.setBorder(buildTitledBorder("Action"));
 	       
-	        actionField = new JTextArea();
-	        actionField.setRows(4);
-	        actionField.setEditable(true);
-	        actionField.setLineWrap(true);
-	        actionField.setWrapStyleWord(true);
+	        //actionField = new JTextField(32);
+	        //actionField.setRows(4);
+	        //actionField.setEditable(true);
+	        //actionField.setLineWrap(true);
+	        //actionField.setWrapStyleWord(true);
+	        
+	        
+	        
+	        actionField = new JTextField(45);        
+        	namePanel.setBorder(buildTitledBorder("Action"));
+        	namePanel.add(actionField);        
+        	actionField.setBorder(BasicBorders.getTextFieldBorder());
+        	
+        	
+	        
+	        //actionLabel = new JLabel("Action ");
 	        if ( action != null )
 	        {
 	        	// set the notes field whatever the existing Notes were for the node:
@@ -84,22 +99,27 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 	        else {
 	        	//noteField.setText(DEFAULT_NOTES);
 	        }
-	        JScrollPane containerPane = new JScrollPane(actionField);
+	        /*JScrollPane containerPane = new JScrollPane(actionField);
 	        containerPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	        containerPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 	        containerPane.setMinimumSize(new Dimension(505, 193));
 	        containerPane.setMaximumSize(new Dimension(505, 193));
 	        containerPane.setPreferredSize(new Dimension(505, 193));
-	        containerPane.setBorder(BasicBorders.getTextFieldBorder());
+	        containerPane.setBorder(BasicBorders.getTextFieldBorder());*/
 
-	       actionPanel.add(containerPane);        
+	      /* gbc.anchor = GridBagConstraints.WEST;
+	       gbc.gridx = 0;
+	       gbc.gridy = 0;
+	       actionPanel.add(actionLabel,gbc);    
+	       gbc.gridx = 1;
+	       actionPanel.add(actionField,gbc);        */
 
 	        mainDialogPanel.setLayout(layout);
 
 	        JPanel centerPanel = new JPanel(new GridBagLayout());
 
-	        GridBagConstraints c = new GridBagConstraints();
-	        c.fill = GridBagConstraints.HORIZONTAL;
+	       // GridBagConstraints c = new GridBagConstraints();
+	       /* c.fill = GridBagConstraints.HORIZONTAL;
 			c.gridx = 0;
 			c.gridy = 1;
 			c.gridwidth = 1;
@@ -111,7 +131,12 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 	        c.gridx = 0;
 	        c.gridy = 2;
 	        c.gridwidth = 2;
-	        centerPanel.add(actionPanel, c);
+	        centerPanel.add(actionPanel, c);*/
+	        gbc.fill = GridBagConstraints.BOTH;
+	        gbc.anchor = GridBagConstraints.NORTHWEST;
+		       gbc.gridx = 0;
+		       gbc.gridy = 0;
+		       centerPanel.add(namePanel,gbc);        
 
 	        mainDialogPanel.add(centerPanel, BorderLayout.CENTER);
 	        mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -137,7 +162,7 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 	
 	
 
-	public synchronized JTextArea getActionField() {
+	public synchronized JTextField getActionField() {
 			return actionField;
 		}
 
@@ -148,7 +173,7 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
+		System.out.println("what the heck");
 
 	}
 

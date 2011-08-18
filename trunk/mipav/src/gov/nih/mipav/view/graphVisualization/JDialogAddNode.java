@@ -157,7 +157,7 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
         //if ( addNode )
         //{
         	// create a text field for the new name:
-        	nameField = new JTextField(25);        
+        	nameField = new JTextField(45);        
         	namePanel.setBorder(buildTitledBorder("Name"));
         	namePanel.add(nameField);        
         	nameField.setBorder(BasicBorders.getTextFieldBorder());
