@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
@@ -300,7 +301,6 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			setProperties();
 		}
 		if(command.equals("actionNode")) {
-			System.out.println("yo");
 			setProperties();
 		}
 		if (command.equalsIgnoreCase("Link nodes")) {
@@ -366,6 +366,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
         }
         else{
         	// pass in the edited notes field:
+
         	if ( notes != null ) {
         		editNotes(notes);
         	}
@@ -377,8 +378,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
         
         //edit action
         String action = actionDialog.getActionField().getText();
-        System.out.println("hey");
-        System.out.println(action);
+
         if(action != null) {
         	editAction(action.trim());
         }
@@ -443,7 +443,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		repaint();
 		
-		
+		savePreferences();
         
 	}
 	
@@ -454,6 +454,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	 */
 	public void savePreferences()   
 	{
+
 		String file = new String("mipavGraphLayout.prop");
 		File graphPreferencesFile = new File(Preferences.getPreferencesDir(), file);
 		FileWriter kNewFile;
@@ -563,14 +564,12 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	public void editAction( String action )
 	{
 		
-		System.out.println("editAction");
 		if ( pickedNode != null )
 		{
 			AttributeManager attrMgr = getGraph().getAttributeManager();
 			attrMgr.setAttribute( "ACTION", pickedNode, action );
 			
 			String act = (String)attrMgr.getAttribute( "ACTION", pickedNode );
-			System.out.println("act is " + action);
 			
 			/*if(propertiesDialog != null) {
 				propertiesDialog.dispose();
@@ -741,6 +740,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		{
 
 			// reset the picked nodes:
+
 			resetPicked();
 			
 			/*if (isOnLogo(e.getPoint())) {
@@ -797,7 +797,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	public void mouseMoved(MouseEvent e) {
 		if ( !e.isControlDown() )
 		{
-			resetPicked();
+			//System.out.println("mouseMoved:calling resetPicked");
+			//resetPicked();
 		}
 		super.mouseMoved(e);
 	}
@@ -864,7 +865,9 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		}
 		else if ( !e.isControlDown() )
 		{
+
 			resetPicked();
+			
 			super.mousePressed(e);
 		}
 	}
@@ -873,6 +876,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	public void mouseReleased(MouseEvent e) {
 		if ( !e.isControlDown() )
 		{
+
 			resetPicked();
 		}
 		super.mouseReleased(e);
@@ -908,12 +912,26 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		 */
 		if ( (iClickCount >= 2) && (m_kImageFrame != null) && (kNode != null) )
 		{
-			System.out.println("nodeClicked >= 2");
-			System.out.println(getGraph().getEdges(kNode).size());
-			if ( getGraph().getEdges(kNode).size() == 1 &&  kNode.getLabel() != null )
+
+			
+			AttributeManager attrMgr = getGraph().getAttributeManager();
+			String  action = (String)attrMgr.getAttribute( "ACTION", kNode );
+			
+			
+			if ( action != null && (!action.trim().equals("")) )
 			{
-				System.out.println(kNode.getLabel());
-				m_kImageFrame.actionPerformed( new ActionEvent( kNode, 0, kNode.getLabel() ) );
+				
+				if(action.startsWith("http")) {
+					openURL(action);
+				}else {
+					m_kImageFrame.actionPerformed( new ActionEvent( kNode, 0, action ) );
+				}
+				
+				
+			}else {
+				if(getGraph().getEdges(kNode).size() == 1) {
+					m_kImageFrame.actionPerformed( new ActionEvent( kNode, 0, kNode.getLabel() ) );
+				}
 			}
 		}
 	}
@@ -1092,10 +1110,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		// build VOI intensity popup menu
 		JPopupMenu popupMenu = new JPopupMenu();
 
-		JMenuItem menuItem = new JMenuItem("Center root node");
-		popupMenu.add(menuItem);
-		menuItem.addActionListener(this);
-		menuItem.setActionCommand("Center root node" );
+		JMenuItem menuItem; 
+		//menuItem = new JMenuItem("Center root node");
+		//popupMenu.add(menuItem);
+		//menuItem.addActionListener(this);
+		//menuItem.setActionCommand("Center root node" );
 		menuItem = new JMenuItem("Set background color");
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
@@ -1106,14 +1125,14 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		menuItem.addActionListener(this);
 		menuItem.setActionCommand("Set background image" );
 		
-		menuItem = new JMenuItem("Increase Font Size");
+		/*menuItem = new JMenuItem("Increase Font Size");
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
 		menuItem.setActionCommand("Increase Font Size" );
 		menuItem = new JMenuItem("Decrease Font Size");
 		popupMenu.add(menuItem);
 		menuItem.addActionListener(this);
-		menuItem.setActionCommand("Decrease Font Size" );
+		menuItem.setActionCommand("Decrease Font Size" );*/
 
 		popupMenu.show(this, mouseEvent.getX(), mouseEvent.getY() );
 	}
@@ -1306,6 +1325,41 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 									   getHeight() - smallLogo.getHeight(this), this);
 		}*/
 	}
+	
+	 /**
+     * Launches browser...code obtained from: Bare Bones Browser Launch by Dem Pilafian Web Page Copyright (c) 2007
+     * Center Key Software Source Code and Javadoc are Public Domain http://www.centerkey.com/java/browser
+     * 
+     * @param url
+     */
+    public void openURL(String url) {
+
+        String osName = System.getProperty("os.name");
+        try {
+            if (osName.startsWith("Mac OS")) {
+                Class fileMgr = Class.forName("com.apple.eio.FileManager");
+                Method openURL = fileMgr.getDeclaredMethod("openURL", new Class[] {String.class});
+                openURL.invoke(null, new Object[] {url});
+            } else if (osName.startsWith("Windows")) {
+                Runtime.getRuntime().exec("rundll32 url.dll,FileProtocolHandler " + url);
+            } else { // assume Unix or Linux
+                String[] browsers = {"firefox", "opera", "konqueror", "epiphany", "mozilla", "netscape"};
+                String browser = null;
+                for (int count = 0; count < browsers.length && browser == null; count++) {
+                    if (Runtime.getRuntime().exec(new String[] {"which", browsers[count]}).waitFor() == 0) {
+                        browser = browsers[count];
+                    }
+                }
+                if (browser == null) {
+                    System.out.println("Can not find web browser");
+                } else {
+                    Runtime.getRuntime().exec(new String[] {browser, url});
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("Can not find web browser");
+        }
+    }
 	
 	
 	
