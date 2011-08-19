@@ -78,11 +78,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
     
     private double epsilon = 1.0E-6;
     
-    private int orthogonalization; // 1 = deflationary
+    private int icAlgorithm; // 1 = deflationary
                                    // 2 = symmetric
-    private final int DEFLATIONARY = 1;
+    private final int DEFLATIONARY_ORTHOGONALIZATION = 1;
     
-    private final int SYMMETRIC = 2;
+    private final int SYMMETRIC_ORTHOGONALIZATION = 2;
+    
+    private final int MAXIMUM_LIKELIHOOD_ESTIMATION = 3;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -399,6 +401,24 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         Matrix matWWT;
         double WWT[][];
         double wslast[][];
+        double B[][];
+        Matrix matB;
+        double Blast[][];
+        double maxBDiff;
+        double y[];
+        double alpha[];
+        double beta[];
+        double Eygy[];
+        double Egpy[];
+        double ty;
+        double EgyyT[][];
+        double tk;
+        double diagAlpha[][];
+        Matrix matAlpha;
+        Matrix matBeta;
+        double prod[][];
+        double BCBT[][];
+        Matrix matC;
 
         if (haveColor) {
 
@@ -710,7 +730,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         wlast = new double[nPlanes];
         E1 = new double[nPlanes];
         randomGen = new RandomNumberGen();
-        if (orthogonalization == DEFLATIONARY) {
+        if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION) {
 	        for (p = 0; p < icNumber; p++) {
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
 	        	sumSquares = 0.0;
@@ -832,8 +852,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 		        	}
 	        	} // while (wMaxDiff >= epsilon)
 	        } // for (p = 0; p < icNumber; p++)
-        } // if (orthogonalization == DEFLATIONARY)
-        else { // orthogonalization == SYMMETRIC
+        } // if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION)
+        else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION){
         	for (p = 0; p < icNumber; p++) {
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
 	        	sumSquares = 0.0;
@@ -987,7 +1007,182 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 		        	}
         		}
         	} // while (wMaxDiff >= epsilon)
-        } // else orthogonalization == SYMMETRIC
+        } // else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION)
+        else { // icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
+        	// Table 9.2 has not whitening but notes that in practice, whitening combined with PCA may often
+        	// be useful.  Under 9.4 examples the text states "Here, we use whitened data.  This is not strictly
+        	// necessary, but the algorithms converge much better with whitened data.
+        	// Compute the correlation matrix
+        	for (i = 0; i < nPlanes; i++) {
+
+                for (j = 0; j < nPlanes; j++) {
+                    covar[i][j] = 0.0;
+                }
+            }
+        	
+        	if (haveColor) {
+
+                for (j = 0; j < samples; j++) {
+
+                    for (z = 0; z < zDim; z++) {
+
+                        for (i = 1; i < 4; i++) {
+                            x[(i - 1) + (3 * z)] = zvalues[(4 * z * samples) + (4 * j) + i];
+                        }
+                    }
+
+                    for (k = 0; k < nPlanes; k++) {
+
+                        for (m = 0; m < nPlanes; m++) {
+                            covar[k][m] += x[k] * x[m];
+                        }
+                    }
+                }
+            } // if haveColor
+            else { // not color
+
+                for (j = 0; j < samples; j++) {
+
+                    for (z = 0; z < zDim; z++) {
+                        x[z] = zvalues[(z * samples) + j];
+                    }
+
+                    for (k = 0; k < nPlanes; k++) {
+
+                        for (m = 0; m < nPlanes; m++) {
+                            covar[k][m] += x[k] * x[m];
+                        }
+                    }
+                }
+            } // else not color
+
+            for (i = 0; i < nPlanes; i++) {
+
+                for (j = 0; j < nPlanes; j++) {
+                    covar[i][j] = (covar[i][j] / samples);
+                }
+            }
+            
+            // Choose an initial (e.g, random) separating matrix B.
+            // Under 9.4 examples the text states "The algorithms were always initialized so that
+            // B was the identity matrix.
+            B = new double[nPlanes][nPlanes];
+            Blast = new double[nPlanes][nPlanes];
+            for (i = 0; i < nPlanes; i++) {
+            	B[i][i] = 1.0;
+            }
+            y = new double[nPlanes];
+            alpha = new double[nPlanes];
+            beta = new double[nPlanes];
+            Eygy = new double[nPlanes];
+            Egpy = new double[nPlanes];
+            EgyyT = new double[nPlanes][nPlanes];
+            diagAlpha = new double[nPlanes][nPlanes];
+            D = new double[nPlanes][nPlanes];
+            maxBDiff = 1.0;
+            // The nonlinear function g is taken as the tanh function.
+            // g'(y) = 1.0 - tanh(y)*tanh(y)
+            while (maxBDiff >= epsilon) {
+            	for (i = 0; i < nPlanes; i++) {
+        			Eygy[i] = 0.0;
+        			Egpy[i] = 0.0;
+        			for (j = 0; j < nPlanes; j++) {
+        				EgyyT[i][j] = 0.0;
+        			}
+        		}
+            	if (haveColor) {
+	                for (j = 0; j < samples; j++) {
+	                    for (z = 0; z < zDim; z++) {
+	                        for (i = 1; i < 4; i++) {
+	                        	index = (i - 1) + (3 * z);
+	                        	y[index] = 0;
+	                        	for (z2 = 0; z2 < zDim; z2++) {
+	                        		for (i2 = 1; i2 < 4; i2++) {
+	                        			index2 = (i2 - 1) + (3 * z2);
+	                        			y[index] += B[index][index2] * zvalues[(4 * z2 * samples) + (4 * j) + i2];
+	                        		} // for (i2 = 1; i2 < 4; i2++)
+	                        	} // for (z2 = 0; z2 < zDim; z2++)
+	                        	ty = Math.tanh(y[index]);
+	                        	Eygy[index] += y[index]*ty;
+	                        	Egpy[index] += (1.0 - ty * ty);
+	                        } // for (i = 1;i < 4; i++)
+	                    } // for (z = 0; z < zDim; z++)
+	                    for (k = 0; k < nPlanes; k++) {
+	                    	tk = Math.tanh(y[k]);
+	                    	for (m = 0; m < nPlanes; m++) {
+	                    		EgyyT[k][m] += tk * y[m];
+	                    	}
+	                    }
+	                } // for (j = 0; j < samples; j++)
+	            } // if haveColor
+	            else { // not color
+	                for (j = 0; j < samples; j++) {
+	                    for (z = 0; z < zDim; z++) {
+	                    	y[z] = 0;
+	                    	for (z2 = 0; z2 < zDim; z2++) {
+	                    		y[z] += B[z][z2] * zvalues[(z2 * samples) + j];
+	                    	} // for (z2 = 0; z2 < zDim; z2++)
+	                    	ty = Math.tanh(y[z]);
+                        	Eygy[z] += y[z]*ty;
+                        	Egpy[z] += (1.0 - ty * ty);
+	                    } // for (z = 0; z < zDim; z++)
+	                    for (k = 0; k < nPlanes; k++) {
+	                    	tk = Math.tanh(y[k]);
+	                    	for (m = 0; m < nPlanes; m++) {
+	                    		EgyyT[k][m] += tk * y[m];
+	                    	}
+	                    }
+	                } // for (j = 0; j < samples; j++)
+	            } // else not color
+            	for (i = 0; i < nPlanes; i++) {
+            		Eygy[i] = Eygy[i]/samples;
+            		beta[i] = -Eygy[i];
+            		Egpy[i] = Egpy[i]/samples;
+            		alpha[i] = -1.0/(beta[i] + Egpy[i]);
+            		for (j = 0; j < nPlanes; j++) {
+            			EgyyT[i][j] = EgyyT[i][j]/samples;
+            		}
+            	}
+            	// Update the separating matrix B
+            	for (i = 0; i < nPlanes; i++) {
+            		diagAlpha[i][i] = alpha[i];
+            		EgyyT[i][i] = EgyyT[i][i] + beta[i];
+            	}
+            	matAlpha = new Matrix(diagAlpha);
+            	matBeta = new Matrix(EgyyT);
+            	matB = new Matrix(B);
+            	prod = ((matAlpha.times(matBeta)).times(matB)).getArray();
+            	for (i = 0; i < nPlanes; i++) {
+            		for (j = 0; j < nPlanes; j++) {
+            			B[i][j] = B[i][j] + prod[i][j];
+            		}
+            	}
+            	// Decorrelate and normalize
+            	matB = new Matrix(B);
+            	matC = new Matrix(covar);
+            	BCBT = ((matB.times(matC)).times(matB.transpose())).getArray();
+            	// BCBT = V * (diagonal eigenvalues) * V'
+                // In EigevalueDecomposition the columns of V represent the eigenvectors
+                // BCBT**(-1/2) = v * 1/sqrt(diagonal eigenvalues) * V'
+                Eigenvalue.decompose(BCBT, V, eigenvalue, e1 );
+                for (i = 0; i < nPlanes; i++) {
+                	D[i][i] = 1.0/Math.sqrt(eigenvalue[i]);
+                }
+                matV = new Matrix(V);
+                matD = new Matrix(D);
+                matWh = (matV.times(matD)).times(matV.transpose()); 
+                B = (matWh.times(matB)).getArray();
+            	maxBDiff = 0.0;
+            	for (i = 0; i < nPlanes; i++) {
+            		for (j = 0; j < nPlanes; j++) {
+            			if (Math.abs(B[i][j] - Blast[i][j]) > maxBDiff) {
+            				maxBDiff = Math.abs(B[i][j] - Blast[i][j]);
+            			}
+            			Blast[i][j] = B[i][j];
+            		}
+            	}
+            } // while (maxBDiff >= epsilon)
+        } // else icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
 
         fireProgressStateChanged(90);
         fireProgressStateChanged("Importing averaged destination data");
