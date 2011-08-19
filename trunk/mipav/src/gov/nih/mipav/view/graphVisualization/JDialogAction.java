@@ -173,8 +173,12 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		System.out.println("what the heck");
-
+		String command = e.getActionCommand();
+		if (command.equals("Cancel")) {
+			if(parent.getPropertiesDialog() != null) {
+	    		parent.getPropertiesDialog() .dispose();
+			}
+		}
 	}
 
 }

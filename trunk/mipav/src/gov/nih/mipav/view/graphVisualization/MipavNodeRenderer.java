@@ -38,15 +38,20 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
 			int iconHeight = 0;
 			int expanderWidth = 0;
 			// initializing call to configure of the text renderer
-			if ( c.getGraph().getEdges(node).size() == 1 &&  node.getLabel() != null ){
+			Graph graph = ((GraphPanel) c).getGraph();
+			
+			AttributeManager attrMgr = graph.getAttributeManager();
+			String action = (String)attrMgr.getAttribute( "ACTION", node );
+			
+			if ( action != null && (!action.trim().equals("")) ){
 				getTextRenderer().configure(c, mp, node.getLabel()+"*");
 			}else {
 				getTextRenderer().configure(c, mp, node.getLabel());
 			}
 			Component textComponent = getTextRenderer().getComponent();
 			// reading some attributes for the node
-			Graph graph = ((GraphPanel) c).getGraph();
-			AttributeManager attrMgr = graph.getAttributeManager();
+			
+
 			//Color textColour = (Color) attrMgr.getAttribute(GraphPanel.NODE_FOREGROUND, node);
 			//if (textColour != null)
 				//getTextRenderer().setColor(textColour);
@@ -77,9 +82,13 @@ public class MipavNodeRenderer extends DefaultNodeRenderer {
  				}*/
  				//setBackground(Color.white);
  				//getTextRenderer().setColor(Color.blue);
+
 				setFont(getFont().deriveFont(Font.BOLD));
-				
-				c.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				if ( action != null && (!action.trim().equals("")) ){
+					c.setCursor(new Cursor(Cursor.HAND_CURSOR));
+				}else {
+					c.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+				}
 				
 				String kNotes = (String)attrMgr.getAttribute( "ANNOTATION", node );	
 				
