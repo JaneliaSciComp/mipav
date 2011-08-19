@@ -17,6 +17,7 @@ import hypergraph.visualnet.GraphPanel;
 import hypergraph.visualnet.NodeRenderer;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridBagConstraints;
@@ -231,7 +232,15 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			}catch(FileNotFoundException ex) {
 				ex.printStackTrace();
 			}
-			setLogo(image);
+			
+
+			int width = this.getSize().width;
+			int height = this.getSize().height;
+			Image newImage = image.getScaledInstance(width, height, Image.SCALE_DEFAULT);
+			
+
+			
+			setLogo(newImage);
 			Color color = new Color(32,32,126);
 			String kColorString = new String( "#" + Integer.toHexString(color.getRGB()).substring(2) );
 			getPropertyManager().setProperty( "hypergraph.hyperbolic.background.color",kColorString );
@@ -928,11 +937,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				}
 				
 				
-			}else {
+			}/*else {
 				if(getGraph().getEdges(kNode).size() == 1) {
 					m_kImageFrame.actionPerformed( new ActionEvent( kNode, 0, kNode.getLabel() ) );
 				}
-			}
+			}*/
 		}
 	}
 
@@ -1250,6 +1259,14 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 	
 	
+	
+	
+	
+	public synchronized boolean isBGImageShowing() {
+		return isBGImageShowing;
+	}
+
+
 	public void paint(Graphics g) {
 
 		if(!isBGImageShowing) {

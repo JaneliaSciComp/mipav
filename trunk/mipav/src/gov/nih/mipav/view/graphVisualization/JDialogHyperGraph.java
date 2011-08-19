@@ -37,6 +37,8 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.awt.image.BufferedImage;
 import java.awt.image.PixelGrabber;
 import java.awt.print.PageFormat;
@@ -86,7 +88,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * Frame and user interface for displaying a HyperGraph in MIPAV.
  *
  */
-public class JDialogHyperGraph extends JFrame implements ActionListener {
+public class JDialogHyperGraph extends JFrame implements ActionListener, ComponentListener {
 
 	/** generated serial id */
 	private static final long serialVersionUID = 7133468293112430462L;
@@ -167,7 +169,8 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 			//setSize( 900, 600 );
 			pack();
 			this.setMinimumSize(this.getSize());
-			setResizable(false);
+			//setResizable(false);
+			addComponentListener(this);
 			setVisible(true);
 		}
 	}
@@ -196,7 +199,8 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		//setSize( 900, 600 );
 		pack();
 		this.setMinimumSize(this.getSize());
-		setResizable(false);
+		//setResizable(false);
+		addComponentListener(this);
 		setVisible(true);
 	}
 
@@ -737,6 +741,22 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 		
 		
 		
+		
+		//set up actions for MIPAV end nodes
+		Iterator iterator = tree.getNodes().iterator();
+
+		while (iterator.hasNext()) {
+			Node node = (Node) iterator.next();
+			
+			if(tree.getEdges(node).size() == 1) {
+				
+				attrMgr.setAttribute( "ACTION", node, node.getLabel() );
+			}
+			
+		}
+		
+		
+		
 		//setting background image
 		Image image = null;
 		/*try {
@@ -797,19 +817,26 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 	
 	     graphPanel.setMinimumSize(new Dimension(900,600));
 	     graphPanel.setPreferredSize(new Dimension(900,600));
+
 	     
 	     mainPanel = new JPanel(new GridBagLayout());
 	     gbc.anchor = GridBagConstraints.WEST;
+	     gbc.fill = GridBagConstraints.NONE;
+	     gbc.weighty = 0;
+	     gbc.weightx = 1;
 	     gbc.gridx = 0;
 	     gbc.gridy = 0;
 	     mainPanel.add(toolbarPanel,gbc);
 	     gbc.gridy = 1;
+	     gbc.weighty = 1;
+	     gbc.anchor = GridBagConstraints.WEST;
+	     gbc.fill = GridBagConstraints.BOTH;
 	     mainPanel.add(graphPanel,gbc);
 	
 	
 		getContentPane().add(mainPanel);
-	     
-	     
+		
+
 
 		
 	}
@@ -1087,6 +1114,51 @@ public class JDialogHyperGraph extends JFrame implements ActionListener {
 
 		return imageName;
 	}
+
+	@Override
+	public void componentHidden(ComponentEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void componentMoved(ComponentEvent e) {
+		
+	}
+
+	@Override
+	public void componentResized(ComponentEvent e) {
+		
+		if(graphPanel.isBGImageShowing()) {
+		
+			Image image = null;
+			try {
+				image = MipavUtil.getIconImage("oval4.jpg");
+			}catch(FileNotFoundException ex) {
+				ex.printStackTrace();
+			}
+			
+			Component comp = this.getComponent(0).getComponentAt(0, 1);
+
+			int width = comp.getSize().width;
+			int height = comp.getSize().height;
+			Image newImage = image.getScaledInstance(width, height, Image.SCALE_DEFAULT);
+			
+			graphPanel.setLogo(newImage);
+		}
+		
+		//repaint();
+		
+		
+	}
+
+	@Override
+	public void componentShown(ComponentEvent e) {
+
+		
+	}
+
+
 
 
 }
