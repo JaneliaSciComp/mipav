@@ -804,6 +804,7 @@ public class DICOM_PDUService extends DICOM_Comms {
     public void showMessage(final String str) {
 
         if (dicomMessageDisplayer != null) {
+            DICOMDisplayer.setMessageType(dicomMessageDisplayer.updateRow(), DICOMDisplayer.STATUS);
             dicomMessageDisplayer.showMessage(str);
         } else {
 
