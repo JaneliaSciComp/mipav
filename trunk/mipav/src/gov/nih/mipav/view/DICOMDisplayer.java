@@ -21,19 +21,19 @@ public class DICOMDisplayer extends JTable {
     private static final long serialVersionUID = -3693967365082796271L;
 
     /** A status type message is "Sending query", "Moving images", etc. */
-    public static int STATUS = 0;
+    public static final int STATUS = 0;
 
     /** A progress type message is the image number that is saved. */
-    public static int PROGRESS = 1;
+    public static final int PROGRESS = 1;
 
     /** A source type message is the server from which the images are coming. */
-    public static int SOURCE = 2;
+    public static final int SOURCE = 2;
 
     /** A destination type message is the file directory to which the images are going. */
-    public static int DESTINATION = 3;
+    public static final int DESTINATION = 3;
 
     /** An error type message is one thrown in an exception or if the files were not saved. */
-    public static int ERROR = 4;
+    public static final int ERROR = 4;
 
     /** DOCUMENT ME! */
     public static int ID = 5;
