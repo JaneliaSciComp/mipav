@@ -738,7 +738,7 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
-        if(name.equals("0008,1140")) {
+        if(name.equals("0018,5010")) {
             System.out.println("Stop");
         }
         
@@ -3502,6 +3502,11 @@ public class FileDicom extends FileDicomBase {
     	
     	VR vr = VR.UN;
 
+    	Preferences.debug("Writing tag "+element.getKey().toString(), Preferences.DEBUG_FILEIO);
+    	if(element.getKey().toString().equals("0028,0009")) {
+    	    System.out.println("Stop");
+    	}
+    	
         // System.out.println("w = " + dicomTags[i].toString());
         try {
 
@@ -3687,15 +3692,22 @@ public class FileDicom extends FileDicomBase {
                     bytesValue[k] = bytesV[k].byteValue();
                 }
                 
-                if((bytesV.length%2) != 0) {
-                	bytesValue[bytesV.length] = appendByte;
+                for(int k=bytesV.length; k<length; k++) {
+                    bytesValue[k] = appendByte;
                 }
 
                 outputFile.write(bytesValue);
         	} else if(obj instanceof String) {
-        		if(((String)obj).length()%2 != 0) {
-        			obj = obj + new String(new byte[]{appendByte});
-        		}
+        	    if(length >= ((String) obj).length()) {
+        	        byte[] appendAr = new byte[length - ((String) obj).length()];
+            	    for(int k=0; k<appendAr.length; k++) {
+            	        appendAr[k] = appendByte;
+            	    }
+            	    obj = obj+new String(appendAr);
+        	    } else {
+        	        Preferences.debug("Truncating string dicom data", Preferences.DEBUG_FILEIO);
+        	        obj = ((String) obj).substring(0, length);
+        	    }
         		
         		outputFile.writeBytes(obj.toString());
         	}
@@ -3818,8 +3830,6 @@ public class FileDicom extends FileDicomBase {
             } else {
                 writeInt(dataLength, endianess);
             }; 
-
-            final Iterator<Entry<FileDicomKey,FileDicomTag>> itr = table.getTagList().entrySet().iterator();
 
             for(int j=0; j<tagArray.length; j++) {
             	FileDicomTag tag = tagArray[j];
