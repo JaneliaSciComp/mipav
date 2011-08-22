@@ -182,7 +182,7 @@ public class FileInfoDicom extends FileInfoBase {
     public float sliceLocation;
 
     /** VR type can be IMPLICIT or EXPLICIT. */
-    public VRtype vr_type = VRtype.IMPLICIT;
+    private VRtype vr_type = VRtype.IMPLICIT;
 
     /** DICOM x coordianate of the slice location. */
     public float xLocation = 0;
@@ -214,7 +214,7 @@ public class FileInfoDicom extends FileInfoBase {
     public FileInfoDicom(String name, String directory, int format) {
         super(name, directory, format);
 
-        tagTable = new FileDicomTagTable(this);
+        tagTable = new FileDicomTagTable(this, vr_type);
     }
 
     /**
@@ -228,8 +228,9 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public FileInfoDicom(String name, String directory, int format, FileInfoDicom refInfo) {
         super(name, directory, format);
+        this.vr_type = refInfo.vr_type;
 
-        tagTable = new FileDicomTagTable(this, refInfo.getTagTable());
+        tagTable = new FileDicomTagTable(this, refInfo.getTagTable(), vr_type);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -964,5 +965,13 @@ public class FileInfoDicom extends FileInfoBase {
      */
     protected final void setModalityFromDicomStr(String value) {
         super.setModality(getModalityFromDicomStr(value));
+    }
+
+    public VRtype getVr_type() {
+        return vr_type;
+    }
+
+    public void setVr_type(VRtype vr_type) {
+        this.vr_type = vr_type;
     }
 }

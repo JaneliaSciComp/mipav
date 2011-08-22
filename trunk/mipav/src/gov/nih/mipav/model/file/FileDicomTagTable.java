@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
+import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
 import gov.nih.mipav.view.*;
 
 import java.util.*;
@@ -42,6 +44,9 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
     /** Tags unique to this slice, or all of the tags for this slice if this is a reference tag table. */
     private Hashtable<FileDicomKey,FileDicomTag> tagTable;
+    
+    /** VR_type to indicate explicit/implicit nature of tags contained in tag table */
+    private VRtype vr_type;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -50,12 +55,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @param  parent  The dicom file info that this tag table belongs to.
      */
-    public FileDicomTagTable(FileInfoDicom parent) {
-        tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
+    public FileDicomTagTable(FileInfoDicom parent, VRtype vr_type) {
+        this.tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
 
-        referenceTagTable = null;
-        isReferenceTagTable = true;
-        parentFileInfo = parent;
+        this.referenceTagTable = null;
+        this.isReferenceTagTable = true;
+        this.parentFileInfo = parent;
+        this.vr_type = vr_type;
     }
 
     /**
@@ -65,13 +71,14 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @param  parent          The dicom file info that this tag table belongs to.
      * @param  firstSliceTags  A reference to the tag table for the first slice of the image volume
      */
-    public FileDicomTagTable(FileInfoDicom parent, FileDicomTagTable firstSliceTags) {
-        tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
+    public FileDicomTagTable(FileInfoDicom parent, FileDicomTagTable firstSliceTags, VRtype vr_type) {
+        this.tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
 
-        referenceTagTable = firstSliceTags;
-        isReferenceTagTable = false;
+        this.referenceTagTable = firstSliceTags;
+        this.isReferenceTagTable = false;
 
-        parentFileInfo = parent;
+        this.parentFileInfo = parent;
+        this.vr_type = vr_type;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -161,13 +168,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         FileDicomTagTable newTable;
 
         if (this.isReferenceTagTable) {
-            newTable = new FileDicomTagTable(this.parentFileInfo);
+            newTable = new FileDicomTagTable(this.parentFileInfo, this.vr_type);
 
             if (this.childTagTables != null) {
                 newTable.childTagTables = (FileDicomTagTable[]) this.childTagTables.clone();
             }
         } else {
-            newTable = new FileDicomTagTable(this.parentFileInfo, this.referenceTagTable);
+            newTable = new FileDicomTagTable(this.parentFileInfo, this.referenceTagTable, this.vr_type);
         }
 
         newTable.tagTable = (Hashtable<FileDicomKey,FileDicomTag>) this.tagTable.clone();
@@ -235,22 +242,43 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      *
      * @return  size of the value in bytes
      */
-    public int getDataLength() {
-        //TODO: this should not return an odd number, allow for appending      
+    public int getDataLength(boolean includeTagID) {
         Iterator<FileDicomTag> tagsItr = tagTable.values().iterator();
         int datasize = 0;
         int nextLength = 0;
         FileDicomTag nextTag;
         while(tagsItr.hasNext()) {
         	nextTag = tagsItr.next();
-        	nextLength = nextTag.getLength();
+        	if(nextTag.getValueRepresentation() != VR.SQ) {
+        	    nextLength = nextTag.getLength();
+        	} else {
+        	    nextLength = ((FileDicomSQ)nextTag.getValue(false)).getDataLength();
+        	}
         	if(nextLength%2 != 0) {
         		Preferences.debug("Appending length within sequence tag", Preferences.DEBUG_FILEIO);
         		nextLength++;
         	}
             datasize += nextLength;
-            Preferences.debug("Tag "+nextTag.getKey()+" inside SQ has length "+nextLength, Preferences.DEBUG_FILEIO);
-            datasize += 8; //include size of header information for tag, assuming explicit VR
+            if(includeTagID) { //inside a sequence of elements, interested in total tag length 
+                Preferences.debug("Tag "+nextTag.getKey()+" inside SQ has length "+nextLength, Preferences.DEBUG_FILEIO);
+                if(vr_type == VRtype.EXPLICIT) {
+                    switch(nextTag.getType()) {
+                    case OB:
+                    case OW:
+                    case OF:
+                    case SQ:
+                    case UT:
+                    case UN:
+                        datasize += 8; //include 2 bytes VR, 2 bytes reserved, 4 bytes for length
+                        break;
+                    default:
+                        datasize += 4; //include 2 bytes VR, 2 bytes length   
+                    }
+                } else {
+                    datasize += 4; //include length for implicit VR
+                }
+                datasize += 4; //include group/element bytes
+            }
         }
 
         return datasize;

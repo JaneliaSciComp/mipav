@@ -2571,7 +2571,7 @@ public class FileIO {
                     final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
                     final FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo
                             .getFileDirectory(), oldDicomInfo.getFileFormat());
-                    (destFileInfo).vr_type = oldDicomInfo.vr_type;
+                    (destFileInfo).setVr_type(oldDicomInfo.getVr_type());
                     (destFileInfo).getTagTable().importTags(oldDicomInfo);
                     modelImageResult.setFileInfo(destFileInfo, 0);
                 }
@@ -2627,7 +2627,7 @@ public class FileIO {
                             final FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(),
                                     oldDicomInfo.getFileDirectory(), oldDicomInfo.getFileFormat(),
                                     (FileInfoDicom) modelImageResult.getFileInfo(0));
-                            (destFileInfo).vr_type = oldDicomInfo.vr_type;
+                            (destFileInfo).setVr_type(oldDicomInfo.getVr_type());
 
                             childTagTables[i - 1] = (destFileInfo).getTagTable();
 
@@ -10668,7 +10668,7 @@ public class FileIO {
             fileDicom.setRescaleIntercept(0);
             fileDicom.setRescaleSlope(1);
             fileDicom.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
-            fileDicom.vr_type = VRtype.EXPLICIT;
+            fileDicom.setVr_type(VRtype.EXPLICIT);
 
             final boolean isMincFloatNotPet = originalFileInfo.getFileFormat() == FileUtility.MINC
                     && originalImageDataType == ModelStorageBase.FLOAT;
@@ -11254,7 +11254,7 @@ public class FileIO {
             } else {
                 myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             }
-            myFileInfo.vr_type = VRtype.EXPLICIT;
+            myFileInfo.setVr_type(VRtype.EXPLICIT);
             final boolean isMincFloatNotPet = image.getFileInfo(0).getFileFormat() == FileUtility.MINC
                     && image.getType() == ModelStorageBase.FLOAT;
             final boolean isAnalyzeFloat = image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE
@@ -11800,7 +11800,7 @@ public class FileIO {
                 if(table.getValue("0020,9057") == null) {
                     table.setValue("0020,9057", z);
                 }
-                FileDicomTagTable item = new FileDicomTagTable(null);
+                FileDicomTagTable item = new FileDicomTagTable(null, myFileInfo.getVr_type());
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {

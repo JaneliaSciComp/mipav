@@ -88,23 +88,22 @@ public class FileDicomSQ extends ModelSerialCloneable {
      */
     public int getDataLength() {
         int datasize = 0;
-
+        int elementsize = 0;
+        
         for (int i = 0; i < sequence.size(); i++) {
 
-            // item start delimiter: FE FF 00 E0 00 00 00 00 (item start)
+            // item start delimiter and length: FE FF 00 E0 00 00 00 00 (item start), always present
             datasize += 8;
-
-            // call the item's version of this method for each item:
-            for (int j = 0; j < sequence.size(); j++) {
-                datasize += sequence.get(j).getDataLength(); 
-            }  
             
-        	// item end delimiter: FE FF 0D E0 00 00 00 00 (item end)
-            // not included: datasize += 8;
-            Preferences.debug("Sequence element has length "+datasize, Preferences.DEBUG_FILEIO);
+            elementsize = sequence.get(i).getDataLength(true);
+            if(elementsize != -1) {
+                datasize += elementsize;
+            } else {
+                return -1;
+            }  
         }
         
-        //do not include sequence beginning and ending delimiters
+        //sequence beginning and ending delimiters not included (since if end is present, length is undefined by standard)
         return datasize;
     }
 
