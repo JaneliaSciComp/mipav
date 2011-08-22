@@ -738,7 +738,7 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
-        if(name.equals("0018,5010")) {
+        if(name.equals("0028,1201")) {
             System.out.println("Stop");
         }
         
@@ -3503,7 +3503,7 @@ public class FileDicom extends FileDicomBase {
     	VR vr = VR.UN;
 
     	Preferences.debug("Writing tag "+element.getKey().toString(), Preferences.DEBUG_FILEIO);
-    	if(element.getKey().toString().equals("0028,0009")) {
+    	if(element.getKey().toString().equals("0028,1201")) {
     	    System.out.println("Stop");
     	}
     	
@@ -3688,7 +3688,11 @@ public class FileDicom extends FileDicomBase {
         default:
         	byte appendByte = 0;
         	
-        	if(obj instanceof Byte[]) {
+        	if(obj instanceof Short[]) { //guaranteed to be even # of bytes
+        	    for(int k=0; k<((Short[])obj).length; k++) {
+        	        writeUnsignedShort(((Short[])obj)[k].shortValue(), endianess);
+        	    }
+        	} if(obj instanceof Byte[]) {
         		bytesV = (Byte[]) obj;
         		
                 final byte[] bytesValue = new byte[bytesV.length+(bytesV.length%2)];
