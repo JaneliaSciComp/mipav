@@ -608,14 +608,14 @@ public class ModelImage extends ModelStorageBase {
                     fileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                             oldDicomInfo.getFileFormat());
 
-                    ((FileInfoDicom) fileInfo[0]).vr_type = oldDicomInfo.vr_type;
+                    ((FileInfoDicom) fileInfo[0]).setVr_type(oldDicomInfo.getVr_type());
                 } else {
 
                     // all other slices are children of the first file info..
                     fileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                             oldDicomInfo.getFileFormat(), (FileInfoDicom) fileInfo[0]);
 
-                    ((FileInfoDicom) fileInfo[i]).vr_type = oldDicomInfo.vr_type;
+                    ((FileInfoDicom) fileInfo[i]).setVr_type(oldDicomInfo.getVr_type());
 
                     childTagTables[i - 1] = ((FileInfoDicom) fileInfo[i]).getTagTable();
                 }
@@ -4449,7 +4449,7 @@ public class ModelImage extends ModelStorageBase {
                     // create a new reference file info
                     newDicomInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                         oldDicomInfo.getFileFormat());
-                    newDicomInfo[0].vr_type = oldDicomInfo.vr_type;
+                    newDicomInfo[0].setVr_type(oldDicomInfo.getVr_type());
                     newDicomInfo[0].setDataType(oldDicomInfo.getDataType());
                 } else {
 
@@ -4457,7 +4457,7 @@ public class ModelImage extends ModelStorageBase {
                     newDicomInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                         oldDicomInfo.getFileFormat(), newDicomInfo[0]);
                     
-                    newDicomInfo[i].vr_type = oldDicomInfo.vr_type;
+                    newDicomInfo[i].setVr_type(oldDicomInfo.getVr_type());
                     newDicomInfo[i].setDataType(oldDicomInfo.getDataType());
 
                     childTagTables[i - 1] = newDicomInfo[i].getTagTable();
