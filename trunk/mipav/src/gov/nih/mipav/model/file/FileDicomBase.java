@@ -747,6 +747,27 @@ imageSearch:while(num < raFileLength-5 && !isImage) {
 
         raFile.write(byteBuffer2);
     }
+    
+    /**
+     * Writes an unsigned short as two bytes to a file.
+     *
+     * @param      data       Data to be written to file.
+     * @param      endianess  <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *                        endian.
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public final void writeUnsignedShort(short data, boolean endianess) throws IOException {
+
+        if (endianess == BIG_ENDIAN) {
+            byteBuffer2[0] = (byte) ((data >>> 8) & 0xff);
+            byteBuffer2[1] = (byte) (data & 0xff);
+        } else {
+            byteBuffer2[0] = (byte) (data & 0xff);
+            byteBuffer2[1] = (byte) ((data >>> 8) & 0xff);
+        }
+        raFile.write(byteBuffer2);
+    }
 
     /**
      * Writes a byte to a file.
