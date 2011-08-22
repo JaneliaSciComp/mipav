@@ -174,14 +174,14 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                        // create a new reference file info
                        destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                        oldDicomInfo.getFileFormat());
-                       ((FileInfoDicom)destFileInfo[0]).vr_type = oldDicomInfo.vr_type;    
+                       ((FileInfoDicom)destFileInfo[0]).setVr_type(oldDicomInfo.getVr_type());    
                    } else {
 
                        // all other slices are children of the first file info..
                        destFileInfo[i] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                        oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[0]);
                        
-                       ((FileInfoDicom)destFileInfo[i]).vr_type = oldDicomInfo.vr_type;
+                       ((FileInfoDicom)destFileInfo[i]).setVr_type(oldDicomInfo.getVr_type()); 
                        childTagTables[i - 1] = ((FileInfoDicom) destFileInfo[i]).getTagTable();
                    }
                    FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[t]).getTagTable();

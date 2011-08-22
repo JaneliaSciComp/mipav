@@ -284,7 +284,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                  // create a new reference file info
                                  destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                                  oldDicomInfo.getFileFormat());
-                                 ((FileInfoDicom)destFileInfo[0]).vr_type = oldDicomInfo.vr_type;    
+                                 ((FileInfoDicom)destFileInfo[0]).setVr_type(oldDicomInfo.getVr_type());     
                              }
                              else {
 
@@ -292,7 +292,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                  destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                                  oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[0]);
                                  
-                                 ((FileInfoDicom)destFileInfo[j]).vr_type = oldDicomInfo.vr_type;
+                                 ((FileInfoDicom)destFileInfo[j]).setVr_type(oldDicomInfo.getVr_type()); 
                                  childTagTables[j - 1] = ((FileInfoDicom) destFileInfo[j]).getTagTable();
                              }
                               

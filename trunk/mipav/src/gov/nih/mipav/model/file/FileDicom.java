@@ -679,7 +679,10 @@ public class FileDicom extends FileDicomBase {
                 e.printStackTrace();
                 Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
             }
-            if(tagElementLength != -1 && bPtrOld+tagElementLength != getFilePointer()) {
+            if(bPtrOld+tagElementLength != getFilePointer()) {
+                Preferences.debug("Possible invalid tag length specified, processing and tag lengths do not agree.");
+            }
+            if(tagElementLength != -1 && bPtrOld+tagElementLength > getFilePointer()) {
                 seek(bPtrOld+tagElementLength); //processing tag was likely not successful, report error but continue parsing
                 Preferences.debug("Skipping tag due to file corruption (or image tag reached): "+key+"\n", Preferences.DEBUG_FILEIO);
             }
@@ -735,9 +738,13 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
+        if(name.equals("0008,1140")) {
+            System.out.println("Stop");
+        }
+        
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
-        if ( (fileInfo.vr_type == VRtype.IMPLICIT) || (groupWord == 2)) {
+        if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
 
             // implicit VR means VR is based on tag as defined in dictionary
             vr = DicomDictionary.getType(key);
@@ -900,7 +907,7 @@ public class FileDicom extends FileDicomBase {
             boolean supportedTransferSyntax = processTransferSyntax(strValue);
             if(supportedTransferSyntax) {
                 Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue
-                        + " VR type: "+fileInfo.vr_type+" Endianess: "+fileInfo.getEndianess() +" \n", Preferences.DEBUG_FILEIO);
+                        + " VR type: "+fileInfo.getVr_type()+" Endianess: "+fileInfo.getEndianess() +" \n", Preferences.DEBUG_FILEIO);
             } else {
                 Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue + " unknown!\n",
                         Preferences.DEBUG_FILEIO);
@@ -955,28 +962,28 @@ public class FileDicom extends FileDicomBase {
         // we should bounce out if we don't support this transfer syntax
         if (strValue.trim().equals("1.2.840.10008.1.2")) {
             fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-            fileInfo.vr_type = VRtype.IMPLICIT;
+            fileInfo.setVr_type(VRtype.IMPLICIT);
             encapsulated = false;
         } else if (strValue.trim().equals("1.2.840.10008.1.2.1")) {
             Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue
                     + " Explicit VR - Little Endian \n", Preferences.DEBUG_FILEIO);
 
             fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-            fileInfo.vr_type = VRtype.EXPLICIT;
+            fileInfo.setVr_type(VRtype.EXPLICIT);
             encapsulated = false;
         } else if (strValue.trim().equals("1.2.840.10008.1.2.2")) {
             Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue
                     + " Explicit VR - Big Endian \n", Preferences.DEBUG_FILEIO);
 
             fileInfo.setEndianess(FileBase.BIG_ENDIAN);
-            fileInfo.vr_type = VRtype.EXPLICIT;
+            fileInfo.setVr_type(VRtype.EXPLICIT);
             encapsulated = false;
         } else if (strValue.trim().startsWith("1.2.840.10008.1.2.4.")) { // JPEG
             Preferences.debug("File Dicom: readHeader - Transfer Syntax = " + strValue
                     + " Implicit VR - Little Endian \n", Preferences.DEBUG_FILEIO);
 
             fileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-            fileInfo.vr_type = VRtype.EXPLICIT;
+            fileInfo.setVr_type(VRtype.EXPLICIT);
             encapsulated = true;
             if (strValue.trim().equals(DICOM_Constants.UID_TransferJPEG2000LOSSLESS)) {
                 encapsulatedJP2 = true;
@@ -1144,7 +1151,7 @@ public class FileDicom extends FileDicomBase {
         
         int imageTagLoc = locateImageTag(0);
         if ( !encapsulated) {
-            if (fileInfo.vr_type == VRtype.IMPLICIT) {
+            if (fileInfo.getVr_type() == VRtype.IMPLICIT) {
                 Preferences.debug("Implicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setOffset(imageTagLoc-4 > 0 ? imageTagLoc-4 : imageTagLoc); // no image length, subtract 4
             }
@@ -2924,7 +2931,7 @@ public class FileDicom extends FileDicomBase {
      * @see FileDicomItem
      */
     private FileDicomTagTable getDataSet(int itemLength, final boolean endianess) throws IOException {
-        final FileDicomTagTable table = new FileDicomTagTable(null);
+        final FileDicomTagTable table = new FileDicomTagTable(null, fileInfo.getVr_type());
 
         final int startfptr = getFilePointer();
         boolean flag = true; //whether dicom header processing should continue
@@ -3146,7 +3153,7 @@ public class FileDicom extends FileDicomBase {
             throws IOException {
         boolean implicit = false;
 
-        if ( (fileInfo.vr_type == VRtype.IMPLICIT) || (groupWord == 2)) {
+        if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
 
             if (fileInfo.containsDICM) {
 
@@ -3257,7 +3264,7 @@ public class FileDicom extends FileDicomBase {
         // 0x10)+" - " , Preferences.DEBUG_FILEIO); System.err.print("( just found: ) "+ Integer.toString(groupWord, 0x10) +
         // ":"+Integer.toString(elementWord, 0x10)+ " - ");
 
-        if (fileInfo.vr_type == VRtype.EXPLICIT) {
+        if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
 
             /*
              * explicit tags carry an extra 4 bytes after the tag (group, element) information to describe the type of
@@ -3274,7 +3281,7 @@ public class FileDicom extends FileDicomBase {
                 elementLength = getLength(bigEndian, byteBuffer4[0], byteBuffer4[1], byteBuffer4[2], byteBuffer4[3]);
                 // Preferences.debug(" length " + Integer.toString(elementLength, 0x10) + "\n", Preferences.DEBUG_FILEIO);
             }
-        } else { // this is what is commonly used.
+        } else {
 
             // either IMPLICIT or group element is not SEQ_ITEM_BEGIN
             read(byteBuffer4);
@@ -3326,7 +3333,7 @@ public class FileDicom extends FileDicomBase {
                 // item as it written into the File
                 FileDicomTagTable item = null;
                 if (elementLength == 0) {
-                    item = new FileDicomTagTable(null);
+                    item = new FileDicomTagTable(null, fileInfo.getVr_type());
                 } else {
                     item = getDataSet(elementLength, endianess);
                 }
@@ -3498,7 +3505,7 @@ public class FileDicom extends FileDicomBase {
         // System.out.println("w = " + dicomTags[i].toString());
         try {
 
-            if (fileInfo.vr_type == VRtype.EXPLICIT) {
+            if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
                 vr = element.getValueRepresentation();// explicit VRs may be difference from implicit; in this case use the explicit
             } else {
                 vr = element.getType();
@@ -3553,29 +3560,25 @@ public class FileDicom extends FileDicomBase {
         writeShort((short) gr, endianess); // write group
         writeShort((short) el, endianess); // write element
 
-        if ( ( (fileInfo.vr_type == VRtype.EXPLICIT) || (gr == 2)) && (vr != null)) {
+        if ( ( (fileInfo.getVr_type() == VRtype.EXPLICIT) || (gr == 2)) && (vr != null)) {
             outputFile.writeBytes(vr.toString()); // write explicit vr
 
-            if (vr.equals(VR.SQ)) {
-
-                // explicit VR 32 bit length
-                outputFile.writeShort(0); // skip two reserved bytes
-                
+            switch(vr) {
+            case SQ:    
                 Preferences.debug("SQ Length: "+ length, Preferences.DEBUG_FILEIO);
-                
+            case OB:
+            case OW:
+            case OF:
+            case UT:
+            case UN:
+                writeShort((short)0, endianess); // skip two reserved bytes
                 if (length == -1) {
                     writeInt(0xFFFFFFFF, endianess); // write undefined length
                 } else {
-                    writeInt(length, endianess);
+                    writeInt(length, endianess); // write length as int
                 }
-            } else if (vr.equals(VR.OB) || vr.equals(VR.OW) || vr.equals(VR.UN)) {
-
-                // explicit vr 32 bit length
-                outputFile.writeShort(0); // skip two reserved bytes
-                writeInt(length, endianess);
-            }
-            // explicit vr 16 bit length
-            else {
+                break;
+            default:
                 writeShort((short) length, endianess); // write length as a short
             }
         } else { // IMPLICIT VR
@@ -3663,9 +3666,9 @@ public class FileDicom extends FileDicomBase {
         	
         case SQ:
         	final FileDicomSQ sq = (FileDicomSQ) element.getValue(false);
-            writeSequence(outputFile, fileInfo.vr_type, sq, endianess);
-            if(length < 0) {
-                // write end-sequence tag:
+            writeSequence(outputFile, fileInfo.getVr_type(), sq, endianess);
+            if(length == -1) {
+                // write end-sequence tag for undefined length sequences
                 writeShort((short) 0xFFFE, endianess);
                 writeShort((short) 0xE0DD, endianess);
                 writeInt(0, endianess);
@@ -3757,7 +3760,7 @@ public class FileDicom extends FileDicomBase {
             return;
         }
 
-        if (fileInfo.vr_type == VRtype.EXPLICIT) {
+        if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
             VR imageTagVR = DicomDictionary.getVR(new FileDicomKey("7FE0,0010"));
 
             // write VR and two reserved bytes
@@ -3805,15 +3808,16 @@ public class FileDicom extends FileDicomBase {
         for (int i = 0; i < sq.getSequence().size(); i++) {
             FileDicomTagTable table = sq.getSequence().get(i);
             FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(table.getTagList());
-            int dataLength = table.getDataLength();
+            int dataLength = table.getDataLength(true); //include tag header information for each tag
             // write item-start tag
             writeShort((short) 0xFFFE, endianess);
             writeShort((short) 0xE000, endianess);
-            if (dataLength > -1) {
-                writeInt(dataLength, endianess); 
-            } else {
+            
+            if (dataLength == -1) {
                 writeInt(0xFFFFFFFF, endianess); // write undefined length
-            }
+            } else {
+                writeInt(dataLength, endianess);
+            }; 
 
             final Iterator<Entry<FileDicomKey,FileDicomTag>> itr = table.getTagList().entrySet().iterator();
 
@@ -3822,7 +3826,7 @@ public class FileDicom extends FileDicomBase {
                 writeNextTag(tag, outputFile);
             }
 
-            if(dataLength < 0) {
+            if(dataLength == -1) {
                 // write end-item tag:
                 writeShort((short) 0xFFFE, endianess);
                 writeShort((short) 0xE00D, endianess);
