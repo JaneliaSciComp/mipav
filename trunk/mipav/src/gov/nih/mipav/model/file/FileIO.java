@@ -4,6 +4,7 @@ package gov.nih.mipav.model.file;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.DICOM_Constants;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.provenance.actions.ActionOpenImage;
 import gov.nih.mipav.model.scripting.*;
@@ -10667,7 +10668,7 @@ public class FileIO {
             fileDicom.setRescaleIntercept(0);
             fileDicom.setRescaleSlope(1);
             fileDicom.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
-            fileDicom.vr_type = FileInfoDicom.EXPLICIT;
+            fileDicom.vr_type = VRtype.EXPLICIT;
 
             final boolean isMincFloatNotPet = originalFileInfo.getFileFormat() == FileUtility.MINC
                     && originalImageDataType == ModelStorageBase.FLOAT;
@@ -11253,7 +11254,7 @@ public class FileIO {
             } else {
                 myFileInfo.getTagTable().setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             }
-            myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
+            myFileInfo.vr_type = VRtype.EXPLICIT;
             final boolean isMincFloatNotPet = image.getFileInfo(0).getFileFormat() == FileUtility.MINC
                     && image.getType() == ModelStorageBase.FLOAT;
             final boolean isAnalyzeFloat = image.getFileInfo(0).getFileFormat() == FileUtility.ANALYZE
