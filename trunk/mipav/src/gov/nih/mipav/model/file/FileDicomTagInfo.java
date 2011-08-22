@@ -67,7 +67,7 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
         OB("OB", StringType.BYTE_STRING),
         OW("OW", StringType.WORD_STRING), 
         SQ("SQ", StringType.SEQUENCE), 
-        AT("AT", StringType.TAG), 
+        AT("AT", StringType.TAG), //Dicom tag pointer
         UN("UN", StringType.UNKNOWN), 
         XX("XX", StringType.UNSUPPORTED), 
         DA("DA", StringType.DATE), 

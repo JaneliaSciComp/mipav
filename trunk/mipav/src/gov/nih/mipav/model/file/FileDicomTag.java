@@ -577,6 +577,8 @@ public class FileDicomTag extends ModelSerialCloneable {
         
         if(type instanceof NumType) {
             return ((NumType) type).getNumBytes();
+        } else if(vr.equals(VR.AT)){
+            return 4;
         } else {
             return 1;
         }
