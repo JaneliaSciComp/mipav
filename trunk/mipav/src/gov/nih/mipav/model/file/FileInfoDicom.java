@@ -32,11 +32,22 @@ public class FileInfoDicom extends FileInfoBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3072660161266896186L;
 
-    /** Used to indicate that the DICOM tags are explicit (i.e they have VRs). */
-    public static final boolean EXPLICIT = false;
-
-    /** Used to indicate that the DICOM tags are implicit (i.e. they use the DICOM dictionary). */
-    public static final boolean IMPLICIT = true;
+    public enum VRtype {
+        /** Used to indicate that the DICOM tags are explicit (i.e they have VRs). */
+        EXPLICIT(false),
+        /** Used to indicate that the DICOM tags are implicit (i.e. VRs defined by DICOM dictionary). */
+        IMPLICIT(true);
+        
+        private boolean legacyVal;
+        
+        VRtype(boolean legacyVal) {
+            this.legacyVal = legacyVal;
+        }
+        
+        public boolean getLegacyVal() {
+            return legacyVal;
+        }
+    }
     
     /** (0028,0103) Pixel Representations */
     public static final int UNDEFINED_PIXEL_REP = -1;
@@ -171,7 +182,7 @@ public class FileInfoDicom extends FileInfoBase {
     public float sliceLocation;
 
     /** VR type can be IMPLICIT or EXPLICIT. */
-    public boolean vr_type = IMPLICIT;
+    public VRtype vr_type = VRtype.IMPLICIT;
 
     /** DICOM x coordianate of the slice location. */
     public float xLocation = 0;
