@@ -3680,6 +3680,11 @@ public class FileDicom extends FileDicomBase {
             }
         	break;
         
+        case AT:
+            writeShort((short) ((FileDicomKey)obj).getGroupNumber(), endianess);
+            writeShort((short) ((FileDicomKey)obj).getElementNumber(), endianess);
+            break;
+        	
         default:
         	byte appendByte = 0;
         	
