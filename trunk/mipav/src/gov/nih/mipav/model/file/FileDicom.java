@@ -3489,13 +3489,17 @@ public class FileDicom extends FileDicomBase {
         fileInfo.getTagTable().setValue("0018,1019", MipavUtil.getVersion());
     }
 
-    private void writeNextTag(FileDicomTag element, RandomAccessFile outputFile) throws IOException {
-        Preferences.debug("Processing tag "+element.getKey()+" with VR "+element.getValueRepresentation()+"\n", Preferences.DEBUG_FILEIO);
+    /**
+     * Writes a dicom tag to the provided output file.  This method uses the transfer syntax of the file to 
+     * determine the format of the tag.
+     */
+    private void writeNextTag(FileDicomTag tag, RandomAccessFile outputFile) throws IOException {
+        Preferences.debug("Processing tag "+tag.getKey()+" with VR "+tag.getValueRepresentation()+"\n", Preferences.DEBUG_FILEIO);
     	
     	VR vr = VR.UN;
 
-    	Preferences.debug("Writing tag "+element.getKey().toString()+"\n", Preferences.DEBUG_FILEIO);
-    	if(element.getKey().toString().equals("0028,1201")) {
+    	Preferences.debug("Writing tag "+tag.getKey().toString()+"\n", Preferences.DEBUG_FILEIO);
+    	if(tag.getKey().toString().equals("0028,1201")) {
     	    System.out.println("Stop");
     	}
     	
@@ -3503,32 +3507,32 @@ public class FileDicom extends FileDicomBase {
         try {
 
             if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
-                vr = element.getValueRepresentation();// explicit VRs may be difference from implicit; in this case use the explicit
+                vr = tag.getValueRepresentation();// explicit VRs may be difference from implicit; in this case use the explicit
             } else {
-                vr = element.getType();
+                vr = tag.getType();
             }
         } catch (final NullPointerException e) {
             vr = VR.UN;
         }
 
         // System.out.println(" Name = " + dicomTags[i].toString());
-        final int gr = element.getGroup();
-        final int el = element.getElement();
+        final int gr = tag.getGroup();
+        final int el = tag.getElement();
 
         // Returns the current length of the value of the dicom tag
         int length = 0;
         if(vr.equals(VR.SQ)) {
-        	length = ((FileDicomSQ) element.getValue(false)).getLength();
+        	length = ((FileDicomSQ) tag.getValue(false)).getLength();
         } else {
-        	length = element.getLength();
+        	length = tag.getLength();
         }
         if(length%2 != 0) {
         	length++; //an odd length tag is appended
         }
 
-        final int nValues = element.getNumberOfValues();
+        final int nValues = tag.getNumberOfValues();
 
-        final int vm = element.getValueMultiplicity();
+        final int vm = tag.getValueMultiplicity();
         // Not sure if I need this - efilm adds it - also efilm has tag, 0000 lengths (meta lengths)for tag groups
         // (02, 08, ....) if (gr==2 && fileInfo.getVRType() == fileInfo.IMPLICIT){
         // fileInfo.setVRType(fileInfo.EXPLICIT); } else if (gr > 2){ fileInfo.setVRType(fileInfo.IMPLICIT); }
@@ -3536,7 +3540,7 @@ public class FileDicom extends FileDicomBase {
         if ( (gr == 2) && (el == 0)) {
 
             // length of the transfer syntax group; after this group is written, need to change endianess
-            metaGroupLength = ((Integer) element.getValue(false)).intValue();
+            metaGroupLength = ((Integer) tag.getValue(false)).intValue();
         }
 
         if (fileInfo.containsDICM) {
@@ -3603,7 +3607,7 @@ public class FileDicom extends FileDicomBase {
         }
         
         long currentFilePointer = raFile.getFilePointer();
-        Object obj = element.getValue(false);
+        Object obj = tag.getValue(false);
         
         switch(vr) {
         case US:
@@ -3662,7 +3666,7 @@ public class FileDicom extends FileDicomBase {
         	break;
         	
         case SQ:
-        	final FileDicomSQ sq = (FileDicomSQ) element.getValue(false);
+        	final FileDicomSQ sq = (FileDicomSQ) tag.getValue(false);
             writeSequence(outputFile, fileInfo.getVr_type(), sq, endianess);
             if(length == -1) {
                 // write end-sequence tag for undefined length sequences
@@ -3715,9 +3719,9 @@ public class FileDicom extends FileDicomBase {
         }
         
         if(raFile.getFilePointer() == currentFilePointer) {
-        	Preferences.debug("No data was written for tag "+element.getKey().toString(), Preferences.DEBUG_FILEIO);
+        	Preferences.debug("No data was written for tag "+tag.getKey().toString(), Preferences.DEBUG_FILEIO);
         } else {
-        	Preferences.debug("Wrote value for key "+element.getKey().toString()+" of length "+length+" with value "+obj.toString(), Preferences.DEBUG_FILEIO);
+        	Preferences.debug("Wrote value for key "+tag.getKey().toString()+" of length "+length+" with value "+obj.toString(), Preferences.DEBUG_FILEIO);
         }
     }
     
