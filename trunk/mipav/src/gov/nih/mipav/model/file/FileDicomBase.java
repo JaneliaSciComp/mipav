@@ -442,6 +442,10 @@ public class FileDicomBase {
         raFile.readFully(tagBuffer);
     }
     
+    /**
+     * Locates a DICOM image beginning at the given offset.  When multiple images after the offset exist,
+     * imageNumber can be used to specify the exact image to retrieve.
+     */
     public int locateImageTag(int offset, int imageNumber) {
         int tagSize = 0;
         int numImagesLoc = 0;
