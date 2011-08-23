@@ -511,6 +511,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredBaseImage;
         ModelImage registeredSrcImage;
@@ -622,10 +623,10 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
             // Register each image half of the way to the same center point
             if (!entireImage) {
                 reg2 = new AlgorithmRegOAR2D(srcImage, baseImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample, doMultiThread);
             } else {
                 reg2 = new AlgorithmRegOAR2D(srcImage, baseImage, cost, DOF, interp, coarseBegin, coarseEnd, coarseRate,
-                                             fineRate, doSubsample);
+                                             fineRate, doSubsample, doMultiThread);
             }
 
             reg2.run();
@@ -673,10 +674,10 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
 
             if (!entireImage) {
                 reg2 = new AlgorithmRegOAR2D(baseImage, srcImage, inputWeightImage, refWeightImage, cost, DOF, interp,
-                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample, doMultiThread);
             } else {
                 reg2 = new AlgorithmRegOAR2D(baseImage, srcImage, cost, DOF, interp, coarseBegin, coarseEnd, coarseRate,
-                                             fineRate, doSubsample);
+                                             fineRate, doSubsample, doMultiThread);
             }
 
             reg2.run();
@@ -977,6 +978,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredImage;
         ModelImage registeredSrcImage;
@@ -1131,10 +1133,11 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
 
                 if (!entireImage) {
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, refWeightImage, inputWeightImage, cost, DOF,
-                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample,
+                                                 doMultiThread);
                 } else {
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                 }
 
                 reg2.run();
@@ -1181,10 +1184,11 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                     transform.disposeLocal();
                     transform = null;
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, inputWeightImage, refWeightImage, cost, DOF,
-                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample,
+                                                 doMultiThread);
                 } else {
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                 }
 
                 reg2.run();
@@ -1492,6 +1496,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredImageX;
         ModelImage registeredImageY;
@@ -1659,10 +1664,10 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
             // Register each color half of the way to the same center point
             if (!entireImage) {
                 reg2 = new AlgorithmRegOAR2D(refImage, inputImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample, doMultiThread);
             } else {
                 reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                             coarseRate, fineRate, doSubsample);
+                                             coarseRate, fineRate, doSubsample, doMultiThread);
             }
 
             reg2.run();
@@ -1708,10 +1713,10 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
 
             if (!entireImage) {
                 reg2 = new AlgorithmRegOAR2D(inputImage, refImage, inputWeightImage, refWeightImage, cost, DOF, interp,
-                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                             coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample, doMultiThread);
             } else {
                 reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                             coarseRate, fineRate, doSubsample);
+                                             coarseRate, fineRate, doSubsample, doMultiThread);
             }
 
             reg2.run();
@@ -2057,6 +2062,7 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredImageX;
         ModelImage registeredImageY;
@@ -2246,10 +2252,11 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                 // Register each color half of the way to the same center point
                 if (!entireImage) {
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, refWeightImage, inputWeightImage, cost, DOF,
-                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample,
+                                                 doMultiThread);
                 } else {
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                 }
 
                 reg2.run();
@@ -2286,10 +2293,11 @@ public class AlgorithmColocalizationEM extends AlgorithmBase {
                     transform.disposeLocal();
                     transform = null;
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, inputWeightImage, refWeightImage, cost, DOF,
-                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample);
+                                                 interp, coarseBegin, coarseEnd, coarseRate, fineRate, doSubsample,
+                                                 doMultiThread);
                 } else {
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                 }
 
                 reg2.run();
