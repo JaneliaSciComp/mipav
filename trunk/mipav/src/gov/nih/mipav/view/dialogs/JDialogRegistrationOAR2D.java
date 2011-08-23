@@ -89,6 +89,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private boolean doSubsample;
     private boolean doJTEM;
+    private boolean doMultiThread;
 
     /** DOCUMENT ME! */
     private String fileNameWRef, directoryWRef, fileNameWInput, directoryWInput;
@@ -169,6 +170,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private JCheckBox sampleCheckBox;
     /** DOCUMENT ME! */
     private JCheckBox jtemCheckBox;
+    
+    private JCheckBox multiThreadCheckBox;
 
     /** DOCUMENT ME! */
     private int scaleStepsBF;
@@ -1131,6 +1134,14 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     public void setSubsample(boolean doSubsample) {
         this.doSubsample = doSubsample;
     }
+    
+    /**
+     * Accessor to set whether or not powell's algorithm uses multithreading
+     * @param doMultiThread
+     */
+    public void setMultiThread(boolean doMultiThread) {
+    	this.doMultiThread = doMultiThread;
+    }
 
     /**
      * Accessor to set the VOIs only flag.
@@ -1232,11 +1243,12 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
         if (weighted) {
             reg2 = new AlgorithmRegOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, bracketBound,
-                                         maxIterations, numMinima);
+                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread,
+                                         bracketBound, maxIterations, numMinima);
         } else {
             reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
-                                         fineRate, doSubsample, bracketBound, maxIterations, numMinima);
+                                         fineRate, doSubsample, doMultiThread,
+                                         bracketBound, maxIterations, numMinima);
             reg2.setJTEM(doJTEM);
         }
 
@@ -1308,6 +1320,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
 
         setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setMultiThread(scriptParameters.getParams().getBoolean("do_multi_thread"));
         setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
         switch(outOfBoundsIndex) {
             case 0: 
@@ -1360,6 +1373,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_multi_thread", doMultiThread));
         scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
@@ -1783,6 +1797,12 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         jtemCheckBox.setForeground(Color.black);
         jtemCheckBox.setSelected(false);
         jtemCheckBox.setEnabled(true);
+        
+        multiThreadCheckBox = new JCheckBox("Multi-threading enabled (not deterministic)");
+        multiThreadCheckBox.setFont(serif12);
+        multiThreadCheckBox.setForeground(Color.black);
+        multiThreadCheckBox.setSelected(true);
+        multiThreadCheckBox.setEnabled(true);
 
         Insets insets = new Insets(0, 2, 0, 2);
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1858,6 +1878,12 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(jtemCheckBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 10;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optPanel.add(multiThreadCheckBox, gbc);
 
         ButtonGroup weightGroup = new ButtonGroup();
 
@@ -2793,6 +2819,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
         doSubsample = sampleCheckBox.isSelected();
         doJTEM = jtemCheckBox.isSelected();
+        doMultiThread = multiThreadCheckBox.isSelected();
         
         fillValue = Float.valueOf(valueText.getText()).floatValue();
         outOfBoundsIndex = outOfBoundsComboBox.getSelectedIndex();
