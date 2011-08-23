@@ -119,6 +119,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     /** If true subsample. */
     private final boolean doSubsample;
     private boolean doJTEM;
+    
+    private boolean doMultiThread;
 
     /** Isotropic input image. */
     private ModelImage imageInputIso;
@@ -354,6 +356,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
+     * @param doMultiThread
      * 
      * <p>
      * Constructor without weighting and without advanced settings (bracket, num iter).
@@ -361,7 +364,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
-            final float _fineRate, final boolean doSubsample) {
+            final float _fineRate, final boolean doSubsample, final boolean doMultiThread) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -394,6 +397,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
         weighted = false;
         this.doSubsample = doSubsample;
+        this.doMultiThread = doMultiThread;
 
     }
 
@@ -414,6 +418,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
+     * @param doMultiThread
      * 
      * <p>
      * Constructor with weighting and without advanced settings (bracket, num iter).
@@ -422,7 +427,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
-            final boolean doSubsample) {
+            final boolean doSubsample, final boolean doMultiThread) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -457,6 +462,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
         weighted = true;
         this.doSubsample = doSubsample;
+        this.doMultiThread = doMultiThread;
 
     }
 
@@ -473,6 +479,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
+     * @param doMultiThread
      * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
      *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
@@ -485,7 +492,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
-            final float _fineRate, final boolean doSubsample, final int _bracketBound, final int _baseNumIter,
+            final float _fineRate, final boolean doSubsample, final boolean doMultiThread,
+            final int _bracketBound, final int _baseNumIter,
             final int _numMinima) {
         super(null, _imageB);
         refImage = _imageA;
@@ -519,6 +527,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
         weighted = false;
         this.doSubsample = doSubsample;
+        this.doMultiThread = doMultiThread;
         bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
@@ -542,6 +551,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
+     * @param doMultiThread
      * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
      *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
@@ -555,7 +565,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
-            final boolean doSubsample, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final boolean doSubsample, final boolean doMultiThread, 
+            final int _bracketBound, final int _baseNumIter, final int _numMinima) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -590,6 +601,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
         weighted = true;
         this.doSubsample = doSubsample;
+        this.doMultiThread = doMultiThread;
         bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
@@ -2368,7 +2380,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             dofs = 3;
         }
         powell = new AlgorithmPowellOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false, bracketBound);
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setMultiThreadingEnabled(doMultiThread);
         powell.setUseJTEM(doJTEM);
 
         // Should we even try to coarse since 2D images at level 8 are pretty small and not computionally taxing ?
@@ -2497,7 +2509,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
                 bracketBound);
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setMultiThreadingEnabled(doMultiThread);
         powell.setUseJTEM(doJTEM);
 
         paths[1] = new Vector<Vector<Vector3f>>(10);
@@ -2584,7 +2596,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, rigidFlag, bracketBound);
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setMultiThreadingEnabled(doMultiThread);
         powell.setUseJTEM(doJTEM);
 
         // long startTime = System.nanoTime();
