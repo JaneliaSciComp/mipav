@@ -38,6 +38,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
 
+
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
 import javax.swing.JDialog;
@@ -48,6 +49,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JRootPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.Timer;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -99,6 +101,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	private Node 			lastMouseClickNode;
 	
 	private boolean isBGImageShowing = true;
+	
+	private Timer clickTimer;
 
 	/**
 	 * Creates the GraphPanel display.
@@ -728,6 +732,10 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	 * @see hypergraph.visualnet.GraphPanel#mouseClicked(java.awt.event.MouseEvent)
 	 */
 	public void mouseClicked(MouseEvent e) {
+		final int clickDelay=500; //delay in msec before processing events
+		
+		
+		
 		if ( e.getButton() == MouseEvent.BUTTON3 )
 		{
 			// Popup a menu on right-click:
@@ -744,27 +752,47 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			else if (element.getElementType() == Element.EDGE_ELEMENT) {
 				popupEdge( e, (Edge)element );
 			}
-		}
-		else if ( !e.isControlDown() )
-		{
-
-			// reset the picked nodes:
+		}else {
 
 			resetPicked();
 			
-			/*if (isOnLogo(e.getPoint())) {
-				logoClicked(e);
-				return;
-			}*/
+
 			setHoverElement(null, false);
-			Element element = getElement(e.getPoint());
+			final Element element = getElement(e.getPoint());
+
+			
 			if (element != null && element.getElementType() == Element.NODE_ELEMENT) {
 				if (e.getClickCount() == 1) {
-					nodeClicked(1, (Node) element);
-					return;
+					
+					AttributeManager attrMgr = getGraph().getAttributeManager();
+					String  action = (String)attrMgr.getAttribute( "ACTION", (Node) element );
+					
+					
+					if ( action != null && (!action.trim().equals("")) )
+					{
+						clickTimer=new Timer(clickDelay, new ActionListener(){
+							public void actionPerformed(ActionEvent e){
+								//do something for the single click
+								nodeClicked(1, (Node) element);
+								return;
+								
+							}
+						});
+					 clickTimer.setRepeats(false); //after expiring once, stop the timer
+					 clickTimer.start();
+					}
+					
+					
+					 
+					
+
 				}
-				if (e.getClickCount() == 2 && lastMouseClickNode != null) {
-					nodeClicked(2, lastMouseClickNode);
+				if (e.getClickCount() == 2) {
+					if(clickTimer != null) {
+						clickTimer.stop(); //the single click will not be processed
+					}
+
+					nodeClicked(2, (Node) element);
 					return;
 				}
 				NodeRenderer nr = getNodeRenderer();
@@ -772,34 +800,12 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 				nr.configure(this, glm.getNodePosition((Node) element), (Node) element);
 			}
 
-//			if (node != null) {
-//				if (!e.isShiftDown())
-//					getSelectionModel().clearSelection();
-//				if ( getSelectionModel().isElementSelected(node) )
-//					getSelectionModel().removeSelectionElement(node);
-//				else
-//					getSelectionModel().addSelectionElement(node);
-//				return;
-//			}
-//			getSelectionModel().clearSelection();
-			//super.mouseClicked(e);
+
 			
 			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			//super.mouseClicked(e);
 		}
+		
+
 	}
 
 	@Override
@@ -899,10 +905,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	{
 		//super.nodeClicked(iClickCount, kNode);
 		
-		if (iClickCount == 1) {
-			lastMouseClickNode = kNode;
+		if (iClickCount == 2) {
+			/*lastMouseClickNode = kNode;
 			if (lastMouseClickNode != null)
-				centerNode(lastMouseClickNode);
+				centerNode(lastMouseClickNode);*/
+			centerNode(kNode);
 		}
 		
 		/*
@@ -919,7 +926,7 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
     		}
 		}
 		 */
-		if ( (iClickCount >= 2) && (m_kImageFrame != null) && (kNode != null) )
+		if ( (iClickCount == 1) && (m_kImageFrame != null) && (kNode != null) )
 		{
 
 			
