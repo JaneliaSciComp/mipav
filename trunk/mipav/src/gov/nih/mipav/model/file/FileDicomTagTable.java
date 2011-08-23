@@ -542,14 +542,9 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         }
         
 
-        tag = new FileDicomTag(info, value);
-        if(length != -1) {
-            tag.setLength(length);
-        }
+        tag = new FileDicomTag(info, value);  //automatically computes proper length for tag
 
         put(tag);
-
-        tag.setValue(value, length);
 
         // we may have added the tag as an explicit/private tag before setting the value.  remove unnecessary
         // duplication..
