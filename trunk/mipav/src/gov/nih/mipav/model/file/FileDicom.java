@@ -3357,17 +3357,6 @@ public class FileDicom extends FileDicomBase {
         
         return sq;
     }
-    
-    
-
-    @SuppressWarnings("unused")
-    private void setPerFrameEnhancedSequenceTags(final boolean endianess) {
-        try {
-            getNextElement(endianess); // gets the first ITEM tag
-        } catch (final Exception e) {
-            e.printStackTrace();
-        }
-    }
 
     /**
      * Reads a length of the data and deposits it into a single Short or an array of Short as needed by the tag's VM.
