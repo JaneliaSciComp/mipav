@@ -76,6 +76,8 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
 
     /** Default subsample set to true:. */
     private boolean m_bDoSubsample = true;
+    
+    private boolean m_bDoMultiThread = true;
 
     /** Boolean to check that a file is loaded before mouse operations are allowed to occur. */
     private boolean m_bFileLoaded = false;
@@ -1607,7 +1609,7 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
 
         AlgorithmRegOAR2D kAlgorithmReg = new AlgorithmRegOAR2D(kReferenceReg, kTileReg, kReferenceMask, kTileMask,
                 m_iCost, m_iDOF, m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate, m_bDoSubsample,
-                m_iBracketBound, m_iMaxIterations, m_iNumMinima);
+                m_bDoMultiThread, m_iBracketBound, m_iMaxIterations, m_iNumMinima);
         kAlgorithmReg.addListener(this);
         kAlgorithmReg.setRunningInSeparateThread(false);
 
