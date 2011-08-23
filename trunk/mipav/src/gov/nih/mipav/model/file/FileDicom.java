@@ -674,7 +674,7 @@ public class FileDicom extends FileDicomBase {
             }
             int bPtrOld = getFilePointer();
             try {
-                flag = processNextTag(tagTable, key, endianess);
+                flag = processNextTag(tagTable, key, endianess, false);
             } catch(Exception e) {
                 e.printStackTrace();
                 Preferences.debug("Error parsing tag: "+key+"\n", Preferences.DEBUG_FILEIO);
@@ -688,7 +688,7 @@ public class FileDicom extends FileDicomBase {
             }
             
             if (getFilePointer() >= fLength || (elementLength == -1 && key.toString().matches(FileDicom.IMAGE_TAG))) { // for dicom files that contain no image information, the image tag will never be encountered
-                int imageLoc = locateImageTag(0);
+                int imageLoc = locateImageTag(0, numEmbeddedImages);
                 if(!notDir) { // Done reading tags, if DICOMDIR then don't do anything else
                     flag = false;
                 } else if(imageLoc != -1 && !imageLoadReady) {
@@ -731,7 +731,7 @@ public class FileDicom extends FileDicomBase {
      * @return
      * @throws IOException
      */
-    private boolean processNextTag(FileDicomTagTable tagTable, FileDicomKey key, boolean endianess) throws IOException {
+    private boolean processNextTag(FileDicomTagTable tagTable, FileDicomKey key, boolean endianess, boolean inSequence) throws IOException {
         String strValue = null;
         Object data = null;
         VR vr; // value representation of data
@@ -843,8 +843,8 @@ public class FileDicom extends FileDicomBase {
                     return getColorPallete(tagTable, new FileDicomKey(name));  //for processing either red(1201), green(1202), or blue(1203)
                 } 
             case OB:
-                if(name.matches(FileDicom.IMAGE_TAG)) { //can be either OW or OB
-                    return processImageData(extents); //finished reading image tags and all image data
+                if(name.matches(FileDicom.IMAGE_TAG) && !inSequence) { //can be either OW or OB
+                    return processImageData(extents, numEmbeddedImages); //finished reading image tags and all image data, get final image for display
                 }
                 data = getByte(tagVM, elementLength, endianess);
                 tagTable.setValue(key, data, elementLength);
@@ -918,10 +918,10 @@ public class FileDicom extends FileDicomBase {
                 return false;
             }
             
-        } else if (name.equals("0028,0010")) { // Set the extents, used for reading the image in FileInfoDicom's processTags
+        } else if (name.equals("0028,0010") && !inSequence) { // Set the extents, used for reading the image in FileInfoDicom's processTags
             extents[1] = ((Short) data).intValue();
             // fileInfo.columns = extents[1];
-        } else if (name.equals("0028,0011")) {
+        } else if (name.equals("0028,0011") && !inSequence) {
             extents[0] = ((Short) data).intValue();
             // fileInfo.rows = extents[0];
         } else if (!isEnhanced && name.equals("0002,0002")) {                           // need to determine if this is enhanced dicom
@@ -1131,7 +1131,7 @@ public class FileDicom extends FileDicomBase {
     /**
      * Processes image data returning whether the header should continue to be read.
      */
-    private boolean processImageData(int[] extents) throws IOException {
+    private boolean processImageData(int[] extents, int imageNumber) throws IOException {
         fileInfo.setInfoFromTags();
         
         final int imageLength = extents[0] * extents[1] * fileInfo.bitsAllocated / 8;
@@ -1149,7 +1149,7 @@ public class FileDicom extends FileDicomBase {
             fileInfo.displayType = fileInfo.getDataType();
         }
         
-        int imageTagLoc = locateImageTag(0);
+        int imageTagLoc = locateImageTag(0, imageNumber);
         if ( !encapsulated) {
             if (fileInfo.getVr_type() == VRtype.IMPLICIT) {
                 Preferences.debug("Implicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
@@ -2939,8 +2939,11 @@ public class FileDicom extends FileDicomBase {
             Preferences.debug("Processed seq amount: "+(getFilePointer() - startfptr), Preferences.DEBUG_FILEIO);
             FileDicomKey key = getNextTag(endianess);
             nameSQ = key.toString();
-            if(!nameSQ.equals(FileDicom.SEQ_ITEM_END)) {
-                flag = processNextTag(table, key, endianess);
+            if(!nameSQ.equals(FileDicom.SEQ_ITEM_END) && !nameSQ.matches(FileDicom.IMAGE_TAG)) {
+                flag = processNextTag(table, key, endianess, true);
+            } else if(nameSQ.matches(FileDicom.IMAGE_TAG)) {
+                numEmbeddedImages++;
+                seek(getFilePointer()+elementLength); //embedded image not displayed //TODO: make this image availbale in the dicom infobox
             }
         }
         
@@ -3433,8 +3436,8 @@ public class FileDicom extends FileDicomBase {
         Preferences.debug("Unknown data; length is " + elementLength + " fp = " + getFilePointer() + "\n",
         		Preferences.DEBUG_FILEIO);
 
-        if (elementLength <= 0) {
-            Preferences.debug("Unknown data; Error length is " + elementLength + "!!!!!\n", Preferences.DEBUG_FILEIO);
+        if (elementLength < 0) {
+            Preferences.debug("Unknown data; Error length is " + elementLength + "\n", Preferences.DEBUG_FILEIO);
 
             return null;
         }

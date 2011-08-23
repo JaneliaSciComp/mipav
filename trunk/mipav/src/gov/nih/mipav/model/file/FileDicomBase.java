@@ -69,6 +69,9 @@ public class FileDicomBase {
     /** If file is a DICOMDIR this is false * */
     protected boolean notDir = true;
 
+    /** The number of images inside of this file which are not the main displayable image (may be icon, RT planning, etc. */
+    protected int numEmbeddedImages = 0;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -431,7 +434,7 @@ public class FileDicomBase {
     public void loadTagBuffer() throws IOException {
 
         try {
-            tagBuffer = new byte[locateImageTag(0)]; //tagBuffer now guaranteed to contain all necessary header information
+            tagBuffer = new byte[locateImageTag(0, 999)]; //tagBuffer now guaranteed to contain all necessary header information, MIPAV can handle up to 999 embedded images
         } catch(NegativeArraySizeException ex) { //file is probably dicomdir, but not known for sure until tagBuffer has been parsed
             tagBuffer = new byte[(int) raFile.length()];
         }
@@ -439,8 +442,9 @@ public class FileDicomBase {
         raFile.readFully(tagBuffer);
     }
     
-    public int locateImageTag(int offset) {
+    public int locateImageTag(int offset, int imageNumber) {
         int tagSize = 0;
+        int numImagesLoc = 0;
         boolean isImage = false;
         try {
             if(!notDir) {
@@ -463,11 +467,19 @@ public class FileDicomBase {
             
             int first, second, third, fourth;
             int num = 0, numRepeats = 0;
-imageSearch:while(num < raFileLength-5 && !isImage) {
+            int lastSuccessNum = 0, lastSuccessNumRepeats = 0;
+            long time = System.currentTimeMillis();
+imageSearch:while(raBuffer.length*numRepeats - numRepeats*4 + num < raFileLength-5 || !isImage) {
                 if(num == raBuffer.length-5) {
                     numRepeats++; //every repeat of buffer reading has a 4 bit preceding overlap
+                    if(raBuffer.length*numRepeats - numRepeats*4 + num >= raFileLength-5) {
+                        break imageSearch;
+                    }
                     Preferences.debug("Rescanning raFile starting at location "+(raBuffer.length*numRepeats - numRepeats*4), Preferences.DEBUG_FILEIO);
                     raFile.seek(raBuffer.length*numRepeats - numRepeats*4);
+                    if(raBuffer.length*(numRepeats+1) - (numRepeats+1)*4 > raFileLength-5) {
+                        raBuffer = new byte[(int) (raFileLength-raFile.getFilePointer())];
+                    }
                     raFile.readFully(raBuffer);
                     num = 0;
                 }
@@ -479,7 +491,12 @@ imageSearch:while(num < raFileLength-5 && !isImage) {
                     if(third == b2) {
                         if(fourth == b3) {
                             isImage = true;
-                            break imageSearch;
+                            numImagesLoc++;
+                            lastSuccessNum = num;
+                            lastSuccessNumRepeats = numRepeats;
+                            if(numImagesLoc == imageNumber+1) {
+                                break imageSearch;
+                            }
                         }
                     }
                 }
@@ -487,14 +504,19 @@ imageSearch:while(num < raFileLength-5 && !isImage) {
                     if(fourth == b2) {
                         if(third == b3) {
                             isImage = true;
-                            break imageSearch;
+                            numImagesLoc++;
+                            lastSuccessNum = num;
+                            lastSuccessNumRepeats = numRepeats;
+                            if(numImagesLoc == imageNumber+1) {
+                                break imageSearch;
+                            }
                         }
                     }
                 }
                 num++;
             }
-            tagSize = raBuffer.length*(numRepeats) + (num+12) - numRepeats*4; //include any possible length and vr fields
-            Preferences.debug("Image tag located near byte "+tagSize, Preferences.DEBUG_FILEIO);
+            tagSize = raBuffer.length*(lastSuccessNumRepeats) + (lastSuccessNum+12) - lastSuccessNumRepeats*4; //include any possible length and vr fields
+            Preferences.debug("Image tag located near byte "+tagSize+" in "+(System.currentTimeMillis()-time), Preferences.DEBUG_FILEIO);
         } catch (IOException ioE) { 
             ioE.printStackTrace();
             return -1;
