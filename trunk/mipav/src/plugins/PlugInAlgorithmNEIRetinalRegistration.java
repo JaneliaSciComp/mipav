@@ -121,6 +121,8 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     private boolean subsamp = true;
     
+    private boolean doMultiThread = true;
+    
     private int bracketSize = 10;
     
     private int iterations = 2;
@@ -736,7 +738,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         outputbox.append("        ** Registering to Reference Image **\n");
         outputbox.setCaretPosition( outputbox.getText().length() );
         AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(ref, temp, refWeightImage, inputWeightImage, costChoice, DoF, interp,startRot, endRot,coarse, 
-        		fine, subsamp, bracketSize,iterations, minima);
+        		fine, subsamp, doMultiThread, bracketSize,iterations, minima);
         reg2.run();
         
         refWeightImage.disposeLocal();
