@@ -11805,9 +11805,14 @@ public class FileIO {
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {
                     FileDicomTag tag = tags.nextElement();
-                    if((tagValue = myFileInfo.getTagTable().getValue(tag.getKey())) == null || !tag.getValue(true).equals(tagValue)) {
-                        item.setValue(tag.getKey().toString(), tag);
+                    if(tag.getKey().equals("0020,9057")) {
+                        System.out.println("Stop");
+                    }
+                    if((tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
+                        item.setValue(tag.getKey(), tag.getValue(false));
                         System.out.println("Inserting unique value from key: "+tag.getKey());
+                    } else if(myFileInfo.getTagTable().getValue(tag.getKey()) != null){
+                        System.out.println("This key contained the same value: "+tag.getKey());
                     }
                 }
                 seq.addItem(item);
