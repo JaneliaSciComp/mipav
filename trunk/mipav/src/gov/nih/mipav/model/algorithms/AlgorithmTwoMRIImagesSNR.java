@@ -231,6 +231,7 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             float fineRateZ = 1.0f;
             boolean maxResol = true;
             boolean doSubsample;
+            boolean doMultiThread;
             boolean fastMode = false;
             int bracketBound = 10;
             int maxIterations = 2;
@@ -246,10 +247,11 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             if (srcImage.getNDims() == 2) {
                 DOF = 3;
                 doSubsample = false;
+                doMultiThread = true;
                 interp = AlgorithmTransform.BILINEAR;
                 interp2 = AlgorithmTransform.BILINEAR;
                 regAlgo = new AlgorithmRegOAR2D(srcImage, image2, cost, DOF, interp, rotateBegin, rotateEnd,
-                        coarseRate, fineRate, doSubsample, bracketBound, maxIterations, numMinima);
+                        coarseRate, fineRate, doSubsample, doMultiThread, bracketBound, maxIterations, numMinima);
                 regAlgo.run();
                 transform = new AlgorithmTransform(image2, regAlgo.getTransform(), interp2, srcImage.getFileInfo()[0]
                         .getResolutions()[0], srcImage.getFileInfo()[0].getResolutions()[1], srcImage.getExtents()[0],
