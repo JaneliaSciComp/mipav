@@ -3838,6 +3838,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         boolean transformVOI = true;
         boolean clip = true;
@@ -3984,7 +3985,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // Register each image half of the way to the same center point
 
                 reg2 = new AlgorithmRegOAR2D(srcImage, baseImage, cost, DOF, interp, coarseBegin, coarseEnd, coarseRate,
-                                             fineRate, doSubsample);
+                                             fineRate, doSubsample, doMultiThread);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -4013,7 +4014,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                                 (int) Math.round(registeredBaseImage.getMax() - registeredBaseImage.getMin() + 1));
 
                 reg2 = new AlgorithmRegOAR2D(baseImage, srcImage, cost, DOF, interp, coarseBegin, coarseEnd, coarseRate,
-                                             fineRate, doSubsample);
+                                             fineRate, doSubsample, doMultiThread);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -6063,6 +6064,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredImage;
         boolean transformVOI = false;
@@ -6254,7 +6256,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     updateFileInfo(baseImage, inputImage);
 
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -6283,7 +6285,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     registeredImage = null;
 
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -8404,6 +8406,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredImageX;
         ModelImage registeredImageY;
@@ -8634,7 +8637,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 // Always register based on the entire image
 
                 reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                             coarseRate, fineRate, doSubsample);
+                                             coarseRate, fineRate, doSubsample, doMultiThread);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -8659,7 +8662,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 bin2 = Math.min(bin2, (int) Math.round(registeredImageY.getMax() - registeredImageY.getMin() + 1));
 
                 reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                             coarseRate, fineRate, doSubsample);
+                                             coarseRate, fineRate, doSubsample, doMultiThread);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -10897,6 +10900,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
         float coarseRate = 2.0f;
         float fineRate = 1.0f;
         boolean doSubsample = true;
+        boolean doMultiThread = true;
         AlgorithmTransform transform;
         ModelImage registeredImageX;
         ModelImage registeredImageY;
@@ -11147,7 +11151,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     // Register each color half of the way to the same center point
 
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -11166,7 +11170,7 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     transform = null;
 
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
-                                                 coarseRate, fineRate, doSubsample);
+                                                 coarseRate, fineRate, doSubsample, doMultiThread);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
