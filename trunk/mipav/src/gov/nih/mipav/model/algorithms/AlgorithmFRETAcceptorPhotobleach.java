@@ -513,12 +513,13 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
             float coarseRate = 3.0f;
             float fineRate = 1.0f;
             boolean doSubsample = false;
+            boolean doMultiThread = true;
             int bracketBound = 10;
             int maxIterations = 2;
             int numMinima = 3;
 
             regAlgo = new AlgorithmRegOAR2D(bwPostImage, bwImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
-                                            fineRate, doSubsample, bracketBound, maxIterations, numMinima);
+                                            fineRate, doSubsample, doMultiThread, bracketBound, maxIterations, numMinima);
             regAlgo.run();
             transform = new AlgorithmTransform(bwImage, regAlgo.getTransform(), interp2,
                                                bwPostImage.getFileInfo()[0].getResolutions()[0],
