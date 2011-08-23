@@ -475,7 +475,7 @@ imageSearch:while(raBuffer.length*numRepeats - numRepeats*4 + num < raFileLength
                     if(raBuffer.length*numRepeats - numRepeats*4 + num >= raFileLength-5) {
                         break imageSearch;
                     }
-                    Preferences.debug("Rescanning raFile starting at location "+(raBuffer.length*numRepeats - numRepeats*4), Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Rescanning raFile starting at location "+(raBuffer.length*numRepeats - numRepeats*4)+"\n", Preferences.DEBUG_FILEIO);
                     raFile.seek(raBuffer.length*numRepeats - numRepeats*4);
                     if(raBuffer.length*(numRepeats+1) - (numRepeats+1)*4 > raFileLength-5) {
                         raBuffer = new byte[(int) (raFileLength-raFile.getFilePointer())];
@@ -516,13 +516,13 @@ imageSearch:while(raBuffer.length*numRepeats - numRepeats*4 + num < raFileLength
                 num++;
             }
             tagSize = raBuffer.length*(lastSuccessNumRepeats) + (lastSuccessNum+12) - lastSuccessNumRepeats*4; //include any possible length and vr fields
-            Preferences.debug("Image tag located near byte "+tagSize+" in "+(System.currentTimeMillis()-time), Preferences.DEBUG_FILEIO);
+            Preferences.debug("Image tag located near byte "+tagSize+" in "+(System.currentTimeMillis()-time)+"\n", Preferences.DEBUG_FILEIO);
         } catch (IOException ioE) { 
             ioE.printStackTrace();
             return -1;
         }
         if(!isImage) {
-            Preferences.debug("No image tag was found for this DICOM image", Preferences.DEBUG_FILEIO);
+            Preferences.debug("No image tag was found for this DICOM image\n", Preferences.DEBUG_FILEIO);
             return -1;
         } 
         return tagSize;

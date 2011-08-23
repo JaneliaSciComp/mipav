@@ -3490,11 +3490,11 @@ public class FileDicom extends FileDicomBase {
     }
 
     private void writeNextTag(FileDicomTag element, RandomAccessFile outputFile) throws IOException {
-        Preferences.debug("Processing tag "+element.getKey()+" with VR "+element.getValueRepresentation(), Preferences.DEBUG_FILEIO);
+        Preferences.debug("Processing tag "+element.getKey()+" with VR "+element.getValueRepresentation()+"\n", Preferences.DEBUG_FILEIO);
     	
     	VR vr = VR.UN;
 
-    	Preferences.debug("Writing tag "+element.getKey().toString(), Preferences.DEBUG_FILEIO);
+    	Preferences.debug("Writing tag "+element.getKey().toString()+"\n", Preferences.DEBUG_FILEIO);
     	if(element.getKey().toString().equals("0028,1201")) {
     	    System.out.println("Stop");
     	}
