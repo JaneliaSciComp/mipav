@@ -60,6 +60,8 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
 
     /** boolean for subsample! */
     private boolean doSubsample = true;
+    
+    private boolean doMultiThread = true;
 
     /** Dboolean for fast mode. */
     private boolean fastMode = false;
@@ -309,8 +311,8 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
                 algReg3D = new AlgorithmRegOAR3D(targetImage, sourceImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                                                  coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                                                  fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-                                                 maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
-                                                 numMinima);
+                                                 maxOfMinResol, doSubsample, doMultiThread,
+                                                 fastMode, bracketBound, maxIterations, numMinima);
 
                 progressBar = new ViewJProgressBar(sourceImage.getImageName(), "", 0, 100, true);
                 progressBar.setSeparateThread(true);
