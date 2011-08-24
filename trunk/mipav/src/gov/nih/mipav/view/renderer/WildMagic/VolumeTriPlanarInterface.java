@@ -2490,12 +2490,14 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.dispose();
             gpuPanel.remove(raycastRenderWM.GetCanvas());
         }
-        for (int i = 0; i < 3; i++) {
-
-            if (m_akPlaneRender[i] != null) {
-            	m_akPlaneRender[i].setVisible(false);
-                m_akPlaneRender[i].dispose();
-            }
+        if (m_akPlaneRender != null) {
+	        for (int i = 0; i < 3; i++) {
+	
+	            if (m_akPlaneRender[i] != null) {
+	            	m_akPlaneRender[i].setVisible(false);
+	                m_akPlaneRender[i].dispose();
+	            }
+	        }
         }
         panelAxial.remove(m_akPlaneRender[0].GetCanvas());
         panelSagittal.remove(m_akPlaneRender[1].GetCanvas());
