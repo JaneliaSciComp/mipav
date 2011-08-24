@@ -63,6 +63,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JCheckBox calcLSBox;
+    
+    private JCheckBox multiThreadCheckBox;
 
     /** DOCUMENT ME! */
     private JPanel coarsePanelX, coarsePanelY, coarsePanelZ;
@@ -99,6 +101,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private boolean doLS = false;
+    
+    private boolean doMultiThread = true;
 
     /** DOCUMENT ME! */
     private boolean doSubsample;
@@ -1100,6 +1104,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     public void setSubsample(final boolean doSubsample) {
         this.doSubsample = doSubsample;
     }
+    
+    /**
+     * Accessor to set whether or not powell's algorithm uses multithreading
+     * @param doMultiThread
+     */
+    public void setMultiThread(boolean doMultiThread) {
+    	this.doMultiThread = doMultiThread;
+    }
 
     /**
      * Accessor to set the VOIs only flag.
@@ -1214,12 +1226,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                         rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                         fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        fastMode, bracketBound, maxIterations, numMinima);
+                        doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
             } else {
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                         rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                         fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        fastMode, bracketBound, maxIterations, numMinima);
+                        doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
             }
         } else {
             // System.out.println("Reference image name is " +refImage.getImageName());
@@ -1228,14 +1240,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             if ( !doLS) {
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound,
-                        maxIterations, numMinima);
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
+                        fastMode, bracketBound, maxIterations, numMinima);
                 reg3.setJTEM(doJTEM);
             } else {
                 System.err.println("Sending LS Image to OAR3D algorithm");
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
                         maxIterations, numMinima);
 
             }
@@ -1325,6 +1337,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
         setMaxOfMinResol(scriptParameters.getParams().getBoolean("do_use_max_of_min_resolutions"));
         setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setMultiThread(scriptParameters.getParams().getBoolean("do_multi_thread"));
         setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
         setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
         setOutOfBoundsIndex(scriptParameters.getParams().getInt("out_of_bounds_index"));
@@ -1386,6 +1399,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_max_of_min_resolutions", maxOfMinResol));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_multi_thread", doMultiThread));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
         scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
@@ -1672,6 +1686,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         calcLSBox = new JCheckBox("Initialize registration process by applying Least Squares", false);
         calcLSBox.setFont(serif12);
         calcLSBox.setForeground(Color.black);
+        
+        multiThreadCheckBox = new JCheckBox("Multi-threading enabled (not deterministic)");
+        multiThreadCheckBox.setFont(serif12);
+        multiThreadCheckBox.setForeground(Color.black);
+        multiThreadCheckBox.setSelected(true);
+        multiThreadCheckBox.setEnabled(true);
 
         final Insets insets = new Insets(0, 2, 0, 2);
         gbc = new GridBagConstraints();
@@ -1734,6 +1754,13 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.REMAINDER;
         optPanel.add(calcLSBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.REMAINDER;
+        optPanel.add(multiThreadCheckBox, gbc);
+
 
         universalCheckbox = new JCheckBox("Apply same rotations to all dimensions.");
         universalCheckbox.setFont(serif12);
@@ -2270,6 +2297,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         voisOnly = voiRadio.isSelected();
 
         doLS = calcLSBox.isSelected();
+        doMultiThread = multiThreadCheckBox.isSelected();
 
         if (weighted) {
             fileNameWRef = textRef.getText();
