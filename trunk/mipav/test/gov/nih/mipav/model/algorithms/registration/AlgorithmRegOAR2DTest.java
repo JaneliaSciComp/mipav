@@ -68,6 +68,7 @@ public class AlgorithmRegOAR2DTest extends TestCase {
     private int interpolation;
     private float rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ;
     private boolean doSubsample;
+    private boolean doMultiThread;
     private int bracketBound;
     private int maxIterations;
     private int numMinima;
@@ -95,6 +96,7 @@ public class AlgorithmRegOAR2DTest extends TestCase {
         fineRateZ = 6;
         
         doSubsample = true;
+        doMultiThread = true;
         bracketBound = 10;
         maxIterations = 2;
         numMinima = 3;
@@ -108,7 +110,7 @@ public class AlgorithmRegOAR2DTest extends TestCase {
         matchImage.importData(0, data, true);
         matchImage.setResolutions(0, resolution);
 
-        reg = new AlgorithmRegOAR2D(refImage, matchImage, cost, dof, interpolation, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, doSubsample, bracketBound, maxIterations, numMinima);
+        reg = new AlgorithmRegOAR2D(refImage, matchImage, cost, dof, interpolation, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, doSubsample, doMultiThread, bracketBound, maxIterations, numMinima);
         reg.setLevel1Factor(2.0f);
         reg.setLevel2Factor(2.0f);
         reg.setLevel4Factor(2.0f);
