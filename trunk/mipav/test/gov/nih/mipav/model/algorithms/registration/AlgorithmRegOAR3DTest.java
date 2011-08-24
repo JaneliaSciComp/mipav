@@ -59,6 +59,7 @@ public class AlgorithmRegOAR3DTest extends TestCase{
     private int interpolate;
     private float rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ;
     private boolean doSubsample;
+    private boolean doMultiThread;
     private boolean fastMode;
     private boolean maxOfMinResol;
     private int bracketBound;
@@ -96,6 +97,7 @@ public class AlgorithmRegOAR3DTest extends TestCase{
         
         maxOfMinResol = true;
         doSubsample = true;
+        doMultiThread = true;
         fastMode = false;
         bracketBound = 10;
         maxIterations = 2;
@@ -113,7 +115,7 @@ public class AlgorithmRegOAR3DTest extends TestCase{
         reg = new AlgorithmRegOAR3D(refImage, matchImage, cost, dof, interpolate, rotateBeginX, rotateEndX,
                 coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
                 rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                doSubsample, doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
         reg.setLevel1FactorXY(2.0f);
         reg.setLevel1FactorZ(2.0f);
         reg.setLevel2FactorXY(2.0f);
