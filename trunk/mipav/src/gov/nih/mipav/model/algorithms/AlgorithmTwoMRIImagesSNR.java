@@ -263,11 +263,12 @@ public class AlgorithmTwoMRIImagesSNR extends AlgorithmBase {
             else if (srcImage.getNDims() == 3) {
                 DOF = 6;
                 doSubsample = true;
+                doMultiThread = true;
                 interp = AlgorithmTransform.TRILINEAR;
                 interp2 = AlgorithmTransform.TRILINEAR;
                 regAlgo3D = new AlgorithmRegOAR3D(srcImage, image2, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxResol, doSubsample, fastMode, bracketBound,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxResol, doSubsample, doMultiThread, fastMode, bracketBound,
                         maxIterations, numMinima);
                 regAlgo3D.run();
                 transform = new AlgorithmTransform(image2, regAlgo3D.getTransform(), interp2, srcImage.getFileInfo()[0]
