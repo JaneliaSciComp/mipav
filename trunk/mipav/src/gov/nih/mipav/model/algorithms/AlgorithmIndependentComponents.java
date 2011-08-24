@@ -26,6 +26,9 @@ import Jama.*;
  * References:
  * 1.) Independent Component Analysis by Aapo Hyvarinen, Juha Karhunen, and Erkki Oja, John-Wiley & Sons, Inc.,
  * 2001. 
+ * From the text: "Another very useful thing to do is to reduce the dimension of the data by principal component
+ * analysis.  This reduces noise and prevents overlearning.  It may also solve the problems with data that has a 
+ * smaller number of independent components than mixtures."
  */
 public class AlgorithmIndependentComponents extends AlgorithmBase implements ActionListener, FocusListener {
 
@@ -70,6 +73,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
     /** DOCUMENT ME! */
     private JTextField textNumber;
     
+    /* From the text Independent Component Analysis by Hyvarinen, Karhunen, and Oja;
+     * "One must also choose the nonlinearity used in the algorithms.  It seems that the robust, nonpolynomial
+     * nonlinearities are to be preferred in most applications.  The simplest thing to do is to just use the
+     * tanh function as the nonlinearity g."
+     */
     private int gnum = 1; // g1(y) = tanh(a1*y)
                           // g2(y) = y*exp(-y*y/2)
                           // g3(y) = y*y*y
@@ -78,11 +86,19 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
     
     private double epsilon = 1.0E-6;
     
-    private int icAlgorithm; // 1 = deflationary
-                                   // 2 = symmetric
-    private final int DEFLATIONARY_ORTHOGONALIZATION = 1;
+    private int icAlgorithm; // 1 = symmetric
+                                   // 2 = deflationary
+    /* From the text Independent Component Analysis by Hyvarinen, Karhunen, and Oja:
+     * "Once choice is between estimating all the independent components in parallel, or just estimating a few of
+     * them (possibly one-by-one).  This corresponds to choosing between symmetric and hierarchical decorrelation.
+     * In most cases, symmetric decorrelation is recommended.  Deflation is mainly useful in cases where we want
+     * to estimate only a very limited number of ICs, and other special cases.  The disadvantage with deflationary
+     * orthogonalization is that the estimation errors in the components the are estimated first accumulate and
+     * increase the errors in the later components."
+     */
+    private final int SYMMETRIC_ORTHOGONALIZATION = 1;
     
-    private final int SYMMETRIC_ORTHOGONALIZATION = 2;
+    private final int DEFLATIONARY_ORTHOGONALIZATION = 2;
     
     private final int MAXIMUM_LIKELIHOOD_ESTIMATION = 3;
 
