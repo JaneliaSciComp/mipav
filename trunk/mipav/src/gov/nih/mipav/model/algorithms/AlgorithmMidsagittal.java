@@ -46,6 +46,8 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
 
     /** Whether to use subsampling when registering the original image against the flipped image. */
     private boolean doSubsample = true;
+    
+    private boolean doMultiThread = true;
 
     /**
      * Whether to skip searching of the parameter space when registering the original image against the flipped image.
@@ -149,7 +151,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, maxOfMin, doSubsample,
-                                                          fastMode, bracketBound, baseNumIter, numMinima);
+                                                          doMultiThread, fastMode, bracketBound, baseNumIter, numMinima);
 
         linkProgressToAlgorithm(regAlgo);
         regAlgo.setProgressValues(generateProgressValues(10, 90));
