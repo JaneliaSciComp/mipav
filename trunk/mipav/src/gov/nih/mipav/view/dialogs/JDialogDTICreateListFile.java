@@ -598,11 +598,16 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 				float fineRateZ = regOptions.getFineRateZ();
 				boolean maxOfMinResol = regOptions.isMaxOfMinResol();
 				boolean doSubsample = regOptions.isDoSubsample();
+				boolean doMultiThread = regOptions.isDoMultiThread();
 				boolean fastMode = regOptions.isFastMode();
 				int bracketBound = regOptions.getBracketBound();
 				int maxIterations = regOptions.getMaxIterations();
 				int numMinima = regOptions.getNumMinima();
-				alg = new AlgorithmDTICreateListFile(studyPath, studyName, dicomB0VolumePath, gradientPath, bmatrixPath, outputTextArea, isInterleaved, performRegistration, cost, DOF, interp, interp2, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations, numMinima, dwiPathTextField);
+				alg = new AlgorithmDTICreateListFile(studyPath, studyName, dicomB0VolumePath, gradientPath, bmatrixPath,
+						outputTextArea, isInterleaved, performRegistration, cost, DOF, interp, interp2, rotateBeginX,
+						rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+						rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread,
+						fastMode, bracketBound, maxIterations, numMinima, dwiPathTextField);
 			}else {
 				alg = new AlgorithmDTICreateListFile(studyPath, studyName, gradientPath, bmatrixPath, outputTextArea, isInterleaved, performRegistration);
 			}
@@ -618,12 +623,16 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 				float coarseRate = regOptions.getCoarseRate();
 				float fineRate = regOptions.getFineRate();
 				boolean doSubsample = regOptions.isDoSubsample();
+				boolean doMultiThread = regOptions.isDoMultiThread();
 				boolean fastMode = regOptions.isFastMode();
 				int bracketBound = regOptions.getBracketBound();
 				int maxIterations = regOptions.getMaxIterations();
 				int numMinima = regOptions.getNumMinima();
 				
-				alg = new AlgorithmDTICreateListFile(prFileName, prFileDir, gradientPath, bmatrixPath, outputTextArea, performRegistration, cost, DOF, interp, interp2, registerTo, rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, fastMode, bracketBound, maxIterations, numMinima, dwiPathTextField);
+				alg = new AlgorithmDTICreateListFile(prFileName, prFileDir, gradientPath, bmatrixPath,
+						outputTextArea, performRegistration, cost, DOF, interp, interp2, registerTo, 
+						rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread, fastMode, 
+						bracketBound, maxIterations, numMinima, dwiPathTextField);
 			}else {
 				alg = new AlgorithmDTICreateListFile(prFileName, prFileDir, gradientPath, bmatrixPath, outputTextArea, performRegistration);
 			}
