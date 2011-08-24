@@ -165,6 +165,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
 
     /** If true subsample for levelEight, levelFour and levelTwo analyses. */
     private boolean doSubsample = true;
+    
+    private boolean doMultiThread = true;
 
     /**
      * If true this algorithm skips all subsample and goes directly to the level 1 optimization. This assumes that
@@ -373,6 +375,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _fineRateZ Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param _maxResol If true is the maximum of the minimum resolution of the two datasets when resampling.
      * @param _doSubsample If true then subsample
+     * @param _doMultiThread
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
      * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
@@ -385,8 +388,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final int _interp, final float _rotateBeginX, final float _rotateEndX, final float _coarseRateX,
             final float _fineRateX, final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY,
             final float _fineRateY, final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ,
-            final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, final boolean _fastMode,
-            final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
+            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
 
         super(null, _imageB);
         refImage = _imageA;
@@ -424,6 +427,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         weighted = false;
         maxResol = _maxResol;
         doSubsample = _doSubsample;
+        doMultiThread = _doMultiThread;
         fastMode = _fastMode;
 
         if (fastMode) {
@@ -461,6 +465,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _fineRateZ Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param _maxResol If true is the maximum of the minimum resolution of the two datasets when resampling.
      * @param _doSubsample If true then subsample
+     * @param _doMultiThread
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
      * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
@@ -474,8 +479,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final float _rotateBeginX, final float _rotateEndX, final float _coarseRateX, final float _fineRateX,
             final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY, final float _fineRateY,
             final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ, final float _fineRateZ,
-            final boolean _maxResol, final boolean _doSubsample, final boolean _fastMode, final int _bracketBound,
-            final int _baseNumIter, final int _numMinima) {
+            final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
+            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -514,6 +519,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         weighted = true;
         maxResol = _maxResol;
         doSubsample = _doSubsample;
+        doMultiThread = _doMultiThread;
         fastMode = _fastMode;
 
         if (fastMode) {
@@ -2100,18 +2106,17 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         // The powells instances can run as separate threads or sequentially. If they are run as parallel threads
         // the AlgorithmPowellOpt3D does not use threads internally. If they are run sequentially, the AlgorithmPowellOpt3D
         // can use threads internally.
-        boolean bParallelLevel8 = true;
         for (int i = 0; (i < coarseNumX); i++) {
             for (int j = 0; (j < coarseNumY); j++) {
                 
                 powellMT[index] = new AlgorithmPowellOpt3D(null, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
                 powellMT[index].setUseJTEM(doJTEM);
-                powellMT[index].setParallelPowell(!bParallelLevel8);
+                powellMT[index].setParallelPowell(false);
                 if ( doJTEM )
                 {
                     powellMT[index].setParallelPowell(false);
                 }
-                powellMT[index].setMultiThreadingEnabled(!bParallelLevel8);
+                powellMT[index].setMultiThreadingEnabled(false);
                 
                 Vectornd[] initials = new Vectornd[coarseNumZ];
                 for (int k = 0; (k < coarseNumZ); k++) {
@@ -2126,7 +2131,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 
                 powellMT[index].setPoints(initials);  
                 powellMT[index].addListener(this);  
-                if ( bParallelLevel8 )
+                if (doMultiThread)
                 {
                     ThreadUtil.mipavThreadPool.execute(powellMT[index]);
                 }
@@ -2164,7 +2169,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
-    	powell.setParallelPowell(multiThreadingEnabled);
+    	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
         {
         	powell.setParallelPowell(false);
@@ -2174,7 +2179,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         powell.setProgress(0);
         powell.setProgressModulus(coarseNumX * coarseNumY * coarseNumZ * maxIter / 100);
         this.linkProgressToAlgorithm(powell);
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setMultiThreadingEnabled(doMultiThread);
 
         final MatrixListItem[][][] matrixList = new MatrixListItem[fineNumX][fineNumY][fineNumZ];
 
@@ -2362,12 +2367,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         maxIter = baseNumIter * 2;
         powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
-    	powell.setParallelPowell(multiThreadingEnabled);
+    	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
         {
         	powell.setParallelPowell(false);
         }
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setMultiThreadingEnabled(doMultiThread);
         powell.setMinProgressValue((int) (progressFrom + 5 * (progressTo - progressFrom) / 6));
         powell.setMaxProgressValue((int) progressTo);
         this.linkProgressToAlgorithm(powell);
@@ -2467,14 +2472,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
-    	powell.setParallelPowell(multiThreadingEnabled);
+    	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
         {
         	powell.setParallelPowell(false);
         }
         powell.setMinProgressValue((int) progressFrom);
         powell.setMaxProgressValue((int) (progressFrom + (progressTo - progressFrom) / 5));
-        powell.setMultiThreadingEnabled(multiThreadingEnabled);
+        powell.setMultiThreadingEnabled(doMultiThread);
         for (final Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = en.nextElement();
             item.cost = powell.measureCost(item.initial);
@@ -2741,7 +2746,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         /**
          * Perform parallel Powell's method.
          */
-    	powell.setParallelPowell(multiThreadingEnabled);
+    	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
         {
         	powell.setParallelPowell(false);
@@ -2828,7 +2833,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
 
-    	powell.setParallelPowell(multiThreadingEnabled);
+    	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
         {
         	powell.setParallelPowell(false);
@@ -2885,7 +2890,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             powell.setPoints(initialPoints);
             powell.setMultiThreadingEnabled(false);
 
-        	powell.setParallelPowell(multiThreadingEnabled);
+        	powell.setParallelPowell(doMultiThread);
             if ( doJTEM )
             {
             	powell.setParallelPowell(false);
@@ -2918,7 +2923,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 powell.setPoints(initialPoints);
                 powell.setMultiThreadingEnabled(false);
                 //powell.setParallelPowell(false);
-            	powell.setParallelPowell(multiThreadingEnabled);
+            	powell.setParallelPowell(doMultiThread);
                 if ( doJTEM )
                 {
                 	powell.setParallelPowell(false);
