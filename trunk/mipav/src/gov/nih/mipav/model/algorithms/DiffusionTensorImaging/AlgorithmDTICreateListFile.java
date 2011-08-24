@@ -239,7 +239,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     private boolean doGraph = false;
     
     /** registration option parameters **/
-    private boolean doSubsample, fastMode, maxOfMinResol;
+    private boolean doSubsample, doMultiThread, fastMode, maxOfMinResol;
     
     /** path to dicom B0 for registration purposes **/
     private String dicomB0VolumePath;
@@ -314,7 +314,12 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
      * @param  bmtxtFilePath     
      * @param  outputTextArea   
      */
-    public AlgorithmDTICreateListFile(String studyPath, String studyName, String dicomB0VolumePath, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved, boolean performRegsitration, int cost, int DOF, int interp, int interp2, float rotateBeginX, float rotateEndX, float coarseRateX, float fineRateX, float rotateBeginY, float rotateEndY, float coarseRateY, float fineRateY, float rotateBeginZ, float rotateEndZ, float coarseRateZ, float fineRateZ, boolean maxOfMinResol, boolean doSubsample, boolean fastMode, int bracketBound, int maxIterations, int numMinima, JTextField dwiPathTextField) {
+    public AlgorithmDTICreateListFile(String studyPath, String studyName, String dicomB0VolumePath, String gradientFilePath,
+    		String bmtxtFilePath, JTextArea outputTextArea, boolean isInterleaved, boolean performRegsitration, int cost,
+    		int DOF, int interp, int interp2, float rotateBeginX, float rotateEndX, float coarseRateX, float fineRateX,
+    		float rotateBeginY, float rotateEndY, float coarseRateY, float fineRateY, float rotateBeginZ, float rotateEndZ,
+    		float coarseRateZ, float fineRateZ, boolean maxOfMinResol, boolean doSubsample, boolean doMultiThread,
+    		boolean fastMode, int bracketBound, int maxIterations, int numMinima, JTextField dwiPathTextField) {
         this.studyPath = studyPath;
         this.studyName = studyName;
         this.dicomB0VolumePath = dicomB0VolumePath;
@@ -344,6 +349,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		this.fineRateZ = fineRateZ;
 		this.maxOfMinResol = maxOfMinResol;
 		this.doSubsample = doSubsample;
+		this.doMultiThread = doMultiThread;
 		this.fastMode = fastMode;
 		this.bracketBound = bracketBound;
 		this.maxIterations = maxIterations;
@@ -378,7 +384,11 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 	/** constructor for par/rec if registration is to be done first
 	 * 
 	 */
-	public AlgorithmDTICreateListFile(String fileName, String fileDir, String gradientFilePath, String bmtxtFilePath, JTextArea outputTextArea, boolean performRegsitration, int cost, int DOF, int interp, int interp2, int registerTo, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, boolean doSubsample, boolean fastMode, int bracketBound, int maxIterations, int numMinima, JTextField dwiPathTextField) {
+	public AlgorithmDTICreateListFile(String fileName, String fileDir, String gradientFilePath, String bmtxtFilePath, 
+			JTextArea outputTextArea, boolean performRegsitration, int cost, int DOF, int interp, int interp2,
+			int registerTo, float rotateBegin, float rotateEnd, float coarseRate, float fineRate, boolean doSubsample, 
+			boolean doMultiThread, boolean fastMode, int bracketBound, int maxIterations, int numMinima,
+			JTextField dwiPathTextField) {
 		this.prFileName = fileName;
 		this.studyName = fileName.substring(0, fileName.indexOf("."));
 		this.prFileDir = fileDir;
@@ -399,6 +409,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		this.coarseRate = coarseRate;
 		this.fineRate = fineRate;
 		this.doSubsample = doSubsample;
+		this.doMultiThread = doMultiThread;
 		this.fastMode = fastMode;
 		this.bracketBound = bracketBound;
 		this.maxIterations = maxIterations;
@@ -713,7 +724,10 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 					String fileName = path.substring(index+1, path.length());
 					matchImage = fileIO.readImage(fileName, fileDir, true, null);
 					//call algorithm to register
-					reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+					reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+							coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+							rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread,
+							fastMode, bracketBound, maxIterations, numMinima);
 					reg3.setRunningInSeparateThread(isRunningInSeparateThread());
 					reg3.addListener(this);
 					ViewJProgressBar progressBar = new ViewJProgressBar("", " ...", 0, 100, true);
