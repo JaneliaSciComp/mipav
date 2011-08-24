@@ -67,6 +67,8 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
 
     /** DOCUMENT ME! */
     private boolean doSubsample;
+    
+    private boolean doMultiThread;
 
     /** DOCUMENT ME! */
     private boolean fastMode;
@@ -130,6 +132,8 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JCheckBox sampleCheckBox;
+    
+    private JCheckBox multiThreadCheckBox;
     
     /** DOCUMENT ME! */
     private JCheckBox minMaxCheckbox;
@@ -522,7 +526,13 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
         this.doSubsample = doSubsample;
     }
 
-
+    /**
+     * Accessor to set if multithreading is used
+     * @param doMultiThread
+     */
+    public void setMultiThread(boolean doMultiThread) {
+    	this.doMultiThread = doMultiThread;
+    }
 
     
 
@@ -718,6 +728,12 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
         sampleCheckBox.setForeground(Color.black);
         sampleCheckBox.setSelected(true);
         sampleCheckBox.setEnabled(true);
+        
+        multiThreadCheckBox = new JCheckBox("Multi-threading enabled (not deterministic)");
+        multiThreadCheckBox.setFont(serif12);
+        multiThreadCheckBox.setForeground(Color.black);
+        multiThreadCheckBox.setSelected(true);
+        multiThreadCheckBox.setEnabled(true);
 
         
         
@@ -767,6 +783,12 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         optPanel.add(sampleCheckBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        gbc.weightx = 1;
+        gbc.gridwidth = 1;
+        optPanel.add(multiThreadCheckBox, gbc);
         
         if(isDICOM) {
         	minMaxCheckbox = new JCheckBox("Use the max of the min resolutions of the two datasets when resampling.");
@@ -1677,6 +1699,7 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
        
 
         doSubsample = sampleCheckBox.isSelected();
+        doMultiThread = multiThreadCheckBox.isSelected();
 
         return true;
     }
@@ -1863,6 +1886,10 @@ public class JDialogDTICreateListFileRegOAR35DOptions extends JDialogBase {
 
 	public boolean isDoSubsample() {
 		return doSubsample;
+	}
+	
+	public boolean isDoMultiThread() {
+		return doMultiThread;
 	}
 
 	public boolean isFastMode() {
