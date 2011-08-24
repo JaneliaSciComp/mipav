@@ -1133,6 +1133,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		float fineRateZ = 3.0f;
 		boolean maxOfMinResol = true;
 		boolean doSubsample = true;
+		boolean doMultiThread = true;
 		boolean fastMode = true;
 		int bracketBound = 10;
 		int maxIterations = 2;
@@ -1147,7 +1148,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regLeftHippocampus.setJTEM(doJTEM);
 			regLeftHippocampus.addListener(this);
@@ -1160,7 +1161,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regRightHippocampus.setJTEM(doJTEM);
 			regRightHippocampus.addListener(this);
@@ -1173,7 +1174,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regLeftAmygdala.setJTEM(doJTEM);
 			regLeftAmygdala.addListener(this);
@@ -1186,7 +1187,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regRightAmygdala.setJTEM(doJTEM);
 			regRightAmygdala.addListener(this);
@@ -1199,7 +1200,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regLeftCaudate.setJTEM(doJTEM);
 			regLeftCaudate.addListener(this);
@@ -1212,7 +1213,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regRightCaudate.setJTEM(doJTEM);
 			regRightCaudate.addListener(this);
@@ -1225,7 +1226,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regLeftPutamen.setJTEM(doJTEM);
 			regLeftPutamen.addListener(this);
@@ -1238,7 +1239,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regRightPutamen.setJTEM(doJTEM);
 			regRightPutamen.addListener(this);
@@ -1252,7 +1253,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regLeftGlobusPallidus.setJTEM(doJTEM);
 			regLeftGlobusPallidus.addListener(this);
@@ -1266,7 +1267,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regRightGlobusPallidus.setJTEM(doJTEM);
 			regRightGlobusPallidus.addListener(this);
@@ -1279,7 +1280,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regLeftThalamus.setJTEM(doJTEM);
 			regLeftThalamus.addListener(this);
@@ -1292,7 +1293,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
 					rotateBeginY, rotateEndY, coarseRateY, fineRateY,
 					rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-					maxOfMinResol, doSubsample, fastMode, bracketBound,
+					maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
 					maxIterations, numMinima);
 			regRightThalamus.setJTEM(doJTEM);
 			regRightThalamus.addListener(this);
