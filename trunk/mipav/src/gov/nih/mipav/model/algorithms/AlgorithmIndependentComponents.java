@@ -23,6 +23,14 @@ import Jama.*;
  * selected by the user after viewing images of the first 10 (or the number that exist if less than 10) independent
  * components. The second image is a 2D image created by averaging together the images in the 3D image. Note that red,
  * green, and blue are treated as separate 2D planes.
+ * Requirements:
+ * 1.) The independent components must be statistically independent.
+ * 2.) The independent components must have nongaussian distributions.
+ * 3.) For simplicity, assume the unknown mixture matrix is square.  In other words, the number of 
+ * mixtures equals the number of independent components.  If the number of independent components is
+ * smaller than the number of mixtures, use principal component analysis to reduce the number of
+ * mixtures to the number of principal components.  Reducing the number of dimensions can reduce noise and
+ * prevent overlearning.
  * References:
  * 1.) Independent Component Analysis by Aapo Hyvarinen, Juha Karhunen, and Erkki Oja, John-Wiley & Sons, Inc.,
  * 2001. 
@@ -76,7 +84,32 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
     /* From the text Independent Component Analysis by Hyvarinen, Karhunen, and Oja;
      * "One must also choose the nonlinearity used in the algorithms.  It seems that the robust, nonpolynomial
      * nonlinearities are to be preferred in most applications.  The simplest thing to do is to just use the
-     * tanh function as the nonlinearity g."
+     * tanh function as the nonlinearity g."  When testing 10 supergaussian independent components,
+     * the best results from a statistical viewpoint were obtained when using the tanh nonlinearity with
+     * any algorithm.
+     * 
+     * Kurtosis in the zero mean case is defined by the equation:
+     * kurt(x) = E{x**4} - 3*[E{x**2}]**2
+     * Normalized kurtosis = E{x**4}/{E{x**2}]**2 - 3
+     * 
+     * A slightly stronger property than uncorrelatedness is whiteness.  Whiteness of a zero-mean random
+       vector means that components are uncorrelated and their variances equal unity.  Whitening is sometimes
+       called sphering.  For whitened data E{x**2} = 1, and both kurtosis and normalized kurtosis reduce to
+       E{x**4} - 3.
+       
+       Kurtosis is the simplest statistical quantity for indicating the nongaussianity of a random variable.
+       The kurtosis of a gaussian distribution is zero.  Distributions having a negative kurtosis are said to
+       be subgaussian or platykurtic.  If the kurtosis is positive, the respective distribution is called
+       supergaussian or leptokurtic.  Subgaussian distributions tend to be flatter than gaussian distributions
+       or multimodal.  The uniform distribution is a subgaussian distribution.  A typical supergaussian
+       distribution has a sharper peak and longer tails than the gaussian distribution.  The Laplacian 
+       distribution is a supergaussian distribution.
+     * 
+     * When the independent components are highly supergaussian, or when robustness is very important, g2(y) = 
+     * y * exp(-y*y/2) may be better.
+     * 
+     * Using kurtosis and hence 1/4 the derivative of the normalized kurtosis = y**3 is well justified only if
+     * the independent components are subgaussian and there are no outliers.
      */
     private int gnum = 1; // g1(y) = tanh(a1*y)
                           // g2(y) = y*exp(-y*y/2)
@@ -95,6 +128,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
      * to estimate only a very limited number of ICs, and other special cases.  The disadvantage with deflationary
      * orthogonalization is that the estimation errors in the components the are estimated first accumulate and
      * increase the errors in the later components."
+     * 
+     * The maximum likelihood estimation algorithm is a computationally optimized version of the gradient
+     * algorithm.  It can use the tanh function to estimate both sub- and supergaussian independent components.
+     * 
+     * "In difficult real world problems, it is useful to apply several different ICA methods, because they 
+     * may reveal different ICs from the data."
      */
     private final int SYMMETRIC_ORTHOGONALIZATION = 1;
     
