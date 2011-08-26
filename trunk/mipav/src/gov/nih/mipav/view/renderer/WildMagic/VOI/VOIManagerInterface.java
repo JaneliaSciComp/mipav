@@ -534,7 +534,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
 
             if (fileName != null) {
-                filePathName = new String(directory + fileName + File.separator);
+                filePathName = new String(directory + fileName);
                 saveVOIIntensitiesTo(filePathName);
 
                 ScriptRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage(), directory));
@@ -4892,6 +4892,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             voiIntensitiesPath += ".txt";
         }
 
+        System.out.println(voiIntensitiesPath);
         textFile = new File(voiIntensitiesPath);
         try {
             raFile = new RandomAccessFile(textFile, "rw");
