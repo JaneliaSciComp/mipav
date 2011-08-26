@@ -3122,7 +3122,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
             } else {
             	directory = System.getProperty("user.dir");    
             }
-        	fileName = VOIs.VOIAt(i).getName() + "_intensities.txt";
+        	fileName = selectedImage.getImageName() + "_" + VOIs.VOIAt(i).getName() + "_intensities.txt";
         	userInterface.setDefaultDirectory(directory);
         	
             this.voiSavedFileName = directory + fileName;
@@ -3325,7 +3325,7 @@ public abstract class ViewJFrameBase extends JFrame implements ViewImageUpdateIn
         
         if (ScriptRunner.getReference().isRunning()) {
         	
-        	fileName = VOIs.VOIAt(i).getName() + "_intensities.txt";
+        	fileName = selectedImage.getImageName() + "_" + VOIs.VOIAt(i).getName() + "_intensities.txt";
         	directory = String.valueOf(voiIntensitiesDir);
         	userInterface.setDefaultDirectory(voiIntensitiesDir);
         	
