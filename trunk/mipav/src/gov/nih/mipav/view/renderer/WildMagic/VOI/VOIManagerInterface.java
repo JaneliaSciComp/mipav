@@ -19,6 +19,7 @@ import gov.nih.mipav.model.scripting.actions.ActionOpenAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionOpenVOI;
 import gov.nih.mipav.model.scripting.actions.ActionPaintToVOI;
 import gov.nih.mipav.model.scripting.actions.ActionSaveAllVOIs;
+import gov.nih.mipav.model.scripting.actions.ActionSaveVOIIntensities;
 import gov.nih.mipav.model.scripting.actions.ActionSelectAllVOIs;
 import gov.nih.mipav.model.scripting.actions.ActionVOIToMask;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -500,6 +501,45 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES.getActionCommand())) {
             saveVOIIntensities();
+            ScriptRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage()));
+            ProvenanceRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage()));
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES_TO.getActionCommand())) {
+
+            // get the voi directory
+            String fileName = null;
+            String directory = null;
+            String filePathName = null;
+            
+            final JFileChooser chooser = new JFileChooser();
+	        chooser.setDialogTitle("Save intensities in VOI as");
+	        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+	
+	        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".txt"}));
+	
+	        final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
+	
+	        if (returnVal == JFileChooser.APPROVE_OPTION) {
+	            fileName = chooser.getSelectedFile().getName();
+	            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+	            
+	
+	        } else {
+	            return;
+	        }
+
+
+            if (fileName != null) {
+                filePathName = new String(directory + fileName + File.separator);
+                saveVOIIntensitiesTo(filePathName);
+
+                ScriptRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage(), directory));
+                ProvenanceRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage(), directory));
+            }
         } 
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL.getActionCommand())) {
             saveLabels(false);
@@ -4708,6 +4748,151 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
         textFile = new File(directory + fileName);
+        try {
+            raFile = new RandomAccessFile(textFile, "rw");
+        } catch (final IOException e) {
+            MipavUtil.displayError("IOException on raFile = new RandomAccessFile");
+            return;
+        }
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        try {
+            raFile.setLength(0);
+        } catch (final IOException e) {
+            MipavUtil.displayError("IOException on raFile.setLength(0)");
+            return;
+        }
+
+        if (selectedImage.isColorImage()) {
+            entryBytes = new String("x,y,z,a,red,green,blue\n").getBytes();
+        } else if (selectedImage.isComplexImage()) {
+            entryBytes = new String("x,y,z,real,imaginary\n").getBytes();
+        } else {
+            entryBytes = new String("x,y,z,intensity\n").getBytes();
+        }
+        try {
+            raFile.write(entryBytes);
+        } catch (final IOException e) {
+            MipavUtil.displayError("IOException on raFile.write(entryBytes) for header line");
+            return;
+        }
+
+        for (z = 0; z < zDim; z++) {
+            k = z * sliceSize;
+            for (y = 0; y < yDim; y++) {
+                j = k + y * xDim;
+                for (x = 0; x < xDim; x++) {
+                    i = j + x;
+                    if (mask.get(i)) {
+                        if (selectedImage.isColorImage()) {
+                            entryBytes = new String(Integer.toString(x) + "," + Integer.toString(y) + ","
+                                    + Integer.toString(z) + "," + Double.toString(buffer[4 * i]) + ","
+                                    + Double.toString(buffer[4 * i + 1]) + "," + Double.toString(buffer[4 * i + 2])
+                                    + "," + Double.toString(buffer[4 * i + 3]) + "\n").getBytes();
+                        } else if (selectedImage.isComplexImage()) {
+                            entryBytes = new String(Integer.toString(x) + "," + Integer.toString(y) + ","
+                                    + Integer.toString(z) + "," + Double.toString(buffer[2 * i]) + ","
+                                    + Double.toString(buffer[2 * i + 1]) + "\n").getBytes();
+                        } else {
+                            entryBytes = new String(Integer.toString(x) + "," + Integer.toString(y) + ","
+                                    + Integer.toString(z) + "," + Double.toString(buffer[i]) + "\n").getBytes();
+                        }
+                        try {
+                            raFile.write(entryBytes);
+                        } catch (final IOException e) {
+                            MipavUtil.displayError("IOException on raFile.write(entryBytes");
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        try {
+            raFile.close();
+        } catch (final IOException e) {
+            MipavUtil.displayError("IOException on raFile.close()");
+        }
+
+    }
+    
+    /**
+     * Save intensities in VOI to a text file of format x,y,z,intensity on each line if not color or complex. If color
+     * use format x,y,z,a,r,g,b on each line and if complex use format x,y,z,real,imaginary on each line.
+     */
+    private void saveVOIIntensitiesTo(String voiIntensitiesPath) {
+        String fileName;
+        String directory;
+        JFileChooser chooser;
+        File textFile;
+        RandomAccessFile raFile;
+        ModelImage selectedImage = null;
+        int imageSize;
+        int nDims;
+        BitSet mask;
+        int xDim;
+        int yDim;
+        int zDim;
+        int sliceSize;
+
+        int nVOI;
+        int i, j, k;
+        ViewVOIVector VOIs = null;
+        int x;
+        int y;
+        int z;
+        double buffer[];
+        byte entryBytes[];
+
+        selectedImage = m_kParent.getActiveImage();
+        VOIs = selectedImage.getVOIs();
+        nVOI = VOIs.size();
+
+        for (i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).isActive()) {
+                break;
+            }
+        }
+
+        if (i == nVOI) {
+            MipavUtil.displayError("Please select a VOI.");
+
+            return;
+        }
+
+        nDims = selectedImage.getNDims();
+        xDim = selectedImage.getExtents()[0];
+        yDim = selectedImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        imageSize = sliceSize;
+        if (nDims > 2) {
+            zDim = selectedImage.getExtents()[2];
+            imageSize *= zDim;
+        } else {
+            zDim = 1;
+        }
+        mask = new BitSet(imageSize);
+        VOIs.VOIAt(i).createBinaryMask3D(mask, xDim, yDim, false, false);
+        if (selectedImage.isColorImage()) {
+            buffer = new double[4 * imageSize];
+        } else if (selectedImage.isComplexImage()) {
+            buffer = new double[2 * imageSize];
+        } else {
+            buffer = new double[imageSize];
+        }
+
+        try {
+            selectedImage.exportData(0, buffer.length, buffer);
+        } catch (final IOException e) {
+            MipavUtil.displayError("IOException on selectedImage.exportData");
+            return;
+        }
+
+        if ( !voiIntensitiesPath.endsWith(".txt")) {
+            voiIntensitiesPath += ".txt";
+        }
+
+        textFile = new File(voiIntensitiesPath);
         try {
             raFile = new RandomAccessFile(textFile, "rw");
         } catch (final IOException e) {
