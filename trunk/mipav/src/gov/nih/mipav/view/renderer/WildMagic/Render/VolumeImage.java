@@ -1040,6 +1040,8 @@ public class VolumeImage implements Serializable {
     private void GenerateHistogram(final GraphicsImage[] kImage, final GraphicsImage[] kImageGM, final String kPostFix) {
         int iTMinX = 255, iTMaxX = 0;
         int iTMinY = 255, iTMaxY = 0;
+        float max = Float.MIN_VALUE;
+        float min = Float.MAX_VALUE;
         m_kHisto = new GraphicsImage[m_iTimeSteps];
         for (int t = 0; t < m_iTimeSteps; t++) {
             float[] afCount = new float[256 * 256];
@@ -1047,7 +1049,8 @@ public class VolumeImage implements Serializable {
                 afCount[i] = 0;
             }
 
-            short a1, a2;
+            int a1;
+            int a2;
             final byte[] abHistoData = kImageGM[t].GetData();
             final byte[] abData = kImage[t].GetData();
             if (m_kImage.isColorImage()) {
@@ -1056,31 +1059,33 @@ public class VolumeImage implements Serializable {
                     int iR = (abData[i]);
                     int iG = (abData[i + 1]);
                     int iB = (abData[i + 2]);
-                    a1 = (short) (iR * 0.299 + iG * 0.587 + iB * 0.114);
-                    a1 = (short) (a1 & 0x00ff);
+                    //a1 = (iR * 0.299 + iG * 0.587 + iB * 0.114);
+                    a1 = (iR + iG + iB)/3;
+                    a1 = (a1 & 0x00ff);
 
                     iR = (abHistoData[i]);
                     iG = (abHistoData[i + 1]);
                     iB = (abHistoData[i + 2]);
-                    a2 = (short) (iR * 0.299 + iG * 0.587 + iB * 0.114);
-                    a2 = (short) (a2 & 0x00ff);
+                    //a2 = (short) (iR * 0.299 + iG * 0.587 + iB * 0.114);
+                    a2 = (iR + iG + iB)/3;
+                    a2 = (a2 & 0x00ff);
                     afCount[a1 + a2 * 256] += 1;
                     iHisto++;
                 }
             }
             else {
             	int iHisto = 0;
-                for (int i = 0; i < abData.length; i += 4) {
-            		a1 = (abData[i]);
-            		a1 = (short) (a1 & 0x00ff);
+                for (int i = 0; i < abData.length; i += 4) {                	
+            		a1 = abData[i];
+            		a1 = (a1 & 0x00ff);
             		a2 = (abHistoData[iHisto]);
-            		a2 = (short) (a2 & 0x00ff);
-            		afCount[a1 + a2 * 256] += 1;
+            		a2 = (a2 & 0x00ff);
+            		afCount[a1 + a2 * 256] += 1;                   
             		iHisto += 4;
             	}
             } 
-            float max = Float.MIN_VALUE;
-            float min = Float.MAX_VALUE;
+            max = Float.MIN_VALUE;
+            min = Float.MAX_VALUE;
             for (int i = 0; i < 256 * 256; ++i) {
                 afCount[i] = (float) Math.log(afCount[i]+1);
                 max = Math.max(afCount[i], max);
@@ -1088,15 +1093,14 @@ public class VolumeImage implements Serializable {
             }
             //System.err.println( min + " " + max );
             final byte[] abHisto = new byte[256 * 256];
-            int maxB = Integer.MIN_VALUE;
-            int minB = Integer.MAX_VALUE;
+            //int maxB = Integer.MIN_VALUE;
+            //int minB = Integer.MAX_VALUE;
             for (int i = 0; i < 256 * 256; ++i) {
             	int iVal = new Float((afCount[i] / max) * 255f).intValue();
                 abHisto[i] = new Float((afCount[i] / max) * 255f).byteValue();
-                maxB = ( iVal > maxB ) ? iVal : maxB;
-                minB = ( iVal < minB ) ? iVal : minB;
+                //maxB = ( iVal > maxB ) ? iVal : maxB;
+                //minB = ( iVal < minB ) ? iVal : minB;
             }
-            //System.err.println( minB + " " + maxB );
             afCount = null;
 
             int iMinX = 255, iMaxX = 0;
@@ -1143,7 +1147,6 @@ public class VolumeImage implements Serializable {
                 iTMaxY = iMaxY;
             }
 
-            // System.err.println( iMinX + ", " + iMinY + " " + iMaxX + ", " + iMaxY );
             // iMinX = 0; iMaxX = 255;
             // iMinY = 0; iMaxY = 255;
 
@@ -1253,7 +1256,7 @@ public class VolumeImage implements Serializable {
     	}
         
 
-        if ( bComputeLaplace && !m_bLaplaceInit )
+        if ( bComputeLaplace && !m_bLaplaceInit && !m_kImage.isColorImage() )
         {
         	for (int i = 0; i < m_iTimeSteps; i++) {
         		final String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String(

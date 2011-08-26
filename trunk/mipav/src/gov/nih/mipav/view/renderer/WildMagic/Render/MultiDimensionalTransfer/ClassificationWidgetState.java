@@ -41,7 +41,7 @@ public class ClassificationWidgetState implements Serializable
             LeftLine[i] = 0f;
             RightLine[i] = 0f;
         } 
-        BoundaryEmphasis[0] = 1.0f;
+        BoundaryEmphasis[0] = 0.0f;
         UseWidget[0] = 0.0f;
     }
     
