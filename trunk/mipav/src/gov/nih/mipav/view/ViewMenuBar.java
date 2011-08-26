@@ -763,6 +763,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI_TO, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_INTENSITIES_TO, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true)}),
                                 ViewMenuBar.separator,
