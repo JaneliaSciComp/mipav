@@ -5120,17 +5120,17 @@ public class ModelImage extends ModelStorageBase {
 
             try {
                 setLock(ModelStorageBase.W_LOCKED);
-                if ( getType() == UBYTE || getType() == BYTE )
+                if ( imDiff <= 255 )
                 {
                 	for (i = start, j = 0; j < length; i++, j++) {
                 		if ( (mask != null) && useMask) {
                 			if (mask.get(j)) {                        	                        	
-                				values[j] = getByte(i);
+                				values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * imDiff);
                 			} else {
                 				values[j] = 0;
                 			}
                 		} else {
-                			values[j] = getByte(i);
+                			values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * imDiff);
                 		}
                 	}                	
                 }
@@ -5141,7 +5141,7 @@ public class ModelImage extends ModelStorageBase {
                 			if (mask.get(j)) {                        	                        	
                 				values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);
                 			} else {
-                				values[j] = (byte)imMin;
+                				values[j] = 0;
                 			}
                 		} else {
                 			values[j] = (byte)(((getDouble(i) - imMin)/imDiff) * 255);

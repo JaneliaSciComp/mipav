@@ -82,7 +82,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kMultiHistogram.SetAnimator(kAnimator);
 		m_kMultiHistogram.SetInterface(this);
 
-		init();
+		init(!kVolumeImage.GetImage().isColorImage());
 	}
 
 	/* (non-Javadoc)
@@ -223,7 +223,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	/**
 	 * Initializes GUI components.
 	 */
-	private void init( ) {
+	private void init( boolean useBoundaryEmphasis ) {
 		GridBagConstraints kGBC = new GridBagConstraints();
 		GridBagLayout kGrid = new GridBagLayout();
 		kGBC.gridx = 0;
@@ -274,8 +274,9 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		kGBC.gridwidth = 1;
 		kGBC.gridx = 0;
 		kGBC.gridy++;
-		boundaryEmphasisSlider = new JSlider();
+		boundaryEmphasisSlider = new JSlider(0, 100, 0);
 		boundaryEmphasisSlider.addChangeListener(this);
+		boundaryEmphasisSlider.setEnabled(useBoundaryEmphasis);
 		buttonPanel.add( new JLabel( "Boundary Emphasis Slider: "), kGBC );
 		kGBC.gridx++;
 		kGBC.gridwidth = 2;
