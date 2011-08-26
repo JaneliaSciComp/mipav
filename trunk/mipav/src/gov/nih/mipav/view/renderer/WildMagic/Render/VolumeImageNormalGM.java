@@ -95,18 +95,16 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
             }
-        	SaveImage(m_iSlice);
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice );
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetScratchTarget(), m_iSlice );
             m_iSlice++; 
             if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
-                m_bDisplaySecond = false;
-                m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
+                m_bDisplaySecond = true;
             }
         }
-        /*
+        
         while ( m_bDisplaySecond )
         {
         	float fZ = ((float)m_iSlice)/(m_kImage.getExtents()[2] -1);
@@ -121,8 +119,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_pkRenderer.EndScene();
             }
         	SaveImage(m_iSlice);
-            //m_pkRenderer.DisplayBackBuffer();
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice, false );
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice );
             m_iSlice++; 
             if ( m_iSlice >= m_kImage.getExtents()[2])
             {
@@ -130,7 +127,7 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_bDisplaySecond = false;
                 m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
             }
-        }*/
+        }
         
         dispose(arg0);
     }
