@@ -84,7 +84,8 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_SAVE_VOI_AS = new UIParams("Save VOI as", "Save VOI as", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_ALL_VOI = new UIParams("Save all VOIs", "Save all VOIs", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_ALL_VOI_TO = new UIParams("Save all VOIs to...", "Save all VOIs to...", UIParams.INVALID_MNEMONIC, null, "save");
-    public static final UIParams PARAM_SAVE_VOI_INTENSITIES = new UIParams("Save intensities in VOI to...", "SaveVOIIntensities", UIParams.INVALID_MNEMONIC, null, "save");
+    public static final UIParams PARAM_SAVE_VOI_INTENSITIES = new UIParams("Save intensities in VOI", "SaveVOIIntensities", UIParams.INVALID_MNEMONIC, null, "save");
+    public static final UIParams PARAM_SAVE_VOI_INTENSITIES_TO = new UIParams("Save intensities in VOI to...", "SaveVOIIntensitiesTo", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_SELECTED_LABEL = new UIParams("Save selected label to...", "SaveSelectedAnnotation", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_ALL_LABEL = new UIParams("Save all labels to...", "SaveAllAnnotations", UIParams.INVALID_MNEMONIC, null, "save");
 	
