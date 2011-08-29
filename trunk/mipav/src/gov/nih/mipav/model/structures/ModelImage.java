@@ -5109,7 +5109,7 @@ public class ModelImage extends ModelStorageBase {
      * 
      * @throws IOException Throws an error when there is a locking or bounds error.
      */
-    public final synchronized void exportDataUseMask(final int start, final int length, final byte[] values)
+    public final synchronized void exportDataUseMask(final int start, final int length, boolean rescale, final byte[] values)
             throws IOException {
         int i, j;
 
@@ -5120,7 +5120,7 @@ public class ModelImage extends ModelStorageBase {
 
             try {
                 setLock(ModelStorageBase.W_LOCKED);
-                if ( imDiff <= 255 )
+                if ( (imDiff <= 255) && !rescale )
                 {
                 	for (i = start, j = 0; j < length; i++, j++) {
                 		if ( (mask != null) && useMask) {

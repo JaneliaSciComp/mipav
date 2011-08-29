@@ -1,9 +1,15 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
+
+import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.model.structures.ModelLUT;
+
 import java.io.IOException;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.GraphicsImage;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Shaders.VertexShader;
@@ -23,6 +29,7 @@ public class ClassificationWidgetEffect extends TextureEffect
     private static final long serialVersionUID = -7141385452679118672L;
     /** Current state of the widget encapsulated in the GLSL parameters needed for the Volume renderer GLSL program: */
     private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
+    
 
     /** Creates a new ClassificationWidgetEffect with the texture specified.
      * @param rkBaseName the name of the 2D Histogram texture image.
@@ -33,9 +40,11 @@ public class ClassificationWidgetEffect extends TextureEffect
         m_kVShader.set(0, new VertexShader("TextureV"));
         m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
 
-        m_kPShader.get(0).SetTextureQuantity(1);
+        m_kPShader.get(0).SetTextureQuantity(2);
         m_kPShader.get(0).SetImageName(0,rkBaseName);
         m_kWidgetState.UseWidget[0] = 1.0f;
+
+        m_kWidgetState.UseColorMap[0] = -1.0f;
     }
 
 
@@ -119,17 +128,35 @@ public class ClassificationWidgetEffect extends TextureEffect
                 m_kWidgetState.Color[3] );
     }
 
+    public void SetAlpha( float fA ) 
+    {
+    	m_kWidgetState.Color[3] = fA;
+    	UpdateColor();
+    }
+    
+
     /**
      * Sets the color of the widget color transfer function.
      * @param the color of the widget color transfer function.
      */
     public void SetColor( float fR, float fG, float fB, float fA ) 
     {
-        m_kWidgetState.Color[0] = fR;
-        m_kWidgetState.Color[1] = fG;
-        m_kWidgetState.Color[2] = fB;
-        m_kWidgetState.Color[3] = fA;
-        UpdateColor();
+    	m_kWidgetState.Color[0] = fR;
+    	m_kWidgetState.Color[1] = fG;
+    	m_kWidgetState.Color[2] = fB;
+    	m_kWidgetState.Color[3] = fA;
+    	m_kWidgetState.UseColorMap[0] = -1.0f;
+    	UpdateColor();
+    }
+
+
+    public void SetLUT( Texture kMap, int index )
+    {
+		m_kPShader.get(0).SetImageName(1,kMap.GetName());
+		m_kPShader.get(0).SetTexture(1,kMap);
+		
+    	m_kWidgetState.UseColorMap[0] = index;
+    	UpdateLUT();
     }
 
     /**
@@ -141,6 +168,15 @@ public class ClassificationWidgetEffect extends TextureEffect
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevColor") != null) ) 
         {
             pkCProgram.GetUC("LevColor").SetDataSource(m_kWidgetState.Color);
+        }
+    }
+
+    public void UpdateLUT( ) 
+    {
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && (pkCProgram.GetUC("UseColorMap") != null) ) 
+        {
+            pkCProgram.GetUC("UseColorMap").SetDataSource(m_kWidgetState.UseColorMap);
         }
     }
     
@@ -161,7 +197,12 @@ public class ClassificationWidgetEffect extends TextureEffect
         Program pkCProgram = GetCProgram(0);
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevMidLine") != null) ) 
         {
-            pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine);
+            pkCProgram.GetUC("LevMidLine").SetDataSource(m_kWidgetState.MidLine); 
+            //System.err.println( "EFFECT : LevMidLine " + m_kWidgetState.MidLine[0] +
+            //		" "  + m_kWidgetState.MidLine[1] +
+            //		" "  + m_kWidgetState.MidLine[2] +
+            //		" "  + m_kWidgetState.MidLine[3] );
+            
         }
     }
     
@@ -183,6 +224,10 @@ public class ClassificationWidgetEffect extends TextureEffect
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevLeftLine") != null) ) 
         {
             pkCProgram.GetUC("LevLeftLine").SetDataSource(m_kWidgetState.LeftLine);
+            //System.err.println( "EFFECT : LevLeftLine " + m_kWidgetState.LeftLine[0] +
+            //		" "  + m_kWidgetState.LeftLine[1] +
+            //		" "  + m_kWidgetState.LeftLine[2] +
+            //		" "  + m_kWidgetState.LeftLine[3] );
         }
     }
     
@@ -204,6 +249,10 @@ public class ClassificationWidgetEffect extends TextureEffect
         if ( (pkCProgram != null) && (pkCProgram.GetUC("LevRightLine") != null) ) 
         {
             pkCProgram.GetUC("LevRightLine").SetDataSource(m_kWidgetState.RightLine);
+            //System.err.println( "EFFECT : LevRightLine " + m_kWidgetState.RightLine[0] +
+            //		" "  + m_kWidgetState.RightLine[1] +
+            //		" "  + m_kWidgetState.RightLine[2] +
+            //		" "  + m_kWidgetState.RightLine[3] );
         }
     }
     
@@ -228,8 +277,8 @@ public class ClassificationWidgetEffect extends TextureEffect
      */
     protected void computeUniformVariables()
     {
-        float fShiftL = 0;
-        float fShiftR = 0;
+    	m_kWidgetState.Shift[0] = 0;
+    	m_kWidgetState.Shift[1] = 0;
         if ( m_kWidgetState.MidLine[1] == m_kWidgetState.MidLine[3] )
         {
             float fIncr = (m_kWidgetState.MidLine[1] - m_kWidgetState.LeftLine[1]) /
@@ -239,23 +288,23 @@ public class ClassificationWidgetEffect extends TextureEffect
 
             float fShiftX = (m_kWidgetState.MidLine[0] - m_kWidgetState.LeftLine[0]) /
             (m_kWidgetState.RightLine[0] - m_kWidgetState.LeftLine[0]);
-            fShiftL = (fShiftX)*fIncr;
-            fShiftR = (1.0f-fShiftX)*fIncr;
+            m_kWidgetState.Shift[0] = (fShiftX)*fIncr;
+            m_kWidgetState.Shift[1] = (1.0f-fShiftX)*fIncr;
         }
         Program pkCProgram = GetCProgram(0);
         if ( (pkCProgram != null) && (pkCProgram.GetUC("Shift") != null) ) 
         {
-            pkCProgram.GetUC("Shift").GetData()[0] = fShiftL;
-            pkCProgram.GetUC("Shift").GetData()[1] = fShiftR;
+            pkCProgram.GetUC("Shift").SetDataSource(m_kWidgetState.Shift);
+            //System.err.println( "EFFECT : Shift " + pkCProgram.GetUC("Shift").GetData()[0] + " " + pkCProgram.GetUC("Shift").GetData()[1] );
         }
         if ( (pkCProgram != null) && (pkCProgram.GetUC("InvY0MY1") != null) ) 
         {            
-            float fLeftInvY0MY1 = 1.0f / (m_kWidgetState.LeftLine[1] - m_kWidgetState.LeftLine[3]);
-            float fMidInvY0MY1 = 1.0f / (m_kWidgetState.MidLine[1] - m_kWidgetState.MidLine[3]);
-            float fRightInvY0MY1 = 1.0f / (m_kWidgetState.RightLine[1] - m_kWidgetState.RightLine[3]);
-            pkCProgram.GetUC("InvY0MY1").GetData()[0] = fLeftInvY0MY1;
-            pkCProgram.GetUC("InvY0MY1").GetData()[1] = fMidInvY0MY1;
-            pkCProgram.GetUC("InvY0MY1").GetData()[2] = fRightInvY0MY1;
+        	m_kWidgetState.YRatio[0] = 1.0f / (m_kWidgetState.LeftLine[1] - m_kWidgetState.LeftLine[3]);
+        	m_kWidgetState.YRatio[1] = 1.0f / (m_kWidgetState.MidLine[1] - m_kWidgetState.MidLine[3]);
+        	m_kWidgetState.YRatio[2] = 1.0f / (m_kWidgetState.RightLine[1] - m_kWidgetState.RightLine[3]);
+            pkCProgram.GetUC("InvY0MY1").SetDataSource(m_kWidgetState.YRatio);
+            //System.err.println( "EFFECT : InvY0MY1 " + pkCProgram.GetUC("InvY0MY1").GetData()[0] + " " + pkCProgram.GetUC("InvY0MY1").GetData()[1] + " " + pkCProgram.GetUC("InvY0MY1").GetData()[2]);
+            //System.err.println( "" );
         }
     }
 

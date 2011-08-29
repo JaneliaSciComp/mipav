@@ -300,7 +300,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void MULTIHISTOMode(boolean bOn)
     {
-        m_bMultiHisto = bOn;
+        if ( m_bMultiHisto == bOn )
+        {
+        	return;
+        }
+    	m_bMultiHisto = bOn;
         if ( m_kPShaderCMP != null )
         {
             Program kCProgram = GetCProgram(0);  
@@ -741,21 +745,6 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     			m_akLevWidget[i].Copy( kLWS.elementAt(i).getState() );
     			bChanged = true;
 
-    			float fShiftL = 0;
-    			float fShiftR = 0;
-    			if ( m_akLevWidget[i].MidLine[1] == m_akLevWidget[i].MidLine[3] )
-    			{
-    				float fIncr = (m_akLevWidget[i].MidLine[1] - m_akLevWidget[i].LeftLine[1]) /
-    				(m_akLevWidget[i].LeftLine[3] - m_akLevWidget[i].LeftLine[1]);
-
-    				fIncr = fIncr * (m_akLevWidget[i].RightLine[0] - m_akLevWidget[i].LeftLine[0]);
-
-    				float fShiftX = (m_akLevWidget[i].MidLine[0] - m_akLevWidget[i].LeftLine[0]) /
-    				(m_akLevWidget[i].RightLine[0] - m_akLevWidget[i].LeftLine[0]);
-    				fShiftL = (fShiftX)*fIncr;
-    				fShiftR = (1.0f-fShiftX)*fIncr;
-    			}
-
     			Program pkCProgram = GetCProgram(0);
     			if ( pkCProgram.GetUC("UseWidget"+i) != null ) 
     			{
@@ -770,17 +759,26 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     			if ( pkCProgram.GetUC("LevMidLine"+i) != null ) 
     			{
     				pkCProgram.GetUC("LevMidLine"+i).SetDataSource(m_akLevWidget[i].MidLine);
-    				//System.err.println( "LevMidLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+    				//System.err.println( "LevMidLine " + m_akLevWidget[i].MidLine[0] + 
+    				//		" " + m_akLevWidget[i].MidLine[1] + 
+    				//		" " + m_akLevWidget[i].MidLine[2] + 
+    				//		" " + m_akLevWidget[i].MidLine[3]  );
     			}
     			if ( pkCProgram.GetUC("LevLeftLine"+i) != null ) 
     			{
     				pkCProgram.GetUC("LevLeftLine"+i).SetDataSource(m_akLevWidget[i].LeftLine);
-    				//System.err.println( "LevLeftLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+    				//System.err.println( "LevLeftLine " + m_akLevWidget[i].LeftLine[0] + 
+    				//		" " + m_akLevWidget[i].LeftLine[1] + 
+    				//		" " + m_akLevWidget[i].LeftLine[2] + 
+    				//		" " + m_akLevWidget[i].LeftLine[3]  );
     			}
     			if ( pkCProgram.GetUC("LevRightLine"+i) != null ) 
     			{
     				pkCProgram.GetUC("LevRightLine"+i).SetDataSource(m_akLevWidget[i].RightLine);
-    				//System.err.println( "LevRightLine" + fX1 + " " + fY1 + " " + fX2 + " " + fY2 );
+    				//System.err.println( "LevRightLine " + m_akLevWidget[i].RightLine[0] + 
+    				//		" " + m_akLevWidget[i].RightLine[1] + 
+    				//		" " + m_akLevWidget[i].RightLine[2] + 
+    				//		" " + m_akLevWidget[i].RightLine[3]  );
     			}
     			if ( pkCProgram.GetUC("BoundaryEmphasis"+i) != null ) 
     			{
@@ -788,19 +786,17 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     			}
     			if ( pkCProgram.GetUC("Shift"+i) != null ) 
     			{
-    				//System.err.println( "Shift" + iState );
-    				pkCProgram.GetUC("Shift"+i).GetData()[0] = fShiftL;
-    				pkCProgram.GetUC("Shift"+i).GetData()[1] = fShiftR;
+    				pkCProgram.GetUC("Shift"+i).SetDataSource(m_akLevWidget[i].Shift);
+    				//System.err.println( "Shift " + m_akLevWidget[i].Shift[0] + 
+    				//	" " + m_akLevWidget[i].Shift[1] );
     			}
     			if ( pkCProgram.GetUC("InvY0MY1"+i) != null ) 
     			{            
-    				//System.err.println( "InvY0MY1" + iState );
-    				float fLeftInvY0MY1 = 1.0f / (m_akLevWidget[i].LeftLine[1] - m_akLevWidget[i].LeftLine[3]);
-    				float fMidInvY0MY1 = 1.0f / (m_akLevWidget[i].MidLine[1] - m_akLevWidget[i].MidLine[3]);
-    				float fRightInvY0MY1 = 1.0f / (m_akLevWidget[i].RightLine[1] - m_akLevWidget[i].RightLine[3]);
-    				pkCProgram.GetUC("InvY0MY1"+i).GetData()[0] = fLeftInvY0MY1;
-    				pkCProgram.GetUC("InvY0MY1"+i).GetData()[1] = fMidInvY0MY1;
-    				pkCProgram.GetUC("InvY0MY1"+i).GetData()[2] = fRightInvY0MY1;
+    				pkCProgram.GetUC("InvY0MY1"+i).SetDataSource(m_akLevWidget[i].YRatio);
+    				//System.err.println( "Shift " + m_akLevWidget[i].YRatio[0] + 
+        			//		" " + m_akLevWidget[i].YRatio[1] + 
+        			//		" " + m_akLevWidget[i].YRatio[2] );
+    	            //System.err.println( "" );
     			}
     		}
     	}

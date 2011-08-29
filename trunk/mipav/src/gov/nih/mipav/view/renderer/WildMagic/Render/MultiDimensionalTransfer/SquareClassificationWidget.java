@@ -146,8 +146,9 @@ public class SquareClassificationWidget extends ClassificationWidget
             fY2 = m_kWidgetMesh.VBuffer.GetTCoord2fY(0,2);
             // set right-line in texture coordinates:
             m_kWidgetEfect.SetRightLine( fX1, fY1, fX2, fY2 );
-            
+
             m_kWidgetEfect.UpdateColor();
+            m_kWidgetEfect.UpdateLUT();
             m_kWidgetEfect.computeUniformVariables();
         }
     }

@@ -1,8 +1,11 @@
 package gov.nih.mipav.view.renderer.WildMagic.Interface;
 
 
+import gov.nih.mipav.view.CustomUIBuilder;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJComponentGraphAxes;
+import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.VolumeImageMultiDimensionalTransfer;
@@ -27,6 +30,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
+import javax.swing.JToolBar;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -95,7 +99,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(colorButton),
 					new CancelListener());
 		}
-		if ( event.getActionCommand().equals("SquareWidget") )
+		else if ( event.getActionCommand().equals("SquareWidget") )
 		{
 			m_kMultiHistogram.setWidget( "Square" );
 			updateHelp(false);
@@ -104,6 +108,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		{
 			m_kMultiHistogram.setWidget( "Triangle" );
 			updateHelp(true);
+		}
+		else
+		{
+			m_kMultiHistogram.update( event.getActionCommand() );
 		}
 	}
 
@@ -180,8 +188,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 		if (source == alphaSlider) {
 			float fAlpha = alphaSlider.getValue()/100.0f;
-			Color kColor = colorButton.getBackground();
-			m_kMultiHistogram.setColor( new ColorRGBA( kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f, fAlpha ) );
+			m_kMultiHistogram.setAlpha( fAlpha );
 		}
 
 
@@ -246,22 +253,6 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kGroup.add(kSquare);
 		m_kGroup.add(kTriangle);
 
-		colorButton = new JButton();
-		colorButton.setPreferredSize(new Dimension(25, 25));
-		colorButton.setToolTipText("Change histogram color");
-		colorButton.addActionListener(this);
-		colorButton.setBackground(Color.white);
-		colorButton.setEnabled(true);   
-
-		kGBC.gridx = 0;
-		kGBC.gridy++;
-		buttonPanel.add( new JLabel( "Histogram Constant Color: "), kGBC );
-		kGBC.gridx++;
-
-		buttonPanel.add( colorButton, kGBC );
-
-
-
 		kGBC.gridx = 0;
 		kGBC.gridy++;
 		alphaSlider = new JSlider();
@@ -323,9 +314,27 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		gbc.gridy++;
 		helpPanel.add( new JLabel( ""), gbc );
 		gbc.gridy++;
+		
+
+
+		ViewToolBarBuilder toolBarObj = new ViewToolBarBuilder(this);
+
+		JToolBar lutToolBar = toolBarObj.buildLUTToolBarTop();
+		colorButton = toolBarObj.buildButton( "", "Change histogram color", CustomUIBuilder.PARAM_PAINT_COLOR.getIconBase() );
+		/*
+		colorButton = new JButton();
+		colorButton.setToolTipText("Change histogram color");
+		colorButton.addActionListener(this);
+		colorButton.setBackground(Color.white);
+		colorButton.setEnabled(true);   
+		colorButton.setBorderPainted(false);
+		colorButton.setFocusPainted(true);
+		colorButton.setMargin(new Insets(0, 0, 0, 0)); */
+		lutToolBar.add( colorButton );
 
 		Box contentBox = new Box(BoxLayout.Y_AXIS);
 		contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		contentBox.add(lutToolBar);
 		contentBox.add(histogramPanel);
 		contentBox.add(buttonPanel);
 		contentBox.add(helpPanel);

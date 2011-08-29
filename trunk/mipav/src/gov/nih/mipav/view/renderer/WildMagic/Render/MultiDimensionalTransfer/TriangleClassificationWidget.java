@@ -199,6 +199,7 @@ public class TriangleClassificationWidget extends ClassificationWidget
                     fRightTexX1, fRightTexY1);
 
             m_kWidgetEfect.UpdateColor();
+            m_kWidgetEfect.UpdateLUT();
             m_kWidgetEfect.computeUniformVariables();
         }
     }

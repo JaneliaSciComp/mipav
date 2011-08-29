@@ -241,7 +241,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         m_kImageNew = kImage;
         if ( m_kVolumeImageNew == null )
         {
-            m_kVolumeImageNew = VolumeImage.UpdateData(kImage, 0, null, null, m_kVolumeTextureNew, new String(kImage.getImageName() + "New"), true );
+            m_kVolumeImageNew = VolumeImage.UpdateData(kImage, 0, null, null, m_kVolumeTextureNew, new String(kImage.getImageName() + "New"), true, false );
             m_kVolumeTextureNew.Release();
             m_kVolumeTextureNew.SetImage(m_kVolumeImageNew);
 
@@ -253,7 +253,7 @@ public class SurfaceLightingEffect extends VolumeClipEffect
         }
         else
         {
-            VolumeImage.UpdateData(kImage, 0, null, m_kVolumeImageNew, m_kVolumeTextureNew, new String(kImage.getImageName() + "New"), true );
+            VolumeImage.UpdateData(kImage, 0, null, m_kVolumeImageNew, m_kVolumeTextureNew, new String(kImage.getImageName() + "New"), true, false );
         }
     }
     /**
