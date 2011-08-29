@@ -43,7 +43,7 @@ public class FileDicomTag extends ModelSerialCloneable {
     /** Integer group word (in hexadecimal). */
     private int group;
 
-    /** Length of the tag. */
+    /** Length of the tag as defined in the input image. */
     private int length;
 
     /** Pointer to more information about this tag, read in and contained within the dicom dictionary. */
@@ -166,8 +166,9 @@ public class FileDicomTag extends ModelSerialCloneable {
     }
 
     /**
-     * Calculates the number of bytes that the data (the object value) takes to be stored. This method returns the
-     * number of data items times the sizeof the data type. 
+     * Calculates the number of bytes that the data (the object value) will take to be stored. This method returns the
+     * number of data items times the sizeof the data type.  This may be different from the previously stored length of
+     * the tag.
      * 
      * @return size of the value in bytes
      */
@@ -242,7 +243,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @return the length
      */
     public final int getLength() {
-        return (getDataLength());
+        return length;
     }
 
     /**
@@ -494,7 +495,7 @@ public class FileDicomTag extends ModelSerialCloneable {
     public void setValue(Object value) {
         final VR vr = getValueRepresentation();
         final String keyword = tagInfo.getKeyword();
-
+        
         // if the vr is null or has no keyword (maybe a private tag?), ignore. Must call setValue
         if ( (vr == null) || (keyword == null)) {
             return;
@@ -506,7 +507,7 @@ public class FileDicomTag extends ModelSerialCloneable {
         if(type.getType() instanceof StringType) {
             switch(type) {
             case AS:
-                val = fromVisibleStringToAS(value.toString());
+                val = value.toString();
                 break;
             case DA:
                 val = fromVisibleStringToDA(value.toString());
@@ -658,7 +659,7 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @param value the value to store
      * @param length length of the tag
      */
-    public final void setValue(Object value, final int length) {
+    private final void setValue(Object value, final int length) {
 
         // illegal on UIDs which are to be padded by null when not even length
         if ( ( (length % 2) != 0) && (value instanceof java.lang.String)) {
@@ -1047,7 +1048,6 @@ public class FileDicomTag extends ModelSerialCloneable {
             newStr.append(strBuf.toString());
             multiple++;
         }
-
         return newStr.toString();
     }
 
@@ -1123,7 +1123,7 @@ public class FileDicomTag extends ModelSerialCloneable {
 
             multiple++;
         }
-
+        
         return date.toString();
     }
 

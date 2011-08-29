@@ -250,7 +250,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         while(tagsItr.hasNext()) {
         	nextTag = tagsItr.next();
         	if(nextTag.getValueRepresentation() != VR.SQ) {
-        	    nextLength = nextTag.getLength();
+        	    nextLength = nextTag.getDataLength();
         	} else {
         	    nextLength = ((FileDicomSQ)nextTag.getValue(false)).getDataLength();
         	}
@@ -521,10 +521,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @param  length  the length of the tag
      */
     public final void setValue(FileDicomKey key, Object value, int length) {
-
         FileDicomTag tag = (FileDicomTag) tagTable.get(key.getKey());
-
-        if (tag != null) {
+        int oldDataLength = 0;
+        boolean updateLengthField = false;
+        
+        if (tag != null) {   
+            oldDataLength = tag.getDataLength();
+            updateLengthField = tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)) != null;
             Preferences.debug("Tag "+key+": has already been set, overwriting", Preferences.DEBUG_FILEIO);
         }
 
@@ -543,8 +546,19 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         
 
         tag = new FileDicomTag(info, value);  //automatically computes proper length for tag
-
+        tag.setLength(length); //stores the input file determined tag length
+        
         put(tag);
+        
+        if(tag.getGroup() != 0 && updateLengthField) {
+            Integer i =  (Integer) tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)).getValue(false);
+            if(tag.getValueRepresentation() == VR.SQ) {
+                i = i-oldDataLength+((FileDicomSQ)tag.getValue(false)).getDataLength();
+            } else {
+                i = i-oldDataLength+tag.getDataLength();
+            }
+            tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)).setValue(new Integer(i));
+        }
 
         // we may have added the tag as an explicit/private tag before setting the value.  remove unnecessary
         // duplication..

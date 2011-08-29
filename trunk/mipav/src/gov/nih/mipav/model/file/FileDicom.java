@@ -738,10 +738,6 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
-        if(name.equals("0028,1201")) {
-            System.out.println("Stop");
-        }
-        
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
         if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
@@ -3524,7 +3520,7 @@ public class FileDicom extends FileDicomBase {
         if(vr.equals(VR.SQ)) {
         	length = ((FileDicomSQ) tag.getValue(false)).getLength();
         } else {
-        	length = tag.getLength();
+        	length = tag.getDataLength();
         }
         if(length%2 != 0) {
         	length++; //an odd length tag is appended

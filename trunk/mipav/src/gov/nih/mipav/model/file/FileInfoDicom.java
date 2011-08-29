@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -567,10 +568,19 @@ public class FileInfoDicom extends FileInfoBase {
      * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
      */
     public final void setInfoFromTags() {
-    	Iterator<Entry<FileDicomKey,FileDicomTag>> itr = tagTable.getTagList().entrySet().iterator();
+        HashMap<Integer, LengthStorageUnit> lengthComp = new HashMap<Integer, LengthStorageUnit>();
+        Iterator<Entry<FileDicomKey,FileDicomTag>> itr = tagTable.getTagList().entrySet().iterator();
+        FileDicomTag tag = null;
+       
         while(itr.hasNext()) {
-            setInfoFromTag(itr.next().getValue());
+            tag = itr.next().getValue();
+            if(tag.getElement() != 0) {
+                appendLengthTag(tag, lengthComp);
+            }
+            setInfoFromTag(tag);
         }
+        
+        updateLengthTags(lengthComp);
         
         if (getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
             displayType = ModelStorageBase.FLOAT;
@@ -591,6 +601,95 @@ public class FileInfoDicom extends FileInfoBase {
             } else if (getDataType() == ModelStorageBase.USHORT) {
                 displayType = ModelStorageBase.SHORT;
             }
+        }
+    }
+    
+    private void updateLengthTags(HashMap<Integer, LengthStorageUnit> lengthComp) {
+        Iterator<Integer> itr = lengthComp.keySet().iterator();
+        while(itr.hasNext()) {
+            int group = itr.next();
+            try {
+                Integer length = (Integer) tagTable.get(new FileDicomKey(group, 0)).getValue(false);
+                if(length.intValue() != lengthComp.get(group).get()) {
+                    Preferences.debug("Computed group: "+Integer.toHexString(group)+" length does not agree with stored value.");
+                }
+                tagTable.get(new FileDicomKey(group, 0)).setValue(new Integer(lengthComp.get(group).get()));
+                
+            } catch(NullPointerException e) {
+                System.out.println("No length for "+Integer.toHexString(group));
+            }
+        }
+    }
+
+    private void appendLengthTag(FileDicomTag tag, HashMap<Integer, LengthStorageUnit> lengthComp) {
+        LengthStorageUnit length = null;
+        int group = tag.getGroup();
+        if((length = lengthComp.get(group)) == null) {
+            lengthComp.put(group, length = new LengthStorageUnit(0));
+        }
+        if(tag.getValueRepresentation() != VR.SQ) {
+            length.add(tag.getDataLength());
+        } else {
+            length.add(((FileDicomSQ)tag.getValue(false)).getDataLength());
+        }
+        if(vr_type == VRtype.EXPLICIT) {
+            if(tag.getType().reservedBytes()) {
+                length.add(2); //include reserved bytes
+                length.add(4); //include 4 bytes for length
+            } else {
+                length.add(2); //include 2 bytes for length
+            }
+            length.add(2); //include vr bytes
+        } else {
+            length.add(4); //include 4 bytes for length
+        }
+        length.add(2); //include group bytes
+        length.add(2); //include element bytes
+    }
+    
+    /**
+     * This class is a basic storage unit for a primitive integer variable.  By creating this storage unit,
+     * modified map values that are stored using this method only need to be accessed once.
+     * 
+     * @author senseneyj
+     *
+     */
+    class LengthStorageUnit {
+        
+        /**Internal integer value stored by this unit. */
+        private int value;
+        
+        /** 
+         * Creates a storage wrapper for a primitive integer variable.
+         */
+        public LengthStorageUnit(int i) {
+            this.value = i;
+        }
+        
+        /**
+         * Adds the parameter i to the stored value.
+         */
+        public void add(int i) {
+            value += i;
+        }
+        
+        /**
+         * Sets the stored value of this storage unit to i.
+         */
+        public void set(int i) {
+            value = i;
+        }
+        
+        /**
+         * Gets the stored value of this storage unit to i.
+         */
+        public int get() {
+            return value;
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(value);
         }
     }
 
