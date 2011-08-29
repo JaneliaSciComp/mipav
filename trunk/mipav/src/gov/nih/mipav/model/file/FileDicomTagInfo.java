@@ -89,6 +89,23 @@ public class FileDicomTagInfo extends ModelSerialCloneable {
         public DicomType getType() {
             return type;
         }
+        
+        /**
+         * Returns whether tags with the VR use two reserved bytes in its encoding
+         */
+        public boolean reservedBytes() {
+            switch(this) {
+            case OB:
+            case OW:
+            case OF:
+            case SQ:
+            case UT:
+            case UN:
+                return true;
+            default:
+                return false;
+            }
+        }
     }
     
     public enum NumType implements DicomType {
