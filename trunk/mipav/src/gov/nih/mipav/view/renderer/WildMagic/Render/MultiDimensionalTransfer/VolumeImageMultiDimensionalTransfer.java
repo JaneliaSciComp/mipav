@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
+import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImageViewer;
@@ -18,6 +20,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.TextureEffect;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
@@ -75,7 +78,7 @@ implements GLEventListener, KeyListener
 	private String m_kWidgetType = new String( "Square" );
 	private boolean m_bFirstAdded = false;
 	private boolean m_bUpdateLev = false;
-
+	
 	/**
 	 * Create a new VolumeImageMultiDimensionalTranfer display.
 	 * @param canvas The canvas to use for the display. The canvas shares a context with the VolumeTriPlanarRenderer.
@@ -440,6 +443,19 @@ implements GLEventListener, KeyListener
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().setSize( m_iWidth, m_iHeight );   
 		m_bDisplay = true;
 	}
+	
+
+	public void setAlpha( float fAlpha )
+	{
+		m_kCurrentColor.A = fAlpha;
+		if (  m_iCurrent != -1 )
+		{
+			m_akWidgets.get(m_iCurrent).setAlpha( fAlpha );
+		}
+		m_bDisplay = true;
+		GetCanvas().display();
+	}
+
 
 	/**
 	 * Sets the contribution of the 2nd derivative on the volume rendering for this widget.
@@ -504,6 +520,19 @@ implements GLEventListener, KeyListener
 	{
 		m_akWidgets = kWidgetList;
 		m_bUpdateLev = true;        
+	}
+	
+	public void update( String kCommand )
+	{
+		boolean bReverseLUT = kCommand.equals( CustomUIBuilder.PARAM_LUT_INVERT.getActionCommand() );
+		int index = VolumeTriPlanarRender.getHistogramLUTTextureIndex( kCommand );
+		Texture kMap = VolumeTriPlanarRender.getHistogramLUTTexture( index, bReverseLUT );
+		if (  m_iCurrent != -1 )
+		{
+			m_akWidgets.get(m_iCurrent).setLUT( kMap, index );
+		}
+		m_bDisplay = true;
+		GetCanvas().display();
 	}
 
 	/**

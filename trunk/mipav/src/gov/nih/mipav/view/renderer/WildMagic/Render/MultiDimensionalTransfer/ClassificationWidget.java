@@ -8,6 +8,7 @@ import java.io.Serializable;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.SceneGraph.Node;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.Spatial;
@@ -264,6 +265,15 @@ public abstract class ClassificationWidget implements Serializable
 	 */
 	public abstract void processMouseDrag(int iX0ld, int iYOld, int iButton, MouseEvent e );
 
+
+	public void setAlpha( float fAlpha )
+	{
+		if ( m_kWidgetEfect != null )
+		{
+			m_kWidgetEfect.SetAlpha( fAlpha );
+		}		
+	}
+	
 	/**
 	 * Sets the contribution of the 2nd derivative on the volume rendering for this widget.
 	 * @param fAlpha the contribution of the 2nd derivative on the volume rendering for this widget.
@@ -285,6 +295,14 @@ public abstract class ClassificationWidget implements Serializable
 		if ( m_kWidgetEfect != null )
 		{
 			m_kWidgetEfect.SetColor( kColor.R, kColor.G, kColor.B, kColor.A );
+		}
+	}
+	
+	public void setLUT( Texture kMap, int index )
+	{
+		if ( m_kWidgetEfect != null )
+		{
+			m_kWidgetEfect.SetLUT( kMap, index );
 		}
 	}
 

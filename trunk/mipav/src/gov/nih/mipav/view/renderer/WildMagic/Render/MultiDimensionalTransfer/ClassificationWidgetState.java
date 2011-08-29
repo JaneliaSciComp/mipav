@@ -1,7 +1,11 @@
 
 package gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer;
 
+import gov.nih.mipav.model.structures.ModelLUT;
+
 import java.io.Serializable;
+
+import WildMagic.LibGraphics.Rendering.Texture;
 
 /**
  * This class stores the information needed for calculating how the multi-histogram is applied to the volume
@@ -15,6 +19,9 @@ public class ClassificationWidgetState implements Serializable
 {
     /**  */
     private static final long serialVersionUID = 711728604033191355L;
+
+    public static int m_iTextureID = 0;
+    
     /** Default, unused state. */
     public static ClassificationWidgetState ZERO_STATE = new ClassificationWidgetState();
     /** Default color for the color transfer function is white: */
@@ -25,10 +32,17 @@ public class ClassificationWidgetState implements Serializable
     public float[] LeftLine = new float[4];
     /** Transfer function right line: */
     public float[] RightLine = new float[4];
+    /** Transfer function shift: */
+    public float[] Shift = new float[4];
+    /** Transfer function y-ratios: */
+    public float[] YRatio = new float[4];
     /** contribution of the boundary emphasis slider and therefor the contribution of the 2nd derivative of the data.*/
     public float[] BoundaryEmphasis = new float[4];
     /** turns the widget on/off in the GLSL shader code. */
     public float[] UseWidget = new float[4];
+    
+    /** turns the widget color map on/off in the GLSL shader code. */
+    public float[] UseColorMap = new float[4];
 
     /**
      * Default Constructor:
@@ -43,6 +57,7 @@ public class ClassificationWidgetState implements Serializable
         } 
         BoundaryEmphasis[0] = 0.0f;
         UseWidget[0] = 0.0f;
+        UseColorMap[0] = -1.0f;
     }
     
     /**
@@ -57,9 +72,12 @@ public class ClassificationWidgetState implements Serializable
             MidLine[i] = kIn.MidLine[i];
             LeftLine[i] = kIn.LeftLine[i];
             RightLine[i] = kIn.RightLine[i];
+            Shift[i] = kIn.Shift[i];
+            YRatio[i] = kIn.YRatio[i];
         }
         BoundaryEmphasis[0] = kIn.BoundaryEmphasis[0];
         UseWidget[0] = kIn.UseWidget[0];
+        UseColorMap[0] = kIn.UseColorMap[0];
     }
     
     /**
@@ -73,6 +91,7 @@ public class ClassificationWidgetState implements Serializable
         RightLine = null;
         BoundaryEmphasis = null;
         UseWidget = null;
+        UseColorMap = null;
     }
     
     public boolean equals( ClassificationWidgetState kIn )
@@ -82,12 +101,16 @@ public class ClassificationWidgetState implements Serializable
         	if ( (Color[i] != kIn.Color[i]) || 
         			(MidLine[i] != kIn.MidLine[i]) ||
         			(LeftLine[i] != kIn.LeftLine[i] ) ||
-        			(RightLine[i] != kIn.RightLine[i]) )
+        			(RightLine[i] != kIn.RightLine[i]) ||
+                    (Shift[i] != kIn.Shift[i]) ||
+                    (YRatio[i] != kIn.YRatio[i])	     )    
         		return false;
         }
         if ( BoundaryEmphasis[0] != kIn.BoundaryEmphasis[0])
         	return false;
         if ( UseWidget[0] != kIn.UseWidget[0])
+        	return false;
+        if ( UseColorMap[0] != kIn.UseColorMap[0])
         	return false;
         return true;
     }

@@ -95,13 +95,17 @@ public class VolumeImageNormalGM extends VolumeImageViewer
                 m_pkRenderer.DrawScene(m_kCuller.GetVisibleSet());
                 m_pkRenderer.EndScene();
             }
-            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetScratchTarget(), m_iSlice );
+        	SaveImage(m_iSlice);
+            m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetNormalMapTarget(), m_iSlice );
+            //m_pkRenderer.FrameBufferToTexSubImage3D( m_kVolumeImage.GetScratchTarget(), m_iSlice );
             m_iSlice++; 
             if ( m_iSlice >= m_kImage.getExtents()[2])
             {
                 m_iSlice = 0;
                 m_bDisplayFirst = false;
-                m_bDisplaySecond = true;
+                m_bDisplaySecond = false;
+                m_kVolumeImage.CopyNormalFiles(m_iVolume, m_kOutputImage);
+                //m_bDisplaySecond = true;
             }
         }
         

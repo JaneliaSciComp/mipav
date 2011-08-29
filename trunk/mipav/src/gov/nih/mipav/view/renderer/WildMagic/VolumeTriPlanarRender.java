@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIVector;
+import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
@@ -157,8 +158,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	protected Texture[] m_akSceneTarget = new Texture[4];
 
 	protected boolean m_bWriteImage = false;
-
-
+	
+	protected static int ms_NumHistogramLUTs = 11;
+	protected static Texture[] ms_akLUTTexture = new Texture[ms_NumHistogramLUTs];
+	
 	/**
 	 * Default Constructor.
 	 */
@@ -738,6 +741,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 m_pkRenderer.ReleaseTexture( imageB.GetSurfaceTarget() );   
 			 m_pkRenderer.ReleaseTexture( imageB.GetScratchTarget() );     	
 		 }
+		  for ( int i = 0; i < ms_akLUTTexture.length; i++ )
+		  {
+			  m_pkRenderer.ReleaseTexture( ms_akLUTTexture[i] );			  
+		  }
 		 m_kSlices.dispose(m_pkRenderer);  
 	 }
 
@@ -2651,6 +2658,80 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			  }
 	  }
 
+	  public static int getHistogramLUTTextureIndex( String kCommand )
+	  {
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_GRAY.getActionCommand()) )
+		  {
+			  return 0;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_RED.getActionCommand()) )
+		  {
+			  return 1;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_GREEN.getActionCommand()) )
+		  {
+			  return 2;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_BLUE.getActionCommand()) )
+		  {
+			  return 3;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_GRAY_BLUE_RED.getActionCommand()) )
+		  {
+			  return 4;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_HOTMETAL.getActionCommand()) )
+		  {
+			  return 5;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_SPECTRUM.getActionCommand()) )
+		  {
+			  return 6;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_COOL_HOT.getActionCommand()) )
+		  {
+			  return 7;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_SKIN.getActionCommand()) )
+		  {
+			  return 8;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_BONE.getActionCommand()) )
+		  {
+			  return 9;
+		  }
+		  if ( kCommand.equals(CustomUIBuilder.PARAM_LUT_STRIPED.getActionCommand()) )
+		  {
+			  return 10;
+		  }
+		  return 0;
+	  }
+	  
+	  public static Texture getHistogramLUTTexture( int index, boolean bReverse )
+	  {
+		  index = Math.min(index, ms_akLUTTexture.length-1);
+		  index = Math.max(index, 0);
+		  return ms_akLUTTexture[index];
+	  }
+	  
+	  
+	  
+	  private void initLUT(Texture[] m_akLUTTexture, ModelLUT kLUT, int index )
+	  {
+		  byte[] aucData = new byte[256 * 4];
+		  GraphicsImage kColorMap = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, 256, aucData, new String("ColorMap" + index));
+		  m_akLUTTexture[index].SetImage(kColorMap);
+		  m_akLUTTexture[index].SetName(kColorMap.GetName());
+
+		  for (int i = 0, count = 0; i < 256; i++) {
+			  int remappedValue = kLUT.getIndexedLUT()[i];
+			  aucData[count++] = (byte) ( (remappedValue & 0x00ff0000) >> 16);
+			  aucData[count++] = (byte) ( (remappedValue & 0x0000ff00) >> 8);
+			  aucData[count++] = (byte) ( (remappedValue & 0x000000ff));
+			  aucData[count++] = (byte) ( 255 );
+		  }
+	  }
+
 	  private void loadShared ()
 	  {
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetVolumeTarget() );
@@ -2671,6 +2752,43 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetLaplaceMapTarget() );
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetSurfaceTarget() );   
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetScratchTarget() );     	
+		  }
+
+		  for ( int i = 0; i < ms_akLUTTexture.length; i++ )
+		  {
+			  ms_akLUTTexture[i] = new Texture();
+			  ms_akLUTTexture[i].SetShared(true);
+		  }
+
+		  int index = 0;
+		  ModelLUT kLUT = new ModelLUT(ModelLUT.GRAY, 256, new int[]{4,256});		  
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+
+		  kLUT.makeRedTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+
+		  kLUT.makeGreenTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeBlueTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeGrayBRTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeHotMetalTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeSpectrumTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeCoolHotTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeSkinTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeBoneTransferFunctions(); kLUT.makeLUT(256);
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+		  kLUT.makeStripedLUT();
+		  initLUT(ms_akLUTTexture, kLUT, index++);
+
+		  for ( int i = 0; i < ms_akLUTTexture.length; i++ )
+		  {
+			  m_pkRenderer.LoadTexture( ms_akLUTTexture[i] );			  
 		  }
 
 		  m_fX = m_kVolumeImageA.GetScaleX();

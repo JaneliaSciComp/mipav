@@ -266,7 +266,8 @@ public class VolumeImage implements Serializable {
      * @return
      */
     public static GraphicsImage UpdateData(final ModelImage kImage, final int iTimeSlice, final ModelImage kNewImage,
-            final GraphicsImage kVolumeImage, final Texture kVolumeTexture, final String kImageName, final boolean bSwap) {
+            final GraphicsImage kVolumeImage, final Texture kVolumeTexture, final String kImageName, 
+            final boolean bSwap, final boolean bRescale) {
         GraphicsImage kReturn = kVolumeImage;
         final int iXBound = kImage.getExtents()[0];
         final int iYBound = kImage.getExtents()[1];
@@ -278,7 +279,7 @@ public class VolumeImage implements Serializable {
             iSize *= 4;
             aucData = new byte[iSize];
             try {
-                kImage.exportDataUseMask(iTimeSlice * iSize, iSize, aucData);
+                kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
                 if (bSwap) {
                     for (int i = 0; i < iSize; i += 4) {
                         final byte tmp = aucData[i];
@@ -300,7 +301,7 @@ public class VolumeImage implements Serializable {
         } else {
             aucData = new byte[iSize];
             try {
-                kImage.exportDataUseMask(iTimeSlice * iSize, iSize, aucData);
+                kImage.exportDataUseMask(iTimeSlice * iSize, iSize, bRescale, aucData);
                 // Temporary make the texture an RGBA texture until JOGL2 fixes NPOT textures.
                 byte[] aucData2 = new byte[iSize*4];
                 for (int i = 0; i < iSize; i++) {
@@ -384,7 +385,7 @@ public class VolumeImage implements Serializable {
 		ModelImage.saveImage( kImage, kImage.getImageName() + ".xml", m_kDir );
         //kImage.saveImage(m_kDir, kImage.getImageName(), FileUtility.XML, false, false);
         m_kNormal[i] = VolumeImage.UpdateData(kImage, 0, null, m_kNormal[i], m_kNormalMapTarget, kImage.getImageName(),
-                true);
+                true, true);
     }
 
     /**
@@ -525,7 +526,7 @@ public class VolumeImage implements Serializable {
     		if ( kNormal != null )
     		{
     			m_kNormal[i] = VolumeImage.UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal
-    					.getImageName(), true);
+    					.getImageName(), true, false);
     			kNormal.disposeLocal();
     			m_bNormalsInit = true;
     		}
@@ -867,10 +868,10 @@ public class VolumeImage implements Serializable {
         m_kImage = kImage;
         if (bCopytoCPU) {
             VolumeImage.UpdateData(m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice],
-                    m_kVolumeTarget, m_kImage.getImageName(), true);
+                    m_kVolumeTarget, m_kImage.getImageName(), true, false);
         } else {
             VolumeImage.UpdateData(m_kImage, m_iTimeSlice, null, m_kVolume[m_iTimeSlice], m_kVolumeTarget, m_kImage
-                    .getImageName(), true);
+                    .getImageName(), true, false);
         }
     }
 
@@ -927,7 +928,7 @@ public class VolumeImage implements Serializable {
         aucData = new byte[iSize];
 
         try {
-            m_kImage.exportDataUseMask(0, iSize, aucData);
+            m_kImage.exportDataUseMask(0, iSize, false, aucData);
         } catch (final IOException e) {
             e.printStackTrace();
         }
@@ -1178,7 +1179,7 @@ public class VolumeImage implements Serializable {
         m_akHistoTCoord[2] = new Vector2f(iTMaxX / 255.0f, iTMaxY / 255.0f);
         m_akHistoTCoord[3] = new Vector2f(iTMinX / 255.0f, iTMaxY / 255.0f);
         m_bHistoInit = true;
-        // System.err.println( iTMinX + ", " + iTMinY + " " + iTMaxX + ", " + iTMaxY );
+        //System.err.println( iTMinX + ", " + iTMinY + " " + iTMaxX + ", " + iTMaxY );
     }
 
     /**
@@ -1203,7 +1204,7 @@ public class VolumeImage implements Serializable {
     			if ( kGradientMagnitude != null && checkImage(kImage, kGradientMagnitude ))
     			{
     				m_kVolumeGM[i] = VolumeImage.UpdateData(kGradientMagnitude, i, null, m_kVolumeGM[i], 
-    						m_kVolumeGMTarget, m_kVolumeGM[i].GetName(), true);
+    						m_kVolumeGMTarget, m_kVolumeGM[i].GetName(), true, false);
     				ModelImage.saveImage( kGradientMagnitude, kImageName + ".xml", m_kDir );
     			}
     			else
@@ -1236,11 +1237,11 @@ public class VolumeImage implements Serializable {
     				}
     				if (kImageGM == null) {
     					System.err.println("Gradient magnitude calculation returned null");
-    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImage, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
+    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImage, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true, false);
     				} else {
     					kImageGM.calcMinMax();
     					m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );
-    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true);
+    					m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true, false);
     				}
     				final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
     				if (kImageFrame != null) {
@@ -1289,7 +1290,7 @@ public class VolumeImage implements Serializable {
         		}
         		if (kImageGMGM != null) {
         			m_kVolumeLaplace[i] = VolumeImage.UpdateData(kImageGMGM, 0, null, m_kVolumeLaplace[i], m_kVolumeLaplaceTarget, kImageName,
-        					true);
+        					true, false);
         		} else {
         			System.err.println("Laplacian calculation returned null");
         		}
@@ -1374,7 +1375,7 @@ public class VolumeImage implements Serializable {
         				.getImageName(), "_" + i));
         		JDialogBase.updateFileInfo( m_kImage, m_akImages[i] );
         		m_kVolume[i] = VolumeImage.UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, m_akImages[i]
-        		                                                                                                    .getImageName(), true);
+        		                                                                                                    .getImageName(), true, false);
         		m_akImages[i].copyFileTypeInfo(m_kImage);
         		m_akImages[i].calcMinMax();
         	}
@@ -1383,7 +1384,7 @@ public class VolumeImage implements Serializable {
         		// Already 3D, just generate the GraphicsImage:
         		m_akImages[0] = m_kImage;
         		m_kVolume[0] = VolumeImage.UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, m_kImage
-        				.getImageName(), true);
+        				.getImageName(), true, false);
         	}
         	// Allocate GraphcisImage for Normal Map Texture:
         	kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), 

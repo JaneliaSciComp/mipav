@@ -57,15 +57,23 @@ uniform vec4 LevMidLine;
 uniform vec4 LevLeftLine;
 uniform vec4 LevRightLine;
 uniform sampler2D BaseSampler;
+uniform sampler1D ColorMap; 
+uniform float UseColorMap;
 void main()
 {
     vec4 kBase = texture2D(BaseSampler,gl_TexCoord[0].xy);
     float fAlpha = computeAlpha( gl_TexCoord[0].x, gl_TexCoord[0].y, Shift, InvY0MY1,
                                  LevMidLine, LevLeftLine, LevRightLine );
-    fAlpha *= LevColor.a;
-    gl_FragColor.r = LevColor.r*fAlpha + (1.0 - fAlpha)*kBase.r;
-    gl_FragColor.g = LevColor.g*fAlpha + (1.0 - fAlpha)*kBase.g;
-    gl_FragColor.b = LevColor.b*fAlpha + (1.0 - fAlpha)*kBase.b;
+    vec4 widgetColor = LevColor;
+    if ( UseColorMap != -1.0 )
+    {
+        widgetColor = texture1D(ColorMap, fAlpha );
+        widgetColor.a = LevColor.a;
+    }
+    fAlpha *= widgetColor.a;
+    gl_FragColor.r = widgetColor.r*fAlpha + (1.0 - fAlpha)*kBase.r;
+    gl_FragColor.g = widgetColor.g*fAlpha + (1.0 - fAlpha)*kBase.g;
+    gl_FragColor.b = widgetColor.b*fAlpha + (1.0 - fAlpha)*kBase.b;
     gl_FragColor.a = 1.0;
 }
 //----------------------------------------------------------------------------
