@@ -1473,21 +1473,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
             if ( !broughtToFront) { // make a new dialog to edit the key
 
-                // if the tag is a "Private Tag", it won't be able to be changed (without
-                // returning, starting an editor dialog crashes the program)
-                if (DicomInfo.getTagTable().get(tagKey).getName().equals("Private Tag")) {
-                    MipavUtil.displayError("Sorry, can't change private tags!");
-
-                    return;
-                }
-
-                editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, DicomInfo.getTagTable(), false); // make
-                // a
-                // dialog
-                // that
-                // edits
-                // that
-                // particular
+                editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, DicomInfo.getTagTable(), false);
                 editorDialogDicom.addButtonListener(this);
                 editorDialogDicom.addWindowListener(new WindowAdapter() { // listen for when the dialog comes alive
                             public void windowActivated(final WindowEvent e) {
