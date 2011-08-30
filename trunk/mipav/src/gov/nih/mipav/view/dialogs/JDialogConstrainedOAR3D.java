@@ -2853,8 +2853,10 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         }
         
         matrixDirectory = (String)matrixComboBox.getSelectedItem();
-        if (matrixDirectory.equals("User specified matrix directory")) {
-            matrixDirectory = userDirectoryText.getText();	
+        if (matrixDirectory != null) {
+	        if (matrixDirectory.equals("User specified matrix directory")) {
+	            matrixDirectory = userDirectoryText.getText();	
+	        }
         }
 
         return true;
