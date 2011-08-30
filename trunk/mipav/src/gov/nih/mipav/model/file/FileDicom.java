@@ -3739,9 +3739,6 @@ public class FileDicom extends FileDicomBase {
      */
     private void writeHeader(final RandomAccessFile outputFile, final FileInfoDicom fileInfo,
             final boolean saveAsEncapJP2) throws IOException {
-
-        // all DICOM files start out as little endian
-        boolean endianess = FileBase.LITTLE_ENDIAN;
         FileDicomTag element;
         FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(fileInfo.getTagTable().getTagList());
 
@@ -3768,7 +3765,7 @@ public class FileDicom extends FileDicomBase {
         	}
         }
 
-        writeShort((short) 0xE07F, endianess); // the image
+        writeShort((short) 0x7FE0, endianess); // the image
         writeShort((short) 0x0010, endianess);
 
         if (saveAsEncapJP2) {
