@@ -254,7 +254,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         	} else {
         	    nextLength = ((FileDicomSQ)nextTag.getValue(false)).getDataLength();
         	}
-        	if(nextLength%2 != 0) {
+        	if(nextLength != -1 && nextLength%2 != 0) {
         		Preferences.debug("Appending length within sequence tag", Preferences.DEBUG_FILEIO);
         		nextLength++;
         	}
@@ -530,6 +530,10 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             updateLengthField = tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)) != null;
             Preferences.debug("Tag "+key+": has already been set, overwriting", Preferences.DEBUG_FILEIO);
         }
+        
+        if(key.toString().equals("0054,0013")) {
+            System.out.println("Stop");
+        }
 
         FileDicomTagInfo info = DicomDictionary.getInfo(key);
         
@@ -553,7 +557,8 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         if(tag.getGroup() != 0 && updateLengthField) {
             Integer i =  (Integer) tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)).getValue(false);
             if(tag.getValueRepresentation() == VR.SQ) {
-                i = i-oldDataLength+((FileDicomSQ)tag.getValue(false)).getDataLength();
+                int tempDataLength = ((FileDicomSQ)tag.getValue(false)).getDataLength();
+                i = i-oldDataLength+tempDataLength;
             } else {
                 i = i-oldDataLength+tag.getDataLength();
             }
