@@ -87,7 +87,9 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * @return  the size of the data held in this sequence in number of bytes.
      */
     public int getDataLength() {
-        int datasize = 0;
+        
+        return -1; //Try to duplicate original file
+        /*int datasize = 0;
         int elementsize = 0;
         
         for (int i = 0; i < sequence.size(); i++) {
@@ -104,7 +106,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
         }
         
         //sequence beginning and ending delimiters not included (since if end is present, length is undefined by standard)
-        return datasize;
+        return datasize;*/
     }
 
     /**
