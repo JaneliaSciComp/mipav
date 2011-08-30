@@ -738,6 +738,10 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
+        if(name.equals("0054,1330")) {
+            System.out.println("Stop");
+        }
+        
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
         if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
@@ -851,7 +855,9 @@ public class FileDicom extends FileDicomBase {
                     break;
                 } //else is implicit sequence, so continue
             case SQ:
-                processSequence(tagTable, key, name, endianess);
+                System.out.println("Skipping sequence "+key);
+                tagTable.removeTag(key);
+                //processSequence(tagTable, key, name, endianess);
                 break;
             }
             
@@ -3762,8 +3768,8 @@ public class FileDicom extends FileDicomBase {
         	}
         }
 
-        writeShort((short) 0x7FE0, endianess); // the image
-        writeShort((short) 0x10, endianess);
+        writeShort((short) 0xE07F, endianess); // the image
+        writeShort((short) 0x0010, endianess);
 
         if (saveAsEncapJP2) {
             writeShort((short) 0x424F, endianess);
