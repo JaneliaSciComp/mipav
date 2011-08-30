@@ -96,7 +96,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
             datasize += 8;
             
             elementsize = sequence.get(i).getDataLength(true);
-            if(elementsize != -1) {
+            if(elementsize != -1 && elementsize != 0) {
                 datasize += elementsize;
             } else {
                 return -1;

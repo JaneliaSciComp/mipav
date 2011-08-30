@@ -738,7 +738,7 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
-        if(name.equals("0054,1330")) {
+        if(name.equals("0054,0013")) {
             System.out.println("Stop");
         }
         
@@ -855,9 +855,7 @@ public class FileDicom extends FileDicomBase {
                     break;
                 } //else is implicit sequence, so continue
             case SQ:
-                System.out.println("Skipping sequence "+key);
-                tagTable.removeTag(key);
-                //processSequence(tagTable, key, name, endianess);
+                processSequence(tagTable, key, name, endianess);
                 break;
             }
             
@@ -3684,7 +3682,7 @@ public class FileDicom extends FileDicomBase {
             break;
         	
         default:
-        	byte appendByte = 0;
+        	byte appendByte = 0x20;
         	
         	if(obj instanceof Short[]) { //guaranteed to be even # of bytes
         	    for(int k=0; k<((Short[])obj).length; k++) {
@@ -3715,7 +3713,7 @@ public class FileDicom extends FileDicomBase {
         	        Preferences.debug("Truncating string dicom data", Preferences.DEBUG_FILEIO);
         	        obj = ((String) obj).substring(0, length);
         	    }
-        		
+
         		outputFile.writeBytes(obj.toString());
         	}
         }
