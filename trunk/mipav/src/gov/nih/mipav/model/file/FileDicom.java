@@ -3499,7 +3499,7 @@ public class FileDicom extends FileDicomBase {
     	VR vr = VR.UN;
 
     	Preferences.debug("Writing tag "+tag.getKey().toString()+"\n", Preferences.DEBUG_FILEIO);
-    	if(tag.getKey().toString().equals("0028,1201")) {
+    	if(tag.getKey().toString().equals("0011,1001")) {
     	    System.out.println("Stop");
     	}
     	
@@ -3526,7 +3526,7 @@ public class FileDicom extends FileDicomBase {
         } else {
         	length = tag.getDataLength();
         }
-        if(length%2 != 0) {
+        if(length != -1 && length%2 != 0) {
         	length++; //an odd length tag is appended
         }
 
