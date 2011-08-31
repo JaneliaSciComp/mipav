@@ -85,31 +85,30 @@ public class FileDicomSQ extends ModelSerialCloneable {
 
     /**
      * Returns the size of the data held in this sequence in number of bytes, including the number of bytes required to
-     * delimit each item.
+     * delimit each item.  Always returns the exact number of bytes used for the current state of the sequence.
      *
      * @return  the size of the data held in this sequence in number of bytes.
      */
     public int getDataLength() {
-        
-        return -1; //Try to duplicate original file
-        /*int datasize = 0;
+        int datasize = 0;
         int elementsize = 0;
         
         for (int i = 0; i < sequence.size(); i++) {
 
-            // item start delimiter and length: FE FF 00 E0 00 00 00 00 (item start), always present
+            // item start delimiter (FE FF 00 E0 00 00 00 00) and length are always present
             datasize += 8;
             
             elementsize = sequence.get(i).getDataLength(true);
-            if(elementsize != -1 && elementsize != 0) {
-                datasize += elementsize;
-            } else {
-                return -1;
-            }  
+            datasize += elementsize;
+            if(sequence.get(i).doWriteAsUnknownLength()) {
+                datasize += 8; //item delim tag and length tag are present
+            }
         }
         
-        //sequence beginning and ending delimiters not included (since if end is present, length is undefined by standard)
-        return datasize;*/
+        if(doWriteAsUnknownLength()) {
+            datasize += 8; //sequence delim tag and length tag are present
+        }
+        return datasize;
     }
 
     /**
@@ -128,7 +127,10 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @return  The length of the sequence as read in by the header
      */
-    public final int getLength() {
+    public final int getWritableLength() {
+        if(doWriteAsUnknownLength()) {
+            return -1;
+        }
         return getDataLength();
     }
 

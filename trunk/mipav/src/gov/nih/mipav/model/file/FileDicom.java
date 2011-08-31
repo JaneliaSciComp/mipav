@@ -3523,7 +3523,7 @@ public class FileDicom extends FileDicomBase {
         // Returns the current length of the value of the dicom tag
         int length = 0;
         if(vr.equals(VR.SQ)) {
-        	length = ((FileDicomSQ) tag.getValue(false)).getLength();
+        	length = ((FileDicomSQ) tag.getValue(false)).getWritableLength();
         } else {
         	length = tag.getDataLength();
         }
@@ -3821,9 +3821,9 @@ public class FileDicom extends FileDicomBase {
             final boolean endianess) throws IOException {
 
         for (int i = 0; i < sq.getSequence().size(); i++) {
-            FileDicomTagTable table = sq.getSequence().get(i);
+            FileDicomSQItem table = sq.getSequence().get(i);
             FileDicomTag[] tagArray = FileDicomTagTable.sortTagsList(table.getTagList());
-            int dataLength = table.getDataLength(true); //include tag header information for each tag
+            int dataLength = table.getWritableLength(true); //include tag header information for each tag
             // write item-start tag
             writeShort((short) 0xFFFE, endianess);
             writeShort((short) 0xE000, endianess);
