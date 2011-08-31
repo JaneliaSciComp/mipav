@@ -35,4 +35,16 @@ public class FileDicomSQItem extends FileDicomTagTable {
     public void setWriteAsUnknownLength(boolean writeAsUnknownLength) {
         this.writeAsUnknownLength = writeAsUnknownLength;
     }
+    
+    /**
+     * Gets the length as read in by the header (possibly undefined).
+     *
+     * @return  The length of the sequence as read in by the header
+     */
+    public final int getWritableLength(boolean includeTagInfo) {
+        if(doWriteAsUnknownLength()) {
+            return -1;
+        }
+        return getDataLength(includeTagInfo);
+    }
 }
