@@ -738,10 +738,6 @@ public class FileDicom extends FileDicomBase {
         String name = key.toString(); // string representing the tag
         int tagVM;
         
-        if(name.equals("0054,0013")) {
-            System.out.println("Stop");
-        }
-        
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
         if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
@@ -3500,9 +3496,6 @@ public class FileDicom extends FileDicomBase {
     	VR vr = VR.UN;
 
     	Preferences.debug("Writing tag "+tag.getKey().toString()+"\n", Preferences.DEBUG_FILEIO);
-    	if(tag.getKey().toString().equals("0011,1001")) {
-    	    System.out.println("Stop");
-    	}
     	
         // System.out.println("w = " + dicomTags[i].toString());
         try {
