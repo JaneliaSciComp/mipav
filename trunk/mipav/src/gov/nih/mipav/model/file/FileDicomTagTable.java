@@ -11,7 +11,7 @@ import java.util.*;
 /**
  * A table containing dicom tags. Common tags are not stored here and instead
  * should be stored in the reference tag table.  The reference tag table may refer
- * to another table within a FileInfoDicom or another table within a series of a dicom sequence.
+ * to another table within a FileInfoDicom.
  */
 public class FileDicomTagTable implements java.io.Serializable, Cloneable {
 
@@ -23,30 +23,30 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** A list of tag tables which point to this as their reference tag table. */
-    private FileDicomTagTable[] childTagTables = null;
+    protected FileDicomTagTable[] childTagTables = null;
 
     /**
      * Whether this tag table is a reference table (meaning it contains all of the tags for a given fileInfo and does
      * not need to refer anywhere else when retrieving values).
      */
-    private boolean isReferenceTagTable = false;
+    protected boolean isReferenceTagTable = false;
 
     /**
      * The dicom file info that this tag table belongs to. Used to update file info fields based on tag table changes.
      */
-    private FileInfoDicom parentFileInfo;
+    protected FileInfoDicom parentFileInfo;
 
     /**
      * The reference table to check when a tag is not found in this table. If this table is a reference table, then the
      * value should be <code>this</code> and no checking of the referenceTagTable should take place.
      */
-    private FileDicomTagTable referenceTagTable;
+    protected FileDicomTagTable referenceTagTable;
 
     /** Tags unique to this slice, or all of the tags for this slice if this is a reference tag table. */
-    private Hashtable<FileDicomKey,FileDicomTag> tagTable;
+    protected Hashtable<FileDicomKey,FileDicomTag> tagTable;
     
     /** VR_type to indicate explicit/implicit nature of tags contained in tag table */
-    private VRtype vr_type;
+    protected VRtype vr_type;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -670,8 +670,6 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     		tagTable.clear();
     	}
         tagTable = null;
-
-
 
     }
 }

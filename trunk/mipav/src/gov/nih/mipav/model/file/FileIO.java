@@ -11800,7 +11800,7 @@ public class FileIO {
                 if(table.getValue("0020,9057") == null) {
                     table.setValue("0020,9057", z);
                 }
-                FileDicomTagTable item = new FileDicomTagTable(null, myFileInfo.getVr_type());
+                FileDicomSQItem item = new FileDicomSQItem(null, myFileInfo.getVr_type());
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {
