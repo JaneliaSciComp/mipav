@@ -1009,13 +1009,13 @@ public class FileDicom extends FileDicomBase {
         Preferences
                 .debug("Sequence Tags: (" + name + "); length = " + len + "\n", Preferences.DEBUG_FILEIO);
 
-        Object sq;
+        FileDicomSQ sq;
 
         // ENHANCED DICOM per frame
         if (name.equals("5200,9230")) {
             int numSlices = 0;
             sq = getSequence(endianess, len);
-            final Vector<FileDicomSQItem> v = ((FileDicomSQ) sq).getSequence();
+            final Vector<FileDicomSQItem> v = sq.getSequence();
             Iterator<FileDicomTag> itr = v.get(0).getTagList().values().iterator();
             TreeSet<Integer> sliceInt = new TreeSet<Integer>(); //keeps track of which slices have already been seen
             while(itr.hasNext()) { //put tags in base FileInfoDicom
@@ -1035,8 +1035,9 @@ public class FileDicom extends FileDicomBase {
             }
         } else {
             if (name.equals("0004,1220")) {
-                dirInfo = (FileDicomSQ) getSequence(endianess, len);
+                dirInfo = getSequence(endianess, len);
                 sq = new FileDicomSQ();
+                sq.setWriteAsUnknownLength(len == -1);
             } else {
                 sq = getSequence(endianess, len);
 
@@ -2929,7 +2930,8 @@ public class FileDicom extends FileDicomBase {
      */
     private FileDicomSQItem getDataSet(int itemLength, final boolean endianess) throws IOException {
         final FileDicomSQItem table = new FileDicomSQItem(null, fileInfo.getVr_type());
-
+        table.setWriteAsUnknownLength(itemLength == -1); //if reported item length is -1, item will continue to be written with unknown length
+        
         final int startfptr = getFilePointer();
         boolean flag = true; //whether dicom header processing should continue
         while (flag && !nameSQ.equals(FileDicom.SEQ_ITEM_END) && (getFilePointer() - startfptr < itemLength || itemLength == -1)) {
@@ -3305,8 +3307,9 @@ public class FileDicom extends FileDicomBase {
      * 
      * @see DicomSQ
      */
-    private Object getSequence(final boolean endianess, final int seqLength) throws IOException {
+    private FileDicomSQ getSequence(final boolean endianess, final int seqLength) throws IOException {
         final FileDicomSQ sq = new FileDicomSQ();
+        sq.setWriteAsUnknownLength(seqLength == -1);
 
         // There is no more of the tag to read if the length of the tag
         // is zero. In fact, trying to get the Next element is potentially
@@ -3337,6 +3340,7 @@ public class FileDicom extends FileDicomBase {
                 } else {
                     item = getDataSet(elementLength, endianess);
                 }
+                item.setWriteAsUnknownLength(elementLength == -1); //if reported item length is -1, item will continue to be written with unknown length
                 if(item != null) {
                     sq.addItem(item);
                 }
