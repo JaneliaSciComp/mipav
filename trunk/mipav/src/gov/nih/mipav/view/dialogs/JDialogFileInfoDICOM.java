@@ -219,14 +219,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         // System.err.println("Key = " + key);
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                         
-                        final Vector<FileDicomTagTable> display = sq.getSequence();
+                        final Vector<FileDicomSQItem> display = sq.getSequence();
 
                         rowData[3] = "";
                         
                         JDialogFileInfoDICOM.addRow(rowData, show);
                         FileDicomTag tag = null;
                         
-                        for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                        for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                             FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
                             rowData[2] = "Sequence element";
                             rowData[3] = "";
@@ -505,14 +505,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                     
-                    final Vector<FileDicomTagTable> display = sq.getSequence();
+                    final Vector<FileDicomSQItem> display = sq.getSequence();
 
                     rowData[3] = "";
                     
                     JDialogFileInfoDICOM.addRow(rowData, show);
                     FileDicomTag tag = null;
                     
-                    for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                    for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                         FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
                         rowData[2] = "Sequence element";
                         rowData[3] = "";
@@ -647,14 +647,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         // System.err.println("Key = " + key);
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                         
-                        final Vector<FileDicomTagTable> display = sq.getSequence();
+                        final Vector<FileDicomSQItem> display = sq.getSequence();
 
                         rowData[3] = "";
                         
                         JDialogFileInfoDICOM.addRow(rowData, show);
                         FileDicomTag tag = null;
                         
-                        for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                        for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                             FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
                             rowData[2] = "Sequence element";
                             rowData[3] = "";
@@ -924,14 +924,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                     
-                    final Vector<FileDicomTagTable> display = sq.getSequence();
+                    final Vector<FileDicomSQItem> display = sq.getSequence();
 
                     rowData[2] = "";
                     
                     JDialogFileInfoDICOM.addRow(rowData, show);
                     FileDicomTag tag = null;
                     
-                    for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                    for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                         FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
                         rowData[1] = "Sequence element";
                         rowData[2] = "";
@@ -1065,14 +1065,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         // System.err.println("Key = " + key);
                         final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                         
-                        final Vector<FileDicomTagTable> display = sq.getSequence();
+                        final Vector<FileDicomSQItem> display = sq.getSequence();
 
                         rowData[3] = "";
                         
                         JDialogFileInfoDICOM.addRow(rowData, show);
                         FileDicomTag tag = null;
                         
-                        for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                        for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                             FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
                             rowData[2] = "Sequence element";
                             rowData[3] = "";
@@ -1197,14 +1197,14 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                     
-                    final Vector<FileDicomTagTable> display = sq.getSequence();
+                    final Vector<FileDicomSQItem> display = sq.getSequence();
 
                     rowData[3] = "";
                     
                     JDialogFileInfoDICOM.addRow(rowData, show);
                     FileDicomTag tag = null;
                     
-                    for (final Enumeration<FileDicomTagTable> f = display.elements(); f.hasMoreElements();) {
+                    for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
                         FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
                         rowData[2] = "Sequence element";
                         rowData[3] = "";
