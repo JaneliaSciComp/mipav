@@ -1015,7 +1015,7 @@ public class FileDicom extends FileDicomBase {
         if (name.equals("5200,9230")) {
             int numSlices = 0;
             sq = getSequence(endianess, len);
-            final Vector<FileDicomTagTable> v = ((FileDicomSQ) sq).getSequence();
+            final Vector<FileDicomSQItem> v = ((FileDicomSQ) sq).getSequence();
             Iterator<FileDicomTag> itr = v.get(0).getTagList().values().iterator();
             TreeSet<Integer> sliceInt = new TreeSet<Integer>(); //keeps track of which slices have already been seen
             while(itr.hasNext()) { //put tags in base FileInfoDicom
@@ -2927,8 +2927,8 @@ public class FileDicom extends FileDicomBase {
      * 
      * @see FileDicomItem
      */
-    private FileDicomTagTable getDataSet(int itemLength, final boolean endianess) throws IOException {
-        final FileDicomTagTable table = new FileDicomTagTable(null, fileInfo.getVr_type());
+    private FileDicomSQItem getDataSet(int itemLength, final boolean endianess) throws IOException {
+        final FileDicomSQItem table = new FileDicomSQItem(null, fileInfo.getVr_type());
 
         final int startfptr = getFilePointer();
         boolean flag = true; //whether dicom header processing should continue
@@ -3331,9 +3331,9 @@ public class FileDicom extends FileDicomBase {
     
                 // elementLength here is the length of the
                 // item as it written into the File
-                FileDicomTagTable item = null;
+                FileDicomSQItem item = null;
                 if (elementLength == 0) {
-                    item = new FileDicomTagTable(null, fileInfo.getVr_type());
+                    item = new FileDicomSQItem(null, fileInfo.getVr_type());
                 } else {
                     item = getDataSet(elementLength, endianess);
                 }

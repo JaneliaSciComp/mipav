@@ -41,7 +41,10 @@ public class FileDicomSQ extends ModelSerialCloneable {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Sequences are composed of items (DICOM items) and store in a vector object. */
-    private Vector<FileDicomTagTable> sequence;
+    private Vector<FileDicomSQItem> sequence;
+    
+    /** Whether the sequence should be written using an unknown length */
+    private boolean writeAsUnknownLength = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -49,7 +52,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      * Creates a new DicomSQ object with initial length.
      */
     public FileDicomSQ() {
-        sequence = new Vector<FileDicomTagTable>(5, 2);
+        sequence = new Vector<FileDicomSQItem>(5, 2);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -59,7 +62,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @param  item  item to add
      */
-    public final void addItem(FileDicomTagTable item) {
+    public final void addItem(FileDicomSQItem item) {
         sequence.addElement(item);
     }
 
@@ -173,9 +176,24 @@ public class FileDicomSQ extends ModelSerialCloneable {
         return str.toString();
     }
 
-	public Vector<FileDicomTagTable> getSequence() {
+	public Vector<FileDicomSQItem> getSequence() {
 		return sequence;
 	}
+
+	/**
+	 * Whether the sequence should be written using an unknown length, can be set as a preference by user.
+	 */
+    public boolean doWriteAsUnknownLength() {
+        return writeAsUnknownLength;
+    }
+
+    /**
+     * Whether the sequence should be written using an unknown length, this includes adding
+     * a sequence delimitation item to the sequence.
+     */
+    public void setWriteAsUnknownLength(boolean writeAsUnknownLength) {
+        this.writeAsUnknownLength = writeAsUnknownLength;
+    }
     
     
 }
