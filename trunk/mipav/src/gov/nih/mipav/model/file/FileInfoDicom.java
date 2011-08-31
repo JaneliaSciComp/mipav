@@ -616,7 +616,7 @@ public class FileInfoDicom extends FileInfoBase {
                 tagTable.get(new FileDicomKey(group, 0)).setValue(new Integer(lengthComp.get(group).get()));
                 
             } catch(NullPointerException e) {
-                System.out.println("No length for "+Integer.toHexString(group));
+                //A length for this group does not exist, this is allowable in DICOM.
             }
         }
     }
