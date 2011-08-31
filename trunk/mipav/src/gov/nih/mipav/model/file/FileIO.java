@@ -11807,9 +11807,6 @@ public class FileIO {
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {
                     FileDicomTag tag = tags.nextElement();
-                    if(tag.getKey().equals("0020,9057")) {
-                        System.out.println("Stop");
-                    }
                     if((tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
                         item.setValue(tag.getKey(), tag.getValue(false));
                         System.out.println("Inserting unique value from key: "+tag.getKey());

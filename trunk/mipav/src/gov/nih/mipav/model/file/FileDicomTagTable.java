@@ -530,10 +530,6 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             updateLengthField = tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)) != null;
             Preferences.debug("Tag "+key+": has already been set, overwriting", Preferences.DEBUG_FILEIO);
         }
-        
-        if(key.toString().equals("0054,0013")) {
-            System.out.println("Stop");
-        }
 
         FileDicomTagInfo info = DicomDictionary.getInfo(key);
         

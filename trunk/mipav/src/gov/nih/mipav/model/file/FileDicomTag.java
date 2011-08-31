@@ -523,6 +523,7 @@ public class FileDicomTag extends ModelSerialCloneable {
                 return;
             case OW:
             case OB:
+            case UN:
                 setValue(value, ((Object[])value).length);
                 return;
             default:

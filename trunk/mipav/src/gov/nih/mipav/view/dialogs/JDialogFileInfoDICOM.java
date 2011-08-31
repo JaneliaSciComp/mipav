@@ -188,15 +188,15 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 }
                 
                 if (rowData[2].equals("Private Tag") || vr.equals(VR.OB)) {
-
+                    Object data = ((FileDicomTag) tagsList.get(key)).getValue(false);
                     // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
                     // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
-                    if ( ((FileDicomTag) tagsList.get(key)).getValue(false) instanceof Byte[]) {
+                    if ( data instanceof Byte[]) {
                         // if (key.equals("0008,0040")) { System.err.println("IN JdialogFileInfo looking at
                         // 0008,0040"); System.err.println("value: " + ((FileDicomTag)
                         // tagsList.get(key)).getValue(false).toString()); }
 
-                        final Byte[] bytesV = (Byte[]) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                        final Byte[] bytesV = (Byte[]) data;
                         final byte[] bytesValue = new byte[bytesV.length];
 
                         if ( (bytesValue != null) && (bytesV != null)) {
