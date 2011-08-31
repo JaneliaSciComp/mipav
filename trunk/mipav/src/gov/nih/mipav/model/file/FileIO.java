@@ -11789,6 +11789,7 @@ public class FileIO {
         long time = System.currentTimeMillis();
         //create sequence ordered by current slice number
         FileDicomSQ seq = new FileDicomSQ();
+        seq.setWriteAsUnknownLength(false); //sequences containing enhanced dicom data always given known length
         int tDim = infoAr[0].length;
         int zDim = infoAr.length;
         for(int t = 0; t < tDim; t++) {
@@ -11801,6 +11802,7 @@ public class FileIO {
                     table.setValue("0020,9057", z);
                 }
                 FileDicomSQItem item = new FileDicomSQItem(null, myFileInfo.getVr_type());
+                item.setWriteAsUnknownLength(false); //enhanced sequence items are always written using known length
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {
