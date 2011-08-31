@@ -31,6 +31,8 @@ import Jama.*;
  * smaller than the number of mixtures, use principal component analysis to reduce the number of
  * mixtures to the number of principal components.  Reducing the number of dimensions can reduce noise and
  * prevent overlearning.
+ * Filtering the data in the Fourier domain is allowed before performing independent component analysis since
+ * applying the Fourier transform to the data does not change the mixing matrix.
  * References:
  * 1.) Independent Component Analysis by Aapo Hyvarinen, Juha Karhunen, and Erkki Oja, John-Wiley & Sons, Inc.,
  * 2001. 
