@@ -611,7 +611,7 @@ public class FileInfoDicom extends FileInfoBase {
             try {
                 Integer length = (Integer) tagTable.get(new FileDicomKey(group, 0)).getValue(false);
                 if(length.intValue() != lengthComp.get(group).get()) {
-                    Preferences.debug("Computed group: "+Integer.toHexString(group)+" length does not agree with stored value.\n");
+                    Preferences.debug("Computed group: "+Integer.toHexString(group)+" length does not agree with stored value.\n", Preferences.DEBUG_FILEIO);
                 }
                 tagTable.get(new FileDicomKey(group, 0)).setValue(new Integer(lengthComp.get(group).get()));
                 
