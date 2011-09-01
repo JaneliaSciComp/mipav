@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -1801,8 +1802,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         multiThreadCheckBox = new JCheckBox("Multi-threading enabled (not deterministic)");
         multiThreadCheckBox.setFont(serif12);
         multiThreadCheckBox.setForeground(Color.black);
-        multiThreadCheckBox.setSelected(true);
-        multiThreadCheckBox.setEnabled(true);
+        multiThreadCheckBox.setSelected(Preferences.isMultiThreadingEnabled()  &&
+        		(ThreadUtil.getAvailableCores() > 1));
+        multiThreadCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
 
         Insets insets = new Insets(0, 2, 0, 2);
         GridBagConstraints gbc = new GridBagConstraints();
