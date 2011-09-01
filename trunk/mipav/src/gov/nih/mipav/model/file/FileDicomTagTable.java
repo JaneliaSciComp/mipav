@@ -522,12 +522,14 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      */
     public final void setValue(FileDicomKey key, Object value, int length) {
         FileDicomTag tag = (FileDicomTag) tagTable.get(key.getKey());
+        FileDicomTag lengthTag = null;
         int oldDataLength = 0;
         boolean updateLengthField = false;
         
         if (tag != null) {   
             oldDataLength = tag.getDataLength();
-            updateLengthField = tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)) != null;
+            updateLengthField = (lengthTag = tagTable.get(new FileDicomKey(key.getGroupNumber(), 0))) != null && 
+                                    lengthTag.getValue(false) != null;
             Preferences.debug("Tag "+key+": has already been set, overwriting", Preferences.DEBUG_FILEIO);
         }
 
@@ -549,16 +551,17 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         tag.setLength(length); //stores the input file determined tag length
         
         put(tag);
+            
         
         if(tag.getGroup() != 0 && updateLengthField) {
-            Integer i =  (Integer) tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)).getValue(false);
+            Integer i =  (Integer) lengthTag.getValue(false);
             if(tag.getValueRepresentation() == VR.SQ) {
                 int tempDataLength = ((FileDicomSQ)tag.getValue(false)).getDataLength();
                 i = i-oldDataLength+tempDataLength;
             } else {
                 i = i-oldDataLength+tag.getDataLength();
             }
-            tagTable.get(new FileDicomKey(key.getGroupNumber(), 0)).setValue(new Integer(i));
+            lengthTag.setValue(new Integer(i));
         }
 
         // we may have added the tag as an explicit/private tag before setting the value.  remove unnecessary
