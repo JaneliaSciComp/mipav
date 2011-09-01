@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -20,6 +21,8 @@ import java.util.*;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.JTextComponent;
+import gov.nih.mipav.model.file.FilePARREC;
+import java.lang.*;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -2220,7 +2223,19 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private JScrollPane buildDTIPanel() {
         //setForeground(Color.black);
         //setTitle("Estimate Tensor");
-
+        
+        boolean isPARREC = false;
+        FileInfoBase fileInfo = image.getFileInfo(0);
+        FileInfoPARREC fileInfoPARREC = null; 
+        try{
+            fileInfoPARREC = (FileInfoPARREC)fileInfo;
+            isPARREC = true;
+        }
+        catch(ClassCastException e) {
+            isPARREC = false;           
+        }
+        
+                       
         gbc = new GridBagConstraints();
         gbc2 = new GridBagConstraints();
         gbc3 = new GridBagConstraints();
@@ -2237,10 +2252,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         srcTableModel.addColumn("X Gradient");
         srcTableModel.addColumn("Y Gradient");
         srcTableModel.addColumn("Z Gradient");
+        
+
 
         srcImagesTable = new JTable(srcTableModel) {
            
-            public String getToolTipText(final MouseEvent e) {
+           public String getToolTipText(final MouseEvent e) {
                 String tip = null;
                 final java.awt.Point p = e.getPoint();
                 final int rowIndex = rowAtPoint(p);
@@ -2308,8 +2325,131 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         final JScrollPane scrollPane = new JScrollPane(srcPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setPreferredSize(new Dimension(850, 200));
+        
+        //srcTableModel.setValueAt(40, 2, 1);
 
+        if(isPARREC){
+
+                if ((fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")|| (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")){ 
+                    for (int j =0; j < fileInfoPARREC.getNumVolumes(); j++){
+                        // Add empty rows based on number of volumes
+                        final Vector<String> rowData = new Vector<String>();
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        srcTableModel.addRow(rowData);
+                        }
+                    if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4") ){
+                            for (int i = 0; i < fileInfoPARREC.getNumVolumes() ; i++) {
+                            //Populate Bvalue column
+                            final String[] bvalArr = fileInfoPARREC.getBvalues();
+                            final String bvals = bvalArr[i].trim();
+                            srcTableModel.setValueAt(bvals, i, 0);
+                            }
+                    
+                        }
+                   
+                    else if (fileInfoPARREC.getVersion().equals("V4.1") || fileInfoPARREC.getVersion().equals("V4.2")){
+                        for (int i = 0; i < fileInfoPARREC.getNumVolumes() ; i++) { 
+                            //Populate Bvalue column
+                            final String[] bvalArr = fileInfoPARREC.getBvalues();
+                            final String bvals = bvalArr[i].trim();
+                            srcTableModel.setValueAt(bvals, i, 0);
+                            
+                            //Populate Gradient column
+                            final String[] gradArr = fileInfoPARREC.getGradients();
+                            final String grads = gradArr[i].trim();
+                            final String[] arr2 = grads.split("\\s+");
+                            srcTableModel.setValueAt(arr2[0], i, 1);
+                            srcTableModel.setValueAt(arr2[1], i, 2);
+                            srcTableModel.setValueAt(arr2[2], i, 3);
+                            }
+                    
+                        }
+                 
+        }
+           
+        }
+        
+        else if (image.getFileInfo()[0] instanceof FileInfoDicom) {
+            FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
+            FileDicomTagTable tagTable = dicomInfo.getTagTable();
+            String studyDescription = (String) tagTable.getValue("0008,1030");
+            String seriesDescription = (String) tagTable.getValue("0008,103E");
+            String scannerType = (String) tagTable.getValue("0019,0010");
+           
+            if (studyDescription.toUpperCase().contains("DTI")|| seriesDescription.toUpperCase().contains("DTI")){ 
+                
+                if (scannerType.toUpperCase().contains("SIEMEN")){
+                   
+                    if (image.is3DImage()) {
+                        int zDim = image.getExtents()[2];                           
+                            for (int i = 0; i <zDim ; i++) {
+                             // Add empty rows based on number of DTI volumes
+                                    final Vector<String> rowData = new Vector<String>();
+                                    rowData.add("");
+                                    rowData.add("");
+                                    rowData.add("");
+                                    rowData.add("");
+                                    srcTableModel.addRow(rowData);
+                                  //Populate Bvalue column
+                                    FileInfoDicom dicom3dInfo = (FileInfoDicom) image.getFileInfo(i);
+                                    FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
+                                    String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
+                                    srcTableModel.setValueAt(siemenBvalue, i, 0);
+                                    
+                                  //Populate Gradient column
+                                    String siemenGrads = (String) tag3dTable.getValue("0019,100E");
+                                    siemenGrads = siemenGrads.trim();
+                                    String grads = siemenGrads.replace('\\','\t');
+                                    final String [] arr2= grads.split("\t");
+                                    srcTableModel.setValueAt(arr2[0], i, 1);
+                                    srcTableModel.setValueAt(arr2[1], i, 2);
+                                    srcTableModel.setValueAt(arr2[2], i, 3);                           
+                            
+                                }
+                            }
+                        
+                    else if (image.is4DImage()) {
+                            int tDim = image.getExtents()[3];  
+                         // Add empty rows based on number of DTI volumes
+                                for (int i = 0; i <tDim ; i++) {
+                                        final Vector<String> rowData = new Vector<String>();
+                                        rowData.add("");
+                                        rowData.add("");
+                                        rowData.add("");
+                                        rowData.add("");
+                                        srcTableModel.addRow(rowData);
+                                        FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i*image.getExtents()[2]);
+                                        
+                                      //Populate Bvalue column
+                                        FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
+                                        String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
+                                        srcTableModel.setValueAt(siemenBvalue, i, 0);
+                                        
+                                      //Populate Gradient column
+                                        String siemenGrads = (String) tag4dTable.getValue("0019,100E");
+                                        siemenGrads = siemenGrads.trim();
+                                        String grads = siemenGrads.replace('\\','\t');
+                                        final String [] arr2= grads.split("\t");
+                                        srcTableModel.setValueAt(arr2[0], i, 1);
+                                        srcTableModel.setValueAt(arr2[1], i, 2);
+                                        srcTableModel.setValueAt(arr2[2], i, 3);
+                                }
+                            
+                            }
+                        }
+                   
+                    }
+                }
+            
+     
+        
+        
         return scrollPane;
+        
+
        
         //return DWIButtonPanel;
       
@@ -3887,6 +4027,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @return
      */
     public boolean readBValGradientFile(final String gradientFilePath) {
+        
+        /*if ((getExamName().toUpperCase()).contains("DTI")){        
+        }*/
 
         try {
             String str;
