@@ -1722,7 +1722,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.add(multiThreadingEnabledCheckBox);
 
         // preset the choices.
-        multiThreadingEnabledCheckBox.setSelected(Preferences.isMultiThreadingEnabled());
+        multiThreadingEnabledCheckBox.setSelected(Preferences.isMultiThreadingEnabled()  &&
+        		(ThreadUtil.getAvailableCores() > 1));
+        multiThreadingEnabledCheckBox.setEnabled(ThreadUtil.getAvailableCores() > 1);
     }
 
     protected void makeGpuCompEnabledOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
