@@ -74,6 +74,10 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	private ViewJComponentGraphAxes gmAxis;
 	private JPanel helpPanel = new JPanel(new GridBagLayout());
 
+	private final static int Circle = 0;
+	private final static int Square = 1;
+	private final static int Triangle = 2;
+
 
 	/**
 	 * Creates new dialog for turning bounding box frame on and off.
@@ -99,15 +103,20 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 			colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(colorButton),
 					new CancelListener());
 		}
+		else if ( event.getActionCommand().equals("CircleWidget") )
+		{
+			m_kMultiHistogram.setWidget( "Circle" );
+			updateHelp(Circle);
+		}
 		else if ( event.getActionCommand().equals("SquareWidget") )
 		{
 			m_kMultiHistogram.setWidget( "Square" );
-			updateHelp(false);
+			updateHelp(Square);
 		}
 		else if ( event.getActionCommand().equals("TriWidget") )
 		{
 			m_kMultiHistogram.setWidget( "Triangle" );
-			updateHelp(true);
+			updateHelp(Triangle);
 		}
 		else
 		{
@@ -203,12 +212,6 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 */
 	public void update()
 	{
-		float fAlpha = boundaryEmphasisSlider.getValue()/100.0f;
-		m_kMultiHistogram.setBoundary( fAlpha );
-
-		fAlpha = alphaSlider.getValue()/100.0f;
-		Color kColor = colorButton.getBackground();
-		m_kMultiHistogram.setColor( new ColorRGBA( kColor.getRed()/255.0f, kColor.getGreen()/255.0f, kColor.getBlue()/255.0f, fAlpha ) );
 		m_kMultiHistogram.display();
 	}
 
@@ -239,19 +242,26 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		kGBC.anchor = GridBagConstraints.WEST;
 		JPanel buttonPanel = new JPanel( kGrid );
 		buttonPanel.setBorder(buildTitledBorder("Options"));
+		buttonPanel.add( new JLabel( "Select Widget Type: "), kGBC );
+		kGBC.gridx++;
+		JRadioButton kCircle = new JRadioButton( "Circle", true );
+		kCircle.addActionListener(this);
+		kCircle.setActionCommand("CircleWidget");
+		buttonPanel.add( kCircle, kGBC);
+		kGBC.gridx++;
 		JRadioButton kSquare = new JRadioButton( "Square", true );
 		kSquare.addActionListener(this);
 		kSquare.setActionCommand("SquareWidget");
-		buttonPanel.add( new JLabel( "Select Widget Type: "), kGBC );
-		kGBC.gridx++;
 		buttonPanel.add( kSquare, kGBC );
 		kGBC.gridx++;
 		JRadioButton kTriangle = new JRadioButton( "Triangle", true );
 		kTriangle.addActionListener(this);
 		kTriangle.setActionCommand("TriWidget");
 		buttonPanel.add( kTriangle, kGBC);
+		m_kGroup.add(kCircle);
 		m_kGroup.add(kSquare);
 		m_kGroup.add(kTriangle);
+		kSquare.setSelected(true);
 
 		kGBC.gridx = 0;
 		kGBC.gridy++;
@@ -344,9 +354,22 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 
 		mainPanel.add(scroller, BorderLayout.NORTH);
 	}
-	private void updateHelp( boolean bTriangle )
+	private void updateHelp( int iType )
 	{
-		if ( !bTriangle )
+		if ( iType == Circle )
+		{
+			Component[] components = helpPanel.getComponents();
+			if ( components.length > 5 )
+			{
+				((JLabel)helpPanel.getComponent(0)).setText( "- To insert a new widget, right-mouse click in the 2D Histogram ");
+				((JLabel)helpPanel.getComponent(1)).setText( "- To move the circle, drag the interior of the widget ");
+				((JLabel)helpPanel.getComponent(2)).setText( "- To resize the circle, drag the blue control point ");
+				((JLabel)helpPanel.getComponent(3)).setText( "- To control intensity distribution, drag the green control point");
+				((JLabel)helpPanel.getComponent(4)).setText( "- To delete a widget, select it and then press the delete key");
+				((JLabel)helpPanel.getComponent(5)).setText( "");
+			}
+		}
+		else if ( iType == Square )
 		{
 			Component[] components = helpPanel.getComponents();
 			if ( components.length > 5 )

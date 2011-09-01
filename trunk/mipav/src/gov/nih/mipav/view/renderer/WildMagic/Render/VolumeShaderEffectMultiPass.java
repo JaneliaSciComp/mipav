@@ -346,7 +346,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
         if ( m_bMultiHisto )
         {
-        	updateLevWidgetState( m_akLevWidget );
+        	updateLevWidgetState( );
         }
 
         super.OnLoadPrograms ( 0,  pkVProgram, pkPProgram, pkCProgram );    
@@ -734,7 +734,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
 		}
 	}
     
-    public boolean updateLevWidgetState( Vector<ClassificationWidget> kLWS )
+    public void updateLevWidgetState( Vector<ClassificationWidget> kLWS )
     {
 		m_iUsedWidgets = kLWS.size();
     	boolean bChanged = false;
@@ -744,63 +744,82 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     		{
     			m_akLevWidget[i].Copy( kLWS.elementAt(i).getState() );
     			bChanged = true;
-
-    			Program pkCProgram = GetCProgram(0);
-    			if ( pkCProgram.GetUC("UseWidget"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("UseWidget"+i).SetDataSource(m_akLevWidget[i].UseWidget);
-    				//System.err.println( "UseWidget"+iState + " " + m_akLevWidget[iState].UseWidget[0]);
-    			}
-    			if ( pkCProgram.GetUC("LevColor"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("LevColor"+i).SetDataSource(m_akLevWidget[i].Color);
-    				//System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
-    			}
-    			if ( pkCProgram.GetUC("LevMidLine"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("LevMidLine"+i).SetDataSource(m_akLevWidget[i].MidLine);
-    				//System.err.println( "LevMidLine " + m_akLevWidget[i].MidLine[0] + 
-    				//		" " + m_akLevWidget[i].MidLine[1] + 
-    				//		" " + m_akLevWidget[i].MidLine[2] + 
-    				//		" " + m_akLevWidget[i].MidLine[3]  );
-    			}
-    			if ( pkCProgram.GetUC("LevLeftLine"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("LevLeftLine"+i).SetDataSource(m_akLevWidget[i].LeftLine);
-    				//System.err.println( "LevLeftLine " + m_akLevWidget[i].LeftLine[0] + 
-    				//		" " + m_akLevWidget[i].LeftLine[1] + 
-    				//		" " + m_akLevWidget[i].LeftLine[2] + 
-    				//		" " + m_akLevWidget[i].LeftLine[3]  );
-    			}
-    			if ( pkCProgram.GetUC("LevRightLine"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("LevRightLine"+i).SetDataSource(m_akLevWidget[i].RightLine);
-    				//System.err.println( "LevRightLine " + m_akLevWidget[i].RightLine[0] + 
-    				//		" " + m_akLevWidget[i].RightLine[1] + 
-    				//		" " + m_akLevWidget[i].RightLine[2] + 
-    				//		" " + m_akLevWidget[i].RightLine[3]  );
-    			}
-    			if ( pkCProgram.GetUC("BoundaryEmphasis"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("BoundaryEmphasis"+i).SetDataSource(m_akLevWidget[i].BoundaryEmphasis);
-    			}
-    			if ( pkCProgram.GetUC("Shift"+i) != null ) 
-    			{
-    				pkCProgram.GetUC("Shift"+i).SetDataSource(m_akLevWidget[i].Shift);
-    				//System.err.println( "Shift " + m_akLevWidget[i].Shift[0] + 
-    				//	" " + m_akLevWidget[i].Shift[1] );
-    			}
-    			if ( pkCProgram.GetUC("InvY0MY1"+i) != null ) 
-    			{            
-    				pkCProgram.GetUC("InvY0MY1"+i).SetDataSource(m_akLevWidget[i].YRatio);
-    				//System.err.println( "Shift " + m_akLevWidget[i].YRatio[0] + 
-        			//		" " + m_akLevWidget[i].YRatio[1] + 
-        			//		" " + m_akLevWidget[i].YRatio[2] );
-    	            //System.err.println( "" );
-    			}
     		}
     	}
-        return bChanged;
+    	if ( bChanged )
+    	{
+    		updateLevWidgetState();
+    	}
+    }
+
+    protected void updateLevWidgetState()
+    {
+    	for ( int i = 0; i < m_iUsedWidgets; i++ )
+    	{
+    		Program pkCProgram = GetCProgram(0);
+    		if ( pkCProgram.GetUC("UseWidget"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("UseWidget"+i).SetDataSource(m_akLevWidget[i].UseWidget);
+    			//System.err.println( "UseWidget"+iState + " " + m_akLevWidget[iState].UseWidget[0]);
+    		}
+    		if ( pkCProgram.GetUC("LevColor"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("LevColor"+i).SetDataSource(m_akLevWidget[i].Color);
+    			//System.err.println( "LevColor" + fR + " " + fG + " " + fB + " " + fA );
+    		}
+    		if ( pkCProgram.GetUC("LevMidLine"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("LevMidLine"+i).SetDataSource(m_akLevWidget[i].MidLine);
+    			//System.err.println( "LevMidLine " + m_akLevWidget[i].MidLine[0] + 
+    			//		" " + m_akLevWidget[i].MidLine[1] + 
+    			//		" " + m_akLevWidget[i].MidLine[2] + 
+    			//		" " + m_akLevWidget[i].MidLine[3]  );
+    		}
+    		if ( pkCProgram.GetUC("LevLeftLine"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("LevLeftLine"+i).SetDataSource(m_akLevWidget[i].LeftLine);
+    			//System.err.println( "LevLeftLine " + m_akLevWidget[i].LeftLine[0] + 
+    			//		" " + m_akLevWidget[i].LeftLine[1] + 
+    			//		" " + m_akLevWidget[i].LeftLine[2] + 
+    			//		" " + m_akLevWidget[i].LeftLine[3]  );
+    		}
+    		if ( pkCProgram.GetUC("LevRightLine"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("LevRightLine"+i).SetDataSource(m_akLevWidget[i].RightLine);
+    			//System.err.println( "LevRightLine " + m_akLevWidget[i].RightLine[0] + 
+    			//		" " + m_akLevWidget[i].RightLine[1] + 
+    			//		" " + m_akLevWidget[i].RightLine[2] + 
+    			//		" " + m_akLevWidget[i].RightLine[3]  );
+    		}
+    		if ( pkCProgram.GetUC("BoundaryEmphasis"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("BoundaryEmphasis"+i).SetDataSource(m_akLevWidget[i].BoundaryEmphasis);
+    		}
+    		if ( pkCProgram.GetUC("Shift"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("Shift"+i).SetDataSource(m_akLevWidget[i].Shift);
+    			//System.err.println( "Shift " + m_akLevWidget[i].Shift[0] + 
+    			//	" " + m_akLevWidget[i].Shift[1] );
+    		}
+    		if ( pkCProgram.GetUC("InvY0MY1"+i) != null ) 
+    		{            
+    			pkCProgram.GetUC("InvY0MY1"+i).SetDataSource(m_akLevWidget[i].YRatio);
+    			//System.err.println( "Shift " + m_akLevWidget[i].YRatio[0] + 
+    			//		" " + m_akLevWidget[i].YRatio[1] + 
+    			//		" " + m_akLevWidget[i].YRatio[2] );
+    			//System.err.println( "" );
+    		}
+    		if ( pkCProgram.GetUC("Center"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("Center"+i).SetDataSource(m_akLevWidget[i].Center); 
+    			//System.err.println( "Center " + fX + " " + fY );
+    		}
+    		if ( pkCProgram.GetUC("Radius"+i) != null ) 
+    		{
+    			pkCProgram.GetUC("Radius"+i).SetDataSource(m_akLevWidget[i].Radius); 
+    			//System.err.println( "Center " + fX + " " + fY );
+    		}
+    	}
     }
 
 
