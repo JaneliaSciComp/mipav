@@ -1,6 +1,9 @@
 package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
+
+
+
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.Preferences;
@@ -10,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 
+import java.lang.*;
 /**
  * The class reads and writes PAR/REC files.
  *
@@ -58,8 +62,55 @@ public class FilePARREC extends FileBase {
     /** slice parameters **/
     private Vector<String> SliceParameters;
     
-    /** sliecs **/
+    /** slices **/
     private Vector<String> Slices;
+    
+  /**version**/
+    private String version;
+    
+    /**exam name**/
+    
+    private String examName = "";
+    
+    /**protocol name**/
+    
+    private String protocolName = "";
+    
+    /**patient position **/
+    
+    private String patientPosition = "";
+    
+    
+    private String foldover = "";
+    
+    private int sliceOrientPos;
+    /**bFactorIndex**/
+    
+    private int bValuePos;
+ /**bFactorIndex**/
+    
+    private int gradPos;
+    
+    private int sliceOrientIndex;
+    
+    private int bValueIndex;
+    
+    private int gradIndex;
+    
+    
+/**counter**/
+    
+    private int counter = 0;
+    
+    
+
+    /**bvalues**/
+    //private String [] stringBvalueArray = new String[Slices.size()/numSlices];
+    
+    /**gradients**/
+   // private String [] stringGradientArray = new String[Slices.size()/numSlices];
+    
+  
     
     /** floating point value = raw value/scaleSlope + rescaleIntercept/(rescaleSlope*scaleSlope) **/
     private float rescaleIntercept[];
@@ -80,6 +131,9 @@ public class FilePARREC extends FileBase {
     /** num vols in 4d dataset **/
     private int numVolumes;
     
+    
+
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -87,7 +141,7 @@ public class FilePARREC extends FileBase {
      *
      * @param  fileNames  DOCUMENT ME!
      */
-    public FilePARREC(String[] fileNames) {
+    public FilePARREC(String[] fileNames) {       
         super(fileNames);
     }
 
@@ -112,6 +166,7 @@ public class FilePARREC extends FileBase {
     */
     public FilePARREC(String fileName, String fileDirectory, FileInfoBase fileInfo) {
         outInfo = (FileInfoPARREC)fileInfo;
+        System.out.println("workingnow");
         this.fileName = fileName;
         this.fileDir = fileDirectory;
         fileNames =getCompleteFileNameListDefault(fileDirectory+fileName);
@@ -470,6 +525,25 @@ public class FilePARREC extends FileBase {
         }
 
         // Begin the processing loop
+        
+       /* BufferedReader rdr = new BufferedReader(new FileReader(new File(fileName)));
+        String thisline = "";
+        thisline = rdr.readLine();
+        int num = 0;
+        
+        while(!thisline.contains("END OF DATA DESCRIPTION FILE")){
+            thisline = rdr.readLine();
+            
+            //Extract Date
+            if(thisline.contains("Examination date/time")){
+                int ind = thisline.indexOf(":");
+                System.out.println("workingdate");
+                String date = thisline.substring(ind+1,thisline.indexOf("/",ind));
+                date=date.trim();
+                date=date.substring(0, 4)+date.substring(5, 7)+date.substring(8, 10);
+            }
+            
+        }*/
 
         VolMap = buildParVolMap();
         SliceMap = buildParSliceMap();
@@ -480,8 +554,8 @@ public class FilePARREC extends FileBase {
 
         String nextLine = raFile.readLine();
         
-        String version;
-
+        //String version;
+        //String[] versionNumber;
 
         while(null!=nextLine) {
             nextLine = nextLine.trim();
@@ -494,28 +568,142 @@ public class FilePARREC extends FileBase {
                 	if(nextLine.contains("Research image export tool")) {
                 		//need to get version
                 		version = nextLine.substring(nextLine.lastIndexOf("V"), nextLine.length());
-                		fileInfo.setVersion(version);
-                		
+                		fileInfo.setVersion(version);            	               		
                 	}
+                           	
+                	String imageInfo  = "";                
+                	int sliceOrientIndexCounter = -1;
+                	int bValIndexCounter = -1;
+                    int gradIndexCounter = -1;
                 	
                     if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
                         String line = raFile.readLine().trim();
                         String ignore = "The rest of this file contains ONE line per image";
-                    
 
                         while(line.compareToIgnoreCase("# === IMAGE INFORMATION ==========================================================")!=0) {
                             if(line.length()>1) {
+                               
                                 if(!line.contains(ignore)) {
+                                    
                                     SliceParameters.add(line.trim());
-                                	fileInfo.setImageInfoList(line.trim());
-                                }
+                                 
+                                	fileInfo.setImageInfoList(line.trim());                                                        
+                                	counter ++;
+                                	
+                                	imageInfo = new String(imageInfo + line.trim());
+                                	   
+                                	   if (imageInfo.contains("slice orientation ( TRA/SAG/COR ) ")){                                         
+                                	       sliceOrientIndexCounter++;
+                                       }
+                                	    if (imageInfo.contains("diffusion_b_factor")){                              	       
+                                	       bValIndexCounter++;
+                                	   }
+                                	   
+                                       if (imageInfo.contains("diffusion (ap, fh, rl)")){                                      
+                                           gradIndexCounter++;
+                                       }                                	   
+                                  }                  
                             }
-                            line = raFile.readLine().trim();
-                            
+                     
+                            line = raFile.readLine().trim();                           
                         }
+                        sliceOrientPos = counter - sliceOrientIndexCounter;
+                        bValuePos = counter - bValIndexCounter;
+                        gradPos = counter - gradIndexCounter;                       
                     }
+             
                     break;
                 case '.' : // scan file variable
+                    
+                        if(nextLine.contains("Examination name")){
+                            String examNameLine = nextLine.trim();
+                            int examNameInd = examNameLine.indexOf(":");
+                            int examNameLineLength = examNameLine.length();
+                            
+                            for (int i = 0 ; i < examNameLineLength-(examNameInd+1); i++) {
+                                int examIndex = (examNameInd+1)+i;
+                                char examLetter= examNameLine.charAt(examIndex);
+                                examName =examName + examLetter;
+                                examName = examName.trim();
+                              
+                            }
+                            fileInfo.setExamName(examName);
+                        }
+                   
+                       if(nextLine.contains("Protocol name")){
+                           String protocolNameLine = nextLine.trim();
+                           int protocolNameInd = protocolNameLine.indexOf(":");
+                           int protocolNameLineLength = protocolNameLine.length();
+                           for (int i = 0 ; i < protocolNameLineLength-(protocolNameInd+1); i++) {
+                               int protocolIndex = (protocolNameInd+1)+i;
+                               char protocolLetter= protocolNameLine.charAt(protocolIndex);
+                               protocolName =protocolName + protocolLetter;
+                               protocolName = protocolName.trim();                            
+                          }
+                           fileInfo.setProtocolName(protocolName);
+                           
+                       }
+                                                  
+                        //Determine date of exam
+                        if(nextLine.contains("Examination date/time")){
+                        int ind = nextLine.indexOf(":");
+                        String date = nextLine.substring(ind+1,nextLine.indexOf("/",ind));
+                        date = date.trim();
+                        fileInfo.setDate(date);
+                    }
+                        if(nextLine.contains("Patient position")){
+                            String patientPositionLine = nextLine.trim();
+                            int patientPositionInd = patientPositionLine.indexOf(":");
+                            int patientPositionLineLength = patientPositionLine.length();
+                            for (int i = 0 ; i < patientPositionLineLength-(patientPositionInd+1); i++) {
+                                int positionIndex = (patientPositionInd+1)+i;
+                                char positionLetter= patientPositionLine.charAt(positionIndex);
+                                patientPosition =patientPosition + positionLetter;
+                                patientPosition = patientPosition.trim();                            
+                           }
+                            fileInfo.setPatientPosition(patientPosition);
+                        }
+                        
+                        if(nextLine.contains("Preparation direction")){
+                            String foldoverLine = nextLine.trim();
+                            int foldoverInd = foldoverLine.indexOf(":");
+                            int foldoverLineLength = foldoverLine.length();
+                            for (int i = 0 ; i < foldoverLineLength-(foldoverInd+1); i++) {
+                                int foldoverIndex = (foldoverInd+1)+i;
+                                char foldoverLetter= foldoverLine.charAt(foldoverIndex);
+                                foldover = foldover + foldoverLetter;
+                                foldover = foldover.trim();                            
+                           }
+                            fileInfo.setPreparationDirection(foldover);
+                        }
+                        
+                        
+                        //Checks to see if examination is DTI to extract angulation and off centre to determine gradients
+                        if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
+                            if(nextLine.contains("Angulation midslice")){
+                            String info = nextLine.substring(nextLine.indexOf(":")+1);
+                            info=info.trim();
+                            double [] sliceAng = new double[3];
+                            sliceAng[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                            info = info.substring(info.indexOf(' ')+1, info.length()).trim();
+                            sliceAng[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                            sliceAng[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                            fileInfo.setSliceAngulation(sliceAng);
+
+                        }
+                        
+                        if(nextLine.contains("Off Centre midslice")){
+                            String info = nextLine.substring(nextLine.indexOf(":")+1);
+                            info=info.trim();
+                            double [] offCentre = new double[3];
+                            offCentre[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                            info = info.substring(info.indexOf(' ')+1, info.length()).trim();                          
+                            offCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                            offCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                            fileInfo.setOffCentre(offCentre);   
+                        }
+                    }  
+
                 	fileInfo.setGeneralInfoList(nextLine);
                     String []tags = nextLine.split(":");
                     String tag = tags[0].trim();
@@ -534,14 +722,14 @@ public class FilePARREC extends FileBase {
                     }
                     break;
                 default: // parse as image slice information
+                  
                     Slices.add(nextLine);
+                
                     break;
 
             }
-
-            nextLine = raFile.readLine();
-            //System.out.println(":"+ nextLine);
             
+            nextLine = raFile.readLine();
 
         }
 
@@ -563,9 +751,6 @@ public class FilePARREC extends FileBase {
         fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(),3);
 
 
-
-
-
         String s;
         String[] ss;
         //Get the volume variables:
@@ -575,11 +760,142 @@ public class FilePARREC extends FileBase {
             return false;
         }
         numSlices = Integer.valueOf(s);
+        fileInfo.setNumSlices(numSlices);
 
 
         // Let's parse the first slice:
-        String sl = (String)Slices.get(0);
+      
+        String sl = (String)Slices.get(0);      
         String[] values = sl.split("\\s+");
+        
+ 
+        //Create bvalue String array from V3 par/rec file (for DTI par/rec files)
+        String [] stringBvalueArray = new String[Slices.size()/numSlices];
+        String [] stringGradientArray = new String[Slices.size()/numSlices];
+        
+        if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
+            
+            //Determine arrangement of slices stored with data
+            String firstSliceIndex = Slices.get(0);
+            firstSliceIndex = firstSliceIndex.trim();
+            final String[] firstSliceArr = firstSliceIndex.split("\\s+");
+            int firstSliceValue= Integer.parseInt(firstSliceArr[0]);
+            
+            String secondSliceIndex = Slices.get(1);
+            secondSliceIndex = secondSliceIndex.trim();
+            final String[] secondSliceArray = secondSliceIndex.split("\\s+");
+            int secondSliceValue = Integer.parseInt(secondSliceArray[0]);
+                      
+            // Find slice index of bvalues
+            int counter2o = 0;
+            int counter3o = 0;
+            for (int i = 0; i < (sliceOrientPos-2); i++){
+                if (SliceParameters.get(i).contains("2")){
+                    counter2o++;
+                }
+                if (SliceParameters.get(i).contains("3")){ 
+                    counter3o++;
+                }
+            }
+            
+            sliceOrientIndex = ((counter2o*1)+(counter3o*2) + (sliceOrientPos-1));
+            
+            String firstSlice = Slices.get(0);
+            firstSlice = firstSlice.trim();
+            final String[] firstOrientSlice = firstSlice.split("\\s+");
+            int firstOrientValue = Integer.parseInt(firstOrientSlice[sliceOrientIndex]);
+            fileInfo.setSliceOrient(firstOrientValue);
+            
+            // Find slice index of bvalues
+            int counter2 = 0;
+            int counter3 = 0;
+            for (int i = 0; i < (bValuePos-2); i++){
+                if (SliceParameters.get(i).contains("2")){
+                    counter2++;
+                }
+                if (SliceParameters.get(i).contains("3")){ 
+                    counter3++;
+                }
+            }
+            
+            bValueIndex = ((counter2*1)+(counter3*2) + (bValuePos-1));
+
+            
+            if (version.equals("V3")||version.equals("V4")){
+                
+                if (firstSliceValue!=secondSliceValue){
+                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                        String sliceIndex = Slices.get(i*numSlices);
+                        sliceIndex = sliceIndex.trim();
+                        final String[] sliceArr = sliceIndex.split("\\s+");
+                        stringBvalueArray[i] = sliceArr[bValueIndex];
+                        }
+                    fileInfo.setBvalues(stringBvalueArray);
+                    
+                    }
+                else{
+                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                        String sliceIndex = Slices.get(i);
+                        sliceIndex = sliceIndex.trim();
+                        final String[] sliceArr = sliceIndex.split("\\s+");
+                        stringBvalueArray[i] = sliceArr[bValueIndex];
+                    }
+                    fileInfo.setBvalues(stringBvalueArray);
+                }
+
+        
+        }
+            else if(version.equals("V4.1")||version.equals("V4.2") ){
+             // Find slice index automatically of gradient values
+                int counter2s = 0;
+                int counter3s = 0;
+                    for (int i = 0; i < (gradPos-2); i++){
+                        if (SliceParameters.get(i).contains("2")){
+                            counter2s++;
+                            }
+                        if (SliceParameters.get(i).contains("3")){ 
+                            counter3s++;
+                            }
+                        }
+                    gradIndex = ((counter2*1)+(counter3*2) + (gradPos-1));
+    
+                    String[] gradients = new String [3];
+               
+                if (firstSliceValue!=secondSliceValue){
+                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                        String sliceIndex = Slices.get(i*numSlices);
+                        sliceIndex = sliceIndex.trim();
+                        final String[] sliceArr = sliceIndex.split("\\s+");
+                        gradients[0] = sliceArr[gradIndex];
+                        gradients[1] = sliceArr[gradIndex+1];
+                        gradients[2] = sliceArr[gradIndex+2];
+                        stringBvalueArray[i] = sliceArr[bValueIndex];
+                        stringGradientArray[i] = (gradients[0]+" ")+(gradients[1]+" ")+(gradients[2]);
+                        }
+                    fileInfo.setBvalues(stringBvalueArray);
+                    fileInfo.setGradients(stringGradientArray);
+                    }
+                
+                else{
+                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                        String sliceIndex = Slices.get(i);
+                        sliceIndex = sliceIndex.trim();
+                        final String[] sliceArr = sliceIndex.split("\\s+");
+                        gradients[0] = sliceArr[gradIndex];
+                        gradients[1] = sliceArr[gradIndex+1];
+                        gradients[2] = sliceArr[gradIndex+2];
+                        stringBvalueArray[i] = sliceArr[bValueIndex];
+                        stringGradientArray[i] = (gradients[0]+" ")+(gradients[1]+" ")+(gradients[2]);
+                        }
+                    fileInfo.setBvalues(stringBvalueArray);
+                    fileInfo.setGradients(stringGradientArray);
+                }
+
+            }
+        }       
+
+
+
 
         @SuppressWarnings("unused")
         float slicethk=0;
@@ -761,6 +1077,7 @@ public class FilePARREC extends FileBase {
             return false;
         }
         numVolumes =Slices.size()/numSlices;
+        fileInfo.setNumVolumes(numVolumes);
         int[] Extents;
         if(numVolumes>1) {
             Extents = new int[] { dim1, dim2, numSlices, numVolumes };
@@ -1364,6 +1681,7 @@ public class FilePARREC extends FileBase {
                 FileInfoPARREC newFileInfo = (FileInfoPARREC) fileInfo.clone();
                 newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
                 newFileInfo.setSliceInfo((String)Slices.get(i));
+                
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
             }
         }
@@ -2206,7 +2524,36 @@ public class FilePARREC extends FileBase {
 	
 	
 	
-    
+    /*String [][] bvalues = new String[Slices.size()/numSlices][numSlices];
+    int numCount = 0;     
+    for (int i = 0; i < Slices.size()/numSlices; i++){          
+        for (int j = 0; j < numSlices; j++){
+            String sliceIndex = Slices.get((numCount*numSlices)+j);
+            sliceIndex = sliceIndex.trim();
+            final String[] sliceArr = sliceIndex.split("\\s+");
+            bvalues[i][j] = sliceArr[27];
+            //System.out.println("bvalues4.1:" +bvalues[1][j]);
+
+
+}
+numCount++;
+}*/
+
+/*//Convert bvalue String array to bvalue int array from V3 par/rec file
+float flBvalueArray[][] = new float[Slices.size()/numSlices][numSlices];
+for (int i = 0; i < Slices.size()/numSlices; i++){          
+for (int j = 0; j <numSlices ; j++){
+    flBvalueArray[i][j] = Float.parseFloat(bvalues[i][j]);
+   
+   
+}
+}
+
+fileInfo.setBvalues(flBvalueArray);
+//Test intBvalueArray
+for (int i = 0; i < Slices.size()/numSlices; i++){
+System.out.println("intBvalueArray index: " +flBvalueArray[i][1]);
+}*/
     
     
 }
