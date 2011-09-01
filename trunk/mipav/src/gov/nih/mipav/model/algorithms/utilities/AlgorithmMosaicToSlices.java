@@ -268,41 +268,35 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                           FileInfoBase destFileInfo[] = null;
                           int numInfos = destImage.getExtents()[3]*destImage.getExtents()[2];
                           FileInfoDicom oldDicomInfo = null;
-                          FileDicomTagTable[] childTagTables = null;
                           int j;
 
                       destFileInfo = new FileInfoBase[numInfos];
-                      oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
-                      childTagTables = new FileDicomTagTable[numInfos - 1];
                       int sliceCounter = 0; //Keeps track of every slice to populate tag
 
                      // Most efficient way of creating DICOM tags for 4-D. Uses pointers based on srcimage dicom tags    
                      for (t = 0; t < destImage.getExtents()[3]; t++) {
                          for (z = 0; z <destImage.getExtents()[2] ; z++) {
                              j = (t*destImage.getExtents()[2]) + z;
-                             if (j == 0) {
-                                 // create a new reference file info
-                                 destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                             oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(t);
+                             if (z == 0) {
+                                 destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                                  oldDicomInfo.getFileFormat());
-                                 ((FileInfoDicom)destFileInfo[0]).setVr_type(oldDicomInfo.getVr_type());     
+                                 ((FileInfoDicom)destFileInfo[j]).setVr_type(oldDicomInfo.getVr_type());     
                              }
                              else {
-
-                                 // all other slices are children of the first file info..
                                  destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
-                                                                 oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[0]);
+                                                                 oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[t*(destImage.getExtents()[2])]);
                                  
                                  ((FileInfoDicom)destFileInfo[j]).setVr_type(oldDicomInfo.getVr_type()); 
-                                 childTagTables[j - 1] = ((FileInfoDicom) destFileInfo[j]).getTagTable();
+          
+                                
                              }
                               
-                              FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[t]).getTagTable();
+                              FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[j]).getTagTable();
                               if (newTagTable.getValue("0018,0088") != null) {
-                                  String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
+                                  String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[j]).getTagTable().getValue("0018,0088")).trim();
                                   sliceResolution = new Double(sliceGapString.trim()).doubleValue();
-                              }
-  
-                                        
+                              }                    
                                   fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                                   resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                                   resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
@@ -311,19 +305,18 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                   resolutions[4] = 1;
                                   destFileInfo[sliceCounter].setResolutions(resolutions);
                                   destFileInfo[sliceCounter].setExtents(destImage.getExtents());
-                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
-                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows                 
-                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
+                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
+                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows                 
+                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
                                                                            Short.toString((short) (t + 1)).length()); // instance number
-                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().importTags((FileInfoDicom) fileInfo[t]);
-                                  ((FileInfoDicom) destFileInfo[t]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
-                                   
-                                   sliceCounter++;  
-                          }
+                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t));
+                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                                  sliceCounter++;  
+                                                           
+                         }                         
                          
                      }
-                     
-                      ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+                                          
                       destImage.setFileInfo(destFileInfo);
                   }
                       //3-D Destination dicom images
@@ -588,3 +581,69 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
 //  Q = [r21*s1 r22*s2]
 //      [r31*s1 r32*s2]
 
+/*destImage.calcMinMax();
+fileInfo = srcImage.getFileInfo();
+if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
+    //4-D Destination dicom images
+    if (srcImage.is3DImage()) {
+        FileInfoBase destFileInfo[] = null;
+        int numInfos = destImage.getExtents()[3]*destImage.getExtents()[2];
+        FileInfoDicom oldDicomInfo = null;
+        FileDicomTagTable[] childTagTables = null;
+        int j;
+
+    destFileInfo = new FileInfoBase[numInfos];
+    oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(0);
+    childTagTables = new FileDicomTagTable[numInfos - 1];
+    int sliceCounter = 0; //Keeps track of every slice to populate tag
+
+   // Most efficient way of creating DICOM tags for 4-D. Uses pointers based on srcimage dicom tags    
+   for (t = 0; t < destImage.getExtents()[3]; t++) {
+       for (z = 0; z <destImage.getExtents()[2] ; z++) {
+           j = (t*destImage.getExtents()[2]) + z;
+           if (j == 0) {
+               // create a new reference file info
+               destFileInfo[0] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                               oldDicomInfo.getFileFormat());
+               ((FileInfoDicom)destFileInfo[0]).setVr_type(oldDicomInfo.getVr_type());     
+           }
+           else {
+
+               // all other slices are children of the first file info..
+               destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                               oldDicomInfo.getFileFormat(), (FileInfoDicom) destFileInfo[0]);
+               
+               ((FileInfoDicom)destFileInfo[j]).setVr_type(oldDicomInfo.getVr_type()); 
+               childTagTables[j - 1] = ((FileInfoDicom) destFileInfo[j]).getTagTable();
+           }
+            
+            FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[t]).getTagTable();
+            if (newTagTable.getValue("0018,0088") != null) {
+                String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[t]).getTagTable().getValue("0018,0088")).trim();
+                sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+            }
+
+                      
+                fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
+                resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
+                resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
+                resolutions[2] = 1.0f;
+                resolutions[3] = 1.0f;
+                resolutions[4] = 1;
+                destFileInfo[sliceCounter].setResolutions(resolutions);
+                destFileInfo[sliceCounter].setExtents(destImage.getExtents());
+                ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
+                ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows                 
+                ((FileInfoDicom) destFileInfo[t]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
+                                                         Short.toString((short) (t + 1)).length()); // instance number
+                ((FileInfoDicom) destFileInfo[t]).getTagTable().importTags((FileInfoDicom) fileInfo[t]);
+                ((FileInfoDicom) destFileInfo[t]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                 
+                 sliceCounter++;  
+        }
+       
+   }
+   
+    ((FileInfoDicom) destFileInfo[0]).getTagTable().attachChildTagTables(childTagTables);
+    destImage.setFileInfo(destFileInfo);
+}*/
