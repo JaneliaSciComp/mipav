@@ -75,7 +75,7 @@ implements GLEventListener, KeyListener
 	/** Reference to the containing JPanel. */
 	private JInterfaceBase m_kInterface = null;
 	/** Defines the current selected widget type. */
-	private String m_kWidgetType = new String( "Square" );
+	private String m_kWidgetType = new String( "Circle" );
 	private boolean m_bFirstAdded = false;
 	private boolean m_bUpdateLev = false;
 	
@@ -164,7 +164,8 @@ implements GLEventListener, KeyListener
 		if ( m_bAdded ) 
 		{
 			m_bAdded = false;
-			m_akWidgets.get(m_iCurrent).setColor(m_kCurrentColor);
+			m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+					m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );         
 			m_bFirstAdded = true;
 			GetCanvas().display();
 		}
@@ -270,6 +271,8 @@ implements GLEventListener, KeyListener
 
 		//following code places a square box over the 2d histogram the first time it is shown
 		if(getM_akLev().size() == 0) {
+			m_kWidgetType = new String( "Square" );
+			
 			long currentTime = System.currentTimeMillis();
 			int mod = MouseEvent.BUTTON3;
 			MouseEvent evt1 = new MouseEvent(GetCanvas(), MouseEvent.MOUSE_PRESSED, currentTime, mod, 127, 127, 1, false, MouseEvent.BUTTON3);
@@ -300,6 +303,7 @@ implements GLEventListener, KeyListener
 	{
 		char ucKey = kKey.getKeyChar();            
 		int iKey = kKey.getKeyCode();
+		int iCurrentPrev = m_iCurrent;
 		if ( m_iCurrent != -1 )
 		{
 			// Delete the current widget:
@@ -318,9 +322,7 @@ implements GLEventListener, KeyListener
 				if ( m_iCurrent >= m_akWidgets.size() )
 				{
 					m_iCurrent = 0;
-				}
-				m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
-						m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+				}   
 				m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 				m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 				m_spkScene.UpdateGS();
@@ -332,12 +334,15 @@ implements GLEventListener, KeyListener
 				if ( m_iCurrent < 0 )
 				{
 					m_iCurrent = m_akWidgets.size()-1;
-				}
-				m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
-						m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );              
+				}      
 				m_spkScene.DetachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 				m_spkScene.AttachChild( m_akWidgets.get(m_iCurrent).getWidget() );
 				m_spkScene.UpdateGS();
+			}
+			if ( (m_iCurrent != iCurrentPrev) && (m_iCurrent >=0 ) )
+			{
+				m_kInterface.updateColorButton( m_akWidgets.get(m_iCurrent).getState().Color,
+						m_akWidgets.get(m_iCurrent).getState().BoundaryEmphasis[0] );
 			}
 		}
 		m_bDisplay = true;
@@ -401,7 +406,12 @@ implements GLEventListener, KeyListener
 			{
 				m_iCurrent++;
 				ClassificationWidget kLev = null;
-				if ( m_kWidgetType.equals( "Square" ) )
+				if ( m_kWidgetType.equals( "Circle" ) )
+				{
+					// new Square widget:
+					kLev = new CircleClassificationWidget(e.getX(),e.getY(), m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);
+				}
+				else if ( m_kWidgetType.equals( "Square" ) )
 				{
 					// new Square widget:
 					kLev = new SquareClassificationWidget(e.getX(),e.getY(), m_kTMin, m_kTMax, m_kVolumeImage.GetHistoName(), m_iWidth, m_iHeight);

@@ -69,7 +69,7 @@ public abstract class ClassificationWidget implements Serializable
 	protected float SPHERE_RADIUS = 0.04f;
 	/** Mouse offset used for dragging the widget. Stored in screen (MouseEvent) coordinates */
 	protected Vector2f m_kMouseOffset = new Vector2f();
-	
+
 	/** Default Constructor */
 	public ClassificationWidget () {}
 
@@ -199,38 +199,49 @@ public abstract class ClassificationWidget implements Serializable
 		// convert the input MouseEvent coordinates into object- or world-coordinates:
 		float fX = calcObjX(iX);
 		float fY = calcObjY(iY);
+		Vector3f kCenter;
 		// compare the mouse position in world coordinates to the lower sphere position:
-		Vector3f kCenter = m_kLowerSphere.Local.GetTranslate();
-		if ( (fX > (kCenter.X - SPHERE_RADIUS)) && (fX < (kCenter.X + SPHERE_RADIUS)) &&
-				(fY > (kCenter.Y - SPHERE_RADIUS)) && (fY < (kCenter.Y + SPHERE_RADIUS)) )
+		if ( m_kLowerSphere != null )
 		{
-			// set the current picked widget:
-			m_kPicked = m_kLowerSphere;
-			//System.err.println( "Picked Lower" );
-			bPicked = true;
+			kCenter = m_kLowerSphere.Local.GetTranslate();
+			if ( (fX > (kCenter.X - SPHERE_RADIUS)) && (fX < (kCenter.X + SPHERE_RADIUS)) &&
+					(fY > (kCenter.Y - SPHERE_RADIUS)) && (fY < (kCenter.Y + SPHERE_RADIUS)) )
+			{
+				// set the current picked widget:
+				m_kPicked = m_kLowerSphere;
+				//System.err.println( "Picked Lower" );
+				bPicked = true;
+			}
 		}
 		// compare the mouse position in world coordinates to the upper sphere position:
-		kCenter = m_kUpperSphere.Local.GetTranslate();
-		if ( (fX > (kCenter.X - SPHERE_RADIUS)) && (fX < (kCenter.X + SPHERE_RADIUS)) &&
-				(fY > (kCenter.Y - SPHERE_RADIUS)) && (fY < (kCenter.Y + SPHERE_RADIUS)) )
+		if ( m_kUpperSphere != null )
 		{
-			// set the current picked widget:
-			m_kPicked = m_kUpperSphere;
-			//System.err.println( "Picked Upper" );
-			bPicked = true;
+			kCenter = m_kUpperSphere.Local.GetTranslate();
+			if ( (fX > (kCenter.X - SPHERE_RADIUS)) && (fX < (kCenter.X + SPHERE_RADIUS)) &&
+					(fY > (kCenter.Y - SPHERE_RADIUS)) && (fY < (kCenter.Y + SPHERE_RADIUS)) )
+			{
+				// set the current picked widget:
+				m_kPicked = m_kUpperSphere;
+				//System.err.println( "Picked Upper" );
+				bPicked = true;
+			}
 		}
 		// this comparison is last, for the case when the middle sphere overlaps another control-point
 		// making the middle sphere the most-likely to be picked.
 		// compare the mouse position in world coordinates to the middle sphere position:
-		kCenter = m_kMiddleSphere.Local.GetTranslate();
-		if ( (fX > (kCenter.X - SPHERE_RADIUS)) && (fX < (kCenter.X + SPHERE_RADIUS)) &&
-				(fY > (kCenter.Y - SPHERE_RADIUS)) && (fY < (kCenter.Y + SPHERE_RADIUS)) )
+		if ( m_kMiddleSphere != null )
 		{
-			// set the current picked widget:
-			m_kPicked = m_kMiddleSphere;
-			//System.err.println( "Picked Middle" );
-			bPicked = true;
+			kCenter = m_kMiddleSphere.Local.GetTranslate();
+			if ( (fX > (kCenter.X - SPHERE_RADIUS)) && (fX < (kCenter.X + SPHERE_RADIUS)) &&
+					(fY > (kCenter.Y - SPHERE_RADIUS)) && (fY < (kCenter.Y + SPHERE_RADIUS)) )
+			{
+				// set the current picked widget:
+				m_kPicked = m_kMiddleSphere;
+				//System.err.println( "Picked Middle" );
+				bPicked = true;
+			}
 		}
+
 		// If one of the control-point spheres was picked, or if the main widget mesh
 		// was picked, set the outline color of the widget to be red:
 		if ( bPicked )
@@ -273,7 +284,7 @@ public abstract class ClassificationWidget implements Serializable
 			m_kWidgetEfect.SetAlpha( fAlpha );
 		}		
 	}
-	
+
 	/**
 	 * Sets the contribution of the 2nd derivative on the volume rendering for this widget.
 	 * @param fAlpha the contribution of the 2nd derivative on the volume rendering for this widget.
@@ -285,7 +296,7 @@ public abstract class ClassificationWidget implements Serializable
 			m_kWidgetEfect.setBoundary( fAlpha );
 		}
 	}
-	
+
 	/**
 	 * Sets the color of the color transfer function for this widget.
 	 * @param kColor the color of the color transfer function for this widget.
@@ -297,7 +308,7 @@ public abstract class ClassificationWidget implements Serializable
 			m_kWidgetEfect.SetColor( kColor.R, kColor.G, kColor.B, kColor.A );
 		}
 	}
-	
+
 	public void setLUT( Texture kMap, int index )
 	{
 		if ( m_kWidgetEfect != null )

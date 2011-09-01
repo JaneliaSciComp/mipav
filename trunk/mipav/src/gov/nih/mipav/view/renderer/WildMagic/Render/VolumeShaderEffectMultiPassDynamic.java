@@ -84,6 +84,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec4 LevLeftLine#;" + "\n"
     	+ "uniform vec4 LevRightLine#;" + "\n"
     	+ "uniform float BoundaryEmphasis#;" + "\n"
+    	+ "uniform float Center#;" + "\n"
+    	+ "uniform float Radius#;" + "\n"
     	+ "" + "\n";
 
     private static String multiHistogramWidgetColorParameters = ""
@@ -317,6 +319,11 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "multiHOpacityTemp = computeAlpha( fMapX, fMapY, Shift#, InvY0MY1#, LevMidLine#, LevLeftLine#, LevRightLine# );" + "\n"
     	+ "widgetColor = LevColor#;" + "\n"
     	+ "" + "\n";
+
+    private static String multiHistogramCompositeCircle = ""
+    	+ "multiHOpacityTemp = computeAlphaCircle( fMapX, fMapY, Center#, LevMidLine#, Radius# );" + "\n"
+    	+ "widgetColor = LevColor#;" + "\n"
+    	+ "" + "\n";
     private static String multiHistogramReadColorMap = ""
         + "widgetColor = texture1D(jColorMap#, multiHOpacityTemp );" + "\n"
         + "widgetColor.a = LevColor#.a;" + "\n"
@@ -324,8 +331,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     private static String multiHistogramCompositeColorMap = ""
     	+ "multiHOpacityTemp *= (1.0 - BoundaryEmphasis# * 2.0 * (0.5 - fMapZ));" + "\n"
     	+ "multiHOpacityTemp *= widgetColor.a;" + "\n"
-    	+ "multiHColorSum += (widgetColor * multiHOpacityTemp) + (1 - multiHOpacityTemp)*multiHColorSum;" + "\n"
-    	+ "multiHOpacitySum += multiHOpacityTemp + (1 - multiHOpacityTemp) * multiHOpacitySum;" + "\n"
+    	+ "multiHColorSum = (widgetColor * multiHOpacityTemp) + (1 - multiHOpacityTemp)*multiHColorSum;" + "\n"
+    	+ "multiHOpacitySum = multiHOpacityTemp + (1 - multiHOpacityTemp) * multiHOpacitySum;" + "\n"
     	+ "" + "\n";
 
     private static String multiHistogramFinish = ""
@@ -435,7 +442,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     }
 
 
-    public boolean updateLevWidgetState( Vector<ClassificationWidget> kLWS )
+    public void updateLevWidgetState( Vector<ClassificationWidget> kLWS )
     {
     	if ( m_iUsedWidgets != kLWS.size() )
     	{
@@ -446,7 +453,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		m_iUsedWidgets = kLWS.size();
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
     		GetCProgram(0).Release();
-    		return true;
+    		return;
     	}
     	boolean bUpdateTextures = false;
 		for ( int i = 0; i < kLWS.size(); i++ )
@@ -462,10 +469,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
     		GetCProgram(0).Release();
     		//System.err.println( "Widget Texture Use Changed" );
-    		return true;
+    		return;
 		}
     	super.updateLevWidgetState(kLWS);
- 	   return false;
     }
 
     public void SURFASTMode()
@@ -678,6 +684,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		// multi-histogram helper functions:
     		text += multiHistogramFunctions;
+    		// multi-histogram helper functions:
+    		text += multiHistogramFunctionsCircle;
     	}
     	
     	// GLSL Program parameters:
@@ -790,7 +798,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		{
     			if ( m_akLevWidget[i].UseWidget[0] != 0f )
     			{
-    				text += multiHistogramComposite.replaceAll( "#", String.valueOf(i) );
+    				if ( m_akLevWidget[i].Radius[0] != -1 )
+    				{
+    					text += multiHistogramCompositeCircle.replaceAll( "#", String.valueOf(i) );
+    				}
+    				else
+    				{
+    					text += multiHistogramComposite.replaceAll( "#", String.valueOf(i) );
+    				}
 
     				if ( m_akLevWidget[i].UseColorMap[0] != -1f )
     				{
@@ -977,8 +992,66 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   }" + "\n"
     	+ "   return (fAlpha);" + "\n"
     	+ "}" + "\n";
-    
-    
+
+    private static String multiHistogramFunctionsCircle = ""
+    + "float computeAlphaCircle( float fX," + "\n"
+    + "                    float fY," + "\n"
+    + "                    vec4  Center," + "\n"
+    + "                    vec4  MidLine," + "\n"
+    + "                    float fRadius )" + "\n"
+    + "{" + "\n"
+    + "    " + "\n"
+    + "    float diffX = fX - Center.x;" + "\n"
+    + "    float diffY = fY - Center.y;" + "\n"
+    + "    float length = sqrt(diffX * diffX + diffY * diffY );" + "\n"
+    + "    if (  length >= fRadius )" + "\n"
+    + "    {" + "\n"
+    + "        return 0.0;" + "\n"
+    + "    }" + "\n"
+    + "" + "\n"
+    + "    vec2 direction;" + "\n"
+    + "    direction.x = fX - MidLine.x;" + "\n"
+    + "    direction.y = fY - MidLine.y; " + "\n"
+    + "    float lengthShade = sqrt(direction.x*direction.x + direction.y*direction.y);" + "\n"
+    + "    direction.x /= lengthShade;" + "\n"
+    + "    direction.y /= lengthShade;" + "\n"
+    + "    float fAlpha;" + "\n"
+    + "    if ( (MidLine.x == Center.x) && (MidLine.y == Center.y) )" + "\n"
+    + "    {" + "\n"
+    + "        fAlpha = max( 0.0, 1.0 - (lengthShade / fRadius) );" + "\n"
+    + "        return fAlpha;" + "\n"
+    + "    }" + "\n"
+    + "    " + "\n"
+    + "    vec2 diff;" + "\n"
+    + "    diff.x = MidLine.x - Center.x;" + "\n"
+    + "    diff.y = MidLine.y - Center.y;" + "\n"
+    + "    float a0 = (diff.x*diff.x + diff.y*diff.y) - fRadius*fRadius;" + "\n"
+    + "    float a1 = dot(direction,diff);" + "\n"
+    + "    float discr = sqrt(a1*a1 - a0);" + "\n"
+    + "    float t0 = -a1 - discr;" + "\n"
+    + "    float t1 = -a1 + discr;" + "\n"
+    + "" + "\n"
+    + "    vec2 p;" + "\n"
+    + "    if ( a0 >= 0.0 )" + "\n"
+    + "    {" + "\n"
+    + "        p = MidLine.xy + t1 * direction.xy;" + "\n"
+    + "    }" + "\n"
+    + "    else if ( t0 > 0.0 )" + "\n"
+    + "    {" + "\n"
+    + "        p = MidLine.xy + t0 * direction.xy;" + "\n"
+    + "    }" + "\n"
+    + "    else" + "\n"
+    + "    {" + "\n"
+    + "        p = MidLine.xy + t1 * direction.xy;" + "\n"
+    + "    }" + "\n"
+    + "    diffX = p.x - MidLine.x;" + "\n"
+    + "    diffY = p.y - MidLine.y;" + "\n"
+    + "    length =  sqrt(diffX * diffX + diffY * diffY );" + "\n"
+    + "" + "\n"
+    + "    fAlpha = max( 0.0, 1.0 - (lengthShade / length) );" + "\n"
+    + "    return fAlpha;" + "\n"
+    + "}" + "\n";
+
     
     private static String lightingFunctions = ""
     	+ "void GetDirectionalLightFactors" + "\n"

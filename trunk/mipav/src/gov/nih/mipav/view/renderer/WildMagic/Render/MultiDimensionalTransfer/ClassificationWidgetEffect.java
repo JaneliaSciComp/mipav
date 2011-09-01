@@ -29,7 +29,7 @@ public class ClassificationWidgetEffect extends TextureEffect
     private static final long serialVersionUID = -7141385452679118672L;
     /** Current state of the widget encapsulated in the GLSL parameters needed for the Volume renderer GLSL program: */
     private ClassificationWidgetState m_kWidgetState = new ClassificationWidgetState();
-    
+
 
     /** Creates a new ClassificationWidgetEffect with the texture specified.
      * @param rkBaseName the name of the 2D Histogram texture image.
@@ -39,6 +39,29 @@ public class ClassificationWidgetEffect extends TextureEffect
         SetPassQuantity(1);
         m_kVShader.set(0, new VertexShader("TextureV"));
         m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
+
+        m_kPShader.get(0).SetTextureQuantity(2);
+        m_kPShader.get(0).SetImageName(0,rkBaseName);
+        m_kWidgetState.UseWidget[0] = 1.0f;
+
+        m_kWidgetState.UseColorMap[0] = -1.0f;
+    }
+
+    /** Creates a new ClassificationWidgetEffect with the texture specified.
+     * @param rkBaseName the name of the 2D Histogram texture image.
+     */
+    public ClassificationWidgetEffect (final String rkBaseName,boolean bCircle)
+    {
+        SetPassQuantity(1);
+        m_kVShader.set(0, new VertexShader("TextureV"));
+        if ( bCircle )
+        {
+        	m_kPShader.set(0, new PixelShader("CircleClassificationWidgetEffect", true));
+        }
+        else
+        {
+        	m_kPShader.set(0, new PixelShader("ClassificationWidgetEffect", true));
+        }
 
         m_kPShader.get(0).SetTextureQuantity(2);
         m_kPShader.get(0).SetImageName(0,rkBaseName);
@@ -203,6 +226,27 @@ public class ClassificationWidgetEffect extends TextureEffect
             //		" "  + m_kWidgetState.MidLine[2] +
             //		" "  + m_kWidgetState.MidLine[3] );
             
+        }
+    }
+    public void SetCenter( float fX, float fY ) 
+    {
+        m_kWidgetState.Center[0] = fX;
+        m_kWidgetState.Center[1] = fY;
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && (pkCProgram.GetUC("Center") != null) ) 
+        {
+            pkCProgram.GetUC("Center").SetDataSource(m_kWidgetState.Center); 
+            //System.err.println( "Center " + fX + " " + fY );
+        }
+    }
+    public void SetRadius( float fR ) 
+    {
+        m_kWidgetState.Radius[0] = fR;
+        Program pkCProgram = GetCProgram(0);
+        if ( (pkCProgram != null) && (pkCProgram.GetUC("Radius") != null) ) 
+        {
+            pkCProgram.GetUC("Radius").SetDataSource(m_kWidgetState.Radius); 
+            //System.err.println( "Radius " + fR );
         }
     }
     
