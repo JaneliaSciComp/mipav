@@ -31,9 +31,51 @@ public class FileInfoPARREC extends FileInfoBase {
     /** par/rec version **/
     private String version;
     
+    /** par/rec date **/
+    private String date;
+    
+    /** par/rec examName **/
+    private String examName;
+    
+    /** par/rec protocolName **/
+    private String protocolName;
+    
+    /** par/rec patientPosition **/
+    private String patientPosition;
+    
+    /** par/rec PreparationDirection **/
+    private String foldover;
+    
+    
+    /** par/rec slice Angulation **/
+    private double[] sliceAng;
+   
+    /**DOCUMENT ME **/
+   private double[] offCentre;
+    
+    /** par/rec Bvalues **/
+    private String stringBvalueArray[];
+    
+    /** par/rec gradients **/
+    private String stringGradientArray[];
+    
+    /** Slice Orientation Value (sag/cor/tra)**/
+    private int firstOrientValue;
+    
+    /** numSlices**/
+    private int numSlices;
+    
+    /** numSlices**/
+    private int numVolumes;
+    
+    
+    
     private ArrayList<String> generalInfoList = new ArrayList<String>();
     
     private ArrayList<String> imageInfoList = new ArrayList<String>();
+
+
+    
     
     
 
@@ -42,14 +84,32 @@ public class FileInfoPARREC extends FileInfoBase {
             super(name, directory, format);
            
     }
+    
+    
+    public void displayDTIInfo_JDialogText(JDialogText dlg) {
+        dlg.append("PAR/REC Version: " +getVersion()+"\n");
+        dlg.append("Date: " +getDate()+"\n");
+        dlg.append("Exam Name: " +getExamName()+"\n");
+        dlg.append("Protocol Name: " +getProtocolName()+"\n");
+        //dlg.append("Patient Position: " +getPatientPosition()+"\n");
+        //dlg.append("Preparation Direction: " +getPreparationDirection()+"\n");
+
+    }
+    
+    
+public void displayDTIInfo_JDialogFileInfo(JDialogFileInfo dlg) {
+      
+    }
+    
    
     //required by FileInfoBase
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogFileInfo dialog ;
-        try {
+       try {
         dialog= (JDialogFileInfo) dlog;
-        } catch (Exception e){
+       } catch (Exception e){
             displayPrimaryInfo((JDialogText)dlog,matrix);
+            displayDTIInfo_JDialogText((JDialogText)dlog);
             return;
         }
 
@@ -60,6 +120,8 @@ public class FileInfoPARREC extends FileInfoBase {
                 editorChoice[0] = JDialogEditor.STRING;
 
                 dialog.displayAboutInfo(this); // setup layout in the dialog
+                
+             
 
                 extents = super.getExtents();
 
@@ -78,11 +140,15 @@ public class FileInfoPARREC extends FileInfoBase {
                     dialog.appendPrimaryData("Max blue", Double.toString(getMaxB()));
 
                 } else {
-                    dialog.appendPrimaryData("Min", Double.toString(getMin()));
-                    dialog.appendPrimaryData("Max", Double.toString(getMax()));
+                   dialog.appendPrimaryData("Min", Double.toString(getMin()));
+                   dialog.appendPrimaryData("Max", Double.toString(getMax()));
                 }
 
                 dialog.appendPrimaryData("Modality", FileInfoBase.getModalityStr(getModality()));
+                
+                System.out.println("hi");
+                dialog.appendPrimaryData("Version", getVersion());
+                System.out.println("Version:" +getVersion());
 
                 dialog.appendPrimaryData("Orientation", getImageOrientationStr(getImageOrientation()));
 
@@ -106,6 +172,7 @@ public class FileInfoPARREC extends FileInfoBase {
                 } else {
                     dialog.appendPrimaryData("Endianess", "Big Endian");
                 }
+               
 
                 if (matrix != null) {
 
@@ -113,6 +180,7 @@ public class FileInfoPARREC extends FileInfoBase {
                     // calling prg might use an editing panel to adjust this matrix
                     dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
                 }
+                displayDTIInfo_JDialogFileInfo(dialog);
     }
     
     
@@ -142,10 +210,113 @@ public class FileInfoPARREC extends FileInfoBase {
 	public String getVersion() {
 		return version;
 	}
-
+	
 	public void setVersion(String version) {
-		this.version = version;
-	}
+	        this.version = version;
+	    }
+	
+	public String getDate() {
+	        return date;
+	    }
+	
+	public void setDate(String date) {
+	        this.date = date;
+	    }
+	
+	   public String getExamName() {
+           return examName;
+       }
+   
+   public void setExamName(String examName) {
+           this.examName = examName;
+       }
+   
+
+   
+       public String getProtocolName() {
+           return protocolName;
+       }
+    
+    public void setProtocolName(String protocolName) {
+           this.protocolName = protocolName;
+       }
+
+        
+    public String getPatientPosition() {
+        return patientPosition;
+    }
+    
+    public void setPatientPosition(String patientPosition) {
+        this.patientPosition = patientPosition;
+}
+    public String getPreparationDirection() {
+        return foldover;
+    }
+    
+    public void setPreparationDirection(String foldover) {
+        this.foldover = foldover;
+}
+    public void setSliceAngulation(double[] sliceAng) {
+        this.sliceAng = sliceAng;
+    }
+    
+    public double[] getSliceAngulation() {
+        return  sliceAng;
+    }
+    
+    public void setOffCentre(double[] sliceAng) {
+        this.offCentre = offCentre;
+    }
+    
+    public double[] getOffCentre() {
+        return  offCentre;
+    }
+    
+    public int getNumSlices() {
+        return numSlices;
+    }
+
+    public void setNumSlices(int numSlices) {
+        this.numSlices = numSlices;
+    }
+    
+ 
+    public int getSliceOrient() {
+        return firstOrientValue;
+    }
+
+    public void setSliceOrient(int firstOrientValue) {
+        this.firstOrientValue = firstOrientValue;
+    }
+    
+    public int getNumVolumes() {
+        return numVolumes;
+    }
+
+    public void setNumVolumes(int numVolumes) {
+        this.numVolumes = numVolumes;
+    }
+    
+
+    
+    public void setBvalues(String stringBvalueArray []){
+        this.stringBvalueArray = stringBvalueArray;
+    }
+    
+    public String [] getBvalues(){
+        return stringBvalueArray;
+    }
+    
+    public void setGradients(String stringGradientArray []){
+        this.stringGradientArray = stringGradientArray;
+    }
+    
+    public String [] getGradients(){
+        return stringGradientArray;
+    }
+    
+
+
 
 	public ArrayList<String> getGeneralInfoList() {
 		return generalInfoList;
@@ -163,8 +334,13 @@ public class FileInfoPARREC extends FileInfoBase {
 		imageInfoList.add(info);
 	}
 	
-	
-	
+	/* public String getDate(){
+	        return date;
+	    }*/
+	 /* public void setDate(String date) {
+	        this.date = date;
+	    }*/
+
 	
 
 	
