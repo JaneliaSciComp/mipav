@@ -50,7 +50,7 @@ public class FileDicomTag extends ModelSerialCloneable {
     private final FileDicomTagInfo tagInfo;
 
     /** Actual value of the tag (may be an array of elements). */
-    private Object value;
+    private Object value = null;
 
     /**
      * Value representation for this tag, if the tags in this dicom file have explicit VRs. If the dicom tags have
@@ -496,8 +496,8 @@ public class FileDicomTag extends ModelSerialCloneable {
         final VR vr = getValueRepresentation();
         final String keyword = tagInfo.getKeyword();
         
-        // if the vr is null or has no keyword (maybe a private tag?), ignore. Must call setValue
-        if ( (vr == null) || (keyword == null)) {
+        //these need to be defined elsewhere before processing of data can continue
+        if (vr == null || keyword == null || value == null) {
             return;
         }
 
