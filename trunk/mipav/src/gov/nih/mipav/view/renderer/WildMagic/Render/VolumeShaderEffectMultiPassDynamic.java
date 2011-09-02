@@ -228,10 +228,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "" + "\n";
     
     public static String surfaceCompositeInit = ""
-    	+ "LocalMaterialDiffuse *= color;" + "\n"
-    	+ "LocalMaterialSpecular *= color;" + "\n"
+    	+ "LocalMaterialDiffuse = color;" + "\n"
     	+ "LocalMaterialAmbient *= color.xyz;" + "\n"
-    	+ "LocalMaterialEmissive *= color.xyz;" + "\n"
     	+ "" + "\n";
 
     
@@ -248,6 +246,20 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "                          Light#Ambient.xyz," + "\n"
     	+ "                          Light#Attenuation );" + "\n";
 
+    public static String surfacePointStatic = ""
+    	+ "colorSum += PointLight( position.xyz," + "\n"
+    	+ "                        local_normal.xyz," + "\n"
+    	+ "                        CameraModelPosition," + "\n"
+    	+ "                        LocalMaterialEmissive.xyz," + "\n"
+    	+ "                        LocalMaterialAmbient.xyz," + "\n"
+    	+ "                        LocalMaterialDiffuse.xyzw," + "\n"
+    	+ "                        LocalMaterialSpecular.xyzw," + "\n"
+    	+ "                        Light#ModelPosition.xyz," + "\n"
+    	+ "                        Light#Ambient.xyz," + "\n"
+    	+ "                        Light#Diffuse.xyz," + "\n"
+    	+ "                        Light#Specular.xyz," + "\n"
+    	+ "                        Light#Attenuation.xyzw);" + "\n"
+    	+ "" + "\n";
     public static String surfacePoint = ""
     	+ "colorSum += PointLight( position.xyz," + "\n"
     	+ "                        local_normal.xyz," + "\n"
@@ -261,6 +273,20 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "                        Light#Diffuse.xyz," + "\n"
     	+ "                        Light#Specular.xyz," + "\n"
     	+ "                        Light#Attenuation.xyzw);" + "\n"
+    	+ "" + "\n";
+    public static String surfaceDirectionalStatic = ""
+    	+ "colorSum += DirectionalLight( position.xyz," + "\n"
+    	+ "                              local_normal.xyz," + "\n"
+    	+ "                              CameraModelPosition," + "\n"
+    	+ "                              LocalMaterialEmissive.xyz," + "\n"
+    	+ "                              LocalMaterialAmbient.xyz," + "\n"
+    	+ "                              LocalMaterialDiffuse.xyzw," + "\n"
+    	+ "                              LocalMaterialSpecular.xyzw," + "\n"
+    	+ "                              Light#ModelDirection.xyz," + "\n"
+    	+ "                              Light#Ambient.xyz," + "\n"
+    	+ "                              Light#Diffuse.xyz," + "\n"
+    	+ "                              Light#Specular.xyz," + "\n"
+    	+ "                              Light#Attenuation.xyzw);" + "\n"
     	+ "" + "\n";
     public static String surfaceDirectional = ""
     	+ "colorSum += DirectionalLight( position.xyz," + "\n"
@@ -276,7 +302,23 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "                              Light#Specular.xyz," + "\n"
     	+ "                              Light#Attenuation.xyzw);" + "\n"
     	+ "" + "\n";
-    
+
+    public static String surfaceSpotStatic = ""
+    	+ "colorSum += SpotLight( position.xyz," + "\n"
+    	+ "                       local_normal.xyz," + "\n"
+    	+ "                       CameraModelPosition," + "\n"
+    	+ "                       LocalMaterialEmissive.xyz," + "\n"
+    	+ "                       LocalMaterialAmbient.xyz," + "\n"
+    	+ "                       LocalMaterialDiffuse.xyzw," + "\n"
+    	+ "                       LocalMaterialSpecular.xyzw," + "\n"
+    	+ "                       Light#ModelPosition.xyz," + "\n"
+    	+ "                       Light#ModelDirection.xyz," + "\n"
+    	+ "                       Light#Ambient.xyz," + "\n"
+    	+ "                       Light#Diffuse.xyz," + "\n"
+    	+ "                       Light#Specular.xyz," + "\n"
+    	+ "                       Light#SpotCutoff.xyzw," + "\n"
+    	+ "                       Light#Attenuation.xyzw);" + "\n"
+    	+ "" + "\n";
     public static String surfaceSpot = ""
     	+ "colorSum += SpotLight( position.xyz," + "\n"
     	+ "                       local_normal.xyz," + "\n"
@@ -848,20 +890,41 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		{
     			if ( m_aafLight[i][0] != -1 )
     			{
-    				switch ( (int)m_aafLight[i][0] )
+    				// first light is static light:
+    				if ( i == 0 )
     				{
-    				case 0: // ambient
-    					text += surfaceAmbient.replaceAll("#", String.valueOf(i) );
-    					break;
-    				case 1: // directional
-    					text += surfaceDirectional.replaceAll("#", String.valueOf(i) );
-    					break;
-    				case 2: // point
-    					text += surfacePoint.replaceAll("#", String.valueOf(i) );
-    					break;
-    				default: // spot
-    					text += surfaceSpot.replaceAll("#", String.valueOf(i) );
-    					break;
+        				switch ( (int)m_aafLight[i][0] )
+        				{
+        				case 0: // ambient
+        					text += surfaceAmbient.replaceAll("#", String.valueOf(i) );
+        					break;
+        				case 1: // directional
+        					text += surfaceDirectionalStatic.replaceAll("#", String.valueOf(i) );
+        					break;
+        				case 2: // point
+        					text += surfacePointStatic.replaceAll("#", String.valueOf(i) );
+        					break;
+        				default: // spot
+        					text += surfaceSpotStatic.replaceAll("#", String.valueOf(i) );
+        					break;
+        				}       	
+    				}
+    				else {
+    					switch ( (int)m_aafLight[i][0] )
+    					{
+    					case 0: // ambient
+    						text += surfaceAmbient.replaceAll("#", String.valueOf(i) );
+    						break;
+    					case 1: // directional
+    						text += surfaceDirectional.replaceAll("#", String.valueOf(i) );
+    						break;
+    					case 2: // point
+    						text += surfacePoint.replaceAll("#", String.valueOf(i) );
+    						break;
+    					default: // spot
+    						text += surfaceSpot.replaceAll("#", String.valueOf(i) );
+    						break;
+    					}
     				}
     			}
     		}
