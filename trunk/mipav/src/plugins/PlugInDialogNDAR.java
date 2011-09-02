@@ -8,8 +8,14 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 
+import gov.nih.ndar.model.abstraction.dictionary.IDataElement;
+import gov.nih.ndar.model.abstraction.dictionary.IDataStructure;
+import gov.nih.ndar.model.transfer.dictionary.XmlDataDictionary;
+import gov.nih.ndar.model.transfer.dictionary.XmlDataType;
 import gov.nih.ndar.ws.accession.VToolSimpleAccessionClient;
 import gov.nih.ndar.ws.client.Startup;
+import gov.nih.ndar.ws.datadictionary.client.DataDictionaryProvider;
+
 
 import java.awt.*;
 import java.awt.event.*;
@@ -85,7 +91,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private OMElement dataStructElement, documentElement;
 
     /** hash table of OMElements * */
-    private final Hashtable<String, OMElement> documentElements = new Hashtable<String, OMElement>();
+    //private final Hashtable<String, OMElement> documentElements = new Hashtable<String, OMElement>();
+    
+    //private ArrayList<IDataStructure> dataStructuresList = new ArrayList<IDataStructure>();
 
     private String namespace;
 
@@ -124,7 +132,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     protected VToolSimpleAccessionClient client;
 
-    private OMElement publishedDataStructs = null;
+    //private OMElement publishedDataStructs = null;
+    
+    private String data_dictionary_server_url = "http://ndardemo.nih.gov/NewDataDictionary/dataDictionary?wsdl";
+    
+    //private String data_dictionary_server_url = "http://ndarportal.nih.gov/NewDataDictionary/dataDictionary?wsdl";
+    
+    private List<XmlDataType> dataTypes;
+
+    private DataDictionaryProvider dataDictionaryProvider;
+    
+    private List<IDataStructure> iDataStructures;
+    
+    
+    
+    
+    
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -144,7 +167,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             + "autism treatments.  Modification of NDAR information may be addressed by contacting your NDAR\n"
             + "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n"
             + "on the NDAR site as required.";
-
+/*
     private enum NDARServer {
         PROD("PROD"),
         DEMO("DEMO");
@@ -154,7 +177,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         NDARServer(final String s) {
             name = s;
         }
-    }
+    }*/
 
     public PlugInDialogNDAR() {
         super(false);
@@ -1457,7 +1480,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private JTable structsTable;
 
-        private QName qName = null;
+       /* private QName qName = null;
 
         private QName qStatus = null;
 
@@ -1467,7 +1490,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private QName qParentDataStructure = null;
 
-        private QName qVersion = null;
+        private QName qVersion = null;*/
 
         private final ArrayList<String> descAL = new ArrayList<String>();
 
@@ -1484,12 +1507,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             this.owner = owner;
 
-            qName = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "short_name");
+           /* qName = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "short_name");
+            System.out.println(qName.toString());
             qStatus = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "status");
             qDataType = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "type");
             qDescription = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "desc");
             qParentDataStructure = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "parent");
-            qVersion = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "version");
+            qVersion = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "version");*/
 
             init();
 
@@ -1525,8 +1549,36 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             structsTable.getColumn("Short Name").setMinWidth(150);
             structsTable.getColumn("Description").setMinWidth(300);
+            
+            
+           //new way of doing web service
+            for (IDataStructure ds : iDataStructures)
+    		{
 
-            final Iterator<OMElement> iter2 = publishedDataStructs.getChildElements();
+    			String desc = ds.getDescription();
+    			String shortname = ds.getShortName();
+    			String version = ds.getDispVersion();
+    			String status = ds.getStatus();
+    			
+    			
+    			 descAL.add(desc);
+                 shortNameAL.add(shortname);
+                 versionAL.add(version);
+                 statusAL.add(status);
+    			
+    		}
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            
+            //old way of using web service
+            /*final Iterator<OMElement> iter2 = publishedDataStructs.getChildElements();
             while (iter2.hasNext()) {
                 final OMElement e = iter2.next();
 
@@ -1550,7 +1602,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                 }
 
-            }
+            }*/
+            
+            
+            
+            
+            
+            
+            
             
             TreeSet<String> sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
             for(int i=0;i<shortNameAL.size();i++) {
@@ -1705,6 +1764,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         private final ArrayList<File> allOtherFiles = new ArrayList<File>();
 
         private boolean addedPreviewImage = false;
+        
+        private IDataStructure iDataStructure;
 
         /**
          * constructor
@@ -1721,7 +1782,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             this.launchedFromInProcessState = launchedFromInProcessState;
 
             if (launchedFromInProcessState) {
+            	//System.out.println("*** launched from in process: " + name);
                 if (name.contains("_NDAR")) {
+               
                     this.dataStructureName = name.substring(0, name.indexOf("_NDAR"));
                 } else {
                     this.dataStructureName = name.substring(0, name.lastIndexOf("_"));
@@ -1741,6 +1804,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             tabScrollPane.setPreferredSize(new Dimension(600, 200));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
+            
+            for (IDataStructure ds : iDataStructures)
+    		{
+
+    			if(ds.getShortName().equals(dataStructureName)) {
+    				
+    				iDataStructure = ds;
+    			}
+    		}
 
             init();
 
@@ -1762,14 +1834,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 // setIconImage() is not part of the Java 1.5 API - catch any runtime error on those systems
             }
 
-            documentElement = documentElements.get(dataStructureName);
+            /*documentElement = documentElements.get(dataStructureName);
             final Iterator<OMElement> iter2 = documentElement.getChildElements();
             // should only be 1 top level Data_Structure tag
             dataStructElement = iter2.next();
-            namespace = dataStructElement.getNamespace().getNamespaceURI();
+            namespace = dataStructElement.getNamespace().getNamespaceURI();*/
 
             try {
-                OMAttribute attr;
+               /* OMAttribute attr;
                 QName qname;
 
                 qname = new QName(namespace, "name");
@@ -1790,8 +1862,26 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                 qname = new QName(namespace, "type");
                 attr = dataStructElement.getAttribute(qname);
-                final String t = attr.getAttributeValue();
+                final String t = attr.getAttributeValue();*/
 
+                
+                
+                
+                
+                
+                
+                String n = iDataStructure.getShortName();
+                String s = iDataStructure.getShortName();
+                String d = iDataStructure.getDescription();
+                String v = iDataStructure.getDispVersion();
+                String t = iDataStructure.getDispDataType();
+                
+                
+                
+                
+                
+                
+                
                 final DataStruct dataStruct = new DataStruct(n, s, d, v, t);
                 boolean found = false;
                 for (int i = 0; i < dataStructures.size(); i++) {
@@ -1807,19 +1897,27 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 if (launchedFromInProcessState) {
                     final int selectedRow = sourceTable.getSelectedRow();
                     final LinkedHashMap<String, String> infoMap = infoList.get(selectedRow);
+                    /*if(infoMap == null) {
+                    	System.out.println("info map is null");
+                    }*/
                     labelsAndComps = labelsAndCompsList.get(selectedRow);
 
-                    parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
-
+                    //parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
+                    
+                    parse_new(iDataStructure, dataStruct, dataStructureName, labelsAndComps);
+                    
                     parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
 
-                    populateFieldsFromCompletedState(labelsAndComps, infoMap);
+                    populateFieldsFromInProcessState(labelsAndComps, infoMap);
 
                 } else {
 
                     labelsAndComps = new TreeMap<JLabel, JComponent>(new JLabelComparator());
 
-                    parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
+                    //parse(dataStructElement, dataStruct, dataStructureName, labelsAndComps);
+                    
+                    parse_new(iDataStructure, dataStruct, dataStructureName, labelsAndComps);
+                    
 
                     parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
 
@@ -1936,6 +2034,153 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 }
             }
         }
+        
+        
+        
+        
+        
+        
+        /**
+         * parses the OMElement
+         * 
+         * @param ds
+         */
+        private void parse_new(final IDataStructure iDataStructure, final DataStruct ds2, final String shortname,
+                final TreeMap<JLabel, JComponent> labelsAndComps) {
+            //final Iterator iter = omElement.getChildElements();
+            OMElement childElement;
+            OMAttribute attr;
+            QName qname;
+            String childElementName;
+            
+            Collection dataElements = iDataStructure.getDataElements();
+			Iterator iter = dataElements.iterator();
+			
+            
+            
+	
+            
+            while (iter.hasNext()) {
+            	IDataElement dataElement = (IDataElement)iter.next();
+            	
+          
+                    final String n = dataElement.getName();
+               
+
+                    final String d = dataElement.getDescription();
+                    
+                    
+                    final String sh = dataElement.getShortDescription();
+                 
+
+                    final String t = dataElement.getTypeString();
+                  
+
+                    final String s = dataElement.getSize().toString();
+                  
+
+                    final String r = dataElement.getRequired();  
+                  
+
+                    final String v = dataElement.getValueRange();
+                   
+
+                    final String parentDataStruct = ds2.getName();
+                    final String parentDataStructShortName = ds2.getShortname();
+                    final DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct,
+                            parentDataStructShortName);
+                    ds2.add(de);
+
+                    JLabel l;
+                    /*if (sh == null || sh.equalsIgnoreCase("")) {
+                        l = new JLabel(n);
+                    } else {
+                        l = new JLabel(sh);
+                    }*/
+                    l = new JLabel(n);
+                    l.setName(n);
+                    l.setToolTipText(sh);
+                   /* System.out.println("^^^ " + n);
+                    System.out.println("^^^-- " + sh);
+                    System.out.println("^^^--" + t);
+                    System.out.println("^^^--" + s);
+                    System.out.println("^^^--" + v);
+                    System.out.println();*/
+                    // if valuerange is enumeration, create a combo box...otherwise create a textfield
+                    if (v!= null && v.contains(";") && t != null && !t.equalsIgnoreCase("DATE")) {
+                        final JComboBox cb = new JComboBox();
+                        cb.setName(n);
+                        final String[] items = v.split(";");
+                        for (final String element : items) {
+                            final String item = element.trim();
+                            cb.addItem(item);
+                        }
+                        if (r.equalsIgnoreCase("Required")) {
+                            l.setForeground(Color.red);
+                        }
+                        labelsAndComps.put(l, cb);
+                    } else {
+                        final JTextField tf = new JTextField(20);
+                        tf.setName(n);
+
+                        String tooltip = "Type: " + t;
+                        if (t.equalsIgnoreCase("String")) {
+                            tooltip += " (" + s + ")";
+                        }
+                        if ( v != null && !v.trim().equalsIgnoreCase("")) {
+                            tooltip += ".  Value range: " + v;
+                        }
+                        tf.setToolTipText(tooltip);
+
+                        if (n.equalsIgnoreCase("image_num_dimensions")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_extent1")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_extent2")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_extent3")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_extent4")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_extent5")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_thumbnail_file")) {
+                            tf.setEnabled(false);
+                        } else if (n.equalsIgnoreCase("image_file")) {
+                            tf.setEnabled(false);
+                        }
+                        if (r.equalsIgnoreCase("Required")) {
+                            l.setForeground(Color.red);
+                        }
+                        labelsAndComps.put(l, tf);
+                    }
+                    // }
+                
+            }
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
 
         /**
          * parses the OMElement
@@ -2051,7 +2296,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         /**
          * populates dialog from completed state
          */
-        public void populateFieldsFromCompletedState(final TreeMap<JLabel, JComponent> labelsAndComps,
+        public void populateFieldsFromInProcessState(final TreeMap<JLabel, JComponent> labelsAndComps,
                 final LinkedHashMap<String, String> infoMap2) {
 
             final Set keySet = infoMap2.keySet();
@@ -2061,13 +2306,17 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             while (iter.hasNext()) {
                 key = (String) iter.next();
                 value = infoMap2.get(key);
-
+                /*if(!value.equals("")) {
+                	System.out.println(" * " + key + " * " + value);
+                }*/
                 final Set keySet2 = labelsAndComps.keySet();
                 final Iterator iter2 = keySet2.iterator();
+                //System.out.println();
                 while (iter2.hasNext()) {
                     final JLabel l = (JLabel) iter2.next();
                     final Component comp = labelsAndComps.get(l);
                     final String name = comp.getName();
+                    //System.out.println("--- " + name);
                     if (name.equalsIgnoreCase(key)) {
                         if (comp instanceof JTextField) {
                             final JTextField t = (JTextField) comp;
@@ -2416,6 +2665,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
+        	//System.out.println("in parseDataStructForValidation");
             String value = "";
             String key = "";
             String labelText = "";
@@ -2534,7 +2784,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 }
                             }
                         }
-                        if ( !size.equalsIgnoreCase("")) {
+                        if ( !size.equalsIgnoreCase("") && !size.equalsIgnoreCase("0")) {
                             final int intValue = Integer.valueOf(size.trim()).intValue();
                             if ( !value.trim().equalsIgnoreCase("")) {
                                 if (value.length() > intValue) {
@@ -2554,6 +2804,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public void complete(final TreeMap<JLabel, JComponent> labelsAndComps, final String dataStructShortname,
                 final boolean isComplete) {
+        	//System.out.println("in complete");
             final LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
             String value = "";
             final Set keySet = labelsAndComps.keySet();
@@ -2577,6 +2828,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 } else if (comp instanceof JComboBox) {
                     value = (String) ( ((JComboBox) comp).getSelectedItem());
                 }
+               /* if(!value.equals("")) {
+                	System.out.println("the key is " + key);
+                	System.out.println("the value is " + value);
+                }*/
                 infoMap.put(key, value);
             }
 
@@ -2850,7 +3105,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         PlugInDialogNDAR dial;
 
         /** Should be either NDAR_SERVER_PROD or NDAR_SERVER_DEMO. Removed storage/retrieval from preferences. */
-        String ndarServer = NDARServer.PROD.name;
+        //String ndarServer = NDARServer.PROD.name;
         //String ndarServer = NDARServer.DEMO.name;
 
        // String ndarDataStructName;
@@ -2869,7 +3124,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
-                client = Startup.getClient(ndarServer);
+              /*  client = Startup.getClient(ndarServer);
 
                 try {
                     publishedDataStructs = client.getPublishedStructures();
@@ -2892,6 +3147,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             if (parent.trim().equalsIgnoreCase("")) {
                                 // set up all the OMElements
                                 final OMElement ome = client.getDataDictionary(shortname);
+                                System.out.println(shortname);
                                 documentElements.put(shortname, ome);
 
                             }
@@ -2900,14 +3156,60 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         // TODO: Store or throw away the information about this data structure
                     }
 
-                }
+                }*/
 
-                progressBar.updateValue(80);
+               
+                
+                
+                dataDictionaryProvider = new DataDictionaryProvider(data_dictionary_server_url);
+        		
+        		dataTypes = new ArrayList<XmlDataType>();
+        		dataTypes.add(XmlDataType.IMAGING);
+        		
+        		
+        		iDataStructures = dataDictionaryProvider.getPublicDataStructureList(dataTypes);
+        		iDataStructures = dataDictionaryProvider.getDataDictionary(iDataStructures).getDataStructure();
+        		
+        		 progressBar.updateValue(80);
 
-                progressBar.updateValue(100);
-                progressBar.setVisible(false);
-                progressBar.dispose();
-                printlnToLog("Successful connection to NDAR data dictionary web service");
+                 progressBar.updateValue(100);
+                 progressBar.setVisible(false);
+                 progressBar.dispose();
+                 printlnToLog("Successful connection to NDAR data dictionary web service");
+        		
+        		
+        		/*for (IDataStructure ds : iDataStructures)
+        		{
+        			//System.out.println();
+        			System.out.println(ds.getShortName());
+        			System.out.println(ds.getDescription());
+        			System.out.println(ds.getDispVersion());
+        			System.out.println(ds.getStatus());
+        			System.out.println();
+        			if(ds.getShortName().equals("image01")) {
+	        			Collection dataElements = ds.getDataElements();
+	        			Iterator iter = dataElements.iterator();
+	        			System.out.println();
+	        			while(iter.hasNext()) {
+	        				System.out.println();
+		        				IDataElement dataElement = (IDataElement)iter.next();
+		        				System.out.println(dataElement.getName());
+		        				
+		        				System.out.println(dataElement.getShortDescription());
+		        				
+		        				System.out.println(dataElement.getRequired());
+	        				
+	        			}
+        			}
+        			
+        			System.out.println();
+        		}
+        		
+        		
+        		System.out.println();*/
+
+                
+                
                 addSourceButton.setEnabled(true);
             } catch (final Exception e) {
                 e.printStackTrace();
