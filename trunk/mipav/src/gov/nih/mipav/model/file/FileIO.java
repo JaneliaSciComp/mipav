@@ -11692,8 +11692,10 @@ public class FileIO {
                     }
 
                     myFileInfo.getTagTable().setValue("0008,0018", sopUID + "." + i);
-                    myFileInfo.getTagTable().setValue("0002,0003", sopUID + "." + i);
-
+                    if(myFileInfo.getTagTable().getValue("0002,0003") != null) {
+                        myFileInfo.getTagTable().setValue("0002,0003", sopUID + "." + i);
+                    }
+                    
                     if (options.isSaveAs()) {
 
                         if ( (i < 9) && (options.getEndSlice() != options.getBeginSlice())) {
