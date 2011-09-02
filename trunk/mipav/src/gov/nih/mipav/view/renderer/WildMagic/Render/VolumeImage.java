@@ -526,7 +526,7 @@ public class VolumeImage implements Serializable {
     		if ( kNormal != null )
     		{
     			m_kNormal[i] = VolumeImage.UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal
-    					.getImageName(), true, false);
+    					.getImageName(), true, true);
     			kNormal.disposeLocal();
     			m_bNormalsInit = true;
     		}
