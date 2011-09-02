@@ -159,7 +159,7 @@ public class CircleClassificationWidget extends ClassificationWidget
             Vector2f center = getCenter();
             m_kWidgetEfect.SetCenter( calcTCoordX(center.X), calcTCoordY(center.Y) );
             
-            m_kWidgetEfect.SetRadius( m_fRadius / 4f );
+            m_kWidgetEfect.SetRadius( m_fRadius / (2*m_kTMax.X) );
 
             m_kWidgetEfect.UpdateColor();
             m_kWidgetEfect.UpdateLUT();
