@@ -11790,8 +11790,10 @@ public class FileIO {
             FileInfoDicom[][] infoAr) {
         long time = System.currentTimeMillis();
         //create sequence ordered by current slice number
-        FileDicomSQ seq = new FileDicomSQ();
-        seq.setWriteAsUnknownLength(false); //sequences containing enhanced dicom data always given known length
+        FileDicomSQ seqBase = new FileDicomSQ(); //this is the 5200,9230 sequence
+        seqBase.setWriteAsUnknownLength(true); //sequences containing enhanced dicom data always given known length
+        FileDicomSQ seq = new FileDicomSQ();  //this is the 0020,9111 sequence
+        seq.setWriteAsUnknownLength(true); 
         int tDim = infoAr[0].length;
         int zDim = infoAr.length;
         for(int t = 0; t < tDim; t++) {
@@ -11804,7 +11806,7 @@ public class FileIO {
                     table.setValue("0020,9057", z);
                 }
                 FileDicomSQItem item = new FileDicomSQItem(null, myFileInfo.getVr_type());
-                item.setWriteAsUnknownLength(false); //enhanced sequence items are always written using known length
+                item.setWriteAsUnknownLength(true); //enhanced sequence items are always written using known length
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
                 Object tagValue = null;
                 while(tags.hasMoreElements()) {
@@ -11813,15 +11815,19 @@ public class FileIO {
                         item.setValue(tag.getKey(), tag.getValue(false));
                         System.out.println("Inserting unique value from key: "+tag.getKey());
                     } else if(myFileInfo.getTagTable().getValue(tag.getKey()) != null){
-                        System.out.println("This key contained the same value: "+tag.getKey());
+                        //System.out.println("This key contained the same value: "+tag.getKey());
                     }
                 }
                 seq.addItem(item);
             }
         }
+        FileDicomSQItem item = new FileDicomSQItem(null, myFileInfo.getVr_type());
+        item.setWriteAsUnknownLength(true);
+        item.setValue("0020,9111", seq);
+        seqBase.addItem(item);
         System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
         //insert constructed sequence into tag table
-        myFileInfo.getTagTable().setValue("5200,9230", seq);
+        myFileInfo.getTagTable().setValue("5200,9230", seqBase);
     }
 
     /**
