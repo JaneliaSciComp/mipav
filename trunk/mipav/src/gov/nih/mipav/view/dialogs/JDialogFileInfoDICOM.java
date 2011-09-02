@@ -163,345 +163,63 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             key = e.nextElement();
             
             name = key.getKey();
+            if(name.equals("0010,21C0")) {
+                System.out.println("Stop");
+            }
             
-            if ( ((FileDicomTag) tagsList.get(key)).getValue(false) != null) {
-                final String tagName = "(" + name + ")";
-                if (tags != null) {
-                    for (final String element : tags) {
-                        if (tagName.equals(element)) {
-                            rowData[0] = new Boolean(true);
-                            break;
-                        } else {
-                            rowData[0] = new Boolean(false);
-                        }
+            final String tagName = "(" + name + ")";
+            if (tags != null) {
+                for (final String element : tags) {
+                    if (tagName.equals(element)) {
+                        rowData[0] = new Boolean(true);
+                        break;
+                    } else {
+                        rowData[0] = new Boolean(false);
                     }
                 }
+            }
 
-                rowData[1] = tagName;
-                rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
+            rowData[1] = tagName;
+            rowData[2] = ((FileDicomTag) tagsList.get(key)).getName();
 
-                VR vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
-                int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
+            VR vr = ((FileDicomTag) tagsList.get(key)).getValueRepresentation();
+            int vm = ((FileDicomTag) tagsList.get(key)).getValueMultiplicity();
 
-                if(vr == null) {
-                   vr = VR.UN;
-                }
-                
-                if (rowData[2].equals("Private Tag") || vr.equals(VR.OB)) {
-                    Object data = ((FileDicomTag) tagsList.get(key)).getValue(false);
-                    // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
-                    // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
-                    if ( data instanceof Byte[]) {
-                        // if (key.equals("0008,0040")) { System.err.println("IN JdialogFileInfo looking at
-                        // 0008,0040"); System.err.println("value: " + ((FileDicomTag)
-                        // tagsList.get(key)).getValue(false).toString()); }
+            if(vr == null) {
+               vr = VR.UN;
+            }
+            
+            if(((FileDicomTag) tagsList.get(key)).getValue(false) == null) {
+                rowData[3] = "";
+            } else if (rowData[2].equals("Private Tag") || vr.equals(VR.OB)) {
+                Object data = ((FileDicomTag) tagsList.get(key)).getValue(false);
+                // System.out.println("OB/Priv: "+name + ".." +((FileDicomTag)tagsList.get(key)).getValue(true));
+                // if (rowData[1].equals("Private Tag") || vr.equals("OB") || vm > 1) {
+                if ( data instanceof Byte[]) {
+                    // if (key.equals("0008,0040")) { System.err.println("IN JdialogFileInfo looking at
+                    // 0008,0040"); System.err.println("value: " + ((FileDicomTag)
+                    // tagsList.get(key)).getValue(false).toString()); }
 
-                        final Byte[] bytesV = (Byte[]) data;
-                        final byte[] bytesValue = new byte[bytesV.length];
+                    final Byte[] bytesV = (Byte[]) data;
+                    final byte[] bytesValue = new byte[bytesV.length];
 
-                        if ( (bytesValue != null) && (bytesV != null)) {
+                    if ( (bytesValue != null) && (bytesV != null)) {
 
-                            // System.out.println(" length = " + bytesV.length);
-                            for (int k = 0; k < bytesV.length; k++) {
-                                bytesValue[k] = bytesV[k].byteValue();
-                            }
-
-                            if (bytesV.length == 0) {
-                                rowData[3] = "";
-                            } else if ( (bytesValue[0] > 32) && (bytesValue[0] < 127)) {
-                                rowData[3] = new String(bytesValue);
-                            } else {
-                                rowData[3] = JDialogFileInfoDICOM.convertType(bytesValue, DicomInfo.getEndianess(), vm);
-                            }
+                        // System.out.println(" length = " + bytesV.length);
+                        for (int k = 0; k < bytesV.length; k++) {
+                            bytesValue[k] = bytesV[k].byteValue();
                         }
-                    } else if (vr.equals(VR.SQ)) {
-                      //TODO: Implement JTable view for sequences
-                        // System.err.println("Key = " + key);
-                        final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
-                        
-                        final Vector<FileDicomSQItem> display = sq.getSequence();
 
-                        rowData[3] = "";
-                        
-                        JDialogFileInfoDICOM.addRow(rowData, show);
-                        FileDicomTag tag = null;
-                        
-                        for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
-                            FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
-                            rowData[2] = "Sequence element";
+                        if (bytesV.length == 0) {
                             rowData[3] = "";
-                            if(JDialogFileInfoDICOM.addRow(rowData, show)) {
-                                tagsModel.addRow(rowData);
-                            }
-                            for(int i=0; i<tagList.length; i++) {
-                                tag = tagList[i];
-                                rowData[2] = tag.getKey()+": "+tag.getKeyword();
-                                rowData[3] = tag.getValue(true);
-                                if(JDialogFileInfoDICOM.addRow(rowData, show)) {
-                                    tagsModel.addRow(rowData);
-                                }
-                            }
+                        } else if ( (bytesValue[0] > 32) && (bytesValue[0] < 127)) {
+                            rowData[3] = new String(bytesValue);
+                        } else {
+                            rowData[3] = JDialogFileInfoDICOM.convertType(bytesValue, DicomInfo.getEndianess(), vm);
                         }
-                        tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
-                    } else {
-
-                        FileDicomTag t;
-                        Object[] tagVals;
-
-                        t = (FileDicomTag) tagsList.get(key);
-                        tagVals = t.getValueList();
-
-                        String dispString = "";
-                        final int num = t.getNumberOfValues();
-
-                        if (num == 0) {
-                            Preferences.debug("No Multiplicity: " + name + "  " + t.getValue(true)
-                                    + ", check that this is not an error.\n");
-                        }
-
-                        for (int q = 0; q < num; q++) {
-
-                            if (tagVals[q] != null) {
-                                try {
-                                    dispString += tagVals[q].toString();
-                                } catch (final NullPointerException e1) {
-                                    dispString += "";
-                                }
-
-                                if ( (q + 1) < num) {
-                                    dispString += ", ";
-                                }
-                            }
-                        }
-                        if (dispString.length() > 0) {
-                            final char c = dispString.charAt(dispString.length() - 1);
-                            if (c == '\0') {
-                                dispString = dispString.substring(0, dispString.indexOf(c));
-                            }
-                        }
-                        rowData[3] = dispString;
-                    }
-                    // // vm = 2 for patient orientation
-                    // if (!name.equals("0020,0020")) {
-                    // if (vm > 1 && vr == "SS") { // hack Neva fix this!!!
-                    // System.out.println("Inside NEVA hack. Neva, fix this!!!");
-                    // System.out.println("Wait. Check it out. The code asks if "+
-                    // " the string var vr \"==\" SS. Wonder when the \n" +
-                    // " String's hashcode will -ever- be equal to \"SS\"."+
-                    // " Or Maybe Never. This should be fixed.");
-                    // short[] values = (short[])((FileDicomTag)tagsList.get(key)).getValue(false);
-                    // for (int k = 0; k < vm; k++) {
-                    // rowData[2] = values[k] + " ";
-                    // }
-                    // }
-                    // else {
-                    // rowData[2] = ((FileDicomTag)tagsList.get(key)).getValue(true).toString();
-                    // }
-                    // }
-                    // }
-                } // special cases which contain coded information:
-                else if (vr.equals(VR.PN)) {
-                    String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
-                    s = s.replace('^', ',');
-
-                    if (s.length() > 0) {
-                        final char c = s.charAt(s.length() - 1);
-                        if (c == '\0') {
-                            s = s.substring(0, s.indexOf(c));
-                        }
-                    }
-                    rowData[3] = s;
-                } else if (name.equals("0008,0060")) {
-
-                    switch (DicomInfo.getModality()) {
-
-                        case 1:
-                            rowData[3] = "BIOMAGNETIC_IMAGING";
-                            break;
-
-                        case 2:
-                            rowData[3] = "COLOR_FLOW_DOPPLER";
-                            break;
-
-                        case 3:
-                            rowData[3] = "COMPUTED_RADIOGRAPHY";
-                            break;
-
-                        case 4:
-                            rowData[3] = "COMPUTED_TOMOGRAPHY";
-                            break;
-
-                        case 5:
-                            rowData[3] = "DUPLEX_DOPPLER";
-                            break;
-
-                        case 6:
-                            rowData[3] = "DIAPHANOGRAPHY";
-                            break;
-
-                        case 7:
-                            rowData[3] = "DIGITAL_RADIOGRAPHY";
-                            break;
-
-                        case 8:
-                            rowData[3] = "ENDOSCOPY";
-                            break;
-
-                        case 9:
-                            rowData[3] = "GENERAL_MICROSCOPY";
-                            break;
-
-                        case 10:
-                            rowData[3] = "HARDCOPY";
-                            break;
-
-                        case 11:
-                            rowData[3] = "INTRAORAL_RADIOGRAPHY";
-                            break;
-
-                        case 12:
-                            rowData[3] = "LASER_SURFACE_SCAN";
-                            break;
-
-                        case 13:
-                            rowData[3] = "MAGNETIC_RESONANCE_ANGIOGRAPHY";
-                            break;
-
-                        case 14:
-                            rowData[3] = "MAMMOGRAPHY";
-                            break;
-
-                        case 15:
-                            rowData[3] = "MAGNETIC_RESONANCE";
-                            break;
-
-                        case 16:
-                            rowData[3] = "MAGNETIC_RESONANCE_SPECTROSCOPY";
-                            break;
-
-                        case 17:
-                            rowData[3] = "NUCLEAR_MEDICINE";
-                            break;
-
-                        case 18:
-                            rowData[3] = "OTHER";
-                            break;
-
-                        case 19:
-                            rowData[3] = "POSITRON_EMISSION_TOMOGRAPHY";
-                            break;
-
-                        case 20:
-                            rowData[3] = "PANORAMIC_XRAY";
-                            break;
-
-                        case 21:
-                            rowData[3] = "RADIO_FLUOROSCOPY";
-                            break;
-
-                        case 22:
-                            rowData[3] = "RADIOGRAPHIC_IMAGING";
-                            break;
-
-                        case 23:
-                            rowData[3] = "RADIOTHERAPY_DOSE";
-                            break;
-
-                        case 24:
-                            rowData[3] = "RADIOTHERAPY_IMAGE";
-                            break;
-
-                        case 25:
-                            rowData[3] = "RADIOTHERAPY_PLAN";
-                            break;
-
-                        case 26:
-                            rowData[3] = "RADIOTHERAPY_RECORD";
-                            break;
-
-                        case 27:
-                            rowData[3] = "RADIOTHERAPY_STRUCTURE_SET";
-                            break;
-
-                        case 28:
-                            rowData[3] = "SLIDE_MICROSCOPY";
-                            break;
-
-                        case 29:
-                            rowData[3] = "SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY";
-                            break;
-
-                        case 30:
-                            rowData[3] = "THERMOGRAPHY";
-                            break;
-
-                        case 31:
-                            rowData[3] = "ULTRASOUND";
-                            break;
-
-                        case 32:
-                            rowData[3] = "XRAY_ANGIOGRAPHY";
-                            break;
-
-                        case 33:
-                            rowData[3] = "EXTERNAL_CAMERA_PHOTOGRAPHY";
-                            break;
-
-                        case 34:
-                            rowData[3] = "UNKNOWN";
-                            break;
-
-                        default:
-                            rowData[3] = "UNKNOWN";
-                            break;
-                    }
-                } else if (name.equals("0008,0064")) {
-                    String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
-                    if (s.length() > 0) {
-                        final char c = s.charAt(s.length() - 1);
-                        if (c == '\0') {
-                            s = s.substring(0, s.indexOf(c));
-                        }
-                    }
-
-                    if (s.equals("DV")) {
-                        rowData[3] = "Digitized Video";
-                    } else if (s.equals("DI")) {
-                        rowData[3] = "Digital Interface";
-                    } else if (s.equals("DF")) {
-                        rowData[3] = "Digitized Film";
-                    } else if (s.equals("WSD")) {
-                        rowData[3] = "Workstation";
-                    }
-                } else if (name.equals("0018,5100")) {
-                    String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
-                    if (s.length() > 0) {
-                        final char c = s.charAt(s.length() - 1);
-                        if (c == '\0') {
-                            s = s.substring(0, s.indexOf(c));
-                        }
-                    }
-                    if (s.equals("HFP")) {
-                        rowData[3] = "Head First-Prone";
-                    } else if (s.equals("HFS")) {
-                        rowData[3] = "Head First-Supine";
-                    } else if (s.equals("HFDR")) {
-                        rowData[3] = "Head First-Decubitus Right";
-                    } else if (s.equals("HFDL")) {
-                        rowData[3] = "Head First-Decubitus Left";
-                    } else if (s.equals("FFP")) {
-                        rowData[3] = "Feet First-Prone";
-                    } else if (s.equals("FFS")) {
-                        rowData[3] = "Feet First-Supine";
-                    } else if (s.equals("FFDR")) {
-                        rowData[3] = "Feet First-Decubitus Right";
-                    } else if (s.equals("FFDL")) {
-                        rowData[3] = "Feet First-Decubitus Left";
-                    } else {
-                        rowData[3] = s;
                     }
                 } else if (vr.equals(VR.SQ)) {
-                    //TODO: Implement JTable view for sequences
+                  //TODO: Implement JTable view for sequences
                     // System.err.println("Key = " + key);
                     final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
                     
@@ -529,8 +247,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                         }
                     }
                     tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
-                } // standard tag. add tag.get(key).getValue(true) as-is to the table
-                else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
+                } else {
 
                     FileDicomTag t;
                     Object[] tagVals;
@@ -538,7 +255,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     t = (FileDicomTag) tagsList.get(key);
                     tagVals = t.getValueList();
 
-                    StringBuilder dispStringBuffer = new StringBuilder();
+                    String dispString = "";
                     final int num = t.getNumberOfValues();
 
                     if (num == 0) {
@@ -547,17 +264,19 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
 
                     for (int q = 0; q < num; q++) {
-                        try {
-                            dispStringBuffer.append(tagVals[q].toString());
-                        } catch (final NullPointerException e1) {
-                            dispStringBuffer.append("");
-                        }
 
-                        if ( (q + 1) < num) {
-                            dispStringBuffer.append(", ");
+                        if (tagVals[q] != null) {
+                            try {
+                                dispString += tagVals[q].toString();
+                            } catch (final NullPointerException e1) {
+                                dispString += "";
+                            }
+
+                            if ( (q + 1) < num) {
+                                dispString += ", ";
+                            }
                         }
                     }
-                    String dispString = dispStringBuffer.toString();
                     if (dispString.length() > 0) {
                         final char c = dispString.charAt(dispString.length() - 1);
                         if (c == '\0') {
@@ -566,13 +285,298 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                     }
                     rowData[3] = dispString;
                 }
+                // // vm = 2 for patient orientation
+                // if (!name.equals("0020,0020")) {
+                // if (vm > 1 && vr == "SS") { // hack Neva fix this!!!
+                // System.out.println("Inside NEVA hack. Neva, fix this!!!");
+                // System.out.println("Wait. Check it out. The code asks if "+
+                // " the string var vr \"==\" SS. Wonder when the \n" +
+                // " String's hashcode will -ever- be equal to \"SS\"."+
+                // " Or Maybe Never. This should be fixed.");
+                // short[] values = (short[])((FileDicomTag)tagsList.get(key)).getValue(false);
+                // for (int k = 0; k < vm; k++) {
+                // rowData[2] = values[k] + " ";
+                // }
+                // }
+                // else {
+                // rowData[2] = ((FileDicomTag)tagsList.get(key)).getValue(true).toString();
+                // }
+                // }
+                // }
+            } // special cases which contain coded information:
+            else if (vr.equals(VR.PN)) {
+                String s = (String) ((FileDicomTag) tagsList.get(key)).getValue(true);
+                s = s.replace('^', ',');
 
-                // instances where rowData will be a private tag are checked here for showTags
-                if (JDialogFileInfoDICOM.addRow(rowData, show)) {
-                    tagsModel.addRow(rowData);
+                if (s.length() > 0) {
+                    final char c = s.charAt(s.length() - 1);
+                    if (c == '\0') {
+                        s = s.substring(0, s.indexOf(c));
+                    }
                 }
+                rowData[3] = s;
+            } else if (name.equals("0008,0060")) {
+
+                switch (DicomInfo.getModality()) {
+
+                    case 1:
+                        rowData[3] = "BIOMAGNETIC_IMAGING";
+                        break;
+
+                    case 2:
+                        rowData[3] = "COLOR_FLOW_DOPPLER";
+                        break;
+
+                    case 3:
+                        rowData[3] = "COMPUTED_RADIOGRAPHY";
+                        break;
+
+                    case 4:
+                        rowData[3] = "COMPUTED_TOMOGRAPHY";
+                        break;
+
+                    case 5:
+                        rowData[3] = "DUPLEX_DOPPLER";
+                        break;
+
+                    case 6:
+                        rowData[3] = "DIAPHANOGRAPHY";
+                        break;
+
+                    case 7:
+                        rowData[3] = "DIGITAL_RADIOGRAPHY";
+                        break;
+
+                    case 8:
+                        rowData[3] = "ENDOSCOPY";
+                        break;
+
+                    case 9:
+                        rowData[3] = "GENERAL_MICROSCOPY";
+                        break;
+
+                    case 10:
+                        rowData[3] = "HARDCOPY";
+                        break;
+
+                    case 11:
+                        rowData[3] = "INTRAORAL_RADIOGRAPHY";
+                        break;
+
+                    case 12:
+                        rowData[3] = "LASER_SURFACE_SCAN";
+                        break;
+
+                    case 13:
+                        rowData[3] = "MAGNETIC_RESONANCE_ANGIOGRAPHY";
+                        break;
+
+                    case 14:
+                        rowData[3] = "MAMMOGRAPHY";
+                        break;
+
+                    case 15:
+                        rowData[3] = "MAGNETIC_RESONANCE";
+                        break;
+
+                    case 16:
+                        rowData[3] = "MAGNETIC_RESONANCE_SPECTROSCOPY";
+                        break;
+
+                    case 17:
+                        rowData[3] = "NUCLEAR_MEDICINE";
+                        break;
+
+                    case 18:
+                        rowData[3] = "OTHER";
+                        break;
+
+                    case 19:
+                        rowData[3] = "POSITRON_EMISSION_TOMOGRAPHY";
+                        break;
+
+                    case 20:
+                        rowData[3] = "PANORAMIC_XRAY";
+                        break;
+
+                    case 21:
+                        rowData[3] = "RADIO_FLUOROSCOPY";
+                        break;
+
+                    case 22:
+                        rowData[3] = "RADIOGRAPHIC_IMAGING";
+                        break;
+
+                    case 23:
+                        rowData[3] = "RADIOTHERAPY_DOSE";
+                        break;
+
+                    case 24:
+                        rowData[3] = "RADIOTHERAPY_IMAGE";
+                        break;
+
+                    case 25:
+                        rowData[3] = "RADIOTHERAPY_PLAN";
+                        break;
+
+                    case 26:
+                        rowData[3] = "RADIOTHERAPY_RECORD";
+                        break;
+
+                    case 27:
+                        rowData[3] = "RADIOTHERAPY_STRUCTURE_SET";
+                        break;
+
+                    case 28:
+                        rowData[3] = "SLIDE_MICROSCOPY";
+                        break;
+
+                    case 29:
+                        rowData[3] = "SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY";
+                        break;
+
+                    case 30:
+                        rowData[3] = "THERMOGRAPHY";
+                        break;
+
+                    case 31:
+                        rowData[3] = "ULTRASOUND";
+                        break;
+
+                    case 32:
+                        rowData[3] = "XRAY_ANGIOGRAPHY";
+                        break;
+
+                    case 33:
+                        rowData[3] = "EXTERNAL_CAMERA_PHOTOGRAPHY";
+                        break;
+
+                    case 34:
+                        rowData[3] = "UNKNOWN";
+                        break;
+
+                    default:
+                        rowData[3] = "UNKNOWN";
+                        break;
+                }
+            } else if (name.equals("0008,0064")) {
+                String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
+                if (s.length() > 0) {
+                    final char c = s.charAt(s.length() - 1);
+                    if (c == '\0') {
+                        s = s.substring(0, s.indexOf(c));
+                    }
+                }
+
+                if (s.equals("DV")) {
+                    rowData[3] = "Digitized Video";
+                } else if (s.equals("DI")) {
+                    rowData[3] = "Digital Interface";
+                } else if (s.equals("DF")) {
+                    rowData[3] = "Digitized Film";
+                } else if (s.equals("WSD")) {
+                    rowData[3] = "Workstation";
+                }
+            } else if (name.equals("0018,5100")) {
+                String s = ((String) ((FileDicomTag) tagsList.get(key)).getValue(true)).trim();
+                if (s.length() > 0) {
+                    final char c = s.charAt(s.length() - 1);
+                    if (c == '\0') {
+                        s = s.substring(0, s.indexOf(c));
+                    }
+                }
+                if (s.equals("HFP")) {
+                    rowData[3] = "Head First-Prone";
+                } else if (s.equals("HFS")) {
+                    rowData[3] = "Head First-Supine";
+                } else if (s.equals("HFDR")) {
+                    rowData[3] = "Head First-Decubitus Right";
+                } else if (s.equals("HFDL")) {
+                    rowData[3] = "Head First-Decubitus Left";
+                } else if (s.equals("FFP")) {
+                    rowData[3] = "Feet First-Prone";
+                } else if (s.equals("FFS")) {
+                    rowData[3] = "Feet First-Supine";
+                } else if (s.equals("FFDR")) {
+                    rowData[3] = "Feet First-Decubitus Right";
+                } else if (s.equals("FFDL")) {
+                    rowData[3] = "Feet First-Decubitus Left";
+                } else {
+                    rowData[3] = s;
+                }
+            } else if (vr.equals(VR.SQ)) {
+                //TODO: Implement JTable view for sequences
+                // System.err.println("Key = " + key);
+                final FileDicomSQ sq = (FileDicomSQ) ((FileDicomTag) tagsList.get(key)).getValue(false);
+                
+                final Vector<FileDicomSQItem> display = sq.getSequence();
+
+                rowData[3] = "";
+                
+                JDialogFileInfoDICOM.addRow(rowData, show);
+                FileDicomTag tag = null;
+                
+                for (final Enumeration<FileDicomSQItem> f = display.elements(); f.hasMoreElements();) {
+                    FileDicomTag[] tagList = FileDicomTagTable.sortTagsList(f.nextElement().getTagList());
+                    rowData[2] = "Sequence element";
+                    rowData[3] = "";
+                    if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                        tagsModel.addRow(rowData);
+                    }
+                    for(int i=0; i<tagList.length; i++) {
+                        tag = tagList[i];
+                        rowData[2] = tag.getKey()+": "+tag.getKeyword();
+                        rowData[3] = tag.getValue(true);
+                        if(JDialogFileInfoDICOM.addRow(rowData, show)) {
+                            tagsModel.addRow(rowData);
+                        }
+                    }
+                }
+                tagsModel.removeRow(tagsModel.getRowCount()-1); //avoid last row added twice
+            } // standard tag. add tag.get(key).getValue(true) as-is to the table
+            else { // if ( ((FileDicomTag) tagsList.get(key)).getMultiplicity() > 1) {
+
+                FileDicomTag t;
+                Object[] tagVals;
+
+                t = (FileDicomTag) tagsList.get(key);
+                tagVals = t.getValueList();
+
+                StringBuilder dispStringBuffer = new StringBuilder();
+                final int num = t.getNumberOfValues();
+
+                if (num == 0) {
+                    Preferences.debug("No Multiplicity: " + name + "  " + t.getValue(true)
+                            + ", check that this is not an error.\n");
+                }
+
+                for (int q = 0; q < num; q++) {
+                    try {
+                        dispStringBuffer.append(tagVals[q].toString());
+                    } catch (final NullPointerException e1) {
+                        dispStringBuffer.append("");
+                    }
+
+                    if ( (q + 1) < num) {
+                        dispStringBuffer.append(", ");
+                    }
+                }
+                String dispString = dispStringBuffer.toString();
+                if (dispString.length() > 0) {
+                    final char c = dispString.charAt(dispString.length() - 1);
+                    if (c == '\0') {
+                        dispString = dispString.substring(0, dispString.indexOf(c));
+                    }
+                }
+                rowData[3] = dispString;
+            }
+
+            // instances where rowData will be a private tag are checked here for showTags
+            if (JDialogFileInfoDICOM.addRow(rowData, show)) {
+                tagsModel.addRow(rowData);
             }
         }
+        
 
         JDialogFileInfoDICOM.sort(tagsModel, 1, false, true);
     }
