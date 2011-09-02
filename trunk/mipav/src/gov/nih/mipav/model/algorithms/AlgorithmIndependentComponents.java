@@ -4,15 +4,8 @@ package gov.nih.mipav.model.algorithms;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
-import java.awt.*;
-import java.awt.event.*;
-
 import java.io.*;
 
-import javax.swing.*;
-import javax.swing.border.*;
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 import Jama.*;
 
@@ -40,7 +33,7 @@ import Jama.*;
  * analysis.  This reduces noise and prevents overlearning.  It may also solve the problems with data that has a 
  * smaller number of independent components than mixtures."
  */
-public class AlgorithmIndependentComponents extends AlgorithmBase implements ActionListener, FocusListener {
+public class AlgorithmIndependentComponents extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -48,40 +41,16 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
     private ModelImage[] destImage;
 
     /** DOCUMENT ME! */
-    private boolean displayAndAsk;
-
-    /** if true create an image averaging together the slices in the filtered version. */
-    private boolean doAveraging;
-
-    /** if true create a filtered version of the original image. */
-    private boolean doFilter;
-
-    /** DOCUMENT ME! */
     private boolean haveColor;
 
     /** number of image planes present. */
     private int nPlanes;
 
-    /** number of independent components displayed 10 or less than 10 if fewer exist. */
-    private int nPresent;
-
-    /** DOCUMENT ME! */
-    private JButton OKButton;
-
     /** number of independent components to be retained. */
     private int icNumber;
 
     /** DOCUMENT ME! */
-    private JDialog iNumberDialog;
-
-    /** DOCUMENT ME! */
-    private boolean pressedOK = false;
-
-    /** DOCUMENT ME! */
     private ModelImage srcImage;
-
-    /** DOCUMENT ME! */
-    private JTextField textNumber;
     
     /* From the text Independent Component Analysis by Hyvarinen, Karhunen, and Oja;
      * "One must also choose the nonlinearity used in the algorithms.  It seems that the robust, nonpolynomial
@@ -150,59 +119,25 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
      *
      * @param  destImg        image model where result image is to stored
      * @param  srcImg         source image model
-     * @param  doFilter       if true create a filtered version of the original image
-     * @param  doAveraging    if true create an image averaging together the slices in the filtered version
-     * @param  displayAndAsk  if true display independent component images and ask how many to retain
-     * @param  icNumber        if displayAndAsk if false icNumber is the number of independent component images to retain
+     * @param  icNumber       icNumber is the number of independent component images to retain
+     * @param  icAlgorithm
+     * @param  gnum
+     * @param  a1
+     * @param  epsilon
      */
-    public AlgorithmIndependentComponents(ModelImage[] destImg, ModelImage srcImg, boolean doFilter, boolean doAveraging,
-                                        boolean displayAndAsk, int pNumber) {
+    public AlgorithmIndependentComponents(ModelImage[] destImg, ModelImage srcImg, int icNumber, int icAlgorithm,
+    		int gnum, double a1, double epsilon) {
 
         destImage = destImg; // Put results in destination image.
         srcImage = srcImg;
-        this.doFilter = doFilter;
-        this.doAveraging = doAveraging;
-        this.displayAndAsk = displayAndAsk;
         this.icNumber = icNumber;
+        this.icAlgorithm = icAlgorithm;
+        this.gnum = gnum;
+        this.a1 = a1;
+        this.epsilon = epsilon;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-    // ************************************************************************
-    // **************************** Action Events *****************************
-    // ************************************************************************
-
-    /**
-     * Calls various methods depending on the action.
-     *
-     * @param  event  event that triggered function
-     */
-    public void actionPerformed(ActionEvent event) {
-        String tmpStr;
-        Object source = event.getSource();
-
-        if (source == OKButton) {
-            tmpStr = textNumber.getText();
-            icNumber = Integer.parseInt(tmpStr);
-
-            if (icNumber < 1) {
-                MipavUtil.displayError("Number must be at least 1");
-                textNumber.requestFocus();
-                textNumber.selectAll();
-
-                return;
-            } else if (icNumber > nPlanes) {
-                MipavUtil.displayError("Number must not exceed number of image planes");
-                textNumber.requestFocus();
-                textNumber.selectAll();
-
-                return;
-            } else {
-                iNumberDialog.dispose();
-                pressedOK = true;
-            }
-        }
-    }
 
     /**
      * Prepares this class for destruction.
@@ -212,20 +147,6 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         srcImage = null;
         super.finalize();
     }
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  Focus event
-     */
-    public void focusGained(FocusEvent event) { }
-
-    /**
-     * Do nothing.
-     *
-     * @param  event  Focus event
-     */
-    public void focusLost(FocusEvent event) { }
 
     /**
      * Start algorithm.
@@ -330,85 +251,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 
     }  
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  al  DOCUMENT ME!
-     */
-    private void createINumberDialog(ActionListener al) {
-        JPanel panel;
-        TitledBorder border;
-        Font serif12, serif12B;
-        JLabel labelNumber;
-
-        iNumberDialog = new JDialog(ViewUserInterface.getReference().getActiveImageFrame(), "Select number", false);
-        iNumberDialog.setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) -
-                                  (iNumberDialog.getBounds().width / 2),
-                                  (Toolkit.getDefaultToolkit().getScreenSize().height / 2) -
-                                  (iNumberDialog.getBounds().height / 2));
-        iNumberDialog.getContentPane().setLayout(new GridBagLayout());
-
-        iNumberDialog.setSize(300, 160);
-
-        serif12 = MipavUtil.font12;
-        serif12B = MipavUtil.font12B;
-
-        panel = new JPanel();
-        panel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-        panel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 1;
-        gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        panel.setForeground(Color.black);
-        border = new TitledBorder("Number of independent components to retain");
-        border.setTitleColor(Color.black);
-        border.setBorder(new EtchedBorder());
-        border.setTitleFont(serif12B);
-        panel.setBorder(border);
-        iNumberDialog.getContentPane().add(panel, gbc);
-
-        textNumber = new JTextField();
-        textNumber.setText("1");
-        textNumber.setFont(serif12);
-        textNumber.addFocusListener(this);
-        panel.add(textNumber, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        labelNumber = new JLabel("1 - " + nPlanes);
-        labelNumber.setForeground(Color.black);
-        labelNumber.setFont(serif12);
-        panel.add(labelNumber, gbc);
-
-        JPanel buttonPanel = new JPanel();
-        OKButton = new JButton("OK");
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        OKButton.setFont(serif12B);
-        OKButton.addActionListener(al);
-        buttonPanel.add(OKButton);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        iNumberDialog.getContentPane().add(buttonPanel, gbc);
-        iNumberDialog.setResizable(true);
-        iNumberDialog.setVisible(true);
-
-    }
+    
 
     /**
      * DOCUMENT ME!
      */
     private void iComponent() {
         double[] mean;
-        double[][] mm;
         int samples;
         int i, j, k, m;
         int z;
@@ -419,25 +268,17 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         double[][] covar;
         double[] x;
         int index;
-        double temp;
-        double[] tempRow;
         int p;
-        ModelImage[] pImage = null;
-        int[] pExtents;
-        ViewJFrameImage[] imageFrame = null;
-        double[][] eigenInverse;
-        double[][] pTrunc;
-        float[] result;
-        int iNumber;
-        float vMin;
-        float vMax;
-        double typeMin;
-        double typeMax;
-        double a;
-        double b;
-        float rMin;
-        float rMax;
-        float scaledValues[] = null;
+        double[] result;
+        //int iNumber;
+        //float vMin;
+        //float vMax;
+        //double typeMin;
+        //double typeMax;
+        //double a;
+        //double b;
+        //float rMin;
+        //float rMax;
         int index2;
         int i2;
         int z2;
@@ -788,6 +629,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
         E1 = new double[nPlanes];
         randomGen = new RandomNumberGen();
         if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION) {
+        	result = new double[samples];
 	        for (p = 0; p < icNumber; p++) {
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
 	        	sumSquares = 0.0;
@@ -908,9 +750,40 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 		        		wlast[i] = w[p][i];
 		        	}
 	        	} // while (wMaxDiff >= epsilon)
+	        	// y[p] = w[p][i] * z
+	        	if (haveColor) {
+		        	for (j = 0; j < samples; j++) {
+	                    result[j] = 0;
+	                    for (z = 0; z < zDim; z++) {
+	
+	                        for (i = 1; i < 4; i++) {
+	                        	index = (i - 1) + (3 * z);
+	                        	result[j] += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
+	                        }
+	                    } // for (z = 0; z < zDim; z++)
+		        	} // for (j = 0; j < samples; j++)
+	        	} // if (haveColor)
+	        	else {
+	        		for (j = 0; j < samples; j++) {
+	                    result[j] = 0;
+	                    for (z = 0; z < zDim; z++) {
+	                    	result[j] += w[p][z] * zvalues[(z * samples) + j];
+	                    } // for (z = 0; z < zDim; z++)
+	        		} // for (z = 0; z < zDim; z++)
+	        	}
+	        	try {
+	                destImage[p].importData(0, result, true);
+	            } catch (IOException error) {
+	                displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
+
+	                setCompleted(false);
+
+	                return;
+	            }
 	        } // for (p = 0; p < icNumber; p++)
         } // if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION)
         else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION){
+        	result = new double[samples];
         	for (p = 0; p < icNumber; p++) {
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
 	        	sumSquares = 0.0;
@@ -1064,12 +937,44 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
 		        	}
         		}
         	} // while (wMaxDiff >= epsilon)
+        	for (p = 0; p < icNumber; p++) {
+	        	if (haveColor) {
+		        	for (j = 0; j < samples; j++) {
+	                    result[j] = 0;
+	                    for (z = 0; z < zDim; z++) {
+	
+	                        for (i = 1; i < 4; i++) {
+	                        	index = (i - 1) + (3 * z);
+	                        	result[j] += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
+	                        }
+	                    } // for (z = 0; z < zDim; z++)
+		        	} // for (j = 0; j < samples; j++)
+	        	} // if (haveColor)
+	        	else {
+	        		for (j = 0; j < samples; j++) {
+	                    result[j] = 0;
+	                    for (z = 0; z < zDim; z++) {
+	                    	result[j] += w[p][z] * zvalues[(z * samples) + j];
+	                    } // for (z = 0; z < zDim; z++)
+	        		} // for (z = 0; z < zDim; z++)
+	        	}
+	        	try {
+	                destImage[p].importData(0, result, true);
+	            } catch (IOException error) {
+	                displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
+	
+	                setCompleted(false);
+	
+	                return;
+	            }
+        	} // for (p = 0; p < icNumber; p++)
         } // else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION)
         else { // icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
         	// Table 9.2 has not whitening but notes that in practice, whitening combined with PCA may often
         	// be useful.  Under 9.4 examples the text states "Here, we use whitened data.  This is not strictly
         	// necessary, but the algorithms converge much better with whitened data.
         	// Compute the correlation matrix
+        	result = new double[samples];
         	for (i = 0; i < nPlanes; i++) {
 
                 for (j = 0; j < nPlanes; j++) {
@@ -1239,89 +1144,40 @@ public class AlgorithmIndependentComponents extends AlgorithmBase implements Act
             		}
             	}
             } // while (maxBDiff >= epsilon)
+            for (p = 0; p < icNumber; p++) {
+	        	if (haveColor) {
+		        	for (j = 0; j < samples; j++) {
+	                    result[j] = 0;
+	                    for (z = 0; z < zDim; z++) {
+	
+	                        for (i = 1; i < 4; i++) {
+	                        	index = (i - 1) + (3 * z);
+	                        	result[j] += B[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
+	                        }
+	                    } // for (z = 0; z < zDim; z++)
+		        	} // for (j = 0; j < samples; j++)
+	        	} // if (haveColor)
+	        	else {
+	        		for (j = 0; j < samples; j++) {
+	                    result[j] = 0;
+	                    for (z = 0; z < zDim; z++) {
+	                    	result[j] += B[p][z] * zvalues[(z * samples) + j];
+	                    } // for (z = 0; z < zDim; z++)
+	        		} // for (z = 0; z < zDim; z++)
+	        	}
+	        	try {
+	                destImage[p].importData(0, result, true);
+	            } catch (IOException error) {
+	                displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
+	
+	                setCompleted(false);
+	
+	                return;
+	            }
+        	} // for (p = 0; p < icNumber; p++)
         } // else icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
 
-        fireProgressStateChanged(90);
-        fireProgressStateChanged("Importing averaged destination data");
-        
-        /*rMin = Float.MAX_VALUE;
-        rMax = -Float.MAX_VALUE;
-        for (i = 0; i < samples; i++) {
-              if (result[i] < rMin) {
-                  rMin = result[i];
-              }
-              if (result[i] > rMax) {
-                  rMax = result[i];
-              }
-        }
-        
-        switch(destImage[iNumber].getType()) {
-            case ModelStorageBase.BOOLEAN:
-                typeMin = 0;
-                typeMax = 1;
-                break;
-            case ModelStorageBase.BYTE:
-                typeMin = -128;
-                typeMax = 127;
-                break;
-            case ModelStorageBase.UBYTE:
-                typeMin = 0;
-                typeMax = 255;
-                break;
-            case ModelStorageBase.SHORT:
-                typeMin = -32768;
-                typeMax = 32767;
-                break;
-            case ModelStorageBase.USHORT:
-                typeMin = 0;
-                typeMax = 65535;
-                break;
-            case ModelStorageBase.INTEGER:
-                typeMin = Integer.MIN_VALUE;
-                typeMax = Integer.MAX_VALUE;
-                break;
-            case ModelStorageBase.UINTEGER:
-                typeMin = 0;
-                typeMax = 4294967295L;
-                break;
-            case ModelStorageBase.LONG:
-                typeMin = Long.MIN_VALUE;
-                typeMax = Long.MAX_VALUE;
-                break;
-            case ModelStorageBase.FLOAT:
-                typeMin = -Float.MAX_VALUE;
-                typeMax = Float.MAX_VALUE;
-                break;
-            case ModelStorageBase.DOUBLE:
-                typeMin = -Double.MAX_VALUE;
-                typeMax = Double.MAX_VALUE;
-                break;
-            default:
-                typeMin = -Double.MAX_VALUE;
-                typeMax = Double.MAX_VALUE;
-        }
-        
-        if ((rMin < typeMin) || (rMax > typeMax)) {
-            // typeMax = a * rMax + b;
-            // typeMin = a * rMin + b;
-            a = (typeMax - typeMin)/(rMax - rMin);
-            b = typeMax - a * rMax;
-            for (i = 0; i < samples; i++) {
-                result[i] = (float)(a * result[i] + b);
-            }
-        }
-
-
-        try {
-            destImage[iNumber].importData(0, result, true);
-        } catch (IOException error) {
-            displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
-
-            setCompleted(false);
-
-            return;
-        }*/
-
+        fireProgressStateChanged(100);
         setCompleted(true);
     }
 
