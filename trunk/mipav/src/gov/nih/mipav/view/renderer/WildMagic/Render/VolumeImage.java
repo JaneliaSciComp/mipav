@@ -1173,13 +1173,19 @@ public class VolumeImage implements Serializable {
         m_kHistoTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
         m_kHistoTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
 
+        iTMinX = 0;
+        iTMaxX = Math.max( iTMaxX, iTMaxY );
         m_akHistoTCoord = new Vector2f[4];
-        m_akHistoTCoord[0] = new Vector2f(iTMinX / 255.0f, iTMinY / 255.0f);
-        m_akHistoTCoord[1] = new Vector2f(iTMaxX / 255.0f, iTMinY / 255.0f);
-        m_akHistoTCoord[2] = new Vector2f(iTMaxX / 255.0f, iTMaxY / 255.0f);
-        m_akHistoTCoord[3] = new Vector2f(iTMinX / 255.0f, iTMaxY / 255.0f);
+        m_akHistoTCoord[0] = new Vector2f(iTMinX / 255.0f, iTMinX / 255.0f);
+        m_akHistoTCoord[1] = new Vector2f(iTMaxX / 255.0f, iTMinX / 255.0f);
+        m_akHistoTCoord[2] = new Vector2f(iTMaxX / 255.0f, iTMaxX / 255.0f);
+        m_akHistoTCoord[3] = new Vector2f(iTMinX / 255.0f, iTMaxX / 255.0f);
+        //m_akHistoTCoord[0] = new Vector2f(0f, 0f);
+        //m_akHistoTCoord[1] = new Vector2f(1f, 0f);
+        //m_akHistoTCoord[2] = new Vector2f(1f, 1f);
+        //m_akHistoTCoord[3] = new Vector2f(0f, 1f);
         m_bHistoInit = true;
-        //System.err.println( iTMinX + ", " + iTMinY + " " + iTMaxX + ", " + iTMaxY );
+        System.err.println( iTMaxX + ", " + iTMaxX );
     }
 
     /**
