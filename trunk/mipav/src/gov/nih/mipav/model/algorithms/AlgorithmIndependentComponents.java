@@ -234,7 +234,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         }
 
         
-        fireProgressStateChanged(srcImage.getImageName(), "Independent component ...");
+        if (srcImageArray != null) {
+        	fireProgressStateChanged(srcImageArray[0].getImageName(), " Independent component ...");
+        }
+        else {
+            fireProgressStateChanged(srcImage.getImageName(), "Independent component ...");
+        }
 
 
         iComponent();
@@ -322,7 +327,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         int i, j, k, m;
         int z;
         int zDim;
-        float[] values;
+        double[] values;
         double[] zvalues;
         int totalLength;
         double[][] covar;
@@ -383,6 +388,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         boolean colorArray[] = new boolean[4];
         int iCurrent;
         int i2Current;
+        double temp[];
 
         if (haveColor) {
         	if (redRequested) {
@@ -455,7 +461,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         fireProgressStateChanged("Exporting source data");
 
         try {
-            values = new float[totalLength];
+            values = new double[totalLength];
         } catch (OutOfMemoryError e) {
             values = null;
             System.gc();
@@ -468,9 +474,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         }
         
         if (srcImageArray != null) {
+        	temp = new double[length];
             for (i = 0; i < srcImageArray.length; i++) {
             	try {
-    	            srcImageArray[i].exportData(i * length, length, values); // locks and releases lock
+    	            srcImageArray[i].exportData(0, length, temp); // locks and releases lock
     	        } catch (IOException error) {
     	            displayError("Algorithm IComponent: Image(s) locked");
     	            setCompleted(false);
@@ -478,8 +485,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
     	            setThreadStopped(true);
     	
     	            return;
-    	        }	
+    	        }
+    	        for (j = 0; j < length; j++) {
+    	        	values[i*length + j] = temp[j];
+    	        }
             }
+            temp = null;
         }
         else {
 	        try {
