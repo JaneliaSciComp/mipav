@@ -48,7 +48,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
     private int[] destExtents;
 
     /** DOCUMENT ME! */
-    private float endTol;
+    private double endTol;
 
     /** DOCUMENT ME! */
     private JRadioButton deflationaryOrthogonalization;
@@ -361,7 +361,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
      *
      * @param  scale  Value to set end tol to.
      */
-    public void setEndTol(float scale) {
+    public void setEndTol(double scale) {
         endTol = scale;
     }
 
@@ -541,7 +541,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
 
         setICNumber(scriptParameters.getParams().getInt("ic_number"));
-        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setEndTol(scriptParameters.getParams().getDouble("end_tolerance"));
         setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
         setICAlgorithm(scriptParameters.getParams().getInt("ic_algorithm"));
         setNonlinearFunction(scriptParameters.getParams().getInt("nonlinear_function"));
@@ -670,8 +670,8 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         labelEndTol.setForeground(Color.black);
         labelEndTol.setFont(serif12);
 
-        textEndTol = new JTextField(5);
-        textEndTol.setText("0.01");
+        textEndTol = new JTextField(10);
+        textEndTol.setText("1.0E-6");
         textEndTol.setFont(serif12);
 
         labelMaxIter = new JLabel("Maximum number of iterations");
@@ -952,8 +952,8 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
 
         tmpStr = textEndTol.getText();
 
-        if (testParameter(tmpStr, Float.MIN_VALUE, 1.0)) {
-            endTol = Float.valueOf(tmpStr).floatValue();
+        if (testParameter(tmpStr, Double.MIN_VALUE, 1.0)) {
+            endTol = Double.valueOf(tmpStr).doubleValue();
         } else {
             textEndTol.requestFocus();
             textEndTol.selectAll();
