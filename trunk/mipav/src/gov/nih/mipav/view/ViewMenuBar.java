@@ -211,6 +211,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Hyperbola detection", "HoughHyperbola", 0, null, false),
                         menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
+                menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
                 //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
                         new JMenuItem[] {
@@ -973,6 +974,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Nonlocal means filter", false);
             menuBuilder.setMenuItemEnabled("Point area average intensities", false);
             menuBuilder.setMenuItemEnabled("Principal component", false);
+            menuBuilder.setMenuItemEnabled("Independent component", false);
             menuBuilder.setMenuItemEnabled("Shading correction", false);
             menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", false);
             menuBuilder.setMenuItemEnabled("Skeletonize", false);
@@ -1201,6 +1203,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Nonlinear noise reduction", true);
         menuBuilder.setMenuItemEnabled("Point area average intensities", true);
         menuBuilder.setMenuItemEnabled("Principal component", true);
+        menuBuilder.setMenuItemEnabled("Independent component", true);
         menuBuilder.setMenuItemEnabled("Quantify using mask", true);
         menuBuilder.setMenuItemEnabled("Shading correction", true);
         menuBuilder.setMenuItemEnabled("Skeletonize3D pot field", true);
