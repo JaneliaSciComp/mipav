@@ -439,17 +439,13 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         int i;
         System.gc();
 
-        // Calculate the number of result images.
-        resultNumber = 0;
-
         try {
-            resultImage = new ModelImage[resultNumber];
-            presentNumber = 0;
+            resultImage = new ModelImage[icNumber];
 
             for (i = 0; i < icNumber; i++) {
                 String name = makeImageName(srcImage[0].getImageName(), "_icomponent" + (i + 1));
 
-                resultImage[presentNumber++] = new ModelImage(ModelStorageBase.DOUBLE, destExtents, name);
+                resultImage[i] = new ModelImage(ModelStorageBase.DOUBLE, destExtents, name);
             }
 
             // Make algorithm
