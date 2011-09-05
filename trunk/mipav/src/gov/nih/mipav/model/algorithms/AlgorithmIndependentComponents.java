@@ -38,7 +38,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ModelImage[] destImage;
+    private ModelImage[] destImage = null;
 
     /** DOCUMENT ME! */
     private boolean haveColor;
@@ -48,6 +48,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
     /** number of independent components to be retained. */
     private int icNumber;
+    
+    private ModelImage[] srcImageArray = null;
 
     /** DOCUMENT ME! */
     private ModelImage srcImage;
@@ -82,13 +84,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
      * Using kurtosis and hence 1/4 the derivative of the normalized kurtosis = y**3 is well justified only if
      * the independent components are subgaussian and there are no outliers.
      */
-    private int gnum = 1; // g1(y) = tanh(a1*y)
+    private int nonlinearFunction = 1; // g1(y) = tanh(a1*y)
                           // g2(y) = y*exp(-y*y/2)
                           // g3(y) = y*y*y
     
-    private double a1 = 1.0;
+    private double a1 = 1.0; // 1.0 <= a1 <= 2.0
     
-    private double epsilon = 1.0E-6;
+    private double endTolerance = 1.0E-6;
     
     private int icAlgorithm; // 1 = symmetric
                                    // 2 = deflationary
@@ -106,11 +108,25 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
      * "In difficult real world problems, it is useful to apply several different ICA methods, because they 
      * may reveal different ICs from the data."
      */
-    private final int SYMMETRIC_ORTHOGONALIZATION = 1;
+    public final static int SYMMETRIC_ORTHOGONALIZATION = 1;
     
-    private final int DEFLATIONARY_ORTHOGONALIZATION = 2;
+    public final static int DEFLATIONARY_ORTHOGONALIZATION = 2;
     
-    private final int MAXIMUM_LIKELIHOOD_ESTIMATION = 3;
+    public final static int MAXIMUM_LIKELIHOOD_ESTIMATION = 3;
+    
+    public final static int TANH_FUNCTION = 1;
+    
+    public final static int EXP_FUNCTION = 2;
+    	
+    public final static int CUBIC_FUNCTION = 3;
+    
+    private int maxIterations;
+    
+    private boolean redRequested;
+    
+    private boolean greenRequested;
+    
+    private boolean blueRequested;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -121,20 +137,58 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
      * @param  srcImg         source image model
      * @param  icNumber       icNumber is the number of independent component images to retain
      * @param  icAlgorithm
-     * @param  gnum
+     * @param  nonlinearFunction
      * @param  a1
-     * @param  epsilon
+     * @param  endTolerance
+     * @param maxIterations
      */
     public AlgorithmIndependentComponents(ModelImage[] destImg, ModelImage srcImg, int icNumber, int icAlgorithm,
-    		int gnum, double a1, double epsilon) {
+    		int nonlinearFunction, double a1, double endTolerance, int maxIterations, boolean redRequested, boolean greenRequested,
+    		boolean blueReuqested) {
 
         destImage = destImg; // Put results in destination image.
         srcImage = srcImg;
         this.icNumber = icNumber;
         this.icAlgorithm = icAlgorithm;
-        this.gnum = gnum;
+        this.nonlinearFunction = nonlinearFunction;
         this.a1 = a1;
-        this.epsilon = epsilon;
+        this.endTolerance = endTolerance;
+        this.maxIterations = maxIterations;
+        this.redRequested = redRequested;
+        this.greenRequested = greenRequested;
+        this.blueRequested = blueReuqested;
+    }
+    
+    /**
+     * Creates a new AlgorithmIndependentComponents object.
+     *
+     * @param  destImg        image model where result image is to stored
+     * @param  srcImg         source image model
+     * @param  icNumber       icNumber is the number of independent component images to retain
+     * @param  icAlgorithm
+     * @param  nonlinearFunction
+     * @param  a1
+     * @param  endTolerance
+     * @param  maxIterations
+     * @param  redRequested
+     * @param  greenRequested
+     * @param  blueRequested
+     */
+    public AlgorithmIndependentComponents(ModelImage[] destImg, ModelImage[] srcImgArray, int icNumber, int icAlgorithm,
+    		int nonlinearFunction, double a1, double endTolerance, int maxIterations, boolean redRequested, boolean greenRequested,
+    		boolean blueRequested) {
+
+        destImage = destImg; // Put results in destination image.
+        srcImageArray = srcImgArray;
+        this.icNumber = icNumber;
+        this.icAlgorithm = icAlgorithm;
+        this.nonlinearFunction = nonlinearFunction;
+        this.a1 = a1;
+        this.endTolerance = endTolerance;
+        this.maxIterations = maxIterations;
+        this.redRequested = redRequested;
+        this.greenRequested = greenRequested;
+        this.blueRequested = blueRequested;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -153,20 +207,26 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        if (srcImage == null) {
+        if ((srcImageArray == null) && (srcImage == null)) {
             displayError("IComponent: Source Image is null");
             setCompleted(false);
 
             return;
         }
 
-        if (srcImage.isColorImage()) {
+        if ((srcImageArray != null) && (srcImageArray[0].isColorImage())) {
+        	haveColor = true;
+        }
+        else if ((srcImageArray != null) && (!(srcImageArray[0].isColorImage()))) {
+        	haveColor = false;
+        }
+        else if (srcImage.isColorImage()) {
             haveColor = true;
         } else {
             haveColor = false;
         }
 
-        if ((srcImage.getNDims() != 3) && (!haveColor)) {
+        if ((srcImageArray == null) && (srcImage.getNDims() != 3) && (!haveColor)) {
             displayError("IComponent: Black and white source image must be 3D");
             setCompleted(false);
 
@@ -317,20 +377,47 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         double prod[][];
         double BCBT[][];
         Matrix matC;
+        int length;
+        int iterations;
+        int colorsRequested = 0;
+        boolean colorArray[] = new boolean[4];
+        int iCurrent;
+        int i2Current;
 
         if (haveColor) {
-
-            if (srcImage.getNDims() == 2) {
-                nPlanes = 3;
+        	if (redRequested) {
+        		colorsRequested++;
+        		colorArray[1] = true;
+        	}
+        	if (greenRequested) {
+        		colorsRequested++;
+        		colorArray[2] =true;
+        	}
+        	if (blueRequested) {
+        		colorsRequested++;
+        		colorArray[3] = true;
+        	}
+            if (srcImageArray != null) {
+        	    nPlanes = colorsRequested * srcImageArray.length;
+        	    zDim = srcImageArray.length;
+            }
+            else if (srcImage.getNDims() == 2) {
+                nPlanes = colorsRequested;
                 zDim = 1;
             } else {
                 zDim = srcImage.getExtents()[2];
-                nPlanes = 3 * zDim;
+                nPlanes = colorsRequested * zDim;
             }
         } // if (haveColor)
         else { // not color
-            zDim = srcImage.getExtents()[2];
-            nPlanes = zDim;
+        	if (srcImageArray != null) {
+        	    nPlanes = srcImageArray.length;
+        	    zDim = srcImageArray.length;
+        	}
+        	else {
+                zDim = srcImage.getExtents()[2];
+                nPlanes = zDim;
+        	}
         } // else not color
 
         try {
@@ -349,13 +436,20 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         for (i = 0; i < nPlanes; i++) {
             mean[i] = 0.0;
         }
-
-        samples = srcImage.getExtents()[0] * srcImage.getExtents()[1];
+        
+        if (srcImageArray != null) {
+        	samples = srcImageArray[0].getExtents()[0] * srcImageArray[0].getExtents()[1];
+        }
+        else {
+            samples = srcImage.getExtents()[0] * srcImage.getExtents()[1];
+        }
 
         if (haveColor) {
             totalLength = 4 * samples * zDim;
+            length = 4 * samples;
         } else {
             totalLength = samples * zDim;
+            length = samples;
         }
 
         fireProgressStateChanged("Exporting source data");
@@ -372,16 +466,32 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
             return;
         }
-
-        try {
-            srcImage.exportData(0, totalLength, values); // locks and releases lock
-        } catch (IOException error) {
-            displayError("Algorithm IComponent: Image(s) locked");
-            setCompleted(false);
-
-            setThreadStopped(true);
-
-            return;
+        
+        if (srcImageArray != null) {
+            for (i = 0; i < srcImageArray.length; i++) {
+            	try {
+    	            srcImageArray[i].exportData(i * length, length, values); // locks and releases lock
+    	        } catch (IOException error) {
+    	            displayError("Algorithm IComponent: Image(s) locked");
+    	            setCompleted(false);
+    	
+    	            setThreadStopped(true);
+    	
+    	            return;
+    	        }	
+            }
+        }
+        else {
+	        try {
+	            srcImage.exportData(0, totalLength, values); // locks and releases lock
+	        } catch (IOException error) {
+	            displayError("Algorithm IComponent: Image(s) locked");
+	            setCompleted(false);
+	
+	            setThreadStopped(true);
+	
+	            return;
+	        }
         }
 
         fireProgressStateChanged(10);
@@ -393,13 +503,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
             for (z = 0; z < zDim; z++) {
 
-                for (i = 1; i < 4; i++) {
-
+                for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+                    iCurrent++;
                     for (j = 0; j < samples; j++) {
-                        mean[(i - 1) + (3 * z)] += values[(4 * z * samples) + (4 * j) + i];
+                        mean[iCurrent + (colorsRequested * z)] += values[(4 * z * samples) + (4 * j) + i];
                     }
 
-                    mean[(i - 1) + (3 * z)] /= samples;
+                    mean[iCurrent + (colorsRequested * z)] /= samples;
                 }
             }
         } // if haveColor
@@ -431,10 +541,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
             for (z = 0; z < zDim; z++) {
 
-                for (i = 1; i < 4; i++) {
-
+                for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+                    iCurrent++;
                     for (j = 0; j < samples; j++) {
-                    	values[(4 * z * samples) + (4 * j) + i] -= mean[(i - 1) + (3 * z)];
+                    	values[(4 * z * samples) + (4 * j) + i] -= mean[iCurrent + (colorsRequested * z)];
                     }
 
                 }
@@ -496,8 +606,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
                 for (z = 0; z < zDim; z++) {
 
-                    for (i = 1; i < 4; i++) {
-                        x[(i - 1) + (3 * z)] = values[(4 * z * samples) + (4 * j) + i];
+                    for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+                    	iCurrent++;
+                        x[iCurrent + (colorsRequested * z)] = values[(4 * z * samples) + (4 * j) + i];
                     }
                 }
 
@@ -599,11 +710,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
                 for (z = 0; z < zDim; z++) {
 
-                    for (i = 1; i < 4; i++) {
-                    	index = (i - 1) + (3 * z);
+                    for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+                    	iCurrent++;
+                    	index = iCurrent + (colorsRequested * z);
                     	for (z2 = 0; z2 < zDim; z2++) {
-                    		for (i2 = 1; i2 < 4; i2++) {
-                    			index2 = (i2 - 1) + (3 * z2);
+                    		for (i2Current = -1, i2 = 1; (i2 < 4) && (colorArray[i2]); i2++) {
+                    			i2Current++;
+                    			index2 = i2Current + (colorsRequested * z2);
                                 zvalues[(4 * z * samples) + (4 * j) + i] += 
                                 	wh[index][index2] * values[(4 * z2 * samples) + (4 * j) + i2];
                     		}
@@ -643,7 +756,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        		wlast[i] = w[p][i];
 	        	}
 	        	wMaxDiff = 1.0;
-	        	while (wMaxDiff >= epsilon) {
+	        	iterations = 0;
+	        	while ((wMaxDiff >= endTolerance) && (iterations < maxIterations)) {
 	        	    for (i = 0; i < nPlanes; i++) {
 	        	    	E1[i] = 0.0;
 	        	    }
@@ -661,17 +775,18 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    wpTz = 0;
 		                    for (z = 0; z < zDim; z++) {
 		
-		                        for (i = 1; i < 4; i++) {
-		                        	index = (i - 1) + (3 * z);
+		                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+		                        	iCurrent++;
+		                        	index = iCurrent + (colorsRequested * z);
 		                        	wpTz += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
 		                        	
 		                        }
 		                    } // for (z = 0; z < zDim; z++)
-		                    if (gnum == 1) {
+		                    if (nonlinearFunction == TANH_FUNCTION) {
 		                    	g = Math.tanh(a1*wpTz);
 		                    	gp = a1*(1.0 - g*g);
 		                    }
-		                    else if (gnum == 2) {
+		                    else if (nonlinearFunction == EXP_FUNCTION) {
 		                    	ex = Math.exp(-wpTz*wpTz/2.0);
 		                    	g = wpTz*ex;
 		                    	gp = (1.0 - wpTz*wpTz)*ex;
@@ -682,8 +797,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    }
 		                    for (z = 0; z < zDim; z++) {
 		                    	
-		                        for (i = 1; i < 4; i++) {
-		                        	index = (i - 1) + (3 * z);
+		                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+		                        	iCurrent++;
+		                        	index = iCurrent + (colorsRequested * z);
 		                        	E1[index] += zvalues[(4 * z * samples) + (4 * j) + i] * g;
 		                        }
 		                    } // for (z = 0; z < zDim; z++)
@@ -697,11 +813,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    for (z = 0; z < zDim; z++) {
 		                    	wpTz += w[p][z] * zvalues[(z * samples) + j];
 		                    } // for (z = 0; z < zDim; z++)
-		                    if (gnum == 1) {
+		                    if (nonlinearFunction == TANH_FUNCTION) {
 		                    	g = Math.tanh(a1*wpTz);
 		                    	gp = a1*(1.0 - g*g);
 		                    }
-		                    else if (gnum == 2) {
+		                    else if (nonlinearFunction == EXP_FUNCTION) {
 		                    	ex = Math.exp(-wpTz*wpTz/2.0);
 		                    	g = wpTz*ex;
 		                    	gp = (1.0 - wpTz*wpTz)*ex;
@@ -749,15 +865,17 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		        		}
 		        		wlast[i] = w[p][i];
 		        	}
-	        	} // while (wMaxDiff >= epsilon)
+		        	iterations++;
+	        	} // while ((wMaxDiff >= endTolerance)&& (iterations < maxIterations))
 	        	// y[p] = w[p][i] * z
 	        	if (haveColor) {
 		        	for (j = 0; j < samples; j++) {
 	                    result[j] = 0;
 	                    for (z = 0; z < zDim; z++) {
 	
-	                        for (i = 1; i < 4; i++) {
-	                        	index = (i - 1) + (3 * z);
+	                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+	                        	iCurrent++;
+	                        	index = iCurrent + (colorsRequested * z);
 	                        	result[j] += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
 	                        }
 	                    } // for (z = 0; z < zDim; z++)
@@ -830,7 +948,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             		wslast[p][i] = w[p][i];
             	}
             }
-        	while (wMaxDiff >= epsilon) {
+            iterations = 0;
+        	while ((wMaxDiff >= endTolerance) && (iterations < maxIterations)) {
         		for (p = 0; p < icNumber; p++) {
         			for (i = 0; i < nPlanes; i++) {
 	        	    	E1[i] = 0.0;
@@ -849,17 +968,18 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    wpTz = 0;
 		                    for (z = 0; z < zDim; z++) {
 		
-		                        for (i = 1; i < 4; i++) {
-		                        	index = (i - 1) + (3 * z);
+		                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+		                        	iCurrent++;
+		                        	index = iCurrent + (colorsRequested * z);
 		                        	wpTz += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
 		                        	
 		                        }
 		                    } // for (z = 0; z < zDim; z++)
-		                    if (gnum == 1) {
+		                    if (nonlinearFunction == TANH_FUNCTION) {
 		                    	g = Math.tanh(a1*wpTz);
 		                    	gp = a1*(1.0 - g*g);
 		                    }
-		                    else if (gnum == 2) {
+		                    else if (nonlinearFunction == EXP_FUNCTION) {
 		                    	ex = Math.exp(-wpTz*wpTz/2.0);
 		                    	g = wpTz*ex;
 		                    	gp = (1.0 - wpTz*wpTz)*ex;
@@ -870,8 +990,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    }
 		                    for (z = 0; z < zDim; z++) {
 		                    	
-		                        for (i = 1; i < 4; i++) {
-		                        	index = (i - 1) + (3 * z);
+		                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+		                        	iCurrent++;
+		                        	index = iCurrent + (colorsRequested * z);
 		                        	E1[index] += zvalues[(4 * z * samples) + (4 * j) + i] * g;
 		                        }
 		                    } // for (z = 0; z < zDim; z++)
@@ -885,11 +1006,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    for (z = 0; z < zDim; z++) {
 		                    	wpTz += w[p][z] * zvalues[(z * samples) + j];
 		                    } // for (z = 0; z < zDim; z++)
-		                    if (gnum == 1) {
+		                    if (nonlinearFunction == TANH_FUNCTION) {
 		                    	g = Math.tanh(a1*wpTz);
 		                    	gp = a1*(1.0 - g*g);
 		                    }
-		                    else if (gnum == 2) {
+		                    else if (nonlinearFunction == EXP_FUNCTION) {
 		                    	ex = Math.exp(-wpTz*wpTz/2.0);
 		                    	g = wpTz*ex;
 		                    	gp = (1.0 - wpTz*wpTz)*ex;
@@ -936,15 +1057,16 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		        		wslast[p][i] = w[p][i];
 		        	}
         		}
-        	} // while (wMaxDiff >= epsilon)
+        	} // while ((wMaxDiff >= endTolerance) && (iterations < maxIterations))
         	for (p = 0; p < icNumber; p++) {
 	        	if (haveColor) {
 		        	for (j = 0; j < samples; j++) {
 	                    result[j] = 0;
 	                    for (z = 0; z < zDim; z++) {
 	
-	                        for (i = 1; i < 4; i++) {
-	                        	index = (i - 1) + (3 * z);
+	                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+	                        	iCurrent++;
+	                        	index = iCurrent + (colorsRequested * z);
 	                        	result[j] += w[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
 	                        }
 	                    } // for (z = 0; z < zDim; z++)
@@ -988,8 +1110,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
                     for (z = 0; z < zDim; z++) {
 
-                        for (i = 1; i < 4; i++) {
-                            x[(i - 1) + (3 * z)] = zvalues[(4 * z * samples) + (4 * j) + i];
+                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+                        	iCurrent++;
+                            x[iCurrent + (colorsRequested * z)] = zvalues[(4 * z * samples) + (4 * j) + i];
                         }
                     }
 
@@ -1044,7 +1167,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             maxBDiff = 1.0;
             // The nonlinear function g is taken as the tanh function.
             // g'(y) = 1.0 - tanh(y)*tanh(y)
-            while (maxBDiff >= epsilon) {
+            iterations = 0;
+            while ((maxBDiff >= endTolerance) && (iterations < maxIterations)) {
             	for (i = 0; i < nPlanes; i++) {
         			Eygy[i] = 0.0;
         			Egpy[i] = 0.0;
@@ -1055,12 +1179,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             	if (haveColor) {
 	                for (j = 0; j < samples; j++) {
 	                    for (z = 0; z < zDim; z++) {
-	                        for (i = 1; i < 4; i++) {
-	                        	index = (i - 1) + (3 * z);
+	                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+	                        	iCurrent++;
+	                        	index = iCurrent + (colorsRequested * z);
 	                        	y[index] = 0;
 	                        	for (z2 = 0; z2 < zDim; z2++) {
-	                        		for (i2 = 1; i2 < 4; i2++) {
-	                        			index2 = (i2 - 1) + (3 * z2);
+	                        		for (i2Current = -1, i2 = 1; (i2 < 4) && (colorArray[i2]); i2++) {
+	                        			i2Current++;
+	                        			index2 = i2Current + (colorsRequested * z2);
 	                        			y[index] += B[index][index2] * zvalues[(4 * z2 * samples) + (4 * j) + i2];
 	                        		} // for (i2 = 1; i2 < 4; i2++)
 	                        	} // for (z2 = 0; z2 < zDim; z2++)
@@ -1143,15 +1269,16 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             			Blast[i][j] = B[i][j];
             		}
             	}
-            } // while (maxBDiff >= epsilon)
+            } // while ((maxBDiff >= endTolerance) && (iterations < maxIterations))
             for (p = 0; p < icNumber; p++) {
 	        	if (haveColor) {
 		        	for (j = 0; j < samples; j++) {
 	                    result[j] = 0;
 	                    for (z = 0; z < zDim; z++) {
 	
-	                        for (i = 1; i < 4; i++) {
-	                        	index = (i - 1) + (3 * z);
+	                        for (iCurrent = -1, i = 1; (i < 4) && (colorArray[i]); i++) {
+	                        	iCurrent++;
+	                        	index = iCurrent + (colorsRequested * z);
 	                        	result[j] += B[p][index]* zvalues[(4 * z * samples) + (4 * j) + i];
 	                        }
 	                    } // for (z = 0; z < zDim; z++)
