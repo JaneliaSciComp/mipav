@@ -164,9 +164,7 @@ public class FileDicom extends FileDicomBase {
 
     private boolean isEnhanced = true;
 
-    private FileDicomTagTable[] childrenTagTables;
-
-    private FileInfoDicom[] enhancedFileInfos;
+    private FileDicomTagTable[] enhancedTagTables;
 
     private boolean isEnhanced4D = false;
 
@@ -737,7 +735,7 @@ public class FileDicom extends FileDicomBase {
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
         int tagVM;
-        
+
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
         if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
@@ -927,17 +925,7 @@ public class FileDicom extends FileDicomBase {
             final int nImages = Integer.valueOf(strValue.trim()).intValue();
             fileInfo.setIsEnhancedDicom(true);
             if (nImages > 1) {
-                childrenTagTables = new FileDicomTagTable[nImages - 1];
-                enhancedFileInfos = new FileInfoDicom[nImages - 1];
-                for (int i = 0; i < nImages - 1; i++) {
-                    final String s = String.valueOf(i + 1);
-                    final FileInfoDicom f = new FileInfoDicom(fileName + s, fileDir, FileUtility.DICOM,
-                            fileInfo);
-                    f.setIsEnhancedDicom(true);
-                    childrenTagTables[i] = f.getTagTable();
-                    enhancedFileInfos[i] = f;
-                }
-                tagTable.attachChildTagTables(childrenTagTables);
+                enhancedTagTables = new FileDicomTagTable[nImages - 1];
             }
         }
         
@@ -1019,8 +1007,8 @@ public class FileDicom extends FileDicomBase {
             }
             numSlices = checkMaxSlice(tagTable, numSlices, sliceInt);
             for(int i=1; i<v.size(); i++) { //each entire children tag table is just what's in v
-                childrenTagTables[i-1] = v.get(i);
-                numSlices = checkMaxSlice(childrenTagTables[i-1], numSlices, sliceInt);
+                enhancedTagTables[i-1] = v.get(i);
+                numSlices = checkMaxSlice(enhancedTagTables[i-1], numSlices, sliceInt);
             }
             enhancedNumSlices = numSlices;
             
@@ -2006,8 +1994,8 @@ public class FileDicom extends FileDicomBase {
         return enhancedNumSlices;
     }
 
-    public FileInfoDicom[] getEnhancedFileInfos() {
-        return enhancedFileInfos;
+    public FileDicomTagTable[] getEnhancedTagTables() {
+        return enhancedTagTables;
     }
 
     /**
