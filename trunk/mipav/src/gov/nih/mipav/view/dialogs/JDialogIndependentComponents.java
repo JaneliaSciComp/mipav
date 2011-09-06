@@ -104,10 +104,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
     private int icNumber;
 
     /** DOCUMENT ME! */
-    private JPanel paramPanel;
-
-    /** DOCUMENT ME! */
-    private int presentNumber;  
+    private JPanel paramPanel; 
 
     /** DOCUMENT ME! */
     private JButton removeButton;
@@ -117,9 +114,6 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
 
     /** DOCUMENT ME! */
     private ModelImage[] resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private int resultNumber;
 
     /** DOCUMENT ME! */
     private int icAlgorithm;
@@ -300,7 +294,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         int i;
-        ViewJFrameImage[] imageFrame = new ViewJFrameImage[resultNumber];
+        ViewJFrameImage[] imageFrame = new ViewJFrameImage[icNumber];
 
         if (algorithm instanceof AlgorithmIndependentComponents) {
             srcImage[0].clearMask();
@@ -311,7 +305,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
                 // Take resultImage out of array form or null pointer errors can
                 // result in one of the resultImages after another of the resultImages
                 // has been deleted.
-                for (i = 0; i < resultNumber; i++) {
+                for (i = 0; i < icNumber; i++) {
                     updateFileInfo(srcImage[0], resultImage[i]);
                     resultImage[i].clearMask();
 
@@ -327,7 +321,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
             } else if (resultImage != null) {
 
                 // algorithm failed but result image still has garbage
-                for (i = 0; i < resultNumber; i++) {
+                for (i = 0; i < icNumber; i++) {
 
                     if (resultImage[i] != null) {
                         resultImage[i].disposeLocal(); // Clean up memory of result image
@@ -480,7 +474,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
 
             if (resultImage != null) {
 
-                for (i = 0; i < resultNumber; i++) {
+                for (i = 0; i < icNumber; i++) {
 
                     if (resultImage[i] != null) {
                         resultImage[i].disposeLocal(); // Clean up memory of result image
@@ -504,7 +498,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
      */
     protected void doPostAlgorithmActions() {
 
-        for (int i = 0; i < resultNumber; i++) {
+        for (int i = 0; i < icNumber; i++) {
             AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
         }
     }
@@ -534,8 +528,6 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         userInterface = ViewUserInterface.getReference();
         parentFrame = srcImage[0].getParentFrame();
 
-        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
-
         setICNumber(scriptParameters.getParams().getInt("ic_number"));
         setEndTol(scriptParameters.getParams().getDouble("end_tolerance"));
         setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
@@ -564,9 +556,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
             scriptParameters.storeInputImage(srcImage[i]);
         }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
-
-        for (int i = 0; i < resultNumber; i++) {
+        for (int i = 0; i < icNumber; i++) {
             scriptParameters.storeImageInRecorder(getResultImage()[i]);
         }
 
@@ -659,7 +649,7 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         labelICNumber.setFont(serif12);
 
         textICNumber = new JTextField(5);
-        textICNumber.setText("3");
+        textICNumber.setText("2");
         textICNumber.setFont(serif12);
 
         labelEndTol = new JLabel("End tolerance");
@@ -934,16 +924,41 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
      */
     private boolean setVariables() {
         String tmpStr;
+        int colorsRequested = 0;
+        
+        if (srcImage[0].isColorImage()) {
+        	if (colorPanel.isRedProcessingRequested()) {
+        		colorsRequested++;
+        	}
+        	if (colorPanel.isGreenProcessingRequested()) {
+        		colorsRequested++;
+        	}
+        	if (colorPanel.isBlueProcessingRequested()) {
+        		colorsRequested++;
+        	}
+        }
 
         tmpStr = textICNumber.getText();
 
-        if (testParameter(tmpStr, 1.0, 12.0)) {
-            icNumber = Integer.valueOf(tmpStr).intValue();
-        } else {
-            textICNumber.requestFocus();
-            textICNumber.selectAll();
+        if (srcImage[0].isColorImage()) {
+        	if (testParameter(tmpStr, 1.0, colorsRequested * srcImage.length)) {
+                icNumber = Integer.valueOf(tmpStr).intValue();
+            } else {
+                textICNumber.requestFocus();
+                textICNumber.selectAll();
 
-            return false;
+                return false;
+            }	
+        }
+        else {
+	        if (testParameter(tmpStr, 1.0, srcImage.length)) {
+	            icNumber = Integer.valueOf(tmpStr).intValue();
+	        } else {
+	            textICNumber.requestFocus();
+	            textICNumber.selectAll();
+	
+	            return false;
+	        }
         }
 
         tmpStr = textEndTol.getText();
