@@ -118,7 +118,7 @@ public class FileDicomSQ extends ModelSerialCloneable {
      *
      * @return  The specified item from the sequence.
      */
-    public final FileDicomTagTable getItem(int index) {
+    public final FileDicomSQItem getItem(int index) {
         return sequence.elementAt(index);
     }
 
