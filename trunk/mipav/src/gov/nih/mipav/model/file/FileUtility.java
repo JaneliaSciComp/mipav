@@ -713,7 +713,8 @@ public class FileUtility {
      * @see FileBase
      */
     public static final int getFileType(final String fileName, final String fileDir, final boolean quiet) {
-        return FileUtility.getFileType(fileName, fileDir, false, quiet);
+    	boolean zerofunused[] = new boolean[1];
+        return FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused);
     }
 
     /**
@@ -724,13 +725,17 @@ public class FileUtility {
      * @param fileDir Directory where fileName exists.
      * @param doWrite If true about to write a file
      * @param quiet Whether to avoid any user interaction (ie, from error popups).
+     * @param zerofunused If true, zero funused fields in an analyze write
      * 
      * @return Filetype from FileBase.
      * 
      * @see FileBase
      */
-    public static final int getFileType(String fileName, final String fileDir, boolean doWrite, boolean quiet) {
+    public static final int getFileType(String fileName, final String fileDir, boolean doWrite, boolean quiet,
+    		boolean zerofunused[]) {
         int fileType;
+        // If true, zero the funused fields in an analyze write
+        zerofunused[0] = false;
         int i;
 
         int indexExt = fileName.lastIndexOf(".");
@@ -849,6 +854,7 @@ public class FileUtility {
                             fileType = FileUtility.ERROR;
                         } else {
                             fileType = choice.fileType();
+                            zerofunused[0] = choice.zerofunused();
                         }
                     } else {
                         // when in quiet mode, we will default to NIFTI format if Prefs are not there
@@ -923,6 +929,7 @@ public class FileUtility {
                             fileType = FileUtility.ERROR;
                         } else {
                             fileType = choice.fileType();
+                            zerofunused[0] = choice.zerofunused();
                         }
                     } else {
                         // when in quiet mode, we will default to NIFTI format if Prefs are not there
