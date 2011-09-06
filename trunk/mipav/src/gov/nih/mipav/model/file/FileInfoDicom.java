@@ -489,6 +489,14 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     /**
+     * @param tagTable the tagTable to set, useful when a tag table has been populated from
+     * an enhanced DICOM series.
+     */
+    public final void setTagTable(FileDicomTagTable tagTable) {
+        this.tagTable = tagTable;
+    }
+
+    /**
      * Accessor for the status of this dicom info.
      *
      * @return  boolean <code>true</code> for images that think they are multi-frame.
