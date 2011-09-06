@@ -93,6 +93,9 @@ public class FileAnalyze extends FileBase {
 
     /** Voxel offset tag used to read in the image. */
     private float vox_offset = 0.0f;
+    
+    /** If true, zero funused fields */
+    private boolean zerofunused = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -157,6 +160,14 @@ public class FileAnalyze extends FileBase {
         try {
             super.finalize();
         } catch (Throwable er) { }
+    }
+    
+    /**
+     * 
+     * @param zerofunused
+     */
+    public void setZerofunused(boolean zerofunused) {
+    	this.zerofunused = zerofunused;
     }
     
     /**
@@ -1614,9 +1625,16 @@ public class FileAnalyze extends FileBase {
 
             // MIPAV is hacking the analyze format to use the unused
             // variables to store axis orientation.
-            setBufferFloat(bufferImageHeader, fileInfo.getOrigin(0), 112, endianess);
-            setBufferFloat(bufferImageHeader, fileInfo.getOrigin(1), 116, endianess);
-            setBufferFloat(bufferImageHeader, fileInfo.getOrigin(2), 120, endianess);
+            if (zerofunused) {
+            	setBufferFloat(bufferImageHeader, 0.0f, 112, endianess);
+	            setBufferFloat(bufferImageHeader, 0.0f, 116, endianess);
+	            setBufferFloat(bufferImageHeader, 0.0f, 120, endianess);	
+            }
+            else {
+	            setBufferFloat(bufferImageHeader, fileInfo.getOrigin(0), 112, endianess);
+	            setBufferFloat(bufferImageHeader, fileInfo.getOrigin(1), 116, endianess);
+	            setBufferFloat(bufferImageHeader, fileInfo.getOrigin(2), 120, endianess);
+            }
 
             setBufferFloat(bufferImageHeader, fileInfo.getCalMax(), 124, endianess);
             setBufferFloat(bufferImageHeader, fileInfo.getCalMin(), 128, endianess);
@@ -1774,9 +1792,16 @@ public class FileAnalyze extends FileBase {
 
             // MIPAV is hacking the analyze format to use the funused
             // variables to store start location.
-            setBufferFloat(bufferImageHeader, myFileInfo.getOrigin(0), 112, endianess);
-            setBufferFloat(bufferImageHeader, myFileInfo.getOrigin(1), 116, endianess);
-            setBufferFloat(bufferImageHeader, myFileInfo.getOrigin(2), 120, endianess);
+            if (zerofunused) {
+            	setBufferFloat(bufferImageHeader, 0.0f, 112, endianess);
+	            setBufferFloat(bufferImageHeader, 0.0f, 116, endianess);
+	            setBufferFloat(bufferImageHeader, 0.0f, 120, endianess);    	
+            }
+            else {
+	            setBufferFloat(bufferImageHeader, myFileInfo.getOrigin(0), 112, endianess);
+	            setBufferFloat(bufferImageHeader, myFileInfo.getOrigin(1), 116, endianess);
+	            setBufferFloat(bufferImageHeader, myFileInfo.getOrigin(2), 120, endianess);
+            }
 
             setBufferFloat(bufferImageHeader, (float) 0, 124, endianess);
             setBufferFloat(bufferImageHeader, (float) 0, 128, endianess);
