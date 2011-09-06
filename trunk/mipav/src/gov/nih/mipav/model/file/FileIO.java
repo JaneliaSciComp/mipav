@@ -1873,7 +1873,8 @@ public class FileIO {
         if (niftiCompressed) {
             fileType = FileUtility.NIFTI;
         } else {
-            fileType = FileUtility.getFileType(fileName, fileDir, false, quiet); // set the fileType
+        	boolean zerofunused[] = new boolean[1];
+            fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
 
             if (fileType == FileUtility.ERROR) {
                 return null;
@@ -2994,6 +2995,8 @@ public class FileIO {
         String compressionExt = null;
         int i;
         int numFiles;
+        // If true, zero funused fields in analyze write
+        boolean zerofunused[] = new boolean[1];
 
         // set it to quiet mode (no prompting) if the options were
         // created during a script
@@ -3024,7 +3027,7 @@ public class FileIO {
         }
 
         if (options.isSaveAs()) { // if we're doing a save-as op, then try to get the filetype from the name
-            fileType = FileUtility.getFileType(options.getFileName(), options.getFileDirectory(), true, quiet);
+            fileType = FileUtility.getFileType(options.getFileName(), options.getFileDirectory(), true, quiet, zerofunused);
 
             // System.err.println("FileType: " + fileType);
 
@@ -3140,7 +3143,7 @@ public class FileIO {
                 break;
 
             case FileUtility.ANALYZE:
-                success = writeAnalyze(image, options);
+                success = writeAnalyze(image, options, zerofunused[0]);
                 break;
 
             case FileUtility.NIFTI:
@@ -10316,10 +10319,11 @@ public class FileIO {
      * 
      * @param image The image to write.
      * @param options The options to use to write the image.
+     * @param zerofunused If true, zero funused fields
      * 
      * @return Flag indicating that this was a successful write.
      */
-    private boolean writeAnalyze(final ModelImage image, final FileWriteOptions options) {
+    private boolean writeAnalyze(final ModelImage image, final FileWriteOptions options, boolean zerofunused) {
         /*
          * Analyze does not support unsigned short. So...if image to be saved is unsigned short, check to see if the max
          * of the image is <= max of unsigned short If that is true, then show a warning that says image will be saved
@@ -10354,6 +10358,7 @@ public class FileIO {
 
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            analyzeFile.setZerofunused(zerofunused);
             createProgressBar(analyzeFile, options.getFileName(), FileIO.FILE_WRITE);
             analyzeFile.writeImage(image, options);
             analyzeFile.finalize();
