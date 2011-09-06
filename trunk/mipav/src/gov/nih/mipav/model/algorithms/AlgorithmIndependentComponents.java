@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
+import gov.nih.mipav.view.*;
 
 import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 import Jama.*;
@@ -752,9 +753,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         wlast = new double[nPlanes];
         E1 = new double[nPlanes];
         randomGen = new RandomNumberGen();
+        fireProgressStateChanged(40);
         if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION) {
         	result = new double[samples];
 	        for (p = 0; p < icNumber; p++) {
+	        	Preferences.debug("p = " + p + "\n");
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
 	        	sumSquares = 0.0;
 	        	for (i = 0; i < nPlanes; i++) {
@@ -769,6 +772,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        	wMaxDiff = 1.0;
 	        	iterations = 0;
 	        	while ((wMaxDiff >= endTolerance) && (iterations < maxIterations)) {
+	        		iterations++;
+	        		fireProgressStateChanged("p = " + p + " iterations = " + iterations);
+	        		fireProgressStateChanged(40 + (60*p/icNumber) + (60*iterations)/(maxIterations*icNumber));
+	        		Preferences.debug("wMaxDiff = " + wMaxDiff + " at iteration " + iterations + "\n",
+	        				Preferences.DEBUG_ALGORITHM);
 	        	    for (i = 0; i < nPlanes; i++) {
 	        	    	E1[i] = 0.0;
 	        	    }
@@ -838,7 +846,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    	gp = 3.0 * wpTz * wpTz;
 		                    }
 		                    for (z = 0; z < zDim; z++) {
-		                    	E1[z] += zvalues[(z * samples) + j];
+		                    	E1[z] += zvalues[(z * samples) + j] * g;
 		                    }
 		                    E2 += gp;
 		                } // for (j = 0; j < samples; j++)
@@ -869,6 +877,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	            	for (i = 0; i < nPlanes; i++) {
 	            		w[p][i] = w[p][i]/norm;
 	            	}
+	            	// Make sure the signs are the same as on the last iteration
+	            	// by always making the first element positive
+	            	if (w[p][0] < 0) {
+	            		for (i = 0; i < nPlanes; i++) {
+	            			w[p][i] = -w[p][i];
+	            		}
+	            	}
 		        	wMaxDiff = 0;
 		        	for (i = 0; i < nPlanes; i++) {
 		        		if (Math.abs(w[p][i] - wlast[i]) > wMaxDiff) {
@@ -876,7 +891,6 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		        		}
 		        		wlast[i] = w[p][i];
 		        	}
-		        	iterations++;
 	        	} // while ((wMaxDiff >= endTolerance)&& (iterations < maxIterations))
 	        	// y[p] = w[p][i] * z
 	        	if (haveColor) {
@@ -961,6 +975,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             }
             iterations = 0;
         	while ((wMaxDiff >= endTolerance) && (iterations < maxIterations)) {
+        		iterations++;
+        		fireProgressStateChanged("iterations = " + iterations);
+        		fireProgressStateChanged(40 + (60*iterations)/maxIterations);
+        		Preferences.debug("wMaxDiff = " + wMaxDiff + " at iteration " + iterations + "\n",
+        				Preferences.DEBUG_ALGORITHM);
         		for (p = 0; p < icNumber; p++) {
         			for (i = 0; i < nPlanes; i++) {
 	        	    	E1[i] = 0.0;
@@ -1031,7 +1050,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		                    	gp = 3.0 * wpTz * wpTz;
 		                    }
 		                    for (z = 0; z < zDim; z++) {
-		                    	E1[z] += zvalues[(z * samples) + j];
+		                    	E1[z] += zvalues[(z * samples) + j] * g;
 		                    }
 		                    E2 += gp;
 		                } // for (j = 0; j < samples; j++)
@@ -1059,6 +1078,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
                 matWh = (matV.times(matD)).times(matV.transpose());  
                 matW = matWh.times(matW);
                 w = matW.getArray();
+                for (p = 0; p < icNumber; p++) {
+                	// Make signs same as on last iteration by always making the first element positive
+                	if (w[p][0] < 0) {
+                		for (i = 0; i < nPlanes; i++) {
+                			w[p][i] = -w[p][i];
+                		}
+                	}
+                }
         		wMaxDiff = 0;
         		for (p = 0; p < icNumber; p++) {
 		        	for (i = 0; i < nPlanes; i++) {
@@ -1180,6 +1207,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             // g'(y) = 1.0 - tanh(y)*tanh(y)
             iterations = 0;
             while ((maxBDiff >= endTolerance) && (iterations < maxIterations)) {
+            	iterations++;
+            	fireProgressStateChanged("iterations = " + iterations);
+        		fireProgressStateChanged(40 + (60*iterations)/maxIterations);
+        		Preferences.debug("maxBDiff = " + maxBDiff + " at iteration " + iterations + "\n",
+        				Preferences.DEBUG_ALGORITHM);
             	for (i = 0; i < nPlanes; i++) {
         			Eygy[i] = 0.0;
         			Egpy[i] = 0.0;
@@ -1272,6 +1304,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
                 matWh = (matV.times(matD)).times(matV.transpose()); 
                 B = (matWh.times(matB)).getArray();
             	maxBDiff = 0.0;
+            	// Make signs the same as on previous iteration by always making the first element positive
+            	for (i = 0; i < nPlanes; i++) {
+            		if (B[i][0] < 0.0) {
+            			for (j = 0; j < nPlanes; j++) {
+            				B[i][j] = -B[i][j];
+            			}
+            		}
+            	}
             	for (i = 0; i < nPlanes; i++) {
             		for (j = 0; j < nPlanes; j++) {
             			if (Math.abs(B[i][j] - Blast[i][j]) > maxBDiff) {
