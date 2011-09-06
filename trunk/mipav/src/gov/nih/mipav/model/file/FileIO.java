@@ -11223,20 +11223,6 @@ public class FileIO {
                 }
             }
             
-            //if saving enhanced, need to recapture unique dicom tags to store in 5200, 9230 sequence of base FileInfoDicom
-            if(options.doEnhanced()) {
-                int tDim = image.getExtents().length <= 3 ? 1 : image.getExtents()[3];
-                int zDim = image.getExtents().length <= 2 ? 1 : image.getExtents()[2];
-                FileInfoDicom[][] infoAr = new FileInfoDicom[zDim][tDim];
-                for(int t = 0; t < tDim; t++) {
-                    for(int z = 0; z < zDim; z++) {
-                        infoAr[z][t] = ((FileInfoDicom)image.getFileInfo(zDim*t + z));
-                    }
-                }
-                
-                insertEnhancedSequence(myFileInfo, infoAr);
-            }
-            
         } else { // if source image is a Non-DICOM image
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
             final JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
@@ -11789,42 +11775,51 @@ public class FileIO {
     private void insertEnhancedSequence(FileInfoDicom myFileInfo,
             FileInfoDicom[][] infoAr) {
         long time = System.currentTimeMillis();
+        System.out.println("Oute");
         //create sequence ordered by current slice number
         FileDicomSQ seqBase = new FileDicomSQ(); //this is the 5200,9230 sequence
         seqBase.setWriteAsUnknownLength(true); //sequences containing enhanced dicom data always given known length
-        FileDicomSQ seq = new FileDicomSQ();  //this is the 0020,9111 sequence
-        seq.setWriteAsUnknownLength(true); 
+        
         int tDim = infoAr[0].length;
         int zDim = infoAr.length;
         for(int t = 0; t < tDim; t++) {
             for(int z = 0; z < zDim; z++) {
                 FileDicomTagTable table = infoAr[z][t].getTagTable();
-                if(table.getValue("0020,9056") == null) {
-                    table.setValue("0020,9056", t);
+                
+                FileDicomSQ seq = new FileDicomSQ();  //this is the 0020,9111 sequence
+                FileDicomTag tag = null;
+                FileDicomSQItem item = null;
+                if((tag = table.get("0020,9111")) != null && !table.isTagSameAsReferenceTag(tag)) {
+                    seq = (FileDicomSQ)table.get("0020,9111").getValue(false);
+                    item = ((FileDicomSQ)table.get("0020,9111").getValue(false)).getItem(0);
+                } else {
+                    item = new FileDicomSQItem(null, myFileInfo.getVr_type());
+                    seq.addItem(item);
+                    seq.setWriteAsUnknownLength(true); 
+                    table.setValue("0020,9111", seq, -1);
                 }
-                if(table.getValue("0020,9057") == null) {
-                    table.setValue("0020,9057", z);
-                }
-                FileDicomSQItem item = new FileDicomSQItem(null, myFileInfo.getVr_type());
-                item.setWriteAsUnknownLength(true); //enhanced sequence items are always written using known length
+                
+                item.setValue("0020,9056", t);
+                item.setValue("0020,9057", z);
+                
+                item.setWriteAsUnknownLength(false); //enhanced sequence items are always written using known length
+                
+                
                 Enumeration<FileDicomTag> tags = table.getTagList().elements();
                 Object tagValue = null;
+                FileDicomSQItem outerItem = new FileDicomSQItem(null, myFileInfo.getVr_type());
                 while(tags.hasMoreElements()) {
-                    FileDicomTag tag = tags.nextElement();
-                    if((tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
-                        item.setValue(tag.getKey(), tag.getValue(false));
+                    tag = tags.nextElement();
+                    if(table == myFileInfo.getTagTable() || //if table is pointing to the same location as myFileInfo, write all tags 
+                            (tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
+                        outerItem.setValue(tag.getKey(), tag.getValue(false));
                         System.out.println("Inserting unique value from key: "+tag.getKey());
-                    } else if(myFileInfo.getTagTable().getValue(tag.getKey()) != null){
-                        //System.out.println("This key contained the same value: "+tag.getKey());
                     }
                 }
-                seq.addItem(item);
+                seqBase.addItem(outerItem); //is now the 2D item within the sequence
+                outerItem.setWriteAsUnknownLength(false);
             }
         }
-        FileDicomSQItem item = new FileDicomSQItem(null, myFileInfo.getVr_type());
-        item.setWriteAsUnknownLength(true);
-        item.setValue("0020,9111", seq);
-        seqBase.addItem(item);
         System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
         //insert constructed sequence into tag table
         myFileInfo.getTagTable().setValue("5200,9230", seqBase);
