@@ -1016,9 +1016,7 @@ public class FileIO {
         boolean isEnhanced4D = imageFile.isEnhanced4D();
         int enhancedNumSlices = 1;
         int enhancedNumVolumes = 1;
-        FileInfoDicom[] enhancedFileInfos = null;
         if (isEnhanced) {
-            enhancedFileInfos = imageFile.getEnhancedFileInfos();
             enhancedNumSlices = imageFile.getEnhancedNumSlices();
         }
 
@@ -1156,13 +1154,13 @@ public class FileIO {
                 // setting the refFileInfo doesn't matter here, since we will be overriding the file info shortly
                 imageFile.setFileName(filename, refFileInfo);
 
-                // Reuse header that was read in above !!!!
+                // Reuse header that was read in above
                 FileInfoDicom curFileInfo;
 
                 if ( !multiframe) {
                     curFileInfo = savedFileInfos[i];
                 } else {
-                    curFileInfo = refFileInfo;
+                    curFileInfo = (FileInfoDicom) refFileInfo.clone();
                 }
 
                 imageFile.setFileInfo(curFileInfo);
@@ -1230,19 +1228,13 @@ public class FileIO {
                     curFileInfo.setOrigin(newOriginPt4D);
                 }
 
-                // If it is enhanced dicom, attach all the fileinfos to the image
-                if (isEnhanced && enhancedFileInfos != null) {
-                    if (location == 0) {
-                        image.setFileInfo(curFileInfo, location);
-                    } else {
-                        final FileInfoDicom[] enhancedFileInfo = {enhancedFileInfos[location - 1]};
-                        final FileInfoDicom[] origFileInfo = {curFileInfo};
-                        FileInfoBase.copyCoreInfo(origFileInfo, enhancedFileInfo);
-                        image.setFileInfo(enhancedFileInfos[location - 1], location);
-                    }
-                } else {
-                    image.setFileInfo(curFileInfo, location);
+                
+                
+                if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
+                    curFileInfo.setTagTable((FileDicomTagTable) imageFile.getEnhancedTagTables()[location - 1]);
                 }
+                image.setFileInfo(curFileInfo, location);
+                
                 if (isEnhanced4D) {
                     if (enhancedCounter1 == enhancedNumVolumes) {
                         enhancedCounter1 = 0;
@@ -11827,6 +11819,7 @@ public class FileIO {
         }
         System.out.println("Finished enhanced sequence construction in "+(System.currentTimeMillis() - time));
         //insert constructed sequence into tag table
+        myFileInfo.getTagTable().setValue("0028,0008", tDim*zDim);
         myFileInfo.getTagTable().setValue("5200,9230", seqBase);
     }
 
