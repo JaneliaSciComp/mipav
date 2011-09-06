@@ -26,6 +26,9 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
     /** Radio button to indicate that an analyze img file should be written out. */
     private JRadioButton analyzeFile;
     
+    /** Checkbox to zero funused fields at 112, 116, and 120.  Default is not selected. */
+    private JCheckBox zeroCheckBox;
+    
     /** Radio button to indicate that an Interfile img file should be written out. */
     private JRadioButton interfileFile;
 
@@ -105,9 +108,19 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
             }
 
             okayPressed = true;
+            
+            dispose();
+        }
+        else if ((event.getSource() == analyzeFile) || (event.getSource() == interfileFile) ||
+        		 (event.getSource() == niftiFile)) {
+        	if (analyzeFile.isSelected()) {
+        		zeroCheckBox.setEnabled(true);
+        	}
+        	else {
+        		zeroCheckBox.setEnabled(false);
+        	}
         }
 
-        dispose();
     }
 
     /**
@@ -126,6 +139,15 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
         else {
             return FileUtility.NIFTI;
         }
+    }
+    
+    public boolean zerofunused() {
+    	if (zeroCheckBox.isSelected()) {
+    		return true;
+    	}
+    	else {
+    		return false;
+    	}
     }
 
     /**
@@ -148,8 +170,12 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
         ButtonGroup writeGroup = new ButtonGroup();
         analyzeFile = WidgetFactory.buildRadioButton("Analyze file", true, writeGroup);
+        analyzeFile.addActionListener(this);
+        zeroCheckBox = WidgetFactory.buildCheckBox("Zero funused fields", false);
         interfileFile = WidgetFactory.buildRadioButton("Interfile file", false, writeGroup);
+        interfileFile.addActionListener(this);
         niftiFile = WidgetFactory.buildRadioButton("Nifti file", false, writeGroup);
+        niftiFile.addActionListener(this);
         saveLabel = new JLabel("Always save .hdr/.img files ");
         saveLabel.setFont(serif12);
         saveLabel.setForeground(Color.black);
@@ -164,6 +190,8 @@ public class JDialogAnalyzeNIFTIChoice extends JDialogBase {
 
         manager.getConstraints().insets = new Insets(0, 15, 0, 10);
         manager.add(analyzeFile);
+        manager.addOnNextLine(zeroCheckBox);
+        
         manager.addOnNextLine(interfileFile);
         manager.addOnNextLine(niftiFile);
 
