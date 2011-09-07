@@ -229,8 +229,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** The available choices for displaying the numerical values of complex data */
     private JComboBox complexDisplayChoices;
 
-    /** The checkbox to indicate whether images are displayed using the log of their magnitude */
+    /** The check box to indicate whether images are displayed using the log of their magnitude */
     private JCheckBox displayLogMag;
+    
+    /** The check box to indicate whether images are displayed with interpolation. */
+    private JCheckBox displayInterpolate;
     
     /** border size for active image color **/
     private JComboBox activeImageColorBorderSize;
@@ -285,6 +288,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayImagePanel.setBorder(buildTitledBorder("Image"));
         makeComplexImageOptions(gbc, gbl);
         makeLogMagImageOptions(gbc, gbl);
+        makeInterpolateImageOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -483,6 +487,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
+            Preferences.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, String.valueOf(displayInterpolate.isSelected()));
             
             // check to see if provenance should be turned on (if it was off)
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
@@ -1072,6 +1077,27 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
              displayLogMag.setSelected(Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
          }
      }
+     
+     /**
+      * Makes checkbox for whether to display the image with interpolation on user's screen
+      */
+      protected void makeInterpolateImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+      
+          displayInterpolate = new JCheckBox("Interpolate image");
+          displayInterpolate.setFont(MipavUtil.font12);
+          displayInterpolate.setForeground(Color.black);
+          displayInterpolate.addActionListener(this);
+          gbc2.insets = new Insets(0, 0, 0, 0);
+          gbc2.gridwidth = GridBagConstraints.REMAINDER;
+          gbc2.anchor = GridBagConstraints.WEST;
+          displayImagePanel.add(displayInterpolate, gbc2);
+          
+          if(Preferences.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY) == null) {
+              Preferences.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, Boolean.valueOf(false).toString());
+          } else {
+              displayInterpolate.setSelected(Preferences.is(Preferences.PREF_INTERPOLATE_DISPLAY));
+          }
+      }
     
     
     /**
