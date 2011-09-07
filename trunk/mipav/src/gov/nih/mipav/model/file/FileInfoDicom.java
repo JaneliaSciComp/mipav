@@ -504,6 +504,13 @@ public class FileInfoDicom extends FileInfoBase {
     public final boolean isMultiFrame() {
         return multiFrame;
     }
+    
+    /**
+     * Sets whether the DICOM image is a multiFrame image.
+     */
+    public final void setMultiFrame(boolean multiFrame) {
+        this.multiFrame = multiFrame;
+    }
 
     /**
      * Parse the string for Objects seperated by "\". Uses the local method getValue to look at the Object held in the
