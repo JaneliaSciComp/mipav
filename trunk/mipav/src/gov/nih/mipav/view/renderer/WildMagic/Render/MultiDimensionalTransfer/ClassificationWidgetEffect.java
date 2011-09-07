@@ -154,6 +154,14 @@ public class ClassificationWidgetEffect extends TextureEffect
     public void SetAlpha( float fA ) 
     {
     	m_kWidgetState.Color[3] = fA;
+    	if ( fA == 0 )
+    	{
+    		m_kWidgetState.UseWidget[0] = 0;
+    	}
+    	else
+    	{
+    		m_kWidgetState.UseWidget[0] = 1;
+    	}
     	UpdateColor();
     }
     
@@ -168,20 +176,35 @@ public class ClassificationWidgetEffect extends TextureEffect
     	m_kWidgetState.Color[1] = fG;
     	m_kWidgetState.Color[2] = fB;
     	m_kWidgetState.Color[3] = fA;
+    	if ( fA == 0 )
+    	{
+    		m_kWidgetState.UseWidget[0] = 0;
+    	}
+    	else
+    	{
+    		m_kWidgetState.UseWidget[0] = 1;
+    	}
     	m_kWidgetState.UseColorMap[0] = -1.0f;
     	UpdateColor();
     }
 
 
-    public void SetLUT( Texture kMap, int index )
+    public void SetLUT( Texture kMap, int index, boolean bReverse )
     {
 		m_kPShader.get(0).SetImageName(1,kMap.GetName());
 		m_kPShader.get(0).SetTexture(1,kMap);
 		
     	m_kWidgetState.UseColorMap[0] = index;
+    	m_kWidgetState.InvertLUT = bReverse;
     	UpdateLUT();
     }
 
+
+	public int GetLUTIndex( )
+	{
+		return (int)m_kWidgetState.UseColorMap[0];
+	}
+	
     /**
      * Updates the color in the GLSL shader program used to render the ClassificationWidget. 
      */
@@ -239,9 +262,10 @@ public class ClassificationWidgetEffect extends TextureEffect
             //System.err.println( "Center " + fX + " " + fY );
         }
     }
-    public void SetRadius( float fR ) 
+    public void SetRadius( float fRX, float fRY ) 
     {
-        m_kWidgetState.Radius[0] = fR;
+        m_kWidgetState.Radius[0] = fRX;
+        m_kWidgetState.Radius[1] = fRY;
         Program pkCProgram = GetCProgram(0);
         if ( (pkCProgram != null) && (pkCProgram.GetUC("Radius") != null) ) 
         {

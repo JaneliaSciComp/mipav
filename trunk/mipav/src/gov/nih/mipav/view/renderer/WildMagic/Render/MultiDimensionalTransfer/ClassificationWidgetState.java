@@ -47,6 +47,7 @@ public class ClassificationWidgetState implements Serializable
     
     /** turns the widget color map on/off in the GLSL shader code. */
     public float[] UseColorMap = new float[4];
+    public boolean InvertLUT = false;
 
     /**
      * Default Constructor:
@@ -64,11 +65,11 @@ public class ClassificationWidgetState implements Serializable
             BoundaryEmphasis[i] = 0f;
             UseWidget[i] = 0;
             UseColorMap[i] = 0f;
+            BoundaryEmphasis[i] = 0.0f;
+            UseWidget[i] = 0.0f;
+            UseColorMap[i] = -1.0f;
+            Radius[i] = -1.0f;
         } 
-        BoundaryEmphasis[0] = 0.0f;
-        UseWidget[0] = 0.0f;
-        UseColorMap[0] = -1.0f;
-        Radius[0] = -1.0f;
     }
     
     /**
@@ -91,6 +92,7 @@ public class ClassificationWidgetState implements Serializable
             UseWidget[i] = kIn.UseWidget[i];
             UseColorMap[i] = kIn.UseColorMap[i];
         }
+        InvertLUT = kIn.InvertLUT;
     }
     
     /**
@@ -122,15 +124,13 @@ public class ClassificationWidgetState implements Serializable
         			(LeftLine[i] != kIn.LeftLine[i] ) ||
         			(RightLine[i] != kIn.RightLine[i]) ||
                     (Shift[i] != kIn.Shift[i]) ||
-                    (YRatio[i] != kIn.YRatio[i])	     )    
+                    (YRatio[i] != kIn.YRatio[i])	||
+                    (BoundaryEmphasis[i] != kIn.BoundaryEmphasis[i]) ||
+                    (UseWidget[i] != kIn.UseWidget[i]) ||
+                    (UseColorMap[i] != kIn.UseColorMap[i]) ||
+                    (InvertLUT != kIn.InvertLUT) )
         		return false;
         }
-        if ( BoundaryEmphasis[0] != kIn.BoundaryEmphasis[0])
-        	return false;
-        if ( UseWidget[0] != kIn.UseWidget[0])
-        	return false;
-        if ( UseColorMap[0] != kIn.UseColorMap[0])
-        	return false;
         return true;
     }
 }
