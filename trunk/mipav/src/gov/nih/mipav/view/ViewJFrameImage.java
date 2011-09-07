@@ -4529,6 +4529,33 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         return true;
     }
+    
+    /**
+     * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
+     * 
+     * @param forceShow forces show to re import image and calc. java image
+     * @param interpMode
+     * 
+     * @return boolean confirming successful update
+     */
+    public synchronized boolean updateImages(final boolean forceShow, final int interpMode) {
+
+        if (componentImage == null) {
+            return false;
+        }
+
+        if (componentImage.show(componentImage.getTimeSlice(), componentImage.getSlice(), null, null, forceShow, interpMode) == false) {
+            return false;
+        }
+
+        final ViewControlsImage myControls = getControls();
+
+        if (myControls != null) {
+            myControls.repaint();
+        }
+
+        return true;
+    }
 
     /**
      * This methods calls the componentImage's update method to redraw the screen.
@@ -5097,7 +5124,30 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         //final JMenuItem kAutoITKMenu = menuBuilder.getMenuItem("Insight toolkit (auto ITK)");
         //m_kAutoItkLoader = new AutoItkLoader(this, (JMenu) kAutoITKMenu);
 
-        updateImages(true);
+        if ((imageA != null) && (imageB != null)) {
+            if (Preferences.isInterpolateDisplay()) {
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_BOTH);
+        	}
+            else {
+            	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
+            }
+        }
+        else if (imageA != null) {
+        	if (Preferences.isInterpolateDisplay()) {
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_A);
+        	}
+            else {
+            	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
+            }	
+        }
+        else if (imageB != null) {
+        	if (Preferences.isInterpolateDisplay()) {
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_A);
+        	}
+            else {
+            	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
+            }		
+        }
 
         if (controls.getTImageSlider() != null) {
             ((ViewJSlider) controls.getTImageSlider()).resizeSlider();
