@@ -78,6 +78,7 @@ implements GLEventListener, KeyListener
 	private String m_kWidgetType = new String( "Circle" );
 	private boolean m_bFirstAdded = false;
 	private boolean m_bUpdateLev = false;
+	private int m_iLUTIndex = 0;
 	
 	/**
 	 * Create a new VolumeImageMultiDimensionalTranfer display.
@@ -535,11 +536,18 @@ implements GLEventListener, KeyListener
 	public void update( String kCommand )
 	{
 		boolean bReverseLUT = kCommand.equals( CustomUIBuilder.PARAM_LUT_INVERT.getActionCommand() );
-		int index = VolumeTriPlanarRender.getHistogramLUTTextureIndex( kCommand );
-		Texture kMap = VolumeTriPlanarRender.getHistogramLUTTexture( index, bReverseLUT );
+		if ( !bReverseLUT )
+		{
+			m_iLUTIndex = VolumeTriPlanarRender.getHistogramLUTTextureIndex( kCommand );
+		}
+		else if (  m_iCurrent != -1 )
+		{
+			m_iLUTIndex = m_akWidgets.get(m_iCurrent).getLUTIndex();
+		}
+		Texture kMap = VolumeTriPlanarRender.getHistogramLUTTexture( m_iLUTIndex, bReverseLUT );
 		if (  m_iCurrent != -1 )
 		{
-			m_akWidgets.get(m_iCurrent).setLUT( kMap, index );
+			m_akWidgets.get(m_iCurrent).setLUT( kMap, m_iLUTIndex, bReverseLUT );
 		}
 		m_bDisplay = true;
 		GetCanvas().display();

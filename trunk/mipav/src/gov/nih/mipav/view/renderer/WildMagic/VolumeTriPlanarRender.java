@@ -2711,6 +2711,25 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	  {
 		  index = Math.min(index, ms_akLUTTexture.length-1);
 		  index = Math.max(index, 0);
+		  if ( bReverse )
+		  {
+			  int i1, i2;
+			  byte temp;
+			  byte[] aucData = ms_akLUTTexture[index].GetImage().GetData();
+			  for ( int i = 0; i < 128; i++ )
+			  {
+				  i1 = i;
+				  i2 = 256-i-1;
+				  for ( int j = 0; j < 4; j++ )
+				  {
+					  temp = aucData[i1*4+j];
+					  aucData[i1*4+j] = aucData[i2*4+j];
+					  aucData[i2*4+j] = temp;
+				  }				  
+			  }		  
+			  
+			  ms_akLUTTexture[index].Reload(true);
+		  }
 		  return ms_akLUTTexture[index];
 	  }
 	  

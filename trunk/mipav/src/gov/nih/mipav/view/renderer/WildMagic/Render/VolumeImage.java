@@ -1185,7 +1185,6 @@ public class VolumeImage implements Serializable {
         //m_akHistoTCoord[2] = new Vector2f(1f, 1f);
         //m_akHistoTCoord[3] = new Vector2f(0f, 1f);
         m_bHistoInit = true;
-        System.err.println( iTMaxX + ", " + iTMaxX );
     }
 
     /**

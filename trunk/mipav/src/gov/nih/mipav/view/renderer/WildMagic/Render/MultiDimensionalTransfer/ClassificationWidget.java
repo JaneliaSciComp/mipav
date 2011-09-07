@@ -309,12 +309,21 @@ public abstract class ClassificationWidget implements Serializable
 		}
 	}
 
-	public void setLUT( Texture kMap, int index )
+	public void setLUT( Texture kMap, int index, boolean bReverse )
 	{
 		if ( m_kWidgetEfect != null )
 		{
-			m_kWidgetEfect.SetLUT( kMap, index );
+			m_kWidgetEfect.SetLUT( kMap, index, bReverse );
 		}
+	}
+
+	public int getLUTIndex( )
+	{
+		if ( m_kWidgetEfect != null )
+		{
+			return m_kWidgetEfect.GetLUTIndex( );
+		}
+		return -1;
 	}
 
 	/**

@@ -23,14 +23,17 @@ public class CircleClassificationWidget extends ClassificationWidget
 
 	private static final long serialVersionUID = -4180814068815939724L;
 
-	/** Current parameterized coordinates for the center control point in X 
-	 * (used to maintain relative position when resizing the widget). */
-	private float m_fCenterX = 0.5f;
-	/** Current parameterized coordinates for the center control point in Y 
-	 * (used to maintain relative position when resizing the widget). */
-	private float m_fCenterY = 0.5f;
+	private Vector2f m_kCenterDir = new Vector2f(0,0);
+	private float m_fCenterScale = 0f;
 	
-    private float m_fRadius = 0.5f;
+
+    private float m_fRadiusX = 0.5f;
+    private float m_fRadiusY = 0.5f;  
+
+
+	//private Vector2f m_kLowerDir = new Vector2f(1,0);
+	//private float m_fLowerScale = .5f;
+	//protected TriMesh[] m_kIntersectSphere = new TriMesh[2];
 
 	/**
 	 * @param iX location in MouseEvent Coordinates.
@@ -109,7 +112,16 @@ public class CircleClassificationWidget extends ClassificationWidget
 		
 		float fCenterX = m_kWidgetMesh.VBuffer.GetPosition3fX(0);
 		float fCenterY = m_kWidgetMesh.VBuffer.GetPosition3fY(0);
-		if ( Math.sqrt( (fX - fCenterX) * (fX - fCenterX) + (fY - fCenterY) * (fY - fCenterY) ) < m_fRadius )
+		
+
+    	float diffX = fX - fCenterX;
+    	float diffY = fY - fCenterY;
+    	float fLength = (float)Math.sqrt( diffX*diffX + diffY*diffY );
+    	float scale = (float)((m_fRadiusX * m_fRadiusY) / Math.sqrt( m_fRadiusY*m_fRadiusY * diffX*diffX + m_fRadiusX*m_fRadiusX * diffY*diffY ));
+    	float newX = diffX * scale;
+    	float newY = diffY * scale;
+    	float fLengthEdge = (float)Math.sqrt( newX*newX + newY*newY );
+		if ( fLength < fLengthEdge )
 		{
 			m_kPicked = m_kWidgetMesh;
 			bPicked = true;
@@ -139,6 +151,13 @@ public class CircleClassificationWidget extends ClassificationWidget
             	// the middle control-point was picked, so shift the mid-line:
                 ShiftMid(e);
             }
+            /*
+            else if ( m_kPicked == m_kLowerSphere )
+            {
+            	// the middle control-point was picked, so shift the mid-line:
+                ShiftLower(e);
+            }
+            */
         }
     }
 	
@@ -159,7 +178,7 @@ public class CircleClassificationWidget extends ClassificationWidget
             Vector2f center = getCenter();
             m_kWidgetEfect.SetCenter( calcTCoordX(center.X), calcTCoordY(center.Y) );
             
-            m_kWidgetEfect.SetRadius( m_fRadius * m_kTMax.X / 2f );
+            m_kWidgetEfect.SetRadius( m_fRadiusX * m_kTMax.X / 2f, m_fRadiusY * m_kTMax.Y / 2f );
 
             m_kWidgetEfect.UpdateColor();
             m_kWidgetEfect.UpdateLUT();
@@ -183,28 +202,79 @@ public class CircleClassificationWidget extends ClassificationWidget
     	float diffX = fX - kCurrentCenter.X;
     	float diffY = fY - kCurrentCenter.Y;
     	float length = (float)Math.sqrt(diffX * diffX + diffY * diffY );
-    	if (  length > m_fRadius )
+    	
+    	float scale = (float)((m_fRadiusX * m_fRadiusY) / Math.sqrt( m_fRadiusY*m_fRadiusY * diffX*diffX + m_fRadiusX*m_fRadiusX * diffY*diffY ));
+    	float newX = diffX * scale;
+    	float newY = diffY * scale;
+    	
+    	float edgeLength = (float)Math.sqrt( newX*newX + newY*newY );
+    	if ( length >= edgeLength )
     	{
-    		Vector2f dir = new Vector2f ( diffX / length, diffY / length );
-    		kCenter.X = kCurrentCenter.X + dir.X * m_fRadius;
-    		kCenter.Y = kCurrentCenter.Y + dir.Y * m_fRadius;
+    		kCenter.X = kCurrentCenter.X + newX *.99f;
+    		kCenter.Y = kCurrentCenter.Y + newY *.99f;   		
+
+        	diffX = kCenter.X - kCurrentCenter.X;
+        	diffY = kCenter.Y - kCurrentCenter.Y;
+        	length = (float)Math.sqrt(diffX * diffX + diffY * diffY );
     	}
     	else
     	{
-            kCenter.X = fX;
-            kCenter.Y = fY;    		
+    		kCenter.X = fX;
+    		kCenter.Y = fY;
     	}
-    	
-        // update the parameterized value of the control-point location for repositioning after scaling.
-        m_fCenterX = (kCenter.X - m_kWidgetMesh.VBuffer.GetPosition3fX(0) + m_fRadius) / 
-        (2 * m_fRadius);
-        m_fCenterY = (kCenter.Y - m_kWidgetMesh.VBuffer.GetPosition3fY(0) + m_fRadius) / 
-        (2 * m_fRadius);
-        
-        // update the scene graph:
+
+    	m_kCenterDir.X = diffX / length;
+    	m_kCenterDir.Y = diffY / length;
+    	m_fCenterScale = length / edgeLength;
+
+        //calcIntersection();
+    	// update the scene graph:
         m_kWidget.UpdateGS();
     }
-    
+
+    /*
+    private void ShiftLower( MouseEvent e )
+    {      
+    	// calculate the coordinates in world space:
+    	float fX = calcObjX(e.getX()); 
+    	float fY = calcObjY(e.getY()); 
+    	Vector3f kCenter = m_kLowerSphere.Local.GetTranslate();
+    	// get the current center of the circle:
+    	Vector2f kCurrentCenter = getCenter();
+
+    	float diffX = fX - kCurrentCenter.X;
+    	float diffY = fY - kCurrentCenter.Y;
+    	float length = (float)Math.sqrt(diffX * diffX + diffY * diffY );
+    	
+    	float scale = (float)((m_fRadiusX * m_fRadiusY) / Math.sqrt( m_fRadiusY*m_fRadiusY * diffX*diffX + m_fRadiusX*m_fRadiusX * diffY*diffY ));
+    	float newX = diffX * scale;
+    	float newY = diffY * scale;
+
+    	float edgeLength = (float)Math.sqrt( newX*newX + newY*newY );
+    	if ( length >= edgeLength )
+    	{
+    		kCenter.X = kCurrentCenter.X + newX *.99f;
+    		kCenter.Y = kCurrentCenter.Y + newY *.99f;   		
+
+        	diffX = kCenter.X - kCurrentCenter.X;
+        	diffY = kCenter.Y - kCurrentCenter.Y;
+        	length = (float)Math.sqrt(diffX * diffX + diffY * diffY );
+    	}
+    	else
+    	{
+    		kCenter.X = fX;
+    		kCenter.Y = fY;
+    	}
+
+    	m_kLowerDir.X = diffX / length;
+    	m_kLowerDir.Y = diffY / length;
+    	m_fLowerScale = length / edgeLength;
+
+        calcIntersection();
+    	// update the scene graph:
+        m_kWidget.UpdateGS();
+    }
+    */
     
     /**
      * Creates the circle widget and control point:
@@ -225,7 +295,7 @@ public class CircleClassificationWidget extends ClassificationWidget
         kAttributes.SetTChannels(0,2);
         
         StandardMesh stdMesh = new StandardMesh( kAttributes );
-        m_kWidgetMesh = stdMesh.Disk( 2, 64, m_fRadius );
+        m_kWidgetMesh = stdMesh.Disk( 2, 64, m_fRadiusX );
         
         float x, y, z;
         // Set up the VertexBuffer positions, colors, texture coordinates:
@@ -274,7 +344,7 @@ public class CircleClassificationWidget extends ClassificationWidget
         m_kUpperSphere.SetName("UpperSphere");
         m_kWidget.AttachChild( m_kUpperSphere );
         m_kUpperSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(1));
-        
+
         
         m_kMiddleSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
         for ( int i = 0; i < m_kMiddleSphere.VBuffer.GetVertexQuantity(); i++ )
@@ -288,6 +358,44 @@ public class CircleClassificationWidget extends ClassificationWidget
         // position the middle control-point in the center:
         m_kMiddleSphere.Local.SetTranslate( m_kWidgetMesh.VBuffer.GetPosition3(0) );
         
+        /*
+        m_kLowerSphere = kSM.Sphere(10,10,SPHERE_RADIUS);
+        for ( int i = 0; i < m_kLowerSphere.VBuffer.GetVertexQuantity(); i++ )
+        {
+        	m_kLowerSphere.VBuffer.SetColor3(0, i, 1f, 1f, 0f);
+        }
+        m_kLowerSphere.AttachEffect( new VertexColor3Effect() );
+        m_kLowerSphere.SetName("LowerSphere");
+        m_kWidget.AttachChild( m_kLowerSphere );
+
+        // position the lower control-point in the center:
+        Vector3f kPos = new Vector3f( m_kWidgetMesh.VBuffer.GetPosition3(0) );
+        kPos.Add( m_kWidgetMesh.VBuffer.GetPosition3(1) );
+        kPos.Scale(.5f);
+        m_kLowerSphere.Local.SetTranslate( kPos );
+        */
+        
+
+        /*
+        m_kIntersectSphere[0] = kSM.Sphere(10,10,SPHERE_RADIUS);
+        for ( int i = 0; i < m_kIntersectSphere[0].VBuffer.GetVertexQuantity(); i++ )
+        {
+        	m_kIntersectSphere[0].VBuffer.SetColor3(0, i, 1f, 0f, 0f);
+        }
+        m_kIntersectSphere[0].AttachEffect( new VertexColor3Effect() );
+        m_kIntersectSphere[0].SetName("i0");
+        m_kWidget.AttachChild( m_kIntersectSphere[0] );
+        
+        m_kIntersectSphere[1] = kSM.Sphere(10,10,SPHERE_RADIUS);
+        for ( int i = 0; i < m_kIntersectSphere[1].VBuffer.GetVertexQuantity(); i++ )
+        {
+        	m_kIntersectSphere[1].VBuffer.SetColor3(0, i, 1f, 0f, 1f);
+        }
+        m_kIntersectSphere[1].AttachEffect( new VertexColor3Effect() );
+        m_kIntersectSphere[1].SetName("i1");
+        m_kWidget.AttachChild( m_kIntersectSphere[1] );
+        calcIntersection();
+        */
         m_kWidget.UpdateGS();
     }
     
@@ -306,42 +414,42 @@ public class CircleClassificationWidget extends ClassificationWidget
         float diffX = fX - kCurrentCenter.X;
         float diffY = fY - kCurrentCenter.Y;
         
-        
-        // calculate new radius:
-        m_fRadius = (float)Math.sqrt( diffX*diffX + diffY*diffY);
-        Vector2f dir = new Vector2f( diffX / m_fRadius, diffY / m_fRadius );
+
+		m_fRadiusX = Math.abs(diffX);
+		m_fRadiusY = Math.abs(diffY);
         
 
         float fInvRS = 1.0f/64f;
         float x,y,z;
 		for ( int i = 1; i < m_kWidgetMesh.VBuffer.GetVertexQuantity(); i++ )
 		{
-            float fAngle = Mathf.TWO_PI*fInvRS*i;
+			float fAngle = Mathf.TWO_PI*fInvRS*i;
             float fCos = (float)Math.cos(fAngle);
             float fSin = (float)Math.sin(fAngle);
             
-			x = kCurrentCenter.X + fCos * m_fRadius;
-			y = kCurrentCenter.Y + fSin * m_fRadius;
+			x = kCurrentCenter.X + fCos * m_fRadiusX;
+			y = kCurrentCenter.Y + fSin * m_fRadiusY;
 			if ( x < LEFT_EDGE )
 			{
-				m_fRadius = (LEFT_EDGE - kCurrentCenter.X)/fCos;
+				m_fRadiusX = (LEFT_EDGE - kCurrentCenter.X)/fCos;
 			}
 			else if ( x > RIGHT_EDGE )
 			{
-				m_fRadius = (RIGHT_EDGE - kCurrentCenter.X)/fCos;
+				m_fRadiusX = (RIGHT_EDGE - kCurrentCenter.X)/fCos;
 			}
 			if ( y < BOTTOM_EDGE )
 			{
-				m_fRadius = (BOTTOM_EDGE - kCurrentCenter.Y)/fSin;
+				m_fRadiusY = (BOTTOM_EDGE - kCurrentCenter.Y)/fSin;
 			}
 			else if ( y > TOP_EDGE )
 			{
-				m_fRadius = (TOP_EDGE - kCurrentCenter.Y)/fSin;
+				m_fRadiusY = (TOP_EDGE - kCurrentCenter.Y)/fSin;
 			}
-		}
-        
-        fX = dir.X * m_fRadius;
-        fY = dir.Y * m_fRadius;
+		}		   
+            	
+    	float scale = (float)((m_fRadiusX * m_fRadiusY) / Math.sqrt( m_fRadiusY*m_fRadiusY * diffX*diffX + m_fRadiusX*m_fRadiusX * diffY*diffY ));
+    	float newX = diffX * scale;
+    	float newY = diffY * scale;
 
 		z = 0.1f;
         int index = 0;
@@ -351,8 +459,8 @@ public class CircleClassificationWidget extends ClassificationWidget
             float fCos = (float)Math.cos(fAngle);
             float fSin = (float)Math.sin(fAngle);
             
-			x = kCurrentCenter.X + fCos * m_fRadius;
-			y = kCurrentCenter.Y + fSin * m_fRadius;
+			x = kCurrentCenter.X + fCos * m_fRadiusX;
+			y = kCurrentCenter.Y + fSin * m_fRadiusY;
 			m_kWidgetMesh.VBuffer.SetPosition3(i, x, y, z );
 			m_kWidgetMesh.VBuffer.SetTCoord2(0, i, calcTCoordX(x), calcTCoordY(y));
 			if ( i >= 1 )
@@ -364,11 +472,39 @@ public class CircleClassificationWidget extends ClassificationWidget
 		}      
 		m_kWidgetMesh.VBuffer.Release();
 		m_kOutline.VBuffer.Release();
-		float middleX = 2 * m_fRadius * m_fCenterX - m_fRadius + kCurrentCenter.X;
-		float middleY = 2 * m_fRadius * m_fCenterY - m_fRadius + kCurrentCenter.Y;
-        m_kMiddleSphere.Local.SetTranslate( middleX, middleY, z );
-        m_kUpperSphere.Local.SetTranslate( kCurrentCenter.X + fX, kCurrentCenter.Y + fY, z );
-        
+
+        m_kUpperSphere.Local.SetTranslate( kCurrentCenter.X + newX, kCurrentCenter.Y + newY, z );
+		
+
+        diffX = m_kCenterDir.X;
+        diffY = m_kCenterDir.Y;    	
+        if ( diffX != 0 && diffY != 0 )
+        {
+        	scale = (float)((m_fRadiusX * m_fRadiusY) / Math.sqrt( m_fRadiusY*m_fRadiusY * diffX*diffX + m_fRadiusX*m_fRadiusX * diffY*diffY ));
+        	newX = diffX * scale;
+        	newY = diffY * scale;
+
+        	float edgeLength = (float)Math.sqrt( newX*newX + newY*newY );
+        	m_kMiddleSphere.Local.SetTranslate( kCurrentCenter.X + m_kCenterDir.X * m_fCenterScale * edgeLength, 
+        			kCurrentCenter.Y + m_kCenterDir.Y * m_fCenterScale * edgeLength, z );
+
+        }           
+/*
+        diffX = m_kLowerDir.X;
+        diffY = m_kLowerDir.Y;    	  	
+        if ( diffX != 0 && diffY != 0 )
+        {
+        	scale = (float)((m_fRadiusX * m_fRadiusY) / Math.sqrt( m_fRadiusY*m_fRadiusY * diffX*diffX + m_fRadiusX*m_fRadiusX * diffY*diffY ));
+        	newX = diffX * scale;
+        	newY = diffY * scale;
+
+        	float edgeLength = (float)Math.sqrt( newX*newX + newY*newY );
+        	m_kLowerSphere.Local.SetTranslate( kCurrentCenter.X + m_kLowerDir.X * m_fLowerScale * edgeLength, 
+        			kCurrentCenter.Y + m_kLowerDir.Y * m_fLowerScale * edgeLength, z );
+
+        }       
+        calcIntersection();
+        */
         // update the scene graph:
         m_kWidget.UpdateGS();
     }
@@ -400,24 +536,24 @@ public class CircleClassificationWidget extends ClassificationWidget
         float fDiffX = fNewGCX - kCurrentCenter.X;
         float fDiffY = fNewGCY - kCurrentCenter.Y;
 
-        if ( kCurrentCenter.X + m_fRadius + fDiffX > RIGHT_EDGE )
+        if ( kCurrentCenter.X + m_fRadiusX + fDiffX > RIGHT_EDGE )
         {
-        	fDiffX = RIGHT_EDGE - (kCurrentCenter.X + m_fRadius);
+        	fDiffX = RIGHT_EDGE - (kCurrentCenter.X + m_fRadiusX);
         }
-        if ( kCurrentCenter.X - m_fRadius + fDiffX < LEFT_EDGE )
+        if ( kCurrentCenter.X - m_fRadiusX + fDiffX < LEFT_EDGE )
         {
-        	fDiffX = LEFT_EDGE - (kCurrentCenter.X - m_fRadius);
+        	fDiffX = LEFT_EDGE - (kCurrentCenter.X - m_fRadiusX);
         }
 
         // Y check that moving the square doesn't move it out of bounds,
         // clamp if necessary:
-        if ( kCurrentCenter.Y - m_fRadius + fDiffY  < BOTTOM_EDGE )
+        if ( kCurrentCenter.Y - m_fRadiusY + fDiffY  < BOTTOM_EDGE )
         {
-        	fDiffY = BOTTOM_EDGE - (kCurrentCenter.Y - m_fRadius);
+        	fDiffY = BOTTOM_EDGE - (kCurrentCenter.Y - m_fRadiusY);
         }
-        if ( kCurrentCenter.Y + m_fRadius + fDiffY > TOP_EDGE )
+        if ( kCurrentCenter.Y + m_fRadiusY + fDiffY > TOP_EDGE )
         {
-        	fDiffY = TOP_EDGE - (kCurrentCenter.Y + m_fRadius);
+        	fDiffY = TOP_EDGE - (kCurrentCenter.Y + m_fRadiusY);
         }
         
         // Move the square: position and texture coordinates:
@@ -449,9 +585,64 @@ public class CircleClassificationWidget extends ClassificationWidget
         // Move the upper sphere by translating it the same amount as the square:
         kTranslate = m_kUpperSphere.Local.GetTranslate(); 
         m_kUpperSphere.Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
-        
+
+        /*
+        // Move the upper sphere by translating it the same amount as the square:
+        kTranslate = m_kLowerSphere.Local.GetTranslate(); 
+        m_kLowerSphere.Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
+        */
+/*
+        kTranslate = m_kIntersectSphere[0].Local.GetTranslate(); 
+        m_kIntersectSphere[0].Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
+        kTranslate = m_kIntersectSphere[1].Local.GetTranslate(); 
+        m_kIntersectSphere[1].Local.SetTranslate( kTranslate.X + fDiffX, kTranslate.Y + fDiffY, kTranslate.Z );
+        */
         // Update the scene-graph
         m_kWidget.UpdateGS();
     }   
-    
+    /*
+    private void calcIntersection()
+    {
+    	float z = 0.1f;
+
+    	Vector3f kMiddle = m_kMiddleSphere.Local.GetTranslate();
+    	Vector3f kLower = m_kLowerSphere.Local.GetTranslate();
+    	// get the current center of the circle:
+    	Vector2f kCurrentCenter = getCenter();
+
+    	Vector2f p0 = new Vector2f( kMiddle.X - kCurrentCenter.X, kMiddle.Y - kCurrentCenter.Y );
+    	Vector2f p1 = new Vector2f( kLower.X - kCurrentCenter.X, kLower.Y - kCurrentCenter.Y );
+    	
+    	float b = m_fRadiusY;
+    	float a = m_fRadiusX;
+    	float slope = (p1.Y - p0.Y) / (p1.X - p0.X);
+    	float intercept = p1.Y - slope * p1.X;
+    	float A = b*b + a*a*slope*slope;
+    	float B = 2*a*a*intercept*slope;
+    	float C = a*a*intercept*intercept - b*b*a*a;
+    	float r = B*B - 4*A*C;
+    	if ( r >= 0 )
+    	{
+    		
+			// solve for x values - using the quadratic equation
+			float x3 = (float)(-B-Math.sqrt(r))/(2*A);
+			float x4 = (float)(-B+Math.sqrt(r))/(2*A);
+			// calculate y, since we know it's on the line at that point (otherwise there would be no intersection)
+			float y3 = slope*x3+intercept;
+			float y4 = slope*x4+intercept;				
+
+			m_kIntersectSphere[0].Local.SetTranslate( kCurrentCenter.X + x3, kCurrentCenter.Y + y3, z );
+			m_kIntersectSphere[1].Local.SetTranslate( kCurrentCenter.X + x4, kCurrentCenter.Y + y4, z );
+    		
+    	}
+    	else
+    	{
+    		System.err.println( "One intersection" );
+    		float x3 = (float)(-B-Math.sqrt(r))/(2*A);	
+			float y3 = slope*x3+intercept;
+			m_kIntersectSphere[0].Local.SetTranslate( kCurrentCenter.X + x3, kCurrentCenter.Y + y3, z );
+			m_kIntersectSphere[1].Local.SetTranslate( kCurrentCenter.X + x3, kCurrentCenter.Y + y3, z );    		
+    	}
+    }
+    */
 }

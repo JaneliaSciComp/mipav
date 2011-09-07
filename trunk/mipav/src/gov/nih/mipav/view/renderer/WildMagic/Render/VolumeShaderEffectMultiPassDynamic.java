@@ -84,8 +84,8 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec4 LevLeftLine#;" + "\n"
     	+ "uniform vec4 LevRightLine#;" + "\n"
     	+ "uniform float BoundaryEmphasis#;" + "\n"
-    	+ "uniform float Center#;" + "\n"
-    	+ "uniform float Radius#;" + "\n"
+    	+ "uniform vec4 Center#;" + "\n"
+    	+ "uniform vec4 Radius#;" + "\n"
     	+ "" + "\n";
 
     private static String multiHistogramWidgetColorParameters = ""
@@ -372,9 +372,13 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "" + "\n";
     private static String multiHistogramCompositeColorMap = ""
     	+ "multiHOpacityTemp *= (1.0 - BoundaryEmphasis# * 2.0 * (0.5 - fMapZ));" + "\n"
-    	+ "multiHOpacityTemp *= widgetColor.a;" + "\n"
-    	+ "multiHColorSum = (widgetColor * multiHOpacityTemp) + (1 - multiHOpacityTemp)*multiHColorSum;" + "\n"
-    	+ "multiHOpacitySum = multiHOpacityTemp + (1 - multiHOpacityTemp) * multiHOpacitySum;" + "\n"
+    	//+ "multiHOpacityTemp *= widgetColor.a;" + "\n"
+    	//+ "multiHColorSum = (widgetColor * multiHOpacityTemp) + (1 - multiHOpacityTemp)*multiHColorSum;" + "\n"
+    	//+ "multiHOpacitySum = multiHOpacityTemp + (1 - multiHOpacityTemp) * multiHOpacitySum;" + "\n"
+    	+ "multiHColorSum += (widgetColor * multiHOpacityTemp);" + "\n"
+    	+ "multiHOpacitySum += multiHOpacityTemp;" + "\n"
+    	+ "Blend += (multiHOpacityTemp * LevColor#.a);" + "\n"
+    	//+ "Blend += (multiHOpacityTemp);" + "\n"
     	+ "" + "\n";
 
     private static String multiHistogramFinish = ""
@@ -497,16 +501,26 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		GetCProgram(0).Release();
     		return;
     	}
-    	boolean bUpdateTextures = false;
+    	boolean bUpdate = false;
 		for ( int i = 0; i < kLWS.size(); i++ )
 		{
 			if ( (m_akLevWidget[i].UseColorMap[0] != kLWS.elementAt(i).getState().UseColorMap[0]) )
 			{
     			m_akLevWidget[i].Copy( kLWS.elementAt(i).getState() );
-    			bUpdateTextures = true;
+    			bUpdate = true;
+			}
+			if ( (m_akLevWidget[i].UseWidget[0] != kLWS.elementAt(i).getState().UseWidget[0]) )
+			{
+    			m_akLevWidget[i].Copy( kLWS.elementAt(i).getState() );
+    			bUpdate = true;
+			}
+			if ( (m_akLevWidget[i].InvertLUT != kLWS.elementAt(i).getState().InvertLUT) )
+			{
+    			m_akLevWidget[i].Copy( kLWS.elementAt(i).getState() );
+    			bUpdate = true;
 			}
 		}
-		if ( bUpdateTextures )
+		if ( bUpdate )
 		{
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
     		GetCProgram(0).Release();
@@ -573,6 +587,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		// remove clip parameters
     		bReloadShaderProgram = true;
     	}
+    	/*
         if ( (m_afBlendParam[0] != 1.0) && !m_kPShaderCMP.GetProgram().GetProgramText().contains(blendParameters) )
         {
         	// add blend to the program:
@@ -582,7 +597,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         {
         	// remove blend from the program:
     		bReloadShaderProgram = true;
-        }
+        } */
         if ( isClipAE() && !m_kPShaderCMP.GetProgram().GetProgramText().contains(clipAEParameters) )
         {
         	// add arbitrary/eye clipping to the program:
@@ -797,7 +812,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		text += clipAEParameters;
     	}
-    	if ( m_afBlendParam[0] != 1.0 )
+    	//if ( (m_afBlendParam[0] != 1.0) )
     	{
     		text += blendParameters;
     	}
@@ -933,7 +948,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	
     	text += colorComposite;   	
     	
-    	if ( m_afBlendParam[0] != 1.0 )
+    	//if ( m_afBlendParam[0] != 1.0 )
     	{
     		if ( m_iWhichShader != MIP && m_iWhichShader != DRR )
     		{
@@ -944,13 +959,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     			text += blendMIP_DRR;
     		}
     	}
+    	/*
     	else
     	{
     		if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
     		{
     			text += compositeMIP_DRR;
     		}
-    	}
+    	}*/
     	
     	// GLSL Program closing bracket: 
     	text += mainEnd;
@@ -1056,62 +1072,65 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   return (fAlpha);" + "\n"
     	+ "}" + "\n";
 
-    private static String multiHistogramFunctionsCircle = ""
-    + "float computeAlphaCircle( float fX," + "\n"
+    private static String multiHistogramFunctionsCircle = ""+ "float computeAlphaCircle( float fX," + "\n"
     + "                    float fY," + "\n"
     + "                    vec4  Center," + "\n"
     + "                    vec4  MidLine," + "\n"
-    + "                    float fRadius )" + "\n"
+    + "                    vec4  Radius )" + "\n"
     + "{" + "\n"
-    + "    " + "\n"
-    + "    float diffX = fX - Center.x;" + "\n"
-    + "    float diffY = fY - Center.y;" + "\n"
-    + "    float length = sqrt(diffX * diffX + diffY * diffY );" + "\n"
-    + "    if (  length >= fRadius )" + "\n"
+    + "    vec2 p0, p1;" + "\n"
+    + "    p0.x = MidLine.x - Center.x;" + "\n"
+    + "    p0.y = MidLine.y - Center.y;" + "\n"
+    + "    p1.x = fX - Center.x;" + "\n"
+    + "    p1.y = fY - Center.y;" + "\n"
+    + "    float b = Radius.y;" + "\n"
+    + "    float a = Radius.x;" + "\n"
+    + "    float slope = (p1.y - p0.y) / (p1.x - p0.x);" + "\n"
+    + "    float intercept = p1.y - slope * p1.x;" + "\n"
+    + "    float A = b*b + a*a*slope*slope;" + "\n"
+    + "    float B = 2*a*a*intercept*slope;" + "\n"
+    + "    float C = a*a*intercept*intercept - b*b*a*a;" + "\n"
+    + "    float r = B*B - 4*A*C;" + "\n"
+    + "    vec2 intersect0;" + "\n"
+    + "    vec2 intersect1;" + "\n"
+    + "    if ( r >= 0 )" + "\n"
     + "    {" + "\n"
-    + "        return 0.0;" + "\n"
+    + "        // solve for x values - using the quadratic equation" + "\n"
+    + "        float x3 = (float)(-B-sqrt(r))/(2*A);" + "\n"
+    + "        float x4 = (float)(-B+sqrt(r))/(2*A);" + "\n"
+    + "        // calculate y, since we know it's on the line at that point (otherwise there would be no intersection)" + "\n"
+    + "        float y3 = slope*x3+intercept;" + "\n"
+    + "        float y4 = slope*x4+intercept;				" + "\n"
+    + "        intersect0.x = Center.x + x3;" + "\n"
+    + "        intersect0.y = Center.y + y3;" + "\n"
+    + "        intersect1.x = Center.x + x4;" + "\n"
+    + "        intersect1.y = Center.y + y4;" + "\n"
+    + "        vec2 shade;" + "\n"
+    + "        shade.x = fX - MidLine.x;" + "\n"
+    + "        shade.y = fY - MidLine.y;" + "\n"
+    + "        vec2 edge;" + "\n"
+    + "        edge.x = intersect0.x - MidLine.x;" + "\n"
+    + "        edge.y = intersect0.y - MidLine.y;" + "\n"
+    + "        if ( dot( edge, shade ) <= 0 )" + "\n"
+    + "        {" + "\n"
+    + "            intersect0 = intersect1;" + "\n"
+    + "        }" + "\n"
     + "    }" + "\n"
-    + "" + "\n"
+    + "    else" + "\n"
+    + "    {" + "\n"
+    + "        float x3 = (float)(-B-sqrt(r))/(2*A);	" + "\n"
+    + "        float y3 = slope*x3+intercept;" + "\n"  
+    + "        intersect0.x = Center.x + x3;" + "\n"
+    + "        intersect0.y = Center.y + y3;" + "\n"
+    + "    }" + "\n"
     + "    vec2 direction;" + "\n"
     + "    direction.x = fX - MidLine.x;" + "\n"
     + "    direction.y = fY - MidLine.y; " + "\n"
     + "    float lengthShade = sqrt(direction.x*direction.x + direction.y*direction.y);" + "\n"
-    + "    direction.x /= lengthShade;" + "\n"
-    + "    direction.y /= lengthShade;" + "\n"
-    + "    float fAlpha;" + "\n"
-    + "    if ( (MidLine.x == Center.x) && (MidLine.y == Center.y) )" + "\n"
-    + "    {" + "\n"
-    + "        fAlpha = max( 0.0, 1.0 - (lengthShade / fRadius) );" + "\n"
-    + "        return fAlpha;" + "\n"
-    + "    }" + "\n"
-    + "    " + "\n"
-    + "    vec2 diff;" + "\n"
-    + "    diff.x = MidLine.x - Center.x;" + "\n"
-    + "    diff.y = MidLine.y - Center.y;" + "\n"
-    + "    float a0 = (diff.x*diff.x + diff.y*diff.y) - fRadius*fRadius;" + "\n"
-    + "    float a1 = dot(direction,diff);" + "\n"
-    + "    float discr = sqrt(a1*a1 - a0);" + "\n"
-    + "    float t0 = -a1 - discr;" + "\n"
-    + "    float t1 = -a1 + discr;" + "\n"
-    + "" + "\n"
-    + "    vec2 p;" + "\n"
-    + "    if ( a0 >= 0.0 )" + "\n"
-    + "    {" + "\n"
-    + "        p = MidLine.xy + t1 * direction.xy;" + "\n"
-    + "    }" + "\n"
-    + "    else if ( t0 > 0.0 )" + "\n"
-    + "    {" + "\n"
-    + "        p = MidLine.xy + t0 * direction.xy;" + "\n"
-    + "    }" + "\n"
-    + "    else" + "\n"
-    + "    {" + "\n"
-    + "        p = MidLine.xy + t1 * direction.xy;" + "\n"
-    + "    }" + "\n"
-    + "    diffX = p.x - MidLine.x;" + "\n"
-    + "    diffY = p.y - MidLine.y;" + "\n"
-    + "    length =  sqrt(diffX * diffX + diffY * diffY );" + "\n"
-    + "" + "\n"
-    + "    fAlpha = max( 0.0, 1.0 - (lengthShade / length) );" + "\n"
+    + "    float diffX = intersect0.x - MidLine.x;" + "\n"
+    + "    float diffY = intersect0.y - MidLine.y;" + "\n"
+    + "    float length =  sqrt(diffX * diffX + diffY * diffY );" + "\n"
+    + "    float fAlpha = max( 0.0, 1.0 - (lengthShade / length) );" + "\n"
     + "    return fAlpha;" + "\n"
     + "}" + "\n";
 

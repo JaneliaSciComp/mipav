@@ -53,9 +53,92 @@ float computeAlphaCircle( float fX,
                     float fY,
                     vec4  Center,
                     vec4  MidLine,
-                    float fRadius )
+                    vec4  Radius )
 {
-    
+
+
+
+    vec2 p0, p1;
+    p0.x = MidLine.x - Center.x;
+    p0.y = MidLine.y - Center.y;
+    p1.x = fX - Center.x;
+    p1.y = fY - Center.y;
+
+
+
+    float testLength = sqrt(p1.x*p1.x + p1.y * p1.y );
+    float scale = (Radius.x * Radius.y) / sqrt( Radius.y*Radius.y * p1.x*p1.x + Radius.x*Radius.x * p1.y*p1.y );
+    float newX = p1.x * scale;
+    float newY = p1.y * scale;
+    float edgeLength = sqrt( newX*newX + newY*newY );
+    if ( testLength >= edgeLength )
+    {
+        return 0;
+    }
+
+    float b = Radius.y;
+    float a = Radius.x;
+    float slope = (p1.y - p0.y) / (p1.x - p0.x);
+    float intercept = p1.y - slope * p1.x;
+    float A = b*b + a*a*slope*slope;
+    float B = 2*a*a*intercept*slope;
+    float C = a*a*intercept*intercept - b*b*a*a;
+    float r = B*B - 4*A*C;
+
+    vec2 intersect0;
+    vec2 intersect1;
+    if ( r >= 0 )
+    {
+        // solve for x values - using the quadratic equation
+        float x3 = (float)(-B-sqrt(r))/(2*A);
+        float x4 = (float)(-B+sqrt(r))/(2*A);
+        // calculate y, since we know it's on the line at that point (otherwise there would be no intersection)
+        float y3 = slope*x3+intercept;
+        float y4 = slope*x4+intercept;				
+
+        intersect0.x = Center.x + x3;
+        intersect0.y = Center.y + y3;
+
+        intersect1.x = Center.x + x4;
+        intersect1.y = Center.y + y4;
+
+        vec2 shade;
+        shade.x = fX - MidLine.x;
+        shade.y = fY - MidLine.y;
+        vec2 edge;
+        edge.x = intersect0.x - MidLine.x;
+        edge.y = intersect0.y - MidLine.y;
+        if ( dot( edge, shade ) <= 0 )
+        {
+            intersect0 = intersect1;
+        }
+    }
+
+    else
+    {
+        float x3 = (float)(-B-sqrt(r))/(2*A);	
+        float y3 = slope*x3+intercept;
+        
+        intersect0.x = Center.x + x3;
+        intersect0.y = Center.y + y3;
+    }
+    vec2 direction;
+    direction.x = fX - MidLine.x;
+    direction.y = fY - MidLine.y; 
+    float lengthShade = sqrt(direction.x*direction.x + direction.y*direction.y);
+
+    float diffX = intersect0.x - MidLine.x;
+    float diffY = intersect0.y - MidLine.y;
+    float length =  sqrt(diffX * diffX + diffY * diffY );
+    float fAlpha = max( 0.0, 1.0 - (lengthShade / length) );
+    if ( length == 0 )
+    {
+        fAlpha = 1;
+    }
+
+    return fAlpha;
+
+    /*
     float diffX = fX - Center.x;
     float diffY = fY - Center.y;
     float length = sqrt(diffX * diffX + diffY * diffY );
@@ -104,7 +187,7 @@ float computeAlphaCircle( float fX,
     length =  sqrt(diffX * diffX + diffY * diffY );
 
     fAlpha = max( 0.0, 1.0 - (lengthShade / length) );
-
+    */
 //     float dirX = fX - MidLine.x;
 //     float dirY = fY - MidLine.y;
 //     float length = sqrt( dirX * dirX + dirY * dirY );
@@ -154,7 +237,7 @@ uniform sampler2D BaseSampler;
 uniform sampler1D ColorMap; 
 uniform float UseColorMap;
 uniform vec4 Center;
-uniform float Radius;
+uniform vec4 Radius;
 void main()
 {
     vec4 kBase = texture2D(BaseSampler,gl_TexCoord[0].xy);
