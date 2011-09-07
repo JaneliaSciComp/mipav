@@ -324,6 +324,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
+     * @return the referenceTagTable
+     */
+    public final FileDicomTagTable getReferenceTagTable() {
+        return referenceTagTable;
+    }
+
+    /**
      * Returns the value matching the key as a meaningful (ie., non-coded) string . This is the equivalent of calling
      * <code>get(key).getValue(true)</code>.
      *

@@ -2107,7 +2107,7 @@ public class FileDicom extends FileDicomBase {
         short[] dataRGB = null;
 
         fileInfo = (FileInfoDicom) image.getFileInfo(index);
-
+        
         if (stampSecondary) {
             // store that this DICOM has been saved/modified since original capture:
             stampSecondaryCapture(fileInfo);
