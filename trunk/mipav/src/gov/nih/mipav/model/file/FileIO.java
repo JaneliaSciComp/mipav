@@ -1161,6 +1161,14 @@ public class FileIO {
                 } else {
                     curFileInfo = (FileInfoDicom) refFileInfo.clone();
                 }
+                
+                if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
+                    imageFile.getEnhancedTagTables()[location - 1].isReferenceTagTable = false;
+                    imageFile.getEnhancedTagTables()[location - 1].parentFileInfo = curFileInfo;
+                    imageFile.getEnhancedTagTables()[location - 1].referenceTagTable = curFileInfo.getTagTable();
+                    curFileInfo.setTagTable((FileDicomTagTable) imageFile.getEnhancedTagTables()[location - 1]);
+                    curFileInfo.setInfoFromTags();
+                }
 
                 imageFile.setFileInfo(curFileInfo);
 
@@ -1200,7 +1208,7 @@ public class FileIO {
                 origin[0] = curFileInfo.xLocation;
                 origin[1] = curFileInfo.yLocation;
                 origin[2] = curFileInfo.zLocation;
-
+                
                 // TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
                 // Finally convert the point to axial millimeter DICOM space.
                 // dicomMatrix.transform(coord, tCoord);
@@ -1227,12 +1235,6 @@ public class FileIO {
                     curFileInfo.setOrigin(newOriginPt4D);
                 }
                 
-                if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
-                    imageFile.getEnhancedTagTables()[location - 1].isReferenceTagTable = false;
-                    imageFile.getEnhancedTagTables()[location - 1].parentFileInfo = curFileInfo;
-                    imageFile.getEnhancedTagTables()[location - 1].referenceTagTable = curFileInfo.getTagTable();
-                    curFileInfo.setTagTable((FileDicomTagTable) imageFile.getEnhancedTagTables()[location - 1]);
-                }
                 image.setFileInfo(curFileInfo, location);
                 
                 if (isEnhanced4D) {
@@ -1243,6 +1245,7 @@ public class FileIO {
                     location = (enhancedCounter1 * enhancedNumSlices) + enhancedCounter2;
                     enhancedCounter1++;
                 }
+                
                 if (image.getType() == ModelStorageBase.FLOAT) {
                     image.importData(location * length, bufferFloat, false);
                 } else if (image.getType() == ModelStorageBase.UINTEGER) {
@@ -1312,7 +1315,7 @@ public class FileIO {
             }
         }
 
-        if (nListImages > 1 || isEnhanced) {
+        if (nListImages > 1) {
 
             for (int m = 0; m < nImages; m++) {
                 image.getFileInfo(m).setMultiFile(true);
@@ -11634,6 +11637,7 @@ public class FileIO {
             }
         }
         
+        
         if(options.doEnhanced()) {
             int tDim = image.getExtents().length <= 3 ? 1 : image.getExtents()[3];
             int zDim = image.getExtents().length <= 2 ? 1 : image.getExtents()[2];
@@ -11643,10 +11647,15 @@ public class FileIO {
                     infoAr[z][t] = ((FileInfoDicom)image.getFileInfo(zDim*t + z));
                 }
             }
-            
             insertEnhancedSequence(myFileInfo, infoAr);
-            image.setFileInfo(myFileInfo, 0);
+        } else {
+            if(image.getFileInfo() instanceof FileInfoDicom[]) {
+                removeEnhancedDicomInfo(myFileInfo, ((FileInfoDicom[])image.getFileInfo()));
+            }
+            myFileInfo.setMultiFrame(false);
         }
+        
+        image.setFileInfo(myFileInfo, 0);
 
         createProgressBar(null, options.getFileName(), FileIO.FILE_WRITE);
 
@@ -11767,6 +11776,13 @@ public class FileIO {
          * if(dicomFile != null) { dicomFile.finalize(); dicomFile = null; }
          */
         return true;
+    }
+
+    private void removeEnhancedDicomInfo(FileInfoDicom myFileInfo, FileInfoDicom[] fileInfoBases) {
+        for(int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i].getTagTable().removeTag("0028,0008");
+        }
+        myFileInfo.getTagTable().removeTag("0028,0008");
     }
 
     private void insertEnhancedSequence(FileInfoDicom myFileInfo,
