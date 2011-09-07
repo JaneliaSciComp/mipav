@@ -1227,7 +1227,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
                         interpMode = ViewJComponentBase.NEAREST_BOTH;
                     }
                 } else {
-                    interpMode = ViewJComponentBase.INTERPOLATE_B;
+                    interpMode = ViewJComponentBase.NEAREST_BOTH;
                 }
             }
 
@@ -1837,9 +1837,27 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         logCheckBoxA.setFont(MipavUtil.font12);
         logCheckBoxA.addItemListener(this);
 
-        interpCheckBoxA = new JCheckBox("Interpolate image", false);
+        interpCheckBoxA = new JCheckBox("Interpolate image", Preferences.isInterpolateDisplay());
         interpCheckBoxA.setFont(MipavUtil.font12);
         interpCheckBoxA.addItemListener(this);
+
+        int interpMode = 0;
+
+        if (Preferences.isInterpolateDisplay()) {
+
+            if (panelParent.getImageB() != null) {
+
+                interpMode = ViewJComponentBase.INTERPOLATE_BOTH;
+                
+            } else {
+                interpMode = ViewJComponentBase.INTERPOLATE_A;
+            }
+        } else {
+            
+                interpMode = ViewJComponentBase.NEAREST_BOTH;
+        }
+
+        panelParent.getImageA().notifyImageDisplayListeners(panelParent.getLUTa(), true, -50, interpMode);
 
         String[] outputChoices = new String[] {panelParent.getImageA().getTypeString(), "Binary", "Short mask"};
 
@@ -2115,9 +2133,24 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         logCheckBoxB.setFont(MipavUtil.font12);
         logCheckBoxB.addItemListener(this);
 
-        interpCheckBoxB = new JCheckBox("Interpolate image", false);
+        interpCheckBoxB = new JCheckBox("Interpolate image", Preferences.isInterpolateDisplay());
         interpCheckBoxB.setFont(MipavUtil.font12);
         interpCheckBoxB.addItemListener(this);
+        
+        int interpMode = 0;
+
+        if (Preferences.isInterpolateDisplay()) {
+
+            if (panelParent.getImageA() != null) {
+                interpMode = ViewJComponentBase.INTERPOLATE_BOTH;
+            } else {
+                interpMode = ViewJComponentBase.INTERPOLATE_B;
+            }
+        } else {
+                interpMode = ViewJComponentBase.NEAREST_BOTH;
+        }
+
+        panelParent.getImageB().notifyImageDisplayListeners(panelParent.getLUTb(), true, -50, interpMode);
 
         String[] outputChoices = new String[] {panelParent.getImageA().getTypeString(), "Binary", "Short mask"};
         outputBoxB = new JComboBox(outputChoices);
