@@ -474,7 +474,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
      * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
      * file information. Should not be used for the values of private tags, unless they are already in the tag table
-     * (through a call to putPrivateTagValue()).
+     * (through a call to putPrivateTagValue()), since the value representation is unknown.
      *
      * @param  key     the key for the DicomTag in tagsList
      * @param  value   the value to set the DicomTag to
@@ -487,7 +487,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
      * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
      * file information. Should not be used for the values of private tags, unless they are already in the tag table
-     * (through a call to putPrivateTagValue()).
+     * (through a call to putPrivateTagValue()), since the value representation is unknown.
      *
      * @param  key     the key for the DicomTag in tagsList
      * @param  value   the value to set the DicomTag to
@@ -500,7 +500,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
      * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
      * file information. Should not be used for the values of private tags, unless they are already in the tag table
-     * (through a call to putPrivateTagValue()).
+     * (through a call to putPrivateTagValue()), since the value representation is unknown.
      *
      * @param  name    the key for the DicomTag in tagsList (Group, element)
      * @param  value   the value to set the DicomTag to
@@ -514,7 +514,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
      * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
      * file information. Should not be used for the values of private tags, unless they are already in the tag table
-     * (through a call to putPrivateTagValue()).
+     * (through a call to putPrivateTagValue()), since the value representation is unknown.
      *
      * @param  key     the key for the DicomTag in tagsList
      * @param  value   the value to set the DicomTag to
@@ -522,6 +522,19 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      */
     public final void setValue(FileDicomKey key, Object value, int length) {
         FileDicomTag tag = (FileDicomTag) tagTable.get(key.getKey());
+        this.setValue(key, tag, value, length);
+    }
+    
+    /**
+     * Sets the value of the DicomTag in the tagsList Hashtable with the same hexadecimal tag name. The tag names are
+     * unique and that's why they are the keys to the Hashtable. This function also sets modality and other important
+     * file information. This function handles private tags appropriately without them first being added to the tagTable.
+     *
+     * @param  key     the key for the DicomTag in tagsList
+     * @param  value   the value to set the DicomTag to
+     * @param  length  the length of the tag
+     */
+    public final void setValue(FileDicomKey key, FileDicomTag tag, Object value, int length) {
         FileDicomTag lengthTag = null;
         int oldDataLength = 0;
         boolean updateLengthField = false;
@@ -542,8 +555,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         if(info != null) {
             info.setKey(key);
         } else {
-            Preferences.debug("Key "+key+" has not been previously set as a private tag.", Preferences.DEBUG_FILEIO);
-            return;
+            if(tag != null) {
+                putPrivateTagValue(new FileDicomTagInfo(key, tag.getType(), 0, "PrivateTag",
+                        "Private Tag")); // put private tags with explicit VRs in file info hashtable
+            } else {
+                Preferences.debug("Cannot populate "+key+" because no VR has been set.\n", Preferences.DEBUG_FILEIO);
+                return;
+            }
         }
         
 
