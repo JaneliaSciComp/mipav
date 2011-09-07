@@ -11649,8 +11649,8 @@ public class FileIO {
             }
             insertEnhancedSequence(myFileInfo, infoAr);
         } else {
-            if(image.getFileInfo() instanceof FileInfoDicom[]) {
-                removeEnhancedDicomInfo(myFileInfo, ((FileInfoDicom[])image.getFileInfo()));
+            if(image.getFileInfo()[0] instanceof FileInfoDicom) {
+                removeEnhancedDicomInfo(myFileInfo, image.getFileInfo());
             }
             myFileInfo.setMultiFrame(false);
         }
@@ -11778,11 +11778,17 @@ public class FileIO {
         return true;
     }
 
-    private void removeEnhancedDicomInfo(FileInfoDicom myFileInfo, FileInfoDicom[] fileInfoBases) {
+    private void removeEnhancedDicomInfo(FileInfoDicom myFileInfo, FileInfoBase[] fileInfoBases) {
         for(int i = 0; i < fileInfoBases.length; i++) {
-            fileInfoBases[i].getTagTable().removeTag("0028,0008");
+            ((FileInfoDicom)fileInfoBases[i]).getTagTable().removeTag("0028,0008");
+            if(((FileInfoDicom)fileInfoBases[i]).getTagTable().getReferenceTagTable() != null) {
+                ((FileInfoDicom)fileInfoBases[i]).getTagTable().getReferenceTagTable().removeTag("0028,0008");
+            }
         }
         myFileInfo.getTagTable().removeTag("0028,0008");
+        if(myFileInfo.getTagTable().getReferenceTagTable() != null) {
+            myFileInfo.getTagTable().getReferenceTagTable().removeTag("0028,0008");
+        }
     }
 
     private void insertEnhancedSequence(FileInfoDicom myFileInfo,
