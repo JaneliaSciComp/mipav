@@ -2989,6 +2989,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
     public boolean updateImages(final boolean forceShow) {
         return updateImages(null, null, forceShow, -1);
     }
+    
+    /**
+     * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
+     * 
+     * @param forceShow forces show to reimport image and calc. java image
+     * @param interpMode
+     * 
+     * @return boolean confirming successful update
+     */
+    public boolean updateImages(final boolean forceShow, final int interpMode) {
+        return updateImages(null, null, forceShow, interpMode);
+    }
 
     /**
      * This methods calls the componentImage's update method to redraw the screen.
@@ -4050,7 +4062,30 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
         pack(); // DO NOT REMOVE!!!!!!!!!!!!!!!!!!! weird things happen to the layout in certain circumstances
         MipavUtil.centerOnScreen(this);
         setVisible(true);
-        updateImages(true);
+        if ((imageA != null) && (imageB != null)) {
+            if (Preferences.isInterpolateDisplay()) {
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_BOTH);
+        	}
+            else {
+            	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
+            }
+        }
+        else if (imageA != null) {
+        	if (Preferences.isInterpolateDisplay()) {
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_A);
+        	}
+            else {
+            	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
+            }	
+        }
+        else if (imageB != null) {
+        	if (Preferences.isInterpolateDisplay()) {
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_B);
+        	}
+            else {
+            	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
+            }		
+        }
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
         initVOI();
