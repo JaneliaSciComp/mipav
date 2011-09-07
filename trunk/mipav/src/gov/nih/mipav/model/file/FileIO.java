@@ -378,7 +378,6 @@ public class FileIO {
      * 
      * @return The image that was read in, or null if failure.
      */
-    @SuppressWarnings("unchecked")
     public ModelImage readDicom(String selectedFileName, String[] fileList, final boolean performSort) {
 
         FileDicom imageFile;
@@ -1227,10 +1226,11 @@ public class FileIO {
                     newOriginPt4D[3] = 0;
                     curFileInfo.setOrigin(newOriginPt4D);
                 }
-
-                
                 
                 if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
+                    imageFile.getEnhancedTagTables()[location - 1].isReferenceTagTable = false;
+                    imageFile.getEnhancedTagTables()[location - 1].parentFileInfo = curFileInfo;
+                    imageFile.getEnhancedTagTables()[location - 1].referenceTagTable = curFileInfo.getTagTable();
                     curFileInfo.setTagTable((FileDicomTagTable) imageFile.getEnhancedTagTables()[location - 1]);
                 }
                 image.setFileInfo(curFileInfo, location);
@@ -1312,7 +1312,7 @@ public class FileIO {
             }
         }
 
-        if (nListImages > 1) {
+        if (nListImages > 1 || isEnhanced) {
 
             for (int m = 0; m < nImages; m++) {
                 image.getFileInfo(m).setMultiFile(true);
@@ -11809,7 +11809,7 @@ public class FileIO {
                     tag = tags.nextElement();
                     if(table == myFileInfo.getTagTable() || //if table is pointing to the same location as myFileInfo, write all tags 
                             (tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
-                        outerItem.setValue(tag.getKey(), tag.getValue(false));
+                        outerItem.setValue(tag.getKey(), tag, tag.getValue(false), -1);
                         System.out.println("Inserting unique value from key: "+tag.getKey());
                     }
                 }
