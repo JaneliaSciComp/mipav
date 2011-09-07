@@ -5142,7 +5142,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
         else if (imageB != null) {
         	if (Preferences.isInterpolateDisplay()) {
-        	    updateImages(true,ViewJComponentBase.INTERPOLATE_A);
+        	    updateImages(true,ViewJComponentBase.INTERPOLATE_B);
         	}
             else {
             	updateImages(true, ViewJComponentBase.NEAREST_BOTH);
