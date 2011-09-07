@@ -2380,7 +2380,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase implements ItemListener, 
      * @param _imageB image to set the frame to
      */
     public void setImageB(final ModelImage _imageB) {
-    	System.out.println("ViewJFrameTriImage.setImageB");
 
         if (imageB != null) {
             imageB.disposeLocal();
