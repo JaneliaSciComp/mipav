@@ -375,6 +375,9 @@ public class Preferences {
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
     public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
     
+    /** Constant that indicates whether of not an image is interpolated on display */
+    public static final String PREF_INTERPOLATE_DISPLAY = "InterpolateDisplay";
+    
     /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM = "TRIM";
 
@@ -664,6 +667,7 @@ public class Preferences {
         // look and feel properties
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, "false");
         
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
@@ -2150,6 +2154,25 @@ public class Preferences {
             mtEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
         }
         if (Boolean.valueOf(mtEnabled)) {
+            return true;
+        }
+        return false;
+    }
+    
+    /**
+     * Indicates whether image displays should be interpolated
+     * 
+     * @return true if image interpolation is enabled
+     */
+    public static boolean isInterpolateDisplay() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String inEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY);
+        if (inEnabled == null) {
+            inEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY);
+        }
+        if (Boolean.valueOf(inEnabled)) {
             return true;
         }
         return false;
