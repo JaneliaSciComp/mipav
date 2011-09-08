@@ -219,7 +219,8 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
             // if it is, we do not want the undefined dialog to pop up
             // We will just ignore this image in the average algorithm...but we will log it
             FileIO fileIO = new FileIO();
-            int fileType = FileUtility.getFileType(filename, directory, false, false);
+            boolean zerofunused[] = new boolean[1];
+            int fileType = FileUtility.getFileType(filename, directory, false, false, zerofunused);
 
             if (fileType == FileUtility.DICOM) {
                 isMultifile = true;
