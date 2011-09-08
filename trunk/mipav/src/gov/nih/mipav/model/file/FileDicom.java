@@ -2384,23 +2384,20 @@ public class FileDicom extends FileDicomBase {
         try {
             writeHeader(raFile, fileInfo, false);
 
-            if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
-                final float[] data = new float[imageSize];
+            final float[] data = new float[imageSize];
 
-                //rescale data, TODO: test using non-short data
-                final double invSlope = fileInfo.getRescaleSlope();
-                final double intercept = fileInfo.getRescaleIntercept();
-                final short[] data2 = new short[imageSize];
+            final double invSlope = fileInfo.getRescaleSlope();
+            final double intercept = fileInfo.getRescaleIntercept();
+            final short[] data2 = new short[imageSize];
 
-                image.exportData(0, imageSize, data);
-                image.reallocate(fileInfo.getDataType());
+            image.exportData(0, imageSize, data);
+            image.reallocate(fileInfo.getDataType());
 
-                for (int i = 0; i < data.length; i++) {
-                    data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
-                }
-
-                image.importData(0, data2, false);
+            for (int i = 0; i < data.length; i++) {
+                data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
             }
+
+            image.importData(0, data2, false);
 
             FileRawChunk rawChunkFile;
             rawChunkFile = new FileRawChunk(raFile, fileInfo);
