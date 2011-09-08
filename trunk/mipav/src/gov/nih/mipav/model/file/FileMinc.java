@@ -1306,7 +1306,7 @@ public class FileMinc extends FileBase {
             valueStr = value.toString();
             Preferences.debug("Short:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
         } else if (value instanceof String) {
-            valueStr = value.toString();
+            valueStr = value.toString().trim();
             Preferences.debug("String:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
         } else if (value instanceof Float) {
             valueStr = value.toString();

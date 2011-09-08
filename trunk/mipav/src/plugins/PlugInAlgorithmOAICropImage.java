@@ -531,8 +531,8 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
 
 
         try {
-            patientID = (String)
-                            ((FileInfoDicom) srcImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false);
+            patientID = ((String)
+                            ((FileInfoDicom) srcImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false)).trim();
             System.err.println("patient id is: " + patientID);
         } catch (Exception ex) { // do nothing
         }

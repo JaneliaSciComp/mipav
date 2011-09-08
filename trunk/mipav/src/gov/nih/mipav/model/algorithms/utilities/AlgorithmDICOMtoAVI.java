@@ -181,8 +181,8 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                 String patientID = null;
 
                 try {
-                    patientID = (String)
-                                    ((FileInfoDicom) dicomImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false);
+                    patientID = ((String)
+                                    ((FileInfoDicom) dicomImage.getFileInfo(0)).getTagTable().get("0010,0020").getValue(false)).trim();
                     // System.err.println("patient id is: " + patientID);
                 } catch (Exception ex) { // do nothing
                 }
