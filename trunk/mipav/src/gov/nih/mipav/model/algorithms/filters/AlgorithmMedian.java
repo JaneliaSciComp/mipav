@@ -419,7 +419,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         
 
-        fireProgressStateChanged(0, null, "Filtering ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Filtering ...");
         
         if (destImage != null) { // if there exists a destination image
 
@@ -674,8 +674,6 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             return;
         }
-
-        fireProgressStateChanged(-1, null, "Buffering ...");
         
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
@@ -757,8 +755,6 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(-1, null, "Buffering ...");
-
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
@@ -766,7 +762,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        fireProgressStateChanged(-1, null, "Filtering ...");
+        fireProgressStateChanged(10, srcImage.getImageName(), "Filtering ...");
 
         if (sliceFiltering) {
 
@@ -1015,6 +1011,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
 
         int srcBufferLength = srcBufferWidth * srcBufferHeight;
+        
         float[] srcBuffer;
         float[] resultBuffer;
 
@@ -1149,7 +1146,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(-1, null, "Buffering ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Buffering ...");
 
 
         // copy image data from srcBuffer into bdrBuffer
@@ -1158,7 +1155,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        fireProgressStateChanged(-1, null, "Filtering ...");
+        fireProgressStateChanged(10, srcImage.getImageName(), "Filtering ...");
 
         if (sliceFiltering) {
 
@@ -1171,6 +1168,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         } else { // volume kernel requested
             volumeFilterBorder(bdrBuffer, resultBuffer);
         }
+        
+        fireProgressStateChanged(90, srcImage.getImageName(), "Importing result ...");
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
      
@@ -1191,6 +1190,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             return;
         }
+        fireProgressStateChanged(100, null, null);
 
         setCompleted(true);
     }
@@ -2551,10 +2551,12 @@ public class AlgorithmMedian extends AlgorithmBase {
      */
     private void sliceFilterBorder(float[] srcBdrBuffer, float[] destBuffer, int srcBufferStartingPoint,
                                    int destBufferStartingPoint) {
+    	int pass;
         int kn;
         boolean loop;
         float a1, a2, b1, b2;
         float zmin, zmed, zmax;
+        int x, y;
 
         // space allocated for extra rows used by the kernel
         int srcBrdBufferKernelOffset = (halfK[kernelNumber-1] * bdrBufferWidth) + halfK[kernelNumber-1];
@@ -2563,70 +2565,83 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcBdrBufferOffset = srcBufferStartingPoint + srcBrdBufferKernelOffset;
 
         int srcBdrBufferIdx;
-        int destRow, destCol, destBufferIdx = destBufferStartingPoint;
+        int destRow, destCol, destBufferIdx;
         float[] maskedList;
         
         float average; // arithmetic mean
         float sigma; // standard deviation
         int kCenter = maskCenter[0]; // to find the middle pixel of the kernel-mask
-
-        for (destRow = 0; destRow < srcBufferHeight; destRow++) {
-            srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferOffset;
-
-            for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
-
-                if (entireImage || mask.get(destBufferIdx)) {
-                    if (adaptiveSize) {
-                        kn = 0;
-                        loop = true;
-                        while (loop) {
-                             maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, true);
-                             Arrays.sort(maskedList);
-                             zmed = median(maskedList);
-                             zmin = maskedList[0];
-                             zmax = maskedList[maskedList.length-1];
-                             a1 = zmed - zmin;
-                             a2 = zmed - zmax;
-                             if ((a1 > 0.0f) && (a2 < 0.0f)) {
-                                 loop = false;
-                                 b1 = srcBdrBuffer[srcBdrBufferIdx] - zmin;
-                                 b2 = srcBdrBuffer[srcBdrBufferIdx] - zmax;
-                                 if ((b1 > 0.0f) && (b2 < 0.0f)) {
-                                     destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
-                                 }
-                                 else {
-                                     destBuffer[destBufferIdx] = zmed;
-                                 }
-                             } // if (a1 > 0.0f_ && (a2 < 0.0f))
-                             else if (kn == kernelNumber) {
-                                 loop = false;
-                                 destBuffer[destBufferIdx] = zmed;
-                             }
-                        } // while (loop)         
-                    } // if (adaptiveSize)
-                    else { // not adaptiveSize
-                        maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
-                        
-                        //verify that this element is an outlier
-                        if (stdDevLimit == 0.0) { // anything is an outlier
-                        	Arrays.sort(maskedList);
-                            destBuffer[destBufferIdx] = median(maskedList);
-                        } else { // look for outlierness
-                            average = mean(maskedList);
-                            sigma = standardDeviation(maskedList, average);
-
-                            if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
-                                    (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
-                            	Arrays.sort(maskedList);
-                                destBuffer[destBufferIdx] = median(maskedList);
-                            } else { // if element was not an outlier, pixel is fine.
-                                destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
-                            }
-                        }
-                        
-                    } // else not adaptiveSize
-                } else {
-                    destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+        
+        for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
+            destBufferIdx = destBufferStartingPoint;
+	        for (destRow = 0; destRow < srcBufferHeight; destRow++) {
+	            srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferOffset;
+	
+	            for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
+	
+	                if (entireImage || mask.get(destBufferIdx)) {
+	                    if (adaptiveSize) {
+	                        kn = 0;
+	                        loop = true;
+	                        while (loop) {
+	                             maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, true);
+	                             Arrays.sort(maskedList);
+	                             zmed = median(maskedList);
+	                             zmin = maskedList[0];
+	                             zmax = maskedList[maskedList.length-1];
+	                             a1 = zmed - zmin;
+	                             a2 = zmed - zmax;
+	                             if ((a1 > 0.0f) && (a2 < 0.0f)) {
+	                                 loop = false;
+	                                 b1 = srcBdrBuffer[srcBdrBufferIdx] - zmin;
+	                                 b2 = srcBdrBuffer[srcBdrBufferIdx] - zmax;
+	                                 if ((b1 > 0.0f) && (b2 < 0.0f)) {
+	                                     destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+	                                 }
+	                                 else {
+	                                     destBuffer[destBufferIdx] = zmed;
+	                                 }
+	                             } // if (a1 > 0.0f_ && (a2 < 0.0f))
+	                             else if (kn == kernelNumber) {
+	                                 loop = false;
+	                                 destBuffer[destBufferIdx] = zmed;
+	                             }
+	                        } // while (loop)         
+	                    } // if (adaptiveSize)
+	                    else { // not adaptiveSize
+	                    	
+	                        maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
+	                        
+	                        //verify that this element is an outlier
+	                        if (stdDevLimit == 0.0) { // anything is an outlier
+	                        	Arrays.sort(maskedList);
+	                            destBuffer[destBufferIdx] = median(maskedList);
+	                        } else { // look for outlierness
+	                            average = mean(maskedList);
+	                            sigma = standardDeviation(maskedList, average);
+	
+	                            if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
+	                                    (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+	                            	Arrays.sort(maskedList);
+	                                destBuffer[destBufferIdx] = median(maskedList);
+	                            } else { // if element was not an outlier, pixel is fine.
+	                                destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+	                            }
+	                        }
+	                        
+	                    } // else not adaptiveSize
+	                } else {
+	                    destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+	                }
+	            }
+	        }
+	        // now set up for the repeat for multiple iterations.
+            // But only bother with copying over if there are more iterations.
+            if (pass < (iterations - 1)) {
+                for ( y = 0; y < srcBufferHeight; y++) {
+                	for (x = 0; x < srcBufferWidth; x++) {
+                		srcBdrBuffer[(x + halfK[0]) + bdrBufferWidth*(y + halfK[0])] = destBuffer[x + srcBufferWidth*y];
+                	}
                 }
             }
         }
@@ -3294,7 +3309,9 @@ public class AlgorithmMedian extends AlgorithmBase {
 
     private void volumeFilterBorder(float[] srcBdrBuffer, float[] destBuffer) {
 
-        // space allocated for extra slices, rows, and cols used by the kernel
+    	int pass;
+    	int x, y, z;
+    	// space allocated for extra slices, rows, and cols used by the kernel
         int srcBrdBufferKernelOffset = (halfK[kernelNumber-1] * bdrBufferWidth * bdrBufferHeight) + 
                                        (halfK[kernelNumber-1] * bdrBufferWidth) + halfK[kernelNumber-1];
 
@@ -3305,60 +3322,74 @@ public class AlgorithmMedian extends AlgorithmBase {
         float a1, a2, b1, b2;
         float zmin, zmed, zmax;
 
+        int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int srcBdrBufferSliceLength = bdrBufferWidth * bdrBufferHeight;
         int srcBdrBufferIdx, srcBdrBufferSliceOffset;
-        int destSlice, destRow, destCol, destBufferIdx = 0;
-
-        for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
-
-            fireProgressStateChanged( ((float) (destSlice) / (srcBufferDepth - 1)), null, null);
-
-            srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
-
-            for (destRow = 0; destRow < srcBufferHeight; destRow++) {
-
-                srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferSliceOffset;
-
-                for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
-                    if (entireImage || mask.get(destBufferIdx)) {
-                        if (adaptiveSize) {
-                            kn = 0;
-                            loop = true;
-                            while (loop) {
-                                 maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, false);
-                                 Arrays.sort(maskedList);
-                                 zmed = median(maskedList);
-                                 zmin = maskedList[0];
-                                 zmax = maskedList[maskedList.length-1];
-                                 a1 = zmed - zmin;
-                                 a2 = zmed - zmax;
-                                 if ((a1 > 0.0f) && (a2 < 0.0f)) {
-                                     loop = false;
-                                     b1 = srcBdrBuffer[srcBdrBufferIdx] - zmin;
-                                     b2 = srcBdrBuffer[srcBdrBufferIdx] - zmax;
-                                     if ((b1 > 0.0f) && (b2 < 0.0f)) {
-                                         destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
-                                     }
-                                     else {
-                                         destBuffer[destBufferIdx] = zmed;
-                                     }
-                                 } // if (a1 > 0.0f_ && (a2 < 0.0f))
-                                 else if (kn == kernelNumber) {
-                                     loop = false;
-                                     destBuffer[destBufferIdx] = zmed;
-                                 }
-                            } // while (loop)             
-                        } // if (adaptiveSize)
-                        else { // not adaptiveSize
-                            maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
-                            Arrays.sort(maskedList);
-                            destBuffer[destBufferIdx] = median(maskedList);
-                        } // else not adaptiveSize
-                    } else {
-                        destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
-                    }
-                }
-            }
+        int destSlice, destRow, destCol, destBufferIdx;
+        for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
+            destBufferIdx = 0;
+	        for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
+	
+	            //fireProgressStateChanged( ((float) (destSlice) / (srcBufferDepth - 1)), null, null);
+	
+	            srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
+	
+	            for (destRow = 0; destRow < srcBufferHeight; destRow++) {
+	
+	                srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferSliceOffset;
+	
+	                for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
+	                    if (entireImage || mask.get(destBufferIdx)) {
+	                        if (adaptiveSize) {
+	                            kn = 0;
+	                            loop = true;
+	                            while (loop) {
+	                                 maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, false);
+	                                 Arrays.sort(maskedList);
+	                                 zmed = median(maskedList);
+	                                 zmin = maskedList[0];
+	                                 zmax = maskedList[maskedList.length-1];
+	                                 a1 = zmed - zmin;
+	                                 a2 = zmed - zmax;
+	                                 if ((a1 > 0.0f) && (a2 < 0.0f)) {
+	                                     loop = false;
+	                                     b1 = srcBdrBuffer[srcBdrBufferIdx] - zmin;
+	                                     b2 = srcBdrBuffer[srcBdrBufferIdx] - zmax;
+	                                     if ((b1 > 0.0f) && (b2 < 0.0f)) {
+	                                         destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+	                                     }
+	                                     else {
+	                                         destBuffer[destBufferIdx] = zmed;
+	                                     }
+	                                 } // if (a1 > 0.0f_ && (a2 < 0.0f))
+	                                 else if (kn == kernelNumber) {
+	                                     loop = false;
+	                                     destBuffer[destBufferIdx] = zmed;
+	                                 }
+	                            } // while (loop)             
+	                        } // if (adaptiveSize)
+	                        else { // not adaptiveSize
+	                            maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
+	                            Arrays.sort(maskedList);
+	                            destBuffer[destBufferIdx] = median(maskedList);
+	                        } // else not adaptiveSize
+	                    } else {
+	                        destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+	                    }
+	                }
+	            }
+	        }
+	    }
+        if (pass < (iterations - 1)) {
+        	for (z = 0; z < srcBufferDepth; z++) {
+	            for ( y = 0; y < srcBufferHeight; y++) {
+	            	for (x = 0; x < srcBufferWidth; x++) {
+	            		srcBdrBuffer[(x + halfK[0]) + bdrBufferWidth*(y + halfK[0]) + 
+	            		             srcBdrBufferSliceLength*(z + halfK[0])] = 
+	            	    destBuffer[x + srcBufferWidth*y + srcSliceLength * z];
+	            	}
+	            }
+        	}
         }
     }
 }
