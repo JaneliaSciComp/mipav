@@ -229,7 +229,8 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
                     directory = String.valueOf(targetFileChooser.getCurrentDirectory()) + File.separatorChar;
                     UI.setDefaultDirectory(directory);
 
-                    int fileType = FileUtility.getFileType(filename, directory, false, false);
+                    boolean zerofunused[] = new boolean[1];
+                    int fileType = FileUtility.getFileType(filename, directory, false, false, zerofunused);
 
                     if (fileType == FileUtility.DICOM) {
                         isMultifile = true;
