@@ -1046,7 +1046,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         vectorGroup.add(vectorMagnitudeButton);
         gbl.setConstraints(vectorMagnitudeButton, gbc);
         colourPanel.add(vectorMagnitudeButton);
-
+        
         if (image.isColorImage()) {
             vectorMagnitudeButton.setEnabled(true);
         } else {
@@ -1056,7 +1056,9 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         vectorMagnitudeButton.addActionListener(this);
 
         colourPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
-        setupBox.add(colourPanel);
+        if (image.isColorImage()) {
+            setupBox.add(colourPanel);
+        }
 
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         setupBox.add(outputPanel);
