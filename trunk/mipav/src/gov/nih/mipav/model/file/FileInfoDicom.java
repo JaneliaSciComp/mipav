@@ -580,17 +580,30 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     /**
-     * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
+     * Public method for populating ModelImage data fields.
      */
     public final void setInfoFromTags() {
+        setInfoFromTags(this.tagTable, false);
+    }
+    
+    /**
+     * After the tag table is filled, check for a number of tags to set up some fields in this file info object.
+     */
+    private final void setInfoFromTags(FileDicomTagTable tagTable, boolean insideSequenceTag) {
         HashMap<Integer, LengthStorageUnit> lengthComp = new HashMap<Integer, LengthStorageUnit>();
         Iterator<Entry<FileDicomKey,FileDicomTag>> itr = tagTable.getTagList().entrySet().iterator();
         FileDicomTag tag = null;
        
         while(itr.hasNext()) {
             tag = itr.next().getValue();
-            if(tag.getElement() != 0) {
+            if(!insideSequenceTag && tag.getElement() != 0) {
                 appendLengthTag(tag, lengthComp);
+            }
+            if(tag.getValue(false) instanceof FileDicomSQ) {
+                FileDicomSQ sq = (FileDicomSQ) tag.getValue(false);
+                for(int i=0; i<sq.getSequence().size(); i++) {
+                    setInfoFromTags(sq.getSequence().get(i), true);
+                }
             }
             setInfoFromTag(tag);
         }
@@ -815,7 +828,7 @@ public class FileInfoDicom extends FileInfoBase {
         // ordering by type 1 tags first.  Then in numerical order.
         try {
             if (tagKey.equals("0008,0060")) {
-                setModalityFromDicomStr((String) tag.getValue(false)); // type 1
+                setModalityFromDicomStr(((String) tag.getValue(false)).trim()); // type 1
                 // setModalityFromDicomStr() covers the possibility of value == ""
             } else if (tagKey.equals("0018,0088")) {
                 super.setResolutions(Float.parseFloat(tag.getValue(false).toString()), 2); // type 1
@@ -869,7 +882,7 @@ public class FileInfoDicom extends FileInfoBase {
                            ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
             	// y resolution followed by x resolution
     
-                String valueStr = (String) tag.getValue(false);
+                String valueStr = ((String) tag.getValue(false)).trim();
                 String firstHalf, secondHalf;
                 int index = 0;
     
@@ -919,7 +932,7 @@ public class FileInfoDicom extends FileInfoBase {
                 }
             } else if (tagKey.equals("0018,1164")) { // type 2
     
-                String valueStr = (String) tag.getValue(false);
+                String valueStr = ((String) tag.getValue(false)).trim();
                 String firstHalf, secondHalf;
                 int index = 0;
     
@@ -974,7 +987,7 @@ public class FileInfoDicom extends FileInfoBase {
             } else if(tagKey.equals("0028,0004")) { //requires bitsAllocated(0028,0100) and pixelRepresentation(0028,0103) to be set
                 setInfoFromTag(tagTable.get(new FileDicomKey("0028,0100")));
                 setInfoFromTag(tagTable.get(new FileDicomKey("0028,0103")));
-                photometricInterp = (String) tag.getValue(false);
+                photometricInterp = ((String) tag.getValue(false)).trim();
                 
                 if ( (photometricInterp.equals("MONOCHROME1") || photometricInterp.equals("MONOCHROME2"))
                         && (bitsAllocated == 1)) {
