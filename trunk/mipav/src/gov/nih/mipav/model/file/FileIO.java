@@ -11781,13 +11781,17 @@ public class FileIO {
     private void removeEnhancedDicomInfo(FileInfoDicom myFileInfo, FileInfoBase[] fileInfoBases) {
         for(int i = 0; i < fileInfoBases.length; i++) {
             ((FileInfoDicom)fileInfoBases[i]).getTagTable().removeTag("0028,0008");
+            ((FileInfoDicom)fileInfoBases[i]).getTagTable().removeTag("5200,9230");
             if(((FileInfoDicom)fileInfoBases[i]).getTagTable().getReferenceTagTable() != null) {
                 ((FileInfoDicom)fileInfoBases[i]).getTagTable().getReferenceTagTable().removeTag("0028,0008");
+                ((FileInfoDicom)fileInfoBases[i]).getTagTable().getReferenceTagTable().removeTag("5200,9230");
             }
         }
         myFileInfo.getTagTable().removeTag("0028,0008");
+        myFileInfo.getTagTable().removeTag("5200,9230");
         if(myFileInfo.getTagTable().getReferenceTagTable() != null) {
             myFileInfo.getTagTable().getReferenceTagTable().removeTag("0028,0008");
+            myFileInfo.getTagTable().getReferenceTagTable().removeTag("5200,9230");
         }
     }
 
