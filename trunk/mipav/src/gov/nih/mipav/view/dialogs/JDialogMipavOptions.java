@@ -1083,7 +1083,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
       */
       protected void makeInterpolateImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
       
-          displayInterpolate = new JCheckBox("Interpolate image");
+          displayInterpolate = new JCheckBox("Interpolate image display");
           displayInterpolate.setFont(MipavUtil.font12);
           displayInterpolate.setForeground(Color.black);
           displayInterpolate.addActionListener(this);
