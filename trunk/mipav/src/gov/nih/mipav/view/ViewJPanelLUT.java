@@ -1837,7 +1837,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
         logCheckBoxA.setFont(MipavUtil.font12);
         logCheckBoxA.addItemListener(this);
 
-        interpCheckBoxA = new JCheckBox("Interpolate image", Preferences.isInterpolateDisplay());
+        interpCheckBoxA = new JCheckBox("Interpolate image display", Preferences.isInterpolateDisplay());
         interpCheckBoxA.setFont(MipavUtil.font12);
         interpCheckBoxA.addItemListener(this);
 
