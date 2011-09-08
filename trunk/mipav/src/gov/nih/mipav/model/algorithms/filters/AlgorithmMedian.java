@@ -419,7 +419,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         
 
-        fireProgressStateChanged(0, srcImage.getImageName(), "Filtering ...");
+        fireProgressStateChanged(srcImage.getImageName(), "Filtering ...");
         
         if (destImage != null) { // if there exists a destination image
 
@@ -678,11 +678,12 @@ public class AlgorithmMedian extends AlgorithmBase {
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        fireProgressStateChanged((.33f), null, "Filtering ...");
+        fireProgressStateChanged(10);
         
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
-        fireProgressStateChanged((.9f), null, "Importing result ...");
+        fireProgressStateChanged("Importing result ...");
+        fireProgressStateChanged(90);
 
         if (threadStopped) {
             finalize();
@@ -762,12 +763,12 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        fireProgressStateChanged(10, srcImage.getImageName(), "Filtering ...");
+        fireProgressStateChanged(10);
 
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                fireProgressStateChanged( ((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
+            	fireProgressStateChanged(10 + (80 *currentSlice) / (srcBufferDepth - 1));
                
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
@@ -776,6 +777,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         } else { // volume kernel requested
             volumeFilterBorder(bdrBuffer, resultBuffer);
         }
+        
+        fireProgressStateChanged("Importing result");
+        fireProgressStateChanged(90);
 
         if (threadStopped) {
             finalize();
@@ -1053,19 +1057,18 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
 
 
-        fireProgressStateChanged(-1, null, "Buffering ...");
-
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        fireProgressStateChanged((.33f), null, "Filtering ...");
+        fireProgressStateChanged(10);
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
-        fireProgressStateChanged((.9f), null, "Importing result ...");
+        fireProgressStateChanged("Importing result ...");
+        fireProgressStateChanged(90);
 
         if (threadStopped) {
             finalize();
@@ -1092,7 +1095,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * Median filters the source image and replaces the source image with the mode filtered image.
      */
     private void calcStoreInDestBorder3D() {
-
+    	
         if (isColorImage) {
 
             // I don't know how to deal with color images now, so call the
@@ -1146,21 +1149,18 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(0, srcImage.getImageName(), "Buffering ...");
-
-
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
 
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        fireProgressStateChanged(10, srcImage.getImageName(), "Filtering ...");
+        fireProgressStateChanged(10);
 
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                fireProgressStateChanged( ((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
+                fireProgressStateChanged(10 + (80 *currentSlice) / (srcBufferDepth - 1));
               
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -1169,7 +1169,8 @@ public class AlgorithmMedian extends AlgorithmBase {
             volumeFilterBorder(bdrBuffer, resultBuffer);
         }
         
-        fireProgressStateChanged(90, srcImage.getImageName(), "Importing result ...");
+        fireProgressStateChanged("Importing result");
+        fireProgressStateChanged(90);
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
      
@@ -1326,7 +1327,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (sliceIndex = 0; sliceIndex < srcBufferDepth; sliceIndex++) {
             
-            fireProgressStateChanged( ((float) (sliceIndex) / (srcBufferDepth - 1)), null, null);
+            //fireProgressStateChanged( ((float) (sliceIndex) / (srcBufferDepth - 1)), null, null);
           
 
             copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, sliceIndex * srcBufferSliceLength,
@@ -2575,6 +2576,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
             destBufferIdx = destBufferStartingPoint;
 	        for (destRow = 0; destRow < srcBufferHeight; destRow++) {
+	        	fireProgressStateChanged(10 + (80*pass)/iterations + (80* destRow) / (iterations *(srcBufferHeight - 1)));
 	            srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferOffset;
 	
 	            for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
@@ -3330,7 +3332,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             destBufferIdx = 0;
 	        for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
 	
-	            //fireProgressStateChanged( ((float) (destSlice) / (srcBufferDepth - 1)), null, null);
+	            fireProgressStateChanged(10 + (80*pass)/iterations + (80* destSlice) / (iterations *(srcBufferDepth - 1)));
 	
 	            srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
 	
