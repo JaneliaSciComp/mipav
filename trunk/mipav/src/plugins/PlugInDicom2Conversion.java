@@ -220,7 +220,8 @@ public class PlugInDicom2Conversion implements PlugInGeneric {
                 suffix = FileUtility.getExtension(fileName);
             }
 
-            fileType = FileUtility.getFileType(fileName, directory, false, false);
+            boolean zerofunused[] = new boolean[1];
+            fileType = FileUtility.getFileType(fileName, directory, false, false, zerofunused);
         }
 
         // now, get rid of any numbers at the end of the name (these
