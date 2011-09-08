@@ -12,6 +12,7 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom.VRtype;
 import gov.nih.mipav.model.file.rawjp2.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogDicomDir;
@@ -2373,13 +2374,16 @@ public class FileDicom extends FileDicomBase {
             stampSecondaryCapture(fileInfo);
         }
         this.image = image;
-        
+        ModelImage image2 = new ModelImage(DataType.SHORT, image.getExtents(), "TempExport");
         
         final int imageSize = image.getSliceSize();
         int volumeSize = 0;
         if(image.getExtents().length > 2) {
             volumeSize = imageSize*image.getExtents()[2];
         }
+        
+        FileRawChunk rawChunkFile;
+        rawChunkFile = new FileRawChunk(raFile, fileInfo);
         
         try {
             writeHeader(raFile, fileInfo, false);
@@ -2390,25 +2394,22 @@ public class FileDicom extends FileDicomBase {
             final double intercept = fileInfo.getRescaleIntercept();
             final short[] data2 = new short[imageSize];
 
-            image.exportData(0, imageSize, data);
-            image.reallocate(fileInfo.getDataType());
-
-            for (int i = 0; i < data.length; i++) {
-                data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
-            }
-
-            image.importData(0, data2, false);
-
-            FileRawChunk rawChunkFile;
-            rawChunkFile = new FileRawChunk(raFile, fileInfo);
-
             for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
                 for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
-                    rawChunkFile.writeImage(image, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize, sliceNum);
+                    image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
+        
+                    for (int i = 0; i < data.length; i++) {
+                        data2[i] = (short) MipavMath.round( (data[i] - intercept) / invSlope);
+                    }
+        
+                    image2.importData(timeNum*volumeSize + sliceNum*imageSize, data2, false);
+                    
+                    rawChunkFile.writeImage(image2, timeNum*volumeSize + sliceNum*imageSize, timeNum*volumeSize + sliceNum*imageSize + imageSize, sliceNum);
                 }
             }
 
             rawChunkFile.close();
+            image2.disposeLocal();
         } catch (final IOException error) {
             throw new IOException("FileDicomWrite: " + error);
         } catch (final OutOfMemoryError error) {
