@@ -279,6 +279,17 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         		texta1.setEnabled(false);
         	}
         }
+        else if ((source == symmetricOrthogonalization) || (source == deflationaryOrthogonalization) ||
+        		 (source == maximumLikelihoodEstimation)) {
+        	if ((symmetricOrthogonalization.isSelected()) || (maximumLikelihoodEstimation.isSelected())) {
+        		labelICNumber.setEnabled(false);
+        		textICNumber.setEnabled(false);
+        	}
+        	else {
+        		labelICNumber.setEnabled(true);
+        		textICNumber.setEnabled(true);
+        	}
+        }
     }
 
     // ************************************************************************
@@ -644,14 +655,6 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
 
         setTitle("Independent Components");
 
-        labelICNumber = new JLabel("Number of independent components");
-        labelICNumber.setForeground(Color.black);
-        labelICNumber.setFont(serif12);
-
-        textICNumber = new JTextField(5);
-        textICNumber.setText("2");
-        textICNumber.setFont(serif12);
-
         labelEndTol = new JLabel("End tolerance");
         labelEndTol.setForeground(Color.black);
         labelEndTol.setFont(serif12);
@@ -680,29 +683,19 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         gbc.gridy = 0;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
-        upperPanel.add(labelICNumber, gbc);
+        upperPanel.add(labelEndTol, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        upperPanel.add(textICNumber, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.weightx = 0;
-        gbc.fill = GridBagConstraints.NONE;
-        upperPanel.add(labelEndTol, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.weightx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textEndTol, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.weightx = 0;
         gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelMaxIter, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textMaxIter, gbc);
@@ -710,14 +703,27 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         icAlgorithmGroup = new ButtonGroup();
         symmetricOrthogonalization = new JRadioButton("Symmetric orthogonalization", true);
         symmetricOrthogonalization.setFont(serif12);
+        symmetricOrthogonalization.addActionListener(this);
         icAlgorithmGroup.add(symmetricOrthogonalization);
 
         deflationaryOrthogonalization = new JRadioButton("Deflationary orthogonalization", false);
         deflationaryOrthogonalization.setFont(serif12);
+        deflationaryOrthogonalization.addActionListener(this);
         icAlgorithmGroup.add(deflationaryOrthogonalization);
+        
+        labelICNumber = new JLabel("Number of independent components");
+        labelICNumber.setForeground(Color.black);
+        labelICNumber.setFont(serif12);
+        labelICNumber.setEnabled(false);
+
+        textICNumber = new JTextField(5);
+        textICNumber.setText("2");
+        textICNumber.setFont(serif12);
+        textICNumber.setEnabled(false);
 
         maximumLikelihoodEstimation = new JRadioButton("Maximum likelihood estimation", false);
         maximumLikelihoodEstimation.setFont(serif12);
+        maximumLikelihoodEstimation.addActionListener(this);
         icAlgorithmGroup.add(maximumLikelihoodEstimation);
 
         icAlgorithmPanel = new JPanel(new GridBagLayout());
@@ -731,7 +737,20 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         icAlgorithmPanel.add(symmetricOrthogonalization, gbc);
         gbc.gridy = 1;
         icAlgorithmPanel.add(deflationaryOrthogonalization, gbc);
+        gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        icAlgorithmPanel.add(labelICNumber, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        icAlgorithmPanel.add(textICNumber, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         icAlgorithmPanel.add(maximumLikelihoodEstimation, gbc);
         
         nonlinearFunctionGroup = new ButtonGroup();
@@ -937,27 +956,46 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         		colorsRequested++;
         	}
         }
-
-        tmpStr = textICNumber.getText();
-
-        if (srcImage[0].isColorImage()) {
-        	if (testParameter(tmpStr, 1.0, colorsRequested * srcImage.length)) {
-                icNumber = Integer.valueOf(tmpStr).intValue();
-            } else {
-                textICNumber.requestFocus();
-                textICNumber.selectAll();
-
-                return false;
-            }	
+        
+        if (symmetricOrthogonalization.isSelected()) {
+            icAlgorithm = AlgorithmIndependentComponents.SYMMETRIC_ORTHOGONALIZATION;
+        } else if (deflationaryOrthogonalization.isSelected()) {
+            icAlgorithm = AlgorithmIndependentComponents.DEFLATIONARY_ORTHOGONALIZATION;
+        } else {
+            icAlgorithm = AlgorithmIndependentComponents.MAXIMUM_LIKELIHOOD_ESTIMATION;
+        }
+        
+        if ((icAlgorithm == AlgorithmIndependentComponents.SYMMETRIC_ORTHOGONALIZATION) ||
+            (icAlgorithm == AlgorithmIndependentComponents.MAXIMUM_LIKELIHOOD_ESTIMATION)) {
+        	if (srcImage[0].isColorImage()) {
+        	    icNumber = colorsRequested * srcImage.length;
+        	}
+        	else {
+        		icNumber = srcImage.length;
+        	}
         }
         else {
-	        if (testParameter(tmpStr, 1.0, srcImage.length)) {
-	            icNumber = Integer.valueOf(tmpStr).intValue();
-	        } else {
-	            textICNumber.requestFocus();
-	            textICNumber.selectAll();
+	        tmpStr = textICNumber.getText();
 	
-	            return false;
+	        if (srcImage[0].isColorImage()) {
+	        	if (testParameter(tmpStr, 1.0, colorsRequested * srcImage.length)) {
+	                icNumber = Integer.valueOf(tmpStr).intValue();
+	            } else {
+	                textICNumber.requestFocus();
+	                textICNumber.selectAll();
+	
+	                return false;
+	            }	
+	        }
+	        else {
+		        if (testParameter(tmpStr, 1.0, srcImage.length)) {
+		            icNumber = Integer.valueOf(tmpStr).intValue();
+		        } else {
+		            textICNumber.requestFocus();
+		            textICNumber.selectAll();
+		
+		            return false;
+		        }
 	        }
         }
 
@@ -981,15 +1019,6 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
             textMaxIter.selectAll();
 
             return false;
-        }
-
-        
-        if (symmetricOrthogonalization.isSelected()) {
-            icAlgorithm = AlgorithmIndependentComponents.SYMMETRIC_ORTHOGONALIZATION;
-        } else if (deflationaryOrthogonalization.isSelected()) {
-            icAlgorithm = AlgorithmIndependentComponents.DEFLATIONARY_ORTHOGONALIZATION;
-        } else {
-            icAlgorithm = AlgorithmIndependentComponents.MAXIMUM_LIKELIHOOD_ESTIMATION;
         }
         
         if (tanhButton.isSelected()) {
