@@ -47,7 +47,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
     /** number of image planes present. */
     private int nPlanes;
 
-    /** number of independent components to be retained. */
+    /** number of independent components to be retained.
+     For SYMMETRIC_ORTHOGONALIZATION and MAXIMUM_LIKELIHOOD_ESTIMATION
+         icNumber = nPlanes
+                  = colorsRequested * number of source images for color
+                  = number of source images for black and white
+         icNumber can only be varied from 1 to nPlanes with DEFLATIONARY_ORTHOGONALIZATION */
     private int icNumber;
     
     private ModelImage[] srcImageArray = null;
@@ -677,10 +682,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         Matrix matWh; // Whitening matrix
         double wh[][];
         try {
-            eigenvalue = new double[covar.length];
-            D = new double[covar.length][covar.length];
-            V = new double[covar.length][covar.length];
-            e1 = new double[covar.length];
+            eigenvalue = new double[nPlanes];
+            D = new double[nPlanes][nPlanes];
+            V = new double[nPlanes][nPlanes];
+            e1 = new double[nPlanes];
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("Algorithm Independent component: Out of memory allocating eig");
@@ -692,7 +697,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         // In EigevalueDecomposition the columns of V represent the eigenvectors
         // Whitening matrix = v * 1/sqrt(diagonal eigenvalues) * V'
         Eigenvalue.decompose( covar, V, eigenvalue, e1 );
-        for (i = 0; i < covar.length; i++) {
+        for (i = 0; i < nPlanes; i++) {
         	D[i][i] = 1.0/Math.sqrt(eigenvalue[i]);
         }
         matV = new Matrix(V);
@@ -749,12 +754,13 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             }
         } // else not color
         
-        w = new double[icNumber][nPlanes];
+        
         wlast = new double[nPlanes];
         E1 = new double[nPlanes];
         randomGen = new RandomNumberGen();
         fireProgressStateChanged(40);
         if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION) {
+        	w = new double[icNumber][nPlanes];
         	result = new double[samples];
 	        for (p = 0; p < icNumber; p++) {
 	        	Preferences.debug("p = " + p + "\n");
@@ -926,8 +932,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        } // for (p = 0; p < icNumber; p++)
         } // if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION)
         else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION){
+        	w = new double[nPlanes][nPlanes];
         	result = new double[samples];
-        	for (p = 0; p < icNumber; p++) {
+        	for (p = 0; p < nPlanes; p++) {
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
 	        	sumSquares = 0.0;
 	        	for (i = 0; i < nPlanes; i++) {
@@ -938,15 +945,15 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        	for (i = 0; i < nPlanes; i++) {
 	        		w[p][i] = w[p][i]/norm;
 	        	}
-        	} // for (p = 0; p < icNumber; p++)
+        	} // for (p = 0; p < nPlanes; p++)
         	matW = new Matrix(w);
         	matWWT = matW.times(matW.transpose());
         	WWT = matWWT.getArray();
         	try {
-                eigenvalue = new double[icNumber];
-                D = new double[icNumber][icNumber];
-                V = new double[icNumber][icNumber];
-                e1 = new double[icNumber];
+                eigenvalue = new double[nPlanes];
+                D = new double[nPlanes][nPlanes];
+                V = new double[nPlanes][nPlanes];
+                e1 = new double[nPlanes];
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("Algorithm Independent component: Out of memory allocating eig");
@@ -958,7 +965,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             // In EigevalueDecomposition the columns of V represent the eigenvectors
             // WWT**(-1/2) = v * 1/sqrt(diagonal eigenvalues) * V'
             Eigenvalue.decompose( WWT, V, eigenvalue, e1 );
-            for (i = 0; i < covar.length; i++) {
+            for (i = 0; i < nPlanes; i++) {
             	D[i][i] = 1.0/Math.sqrt(eigenvalue[i]);
             }
             matV = new Matrix(V);
@@ -967,8 +974,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             matW = matWh.times(matW);
             w = matW.getArray();
             wMaxDiff = 1.0;
-            wslast = new double[icNumber][nPlanes];
-            for (p = 0 ; p < icNumber; p++) {
+            wslast = new double[nPlanes][nPlanes];
+            for (p = 0 ; p < nPlanes; p++) {
             	for (i = 0; i < nPlanes; i++) {
             		wslast[p][i] = w[p][i];
             	}
@@ -980,7 +987,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		fireProgressStateChanged(40 + (60*iterations)/maxIterations);
         		Preferences.debug("wMaxDiff = " + wMaxDiff + " at iteration " + iterations + "\n",
         				Preferences.DEBUG_ALGORITHM);
-        		for (p = 0; p < icNumber; p++) {
+        		for (p = 0; p < nPlanes; p++) {
         			for (i = 0; i < nPlanes; i++) {
 	        	    	E1[i] = 0.0;
 	        	    }
@@ -1062,7 +1069,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                for (i = 0; i < nPlanes; i++) {
 	                	w[p][i] = E1[i] - E2*w[p][i];
 	                }	
-        		} // for (p = 0; p < icNumber; p++)
+        		} // for (p = 0; p < nPlanes; p++)
         		matW = new Matrix(w);
             	matWWT = matW.times(matW.transpose());
             	WWT = matWWT.getArray();
@@ -1070,7 +1077,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
                 // In EigevalueDecomposition the columns of V represent the eigenvectors
                 // WWT**(-1/2) = v * 1/sqrt(diagonal eigenvalues) * V'
                 Eigenvalue.decompose( WWT, V, eigenvalue, e1 );
-                for (i = 0; i < covar.length; i++) {
+                for (i = 0; i < nPlanes; i++) {
                 	D[i][i] = 1.0/Math.sqrt(eigenvalue[i]);
                 }
                 matV = new Matrix(V);
@@ -1078,7 +1085,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
                 matWh = (matV.times(matD)).times(matV.transpose());  
                 matW = matWh.times(matW);
                 w = matW.getArray();
-                for (p = 0; p < icNumber; p++) {
+                for (p = 0; p < nPlanes; p++) {
                 	// Make signs same as on last iteration by always making the first element positive
                 	if (w[p][0] < 0) {
                 		for (i = 0; i < nPlanes; i++) {
@@ -1087,7 +1094,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
                 	}
                 }
         		wMaxDiff = 0;
-        		for (p = 0; p < icNumber; p++) {
+        		for (p = 0; p < nPlanes; p++) {
 		        	for (i = 0; i < nPlanes; i++) {
 		        		if (Math.abs(w[p][i] - wslast[p][i]) > wMaxDiff) {
 		        		    wMaxDiff = Math.abs(w[p][i] - wslast[p][i]);	
@@ -1096,7 +1103,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 		        	}
         		}
         	} // while ((wMaxDiff >= endTolerance) && (iterations < maxIterations))
-        	for (p = 0; p < icNumber; p++) {
+        	for (p = 0; p < nPlanes; p++) {
 	        	if (haveColor) {
 		        	for (j = 0; j < samples; j++) {
 	                    result[j] = 0;
@@ -1127,7 +1134,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	
 	                return;
 	            }
-        	} // for (p = 0; p < icNumber; p++)
+        	} // for (p = 0; p < nPlanes; p++)
         } // else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION)
         else { // icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
         	// Table 9.2 has not whitening but notes that in practice, whitening combined with PCA may often
@@ -1321,7 +1328,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             		}
             	}
             } // while ((maxBDiff >= endTolerance) && (iterations < maxIterations))
-            for (p = 0; p < icNumber; p++) {
+            for (p = 0; p < nPlanes; p++) {
 	        	if (haveColor) {
 		        	for (j = 0; j < samples; j++) {
 	                    result[j] = 0;
@@ -1352,7 +1359,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	
 	                return;
 	            }
-        	} // for (p = 0; p < icNumber; p++)
+        	} // for (p = 0; p < nPlanes; p++)
         } // else icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
 
         fireProgressStateChanged(100);
