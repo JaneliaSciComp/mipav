@@ -314,7 +314,6 @@ public class VOIPoint extends VOIBase {
      * @param iZ input z-position
      * @return true if the input position is near one of the contour points.
      */
-    @Override
 	public boolean nearPoint( int iX, int iY, int iZ) {
         if ( m_kRotationInverse != null )
         {
@@ -376,6 +375,12 @@ public class VOIPoint extends VOIBase {
         m_kRotationInverse.Inverse();
     }
 
+
+    public void setPlane( int iPlane )
+    {
+        m_iPlane = XPLANE | YPLANE | ZPLANE;
+        m_bUpdatePlane = false;
+    }
 
     /**
      * Returns the totalDistance string.

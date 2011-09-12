@@ -705,7 +705,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param g Graphics.
 	 */
 	public void draw( VOIBase kVOI, float[] resolutions, int[] unitsOfMeasure, 
-			int slice, Graphics g ) 
+			int slice, Graphics g, boolean bShowAllPoints ) 
 	{
 		if (g == null) {
 			MipavUtil.displayError("Draw VOI: grapics = null");
@@ -715,7 +715,12 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			drawVOIPolyLineSlice( (VOIPolyLineSlice)kVOI, resolutions, unitsOfMeasure, g );
 		}
-		if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
+		if ( (kVOI.getType() == VOI.POINT) && bShowAllPoints && (getSlice(kVOI) == slice) )
+		{
+			drawVOIPoint( (VOIPoint)kVOI, g );
+			return;
+		}
+		else if ( (m_iPlane != (m_iPlane & kVOI.getPlane())) || (getSlice(kVOI)!= slice) )
 		{
 			return;
 		}
