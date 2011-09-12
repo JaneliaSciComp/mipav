@@ -395,6 +395,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         int iCurrent;
         int i2Current;
         double temp[];
+        double wstd[][];
+        double wslaststd[][];
+        double wlaststd[];
+        double Bstd[][];
+        double Blaststd[][];
 
         if (haveColor) {
         	if (redRequested) {
@@ -755,12 +760,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         } // else not color
         
         
-        wlast = new double[nPlanes];
         E1 = new double[nPlanes];
         randomGen = new RandomNumberGen();
         fireProgressStateChanged(40);
         if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION) {
         	w = new double[icNumber][nPlanes];
+        	wstd =  new double[icNumber][nPlanes];
+        	wlast = new double[nPlanes];
+        	wlaststd = new double[nPlanes];
         	result = new double[samples];
 	        for (p = 0; p < icNumber; p++) {
 	        	Preferences.debug("p = " + p + "\n");
@@ -887,13 +894,28 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	            	// by always making the first element positive
 	            	if (w[p][0] < 0) {
 	            		for (i = 0; i < nPlanes; i++) {
-	            			w[p][i] = -w[p][i];
+	            			wstd[p][i] = -w[p][i];
+	            		}
+	            	}
+	            	else {
+	            	    for (i = 0; i < nPlanes; i++) {
+	            		    wstd[p][i] = w[p][i];		
+	            	    }
+	            	}
+	            	if (wlast[0] < 0) {
+	            		for (i = 0; i < nPlanes; i++) {
+	            			wlaststd[i] = -wlast[i];
+	            		}
+	            	}
+	            	else {
+	            		for (i = 0; i < nPlanes; i++) {
+	            			wlaststd[i] = wlast[i];
 	            		}
 	            	}
 		        	wMaxDiff = 0;
 		        	for (i = 0; i < nPlanes; i++) {
-		        		if (Math.abs(w[p][i] - wlast[i]) > wMaxDiff) {
-		        		    wMaxDiff = Math.abs(w[p][i] - wlast[i]);	
+		        		if (Math.abs(wstd[p][i] - wlaststd[i]) > wMaxDiff) {
+		        		    wMaxDiff = Math.abs(wstd[p][i] - wlaststd[i]);	
 		        		}
 		        		wlast[i] = w[p][i];
 		        	}
@@ -918,7 +940,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                    for (z = 0; z < zDim; z++) {
 	                    	result[j] += w[p][z] * zvalues[(z * samples) + j];
 	                    } // for (z = 0; z < zDim; z++)
-	        		} // for (z = 0; z < zDim; z++)
+	        		} // for (j = 0; j < samples; j++)
 	        	}
 	        	try {
 	                destImage[p].importData(0, result, true);
@@ -930,9 +952,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
 	        } // for (p = 0; p < icNumber; p++)
+	        System.out.println("w[0][0] = " + w[0][0] + " w[0][1] = " + w[0][1]);
+        	System.out.println("w[1][0] = " + w[1][0] + " w[1][1] = " + w[1][1]);
         } // if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION)
         else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION){
         	w = new double[nPlanes][nPlanes];
+        	wstd = new double[nPlanes][nPlanes];
         	result = new double[samples];
         	for (p = 0; p < nPlanes; p++) {
 	        	// Choose an initial value of unit norm for w[p], e.g., randomly
@@ -975,6 +1000,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             w = matW.getArray();
             wMaxDiff = 1.0;
             wslast = new double[nPlanes][nPlanes];
+            wslaststd = new double[nPlanes][nPlanes];
             for (p = 0 ; p < nPlanes; p++) {
             	for (i = 0; i < nPlanes; i++) {
             		wslast[p][i] = w[p][i];
@@ -1085,19 +1111,33 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
                 matWh = (matV.times(matD)).times(matV.transpose());  
                 matW = matWh.times(matW);
                 w = matW.getArray();
-                for (p = 0; p < nPlanes; p++) {
-                	// Make signs same as on last iteration by always making the first element positive
-                	if (w[p][0] < 0) {
-                		for (i = 0; i < nPlanes; i++) {
-                			w[p][i] = -w[p][i];
-                		}
-                	}
-                }
         		wMaxDiff = 0;
         		for (p = 0; p < nPlanes; p++) {
+        		    if (w[p][0] < 0) {
+    		    	    for (i = 0; i < nPlanes; i++) {
+    		    		    wstd[p][i] = -w[p][i];
+    		    	    }
+        		    }
+        		    else {
+        		    	for (i = 0; i < nPlanes; i++) {
+        		    		wstd[p][i] = w[p][i];
+        		    	}
+        		    }
+        		    if (wslast[p][0] < 0) {
+    		    	    for (i = 0; i < nPlanes; i++) {
+    		    		    wslaststd[p][i] = -wslast[p][i];
+    		    	    }
+        		    }
+        		    else {
+        		    	for (i = 0; i < nPlanes; i++) {
+        		    		wslaststd[p][i] = wslast[p][i];
+        		    	}
+        		    }
+        		}
+        		for (p = 0; p < nPlanes; p++) {
 		        	for (i = 0; i < nPlanes; i++) {
-		        		if (Math.abs(w[p][i] - wslast[p][i]) > wMaxDiff) {
-		        		    wMaxDiff = Math.abs(w[p][i] - wslast[p][i]);	
+		        		if (Math.abs(wstd[p][i] - wslaststd[p][i]) > wMaxDiff) {
+		        		    wMaxDiff = Math.abs(wstd[p][i] - wslaststd[p][i]);	
 		        		}
 		        		wslast[p][i] = w[p][i];
 		        	}
@@ -1123,7 +1163,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                    for (z = 0; z < zDim; z++) {
 	                    	result[j] += w[p][z] * zvalues[(z * samples) + j];
 	                    } // for (z = 0; z < zDim; z++)
-	        		} // for (z = 0; z < zDim; z++)
+	        		} // for (j = 0; j < samples; j++)
 	        	}
 	        	try {
 	                destImage[p].importData(0, result, true);
@@ -1135,6 +1175,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
         	} // for (p = 0; p < nPlanes; p++)
+        	System.out.println("w[0][0] = " + w[0][0] + " w[0][1] = " + w[0][1]);
+        	System.out.println("w[1][0] = " + w[1][0] + " w[1][1] = " + w[1][1]);
         } // else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION)
         else { // icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
         	// Table 9.2 has not whitening but notes that in practice, whitening combined with PCA may often
@@ -1197,9 +1239,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             // Under 9.4 examples the text states "The algorithms were always initialized so that
             // B was the identity matrix.
             B = new double[nPlanes][nPlanes];
+            Bstd = new double[nPlanes][nPlanes];
             Blast = new double[nPlanes][nPlanes];
+            Blaststd = new double[nPlanes][nPlanes];
             for (i = 0; i < nPlanes; i++) {
             	B[i][i] = 1.0;
+            	Blast[i][i] = 1.0;
             }
             y = new double[nPlanes];
             alpha = new double[nPlanes];
@@ -1315,14 +1360,29 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             	for (i = 0; i < nPlanes; i++) {
             		if (B[i][0] < 0.0) {
             			for (j = 0; j < nPlanes; j++) {
-            				B[i][j] = -B[i][j];
+            				Bstd[i][j] = -B[i][j];
+            			}
+            		}
+            		else {
+            			for (j = 0; j < nPlanes; j++) {
+            				Bstd[i][j] = B[i][j];
+            			}
+            		}
+            		if (Blast[i][0] < 0.0) {
+            			for (j = 0; j < nPlanes; j++) {
+            				Blaststd[i][j] = -Blast[i][j];
+            			}
+            		}
+            		else {
+            			for (j = 0; j < nPlanes; j++) {
+            				Blaststd[i][j] = Blast[i][j];
             			}
             		}
             	}
             	for (i = 0; i < nPlanes; i++) {
             		for (j = 0; j < nPlanes; j++) {
-            			if (Math.abs(B[i][j] - Blast[i][j]) > maxBDiff) {
-            				maxBDiff = Math.abs(B[i][j] - Blast[i][j]);
+            			if (Math.abs(Bstd[i][j] - Blaststd[i][j]) > maxBDiff) {
+            				maxBDiff = Math.abs(Bstd[i][j] - Blaststd[i][j]);
             			}
             			Blast[i][j] = B[i][j];
             		}
@@ -1360,6 +1420,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
         	} // for (p = 0; p < nPlanes; p++)
+            System.out.println("B[0][0] = " + B[0][0] + " B[0][1] = " + B[0][1]);
+        	System.out.println("B[1][0] = " + B[1][0] + " B[1][1] = " + B[1][1]);
         } // else icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
 
         fireProgressStateChanged(100);
