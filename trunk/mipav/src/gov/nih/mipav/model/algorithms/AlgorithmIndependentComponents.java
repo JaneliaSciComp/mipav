@@ -952,8 +952,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
 	        } // for (p = 0; p < icNumber; p++)
-	        System.out.println("w[0][0] = " + w[0][0] + " w[0][1] = " + w[0][1]);
-        	System.out.println("w[1][0] = " + w[1][0] + " w[1][1] = " + w[1][1]);
+	        for (p = 0; p < icNumber; p++) {
+	        	for (i = 0; i < nPlanes; i++) {
+	        		Preferences.debug(" w["+p+"]["+i+"] = " + w[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        	}
+        	}
         } // if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION)
         else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION){
         	w = new double[nPlanes][nPlanes];
@@ -1175,8 +1178,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
         	} // for (p = 0; p < nPlanes; p++)
-        	System.out.println("w[0][0] = " + w[0][0] + " w[0][1] = " + w[0][1]);
-        	System.out.println("w[1][0] = " + w[1][0] + " w[1][1] = " + w[1][1]);
+        	for (p = 0; p < nPlanes; p++) {
+	        	for (i = 0; i < nPlanes; i++) {
+	        		Preferences.debug(" w["+p+"]["+i+"] = " + w[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        	}
+        	}
         } // else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION)
         else { // icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
         	// Table 9.2 has not whitening but notes that in practice, whitening combined with PCA may often
@@ -1420,8 +1426,11 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
         	} // for (p = 0; p < nPlanes; p++)
-            System.out.println("B[0][0] = " + B[0][0] + " B[0][1] = " + B[0][1]);
-        	System.out.println("B[1][0] = " + B[1][0] + " B[1][1] = " + B[1][1]);
+            for (p = 0; p < nPlanes; p++) {
+            	for (i = 0; i < nPlanes; i++) {
+            		Preferences.debug("B["+p+"]["+i+"] = " + B[p][i] + "\n",Preferences.DEBUG_ALGORITHM);
+            	}
+            }
         } // else icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
 
         fireProgressStateChanged(100);
