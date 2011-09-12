@@ -11822,8 +11822,8 @@ public class FileIO {
                     table.setValue("0020,9111", seq, -1);
                 }
                 
-                item.setValue("0020,9056", t);
-                item.setValue("0020,9057", z);
+                item.setValue("0020,9056", t+1);  //is one-based
+                item.setValue("0020,9057", z+1);  //is one-based
                 
                 item.setWriteAsUnknownLength(false); //enhanced sequence items are always written using known length
                 
