@@ -1126,7 +1126,7 @@ public class FileIO {
         int enhancedCounter2 = 0;
 
         for (int i = 0; i < nImages; i++) {
-            if (multiframe) {
+        	if (multiframe) {
                 filename = fileList[0];
                 start = i;
                 location = i;
@@ -11836,7 +11836,6 @@ public class FileIO {
                     if(table == myFileInfo.getTagTable() || //if table is pointing to the same location as myFileInfo, write all tags 
                             (tagValue = myFileInfo.getTagTable().get(tag.getKey())) == null || !tag.equals(tagValue)) {
                         outerItem.setValue(tag.getKey(), tag, tag.getValue(false), -1);
-                        System.out.println("Inserting unique value from key: "+tag.getKey());
                     }
                 }
                 seqBase.addItem(outerItem); //is now the 2D item within the sequence

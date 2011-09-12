@@ -736,10 +736,6 @@ public class FileDicom extends FileDicomBase {
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
         int tagVM;
-
-        if(name.equals("0028,0008")) {
-        	System.out.println("Stop");
-        }
         
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
@@ -2398,8 +2394,9 @@ public class FileDicom extends FileDicomBase {
             final double intercept = fileInfo.getRescaleIntercept();
             final short[] data2 = new short[imageSize];
 
-            for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
-                for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+            
+            for (int sliceNum = startSlice; sliceNum <= endSlice; sliceNum++) {
+            	for(int timeNum = startTime; timeNum <= endTime; timeNum++) {
                     image.exportData(timeNum*volumeSize + sliceNum*imageSize, imageSize, data);
         
                     for (int i = 0; i < data.length; i++) {
@@ -3484,14 +3481,7 @@ public class FileDicom extends FileDicomBase {
         Preferences.debug("Processing tag "+tag.getKey()+" with VR "+tag.getValueRepresentation()+"\n", Preferences.DEBUG_FILEIO);
     	
     	VR vr = VR.UN;
-
-    	Preferences.debug("Writing tag "+tag.getKey().toString()+"\n", Preferences.DEBUG_FILEIO);
     	
-    	if(tag.getKey().toString().equals("0028,0008")) {
-    	    System.out.println("Stop");
-    	}
-    	
-        // System.out.println("w = " + dicomTags[i].toString());
         try {
 
             if (fileInfo.getVr_type() == VRtype.EXPLICIT) {
@@ -3503,7 +3493,6 @@ public class FileDicom extends FileDicomBase {
             vr = VR.UN;
         }
 
-        // System.out.println(" Name = " + dicomTags[i].toString());
         final int gr = tag.getGroup();
         final int el = tag.getElement();
 
@@ -3521,9 +3510,6 @@ public class FileDicom extends FileDicomBase {
         final int nValues = tag.getNumberOfValues();
 
         final int vm = tag.getValueMultiplicity();
-        // Not sure if I need this - efilm adds it - also efilm has tag, 0000 lengths (meta lengths)for tag groups
-        // (02, 08, ....) if (gr==2 && fileInfo.getVRType() == fileInfo.IMPLICIT){
-        // fileInfo.setVRType(fileInfo.EXPLICIT); } else if (gr > 2){ fileInfo.setVRType(fileInfo.IMPLICIT); }
 
         if ( (gr == 2) && (el == 0)) {
 
