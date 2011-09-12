@@ -1748,31 +1748,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
 
     /**
-     * Returns true if the input position is near one of the points on this contour.
-     * @param iX input x-position.
-     * @param iY input y-position.
-     * @param iZ input z-position
-     * @return true if the input position is near one of the contour points.
-     */
-    public boolean nearPoint( int iX, int iY, int iZ) {
-
-        Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
-        for ( int i = 0; i < size(); i++ )
-        {
-            Vector3f kPos = get(i);
-            Vector3f kDiff = new Vector3f();
-            kDiff.Sub( kPos, kVOIPoint );
-            if ( (Math.abs( kDiff.X ) < 3) &&  (Math.abs( kDiff.Y ) < 3) && (Math.abs( kDiff.Z ) < 3) )
-            {
-                setNearPoint(i);
-                return true;
-            }
-        }
-        return false;
-    }
-
-
-    /**
      * Fits a plane to the points in this contour and returns the plane.
      * @return
      */

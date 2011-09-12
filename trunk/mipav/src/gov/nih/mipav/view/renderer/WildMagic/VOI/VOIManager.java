@@ -1926,11 +1926,11 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		{
 			return false;
 		}
-		if ( kVOI.nearLine( (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
+		if ( nearLine( kVOI, (int)kVolumePt.X, (int)kVolumePt.Y, (int)kVolumePt.Z ) )
 		{
 			return true;
 		}
-		if ( kVOI.nearPoint( iX, iY, iZ ) )
+		if ( nearPoint( kVOI, iX, iY, iZ ) )
 		{
 			return true;
 		}
