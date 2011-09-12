@@ -5280,7 +5280,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         voiManager.draw( kVOI3D, 
                                     imageA.getResolutions(0), 
                                     imageA.getUnitsOfMeasure(), slice, 
-                                    offscreenGraphics2d );
+                                    offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
                     }
                 }
             }
@@ -5300,7 +5300,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                         voiManager.draw( kVOI3D, 
                                     imageB.getResolutions(0), 
                                     imageB.getUnitsOfMeasure(), slice, 
-                                    offscreenGraphics2d );
+                                    offscreenGraphics2d, (orientation == FileInfoBase.UNKNOWN_ORIENT) );
                     }
                 }
             }
