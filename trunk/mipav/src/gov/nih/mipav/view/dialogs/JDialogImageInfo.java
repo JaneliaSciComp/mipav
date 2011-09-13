@@ -19,7 +19,9 @@ import java.io.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellEditor;
 import javax.swing.text.JTextComponent;
 import gov.nih.mipav.model.file.FilePARREC;
 import java.lang.*;
@@ -47,10 +49,15 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** grid bag constraints * */
     private GridBagConstraints gbc, gbc2, gbc3;
+
     /** main panel * */
     private JPanel mainPanel;
+
     /** table to display the src image names. */
-    private JTable srcImagesTable;
+    private JTable srcBvalGradTable;
+    
+    /** TextArea of main dialogfor text output.* */
+    private JTextArea outputTextArea;
 
     /** DOCUMENT ME! */
     private JTextField[] acpcACFields;
@@ -69,12 +76,36 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JTextField acpcResField;
-    
+
     /** DOCUMENT ME! */
     private JTextField bValueTextField;
-    
+
     /** DOCUMENT ME! */
     private JTextField gradientTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField fatshiftTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField gradResTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField gradOPTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField philRelTextField;
+
+    /** DOCUMENT ME! */
+    private JComboBox fatshiftBox;
+
+    /** DOCUMENT ME! */
+    private JComboBox gradResBox;
+
+    /** DOCUMENT ME! */
+    private JComboBox gradOPBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox philRelBox;
 
     /** Add as New/Replace button (depending on selected matrix type). */
     private JButton addReplaceMatrix;
@@ -120,6 +151,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JCheckBox isTLRCBox;
+    
+    /** DOCUMENT ME! */
+    private JCheckBox isDWICellEditBox; 
+    
+    /** DOCUMENT ME! */
+    private JCheckBox isDWITableDeleteBox;
 
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
@@ -162,13 +199,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private String newImageName;
-    
+
     /** current directory * */
     private String currDir = null;
-    
+
     /** table model for the srcimages. */
     private DefaultTableModel srcTableModel;
-
 
     /** DOCUMENT ME! */
     private int orient;
@@ -254,6 +290,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private JTextField[] tlrcResFields;
 
     /** DOCUMENT ME! */
+    // private JTextField[] bvalGradFields;
+
+    /** DOCUMENT ME! */
     private JComboBox transformIDBox;
 
     /** DOCUMENT ME! */
@@ -263,6 +302,30 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private boolean wcSystem = false;
 
     private boolean resizeOnClose = false;
+    
+    /** Radio button to save gradBval text file in FSL format */
+    JRadioButton fslButton;
+    
+    /** Radio button to save gradBval text file in DTIStudio format */
+    JRadioButton dtiStudioButton; 
+    
+    /** Radio button to save gradBval text file in mipavStandard format */
+    JRadioButton mipavStandardButton; 
+    
+    /** bValGrad test file name from user */
+    String filebvalGradTxtName;
+    
+    /** number of Volumes in DWI Image */
+    private int numVolumes;
+    
+    /** number of Volumes in DWI Image */
+    private int dwiBrowse;
+    
+    /**int to determine which format user selects for gradBval test file */
+    private int gradBvalText;
+        
+    /**chooser for save gradBval text dialog */
+    JFileChooser saveGradchooser; 
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -346,16 +409,16 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 if (image.getFileInfo(0).getModality() != modality) {
                     updateImageModality();
                 }
-                //updates resolution info for every slice/volume/time sequence
+                // updates resolution info for every slice/volume/time sequence
                 updateResolInfo();
-                
+
                 updateTalairachInfo();
-                
+
                 updateImageOrientation();
                 updateOriginInfo();
-                
+
                 updateMatrixInfo();
-                
+
                 if (linkedImageField != null) {
                     updateXMLLinkedFile();
                 }
@@ -576,41 +639,97 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         } else if (command.equals("PasteMatrix")) {
             updateMatrixFields(ViewUserInterface.getReference().getClippedMatrix());
-        }
-          else if (command.equals("bvalGradBrowse")) {
+        } else if (command.equals("bvalGradBrowse")) {
+            dwiBrowse = 1;
             final JFileChooser chooser = new JFileChooser();
-            
+
             if (currDir != null) {
-            chooser.setCurrentDirectory(new File(currDir));
+                chooser.setCurrentDirectory(new File(currDir));
             }
             chooser.setDialogTitle("Choose File");
             chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            
+
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
-            currDir = chooser.getSelectedFile().getAbsolutePath();
-            readBValGradientFile(currDir);
-        }
+                currDir = chooser.getSelectedFile().getAbsolutePath();
+                readBValGradientFile(currDir);
+            }
 
-       }
-            else if (command.equals("bValue")) {
-            final int[] selectedRows = srcImagesTable.getSelectedRows();
+        } else if (command.equals("bValue")) {
+            final int[] selectedRows = srcBvalGradTable.getSelectedRows();
             final String bValue = bValueTextField.getText();
             for (final int element : selectedRows) {
-            srcTableModel.setValueAt(bValue, element, 0);
+                srcTableModel.setValueAt(bValue, element, 0);
             }
-             bValueTextField.setText("");
-    }
+            bValueTextField.setText("");
+        }
+
+        else if (command.equals("gradient")) {
+            final int[] selectedRows = srcBvalGradTable.getSelectedRows();
+            final int selectedColumn = srcBvalGradTable.getSelectedColumn();
+            final String gradient = gradientTextField.getText();
+            for (final int element : selectedRows) {
+                srcTableModel.setValueAt(gradient, element, selectedColumn);
+            }
+            gradientTextField.setText("");
+        }
+        else if (command.equals("DWICellEditSwitch")){
+            final boolean en = isDWICellEditBox.isSelected();
+                if (en == true){
+                srcBvalGradTable.setBackground(Color.white);    
+                srcBvalGradTable.setEnabled(true);
+                
+                }   
+             
+                else {
+                    //Color c = new Color(10,10,10,10);
+                    srcBvalGradTable.setBackground(Color.lightGray);
+                    srcBvalGradTable.setEnabled(false);
+                }
         
-            else if (command.equals("gradient")) {
-             final int[] selectedRows = srcImagesTable.getSelectedRows();
-             final int selectedColumn = srcImagesTable.getSelectedColumn();
-             final String gradient = gradientTextField.getText();
-             for (final int element : selectedRows) {
-             srcTableModel.setValueAt(gradient, element, selectedColumn);
-              }
-             gradientTextField.setText("");
-    }
+        } else if (command.equals("DWITableDeleteButton")){
+                   srcBvalGradTable.setBackground(Color.white);
+                   srcBvalGradTable.setEnabled(true);
+                    for (int i = 0; i < numVolumes; i++) {
+                        // Add empty rows based on number of volumes
+                        srcTableModel.setValueAt("",i, 0);
+                        srcTableModel.setValueAt("",i, 1);
+                        srcTableModel.setValueAt("",i, 2);
+                        srcTableModel.setValueAt("",i, 3);
+                        srcTableModel.setValueAt("",i, 4);
+                
+                        }
+
+                         
+
+
+
+        } else if (command.equals("saveBvalGrad")) {
+            saveGradchooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
+            saveGradchooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            saveGradchooser.setDialogTitle("Save B-Value/ Gradient Table to TXT File");
+            saveGradchooser.setAccessory(buildSaveGradBvalPanel());
+            
+            int returnValue = saveGradchooser.showSaveDialog(this);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                filebvalGradTxtName = saveGradchooser.getSelectedFile().getPath();
+               if (fslButton.isSelected()){
+                  gradBvalText = 1;
+                  createBValGradFileTXT();
+               }
+               else if (dtiStudioButton.isSelected()){
+                   gradBvalText = 2;
+                   createBValGradFileTXT();                  
+               }               
+               else if (mipavStandardButton.isSelected()){
+                   gradBvalText = 3;
+                   createBValGradFileTXT();                  
+               }  
+                
+            }
+            
+        }
+             
     }
 
     /**
@@ -992,11 +1111,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         final JPanel generalPanel = new JPanel(new GridBagLayout());
         generalPanel.setBorder(buildTitledBorder(""));
-        
+
         final JLabel directoryLabel = new JLabel("Image directory:  ");
         directoryLabel.setFont(serif12);
         directoryLabel.setForeground(Color.black);
-        
+
         final JLabel directoryLabel2 = new JLabel(image.getImageDirectory());
         directoryLabel2.setFont(serif12);
         directoryLabel2.setForeground(Color.black);
@@ -2215,49 +2334,44 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         return scrollPane;
     }
+
+    public void setDWITable(DefaultTableModel srcTableModel) {
+        this.srcTableModel= srcTableModel;
+    }
     /**
      * Builds the panels which is edited in the tabbed pane "DTI".
      * 
      * @return The DTI panel.
      */
     private JScrollPane buildDTIPanel() {
-        //setForeground(Color.black);
-        //setTitle("Estimate Tensor");
-        
+
         boolean isPARREC = false;
         FileInfoBase fileInfo = image.getFileInfo(0);
-        FileInfoPARREC fileInfoPARREC = null; 
-        try{
-            fileInfoPARREC = (FileInfoPARREC)fileInfo;
+        FileInfoPARREC fileInfoPARREC = null;
+        try {
+            fileInfoPARREC = (FileInfoPARREC) fileInfo;
             isPARREC = true;
+        } catch (ClassCastException e) {
+            isPARREC = false;
         }
-        catch(ClassCastException e) {
-            isPARREC = false;           
-        }
-        
-                       
-        gbc = new GridBagConstraints();
+
         gbc2 = new GridBagConstraints();
-        gbc3 = new GridBagConstraints();
         mainPanel = new JPanel(new GridBagLayout());
 
+
         final JPanel srcPanel = new JPanel(new GridBagLayout());
-        srcTableModel = new DefaultTableModel() {
-            public boolean isCellEditable(final int row, final int column) {
-                return false;
-            }
-        };
-        //srcTableModel.addColumn("Image");
+        srcTableModel = new DefaultTableModel(); 
+        
+
+        srcTableModel.addColumn("Volume");
         srcTableModel.addColumn("B-Value");
         srcTableModel.addColumn("X Gradient");
         srcTableModel.addColumn("Y Gradient");
         srcTableModel.addColumn("Z Gradient");
-        
 
+        srcBvalGradTable = new JTable(srcTableModel) {
 
-        srcImagesTable = new JTable(srcTableModel) {
-           
-           public String getToolTipText(final MouseEvent e) {
+            public String getToolTipText(final MouseEvent e) {
                 String tip = null;
                 final java.awt.Point p = e.getPoint();
                 final int rowIndex = rowAtPoint(p);
@@ -2273,189 +2387,314 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             }
         };
-        srcImagesTable.setPreferredScrollableViewportSize(new Dimension(800, 150));
-        //srcImagesTable.getColumn("Image").setMinWidth(800);
-        
-     
 
-        final JLabel bValueLabel = new JLabel(" Apply B-Value to selected rows:");
-        bValueTextField = new JTextField(5);
-        final JButton bValueButton = new JButton("Apply");
-        //bValueButton.setPreferredSize(new Dimension(65, 30));
-        bValueButton.addActionListener(this);
-        bValueButton.setActionCommand("bValue");
-        final JPanel bValuePanel = new JPanel();
-        bValuePanel.add(bValueLabel);
-        bValuePanel.add(bValueTextField);
-        bValuePanel.add(bValueButton);
-        
-        final JLabel gradientLabel = new JLabel(" Apply Gradient to selected rows:");
-        gradientTextField = new JTextField(5);
-        final JButton gradientButton = new JButton("Apply");
-        //gradientButton.setPreferredSize(new Dimension(65, 20));
-        gradientButton.addActionListener(this);
-        gradientButton.setActionCommand("gradient");
-        final JPanel gradientPanel = new JPanel();
-        gradientPanel.add(gradientLabel);
-        gradientPanel.add(gradientTextField);
-        gradientPanel.add(gradientButton);
-        
-        
-        
+        srcBvalGradTable.setPreferredScrollableViewportSize(new Dimension(595, 200));
+        srcBvalGradTable.getColumn("Volume").setMaxWidth(60);
+        srcBvalGradTable.setBackground(Color.lightGray);
+        srcBvalGradTable.setEnabled(false);
+
         final JPanel DWIButtonPanel = new JPanel();
         final JButton loadBValGradFileButton = new JButton("Load B-Value/Grad File");
-        //loadBValGradFileButton.setPreferredSize(new Dimension(16, 30));
         loadBValGradFileButton.addActionListener(this);
-        loadBValGradFileButton.setActionCommand("bvalGradBrowse");;
-        DWIButtonPanel.add(loadBValGradFileButton);
-        DWIButtonPanel.add(bValuePanel);
-        DWIButtonPanel.add(gradientPanel);
+        loadBValGradFileButton.setActionCommand("bvalGradBrowse");
        
+        final JButton saveBvalGradButton = new JButton("Save Table As");
+        saveBvalGradButton.addActionListener(this);
+        saveBvalGradButton.setActionCommand("saveBvalGrad");
+        
+        isDWICellEditBox = new JCheckBox("Edit Table", false);
+        isDWICellEditBox.addActionListener(this);
+        isDWICellEditBox.setActionCommand("DWICellEditSwitch");
+        
+        final JButton clearDWITableButton = new JButton("Clear");
+        clearDWITableButton.addActionListener(this);
+        clearDWITableButton.setActionCommand("DWITableDeleteButton");
+
+        DWIButtonPanel.add(loadBValGradFileButton);
+        DWIButtonPanel.add(saveBvalGradButton);
+        DWIButtonPanel.add(isDWICellEditBox);
+        DWIButtonPanel.add(clearDWITableButton);
+
+
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        gbc2.insets = new Insets(15, 5, 5, 15);
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
+        gbc2.weightx = .75;
+        gbc2.weighty = 1;
         gbc2.gridwidth = 1;
-        gbc2.anchor = GridBagConstraints.CENTER;
-        final JScrollPane srcImagesScrollPane = new JScrollPane(srcImagesTable);
-        // srcImagesTable.addMouseListener(new MouseHandler());
+        gbc2.fill = GridBagConstraints.BOTH;
+        final JScrollPane srcImagesScrollPane = new JScrollPane(srcBvalGradTable);
         srcPanel.add(srcImagesScrollPane, gbc2);
+        gbc2.gridx = 0;
         gbc2.gridy = 1;
+        gbc2.weightx = 1;
+        gbc2.weighty = 0;
+        gbc2.gridwidth = 2;
+        gbc2.fill = GridBagConstraints.BOTH;
+
         srcPanel.add(DWIButtonPanel, gbc2);
-      
+
         final JScrollPane scrollPane = new JScrollPane(srcPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setPreferredSize(new Dimension(850, 200));
-        
-        //srcTableModel.setValueAt(40, 2, 1);
 
-        if(isPARREC){
+        if (isPARREC) {
 
-                if ((fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")|| (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")){ 
-                    for (int j =0; j < fileInfoPARREC.getNumVolumes(); j++){
-                        // Add empty rows based on number of volumes
-                        final Vector<String> rowData = new Vector<String>();
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        rowData.add("");
-                        srcTableModel.addRow(rowData);
-                        }
-                    if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4") ){
-                            for (int i = 0; i < fileInfoPARREC.getNumVolumes() ; i++) {
-                            //Populate Bvalue column
-                            final String[] bvalArr = fileInfoPARREC.getBvalues();
-                            final String bvals = bvalArr[i].trim();
-                            srcTableModel.setValueAt(bvals, i, 0);
-                            }
+            if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
+                    || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
+                
+                numVolumes = fileInfoPARREC.getNumVolumes();
+
+                for (int i = 0; i < numVolumes; i++) {
+                    // Add empty rows based on number of volumes
+                    final Vector<Object> rowData = new Vector<Object>();
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    srcTableModel.addRow(rowData);
+                }
+                if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4")) {
+                    /*final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
+                    final GridBagConstraints gbc = new GridBagConstraints();
+                    gbc.insets = new Insets(5, 1, 1, 5);
+                    gbc.fill = GridBagConstraints.BOTH;
                     
-                        }
-                   
-                    else if (fileInfoPARREC.getVersion().equals("V4.1") || fileInfoPARREC.getVersion().equals("V4.2")){
-                        for (int i = 0; i < fileInfoPARREC.getNumVolumes() ; i++) { 
-                            //Populate Bvalue column
-                            final String[] bvalArr = fileInfoPARREC.getBvalues();
-                            final String bvals = bvalArr[i].trim();
-                            srcTableModel.setValueAt(bvals, i, 0);
-                            
-                            //Populate Gradient column
-                            final String[] gradArr = fileInfoPARREC.getGradients();
-                            final String grads = gradArr[i].trim();
-                            final String[] arr2 = grads.split("\\s+");
-                            srcTableModel.setValueAt(arr2[0], i, 1);
-                            srcTableModel.setValueAt(arr2[1], i, 2);
-                            srcTableModel.setValueAt(arr2[2], i, 3);
-                            }
+                    GradCreatorPanel.setBorder(buildTitledBorder("Gradient Creator Input Parameters"));
+                    final JLabel fatShiftLabel = new JLabel("Fatshift");
+                    fatshiftTextField = new JTextField(5);
+                    fatshiftBox = new JComboBox();
+                    fatshiftBox.setBackground(Color.white);
+                    fatshiftBox.addItem("L");
+                    fatshiftBox.addItem("A");
+                    fatshiftBox.addItem("P");
+                    fatshiftBox.addItem("H");
+                    fatshiftBox.addItem("F");
+                    gbc.gridy = 0;
+                    gbc.gridx = 0;
+                    GradCreatorPanel.add(fatShiftLabel,gbc);
+                    gbc.gridy = 0;
+                    gbc.gridx = 1;
+                    GradCreatorPanel.add(fatshiftBox,gbc);
+
+                    final JLabel gradResLabel = new JLabel("Gradient Resolution");
+                    gradResTextField = new JTextField(5);
+                    gradResBox = new JComboBox();
+                    gradResBox.setBackground(Color.white);
+                    gradResBox.addItem("Low");
+                    gradResBox.addItem("Medium");
+                    gradResBox.addItem("High");
+                    gbc.gridy = 1;
+                    gbc.gridx = 0;
+                    GradCreatorPanel.add(gradResLabel,gbc);
+                    gbc.gridy = 1;
+                    gbc.gridx = 1;
+                    GradCreatorPanel.add(gradResBox,gbc);
+
+                    final JLabel gradOPLabel = new JLabel("Gradient Overplus");
+                    gradOPTextField = new JTextField(5);
+                    gradOPBox = new JComboBox();
+                    gradOPBox.setBackground(Color.white);
+                    gradOPBox.addItem("Yes");
+                    gradOPBox.addItem("No");
+                    gbc.gridy = 2;
+                    gbc.gridx = 0;
+                    GradCreatorPanel.add(gradOPLabel,gbc);
+                    gbc.gridy = 2;
+                    gbc.gridx = 1;
+                    GradCreatorPanel.add(gradOPBox,gbc);
                     
-                        }
-                 
-        }
+                    final JLabel philRelLabel = new JLabel("Philips Release");
+                    philRelTextField = new JTextField(5);
+                    philRelBox = new JComboBox();
+                    philRelBox.setBackground(Color.white);
+                    philRelBox.addItem("Rel 2.0");
+                    philRelBox.addItem("Rel 2.1");
+                    philRelBox.addItem("Rel 2.5");
+                    philRelBox.addItem("Rel 11.x");
+                    gbc.gridy = 3;
+                    gbc.gridx = 0;
+                    GradCreatorPanel.add(philRelLabel,gbc);
+                    gbc.gridy = 3;
+                    gbc.gridx = 1;
+                    GradCreatorPanel.add(philRelBox,gbc);
+                     
+                    gbc2.gridy = 0;
+                    gbc2.gridx = 1;
+                    gbc2.gridwidth = 1;
+                    gbc2.weightx = .25;
+                    gbc2.weighty = 1;
+                    srcPanel.add(GradCreatorPanel, gbc2);*/
+
+                    
+                     for (int i = 0; i < fileInfoPARREC.getNumVolumes() ; i++) { //Populate Bvalue column final
+                         // Populate Volume column
+                         srcTableModel.setValueAt(String.valueOf(i),i,0);
+                         // Populate Bvalue column
+                         String[] bvalArr = fileInfoPARREC.getBvalues(); 
+                         final String bvals = bvalArr[i].trim();
+                         srcTableModel.setValueAt(bvals, i, 1); 
+                      }
            
+                 
+
+                }
+
+                else if (fileInfoPARREC.getVersion().equals("V4.1") || fileInfoPARREC.getVersion().equals("V4.2")) {
+                    for (int i = 0; i < numVolumes; i++) {
+                        // Populate Volume column
+                        srcTableModel.setValueAt(String.valueOf(i),i,0);
+                        // Populate Bvalue column
+                        final String[] bvalArr = fileInfoPARREC.getBvalues();
+                        final String bvals = bvalArr[i].trim();
+                        srcTableModel.setValueAt(bvals, i, 1);
+
+                        // Populate Gradient column
+                        final String[] gradArr = fileInfoPARREC.getGradients();
+                        final String grads = gradArr[i].trim();
+                        final String[] arr2 = grads.split("\\s+");
+                         srcTableModel.setValueAt(arr2[0], i, 2);
+                         srcTableModel.setValueAt(arr2[1], i, 3);
+                         srcTableModel.setValueAt(arr2[2], i, 4);
+                    }
+                    createBValGradFileTXT();
+                    setDWITable(srcTableModel);
+                  
+
+                }
+
+            }
+
         }
-        
+
         else if (image.getFileInfo()[0] instanceof FileInfoDicom) {
             FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
             FileDicomTagTable tagTable = dicomInfo.getTagTable();
             String studyDescription = (String) tagTable.getValue("0008,1030");
             String seriesDescription = (String) tagTable.getValue("0008,103E");
             String scannerType = (String) tagTable.getValue("0019,0010");
-           
-            if (studyDescription.toUpperCase().contains("DTI")|| seriesDescription.toUpperCase().contains("DTI")){ 
-                
-                if (scannerType.toUpperCase().contains("SIEMEN")){
+
+            if (studyDescription.toUpperCase().contains("DTI") || seriesDescription.toUpperCase().contains("DTI")) {
+
+                if (scannerType.toUpperCase().contains("SIEMEN")) {
+                    
                    
+
                     if (image.is3DImage()) {
-                        int zDim = image.getExtents()[2];                           
-                            for (int i = 0; i <zDim ; i++) {
-                             // Add empty rows based on number of DTI volumes
-                                    final Vector<String> rowData = new Vector<String>();
-                                    rowData.add("");
-                                    rowData.add("");
-                                    rowData.add("");
-                                    rowData.add("");
-                                    srcTableModel.addRow(rowData);
-                                  //Populate Bvalue column
-                                    FileInfoDicom dicom3dInfo = (FileInfoDicom) image.getFileInfo(i);
-                                    FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
-                                    String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
-                                    srcTableModel.setValueAt(siemenBvalue, i, 0);
-                                    
-                                  //Populate Gradient column
-                                    String siemenGrads = (String) tag3dTable.getValue("0019,100E");
-                                    siemenGrads = siemenGrads.trim();
-                                    String grads = siemenGrads.replace('\\','\t');
-                                    final String [] arr2= grads.split("\t");
-                                    srcTableModel.setValueAt(arr2[0], i, 1);
-                                    srcTableModel.setValueAt(arr2[1], i, 2);
-                                    srcTableModel.setValueAt(arr2[2], i, 3);                           
+                        numVolumes = image.getExtents()[2];
+                        int zDim = image.getExtents()[2];
+                        for (int i = 0; i < zDim; i++) {
+                            // Add empty rows based on number of DTI volumes
+                            final Vector<String> rowData = new Vector<String>();
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            srcTableModel.addRow(rowData);
                             
-                                }
-                            }
-                        
-                    else if (image.is4DImage()) {
-                            int tDim = image.getExtents()[3];  
-                         // Add empty rows based on number of DTI volumes
-                                for (int i = 0; i <tDim ; i++) {
-                                        final Vector<String> rowData = new Vector<String>();
-                                        rowData.add("");
-                                        rowData.add("");
-                                        rowData.add("");
-                                        rowData.add("");
-                                        srcTableModel.addRow(rowData);
-                                        FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i*image.getExtents()[2]);
-                                        
-                                      //Populate Bvalue column
-                                        FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
-                                        String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
-                                        srcTableModel.setValueAt(siemenBvalue, i, 0);
-                                        
-                                      //Populate Gradient column
-                                        String siemenGrads = (String) tag4dTable.getValue("0019,100E");
-                                        siemenGrads = siemenGrads.trim();
-                                        String grads = siemenGrads.replace('\\','\t');
-                                        final String [] arr2= grads.split("\t");
-                                        srcTableModel.setValueAt(arr2[0], i, 1);
-                                        srcTableModel.setValueAt(arr2[1], i, 2);
-                                        srcTableModel.setValueAt(arr2[2], i, 3);
-                                }
+                            // Populate Volume column
+                            srcTableModel.setValueAt(String.valueOf(i),i,0);
                             
-                            }
+                            // Populate Bvalue column
+                            FileInfoDicom dicom3dInfo = (FileInfoDicom) image.getFileInfo(i);
+                            FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
+                            String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
+                            srcTableModel.setValueAt(siemenBvalue, i, 1);
+
+                            // Populate Gradient column
+                            String siemenGrads = (String) tag3dTable.getValue("0019,100E");
+                            siemenGrads = siemenGrads.trim();
+                            String grads = siemenGrads.replace('\\', '\t');
+                            final String[] arr2 = grads.split("\t");
+                            srcTableModel.setValueAt(arr2[0], i, 2);
+                            srcTableModel.setValueAt(arr2[1], i, 3);
+                            srcTableModel.setValueAt(arr2[2], i, 4);
+
                         }
-                   
+                        setDWITable(srcTableModel);
+                    }
+
+                    else if (image.is4DImage()) {
+                        numVolumes = image.getExtents()[3];
+                        int tDim = image.getExtents()[3];
+                        // Add empty rows based on number of DTI volumes
+                        for (int i = 0; i < tDim; i++) {
+                            final Vector<String> rowData = new Vector<String>();
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            srcTableModel.addRow(rowData);
+                            FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i * image.getExtents()[2]);
+                            
+                            // Populate Volume column
+                            srcTableModel.setValueAt(String.valueOf(i),i,0);
+
+                            // Populate Bvalue column
+                            FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
+                            String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
+                            srcTableModel.setValueAt(siemenBvalue, i, 1);
+
+                            // Populate Gradient column
+                            String siemenGrads = (String) tag4dTable.getValue("0019,100E");
+                            siemenGrads = siemenGrads.trim();
+                            String grads = siemenGrads.replace('\\', '\t');
+                            final String[] arr2 = grads.split("\t");
+                            srcTableModel.setValueAt(arr2[0], i, 2);
+                            srcTableModel.setValueAt(arr2[1], i, 3);
+                            srcTableModel.setValueAt(arr2[2], i, 4);
+                        }
+                        setDWITable(srcTableModel);
+
                     }
                 }
-            
-     
-        
-        
-        return scrollPane;
-        
 
-       
-        //return DWIButtonPanel;
-      
+            }
+        }
+
+        return scrollPane;
 
     }
+    
 
+    
+    public DefaultTableModel getDWITable() {
+        return srcTableModel;
+    }
+   
+    private JPanel buildSaveGradBvalPanel() {
+        
+    
+
+    
+    final JPanel saveBvalGradPanel = new JPanel();
+    saveBvalGradPanel.setBorder(buildTitledBorder("Format Options"));
+
+    fslButton = new JRadioButton("FSL");
+    fslButton.setSelected(true);
+       
+    dtiStudioButton = new JRadioButton("DTI Studio");
+    
+    mipavStandardButton = new JRadioButton("Standard MIPAV Format");
+    
+   ButtonGroup group = new ButtonGroup();
+   group.add(fslButton);
+   group.add(dtiStudioButton);
+   group.add(mipavStandardButton);
+   
+   saveBvalGradPanel.setLayout(new GridLayout(3, 1));
+   saveBvalGradPanel.add(fslButton);
+   saveBvalGradPanel.add(dtiStudioButton);
+   saveBvalGradPanel.add(mipavStandardButton);
+   
+
+   
+   return saveBvalGradPanel;
+          
+
+}
 
     /**
      * Initializes the dialog box and adds the components.
@@ -2488,10 +2727,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         applyButton.addActionListener(this);
         buttonPanel.add(applyButton);
 
-        //buildOKButton();
+        // buildOKButton();
         buildCancelButton();
         cancelButton.setText("Close");
-        //buttonPanel.add(OKButton);
+        // buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
         mainDialogPanel.add(buttonPanel, "South");
 
@@ -2514,14 +2753,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /**
      * Sets combo box choices that match resolution units listed in FileInfoBase and in the same order.
-     *
-     * @param  cBox  Combo box to setup to display the units.
+     * 
+     * @param cBox Combo box to setup to display the units.
      */
     private void setComboBox(JComboBox cBox) {
 
         cBox.setFont(serif12);
         cBox.setBackground(Color.white);
-        for(Unit u : Unit.values()) {
+        for (Unit u : Unit.values()) {
             cBox.addItem(u.toString());
         }
     }
@@ -3214,9 +3453,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /**
      * Updates the image orientation.
      */
-    private void updateImageOrientation() {  	
-    	TransMatrix newMatrix = null;
-    	TransMatrix newMatrix2 = null;
+    private void updateImageOrientation() {
+        TransMatrix newMatrix = null;
+        TransMatrix newMatrix2 = null;
         FileInfoBase[] fileInfo = null;
         int originalOrientAxis[] = null;
         originalOrientAxis = image.getFileInfo()[0].getAxisOrientation().clone();
@@ -3259,244 +3498,235 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             boolean axisFlip[] = new boolean[3];
             boolean found;
             float loc;
-            
+
             if (matHolder != null) {
-            	
+
                 LinkedHashMap<String, TransMatrix> matrixMap = matHolder.getMatrixMap();
                 Iterator<String> iter = matrixMap.keySet().iterator();
                 String nextKey = null;
-                
+
                 TransMatrix tempMatrix = null;
-                
+
                 for (j = 0; j <= 2; j++) {
                     switch (originalOrientAxis[j]) {
                         case FileInfoBase.ORI_R2L_TYPE:
                             found = false;
-                            for (i = 0; (i <= 2) && (!found); i++) {
+                            for (i = 0; (i <= 2) && ( !found); i++) {
                                 if (orientAxis[i] == FileInfoBase.ORI_R2L_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = false;
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = false;
                                     found = true;
-                                }
-                                else if (orientAxis[i] == FileInfoBase.ORI_L2R_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = true;
+                                } else if (orientAxis[i] == FileInfoBase.ORI_L2R_TYPE) {
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = true;
                                     found = true;
                                 }
                             }
                             break;
                         case FileInfoBase.ORI_L2R_TYPE:
                             found = false;
-                            for (i = 0; (i <= 2) && (!found); i++) {
+                            for (i = 0; (i <= 2) && ( !found); i++) {
                                 if (orientAxis[i] == FileInfoBase.ORI_L2R_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = false;
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = false;
                                     found = true;
-                                }
-                                else if (orientAxis[i] == FileInfoBase.ORI_R2L_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = true;
+                                } else if (orientAxis[i] == FileInfoBase.ORI_R2L_TYPE) {
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = true;
                                     found = true;
                                 }
                             }
                             break;
                         case FileInfoBase.ORI_A2P_TYPE:
                             found = false;
-                            for (i = 0; (i <= 2) && (!found); i++) {
+                            for (i = 0; (i <= 2) && ( !found); i++) {
                                 if (orientAxis[i] == FileInfoBase.ORI_A2P_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = false;
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = false;
                                     found = true;
-                                }
-                                else if (orientAxis[i] == FileInfoBase.ORI_P2A_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = true;
+                                } else if (orientAxis[i] == FileInfoBase.ORI_P2A_TYPE) {
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = true;
                                     found = true;
                                 }
                             }
                             break;
                         case FileInfoBase.ORI_P2A_TYPE:
                             found = false;
-                            for (i = 0; (i <= 2) && (!found); i++) {
+                            for (i = 0; (i <= 2) && ( !found); i++) {
                                 if (orientAxis[i] == FileInfoBase.ORI_P2A_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = false;
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = false;
                                     found = true;
-                                }
-                                else if (orientAxis[i] == FileInfoBase.ORI_A2P_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = true;
+                                } else if (orientAxis[i] == FileInfoBase.ORI_A2P_TYPE) {
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = true;
                                     found = true;
                                 }
                             }
                             break;
                         case FileInfoBase.ORI_I2S_TYPE:
                             found = false;
-                            for (i = 0; (i <= 2) && (!found); i++) {
+                            for (i = 0; (i <= 2) && ( !found); i++) {
                                 if (orientAxis[i] == FileInfoBase.ORI_I2S_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = false;
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = false;
                                     found = true;
-                                }
-                                else if (orientAxis[i] == FileInfoBase.ORI_S2I_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = true;
+                                } else if (orientAxis[i] == FileInfoBase.ORI_S2I_TYPE) {
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = true;
                                     found = true;
                                 }
                             }
                             break;
                         case FileInfoBase.ORI_S2I_TYPE:
                             found = false;
-                            for (i = 0; (i <= 2) && (!found); i++) {
+                            for (i = 0; (i <= 2) && ( !found); i++) {
                                 if (orientAxis[i] == FileInfoBase.ORI_S2I_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = false;
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = false;
                                     found = true;
-                                }
-                                else if (orientAxis[i] == FileInfoBase.ORI_I2S_TYPE) {
-                                	axisOrder[i] = j;
-                                	axisFlip[i] = true;
+                                } else if (orientAxis[i] == FileInfoBase.ORI_I2S_TYPE) {
+                                    axisOrder[i] = j;
+                                    axisFlip[i] = true;
                                     found = true;
                                 }
                             }
                             break;
                     }
                 } // for (j = 0; j <= 2; j++)
-	            
+
                 while (iter.hasNext()) {
                     nextKey = iter.next();
                     tempMatrix = matrixMap.get(nextKey);
                     if (tempMatrix.isNIFTI()) {
-                    	if (newMatrix == null) {
-                    	    newMatrix = new TransMatrix(4);
-	                    	for (i = 0; i < 3; i++) {
-	                            for (j = 0; j < 3; j++) {
-	                            	if (axisFlip[i]) {
-	                            		newMatrix.set(j, i, -tempMatrix.get(j, axisOrder[i]));
-	                            	}
-	                            	else {
-	                                    newMatrix.set(j, i, tempMatrix.get(j, axisOrder[i]));
-	                            	}
-	                            }
-	                            loc = tempMatrix.get(i, 3);
-	                            if (axisFlip[i]) {
-	                            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
-	                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
-	                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
-	                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
-	                            		if (loc < 0) {
-	                                	    loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
-	                            		}
-	                                }
-	                                else {
-	                                	if (loc > 0) {
-	                                	    loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
-	                                	}
-	                                }
-	                            }
-	                            newMatrix.set(i, 3, loc);
-	                    	} // for (i = 0; i < 3; i++)
-	                    	tempMatrix.Copy(newMatrix);
-	                    	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
-		                        if (tempMatrix.isQform()) {
-		                            if (image.getNDims() == 3) {
-		                                for (i = 0; i < image.getExtents()[2]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix);
-		                                }
-		                            }
-		                            else if (image.getNDims() == 4) {
-		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix);    
-		                                }
-		                            }
-		                        } // if (tempMatrix.isQform())
-		                        else { // tempMatrix is sform
-		                            if (image.getNDims() == 3) {
-		                                for (i = 0; i < image.getExtents()[2]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix);
-		                                }
-		                            }
-		                            else if (image.getNDims() == 4) {
-		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix);    
-		                                }
-		                            }    
-		                        } // else tempMatrix is sform
-	                    	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
-                    	} // if (newMatrix == null)
-                    	else {
-                    		newMatrix2 = new TransMatrix(4);
-                    		for (i = 0; i < 3; i++) {
-	                            for (j = 0; j < 3; j++) {
-	                            	if (axisFlip[i]) {
-	                            		newMatrix2.set(j, i, -tempMatrix.get(j, axisOrder[i]));
-	                            	}
-	                            	else {
-	                                    newMatrix2.set(j, i, tempMatrix.get(j, axisOrder[i]));
-	                            	}
-	                            }
-	                            loc = tempMatrix.get(i, 3);
-	                            if (axisFlip[i]) {
-	                            	orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
-	                            	if ((orient == FileInfoBase.ORI_R2L_TYPE) || 
-	                                        (orient == FileInfoBase.ORI_A2P_TYPE) || 
-	                                        (orient == FileInfoBase.ORI_I2S_TYPE)) {
-	                            		if (loc < 0) {
-	                                	    loc = loc + ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
-	                            		}
-	                                }
-	                                else {
-	                                	if (loc > 0) {
-	                                	    loc = loc - ((image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(0).getResolutions()[i]);
-	                                	}
-	                                }
-	                            }
-	                            newMatrix2.set(i, 3, loc);
-	                    	} // for (i = 0; i < 3; i++)
-	                    	tempMatrix.Copy(newMatrix2);
-	                    	if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
-		                        if (tempMatrix.isQform()) {
-		                            if (image.getNDims() == 3) {
-		                                for (i = 0; i < image.getExtents()[2]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix2);
-		                                }
-		                            }
-		                            else if (image.getNDims() == 4) {
-		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixQ(newMatrix2);    
-		                                }
-		                            }
-		                        } // if (tempMatrix.isQform())
-		                        else { // tempMatrix is sform
-		                            if (image.getNDims() == 3) {
-		                                for (i = 0; i < image.getExtents()[2]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix2);
-		                                }
-		                            }
-		                            else if (image.getNDims() == 4) {
-		                                for (i = 0; i < image.getExtents()[2]*image.getExtents()[3]; i++) {
-		                                    ((FileInfoNIFTI)image.getFileInfo(i)).setMatrixS(newMatrix2);    
-		                                }
-		                            }    
-		                        } // else tempMatrix is sform
-	                    	} // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
-                    	}
+                        if (newMatrix == null) {
+                            newMatrix = new TransMatrix(4);
+                            for (i = 0; i < 3; i++) {
+                                for (j = 0; j < 3; j++) {
+                                    if (axisFlip[i]) {
+                                        newMatrix.set(j, i, -tempMatrix.get(j, axisOrder[i]));
+                                    } else {
+                                        newMatrix.set(j, i, tempMatrix.get(j, axisOrder[i]));
+                                    }
+                                }
+                                loc = tempMatrix.get(i, 3);
+                                if (axisFlip[i]) {
+                                    orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+                                    if ( (orient == FileInfoBase.ORI_R2L_TYPE) || (orient == FileInfoBase.ORI_A2P_TYPE)
+                                            || (orient == FileInfoBase.ORI_I2S_TYPE)) {
+                                        if (loc < 0) {
+                                            loc = loc
+                                                    + ( (image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(
+                                                            0).getResolutions()[i]);
+                                        }
+                                    } else {
+                                        if (loc > 0) {
+                                            loc = loc
+                                                    - ( (image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(
+                                                            0).getResolutions()[i]);
+                                        }
+                                    }
+                                }
+                                newMatrix.set(i, 3, loc);
+                            } // for (i = 0; i < 3; i++)
+                            tempMatrix.Copy(newMatrix);
+                            if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+                                if (tempMatrix.isQform()) {
+                                    if (image.getNDims() == 3) {
+                                        for (i = 0; i < image.getExtents()[2]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixQ(newMatrix);
+                                        }
+                                    } else if (image.getNDims() == 4) {
+                                        for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixQ(newMatrix);
+                                        }
+                                    }
+                                } // if (tempMatrix.isQform())
+                                else { // tempMatrix is sform
+                                    if (image.getNDims() == 3) {
+                                        for (i = 0; i < image.getExtents()[2]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixS(newMatrix);
+                                        }
+                                    } else if (image.getNDims() == 4) {
+                                        for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixS(newMatrix);
+                                        }
+                                    }
+                                } // else tempMatrix is sform
+                            } // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
+                        } // if (newMatrix == null)
+                        else {
+                            newMatrix2 = new TransMatrix(4);
+                            for (i = 0; i < 3; i++) {
+                                for (j = 0; j < 3; j++) {
+                                    if (axisFlip[i]) {
+                                        newMatrix2.set(j, i, -tempMatrix.get(j, axisOrder[i]));
+                                    } else {
+                                        newMatrix2.set(j, i, tempMatrix.get(j, axisOrder[i]));
+                                    }
+                                }
+                                loc = tempMatrix.get(i, 3);
+                                if (axisFlip[i]) {
+                                    orient = image.getFileInfo(0).getAxisOrientation(axisOrder[i]);
+                                    if ( (orient == FileInfoBase.ORI_R2L_TYPE) || (orient == FileInfoBase.ORI_A2P_TYPE)
+                                            || (orient == FileInfoBase.ORI_I2S_TYPE)) {
+                                        if (loc < 0) {
+                                            loc = loc
+                                                    + ( (image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(
+                                                            0).getResolutions()[i]);
+                                        }
+                                    } else {
+                                        if (loc > 0) {
+                                            loc = loc
+                                                    - ( (image.getFileInfo(0).getExtents()[i] - 1) * image.getFileInfo(
+                                                            0).getResolutions()[i]);
+                                        }
+                                    }
+                                }
+                                newMatrix2.set(i, 3, loc);
+                            } // for (i = 0; i < 3; i++)
+                            tempMatrix.Copy(newMatrix2);
+                            if (image.getFileInfo(0) instanceof FileInfoNIFTI) {
+                                if (tempMatrix.isQform()) {
+                                    if (image.getNDims() == 3) {
+                                        for (i = 0; i < image.getExtents()[2]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixQ(newMatrix2);
+                                        }
+                                    } else if (image.getNDims() == 4) {
+                                        for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixQ(newMatrix2);
+                                        }
+                                    }
+                                } // if (tempMatrix.isQform())
+                                else { // tempMatrix is sform
+                                    if (image.getNDims() == 3) {
+                                        for (i = 0; i < image.getExtents()[2]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixS(newMatrix2);
+                                        }
+                                    } else if (image.getNDims() == 4) {
+                                        for (i = 0; i < image.getExtents()[2] * image.getExtents()[3]; i++) {
+                                            ((FileInfoNIFTI) image.getFileInfo(i)).setMatrixS(newMatrix2);
+                                        }
+                                    }
+                                } // else tempMatrix is sform
+                            } // if (destImage.getFileInfo(0) instanceof FileInfoNIFTI)
+                        }
                     } // if (tempMatrix.isNIFTI())
                 }
                 if (newMatrix != null) {
-                	matHolder.clearMatrices();
-                	matHolder.addMatrix(newMatrix);
-                	if (newMatrix2 != null) {
-                		matHolder.addMatrix(newMatrix2);
-                	}
+                    matHolder.clearMatrices();
+                    matHolder.addMatrix(newMatrix);
+                    if (newMatrix2 != null) {
+                        matHolder.addMatrix(newMatrix2);
+                    }
                 }
-                
+
                 if (changeQ || changeS) {
                     updateMatrixBox(true);
                 }
-            } // if (matHolder != null)    
+            } // if (matHolder != null)
 
-            
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
 
         // if script recording, show the change of image orientation/axis orientations
@@ -3580,11 +3810,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * Updates the image with the new Matrix information (for matrix replacement).
      */
     private void updateMatrixInfo() {
-    	FileInfoBase[] fileInfo;
+        FileInfoBase[] fileInfo;
 
         final String type = (String) transformIDBox.getSelectedItem();
         // matrixType = type with a 0 or 1 appended at the end
-        final String matrixType = (String)matrixBox.getSelectedItem();
+        final String matrixType = (String) matrixBox.getSelectedItem();
         int id = -1;
 
         if (type == "Scanner Anatomical") {
@@ -3607,7 +3837,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         updateTransformInfo(tMat);
 
         image.getMatrixHolder().replaceMatrix(matrixType, tMat);
-        
+
         fileInfo = image.getFileInfo();
         if (fileInfo[0] instanceof FileInfoNIFTI) {
             MatrixHolder matHolder = null;
@@ -3625,7 +3855,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     nextKey = iter.next();
                     tempMatrix = matrixMap.get(nextKey);
                     if (tempMatrix.isNIFTI()) {
-                        
+
                         if (tempMatrix.isQform()) {
                             if (image.getNDims() == 3) {
                                 for (i = 0; i < image.getExtents()[2]; i++) {
@@ -3650,7 +3880,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                         } // else if ((!tempMatrix.isQform()) && changeS)
                     } // if (tempMatrix.isNIFTI())
                 } // while (iter.hasNext())
-                
 
             } // if (matHolder != null)
         } // if (fileInfo[0] instanceof FileInfoNIFTI)
@@ -3814,7 +4043,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[resIndex].setResolutions(resolutions);
             }
         }
-        image.getParentFrame().getComponentImage(). loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
+        image.getParentFrame().getComponentImage()
+                .loadPaintBrush(Preferences.getProperty(Preferences.PREF_LAST_PAINT_BRUSH), false);
 
         if (fileInfo[0] instanceof FileInfoNIFTI) {
             MatrixHolder matHolder = null;
@@ -4019,7 +4249,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             System.err.println("THIS IS NOT AN XML FILE!!!");
         }
     }
-  
+
     /**
      * reads the bval/gradient file...both dti studio format and fsl format are accepted
      * 
@@ -4027,9 +4257,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @return
      */
     public boolean readBValGradientFile(final String gradientFilePath) {
-        
-        /*if ((getExamName().toUpperCase()).contains("DTI")){        
-        }*/
+
+        /*
+         * if ((getExamName().toUpperCase()).contains("DTI")){ }
+         */
 
         try {
             String str;
@@ -4040,36 +4271,39 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             if (firstLine.contains(":")) {
                 String line;
                 int lineCount = 0;
-                //counts number of lines in file
-                while ((line = raFile.readLine())!= null){
+                // counts number of lines in file
+                while ( (line = raFile.readLine()) != null) {
                     lineCount++;
                 }
-                lineCount = lineCount +1;
-                
+                numVolumes = lineCount + 1;
+
                 raFile.seek(0);
                 // this is DTI Studio
-                for (int j =0; j < lineCount; j++){
-                final Vector<String> rowData = new Vector<String>();
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-                rowData.add("");
-                srcTableModel.addRow(rowData);
+                for (int j = 0; j < numVolumes; j++) {
+                    final Vector<String> rowData = new Vector<String>();
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    rowData.add("");
+                    srcTableModel.addRow(rowData);
                 }
                 final int numRows = srcTableModel.getRowCount();
 
                 for (int i = 0; i < numRows; i++) {
-                    if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
+                    if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
                         str = raFile.readLine();
                         if (str != null) {
                             final String[] arr = str.split(":");
-                           
+
                             if (arr.length == 2) {
+                                // Populate Volume column
+                                srcTableModel.setValueAt(String.valueOf(i),i,0);
                                 final String grads = arr[1].trim();
                                 final String[] arr2 = grads.split("\\s+");
-                                srcTableModel.setValueAt(arr2[0], i, 1);
-                                srcTableModel.setValueAt(arr2[1], i, 2);
-                                srcTableModel.setValueAt(arr2[2], i, 3);
+                                srcTableModel.setValueAt(arr2[0], i, 2);
+                                srcTableModel.setValueAt(arr2[1], i, 3);
+                                srcTableModel.setValueAt(arr2[2], i, 4);
                             }
                         }
 
@@ -4077,147 +4311,148 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
                 }
 
-           } else {
-               // this is FSL
-               
-                //String line;
-               
-               int decimalCount = 0;
-               StringBuffer buffFirstLine = new StringBuffer(firstLine);
-               int length = buffFirstLine.length();
-               //count number of decimal points in first line
-               for (int i = 0; i < length; i++) {
-                   char index = buffFirstLine.charAt(i);
-                   if (index == '.') {
-                       decimalCount++;
-                   }
-               
-                   
-               }
-                 
-                   if (decimalCount > 4){
-                       raFile.seek(0);
-              
-                       for (int j =0; j < decimalCount; j++){
-                           final Vector<String> rowData = new Vector<String>();
-                           rowData.add("");
-                           rowData.add("");
-                           rowData.add("");
-                           rowData.add("");
-                           srcTableModel.addRow(rowData);
-                       }
-               
- 
-                       final int numRows = srcTableModel.getRowCount();
-                       int start = 0;
+            } else {
+                // this is FSL
 
-                       for (int i = 0; i < numRows; i++) {
-                           if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
-                               start = i;
-                               break;
-                           }
-                       }
-     
-                       int k = start;
-                       String firstline = raFile.readLine();
-                       firstline = firstline.trim();
-                
-                       String []arr = firstline.split("\\s+");
-                
-                
-                       for (final String element : arr) {
-                           if (k < numRows) {
-                               srcTableModel.setValueAt(element, k, 1);
-                               k = k + 1;
-                           } else {
-                               break;
-                           }
-                       }
+                // String line;
 
-                       k = start;
-                       String secondLine = raFile.readLine();
-                       secondLine = secondLine.trim();
-                       arr = secondLine.split("\\s+");
-                       for (final String element : arr) {
-                           if (k < numRows) {
-                               srcTableModel.setValueAt(element, k, 2);
-                               k = k + 1;
-                           } else {
-                               break;
-                           }
-                       }
+                int decimalCount = 0;
+                StringBuffer buffFirstLine = new StringBuffer(firstLine);
+                int length = buffFirstLine.length();
+                // count number of decimal points in first line
+                for (int i = 0; i < length; i++) {
+                    char index = buffFirstLine.charAt(i);
+                    if (index == '.') {
+                        decimalCount++;
+                    }
 
-                       k = start;
-                       String thirdlLine = raFile.readLine();
-                       thirdlLine = thirdlLine.trim();
-                       arr = thirdlLine.split("\\s+");
-                       for (final String element : arr) {
-                           if (k < numRows) {
-                               srcTableModel.setValueAt(element, k, 3);
-                               k = k + 1;
-                           } else {
-                               break;
-                           }
-                       }
-                
+                }
 
-                       k = start;
-                       String fourthLine = raFile.readLine();
-                       fourthLine = fourthLine.trim();
-                       arr = fourthLine.split("\\s+");
-                       for (final String element : arr) {
-                           if (k < numRows) {
-                               srcTableModel.setValueAt(element, k, 0);
-                               k = k + 1;
-                           } else {
-                               break;
-                           }
-                       }
+                if (decimalCount > 4) {
+                    raFile.seek(0);
+                    numVolumes = decimalCount;
 
-                   }
-                   
-                   else{
-                       String line;
-                       int lineCount = 0;
-                       //counts number of lines in file
-                       while ((line = raFile.readLine())!= null){
-                           lineCount++;
-                       }
-                       lineCount = lineCount +1;
-                       raFile.seek(0);
-                       // this is DTI Studio
-                       for (int j =0; j < lineCount; j++){
-                       final Vector<String> rowData = new Vector<String>();
-                       rowData.add("");
-                       rowData.add("");
-                       rowData.add("");
-                       rowData.add("");
-                       srcTableModel.addRow(rowData);
-                       }
-                       final int numRows = srcTableModel.getRowCount();
-                       
-                       for (int i = 0; i < numRows; i++) {
-                           if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
-                               str = raFile.readLine();
-                               if (str != null) {
-                                   final String[] arr = str.split("\\s+");
-                                       srcTableModel.setValueAt(arr[1], i, 1);
-                                       srcTableModel.setValueAt(arr[2], i, 2);
-                                       srcTableModel.setValueAt(arr[3], i, 3);
-                                   
-                               }
+                    for (int j = 0; j < numVolumes; j++) {
+                        final Vector<String> rowData = new Vector<String>();
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        srcTableModel.addRow(rowData);
+                        // Populate Volume column
+                        srcTableModel.setValueAt(String.valueOf(j),j,0);
+                    }
 
-                           }
+                    final int numRows = srcTableModel.getRowCount();
+                    int start = 0;
 
-                       }
-                       
-                       
-                   }
-            
-               
-           }
+                    for (int i = 0; i < numRows; i++) {
+                        if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
+                            start = i;
+                            break;
+                        }
+                    }
+
+                    int k = start;
+                    String firstline = raFile.readLine();
+                    firstline = firstline.trim();
+
+                    String[] arr = firstline.split("\\s+");
+
+                    for (final String element : arr) {
+                        if (k < numRows) {
+                            srcTableModel.setValueAt(element, k, 2);
+                            k = k + 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    k = start;
+                    String secondLine = raFile.readLine();
+                    secondLine = secondLine.trim();
+                    arr = secondLine.split("\\s+");
+                    for (final String element : arr) {
+                        if (k < numRows) {
+                            srcTableModel.setValueAt(element, k, 3);
+                            k = k + 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    k = start;
+                    String thirdlLine = raFile.readLine();
+                    thirdlLine = thirdlLine.trim();
+                    arr = thirdlLine.split("\\s+");
+                    for (final String element : arr) {
+                        if (k < numRows) {
+                            srcTableModel.setValueAt(element, k, 4);
+                            k = k + 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    k = start;
+                    String fourthLine = raFile.readLine();
+                    fourthLine = fourthLine.trim();
+                    arr = fourthLine.split("\\s+");
+                    for (final String element : arr) {
+                        if (k < numRows) {
+                            srcTableModel.setValueAt(element, k, 1);
+                            k = k + 1;
+                        } else {
+                            break;
+                        }
+                    }
+
+                }
+
+                else {
+                    String line;
+                    int lineCount = 0;
+                    // counts number of lines in file
+                    while ( (line = raFile.readLine()) != null) {
+                        lineCount++;
+                    }
+                    numVolumes = lineCount + 1;
+                    raFile.seek(0);
+                    // this is DTI Studio
+                    for (int j = 0; j < numVolumes; j++) {
+                        final Vector<String> rowData = new Vector<String>();
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        rowData.add("");
+                        srcTableModel.addRow(rowData);
+                    }
+                    final int numRows = srcTableModel.getRowCount();
+
+                    for (int i = 0; i < numRows; i++) {
+                        if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
+                            str = raFile.readLine();
+                            if (str != null) {
+                                // Populate Volume column
+                                srcTableModel.setValueAt(String.valueOf(i),i,0);
+                                final String[] arr = str.split("\\s+");
+                                srcTableModel.setValueAt(arr[1], i, 2);
+                                srcTableModel.setValueAt(arr[2], i, 3);
+                                srcTableModel.setValueAt(arr[3], i, 4);
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
             raFile.close();
-            
+
         } catch (final Exception e) {
 
             MipavUtil.displayError("Error reading B-Value/Grad File...DTI Studio, FSL, and .txt formats are accepted");
@@ -4226,4 +4461,72 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         return true;
     }
+    /**
+     * This method creates the B-Value/Gradient file for DTI Tab
+     * 
+     * @return
+     */
+    public boolean createBValGradFileTXT() {
+        try {
+            StringBuffer sb;
+            int padLength;
+            File bvalGradFile = new File(filebvalGradTxtName);
+            FileOutputStream outputStream = new FileOutputStream(bvalGradFile);
+            PrintStream printStream = new PrintStream(outputStream);
+            
+            String firstGrad = "";
+            String secondGrad = "";
+            String thirdGrad = "";
+            String bvalString = "";
+            
+            for (int i = 0; i < numVolumes; i++) {
+              if (gradBvalText == 1){
+                    firstGrad = firstGrad + srcTableModel.getValueAt(i,2)+ "    ";
+                    secondGrad = secondGrad + srcTableModel.getValueAt(i,3)+ "    ";
+                    thirdGrad = thirdGrad + srcTableModel.getValueAt(i,4)+ "    ";
+                    bvalString = bvalString + srcTableModel.getValueAt(i,1) + "    " ;
+                    
+              }
+                else if (gradBvalText == 2){                                 
+                    printStream.print((i+1) +":" + "\t" +srcTableModel.getValueAt(i,2) + "    "+srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4));              
+                    printStream.println();
+                }
+                else if (gradBvalText == 3){
+                    printStream.print((i) +":" + "\t" +srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4));                  
+                    printStream.println();
+                    
+                }
+
+               
+            }
+            printStream.println(firstGrad);
+            printStream.println(secondGrad);
+            printStream.println(thirdGrad);
+            printStream.println(bvalString);
+            outputStream.close();
+    
+        } catch(Exception e) {
+            Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("! ERROR: Creation of bvalueGrad file failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+            if (outputTextArea != null) {
+                outputTextArea.append("! ERROR: " + e.toString() + "\n");
+                outputTextArea.append("! ERROR: Creation of bvalueGrad file file failed....exiting algorithm \n");
+            }
+            return false;
+        }
+        
+        
+        Preferences.debug(" - bvalueGrad file created : " + "dtiStudio.txt", Preferences.DEBUG_ALGORITHM);
+
+        if (outputTextArea != null) {
+            outputTextArea.append(" - bvalueGrad file created : " +"dtiStudio.txt" + " \n");
+        }
+        
+        return true;
+            
+        }
+        
+        
+    
+
 }

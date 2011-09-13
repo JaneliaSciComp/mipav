@@ -611,7 +611,7 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 		 public Component getTableCellRendererComponent(final JTable table, final Object value,
 	                final boolean isSelected, final boolean hasFocus, final int row, final int column) {
 			 
-			 
+			 System.out.println("concatrendererworking");
 	            JButton comp;
 	            
 	            String imgName = (String)(srcImagesTable.getValueAt(row, 0));

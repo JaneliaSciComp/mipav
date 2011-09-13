@@ -160,10 +160,8 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
      */
     public JDialogDicomDir(Frame parent) {
         super(parent, false);
-        
         // get the selected directory
         JFileChooser chooser ;
-        
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
         	chooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
         } else {
@@ -211,7 +209,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
 	        this.opener = caller;
 	        if (file != null) {
 	                this.file = file;
-	                init("DICOMDIR Browser");
+	                init("DWDIR Browser");
 	                scrollPane.getVerticalScrollBar().addAdjustmentListener(new ScrollCorrector());
 	                ifSuccess = true;
 	        }
@@ -232,6 +230,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
+        System.out.println("working8");
 
         if (source == cancelButton) {
             dispose();
@@ -244,6 +243,7 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
     
    
     private void openImage() {
+        System.out.println("working9");
 
     	// if button is pressed without selection
     	if (tree.isSelectionEmpty())
