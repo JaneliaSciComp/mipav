@@ -521,8 +521,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         if (selfTest) {
         	for (j = 0; j < length; j++) {
         		// No phase difference below:
-        		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
-        		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
+        		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
+        		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
         		//ic1 = 1.5*x1 - 0.5*x2
         		//ic2 = -0.5*x1 + 1.5*x2
         		// Normalizing:
@@ -530,8 +530,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		// -0.3166227766*x1 + 0.948683298*x2
         		// Results with tanh with a1 = 1.0:
         		// Symmetric:
-        		// w[0][0] = -.985311 w[0][1] = -0.17076
-        		// w[1][0] = 0.17076 w[1][1] = -0.985311
+        		//w[0][0] = 0.9853117296084969
+        		// w[0][1] = 0.17076532287297813
+        		 //w[1][0] = -0.1707653228729781
+        		 //w[1][1] = 0.9853117296084966
         		// Deflationary:
         		// w[0][0] = -0.9606731 w[0][1] = -0.27768
         		// w[1][0] = -0.27768 w[1][1] = 0.9606731
@@ -562,8 +564,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		// B[0][0] = 0.98901 B[0][1] = 0.147822
         		// B[1][0] = -0.147822 B[1][1] = 0.98901
         		// Now introduce a PI/4 phase in one sine.
-        		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
-        		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
+        		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
+        		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
         		//tanh:
         		// Symmetric:
         		//w[0][0] = 0.1327884151147901
@@ -580,7 +582,38 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		//B[0][1] = 0.12064662431635811
         		//B[1][0] = -0.12064662431632864
         		//B[1][1] = 0.9926955182937827
-        		
+        		// Now make one sine 3.5 times the frequency of the other
+        		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.5*j*Math.PI/100.0);
+        		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.5*j*Math.PI/100.0);
+        		// tanh:
+        		// Symmetric:
+        		 //w[0][0] = 0.9999999999212936
+        		 //w[0][1] = 1.2546432531591132E-5
+        		 //w[1][0] = 1.2546432531618073E-5
+        		// w[1][1] = -0.9999999999212936
+        		 //w[0][0] = -0.9999999999212937
+        		 //w[0][1] = -1.2546430496945171E-5
+        		 //w[1][0] = -1.2546430496980062E-5
+        		 //w[1][1] = 0.9999999999212934
+        		//Deflationary:
+        		//w[0][0] = -0.9999999994307308
+        		 //w[0][1] = -3.374223489262356E-5
+        		 //w[1][0] = -3.374223489262355E-5
+        		 //w[1][1] = 0.9999999994307308
+        		// Maximum likelihood:
+        		//B[0][0] = 0.9999999999213403
+        		//B[0][1] = 1.2545154233450775E-5
+        		//B[1][0] = -1.2545154120376977E-5
+        		//B[1][1] = 0.9999999999211855
+        		// Now make one sine PI times the frequency of the other
+        		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(Math.PI*j*Math.PI/100.0);
+        		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(Math.PI*j*Math.PI/100.0);
+        		// tanh
+        		// symmetric:
+        		//w[0][0] = 0.9999999999987451
+        		 //w[0][1] = 1.5840778904923386E-6
+        		 //w[1][0] = -1.5840778905102483E-6
+        		 //w[1][1] = 0.9999999999987451
         	}
         }
 
