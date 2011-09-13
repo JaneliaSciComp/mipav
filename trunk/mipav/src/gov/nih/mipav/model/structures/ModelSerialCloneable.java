@@ -54,4 +54,19 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
             return null;
         }
     }
+    
+    /**
+     * Does not use serialization for cloning, exists for performance comparison.
+     * 
+     * @throws CloneNotSupportedException 
+     * 
+     */
+    public Object nativeClone() {
+    	try {
+			return super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+			return null;
+		}
+    }
 }
