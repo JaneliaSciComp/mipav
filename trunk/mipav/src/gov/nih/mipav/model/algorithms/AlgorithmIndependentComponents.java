@@ -133,6 +133,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
     private boolean greenRequested;
     
     private boolean blueRequested;
+    
+    private boolean selfTest = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -514,6 +516,72 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	
 	            return;
 	        }
+        }
+        
+        if (selfTest) {
+        	for (j = 0; j < length; j++) {
+        		// No phase difference below:
+        		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
+        		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
+        		//ic1 = 1.5*x1 - 0.5*x2
+        		//ic2 = -0.5*x1 + 1.5*x2
+        		// Normalizing:
+        		// 0.948683298*x1 - 0.316227766*x2
+        		// -0.3166227766*x1 + 0.948683298*x2
+        		// Results with tanh with a1 = 1.0:
+        		// Symmetric:
+        		// w[0][0] = -.985311 w[0][1] = -0.17076
+        		// w[1][0] = 0.17076 w[1][1] = -0.985311
+        		// Deflationary:
+        		// w[0][0] = -0.9606731 w[0][1] = -0.27768
+        		// w[1][0] = -0.27768 w[1][1] = 0.9606731
+        		// Maximum likelihood:
+        		// B[0][0] = 0.98901 B[0][1] = 0.147822
+        		// B[1][0] = -0.147822 B[1][1] = 0.98901
+        		// Results with y*exp(-y*y/2):
+        		// Symmetric:
+        		// w[0][0] = -0.17043186 w[0][1] = 0.98536946
+        		// w[1][0] = -0.98536946 w[1][1] = -0.17043186
+        		// Deflationary:
+        		// w[0][0] = -1.63731E-5 w[0][1] = 0.9999999998659
+        		// w[1][0] = -0.9999999998659 w[1][1] = -1.63731E-5
+        		// Maximum likelihood:
+        		// B[0][0] = 0.98901 B[0][1] = 0.147822
+        		// B[1][0] = -0.147822 B[1][1] = 0.98901
+        		// Results with y*y*y:
+        		// 0.948683298*x1 - 0.316227766*x2
+        		// -0.3166227766*x1 + 0.948683298*x2
+        		// Results with tanh with a1 = 1.0:
+        		// Symmetric:
+        		// w[0][0] = 0.98921498 w[0][1] = 0.1467089
+        		// w[1][0] = -0.14647089 w[1][1] = 0.98921498
+        		// Deflationary:
+        		// w[0][0] = -0.96355 w[0][1] = -0.267511
+        		// w[1][0] = 0.267511 w[1][1] = -0.96355
+        		// Maximum likelihood:
+        		// B[0][0] = 0.98901 B[0][1] = 0.147822
+        		// B[1][0] = -0.147822 B[1][1] = 0.98901
+        		// Now introduce a PI/4 phase in one sine.
+        		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
+        		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
+        		//tanh:
+        		// Symmetric:
+        		//w[0][0] = 0.1327884151147901
+        		//w[0][1] = -0.991144407647696
+        		//w[1][0] = -0.9911444076476956
+        		//w[1][1] = -0.13278841511478998
+        		// Deflationary:
+        		 //w[0][0] = -0.9729204962298503
+        		 //w[0][1] = -0.23114001820511687
+        		 //w[1][0] = -0.23114001820511687
+        		 //w[1][1] = 0.9729204962298502
+        		// Maximum likelihood:
+        		//B[0][0] = 0.992695518294043
+        		//B[0][1] = 0.12064662431635811
+        		//B[1][0] = -0.12064662431632864
+        		//B[1][1] = 0.9926955182937827
+        		
+        	}
         }
 
         fireProgressStateChanged(10);
