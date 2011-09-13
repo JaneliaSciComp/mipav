@@ -536,6 +536,9 @@ public class FileDicomTag extends ModelSerialCloneable {
                 }  
             }
             
+            if(val == null) {
+            	val = "";
+            }
             setValue(val, val.length());
         } else if (type.getType() instanceof NumType) {
             Object[] nAr = null;
