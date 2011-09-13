@@ -136,6 +136,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
         srcTableModel.addColumn("Z Gradient");
         srcImagesTable = new JTable(srcTableModel) {
             public String getToolTipText(final MouseEvent e) {
+                System.out.println("working101");
                 String tip = null;
                 final java.awt.Point p = e.getPoint();
                 final int rowIndex = rowAtPoint(p);
@@ -931,15 +932,19 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 raFile.seek(0);
                 // this is DTI Studio
                 final int numRows = srcTableModel.getRowCount();
+                System.out.println("numRows:"+numRows);
 
                 for (int i = 0; i < numRows; i++) {
                     if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
                         str = raFile.readLine();
+                        System.out.println("str:"+str);
                         if (str != null) {
                             final String[] arr = str.split(":");
+                            System.out.println("arr:"+arr);
                             if (arr.length == 2) {
                                 final String grads = arr[1].trim();
                                 final String[] arr2 = grads.split("\\s+");
+                                System.out.println("arr2:"+arr2);
                                 srcTableModel.setValueAt(arr2[0], i, 2);
                                 srcTableModel.setValueAt(arr2[1], i, 3);
                                 srcTableModel.setValueAt(arr2[2], i, 4);
@@ -951,16 +956,21 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 }
 
             } else {
+                System.out.println("working6");
                 final int numRows = srcTableModel.getRowCount();
+                System.out.println("numRows:"+numRows);
                 int start = 0;
                 for (int i = 0; i < numRows; i++) {
                     if ( ((String) srcTableModel.getValueAt(i, 2)).trim().equals("")) {
                         start = i;
+                        System.out.println("start:"+start);
                         break;
                     }
                 }
                 // this is FSL
+                System.out.println("working7");
                 firstLine = firstLine.trim();
+                System.out.println("firstLine:"+firstLine);
                 String[] arr = firstLine.split("\\s+");
                 int k = start;
 
@@ -968,6 +978,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                     if (k < numRows) {
                         srcTableModel.setValueAt(element, k, 2);
                         k = k + 1;
+                        System.out.println("k:"+k);
                     } else {
                         break;
                     }
@@ -976,6 +987,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 k = start;
                 String secondLine = raFile.readLine();
                 secondLine = secondLine.trim();
+                System.out.println("secondLine:"+secondLine);
                 arr = secondLine.split("\\s+");
                 for (final String element : arr) {
                     if (k < numRows) {
@@ -989,6 +1001,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 k = start;
                 String thirdLine = raFile.readLine();
                 thirdLine = thirdLine.trim();
+                System.out.println("thirdLine:"+thirdLine);
                 arr = thirdLine.split("\\s+");
                 for (final String element : arr) {
                     if (k < numRows) {
@@ -1002,6 +1015,7 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 k = start;
                 String fourthLine = raFile.readLine();
                 fourthLine = fourthLine.trim();
+                System.out.println("fourthLine:"+fourthLine);
                 arr = fourthLine.split("\\s+");
                 for (final String element : arr) {
                     if (k < numRows) {
