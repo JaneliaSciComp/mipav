@@ -264,7 +264,7 @@ public void displayDTIInfo_JDialogFileInfo(JDialogFileInfo dlg) {
         return  sliceAng;
     }
     
-    public void setOffCentre(double[] sliceAng) {
+    public void setOffCentre(double[] offCentre) {
         this.offCentre = offCentre;
     }
     
