@@ -1159,7 +1159,7 @@ public class FileIO {
                 if ( !multiframe) {
                     curFileInfo = savedFileInfos[i];
                 } else {
-                	curFileInfo = (FileInfoDicom) refFileInfo.nativeClone();
+                	curFileInfo = (FileInfoDicom) refFileInfo.clone();
                 }
                 
                 if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
