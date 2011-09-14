@@ -402,6 +402,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         double wlaststd[];
         double Bstd[][];
         double Blaststd[][];
+        Matrix matScale;
+        double scale[][];
 
         if (haveColor) {
         	if (redRequested) {
@@ -519,7 +521,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         }
         
         if (selfTest) {
-        	for (j = 0; j < length; j++) {
+        	for (i = 0, j = 0, k = 0; j < length; j++, i++) {
+        		// Because of the whitening step, the w and B matrices will not reflect the scaling values
+        		// of the 2 components.  Must look at matW.times(matWh) and matB.times(matWh)
         		// No phase difference below:
         		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
         		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
@@ -528,92 +532,19 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		// Normalizing:
         		// 0.948683298*x1 - 0.316227766*x2
         		// -0.3166227766*x1 + 0.948683298*x2
-        		// Results with tanh with a1 = 1.0:
-        		// Symmetric:
-        		//w[0][0] = 0.9853117296084969
-        		// w[0][1] = 0.17076532287297813
-        		 //w[1][0] = -0.1707653228729781
-        		 //w[1][1] = 0.9853117296084966
-        		// Deflationary:
-        		// w[0][0] = -0.9606731 w[0][1] = -0.27768
-        		// w[1][0] = -0.27768 w[1][1] = 0.9606731
-        		// Maximum likelihood:
-        		// B[0][0] = 0.98901 B[0][1] = 0.147822
-        		// B[1][0] = -0.147822 B[1][1] = 0.98901
-        		// Results with y*exp(-y*y/2):
-        		// Symmetric:
-        		// w[0][0] = -0.17043186 w[0][1] = 0.98536946
-        		// w[1][0] = -0.98536946 w[1][1] = -0.17043186
-        		// Deflationary:
-        		// w[0][0] = -1.63731E-5 w[0][1] = 0.9999999998659
-        		// w[1][0] = -0.9999999998659 w[1][1] = -1.63731E-5
-        		// Maximum likelihood:
-        		// B[0][0] = 0.98901 B[0][1] = 0.147822
-        		// B[1][0] = -0.147822 B[1][1] = 0.98901
-        		// Results with y*y*y:
-        		// 0.948683298*x1 - 0.316227766*x2
-        		// -0.3166227766*x1 + 0.948683298*x2
-        		// Results with tanh with a1 = 1.0:
-        		// Symmetric:
-        		// w[0][0] = 0.98921498 w[0][1] = 0.1467089
-        		// w[1][0] = -0.14647089 w[1][1] = 0.98921498
-        		// Deflationary:
-        		// w[0][0] = -0.96355 w[0][1] = -0.267511
-        		// w[1][0] = 0.267511 w[1][1] = -0.96355
-        		// Maximum likelihood:
-        		// B[0][0] = 0.98901 B[0][1] = 0.147822
-        		// B[1][0] = -0.147822 B[1][1] = 0.98901
+        		
         		// Now introduce a PI/4 phase in one sine.
         		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
         		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin((3.0*j*Math.PI/100.0) + 0.25*Math.PI);
-        		//tanh:
-        		// Symmetric:
-        		//w[0][0] = 0.1327884151147901
-        		//w[0][1] = -0.991144407647696
-        		//w[1][0] = -0.9911444076476956
-        		//w[1][1] = -0.13278841511478998
-        		// Deflationary:
-        		 //w[0][0] = -0.9729204962298503
-        		 //w[0][1] = -0.23114001820511687
-        		 //w[1][0] = -0.23114001820511687
-        		 //w[1][1] = 0.9729204962298502
-        		// Maximum likelihood:
-        		//B[0][0] = 0.992695518294043
-        		//B[0][1] = 0.12064662431635811
-        		//B[1][0] = -0.12064662431632864
-        		//B[1][1] = 0.9926955182937827
+        		
         		// Now make one sine 3.5 times the frequency of the other
         		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.5*j*Math.PI/100.0);
         		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.5*j*Math.PI/100.0);
-        		// tanh:
-        		// Symmetric:
-        		 //w[0][0] = 0.9999999999212936
-        		 //w[0][1] = 1.2546432531591132E-5
-        		 //w[1][0] = 1.2546432531618073E-5
-        		// w[1][1] = -0.9999999999212936
-        		 //w[0][0] = -0.9999999999212937
-        		 //w[0][1] = -1.2546430496945171E-5
-        		 //w[1][0] = -1.2546430496980062E-5
-        		 //w[1][1] = 0.9999999999212934
-        		//Deflationary:
-        		//w[0][0] = -0.9999999994307308
-        		 //w[0][1] = -3.374223489262356E-5
-        		 //w[1][0] = -3.374223489262355E-5
-        		 //w[1][1] = 0.9999999994307308
-        		// Maximum likelihood:
-        		//B[0][0] = 0.9999999999213403
-        		//B[0][1] = 1.2545154233450775E-5
-        		//B[1][0] = -1.2545154120376977E-5
-        		//B[1][1] = 0.9999999999211855
+        		
         		// Now make one sine PI times the frequency of the other
         		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(Math.PI*j*Math.PI/100.0);
         		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(Math.PI*j*Math.PI/100.0);
-        		// tanh
-        		// symmetric:
-        		//w[0][0] = 0.9999999999987451
-        		 //w[0][1] = 1.5840778904923386E-6
-        		 //w[1][0] = -1.5840778905102483E-6
-        		 //w[1][1] = 0.9999999999987451
+        		
         	}
         }
 
@@ -860,6 +791,12 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             }
         } // else not color
         
+        for (i = 0; i < nPlanes; i++) {
+        	for (j = 0; j < nPlanes; j++) {
+        		Preferences.debug("wh["+i+"]["+j+"] = " +  wh[i][j] + "\n");
+        	}
+        }
+        
         
         E1 = new double[nPlanes];
         randomGen = new RandomNumberGen();
@@ -1056,6 +993,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        for (p = 0; p < icNumber; p++) {
 	        	for (i = 0; i < nPlanes; i++) {
 	        		Preferences.debug(" w["+p+"]["+i+"] = " + w[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        	}
+        	}
+	        matW = new Matrix(w);
+        	matScale = matW.times(matWh);
+        	scale = matScale.getArray();
+        	for (p = 0; p < nPlanes; p++) {
+	        	for (i = 0; i < nPlanes; i++) {
+	        		Preferences.debug(" scale["+p+"]["+i+"] = " + scale[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
 	        	}
         	}
         } // if (icAlgorithm == DEFLATIONARY_ORTHOGONALIZATION)
@@ -1282,6 +1227,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         	for (p = 0; p < nPlanes; p++) {
 	        	for (i = 0; i < nPlanes; i++) {
 	        		Preferences.debug(" w["+p+"]["+i+"] = " + w[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        	}
+        	}
+        	matW = new Matrix(w);
+        	matScale = matW.times(matWh);
+        	scale = matScale.getArray();
+        	for (p = 0; p < nPlanes; p++) {
+	        	for (i = 0; i < nPlanes; i++) {
+	        		Preferences.debug(" scale["+p+"]["+i+"] = " + scale[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
 	        	}
         	}
         } // else if (icAlgorithm == SYMMETRIC_ORTHOGONALIZATION)
@@ -1532,6 +1485,14 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
             		Preferences.debug("B["+p+"]["+i+"] = " + B[p][i] + "\n",Preferences.DEBUG_ALGORITHM);
             	}
             }
+            matB = new Matrix(B);
+        	matScale = matB.times(matWh);
+        	scale = matScale.getArray();
+        	for (p = 0; p < nPlanes; p++) {
+	        	for (i = 0; i < nPlanes; i++) {
+	        		Preferences.debug(" scale["+p+"]["+i+"] = " + scale[p][i] + "\n", Preferences.DEBUG_ALGORITHM);
+	        	}
+        	}
         } // else icAlgorithm == MAXIMUM_LIKELIHOOD_ESTIMATION
 
         fireProgressStateChanged(100);
