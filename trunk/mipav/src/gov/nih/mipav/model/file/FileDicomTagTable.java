@@ -305,7 +305,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         if (!isReferenceTagTable) {
             tagList = referenceTagTable.getTagList();
 
-            // merge (tags in this table take precidence)
+            // merge (tags in this table take precedence)
             Enumeration<FileDicomKey> keys = this.tagTable.keys();
 
             while (keys.hasMoreElements()) {
