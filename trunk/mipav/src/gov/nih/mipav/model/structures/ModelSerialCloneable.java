@@ -56,7 +56,7 @@ public class ModelSerialCloneable implements Cloneable, Serializable {
     }
     
     /**
-     * Does not use serialization for cloning, exists for performance comparison.
+     * Does not use serialization for cloning, exists for performance comparison and shallow copies.
      * 
      * @throws CloneNotSupportedException 
      * 
