@@ -1155,11 +1155,15 @@ public class FileIO {
 
                 // Reuse header that was read in above
                 FileInfoDicom curFileInfo;
-
+                
                 if ( !multiframe) {
                     curFileInfo = savedFileInfos[i];
                 } else {
+                	FileDicomTagTable table = refFileInfo.getTagTable();
+                	refFileInfo.setTagTable(null);
                 	curFileInfo = (FileInfoDicom) refFileInfo.clone();
+                	refFileInfo.setTagTable(table);
+                	curFileInfo.setTagTable(table);
                 }
                 
                 if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
