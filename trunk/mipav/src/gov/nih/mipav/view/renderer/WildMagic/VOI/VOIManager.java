@@ -25,6 +25,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
+import gov.nih.mipav.view.*;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -51,6 +52,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
+import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
@@ -2792,7 +2794,61 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		float[] coords = new float[4];
 		getCoordsProtractor(x, y, .5, coords); // get coordinates for tick marks
 
-		String degreeString = ((VOIProtractor)kVOI).getAngleString( res );
+		String degreeString;
+		if (m_kParent.getActiveImage().getTriImageFrame() != null) {
+			ViewJFrameTriImage triFrame = m_kParent.getActiveImage().getTriImageFrame();
+			int orientation = triFrame.getCurrentOrientation();
+			int selectedImage = triFrame.getSelectedImage();
+			int index = ViewJFrameTriImage.AXIAL_A;
+			double theta = ((VOIProtractor)kVOI).getTheta( res );
+			switch (orientation) {
+			case FileInfoBase.AXIAL:
+			    switch (selectedImage) {
+			    case (ViewJComponentBase.IMAGE_A) :
+			        index = ViewJFrameTriImage.AXIAL_A;	
+			        break;
+			    case (ViewJComponentBase.IMAGE_B) :
+			    	index = ViewJFrameTriImage.AXIAL_B;
+			        break;
+			    case (ViewJComponentBase.BOTH) :
+			    	index = ViewJFrameTriImage.AXIAL_AB;
+			    }
+				break;
+			case FileInfoBase.CORONAL:
+				switch (selectedImage) {
+			    case (ViewJComponentBase.IMAGE_A) :
+			        index = ViewJFrameTriImage.CORONAL_A;	
+			        break;
+			    case (ViewJComponentBase.IMAGE_B) :
+			    	index = ViewJFrameTriImage.CORONAL_B;
+			        break;
+			    case (ViewJComponentBase.BOTH) :
+			    	index = ViewJFrameTriImage.CORONAL_AB;
+			    }
+				break;
+			case FileInfoBase.SAGITTAL:
+				switch (selectedImage) {
+			    case (ViewJComponentBase.IMAGE_A) :
+			        index = ViewJFrameTriImage.SAGITTAL_A;	
+			        break;
+			    case (ViewJComponentBase.IMAGE_B) :
+			    	index = ViewJFrameTriImage.SAGITTAL_B;
+			        break;
+			    case (ViewJComponentBase.BOTH) :
+			    	index = ViewJFrameTriImage.SAGITTAL_AB;
+			    }
+			}
+			ViewJComponentTriImage triComponent = triFrame.getTriImage(index);
+			Vector2f protractor1 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(1));
+            Vector2f protractor2 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(2));
+            if (protractor2.Y > protractor1.Y) {
+            	theta = -theta;
+            }
+            degreeString = ((VOIProtractor)kVOI).getAngleString( theta );
+		}
+		else {
+		    degreeString = ((VOIProtractor)kVOI).getAngleString( res );
+		}
 
 		if (close == true) {
 
