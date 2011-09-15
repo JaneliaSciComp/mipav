@@ -73,6 +73,25 @@ public class VOIProtractor extends VOIBase {
     {
         return allSlices;
     }
+    
+    /**
+     * Returns the angle of the protractor as a string. Based on the input image resolutions.
+     * @param afResolutions
+     * @return
+     */
+    public String getAngleString(double fAngle )
+    {
+
+        String degreeString = String.valueOf(fAngle); // since y decreases going down
+        int i = degreeString.indexOf('.');
+
+        if (degreeString.length() >= (i + 3)) {
+            degreeString = degreeString.substring(0, i + 3);
+        }
+
+        degreeString += " deg";
+        return degreeString;
+    }
 
     /**
      * Returns the angle of the protractor as a string. Based on the input image resolutions.
