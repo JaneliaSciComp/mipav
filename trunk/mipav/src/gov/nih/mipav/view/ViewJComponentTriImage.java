@@ -542,7 +542,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
             theta = voiProtractor.getTheta(res);
             Vector2f protractor1 = getScreenCoordinates(voiProtractor.get(1));
             Vector2f protractor2 = getScreenCoordinates(voiProtractor.get(2));
-            if (protractor2.Y > protractor1.Y) {
+            if (protractor2.Y < protractor1.Y) {
             	theta = -theta;
             }
             return theta;
