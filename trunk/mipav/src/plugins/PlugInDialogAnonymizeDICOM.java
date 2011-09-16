@@ -421,7 +421,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 			}
             if(info instanceof FileInfoDicom) {
             	FileDicomTagTable tagTable = ((FileInfoDicom) info).getTagTable();
-            	currentTagEditor = new DicomTagSelectorDialog(tagTable, parent);
+            	currentTagEditor = new DicomTagSelectorDialog(tagTable.getTagList(), parent, true);
             }
 		}
     	
