@@ -2841,7 +2841,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			ViewJComponentTriImage triComponent = triFrame.getTriImage(index);
 			Vector2f protractor1 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(1));
             Vector2f protractor2 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(2));
-            if (protractor2.Y > protractor1.Y) {
+            if (protractor2.Y < protractor1.Y) {
             	theta = -theta;
             }
             degreeString = ((VOIProtractor)kVOI).getAngleString( theta );
