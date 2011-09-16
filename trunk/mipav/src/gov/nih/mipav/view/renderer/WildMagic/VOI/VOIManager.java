@@ -2839,9 +2839,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			    }
 			}
 			ViewJComponentTriImage triComponent = triFrame.getTriImage(index);
-			Vector2f protractor1 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(1));
+			Vector2f protractor0 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(0));
             Vector2f protractor2 = triComponent.getScreenCoordinates(((VOIProtractor)kVOI).get(2));
-            if (protractor2.Y < protractor1.Y) {
+            if (protractor2.Y < protractor0.Y) {
             	theta = -theta;
             }
             degreeString = ((VOIProtractor)kVOI).getAngleString( theta );
@@ -4580,7 +4580,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @return true if the mouse is near a point on the contour of the input VOI.
 	 */
 	private boolean nearPoint( VOIBase kVOI, int iX, int iY, int iZ) {
-
 		Vector3f kVOIPoint = new Vector3f(iX, iY, iZ );
 		kVOI.setNearPoint(-1);
 		for ( int i = 0; i < kVOI.size(); i++ )
