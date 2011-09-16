@@ -1364,6 +1364,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     {
         if ( m_bUpdateBounds )
         {
+        	
             for ( int i = 0; i < size(); i++ )
             {
                 Vector3f kVolumePt = elementAt(i);
@@ -1375,6 +1376,20 @@ public abstract class VOIBase extends Vector<Vector3f> {
                 m_akImageMinMax[0].Min( kVolumePt );
                 m_akImageMinMax[1].Max( kVolumePt );
             }
+            if (voiGroup.getCurveType() == VOI.PROTRACTOR) {
+	        	if (m_akImageMinMax[0].X == m_akImageMinMax[1].X) {
+	        		m_akImageMinMax[0].X -= 2.0f;
+	        		m_akImageMinMax[1].X += 2.0f;
+	        	}
+	        	if (m_akImageMinMax[0].Y == m_akImageMinMax[1].Y) {
+	        		m_akImageMinMax[0].Y -= 2.0f;
+	        		m_akImageMinMax[1].Y += 2.0f;
+	        	}
+	        	if (m_akImageMinMax[0].Z == m_akImageMinMax[1].Z) {
+	        		m_akImageMinMax[0].Z -= 2.0f;
+	        		m_akImageMinMax[1].Z += 2.0f;
+	        	}
+        	}
             m_bUpdateBounds = false;
         }
         return m_akImageMinMax;
