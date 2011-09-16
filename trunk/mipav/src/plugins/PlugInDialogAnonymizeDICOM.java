@@ -78,7 +78,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 	private JButton tagEditorBrowseButton;
 	
 	/** The Dicom tag editor for selecting additional tags to anonymize */
-	private TagEditorDialog currentTagEditor;
+	private DicomTagSelectorDialog currentTagEditor;
 
 	/**InfoGathering threads to find Dicom data*/
 	private ArrayList<PlugInDialogAnonymizeDICOM.InformationUpdate> infoGather;
@@ -421,8 +421,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 			}
             if(info instanceof FileInfoDicom) {
             	FileDicomTagTable tagTable = ((FileInfoDicom) info).getTagTable();
-            	
-            	currentTagEditor = new TagEditorDialog(tagTable, parent);
+            	currentTagEditor = new DicomTagSelectorDialog(tagTable, parent);
             }
 		}
     	

@@ -119,7 +119,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	private ArrayList<InformationUpdate> infoGather;
 	
 	/** The Dicom tag editor for selecting additional tags to anonymize */
-	private TagEditorDialog currentTagEditor;
+	private DicomTagSelectorDialog currentTagEditor;
 	
 	//	~ Constructors --------------------------------------------------------------------------
 
@@ -787,7 +787,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		}
             	}
             	
-            	currentTagEditor = new TagEditorDialog(tagTable, parent);
+            	currentTagEditor = new DicomTagSelectorDialog(tagTable, parent);
             }
 		}
     	

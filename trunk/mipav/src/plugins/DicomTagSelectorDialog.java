@@ -35,7 +35,14 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-public class TagEditorDialog extends JDialogBase implements ListSelectionListener {
+/**
+ * This class allows for DICOM tags to be selected.  Selected DICOM tags can either come from the overall DICOM dictionary or from the tags that exist in
+ * a given image.
+ * 
+ * @author senseneyj
+ *
+ */
+public class DicomTagSelectorDialog extends JDialogBase implements ListSelectionListener {
 
     	/**For adding a top level dicom tag*/
     	private static final String ADD_TAG = "Add";
@@ -85,16 +92,16 @@ public class TagEditorDialog extends JDialogBase implements ListSelectionListene
 		/**Name and property labels that describe a DICOM tag for a particular file*/
 		private JLabel nameValue, nameValueSeq, propertyValue, propertyValueSeq;
     	
-		/**Original tag table for this file*/
-		private FileDicomTagTable tagTable;
+		/**Original list of available DICOM tags*/
+		private Hashtable<FileDicomKey, FileDicomTag> tagList;
 		
 		/** The parent dialog which receives text from this dicom tag editor */
 		private DicomTagImpl parentPlugin;
 		
-		public TagEditorDialog(FileDicomTagTable tagTable, JDialogBase parent) {
+		public DicomTagSelectorDialog(FileDicomTagTable tagTable, JDialogBase parent) {
 			super(parent, false);
 			
-			this.tagTable = tagTable;
+			this.tagList = tagTable.getTagList();
 			
 			if(parent instanceof DicomTagImpl) {
 				this.parentPlugin = (DicomTagImpl)parent;
@@ -519,7 +526,7 @@ public class TagEditorDialog extends JDialogBase implements ListSelectionListene
 				propertyValue.setText(keyToValue.get(tagName));
 				if(keyToValue.get(tagName).equals(SEQUENCE)) {
 					add(sequenceInformationPanel, BorderLayout.SOUTH);
-					FileDicomSQ sq = (FileDicomSQ)tagTable.getValue(tagName);
+					FileDicomSQ sq = (FileDicomSQ)tagList.get(new FileDicomKey(tagName)).getValue(false);
 					FileDicomTagTable item = sq.getItem(0);
 					buildSeqGroupElementMap(item.getTagList());
 					Vector<String> vGroup;
