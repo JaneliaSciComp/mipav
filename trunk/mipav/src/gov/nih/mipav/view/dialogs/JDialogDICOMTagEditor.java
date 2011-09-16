@@ -47,6 +47,9 @@ public class JDialogDICOMTagEditor extends JDialogBase {
     /** A reference to the tag table containing the tag we will be editing. */
     private FileDicomTagTable tagTable;
 
+    /** The main panel that is accessed. */
+	private Box mainBox;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -63,9 +66,12 @@ public class JDialogDICOMTagEditor extends JDialogBase {
 
         this.tagTable = _tagTable;
         this.tagKey = _tagKey;
-        setTitle("Edit tag (" + tagKey + "): " + tagTable.get(tagKey).getName());
+        
+        if(isStandalone) {
+        	setTitle("Edit tag (" + tagKey + "): " + tagTable.get(tagKey).getName());
+        }
 
-        Box mainBox = new Box(BoxLayout.Y_AXIS);
+        mainBox = new Box(BoxLayout.Y_AXIS);
         Box editBox = new Box(BoxLayout.Y_AXIS);
 
         // Build original value panel; contains both label and tag-value
@@ -131,12 +137,14 @@ public class JDialogDICOMTagEditor extends JDialogBase {
         applyToAllSlicesCheckBox.setForeground(Color.black);
         mainBox.add(applyToAllSlicesCheckBox);
 
-        getContentPane().add(mainBox, BorderLayout.CENTER);
-        getContentPane().add(buildOKCancelPanel(), BorderLayout.SOUTH);
-
-        pack();
-        setResizable(true); // default anyway
-        setVisible(true);
+        if(isStandalone) {
+	        getContentPane().add(mainBox, BorderLayout.CENTER);
+	        getContentPane().add(buildOKCancelPanel(), BorderLayout.SOUTH);
+	
+	        pack();
+	        setResizable(true); // default anyway
+	        setVisible(true);
+        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
