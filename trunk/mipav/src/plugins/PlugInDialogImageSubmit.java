@@ -787,7 +787,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		}
             	}
             	
-            	currentTagEditor = new DicomTagSelectorDialog(tagTable, parent);
+            	currentTagEditor = new DicomTagSelectorDialog(tagTable.getTagList(), parent, true);
             }
 		}
     	

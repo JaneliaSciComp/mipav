@@ -97,11 +97,14 @@ public class DicomTagSelectorDialog extends JDialogBase implements ListSelection
 		
 		/** The parent dialog which receives text from this dicom tag editor */
 		private DicomTagImpl parentPlugin;
+
+		/** When this object exists as an embedded panel, this variable contains all necessary data elements. */
+		private JPanel embeddedPanel;
 		
-		public DicomTagSelectorDialog(FileDicomTagTable tagTable, JDialogBase parent) {
+		public DicomTagSelectorDialog(Hashtable<FileDicomKey,FileDicomTag> tagList, JDialogBase parent, boolean isStandalone) {
 			super(parent, false);
 			
-			this.tagList = tagTable.getTagList();
+			this.tagList = tagList;
 			
 			if(parent instanceof DicomTagImpl) {
 				this.parentPlugin = (DicomTagImpl)parent;
@@ -115,14 +118,22 @@ public class DicomTagSelectorDialog extends JDialogBase implements ListSelection
 			this.keyToValue = new TreeMap<String, String>();
 			this.setResizable(false);
 			
-			buildGroupElementMap(tagTable);
+			buildGroupElementMap(tagList);
 			
-			init();
+			init(isStandalone);
 		}
-		
-		public void init() {
-			setForeground(Color.black);
-	        setTitle("Tag Selector Tool");
+
+
+		/**
+		 * Builds the panel that the tag dialog frame contains, and optionally builds 
+		 * the standalone frame that encompasses all functionality of this class.
+		 * @param isStandalone 
+		 */
+		public void init(boolean isStandalone) {
+			if(isStandalone) {
+				setForeground(Color.black);
+		        setTitle("Tag Selector Tool");
+			}
 	        
 	        tagSelectorPanel = buildTagSelectorPanel();
 	        
@@ -130,10 +141,16 @@ public class DicomTagSelectorDialog extends JDialogBase implements ListSelection
 	        
 	        sequenceInformationPanel = buildSequenceInfoPanel();
 	        
-	        add(tagSelectorPanel, BorderLayout.NORTH);
-	        add(tagInformationPanel, BorderLayout.CENTER);
-	        
-	        pack();
+	        if(isStandalone) {
+		        add(tagSelectorPanel, BorderLayout.NORTH);
+		        add(tagInformationPanel, BorderLayout.CENTER);
+		        
+		        pack();
+	        } else {
+	        	embeddedPanel = new JPanel();
+	        	embeddedPanel.add(tagSelectorPanel);
+	        	embeddedPanel.add(tagInformationPanel);
+	        }
 		}
 		
 		private JPanel buildTagSelectorPanel() {
@@ -405,8 +422,7 @@ public class DicomTagSelectorDialog extends JDialogBase implements ListSelection
 			
 		}
 		
-		private void buildGroupElementMap(FileDicomTagTable tagTable) {
-			Hashtable<FileDicomKey, FileDicomTag> tagHash = tagTable.getTagList();
+		private void buildGroupElementMap(Hashtable<FileDicomKey, FileDicomTag> tagHash) {
 			Enumeration<FileDicomKey> e = tagHash.keys();
 			while(e.hasMoreElements()) {
 				FileDicomKey key = e.nextElement();
@@ -424,7 +440,8 @@ public class DicomTagSelectorDialog extends JDialogBase implements ListSelection
 				} else {
 					keyToName.put(key.toString(), tagName);
 				}
-				Object obj = tagTable.getValue(key);
+				
+				Object obj = tagHash.get(key).getValue(false);
 				if(obj instanceof FileDicomSQ && ((FileDicomSQ)obj).getSequenceLength() > 0) {
 					keyToValue.put(key.toString(), SEQUENCE);
 				} else if(obj == null || (obj instanceof FileDicomSQ && ((FileDicomSQ)obj).getSequenceLength() == 0)) {
