@@ -329,7 +329,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         propPane.setBorder(null);
         tagInformationPanel.add(propPane, infoPanelConstraints);
         
-        if(keyToValue.get(tagName) == null) {
+        if(keyToValue.get(tagName).equals(UNKNOWN)) {
         	propPane.setVisible(false);
         	propertyLabel.setVisible(false);
         }
@@ -567,9 +567,9 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 			String tagName = groupList.getSelectedValue().toString()+","+elementList.getSelectedValue().toString();
 			nameValue.setText(keyToName.get(tagName));
 			String keyValue = keyToValue.get(tagName);
-			propPane.setVisible(keyValue != null);
-        	propertyLabel.setVisible(keyValue != null);
-			if(keyValue != null) {
+			propPane.setVisible(!keyValue.equals(UNKNOWN));
+        	propertyLabel.setVisible(!keyValue.equals(UNKNOWN));
+			if(!keyValue.equals(UNKNOWN)) {
 				propertyValue.setText(keyValue);
 				if(keyValue.equals(SEQUENCE)) {
 					add(sequenceInformationPanel, BorderLayout.SOUTH);
