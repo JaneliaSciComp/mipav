@@ -18,6 +18,8 @@ import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector;
+import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector.DicomTagSelectorImpl;
 
 import javax.swing.*;
 
@@ -29,7 +31,7 @@ import java.util.Vector;
  * @author joshim2
  *
  */
-public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, DicomTagImpl {
+public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, DicomTagSelectorImpl {
 
 	// ~ Instance fields ------------------------------------------------------------------------
 	
@@ -78,7 +80,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 	private JButton tagEditorBrowseButton;
 	
 	/** The Dicom tag editor for selecting additional tags to anonymize */
-	private DicomTagSelectorDialog currentTagEditor;
+	private JDialogDicomTagSelector currentTagEditor;
 
 	/**InfoGathering threads to find Dicom data*/
 	private ArrayList<PlugInDialogAnonymizeDICOM.InformationUpdate> infoGather;
@@ -421,7 +423,7 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 			}
             if(info instanceof FileInfoDicom) {
             	FileDicomTagTable tagTable = ((FileInfoDicom) info).getTagTable();
-            	currentTagEditor = new DicomTagSelectorDialog(tagTable.getTagList(), parent, true);
+            	currentTagEditor = new JDialogDicomTagSelector(tagTable.getTagList(), parent, true);
             }
 		}
     	
