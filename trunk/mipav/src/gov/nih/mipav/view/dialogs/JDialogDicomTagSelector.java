@@ -116,6 +116,12 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	/** When this object exists as an embedded panel, this variable contains all necessary data elements. */
 	private JPanel embeddedPanel;
 	
+	/**When a tag value exists, this label displays the text "Tag value:" */
+	private JLabel propertyLabel;
+
+	/**When a tag value exists, this panel displays the value */
+	private JScrollPane propPane;
+	
 	public JDialogDicomTagSelector(Hashtable<FileDicomKey,FileDicomTag> tagList, JDialogBase parent, boolean isStandalone) {
 		super(parent, false);
 		
@@ -307,14 +313,14 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         infoPanelConstraints.gridx = 0;
         infoPanelConstraints.gridy = 1;
         infoPanelConstraints.weightx = 0;
-        JLabel propertyLabel = new JLabel("Tag value:");
+        propertyLabel = new JLabel("Tag value:");
         tagInformationPanel.add(propertyLabel, infoPanelConstraints);
         
         infoPanelConstraints.gridx = 1;
         infoPanelConstraints.gridy = 1;
         infoPanelConstraints.weightx = 1;
         propertyValue = new JLabel(keyToValue.get(tagName));
-        JScrollPane propPane = new JScrollPane(propertyValue);
+        propPane = new JScrollPane(propertyValue);
         propPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         propPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_NEVER);
         propPane.setMinimumSize(SCROLL_PANE_SIZE);
@@ -322,6 +328,11 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         propPane.setPreferredSize(SCROLL_PANE_SIZE);
         propPane.setBorder(null);
         tagInformationPanel.add(propPane, infoPanelConstraints);
+        
+        if(keyToValue.get(tagName) == null) {
+        	propPane.setVisible(false);
+        	propertyLabel.setVisible(false);
+        }
         
         return tagInformationPanel;
 	}
@@ -555,21 +566,29 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 		if(groupList.getSelectedIndex() != -1 && elementList.getSelectedIndex() != -1) {
 			String tagName = groupList.getSelectedValue().toString()+","+elementList.getSelectedValue().toString();
 			nameValue.setText(keyToName.get(tagName));
-			propertyValue.setText(keyToValue.get(tagName));
-			if(keyToValue.get(tagName).equals(SEQUENCE)) {
-				add(sequenceInformationPanel, BorderLayout.SOUTH);
-				FileDicomSQ sq = (FileDicomSQ)tagList.get(new FileDicomKey(tagName)).getValue(false);
-				FileDicomTagTable item = sq.getItem(0);
-				buildSeqGroupElementMap(item.getTagList());
-				Vector<String> vGroup;
-		        Collections.sort(vGroup = new Vector<String>(groupToElementSeq.keySet()), new NumberComparator());
-				groupCombo.setModel(new DefaultComboBoxModel(vGroup));
-				groupCombo.setSelectedIndex(0);
-				Vector<String> vElement;
-		        Collections.sort(vElement = new Vector<String>(groupToElementSeq.get(vGroup.get(0))), new NumberComparator());
-				elementCombo.setModel(new DefaultComboBoxModel(vElement));
-				elementCombo.setSelectedIndex(0);
-				pack();
+			String keyValue = keyToValue.get(tagName);
+			propPane.setVisible(keyValue != null);
+        	propertyLabel.setVisible(keyValue != null);
+			if(keyValue != null) {
+				propertyValue.setText(keyValue);
+				if(keyValue.equals(SEQUENCE)) {
+					add(sequenceInformationPanel, BorderLayout.SOUTH);
+					FileDicomSQ sq = (FileDicomSQ)tagList.get(new FileDicomKey(tagName)).getValue(false);
+					FileDicomTagTable item = sq.getItem(0);
+					buildSeqGroupElementMap(item.getTagList());
+					Vector<String> vGroup;
+			        Collections.sort(vGroup = new Vector<String>(groupToElementSeq.keySet()), new NumberComparator());
+					groupCombo.setModel(new DefaultComboBoxModel(vGroup));
+					groupCombo.setSelectedIndex(0);
+					Vector<String> vElement;
+			        Collections.sort(vElement = new Vector<String>(groupToElementSeq.get(vGroup.get(0))), new NumberComparator());
+					elementCombo.setModel(new DefaultComboBoxModel(vElement));
+					elementCombo.setSelectedIndex(0);
+					pack();
+				} else {
+					remove(sequenceInformationPanel);
+					pack();
+				}
 			} else {
 				remove(sequenceInformationPanel);
 				pack();
