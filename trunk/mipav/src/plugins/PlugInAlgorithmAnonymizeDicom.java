@@ -173,10 +173,7 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
                                                                                                                     // file
                 //final ReadDicom imageFile = new ReadDicom(allTempFiles[i].getName(), allTempFiles[i].getParent()
                 //        + File.separator);
-                //TODO: Enable with new dicom file
-                FileDicom imageFile = null;
-                imageFile.setQuiet(true); // if we want quiet, we tell the reader, too.
-                imageFile.readHeader(true); // can we read the header?
+                //TODO: Test readability of new header here (could be provided as a user option.)
                 printToLogFile.println();
                 printToLogFile.println("The " + (i > 0 ? "unique " : "")
                         + "anonymized tags for this file are printed below:");
