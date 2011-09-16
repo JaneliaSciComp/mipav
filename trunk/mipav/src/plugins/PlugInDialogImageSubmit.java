@@ -22,6 +22,8 @@ import gov.nih.mipav.model.file.FileXML;
 import gov.nih.mipav.plugins.JDialogStandaloneScriptablePlugin;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector;
+import gov.nih.mipav.view.dialogs.JDialogDicomTagSelector.DicomTagSelectorImpl;
 
 import javax.swing.*;
 
@@ -45,7 +47,7 @@ import java.util.Vector;
  * @author joshim2
  *
  */
-public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, DicomTagImpl {
+public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin implements AlgorithmInterface, DicomTagSelectorImpl {
 
 	// ~ Static fields -------------------------------------------------------------------------
 	
@@ -119,7 +121,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
 	private ArrayList<InformationUpdate> infoGather;
 	
 	/** The Dicom tag editor for selecting additional tags to anonymize */
-	private DicomTagSelectorDialog currentTagEditor;
+	private JDialogDicomTagSelector currentTagEditor;
 	
 	//	~ Constructors --------------------------------------------------------------------------
 
@@ -787,7 +789,7 @@ public class PlugInDialogImageSubmit extends JDialogStandaloneScriptablePlugin i
             		}
             	}
             	
-            	currentTagEditor = new DicomTagSelectorDialog(tagTable.getTagList(), parent, true);
+            	currentTagEditor = new JDialogDicomTagSelector(tagTable.getTagList(), parent, true);
             }
 		}
     	
