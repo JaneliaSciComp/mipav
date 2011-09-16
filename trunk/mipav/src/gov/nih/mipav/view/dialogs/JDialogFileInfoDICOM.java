@@ -103,6 +103,9 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
     /** Maps the group word to a displayed color, private tags are not specified. * */
     private TreeMap<String, Color> groupColorMap;
 
+    /** Button for inserting new tags */
+	private JButton newTagButton;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -1900,6 +1903,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         uncheckAllButton = toolbarBuilder.buildButton("UncheckAll", "Uncheck All Tags", "uncheckall");
         editTagButton = toolbarBuilder.buildButton("EditTag", "Edit Tag", "edittag");
         editTagButton.setEnabled(false);
+        newTagButton = toolbarBuilder.buildButton("NewTag", "New Tag", "newtag");
         overlayButton = toolbarBuilder.buildButton("OverlayTag", "Overlay", "overlay");
         anonymizeButton = toolbarBuilder.buildButton("AnonymizeImage", "Anonymize", "anon");
 
@@ -1912,6 +1916,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         toolBar.add(saveCheckedButton);
         toolBar.add(saveCheckedAppendButton);
         toolBar.add(ViewToolBarBuilder.makeSeparator());
+        toolBar.add(newTagButton);
         toolBar.add(editTagButton);
         toolBar.add(ViewToolBarBuilder.makeSeparator());
         toolBar.add(overlayButton);
