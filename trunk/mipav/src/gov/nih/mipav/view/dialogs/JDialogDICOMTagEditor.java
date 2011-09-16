@@ -230,6 +230,13 @@ public class JDialogDICOMTagEditor extends JDialogBase {
     }
 
     /**
+	 * @return the mainBox
+	 */
+	public Box getMainBox() {
+		return mainBox;
+	}
+
+	/**
      * check the dialog so that if all the fields are okay (have the right number of digits, etc) and there are no
      * messages to send back to the user about correctness.
      *
