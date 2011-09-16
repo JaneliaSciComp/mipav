@@ -1480,7 +1480,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
 
             if ( !broughtToFront) { // make a new dialog to edit the key
 
-                editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, DicomInfo.getTagTable(), false);
+                editorDialogDicom = new JDialogDICOMTagEditor(this, tagKey, DicomInfo.getTagTable(), false, true);
                 editorDialogDicom.addButtonListener(this);
                 editorDialogDicom.addWindowListener(new WindowAdapter() { // listen for when the dialog comes alive
                             public void windowActivated(final WindowEvent e) {

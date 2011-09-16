@@ -58,7 +58,7 @@ public class JDialogDICOMTagEditor extends JDialogBase {
      * @param  _tagTable  the tag table containing the tag to edit.
      * @param  modal      force this dialog to stay on top (when true)
      */
-    public JDialogDICOMTagEditor(Dialog parent, String _tagKey, FileDicomTagTable _tagTable, boolean modal) {
+    public JDialogDICOMTagEditor(Dialog parent, String _tagKey, FileDicomTagTable _tagTable, boolean modal, boolean isStandalone) {
         super(parent, modal);
 
         this.tagTable = _tagTable;
@@ -72,20 +72,26 @@ public class JDialogDICOMTagEditor extends JDialogBase {
         JPanel originalValuePanel = new JPanel();
         originalValuePanel.setBorder(buildTitledBorder("Original Tag Value"));
 
-        originalTextField = new JTextField(tagTable.getValue(tagKey).toString());
-        originalTextField.setColumns(32);
-        originalTextField.setEditable(false);
-        originalTextField.setBackground(Color.lightGray);
-        originalTextField.setFont(MipavUtil.font12);
-        originalValuePanel.add(originalTextField);
-        editBox.add(originalValuePanel);
+        Object origValue = tagTable.getValue(tagKey);
+        
+        if(origValue != null) {
+	        originalTextField = new JTextField(origValue.toString());
+	        originalTextField.setColumns(32);
+	        originalTextField.setEditable(false);
+	        originalTextField.setBackground(Color.lightGray);
+	        originalTextField.setFont(MipavUtil.font12);
+	        originalValuePanel.add(originalTextField);
+	        editBox.add(originalValuePanel);
 
-        editBox.add(Box.createVerticalStrut(5));
+	        editBox.add(Box.createVerticalStrut(5));
+        } else {
+        	origValue = "";
+        }
 
         // Build editing panels.
         int i = 0;
         String editString;
-        StringTokenizer val = new StringTokenizer(tagTable.getValue(tagKey).toString(), "\\");
+        StringTokenizer val = new StringTokenizer(origValue.toString(), "\\");
 
         if (val.countTokens() == 0) {
             newInputPanel = new JPanelEdit[1];
