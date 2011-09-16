@@ -283,20 +283,25 @@ public class JDialogDICOMTagEditor extends JDialogBase {
      * @return  DOCUMENT ME!
      */
     private JPanelEdit makeAppropriateInputPanel(String editString) {
-        JPanelEdit inputPanel;
+        JPanelEdit inputPanel = null;
 
-        if (tagTable.get(tagKey).getValueRepresentation().equals("DA")) {
-            inputPanel = new JPanelEditDate(editString, false);
-        } else if (tagTable.get(tagKey).getValueRepresentation().equals("TM")) {
-            inputPanel = new JPanelEditTime(editString, false);
-        } else if (tagTable.get(tagKey).getKeyword().equals("PatientSex")) {
-            inputPanel = new JPanelEditSex(editString);
-        } else {
-            inputPanel = new JPanelEditDefault(editString);
+        switch(tagTable.get(tagKey).getValueRepresentation()) {
+        case DA:
+        	inputPanel = new JPanelEditDate(editString, false);
+        	break;
+        case TM:
+        	inputPanel = new JPanelEditTime(editString, false);
+        	break;
+        case SQ:
+        	//TODO: Create panel for editing dicom sequences
+        	break;
+        default:
+        	if (tagTable.get(tagKey).getKeyword().equals("PatientSex")) {
+        		inputPanel = new JPanelEditSex(editString);
+        	} else {
+        		inputPanel = new JPanelEditDefault(editString);
+        	}
         }
-
         return inputPanel;
     }
-
-
 }
