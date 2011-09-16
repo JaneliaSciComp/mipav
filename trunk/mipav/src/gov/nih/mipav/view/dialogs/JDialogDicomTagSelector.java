@@ -545,6 +545,14 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 		}
 	}
 	
+	/**
+	 * @return the embeddedPanel
+	 */
+	public JPanel getEmbeddedPanel() {
+		return embeddedPanel;
+	}
+
+
 	private boolean tagExistsInField(String text) {
 		String[] tagList = parentPlugin.getTagListTextField().getText().split(";");
 		for(int i=0; i<tagList.length; i++) {
