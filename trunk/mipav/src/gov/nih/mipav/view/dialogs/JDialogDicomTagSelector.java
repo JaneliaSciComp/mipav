@@ -14,6 +14,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,9 +33,12 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -121,6 +126,11 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 
 	/**When a tag value exists, this panel displays the value */
 	private JScrollPane propPane;
+
+	/** Text fields for displaying/entering a group/element tag */
+	private JTextField elementSeqText, groupSeqText, elementText, groupText;
+
+	private TagInputListener k1, k2;
 	
 	public JDialogDicomTagSelector(Hashtable<FileDicomKey,FileDicomTag> tagList, JDialogBase parent, boolean isStandalone) {
 		super(parent, false);
@@ -200,10 +210,16 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         JLabel groupLabel = new JLabel("Group:");
         tagSelectorPanel.add(groupLabel, selectorPanelConstraints);
         
+        selectorPanelConstraints.gridx = 2;
+        selectorPanelConstraints.gridy = 0;
+        selectorPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        groupText = new JTextField();
+        tagSelectorPanel.add(groupText, selectorPanelConstraints);
+        
         selectorPanelConstraints.gridx = 1;
         selectorPanelConstraints.gridy = 1;
         selectorPanelConstraints.gridheight = 3;
-        
+        selectorPanelConstraints.gridwidth = 2;
         selectorPanelConstraints.anchor = GridBagConstraints.CENTER;
         Vector<String> vGroup;
         Collections.sort(vGroup = new Vector<String>(groupToElement.keySet()), new NumberComparator());
@@ -220,17 +236,27 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         scrollPaneGroup.setMinimumSize(new Dimension(150, 94));
         scrollPaneGroup.setPreferredSize(new Dimension(150, 94));
         tagSelectorPanel.add(scrollPaneGroup, selectorPanelConstraints);
+        k1 = new TagInputListener(groupText, groupList, this);
+        groupText.setText(groupList.getModel().getElementAt(0).toString());
         
         // Element Column
-        selectorPanelConstraints.gridx = 2;
+        selectorPanelConstraints.gridx = 3;
         selectorPanelConstraints.gridy = 0;
+        selectorPanelConstraints.gridwidth = 1;
         selectorPanelConstraints.gridheight = 1;
         selectorPanelConstraints.anchor = GridBagConstraints.NORTHWEST;
         JLabel elementLabel = new JLabel("Element:");
         tagSelectorPanel.add(elementLabel, selectorPanelConstraints);
         
-        selectorPanelConstraints.gridx = 2;
+        selectorPanelConstraints.gridx = 4;
+        selectorPanelConstraints.gridy = 0;
+        selectorPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        elementText = new JTextField();
+        tagSelectorPanel.add(elementText, selectorPanelConstraints);
+        
+        selectorPanelConstraints.gridx = 3;
         selectorPanelConstraints.gridy = 1;
+        selectorPanelConstraints.gridwidth = 2;
         selectorPanelConstraints.gridheight = 3;
         selectorPanelConstraints.anchor = GridBagConstraints.CENTER;
         Vector<String> vElement;
@@ -248,10 +274,13 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         scrollPaneElement.setMinimumSize(new Dimension(150, 94));
         scrollPaneElement.setPreferredSize(new Dimension(150, 94));
         tagSelectorPanel.add(scrollPaneElement, selectorPanelConstraints);
+        k2 = new TagInputListener(elementText, elementList, this);
+        elementText.setText(elementList.getModel().getElementAt(0).toString());
         
         //Buttons Column
-        selectorPanelConstraints.gridx = 3;
+        selectorPanelConstraints.gridx = 5;
         selectorPanelConstraints.gridy = 1;
+        selectorPanelConstraints.gridwidth = 1;
         selectorPanelConstraints.gridheight = 1;
         selectorPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
         selectorPanelConstraints.insets = new Insets(5, 5, 5, 5);
@@ -260,14 +289,14 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         addButton.addActionListener(this);
         tagSelectorPanel.add(addButton, selectorPanelConstraints);
         
-        selectorPanelConstraints.gridx = 3;
+        selectorPanelConstraints.gridx = 5;
         selectorPanelConstraints.gridy = 2;
         clearButton = new JButton("Clear");
         clearButton.setActionCommand(CLEAR_TAGS);
         clearButton.addActionListener(this);
         tagSelectorPanel.add(clearButton, selectorPanelConstraints);
         
-        selectorPanelConstraints.gridx = 3;
+        selectorPanelConstraints.gridx = 5;
         selectorPanelConstraints.gridy = 3;
         closeButton = new JButton("Close");
         closeButton.setActionCommand(CLOSE);
@@ -360,13 +389,21 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         seqPanelConstraints.gridy = 0;
         seqPanelConstraints.weightx = 1;
         seqPanelConstraints.gridheight = 1;
+        seqPanelConstraints.gridwidth = 1;
         seqPanelConstraints.anchor = GridBagConstraints.WEST;
         seqPanelConstraints.insets = new Insets(5, 15, 5, 15);
         JLabel groupLabel = new JLabel("Group:");
         sequenceInformationPanel.add(groupLabel, seqPanelConstraints);
         
+        seqPanelConstraints.gridx = 2;
+        seqPanelConstraints.gridy = 0;
+        seqPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        groupSeqText = new JTextField("0000");
+        sequenceInformationPanel.add(groupSeqText, seqPanelConstraints);
+        
         seqPanelConstraints.gridx = 1;
         seqPanelConstraints.gridy = 1;
+        seqPanelConstraints.gridwidth = 2;
         groupCombo = new JComboBox();
         groupCombo.addActionListener(this);
         groupCombo.setMinimumSize(new Dimension(100, 26));
@@ -374,13 +411,22 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         sequenceInformationPanel.add(groupCombo, seqPanelConstraints);
         
         // Element Column
-        seqPanelConstraints.gridx = 2;
+        seqPanelConstraints.gridx = 3;
         seqPanelConstraints.gridy = 0;
+        seqPanelConstraints.gridwidth = 1;
         JLabel elementLabel = new JLabel("Element:");
         sequenceInformationPanel.add(elementLabel, seqPanelConstraints);
         
-        seqPanelConstraints.gridx = 2;
+        seqPanelConstraints.gridx = 4;
+        seqPanelConstraints.gridy = 0;
+        seqPanelConstraints.fill = GridBagConstraints.HORIZONTAL;
+        elementSeqText = new JTextField("0000");
+        sequenceInformationPanel.add(elementSeqText, seqPanelConstraints);
+        
+        seqPanelConstraints.gridx = 3;
         seqPanelConstraints.gridy = 1;
+        seqPanelConstraints.gridwidth = 2;
+        seqPanelConstraints.fill = GridBagConstraints.NONE;
         elementCombo = new JComboBox();
         elementCombo.addActionListener(this);
         elementCombo.setMinimumSize(new Dimension(100, 26));
@@ -433,7 +479,7 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
         sequenceInformationPanel.add(propPane, seqPanelConstraints);
         
         //button column
-        seqPanelConstraints.gridx = 3;
+        seqPanelConstraints.gridx = 5;
         seqPanelConstraints.gridy = 1;
         seqPanelConstraints.weightx = 0;
         seqPanelConstraints.anchor = GridBagConstraints.CENTER;
@@ -569,6 +615,9 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 	        Collections.sort(vElement = new Vector<String>(groupToElement.get(groupList.getSelectedValue())), new NumberComparator());
 	        elementList.setListData(vElement);
 	        elementList.setSelectedIndex(0);
+	        groupText.getDocument().removeDocumentListener(k1);
+	        groupText.setText(groupList.getSelectedValue().toString());
+	        groupText.getDocument().addDocumentListener(k1);
 	        elementList.updateUI();
 		}
 		if(groupList.getSelectedIndex() != -1 && elementList.getSelectedIndex() != -1) {
@@ -601,10 +650,67 @@ public class JDialogDicomTagSelector extends JDialogBase implements ListSelectio
 				remove(sequenceInformationPanel);
 				pack();
 			}
+			elementText.getDocument().removeDocumentListener(k2);
+			elementText.setText(elementList.getSelectedValues()[0].toString());
+			elementText.getDocument().addDocumentListener(k2);
 			nameValue.updateUI();
 			tagInformationPanel.updateUI();
 		}
 	}
+	
+	private class TagInputListener implements DocumentListener {
+
+		private JTextField updateField;
+		private JList updateBox;
+		private JDialogDicomTagSelector tagSelector;
+		
+		public TagInputListener(JTextField updateField, JList updateBox, JDialogDicomTagSelector tagSelector) {
+			
+			this.updateBox = updateBox;
+			this.updateField = updateField;
+			this.tagSelector = tagSelector;
+			updateField.getDocument().addDocumentListener(this);
+		}
+
+		public void changedUpdate(DocumentEvent e) {}
+
+		public void insertUpdate(DocumentEvent e) {
+			updateBoxInput();
+			
+			System.out.println("Insert:" +updateField.getText());
+		}
+
+		private void updateBoxInput() {
+			if(updateField.getText() != null) {
+				try {
+					String tag = new String(updateField.getText());
+					while(tag.length() < 4) {
+						tag += "0";
+					}
+					tag = tag.substring(0, 4);
+					int i=0;
+					Integer c1 = Integer.valueOf(tag, 16);
+					for(i=0; i<updateBox.getModel().getSize(); i++) {
+						Integer c2 = Integer.valueOf(updateBox.getSelectedValues()[0].toString(), 16);
+						if(c1 >= c2) {
+							break;
+						}
+					}
+					updateBox.getSelectionModel().removeListSelectionListener(tagSelector);
+					System.out.println(i);
+					updateBox.setSelectedIndex(i);
+					updateBox.getSelectionModel().addListSelectionListener(tagSelector);
+				} catch(NumberFormatException nfe) {
+					
+				}
+			}
+		}
+
+		public void removeUpdate(DocumentEvent e) {
+			updateBoxInput();
+			System.out.println("Remove:" +updateField.getText());
+		}
+    }
 	
 	private class NumberComparator implements Comparator<String>, Serializable {
 
