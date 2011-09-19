@@ -2047,7 +2047,7 @@ outer:
      * @param  n    DOCUMENT ME!
      * @param  tag  DOCUMENT ME!
      */
-    private void sortg(double[] a, int n, double[] tag) {
+    public void sortg(double[] a, int n, double[] tag) {
         // Sorts array a into increasing order, from a[0] TO a[n-1]
         // The array tag is permuted the same as array a
 
