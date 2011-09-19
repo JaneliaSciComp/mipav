@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -404,6 +405,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         double Blaststd[][];
         Matrix matScale;
         double scale[][];
+        FFTUtility fft;
+        double resultImag[] = null;
+        double resultMag[] = null;
+        double tag[] = null;
 
         if (haveColor) {
         	if (redRequested) {
@@ -521,6 +526,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         }
         
         if (selfTest) {
+        	resultImag = new double[length];
+        	resultMag = new double[length];
+        	tag = new double[length];
         	for (i = 0, j = 0, k = 0; j < length; j++, i++) {
         		// Because of the whitening step, the w and B matrices will not reflect the scaling values
         		// of the 2 components.  Must look at matW.times(matWh) and matB.times(matWh)
@@ -989,6 +997,25 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 
 	                return;
 	            }
+	            if (selfTest) {
+	            	Preferences.debug("Largest FFT coefficients in component " + p + "\n");
+	            	for (i = 0; i < length; i++) {
+	            		resultImag[i] = 0.0;
+	            	}
+	                fft = new FFTUtility(result, resultImag, 1, length, 1, -1, FFTUtility.FFT);	
+	                fft.run();
+	                for (i = 0; i < length; i++) {
+	                	resultMag[i] = Math.sqrt(result[i]*result[i] + resultImag[i]*resultImag[i]);
+	                }
+	                for (i = 0; i < length; i++) {
+	                	tag[i] = i;
+	                }
+	                fft.sortg(resultMag, length, tag);
+	                for (i = length-1; i > length-100; i--) {
+	                	Preferences.debug("Mag = " + resultMag[i] + " Index = " + Math.round(tag[i]) + " Real = " + result[(int)Math.round(tag[i])] + " Imag = " +
+	                			                                                 resultImag[(int)Math.round(tag[i])] + "\n");
+	                }
+	            }
 	        } // for (p = 0; p < icNumber; p++)
 	        for (p = 0; p < icNumber; p++) {
 	        	for (i = 0; i < nPlanes; i++) {
@@ -1222,6 +1249,25 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                setCompleted(false);
 	
 	                return;
+	            }
+	            if (selfTest) {
+	            	Preferences.debug("Largest FFT coefficients in component " + p + "\n");
+	            	for (i = 0; i < length; i++) {
+	            		resultImag[i] = 0.0;
+	            	}
+	                fft = new FFTUtility(result, resultImag, 1, length, 1, -1, FFTUtility.FFT);	
+	                fft.run();
+	                for (i = 0; i < length; i++) {
+	                	resultMag[i] = Math.sqrt(result[i]*result[i] + resultImag[i]*resultImag[i]);
+	                }
+	                for (i = 0; i < length; i++) {
+	                	tag[i] = i;
+	                }
+	                fft.sortg(resultMag, length, tag);
+	                for (i = length-1; i > length-100; i--) {
+	                	Preferences.debug("Mag = " + resultMag[i] + " Index = " + Math.round(tag[i]) + " Real = " + result[(int)Math.round(tag[i])] + " Imag = " +
+	                			                                                 resultImag[(int)Math.round(tag[i])] + "\n");
+	                }
 	            }
         	} // for (p = 0; p < nPlanes; p++)
         	for (p = 0; p < nPlanes; p++) {
@@ -1468,7 +1514,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                    for (z = 0; z < zDim; z++) {
 	                    	result[j] += B[p][z] * zvalues[(z * samples) + j];
 	                    } // for (z = 0; z < zDim; z++)
-	        		} // for (z = 0; z < zDim; z++)
+	        		} // for (j = 0; j < samples; z++)
 	        	}
 	        	try {
 	                destImage[p].importData(0, result, true);
@@ -1478,6 +1524,26 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                setCompleted(false);
 	
 	                return;
+	            }
+	            
+	            if (selfTest) {
+	            	Preferences.debug("Largest FFT coefficients in component " + p + "\n");
+	            	for (i = 0; i < length; i++) {
+	            		resultImag[i] = 0.0;
+	            	}
+	                fft = new FFTUtility(result, resultImag, 1, length, 1, -1, FFTUtility.FFT);	
+	                fft.run();
+	                for (i = 0; i < length; i++) {
+	                	resultMag[i] = Math.sqrt(result[i]*result[i] + resultImag[i]*resultImag[i]);
+	                }
+	                for (i = 0; i < length; i++) {
+	                	tag[i] = i;
+	                }
+	                fft.sortg(resultMag, length, tag);
+	                for (i = length-1; i > length-100; i--) {
+	                	Preferences.debug("Mag = " + resultMag[i] + " Index = " + Math.round(tag[i]) + " Real = " + result[(int)Math.round(tag[i])] + " Imag = " +
+	                			                                                 resultImag[(int)Math.round(tag[i])] + "\n");
+	                }
 	            }
         	} // for (p = 0; p < nPlanes; p++)
             for (p = 0; p < nPlanes; p++) {
