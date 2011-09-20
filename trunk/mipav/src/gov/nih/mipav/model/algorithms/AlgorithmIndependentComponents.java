@@ -405,10 +405,16 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         double Blaststd[][];
         Matrix matScale;
         double scale[][];
-        FFTUtility fft;
-        double resultImag[] = null;
-        double resultMag[] = null;
-        double tag[] = null;
+        double source1[] = null;
+        double source2[] = null;
+        double sumResult;
+        double sumSource;
+        double sumResultSource;
+        double sumResultSquared;
+        double sumSourceSquared;
+        double stdDevSource;
+        double stdDevResult;
+        double correlation;
 
         if (haveColor) {
         	if (redRequested) {
@@ -526,14 +532,15 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         }
         
         if (selfTest) {
-        	resultImag = new double[length];
-        	resultMag = new double[length];
-        	tag = new double[length];
+            source1 = new double[length];
+        	source2 = new double[length];
         	for (i = 0, j = 0, k = 0; j < length; j++, i++) {
         		// Because of the whitening step, the w and B matrices will not reflect the scaling values
         		// of the 2 components.  Must look at matW.times(matWh) and matB.times(matWh)
         		// Note that sine waves are subgaussian.
         		// No phase difference below:
+        		source1[j] = Math.sin(j*Math.PI/100.0);
+        		source2[j] = Math.sin(3.0*j*Math.PI/100.0);
         		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
         		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
         		//ic1 = 1.5*x1 - 0.5*x2
@@ -999,23 +1006,36 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
 	            if (selfTest) {
-	            	Preferences.debug("Largest FFT coefficients in component " + p + "\n");
-	            	for (i = 0; i < length; i++) {
-	            		resultImag[i] = 0.0;
-	            	}
-	                fft = new FFTUtility(result, resultImag, 1, length, 1, -1, FFTUtility.FFT);	
-	                fft.run();
-	                for (i = 0; i < length; i++) {
-	                	resultMag[i] = Math.sqrt(result[i]*result[i] + resultImag[i]*resultImag[i]);
+	            	// source1
+	            	sumSource = 0;
+	            	sumResult = 0;
+	            	sumResultSource = 0;
+	            	sumSourceSquared = 0;
+	            	sumResultSquared = 0;
+	                for (j = 0; j < length; j++) {
+	                    sumSource += source1[j];
+	                    sumSourceSquared += source1[j]*source1[j];
+	                    sumResultSource += result[j]*source1[j];
+	                    sumResult += result[j];
+	                    sumResultSquared += result[j]*result[j];
 	                }
-	                for (i = 0; i < length; i++) {
-	                	tag[i] = i;
+	                stdDevSource = Math.sqrt((sumSourceSquared - sumSource*sumSource/length)/(length-1));
+	                stdDevResult = Math.sqrt((sumResultSquared - sumResult*sumResult/length)/(length-1));
+	                correlation = (sumResultSource - sumSource*sumResult/length)/((length-1)*stdDevSource*stdDevResult);
+	                Preferences.debug("Correlation of component " + p + " with source1 = " + correlation + "\n");
+	                
+	                // source2
+	                sumSource = 0;
+	                sumSourceSquared = 0;
+	                sumResultSource = 0;
+	                for (j = 0; j < length; j++) {
+	                    sumSource += source2[j];
+	                    sumSourceSquared += source2[j]*source2[j];
+	                    sumResultSource += result[j]*source2[j];
 	                }
-	                fft.sortg(resultMag, length, tag);
-	                for (i = length-1; i > length-100; i--) {
-	                	Preferences.debug("Mag = " + resultMag[i] + " Index = " + Math.round(tag[i]) + " Real = " + result[(int)Math.round(tag[i])] + " Imag = " +
-	                			                                                 resultImag[(int)Math.round(tag[i])] + "\n");
-	                }
+	                stdDevSource = Math.sqrt((sumSourceSquared - sumSource*sumSource/length)/(length-1));
+	                correlation = (sumResultSource - sumSource*sumResult/length)/((length-1)*stdDevSource*stdDevResult);
+	                Preferences.debug("Correlation of component " + p + " with source2 = " + correlation + "\n");	
 	            }
 	        } // for (p = 0; p < icNumber; p++)
 	        for (p = 0; p < icNumber; p++) {
@@ -1252,23 +1272,36 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	                return;
 	            }
 	            if (selfTest) {
-	            	Preferences.debug("Largest FFT coefficients in component " + p + "\n");
-	            	for (i = 0; i < length; i++) {
-	            		resultImag[i] = 0.0;
-	            	}
-	                fft = new FFTUtility(result, resultImag, 1, length, 1, -1, FFTUtility.FFT);	
-	                fft.run();
-	                for (i = 0; i < length; i++) {
-	                	resultMag[i] = Math.sqrt(result[i]*result[i] + resultImag[i]*resultImag[i]);
+	            	// source1
+	            	sumSource = 0;
+	            	sumResult = 0;
+	            	sumResultSource = 0;
+	            	sumSourceSquared = 0;
+	            	sumResultSquared = 0;
+	                for (j = 0; j < length; j++) {
+	                    sumSource += source1[j];
+	                    sumSourceSquared += source1[j]*source1[j];
+	                    sumResultSource += result[j]*source1[j];
+	                    sumResult += result[j];
+	                    sumResultSquared += result[j]*result[j];
 	                }
-	                for (i = 0; i < length; i++) {
-	                	tag[i] = i;
+	                stdDevSource = Math.sqrt((sumSourceSquared - sumSource*sumSource/length)/(length-1));
+	                stdDevResult = Math.sqrt((sumResultSquared - sumResult*sumResult/length)/(length-1));
+	                correlation = (sumResultSource - sumSource*sumResult/length)/((length-1)*stdDevSource*stdDevResult);
+	                Preferences.debug("Correlation of component " + p + " with source1 = " + correlation + "\n");
+	                
+	                // source2
+	                sumSource = 0;
+	                sumSourceSquared = 0;
+	                sumResultSource = 0;
+	                for (j = 0; j < length; j++) {
+	                    sumSource += source2[j];
+	                    sumSourceSquared += source2[j]*source2[j];
+	                    sumResultSource += result[j]*source2[j];
 	                }
-	                fft.sortg(resultMag, length, tag);
-	                for (i = length-1; i > length-100; i--) {
-	                	Preferences.debug("Mag = " + resultMag[i] + " Index = " + Math.round(tag[i]) + " Real = " + result[(int)Math.round(tag[i])] + " Imag = " +
-	                			                                                 resultImag[(int)Math.round(tag[i])] + "\n");
-	                }
+	                stdDevSource = Math.sqrt((sumSourceSquared - sumSource*sumSource/length)/(length-1));
+	                correlation = (sumResultSource - sumSource*sumResult/length)/((length-1)*stdDevSource*stdDevResult);
+	                Preferences.debug("Correlation of component " + p + " with source2 = " + correlation + "\n");	
 	            }
         	} // for (p = 0; p < nPlanes; p++)
         	for (p = 0; p < nPlanes; p++) {
@@ -1528,24 +1561,37 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	            }
 	            
 	            if (selfTest) {
-	            	Preferences.debug("Largest FFT coefficients in component " + p + "\n");
-	            	for (i = 0; i < length; i++) {
-	            		resultImag[i] = 0.0;
-	            	}
-	                fft = new FFTUtility(result, resultImag, 1, length, 1, -1, FFTUtility.FFT);	
-	                fft.run();
-	                for (i = 0; i < length; i++) {
-	                	resultMag[i] = Math.sqrt(result[i]*result[i] + resultImag[i]*resultImag[i]);
+	                // source1
+	            	sumSource = 0;
+	            	sumResult = 0;
+	            	sumResultSource = 0;
+	            	sumSourceSquared = 0;
+	            	sumResultSquared = 0;
+	                for (j = 0; j < length; j++) {
+	                    sumSource += source1[j];
+	                    sumSourceSquared += source1[j]*source1[j];
+	                    sumResultSource += result[j]*source1[j];
+	                    sumResult += result[j];
+	                    sumResultSquared += result[j]*result[j];
 	                }
-	                for (i = 0; i < length; i++) {
-	                	tag[i] = i;
+	                stdDevSource = Math.sqrt((sumSourceSquared - sumSource*sumSource/length)/(length-1));
+	                stdDevResult = Math.sqrt((sumResultSquared - sumResult*sumResult/length)/(length-1));
+	                correlation = (sumResultSource - sumSource*sumResult/length)/((length-1)*stdDevSource*stdDevResult);
+	                Preferences.debug("Correlation of component " + p + " with source1 = " + correlation + "\n");
+	                
+	                // source2
+	                sumSource = 0;
+	                sumSourceSquared = 0;
+	                sumResultSource = 0;
+	                for (j = 0; j < length; j++) {
+	                    sumSource += source2[j];
+	                    sumSourceSquared += source2[j]*source2[j];
+	                    sumResultSource += result[j]*source2[j];
 	                }
-	                fft.sortg(resultMag, length, tag);
-	                for (i = length-1; i > length-100; i--) {
-	                	Preferences.debug("Mag = " + resultMag[i] + " Index = " + Math.round(tag[i]) + " Real = " + result[(int)Math.round(tag[i])] + " Imag = " +
-	                			                                                 resultImag[(int)Math.round(tag[i])] + "\n");
-	                }
-	            }
+	                stdDevSource = Math.sqrt((sumSourceSquared - sumSource*sumSource/length)/(length-1));
+	                correlation = (sumResultSource - sumSource*sumResult/length)/((length-1)*stdDevSource*stdDevResult);
+	                Preferences.debug("Correlation of component " + p + " with source2 = " + correlation + "\n");
+	            } // if (selfTest)
         	} // for (p = 0; p < nPlanes; p++)
             for (p = 0; p < nPlanes; p++) {
             	for (i = 0; i < nPlanes; i++) {
