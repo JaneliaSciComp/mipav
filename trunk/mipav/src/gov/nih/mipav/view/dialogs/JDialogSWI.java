@@ -294,7 +294,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             scriptParameters.storeOutputImageParams(swiAlgo.getPhaseMask(), true);
             scriptParameters.storeOutputImageParams(swiAlgo.getiCenter(), true);
         }
-        scriptParameters.storeOutputImageParams(swiAlgo.getDestImage(), true);  //magEnhanced image
+        scriptParameters.storeOutputImageParams(swiAlgo.getDestImage(), true);  //magEnhancedFINAL image
         
         //algorithm shows inter images, but referencing them here allows JIST to see them for possible post-processing
     } //end storeParamsFromGUI()
@@ -522,7 +522,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      * @return The image name of the requested output image parameter label.
      */
     public String getOutputImageName(String imageParamName) {
-        return "magEnhanced";
+        return "magEnhancedFINAL";
     }
 
     /**
