@@ -443,7 +443,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             }
 
             public String getDescription() {
-                return new String("Creates suscptibility weighted image.");
+                return new String("Creates susceptibility weighted image.");
             }
 
             public String getDescriptionLong() {
