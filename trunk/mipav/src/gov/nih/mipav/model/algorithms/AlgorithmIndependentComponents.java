@@ -532,6 +532,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         	for (i = 0, j = 0, k = 0; j < length; j++, i++) {
         		// Because of the whitening step, the w and B matrices will not reflect the scaling values
         		// of the 2 components.  Must look at matW.times(matWh) and matB.times(matWh)
+        		// Note that sine waves are subgaussian.
         		// No phase difference below:
         		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
         		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
