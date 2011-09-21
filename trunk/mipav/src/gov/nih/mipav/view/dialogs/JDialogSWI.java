@@ -505,7 +505,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
     public ParameterTable createOutputParameters() {
         final ParameterTable table = new ParameterTable();
         try {
-            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+            table.put(new ParameterImage("magEnhancedFINAL"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
