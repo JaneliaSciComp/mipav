@@ -303,7 +303,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
    
     private void init() {
         setForeground(Color.black);
-        setTitle("SWI Plugin");
+        setTitle("SWI Plugin 5.3.4a");
         guiBuilder = new GuiBuilder(this);
         
         try {
