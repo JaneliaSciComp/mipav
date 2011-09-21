@@ -539,10 +539,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		// of the 2 components.  Must look at matW.times(matWh) and matB.times(matWh)
         		// Note that sine waves are subgaussian.
         		// No phase difference below:
-        		source1[j] = Math.sin(j*Math.PI/100.0);
-        		source2[j] = Math.sin(3.0*j*Math.PI/100.0);
-        		values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
-        		values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
+        		//source1[j] = Math.sin(j*Math.PI/100.0);
+        		//source2[j] = Math.sin(3.0*j*Math.PI/100.0);
+        		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(3.0*j*Math.PI/100.0);
+        		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(3.0*j*Math.PI/100.0);
         		//ic1 = 1.5*x1 - 0.5*x2
         		//ic2 = -0.5*x1 + 1.5*x2
         		// Normalizing:
@@ -561,6 +561,45 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         		//values[j] = 0.75*Math.sin(j*Math.PI/100.0) + 0.25*Math.sin(Math.PI*j*Math.PI/100.0);
         		//values[length+j] = 0.25*Math.sin(j*Math.PI/100.0) + 0.75*Math.sin(Math.PI*j*Math.PI/100.0);
         		
+        		source1[j] = Math.sin(j*Math.PI/100);
+        	    if (k == 0) {
+        	    	source2[j] = (double)i/100.0;
+        	    	if (i == 50) {
+        	    		k = 1;
+        	    		i = 1;
+        	    	}
+        	    } // if (k == 0)
+        	    else if (k == 1) {
+        	    	source2[j] = (100.0 - i)/100.0;
+        	    	if (i == 100) {
+        	    	    k = 2;
+        	    	    i = 1;
+        	    	}
+        	    }
+        	    else {
+        	    	source2[j] = (i - 100.0)/100.0;
+        	    	if (i == 100) {
+        	    		k = 0;
+        	    		i = 1;
+        	    	}
+        	    }
+        	    values[j] = 0.75*source1[j] + 0.25*source2[j];
+        	    values[length+j] = 0.25*source1[j] + 0.75*source2[j];
+        	    // Sine and sawtooth for symmetric orthogonalization tanh a1 = 1.0
+        	    // Correlation of component 0 with source1 = 5.051042560330396E-4
+        	    // Correlation of component 0 with source2 = -0.9999999895503814
+        	    // Correlation of component 1 with source1 = -0.9999998724348328
+        	    // Correlation of component 1 with source2 = 1.445666067492265E-4
+        	    // Sine and sawtooth for deflationary orthogonalization tanh a1 = 1.0
+        	    // Correlation of component 0 with source1 = 0.9999999989899313
+        	    // Correlation of component 0 with source2 = -6.946176537134483E-4
+        	    // Correlation of component 1 with source1 = 4.49468247925615E-5
+        	    // Correlation of component 1 with source2 = 0.9999997587532854
+        	    // Sine and sawtooth for maximum likelihhod estimation tanh a1 = 1.0
+        	    // Correlation of component 0 with source1 = 0.9999995687850864
+        	    // Correlation of component 0 with source2 = 2.790001248402416E-4
+        	    // Correlation of component 1 with source1 = -9.28670879698718E-4
+        	    // Correlation of component 1 with source2 = 0.9999999610796458
         	}
         }
 
