@@ -137,9 +137,9 @@ public class AlgorithmSWI extends AlgorithmBase {
         System.out.println("Algorithm is running");
         if(srcImage.getNDims() < 3) {
     		calc2D();
-            } else {
-    		calc3D();
-            }
+        } else {
+        	calc3D();
+        }
         
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 

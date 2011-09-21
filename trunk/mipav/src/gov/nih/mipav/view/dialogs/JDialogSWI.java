@@ -197,6 +197,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
+            
+            setComplete(algorithm.isCompleted());
 
             if (algorithm != null) {
                 algorithm.finalize();
@@ -451,15 +453,15 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             }
 
             public String getShortLabel() {
-                return new String("SWI");
+                return new String("SWI534");
             }
 
             public String getLabel() {
-                return new String("SWI");
+                return new String("SWI534");
             }
 
             public String getName() {
-                return new String("SWI");
+                return new String("SWI534");
             }
         };
     }
