@@ -482,8 +482,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
     public ParameterTable createInputParameters() {
         final ParameterTable table = new ParameterTable();
         try {
-        	table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
-            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+        	table.put(new ParameterExternalImage("MagnitudeImage"));
+            table.put(new ParameterExternalImage("PhaseImage"));
         	
         	table.put(new ParameterInt("xFilterSize", xFilterSize));
             table.put(new ParameterInt("yFilterSize", yFilterSize));
