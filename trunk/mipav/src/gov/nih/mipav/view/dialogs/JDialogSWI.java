@@ -260,6 +260,13 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
     } // end callAlgorithm()
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+    	AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+    
+    /**
      * Used in turning the plugin into a script
      */
     protected void setGUIFromParams() {
