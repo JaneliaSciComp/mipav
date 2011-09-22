@@ -453,15 +453,15 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             }
 
             public String getShortLabel() {
-                return new String("SWI534");
+                return new String("SWI534a");
             }
 
             public String getLabel() {
-                return new String("SWI534");
+                return new String("SWI534a");
             }
 
             public String getName() {
-                return new String("SWI534");
+                return new String("SWI534a");
             }
         };
     }
@@ -505,9 +505,10 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      * @return A parameter table listing the outputs of this algorithm.
      */
     public ParameterTable createOutputParameters() {
-        final ParameterTable table = new ParameterTable();
+    	final ParameterTable table = new ParameterTable();
+
         try {
-            table.put(new ParameterImage("magEnhancedFINAL"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
@@ -524,7 +525,13 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      * @return The image name of the requested output image parameter label.
      */
     public String getOutputImageName(String imageParamName) {
-        return "magEnhancedFINAL";
+    	if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            return resultImage.getImageName();
+        }
+
+    	System.out.println("Unrecognized output image parameter: " + imageParamName);
+
+        return null;
     }
 
     /**
@@ -533,6 +540,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      * @return True, if the action is complete. False, if the action failed or is still running.
      */
     public boolean isActionComplete() {
-        return isComplete();
+        System.out.println("Returning result of SWI action: "+isComplete());
+    	return isComplete();
     }
 }
