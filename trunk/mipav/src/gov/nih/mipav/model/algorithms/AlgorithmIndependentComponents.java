@@ -34,6 +34,9 @@ import Jama.*;
  * From the text: "Another very useful thing to do is to reduce the dimension of the data by principal component
  * analysis.  This reduces noise and prevents overlearning.  It may also solve the problems with data that has a 
  * smaller number of independent components than mixtures."
+ * 
+ * Software was tested with images obtained from the site at http://www.lx.it.pt/~lbalmeida/ica/seethrough/index.html,
+ * "See-through" data sets for nonlinear source separation by Luis B. Almeida.
  */
 public class AlgorithmIndependentComponents extends AlgorithmBase {
 
