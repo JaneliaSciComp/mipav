@@ -39,6 +39,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 
 /**
  * This class recalculates mo and dceFullTre to provide better estimates using the inverse Ernst equation
@@ -155,7 +156,7 @@ public class AlgorithmSWI extends AlgorithmBase {
     
     private void calc3D() {
     	
-    	System.out.println("SWI processing here");
+    	System.out.println("SWI processing here2");
     	xDim = magImage.getExtents()[0];
     	yDim = magImage.getExtents()[1];
     	zDim = magImage.getExtents()[2];
@@ -221,7 +222,7 @@ public class AlgorithmSWI extends AlgorithmBase {
 
         fireProgressStateChanged(55, "SWI", "Dividing by complex image...");
         generateIFinal(iImage, iCenterImage, brainMaskSet, ixRealFinal, ixImagFinal);
-        
+
     	double[] phaseMaskData = new double[xDim*yDim*zDim];
 
     	fireProgressStateChanged(75, "SWI", "Creating phase mask...");
@@ -233,6 +234,7 @@ public class AlgorithmSWI extends AlgorithmBase {
 
     private ModelImage generateMagEnhanced(double[] phaseMaskData, ModelImage magnitude) {
         ModelImage magEnhanced = new ModelImage(ModelImage.DOUBLE, new int[]{xDim,yDim,zDim}, "magEnhancedFINAL");
+        JDialogBase.updateFileInfo(magImage, magEnhanced);
         double[] realData = new double[magnitude.getDataSize()];
         try {
             magnitude.exportData(0, magnitude.getDataSize(), realData);
@@ -245,15 +247,15 @@ public class AlgorithmSWI extends AlgorithmBase {
             realData[i] = realData[i]*(Math.pow(phaseMaskData[i], multFactor));
         }
         try {
-            magEnhanced.importData(0, realData, true);
+            magEnhanced.importData(0, realData, false);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
         if(showInterImages) {
-            ModelImage magEnhancedAlg = (ModelImage) magEnhanced.clone();
-            magEnhancedAlg.setImageName("magEnhancedAlg");
+            ModelImage magEnhancedAlg = (ModelImage) magEnhanced.clone("magEnhancedAlg");
+            JDialogBase.updateFileInfo(magImage, magEnhancedAlg);
             if(!inScript) {
                 ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
                 magEnhancedFrame.setVisible(true);
@@ -265,7 +267,8 @@ public class AlgorithmSWI extends AlgorithmBase {
 
     private ModelImage generatePhaseMask(BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal, double[] phaseMaskData) {
         ModelImage phaseMask = new ModelImage(ModelImage.DOUBLE, new int[]{xDim,yDim,zDim}, "phaseMask");
-
+        JDialogBase.updateFileInfo(magImage, phaseMask);
+        
         for(int i=0; i<xDim*yDim*zDim; i++) {
             phaseMaskData[i] = 1;
         }
@@ -278,7 +281,7 @@ public class AlgorithmSWI extends AlgorithmBase {
         }
         
         try {
-            phaseMask.importData(0, phaseMaskData, true);
+            phaseMask.importData(0, phaseMaskData, false);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -297,6 +300,7 @@ public class AlgorithmSWI extends AlgorithmBase {
 
     private ModelImage generateIFinal(ModelImage iImage, ModelImage iCenterImage, BitSet brainMaskSet, double[] ixRealFinal, double[] ixImagFinal) {
         ModelImage iFinal = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "iFinal");
+        JDialogBase.updateFileInfo(magImage, iFinal);
         double[] ixReal = new double[xDim*yDim*zDim];
         double[] ixImag = new double[xDim*yDim*zDim];
         double[] ixRealCenter = new double[xDim*yDim*zDim];
@@ -320,7 +324,7 @@ public class AlgorithmSWI extends AlgorithmBase {
         }
         
         try {
-            iFinal.importDComplexData(0, ixRealFinal, ixImagFinal, true, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
+            iFinal.importDComplexData(0, ixRealFinal, ixImagFinal, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -339,6 +343,7 @@ public class AlgorithmSWI extends AlgorithmBase {
 
     private ModelImage runiFFTonKCenter(ModelImage kCenterImage) {
         ModelImage iFFTDest = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim, yDim, zDim}, "ifftDest");
+        JDialogBase.updateFileInfo(magImage, iFFTDest);
         kCenterImage.setImage25D(true);
         iFFTDest.setImage25D(true);
         boolean complexInverse = true;
@@ -354,8 +359,9 @@ public class AlgorithmSWI extends AlgorithmBase {
         }
         
         ModelImage iCenter = new ModelImage(ModelImage.COMPLEX, new int[]{xDim, yDim, zDim}, "ixcenter");
+        JDialogBase.updateFileInfo(magImage, iCenter);
         try {
-            iCenter.importComplexData(0, realData, imagData, true, false);
+            iCenter.importComplexData(0, realData, imagData, false, false);
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -373,10 +379,10 @@ public class AlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createKCenterImage(ModelImage kImage) {
-        ModelImage kCenterImage = (ModelImage) kImage.clone();
+        ModelImage kCenterImage = (ModelImage) kImage.clone("kCenterImage");
+        JDialogBase.updateFileInfo(magImage, kCenterImage);
         int xDim = kCenterImage.getExtents()[0];
         int yDim = kCenterImage.getExtents()[1];
-        kCenterImage.setImageName("kCenterImage");
         for(int i=0; i<xDim; i++) {
             for(int j=0; j<yDim; j++) {
                 if(i < xFilterTopLeft+1 || i > xFilterTopLeft+xFilterSize) {
@@ -413,6 +419,7 @@ public class AlgorithmSWI extends AlgorithmBase {
 
     private ModelImage createkImage(ModelImage iImage) {
         ModelImage kImage = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "kData");
+        JDialogBase.updateFileInfo(magImage, kImage);
         
         //kImage is now at 512x512
         boolean complexInverse = false;
@@ -435,8 +442,10 @@ public class AlgorithmSWI extends AlgorithmBase {
     }
 
     private ModelImage createiImage(double[] realData, double[] imagData) {
-        ModelImage iImage  = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "iData");
-
+        
+    	ModelImage iImage  = new ModelImage(ModelImage.DCOMPLEX, new int[]{xDim,yDim,zDim}, "iData");
+    	JDialogBase.updateFileInfo(magImage, iImage);
+    	System.out.println("Working on i image");
         try {
             iImage.importDComplexData(0, realData, imagData, true, false);
             iImage.setOriginalExtents(iImage.getExtents());
@@ -445,19 +454,31 @@ public class AlgorithmSWI extends AlgorithmBase {
             e2.printStackTrace();
         }
         
-        if(showInterImages) {
-            this.iImage = iImage;
-            if(!inScript) {
+        System.out.println("IMported on i image");
+        
+        
+        if(showInterImages) { 
+        	this.iImage = iImage;
+        	if(!inScript) {
+            	
+            	System.out.println("We were not in script");
                 ViewJFrameImage iFrame = new ViewJFrameImage(iImage);
                 iFrame.setVisible(true);
+            } else {
+            	System.out.println("We were in script");
             }
+        } else {
+        	System.out.println("Not showing interimages");
         }
         
+        System.out.println("Returning on i image");
+        	
         return iImage;
     }
 
     private ModelImage createBrainMask() {
         ModelImage brainMask = new ModelImage(ModelImage.BOOLEAN, new int[]{xDim,yDim,zDim}, "brainMask");
+        JDialogBase.updateFileInfo(magImage, brainMask);
         
         for(int i=0; i<xDim; i++) {
             for(int j=0; j<yDim; j++) {
