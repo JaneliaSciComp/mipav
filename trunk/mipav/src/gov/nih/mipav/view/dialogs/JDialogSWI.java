@@ -482,21 +482,16 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
     public ParameterTable createInputParameters() {
         final ParameterTable table = new ParameterTable();
         try {
-            table.put(new ParameterInt("xFilterSize", xFilterSize));
+        	table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(2)));
+        	
+        	table.put(new ParameterInt("xFilterSize", xFilterSize));
             table.put(new ParameterInt("yFilterSize", yFilterSize));
             table.put(new ParameterInt("multFactor", multFactor));
             table.put(new ParameterBoolean("showInterImages", showInterImages));
             table.put(new ParameterDouble("maskThreshold", maskThreshold));
             
-            if(scriptParameters != null) {
-                magImage = scriptParameters.retrieveImage("MagnitudeImage");
-                phaseImage = scriptParameters.retrieveImage("PhaseImage");
-            }
-            
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
-            
-            table.put(new ParameterExternalImage("MagnitudeImage"));
-            table.put(new ParameterExternalImage("PhaseImage"));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
@@ -533,7 +528,14 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      */
     public String getOutputImageName(String imageParamName) {
     	if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-            return resultImage.getImageName();
+    		if (swiAlgo.getDestImage() != null) {
+                // algo produced a new result image
+    			System.out.println("Returning Swi algo image, not null");
+    			return swiAlgo.getDestImage().getImageName();
+            } else {
+                System.out.println("Swi algo image was null");
+                return image.getImageName();
+            }
         }
 
     	System.out.println("Unrecognized output image parameter: " + imageParamName);
