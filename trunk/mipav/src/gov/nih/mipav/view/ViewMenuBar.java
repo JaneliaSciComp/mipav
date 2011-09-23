@@ -329,6 +329,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Inhomogeneity N3 correction", "N3Correction", 0, null, false)}),
                 // menuBuilder.buildMenuItem("MRI combined info", "MRICorrection", 0, null, false)}),
                 menuBuilder.makeMenu("SNR", false, new JMenuItem[] {
+                		menuBuilder.buildMenuItem("Any two images", "ANY2SNR", 0, null, false),
                         menuBuilder.buildMenuItem("Single MRI image", "SMRISNR", 0, null, false),
                         menuBuilder.buildMenuItem("Two MRI images", "DMRISNR", 0, null, false),}),
                 menuBuilder.makeMenu("Spatial statistics", false, new JMenuItem[] {
@@ -1293,6 +1294,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Lightbox generator", true);
         menuBuilder.setMenuItemEnabled("Local normalization", true);
         menuBuilder.setMenuItemEnabled("Nonmaximum suppression", true);
+        menuBuilder.setMenuItemEnabled("Any two images", true);
         menuBuilder.setMenuItemEnabled("Single MRI image", true);
         menuBuilder.setMenuItemEnabled("Two MRI images", true);
         menuBuilder.setMenuItemEnabled("Hough transform", true);
