@@ -36,7 +36,39 @@ import Jama.*;
  * smaller number of independent components than mixtures."
  * 
  * Software was tested with images obtained from the site at http://www.lx.it.pt/~lbalmeida/ica/seethrough/index.html,
- * "See-through" data sets for nonlinear source separation by Luis B. Almeida.
+ * "See-through" data sets for nonlinear source separation by Luis B. Almeida.  In the paper "Separating a Real-Life
+ * Nonlinear Image Mixture" by Luis B. Almeida, the following average linear and nonlinear separation SNR results are
+ * given in decibels for sets 4 thru 8:
+ * Set number      linear source 1          linear source 2          nonlinear source1       nonlinear source2
+ *        4            9.0                       8.7                      13.8                   13.1
+ *        5            5.2                      10.5                       9.3                   13.9
+ *        6           13.4                       6.6                      14.2                    6.4
+ *        7            4.5                      11.2                       6.2                   11.2
+ *        8            5.8                       3.4                       6.0                    3.7
+ *        
+ *  My results:
+ *  set 4:
+ *  symmetric orthogonalization tanh a1 = 1.0 source1 3.96 dB source2 8.56 dB
+ *  set 5:
+ *  symmetric orthogonalization tanh a1 = 1.0 source1 5.93 dB source2 4.05 dB
+ *  symmetric orthogonalization exp           source1 9.76 dB source2 9.86 dB
+ *  symmetric orthogonalization cubic         source1 5.84 dB source2 3.99 dB
+ *  maximum likelihood estimation exp         source1 5.64 dB source2 3.89 dB
+ *                                            source1 5.36 dB source2 3.89 dB
+ *  set 6:
+ *  symmetric orthogonalization tanh a1 = 1.0 source1 15.5 dB source2 11.8 dB
+ *  maximum likelihood estimation tanh a1 = 1.0 source1 15.5 dB source2 11.8 dB
+ *  set 7:
+ *  symmetric orthogonalization tanh a1 = 1.0 source1 9.93 dB source2 14.8 dB
+ *  maximum likelihood estimation tanh a1 = 1.0 source1 10.1 dB source2 14.8 dB
+ *  set 8:
+ *  symmetric orthogonalization tanh a1 = 1.0 source1 11.5 dB source2 6.91 dB
+ *                                            source1 11.3 dB source2 10.9 dB
+ *  maximum likelihood estimation tanh a1 = 1.0 source1 11.4 dB source2 6.79 dB
+ *                                              source1 11.4 dB source2 6.79 dB
+ *                                              source1 11.4 dB source2 6.79 dB
+ *  maximum likelihood estimation exp           source1 11.4 dB source2 6.79 dB
+ * 
  */
 public class AlgorithmIndependentComponents extends AlgorithmBase {
 
