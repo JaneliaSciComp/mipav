@@ -103,6 +103,7 @@ public class AlgorithmAnyTwoImagesSNR extends AlgorithmBase {
         double b;
         double numerator;
         double denominator;
+        double snrdB;
 
         if (srcImage == null) {
             displayError("image is null");
@@ -341,10 +342,14 @@ public class AlgorithmAnyTwoImagesSNR extends AlgorithmBase {
 	        } // for (i = 0; i < imageLength; i++)
         }
         snr = numerator/denominator;
+        snrdB = 10.0 * Math.log10(snr);
 
         Preferences.debug("SNR of image2 relative to image1 = " + nf.format(snr) + "\n", 
         		Preferences.DEBUG_ALGORITHM);
         UI.setDataText("SNR of image2 relative to image1 = " + nf.format(snr) + "\n");
+        Preferences.debug("SNR in decibels of image2 relative to image1 = " + nf.format(snrdB) + " dB\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        UI.setDataText("SNR in decibels of image2 relative to image1 = " + nf.format(snrdB) + " dB\n");
 
         setCompleted(true);
 
