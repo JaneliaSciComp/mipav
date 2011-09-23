@@ -116,6 +116,8 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
 
     private boolean showInterImages = false;
     
+    private String resultImageName = "result_image";
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -172,6 +174,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             resultImage = algorithm.getDestImage();
+            resultImage.setImageName(resultImageName);
             if ((swiAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
@@ -528,14 +531,7 @@ public class JDialogSWI extends JDialogScriptableBase implements AlgorithmInterf
      */
     public String getOutputImageName(String imageParamName) {
     	if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-    		if (swiAlgo.getDestImage() != null) {
-                // algo produced a new result image
-    			System.out.println("Returning Swi algo image, not null");
-    			return swiAlgo.getDestImage().getImageName();
-            } else {
-                System.out.println("Swi algo image was null");
-                return image.getImageName();
-            }
+    		return resultImageName;
         }
 
     	System.out.println("Unrecognized output image parameter: " + imageParamName);
