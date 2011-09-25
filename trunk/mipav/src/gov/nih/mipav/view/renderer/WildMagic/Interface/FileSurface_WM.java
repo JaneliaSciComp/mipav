@@ -991,7 +991,7 @@ public class FileSurface_WM {
             for (int i = 0; i < akSurfaces.length; i++) {
             	saveSinglePlyMesh(null, kImage, akSurfaces[i] );
             }
-        }
+        }                           
     }
     
     
@@ -1744,7 +1744,7 @@ public class FileSurface_WM {
      * @param   bLoad  whether the files are opened for reading (bLoad = true) or writing (bLoad = false)
      * @return  File[] array of opened files.
      */
-    private static File[] openFiles(boolean bLoad) {
+    public static File[] openFiles(boolean bLoad) {
 
         // file dialog to select surface mesh files (*.sur)
         JFileChooser chooser = new JFileChooser();
@@ -2636,6 +2636,7 @@ public class FileSurface_WM {
                 {
                     for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
 
+                    	//System.err.println( akComponent[i].VBuffer.GetPosition3( j ) ); 
                         // The mesh files save the verticies as
                         // pt.x*resX*direction[0] + startLocation
                         // The loaded vertices go from -1 to 1
