@@ -4,9 +4,12 @@ package gov.nih.mipav.view.renderer.WildMagic.Interface;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewToolBarBuilder;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogSmoothMesh;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 
@@ -20,6 +23,8 @@ import java.awt.FlowLayout;
 import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Vector;
@@ -94,6 +99,9 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** The labels below the detail slider. */
     private JLabel[] detailSliderLabels;
 
+    /** Save surface button. */
+    private JButton saveSurfaceButton;
+    
     /** Save surface button. */
     private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton, levelPLYButton;
 
@@ -272,11 +280,15 @@ public class JPanelSurface_WM extends JInterfaceBase
         }
         else if (command.equals("ChangePolyMode")) {
             changePolyMode(polygonIndexToMode(polygonModeCB.getSelectedIndex()));
-        } else if (command.equals("LevelXML") || command.equals("LevelW") || command.equals("LevelS") ||
-                   command.equals("LevelV") || command.equals("LevelSTL") || command.equals("LevelPLY"))
-        {
-            saveSurfaces( surfaceList.getSelectedIndices(), command );
         } 
+        else if (command.equals("saveSurface")) {
+            saveSurfaces( surfaceList.getSelectedIndices(), command );        	
+        }
+        //else if (command.equals("LevelXML") || command.equals("LevelW") || command.equals("LevelS") ||
+        //        command.equals("LevelV") || command.equals("LevelSTL") || command.equals("LevelPLY"))
+        //{
+        //    saveSurfaces( surfaceList.getSelectedIndices(), command );
+        //} 
         else if (command.equals("Smooth")) {
             smoothSurface(surfaceList.getSelectedIndices(), JDialogSmoothMesh.SMOOTH1);
         } else if (command.equals("Smooth2")) {
@@ -850,22 +862,24 @@ public class JPanelSurface_WM extends JInterfaceBase
         smooth2Button = toolbarBuilder.buildButton("Smooth2", "Smooth level 2", "sm2");
         smooth3Button = toolbarBuilder.buildButton("Smooth3", "Smooth level 3", "sm3");
         decimateButton = toolbarBuilder.buildButton("Decimate", "Decimate the surface", "decimate");
-        levelSButton = toolbarBuilder.buildButton("LevelS", "Save single level (.sur)", "levelssave");
-        levelVButton = toolbarBuilder.buildButton("LevelV", "Save single level (.wrl)", "levelvsave");
-        levelWButton = toolbarBuilder.buildButton("LevelW", "Save multi objects (.wrl)", "levelwsave");
-        levelXMLButton = toolbarBuilder.buildButton("LevelXML", "Save xml surface (.xml)", "savexml");
-        levelSTLButton = toolbarBuilder.buildButton("LevelSTL", "Save STL binary surface (.stl)", "savestl");
-        levelPLYButton = toolbarBuilder.buildButton("LevelPLY", "Save PLY surface (.ply)", "saveply");
+        saveSurfaceButton = toolbarBuilder.buildButton("saveSurface", "Save surface to a file", "save");
+        //levelSButton = toolbarBuilder.buildButton("LevelS", "Save single level (.sur)", "levelssave");
+        //levelVButton = toolbarBuilder.buildButton("LevelV", "Save single level (.wrl)", "levelvsave");
+        //levelWButton = toolbarBuilder.buildButton("LevelW", "Save multi objects (.wrl)", "levelwsave");
+        //levelXMLButton = toolbarBuilder.buildButton("LevelXML", "Save xml surface (.xml)", "savexml");
+        //levelSTLButton = toolbarBuilder.buildButton("LevelSTL", "Save STL binary surface (.stl)", "savestl");
+        //levelPLYButton = toolbarBuilder.buildButton("LevelPLY", "Save PLY surface (.ply)", "saveply");
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
         toolBar.add(smooth3Button);
         toolBar.add(decimateButton);
-        toolBar.add(levelSButton);
-        toolBar.add(levelVButton);
-        toolBar.add(levelWButton);
-        toolBar.add(levelXMLButton);
-        toolBar.add(levelSTLButton);
-        toolBar.add(levelPLYButton);
+        toolBar.add(saveSurfaceButton);
+        //toolBar.add(levelSButton);
+        //toolBar.add(levelVButton);
+        //toolBar.add(levelWButton);
+        //toolBar.add(levelXMLButton);
+        //toolBar.add(levelSTLButton);
+        //toolBar.add(levelPLYButton);
 
         JPanel toolBarPanel = new JPanel();
         toolBarPanel.setLayout(new BorderLayout());
@@ -1392,6 +1406,10 @@ public class JPanelSurface_WM extends JInterfaceBase
         if (aiSelected == null) {
             MipavUtil.displayError("Select a surface to save.");
             return;
+        }  
+        if (aiSelected.length != 1) {
+            MipavUtil.displayError("Select one surface to save.");
+            return;
         }
 
         if ( m_kVolumeViewer != null )
@@ -1400,7 +1418,63 @@ public class JPanelSurface_WM extends JInterfaceBase
             for (int i = 0; i < aiSelected.length; i++) {
                 akSurfaces[i] = m_akSurfaceStates.get(aiSelected[i]).Surface;
             }
-            FileSurface_WM.saveSurfaces(m_kVolumeViewer.getImageA(), akSurfaces, kCommand );
+
+            File[] akFiles = FileSurface_WM.openFiles(false);
+
+            if (akFiles == null) {
+                return;
+            }
+            String kName = akFiles[0].getAbsolutePath();
+                                             
+
+            try {
+                float[] startLocation = m_kVolumeViewer.getImageA().getFileInfo(0).getOrigin();
+                int[] extents = m_kVolumeViewer.getImageA().getExtents();
+                int xDim = extents[0];
+                int yDim = extents[1];
+                int zDim = extents[2];
+                
+                float[] resols = m_kVolumeViewer.getImageA().getFileInfo()[0].getResolutions();
+                float xBox = (xDim - 1) * resols[0];
+                float yBox = (yDim - 1) * resols[1];
+                float zBox = (zDim - 1) * resols[2];
+                float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+                int[] direction = MipavCoordinateSystems.getModelDirections(m_kVolumeViewer.getImageA());
+                float[] box = new float[]{ xBox, yBox, zBox };
+
+                //                 for (int i = 0; i < meshes.length; i++) {
+                VertexBuffer kVBuffer = new VertexBuffer( akSurfaces[0].VBuffer );
+
+                // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
+                // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
+                // The mesh files must save the verticies as
+                // pt.x*resX*direction[0] + startLocation
+                for (int j = 0; j < kVBuffer.GetVertexQuantity(); j++) {
+                	kVBuffer.SetPosition3( j,
+                			((((akSurfaces[0].VBuffer.GetPosition3fX(j) * 2.0f * maxBox) + xBox) / 2.0f) * direction[0]) +
+                			startLocation[0],
+                			((((akSurfaces[0].VBuffer.GetPosition3fY(j) * 2.0f * maxBox) + yBox) / 2.0f) * direction[1]) +
+                			startLocation[1],
+                			((((akSurfaces[0].VBuffer.GetPosition3fZ(j) * 2.0f * maxBox) + zBox) / 2.0f) * direction[2]) +
+                			startLocation[2] );
+
+                }
+
+                //double[][] inverseDicomArray = null;
+                TransMatrix inverse_DicomMatrix = null;
+                if (m_kVolumeViewer.getImageA().getMatrixHolder().containsType(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL)) {
+                	inverse_DicomMatrix = m_kVolumeViewer.getImageA().getMatrix().clone();
+                	inverse_DicomMatrix.Inverse();
+                	//inverseDicomArray = inverseDicomMatrix.getMatrix();
+                }
+
+                TriMesh surfaceSave = new TriMesh( kVBuffer, akSurfaces[0].IBuffer );
+                //int iType = akSurfaces[0] instanceof ClodMesh ? 1 : 0;
+                FileSurface_WM.save(kName, surfaceSave, 0, surfaceSave.VBuffer, true, direction, startLocation, box, inverse_DicomMatrix);
+            } catch (IOException error) {
+                MipavUtil.displayError("Error while trying to save single mesh");
+            }
         }
     }
     
@@ -1445,17 +1519,19 @@ public class JPanelSurface_WM extends JInterfaceBase
      * @param  flag  Enable or disable.
      */
     private void setElementsEnabled(boolean flag) {
-        levelSButton.setEnabled(flag);
-        levelVButton.setEnabled(flag);
-        levelWButton.setEnabled(flag);
+        saveSurfaceButton.setEnabled(flag);
+        
+        //levelSButton.setEnabled(flag);
+        //levelVButton.setEnabled(flag);
+        //levelWButton.setEnabled(flag);
         decimateButton.setEnabled(flag);
         colorButton.setEnabled(flag);
         smooth1Button.setEnabled(flag);
         smooth2Button.setEnabled(flag);
         smooth3Button.setEnabled(flag);
-        levelXMLButton.setEnabled(flag);
-        levelSTLButton.setEnabled(flag);
-        levelPLYButton.setEnabled(flag);
+        //levelXMLButton.setEnabled(flag);
+        //levelSTLButton.setEnabled(flag);
+        //levelPLYButton.setEnabled(flag);
 
         colorLabel.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
