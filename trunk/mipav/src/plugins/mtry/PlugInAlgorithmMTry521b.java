@@ -66,13 +66,16 @@ public class PlugInAlgorithmMTry521b extends AlgorithmBase {
 
     /** How many channels were used by scanner to acquire images */
     private int numChannel;
+
+    /** Dimensions for output images. */
+    private int xDim, yDim, zDim;
     
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
      * @param numChannel 
-     * @param  srcImg       Source image model.
+     * @param  srcImg       Source image model, requires 3D images.
      */
     public PlugInAlgorithmMTry521b(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
             double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, 
@@ -89,6 +92,7 @@ public class PlugInAlgorithmMTry521b extends AlgorithmBase {
         this.invTimeMax = invTimeMax;
         this.doReconstruct = doReconstruct;
         this.numChannel = numChannel;
+
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -126,6 +130,10 @@ public class PlugInAlgorithmMTry521b extends AlgorithmBase {
     
     private void calc3D() {
     	
+        xDim = minImage.getExtents()[0];
+        yDim = minImage.getExtents()[1];
+        zDim = minImage.getExtents()[2] / (2*numChannel);
+        
     	int size = (int)((t1Max - t1Min)/precision);
     	double[] t1Val = new double[size];
     	double newX = t1Min;
@@ -191,10 +199,10 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	}
     	
     	//Reshape the images as three complex images, and an additional phase image
-    	double[][] minImageComplexReal = new double[64*64*44][5], minImageComplexImag = new double[64*64*44][5], 
-    	            medImageComplexReal = new double[64*64*44][5], medImageComplexImag = new double[64*64*44][5],
-    	            maxImageComplexReal = new double[64*64*44][5], maxImageComplexImag = new double[64*64*44][5], 
-    	            negPhaseReal = new double[64*64*44][5], negPhaseImag = new double[64*64*44][5];
+    	double[][] minImageComplexReal = new double[xDim*yDim*zDim][numChannel], minImageComplexImag = new double[xDim*yDim*zDim][numChannel], 
+    	            medImageComplexReal = new double[xDim*yDim*zDim][numChannel], medImageComplexImag = new double[xDim*yDim*zDim][numChannel],
+    	            maxImageComplexReal = new double[xDim*yDim*zDim][numChannel], maxImageComplexImag = new double[xDim*yDim*zDim][numChannel], 
+    	            negPhaseReal = new double[xDim*yDim*zDim][numChannel], negPhaseImag = new double[xDim*yDim*zDim][numChannel];
     	
     	rescaleToComplex(minImage, minImageComplexReal, minImageComplexImag);
     	rescaleToComplex(medImage, medImageComplexReal, medImageComplexImag);
@@ -226,11 +234,11 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
             }
         }
         
-        double[] t1Real = new double[64*64*44];
-        double[][] tempNumReal = new double[64*64*44][5];
-        double[][] tempNumImag = new double[64*64*44][5];
-        double[][] tempDenReal = new double[64*64*44][5];
-        double[][] tempDenImag = new double[64*64*44][5];
+        double[] t1Real = new double[xDim*yDim*zDim];
+        double[][] tempNumReal = new double[xDim*yDim*zDim][numChannel];
+        double[][] tempNumImag = new double[xDim*yDim*zDim][numChannel];
+        double[][] tempDenReal = new double[xDim*yDim*zDim][numChannel];
+        double[][] tempDenImag = new double[xDim*yDim*zDim][numChannel];
         
         double realFactor;
         
@@ -303,12 +311,12 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     /**
      * Reconstructs each inversion time image.
      * 
-     * @param each imageReal/imageImage are [64x64x44][5] size
+     * @param each imageReal/imageImage are [xDim*yDim*zDim][numChannel] size
      * @return
      */
     private ModelImage reconstruct(double[][] imageReal,
             double[][] imageImag, String name) {
-        ModelImage reconImage = new ModelImage(DataType.DOUBLE, new int[]{64,64,44}, name);
+        ModelImage reconImage = new ModelImage(DataType.DOUBLE, new int[]{xDim,yDim,zDim}, name);
         double[][] squareRealResult = new double[imageReal.length][];
         double[][] squareImagResult = new double[imageImag.length][];
         for(int i=0; i<imageReal.length; i++) {
@@ -341,7 +349,6 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         try {
             reconImage.importData(0, mag, true);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -387,12 +394,12 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     }
 
     private void rescaleToComplex(ModelImage origImage, double[][] realData, double[][] complexData) {
-        double[] realDataTemp = new double[64*64*44*5];
-        double[] complexDataTemp = new double[64*64*44*5];
+        double[] realDataTemp = new double[xDim*yDim*zDim*numChannel];
+        double[] complexDataTemp = new double[xDim*yDim*zDim*numChannel];
         
         try {
-            origImage.exportData(0, 64*64*44*5, realDataTemp);
-            origImage.exportData(64*64*44*5, 64*64*44*5, complexDataTemp);            
+            origImage.exportData(0, xDim*yDim*zDim*numChannel, realDataTemp);
+            origImage.exportData(xDim*yDim*zDim*numChannel, xDim*yDim*zDim*numChannel, complexDataTemp);            
             //resultImage.importComplexData(0, realData, complexData, true, false);
             System.out.println("Compare ends "+realDataTemp[realDataTemp.length-1]+" "+complexDataTemp[0]);
         } catch(IOException e) {
@@ -400,7 +407,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         }
 
         int index = 0;
-        for(int j=0; j<5; j++) {
+        for(int j=0; j<numChannel; j++) {
             for(int i=0; i<realData.length; i++) {
                 realData[i][j] = realDataTemp[index];
                 complexData[i][j] = complexDataTemp[index];
