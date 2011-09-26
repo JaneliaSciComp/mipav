@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.algorithms.filters.FFTUtility;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -13,11 +12,7 @@ import Jama.*;
 
 
 /**
- * This algorithm operates on 3D black and white images and on 2D and 3D color images. The user can select 1 or both of
- * 2 output images: The first image is a filtered 3D image containing only the first n independent components, where n is
- * selected by the user after viewing images of the first 10 (or the number that exist if less than 10) independent
- * components. The second image is a 2D image created by averaging together the images in the 3D image. Note that red,
- * green, and blue are treated as separate 2D planes.
+ * This algorithm operates on 2D and 3D black and white and color images. 
  * Requirements:
  * 1.) The independent components must be statistically independent.
  * 2.) The independent components must have nongaussian distributions.
@@ -31,6 +26,10 @@ import Jama.*;
  * References:
  * 1.) Independent Component Analysis by Aapo Hyvarinen, Juha Karhunen, and Erkki Oja, John-Wiley & Sons, Inc.,
  * 2001. 
+ * 2.) Independent Component Analysis A Tutorial Introduction by James V. Stone, Massachusetts Institute of
+ * Technology, 2004.
+ * 3.) Independent Component Analysis Principles and Practice Edited by Stephen Roberts and Richard Everson,
+ * Cambridge University Press, 2001.
  * From the text: "Another very useful thing to do is to reduce the dimension of the data by principal component
  * analysis.  This reduces noise and prevents overlearning.  It may also solve the problems with data that has a 
  * smaller number of independent components than mixtures."
@@ -110,7 +109,8 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
      * A slightly stronger property than uncorrelatedness is whiteness.  Whiteness of a zero-mean random
        vector means that components are uncorrelated and their variances equal unity.  Whitening is sometimes
        called sphering.  For whitened data E{x**2} = 1, and both kurtosis and normalized kurtosis reduce to
-       E{x**4} - 3.
+       E{x**4} - 3.  Whitening makes the likelihood landscape more isotropic and removes the burden of 
+       removing second order infromration.
        
        Kurtosis is the simplest statistical quantity for indicating the nongaussianity of a random variable.
        The kurtosis of a gaussian distribution is zero.  Distributions having a negative kurtosis are said to
@@ -379,15 +379,6 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
         int index;
         int p;
         double[] result;
-        //int iNumber;
-        //float vMin;
-        //float vMax;
-        //double typeMin;
-        //double typeMax;
-        //double a;
-        //double b;
-        //float rMin;
-        //float rMax;
         int index2;
         int i2;
         int z2;
