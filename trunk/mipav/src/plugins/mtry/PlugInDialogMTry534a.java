@@ -585,15 +585,15 @@ public class PlugInDialogMTry534a extends JDialogScriptableBase implements Algor
             }
 
             public String getShortLabel() {
-                return new String("MTry");
+                return new String("MTry534a");
             }
 
             public String getLabel() {
-                return new String("MTry");
+                return new String("MTry534a");
             }
 
             public String getName() {
-                return new String("MTry");
+                return new String("MTry534a");
             }
         };
     }
