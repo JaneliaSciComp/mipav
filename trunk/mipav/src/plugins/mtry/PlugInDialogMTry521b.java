@@ -63,7 +63,7 @@ import javax.swing.*;
  * meaning it can be executed and recorded as part of a script.  It implements AlgorithmInterface,
  * meaning it has methods for listening to and recording the progress of an algorithm.
  * 
- * @version  June 4, 2010
+ * @version  September 14, 2011
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -88,41 +88,43 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
     /** This is your algorithm */
     private PlugInAlgorithmMTry521b mTryAlgo = null;
 
+    
     private String[] titles;
 
+    /** Comboboxes for selecting images that are min, med, and maxImage */
     private JComboBox[] imageCombo;
     
+    /** Internal builder for creating gui components. */
     private GuiBuilder guiBuilder;
 
+    /** Gui elements for user specification of inversion times, in case they differ froom image info */
     private JTextField[] inversionTimeField;
 
-    private JTextField t1MinField;
+    /** Gui elements for specifying fit parameters. */
+    private JTextField t1MinField, t1MaxField, precisionField, numChannelField;
 
-    private JTextField t1MaxField;
+    /** Gui element for allowing reconstruction */
+    private JCheckBox doReconstructCheck;
+    
+    /** Selected images with varying inverstion times. */
+    private ModelImage minImage, medImage, maxImage;
 
-    private JTextField precisionField;
+    /** Max and min t1 values to perform fitting, defaults are 100, 7000 */
+    private double t1Min, t1Max;
 
-    private ModelImage minImage;
-
-    private ModelImage medImage;
-
-    private ModelImage maxImage;
-
-    private double t1Min;
-
-    private double t1Max;
-
+    /** Requested precision of fit, default is 1*/
     private double precision;
 
-    private double invTimeMin;
+    /** Inversion times used for each scan (usually detected in image information). */
+    private double invTimeMin, invTimeMed, invTimeMax;
 
-    private double invTimeMed;
-
-    private double invTimeMax;
-
+    /** Whether to perform reconstruction of image */
     private boolean doReconstruct;
+    
+    /** How many channels were used by scanner to acquire image */
+    private int numChannel;
 
-    private JCheckBox doReconstructCheck;
+    
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -217,10 +219,11 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
 
         try {
             
-            resultImage = new ModelImage(ModelImage.FLOAT, new int[]{64,64,44}, "T1Map");
+            resultImage = new ModelImage(ModelImage.FLOAT, new int[]{minImage.getExtents()[0],minImage.getExtents()[1],(minImage.getExtents()[2]/(2*numChannel))}, "T1Map");
             
             mTryAlgo = new PlugInAlgorithmMTry521b(resultImage, minImage, medImage, maxImage, 
-                                                    t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax, doReconstruct);
+                                                    t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax, 
+                                                    doReconstruct, numChannel);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -264,6 +267,7 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
         t1Min = scriptParameters.getParams().getDouble("t1Min");
         t1Max = scriptParameters.getParams().getDouble("t1Max");
         doReconstruct = scriptParameters.getParams().getBoolean("doReconstruct");
+        numChannel = scriptParameters.getParams().getInt("numChannel");
 
         minImage = scriptParameters.retrieveImage("minImageInvTime"+Double.valueOf(invTimeMin).intValue());
         medImage = scriptParameters.retrieveImage("medImageInvTime"+Double.valueOf(invTimeMed).intValue());
@@ -285,11 +289,12 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
         scriptParameters.getParams().put(ParameterFactory.newParameter("t1Min", t1Min));
         scriptParameters.getParams().put(ParameterFactory.newParameter("t1Max", t1Max));
         scriptParameters.getParams().put(ParameterFactory.newParameter("doReconstruct", doReconstruct));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("numChannel", numChannel));
     } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("MDEFT Plugin");
+        setTitle("MDEFT Plugin 5.3.4a");
         guiBuilder = new GuiBuilder(this);
         
         try {
@@ -352,8 +357,8 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
             gbc.gridy++;
         }
         
-        JPanel paramPanel = new JPanel(new GridBagLayout());
-        paramPanel.setBorder(MipavUtil.buildTitledBorder("T1 Parameters"));
+        JPanel fitParamPanel = new JPanel(new GridBagLayout());
+        fitParamPanel.setBorder(MipavUtil.buildTitledBorder("T1 Parameters"));
         gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -364,20 +369,31 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
         gbc.gridx = 0;
         gbc.gridy = 0;
         
-        t1MinField = guiBuilder.buildDecimalField("Minimum T1", 500);
-        t1MaxField = guiBuilder.buildDecimalField("Maximum T1", 2500);
-        precisionField = guiBuilder.buildDecimalField("Precision", 0.5);
+        t1MinField = guiBuilder.buildDecimalField("Minimum T1", 100);
+        t1MaxField = guiBuilder.buildDecimalField("Maximum T1", 7000);
+        precisionField = guiBuilder.buildDecimalField("Precision", 1.0);
         doReconstructCheck = guiBuilder.buildCheckBox("Do image reconstruction", true);
+        int channelDefault = 5;
+        if(titles[0] != null) {
+            ModelImage channelSearch = ViewUserInterface.getReference().getRegisteredImageByName(titles[0]);
+            if(channelSearch != null && channelSearch.getNDims() > 2) {
+                channelDefault = channelSearch.getExtents()[2]/(44*2);
+            }
+            if(channelDefault == 0) {
+                channelDefault = 1;
+            }
+        }
+        numChannelField = guiBuilder.buildIntegerField("Number of channels", channelDefault);
                 
-        paramPanel.add(t1MinField.getParent(), gbc);
+        fitParamPanel.add(t1MinField.getParent(), gbc);
         gbc.gridy++;
-        paramPanel.add(t1MaxField.getParent(), gbc);
+        fitParamPanel.add(t1MaxField.getParent(), gbc);
         gbc.gridy++;
-        paramPanel.add(precisionField.getParent(), gbc);
+        fitParamPanel.add(precisionField.getParent(), gbc);
         gbc.gridy++;
         
-        JPanel debugPanel = new JPanel(new GridBagLayout());
-        debugPanel.setBorder(MipavUtil.buildTitledBorder("Debug Parameters"));
+        JPanel imageParamPanel = new JPanel(new GridBagLayout());
+        imageParamPanel.setBorder(MipavUtil.buildTitledBorder("Image Parameters"));
         gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -387,8 +403,9 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
-        debugPanel.add(doReconstructCheck.getParent(), gbc);
+        imageParamPanel.add(doReconstructCheck.getParent(), gbc);
         gbc.gridy++;
+        imageParamPanel.add(numChannelField.getParent(), gbc);
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
@@ -404,9 +421,9 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
         
         mainPanel.add(imagePanel, gbc);
         gbc.gridy++;
-        mainPanel.add(paramPanel, gbc);
+        mainPanel.add(fitParamPanel, gbc);
         gbc.gridy++;
-        mainPanel.add(debugPanel, gbc);
+        mainPanel.add(imageParamPanel, gbc);
         gbc.gridy++;
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -455,25 +472,25 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
 	        titles[i] = imageCombo[i].getSelectedItem().toString();
 	    }
 	    
-	    double invTime1, invTime2, invTime3;
-	    
-	    try {
-	        
 	    doReconstruct = doReconstructCheck.isSelected();
 	    
-	    t1Min = Double.valueOf(t1MinField.getText()).doubleValue();
-	    t1Max = Double.valueOf(t1MaxField.getText()).doubleValue();
-	    precision = Double.valueOf(precisionField.getText()).doubleValue();
+	    double invTime1, invTime2, invTime3, channelDouble;
 	    
-	    invTime1 = Double.valueOf(inversionTimeField[0].getText()).doubleValue();
-	    invTime2 = Double.valueOf(inversionTimeField[1].getText()).doubleValue();
-	    invTime3 = Double.valueOf(inversionTimeField[2].getText()).doubleValue();
+	    try {
+    	    t1Min = Double.valueOf(t1MinField.getText()).doubleValue();
+    	    t1Max = Double.valueOf(t1MaxField.getText()).doubleValue();
+    	    precision = Double.valueOf(precisionField.getText()).doubleValue();
+    	    
+    	    invTime1 = Double.valueOf(inversionTimeField[0].getText()).doubleValue();
+    	    invTime2 = Double.valueOf(inversionTimeField[1].getText()).doubleValue();
+    	    invTime3 = Double.valueOf(inversionTimeField[2].getText()).doubleValue();
+    	    numChannel = Integer.valueOf(numChannelField.getText()).intValue();
 	    
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("All values must be numerical.");
 	        return false;
 	    }
-	    
+
 	    double minTime = Math.min(invTime1, invTime2);
 	    minTime = Math.min(minTime, invTime3);
 	    
@@ -526,6 +543,22 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
         
         if(!i1Placed || !i2Placed || !i3Placed) {
             MipavUtil.displayError("Sorting failed, please enter unique inversion times");
+            return false;
+        }
+        
+        if(minImage.getNDims() > 2 && medImage.getNDims() > 2 && maxImage.getNDims() > 2) {
+            if(minImage.getExtents()[2] != medImage.getExtents()[2] && medImage.getExtents()[2] != maxImage.getExtents()[2]) {
+                MipavUtil.displayError("All images must contain the same number of slices.");
+                return false;
+            }
+            
+            channelDouble = minImage.getExtents()[2]/((double)numChannel*2);
+            if(!Double.valueOf(((int)channelDouble)).equals(channelDouble)) { //test for whether channel double is whole number
+                MipavUtil.displayError(numChannel+" is not a valid number of channels, the number of image slices must be divisible by (2*number of channels).");
+                return false;
+            }
+        } else {
+            MipavUtil.displayError("All images must be 3D images");
             return false;
         }
         
@@ -583,6 +616,7 @@ public class PlugInDialogMTry521b extends JDialogScriptableBase implements Algor
             table.put(new ParameterDouble("t1Min", t1Min));
             table.put(new ParameterDouble("t1Max", t1Max));
             table.put(new ParameterBoolean("doReconstruct", doReconstruct));
+            table.put(new ParameterInt("numChannel", numChannel));
             
             if(scriptParameters != null) {
                 minImage = scriptParameters.retrieveImage("minImage");

@@ -46,38 +46,37 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 public class PlugInAlgorithmMTry521b extends AlgorithmBase {
 
-    private ModelImage minImage;
+    /** Selected images with varying inverstion times. */
+    private ModelImage minImage, medImage, maxImage;
 
-    private ModelImage medImage;
+    /** Max and min t1 values to perform fitting, defaults are 100, 7000 */
+    private double t1Min, t1Max;
 
-    private ModelImage maxImage;
-
-    private double t1Min;
-
-    private double t1Max;
-
+    /** Requested precision of fit*/
     private double precision;
 
-    private double invTimeMin;
+    /** Inversion times used for each scan (usually detected in image information.) */
+    private double invTimeMin, invTimeMed, invTimeMax;
 
-    private double invTimeMed;
+    /** T1 maxinmum and minimum values used for function fitting, from t1Min and t1Max */
+    private double funcMin, funcMax;
 
-    private double invTimeMax;
-
-    private double funcMin;
-
-    private double funcMax;
-
+    /** Whether to perform reconstruction of image */
     private boolean doReconstruct;
+
+    /** How many channels were used by scanner to acquire images */
+    private int numChannel;
     
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
+     * @param numChannel 
      * @param  srcImg       Source image model.
      */
     public PlugInAlgorithmMTry521b(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
-            double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, boolean doReconstruct) {
+            double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, 
+            boolean doReconstruct, int numChannel) {
         super(resultImage, minImage);
         this.minImage = minImage;
         this.medImage = medImage;
@@ -89,15 +88,11 @@ public class PlugInAlgorithmMTry521b extends AlgorithmBase {
         this.invTimeMed = invTimeMed;
         this.invTimeMax = invTimeMax;
         this.doReconstruct = doReconstruct;
+        this.numChannel = numChannel;
     }
         
-//  ~ Methods --------------------------------------------------------------------------------------------------------
+    //  ~ Methods --------------------------------------------------------------------------------------------------------
 
-    
-    
-  
-    
-    
     /**
      * Prepares this class for destruction.
      */
@@ -115,25 +110,21 @@ public class PlugInAlgorithmMTry521b extends AlgorithmBase {
     public void runAlgorithm() {
     	if(srcImage.getNDims() < 3) {
     		calc2D();
-            } else {
+        } else {
     		calc3D();
-            }
+        }
         
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
-    
-	//  ~ Methods --------------------------------------------------------------------------------------------------------
-    
+
     private void calc2D() {
     	fireProgressStateChanged("Message 2D: "+srcImage.getImageName());
      
-    	MipavUtil.displayError("This algorithm is not yet designed for 2D images.");
+    	MipavUtil.displayError("This algorithm is not designed for 2D images, since it requires complex image components.");
     }
     
     private void calc3D() {
-    	
-    	System.out.println("4d processing here");
     	
     	int size = (int)((t1Max - t1Min)/precision);
     	double[] t1Val = new double[size];
@@ -199,14 +190,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	    funcValue += t1Precision;
     	}
     	
-    	//Reshape the images as three complex images
-    	//ModelImage minImageComplex = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "minImageComplex");
-    	//ModelImage medImageComplex = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "medImageComplex");
-    	//ModelImage maxImageComplex = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "maxImageComplex");
-    	//ModelImage negPhase = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "negPhaseComplex");
-    	
-    	//ModelImage resultImage = new ModelImage(ModelImage.COMPLEX, new int[]{64,64,44,5}, "maxImageComplex");
-    	
+    	//Reshape the images as three complex images, and an additional phase image
     	double[][] minImageComplexReal = new double[64*64*44][5], minImageComplexImag = new double[64*64*44][5], 
     	            medImageComplexReal = new double[64*64*44][5], medImageComplexImag = new double[64*64*44][5],
     	            maxImageComplexReal = new double[64*64*44][5], maxImageComplexImag = new double[64*64*44][5], 
@@ -216,8 +200,6 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	rescaleToComplex(medImage, medImageComplexReal, medImageComplexImag);
     	rescaleToComplex(maxImage, maxImageComplexReal, maxImageComplexImag);
     	rescaleToComplex(maxImage, negPhaseReal, negPhaseImag);
-    	
-    	//searchForValues(minImageComplexReal, minImageComplexImag, medImageComplexReal, medImageComplexImag, maxImageComplexReal, maxImageComplexImag);
     	
     	if(doReconstruct) {
         	ModelImage minImageRecon = reconstruct(minImageComplexReal, minImageComplexImag, "minImageRecon"+invTimeMin);
@@ -233,17 +215,6 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
             ViewJFrameImage maxRecon = new ViewJFrameImage(maxImageRecon);
             maxRecon.setVisible(true);
     	}
-    	
-    	/*double[] maxImageComplexReal = new double[maxImageComplex.getSize()];
-    	double[] maxImageComplexImag = new double[maxImageComplex.getSize()];
-    	double[] negPhaseReal = new double[maxImageComplex.getSize()];
-    	double[] negPhaseImag = new double[maxImageComplex.getSize()];
-    	try {
-            maxImageComplex.exportDComplexData(0, maxImageComplex.getSize(), maxImageComplexRReceived	Subject	From	Size	Categories	
-1:05 PM	DCO Presentation Monday (11/22) Service Desk Knowledge Management and Change Management	CIT Communications Office (NIH/CIT)	11 KB		eal, maxImageComplexImag);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
     	
         double pow, mag;
         for(int i=0; i<maxImageComplexReal.length; i++) {
@@ -319,7 +290,6 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	try {
             destImage.importData(0, t1Real, true);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
     	
