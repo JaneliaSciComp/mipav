@@ -6,6 +6,7 @@ import gov.nih.mipav.model.file.FileInfoSurfaceRefXML;
 import gov.nih.mipav.model.file.FileInfoXML;
 import gov.nih.mipav.model.file.FileSurfaceXML;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import java.util.Vector;
 
@@ -31,12 +32,12 @@ public class FileInfoSurfaceGiftiXML_WM extends FileInfoSurfaceRefXML {
     /**
      * Vector to hold the 3D coordinate positions
      */
-    private Vector coordinates;
+    private Vector<Vector3f> coordinates;
     
     /**
      * Vector to hold the connection index.
      */
-    private Vector connectivity;
+    private Vector<Integer> connectivity;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ public class FileInfoSurfaceGiftiXML_WM extends FileInfoSurfaceRefXML {
     /**
      * Set the default coordinate vector. 
      */
-    public void setCoordinate(Vector coords) {
+    public void setCoordinate(Vector<Vector3f> coords) {
     	coordinates = coords;
     }
     
@@ -65,7 +66,7 @@ public class FileInfoSurfaceGiftiXML_WM extends FileInfoSurfaceRefXML {
      * Set the default connectivity vector.
      * @param conn
      */
-    public void setConnectivity(Vector conn) {
+    public void setConnectivity(Vector<Integer> conn) {
     	connectivity = conn;
     }
     
@@ -73,7 +74,7 @@ public class FileInfoSurfaceGiftiXML_WM extends FileInfoSurfaceRefXML {
      * Get the coordinate vector. 
      * @return  coordinate
      */
-    public Vector getCoordinate() {
+    public Vector<Vector3f> getCoordinate() {
     	return coordinates;
     }
     
@@ -81,7 +82,7 @@ public class FileInfoSurfaceGiftiXML_WM extends FileInfoSurfaceRefXML {
      * Get the connectivity vector.
      * @return connectivity. 
      */
-    public Vector getConnectivity() {
+    public Vector<Integer> getConnectivity() {
     	return connectivity;
     }
     

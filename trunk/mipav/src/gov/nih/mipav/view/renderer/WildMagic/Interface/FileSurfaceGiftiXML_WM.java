@@ -102,7 +102,6 @@ public class FileSurfaceGiftiXML_WM extends FileSurfaceGiftiXML {
 				String qName) throws SAXException {
 			currentKey = localName;
 			if (currentKey.equals("GIFTI")) {
-				// fileInfo.setID(Integer.valueOf(elementBuffer).intValue());
 			} else if (currentKey.equals("Data")) {
 				if ( intent.equals("NIFTI_INTENT_POINTSET") ) {   
 					fileInfo.setCoordinate(getCoordinate(elementBuffer));
@@ -111,55 +110,32 @@ public class FileSurfaceGiftiXML_WM extends FileSurfaceGiftiXML {
 				}
 				
 			} else if (currentKey.equals("DataArray")) {
-				// fileInfo.setDiffuse(getColor(elementBuffer));
 			} else if (currentKey.equals("Dimensionality")) {
-				// fileInfo.setEmissive(getColor(elementBuffer));
 			} else if (currentKey.equals("Dim0")) {
-				// fileInfo.setSpecular(getColor(elementBuffer));
 			} else if (currentKey.equals("Dim1")) {
-				// fileInfo.setShininess(Float.valueOf(elementBuffer).floatValue());
 			} else if (currentKey.equals("Dim2")) {
-				// fileInfo.setType(elementBuffer);
 			} else if (currentKey.equals("Dim3")) {
-				// fileInfo.setOpacity(Float.valueOf(elementBuffer).floatValue());
 			} else if (currentKey.equals("Dim4")) {
-				// fileInfo.setLevelDetail(Integer.valueOf(elementBuffer).intValue());
 			} else if (currentKey.equals("Dim5")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("Intent")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("ArrayIndexingOrder")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("DataType")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("Endian")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("ExternalFileName")) {
 				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("ExternalFileOffset")) {
 				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("Encoding")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("DataSpace")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("Label")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("LabelTable")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("MatrixData")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("MD")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("MetaData")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("TransformedSpace")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("Name")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("Value")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} else if (currentKey.equals("CoordinateSystemTransformMatrix")) {
-				// fileInfo.setSurfaceFileName(elementBuffer);
 			} 	
 		}
 		
@@ -168,8 +144,8 @@ public class FileSurfaceGiftiXML_WM extends FileSurfaceGiftiXML {
 		 * @param elementBuffer buffer hold the whole coordinate data
 		 * @return coords    coordinate vector that hold the 3D positions.
 		 */
-		public Vector getCoordinate(String elementBuffer) {
-			Vector coords = new Vector();
+		public Vector<Vector3f> getCoordinate(String elementBuffer) {
+			Vector<Vector3f> coords = new Vector<Vector3f>();
 			String[] strs = elementBuffer.split("\\s+");
             for(int i=0;i<strs.length;i+=3){
                 try {
@@ -190,10 +166,9 @@ public class FileSurfaceGiftiXML_WM extends FileSurfaceGiftiXML {
 		 * @param elementBuffer
 		 * @return
 		 */
-		public Vector getConnectivity(String elementBuffer) {
+		public Vector<Integer> getConnectivity(String elementBuffer) {
 			StringTokenizer str = new StringTokenizer(elementBuffer, " ");
-			Vector conn = new Vector();
-			int i = 0;
+			Vector<Integer> conn = new Vector<Integer>();
 			int index;
 			while ( str.hasMoreTokens() ) {
 				index = Integer.valueOf(str.nextToken());
@@ -337,7 +312,7 @@ public class FileSurfaceGiftiXML_WM extends FileSurfaceGiftiXML {
         kAttr.SetTChannels(0,3);
         kAttr.SetCChannels(0,4);
         VertexBuffer kVBuffer = new VertexBuffer( kAttr, vertexCount );
-        Vector coords = ((FileInfoSurfaceGiftiXML_WM)fileInfo).getCoordinate();
+        Vector<Vector3f> coords = ((FileInfoSurfaceGiftiXML_WM)fileInfo).getCoordinate();
 		for(int i=0;i<coords.size();i++){
             try {
             	Vector3f v = (Vector3f)coords.get(i);
@@ -356,7 +331,7 @@ public class FileSurfaceGiftiXML_WM extends FileSurfaceGiftiXML {
 		 //connection
         int count=0;
         int[] indices=new int[indexCount];
-        Vector conn = ((FileInfoSurfaceGiftiXML_WM)fileInfo).getConnectivity();
+        Vector<Integer> conn = ((FileInfoSurfaceGiftiXML_WM)fileInfo).getConnectivity();
         for(int i=0;i<conn.size();i++){			
             try {
                 indices[count++]= (Integer)conn.get(i);
