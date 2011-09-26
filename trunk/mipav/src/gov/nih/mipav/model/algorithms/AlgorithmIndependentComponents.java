@@ -15,7 +15,8 @@ import Jama.*;
  * This algorithm operates on 2D and 3D black and white and color images. 
  * Requirements:
  * 1.) The independent components must be statistically independent.
- * 2.) The independent components must have nongaussian distributions.
+ * 2.) The independent components must have all nongaussian distributions or one gaussian distribution
+ * and all the other distributions nongaussian.
  * 3.) For simplicity, assume the unknown mixture matrix is square.  In other words, the number of 
  * mixtures equals the number of independent components.  If the number of independent components is
  * smaller than the number of mixtures, use principal component analysis to reduce the number of
