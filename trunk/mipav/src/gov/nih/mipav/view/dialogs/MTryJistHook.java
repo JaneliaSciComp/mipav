@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.dialogs;
 
-import mtry.PlugInDialogMTry521b;
+import mtry.PlugInDialogMTry534a;
 import gov.nih.mipav.model.scripting.parameters.ParameterTable;
 
 /**
@@ -13,10 +13,10 @@ import gov.nih.mipav.model.scripting.parameters.ParameterTable;
  */
 public class MTryJistHook implements ActionDiscovery {
 
-    private PlugInDialogMTry521b internalDialog;
+    private PlugInDialogMTry534a internalDialog;
     
     public MTryJistHook() {
-        this.internalDialog = new PlugInDialogMTry521b();
+        this.internalDialog = new PlugInDialogMTry534a();
     }
     
     public ActionMetadata getActionMetadata() {
