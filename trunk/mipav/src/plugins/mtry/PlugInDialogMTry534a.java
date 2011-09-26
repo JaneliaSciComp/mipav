@@ -553,7 +553,7 @@ public class PlugInDialogMTry534a extends JDialogScriptableBase implements Algor
             }
             
             channelDouble = minImage.getExtents()[2]/((double)numChannel*2);
-            if(!Double.valueOf(((int)channelDouble)).equals(channelDouble)) { //test for whether channel double is whole number
+            if(!Double.valueOf(((int)channelDouble)).equals(channelDouble) || numChannel < 1) { //test for whether channel double is whole number
                 MipavUtil.displayError(numChannel+" is not a valid number of channels, the number of image slices must be divisible by (2*number of channels).");
                 return false;
             }
