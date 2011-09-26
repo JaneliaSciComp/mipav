@@ -618,12 +618,6 @@ public class PlugInDialogMTry534a extends JDialogScriptableBase implements Algor
             table.put(new ParameterBoolean("doReconstruct", doReconstruct));
             table.put(new ParameterInt("numChannel", numChannel));
             
-            if(scriptParameters != null) {
-                minImage = scriptParameters.retrieveImage("minImage");
-                medImage = scriptParameters.retrieveImage("medImage");
-                maxImage = scriptParameters.retrieveImage("maxImage");
-            }
-            
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             
             table.put(new ParameterExternalImage("minImage"));
@@ -647,7 +641,7 @@ public class PlugInDialogMTry534a extends JDialogScriptableBase implements Algor
         final ParameterTable table = new ParameterTable();
 
         try {
-            table.put(new ParameterImage("MTryImage"));
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
@@ -664,7 +658,13 @@ public class PlugInDialogMTry534a extends JDialogScriptableBase implements Algor
      * @return The image name of the requested output image parameter label.
      */
     public String getOutputImageName(String imageParamName) {
-        return "MTryImage";
+        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
+            return "result_image";
+        }
+
+        System.out.println("Unrecognized output image parameter: " + imageParamName);
+
+        return null;
     }
 
     /**
