@@ -295,7 +295,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @param key
      * @return
      */
-    private Object generateNewTagValue(String key) {
+    public Object generateNewTagValue(String key) {
     	return generateNewTagValue(key, getTagTable());
     }
     
