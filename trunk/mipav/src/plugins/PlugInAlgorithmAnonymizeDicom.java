@@ -171,8 +171,8 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
                                                                                                                     // from
                                                                                                                     // temp
                                                                                                                     // file
-                //final ReadDicom imageFile = new ReadDicom(allTempFiles[i].getName(), allTempFiles[i].getParent()
-                //        + File.separator);
+                final FileDicom imageFile = new FileDicom(selectedFiles[i].getName(), allTempFiles[i].getParent()
+                        + File.separator);
                 //TODO: Test readability of new header here (could be provided as a user option.)
                 printToLogFile.println();
                 printToLogFile.println("The " + (i > 0 ? "unique " : "")
@@ -266,54 +266,6 @@ public class PlugInAlgorithmAnonymizeDicom extends AlgorithmBase {
             }
             return (o1).getGroupNumber() - (o2).getGroupNumber();
         }
-    }
-
-    /**
-     * Validator to test accuracy
-     * 
-     * @param args
-     * @throws IOException
-     */
-    public static void main(final String[] args) throws IOException {
-
-        final byte[] ar = {0, 0, 5, 0, 70, 68, 8, 0, 0, 0, 0, 0, 0, 26, 117, 64, 0, 0, 6, 0, 70, 68, 8, 0, 41, 92,
-                -113, -62, -11, -88, 18, 64, 0, 0, 7, 0, 83, 76, 4, 0, -69, 3, 0, 0, 0, 0, 8, 0, 83, 76, 4, 0, -56, 0,
-                0, 0, 0, 0, 13, 0, 83, 76, 4, 0, 2, 0, 0, 0, 0, 0, 14, 0, 83, 76, 4, 0, 4, 0, 0, 0, 0, 0, 19, 0, 83,
-                76, 4, 0, 81, 1, 0, 0, 0, 0, 20, 0, 83, 76, 4, 0, 1, 0, 0, 0, 0, 0, 22, 0, 83, 76, 4, 0, 50, 0, 0, 0,
-                0, 0, 24, 0, 83, 76, 4, 0, -96, 2, 0, 0, 0, 0, 29, 0, 76, 84, 14, 0, 65, 0, 66, 0, 68, 0, 79, 0, 77, 0,
-                69, 0, 78, 0, 0, 0, 30, 0, 70, 68, 8, 0, 0, 0, 0, 0, 0, 64, 127, 64, 0, 0, 31, 0, 70, 68, 8, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 32, 0, 70, 68, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 33, 0, 83, 76, 4, 0, 1, 0,
-                0, 0, 0, 0, 34, 0, 83, 76, 4, 0, 3, 0, 0, 0, 0, 0, 37, 0, 83, 76, 4, 0, 1, 0, 0, 0, 0, 0, 38, 0, 70,
-                68, 8, 0, 0, 0, 0, 0, 0, 112, 124, 64, 0, 0, 39, 0, 70, 68, 8, 0, 0, 0, 0, 0, 0, 0, 78, 64, 0, 0, 40,
-                0, 83, 76, 4, 0, 38, 1, 0, 0, 0, 0, 41, 0, 83, 76, 4, 0, 0, 0, 0, 0, 0, 0, 44, 0, 83, 76, 4, 0, -44, 0,
-                0, 0, 0, 0, 45, 0, 83, 76, 4, 0, 0, 0, 0, 0, 0, 0, 46, 0, 83, 76, 4, 0, 1, 0, 0, 0, 0, 0, 47, 0, 70,
-                68, 8, 0, 0, 0, 0, 0, 0, 0, 4, 64, 0, 0, 48, 0, 76, 84, 8, 0, 80, 0, 50, 0, 48, 0, 65, 0, 0, 0, 51, 0,
-                83, 76, 4, 0, 3, 0, 0, 0, 0, 0, 1, 1, 70, 68, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 70, 68, 8, 0,
-                14, 45, -78, -99, -17, -89, -18, 63, 0, 0, 3, 1, 70, 68, 8, 0, -123, -21, 81, -72, 30, -123, -21, 63,
-                0, 0, 5, 1, 73, 83, 2, 0, 48, 32, -1, -1, -1, -1, 67, 83, 10, 0, 69, 78, 68, 33, 32, 32, 32, 32, 32, 32};
-
-        final String str = new String(ar);
-        System.out.println("The string is:");
-        System.out.println(str);
-
-        /*
-         * File[] f = new File[1];
-         * 
-         * f[0] = new File(args[0]); String[] s = new String[1]; s[0] = "";
-         * 
-         * PlugInAlgorithmAnonymizeDicom p = new PlugInAlgorithmAnonymizeDicom (f, s, "", ""); p.runAlgorithm();
-         * p.finalize();
-         * 
-         * //For now inTest and inCopy should be identical, final implementation will have inTest and inCopy identical
-         * except for anonymized images System.out.println("Reading in "+args[0]); DataInputStream inTest = new
-         * DataInputStream(new FileInputStream(new File(args[0]))); System.out.println("Reading in "+args[1]);
-         * DataInputStream inCopy = new DataInputStream(new FileInputStream(new File(args[1]))); int maxSize =
-         * inTest.available(); byte[] b = new byte[maxSize], c = new byte[maxSize]; inTest.readFully(b);
-         * inCopy.readFully(c); System.out.println("Size compare: "+b.length+"\t"+c.length); boolean cons = true;
-         * for(int i=0; i<b.length; i++) { if(b[i] != c[i]) { System.out.println("Data corruption at "+i); cons =
-         * false; } } if(cons) { System.out.println("Program passed validation."); }
-         */
-
     }
 
 }

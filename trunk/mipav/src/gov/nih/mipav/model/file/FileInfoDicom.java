@@ -1,6 +1,8 @@
 package gov.nih.mipav.model.file;
 
 
+import gov.nih.mipav.model.file.FileDicomTagInfo.NumType;
+import gov.nih.mipav.model.file.FileDicomTagInfo.StringType;
 import gov.nih.mipav.model.file.FileDicomTagInfo.VR;
 import gov.nih.mipav.model.structures.*;
 
@@ -265,7 +267,7 @@ public class FileInfoDicom extends FileInfoBase {
             try {
 
                 if (list[i]) {
-                	String anonValue = generateAnonTag(anonymizeTagIDs[i]);
+                	String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
                 	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
                 }
             } catch (NullPointerException npe) { // an IllegalArgumentException is probably not right here....
@@ -281,7 +283,7 @@ public class FileInfoDicom extends FileInfoBase {
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
-        		String anonValue = generateAnonTag(anonymizeTagIDs[i]);
+        		String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
             	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
             }
         }
@@ -289,69 +291,92 @@ public class FileInfoDicom extends FileInfoBase {
     }
     
     /**
-     * Generates an anonymous version of a particular tag that is DICOM compatible 
+     * Generates a new version of a particular tag that is DICOM compatible 
      * @param key
      * @return
      */
-    private String generateAnonTag(String key) {
-    	String anonStr = "";
-    	String strValue = getTagTable().get(key).getValue(true).toString();
-    	if(strValue != null) {
-	    	if(key.equals("0008,0014") || key.equals("0008,0018") || 
-	    			key.equals("0020,000E") || key.equals("0020,000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
-	    		Random r = new Random();
-	    		
-	    		for(int i=0; i<strValue.length(); i++) {
-	        		if(strValue.charAt(i) == '.') {
-	        			anonStr = anonStr+".";
-	        		} else if(key.equals("0008,0018")) {
-	        			anonStr = anonStr+r.nextInt(10);
-	        		} else {
-	        			anonStr = anonStr+"1";
-	        		}
-	        	}
-	    	} else {		                	
-	        	for(int i=0; i<strValue.length(); i++) {
-	        		anonStr = anonStr+"X";
-	        	}
-	    	}
-    	}
-    	
-    	return anonStr;
+    private Object generateNewTagValue(String key) {
+    	return generateNewTagValue(key, getTagTable());
     }
     
     /**
-     * Generates an new version of a particular tag that is DICOM compatible 
+     * Generates a new version of a particular tag in the given tag table with same length that is DICOM compatible 
      * @param key
      * @return
      */
-    public static String generateNewTag(String key, String strValue) {
-    	String anonStr = "";
-    	if(strValue != null) {
-	    	if(key.equals("0008,0014") || key.equals("0008,0018") || key.equals("0002,0003")||
-	    			key.equals("0020,000E") || key.equals("0020,000D") || key.equals("0020,0010") || key.equals("0020,0052")) {
-	    		Random r = new Random();
-	    		
-	    		for(int i=0; i<strValue.length(); i++) {
-	        		if(strValue.charAt(i) == '.') {
-	        			anonStr = anonStr+".";
-	        		}
-	        		else if(strValue.charAt(i) == ' ') {
-	        			anonStr = anonStr+"A";
-	        		}else if(key.equals("0008,0018")) {
-	        			anonStr = anonStr+r.nextInt(10);
-	        		} else {
-	        			anonStr = anonStr+"1";
-	        		}
-	        	}
-	    	} else {		                	
-	        	for(int i=0; i<strValue.length(); i++) {
-	        		anonStr = anonStr+"X";
-	        	}
-	    	}
-    	}
-    	
-    	return anonStr;
+    public static Object generateNewTagValue(String key, FileDicomTagTable tagTable) {
+        FileDicomTag tag = tagTable.get(key);
+        if(!tag.getType().equals(VR.SQ)) {
+            return generateNewTagValue(key, tag.getValue(true).toString(), tag.getType());
+        } else {
+            FileDicomSQ sqNew = new FileDicomSQ();
+            FileDicomSQ sqOrig = (FileDicomSQ) tag.getValue(false);
+            if(sqOrig != null) {
+                for(int i=0; i<sqOrig.getSequence().size(); i++) {
+                    FileDicomSQItem itemOrig = sqOrig.getSequence().elementAt(i);
+                    FileDicomSQItem itemNew = new FileDicomSQItem(null, itemOrig.getVr_type());
+                    itemNew.setWriteAsUnknownLength(itemOrig.doWriteAsUnknownLength());
+                    Enumeration<FileDicomKey> origKeyEnum = itemOrig.getTagList().keys();
+                    FileDicomKey origKey;
+                    while(origKeyEnum.hasMoreElements()) {
+                        origKey = origKeyEnum.nextElement();
+                        itemNew.setValue(origKey, generateNewTagValue(origKey.toString(), itemOrig));
+                    }
+                    sqNew.addItem(itemNew);
+                }
+            }
+            return sqNew;
+        }
+    }
+    
+    /**
+     * Generates a new version of a particular tag in the standard DICOM tag table with same length that is DICOM compatible 
+     * @param key
+     * @return
+     */
+    public static Object generateNewTagValue(String key, String strValue) {
+        FileDicomTagInfo tag = DicomDictionary.getDicomTagTable().get(key);
+        return generateNewTagValue(key, "", tag.getType());
+    }
+    
+    /**
+     * Generates a new version of a particular tag given an arbitrary value and returns a DICOM compatible result 
+     * @param key
+     * @return
+     */
+    public static Object generateNewTagValue(String key, String strValue, VR vr) {
+        StringBuilder anonStr = new StringBuilder();
+        if(strValue != null) {
+            boolean doRandom = false;
+            Random r = null;
+            if(key.equals("0008,0018")) { //requires unique ID number for instance
+                doRandom = true;
+                r = new Random();
+            }
+            
+            for(char c : strValue.toCharArray()) {
+                if(c == '.' || c == ',' || c == ' ') { //preserve commas to allow for multiplicity, '.' to preserve possible file structure
+                    anonStr.append(c);
+                } else if(doRandom) {
+                    anonStr.append(r.nextInt(10));
+                } else {
+                    if(vr.getType() instanceof NumType || vr.getType().equals(StringType.DATE)) {
+                        anonStr.append("1");
+                    } else { 
+                        switch(vr) {
+                        case AT:
+                            return Integer.toHexString(r.nextInt(0x52FF))+","+Integer.toHexString(r.nextInt(0x52FF));
+                        case SQ:
+                            return null; //The sequence should have new tag values generated for each element in the sequence
+                        default:
+                            anonStr.append("X");
+                        }                        
+                    }
+                }
+            }
+        }
+        
+        return anonStr.toString();
     }
 
     /**

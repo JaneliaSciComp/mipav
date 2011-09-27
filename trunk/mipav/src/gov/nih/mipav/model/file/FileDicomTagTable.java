@@ -294,9 +294,9 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * Returns a new copy of all of the tags in this table, including tags from the reference tag table.
+     * Returns a copy of all of the tags in this table, including tags from the reference tag table.
      *
-     * @return  A new copy of all of the dicom tags.
+     * @return  A copy of all of the dicom tags.
      */
     @SuppressWarnings("unchecked")
     public final Hashtable<FileDicomKey,FileDicomTag> getTagList() {
@@ -382,6 +382,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         }
 
         return tag.getValue(parse);
+    }
+
+    /**
+     * @return the vr_type
+     */
+    public final VRtype getVr_type() {
+        return vr_type;
     }
 
     /**
@@ -594,6 +601,13 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         if (isTagSameAsReferenceTag(tag)) {
             this.tagTable.remove(key);
         }
+    }
+
+    /**
+     * @param vr_type the vr_type to set
+     */
+    public final void setVr_type(VRtype vr_type) {
+        this.vr_type = vr_type;
     }
 
     /**
