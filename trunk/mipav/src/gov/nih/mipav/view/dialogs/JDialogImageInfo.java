@@ -16,6 +16,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
@@ -33,6 +34,36 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * The image attribute input dialog, which consists of six tabbled panes allowing the user to edit image name,
  * resolutions, orientations, dataset origin, history, and transformation matrix.
  * 
+ * 
+ * 
+ * <hr>
+ * The copyright below  only pertains to methods within JDialogImageInfo that relate to the Gradient Table Creator
+ * for Philips PAR/REC files V3/V4 that is displayed in the DTI tab. Portions of code that relate to this copyright
+ * are denoted with comments giving credit to software and authors.
+ * <pre>
+ * Copyright (c) 2011, Bennett Landman
+ * All rights reserved.
+ * Redistribution and use in source and binary forms, with or without 
+ * modification, are permitted provided that the following conditions are met:
+ * 
+ *      - Redistributions of source code must retain the above copyright 
+ *        notice, this list of conditions and the following disclaimer.
+ *        
+ *      - Redistributions in binary form must reproduce the above copyright 
+ *        notice, this list of conditions and the following disclaimer in the 
+ *        documentation and/or other materials provided with the distribution.
+ *        
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+ * SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+ * TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+ * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
+ * </pre>
  * @version 0.1 Nov 23, 1999
  * @author Matthew J. McAuliffe, Ph.D.
  */
@@ -58,6 +89,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     
     /** TextArea of main dialogfor text output.* */
     private JTextArea outputTextArea;
+    
+    private DTIParameters dtiparams, newDTIparams;
 
     /** DOCUMENT ME! */
     private JTextField[] acpcACFields;
@@ -76,36 +109,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JTextField acpcResField;
-
-    /** DOCUMENT ME! */
-    private JTextField bValueTextField;
-
-    /** DOCUMENT ME! */
-    private JTextField gradientTextField;
-
-    /** DOCUMENT ME! */
-    private JTextField fatshiftTextField;
-
-    /** DOCUMENT ME! */
-    private JTextField gradResTextField;
-
-    /** DOCUMENT ME! */
-    private JTextField gradOPTextField;
     
     /** DOCUMENT ME! */
-    private JTextField philRelTextField;
-
+    private JTextField invertedTextField;
+      
     /** DOCUMENT ME! */
-    private JComboBox fatshiftBox;
-
-    /** DOCUMENT ME! */
-    private JComboBox gradResBox;
-
-    /** DOCUMENT ME! */
-    private JComboBox gradOPBox;
-    
-    /** DOCUMENT ME! */
-    private JComboBox philRelBox;
+    private JComboBox invertedBox;
 
     /** Add as New/Replace button (depending on selected matrix type). */
     private JButton addReplaceMatrix;
@@ -152,12 +161,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     /** DOCUMENT ME! */
     private JCheckBox isTLRCBox;
     
-    /** DOCUMENT ME! */
-    private JCheckBox isDWICellEditBox; 
-    
-    /** DOCUMENT ME! */
-    private JCheckBox isDWITableDeleteBox;
-
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
 
@@ -202,9 +205,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** current directory * */
     private String currDir = null;
-
-    /** table model for the srcimages. */
-    private DefaultTableModel srcTableModel;
 
     /** DOCUMENT ME! */
     private int orient;
@@ -290,9 +290,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private JTextField[] tlrcResFields;
 
     /** DOCUMENT ME! */
-    // private JTextField[] bvalGradFields;
-
-    /** DOCUMENT ME! */
     private JComboBox transformIDBox;
 
     /** DOCUMENT ME! */
@@ -325,7 +322,119 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private int gradBvalText;
         
     /**chooser for save gradBval text dialog */
-    JFileChooser saveGradchooser; 
+    private JFileChooser saveGradchooser; 
+    
+    /** table model for the srcimages. */
+    private DefaultTableModel srcTableModel;
+    
+    /** DOCUMENT ME! */
+    private JTextField bValueTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField gradientTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField fatshiftTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField gradResTextField;
+
+    /** DOCUMENT ME! */
+    private JTextField gradOPTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField philRelTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField patientPosTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField patientOrientTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField foldOverTextField;
+    
+    /** DOCUMENT ME! */
+    private JTextField osTextField;
+    
+    /** DOCUMENT ME! */
+    private JCheckBox isDWICellEditBox; 
+       
+    /** DOCUMENT ME! */
+    private JCheckBox isJonesBox; 
+    
+    /** DOCUMENT ME! */
+    private JCheckBox isKirbyBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox fatshiftBox;
+
+    /** DOCUMENT ME! */
+    private JComboBox gradResBox;
+
+    /** DOCUMENT ME! */
+    private JComboBox gradOPBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox philRelBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox patientPosBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox patientOrientBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox foldOverBox;
+    
+    /** DOCUMENT ME! */
+    private JComboBox osBox;
+    
+    /** DOCUMENT ME! */
+    private JCheckBox isDWITableDeleteBox;
+    
+    /** DOCUMENT ME! */
+    private double[][] gradCreatetable;
+    
+    /** DOCUMENT ME! */
+    private double[][] angCorrGT;
+    
+    /** DOCUMENT ME! */
+    private double[][] rev_angCorrGT;
+    
+    /** DOCUMENT ME! */
+    private String space;
+    
+    /** DOCUMENT ME! */
+    private JLabel osLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel invertedLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel gradResLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel gradOPLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel fatShiftLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel patientPosLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel patientOrientLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel foldOverLabel;
+    
+    /** DOCUMENT ME! */
+    private JLabel philRelLabel;
+    
+
+    
+    
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -427,6 +536,56 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     dispose();
                 }
             }
+          if (dtiparams != null){                   
+                       // Populate Gradient column
+                       if (srcTableModel.getValueAt(0, 1) != ""){
+
+                              float [] flBvalueArr= new float[numVolumes]; 
+                              for (int i = 0; i < numVolumes; i++) {                     
+                                  flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                          }
+                              dtiparams.setbValues(flBvalueArr);    
+                       }
+                       if (srcTableModel.getValueAt(0, 3) != ""){
+                              float[][] flGradArr = new float[numVolumes][3];
+                              for (int i = 0; i < numVolumes; i++) {
+                                  flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                  flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                  flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                          }
+                       
+                              dtiparams.setGradients(flGradArr);
+                       }       
+                              dtiparams.setNumVolumes(numVolumes);
+                   }
+          else if (dtiparams == null){                 
+                  if (srcTableModel.getRowCount() != 0){
+                      if (srcTableModel.getValueAt(0, 1) != ""){
+                          float [] flBvalueArr= new float[numVolumes]; 
+                          for (int i = 0; i < numVolumes; i++) {      
+                              flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                              }
+                         newDTIparams.setbValues(flBvalueArr);
+                      }
+                      
+                      if (srcTableModel.getValueAt(0, 3) != ""){
+                          float[][] flGradArr = new float[numVolumes][3];
+                          for (int i = 0; i < numVolumes; i++) {
+                              flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                              flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                              flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                              }
+                      
+                      newDTIparams.setGradients(flGradArr);
+                      }
+                      newDTIparams.setNumVolumes(numVolumes);
+                  }
+              
+              
+          }
+              
+          
+            
         } else if (command.equals("BrowseLinked")) {
             final JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Select linked image");
@@ -654,25 +813,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 currDir = chooser.getSelectedFile().getAbsolutePath();
                 readBValGradientFile(currDir);
             }
+            
 
-        } else if (command.equals("bValue")) {
-            final int[] selectedRows = srcBvalGradTable.getSelectedRows();
-            final String bValue = bValueTextField.getText();
-            for (final int element : selectedRows) {
-                srcTableModel.setValueAt(bValue, element, 0);
-            }
-            bValueTextField.setText("");
-        }
-
-        else if (command.equals("gradient")) {
-            final int[] selectedRows = srcBvalGradTable.getSelectedRows();
-            final int selectedColumn = srcBvalGradTable.getSelectedColumn();
-            final String gradient = gradientTextField.getText();
-            for (final int element : selectedRows) {
-                srcTableModel.setValueAt(gradient, element, selectedColumn);
-            }
-            gradientTextField.setText("");
-        }
+        } 
         else if (command.equals("DWICellEditSwitch")){
             final boolean en = isDWICellEditBox.isSelected();
                 if (en == true){
@@ -696,13 +839,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                         srcTableModel.setValueAt("",i, 1);
                         srcTableModel.setValueAt("",i, 2);
                         srcTableModel.setValueAt("",i, 3);
-                        srcTableModel.setValueAt("",i, 4);
-                
+                        srcTableModel.setValueAt("",i, 4);                
                         }
 
-                         
-
-
+                    
 
         } else if (command.equals("saveBvalGrad")) {
             saveGradchooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
@@ -729,6 +869,16 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
             
         }
+        else if (command.equals("JonesSwitch")) {
+            DWIJonesKirbyDialog();
+           
+        }
+        
+        else if (command.equals("gradTable")) {
+            gradientTableCreator();
+        }
+        
+
              
     }
 
@@ -2344,6 +2494,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
      * @return The DTI panel.
      */
     private JScrollPane buildDTIPanel() {
+        dtiparams = image.getDTIParameters();
 
         boolean isPARREC = false;
         FileInfoBase fileInfo = image.getFileInfo(0);
@@ -2358,7 +2509,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         gbc2 = new GridBagConstraints();
         mainPanel = new JPanel(new GridBagLayout());
 
-
+        //Create table that will display gradients and bvalues
         final JPanel srcPanel = new JPanel(new GridBagLayout());
         srcTableModel = new DefaultTableModel(); 
         
@@ -2414,6 +2565,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         DWIButtonPanel.add(saveBvalGradButton);
         DWIButtonPanel.add(isDWICellEditBox);
         DWIButtonPanel.add(clearDWITableButton);
+        
 
 
         gbc2.gridx = 0;
@@ -2436,14 +2588,14 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         final JScrollPane scrollPane = new JScrollPane(srcPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-
-        if (isPARREC) {
-
-            if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
-                    || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
-                
-                numVolumes = fileInfoPARREC.getNumVolumes();
-
+        
+        //Set DTI Param object to get bvalues and gradients for display in srcTableModel
+        if (dtiparams != null){
+            image.setDTIParameters(dtiparams);
+            
+            if (dtiparams.getNumVolumes() != 0){
+            numVolumes = dtiparams.getNumVolumes();
+            
                 for (int i = 0; i < numVolumes; i++) {
                     // Add empty rows based on number of volumes
                     final Vector<Object> rowData = new Vector<Object>();
@@ -2454,17 +2606,50 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     rowData.add("");
                     srcTableModel.addRow(rowData);
                 }
+            
+                if (dtiparams.getbValues() != null){
+                    for (int i = 0; i < numVolumes; i++) { 
+                        // Populate Volume column
+                        srcTableModel.setValueAt(String.valueOf(i),i,0);
+                        // Populate Bvalue column
+                        float[] flBvalArr = dtiparams.getbValues();
+                        srcTableModel.setValueAt(String.valueOf(flBvalArr[i]),i,1);
+                 }
+                }
+                if (dtiparams.getGradients() != null){  
+                    for (int i = 0; i < numVolumes; i++) {
+                         // Populate Gradient column
+                         float[][] flGradArr = dtiparams.getGradients();
+                         srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
+                         srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
+                         srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
+                        }
+                     }
+            
+        }
+        }
+        
+
+      /*  if (isPARREC) {
+
+            if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
+                    || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
+
+
                 if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4")) {
-                    /*final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
+                    //Determine if Philips PAR/REC is version 3 or 4 to determine which gradient table dialog to be displayed
+                    final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
                     final GridBagConstraints gbc = new GridBagConstraints();
                     gbc.insets = new Insets(5, 1, 1, 5);
                     gbc.fill = GridBagConstraints.BOTH;
                     
+                    //Add all parameters not aquired in PAR file for user to input
                     GradCreatorPanel.setBorder(buildTitledBorder("Gradient Creator Input Parameters"));
-                    final JLabel fatShiftLabel = new JLabel("Fatshift");
+                    fatShiftLabel = new JLabel("Fatshift");
                     fatshiftTextField = new JTextField(5);
                     fatshiftBox = new JComboBox();
                     fatshiftBox.setBackground(Color.white);
+                    fatshiftBox.addItem("R");
                     fatshiftBox.addItem("L");
                     fatshiftBox.addItem("A");
                     fatshiftBox.addItem("P");
@@ -2476,199 +2661,208 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     gbc.gridy = 0;
                     gbc.gridx = 1;
                     GradCreatorPanel.add(fatshiftBox,gbc);
+                    
+                    isJonesBox = new JCheckBox("Jones30", false);
+                    isJonesBox.setForeground(Color.BLACK);
+                    isJonesBox.addActionListener(this);
+                    isJonesBox.setActionCommand("JonesSwitch");                            
+                    gbc.gridy = 1;
+                    gbc.gridx = 0;
+                    GradCreatorPanel.add(isJonesBox,gbc);
+                    
+                    isKirbyBox = new JCheckBox("Kirby", false);
+                    isKirbyBox.setForeground(Color.lightGray);                         
+                    gbc.gridy = 1;
+                    gbc.gridx = 1;
+                    GradCreatorPanel.add(isKirbyBox,gbc);
+                    
 
-                    final JLabel gradResLabel = new JLabel("Gradient Resolution");
+                    gradResLabel = new JLabel("Gradient Resolution");
                     gradResTextField = new JTextField(5);
                     gradResBox = new JComboBox();
                     gradResBox.setBackground(Color.white);
                     gradResBox.addItem("Low");
                     gradResBox.addItem("Medium");
                     gradResBox.addItem("High");
-                    gbc.gridy = 1;
+                    gbc.gridy = 2;
                     gbc.gridx = 0;
                     GradCreatorPanel.add(gradResLabel,gbc);
-                    gbc.gridy = 1;
+                    gbc.gridy = 2;
                     gbc.gridx = 1;
                     GradCreatorPanel.add(gradResBox,gbc);
 
-                    final JLabel gradOPLabel = new JLabel("Gradient Overplus");
+                    gradOPLabel = new JLabel("Gradient Overplus");
                     gradOPTextField = new JTextField(5);
                     gradOPBox = new JComboBox();
                     gradOPBox.setBackground(Color.white);
                     gradOPBox.addItem("Yes");
                     gradOPBox.addItem("No");
-                    gbc.gridy = 2;
+                    gbc.gridy = 3;
                     gbc.gridx = 0;
                     GradCreatorPanel.add(gradOPLabel,gbc);
-                    gbc.gridy = 2;
+                    gbc.gridy = 3;
                     gbc.gridx = 1;
                     GradCreatorPanel.add(gradOPBox,gbc);
                     
-                    final JLabel philRelLabel = new JLabel("Philips Release");
+                    philRelLabel = new JLabel("Philips Release");
                     philRelTextField = new JTextField(5);
                     philRelBox = new JComboBox();
                     philRelBox.setBackground(Color.white);
-                    philRelBox.addItem("Rel 2.0");
-                    philRelBox.addItem("Rel 2.1");
-                    philRelBox.addItem("Rel 2.5");
-                    philRelBox.addItem("Rel 11.x");
-                    gbc.gridy = 3;
+                    philRelBox.addItem("Rel_1.5");
+                    philRelBox.addItem("Rel_1.7");
+                    philRelBox.addItem("Rel_2.0");
+                    philRelBox.addItem("Rel_2.1");
+                    philRelBox.addItem("Rel_2.5");
+                    philRelBox.addItem("Rel_11.x");
+                    gbc.gridy = 4;
                     gbc.gridx = 0;
                     GradCreatorPanel.add(philRelLabel,gbc);
-                    gbc.gridy = 3;
+                    gbc.gridy = 4;
                     gbc.gridx = 1;
                     GradCreatorPanel.add(philRelBox,gbc);
-                     
-                    gbc2.gridy = 0;
-                    gbc2.gridx = 1;
-                    gbc2.gridwidth = 1;
-                    gbc2.weightx = .25;
-                    gbc2.weighty = 1;
-                    srcPanel.add(GradCreatorPanel, gbc2);*/
-
                     
-                     for (int i = 0; i < fileInfoPARREC.getNumVolumes() ; i++) { //Populate Bvalue column final
-                         // Populate Volume column
-                         srcTableModel.setValueAt(String.valueOf(i),i,0);
-                         // Populate Bvalue column
-                         String[] bvalArr = fileInfoPARREC.getBvalues(); 
-                         final String bvals = bvalArr[i].trim();
-                         srcTableModel.setValueAt(bvals, i, 1); 
-                      }
-           
-                 
-
-                }
-
-                else if (fileInfoPARREC.getVersion().equals("V4.1") || fileInfoPARREC.getVersion().equals("V4.2")) {
-                    for (int i = 0; i < numVolumes; i++) {
-                        // Populate Volume column
-                        srcTableModel.setValueAt(String.valueOf(i),i,0);
-                        // Populate Bvalue column
-                        final String[] bvalArr = fileInfoPARREC.getBvalues();
-                        final String bvals = bvalArr[i].trim();
-                        srcTableModel.setValueAt(bvals, i, 1);
-
-                        // Populate Gradient column
-                        final String[] gradArr = fileInfoPARREC.getGradients();
-                        final String grads = gradArr[i].trim();
-                        final String[] arr2 = grads.split("\\s+");
-                         srcTableModel.setValueAt(arr2[0], i, 2);
-                         srcTableModel.setValueAt(arr2[1], i, 3);
-                         srcTableModel.setValueAt(arr2[2], i, 4);
+                    if (fileInfoPARREC.getVersion().equals("V4")){
+                      //Add all parameters not aquired in PAR file for user to input
+                        osLabel = new JLabel("OS");
+                        osLabel.setForeground(Color.lightGray);
+                        osTextField = new JTextField(5);
+                        osBox = new JComboBox();
+                        osBox.setForeground(Color.lightGray);
+                        osBox.addItem("Windows");
+                        osBox.addItem("VMS");
+                        gbc.gridy = 5;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(osLabel,gbc);
+                        gbc.gridy = 5;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(osBox,gbc);
+                        
+                        invertedLabel = new JLabel("Inverted");
+                        invertedLabel.setForeground(Color.lightGray);
+                        invertedTextField = new JTextField(5);
+                        invertedBox = new JComboBox();
+                        invertedBox.setForeground(Color.lightGray);
+                        invertedBox.addItem("No");
+                        invertedBox.addItem("Yes");
+                        gbc.gridy = 6;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(invertedLabel,gbc);
+                        gbc.gridy = 6;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(invertedBox,gbc);
+                        
+                        final JButton applyGradOptions = new JButton("Compute Gradient Table");
+                        applyGradOptions.addActionListener(this);
+                        applyGradOptions.setActionCommand("gradTable");
+                        gbc.gridy = 7;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(applyGradOptions,gbc);
+                         
+                        gbc2.gridy = 0;
+                        gbc2.gridx = 1;
+                        gbc2.gridwidth = 1;
+                        gbc2.weightx = .25;
+                        gbc2.weighty = 1;
+                        srcPanel.add(GradCreatorPanel, gbc2);
                     }
-                    createBValGradFileTXT();
-                    setDWITable(srcTableModel);
-                  
-
-                }
-
-            }
-
-        }
-
-        else if (image.getFileInfo()[0] instanceof FileInfoDicom) {
-            FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
-            FileDicomTagTable tagTable = dicomInfo.getTagTable();
-            String studyDescription = (String) tagTable.getValue("0008,1030");
-            String seriesDescription = (String) tagTable.getValue("0008,103E");
-            String scannerType = (String) tagTable.getValue("0019,0010");
-
-            if (studyDescription.toUpperCase().contains("DTI") || seriesDescription.toUpperCase().contains("DTI")) {
-
-                if (scannerType.toUpperCase().contains("SIEMEN")) {
                     
-                   
-
-                    if (image.is3DImage()) {
-                        numVolumes = image.getExtents()[2];
-                        int zDim = image.getExtents()[2];
-                        for (int i = 0; i < zDim; i++) {
-                            // Add empty rows based on number of DTI volumes
-                            final Vector<String> rowData = new Vector<String>();
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            srcTableModel.addRow(rowData);
-                            
-                            // Populate Volume column
-                            srcTableModel.setValueAt(String.valueOf(i),i,0);
-                            
-                            // Populate Bvalue column
-                            FileInfoDicom dicom3dInfo = (FileInfoDicom) image.getFileInfo(i);
-                            FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
-                            String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
-                            srcTableModel.setValueAt(siemenBvalue, i, 1);
-
-                            // Populate Gradient column
-                            String siemenGrads = (String) tag3dTable.getValue("0019,100E");
-                            siemenGrads = siemenGrads.trim();
-                            String grads = siemenGrads.replace('\\', '\t');
-                            final String[] arr2 = grads.split("\t");
-                            srcTableModel.setValueAt(arr2[0], i, 2);
-                            srcTableModel.setValueAt(arr2[1], i, 3);
-                            srcTableModel.setValueAt(arr2[2], i, 4);
-
-                        }
-                        setDWITable(srcTableModel);
-                    }
-
-                    else if (image.is4DImage()) {
-                        numVolumes = image.getExtents()[3];
-                        int tDim = image.getExtents()[3];
-                        // Add empty rows based on number of DTI volumes
-                        for (int i = 0; i < tDim; i++) {
-                            final Vector<String> rowData = new Vector<String>();
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            srcTableModel.addRow(rowData);
-                            FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i * image.getExtents()[2]);
-                            
-                            // Populate Volume column
-                            srcTableModel.setValueAt(String.valueOf(i),i,0);
-
-                            // Populate Bvalue column
-                            FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
-                            String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
-                            srcTableModel.setValueAt(siemenBvalue, i, 1);
-
-                            // Populate Gradient column
-                            String siemenGrads = (String) tag4dTable.getValue("0019,100E");
-                            siemenGrads = siemenGrads.trim();
-                            String grads = siemenGrads.replace('\\', '\t');
-                            final String[] arr2 = grads.split("\t");
-                            srcTableModel.setValueAt(arr2[0], i, 2);
-                            srcTableModel.setValueAt(arr2[1], i, 3);
-                            srcTableModel.setValueAt(arr2[2], i, 4);
-                        }
-                        setDWITable(srcTableModel);
-
-                    }
+                    else if (fileInfoPARREC.getVersion().equals("V3")){
+                        //Add all parameters not aquired in PAR file for user to input
+                        patientPosLabel = new JLabel("Patient Position");
+                        patientPosTextField = new JTextField(5);
+                        patientPosBox = new JComboBox();
+                        patientPosBox.setBackground(Color.white);
+                        patientPosBox.addItem("Head First");
+                        patientPosBox.addItem("Feet First");
+                        gbc.gridy = 5;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(patientPosLabel,gbc);
+                        gbc.gridy = 5;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(patientPosBox,gbc);
+                        
+                        patientOrientLabel = new JLabel("Patient Orientation");
+                        patientOrientTextField = new JTextField(5);
+                        patientOrientBox = new JComboBox();
+                        patientOrientBox.setBackground(Color.white);
+                        patientOrientBox.addItem("SP");
+                        patientOrientBox.addItem("PR");
+                        patientOrientBox.addItem("RD");
+                        patientOrientBox.addItem("LD");
+                        gbc.gridy = 6;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(patientOrientLabel,gbc);
+                        gbc.gridy = 6;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(patientOrientBox,gbc);
+                        
+                        foldOverLabel = new JLabel("Fold Over");
+                        foldOverTextField = new JTextField(5);
+                        foldOverBox = new JComboBox();
+                        foldOverBox.setBackground(Color.white);
+                        foldOverBox.addItem("AP");
+                        foldOverBox.addItem("RL");
+                        foldOverBox.addItem("FH");
+                        gbc.gridy = 7;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(foldOverLabel,gbc);
+                        gbc.gridy = 7;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(foldOverBox,gbc);
+                                                
+                        osLabel = new JLabel("OS");
+                        osLabel.setForeground(Color.lightGray);
+                        osTextField = new JTextField(5);
+                        osBox = new JComboBox();
+                        osBox.setForeground(Color.lightGray);
+                        osBox.addItem("Windows");
+                        osBox.addItem("VMS");
+                        gbc.gridy = 8;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(osLabel,gbc);
+                        gbc.gridy = 8;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(osBox,gbc);
+                        
+                        invertedLabel = new JLabel("Inverted");
+                        invertedLabel.setForeground(Color.lightGray);
+                        invertedTextField = new JTextField(5);
+                        invertedBox = new JComboBox();
+                        invertedBox.setForeground(Color.lightGray);
+                        invertedBox.addItem("No");
+                        invertedBox.addItem("Yes");
+                        gbc.gridy = 9;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(invertedLabel,gbc);
+                        gbc.gridy = 9;
+                        gbc.gridx = 1;
+                        GradCreatorPanel.add(invertedBox,gbc);
+                        
+                        final JButton applyGradOptions = new JButton("Compute Gradient Table");
+                        applyGradOptions.addActionListener(this);
+                        applyGradOptions.setActionCommand("gradTable");
+                        gbc.gridy = 10;
+                        gbc.gridx = 0;
+                        GradCreatorPanel.add(applyGradOptions,gbc);
+                         
+                        gbc2.gridy = 0;
+                        gbc2.gridx = 1;
+                        gbc2.gridwidth = 1;
+                        gbc2.weightx = .25;
+                        gbc2.weighty = 1;
+                        srcPanel.add(GradCreatorPanel, gbc2);
+                        
+                    }                           
                 }
-
             }
-        }
-
+        }*/
         return scrollPane;
+    }        
 
-    }
-    
-
-    
-    public DefaultTableModel getDWITable() {
-        return srcTableModel;
-    }
    
     private JPanel buildSaveGradBvalPanel() {
-        
     
-
-    
+    //Determine which TXT format to save bvalues and gradients in    
     final JPanel saveBvalGradPanel = new JPanel();
     saveBvalGradPanel.setBorder(buildTitledBorder("Format Options"));
 
@@ -2688,19 +2882,953 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
    saveBvalGradPanel.add(fslButton);
    saveBvalGradPanel.add(dtiStudioButton);
    saveBvalGradPanel.add(mipavStandardButton);
-   
-
-   
+     
    return saveBvalGradPanel;
           
 
 }
+    private void DWIJonesKirbyDialog(){
+        //Create color changes in GradientTableCreator Dialog is Jones check box is selected or unselected
+        
+        FileInfoBase fileInfo = image.getFileInfo(0);
+        FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
+        if (isJonesBox.isSelected()){
+            isKirbyBox.setSelected(true);
+            isKirbyBox.setForeground(Color.BLACK);
+            osLabel.setForeground(Color.BLACK);
+            osBox.setForeground(Color.BLACK);
+            invertedLabel.setForeground(Color.BLACK);
+            invertedBox.setForeground(Color.BLACK);
+
+            if (fileInfoPARREC.getVersion().equals("V3")) {
+                gradResLabel.setForeground(Color.lightGray);
+                gradResBox.setForeground(Color.lightGray);
+                gradOPLabel.setForeground(Color.lightGray);
+                gradOPBox.setForeground(Color.lightGray);
+                philRelLabel.setForeground(Color.lightGray);
+                philRelBox.setForeground(Color.lightGray);
+                patientPosLabel.setForeground(Color.lightGray);
+                patientPosBox.setForeground(Color.lightGray);
+                patientOrientLabel.setForeground(Color.lightGray);
+                patientOrientBox.setForeground(Color.lightGray);                     
+            }
+            
+            else if (fileInfoPARREC.getVersion().equals("V4")){
+                gradResLabel.setForeground(Color.lightGray);
+                gradResBox.setForeground(Color.lightGray);
+                gradOPLabel.setForeground(Color.lightGray);
+                gradOPBox.setForeground(Color.lightGray);
+                philRelLabel.setForeground(Color.lightGray);
+                philRelBox.setForeground(Color.lightGray);              
+            }
+        }
+        
+        else {
+            isKirbyBox.setForeground(Color.lightGray);
+            osLabel.setForeground(Color.lightGray);
+            osBox.setForeground(Color.lightGray);
+            invertedLabel.setForeground(Color.lightGray);
+            invertedBox.setForeground(Color.lightGray);
+            if (fileInfoPARREC.getVersion().equals("V3")) {
+                gradResLabel.setForeground(Color.BLACK);
+                gradResBox.setForeground(Color.BLACK);
+                gradOPLabel.setForeground(Color.BLACK);
+                gradOPBox.setForeground(Color.BLACK);
+                philRelLabel.setForeground(Color.BLACK);
+                philRelBox.setForeground(Color.BLACK);
+                patientPosLabel.setForeground(Color.BLACK);
+                patientPosBox.setForeground(Color.BLACK);
+                patientOrientLabel.setForeground(Color.BLACK);
+                patientOrientBox.setForeground(Color.BLACK);                
+            }
+            
+            else if (fileInfoPARREC.getVersion().equals("V4")){
+                gradResLabel.setForeground(Color.BLACK);
+                gradResBox.setForeground(Color.BLACK);
+                gradOPLabel.setForeground(Color.BLACK);
+                gradOPBox.setForeground(Color.BLACK);
+                philRelLabel.setForeground(Color.BLACK);
+                philRelBox.setForeground(Color.BLACK);               
+            }
+        }
+        
+    }
+    private void gradientTableCreator() {
+        //Get info from PAR file and user inputs from Gradient Table Creator Dialog
+        FileInfoBase fileInfo = image.getFileInfo(0);
+        FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
+
+        fatshiftBox.getSelectedItem();
+        gradResBox.getSelectedItem();
+        gradOPBox.getSelectedItem();
+        String philRel = (String) philRelBox.getSelectedItem(); 
+        String os = (String) osBox.getSelectedItem(); 
+        String inverted = (String) invertedBox.getSelectedItem(); 
+        
+        String gradResWOP = ((String) gradOPBox.getSelectedItem()) + ((String) gradResBox.getSelectedItem());
+        
+       
+        /**
+         * From JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.DTIGradientTableCreator.java
+         * @author John Bogovic
+         */
+               
+        if (inverted.equals("Yes")){
+            invertedLabel.setForeground(Color.red);
+            System.err.println("Inverted must be NO");
+        }
+        
+        if(isJonesBox.isSelected() && inverted.equals("No")){
+            if(isKirbyBox.isSelected()){
+                if(numVolumes==32 && os.equals("Windows")){
+                    gradCreatetable = getJones30();
+                    space = "MPS";
+                }else if(numVolumes==35 && os.equals("VMS")){
+                    gradCreatetable = getJones30VMS();
+                    space = "MPS";
+                }else if(numVolumes==31 && os.equals("Windows")){
+                    gradCreatetable  = getJones30();
+                    space = "LPH";
+                }
+                else{
+                    osLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " or Operating System "+ os + " are not consistent with gradient table choice - expected 32,35, or 31 dimensions");
+                }
+            }
+            
+            else{
+                System.err.println("Gradient Table Creator "+"Jones30 is valid only for the KIRBY scanners");
+            }
+        }
+        
+        else {
+        if(gradResWOP.equals("YesLow")){
+            if(numVolumes==8){
+                if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_1.5") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
+                    gradCreatetable = getLowOP();
+                    space = "LPH";
+                 }
+                else{
+                    gradCreatetable = getLowOP2();
+                    space = "XYZ";
+                }       
+            }           
+            else{
+                System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
+            }            
+        }
+        
+        else if(gradResWOP.equals("YesMedium")){
+            if(numVolumes==17){
+                if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
+                    gradCreatetable = getMediumOP();
+                    space = "LPH";
+                 }
+                else{
+                    gradCreatetable = getMediumOP2();
+                    space = "XYZ";
+                }            
+            }           
+            else{
+                System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
+            } 
+        } 
+        
+        else if(gradResWOP.equals("YesHigh")){
+            if(numVolumes==34){
+                if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0")){
+                    gradCreatetable = getHighOP_24prev();
+                    space = "LPH";
+                 }
+                else if(philRel.equals("Rel_2.5")){
+                    gradCreatetable = getHighOP_rel25();
+                    space = "LPH";                   
+                }                
+                else{
+                    gradCreatetable = getHighOP_25post();
+                    space = "XYZ";
+                }           
+            }
+            else{
+                System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 35 dimensions");
+            } 
+        }
+        else if(gradResWOP.equals("NoLow")){
+            if(numVolumes==8){
+                if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
+                    gradCreatetable = getLow();
+                    space = "MPS";
+                 }           
+            }
+            else{
+                System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
+            } 
+        }
+        
+        else if(gradResWOP.equals("NoMedium")){
+            if(numVolumes==17){
+                if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
+                    gradCreatetable = getMedium();
+                    space = "MPS";
+                 }           
+        }
+            else{
+                System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
+            }              
+        }
+        
+        else if(gradResWOP.equals("NoHigh")){
+            if(numVolumes==34){
+                if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
+                    gradCreatetable = getHigh();
+                    space = "MPS";
+                 }          
+            }
+            else{
+                System.err.println("Gradient Table Creator"+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 34 dimensions");
+            }
+        }
+        
+        else{
+            System.err.println("Gradient Table Creator "+"Could not determine a table!");
+        }              
+    }
+        angulationCorrection(gradCreatetable);   
+  }
+    
+    public static final double[][] getLowOP(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{-0.9428,-0.4714, 0.9428},
+                 {0.9428,-0.9428, 0.4714},
+                    {-1.0000,-1.0000, 0.0000},
+                     {0.0000,-1.0000, 1.0000},
+                    {1.0000, 0.0000, 1.0000}};        
+    }
+    
+    public static final double[][] getMediumOP(){ 
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{-0.7071,-0.7071,-1.0000},
+        {-0.7071,-0.7071, 1.0000},
+         {1.0000,-1.0000, 0.0000},
+        {-0.1561,-0.9999,-0.9879},
+         {0.4091,-0.9894,-0.9240},
+         {0.8874,-0.4674,-0.9970},
+         {0.9297,-0.3866,-0.9930},
+        {-0.9511,-0.7667,-0.7124},
+         {0.9954,-0.6945, 0.7259},
+        {-0.9800,-0.3580, 0.9547},
+        {-0.9992,-1.0000, 0.0392},
+        {-0.3989,-0.9999, 0.9171},
+         {0.4082,-0.9923, 0.9213},
+         {0.9982,-0.9989, 0.0759},
+         {0.9919,-0.2899, 0.9655}};
+    }
+    
+    public static final double[][] getLowOP2(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{0.9428,-0.4714,0.9428},
+         {0.4714,-0.9428,-0.9428},
+         {0.9428,0.9428,-0.4714},
+         {1.0,-1.0,0.0},
+         {1.0,0.0,-1.0},
+         {0.0,1.0,-1.0}};
+    }
+    
+    public static final double[][] getMediumOP2(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{0.7071,-0.7071,1.0000},
+        {0.7071,-0.7071,-1.0000},
+        {1.0000,1.0000,0.0000},
+        {0.9999,-0.1561,0.9879},
+        {0.9894,0.4091,0.9240},
+        {0.4674,0.8874,0.9970},
+        {0.3866,0.9297,0.9930},
+        {0.7667,-0.9511,0.7124},
+        {0.6945,0.9954,-0.7259},
+        {0.3580,-0.9800,-0.9547},
+        {1.0000,-0.9992,-0.0392},
+        {0.9999,-0.3989,-0.9171},
+        {0.9923,0.4082,-0.9213},
+        {0.9989,0.9982,-0.0759},
+        {0.2899,0.9919,-0.9655}};
+        
+    }
+    
+    public static final double[][] getHighOP_24prev(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{-0.70710,-0.70710,-1.00000},
+        {-0.70710,-0.70710, 1.00000},
+        { 1.00000,-1.00000, 0.00000},
+        {-0.92390,-0.38270,-1.00000},
+        {-0.29510,-0.95550,-1.00000},
+        { 0.02780,-0.99960,-1.00000},
+         { 0.59570,-0.80320,-1.00000},
+         { 0.97570,-0.21910,-1.00000},
+        {-0.92420,-0.38280,-0.99970},
+        {-0.41420,-1.00000,-0.91020},
+        { 0.41650,-0.99900,-0.91020},
+         { 0.72830,-0.68740,-0.99850},
+         { 1.00000,-0.41420,-0.91020},
+        {-1.00000,-0.66820,-0.74400},
+        {-0.66820,-1.00000,-0.74400},
+        { 0.78560,-0.91070,-0.74400},
+         { 1.00000,-0.66820,-0.74400},
+        {-1.00000,-1.00000,-0.00030},
+        {-1.00000,-0.66820, 0.74400},
+        { 1.00000,-0.66820, 0.74400},
+         { 0.66820,-1.00000, 0.74400},
+         { 1.00000,-0.66820, 0.74400},
+        {-0.90000,-0.60130, 0.91020},
+        {-0.99850,-0.99850, 0.07740},
+        {-0.41420,-1.00000, 0.91020},
+        { 0.41420,-1.00000, 0.91020},
+         { 1.00000,-1.00000, 0.01110},
+         { 1.00000,-0.41420, 0.91020},
+        {-0.99880,-0.99880, 0.06920},
+        { 0.04910,-0.99880, 1.00000},
+         { 0.99990,-0.99990, 0.01630},
+         {1.00000, 0.00000, 1.00000}};
+    }
+    
+    public static final double[][] getHighOP_rel25(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{ 
+                 {-0.70710,-0.70710,-1.00000},
+                    {-0.70710,-0.70710, 1.00000},
+                     {1.00000,-1.00000, 0.00000},
+                    {-0.92390,-0.38270,-1.00000},
+                    {-0.29510,-0.95550,-1.00000},
+                     {0.02780,-0.99960,-1.00000},
+                     {0.59570,-0.80320,-1.00000},
+                     {0.97570,-0.21910,-1.00000},
+                    {-0.92420,-0.38280,-0.99970},
+                    {-0.41420,-1.00000,-0.91020},
+                     {0.41650,-0.99900,-0.91020},
+                     {0.72830,-0.68740,-0.99850},
+                     {1.00000,-0.41420,-0.91020},
+                    {-1.00000,-0.66820,-0.74400},
+                    {-0.66820,-1.00000,-0.74400},
+                     {0.78560,-0.91070,-0.74400},
+                     {1.00000,-0.66820,-0.74400},
+                    {-1.00000,-1.00000,-0.00030},
+                    {-1.00000,-0.66820, 0.74400},
+                     {1.00000,-0.66820, 0.74400},
+                     {0.66820,-1.00000, 0.74400},
+                    {-1.00000,-1.00000, 0.01110},
+                    {-0.90000,-0.60130, 0.91020},
+                    {-0.99850,-0.99850, 0.07740},
+                    {-0.41420,-1.00000, 0.91020},
+                     {0.41420,-1.00000, 0.91020},
+                     {1.00000,-1.00000, 0.01110},
+                     {1.00000,-0.41420, 0.91020},
+                    {-0.99880,-0.99880, 0.06920},
+                     {0.04910,-0.99880, 1.00000},
+                     {0.99990,-0.99990, 0.01630},
+                     {1.00000, 0.00000, 1.00000}};
+    }
+    
+    public static final double[][] getHighOP_25post(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{0.3827,-0.9239,1.0000},
+          {0.9555,-0.2951,1.0000},
+          {0.9996,0.0278,1.0000},
+          {0.8032,0.5957,1.0000},
+          {0.2191,0.9757,1.0000},
+          {0.3828,-0.9242,0.9997},
+          {0.7071,-0.7071,1.0000},
+          {1.0000,-0.4142,0.9102},
+          {0.9990,0.4165,0.9102},
+          {0.6874,0.7283,0.9985},
+          {0.4142,1.0000,0.9102},
+          {0.6682,-1.0000,0.7440},
+          {1.0000,-0.6682,0.7440},
+          {0.9107,0.7856,0.7440},
+          {0.6682,1.0000,0.7440},
+          {1.0000,-1.0000,0.0003},
+          {1.0000,1.0000,0.0000},
+          {0.6682,-1.0000,-0.7440},
+          { 0.6682,1.0000,-0.7440},
+          { 1.0000,0.6682,-0.7440},
+          { 0.6682,1.0000,-0.7440},
+          { 0.6013,-0.9000,-0.9102},
+          { 0.9985,-0.9985,-0.0774},
+          {1.0000,-0.4142,-0.9102},
+          {  1.0000,0.4142,-0.9102},
+          { 1.0000,1.0000,-0.0111},
+          { 0.4142,1.0000,-0.9102},
+          { 0.5624,-0.8269,-1.0000},
+          { 0.9988,-0.9988,-0.0692},
+          { 0.9988,0.0491,-1.0000},
+          { 0.9999,0.9999,-0.0163},
+          {0.0000,1.0000,-1.0000}   
+         };
+    }
+        
+    public static final double[][] getLow(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{
+                 {1.0,0.0,0.0},
+                 { 0.0,1.0,0.0},
+                 { 0.0,0.0,1.0},
+                {-0.7044,-0.0881,-0.7044},
+                 {0.7044,0.7044,0.0881},
+                 {0.0881,0.7044,0.7044}};
+    }
+    
+    public static final double[][] getMedium(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{
+                {1.0,0.0,0.0},
+                { 0.0,1.0,0.0},
+                { 0.0,0.0,1.0},
+                { -0.1789,-0.1113,-0.9776},
+               { -0.0635,0.3767,-0.9242},
+               {  0.710,0.0516,-0.7015},
+                {  0.6191,-0.4385,-0.6515},  
+                {  0.2424,0.7843,-0.5710},
+                { -0.2589,-0.6180,-0.7423},
+               { -0.8169,0.1697,-0.5513},
+               { -0.8438,0.5261,-0.1060},
+               { -0.2626,0.9548,-0.1389},
+               { 0.0001,0.9689,0.2476},
+                { 0.7453,0.6663,0.0242},
+                {0.9726,0.2317,0.0209}};
+    }
+    
+    public static final double[][] getHigh(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{
+                {1.0,0.0,0.0},
+                { 0.0,1.0,0.0},
+                { 0.0,0.0,1.0},
+                { -0.0424,-0.1146,-0.9925},
+               {  0.1749,-0.2005,-0.9639},
+                { 0.2323,-0.1626,-0.9590},
+                { 0.3675,0.0261,-0.9296},
+                { 0.1902,0.3744,-0.9076},
+                {  -0.1168,0.8334,-0.5402},
+               {  -0.2005,0.2527,-0.9466},
+               {  -0.4958,0.1345,-0.8580},
+               { -0.0141,-0.6281,-0.7780},
+               { -0.7445,-0.1477,-0.6511},
+               { -0.7609,0.3204,-0.5643},
+               { -0.1809,0.9247,-0.3351},
+               {-0.6796,-0.4224,-0.5997},
+               { 0.7771,0.4707,-0.4178},
+                { 0.9242,-0.1036,-0.3677},
+                { 0.4685,-0.7674,-0.4378},
+                {  0.8817,-0.1893,-0.4322},
+                {  0.6904,0.7062,-0.1569},
+                {  0.2391,0.7571,-0.6080},
+                { -0.0578,0.9837,0.1703},
+               { -0.5368,0.8361,-0.1135},
+               { -0.9918,-0.1207,-0.0423},
+               { -0.9968,0.0709,-0.0379},
+               { -0.8724,0.4781,-0.1014},
+               { -0.2487,0.9335,0.2581},
+               { 0.1183,0.9919,-0.0471},
+                { 0.3376,0.8415,0.4218},
+                { 0.5286,0.8409,0.1163},
+                { 0.9969,0.0550,-0.0571} };
+    }
+    
+    public static final double[][] getJones30(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{1,0,0},
+                {0.166,0.986,0},             
+                {-0.110,0.664,0.740},   
+                {0.901,-0.419,-0.110},      
+                {-0.169,-0.601, 0.781},    
+                {-0.815, -0.386, 0.433},
+                {0.656, 0.366, 0.660},
+                {0.582, 0.800, 0.143},
+                {0.900, 0.259, 0.350},
+                {0.693, -0.698, 0.178},
+                {0.357, -0.924, -0.140},
+                {0.543, -0.488, -0.683},
+                {-0.525, -0.396, 0.753},
+                {-0.639, 0.689, 0.341},
+                {-0.330, -0.013, -0.944},
+                {-0.524, -0.783, 0.335},
+                {0.609, -0.065, -0.791},
+                {0.220, -0.233, -0.947},
+                {-0.004, -0.910, -0.415},
+                {-0.511, 0.627, -0.589},
+                {0.414, 0.737, 0.535},
+                {-0.679, 0.139, -0.721},
+                {0.884, -0.296, 0.362},
+                {0.262, 0.432, 0.863},
+                {0.088, 0.185, -0.979},
+                {0.294, -0.907, 0.302},
+                {0.887, -0.089, -0.453},
+                {0.257, -0.443, 0.859},
+                {0.086, 0.867, -0.491},
+                {0.863, 0.504, -0.025}};
+    }
+    
+    public static final double[][] getJones30VMS(){
+        /**
+         * Hard coded gradient table from JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.GTCParams.java      
+         * @author Bennett Landman
+         */ 
+        
+        return new double[][]{{1,0,0},
+                {0.166,0.986,0},             
+                {-0.110,0.664,0.740},   
+                {0.901,-0.419,-0.110},      
+                {-0.169,-0.601, 0.781},    
+                {-0.815, -0.386, 0.433},
+                {0.656, 0.366, 0.660},
+                {0.582, 0.800, 0.143},
+                {0.900, 0.259, 0.350},
+                {0.693, -0.698, 0.178},
+                {0.357, -0.924, -0.140},
+                {0.543, -0.488, -0.683},
+                {-0.525, -0.396, 0.753},
+                {-0.639, 0.689, 0.341},
+                {-0.330, -0.013, -0.944},
+                {-0.524, -0.783, 0.335},
+                {-0.609, -0.065, -0.791},
+                {0.220, -0.233, -0.947},
+                {-0.004, -0.910, -0.415},
+                {-0.511, 0.627, -0.589},
+                {0.414, 0.737, 0.535},
+                {-0.679, 0.139, -0.721},
+                {0.884, -0.296, 0.362},
+                {0.262, 0.432, 0.863},
+                {0.088, 0.185, -0.979},
+                {0.294, -0.907, 0.302},
+                {0.887, -0.089, -0.453},
+                {0.257, -0.443, 0.859},
+                {0.086, 0.867, -0.491},
+                {0.863, 0.504, -0.025}};
+    }
+    
+    private double cos(double a){
+        return Math.cos(a);
+    }
+    private double sin(double a){
+        return Math.sin(a);
+    }
+    
+
+    public double[][] matrixMultiply(double[][] A, double[][] B){       
+        /**
+         * 3x3 only
+         * (helper to angulationCorrection)
+         * From JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.DTIGradientTableCreator.java
+         * @author John Bogovic
+         */
+        
+        double[][] C = new double[A.length][B[0].length];
+        for(int i=0; i<C.length; i++){
+            for(int j=0; j<C[0].length; j++){
+                C[i][j]=A[i][0]*B[0][j] + A[i][1]*B[1][j]+A[i][2]*B[2][j];
+            }
+        }
+        return C;
+    }
+    
+    public double[][] applyRotation(double[][] A, double[][] table){
+        /**
+        * Apply rotation to every row of the input table
+        * (helper to angulationCorrection)
+        * From JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.DTIGradientTableCreator.java
+        * @author John Bogovic
+        */
+        
+        double[][] rotTable = new double[table.length][table[0].length];
+        for(int i=0; i<rotTable.length; i++){
+                double[][] row = {{table[i][0]},{table[i][1]},{table[i][2]}};
+                double[][] newrow = matrixMultiply(A,row);
+                     
+                rotTable[i][0]=newrow[0][0];
+                rotTable[i][1]=newrow[1][0];
+                rotTable[i][2]=newrow[2][0];
+        }
+        return rotTable;
+    }
+    
+    private double[][] normalizeTable(double[][] table){       
+        /**
+        * (helper to angulationCorrection)
+        * From JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.DTIGradientTableCreator.java
+        * @author John Bogovic
+        */
+        
+        double[][] normTable = new double[table.length][table[0].length];
+        for(int i=0; i<normTable.length; i++){
+            double length = table[i][0]*table[i][0] + table[i][1]*table[i][1] + table[i][2]*table[i][2]; 
+            if(length!=0){
+                length=Math.sqrt(length);
+                normTable[i][0]=table[i][0]/length;
+                normTable[i][1]=table[i][1]/length;
+                normTable[i][2]=table[i][2]/length;
+            }else{
+                normTable[i][0]=table[i][0];
+                normTable[i][1]=table[i][1];
+                normTable[i][2]=table[i][2];
+            }
+        }
+        
+        return normTable;
+    }
+    
+    public void angulationCorrection(double[][] tablein){
+        /**
+         * From JHU CATNAP: edu.jhu.ece.iacl.algorithms.dti.DTIGradientTableCreator.java
+         *  Take in hard coded gradient table assigned from user inputs and applies angulationCorrection to
+         *  output a corrected gradient table for PAR/REC v3 and v4 DWI images
+         * @param tablein
+         * @author John Bogovic
+         */
+        
+        FileInfoBase fileInfo = image.getFileInfo(0);
+        FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
+        angCorrGT=new double[tablein.length][tablein[0].length];
+                
+        fileInfoPARREC.getSliceAngulation()[0]=Math.toRadians(fileInfoPARREC.getSliceAngulation()[0]);
+        fileInfoPARREC.getSliceAngulation()[1]=Math.toRadians(fileInfoPARREC.getSliceAngulation()[1]);
+        fileInfoPARREC.getSliceAngulation()[2]=Math.toRadians(fileInfoPARREC.getSliceAngulation()[2]);
+//      ==========================================================
+//      TRANSFORMATION DEFINITIONS 
+//      ==========================================================
+
+        // Transformations and reverse transformatins that we will use
+        // Definitions for these matrices were taken from Philips documentation
+        double[][] Tpo;
+        double[][] rev_Tpo;
+       // System.out.println(fileInfoPARREC.getPatientPosition().toUpperCase());
+       // if (fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE")){
+       //     System.out.println("supineworking");
+            
+        //}
+        //System.out.println(patientOrientBox.getSelectedItem());
+        //patientOrientBox.getSelectedItem()!= null && patientOrientBox.getSelectedItem()=="SP" || ;
+        
+        if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE"))|| patientOrientBox.getSelectedItem()=="SP" ){
+            Tpo = new double[][]{{1, 0, 0},{0, 1, 0}, {0, 0, 1}};
+            rev_Tpo = new double[][]{{1,0,0},{0,1,0},{0,0,1}};
+        }
+        else if ((fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("PRONE")) || patientOrientBox.getSelectedItem()=="PR" ){
+            Tpo = new double[][]{{-1, 0, 0},{0, -1, 0}, {0, 0, 1}};
+            rev_Tpo = new double[][]{{-1,0,0},{0,-1,0},{0,0,1}};
+        }  
+        else if ( (fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("RIGHT")) || patientOrientBox.getSelectedItem()=="RD"){
+            Tpo = new double[][]{{0,-1, 0},{1, 0, 0}, {0, 0, 1}};
+            rev_Tpo = new double[][]{{0,1,0},{-1,0,0},{0,0,1}};
+        }  
+        else if ((fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("LEFT")) || patientOrientBox.getSelectedItem()=="LD" ){
+            Tpo = new double[][]{{0,1, 0},{-1, 0, 0}, {0, 0, 1}};
+            rev_Tpo = new double[][]{{0,-1,0},{1,0,0},{0,0,1}};
+        }else{
+            Tpo=null;
+            rev_Tpo=null;
+        }
+
+        double[][] Tpp;
+        double[][] rev_Tpp;
+      
+        if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("HEADFIRST")) || patientPosBox.getSelectedItem()=="Head First"){
+            Tpp = new double[][]{{0, -1, 0},{-1, 0, 0}, {0, 0, 1}};
+            rev_Tpp = new double[][]{{0,-1,0},{-1,0,0},{0,0,-1}};
+        }
+        else if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("FEETFIRST")) || patientPosBox.getSelectedItem()=="Feet First"){
+            Tpp = new double[][]{{0, 1, 0},{-1, 0, 0}, {0, 0, -1}};
+            rev_Tpp = new double[][]{{0,-1,0},{1,0,0},{0,0,-1}};
+        }else{
+            Tpp=null;
+            rev_Tpp=null;
+        }
+
+        double ap = fileInfoPARREC.getSliceAngulation()[0];
+        double fh = fileInfoPARREC.getSliceAngulation()[1];
+        double rl =fileInfoPARREC.getSliceAngulation()[2];
+        
+        double[][] Tpom = matrixMultiply(Tpo,Tpp);
+        double[][] rev_Tpom = matrixMultiply(rev_Tpp,rev_Tpo);
+
+        double[][] Trl = {{1,0,0}, {0, cos(rl), -sin(rl)}, {0,sin(rl),cos(rl)}};
+        double[][] Tap = {{cos(ap),0,sin(ap)}, {0,1,0}, {-sin(ap),0,cos(ap)}};
+        double[][] Tfh = {{cos(fh),-sin(fh),0}, {sin(fh),cos(fh),0}, {0,0,1}};
+        double[][] Tang = matrixMultiply(matrixMultiply(Trl,Tap),Tfh);
+
+        double[][] rev_Trl = {{1,0,0}, {0, cos(rl), sin(rl)}, {0,-sin(rl),cos(rl)}};
+        double[][] rev_Tap = {{cos(ap),0,-sin(ap)}, {0,1,0}, {sin(ap),0,cos(ap)}};
+        double[][] rev_Tfh = {{cos(fh),sin(fh),0}, {-sin(fh),cos(fh),0}, {0,0,1}};
+        double[][] rev_Tang = matrixMultiply(matrixMultiply(rev_Tfh,rev_Tap),rev_Trl);
+
+        double[][] Tsom;
+        double[][] rev_Tsom;
+        
+//      % Definitions for Tsom
+        if (fileInfoPARREC.getSliceOrient()== 1 ){
+            Tsom = new double[][]{{0,0,-1},{0,-1,0},{1,0,0}};
+            rev_Tsom = new double[][]{{0,0,1},{0,-1,0},{-1,0,0}};
+        }
+        else if (fileInfoPARREC.getSliceOrient()== 2){
+            Tsom = new double[][]{{0,-1,0},{0,0,1},{1,0,0}};
+            rev_Tsom = new double[][]{{0,0,1},{-1,0,0},{0,1,0}};
+        }
+        else if (fileInfoPARREC.getSliceOrient()== 3){
+            Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
+            rev_Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
+        }else{
+            Tsom=null;
+            rev_Tsom=null;
+        }
+        
+        //Definitions for Tprep_par Tprep_per & Tfsd_m, Tfsd_p, Tfsd_s
+
+        double[][] Tprep_par = {{1,0,0},{0,1,0},{0,0,1}};
+        double[][]rev_Tprep_par = {{1,0,0},{0,1,0},{0,0,1}};
+        double[][]Tprep_per = {{0,-1,0},{1,0,0},{0,0,1}};
+        double[][]rev_Tprep_per = {{0,1,0},{-1,0,0},{0,0,1}};
+
+        double[][] Tfsd_m = {{-1,0,0},{0,1,0},{0,0,1}};
+        double[][] rev_Tfsd_m = {{-1,0,0},{0,1,0},{0,0,1}};
+        double[][] Tfsd_p = {{1,0,0},{0,-1,0},{0,0,1}};
+        double[][] rev_Tfsd_p = {{1,0,0},{0,-1,0},{0,0,1}};
+        double[][] Tfsd_s = {{1,0,0},{0,1,0},{0,0,-1}};
+        double[][] rev_Tfsd_s = {{1,0,0},{0,1,0},{0,0,-1}};
+
+
+        double[][] Tprep;
+        double[][] rev_Tprep;
+        double[][] Tfsd;
+        double[][] rev_Tfsd;
+        if(fileInfoPARREC.getSliceOrient()== 1){
+            
+            if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR")) || foldOverBox.getSelectedItem()=="AP"){
+                Tprep =Tprep_per;
+                rev_Tprep = rev_Tprep_per;
+                if(fatshiftBox.getSelectedItem()=="A"){
+                    Tfsd = Tfsd_m;
+                    rev_Tfsd = rev_Tfsd_m;
+                }else if(fatshiftBox.getSelectedItem()=="P"){
+                    Tfsd = Tfsd_p;
+                    rev_Tfsd = rev_Tfsd_p;
+                }else{
+                    fatShiftLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Anterior-Posterior-- foldover ");
+                    Tfsd = null;
+                    rev_Tfsd = null;
+                }
+
+            }
+      
+            else if( (fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) || foldOverBox.getSelectedItem()=="RL" ){
+                Tprep =Tprep_par;
+                rev_Tprep = rev_Tprep_par;
+                if(fatshiftBox.getSelectedItem()=="R"){
+                    Tfsd = Tfsd_p;
+                    rev_Tfsd = rev_Tfsd_p;
+                }else if(fatshiftBox.getSelectedItem()=="L"){
+                    Tfsd = Tfsd_m;
+                    rev_Tfsd = rev_Tfsd_m;
+                }else{
+                    fatShiftLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Right-Left-- foldover ");
+                    Tfsd = null;
+                    rev_Tfsd = null;
+                }
+
+            }
+            else {
+                fatShiftLabel.setForeground(Color.red);
+                Tprep=null;
+                rev_Tprep=null;
+                Tfsd = null;
+                rev_Tfsd = null;
+            }
+        }
+        else if(fileInfoPARREC.getSliceOrient()== 3){
+            if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) || foldOverBox.getSelectedItem()=="FH"){
+                Tprep =Tprep_per;
+                rev_Tprep = rev_Tprep_per;
+                if(fatshiftBox.getSelectedItem()=="F"){
+                    Tfsd = Tfsd_p;
+                    rev_Tfsd = rev_Tfsd_p;
+                }else if(fatshiftBox.getSelectedItem()=="H"){
+                    Tfsd = Tfsd_m;
+                    rev_Tfsd = rev_Tfsd_m;
+                }else{
+                    fatShiftLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Superior-Inferior OR FH-- foldover ");
+                    Tfsd = null;
+                    rev_Tfsd = null;
+                }
+            }
+            else if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) || foldOverBox.getSelectedItem()=="RL"){
+                Tprep =Tprep_par;
+                rev_Tprep = rev_Tprep_par;
+                if(fatshiftBox.getSelectedItem()=="R"){
+                    Tfsd = Tfsd_p;
+                    rev_Tfsd = rev_Tfsd_p;
+                }else if(fatshiftBox.getSelectedItem()=="L"){
+                    Tfsd = Tfsd_m;
+                    rev_Tfsd = rev_Tfsd_m;
+                }else{
+                    fatShiftLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Right-Left-- foldover ");
+                    Tfsd = null;
+                    rev_Tfsd = null;
+                }
+
+            }
+            else{
+                Tprep=null;
+                rev_Tprep=null;
+                Tfsd = null;
+                rev_Tfsd = null;
+            }
+        }
+        else if(fileInfoPARREC.getSliceOrient()== 2){
+            if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) || foldOverBox.getSelectedItem()=="FH" ){
+                Tprep =Tprep_per;
+                rev_Tprep = rev_Tprep_per;
+                if(fatshiftBox.getSelectedItem()=="F"){
+                    Tfsd = Tfsd_p;
+                    rev_Tfsd = rev_Tfsd_p;
+                }else if(fatshiftBox.getSelectedItem()=="H"){
+                    Tfsd = Tfsd_m;
+                    rev_Tfsd = rev_Tfsd_m;
+                }else{
+                    fatShiftLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Superior-Inferior OR FH-- foldover ");
+                    Tfsd = null;
+                    rev_Tfsd = null;
+                }
+
+            }
+            else if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR"))||foldOverBox.getSelectedItem()=="AP"){
+                Tprep =Tprep_par;
+                rev_Tprep = rev_Tprep_par;
+                if(fatshiftBox.getSelectedItem()=="A"){
+                    Tfsd = Tfsd_p;
+                    rev_Tfsd = rev_Tfsd_p;
+                }else if(fatshiftBox.getSelectedItem()=="P"){
+                    Tfsd = Tfsd_m;
+                    rev_Tfsd = rev_Tfsd_m;
+                }else{
+                    fatShiftLabel.setForeground(Color.red);
+                    System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Anterior-Posterior OR FH-- foldover ");
+                    Tfsd = null;
+                    rev_Tfsd = null;
+                }
+            }
+            else{
+                Tprep=null;
+                rev_Tprep=null;
+                Tfsd = null;
+                rev_Tfsd = null;
+            }
+        }else{
+            Tprep=null;
+            rev_Tprep=null;
+            Tfsd=null;
+            rev_Tfsd=null;
+        }
+        
+//      % ==========================================
+//      % END OF PHILIPS TRANSFORMATION DEFINITIONS
+//      % ==========================================
+        
+        /*
+         * APPLY TRANSFORMATIONS
+         */
+//      % ======================================
+//      % APPLICATION OF THE TRANSFORMATIONS
+//      % ======================================
+        if(space=="LPH"){
+            angCorrGT = applyRotation(matrixMultiply(rev_Tsom,rev_Tang),gradCreatetable);
+            rev_angCorrGT = applyRotation(matrixMultiply(Tang,Tsom),angCorrGT);
+        }
+        else if(space=="XYZ"){
+            angCorrGT = applyRotation(matrixMultiply(rev_Tsom,matrixMultiply(rev_Tang,Tpom)),gradCreatetable);
+            rev_angCorrGT = applyRotation(matrixMultiply(rev_Tpom,matrixMultiply(Tang,Tsom)),angCorrGT);
+        }
+        else if(space=="MPS"){
+            angCorrGT = applyRotation(matrixMultiply(Tprep,Tfsd),gradCreatetable);
+            rev_angCorrGT = applyRotation(matrixMultiply(rev_Tfsd,rev_Tprep),angCorrGT);;
+        }
+        else{
+            System.err.println("Gradient Table Creator"+"NO CORRECTION APPLIED!");
+        }
+
+//      % Normalize the non zero vectors
+        angCorrGT = normalizeTable(angCorrGT);
+        rev_angCorrGT = normalizeTable(rev_angCorrGT);
+        
+        DecimalFormat twoDForm = new DecimalFormat("#.####");
+        /*System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][0])));
+        System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][1])));
+        System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][2])));
+        
+        for (int i = 0; i<tablein.length; i++){
+        System.out.println("angCorrGT: " +(i+1) + "\t" +Double.valueOf(twoDForm.format(angCorrGT[i][0]))+ "\t" + Double.valueOf(twoDForm.format(angCorrGT[i][1]))+ "\t" + Double.valueOf(twoDForm.format(angCorrGT[i][2])));
+        }*/
+        
+        for (int i = 0; i<tablein.length; i++){
+        srcTableModel.setValueAt((Double.valueOf(twoDForm.format(angCorrGT[i][0]))), i, 2);
+        srcTableModel.setValueAt((Double.valueOf(twoDForm.format(angCorrGT[i][1]))), i, 3);
+        srcTableModel.setValueAt((Double.valueOf(twoDForm.format(angCorrGT[i][2]))), i, 4);
+        }
+
+    }
 
     /**
      * Initializes the dialog box and adds the components.
      * 
      * @param addTitle DOCUMENT ME!
      */
+    
+
+
     private void init(final String addTitle) {
         tabbedPane = new JTabbedPane();
         tabbedPane.setFont(font12B);
@@ -4261,6 +5389,15 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         /*
          * if ((getExamName().toUpperCase()).contains("DTI")){ }
          */
+               
+        if (srcTableModel.getRowCount()>0){
+            int rowCount = srcTableModel.getRowCount();
+            for (int i = 0; i < rowCount; i++) {
+                int delRow = (rowCount-i)-1;
+                srcTableModel.removeRow(delRow);                             
+            }
+            
+        }
 
         try {
             String str;
@@ -4277,8 +5414,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 }
                 numVolumes = lineCount + 1;
 
+
+
                 raFile.seek(0);
                 // this is DTI Studio
+                
                 for (int j = 0; j < numVolumes; j++) {
                     final Vector<String> rowData = new Vector<String>();
                     rowData.add("");
@@ -4288,10 +5428,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     rowData.add("");
                     srcTableModel.addRow(rowData);
                 }
-                final int numRows = srcTableModel.getRowCount();
+                final int numRows = srcTableModel.getRowCount();;
 
-                for (int i = 0; i < numRows; i++) {
+
+                for (int i = 0; i < numVolumes; i++) {
                     if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
+                        
                         str = raFile.readLine();
                         if (str != null) {
                             final String[] arr = str.split(":");
