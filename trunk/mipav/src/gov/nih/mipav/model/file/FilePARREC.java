@@ -42,6 +42,9 @@ public class FilePARREC extends FileBase {
 
     /** The image read in from the file. */
     private ModelImage image;
+    
+    /** Object to save DWI paramters to */
+    private DTIParameters dtiparams;
 
     /** Voxel offset tag used to read in the image. */
     private float vox_offset = 0.0f;
@@ -166,7 +169,6 @@ public class FilePARREC extends FileBase {
     */
     public FilePARREC(String fileName, String fileDirectory, FileInfoBase fileInfo) {
         outInfo = (FileInfoPARREC)fileInfo;
-        System.out.println("workingnow");
         this.fileName = fileName;
         this.fileDir = fileDirectory;
         fileNames =getCompleteFileNameListDefault(fileDirectory+fileName);
@@ -723,8 +725,7 @@ public class FilePARREC extends FileBase {
                     break;
                 default: // parse as image slice information
                   
-                    Slices.add(nextLine);
-                
+                    Slices.add(nextLine);               
                     break;
 
             }
@@ -761,19 +762,23 @@ public class FilePARREC extends FileBase {
         }
         numSlices = Integer.valueOf(s);
         fileInfo.setNumSlices(numSlices);
+        //get numVolumes
+        numVolumes = Slices.size()/numSlices;
 
 
-        // Let's parse the first slice:
-      
+        // Let's parse the first slice:    
         String sl = (String)Slices.get(0);      
         String[] values = sl.split("\\s+");
         
  
         //Create bvalue String array from V3 par/rec file (for DTI par/rec files)
-        String [] stringBvalueArray = new String[Slices.size()/numSlices];
-        String [] stringGradientArray = new String[Slices.size()/numSlices];
+        float [] flBvalueArray = new float[numVolumes];
+        float[][] flGradientArray = new float[numVolumes][3];
         
         if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
+            dtiparams = new DTIParameters(numVolumes);
+            dtiparams.setNumVolumes(numVolumes);
+            
             
             //Determine arrangement of slices stored with data
             String firstSliceIndex = Slices.get(0);
@@ -796,8 +801,7 @@ public class FilePARREC extends FileBase {
                 if (SliceParameters.get(i).contains("3")){ 
                     counter3o++;
                 }
-            }
-            
+            }           
             sliceOrientIndex = ((counter2o*1)+(counter3o*2) + (sliceOrientPos-1));
             
             String firstSlice = Slices.get(0);
@@ -821,29 +825,28 @@ public class FilePARREC extends FileBase {
             bValueIndex = ((counter2*1)+(counter3*2) + (bValuePos-1));
 
             
-            if (version.equals("V3")||version.equals("V4")){
-                
+            if (version.equals("V3")||version.equals("V4")){                
                 if (firstSliceValue!=secondSliceValue){
-                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                    for (int i = 0; i < numVolumes; i++){
                         String sliceIndex = Slices.get(i*numSlices);
                         sliceIndex = sliceIndex.trim();
-                        final String[] sliceArr = sliceIndex.split("\\s+");
-                        stringBvalueArray[i] = sliceArr[bValueIndex];
+                        final String[] sliceArr = sliceIndex.split("\\s+");                      
+                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+
                         }
-                    fileInfo.setBvalues(stringBvalueArray);
-                    
+                    dtiparams.setbValues(flBvalueArray);                   
                     }
+                
                 else{
-                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                    for (int i = 0; i < numVolumes; i++){
                         String sliceIndex = Slices.get(i);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");
-                        stringBvalueArray[i] = sliceArr[bValueIndex];
-                    }
-                    fileInfo.setBvalues(stringBvalueArray);
-                }
+                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
 
-        
+                    }
+                    dtiparams.setbValues(flBvalueArray);
+                }       
         }
             else if(version.equals("V4.1")||version.equals("V4.2") ){
              // Find slice index automatically of gradient values
@@ -858,43 +861,40 @@ public class FilePARREC extends FileBase {
                             }
                         }
                     gradIndex = ((counter2*1)+(counter3*2) + (gradPos-1));
-    
-                    String[] gradients = new String [3];
-               
+                  
                 if (firstSliceValue!=secondSliceValue){
-                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                    for (int i = 0; i < numVolumes; i++){
                         String sliceIndex = Slices.get(i*numSlices);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");
-                        gradients[0] = sliceArr[gradIndex];
-                        gradients[1] = sliceArr[gradIndex+1];
-                        gradients[2] = sliceArr[gradIndex+2];
-                        stringBvalueArray[i] = sliceArr[bValueIndex];
-                        stringGradientArray[i] = (gradients[0]+" ")+(gradients[1]+" ")+(gradients[2]);
+                        flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
+                        flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
+                        flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
+                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
                         }
-                    fileInfo.setBvalues(stringBvalueArray);
-                    fileInfo.setGradients(stringGradientArray);
+                    
+                    dtiparams.setbValues(flBvalueArray);
+                    dtiparams.setGradients(flGradientArray);
+
                     }
                 
                 else{
-                    for (int i = 0; i < Slices.size()/numSlices; i++){
+                    for (int i = 0; i < numVolumes; i++){
                         String sliceIndex = Slices.get(i);
                         sliceIndex = sliceIndex.trim();
                         final String[] sliceArr = sliceIndex.split("\\s+");
-                        gradients[0] = sliceArr[gradIndex];
-                        gradients[1] = sliceArr[gradIndex+1];
-                        gradients[2] = sliceArr[gradIndex+2];
-                        stringBvalueArray[i] = sliceArr[bValueIndex];
-                        stringGradientArray[i] = (gradients[0]+" ")+(gradients[1]+" ")+(gradients[2]);
+                        flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
+                        flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
+                        flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
+                        flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
                         }
-                    fileInfo.setBvalues(stringBvalueArray);
-                    fileInfo.setGradients(stringGradientArray);
+                    
+                    dtiparams.setbValues(flBvalueArray);
+                    dtiparams.setGradients(flGradientArray);
                 }
 
             }
         }       
-
-
 
 
         @SuppressWarnings("unused")
@@ -1076,8 +1076,7 @@ public class FilePARREC extends FileBase {
             Preferences.debug("FilePARREC:readHeader. Invalid slice dimension"+ "\n", Preferences.DEBUG_FILEIO);
             return false;
         }
-        numVolumes =Slices.size()/numSlices;
-        fileInfo.setNumVolumes(numVolumes);
+
         int[] Extents;
         if(numVolumes>1) {
             Extents = new int[] { dim1, dim2, numSlices, numVolumes };
@@ -1435,6 +1434,15 @@ public class FilePARREC extends FileBase {
         if (image != null) {
             image.calcMinMax();
         }
+        
+        
+        if (dtiparams != null){
+          //Saves DWI parameters from PAR file to DTIParameters object
+            image.setDTIParameters(dtiparams);
+        }
+        
+        
+        
 
         return image;
     }
