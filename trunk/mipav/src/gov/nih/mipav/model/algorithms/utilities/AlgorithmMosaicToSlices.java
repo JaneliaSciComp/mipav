@@ -29,6 +29,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
 
     /** Source image */
     private ModelImage srcImage;
+    
+    private DTIParameters orgImDTIparams, newImDTIparams;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -40,7 +42,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
      */
     public AlgorithmMosaicToSlices(ModelImage srcIm, ModelImage dest) {
         super(dest, srcIm);
-        srcImage = srcIm; 
+        srcImage = srcIm;
+        orgImDTIparams = srcImage.getDTIParameters();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -155,6 +158,12 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
             subXDim = destImage.getExtents()[0];
             subYDim = destImage.getExtents()[1];
             numberOfImagesInMosaic = destImage.getExtents()[2];
+            if (orgImDTIparams != null){
+                newImDTIparams = new DTIParameters(1); 
+                newImDTIparams.setbValues(orgImDTIparams.getbValues());
+                newImDTIparams.setGradients(orgImDTIparams.getGradients());
+                
+            } 
             subLength = cFactor * subXDim * subYDim;
             subBuffer = new double[subLength];
             sliceNum = 0;
@@ -215,6 +224,12 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                     subZDim = destImage.getExtents()[2]; //User specified Z-Dim
                     compSubZDim = (yDim/(subYDim))*((xDim/subXDim)); //Sets for loop Z-Dim based on subX and subY dims  
                     subTDim = destImage.getExtents()[3];
+                    if (orgImDTIparams != null){
+                        newImDTIparams = new DTIParameters(subTDim); 
+                        newImDTIparams.setbValues(orgImDTIparams.getbValues());
+                        newImDTIparams.setGradients(orgImDTIparams.getGradients());
+                        
+                    }                    
                     subLength = cFactor * subXDim * subYDim * compSubZDim;
                     subBuffer = new double[subLength/compSubZDim]; //Creates buffer for each z-slice
                     sliceNum = 0;
@@ -512,6 +527,13 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                       fileInfo = null;
                   }
                   destImage.calcMinMax();
+                  
+                  
+                  
+                  if (newImDTIparams != null){
+                      destImage.setDTIParameters(newImDTIparams);
+                  }
+                  
                   setCompleted(true);
                   
               }
