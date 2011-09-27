@@ -16,7 +16,7 @@ import Jama.*;
  * Requirements:
  * 1.) The independent components must be statistically independent.
  * 2.) The independent components must have all nongaussian distributions or one gaussian distribution
- * and all the other distributions nongaussian.
+ * and all the other distributions nongaussian or the independent components have time dependencies.
  * 3.) For simplicity, assume the unknown mixture matrix is square.  In other words, the number of 
  * mixtures equals the number of independent components.  If the number of independent components is
  * smaller than the number of mixtures, use principal component analysis to reduce the number of
@@ -111,7 +111,9 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
        vector means that components are uncorrelated and their variances equal unity.  Whitening is sometimes
        called sphering.  For whitened data E{x**2} = 1, and both kurtosis and normalized kurtosis reduce to
        E{x**4} - 3.  Whitening makes the likelihood landscape more isotropic and removes the burden of 
-       removing second order infromration.
+       removing second order information.  The covariance matrix of whitened data is the identity matrix.
+       Whitening data makes the new mixing matrix orthogonal.  The original mixing matrix required estimating
+       n*n parameters, but the orthogonal mixing matrix only requires estimating n*(n-1)/2 parameters.
        
        Kurtosis is the simplest statistical quantity for indicating the nongaussianity of a random variable.
        The kurtosis of a gaussian distribution is zero.  Distributions having a negative kurtosis are said to
@@ -150,6 +152,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
      * 
      * "In difficult real world problems, it is useful to apply several different ICA methods, because they 
      * may reveal different ICs from the data."
+     * 
+     * From the text Independent Component Analysis Principles and Practice Introduction by Roberts and Everson:
+     * "Work to date using ICA on images ignores the two-dimensional nature of images and concatenates rows (or
+     * columns) of the image to form a one-dimensional signal."
      */
     public final static int SYMMETRIC_ORTHOGONALIZATION = 1;
     
