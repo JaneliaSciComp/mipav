@@ -99,6 +99,9 @@ public class ModelImage extends ModelStorageBase {
 
     /** Reference to talairach transform information. */
     private TalairachTransformInfo talairach;
+    
+    /** Reference to DWI bvalue and gradient information. */
+    private DTIParameters dtiParameters;
 
     /**
      * The user interface has a vector of all image models loaded into MIPAV. I put the reference to it here so that
@@ -3916,6 +3919,20 @@ public class ModelImage extends ModelStorageBase {
         if (UI != null) {
             UI.registerImage(imageName, this);
         }
+    }
+    
+    
+    public DTIParameters getDTIParameters() {
+        return dtiParameters;
+    }
+    
+    /**
+     * Sets the DTIParamters object
+     * 
+     * @param dti params object that stores dwi parameters (i.e. gradients and bvalues)
+     */
+    public void setDTIParameters(DTIParameters dtiParameters) {
+        this.dtiParameters = dtiParameters;
     }
 
     /**
