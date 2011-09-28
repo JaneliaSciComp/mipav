@@ -65,7 +65,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmNewGeneric2 genericAlgo = null;
+    private PlugInAlgorithmDicomStitch dicomAlgo = null;
 
     /** The check box for whether a blur should be performed. */
 	private JCheckBox check;
@@ -125,11 +125,11 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmNewGeneric2) {
+       if (algorithm instanceof PlugInAlgorithmDicomStitch) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             
-            if ((genericAlgo.isCompleted() == true) && (resultImage != null)) {
+            if ((dicomAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 updateFileInfo(image, resultImage);
@@ -172,18 +172,17 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     protected void callAlgorithm() {
 
         try {
-            String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
-            resultImage.setImageName(name);
+            resultImage.setImageName(image.getImageName()+"_Stitched");
             
-            genericAlgo = new PlugInAlgorithmNewGeneric2(resultImage, image);
-            genericAlgo.doGaussian(doGaussian);
+            dicomAlgo = new PlugInAlgorithmDicomStitch(resultImage, image);
+            dicomAlgo.doGaussian(doGaussian);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            genericAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", genericAlgo);
+            dicomAlgo.addListener(this);
+            createProgressBar(image.getImageName(), " ...", dicomAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -191,11 +190,11 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
-                if (genericAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (dicomAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                genericAlgo.run();
+                dicomAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -203,7 +202,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
                 resultImage = null;
             }
 
-            MipavUtil.displayError("Generic algorithm: unable to allocate enough memory");
+            MipavUtil.displayError("Dicom stitch algorithm: unable to allocate enough memory");
 
             return;
         }
@@ -230,7 +229,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generic Plugin");
+        setTitle("Dicom Stitch Plugin");
         try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {

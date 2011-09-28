@@ -60,7 +60,7 @@ public class PlugInDicomStitch implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogNewGeneric2(parentFrame, image);
+            new PlugInDialogDicomStitch(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInNewGeneric only runs on an image frame.");
         }
