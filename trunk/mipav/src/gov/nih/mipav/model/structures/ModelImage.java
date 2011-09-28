@@ -226,18 +226,23 @@ public class ModelImage extends ModelStorageBase {
      * Creates a new ModelImage object.
      * 
      * @param type indicates type of buffer(ie. boolean, byte ...)
-     * @param dimExtents DOCUMENT ME!
-     * @param name DOCUMENT ME!
-     * @param _UI DOCUMENT ME!
+     * @param dimExtents array indicating image extent in each dimension.
+     * @param name name of the image.
+     * @param _UI should be ViewUserInterface.getReference()
      * 
-     * @return DOCUMENT ME!
-     * 
-     * @deprecated DOCUMENT ME!
+     * @deprecated Only one ViewUserInterface should be instantiated for an instance of MIPAV running, so _UI should be ViewUserInterface.getReference()
      */
     public ModelImage(final int type, final int[] dimExtents, final String name, final ViewUserInterface _UI) {
         this(type, dimExtents, name);
     }
 
+    /**
+     * Creates a new ModelImage object based on an existing ModelSimpleImage, only exists as a FLOAT datatype.
+     * 
+     * @param simpleImage legacy ModelSimpleImage 
+     * @param name name of the image.
+     * 
+     */
     public ModelImage(final ModelSimpleImage simpleImage, final String name) {
         this(ModelStorageBase.FLOAT, simpleImage.extents, name);
         try {
@@ -700,7 +705,7 @@ public class ModelImage extends ModelStorageBase {
             index = (t * getExtents()[2]) + z;
         } else {
             index = (t * getExtents()[2]) + z;
-        } // Hmmmmmmm
+        } 
 
         if (dicom) {
             dialog.setTitle(dialog.getTitle() + ": " + (index));
@@ -711,14 +716,7 @@ public class ModelImage extends ModelStorageBase {
         } else if (fileInfo[0] instanceof FileInfoMincHDF) {
             dialog.setTitle(dialog.getTitle() + ": " + (index));
             ((JDialogFileInfoMincHDF) dialog).displayAboutInfo(this, (FileInfoMincHDF) fileInfo[0], index);
-            // fileInfo[0].displayAboutInfo(dialog, getMatrix());
         } else {
-
-            // System.out.println(" dialog = " + dialog);
-            // System.out.println(" +++++++++++++++++++++++++++++ z = " + i);
-            // System.out.println(" fileInfo = " + fileInfo[i]);
-            dialog.setTitle(dialog.getTitle() + ": " + (index));
-
             fileInfo[index].displayAboutInfo(dialog, getMatrix());
         }
     }
