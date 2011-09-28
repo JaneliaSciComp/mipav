@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
+import javax.vecmath.Vector3d;
+
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -40,6 +42,9 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private float[] dt = new float[5];
+    
+    /** DOCUMENT ME! */
+    private double[] dt_double = new double[5];
 
     /** DOCUMENT ME! */
     private float[] dx = new float[5];
@@ -961,6 +966,120 @@ public class AlgorithmBSpline extends AlgorithmBase {
 
         return (new Vector3f(x, y, z));
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * This method can also be used to calculate derivatives of the Bspline.
+     *
+     * @param   derivOrder  derivative order (n <= 4 )
+     * @param   t           float point index along the Bspline indicating point of interest
+     * @param   dataX       control points for the Bspline
+     * @param   dataY       control points for the Bspline
+     * @param   dataZ       control points for the Bspline
+     *
+     * @return  the Bspline interpolated data point
+     */
+    public Vector3d bSplineJetXYZ_double(int derivOrder, float t, float[] dataX, float[] dataY, float[] dataZ) {
+        double tdiff, tdiff2;
+        int tbase;
+        int i;
+        int i0, j0, k0;
+        double x, y, z;
+
+        tbase = (int) t;
+        
+        double[] geomx = new double[5];
+        double[] geomy = new double[5];
+        double[] geomz = new double[5];
+        
+        double[][] mat4 = {
+                { 0.04166666667, -0.16666666667, 0.25, -0.16666666667, 0.04166666667 },
+                { 0.45833333, -0.50000000, -0.25, 0.50000000, -0.16666666667 },
+                { 0.45833333, 0.50000000, -0.25, -0.50000000, 0.25000000 },
+                { 0.04166666667, 0.16666666667, 0.25, 0.16666666667, -0.16666666667 },
+                { 0, 0, 0, 0, 0.04166666667 }
+            };
+
+        if (tbase != xyold_tbase) {
+            xyold_tbase = tbase;
+
+            for (i0 = 0; i0 <= 4; i0++) {
+                geomx[i0] = 0;
+                geomy[i0] = 0;
+                geomz[i0] = 0;
+
+                for (j0 = 0, k0 = tbase - 2; j0 <= 4; j0++, k0++) {
+                    geomx[i0] += mat4[j0][i0] * (double)dataX[k0];
+                    geomy[i0] += mat4[j0][i0] * (double)dataY[k0];
+                    geomz[i0] += mat4[j0][i0] * (double)dataZ[k0];
+                }
+            }
+        }
+
+        tdiff = t - tbase;
+
+        switch (derivOrder) {
+
+            case 0:
+            	dt_double[0] = 1;
+            	dt_double[1] = tdiff;
+            	dt_double[2] = tdiff * dt_double[1];
+            	dt_double[3] = tdiff * dt_double[2];
+            	dt_double[4] = tdiff * dt_double[3];
+                break;
+
+            case 1:
+                tdiff2 = tdiff * tdiff;
+                dt_double[1] = 1;
+                dt_double[2] = 2 * tdiff;
+                dt_double[3] = 3 * tdiff2;
+                dt_double[4] = 4 * tdiff * tdiff2;
+                break;
+
+            case 2:
+            	dt_double[2] = 2;
+            	dt_double[3] = 6 * tdiff;
+            	dt_double[4] = 12 * tdiff * tdiff;
+                break;
+
+            case 3:
+            	dt_double[3] = 6;
+            	dt_double[4] = 24 * tdiff;
+                break;
+
+            case 4:
+            	dt_double[4] = 24;
+                break;
+        }
+
+        x = 0;
+        y = 0;
+        z = 0;
+
+        for (i = derivOrder; i <= 4; i++) {
+            x += dt[i] * geomx[i];
+            y += dt[i] * geomy[i];
+            z += dt[i] * geomz[i];
+        }
+
+        return (new Vector3d(x, y, z));
+    }
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * Clean up memeory.
