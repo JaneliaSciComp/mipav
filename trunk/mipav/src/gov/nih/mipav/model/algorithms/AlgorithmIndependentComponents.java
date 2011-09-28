@@ -113,7 +113,10 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
        E{x**4} - 3.  Whitening makes the likelihood landscape more isotropic and removes the burden of 
        removing second order information.  The covariance matrix of whitened data is the identity matrix.
        Whitening data makes the new mixing matrix orthogonal.  The original mixing matrix required estimating
-       n*n parameters, but the orthogonal mixing matrix only requires estimating n*(n-1)/2 parameters.
+       n*n parameters, but the orthogonal mixing matrix only requires estimating n*(n-1)/2 parameters.  The 
+       vectors wi corresponding to different independent components are orthogonal in the whitened space.
+       To prevent the vectors from converging to the same maxima we must orthogonalize the vectors after
+       every iteration.
        
        Kurtosis is the simplest statistical quantity for indicating the nongaussianity of a random variable.
        The kurtosis of a gaussian distribution is zero.  Distributions having a negative kurtosis are said to
