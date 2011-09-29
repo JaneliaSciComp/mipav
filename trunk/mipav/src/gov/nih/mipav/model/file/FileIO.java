@@ -1483,8 +1483,9 @@ public class FileIO {
         String seriesDescription = (String) tagTable.getValue("0008,103E");
         String scannerType = (String) tagTable.getValue("0019,0010");
 
-        if (studyDescription.toUpperCase().contains("DTI") || seriesDescription.toUpperCase().contains("DTI")) {
-            if (scannerType.toUpperCase().contains("SIEMEN")) {                                     
+        if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
+                (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+            if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {                                     
                 if (image.is3DImage()) {
                     int numVolumes = image.getExtents()[2];
                     dtiparams = new DTIParameters(numVolumes);
@@ -1512,9 +1513,7 @@ public class FileIO {
                     dtiparams.setbValues(flBvalueArray);
                     dtiparams.setGradients(flGradientArray);
 
-                }
-
-                 else if (image.is4DImage()) {
+                } else if (image.is4DImage()) {
                      int numVolumes = image.getExtents()[3];
                      dtiparams = new DTIParameters(numVolumes);
                      dtiparams.setNumVolumes(numVolumes);
