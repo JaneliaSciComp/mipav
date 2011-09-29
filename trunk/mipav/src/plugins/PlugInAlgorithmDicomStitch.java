@@ -94,10 +94,10 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	int yDim = stitchImage.getExtents()[1];
     	int zDim = srcImage.getNDims() > 2 ? srcImage.getExtents()[2] : 1;
     	int tDim = srcImage.getNDims() > 3 ? srcImage.getExtents()[3] : 1;
-    	double xMin = 0, xMax = 0, yMin = 0, yMax = 0, zMin = 0, zMax = 0;
+    	double xMin = 0, xMax = 0, yMin = 0, yMax = 0, zMin = 0, zMax = 0, xOffset = 0, yOffset = 0, zOffset = 0;
     	
     	long time = System.currentTimeMillis();
-    	for(int z=0; z<1; z++) {
+    	for(int z=0; z<zDim; z++) {
     	    FileInfoDicom infoDicomStitch = (FileInfoDicom) stitchImage.getFileInfo()[z];
     	    FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
     	    
@@ -113,39 +113,45 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
 
     	    for(int i=0; i<xDim; i++) {
     	        for(int j=0; j<yDim; j++) {
-    	            Vector3f posMove = new Vector3f();
-    	            posMove.Set(i, j, 1);
-    	            
-    	            Vector3f posResult = new Vector3f();
-    	            toImage.MultRight(posMove, posResult);
-    	            if(i == 0 && j == 0) {
-    	                System.out.println(i+", "+j+" became "+posResult);
-    	            }
-    	            
-    	            if(posResult.X < xMin) {
-    	                xMin = posResult.X;
-    	            } else if(posResult.X > xMax) {
-    	                xMax = posResult.X;
-    	            }
-    	            
-    	            if(posResult.Y < yMin) {
-    	                yMin = posResult.Y;
-    	            } else if(posResult.Y > yMax) {
-    	                yMax = posResult.Y;
-    	            }
-    	            
-    	            if(posResult.Z < zMin) {
-    	                zMin = posResult.Z;
-    	            } else if(posResult.Z > zMax) {
-    	                zMax = posResult.Z;
+    	            if(stitchImage.getShort(i, j, z) != 0) {
+    	                Vector3f posMove = new Vector3f();
+                        posMove.Set(i, j, 1);
+                        
+                        Vector3f posResult = new Vector3f();
+                        toImage.MultRight(posMove, posResult);
+                        //if(i == 0 && j == 0) {
+                           //System.out.println(i+", "+j+" became "+posResult);
+                        //}
+                        
+                        if(posResult.X < xMin) {
+                            xMin = posResult.X;
+                        } else if(posResult.X > xMax) {
+                            xMax = posResult.X;
+                        }
+                        
+                        if(posResult.Y < yMin) {
+                            yMin = posResult.Y;
+                        } else if(posResult.Y > yMax) {
+                            yMax = posResult.Y;
+                        }
+                        
+                        if(posResult.Z < zMin) {
+                            zMin = posResult.Z;
+                        } else if(posResult.Z > zMax) {
+                            zMax = posResult.Z;
+                        }
     	            }
     	        }
     	    }   	    
     	    System.out.println("Slice "+z+" xRange: "+xMin+", "+xMax+" yRange: "+yMin+", "+yMax+" zRange: "+zMin+", "+zMax);
     	}
         
-    	ModelImage finalImage = new ModelImage(stitchImage.getDataType(), new int[]{(int) (xMax-xMin+1), (int) (yMax-yMin+1), (int) (zMax-zMin+1)},"Transformed");
-    	for(int z=0; z<1; z++) {
+    	xOffset = 0 - xMin;
+    	yOffset = 0 - yMin;
+    	zOffset = 0 - zMin;
+    	
+    	ModelImage finalImage = new ModelImage(stitchImage.getDataType(), new int[]{(int) (xMax-xMin+1), (int) (yMax-yMin+1), (int) (zMax-zMin+1)+zDim},"Transformed");
+    	for(int z=0; z<zDim; z++) {
     	    time = System.currentTimeMillis();
             FileInfoDicom infoDicomStitch = (FileInfoDicom) stitchImage.getFileInfo()[z];
             FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
@@ -159,21 +165,34 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             toImage.Inverse();
             
             toImage.Mult(toPos);
-
+            int imageVal = 0;
             for(int i=0; i<xDim; i++) {
                 for(int j=0; j<yDim; j++) {
-                    Vector3f posMove = new Vector3f();
-                    posMove.Set(i, j, 1);
-                    
-                    Vector3f posResult = new Vector3f();
-                    toImage.MultRight(posMove, posResult);
-                    finalImage.set((int)posResult.X, (int)posResult.Y, (int)posResult.Z, stitchImage.getShort(i, j, z));
+                    if((imageVal = stitchImage.getShort(i, j, z)) != 0) {
+                        Vector3f posMove = new Vector3f();
+                        posMove.Set(i, j, 1);
+                        
+                        Vector3f posResult = new Vector3f();
+                        toImage.MultRight(posMove, posResult);
+                        finalImage.set((int)(posResult.X+xOffset), (int)(posResult.Y+yOffset), (int)(posResult.Z+zOffset)+z, imageVal);
+                    }
                 }
             }           
             System.out.println("Slice complete in "+(System.currentTimeMillis() - time));
         }
-    	ViewJFrameImage frame = new ViewJFrameImage(stitchImage);
-    	frame.setVisible(true);
+
+    	for(int z=0; z<zDim; z++) {
+    	    for(int i=0; i<srcImage.getExtents()[0]; i++) {
+    	        for(int j=0; j<srcImage.getExtents()[1]; j++) {
+    	            finalImage.set(i, j, z, srcImage.getShort(i, j, z));
+    	        }
+    	    }
+    	}
+    	
+    	//stitchImage.setFileInfo(srcImage.getFileInfo());
+        finalImage.calcMinMax();
+        ViewJFrameImage frame = new ViewJFrameImage(finalImage);
+        frame.setVisible(true);
     	
     	
     	for(int z=0; z<zDim; z++) {
@@ -238,8 +257,8 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         mat.Set(1, 1, (float)(xyCos[4].doubleValue()*spacing[1].doubleValue()));
         mat.Set(2, 1, (float)(xyCos[5].doubleValue()*spacing[1].doubleValue()));
        
-        mat.Set(0, 2, position[0].floatValue());
-        mat.Set(1, 2, position[1].floatValue());
+        mat.Set(0, 2, position[1].floatValue());
+        mat.Set(1, 2, position[0].floatValue());
         mat.Set(2, 2, position[2].floatValue());
         
         System.out.println("Created dicom position matrix:\n"+mat.toString());
