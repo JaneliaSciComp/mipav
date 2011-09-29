@@ -23,17 +23,22 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileInfoDicom;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.Enumeration;
 
 import javax.swing.*;
 
@@ -42,37 +47,36 @@ import javax.swing.*;
  * meaning it can be executed and recorded as part of a script.  It implements AlgorithmInterface,
  * meaning it has methods for listening to and recording the progress of an algorithm.
  * 
- * @version  June 4, 2010
- * @see      JDialogBase
+ * @version  September 28, 2011
+ * @see      JDialogScriptableBase
  * @see      AlgorithmInterface
  *
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
 public class PlugInDialogDicomStitch extends JDialogScriptableBase implements AlgorithmInterface {
-    
-    
+
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /**declare UID */
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Result image. */
+    /** The stitched image */
     private ModelImage resultImage = null;
 
-    /** This source image is typically set by the constructor */
-    private ModelImage image; // 
+    /** Images that will be stitched together */
+    private ModelImage origImage, stitchImage; // 
     
-    /** This is your algorithm */
+    /** Algorithm which performs dicom image stitching between two images. */
     private PlugInAlgorithmDicomStitch dicomAlgo = null;
+	
+	/** Internal builder for gui components */
+	private GuiBuilder guiBuilder;
 
-    /** The check box for whether a blur should be performed. */
-	private JCheckBox check;
-
-	/** The variable representing whether the blur should be performed. */
-	private boolean doGaussian;
-
+	/** Gui comboboxes for selecting images */
+    private JComboBox origCombo, toStitchCombo;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -88,8 +92,12 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
      */
     public PlugInDialogDicomStitch(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-
-        image = im;
+        if(!isEligibleImage(im)) {
+            MipavUtil.displayError("The selected image does not contain populated tag values for (0020,0032), (0020,0037), or (0028,0030)");
+            return;
+        }
+        
+        origImage = im;
         init();
     }
     
@@ -127,12 +135,12 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     public void algorithmPerformed(AlgorithmBase algorithm) {
        if (algorithm instanceof PlugInAlgorithmDicomStitch) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
-            image.clearMask();
+            origImage.clearMask();
             
             if ((dicomAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(image, resultImage);
+                updateFileInfo(origImage, resultImage);
 
                 resultImage.clearMask();
 
@@ -172,17 +180,16 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     protected void callAlgorithm() {
 
         try {
-            resultImage = (ModelImage) image.clone();
-            resultImage.setImageName(image.getImageName()+"_Stitched");
+            resultImage = (ModelImage) origImage.clone();
+            resultImage.setImageName(origImage.getImageName()+"_Stitched");
             
-            dicomAlgo = new PlugInAlgorithmDicomStitch(resultImage, image);
-            dicomAlgo.doGaussian(doGaussian);
+            dicomAlgo = new PlugInAlgorithmDicomStitch(resultImage, origImage, stitchImage);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             dicomAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", dicomAlgo);
+            createProgressBar(origImage.getImageName(), " ...", dicomAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -213,21 +220,19 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
-    	image = scriptParameters.retrieveInputImage();
-
-    	doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
+    	origImage = scriptParameters.retrieveInputImage();
     } //end setGUIFromParams()
 
     /**
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    	scriptParameters.storeInputImage(image);
-   
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
+    	scriptParameters.storeInputImage(origImage);
     } //end storeParamsFromGUI()
    
     private void init() {
+        guiBuilder = new GuiBuilder(this);
+        
         setForeground(Color.black);
         setTitle("Dicom Stitch Plugin");
         try {
@@ -248,32 +253,42 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("A titled border"));
+        mainPanel.setBorder(buildTitledBorder("DICOM images"));
 
-        JLabel labelVOI = new JLabel("Blank text");
+        int selectedIndex = 0, totalImages = 0;
+        ArrayList<String> validImageName = new ArrayList<String>();
+        Enumeration<ModelImage> enumStr = ViewUserInterface.getReference().getRegisteredImages();
+        while(enumStr.hasMoreElements()) {
+            ModelImage img = enumStr.nextElement();
+            if(origImage.getImageName().equals(img.getImageName())) {
+                selectedIndex = totalImages;
+            }
+            if(isEligibleImage(img)) {
+                totalImages++;
+                validImageName.add(img.getImageName());
+            }
+        }
+        
+        String[] validImageNameArr = validImageName.toArray(new String[validImageName.size()]);
+        
+        origCombo = guiBuilder.buildComboBox("Original image", validImageNameArr, selectedIndex);
+        toStitchCombo = guiBuilder.buildComboBox("Stitching image", validImageNameArr);
+        
+        JLabel labelVOI = new JLabel("Select the images that will be stitched together.  Any images shown below are valid for stitching.");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
 
-        gbc.gridy = 1;
-        
-        check = new JCheckBox("Do gaussian blur");
-        check.setFont(serif12);
-        check.setSelected(false);
-        mainPanel.add(check, gbc);
+        gbc.gridy++;
+        mainPanel.add(origCombo.getParent(), gbc);
+        gbc.gridy++;
+        mainPanel.add(toStitchCombo.getParent(), gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
         // Build the Panel that holds the OK and CANCEL Buttons
-        JPanel OKCancelPanel = new JPanel();
+        JPanel OKCancelPanel = guiBuilder.buildOKCancelPanel();
 
-        // size and place the OK button
-        buildOKButton();
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
-
-        // size and place the CANCEL button
-        buildCancelButton();
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
 
         pack();
@@ -283,13 +298,39 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
 
     } // end init()
 
+    private boolean isEligibleImage(ModelImage img) {
+        if(img.isDicomImage() && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().containsTag(new FileDicomKey("0020,0037"))
+                && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().containsTag(new FileDicomKey("0020,0032"))
+                && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().containsTag(new FileDicomKey("0028,0030"))) {
+                    return true;
+                }
+        return false;
+    }
+
     /**
      * This method could ensure everything in your dialog box has been set correctly
      * 
      * @return
      */
 	private boolean setVariables() {
-		doGaussian = check.isSelected();
+		if(origCombo.getSelectedIndex() == toStitchCombo.getSelectedIndex()) {
+		    MipavUtil.displayInfo("Select two different images for stitching.");
+		    return false;
+		}
+		
+		origImage = ViewUserInterface.getReference().getRegisteredImageByName(origCombo.getSelectedItem().toString());
+		stitchImage = ViewUserInterface.getReference().getRegisteredImageByName(toStitchCombo.getSelectedItem().toString());
+		
+		if(origImage == null || stitchImage == null) {
+		    MipavUtil.displayInfo("Could not find selected images");
+		    return false;
+		}
+		
+		if(!isEligibleImage(origImage) || !isEligibleImage(stitchImage)) { //checking again useful for scripting
+		    MipavUtil.displayInfo("Selected images are not valid dicom images");
+		    return false;
+		}
+		
 		return true;
 	} //end setVariables()
 }
