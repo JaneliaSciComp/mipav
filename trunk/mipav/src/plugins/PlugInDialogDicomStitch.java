@@ -220,14 +220,16 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
-    	origImage = scriptParameters.retrieveInputImage();
+        origImage = scriptParameters.retrieveImage("origImage");
+        stitchImage = scriptParameters.retrieveImage("stitchImage");
     } //end setGUIFromParams()
 
     /**
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    	scriptParameters.storeInputImage(origImage);
+        scriptParameters.storeImage(origImage, "origImage");
+        scriptParameters.storeImage(stitchImage, "stitchImage");
     } //end storeParamsFromGUI()
    
     private void init() {
@@ -253,7 +255,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("DICOM images"));
+        mainPanel.setBorder(buildTitledBorder("Dicom stitching images"));
 
         int selectedIndex = 0, totalImages = 0;
         ArrayList<String> validImageName = new ArrayList<String>();
@@ -272,9 +274,10 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
         String[] validImageNameArr = validImageName.toArray(new String[validImageName.size()]);
         
         origCombo = guiBuilder.buildComboBox("Original image", validImageNameArr, selectedIndex);
-        toStitchCombo = guiBuilder.buildComboBox("Stitching image", validImageNameArr);
+        toStitchCombo = guiBuilder.buildComboBox("Stitching image", validImageNameArr, selectedIndex == 0 && totalImages > 1 ? selectedIndex : 0);
         
-        JLabel labelVOI = new JLabel("Select the images that will be stitched together.  Any images shown below are valid for stitching.");
+        JLabel labelVOI = new JLabel("<html>Select the images that will be stitched together." +
+        		                        "<br>Any images shown below are valid for stitching.</html>");
         labelVOI.setForeground(Color.black);
         labelVOI.setFont(serif12);
         mainPanel.add(labelVOI, gbc);
