@@ -207,17 +207,17 @@ public class AlgorithmTransform extends AlgorithmBase {
     /**
      * Creates a new AlgorithmTransform object.
      * 
-     * @param srcImage DOCUMENT ME!
-     * @param xfrm DOCUMENT ME!
-     * @param interp DOCUMENT ME!
-     * @param oXres DOCUMENT ME!
-     * @param oYres DOCUMENT ME!
-     * @param oXdim DOCUMENT ME!
-     * @param oYdim DOCUMENT ME!
+     * @param srcImage ModelImage to be transformed
+     * @param xfrm Transformation matrix to be applied
+     * @param interp Type of interpolation (NEAREST_NEIGHBOR, BILINEAR, BSPLINE3, BSPLINE4, etc)
+     * @param oXres X resolution of output image
+     * @param oYres Y resolution of output image
+     * @param oXdim X dimension of output image
+     * @param oYdim Y dimension of output image
      * @param units DOCUMENT ME!
-     * @param tVOI DOCUMENT ME!
-     * @param clip DOCUMENT ME!
-     * @param pad DOCUMENT ME!
+     * @param tVOI if <code>true</code> the VOI should be transformed with the volume
+     * @param clip if <code>true</code> output range is clipped to input range
+     * @param pad if <code>true</code> output image is padded so that none of the image is clipped
      */
     public AlgorithmTransform(final ModelImage srcImage, final TransMatrix xfrm, final int interp, final float oXres,
             final float oYres, int oXdim, int oYdim, final int[] units, final boolean tVOI, boolean clip,
