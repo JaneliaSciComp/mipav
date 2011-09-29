@@ -150,6 +150,8 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	yOffset = 0 - yMin;
     	zOffset = 0 - zMin;
     	
+    	System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
+    	
     	ModelImage finalImage = new ModelImage(stitchImage.getDataType(), new int[]{(int) (xMax-xMin+1), (int) (yMax-yMin+1), (int) (zMax-zMin+1)+zDim},"Transformed");
     	for(int z=0; z<zDim; z++) {
     	    time = System.currentTimeMillis();
