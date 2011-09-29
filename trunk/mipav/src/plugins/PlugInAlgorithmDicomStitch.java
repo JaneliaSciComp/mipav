@@ -22,6 +22,8 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import java.io.IOException;
+
 import WildMagic.LibFoundation.Mathematics.Matrix2f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
@@ -32,7 +34,9 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 
 /**
  * Stitches two dicom images together when necessary tags are populated.
@@ -90,18 +94,23 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	int yDim = stitchImage.getExtents()[1];
     	int zDim = srcImage.getNDims() > 2 ? srcImage.getExtents()[2] : 1;
     	int tDim = srcImage.getNDims() > 3 ? srcImage.getExtents()[3] : 1;
-    	for(int z=0; z<zDim; z++) {
+    	double xMin = 0, xMax = 0, yMin = 0, yMax = 0, zMin = 0, zMax = 0;
+    	
+    	long time = System.currentTimeMillis();
+    	for(int z=0; z<1; z++) {
     	    FileInfoDicom infoDicomStitch = (FileInfoDicom) stitchImage.getFileInfo()[z];
     	    FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
     	    
     	    //get necessary dicom elements for matrix multiplication
+    	    System.out.println("stitchImage");
     	    Matrix3f toPos = createSpacingMatrix(infoDicomStitch);
     	    
+    	    System.out.println("origImage");
     	    Matrix3f toImage = createSpacingMatrix(infoDicomOrig);
     	    toImage.Inverse();
     	    
     	    toImage.Mult(toPos);
-    	    
+
     	    for(int i=0; i<xDim; i++) {
     	        for(int j=0; j<yDim; j++) {
     	            Vector3f posMove = new Vector3f();
@@ -109,13 +118,101 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	            
     	            Vector3f posResult = new Vector3f();
     	            toImage.MultRight(posMove, posResult);
-    	            System.out.println(posMove+" changed to "+posResult.toString());
+    	            if(i == 0 && j == 0) {
+    	                System.out.println(i+", "+j+" became "+posResult);
+    	            }
+    	            
+    	            if(posResult.X < xMin) {
+    	                xMin = posResult.X;
+    	            } else if(posResult.X > xMax) {
+    	                xMax = posResult.X;
+    	            }
+    	            
+    	            if(posResult.Y < yMin) {
+    	                yMin = posResult.Y;
+    	            } else if(posResult.Y > yMax) {
+    	                yMax = posResult.Y;
+    	            }
+    	            
+    	            if(posResult.Z < zMin) {
+    	                zMin = posResult.Z;
+    	            } else if(posResult.Z > zMax) {
+    	                zMax = posResult.Z;
+    	            }
     	        }
     	    }   	    
+    	    System.out.println("Slice "+z+" xRange: "+xMin+", "+xMax+" yRange: "+yMin+", "+yMax+" zRange: "+zMin+", "+zMax);
     	}
+        
+    	ModelImage finalImage = new ModelImage(stitchImage.getDataType(), new int[]{(int) (xMax-xMin+1), (int) (yMax-yMin+1), (int) (zMax-zMin+1)},"Transformed");
+    	for(int z=0; z<1; z++) {
+    	    time = System.currentTimeMillis();
+            FileInfoDicom infoDicomStitch = (FileInfoDicom) stitchImage.getFileInfo()[z];
+            FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
+            
+            //get necessary dicom elements for matrix multiplication
+            System.out.println("stitchImage");
+            Matrix3f toPos = createSpacingMatrix(infoDicomStitch);
+            
+            System.out.println("origImage");
+            Matrix3f toImage = createSpacingMatrix(infoDicomOrig);
+            toImage.Inverse();
+            
+            toImage.Mult(toPos);
+
+            for(int i=0; i<xDim; i++) {
+                for(int j=0; j<yDim; j++) {
+                    Vector3f posMove = new Vector3f();
+                    posMove.Set(i, j, 1);
+                    
+                    Vector3f posResult = new Vector3f();
+                    toImage.MultRight(posMove, posResult);
+                    finalImage.set((int)posResult.X, (int)posResult.Y, (int)posResult.Z, stitchImage.getShort(i, j, z));
+                }
+            }           
+            System.out.println("Slice complete in "+(System.currentTimeMillis() - time));
+        }
+    	ViewJFrameImage frame = new ViewJFrameImage(stitchImage);
+    	frame.setVisible(true);
     	
-    	Matrix2f mat = new Matrix2f();
-    	mat.Inverse();
+    	
+    	for(int z=0; z<zDim; z++) {
+            FileInfoDicom infoDicomStitch = (FileInfoDicom) stitchImage.getFileInfo()[z];
+            FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
+            
+            //get necessary dicom elements for matrix multiplication
+            Matrix3f toPos = createSpacingMatrix(infoDicomStitch);
+            
+            Matrix3f toImage = createSpacingMatrix(infoDicomOrig);
+            toImage.Inverse();
+            
+            toImage.Mult(toPos);
+            
+            TransMatrix trans = new TransMatrix(4);
+            trans.set(0, 0, toImage.M00);
+            trans.set(0, 1, toImage.M01);
+            trans.set(0, 2, toImage.M02);
+            trans.set(0, 3, 0);
+            
+            trans.set(1, 0, toImage.M10);
+            trans.set(1, 1, toImage.M11);
+            trans.set(1, 2, toImage.M12);
+            trans.set(1, 3, 0);
+            
+            trans.set(2, 0, toImage.M20);
+            trans.set(2, 1, toImage.M21);
+            trans.set(2, 2, toImage.M22);
+            trans.set(2, 3, 0);
+            
+            trans.set(3, 0, 0);
+            trans.set(3, 1, 0);
+            trans.set(3, 2, 0);
+            trans.set(3, 3, 1);
+            
+            
+        }
+    	
+    	
     	
     
     	for(int i=1; i<100; i++) {
@@ -124,6 +221,10 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     }
 
     private Matrix3f createSpacingMatrix(FileInfoDicom infoDicom) {
+        System.out.println("new slice");
+        System.out.println(infoDicom.getTagTable().get("0020,0037").getValue(false));
+        System.out.println(infoDicom.getTagTable().get("0028,0030").getValue(false));
+        System.out.println(infoDicom.getTagTable().get("0020,0032").getValue(false));
         Double[] xyCos = fromObjectToDouble(infoDicom.getTagTable().get("0020,0037").getValueList());
         Double[] spacing = fromObjectToDouble(infoDicom.getTagTable().get("0028,0030").getValueList());
         Double[] position = fromObjectToDouble(infoDicom.getTagTable().get("0020,0032").getValueList());
@@ -137,9 +238,9 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         mat.Set(1, 1, (float)(xyCos[4].doubleValue()*spacing[1].doubleValue()));
         mat.Set(2, 1, (float)(xyCos[5].doubleValue()*spacing[1].doubleValue()));
        
-        mat.Set(0, 3, position[0].floatValue());
-        mat.Set(1, 3, position[1].floatValue());
-        mat.Set(2, 3, position[2].floatValue());
+        mat.Set(0, 2, position[0].floatValue());
+        mat.Set(1, 2, position[1].floatValue());
+        mat.Set(2, 2, position[2].floatValue());
         
         System.out.println("Created dicom position matrix:\n"+mat.toString());
         
