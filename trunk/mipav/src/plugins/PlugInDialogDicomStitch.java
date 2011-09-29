@@ -27,7 +27,6 @@ import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileInfoDicom;
 
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
