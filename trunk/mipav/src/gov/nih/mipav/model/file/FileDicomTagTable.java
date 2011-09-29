@@ -183,18 +183,20 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
     }
 
     /**
-     * Returns whether this tag table contains a tag with the given key identifier.
+     * Returns whether this specific tag table contains a tag with the given key identifier, does not check the reference tag
+     *          table
      *
      * @param   keyStr  the string representing the key for this tag -- 'group,element'
      *
-     * @return  whether a tag matching the given key is contained in this tag table (or the reference tag table).
+     * @return  whether a tag matching the given key is contained in this tag table (does not check reference tag table).
      */
     public final boolean containsTag(String keyStr) {
         return containsTag(new FileDicomKey(keyStr));
     }
 
     /**
-     * Returns whether this tag table contains a tag with the given key identifier.
+     * Returns whether this specific tag table contains a tag with the given key identifier, does not check the reference tag
+     *          table
      *
      * @param   key  the key for this tag
      *
