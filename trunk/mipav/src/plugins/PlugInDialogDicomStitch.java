@@ -273,7 +273,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
         String[] validImageNameArr = validImageName.toArray(new String[validImageName.size()]);
         
         origCombo = guiBuilder.buildComboBox("Original image", validImageNameArr, selectedIndex);
-        toStitchCombo = guiBuilder.buildComboBox("Stitching image", validImageNameArr, selectedIndex == 0 && totalImages > 1 ? selectedIndex : 0);
+        toStitchCombo = guiBuilder.buildComboBox("Stitching image", validImageNameArr, selectedIndex == 0 && totalImages > 1 ? 1 : 0);
         
         JLabel labelVOI = new JLabel("<html>Select the images that will be stitched together." +
         		                        "<br>Any images shown below are valid for stitching.</html>");
