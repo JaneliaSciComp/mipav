@@ -27,9 +27,7 @@ import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.structures.ModelImage;
 
 /**
- * This class implements a basic algorithm that performs operations on 2D and 3D images. 
- * By extending AlgorithmBase, it has no more functionality than any other algorithm in MIPAV.
- * No functionality specifically makes it a plug-in.
+ * Stitches two dicom images together when necessary tags are populated.
  * 
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
@@ -37,24 +35,22 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
 
-	    /** Whether to perform a gaussian blur */
-		private boolean doGaussian;
+    /** Whether to perform a gaussian blur */
+    private ModelImage stitchImage;
     
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
-     * @param  srcImg       Source image model.
+     * @param  srcImg       Original image model.
+     * @param  stitchImage  Image to stitch to original.
      */
-    public PlugInAlgorithmDicomStitch(ModelImage resultImage, ModelImage srcImg) {
-        super(resultImage, srcImg);
-        }
+    public PlugInAlgorithmDicomStitch(ModelImage resultImage, ModelImage origImage, ModelImage stitchImage) {
+        super(resultImage, origImage);
+        this.stitchImage = stitchImage;
+    }
         
-//  ~ Methods --------------------------------------------------------------------------------------------------------
-
-		public void doGaussian(boolean doGaussian) {
-			this.doGaussian = doGaussian;
-		}
+    //  ~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Prepares this class for destruction.
@@ -62,60 +58,40 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     public void finalize() {
         destImage = null;
         srcImage = null;
+        stitchImage = null;
         super.finalize();
     }
     
     /**
-	     * Starts the algorithm.  At the conclusion of this method, AlgorithmBase reports to any
-	     * algorithm listeners that this algorithm has completed.  This method is not usually called explicitly by
-	     * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
+     * Starts the algorithm.  At the conclusion of this method, AlgorithmBase reports to any
+     * algorithm listeners that this algorithm has completed.  This method is not usually called explicitly by
+     * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
-	    public void runAlgorithm() {
-	    	if(srcImage.getNDims() < 3) {
-	    		calc2D();
-                } else {
-	    		calc3D();
-                }
-            
-	    	setCompleted(true); //indicating to listeners that the algorithm completed successfully
-    
-	    } // end runAlgorithm()
-    
-	//  ~ Methods --------------------------------------------------------------------------------------------------------
-    
-	    private void calc2D() {
-	    	fireProgressStateChanged("Message 2D: "+srcImage.getImageName());
-         
-	    	if(doGaussian) {
-	    		final float[] sigmas = {1.0f, 1.0f};
+    public void runAlgorithm() {
+    	calc3D();
         
-		    	AlgorithmGaussianBlur gaussianBlurAlgo = new AlgorithmGaussianBlur(destImage, srcImage, sigmas, true, false);
-		    	gaussianBlurAlgo.setRunningInSeparateThread(false);
-		    	linkProgressToAlgorithm(gaussianBlurAlgo);
-		    	gaussianBlurAlgo.runAlgorithm();
-        }
-        
-	    	for(int i=1; i<100; i++) {
-	    		fireProgressStateChanged(i);
-        }
-        }
-        
-	    private void calc3D() {
-	    	fireProgressStateChanged("Message 3D: "+srcImage.getImageName());
-        
-	    	if(doGaussian) {
-	    		final float[] sigmas = {1.0f, 1.0f, 1.0f};
+    	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
-		    	AlgorithmGaussianBlur gaussianBlurAlgo = new AlgorithmGaussianBlur(destImage, srcImage, sigmas, true, false);
-		    	gaussianBlurAlgo.setRunningInSeparateThread(false);
-		    	linkProgressToAlgorithm(gaussianBlurAlgo);
-		    	gaussianBlurAlgo.runAlgorithm();
+    } // end runAlgorithm()
+
+    //  ~ Methods --------------------------------------------------------------------------------------------------------
+    
+    private void calc3D() {
+    	fireProgressStateChanged("Message 3D: "+srcImage.getImageName());
+    
+    	//if(doGaussian) {
+    		final float[] sigmas = {1.0f, 1.0f, 1.0f};
+
+	    	AlgorithmGaussianBlur gaussianBlurAlgo = new AlgorithmGaussianBlur(destImage, srcImage, sigmas, true, false);
+	    	gaussianBlurAlgo.setRunningInSeparateThread(false);
+	    	linkProgressToAlgorithm(gaussianBlurAlgo);
+	    	gaussianBlurAlgo.runAlgorithm();
+    //}
+    
+    	for(int i=1; i<100; i++) {
+    		fireProgressStateChanged(i);
         }
+    }
         
-	    	for(int i=1; i<100; i++) {
-	    		fireProgressStateChanged(i);
-            }
-                    }
-            
-		
-        }
+	
+}
