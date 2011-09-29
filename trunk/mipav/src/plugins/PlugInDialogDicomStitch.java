@@ -299,9 +299,9 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     } // end init()
 
     private boolean isEligibleImage(ModelImage img) {
-        if(img.isDicomImage() && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().containsTag(new FileDicomKey("0020,0037"))
-                && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().containsTag(new FileDicomKey("0020,0032"))
-                && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().containsTag(new FileDicomKey("0028,0030"))) {
+        if(img.isDicomImage() && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().get(new FileDicomKey("0020,0037")) != null
+                && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().get(new FileDicomKey("0020,0032")) != null
+                && ((FileInfoDicom)img.getFileInfo()[0]).getTagTable().get(new FileDicomKey("0028,0030")) != null) {
                     return true;
                 }
         return false;
