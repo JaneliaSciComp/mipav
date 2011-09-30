@@ -52,16 +52,21 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     /** Whether to perform a gaussian blur */
     private ModelImage stitchImage;
     
+    /** Whether to overlay result images in single frame. */
+    private boolean doImageB;
+    
     /**
      * Constructor.
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Original image model.
      * @param  stitchImage  Image to stitch to original.
+     * @param doImageB 
      */
-    public PlugInAlgorithmDicomStitch(ModelImage resultImage, ModelImage origImage, ModelImage stitchImage) {
+    public PlugInAlgorithmDicomStitch(ModelImage resultImage, ModelImage origImage, ModelImage stitchImage, boolean doImageB) {
         super(resultImage, origImage);
         this.stitchImage = stitchImage;
+        this.doImageB = doImageB;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -104,18 +109,18 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	    FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
     	    
     	    //get necessary dicom elements for matrix multiplication
-    	    System.out.println("stitchImage");
+    	    //System.out.println("stitchImage");
     	    Matrix3f toPosStitch = createSpacingMatrix(infoDicomStitch);
     	    
-    	    System.out.println("origImage");
+    	    //System.out.println("origImage");
     	    Matrix3f toImageOrig = createSpacingMatrix(infoDicomOrig);
-    	    System.out.println("ToPos "+toPosStitch);
-    	    System.out.println("ToImage "+toImageOrig);
+    	    //System.out.println("ToPos "+toPosStitch);
+    	    //System.out.println("ToImage "+toImageOrig);
     	    toImageOrig.Inverse();
-    	    System.out.println("ToImageInverse "+toImageOrig);
+    	    //System.out.println("ToImageInverse "+toImageOrig);
     	    
     	    toImageOrig.Mult(toPosStitch);
-    	    System.out.println("ToImageMult "+toImageOrig);
+    	    //System.out.println("ToImageMult "+toImageOrig);
     	    
     	    for(int i=0; i<xDim; i++) {
     	        for(int j=0; j<yDim; j++) {
@@ -156,7 +161,7 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
     	yOffset = 0 - yMin;
     	zOffset = 0 - zMin;
     	
-    	System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
+    	//System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
     	
     	ModelImage finalImage = new ModelImage(stitchImage.getDataType(), new int[]{(int) (xMax-xMin+1), (int) (yMax-yMin+1), (int) (zMax-zMin)+zDim},"Transformed");
     	for(int z=0; z<zDim; z++) {
@@ -165,10 +170,10 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
             
             //get necessary dicom elements for matrix multiplication
-            System.out.println("stitchImage");
+            //System.out.println("stitchImage");
             Matrix3f toPos = createSpacingMatrix(infoDicomStitch);
             
-            System.out.println("origImage");
+            //System.out.println("origImage");
             Matrix3f toImage = createSpacingMatrix(infoDicomOrig);
             toImage.Inverse();
             
@@ -176,35 +181,41 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             
             //doTransformationWithAlgo(toImage, finalImage);
 
-            System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
+            //System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
             doTransformManual(toImage, finalImage, xDim, yDim, (int)xOffset, (int)yOffset, (int)zOffset, z);
         }
-
-    	for(int z=0; z<zDim; z++) {
-    	    for(int i=0; i<srcImage.getExtents()[0]; i++) {
-    	        for(int j=0; j<srcImage.getExtents()[1]; j++) {
-    	            finalImage.set(i, j, z, srcImage.getShort(i, j, z));
-    	        }
-    	    }
-    	}
+    	ModelImage srcImageRealloc = null;
     	
-    	ModelImage srcImageRealloc = new ModelImage(srcImage.getDataType(), finalImage.getExtents(), "srcImageExpanded");
-    	for(int z=0; z<zDim; z++) {
-            for(int i=0; i<srcImage.getExtents()[0]; i++) {
-                for(int j=0; j<srcImage.getExtents()[1]; j++) {
-                    srcImageRealloc.set(i, j, z, srcImage.getShort(i, j, z));
+    	if(doImageB) {
+    	    srcImageRealloc = new ModelImage(srcImage.getDataType(), finalImage.getExtents(), "srcImageExpanded");
+            for(int z=0; z<zDim; z++) {
+                for(int i=0; i<srcImage.getExtents()[0]; i++) {
+                    for(int j=0; j<srcImage.getExtents()[1]; j++) {
+                        srcImageRealloc.set(i, j, z, srcImage.getShort(i, j, z));
+                    }
+                }
+            }
+            
+            srcImageRealloc.setFileInfo(srcImage.getFileInfo());
+            srcImageRealloc.calcMinMax();
+    	} else {
+    	    for(int z=0; z<zDim; z++) {
+                for(int i=0; i<srcImage.getExtents()[0]; i++) {
+                    for(int j=0; j<srcImage.getExtents()[1]; j++) {
+                        finalImage.set(i, j, z, srcImage.getShort(i, j, z));
+                    }
                 }
             }
     	}
 
-    	srcImageRealloc.setFileInfo(srcImage.getFileInfo().clone());
-    	srcImageRealloc.calcMinMax();
-    	
-    	finalImage.setFileInfo(stitchImage.getFileInfo().clone());
+    	finalImage.setFileInfo(srcImage.getFileInfo());
         finalImage.calcMinMax();
         
         ViewJFrameImage newFrame = new ViewJFrameImage(finalImage);
-        //newFrame.setImageB(srcImageRealloc);
+        if(doImageB) {
+            newFrame.setVisible(false);
+            newFrame.setImageB(srcImageRealloc);
+        }
         newFrame.setVisible(true);
         
         /*ModelImage finalImage2 = (ModelImage) finalImage.clone();

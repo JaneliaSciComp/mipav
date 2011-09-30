@@ -27,6 +27,7 @@ import gov.nih.mipav.model.file.FileDicomKey;
 import gov.nih.mipav.model.file.FileInfoDicom;
 
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -75,6 +76,12 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
 
 	/** Gui comboboxes for selecting images */
     private JComboBox origCombo, toStitchCombo;
+
+    /** Gui component for seperate images */
+    private JCheckBox doImageBCheckBox;
+
+    /** Whether to display the images as a single frame with separate images. */
+    private boolean doImageB;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -144,7 +151,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
                 resultImage.clearMask();
 
                 try {
-                    new ViewJFrameImage(resultImage);
+                    //new ViewJFrameImage(resultImage);
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -182,7 +189,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
             resultImage = (ModelImage) origImage.clone();
             resultImage.setImageName(origImage.getImageName()+"_Stitched");
             
-            dicomAlgo = new PlugInAlgorithmDicomStitch(resultImage, origImage, stitchImage);
+            dicomAlgo = new PlugInAlgorithmDicomStitch(resultImage, origImage, stitchImage, doImageB);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -221,6 +228,8 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     protected void setGUIFromParams() {
         origImage = scriptParameters.retrieveImage("origImage");
         stitchImage = scriptParameters.retrieveImage("stitchImage");
+        
+        doImageB = scriptParameters.getParams().getBoolean("doImageB");
     } //end setGUIFromParams()
 
     /**
@@ -229,6 +238,8 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeImage(origImage, "origImage");
         scriptParameters.storeImage(stitchImage, "stitchImage");
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doImageB", doImageB));
     } //end storeParamsFromGUI()
    
     private void init() {
@@ -274,6 +285,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
         
         origCombo = guiBuilder.buildComboBox("Original image", validImageNameArr, selectedIndex);
         toStitchCombo = guiBuilder.buildComboBox("Stitching image", validImageNameArr, selectedIndex == 0 && totalImages > 1 ? 1 : 0);
+        doImageBCheckBox = guiBuilder.buildCheckBox("Overlay stitch as seperate images", doImageB);
         
         JLabel labelVOI = new JLabel("<html>Select the images that will be stitched together." +
         		                        "<br>Any images shown below are valid for stitching.</html>");
@@ -285,6 +297,8 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
         mainPanel.add(origCombo.getParent(), gbc);
         gbc.gridy++;
         mainPanel.add(toStitchCombo.getParent(), gbc);
+        gbc.gridy++;
+        mainPanel.add(doImageBCheckBox.getParent(), gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -322,6 +336,7 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
 		
 		origImage = ViewUserInterface.getReference().getRegisteredImageByName(origCombo.getSelectedItem().toString());
 		stitchImage = ViewUserInterface.getReference().getRegisteredImageByName(toStitchCombo.getSelectedItem().toString());
+		doImageB = doImageBCheckBox.isSelected();
 		
 		if(origImage == null || stitchImage == null) {
 		    MipavUtil.displayInfo("Could not find selected images");
