@@ -115,6 +115,13 @@ public class ModelImage extends ModelStorageBase {
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
     
+    /**
+     * Creates a new ModelImage object.
+     * 
+     * @param type indicates type of buffer as DataType enum (ie. boolean, byte ...)
+     * @param dimExtents array indicating image extent in each dimension.
+     * @param name name of the image.
+     */
     public ModelImage(final DataType type, final int[] dimExtents, final String name) {
         this(type.getLegacyNum(), dimExtents, name);
     }
