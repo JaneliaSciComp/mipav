@@ -181,7 +181,7 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             
             //doTransformationWithAlgo(toImage, finalImage);
 
-            //System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
+            System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
             doTransformManual(toImage, finalImage, xDim, yDim, (int)xOffset, (int)yOffset, (int)zOffset, z);
         }
     	ModelImage srcImageRealloc = null;
