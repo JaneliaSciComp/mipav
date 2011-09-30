@@ -182,7 +182,7 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
             //doTransformationWithAlgo(toImage, finalImage);
 
             System.out.println("Offsets: "+xOffset+", "+yOffset+", "+zOffset);
-            doTransformManual(toImage, finalImage, xDim, yDim, (int)xOffset, (int)yOffset, (int)zOffset, z);
+            doTransformManual(toImage, finalImage, xDim, yDim, z);
         }
     	ModelImage srcImageRealloc = null;
     	
@@ -269,7 +269,64 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         }
     }
     
-    private void doTransformManual(Matrix3f toImage, ModelImage finalImage, int xDim, int yDim, int xOffset, int yOffset, int zOffset, int z) {
+    private void doTransformManual(Matrix3f toImage, ModelImage finalImage, int xDim, int yDim, int z) {
+        FileInfoDicom infoDicomStitch = (FileInfoDicom) stitchImage.getFileInfo()[z];
+        FileInfoDicom infoDicomOrig = (FileInfoDicom) srcImage.getFileInfo()[z];
+        double xMin = 0, xMax = 0, yMin = 0, yMax = 0, zMin = 0, zMax = 0, xOffset = 0, yOffset = 0, zOffset = 0;
+        //get necessary dicom elements for matrix multiplication
+        //System.out.println("stitchImage");
+        Matrix3f toPosStitch = createSpacingMatrix(infoDicomStitch);
+        
+        //System.out.println("origImage");
+        Matrix3f toImageOrig = createSpacingMatrix(infoDicomOrig);
+        //System.out.println("ToPos "+toPosStitch);
+        //System.out.println("ToImage "+toImageOrig);
+        toImageOrig.Inverse();
+        //System.out.println("ToImageInverse "+toImageOrig);
+        
+        toImageOrig.Mult(toPosStitch);
+        //System.out.println("ToImageMult "+toImageOrig);
+        
+        for(int i=0; i<xDim; i++) {
+            for(int j=0; j<yDim; j++) {
+                //if(stitchImage.getShort(i, j, z) != 0) {
+                    Vector3f posMove = new Vector3f();
+                    posMove.Set(i, j, 1);
+                    
+                    Vector3f posResult = new Vector3f();
+                    toImageOrig.MultRight(posMove, posResult);
+                    //if(i == 0 && j == 0) {
+                       //System.out.println(i+", "+j+" became "+posResult);
+                    //}
+                    
+                    if(posResult.X < xMin) {
+                        xMin = posResult.X;
+                    } else if(posResult.X > xMax) {
+                        xMax = posResult.X;
+                    }
+                    
+                    if(posResult.Y < yMin) {
+                        yMin = posResult.Y;
+                    } else if(posResult.Y > yMax) {
+                        yMax = posResult.Y;
+                    }
+                    
+                    if(posResult.Z < zMin) {
+                        zMin = posResult.Z;
+                    } else if(posResult.Z > zMax) {
+                        zMax = posResult.Z;
+                    }
+                //}
+            }
+        }
+        xOffset = 0 - xMin;
+        yOffset = 0 - yMin;
+        zOffset = 0 - zMin;
+        System.out.println("Slice "+z+" xRange: "+xMin+", "+xMax+" yRange: "+yMin+", "+yMax+" zRange: "+zMin+", "+zMax);
+    
+    
+    
+        
         int imageVal = 0;
         for(int i=0; i<xDim; i++) {
             for(int j=0; j<yDim; j++) {
