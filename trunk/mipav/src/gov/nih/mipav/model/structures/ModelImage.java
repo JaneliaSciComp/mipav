@@ -116,7 +116,7 @@ public class ModelImage extends ModelStorageBase {
     // ---------------------------------------------------------------------------------------------------
     
     /**
-     * Creates a new ModelImage object.
+     * Creates a new ModelImage object, registering it to the default user interface.
      * 
      * @param type indicates type of buffer as DataType enum (ie. boolean, byte ...)
      * @param dimExtents array indicating image extent in each dimension.
@@ -127,21 +127,36 @@ public class ModelImage extends ModelStorageBase {
     }
     
     /**
-     * Creates a new ModelImage object.
+     * Creates a new ModelImage object, registering it to the default user interface.
      * 
      * @param type indicates type of buffer(ie. boolean, byte ...)
      * @param dimExtents array indicating image extent in each dimension.
      * @param name name of the image.
      */
     public ModelImage(final int type, final int[] dimExtents, final String name) {
-        super(type, dimExtents);
+        this(type, dimExtents, name, ViewUserInterface.getReference());
+    }
+
+    /**
+     * Creates a new ModelImage object that is registered to the provided user interface.  Should not be used when
+     * an instance of the interface exists.
+     * 
+     * @param type indicates type of buffer(ie. boolean, byte ...)
+     * @param dimExtents array indicating image extent in each dimension.
+     * @param name name of the image.
+     * @param _UI should be ViewUserInterface.getReference()
+     * 
+     * @deprecated Only one ViewUserInterface should be instantiated for an instance of MIPAV running, so _UI should be ViewUserInterface.getReference()
+     */
+    public ModelImage(final int type, final int[] dimExtents, final String name, final ViewUserInterface _UI) {
+    	super(type, dimExtents);
 
         int i;
 
         // The user interface has a vector of all image models loaded into
         // MIPAV. I keep a reference to the userinterface here so that when an image
         // is created it can added to the hashtable in the user interface.
-        UI = ViewUserInterface.getReference();
+        this.UI = _UI;
 
         imageName = ModelImage.makeImageName(name, ""); // removes suffix if one is there.
 
@@ -225,22 +240,6 @@ public class ModelImage extends ModelStorageBase {
 
         frameList = new Vector<ViewImageUpdateInterface>();
         voiVector = new VOIVector();
-    }
-
-    
-
-    /**
-     * Creates a new ModelImage object.
-     * 
-     * @param type indicates type of buffer(ie. boolean, byte ...)
-     * @param dimExtents array indicating image extent in each dimension.
-     * @param name name of the image.
-     * @param _UI should be ViewUserInterface.getReference()
-     * 
-     * @deprecated Only one ViewUserInterface should be instantiated for an instance of MIPAV running, so _UI should be ViewUserInterface.getReference()
-     */
-    public ModelImage(final int type, final int[] dimExtents, final String name, final ViewUserInterface _UI) {
-        this(type, dimExtents, name);
     }
 
     /**
