@@ -1158,7 +1158,7 @@ public class FileTiff extends FileBase {
                 fileInfo.setResolutions(imgResols);
                 if ((multiFile == false) && (one == false)) {
                     for (i = 0; i < imageSlice; i++) {
-                        image.setFileInfo(fileInfo, i);
+                        image.setFileInfo((FileInfoTiff)fileInfo.clone(), i);
                     }
                 }
             } // if (!foundTag43314)
