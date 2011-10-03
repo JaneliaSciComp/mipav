@@ -39,6 +39,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
 /**
@@ -57,10 +58,8 @@ public class AlgorithmSWI extends AlgorithmBase {
     private double maskThreshold;
 
     private int xFilterSize;
-
     
     private int yFilterSize;
-
     
     private int multFactor;
 
@@ -146,8 +145,6 @@ public class AlgorithmSWI extends AlgorithmBase {
 
     } // end runAlgorithm()
     
-	//  ~ Methods --------------------------------------------------------------------------------------------------------
-    
     private void calc2D() {
     	fireProgressStateChanged("Message 2D: "+srcImage.getImageName());
      
@@ -201,6 +198,7 @@ public class AlgorithmSWI extends AlgorithmBase {
         
         fireProgressStateChanged(25, "SWI", "Creating frequency window...");
     	ModelImage kCenterImage = createKCenterImage(kImage);
+    	ViewUserInterface.getReference().unRegisterImage(kCenterImage);
     	
     	xDim = magImage.getExtents()[0];
         yDim = magImage.getExtents()[1];
@@ -239,7 +237,6 @@ public class AlgorithmSWI extends AlgorithmBase {
         try {
             magnitude.exportData(0, magnitude.getDataSize(), realData);
         } catch (IOException e1) {
-            // TODO Auto-generated catch block
             e1.printStackTrace();
         }
         
@@ -249,7 +246,6 @@ public class AlgorithmSWI extends AlgorithmBase {
         try {
             magEnhanced.importData(0, realData, false);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -260,6 +256,8 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage magEnhancedFrame = new ViewJFrameImage(magEnhancedAlg);
                 magEnhancedFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(magEnhanced);
         }
         
         return magEnhanced;
@@ -283,7 +281,6 @@ public class AlgorithmSWI extends AlgorithmBase {
         try {
             phaseMask.importData(0, phaseMaskData, false);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -293,6 +290,8 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage phaseMaskFrame = new ViewJFrameImage(phaseMask);
                 phaseMaskFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(phaseMask);
         }
         
         return phaseMask;
@@ -326,7 +325,6 @@ public class AlgorithmSWI extends AlgorithmBase {
         try {
             iFinal.importDComplexData(0, ixRealFinal, ixImagFinal, false, Preferences.is(Preferences.PREF_LOGMAG_DISPLAY));
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -336,6 +334,8 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage iFinalFrame = new ViewJFrameImage(iFinal);
                 iFinalFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(iFinal);
         }
         
         return iFinal;
@@ -363,7 +363,6 @@ public class AlgorithmSWI extends AlgorithmBase {
         try {
             iCenter.importComplexData(0, realData, imagData, false, false);
         } catch (IOException e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         
@@ -373,13 +372,16 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage iNewCenterFrame = new ViewJFrameImage(iCenter);  //ixcenter should now be same as ifftDest
                 iNewCenterFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(iFFTDest);
+        	ViewUserInterface.getReference().unRegisterImage(iCenter);
         }
         
         return iCenter;
     }
 
     private ModelImage createKCenterImage(ModelImage kImage) {
-        ModelImage kCenterImage = (ModelImage) kImage.clone("kCenterImage");
+        ModelImage kCenterImage = (ModelImage) kImage.clone("kCenterImage222");
         JDialogBase.updateFileInfo(magImage, kCenterImage);
         int xDim = kCenterImage.getExtents()[0];
         int yDim = kCenterImage.getExtents()[1];
@@ -412,6 +414,8 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage kCenterFrame = new ViewJFrameImage(kCenterImage);
                 kCenterFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(kCenterImage);
         }
         
         return kCenterImage;
@@ -436,6 +440,8 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage kFrame = new ViewJFrameImage(kImage);
                 kFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(kImage);
         }
         
         return kImage;
@@ -460,18 +466,12 @@ public class AlgorithmSWI extends AlgorithmBase {
         if(showInterImages) { 
         	this.iImage = iImage;
         	if(!inScript) {
-            	
-            	System.out.println("We were not in script");
                 ViewJFrameImage iFrame = new ViewJFrameImage(iImage);
                 iFrame.setVisible(true);
-            } else {
-            	System.out.println("We were in script");
-            }
+            } 
         } else {
-        	System.out.println("Not showing interimages");
+        	ViewUserInterface.getReference().unRegisterImage(iImage);
         }
-        
-        System.out.println("Returning on i image");
         	
         return iImage;
     }
@@ -497,6 +497,8 @@ public class AlgorithmSWI extends AlgorithmBase {
                 ViewJFrameImage brainFrame = new ViewJFrameImage(brainMask);
                 brainFrame.setVisible(true);
             }
+        } else {
+        	ViewUserInterface.getReference().unRegisterImage(brainMask);
         }
         
         return brainMask;
