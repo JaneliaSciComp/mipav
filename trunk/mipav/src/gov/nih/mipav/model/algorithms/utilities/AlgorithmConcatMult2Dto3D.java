@@ -109,12 +109,15 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmBase {
 
 	        } else {
 	            fileInfo = destImage.getFileInfo();
-
+	            int[] units = new int[3];
+	            units[0] = images[0].getFileInfo()[0].getUnitsOfMeasure()[0];
+	            units[1] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
+	            units[2] = images[0].getFileInfo()[0].getUnitsOfMeasure()[1];
 	            for (int i = 0; i < destImage.getExtents()[2]; i++) {
 	                fileInfo[i].setModality(images[0].getFileInfo()[0].getModality());
 	                fileInfo[i].setFileDirectory(images[0].getFileInfo()[0].getFileDirectory());
 	                fileInfo[i].setEndianess(images[0].getFileInfo()[0].getEndianess());
-	                fileInfo[i].setUnitsOfMeasure(images[0].getFileInfo()[0].getUnitsOfMeasure());
+	                fileInfo[i].setUnitsOfMeasure(units);
 	                fileInfo[i].setResolutions(resols);
 	                fileInfo[i].setExtents(destImage.getExtents());
 	                fileInfo[i].setMax(destImage.getMax());
