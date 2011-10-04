@@ -288,7 +288,13 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * run algorithm
      */
     public void runAlgorithm() {
-        outputTextArea.append("Running Algorithm v5.4" + "\n");
+    	if(outputTextArea != null) {
+    		outputTextArea.append("Running Algorithm v5.4" + "\n");
+    	}else {
+    		System.out.println("Running Algorithm v5.4");
+    	}
+    	
+    	
         
         //outputTextArea.append("Standard Column : RV/LD (in to out); RD/LV(out to in)" + "\n");
         /*String text = "";
@@ -4387,8 +4393,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final long endTime = System.currentTimeMillis();
         final long diffTime = endTime - begTime;
         final float seconds = ((float) diffTime) / 1000;
-
-        outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
+        if(outputTextArea != null) {
+        	outputTextArea.append("** Algorithm took " + seconds + " seconds \n");
+    	}else {
+    		System.out.println("** Algorithm took " + seconds + " seconds \n");
+    	}
+        
 
         setCompleted(true);
     }
@@ -4401,18 +4411,42 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * 
      */
     private void createSWCFile() {
-    	outputTextArea.append("Creating SWC file..." + "\n");
-        outputTextArea.append("\n");
+    	
+    	if(outputTextArea != null) {
+    		outputTextArea.append("Creating SWC file..." + "\n");
+            outputTextArea.append("\n");
+    	}else {
+    		System.out.println("Creating SWC file...");
+    		System.out.println();
+    	}
+    	
+    	
+        
+        
     	File filamentFile = new File(filamentFileParentDir + File.separator + standardizedFilamentFileName);
     	readFilamentFile_swc(filamentFile);
     	determineConnectivity1_swc(allFilamentCoords_swc);
     	determineAxon_swc(allFilamentCoords_swc);
 		determineDistances_swc(allFilamentCoords_swc);
-		outputTextArea.append("SWC - subsampling..." + "\n");
-        outputTextArea.append("\n");
+		
+		if(outputTextArea != null) {
+			outputTextArea.append("SWC - subsampling..." + "\n");
+	        outputTextArea.append("\n");
+    	}else {
+    		System.out.println("SWC - subsampling...");
+    		System.out.println();
+    	}
+		
 		subsample_swc(allFilamentCoords_swc,newFilamentCoords_swc);
-		outputTextArea.append("SWC - determining connectivity..." + "\n");
-        outputTextArea.append("\n");
+		
+		if(outputTextArea != null) {
+			outputTextArea.append("SWC - determining connectivity..." + "\n");
+	        outputTextArea.append("\n");
+    	}else {
+    		System.out.println("SWC - determining connectivity...");
+    		System.out.println(); 
+    	}
+		
 		determineConnectivity2_swc(newFilamentCoords_swc);
 		
 		createGreenImage();
@@ -4433,15 +4467,27 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 		output_swc(outputFilename_auto,newFilamentCoords_swc);
 		outputTextArea.append("Saving automatic SWC file to " + filamentFileParentDir + File.separator + outputFilename_auto + "\n");
         outputTextArea.append("\n");*/
-
-		outputTextArea.append("SWC - determining radd via threshold..." + "\n");
-        outputTextArea.append("\n");
+		if(outputTextArea != null) {
+			outputTextArea.append("SWC - determining radd via threshold..." + "\n");
+	        outputTextArea.append("\n");
+    	}else {
+    		System.out.println("SWC - determining radd via threshold..." ); 
+    		System.out.println(); 
+    	}
+		
 		determineRadiiThreshold_swc(newFilamentCoords_swc);
 		
 		String outputFilename = oldSurfaceFile.getName().substring(0, oldSurfaceFile.getName().indexOf(".")) + ".swc";
 		output_swc(outputFilename,newFilamentCoords_swc);
-		outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename + "\n");
-        outputTextArea.append("\n");
+		
+		if(outputTextArea != null) {
+			outputTextArea.append("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename + "\n");
+	        outputTextArea.append("\n");
+    	}else {
+    		System.out.println("Saving threshold SWC file to " + filamentFileParentDir + File.separator + outputFilename);
+    		System.out.println(); 
+    	}
+		
         
         
 		
@@ -5723,7 +5769,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				 index = (zCenterPixel * (extents[0] * extents[1])) + (yCenterPixel * extents[0]) + xCenterPixel;
 				 
 				 //System.out.println(i + "," + k + ": "+ xCenterPixel + "," + yCenterPixel + "," + zCenterPixel);
-				 outputTextArea.append(i + "," + k + ": "+ xCenterPixel + "," + yCenterPixel + "," + zCenterPixel + "\n");
+				 if(outputTextArea != null) {
+					 outputTextArea.append(i + "," + k + ": "+ xCenterPixel + "," + yCenterPixel + "," + zCenterPixel + "\n");	
+			     }else {
+			    	System.out.println(i + "," + k + ": "+ xCenterPixel + "," + yCenterPixel + "," + zCenterPixel);
+			     }
+				 
 				 
 				 System.gc();
 				 float lapMax = -100;
@@ -5739,7 +5790,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
 			            lap = AlgorithmConvolver.convolve3DPtMed(index, extents, greenBuffer, kExtents, GxxData);
 			            //System.out.println("   " + s + "   " + lap);	
-			            outputTextArea.append("   " + s + "   " + lap + "\n");
+			            if(outputTextArea != null) {
+			            	outputTextArea.append("   " + s + "   " + lap + "\n");
+			        	}else {
+			        		System.out.println("   " + s + "   " + lap ); 
+			        	}
+			            
 			            if(lap > lapMax) {
 			            	lapMax = lap;
 			            	radiusPixelSpace = s;
@@ -6320,7 +6376,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * calls the non-linear thin plate spline alg
      */
     private void thinPlateSplineAlg() {
-        outputTextArea.append("Calling Non Linear Thin Plate Spline Registration" + "\n");
+    	if(outputTextArea != null) {
+    		outputTextArea.append("Calling Non Linear Thin Plate Spline Registration" + "\n");
+    	}else {
+    		System.out.println("Calling Non Linear Thin Plate Spline Registration"); 
+    	}
+        
         int nPtsA = 0; // = standardColumnImage.getVOIs().size();
         int nPtsB = 0; // = resultImage1.getVOIs().size()
 
@@ -6465,7 +6526,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
      * calls rigid least squared alg
      */
     private void leastSquaredAlg() {
-        outputTextArea.append("Calling Rigid Least Squared Registration" + "\n");
+    	if(outputTextArea != null) {
+    		outputTextArea.append("Calling Rigid Least Squared Registration" + "\n");
+    	}else {
+    		System.out.println("Calling Rigid Least Squared Registration"); 
+    	}
+        
         int nPtsA = 0; // = standardColumnImage.getVOIs().size();
         int nPtsB = 0; // = neuronImage.getVOIs().size()
 
@@ -6612,9 +6678,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                         || yPt[0] > neuronImage_grey.getExtents()[1] - 1
                         || zPt[0] > neuronImage_grey.getExtents()[2] - 1) {
                 	
-
-                    outputTextArea.append("neuron image point after rigid least squares alg is out of bounds - "
-                            + label + "\n");
+                	if(outputTextArea != null) {
+                		outputTextArea.append("neuron image point after rigid least squares alg is out of bounds - "
+                                + label + "\n");
+                	}else {
+                		System.out.println("neuron image point after rigid least squares alg is out of bounds - "
+                                + label); 
+                	}
+                    
                     indexAL_std.add(new Integer(j));
                     sliceAL_std.add(new Integer(s));
                     labelAL_std.add(label);
@@ -6672,7 +6743,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
                     for (int i = 0; i < labelAL_std.size(); i++) {
                         removeLabel = labelAL_std.get(i);
                         if (label.equals(removeLabel)) {
-                            outputTextArea.append("removing point from standard column image - " + label + "\n");
+                        	if(outputTextArea != null) {
+                        		outputTextArea.append("removing point from standard column image - " + label + "\n");
+                        	}else {
+                        		System.out.println("removing point from standard column image - " + label); 
+                        	}
+                            
                             voi.getCurves().removeElement(voiPoint);
                         }
                     }
@@ -6753,7 +6829,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         // loop through each point in result image
         for (float z = 0; z < 512; z = z + samplingRate) {
             if ((float) Math.floor(z) == z) {
-                outputTextArea.append("z is " + z + "\n");
+            	if(outputTextArea != null) {
+            		outputTextArea.append("z is " + z + "\n");
+            	}else {
+            		System.out.println("z is " + z ); 
+            	}
+                
 
                 if (z % 5 == 0) {
                     System.gc();
@@ -6945,8 +7026,12 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
 
         
-
-        outputTextArea.append("\n");
+        if(outputTextArea != null) {
+        	outputTextArea.append("\n");
+    	}else {
+    		System.out.println(); 
+    	}
+        
 
         if (cityBlockImage != null) {
             cityBlockImage.disposeLocal();
@@ -6987,8 +7072,14 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         }
 
         if (r7_27Coord_transformed != null) {
-            outputTextArea.append("Setting new origin of standardized image to transformed r7 center point" + "\n");
-            outputTextArea.append("\n");
+        	if(outputTextArea != null) {
+        		outputTextArea.append("Setting new origin of standardized image to transformed r7 center point" + "\n");
+                outputTextArea.append("\n"); 
+        	}else {
+        		System.out.println("Setting new origin of standardized image to transformed r7 center point" );
+        		System.out.println();
+        	}
+            
         }
 
         finalImage.setFileInfo(fileInfoBases);
@@ -7005,9 +7096,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         opts.setEndSlice(511);
         opts.setOptionsSet(true);
         fileIO.writeImage(finalImage, opts);
-        outputTextArea.append("Saving final standardized image as: \n");
-        outputTextArea.append(dir + finalImageName + ".ics" + "\n");
-        outputTextArea.append("\n");
+        if(outputTextArea != null) {
+        	outputTextArea.append("Saving final standardized image as: \n");
+            outputTextArea.append(dir + finalImageName + ".ics" + "\n");
+            outputTextArea.append("\n");
+    	}else {
+    		System.out.println("Saving final standardized image as: ");
+    		System.out.println(dir + finalImageName + ".ics");
+    		System.out.println(); 
+    	}
+        
 
         writeSurfaceFile();
         //if we do a flipx or flipy or flipz ...lets also write surface file without being flipped
@@ -7035,9 +7133,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         final String parentDir = pointsFile.getParent();
         final String newName = pointsFile.getName().substring(0, pointsFile.getName().indexOf("."))
                 + "_transformedCoordinates.txt";
-        outputTextArea.append("Saving new transformed coordinates file as: \n");
-        outputTextArea.append(parentDir + File.separator + newName + "\n");
-        outputTextArea.append("\n");
+        if(outputTextArea != null) {
+        	outputTextArea.append("Saving new transformed coordinates file as: \n");
+            outputTextArea.append(parentDir + File.separator + newName + "\n");
+            outputTextArea.append("\n");
+    	}else {
+    		System.out.println("Saving new transformed coordinates file as: ");
+    		System.out.println(parentDir + File.separator + newName);
+    		System.out.println(); 
+    	}
+        
 
         try {
 
@@ -7103,9 +7208,16 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         	standardizedFilamentFileName = standardizedFilamentFileName + "_flipZ";
         }
         standardizedFilamentFileName = standardizedFilamentFileName + ".iv";
-        outputTextArea.append("Saving new filament file as: \n");
-        outputTextArea.append(filamentFileParentDir + File.separator + standardizedFilamentFileName + "\n");
-        outputTextArea.append("\n");
+        if(outputTextArea != null) {
+        	outputTextArea.append("Saving new filament file as: \n");
+            outputTextArea.append(filamentFileParentDir + File.separator + standardizedFilamentFileName + "\n");
+            outputTextArea.append("\n");
+    	}else {
+    		System.out.println("Saving new filament file as: ");
+    		System.out.println(filamentFileParentDir + File.separator + standardizedFilamentFileName);
+    		System.out.println(); 
+    	}
+        
 
         try {
             final RandomAccessFile raFile = new RandomAccessFile(oldSurfaceFile, "r");

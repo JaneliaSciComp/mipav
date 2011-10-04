@@ -343,49 +343,49 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 			}
 			
 			
-			if(vars[4].equalsIgnoreCase("FlipNone")) {
+			if(vars[4].equalsIgnoreCase("flipNone")) {
 				plugin.flipXCB.setSelected(false);
 				plugin.flipYCB.setSelected(false);
 				plugin.flipZCB.setSelected(false);
-			}else if (vars[4].equalsIgnoreCase("FlipX")) {
+			}else if (vars[4].equalsIgnoreCase("flipX")) {
 				plugin.flipXCB.setSelected(true);
 				plugin.flipYCB.setSelected(false);
 				plugin.flipZCB.setSelected(false);
-			}else if (vars[4].equalsIgnoreCase("FlipY")) {
+			}else if (vars[4].equalsIgnoreCase("flipY")) {
 				plugin.flipXCB.setSelected(false);
 				plugin.flipYCB.setSelected(true);
 				plugin.flipZCB.setSelected(false);
-			}else if (vars[4].equalsIgnoreCase("FlipZ")) {
+			}else if (vars[4].equalsIgnoreCase("flipZ")) {
 				plugin.flipXCB.setSelected(false);
 				plugin.flipYCB.setSelected(false);
 				plugin.flipZCB.setSelected(true);
-			}else if (vars[4].equalsIgnoreCase("FlipXY")) {
+			}else if (vars[4].equalsIgnoreCase("flipXY")) {
 				plugin.flipXCB.setSelected(true);
 				plugin.flipYCB.setSelected(true);
 				plugin.flipZCB.setSelected(false);
-			}else if (vars[4].equalsIgnoreCase("FlipXZ")) {
+			}else if (vars[4].equalsIgnoreCase("flipXZ")) {
 				plugin.flipXCB.setSelected(true);
 				plugin.flipYCB.setSelected(false);
 				plugin.flipZCB.setSelected(true);
-			}else if (vars[4].equalsIgnoreCase("FlipYZ")) {
+			}else if (vars[4].equalsIgnoreCase("flipYZ")) {
 				plugin.flipXCB.setSelected(false);
 				plugin.flipYCB.setSelected(true);
 				plugin.flipZCB.setSelected(true);
-			}else if (vars[4].equalsIgnoreCase("FlipXYZ")) {
+			}else if (vars[4].equalsIgnoreCase("flipXYZ")) {
 				plugin.flipXCB.setSelected(true);
 				plugin.flipYCB.setSelected(true);
 				plugin.flipZCB.setSelected(true);
 			}
 			
-			if(vars[5].equalsIgnoreCase("27_Points")) {
+			if(vars[5].equalsIgnoreCase("27_points")) {
 				plugin._27PointsRadio.setSelected(true);
 				plugin._75PointsRadio.setSelected(false);
 				plugin._147PointsRadio.setSelected(false);
-			}else if(vars[5].equalsIgnoreCase("75_Points")) {
+			}else if(vars[5].equalsIgnoreCase("75_points")) {
 				plugin._27PointsRadio.setSelected(false);
 				plugin._75PointsRadio.setSelected(true);
 				plugin._147PointsRadio.setSelected(false);
-			}else if(vars[5].equalsIgnoreCase("147_Points")) {
+			}else if(vars[5].equalsIgnoreCase("147_points")) {
 				plugin._27PointsRadio.setSelected(false);
 				plugin._75PointsRadio.setSelected(false);
 				plugin._147PointsRadio.setSelected(true);
@@ -400,18 +400,18 @@ public class PlugInDialogDrosophilaStandardColumnRegistration_BatchProcessing ex
 			
 			
 			
-			if(vars[6].equalsIgnoreCase("LVRD")) {
+			if(vars[6].equalsIgnoreCase("lvrd")) {
 				plugin.lvrdRadio.setSelected(true);
 				plugin.rvldRadio.setSelected(false);
-			}else if(vars[6].equalsIgnoreCase("RVLD")) {
+			}else if(vars[6].equalsIgnoreCase("rvld")) {
 				plugin.lvrdRadio.setSelected(false);
 				plugin.rvldRadio.setSelected(true);
 			}
 			
-			if(vars[7].equalsIgnoreCase("RigidTPS")) {
+			if(vars[7].equalsIgnoreCase("rigidTPS")) {
 				plugin.rigTPSRadio.setSelected(true);
 				plugin.rigRadio.setSelected(false);
-			}else if(vars[7].equalsIgnoreCase("Rigid")) {
+			}else if(vars[7].equalsIgnoreCase("rigidOnly")) {
 				plugin.rigTPSRadio.setSelected(false);
 				plugin.rigRadio.setSelected(true);
 			}
