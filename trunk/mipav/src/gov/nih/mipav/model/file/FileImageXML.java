@@ -111,7 +111,7 @@ public class FileImageXML extends FileXML {
     
     private String[] dataFileName;
     
-    private  DTIParameters dtiparams;
+    //private  DTIParameters dtiparams;
     
     private int numVolumes;
     
@@ -422,7 +422,6 @@ public class FileImageXML extends FileXML {
 
         TalairachTransformInfo talairach = new TalairachTransformInfo();
         
-        //DTIParameters dtiparams = new DTIParameters();
 
         fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.XML);
 
@@ -940,16 +939,16 @@ public class FileImageXML extends FileXML {
             annotationVector.removeAllElements();
         }
         
-        if (dtiparams != null){
-            System.out.println("dtiparamsworking");
+        /*if (dtiparams != null){
+            //System.out.println("dtiparamsworking");
             if (gradients!=null){
-                System.out.println("gradientsworking");
+                //System.out.println("gradientsworking");
                 dtiparams.setGradients(gradients);
             }
-            System.out.println("gradients: " +dtiparams.getGradients()[1][2]);
+            //System.out.println("gradients: " +dtiparams.getGradients()[1][2]);
             image.setDTIParameters(dtiparams);  
             
-        }
+        }*/
         
         
         
@@ -2228,10 +2227,10 @@ public class FileImageXML extends FileXML {
             openTag("Talairach", false);
         }
         
-        if (dtiparams != null) {
+        /*if (dtiparams != null) {
             dtiparams = image.getDTIParameters();
-            System.out.println("bvalues: " +dtiparams.getGradients());
-        }
+            //System.out.println("bvalues: " +dtiparams.getGradients());
+        }*/
 
         openTag("image", false);
 
@@ -3252,7 +3251,7 @@ public class FileImageXML extends FileXML {
          */
         public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
             currentKey = localName;
-            System.out.println("currentKey: " +currentKey);
+            //System.out.println("currentKey: " +currentKey);
 
             if (currentKey.equals("Data-type")) {
                 Preferences.debug("Data-type: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
@@ -3581,8 +3580,8 @@ public class FileImageXML extends FileXML {
                 if (matrix != null) {
                     matrixVector.add(matrix);
                 }
-            } else if (currentKey.equals("volumeNum")){
-                System.out.println("volumeNum working");
+            } /*else if (currentKey.equals("volumeNum")){
+                //System.out.println("volumeNum working");
                 if (fileInfo.getExtents()[3] != 0){
                     dtiparams = new DTIParameters(fileInfo.getExtents()[3]);
                     System.out.println("4DeleBuf: " +elementBuffer);
@@ -3609,12 +3608,12 @@ public class FileImageXML extends FileXML {
                 
             } else if (currentKey.equals("gradient")){
                 gradCount++;
-                System.out.println("gradCount: " +gradCount);
+                //System.out.println("gradCount: " +gradCount);
                 String[] arr = elementBuffer.split(",");
                 gradients[gradCount][0] = Float.parseFloat(arr[0]);
                 gradients[gradCount][1] = Float.parseFloat(arr[1]);
                 gradients[gradCount][2] = Float.parseFloat(arr[2]); 
-            }
+            }*/
             
         }
 
