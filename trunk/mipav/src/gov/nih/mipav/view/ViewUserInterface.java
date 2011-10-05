@@ -4125,7 +4125,7 @@ parse:  while (i < args.length) {
             }
             // else sizes match; there are no problems
         } catch (final NullPointerException npe) { // prefs not found/invalid strings
-            if ( !MipavUtil.getForceQuiet()) {
+            if (!GraphicsEnvironment.isHeadless() &&  !MipavUtil.getForceQuiet()) {
                 MipavUtil.displayWarning("Heap size settings in the "
                         + "environment startup file either do not match \n"
                         + "those in the Preferences file, or are non-existant.\n"
@@ -4134,7 +4134,7 @@ parse:  while (i < args.length) {
             } else {
                 MipavUtil.displayError("Heap size settings in the " + "environment startup file either do not match \n"
                         + "those in the Preferences file, or are non-existant.\n"
-                        + "Memory Allocation will display so you can " + "ensure this is correct.");
+                        + "Please change these settings in the mipav.lax file.");
             }
         } catch (final FileNotFoundException fnf) { // LAX not found
             Preferences.debug(fnf.getLocalizedMessage() + "\n");
