@@ -1300,7 +1300,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param dialog dialog box that is written to
      */
     public void displayAboutInfo(final JDialogBase dialog) {
+        System.out.println("fileinfobase:displayAboutInfo");
         displayAboutInfo(dialog, null);
+        
     }
 
     /**
@@ -1315,6 +1317,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         for (int i = 0; i < extents.length; i++) {
             dialog.append("Dimension " + i + ":          " + extents[i] + "\n");
         }
+        
+        
 
         dialog.append("Type:                 " + ModelStorageBase.getBufferTypeStr(dataType) + "\n");
 
@@ -1331,8 +1335,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
 
         dialog.append("Modality:             " + FileInfoBase.modalityStr[modality] + "\n");
-        dialog.append("Slice origin upper left corner of image - right hand rule\n");
 
+
+        dialog.append("Slice origin upper left corner of image - right hand rule\n");
+       
         for (int i = 0; i < origin.length; i++) {
 
             switch (i) {
