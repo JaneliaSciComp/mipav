@@ -110,6 +110,14 @@ public class FileImageXML extends FileXML {
     private Thumbnail thumbnail = null;
     
     private String[] dataFileName;
+    
+    private  DTIParameters dtiparams;
+    
+    private int numVolumes;
+    
+    private float [][] gradients;
+    
+    private float [] bValues;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -413,6 +421,8 @@ public class FileImageXML extends FileXML {
         float[][] resolutions = null;
 
         TalairachTransformInfo talairach = new TalairachTransformInfo();
+        
+        //DTIParameters dtiparams = new DTIParameters();
 
         fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.XML);
 
@@ -929,6 +939,21 @@ public class FileImageXML extends FileXML {
 
             annotationVector.removeAllElements();
         }
+        
+        if (dtiparams != null){
+            System.out.println("dtiparamsworking");
+            if (gradients!=null){
+                System.out.println("gradientsworking");
+                dtiparams.setGradients(gradients);
+            }
+            System.out.println("gradients: " +dtiparams.getGradients()[1][2]);
+            image.setDTIParameters(dtiparams);  
+            
+        }
+        
+        
+        
+        
 
         return image;
     }
@@ -2202,6 +2227,11 @@ public class FileImageXML extends FileXML {
 
             openTag("Talairach", false);
         }
+        
+        if (dtiparams != null) {
+            dtiparams = image.getDTIParameters();
+            System.out.println("bvalues: " +dtiparams.getGradients());
+        }
 
         openTag("image", false);
 
@@ -3036,6 +3066,8 @@ public class FileImageXML extends FileXML {
 
         /** DOCUMENT ME! */
         int acpcMaxCount = -1;
+        
+        int gradCount = -1;
 
         /** DOCUMENT ME! */
         float[] acpcMin = null;
@@ -3144,6 +3176,8 @@ public class FileImageXML extends FileXML {
 
         /** DOCUMENT ME! */
         TalairachTransformInfo talairach;
+        
+       
 
         /** DOCUMENT ME! */
         int[] thumbnailBuffer = null;
@@ -3173,10 +3207,10 @@ public class FileImageXML extends FileXML {
          * @param hisVector DOCUMENT ME!
          * @param anVector DOCUMENT ME!
          * @param tal DOCUMENT ME!
-         */
+         */ 
         public MyXMLHandler(FileInfoImageXML fInfo, Vector<VOI> anVector, Vector<TransMatrix> mVector,
                 TalairachTransformInfo tal) {
-            fileInfo = fInfo;
+            fileInfo = fInfo;   
             annotationVector = anVector;
             matrixVector = mVector;
             this.talairach = tal;
@@ -3218,6 +3252,7 @@ public class FileImageXML extends FileXML {
          */
         public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
             currentKey = localName;
+            System.out.println("currentKey: " +currentKey);
 
             if (currentKey.equals("Data-type")) {
                 Preferences.debug("Data-type: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
@@ -3546,7 +3581,41 @@ public class FileImageXML extends FileXML {
                 if (matrix != null) {
                     matrixVector.add(matrix);
                 }
+            } else if (currentKey.equals("volumeNum")){
+                System.out.println("volumeNum working");
+                if (fileInfo.getExtents()[3] != 0){
+                    dtiparams = new DTIParameters(fileInfo.getExtents()[3]);
+                    System.out.println("4DeleBuf: " +elementBuffer);
+                    numVolumes = Integer.parseInt(elementBuffer);
+                    gradients = new float[numVolumes][3];
+                    dtiparams.setNumVolumes(Integer.parseInt(elementBuffer));
+                    }
+                else {
+                    DTIParameters dtiparams = new DTIParameters(fileInfo.getExtents()[2]);
+                    System.out.println("3DeleBuf: " +elementBuffer);
+                    numVolumes = Integer.parseInt(elementBuffer);
+                    gradients = new float[numVolumes][3];
+                    dtiparams.setNumVolumes(Integer.parseInt(elementBuffer));
+                    }
+                
             }
+              else if (currentKey.equals("bValues")){
+                  bValues = new float[numVolumes];
+                  for (int i = 0; i < numVolumes; i++) {                     
+                      String[] arr = elementBuffer.split(",");
+                      bValues[i] = Float.parseFloat(arr[i]);
+                  }
+                  dtiparams.setbValues(bValues);
+                
+            } else if (currentKey.equals("gradient")){
+                gradCount++;
+                System.out.println("gradCount: " +gradCount);
+                String[] arr = elementBuffer.split(",");
+                gradients[gradCount][0] = Float.parseFloat(arr[0]);
+                gradients[gradCount][1] = Float.parseFloat(arr[1]);
+                gradients[gradCount][2] = Float.parseFloat(arr[2]); 
+            }
+            
         }
 
         /**
