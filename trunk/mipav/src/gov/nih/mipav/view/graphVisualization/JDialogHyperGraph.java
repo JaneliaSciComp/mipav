@@ -78,6 +78,8 @@ import org.apache.pdfbox.pdmodel.graphics.xobject.PDJpeg;
 import org.apache.pdfbox.pdmodel.graphics.xobject.PDXObjectImage;
 import org.xml.sax.SAXException;
 
+import com.jogamp.newt.event.MouseEvent;
+import com.jogamp.newt.event.MouseListener;
 import com.sun.jimi.core.Jimi;
 import com.sun.jimi.core.JimiException;
 
@@ -88,7 +90,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * Frame and user interface for displaying a HyperGraph in MIPAV.
  *
  */
-public class JDialogHyperGraph extends JFrame implements ActionListener, ComponentListener {
+public class JDialogHyperGraph extends JFrame implements ActionListener, ComponentListener, MouseListener {
 
 	/** generated serial id */
 	private static final long serialVersionUID = 7133468293112430462L;
@@ -133,6 +135,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 	 */
 	public JDialogHyperGraph(String dir, String file) {
 		super();
+		
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (final FileNotFoundException error) {
@@ -688,7 +691,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 	
 	     graphPanel.setMinimumSize(new Dimension(900,600));
 	     graphPanel.setPreferredSize(new Dimension(900,600));
-	     
+	
 	     mainPanel = new JPanel(new GridBagLayout());
 	     gbc.anchor = GridBagConstraints.WEST;
 	     gbc.gridx = 0;
@@ -776,6 +779,8 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 		}catch(FileNotFoundException e) {
 			e.printStackTrace();
 		}
+		
+		graphPanel.setBGImageShowing(true);
 		graphPanel.setLogo(image);
 		Color color = new Color(32,32,126);
 		String kColorString = new String( "#" + Integer.toHexString(color.getRGB()).substring(2) );
@@ -1118,18 +1123,19 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 	@Override
 	public void componentHidden(ComponentEvent e) {
 		// TODO Auto-generated method stub
+		System.out.println("component hidden");
 		
 	}
 
 	@Override
 	public void componentMoved(ComponentEvent e) {
-		
+		System.out.println("component moved");
 	}
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		
-		if(graphPanel.isBGImageShowing()) {
+		System.out.println("component resized");
+		/*if(graphPanel.isBGImageShowing()) {
 		
 			Image image = null;
 			try {
@@ -1147,6 +1153,8 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 			graphPanel.setLogo(newImage);
 		}
 		
+		System.out.println("aaa");*/
+		
 		//repaint();
 		
 		
@@ -1154,7 +1162,55 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 
 	@Override
 	public void componentShown(ComponentEvent e) {
+		System.out.println("component shown");
+		
+	}
 
+	@Override
+	public void mouseClicked(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseDragged(MouseEvent arg0) {
+		System.out.println("mouse dragged");
+		
+	}
+
+	@Override
+	public void mouseEntered(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseExited(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseMoved(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mousePressed(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseReleased(MouseEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void mouseWheelMoved(MouseEvent arg0) {
+		// TODO Auto-generated method stub
 		
 	}
 

@@ -100,9 +100,12 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	private Node 			lastMouseClickNode;
 	
-	private boolean isBGImageShowing = true;
+	private boolean isBGImageShowing = false;
 	
 	private Timer clickTimer;
+	
+	private Image image, newImage;
+	
 
 	/**
 	 * Creates the GraphPanel display.
@@ -118,6 +121,11 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 		setNodeRenderer(new MipavNodeRenderer());
 		setEdgeRenderer(new MipavEdgeRenderer());
 		getEdgeRenderer().setLabelVisible(true);
+		try {
+			image = MipavUtil.getIconImage("oval4.jpg");
+		}catch(FileNotFoundException ex) {
+			ex.printStackTrace();
+		}
 		setSmallLogo(null);
 		setLogo(null);
 	}
@@ -819,6 +827,8 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	}
 	
 	
+
+	
 	
 	
 	public synchronized PropertiesDialog getPropertiesDialog() {
@@ -1269,6 +1279,13 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 	
 	
 	
+	
+	
+	public synchronized void setBGImageShowing(boolean isBGImageShowing) {
+		this.isBGImageShowing = isBGImageShowing;
+	}
+
+
 	public synchronized boolean isBGImageShowing() {
 		return isBGImageShowing;
 	}
@@ -1301,6 +1318,20 @@ public class MipavGraphPanel extends GraphPanel implements ActionListener {
 			//super.paint(g);
 			
 			
+			
+			
+			
+			//Component comp = this.getComponent(0).getComponentAt(0, 1);
+
+			/*int width = getSize().width;
+			int height = getSize().height;
+			newImage = image.getScaledInstance(width, height, Image.SCALE_DEFAULT);
+			
+			setLogo(newImage);*/
+			
+
+			
+		
 			if (getWidth() > 300 && getHeight() > 300) {
 				if (logo != null)
 					g.drawImage(logo, getWidth() - logo.getWidth(this),
