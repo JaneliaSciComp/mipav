@@ -1649,7 +1649,6 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 				        z[0] = zEnd;
 				        newPtVOI.importCurve(x, y, z);
         	}else {
-        		
         		// top
 		        //A
 		        standardColumnImage.set(23, 256, zStart, 100);
@@ -2719,7 +2718,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
         	}
 	
         }else if(numPoints == PlugInDialogDrosophilaStandardColumnRegistration._75POINTS) {
-        	
+        	System.out.println("75 points");
         	
         	if(rvld) {
             	// top
@@ -6542,7 +6541,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         curves = standardColumnImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
         nPtsA = curves.size();
-
+System.out.println(nPtsA);
         Preferences.debug("nPtsA = " + nPtsA + "\n");
         ptA = new Vector3f[nPtsA];
 
@@ -6552,7 +6551,7 @@ public class PlugInAlgorithmDrosophilaStandardColumnRegistration extends Algorit
 
         curves = neuronImage_grey.getVOIs().VOIAt(0).getCurves();
         nPtsB = curves.size();
-
+System.out.println(nPtsB);
         if (nPtsA != nPtsB) {
             MipavUtil.displayError("Both images must have the same number of points");
 

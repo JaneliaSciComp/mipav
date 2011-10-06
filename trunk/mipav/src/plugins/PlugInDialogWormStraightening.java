@@ -77,8 +77,8 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
 	
 	private int unitOfMeasure = Unit.MICROMETERS.getLegacyNum();
 	
-	private String currDir;
-	//private String currDir = "C:\\images\\hari\\";
+	//private String currDir;
+	private String currDir = "C:\\images\\hari\\";
 	
     private ViewJFrameImage vjf;
     
