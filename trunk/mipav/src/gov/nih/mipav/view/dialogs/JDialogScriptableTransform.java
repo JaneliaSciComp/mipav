@@ -1390,7 +1390,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
-
             algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
                     doVOI, doClip, doPad, doRotateCenter, center);
             algoTrans.setFillValue(fillValue);
