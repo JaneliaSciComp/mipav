@@ -269,7 +269,6 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
      */
     protected void callAlgorithm() {
         System.gc();
-
         nSlices = srcImage.getExtents()[2];
         numChecked = 0;
 

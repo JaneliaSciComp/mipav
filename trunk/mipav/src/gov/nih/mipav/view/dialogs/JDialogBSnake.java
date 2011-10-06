@@ -413,7 +413,6 @@ public class JDialogBSnake extends JDialogBase implements AlgorithmInterface {
     private void init() {
         setForeground(Color.black);
         setTitle("Evolve Boundary");
-
         JPanel scalePanel = new JPanel(new GridLayout(3, 2));
         scalePanel.setForeground(Color.black);
         scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));

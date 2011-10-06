@@ -170,7 +170,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
      * Run the algorithm.
      */
     public void callAlgorithm() {
-
         try {
             System.gc();
 
