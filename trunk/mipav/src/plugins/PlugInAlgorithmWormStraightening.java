@@ -9,12 +9,18 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBSpline;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult2Dto3D;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlices;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlicesVolumes;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIPoint;
@@ -81,8 +87,9 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	 * at the points along the b-spline. It builds of a result image by stacking these planes.
 	 */
 	private void doPlanes() {
-		//first create empty result image and set up voi to transfer points to result image
-		int[] extents = {50, 400, interpolationPts};
+		//first create empty result image and set up voi to transfer points to result image\
+		//!!!!!!!!!!!!!!!!!!NEED TO REMOVE THAT -1 AT SOME POINT
+		int[] extents = {50, 400, interpolationPts-1};
 		float[] res = {wormImage.getResolutions(0)[2], wormImage.getResolutions(0)[1],1.0f};
 		resultImage = new ModelImage(ModelStorageBase.FLOAT, extents, "RESULT IMAGE");
 		resultImage.setResolutions(res);
@@ -151,9 +158,9 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         int zExtent = wormImage.getExtents()[2];
         double p;
         int newY = 0;
-        final float[] newPtx = new float[1];
-        final float[] newPty = new float[1];
-        final float[] newPtz = new float[1];
+        float[] newPtx = new float[1];
+        float[] newPty = new float[1];
+        float[] newPtz = new float[1];
         
         
         //alg to get tangent vector
@@ -161,13 +168,25 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         
         //when wanting to visualize the planes on the original image points...first blank out the image
         //!!!!!!make sure you comment this out when wanting to populate result image
-        wormImage.setAll(0);
+        //wormImage.setAll(0);
         
-
+        javax.vecmath.Vector3f compareAngle = new javax.vecmath.Vector3f(1,0,0);
+        javax.vecmath.Vector3f v ;
+        float angle;
+		double halfPi = Math.PI/2.0;
+		double quarterPi = Math.PI/4.0;
+		double startRange = halfPi - quarterPi;
+		double endRange = halfPi + quarterPi;
         
         //*****this new way of basing it on tolerance rahter than going from positive to negative or vice versa
         //results in an arrayoutof bouds error when on the last point.
         //.....so....need to get last one to work everntually!!!
+        String[] planeOrientations = new String[interpolationPts-1];
+        boolean[] doFlip = new boolean[interpolationPts-1];
+        //Vector3f[] tanVectors = new Vector3f[interpolationPts-1];
+        boolean isCloseToHorizontal;
+        
+        
         for(int i=0;i<interpolationPts-1;i++) {
 
         		System.out.println("^^ " + i);
@@ -179,19 +198,111 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             	//normalizing tangent
                 tanVector.Normalize();
                 
+                //tanVectors[i] = tanVector;
+                
+                
+                v = new javax.vecmath.Vector3f(tanVector.X,tanVector.Y,tanVector.Z);
+                angle = v.angle(compareAngle);
+                if(angle <= halfPi) {
+            		doFlip[i] = false;
+            	}else {
+            		doFlip[i] = true;
+            	}
+                
+                //if angle is within PI/2 +- Pi/4, then this means it is more of a horizontal line
+                if(angle >= startRange && angle <= endRange) {
+                	isCloseToHorizontal = true;
+                }else {
+                	isCloseToHorizontal = false;
+                }
+                
+                
+                
+                
                 //Equation of plane through P1(x1,y1,z1) with normal vector a = <a1,a2,a3) is
                 //a1(x-x1) + a2(y-y1) + a3(z-z1) = 0
                 double a1 = tanVector.X;
                 double a2 = tanVector.Y;
                 double a3 = tanVector.Z;
                 point = ((VOIPoint)contours.get(index)).exportPoint();
-                double x1 = point.X;
-                double y1 = point.Y;
-                double z1 = point.Z;  
+                
+                
+                
+                //double x1 = point.X;
+                //double y1 = point.Y;
+                //double z1 = point.Z;  
+                
+                
+                int x1 = Math.round(point.X);
+                int y1 = Math.round(point.Y);
+                int z1 = Math.round(point.Z);
 
                 double tolerance = 1;
                 float pix;
                 double oldP;
+                
+                
+                
+                
+                //////////////////////////////////////////////////////////
+                //BILLS STUFF
+                
+                /*
+                System.out.println("doing new way");
+                double root = Math.sqrt(a1*a1 + a2*a2 + a3*a3);
+                double dx = a1/root;
+                double dy = a2/root;
+                double dz = a3/root;
+                double p1;
+                double p2;
+                double x1a = x1 - dx;
+                double y1a = y1 - dy;
+                double z1a = z1 - dz;
+                double x1b = x1 + dx;
+                double y1b = y1 + dy;
+                double z1b = z1 + dz;
+                for (int z = 0; z < zExtent; z++) {
+                  for (int y = 0; y < yExtent; y++) {
+                        for (int x = 0; x < xExtent; x++) {
+                              p = (a1*(x-x1)) + (a2*(y-y1)) + (a3*(z-z1));
+                                    if(p < tolerance && p > (-tolerance)) {
+                                          if (((Math.round(x+dx))>= 0) && ((Math.round(x+dx)) < xExtent) &&
+                                          ((Math.round(y+dy))>= 0) && ((Math.round(y+dy)) < yExtent) &&
+                                          ((Math.round(z+dz))>= 0) && ((Math.round(z+dz)) < zExtent)) {
+                                                p1 = (a1*(x - x1a)) + (a2*(y - y1a)) + (a3*(z - z1a));
+                                                if (Math.abs(p1) < Math.abs(p)) {
+                                                      wormImage.set((int)Math.round(x + dx),(int)Math.round(y + dy),(int)Math.round(z + dz), 100);
+                                                      continue;
+                                                }
+                                          }
+                                          
+                                          if (((Math.round(x-dx))>= 0) && ((Math.round(x-dx)) < xExtent) &&
+                                                ((Math.round(y-dy))>= 0) && ((Math.round(y-dy)) < yExtent) &&
+                                                ((Math.round(z-dz))>= 0) && ((Math.round(z-dz)) < zExtent)) {
+                                                p2 = (a1*(x - x1b)) + (a2*(y - y1b)) + (a3*(z - z1b));
+                                                if (Math.abs(p2) < Math.abs(p)) {
+                                                      wormImage.set((int)Math.round(x - dx),(int)Math.round(y - dy),(int)Math.round(z - dz), 100);
+                                                      continue;   
+                                                }
+                                          }
+                                          
+                                          wormImage.set(x, y, z, 100);
+                                    }
+                        }
+                  }
+                }
+
+                
+                
+                
+                */
+                
+                
+                
+                
+               ////////////////////////////////////////////////////////////// 
+                
+                
                 
                 
                 
@@ -202,9 +313,21 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         	        				oldP = -500;
         			    xLoop:    	for(int x=0;x<xExtent;x++) {
         				        		p = (a1*(x-x1)) + (a2*(y-y1)) + (a3*(z-z1));
+        				        		/*if(z==0 && y == 0 && x == 0) {
+        				        			if(p < 0) {
+        				        				System.out.println("i = " + i + " :negative");
+        				        				planeOrientations[i] = "negative";
+        				        			}else if( p > 0){
+        				        				System.out.println("i = " + i + " :positive");
+        				        				planeOrientations[i] = "positive";
+        				        			}
+        				        		}*/
+        				        		
+        				        		
+        				        		
 				        				if(p < tolerance && p > (-tolerance)) {
 				        					if(oldP == -500) {
-	        				        			/*pix = wormImage.getFloat(x, y, z);
+	        				        			pix = wormImage.getFloat(x, y, z);
 	        				        			
 	        				        			resultImage.set(z, newY, i, pix);
 	        				        			//transfer point over to result image if this is the point coordinate
@@ -213,9 +336,9 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		    								        newPty[0] = newY;
 		    								        newPtz[0] = i;
 		    				        				newPtVOI.importCurve(newPtx, newPty, newPtz);
-		    				        			}*/
+		    				        			}
 
-					        					wormImage.set(x, y, z, 100);
+					        					//wormImage.set(x, y, z, 1);
 					        					oldP = p;
 					        					newY++;
 				        					}else {
@@ -225,7 +348,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 				        							
 				        						}else {
 
-		        				        			/*pix = wormImage.getFloat(x, y, z);
+		        				        			pix = wormImage.getFloat(x, y, z);
 		        				        			
 		        				        			resultImage.set(z, newY, i, pix);
 		        				        			//transfer point over to result image if this is the point coordinate
@@ -235,8 +358,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 			    								        newPtz[0] = i;
 			    				        				newPtVOI.importCurve(newPtx, newPty, newPtz);
 			    				        			}
-*/
-						        					wormImage.set(x, y, z, 200);
+
+						        					//wormImage.set(x, y, z, 2);
 						        					oldP = p;
 						        					newY++;
 				        						}
@@ -325,21 +448,166 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         
         
         
+
+        
+		
+		
+        
+        
         
         wormImage.calcMinMax();
         resultImage.calcMinMax();
         
+        System.out.println("aaa");
         
-        
+        //now we need to translate and line up all the slices based on the 0th point coordinate
         //pad image so that we can translate slices appropriately
-        /*float[] padValue = new float[3];
+        float[] padValue = new float[3];
         padValue[0] = 0.0f;
+        int[] marginX = new int[2];
+        int[] marginY = new int[2];
+        int[] marginZ = new int[2];
+        marginX[0] = 50;
+        marginX[1] = 50;
+        marginY[0] = 50;
+        marginY[1] = 50;
         AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(resultImage, marginX, marginY, marginZ );
-        imageMarginsAlgo.setPadValue(padValue);*/
+        imageMarginsAlgo.setPadValue(padValue);
+        imageMarginsAlgo.run();
+        resultImage = imageMarginsAlgo.getSrcImage();
+        
+        
+        System.out.println("bbb");
+        
+        //now extract each slice and translate each slice so that voi point moves to center
+        ModelImage[] slices = new ModelImage[resultImage.getExtents()[2]];
+        ModelImage[] extractedImages;
+        int[] destExtents = new int[2];
+        destExtents[0] = resultImage.getExtents()[0];
+        destExtents[1] = resultImage.getExtents()[1];
+        AlgorithmExtractSlicesVolumes extractSlicesAlgo;
+        AlgorithmTransform algoTrans;
+        int newCenterX = Math.round(resultImage.getExtents()[0]/2); 
+        int newCenterY = Math.round(resultImage.getExtents()[1]/2);
+        VOIs = resultImage.getVOIs();
+        contours = VOIs.VOIAt(0).getCurves();
+        boolean[] checkListExtract = new boolean[resultImage.getExtents()[2]];
+        double tx = 0;
+        double ty = 0;
+        double tZ = 0;
+        float diffX = 0;
+        float diffY = 0;
+        TransMatrix xfrm;
+        float oXres = resultImage.getResolutions(0)[0];
+        float oYres = resultImage.getResolutions(0)[1];
+        int oXdim = resultImage.getExtents()[0];
+        int oYdim = resultImage.getExtents()[1];
+        int[] units = new int[2];
+        units[0] = resultImage.getUnitsOfMeasure(0);
+        units[1] = resultImage.getUnitsOfMeasure(1);
+        
+        System.out.println("ccc");
+        int[] destExtents2 = new int[3];
+        destExtents2[0] = resultImage.getExtents()[0];
+        destExtents2[1] = resultImage.getExtents()[1];
+        destExtents2[2] = resultImage.getExtents()[2];
+
+		
+        ModelImage finalImage = new ModelImage(resultImage.getType(), destExtents2, "final image");
+        finalImage.setResolutions(resultImage.getResolutions(0));
+		fileInfoBases = finalImage.getFileInfo();
+        for (int i = 0; i < fileInfoBases.length; i++) {
+            fileInfoBases[i].setEndianess(resultImage.getFileInfo()[0].getEndianess());
+            fileInfoBases[i].setUnitsOfMeasure(resultImage.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfoBases[i].setResolutions(resultImage.getResolutions(0));
+        } 
+        finalImage.setFileInfo(fileInfoBases);
+        
+
+        
+        System.out.println(fileInfoBases[0].getUnitsOfMeasure().length);
+        AlgorithmFlip flipAlgo;
+ 
+        for(int i=0;i<resultImage.getExtents()[2];i++) {
+        	System.out.println("i is " + i);
+        	for(int k=0;k<resultImage.getExtents()[2];k++) {
+        		if(k==i) {
+        			checkListExtract[k] = true;
+        		}else {
+        			checkListExtract[k] = false;
+        		}
+        	}
+        	extractSlicesAlgo = new AlgorithmExtractSlicesVolumes(resultImage, checkListExtract);
+        	extractSlicesAlgo.run();
+        	extractedImages = extractSlicesAlgo.getExtractedImages();
+        	
+        	newPtVOI = new VOI((short) 0, "point2D.voi", VOI.POINT, -1.0f);
+            newPtVOI.setUID(newPtVOI.hashCode());
+            extractedImages[0].registerVOI(newPtVOI);
+            
+            newPtx[0] = ((VOIPoint)contours.get(i)).exportPoint().X;
+	        newPty[0] = ((VOIPoint)contours.get(i)).exportPoint().Y;
+	        newPtz[0] = 0;
+	        newPtVOI.importCurve(newPtx, newPty, newPtz);
+        	
+        	
+        	//we might have to flip the image...so do it here
+	        if(doFlip[i]) {
+	        	flipAlgo = new AlgorithmFlip(extractedImages[0], AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE_AND_VOI, true);
+	        	
+	        	flipAlgo.run();
+	        }
+	        
+	        
+	        
+	        
+        	//now get the point coordinate
+	        VOIVector VOIs2 = extractedImages[0].getVOIs();
+	        Vector<VOIBase> contours2 = VOIs2.VOIAt(0).getCurves();
+        	point = ((VOIPoint)contours2.get(0)).exportPoint();
+        	diffX = point.X - newCenterX;
+        	diffX = -(diffX);
+        	diffY = point.Y - newCenterY;
+        	diffY = -(diffY);
+        	
+        	tx = diffX * resultImage.getResolutions(0)[0];
+        	ty = diffY * resultImage.getResolutions(0)[1];
+        	
+        	xfrm = new TransMatrix(3);
+        	
+        	xfrm.setTranslate(tx, ty);
+            xfrm.setRotate(0);
+            xfrm.setSkew(0, 0);
+            xfrm.setZoom(1, 1);
+            
+            
+            algoTrans = new AlgorithmTransform(extractedImages[0], xfrm, 1, oXres, oYres, oXdim, oYdim, units, false, false, false, false, null);
+    
+            algoTrans.setUpdateOriginFlag(true);
+            
+            algoTrans.run();
+            
+            slices[i] = algoTrans.getTransformedImage();
+  
+        }
         
         
         
-        //vjf = new ViewJFrameImage(resultImage);
+        
+        AlgorithmConcatMult2Dto3D alg = new AlgorithmConcatMult2Dto3D(slices, finalImage);
+        
+        alg.run();
+        
+        
+        System.out.println(finalImage.getFileInfo()[0].getUnitsOfMeasure().length);
+        finalImage.calcMinMax();
+        System.out.println(finalImage.toString());
+        System.out.println("ccc");
+        vjf = new ViewJFrameImage(finalImage);
+        
+        
+        
+        
         
        
         

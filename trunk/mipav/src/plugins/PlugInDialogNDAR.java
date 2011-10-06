@@ -51,7 +51,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     private JLabel outputDirLabel;
 
-    private JButton addSourceButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
+    private JButton addSourceButton, loadCSVButton, finishButton, removeSourceButton, completeDataElementsButton, outputDirButton;
 
     private JPanel outputDirPanel;
 
@@ -144,8 +144,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     
     private List<IDataStructure> iDataStructures;
     
+    private File csvFile;
     
+    private String[] csvFieldNames;
     
+    private ArrayList<String> tempDirs = new ArrayList<String>();
+    
+    private boolean isFinished = false;
     
     
 
@@ -226,7 +231,20 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
             listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Data Structure(s) "));
 
-        } else if (command.equalsIgnoreCase("RemoveSource")) {
+        }else if(command.equalsIgnoreCase("loadCSV")) {
+        	
+        	JFileChooser chooser = new JFileChooser();
+        	chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+	        chooser.setDialogTitle("Choose gradient file");
+	        int returnValue = chooser.showOpenDialog(this);
+	        if (returnValue == JFileChooser.APPROVE_OPTION) {
+	        	csvFile = chooser.getSelectedFile();
+	        	readCSVFile();
+	        	
+	        }
+        	
+        	
+        }else if (command.equalsIgnoreCase("RemoveSource")) {
             final int selected = sourceTable.getSelectedRow();
             final String key = (String) sourceTable.getValueAt(selected, 0);
             sourceTableModel.removeRow(selected);
@@ -309,13 +327,18 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 outputDirButton.setEnabled(false);
                 addSourceButton.setEnabled(false);
                 completeDataElementsButton.setEnabled(false);
+                loadCSVButton.setEnabled(false); 
+                
+                
+                
+                
 
             }
 
         } else if (command.equalsIgnoreCase("completeDataElements")) {
 
             final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
-            new InfoDialog(this, dsName, true);
+            new InfoDialog(this, dsName, true,true,null);
 
         } else if (command.equalsIgnoreCase("outputDirBrowse")) {
             final JFileChooser chooser = new JFileChooser();
@@ -332,6 +355,68 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
     }
 
+     
+    
+    private boolean readCSVFile() {
+    	 try {
+             String str;
+             FileInputStream fis = new FileInputStream(csvFile);
+             BufferedReader d = new BufferedReader(new InputStreamReader(fis));
+             String dsName = "";
+             String version = "";
+             //first line is data structure name and version
+             str = d.readLine().trim();
+             String[] arr = str.split(",");
+             dsName = arr[0];
+             version = arr[1];
+             if(version.length() == 1) {
+            	 version = "0" + version;
+             }
+             dsName = dsName + version;
+             //second line are the field names
+             str = d.readLine().trim();
+             csvFieldNames = str.split(",");
+             
+             String[] csvParamsArr;
+             while ((str = d.readLine()) != null) {
+
+                 str = str.trim();
+                 arr = str.split(",");
+                 if(arr.length != csvFieldNames.length) {
+                	csvParamsArr = new String[csvFieldNames.length];
+                	for(int i=0;i<arr.length;i++) {
+                		csvParamsArr[i] = arr[i];
+                	}
+                	for(int i=arr.length;i<csvParamsArr.length;i++) {
+                		csvParamsArr[i] = "";
+                	}
+                	 
+                	 
+                 }else {
+                	 csvParamsArr = arr;
+                 }
+
+
+                 
+                 
+                 InfoDialog dlg = new InfoDialog(this, dsName, false,false, csvParamsArr);
+                 
+
+             }
+             fis.close();
+         }
+         catch(Exception e) {
+         	return false;
+         }
+
+         return true;
+    	
+    	
+    }
+    
+    
+    
+    
     /**
      * Sets values based on knob along slider.
      * 
@@ -415,6 +500,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         this.setMinimumSize(this.getSize());
         // this.setSize(new Dimension(610, 537));
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * Build a panel for the zip and metadata file creation log.
@@ -811,6 +905,28 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
 
         printlnToLog("*** Submission package processing complete. ***");
+        
+        
+        
+       //need to delete all tempDirs that were created
+        if(tempDirs.size() > 0) {
+        	for(int i=0;i<tempDirs.size();i++) {
+        		String dir = tempDirs.get(i);
+        		File f = new File(dir);
+        		if(f.exists()) {
+        			String[] list = f.list();
+        			if(list != null) {
+        				for(int k=0;k<list.length;k++) {
+        					File entry = new File(f,list[k]);
+        					entry.delete();
+        				}
+        			}
+        			f.delete();
+        		}
+        	}
+        }
+        
+        isFinished = true;
 
     }
 
@@ -1089,6 +1205,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         addSourceButton.addActionListener(this);
         addSourceButton.setActionCommand("AddSource");
 
+        
+        loadCSVButton = new JButton("Load CSV File");
+        loadCSVButton.setToolTipText("Load CSV File");
+        loadCSVButton.addActionListener(this);
+        loadCSVButton.setActionCommand("loadCSV");
+        
         removeSourceButton = new JButton("Remove Data Structure");
         removeSourceButton.setToolTipText("Remove the selected Data Structure");
         removeSourceButton.addActionListener(this);
@@ -1110,17 +1232,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         completeDataElementsButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         addSourceButton.setEnabled(false);
+        loadCSVButton.setEnabled(false);
         removeSourceButton.setEnabled(false);
         completeDataElementsButton.setEnabled(false);
         finishButton.setEnabled(false);
 
+        
+        
         gbc.gridx = 0;
-        buttonPanel1.add(addSourceButton, gbc);
+        buttonPanel1.add(loadCSVButton, gbc);
         gbc.gridx = 1;
-        buttonPanel1.add(removeSourceButton, gbc);
+        buttonPanel1.add(addSourceButton, gbc);
         gbc.gridx = 2;
-        buttonPanel1.add(completeDataElementsButton, gbc);
+        buttonPanel1.add(removeSourceButton, gbc);
         gbc.gridx = 3;
+        buttonPanel1.add(completeDataElementsButton, gbc);
+        gbc.gridx = 4;
         buttonPanel1.add(finishButton, gbc);
 
         return buttonPanel1;
@@ -1231,8 +1358,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 removeSourceButton.setEnabled(false);
                 return;
             } else {
-                completeDataElementsButton.setEnabled(true);
-                removeSourceButton.setEnabled(true);
+            	if(!isFinished) {
+            		completeDataElementsButton.setEnabled(true);
+            		removeSourceButton.setEnabled(true);
+            	}
             }
 
             previewPanel.removeAll();
@@ -1246,9 +1375,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             }
 
             if (e.getClickCount() == 2) {
-
-                final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
-                new InfoDialog(this, dsName, true);
+            	if(!isFinished) {
+	                final String dsName = (String) sourceTableModel.getValueAt(sourceTable.getSelectedRow(), 0);
+	                new InfoDialog(this, dsName, true,true,null);
+            	}
 
             }
         }
@@ -1711,7 +1841,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 if (selectedRow != -1) {
                     this.dispose();
                     final String dsName = (String) structsModel.getValueAt(selectedRow, 0);
-                    new InfoDialog(owner, dsName, false);
+                    new InfoDialog(owner, dsName, false,true,null);
                 }
             }
 
@@ -1766,6 +1896,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         private boolean addedPreviewImage = false;
         
         private IDataStructure iDataStructure;
+        
+        private boolean setInitialVisible;
+        
+        private String[] csvParams;
 
         /**
          * constructor
@@ -1774,12 +1908,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * @param file
          * @param launchedFromCompletedState
          */
-        public InfoDialog(final PlugInDialogNDAR owner, final String name, final boolean launchedFromInProcessState) {
+        public InfoDialog(final PlugInDialogNDAR owner, final String name, final boolean launchedFromInProcessState, boolean setInitialVisible, String[] csvParams) {
 
             super(owner, true);
 
             this.owner = owner;
             this.launchedFromInProcessState = launchedFromInProcessState;
+            this.setInitialVisible = setInitialVisible;
+            this.csvParams = csvParams;
 
             if (launchedFromInProcessState) {
             	//System.out.println("*** launched from in process: " + name);
@@ -1822,6 +1958,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * init
          */
         private void init() {
+
             setTitle("Edit Data Elements");
             addWindowListener(this);
             mainPanel = new JPanel(new GridBagLayout());
@@ -1922,6 +2059,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     parseForInitLabelsAndComponents(dataStruct, labelsAndComps);
 
                     labelsAndCompsList.add(labelsAndComps);
+                    
+                    if(!setInitialVisible) {
+                    	//this means it was launched via the csv file
+                    	populateFieldsFromCSV(labelsAndComps, csvParams);
+                    	
+                    }
 
                 }
             } catch (final Exception e) {
@@ -1966,8 +2109,334 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             pack();
             MipavUtil.centerInWindow(owner, this);
             this.setMinimumSize(this.getSize());
-            setVisible(true);
+            if(setInitialVisible) {
+            	setVisible(true);
+            }
         }
+        
+        
+        private void populateFieldsFromCSV(TreeMap<JLabel, JComponent> labelsAndComps, String[] csvparams) {
+        	
+
+        	FileInputStream fis = null;
+        	ZipInputStream zin;
+        	if(dataStructureName.startsWith("image")) {
+        		//first check to see if image_file was supplied in the csv
+        		int imageFileIndex = -1;
+        		for(int i=0;i<csvFieldNames.length;i++) {
+               	 if(csvFieldNames[i].trim().equalsIgnoreCase("image_file")) {
+               		imageFileIndex = i;
+               		 break;
+               	 } 
+                }
+        		
+        		
+        		if(imageFileIndex != -1 && !csvParams[imageFileIndex].equals("")) {
+        			
+        			//if image_file is in zip format....first unzip it temporarily
+        			
+        			String imageFile = csvparams[imageFileIndex];
+        			ModelImage srcImage = null;
+        			FileIO fileIO = new FileIO();
+                    fileIO.setQuiet(true);
+                    File file;
+                    boolean isMultifile = false;
+        			if(imageFile.endsWith(".zip")) {
+  
+        				String destName = imageFile.replace("/", File.separator);
+        				destName =  destName.replace("\\", File.separator);
+        				destName = destName.substring(destName.lastIndexOf(File.separator)+1, destName.lastIndexOf("."));
+        				//String destDirName = 
+        				String tempDir = csvFile.getParentFile().getAbsolutePath() + File.separator + destName + "_temp_" + System.currentTimeMillis();
+        				tempDirs.add(tempDir);
+        				File imageZipFile = new File(csvFile.getParentFile().getAbsolutePath() + File.separator + imageFile);
+        				String fileName = "";
+                         try {
+                        	 fis = new FileInputStream(imageZipFile);
+                             zin = new ZipInputStream(new BufferedInputStream(fis));
+                             FileOutputStream fout;
+                             ZipEntry entry;
+                             BufferedOutputStream dest = null;
+                             int BUFFER = 2048;
+                             int count;
+             				 byte[] data = new byte[BUFFER];
+             				 File f;
+             				 //while we are at it, find the first file that does not have a .raw extension, so we can open it
+                             
+             				 while((entry = zin.getNextEntry()) != null) {
+                            	 f = new File(tempDir);
+                            	 if(!f.exists()) {
+                            		 f.mkdir();
+                            	 }
+                            	 if(fileName.equals("")) {
+	                            	 if(!entry.getName().endsWith(".raw")) {
+	                            		 fileName = entry.getName();
+	                            	 }
+                            	 }
+                            	 fout = new FileOutputStream(tempDir + File.separator + entry.getName());
+                            	 dest = new BufferedOutputStream(fout, BUFFER);
+                            	 while ((count = zin.read(data, 0, BUFFER)) != -1) {
+                            		 dest.write(data, 0, count);
+                            	 }
+                             }
+                             dest.flush();
+                        	 dest.close();
+                        	 zin.close();
+
+                         } catch (final Exception e) {
+                             e.printStackTrace();
+                         }
+                         
+                         
+                         //now that everything has been unzipped, open the image from the tempDir
+                         file = new File(tempDir + File.separator + fileName);
+                         isMultifile = true;
+                         srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+                         
+        			}else {
+        				file = new File(csvFile.getParentFile().getAbsolutePath() + File.separator + imageFile);
+        				isMultifile = false;
+        				srcImage = fileIO.readImage(file.getName(), file.getParent() + File.separator, isMultifile, null);
+        			}
+
+                    if (srcImage != null) {
+
+                        //final String labelName = command.substring(command.indexOf("_") + 1, command.length());
+
+                        final Set keySet = labelsAndComps.keySet();
+                        final Iterator iter = keySet.iterator();
+                        while (iter.hasNext()) {
+                            final JLabel l = (JLabel) iter.next();
+                            if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
+                                final JTextField tf = (JTextField) labelsAndComps.get(l);
+                                final String n = file.getName();
+                                tf.setText("Automatically generated JPEG");
+                            } else if (l.getName().equalsIgnoreCase("image_file")) {
+                                final JTextField tf = (JTextField) labelsAndComps.get(l);
+                                tf.setText(file.getName());
+                                tf.setEnabled(false);
+                            }
+
+                        }
+
+                        final int[] extents = new int[] {srcImage.getExtents()[0], srcImage.getExtents()[1]};
+
+                        previewImg = new ViewJComponentPreviewImage(srcImage, extents, owner);
+                        int slice = 0;
+                        if ( !srcImage.is2DImage()) {
+                            slice = (srcImage.getExtents()[2] / 2);
+                        }
+                        previewImg.createImg(slice);
+
+                        previewPanel.removeAll();
+                        previewPanel.repaint();
+
+                        previewPanel.add(previewImg);
+
+                        addedPreviewImage = true;
+
+                        if (launchedFromInProcessState) {
+                            final int selectedRow = sourceTable.getSelectedRow();
+                            previewImages.set(selectedRow, previewImg);
+                            previewImages.get(selectedRow).setSliceBrightness(brightness, contrast);
+                            imageFiles.set(selectedRow, file);
+                            multifiles.set(selectedRow, new Boolean(isMultifile));
+
+                        } else {
+                            final int size = previewImages.size();
+                            previewImages.set(size - 1, previewImg);
+                            previewImages.get(size - 1).setSliceBrightness(brightness, contrast);
+                            imageFiles.set(size - 1, file);
+                            multifiles.set(size - 1, new Boolean(isMultifile));
+                        }
+
+                        previewPanel.validate();
+                        previewPanel.repaint();
+
+                        //need to determine if there are any entries in cvs that has things like image extents or resolutions
+                        //that are different than the ones determined by header....if there are, then prompt a warning
+                        
+                        int response = determineImageHeaderDescrepencies(srcImage);
+                        
+                        if(response == 1) {
+                        	populateFields(labelsAndComps, srcImage);
+                        	
+                        	String key;
+                            String value;
+                            for(int i=0;i<csvFieldNames.length;i++) {
+                           
+                     	   		key = csvFieldNames[i];
+         	                   	value = csvParams[i];
+         	                   	if(!key.equals("image_file")) {      
+         	                   		final Set keySet2 = labelsAndComps.keySet();
+         	                        final Iterator iter2 = keySet2.iterator();
+         	                        //System.out.println();
+         	                        while (iter2.hasNext()) {
+         	                            final JLabel l = (JLabel) iter2.next();
+         	                            final Component comp = labelsAndComps.get(l);
+         	                            final String name = comp.getName();
+         	                            //System.out.println("--- " + name);
+         	                            if (name.equalsIgnoreCase(key)) {
+         	                                if (comp instanceof JTextField) {
+         	                                    final JTextField t = (JTextField) comp;
+         	                                    t.setText(value);
+         	
+         	                                } else if (comp instanceof JComboBox) {
+         	                                    final JComboBox c = (JComboBox) comp;
+         	
+         	                                    for (int k = 0; k < c.getItemCount(); k++) {
+         	                                        final String item = (String) c.getItemAt(k);
+         	                                        if (value.equalsIgnoreCase(item)) {
+         	                                            c.setSelectedIndex(k);
+         	                                        }
+         	                                    }
+         	                                }
+         	                                break;
+         	                            }
+         	                        }
+         		                }
+                            }
+                        	
+                        }else {
+                        	
+                        	String key;
+                            String value;
+                            for(int i=0;i<csvFieldNames.length;i++) {
+                           
+                     	   		key = csvFieldNames[i];
+         	                   	value = csvParams[i];
+         	                   	if(!key.equals("image_file")) {      
+         	                   		final Set keySet2 = labelsAndComps.keySet();
+         	                        final Iterator iter2 = keySet2.iterator();
+         	                        //System.out.println();
+         	                        while (iter2.hasNext()) {
+         	                            final JLabel l = (JLabel) iter2.next();
+         	                            final Component comp = labelsAndComps.get(l);
+         	                            final String name = comp.getName();
+         	                            //System.out.println("--- " + name);
+         	                            if (name.equalsIgnoreCase(key)) {
+         	                                if (comp instanceof JTextField) {
+         	                                    final JTextField t = (JTextField) comp;
+         	                                    t.setText(value);
+         	
+         	                                } else if (comp instanceof JComboBox) {
+         	                                    final JComboBox c = (JComboBox) comp;
+         	
+         	                                    for (int k = 0; k < c.getItemCount(); k++) {
+         	                                        final String item = (String) c.getItemAt(k);
+         	                                        if (value.equalsIgnoreCase(item)) {
+         	                                            c.setSelectedIndex(k);
+         	                                        }
+         	                                    }
+         	                                }
+         	                                break;
+         	                            }
+         	                        }
+         		                }
+                            }
+                            
+                            populateFields(labelsAndComps, srcImage);
+                        	
+                        }
+                        
+                        
+                        
+
+                        srcImage.disposeLocal();
+                        srcImage = null;
+
+                    }
+
+        		}
+        		
+        		
+        		
+        		
+        		
+        	       
+        		
+        		
+        		
+
+        	}else {
+        		//this means its not an imaging data structure
+        		
+
+                String key;
+                String value;
+                for(int i=0;i<csvFieldNames.length;i++) {
+               
+                	key = csvFieldNames[i];
+                	value = csvParams[i];
+                	
+                	 final Set keySet2 = labelsAndComps.keySet();
+                     final Iterator iter2 = keySet2.iterator();
+                     //System.out.println();
+                     while (iter2.hasNext()) {
+                         final JLabel l = (JLabel) iter2.next();
+                         final Component comp = labelsAndComps.get(l);
+                         final String name = comp.getName();
+                         //System.out.println("--- " + name);
+                         if (name.equalsIgnoreCase(key)) {
+                             if (comp instanceof JTextField) {
+                                 final JTextField t = (JTextField) comp;
+                                 t.setText(value);
+
+                             } else if (comp instanceof JComboBox) {
+                                 final JComboBox c = (JComboBox) comp;
+
+                                 for (int k = 0; k < c.getItemCount(); k++) {
+                                     final String item = (String) c.getItemAt(k);
+                                     if (value.equalsIgnoreCase(item)) {
+                                         c.setSelectedIndex(k);
+                                     }
+                                 }
+                             }
+                             break;
+                         }
+                     }
+                	
+                }
+
+        	}
+        	
+        	
+        	
+        	
+        	
+        	
+        	
+        	
+        	
+        	
+        	
+        	//need to validate and then close window
+        	ArrayList<String> errs;
+            final StringBuffer errors = new StringBuffer();
+        	 errs = validateFields();
+
+             boolean isComplete = true;
+             if (errs.size() != 0) {
+                 for (int i = 0; i < errs.size(); i++) {
+                     errors.append(" - " + errs.get(i) + "\n");
+                 }
+                 //MipavUtil.displayWarning(errors.toString());
+                 isComplete = false;
+             }
+
+             complete(labelsAndComps, dataStructureName, isComplete);
+
+             enableDisableFinishButton();
+             dispose();
+        	
+        	
+        	
+        	
+        	
+        	
+        }
+        
+        
 
         /**
          * displays the labels and components
@@ -2337,6 +2806,189 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 }
             }
         }
+        
+        public int determineImageHeaderDescrepencies(ModelImage img) {
+        	 final float[] res = img.getResolutions(0);
+             final int[] units = img.getUnitsOfMeasure();
+             final int exts[] = img.getExtents();
+             final int nDims = img.getNDims();
+             final int modality = img.getFileInfo(0).getModality();
+             final String modalityString = FileInfoBase.getModalityStr(modality);
+             final float sliceThickness = img.getFileInfo(0).getSliceThickness();
+             final int orient = img.getFileInfo(0).getImageOrientation();
+             final String orientation = FileInfoBase.getImageOrientationStr(orient);
+             
+             ArrayList<String> csvFList = new ArrayList<String>();
+             ArrayList<String> csvPList = new ArrayList<String>();
+             ArrayList<String> headerList = new ArrayList<String>();
+             
+             
+             for(int i=0;i<csvFieldNames.length;i++) {
+
+            	 
+            	 if(!csvParams[i].trim().equals("")) {
+
+	            	 if(csvFieldNames[i].equalsIgnoreCase("image_num_dimensions")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(nDims))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(nDims));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_extent1")) {
+	
+	            		 if(!csvParams[i].trim().equals(String.valueOf(exts[0]))) {
+
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(exts[0]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_extent2")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(exts[1]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(exts[1]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_extent3")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(exts[2]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(exts[2]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_extent4")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(exts[3]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(exts[3]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_extent5")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(exts[4]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(exts[4]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_unit1")) {
+	            		 if(!csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[0]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[0]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_unit2")) {
+	            		 if(!csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[1]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[1]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_unit3")) {
+	            		 if(!csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[2]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[2]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_unit4")) {
+	            		 if(!csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[3]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[3]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_unit5")) {
+	            		 if(!csvParams[i].trim().equals(FileInfoBase.getUnitsOfMeasureStr(units[4]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(FileInfoBase.getUnitsOfMeasureStr(units[4]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_resolution1")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(res[0]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(res[0]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_resolution2")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(res[1]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(res[1]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_resolution3")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(res[2]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(res[2]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_resolution4")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(res[3]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(res[3]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_resolution5")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(res[4]))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(res[4]));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_modality")) {
+	            		 if(!csvParams[i].trim().equals(modalityString)) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(modalityString);
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_slice_thickness")) {
+	            		 if(!csvParams[i].trim().equals(String.valueOf(sliceThickness))) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(String.valueOf(sliceThickness));
+	            		 }
+	            	 }else  if(csvFieldNames[i].equalsIgnoreCase("image_orientation")) {
+	            		 if(!csvParams[i].trim().equals(orientation)) {
+	            			 csvFList.add(csvFieldNames[i]);
+	            			 csvPList.add(csvParams[i]);
+	            			 headerList.add(orientation);
+	            		 }
+	            	 }
+	             }
+             }
+             
+             
+             
+             if(csvFList.size() > 0) {
+            	 
+            	 String message = "Certain image info in the csv do not match with info obtained from header : \n";
+            	 for(int i=0;i<csvFList.size();i++) {
+            		 String fieldName = csvFList.get(i);
+            		 String param = csvPList.get(i);
+            		 String headerInfo = headerList.get(i);
+            		 
+            		 message = message + fieldName + " : " + "      csv:" + param + "     header:" + headerInfo + "\n";
+            		 
+            	 }
+            	 //message = message + "Press Yes to use CSV info.     Press No to use Header info";
+            	 UIManager.put("OptionPane.yesButtonText", "Use CSV");  
+            	 UIManager.put("OptionPane.noButtonText", "Use Image Header"); 
+            	 int response = JOptionPane.showConfirmDialog(null, message, "", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+            	 //Object[] options = {"ok button text"};  
+            	 //int response = JOptionPane.showOptionDialog(null, message, "", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE,null,options,options[0]);
+            	 
+            	 UIManager.put("OptionPane.yesButtonText", "Yes");  
+            	 UIManager.put("OptionPane.noButtonText", "No"); 
+            	 
+            	  if (response == JOptionPane.YES_OPTION) {
+            		  return 1;
+            	  }else {
+            		  return 2;
+            	  }
+            	  
+            	  
+ 
+             }else {
+            	 return 0;
+             }
+        	
+        }
+        
+        
+        
+        
 
         /**
          * prepopulates some of the fields with info from image header
@@ -2458,7 +3110,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         public void actionPerformed(final ActionEvent e) {
             final String command = e.getActionCommand();
             ArrayList<String> errs;
-            final StringBuffer errors = new StringBuffer();
+            StringBuffer errors = new StringBuffer();
             ;
             if (command.equalsIgnoreCase("ok3")) {
                 errs = validateFields();
@@ -3211,6 +3863,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 
                 
                 addSourceButton.setEnabled(true);
+                loadCSVButton.setEnabled(true);
             } catch (final Exception e) {
                 e.printStackTrace();
                 if (progressBar != null) {
