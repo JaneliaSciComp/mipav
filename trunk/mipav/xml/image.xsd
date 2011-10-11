@@ -350,9 +350,25 @@
 						</xs:sequence>
 					</xs:complexType>
 				</xs:element>
-			</xs:sequence>
+				<xs:element name="DTIParameters" minOccurs="0" maxOccurs="unbounded">
+	               <xs:complexType>
+						<xs:sequence>
+							<xs:element name="volumeNum" type="xs:string" minOccurs="1" maxOccurs="1"/>
+							<xs:element name="bValues" type="xs:string" minOccurs="0" maxOccurs="1"/>
+							<xs:element name="VolumeGradients" minOccurs="0">
+								<xs:complexType>
+									<xs:sequence>
+											<xs:element name="gradient" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+													</xs:sequence>
+												</xs:complexType>
+										</xs:element>
+    							</xs:sequence>
+    					</xs:complexType>
+    				</xs:element>
+				</xs:sequence>
 			<xs:attribute name="filename" type="xs:string" use="optional"/>
 			<xs:attribute name="nDimensions" type="xs:int" use="required"/>
 		</xs:complexType>
 	</xs:element>
+	         
 </xs:schema>
