@@ -552,7 +552,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     
     public Vector3f getProtractorCommonVertex() {
     	if (voiProtractor != null) {
-    	    return voiProtractor.get(0);
+    	    return voiProtractor.get(1);
     	}
     	else {
     		return null;
