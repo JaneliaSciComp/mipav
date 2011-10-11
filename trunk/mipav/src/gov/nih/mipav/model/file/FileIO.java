@@ -1485,7 +1485,8 @@ public class FileIO {
 
         if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
                 (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
-            if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {                                     
+            if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
+                //For Siemen's DWI 3D Mosaic Images
                 if (image.is3DImage()) {
                     int numVolumes = image.getExtents()[2];
                     dtiparams = new DTIParameters(numVolumes);
@@ -1503,19 +1504,22 @@ public class FileIO {
                             flBvalueArray[i] = Float.parseFloat(siemenBvalue);
     
                             // Get Gradients from Siemens Tags
-                            String siemenGrads = (String) tag3dTable.getValue("0019,100E");
-                            siemenGrads = siemenGrads.trim();
-                            String grads = siemenGrads.replace('\\', '\t');
-                            final String[] arr2 = grads.split("\t");
-                            flGradientArray[i][0] = Float.valueOf(arr2[0]);
-                            flGradientArray[i][1] = Float.valueOf(arr2[1]);
-                            flGradientArray[i][2] = Float.valueOf(arr2[2]);
-                    }
+                            if ((String) tagTable.getValue("0019,100E") != null){
+                                String siemenGrads = (String) tag3dTable.getValue("0019,100E");
+                                siemenGrads = siemenGrads.trim();
+                                String grads = siemenGrads.replace('\\', '\t');
+                                final String[] arr2 = grads.split("\t");
+                                flGradientArray[i][0] = Float.valueOf(arr2[0]);
+                                flGradientArray[i][1] = Float.valueOf(arr2[1]);
+                                flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                            }
+                        }
                         dtiparams.setbValues(flBvalueArray);
                         dtiparams.setGradients(flGradientArray);
                     }
 
                 } else if (image.is4DImage()) {
+                    //For Siemen's DWI 4D Volume Images
                      int numVolumes = image.getExtents()[3];
                      dtiparams = new DTIParameters(numVolumes);
                      dtiparams.setNumVolumes(numVolumes);
@@ -1533,27 +1537,94 @@ public class FileIO {
                             flBvalueArray[i] = Float.parseFloat(siemenBvalue);
     
                             // Get Gradients from Siemens Tags
-                            String siemenGrads = (String) tag4dTable.getValue("0019,100E");
-                            siemenGrads = siemenGrads.trim();
-                            String grads = siemenGrads.replace('\\', '\t');
-                            final String[] arr2 = grads.split("\t");
-                            flGradientArray[i][0] = Float.valueOf(arr2[0]);
-                            flGradientArray[i][1] = Float.valueOf(arr2[1]);
-                            flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                            if ((String) tagTable.getValue("0019,100E") != null){
+                                String siemenGrads = (String) tag4dTable.getValue("0019,100E");
+                                siemenGrads = siemenGrads.trim();
+                                String grads = siemenGrads.replace('\\', '\t');
+                                final String[] arr2 = grads.split("\t");
+                                flGradientArray[i][0] = Float.valueOf(arr2[0]);
+                                flGradientArray[i][1] = Float.valueOf(arr2[1]);
+                                flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                            }
                         }
                         
                     dtiparams.setbValues(flBvalueArray);
                     dtiparams.setGradients(flGradientArray);
 
                 }
-                }
+              }
             }
-
+            else if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+                if (image.is3DImage()) {
+                    if ((String) tagTable.getValue("2001,1018") != null){
+                    String zSlices = (String) tagTable.getValue("2001,1018");
+                    int numZSlices = Integer.parseInt(zSlices);
+                    if (zSlices != null){
+                        //Calculating paramters for conversion of 3d to 4d Philips Dicom
+                        float[] resols = new float[4];
+                        int[] units = new int[4];
+                        for (int i = 0; i < 3; i++) {
+                            resols[i] = image.getFileInfo(0).getResolutions()[i];
+                            units[i] = image.getFileInfo(0).getUnitsOfMeasure()[i];
+                        }
+                        float resols3 = resols[2];
+                        float resols4 = 1.0f;
+                        int units3 = units[2];
+                        int units4 = units[2];
+                        
+                        //Convert 3D Philips Dicom to 4D Dicom based on the number of volumes listed in a private tag
+                        String imageName = image.getImageName();
+                        AlgorithmConvert3Dto4D convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, numZSlices, resols3, resols4, units3, units4);
+                        convert3Dto4DAlgo.run();
+                        image = convert3Dto4DAlgo.getResultImage();
+                        image.setImageName(imageName + "_4D");
+                    }
+                        
+                    if (image.is4DImage()){
+                        //For Philip's DWI 4D DICOM
+                        int numVolumes = image.getExtents()[3];
+                    
+                        dtiparams = new DTIParameters(numVolumes);
+                        dtiparams.setNumVolumes(numVolumes);
+                    
+                        if ((String) tagTable.getValue("0018,9087") != null){
+                            float [] flBvalueArray = new float[numVolumes];
+                            float[][] flGradientArray = new float[numVolumes][3];
+       
+                            for (int i = 0; i < numVolumes; i++) {
+                               FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i*image.getExtents()[2]);
+                               
+                               // Get Bvalues from Philips Tags
+                               FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
+                               String philipsBvalue = (String) tag4dTable.getValue("0018,9087");
+                               flBvalueArray[i] = Float.parseFloat(philipsBvalue);
+       
+                               // Get Gradients from Philips Tags
+                               if ((String) tagTable.getValue("0018,9089") != null){
+                               String philipsGrads = (String) tag4dTable.getValue("0018,9089");
+                               philipsGrads = philipsGrads.trim();
+                               String grads = philipsGrads.replace('\\', '\t');
+                               final String[] arr2 = grads.split("\t");
+                               flGradientArray[i][0] = Float.valueOf(arr2[0]);
+                               flGradientArray[i][1] = Float.valueOf(arr2[1]);
+                               flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                               }
+                           }
+                           
+                           dtiparams.setbValues(flBvalueArray);
+                           dtiparams.setGradients(flGradientArray);
+    
+                           }
+                    }
+                }                
+            }
         }
+      }
         
         if (dtiparams != null){
             image.setDTIParameters(dtiparams);
         }
+        
         return image;
     }
 
