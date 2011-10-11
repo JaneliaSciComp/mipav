@@ -7,9 +7,9 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * This class is fundamental to the VOI class in which points are stored that describe a Protractor VOI. The points are
- * 3D and are floats (see Vector3f). It extends VOIBase and therefore it extends Vector. Point 0 is the common vertex of
- * the 2 intersecting lines, point 1 is the outer point of the initially shorter line, and point 2 is the outer point of
- * the intially longer line. This kind of VOI is used to measure angles.
+ * 3D and are floats (see Vector3f). It extends VOIBase and therefore it extends Vector. Point 1 is the common vertex of
+ * the 2 intersecting lines, point 0 is the outer point of the initially shorter line, and point 2 is the outer point of
+ * the initially longer line. This kind of VOI is used to measure angles.
  *
  * @see  VOIBase
  * @see  VOILine
