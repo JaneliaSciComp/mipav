@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.file;
 
+import java.io.Serializable;
+
 
 /**
  * Object to store parameters in the ModelImage acquired from DWI image file or ImageInfo DTI tab
@@ -9,7 +11,7 @@ package gov.nih.mipav.model.file;
  * @see
  */
 
-public class DTIParameters {
+public class DTIParameters implements Serializable {
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
