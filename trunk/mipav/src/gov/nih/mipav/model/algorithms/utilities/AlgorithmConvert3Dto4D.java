@@ -194,6 +194,9 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                             Short.toString((short) (t + 1)), Short.toString((short) (t + 1)).length()); // instance
                                                                                                         // number
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(j));
+                    if (newTagTable.getValue("2001,1018") != null){
+                        ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("2001,1018", null);        
+                    }
                     sliceCounter++;
 
                 }
