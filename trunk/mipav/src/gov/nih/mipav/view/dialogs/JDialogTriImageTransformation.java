@@ -12,6 +12,8 @@ import java.awt.event.*;
 
 import javax.swing.*;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
  * Dialog to transform an image in the tri planar view based on a bounding box.
@@ -48,6 +50,16 @@ public class JDialogTriImageTransformation extends JDialogBase {
 
     /** DOCUMENT ME! */
     private double thetaXY, thetaXZ, thetaZY; // rotation angles in degrees, the negative of these
+    
+    private ButtonGroup centerGroup;
+    
+    private JRadioButton crosshairButton;
+    
+    private JRadioButton protractorCommonVertexButton;
+    
+    private JRadioButton imageCenterButton;
+    
+    private JRadioButton originButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -194,6 +206,51 @@ public class JDialogTriImageTransformation extends JDialogBase {
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         interpolationPanel.add(comboBoxInterp, gbc);
+        
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setBorder(buildTitledBorder("Choose rotation center"));
+        
+        centerGroup = new ButtonGroup();
+        crosshairButton = new JRadioButton("Crosshair position", true);
+        crosshairButton.setFont(serif12);
+        crosshairButton.setForeground(Color.black);
+        centerGroup.add(crosshairButton);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        centerPanel.add(crosshairButton, gbc);
+        
+        protractorCommonVertexButton = new JRadioButton("Protractor common vertex", false);
+        protractorCommonVertexButton.setFont(serif12);
+        protractorCommonVertexButton.setForeground(Color.black);
+        centerGroup.add(protractorCommonVertexButton);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        centerPanel.add(protractorCommonVertexButton, gbc);
+        
+        imageCenterButton = new JRadioButton("Image center", false);
+        imageCenterButton.setFont(serif12);
+        imageCenterButton.setForeground(Color.black);
+        centerGroup.add(imageCenterButton);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        centerPanel.add(imageCenterButton, gbc);
+        
+        originButton = new JRadioButton("Image origin", false);
+        originButton.setFont(serif12);
+        originButton.setForeground(Color.black);
+        centerGroup.add(originButton);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        centerPanel.add(originButton, gbc);
 
         buildOKButton();
         OKButton.setText("Apply");
@@ -208,6 +265,8 @@ public class JDialogTriImageTransformation extends JDialogBase {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(interpolationPanel, gbc);
         gbc.gridy = 1;
+        mainPanel.add(centerPanel, gbc);
+        gbc.gridy = 2;
 
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -257,6 +316,51 @@ public class JDialogTriImageTransformation extends JDialogBase {
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         interpolationPanel.add(comboBoxInterp, gbc);
+        
+        JPanel centerPanel = new JPanel(new GridBagLayout());
+        centerPanel.setBorder(buildTitledBorder("Choose rotation center"));
+        
+        centerGroup = new ButtonGroup();
+        crosshairButton = new JRadioButton("Crosshair position", true);
+        crosshairButton.setFont(serif12);
+        crosshairButton.setForeground(Color.black);
+        centerGroup.add(crosshairButton);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        centerPanel.add(crosshairButton, gbc);
+        
+        protractorCommonVertexButton = new JRadioButton("Protractor common vertex", false);
+        protractorCommonVertexButton.setFont(serif12);
+        protractorCommonVertexButton.setForeground(Color.black);
+        centerGroup.add(protractorCommonVertexButton);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        centerPanel.add(protractorCommonVertexButton, gbc);
+        
+        imageCenterButton = new JRadioButton("Image center", false);
+        imageCenterButton.setFont(serif12);
+        imageCenterButton.setForeground(Color.black);
+        centerGroup.add(imageCenterButton);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        centerPanel.add(imageCenterButton, gbc);
+        
+        originButton = new JRadioButton("Image origin", false);
+        originButton.setFont(serif12);
+        originButton.setForeground(Color.black);
+        centerGroup.add(originButton);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        centerPanel.add(originButton, gbc);
 
         buildOKButton();
         OKButton.setText("Apply");
@@ -273,6 +377,8 @@ public class JDialogTriImageTransformation extends JDialogBase {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(interpolationPanel, gbc);
         gbc.gridy = 1;
+        mainPanel.add(centerPanel, gbc);
+        gbc.gridy = 2;
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         getContentPane().add(mainPanel);
@@ -292,6 +398,12 @@ public class JDialogTriImageTransformation extends JDialogBase {
             ModelImage clonedImage = null;
             float[] imgBuffer;
             int bufferSize;
+            Vector3f commonVertexXY;
+            Vector3f commonVertexXZ;
+            Vector3f commonVertexZY;
+            double transX = centerX;
+            double transY = centerY;
+            double transZ = centerZ;
 
             progressBar = new ViewJProgressBar("Preparing image ...", "Transforming image ...", 0, 100, false, null,
                                                null);
@@ -328,24 +440,33 @@ public class JDialogTriImageTransformation extends JDialogBase {
 
             if (selectedImage == ViewJComponentBase.IMAGE_A) {
                 thetaXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_A).getTheta();
+                commonVertexXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_A).getProtractorCommonVertex();
                 thetaXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_A).getTheta();
+                commonVertexXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_A).getProtractorCommonVertex();
                 thetaZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A).getTheta();
+                commonVertexZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A).getProtractorCommonVertex();
 
                 frame.getTriImage(ViewJFrameTriImage.AXIAL_A).clearProtractor();
                 frame.getTriImage(ViewJFrameTriImage.CORONAL_A).clearProtractor();
                 frame.getTriImage(ViewJFrameTriImage.SAGITTAL_A).clearProtractor();
             } else if (selectedImage == ViewJComponentBase.IMAGE_B) {
                 thetaXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_B).getTheta();
+                commonVertexXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_B).getProtractorCommonVertex();
                 thetaXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_B).getTheta();
+                commonVertexXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_B).getProtractorCommonVertex();
                 thetaZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B).getTheta();
+                commonVertexZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B).getProtractorCommonVertex();
 
                 frame.getTriImage(ViewJFrameTriImage.AXIAL_B).clearProtractor();
                 frame.getTriImage(ViewJFrameTriImage.CORONAL_B).clearProtractor();
                 frame.getTriImage(ViewJFrameTriImage.SAGITTAL_B).clearProtractor();
             } else {
                 thetaXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_AB).getTheta();
+                commonVertexXY = frame.getTriImage(ViewJFrameTriImage.AXIAL_AB).getProtractorCommonVertex();
                 thetaXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_AB).getTheta();
+                commonVertexXZ = frame.getTriImage(ViewJFrameTriImage.CORONAL_AB).getProtractorCommonVertex();
                 thetaZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB).getTheta();
+                commonVertexZY = frame.getTriImage(ViewJFrameTriImage.SAGITTAL_AB).getProtractorCommonVertex();
 
                 frame.getTriImage(ViewJFrameTriImage.AXIAL_AB).clearProtractor();
                 frame.getTriImage(ViewJFrameTriImage.CORONAL_AB).clearProtractor();
@@ -353,10 +474,43 @@ public class JDialogTriImageTransformation extends JDialogBase {
             }
 
             TransMatrix xfrm = new TransMatrix(4);
+            
+            if (crosshairButton.isSelected()) {
+            	transX = centerX;
+            	transY = centerY;
+            	transZ = centerZ;
+            }
+            else if (protractorCommonVertexButton.isSelected()) {
+            	if ((commonVertexXY != null) && (thetaXY != 0.0)) {
+            		transX = commonVertexXY.X;
+            		transY = commonVertexXY.Y;
+            		transZ = commonVertexXY.Z;
+            	}
+            	else if ((commonVertexXZ != null) && (thetaXZ != 0.0)) {
+            	    transX = commonVertexXZ.X;
+            	    transY = commonVertexXZ.Y;
+            	    transZ = commonVertexXZ.Z;
+            	}
+            	else if ((commonVertexZY != null) && (thetaZY != 0.0)) {
+            		transX = commonVertexZY.X;
+            	    transY = commonVertexZY.Y;
+            	    transZ = commonVertexZY.Z;	
+            	}
+            }
+            else if (imageCenterButton.isSelected()) {
+            	transX = (image.getExtents()[0] - 1.0)/2.0;
+            	transY = (image.getExtents()[1] - 1.0)/2.0;
+            	transZ = (image.getExtents()[2] - 1.0)/2.0;
+            }
+            else if (originButton.isSelected()) {
+            	transX = 0.0;
+            	transY = 0.0;
+            	transZ = 0.0;
+            }
 
-            xfrm.setTranslate(centerX * image.getFileInfo()[0].getResolutions()[0],
-                              centerY * image.getFileInfo()[0].getResolutions()[1],
-                              centerZ * image.getFileInfo()[0].getResolutions()[2]);
+            xfrm.setTranslate(transX * image.getFileInfo()[0].getResolutions()[0],
+                              transY * image.getFileInfo()[0].getResolutions()[1],
+                              transZ * image.getFileInfo()[0].getResolutions()[2]);
 
             int imageOrient = imageA.getFileInfo(0).getImageOrientation();
 
@@ -370,9 +524,9 @@ public class JDialogTriImageTransformation extends JDialogBase {
                 xfrm.setRotate(thetaZY, thetaXZ, -thetaXY, TransMatrix.DEGREES);
             }
 
-            xfrm.setTranslate(-(double) centerX * image.getFileInfo()[0].getResolutions()[0],
-                              -(double) centerY * image.getFileInfo()[0].getResolutions()[1],
-                              -(double) centerZ * image.getFileInfo()[0].getResolutions()[2]);
+            xfrm.setTranslate(-(double) transX * image.getFileInfo()[0].getResolutions()[0],
+                              -(double) transY * image.getFileInfo()[0].getResolutions()[1],
+                              -(double) transZ * image.getFileInfo()[0].getResolutions()[2]);
 
             System.gc();
             imgBuffer = new float[bufferSize];
