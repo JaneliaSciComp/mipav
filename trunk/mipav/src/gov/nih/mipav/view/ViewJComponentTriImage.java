@@ -549,6 +549,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         }
         return 0;
     }
+    
+    public Vector3f getProtractorCommonVertex() {
+    	if (voiProtractor != null) {
+    	    return voiProtractor.get(0);
+    	}
+    	else {
+    		return null;
+    	}
+    }
 
     /**
      * Translate a point on the x-y tri-image component into image volume space. Assumes input parameters have zoom and
