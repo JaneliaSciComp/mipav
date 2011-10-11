@@ -358,7 +358,16 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     private JTextField osTextField;
     
     /** DOCUMENT ME! */
-    private JCheckBox isDWICellEditBox; 
+    private JCheckBox isDWICellEditBox;
+    
+    /** DOCUMENT ME! */
+    private JCheckBox negXCheckBox;
+    
+    /** DOCUMENT ME! */
+    private JCheckBox negYCheckBox;
+    
+    /** DOCUMENT ME! */
+    private JCheckBox negZCheckBox;
        
     /** DOCUMENT ME! */
     private JCheckBox isJonesBox; 
@@ -538,48 +547,88 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             }
           if (dtiparams != null){                   
                        // Populate Gradient column
-                       if (srcTableModel.getValueAt(0, 1) != ""){
+              if (srcTableModel.getRowCount() != 0){
+                  if (srcTableModel.getValueAt(0, 1) != ""){
+                      float [] flBvalueArr= new float[numVolumes]; 
+                      for (int i = 0; i < numVolumes; i++) {      
+                          flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                          }
+                     dtiparams.setbValues(flBvalueArr);
+                  }
+                  
+                  if (srcTableModel.getValueAt(0, 3) != ""){
+                      float[][] flGradArr = new float[numVolumes][3];
+                      for (int i = 0; i < numVolumes; i++) {
+                          if (srcTableModel.getValueAt(i, 2) != ""){
+                              flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                              }
+                              else{
+                                  flGradArr[i][0]= (float) 0.0;
+                                  }
+                          if (srcTableModel.getValueAt(i, 3) != ""){
+                              flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                              }
+                              else{
+                                  flGradArr[i][1]= (float) 0.0;
+                                  }
+                          if (srcTableModel.getValueAt(i, 4) != ""){
+                              flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                              }
+                              else{
+                                  flGradArr[i][1]= (float) 0.0;
+                              }
+                          }
+                  
+                      dtiparams.setGradients(flGradArr);
+                  }
+                  dtiparams.setNumVolumes(numVolumes);
+                  image.setDTIParameters(dtiparams);  
+              }
+         }
+          else if (dtiparams == null){
 
-                              float [] flBvalueArr= new float[numVolumes]; 
-                              for (int i = 0; i < numVolumes; i++) {                     
-                                  flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
-                          }
-                              dtiparams.setbValues(flBvalueArr);    
-                       }
-                       if (srcTableModel.getValueAt(0, 3) != ""){
-                              float[][] flGradArr = new float[numVolumes][3];
-                              for (int i = 0; i < numVolumes; i++) {
-                                  flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
-                                  flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
-                                  flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
-                          }
-                       
-                              dtiparams.setGradients(flGradArr);
-                       }       
-                              dtiparams.setNumVolumes(numVolumes);
-                   }
-          else if (dtiparams == null){                 
+              System.out.println("gradcreatetableworking");
                   if (srcTableModel.getRowCount() != 0){
+                      newDTIparams = new DTIParameters(numVolumes);
                       if (srcTableModel.getValueAt(0, 1) != ""){
                           float [] flBvalueArr= new float[numVolumes]; 
                           for (int i = 0; i < numVolumes; i++) {      
                               flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
                               }
+                          System.out.println("settingbvals");
                          newDTIparams.setbValues(flBvalueArr);
                       }
                       
                       if (srcTableModel.getValueAt(0, 3) != ""){
                           float[][] flGradArr = new float[numVolumes][3];
                           for (int i = 0; i < numVolumes; i++) {
-                              flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
-                              flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
-                              flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                              if (srcTableModel.getValueAt(i, 2) != ""){
+                                  flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                  }
+                                  else{
+                                      flGradArr[i][0]= (float) 0.0;
+                                  }
+                              if (srcTableModel.getValueAt(i, 3) != ""){
+                                  flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                  }
+                                  else{
+                                      flGradArr[i][1]= (float) 0.0;
+                                  }
+                              if (srcTableModel.getValueAt(i, 4) != ""){
+                                  flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                  }
+                                  else{
+                                      flGradArr[i][1]= (float) 0.0;
+                                  }
                               }
                       
                       newDTIparams.setGradients(flGradArr);
                       }
                       newDTIparams.setNumVolumes(numVolumes);
+                      image.setDTIParameters(newDTIparams);  
                   }
+                  
+              
               
               
           }
@@ -876,6 +925,43 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         
         else if (command.equals("gradTable")) {
             gradientTableCreator();
+        }
+        
+        else if (command.equals("NegX")){
+            srcBvalGradTable.setBackground(Color.white);
+            srcBvalGradTable.setEnabled(true);          
+             for (int i = 0; i < numVolumes; i++) {
+                 if (srcTableModel.getValueAt(i, 2) != ""){
+                 // Add empty rows based on number of volumes
+                 float negX = (Float.valueOf((String)srcTableModel.getValueAt(i,2))*-1)+0;
+                 srcTableModel.setValueAt(String.valueOf(negX),i, 2);
+             }
+            }
+            
+        }
+        else if (command.equals("NegY")){
+            srcBvalGradTable.setBackground(Color.white);
+            srcBvalGradTable.setEnabled(true);
+             for (int i = 0; i < numVolumes; i++) {
+                 if (srcTableModel.getValueAt(i, 3) != ""){
+                 // Add empty rows based on number of volumes
+                 float negX = (Float.valueOf((String)srcTableModel.getValueAt(i,3))*-1)+0;
+                 srcTableModel.setValueAt(String.valueOf(negX),i, 3);
+                 }
+             }
+            
+        }
+        else if (command.equals("NegZ")){
+            srcBvalGradTable.setBackground(Color.white);
+            srcBvalGradTable.setEnabled(true);
+             for (int i = 0; i < numVolumes; i++) {
+                 if (srcTableModel.getValueAt(i, 4) != ""){
+                 // Add empty rows based on number of volumes
+                 float negX = (Float.valueOf((String)srcTableModel.getValueAt(i,4))*-1)+0;
+                 srcTableModel.setValueAt(String.valueOf(negX),i, 4);
+                 }
+             }
+            
         }
         
 
@@ -2560,11 +2646,26 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         final JButton clearDWITableButton = new JButton("Clear");
         clearDWITableButton.addActionListener(this);
         clearDWITableButton.setActionCommand("DWITableDeleteButton");
+        
+        negXCheckBox = new JCheckBox("+/- x");
+        negXCheckBox.addActionListener(this);
+        negXCheckBox.setActionCommand("NegX");
+
+        negYCheckBox = new JCheckBox("+/- y");;
+        negYCheckBox.addActionListener(this);
+        negYCheckBox.setActionCommand("NegY");
+
+        negZCheckBox = new JCheckBox("+/- z");
+        negZCheckBox.addActionListener(this);
+        negZCheckBox.setActionCommand("NegZ");
 
         DWIButtonPanel.add(loadBValGradFileButton);
         DWIButtonPanel.add(saveBvalGradButton);
         DWIButtonPanel.add(isDWICellEditBox);
         DWIButtonPanel.add(clearDWITableButton);
+        DWIButtonPanel.add(negXCheckBox );
+        DWIButtonPanel.add(negYCheckBox );
+        DWIButtonPanel.add(negZCheckBox );
         
 
 
@@ -2630,7 +2731,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }
         
 
-      /*  if (isPARREC) {
+        if (isPARREC) {
 
             if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
                     || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
@@ -2695,8 +2796,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                     gradOPTextField = new JTextField(5);
                     gradOPBox = new JComboBox();
                     gradOPBox.setBackground(Color.white);
-                    gradOPBox.addItem("Yes");
                     gradOPBox.addItem("No");
+                    gradOPBox.addItem("Yes");
                     gbc.gridy = 3;
                     gbc.gridx = 0;
                     GradCreatorPanel.add(gradOPLabel,gbc);
@@ -2763,7 +2864,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                         gbc2.gridwidth = 1;
                         gbc2.weightx = .25;
                         gbc2.weighty = 1;
-                        srcPanel.add(GradCreatorPanel, gbc2);
+                        //srcPanel.add(GradCreatorPanel, gbc2);
                     }
                     
                     else if (fileInfoPARREC.getVersion().equals("V3")){
@@ -2850,12 +2951,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                         gbc2.gridwidth = 1;
                         gbc2.weightx = .25;
                         gbc2.weighty = 1;
-                        srcPanel.add(GradCreatorPanel, gbc2);
+                        //srcPanel.add(GradCreatorPanel, gbc2);
                         
                     }                           
                 }
             }
-        }*/
+        }
         return scrollPane;
     }        
 
@@ -3814,9 +3915,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }*/
         
         for (int i = 0; i<tablein.length; i++){
-        srcTableModel.setValueAt((Double.valueOf(twoDForm.format(angCorrGT[i][0]))), i, 2);
-        srcTableModel.setValueAt((Double.valueOf(twoDForm.format(angCorrGT[i][1]))), i, 3);
-        srcTableModel.setValueAt((Double.valueOf(twoDForm.format(angCorrGT[i][2]))), i, 4);
+        srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][0]))), i, 2);
+        srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][1]))), i, 3);
+        srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][2]))), i, 4);
         }
 
     }
