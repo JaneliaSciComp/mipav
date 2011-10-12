@@ -539,7 +539,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
     	double theta;
         if ( voiProtractor != null )
         {
-            theta = voiProtractor.getTheta(res);
+            theta = voiProtractor.getTheta(imageActive.getFileInfo()[0].getResolutions());
             Vector2f protractor0 = getScreenCoordinates(voiProtractor.get(0));
             Vector2f protractor2 = getScreenCoordinates(voiProtractor.get(2));
             if (protractor2.Y < protractor0.Y) {
