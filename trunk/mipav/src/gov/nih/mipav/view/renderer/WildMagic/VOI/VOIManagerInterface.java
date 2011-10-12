@@ -3185,7 +3185,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         int frameReferenceTime;
 
         ModelImage kImage = m_kParent.getActiveImage();
-        if(useFrameRefTime && !(kImage.getFileInfo() instanceof FileInfoDicom[])) {
+        if(useFrameRefTime && !(kImage.getFileInfo(0) instanceof FileInfoDicom)) {
         	useFrameRefTime = false; //frame ref time is only defined for dicom images
         }
 
