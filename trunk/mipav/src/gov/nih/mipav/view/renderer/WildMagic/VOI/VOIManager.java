@@ -3564,9 +3564,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			str = new String("(" + x + "," + y + ")");
 			//Create the string that will be drawn for label and name
 			if (doName) {
-				str = new String(kVOI.getName() + ": (" + x + "," + y + ")");
+				str = new String(kVOI.getName());
 			} else if (label != null) {
-				str = new String(label + ": (" + x + "," + y + ")");
+				str = new String(label);
 			}
 
 			int type = 0;
@@ -3634,7 +3634,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				if (xS < 70) {
 					xPos += 10;
 				} else {
-					xPos -= 60;
+					xPos -= 20;
 				}
 				if (yS < 30) {
 					yPos += 20;
