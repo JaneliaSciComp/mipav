@@ -1047,10 +1047,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(defaultDisplayChoices, gbc2);
         
-        DefaultDisplay defaultChoice = DefaultDisplay.LUT;
+        DefaultDisplay defaultChoice = DefaultDisplay.MinMax;
         //preset the choices.
         if(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY) == null) {
-        	Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.LUT.name());
+        	Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.MinMax.name());
         } else {
         	defaultChoice = DefaultDisplay.valueOf(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY));
         }
@@ -1101,7 +1101,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
      protected void makeLogMagImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
      
-         displayLogMag = new JCheckBox("Display log magnitude of image");
+         displayLogMag = new JCheckBox("Display log magnitude of complex images");
          displayLogMag.setFont(MipavUtil.font12);
          displayLogMag.setForeground(Color.black);
          displayLogMag.addActionListener(this);

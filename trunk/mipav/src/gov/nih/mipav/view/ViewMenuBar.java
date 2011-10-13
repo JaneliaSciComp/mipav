@@ -584,11 +584,11 @@ public class ViewMenuBar {
      */
     public JMenu makeLUTMenu() {
         return menuBuilder.makeMenu("LUT", 'L', false, new JComponent[] {
-                menuBuilder.buildMenuItem("Open LUT", null, 0, "open.gif", true),
+                menuBuilder.buildMenuItem("Open LUT/transfer function", null, 0, "open.gif", true),
                 menuBuilder.buildMenuItem("Open functions", null, 0, "open.gif", true),
                 menuBuilder.buildMenuItem("Open LUT from...", null, 0, "open.gif", true),
                 menuBuilder.buildMenuItem("Open functions from...", null, 0, "open.gif", true), ViewMenuBar.separator,
-                menuBuilder.buildMenuItem("Save LUT", null, 0, "save.gif", true),
+                menuBuilder.buildMenuItem("Save LUT/transfer function", null, 0, "save.gif", true),
                 menuBuilder.buildMenuItem("Save functions", null, 0, "save.gif", true),
                 menuBuilder.buildMenuItem("Save LUT as...", null, 0, "save.gif", true),
                 menuBuilder.buildMenuItem("Save functions as...", null, 0, "save.gif", true), ViewMenuBar.separator,

@@ -1064,16 +1064,16 @@ public class ViewJFrameHistoLUT extends ViewJFrameBase implements WindowListener
 
             menuBar.add(menuObj.makeMenu("File", 'F', false,
                                          new JComponent[] {
-                                             menuObj.buildMenuItem("Open LUT", "OpenLUT", 0, "open.gif", true),
-                                             menuObj.buildMenuItem("Save LUT", "SaveLUT", 0, "save.gif", true),
+                                             menuObj.buildMenuItem("Open LUT and transfer function", "OpenLUT", 0, "open.gif", true),
+                                             menuObj.buildMenuItem("Save LUT and transfer function", "SaveLUT", 0, "save.gif", true),
                                              new JSeparator(),
-                                             menuObj.buildMenuItem("Open default LUT", "OpenUDLUT", 0,
+                                             menuObj.buildMenuItem("Open default LUT and transfer function", "OpenUDLUT", 0,
                                                                    "defaultlutopen.gif", true),
-                                             menuObj.buildMenuItem("Save default LUT", "SaveUDLUT", 0,
+                                             menuObj.buildMenuItem("Save default LUT and transfer function", "SaveUDLUT", 0,
                                                                    "defaultlutsave.gif", true), new JSeparator(),
-                                             menuObj.buildMenuItem("Open transfer functions", "OpenFuncts", 0,
+                                             menuObj.buildMenuItem("Open transfer function", "OpenFuncts", 0,
                                                                    "open.gif", true),
-                                             menuObj.buildMenuItem("Save transfer functions", "SaveFuncts", 0,
+                                             menuObj.buildMenuItem("Save transfer function", "SaveFuncts", 0,
                                                                    "save.gif", true), separator,
                                              menuObj.buildMenuItem("Close LUT", "CloseLUT", 0, null, true)
                                          }));
