@@ -4973,7 +4973,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private void setGraphVisible() { 
         int nVOI;
         ViewVOIVector VOIs;
-        ViewUserInterface UI = ViewUserInterface.getReference();
 
         ModelImage kImage = m_kParent.getActiveImage();
         VOIs = kImage.getVOIs();
