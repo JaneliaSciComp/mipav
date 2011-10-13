@@ -1042,7 +1042,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         defaultDisplayChoices = new JComboBox(DefaultDisplay.values());
         defaultDisplayChoices.setFont(MipavUtil.font12);
         
-        gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.insets = new Insets(0, 0, 5, 0);
         gbc2.gridwidth = GridBagConstraints.REMAINDER;
         gbc2.anchor = GridBagConstraints.WEST;
         displayImagePanel.add(defaultDisplayChoices, gbc2);
