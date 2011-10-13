@@ -221,8 +221,8 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_LUT_GENERATE = new UIParams("GenerateLUT", "Generate LUT table", "luttable");
 	
     /** LUT Save/open buttons*/
-    public static final UIParams PARAM_LUT_OPEN = new UIParams("OpenUDLUT", "Open user defined LUT", "userlutopen");
-    public static final UIParams PARAM_LUT_SAVE = new UIParams("SaveUDLUT", "Save user defined LUT", "userlutsave");
+    public static final UIParams PARAM_LUT_OPEN = new UIParams("OpenUDLUT", "Open default LUT", "defaultlutopen");
+    public static final UIParams PARAM_LUT_SAVE = new UIParams("SaveUDLUT", "Save default LUT", "defaultlutsave");
 	
     /** Image slider/frame related buttons */	
     public static final UIParams PARAM_IMAGE_SLICE_PREVIOUS = new UIParams("PreviousImage",

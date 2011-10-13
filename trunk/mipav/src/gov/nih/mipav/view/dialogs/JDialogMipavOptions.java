@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.Preferences.ComplexDisplay;
+import gov.nih.mipav.view.Preferences.DefaultDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -228,6 +229,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** The available choices for displaying the numerical values of complex data */
     private JComboBox complexDisplayChoices;
+    
+    /** Available choices for displaying brightness/color display correlations for pixel values. */
+    private JComboBox defaultDisplayChoices;
 
     /** The check box to indicate whether images are displayed using the log of their magnitude */
     private JCheckBox displayLogMag;
@@ -286,6 +290,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         
         displayImagePanel.setLayout(gbl);
         displayImagePanel.setBorder(buildTitledBorder("Image"));
+        makeDefaultLoadImageOptions(gbc, gbl);
         makeComplexImageOptions(gbc, gbl);
         makeLogMagImageOptions(gbc, gbl);
         makeInterpolateImageOptions(gbc, gbl);
@@ -485,6 +490,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_ACTIVE_IMAGE_COLOR_BORDERSIZE, (String)activeImageColorBorderSize.getSelectedItem());
             Preferences.setProperty(Preferences.PREF_CROSSHAIR_CURSOR, crosshairNames[crosshairChoices
                     .getSelectedIndex()]);
+            Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, ((DefaultDisplay)defaultDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
             Preferences.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, String.valueOf(displayInterpolate.isSelected()));
@@ -1020,7 +1026,40 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // preset the choices.
         checkOnFrameClose.setSelected(Preferences.is(Preferences.PREF_CLOSE_FRAME_CHECK));
     }
-
+    
+    /**
+     * Makes the options for displaying how images should be displayed on default.
+     */
+    protected void makeDefaultLoadImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+    	final JLabel l1 = new JLabel("Load image using default: ");
+    	l1.setFont(MipavUtil.font12);
+        l1.setForeground(Color.black);
+        gbc2.insets = new Insets(0, 0, 0, 5);
+        gbc2.gridwidth = 1;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(l1, gbc2);
+        
+        defaultDisplayChoices = new JComboBox(DefaultDisplay.values());
+        defaultDisplayChoices.setFont(MipavUtil.font12);
+        
+        gbc2.insets = new Insets(0, 0, 0, 0);
+        gbc2.gridwidth = GridBagConstraints.REMAINDER;
+        gbc2.anchor = GridBagConstraints.WEST;
+        displayImagePanel.add(defaultDisplayChoices, gbc2);
+        
+        DefaultDisplay defaultChoice = DefaultDisplay.LUT;
+        //preset the choices.
+        if(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY) == null) {
+        	Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.LUT.name());
+        } else {
+        	defaultChoice = DefaultDisplay.valueOf(Preferences.getProperty(Preferences.PREF_DEFAULT_DISPLAY));
+        }
+        
+        if(defaultChoice != null) {
+        	defaultDisplayChoices.setSelectedItem(defaultChoice);
+        }
+    }
+    
     /**
      * Makes the options for displaying complex image information
      * 
