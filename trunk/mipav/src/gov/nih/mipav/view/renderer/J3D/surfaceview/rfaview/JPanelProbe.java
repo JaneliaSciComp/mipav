@@ -2384,10 +2384,10 @@ public class JPanelProbe extends JPanelRendererJ3D implements ChangeListener, Li
         bonePresetButton = toolbarBuilder.buildButton("BonePreset", "Bone visualization settings.", "histolut");
         toolBar.add(bonePresetButton);
         loadVisualizationButton = toolbarBuilder.buildButton("LoadPreset", "Load custom visualization settings.",
-                                                             "userlutopen");
+                                                             "defaultlutopen");
         toolBar.add(loadVisualizationButton);
         saveVisualizationButton = toolbarBuilder.buildButton("SavePreset", "Save custom visualization settings.",
-                                                             "userlutsave");
+                                                             "defaultlutsave");
         toolBar.add(saveVisualizationButton);
         mainPanel.add(toolBar, gbc);
     }
