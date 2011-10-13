@@ -23,6 +23,12 @@ public class Preferences {
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
+	/**
+	 * Defines options for displaying pixel values of complex images.
+	 * 
+	 * @author senseneyj
+	 *
+	 */
     public enum ComplexDisplay {
         /** Displays complex images in a + bi format */
         APLUSBI("a + bi", 2),
@@ -52,6 +58,38 @@ public class Preferences {
         }
     }
     
+    /**
+     * Defines options for defining color and brightness display based on pixel values.
+     * 
+     * @author senseneyj
+     *
+     */
+    public enum DefaultDisplay {
+        /** Lookuptable table and associated transfer function */
+        LUT("Lookup table"),
+        /** Window and level settings (will also be reflected as transfer function */
+        WindowLevel("Window & level"),
+        /** Minimum and maximum settings  */
+        MinMax("Min & max");
+        
+        /** The format of default display */
+        private String str;
+
+        DefaultDisplay(String str) {
+            this.str = str;
+        }
+        
+        public String toString() {
+            return str;
+        }
+    }
+    
+    /**
+     * Defines system architecture on which MIPAV is running.
+     * 
+     * @author senseneyj
+     *
+     */
     public enum SystemArchitecture {
         /** Indicates an unknown system architecture. */
         ARCH_UNKNOWN,
@@ -112,6 +150,12 @@ public class Preferences {
         }
     }
     
+    /**
+     * Defines operating system on which MIPAV is running.
+     * 
+     * @author senseneyj
+     *
+     */
     public enum OperatingSystem {
         /** Operating system enum for Windows. */
         OS_WINDOWS,
@@ -368,6 +412,9 @@ public class Preferences {
     /** Constant that indicates the crosshair cursor to be used. */
     public static final String PREF_CROSSHAIR_CURSOR = "CrosshairCursor";
 
+    /** Constant to indicate default brightness and color display to screen */
+    public static final String PREF_DEFAULT_DISPLAY = "DefaultDisplay";
+    
     /** Constant that indicates method used to display complex data values on MIPAV toolbar 
      * (MIPAV visually always shows magnitude or log magnitude). */
     public static final String PREF_COMPLEX_DISPLAY = "ComplexDisplay";
@@ -665,6 +712,7 @@ public class Preferences {
         // location
 
         // look and feel properties
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.LUT.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, "false");
@@ -969,6 +1017,22 @@ public class Preferences {
         return false;
     }
 
+    /**
+     * Returns how pixel values of images are displayed in terms or brightness values and possible colors.
+     * 
+     * @return The default display enumeration.
+     */
+    public static DefaultDisplay getDefaultDisplay() {
+    	if(Preferences.mipavProps == null) {
+    		Preferences.read();
+    	}
+    	String defaultDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
+    	if(defaultDisplay == null) {
+    		defaultDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_DEFAULT_DISPLAY);
+    	}
+    	return DefaultDisplay.valueOf(defaultDisplay);
+    }
+    
     /**
      * Returns how pixel values are displayed on the MIPAV toolbar for complex images.  Although
      * MIPAV always displays the magnitude or log magnitude when viewing an image, the toolbar can
