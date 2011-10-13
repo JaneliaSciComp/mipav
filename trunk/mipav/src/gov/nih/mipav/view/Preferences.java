@@ -66,7 +66,7 @@ public class Preferences {
      */
     public enum DefaultDisplay {
         /** Lookuptable table and associated transfer function */
-        LUT("Lookup table"),
+        LUT("LUT and transfer function"),
         /** Window and level settings (will also be reflected as transfer function */
         WindowLevel("Window & level"),
         /** Minimum and maximum settings  */
@@ -712,7 +712,7 @@ public class Preferences {
         // location
 
         // look and feel properties
-        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.LUT.name());
+        Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.MinMax.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, "false");

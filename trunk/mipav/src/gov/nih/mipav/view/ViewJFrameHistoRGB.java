@@ -1655,8 +1655,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             menuBar.add(menuObj.makeMenu("File", 'F', false,
                                          new JComponent[] {
-                                             menuObj.buildMenuItem("Open LUT", "OpenLUT", 0, "open.gif", true),
-                                             menuObj.buildMenuItem("Save LUT", "SaveLUT", 0, "save.gif", true),
+                                             menuObj.buildMenuItem("Open LUT  and transfer functions", "OpenLUT", 0, "open.gif", true),
+                                             menuObj.buildMenuItem("Save LUT  and transfer functions", "SaveLUT", 0, "save.gif", true),
                                              menuObj.buildMenuItem("Open transfer functions", "OpenFuncts", 0,
                                                                    "open.gif", true),
                                              menuObj.buildMenuItem("Save transfer functions", "SaveFuncts", 0,
