@@ -1,6 +1,10 @@
 import java.awt.Dimension;
+import java.io.IOException;
 import java.util.Vector;
 
+import javax.media.j3d.Transform3D;
+import javax.vecmath.AxisAngle4f;
+import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -9,6 +13,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
 import gov.nih.mipav.model.algorithms.AlgorithmBSmooth;
 import gov.nih.mipav.model.algorithms.AlgorithmBSpline;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmExtractSurfaceCubes;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult2Dto3D;
@@ -27,6 +32,7 @@ import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 
 
 public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
@@ -39,11 +45,41 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	
 	private ViewJFrameImage vjf;
 	
+	private Vector3f[] boxSliceVertices;
+	
+
+    private float xBox, yBox, zBox;
+
+    private float[] resols = new float[3];
+    
+    
+    private int xDim, yDim, zDim;
+    
+    private int[] resultExtents = new int[3];
+    
+    private int[] wormImageExtents;
+	
 	
 
 	
 	public PlugInAlgorithmWormStraightening(ModelImage wormImage, int interpolationPts) {
 		this.wormImage = wormImage;
+		
+		wormImageExtents = wormImage.getExtents();
+		
+		xDim = wormImage.getExtents()[0];
+		yDim = wormImage.getExtents()[1];
+		zDim = wormImage.getExtents()[2];
+		
+		resols[0] = wormImage.getResolutions(0)[0];
+		resols[1] = wormImage.getResolutions(0)[1];
+		resols[2] = wormImage.getResolutions(0)[2];
+		
+		
+		
+		
+        
+        
 		this.interpolationPts = interpolationPts;
 		
 	}
@@ -89,9 +125,12 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	private void doPlanes() {
 		//first create empty result image and set up voi to transfer points to result image\
 		//!!!!!!!!!!!!!!!!!!NEED TO REMOVE THAT -1 AT SOME POINT
-		int[] extents = {50, 400, interpolationPts-1};
+		resultExtents[0] = 400;
+		resultExtents[1] = 400;
+		resultExtents[2] = interpolationPts-1;
+		
 		float[] res = {wormImage.getResolutions(0)[2], wormImage.getResolutions(0)[1],1.0f};
-		resultImage = new ModelImage(ModelStorageBase.FLOAT, extents, "RESULT IMAGE");
+		resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, "RESULT IMAGE");
 		resultImage.setResolutions(res);
 		FileInfoBase[] fileInfoBases = resultImage.getFileInfo();
         for (int i = 0; i < fileInfoBases.length; i++) {
@@ -107,7 +146,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	    
 	    
 	    
-		//In oreder to determine the perpendicalur plane along each point, we also need the tangent vector at that
+		//In oreder to determine the perpendicalur plane along each point, we also need the tangent vector (normal vector to plane) at that
 		//point along the b-spline
 		//set up points needed for bSplineJetXYZ() method which returns the tangent vector
         VOIVector VOIs = wormImage.getVOIs();
@@ -149,19 +188,21 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
         
 
-        
-        
+
 
         //variables needed for loop
         int xExtent = wormImage.getExtents()[0];
         int yExtent = wormImage.getExtents()[1];
         int zExtent = wormImage.getExtents()[2];
+
+
         double p;
         int newY = 0;
         float[] newPtx = new float[1];
         float[] newPty = new float[1];
         float[] newPtz = new float[1];
         
+
         
         //alg to get tangent vector
         AlgorithmBSpline bSplineAlgo = smoothAlgo.getbSplineAlgo();
@@ -171,26 +212,30 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         //wormImage.setAll(0);
         
         javax.vecmath.Vector3f compareAngle = new javax.vecmath.Vector3f(1,0,0);
+        javax.vecmath.Vector3f imageOrientationAngle = new javax.vecmath.Vector3f(0,1,0);
         javax.vecmath.Vector3f v ;
-        float angle;
+        float angle, rotationAngle;
 		double halfPi = Math.PI/2.0;
 		double quarterPi = Math.PI/4.0;
 		double startRange = halfPi - quarterPi;
 		double endRange = halfPi + quarterPi;
         
-        //*****this new way of basing it on tolerance rahter than going from positive to negative or vice versa
-        //results in an arrayoutof bouds error when on the last point.
-        //.....so....need to get last one to work everntually!!!
+       
         String[] planeOrientations = new String[interpolationPts-1];
         boolean[] doFlip = new boolean[interpolationPts-1];
+        int sliceSize = xExtent*yExtent;
+
+
+
         //Vector3f[] tanVectors = new Vector3f[interpolationPts-1];
-        boolean isCloseToHorizontal;
-        
-        
+
+        float[] values;
+        int start = 0;
+        int resultSliceSize = resultExtents[0] * resultExtents[1];
         for(int i=0;i<interpolationPts-1;i++) {
 
         		System.out.println("^^ " + i);
-        		
+
         		//determining tangent vector at point
             	int index = i;
             	float floatIndex = (float)index + 2;
@@ -198,9 +243,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             	//normalizing tangent
                 tanVector.Normalize();
                 
-                //tanVectors[i] = tanVector;
                 
-                
+                //used later for when to determine whether to flip the image or not
                 v = new javax.vecmath.Vector3f(tanVector.X,tanVector.Y,tanVector.Z);
                 angle = v.angle(compareAngle);
                 if(angle <= halfPi) {
@@ -209,239 +253,49 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             		doFlip[i] = true;
             	}
                 
-                //if angle is within PI/2 +- Pi/4, then this means it is more of a horizontal line
-                if(angle >= startRange && angle <= endRange) {
-                	isCloseToHorizontal = true;
-                }else {
-                	isCloseToHorizontal = false;
-                }
-                
-                
-                
-                
-                //Equation of plane through P1(x1,y1,z1) with normal vector a = <a1,a2,a3) is
-                //a1(x-x1) + a2(y-y1) + a3(z-z1) = 0
-                double a1 = tanVector.X;
-                double a2 = tanVector.Y;
-                double a3 = tanVector.Z;
+
+                //get coordinate of control point of b-spline
                 point = ((VOIPoint)contours.get(index)).exportPoint();
-                
-                
-                
-                //double x1 = point.X;
-                //double y1 = point.Y;
-                //double z1 = point.Z;  
-                
-                
-                int x1 = Math.round(point.X);
-                int y1 = Math.round(point.Y);
-                int z1 = Math.round(point.Z);
+                float x1 = point.X;
+                float y1 = point.Y;
+                float z1 = point.Z;  
 
-                double tolerance = 1;
-                float pix;
-                double oldP;
+                
+                
+                //need to first get the 4 corners for where plane cuts at image
+                Transform3D translate = new Transform3D();
+                translate.setTranslation(new javax.vecmath.Vector3f(x1,y1,z1));
+                
+               Transform3D rotate = new Transform3D();
+               //rotate.setRotationScale(rotationMatrix);
+               
+               Transform3D transformTotal = new Transform3D();
+               transformTotal.mul(translate);
+               transformTotal.mul(rotate);
                 
                 
                 
+
+                transformBoxSlices(transformTotal);
                 
-                //////////////////////////////////////////////////////////
-                //BILLS STUFF
                 
-                /*
-                System.out.println("doing new way");
-                double root = Math.sqrt(a1*a1 + a2*a2 + a3*a3);
-                double dx = a1/root;
-                double dy = a2/root;
-                double dz = a3/root;
-                double p1;
-                double p2;
-                double x1a = x1 - dx;
-                double y1a = y1 - dy;
-                double z1a = z1 - dz;
-                double x1b = x1 + dx;
-                double y1b = y1 + dy;
-                double z1b = z1 + dz;
-                for (int z = 0; z < zExtent; z++) {
-                  for (int y = 0; y < yExtent; y++) {
-                        for (int x = 0; x < xExtent; x++) {
-                              p = (a1*(x-x1)) + (a2*(y-y1)) + (a3*(z-z1));
-                                    if(p < tolerance && p > (-tolerance)) {
-                                          if (((Math.round(x+dx))>= 0) && ((Math.round(x+dx)) < xExtent) &&
-                                          ((Math.round(y+dy))>= 0) && ((Math.round(y+dy)) < yExtent) &&
-                                          ((Math.round(z+dz))>= 0) && ((Math.round(z+dz)) < zExtent)) {
-                                                p1 = (a1*(x - x1a)) + (a2*(y - y1a)) + (a3*(z - z1a));
-                                                if (Math.abs(p1) < Math.abs(p)) {
-                                                      wormImage.set((int)Math.round(x + dx),(int)Math.round(y + dy),(int)Math.round(z + dz), 100);
-                                                      continue;
-                                                }
-                                          }
-                                          
-                                          if (((Math.round(x-dx))>= 0) && ((Math.round(x-dx)) < xExtent) &&
-                                                ((Math.round(y-dy))>= 0) && ((Math.round(y-dy)) < yExtent) &&
-                                                ((Math.round(z-dz))>= 0) && ((Math.round(z-dz)) < zExtent)) {
-                                                p2 = (a1*(x - x1b)) + (a2*(y - y1b)) + (a3*(z - z1b));
-                                                if (Math.abs(p2) < Math.abs(p)) {
-                                                      wormImage.set((int)Math.round(x - dx),(int)Math.round(y - dy),(int)Math.round(z - dz), 100);
-                                                      continue;   
-                                                }
-                                          }
-                                          
-                                          wormImage.set(x, y, z, 100);
-                                    }
-                        }
-                  }
+                //now we call export diagonal and pass in those vertices
+                values = new float[resultExtents[0] * resultExtents[1]]; 
+                try {
+                	System.out.println("-------");
+                	System.out.println(boxSliceVertices[0].X + " , " + boxSliceVertices[0].Y + " " + boxSliceVertices[0].Z);
+                	System.out.println(boxSliceVertices[1].X + " , " + boxSliceVertices[1].Y + " " + boxSliceVertices[1].Z);
+                	System.out.println(boxSliceVertices[2].X + " , " + boxSliceVertices[2].Y + " " + boxSliceVertices[2].Z);
+                	System.out.println(boxSliceVertices[3].X + " , " + boxSliceVertices[3].Y + " " + boxSliceVertices[3].Z);
+                	wormImage.exportDiagonal(0, i, wormImageExtents, boxSliceVertices, values, true);
+                	resultImage.importData(start, values, false);
+                	start = start + resultSliceSize;
+                }catch(IOException e) {
+                	e.printStackTrace();
                 }
-
                 
                 
                 
-                */
-                
-                
-                
-                
-               ////////////////////////////////////////////////////////////// 
-                
-                
-                
-                
-                
-                for(int z=0;z<zExtent;z++) {
-                	newY = 0;
-        	        for(int y=0;y<yExtent;y++) {
-        	        	//boolean isNegFirst = true;
-        	        				oldP = -500;
-        			    xLoop:    	for(int x=0;x<xExtent;x++) {
-        				        		p = (a1*(x-x1)) + (a2*(y-y1)) + (a3*(z-z1));
-        				        		/*if(z==0 && y == 0 && x == 0) {
-        				        			if(p < 0) {
-        				        				System.out.println("i = " + i + " :negative");
-        				        				planeOrientations[i] = "negative";
-        				        			}else if( p > 0){
-        				        				System.out.println("i = " + i + " :positive");
-        				        				planeOrientations[i] = "positive";
-        				        			}
-        				        		}*/
-        				        		
-        				        		
-        				        		
-				        				if(p < tolerance && p > (-tolerance)) {
-				        					if(oldP == -500) {
-	        				        			pix = wormImage.getFloat(x, y, z);
-	        				        			
-	        				        			resultImage.set(z, newY, i, pix);
-	        				        			//transfer point over to result image if this is the point coordinate
-	        				        			if(x == Math.round(x1) && y == Math.round(y1) && z == Math.round(z1)) {
-		    				        				newPtx[0] = z;
-		    								        newPty[0] = newY;
-		    								        newPtz[0] = i;
-		    				        				newPtVOI.importCurve(newPtx, newPty, newPtz);
-		    				        			}
-
-					        					//wormImage.set(x, y, z, 1);
-					        					oldP = p;
-					        					newY++;
-				        					}else {
-				        						if(oldP < 0 && p > 0) {
-				        							
-				        						}else if(oldP > 0 && p < 0) {
-				        							
-				        						}else {
-
-		        				        			pix = wormImage.getFloat(x, y, z);
-		        				        			
-		        				        			resultImage.set(z, newY, i, pix);
-		        				        			//transfer point over to result image if this is the point coordinate
-		        				        			if(x == Math.round(x1) && y == Math.round(y1) && z == Math.round(z1)) {
-			    				        				newPtx[0] = z;
-			    								        newPty[0] = newY;
-			    								        newPtz[0] = i;
-			    				        				newPtVOI.importCurve(newPtx, newPty, newPtz);
-			    				        			}
-
-						        					//wormImage.set(x, y, z, 2);
-						        					oldP = p;
-						        					newY++;
-				        						}
-				        					}
-
-    				        			}	
-            				        	
-        				        		
-        				        			
-        				        			
-        				        		
-        				        		//this is the old way of doing it...going from neg to pos or vice versa
-        				        		/*if(p<0) {
-        				        			if(x==0) {
-        				        				isNegFirst = true;
-        				        			}else {
-        				        				if(!isNegFirst) {
-        				        					//means we have crossed over to positive...so get
-        	    				        			//the pixel value of the one before it
-        	    				        			pix = wormImage.getFloat(x-1, y, z);
-        	    				        			
-        	    				        			resultImage.set(z, newY, i, pix);
-        	    				        			if(x-1 == Math.round(x1) && y == Math.round(y1) && z == Math.round(z1)) {
-        	    				        				System.out.println("found");
-        	    				        				newPtx[0] = z;
-        	    								        newPty[0] = newY;
-        	    								        newPtz[0] = i;
-        	    								        System.out.println("*** i is " + i);
-        	    				        				newPtVOI.importCurve(newPtx, newPty, newPtz);
-        	    				        			}
-        	    	 			        			
-        	    				        			//if(i==19) {
-        	    				        				//wormImage.set(x-1, y, z, 29000);
-        	    				        			//}
-        	    				        			//resultImage.set(z, newY, pix);
-        	    				        			
-        	    				        			newY++;
-
-        	    				        			break xLoop;
-        				        				}
-        				        			}
-        				        			
-        				        		}else if(p>0) {
-        				        			
-        				        			if(x==0) {
-        				        				isNegFirst = false;
-        				        			}else {
-        				        				if(isNegFirst) {
-        				        					//means we have crossed over to positive...so get
-        	    				        			//the pixel value of the one before it
-        	    				        			pix = wormImage.getFloat(x-1, y, z);
-        	    				        			
-        	    				        			resultImage.set(z, newY, i, pix);
-        	    				        			
-        	    				        			if(x-1 == Math.round(x1) && y == Math.round(y1) && z == Math.round(z1)) {
-        	    				        				System.out.println("found");
-        	    				        				newPtx[0] = z;
-        	    								        newPty[0] = newY;
-        	    								        newPtz[0] = i;
-        	    								        System.out.println("### i is " + i);
-        	    				        				newPtVOI.importCurve(newPtx, newPty, newPtz);
-        	    				        			}
-        	    				        			//if(i==19) {
-        	    				        				//wormImage.set(x-1, y, z, 29000);
-        	    				        			//}
-        	    				        			//resultImage.set(z, newY, pix);
-        	    				        			
-        	    				        			newY++;
-
-        	    				        			break xLoop;
-        				        				}
-        				        			}
-        				        		}else {
-        				        			if(x == 0) {
-        				        				//System.out.println("ZERO " + i);
-        				        			}
-        				        		}*/
-        			        		
-        			        		}
-        	        }
-                }
-
             
             
         }
@@ -458,6 +312,14 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         wormImage.calcMinMax();
         resultImage.calcMinMax();
         
+        
+        new ViewJFrameImage(resultImage);
+        
+        
+        
+        
+        
+  /*      
         System.out.println("aaa");
         
         //now we need to translate and line up all the slices based on the 0th point coordinate
@@ -609,7 +471,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         
         
         
-       
+       */
         
         
         
@@ -618,9 +480,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	
 	
 	
-	
-	
-	
+
 	
 	
 	
@@ -629,94 +489,162 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	
 	
 	/**
-	 * not being used anymore
-	 * 
-	 */
-	private void createMatchImage() {
-		//first get length of b-spline
-		VOIVector VOIs = wormImage.getVOIs();
-		Vector<VOIBase> contours = VOIs.VOIAt(0).getCurves();
-        int nPoints = contours.size();
-        System.out.println("------ " + nPoints);
-        float[] xPoints = new float[nPoints];
-        float[] yPoints = new float[nPoints];
-        float[] zPoints = new float[nPoints];
-        for (int i = 0; i < nPoints; i++) {
-     	   Vector3f point = ((VOIPoint)contours.get(i)).exportPoint();
-            xPoints[i] = point.X;
-            yPoints[i] = point.Y;
-            zPoints[i] = point.Z;
+     * transform the points used to render the triSliceImages textures.
+     * 
+     * @param kTransform the Transform3D used to rotate the boxes.
+     */
+    private void transformBoxSlices(Transform3D kTransform) {
+        if (kTransform == null) {
+            kTransform = new Transform3D();
+            kTransform.setIdentity();
+        }
+        Point3f[] inVertices = new Point3f[4];
+        for(int i=0;i<inVertices.length;i++) {
+        	inVertices[i] = new Point3f();
         }
         
-        AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
-        float length = arcLength.getTotalArcLength();
-        System.out.println(length);
-		int[] extents = {700, 700, 40};
-        matchImage = new ModelImage(ModelStorageBase.UBYTE, extents, "matchTESTImage");
-        for (int i = 0; i < matchImage.getExtents()[2]; i++) {
-        	matchImage.setResolutions(i, wormImage.getResolutions(0));
+        
+        
+        // 
+        //
+        //		a-----b
+        //		|	  |
+        //		|	  |
+        //		|     |
+        //		c-----d
+        //
+        //
+       
+        //let slice = 0
+        //a = (0, 0, slice)
+        //b = (xDim - 1, 0, slice)
+        //c = (0, yDim - 1, slice)
+        //d = (xDim - 1, yDim - 1, slice)
+        
+        javax.vecmath.Vector3f a = new javax.vecmath.Vector3f(0,0,0);
+        javax.vecmath.Vector3f b = new javax.vecmath.Vector3f(xDim-1,0,0);
+        javax.vecmath.Vector3f c = new javax.vecmath.Vector3f(0,yDim-1,0);
+        javax.vecmath.Vector3f d = new javax.vecmath.Vector3f(xDim-1,yDim-1,0);
+        
+        
+        
+        xBox = (xDim - 1) * resols[0];
+        yBox = (yDim - 1) * resols[1];
+        zBox = (zDim - 1) * resols[2];
+        
+        
+        
+        
+        float x = 0;
+        float y = 0;
+        float z = 0;
+        
+        
+        x = xBox * (a.x / (xDim -1));
+        y = yBox * (a.y / (yDim -1));
+        z = zBox * (a.z / (zDim -1));
+        inVertices[0] = new Point3f(x,y,z);
+        
+        x = xBox * (b.x / (xDim -1));
+        y = yBox * (b.y / (yDim -1));
+        z = zBox * (b.z / (zDim -1));
+        inVertices[1] = new Point3f(x,y,z);
+        
+        x = xBox * (c.x / (xDim -1));
+        y = yBox * (c.y / (yDim -1));
+        z = zBox * (c.z / (zDim -1));
+        inVertices[2] = new Point3f(x,y,z);
+        
+        x = xBox * (d.x / (xDim -1));
+        y = yBox * (d.y / (yDim -1));
+        z = zBox * (d.z / (zDim -1));
+        inVertices[3] = new Point3f(x,y,z);
+        
+        
+        
+        /*x = (2*xBox) * (a.x / (xDim -1)) - xBox;
+        y = (2*yBox) * (a.y / (yDim -1)) - yBox;
+        z = (2*zBox) * (a.z / (zDim -1)) - zBox;
+        inVertices[0] = new Point3f(x,y,z);
+        
+        x = (2*xBox) * (b.x / (xDim -1)) - xBox;
+        y = (2*yBox) * (b.y / (yDim -1)) - yBox;
+        z = (2*zBox) * (b.z / (zDim -1)) - zBox;
+        inVertices[1] = new Point3f(x,y,z);
+        
+        x = (2*xBox) * (c.x / (xDim -1)) - xBox;
+        y = (2*yBox) * (c.y / (yDim -1)) - yBox;
+        z = (2*zBox) * (c.z / (zDim -1)) - zBox;
+        inVertices[2] = new Point3f(x,y,z);
+        
+        x = (2*xBox) * (d.x / (xDim -1)) - xBox;
+        y = (2*yBox) * (d.y / (yDim -1)) - yBox;
+        z = (2*zBox) * (d.z / (zDim -1)) - zBox;
+        inVertices[3] = new Point3f(x,y,z);*/
+        
+        
+        
+        Point3f[] outVertices = new Point3f[4];
+
+        boxSliceVertices = new Vector3f[4];
+            
+        for (int i = 0; i < 4; i++) {
+            outVertices[i] = new Point3f();
+            
+            boxSliceVertices[i] = new Vector3f();
+            
+
+            /* Rotate the points in the bounding box: */
+            kTransform.transform(inVertices[i], outVertices[i]);
+            /* Convert the points to ModelImage space: */
+            ScreenToModel(new javax.vecmath.Vector3f(outVertices[i].x, outVertices[i].y, outVertices[i].z),
+                    boxSliceVertices[i]);
         }
-        FileInfoBase[] fileInfoBases = matchImage.getFileInfo();
-        for (int i = 0; i < fileInfoBases.length; i++) {
-            //fileInfoBases[i] = new FileInfoImageXML(matchImage.getImageName(), null, FileUtility.XML);
-            fileInfoBases[i].setEndianess(wormImage.getFileInfo()[0].getEndianess());
-            fileInfoBases[i].setUnitsOfMeasure(wormImage.getFileInfo()[0].getUnitsOfMeasure());
-            fileInfoBases[i].setResolutions(wormImage.getFileInfo()[0].getResolutions());
-            //fileInfoBases[i].setExtents(extents);
-            fileInfoBases[i].setOrigin(wormImage.getFileInfo()[0].getOrigin());
-            //fileInfoBases[i].setDataType(ModelStorageBase.UBYTE);
+        
 
-        }
-        matchImage.setFileInfo(fileInfoBases);
-
-        VOI newPtVOI = null;
-
-        newPtVOI = new VOI((short) 0, "point3D.voi", VOI.POINT, -1.0f);
-        newPtVOI.setUID(newPtVOI.hashCode());
-        matchImage.registerVOI(newPtVOI);
-        
-        float[] x = new float[1];
-        float[] y = new float[1];
-        float[] z = new float[1];
-        float totalLength = 0;
-        
-        for(int k=1;k<nPoints;k++) {
-        	Vector3f point1 = ((VOIPoint)contours.get(k-1)).exportPoint();
-        	Vector3f point2 = ((VOIPoint)contours.get(k)).exportPoint();
-        	float distance = point1.Distance(point2);
-        	totalLength = totalLength + distance;
-        }
-        
-        System.out.println(totalLength);
-
-        x[0] = 449;
-        z[0] = 24;
-        
-        int yStart = Math.round((700 - totalLength)/2);
-
-        y[0] = yStart;
-        newPtVOI.importCurve(x, y, z);
-        
-        totalLength = 0;
-        for(int k=1;k<nPoints;k++) {
-        	Vector3f point1 = ((VOIPoint)contours.get(k-1)).exportPoint();
-        	Vector3f point2 = ((VOIPoint)contours.get(k)).exportPoint();
-        	
-        	float distance = point1.Distance(point2);
-        	totalLength = totalLength + distance;
-        	
-        	int yCoord = Math.round(yStart + totalLength);
-        	
-        	y[0] = yCoord;
-            newPtVOI.importCurve(x, y, z);
-        }
-
-        matchImage.notifyImageDisplayListeners();
-        
-        vjf = new ViewJFrameImage(matchImage);
-        
-        
-	}
+    }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+     * Translate from normalized plane coordinates to Model coordinates:
+     * 
+     * @param screen the input point to be transformed from normalized plane coordinates
+     * @param model the output point in Model coordinates
+     */
+    private void ScreenToModel(javax.vecmath.Vector3f screen, Vector3f model) {
+        model.X = Math.round( ( (screen.x + xBox) * ((float) xDim - 1)) / (2.0f * xBox));
+        model.Y = Math.round( ( (screen.y - yBox) * ((float) yDim - 1)) / ( -2.0f * yBox));
+        model.Z = Math.round( ( (screen.z - zBox) * ((float) zDim - 1)) / ( -2.0f * zBox));
+    }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	
 	
