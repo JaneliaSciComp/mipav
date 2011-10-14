@@ -217,8 +217,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         float[] values;
         int start = 0;
         int resultSliceSize = resultExtents[0] * resultExtents[1];
-        //for(int i=0;i<interpolationPts-1;i++) {
-         for(int i=17;i < 18;i++) {
+        for(int i=0;i<interpolationPts-1;i++) {
+         //for(int i=17;i < 18;i++) {
 
         		System.out.println("^^ " + i);
         		//determining tangent vector at point
@@ -239,13 +239,13 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
                 //get coordinate of control point of b-spline
                 point = ((VOIPoint)contours.get(index)).exportPoint();
-                float x1 = point.X * res[0];
-                float y1 = point.Y * res[1];
-                float z1 = point.Z * res[2]; 
-                
-                float xC = wormImage.getImageCentermm(false).X;
-                float yC = wormImage.getImageCentermm(false).Y;
-                float zC = wormImage.getImageCentermm(false).Z; 
+                float x1 = point.X;
+                float y1 = point.Y;
+                float z1 = point.Z; 
+                System.out.println(" x1 = " + x1 + " y1 = " + y1 + " z1 = " + z1 );
+                float xC = wormImage.getImageCenter().X;
+                float yC = wormImage.getImageCenter().Y;
+                float zC = wormImage.getImageCenter().Z; 
  
                 //I think rotation should be about the center of the image as 
                 // opposed to the point of interection of the plane
@@ -279,6 +279,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
                System.out.println("Z axis angle: " + angle);
                
                Transform3D transformTotal = new Transform3D();
+               transformTotal.setIdentity();
                transformTotal.mul(translatePlane);
                //transformTotal.mul(translateC);
                transformTotal.mul(rotateX);
@@ -479,7 +480,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         //		|	  |
         //		|	  |
         //		|     |
-        //		c-----d
+        //		d-----c
         //
         //
        
@@ -491,53 +492,34 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         
         javax.vecmath.Vector3f a = new javax.vecmath.Vector3f(0,0,0);
         javax.vecmath.Vector3f b = new javax.vecmath.Vector3f(xDim-1,0,0);
-        javax.vecmath.Vector3f c = new javax.vecmath.Vector3f(0,yDim-1,0);
-        javax.vecmath.Vector3f d = new javax.vecmath.Vector3f(xDim-1,yDim-1,0);
+        javax.vecmath.Vector3f c = new javax.vecmath.Vector3f(xDim-1,yDim-1,0);
+        javax.vecmath.Vector3f d = new javax.vecmath.Vector3f(0,yDim-1,0);
 
         float x = 0;
         float y = 0;
         float z = 0;
 
-        x = a.x * resols[0];
-        y = a.y * resols[1];
-        z = a.z * resols[2];
+        x = a.x ;
+        y = a.y ;
+        z = a.z ;
         inVertices[0] = new Point3f(x,y,z);
         
-        x = b.x * resols[0];
-        y = b.y * resols[1];
-        z = b.z * resols[2];
+        x = b.x ;
+        y = b.y ;
+        z = b.z ;
         inVertices[1] = new Point3f(x,y,z);
         
-        x = c.x * resols[0];
-        y = c.y * resols[1];
-        z = c.z * resols[2];
+        x = c.x ;
+        y = c.y ;
+        z = c.z ;
         inVertices[2] = new Point3f(x,y,z);
         
-        x = d.x * resols[0];
-        y = d.y * resols[1];
-        z = d.z * resols[2];
+        x = d.x;
+        y = d.y;
+        z = d.z;
         inVertices[3] = new Point3f(x,y,z);
         
-        /*x = xBox * (a.x / (xDim -1));
-        y = yBox * (a.y / (yDim -1));
-        z = zBox * (a.z / (zDim -1));
-        inVertices[0] = new Point3f(x,y,z);
-        
-        x = xBox * (b.x / (xDim -1));
-        y = yBox * (b.y / (yDim -1));
-        z = zBox * (b.z / (zDim -1));
-        inVertices[1] = new Point3f(x,y,z);
-        
-        x = xBox * (c.x / (xDim -1));
-        y = yBox * (c.y / (yDim -1));
-        z = zBox * (c.z / (zDim -1));
-        inVertices[2] = new Point3f(x,y,z);
-        
-        x = xBox * (d.x / (xDim -1));
-        y = yBox * (d.y / (yDim -1));
-        z = zBox * (d.z / (zDim -1));
-        inVertices[3] = new Point3f(x,y,z);
-*/
+      
         /*x = (2*xBox) * (a.x / (xDim -1)) - xBox;
         y = (2*yBox) * (a.y / (yDim -1)) - yBox;
         z = (2*zBox) * (a.z / (zDim -1)) - zBox;
@@ -577,6 +559,23 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             boxSliceVertices[i].Y = outVertices[i].y;
             boxSliceVertices[i].Z = outVertices[i].z;
         }
+        /*
+        boxSliceVertices[0].X = a.x;
+        boxSliceVertices[0].Y = a.y;
+        boxSliceVertices[0].Z = a.z;
+        
+        boxSliceVertices[1].X = b.x;
+        boxSliceVertices[1].Y = b.y;
+        boxSliceVertices[1].Z = b.z;
+        
+        boxSliceVertices[2].X = c.x;
+        boxSliceVertices[2].Y = c.y;
+        boxSliceVertices[2].Z = c.z;
+        
+        boxSliceVertices[3].X = d.x;
+        boxSliceVertices[3].Y = d.y;
+        boxSliceVertices[3].Z = d.z;
+        */
     }
     
     /**
