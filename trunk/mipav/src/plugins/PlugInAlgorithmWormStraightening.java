@@ -4,6 +4,7 @@ import java.util.Vector;
 
 import javax.media.j3d.Transform3D;
 import javax.vecmath.AxisAngle4f;
+import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
@@ -74,19 +75,11 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		resols[0] = wormImage.getResolutions(0)[0];
 		resols[1] = wormImage.getResolutions(0)[1];
 		resols[2] = wormImage.getResolutions(0)[2];
-		
-		
-		
-		
-        
         
 		this.interpolationPts = interpolationPts;
-		
 	}
 	
-	
-	
-	
+
 	public void runAlgorithm() {
 
 		//first run b-spline algorithm on input points VOI
@@ -185,25 +178,18 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         xPoints[nPoints + 4] = point.X;
         yPoints[nPoints + 4] = point.Y;
         zPoints[nPoints + 4] = point.Z;
-
         
-
-
-
         //variables needed for loop
         int xExtent = wormImage.getExtents()[0];
         int yExtent = wormImage.getExtents()[1];
         int zExtent = wormImage.getExtents()[2];
-
 
         double p;
         int newY = 0;
         float[] newPtx = new float[1];
         float[] newPty = new float[1];
         float[] newPtz = new float[1];
-        
 
-        
         //alg to get tangent vector
         AlgorithmBSpline bSplineAlgo = smoothAlgo.getbSplineAlgo();
         
@@ -211,22 +197,21 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         //!!!!!!make sure you comment this out when wanting to populate result image
         //wormImage.setAll(0);
         
-        javax.vecmath.Vector3f compareAngle = new javax.vecmath.Vector3f(1,0,0);
-        javax.vecmath.Vector3f imageOrientationAngle = new javax.vecmath.Vector3f(0,1,0);
-        javax.vecmath.Vector3f v ;
+        javax.vecmath.Vector3f compareVect = new javax.vecmath.Vector3f(1,0,0);
+        javax.vecmath.Vector3f imageOrientationVectX = new javax.vecmath.Vector3f(1,0,0);
+        javax.vecmath.Vector3f imageOrientationVectY = new javax.vecmath.Vector3f(0,1,0);
+        javax.vecmath.Vector3f imageOrientationVectZ = new javax.vecmath.Vector3f(0,0,1);
+        javax.vecmath.Vector3f tangentVect ;
         float angle, rotationAngle;
 		double halfPi = Math.PI/2.0;
 		double quarterPi = Math.PI/4.0;
 		double startRange = halfPi - quarterPi;
 		double endRange = halfPi + quarterPi;
-        
-       
+          
         String[] planeOrientations = new String[interpolationPts-1];
         boolean[] doFlip = new boolean[interpolationPts-1];
         int sliceSize = xExtent*yExtent;
-
-
-
+        
         //Vector3f[] tanVectors = new Vector3f[interpolationPts-1];
 
         float[] values;
@@ -235,7 +220,6 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         for(int i=0;i<interpolationPts-1;i++) {
 
         		System.out.println("^^ " + i);
-
         		//determining tangent vector at point
             	int index = i;
             	float floatIndex = (float)index + 2;
@@ -243,41 +227,53 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             	//normalizing tangent
                 tanVector.Normalize();
                 
-                
                 //used later for when to determine whether to flip the image or not
-                v = new javax.vecmath.Vector3f(tanVector.X,tanVector.Y,tanVector.Z);
-                angle = v.angle(compareAngle);
+                tangentVect = new javax.vecmath.Vector3f(tanVector.X,tanVector.Y,tanVector.Z);
+                angle = tangentVect.angle(compareVect);
                 if(angle <= halfPi) {
             		doFlip[i] = false;
             	}else {
             		doFlip[i] = true;
             	}
-                
 
                 //get coordinate of control point of b-spline
                 point = ((VOIPoint)contours.get(index)).exportPoint();
                 float x1 = point.X;
                 float y1 = point.Y;
                 float z1 = point.Z;  
-
-                
+ 
+                //I think rotation should be about the center of the image as 
+                // opposed to the point of interection of the plane
                 
                 //need to first get the 4 corners for where plane cuts at image
                 Transform3D translate = new Transform3D();
                 translate.setTranslation(new javax.vecmath.Vector3f(x1,y1,z1));
                 
-               Transform3D rotate = new Transform3D();
-               //rotate.setRotationScale(rotationMatrix);
+                Transform3D translateInv = new Transform3D();
+                translateInv.setTranslation(new javax.vecmath.Vector3f(-x1,-y1,-z1));
+                
+               Transform3D rotateX = new Transform3D();
+               Transform3D rotateY = new Transform3D();
+               Transform3D rotateZ = new Transform3D();
+     
+               //rotate.setRotation(new AxixAngle4f() );
+               angle = tangentVect.angle(imageOrientationVectX);
+               rotateX.setRotation(new AxisAngle4f(imageOrientationVectX, angle));
+               
+               angle = tangentVect.angle(imageOrientationVectY);
+               rotateY.setRotation(new AxisAngle4f(imageOrientationVectY, angle));
+               
+               angle = tangentVect.angle(imageOrientationVectZ);
+               rotateZ.setRotation(new AxisAngle4f(imageOrientationVectZ, angle));
                
                Transform3D transformTotal = new Transform3D();
                transformTotal.mul(translate);
-               transformTotal.mul(rotate);
-                
-                
-                
+               transformTotal.mul(rotateX);
+               transformTotal.mul(rotateY);
+               transformTotal.mul(rotateZ);
+               transformTotal.mul(translateInv);
 
-                transformBoxSlices(transformTotal);
-                
+               transformBoxSlices(transformTotal); 
                 
                 //now we call export diagonal and pass in those vertices
                 values = new float[resultExtents[0] * resultExtents[1]]; 
@@ -293,31 +289,12 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
                 }catch(IOException e) {
                 	e.printStackTrace();
                 }
-                
-                
-                
-            
-            
         }
-        
-        
-        
-
-        
-		
-		
-        
-        
         
         wormImage.calcMinMax();
         resultImage.calcMinMax();
-        
-        
+       
         new ViewJFrameImage(resultImage);
-        
-        
-        
-        
         
   /*      
         System.out.println("aaa");
@@ -419,10 +396,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	        	
 	        	flipAlgo.run();
 	        }
-	        
-	        
-	        
-	        
+
         	//now get the point coordinate
 	        VOIVector VOIs2 = extractedImages[0].getVOIs();
 	        Vector<VOIBase> contours2 = VOIs2.VOIAt(0).getCurves();
@@ -441,8 +415,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             xfrm.setRotate(0);
             xfrm.setSkew(0, 0);
             xfrm.setZoom(1, 1);
-            
-            
+  
             algoTrans = new AlgorithmTransform(extractedImages[0], xfrm, 1, oXres, oYres, oXdim, oYdim, units, false, false, false, false, null);
     
             algoTrans.setUpdateOriginFlag(true);
@@ -452,41 +425,22 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             slices[i] = algoTrans.getTransformedImage();
   
         }
-        
-        
-        
-        
+
         AlgorithmConcatMult2Dto3D alg = new AlgorithmConcatMult2Dto3D(slices, finalImage);
         
         alg.run();
-        
-        
+ 
         System.out.println(finalImage.getFileInfo()[0].getUnitsOfMeasure().length);
         finalImage.calcMinMax();
         System.out.println(finalImage.toString());
         System.out.println("ccc");
         vjf = new ViewJFrameImage(finalImage);
-        
-        
-        
-        
-        
+    
        */
-        
-        
-        
-		
+	
 	}
 	
-	
-	
 
-	
-	
-	
-	
-	
-	
 	
 	/**
      * transform the points used to render the triSliceImages textures.
@@ -502,8 +456,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         for(int i=0;i<inVertices.length;i++) {
         	inVertices[i] = new Point3f();
         }
-        
-        
+
         
         // 
         //
@@ -525,21 +478,15 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         javax.vecmath.Vector3f b = new javax.vecmath.Vector3f(xDim-1,0,0);
         javax.vecmath.Vector3f c = new javax.vecmath.Vector3f(0,yDim-1,0);
         javax.vecmath.Vector3f d = new javax.vecmath.Vector3f(xDim-1,yDim-1,0);
-        
-        
-        
+       
         xBox = (xDim - 1) * resols[0];
         yBox = (yDim - 1) * resols[1];
         zBox = (zDim - 1) * resols[2];
-        
-        
-        
-        
+
         float x = 0;
         float y = 0;
         float z = 0;
-        
-        
+
         x = xBox * (a.x / (xDim -1));
         y = yBox * (a.y / (yDim -1));
         z = zBox * (a.z / (zDim -1));
@@ -559,9 +506,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         y = yBox * (d.y / (yDim -1));
         z = zBox * (d.z / (zDim -1));
         inVertices[3] = new Point3f(x,y,z);
-        
-        
-        
+
         /*x = (2*xBox) * (a.x / (xDim -1)) - xBox;
         y = (2*yBox) * (a.y / (yDim -1)) - yBox;
         z = (2*zBox) * (a.z / (zDim -1)) - zBox;
@@ -582,8 +527,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         z = (2*zBox) * (d.z / (zDim -1)) - zBox;
         inVertices[3] = new Point3f(x,y,z);*/
         
-        
-        
+
         Point3f[] outVertices = new Point3f[4];
 
         boxSliceVertices = new Vector3f[4];
