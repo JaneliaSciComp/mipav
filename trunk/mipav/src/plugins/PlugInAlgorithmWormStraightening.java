@@ -122,7 +122,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		resultExtents[1] = 400;
 		resultExtents[2] = interpolationPts-1;
 		
-		float[] res = {wormImage.getResolutions(0)[2], wormImage.getResolutions(0)[1],1.0f};
+		float[] res = {wormImage.getResolutions(0)[0], wormImage.getResolutions(0)[1],wormImage.getResolutions(0)[2]};
 		resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, "RESULT IMAGE");
 		resultImage.setResolutions(res);
 		FileInfoBase[] fileInfoBases = resultImage.getFileInfo();
@@ -217,7 +217,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         float[] values;
         int start = 0;
         int resultSliceSize = resultExtents[0] * resultExtents[1];
-        for(int i=0;i<interpolationPts-1;i++) {
+        //for(int i=0;i<interpolationPts-1;i++) {
+         for(int i=17;i < 18;i++) {
 
         		System.out.println("^^ " + i);
         		//determining tangent vector at point
@@ -238,19 +239,27 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
                 //get coordinate of control point of b-spline
                 point = ((VOIPoint)contours.get(index)).exportPoint();
-                float x1 = point.X;
-                float y1 = point.Y;
-                float z1 = point.Z;  
+                float x1 = point.X * res[0];
+                float y1 = point.Y * res[1];
+                float z1 = point.Z * res[2]; 
+                
+                float xC = wormImage.getImageCentermm(false).X;
+                float yC = wormImage.getImageCentermm(false).Y;
+                float zC = wormImage.getImageCentermm(false).Z; 
  
                 //I think rotation should be about the center of the image as 
                 // opposed to the point of interection of the plane
                 
                 //need to first get the 4 corners for where plane cuts at image
-                Transform3D translate = new Transform3D();
-                translate.setTranslation(new javax.vecmath.Vector3f(x1,y1,z1));
                 
-                Transform3D translateInv = new Transform3D();
-                translateInv.setTranslation(new javax.vecmath.Vector3f(-x1,-y1,-z1));
+                Transform3D translateC = new Transform3D();
+                translateC.setTranslation(new javax.vecmath.Vector3f(xC,yC,zC));
+                
+                Transform3D translatePlane = new Transform3D();
+                translatePlane.setTranslation(new javax.vecmath.Vector3f(x1,y1,z1));
+                
+                Transform3D translateInvC = new Transform3D();
+                translateInvC.setTranslation(new javax.vecmath.Vector3f(-xC,-yC,-zC));
                 
                Transform3D rotateX = new Transform3D();
                Transform3D rotateY = new Transform3D();
@@ -259,19 +268,23 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
                //rotate.setRotation(new AxixAngle4f() );
                angle = tangentVect.angle(imageOrientationVectX);
                rotateX.setRotation(new AxisAngle4f(imageOrientationVectX, angle));
+               System.out.println("X axis angle: " + angle);
                
                angle = tangentVect.angle(imageOrientationVectY);
                rotateY.setRotation(new AxisAngle4f(imageOrientationVectY, angle));
+               System.out.println("Y axis angle: " + angle);
                
                angle = tangentVect.angle(imageOrientationVectZ);
                rotateZ.setRotation(new AxisAngle4f(imageOrientationVectZ, angle));
+               System.out.println("Z axis angle: " + angle);
                
                Transform3D transformTotal = new Transform3D();
-               transformTotal.mul(translate);
+               transformTotal.mul(translatePlane);
+               //transformTotal.mul(translateC);
                transformTotal.mul(rotateX);
                transformTotal.mul(rotateY);
                transformTotal.mul(rotateZ);
-               transformTotal.mul(translateInv);
+               transformTotal.mul(translateInvC);
 
                transformBoxSlices(transformTotal); 
                 
@@ -283,7 +296,9 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
                 	System.out.println(boxSliceVertices[1].X + " , " + boxSliceVertices[1].Y + " " + boxSliceVertices[1].Z);
                 	System.out.println(boxSliceVertices[2].X + " , " + boxSliceVertices[2].Y + " " + boxSliceVertices[2].Z);
                 	System.out.println(boxSliceVertices[3].X + " , " + boxSliceVertices[3].Y + " " + boxSliceVertices[3].Z);
+                	
                 	wormImage.exportDiagonal(0, i, wormImageExtents, boxSliceVertices, values, true);
+                	
                 	resultImage.importData(start, values, false);
                 	start = start + resultSliceSize;
                 }catch(IOException e) {
@@ -478,16 +493,32 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         javax.vecmath.Vector3f b = new javax.vecmath.Vector3f(xDim-1,0,0);
         javax.vecmath.Vector3f c = new javax.vecmath.Vector3f(0,yDim-1,0);
         javax.vecmath.Vector3f d = new javax.vecmath.Vector3f(xDim-1,yDim-1,0);
-       
-        xBox = (xDim - 1) * resols[0];
-        yBox = (yDim - 1) * resols[1];
-        zBox = (zDim - 1) * resols[2];
 
         float x = 0;
         float y = 0;
         float z = 0;
 
-        x = xBox * (a.x / (xDim -1));
+        x = a.x * resols[0];
+        y = a.y * resols[1];
+        z = a.z * resols[2];
+        inVertices[0] = new Point3f(x,y,z);
+        
+        x = b.x * resols[0];
+        y = b.y * resols[1];
+        z = b.z * resols[2];
+        inVertices[1] = new Point3f(x,y,z);
+        
+        x = c.x * resols[0];
+        y = c.y * resols[1];
+        z = c.z * resols[2];
+        inVertices[2] = new Point3f(x,y,z);
+        
+        x = d.x * resols[0];
+        y = d.y * resols[1];
+        z = d.z * resols[2];
+        inVertices[3] = new Point3f(x,y,z);
+        
+        /*x = xBox * (a.x / (xDim -1));
         y = yBox * (a.y / (yDim -1));
         z = zBox * (a.z / (zDim -1));
         inVertices[0] = new Point3f(x,y,z);
@@ -506,7 +537,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
         y = yBox * (d.y / (yDim -1));
         z = zBox * (d.z / (zDim -1));
         inVertices[3] = new Point3f(x,y,z);
-
+*/
         /*x = (2*xBox) * (a.x / (xDim -1)) - xBox;
         y = (2*yBox) * (a.y / (yDim -1)) - yBox;
         z = (2*zBox) * (a.z / (zDim -1)) - zBox;
@@ -537,27 +568,16 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
             
             boxSliceVertices[i] = new Vector3f();
             
-
             /* Rotate the points in the bounding box: */
             kTransform.transform(inVertices[i], outVertices[i]);
             /* Convert the points to ModelImage space: */
-            ScreenToModel(new javax.vecmath.Vector3f(outVertices[i].x, outVertices[i].y, outVertices[i].z),
-                    boxSliceVertices[i]);
+            //ScreenToModel(new javax.vecmath.Vector3f(outVertices[i].x, outVertices[i].y, outVertices[i].z),
+            //        boxSliceVertices[i]);
+            boxSliceVertices[i].X = outVertices[i].x;
+            boxSliceVertices[i].Y = outVertices[i].y;
+            boxSliceVertices[i].Z = outVertices[i].z;
         }
-        
-
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     /**
      * Translate from normalized plane coordinates to Model coordinates:
@@ -565,11 +585,11 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
      * @param screen the input point to be transformed from normalized plane coordinates
      * @param model the output point in Model coordinates
      */
-    private void ScreenToModel(javax.vecmath.Vector3f screen, Vector3f model) {
+   /* private void ScreenToModel(javax.vecmath.Vector3f screen, Vector3f model) {
         model.X = Math.round( ( (screen.x + xBox) * ((float) xDim - 1)) / (2.0f * xBox));
         model.Y = Math.round( ( (screen.y - yBox) * ((float) yDim - 1)) / ( -2.0f * yBox));
         model.Z = Math.round( ( (screen.z - zBox) * ((float) zDim - 1)) / ( -2.0f * zBox));
-    }
+    }*/
 	
 	
 	
