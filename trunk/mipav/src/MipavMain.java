@@ -10,12 +10,13 @@
 import java.io.File;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.CommandLineParser.StaticArgument;
 
 
 /**
  * The class which starts up the Mipav application. Also passes along the command line arguments to the UI.
  */
-public class MipavMain implements CommandLineParser {
+public class MipavMain {//implements CommandLineParser { //TODO: Test effectiveness in nightly build
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -27,8 +28,8 @@ public class MipavMain implements CommandLineParser {
     public static void main(String[] args) {
         System.setProperty("sun.awt.noerasebackground", "true");
 
-        MipavMain mipav = new MipavMain();
-        int initArg = mipav.parseArguments(args, 0); //process static command line arguments
+        //MipavMain mipav = new MipavMain();
+        int initArg = MipavMain.parseArguments(args, 0); //process static command line arguments
         
         ViewUserInterface ui = ViewUserInterface.create();
         ui.parseArguments(args, initArg); //process command line arguments that require mipav objects
@@ -47,7 +48,7 @@ public class MipavMain implements CommandLineParser {
      * required that MIPAV has not been initialized yet. Returns the next argument to be processed (finished 
      * if returns args.length)
      */
-    public int parseArguments(String[] args, int initArg) {
+    public static int parseArguments(String[] args, int initArg) {
         int i = 0;
         String arg;
         boolean prefDirCommandDone = false;
@@ -173,7 +174,7 @@ parse:  while (i < args.length) {
      * If the preferences name command is about to be performed before an existing preferences directory command,
      * this guarantees that the directory command will be executed first.
      */
-    private void checkPrefDirCommand(String[] args, int initArg) {
+    private static void checkPrefDirCommand(String[] args, int initArg) {
         for(int i=0; i<args.length; i++) {
             if(StaticArgument.getArgument(args[i], true) == StaticArgument.PreferencesDir) {
                 String[] argSub = new String[]{args[i], args[i+1]};
