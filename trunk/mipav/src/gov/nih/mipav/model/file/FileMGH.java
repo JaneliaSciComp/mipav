@@ -1400,6 +1400,91 @@ public class FileMGH extends FileBase {
             yk /= val;
             zk /= val;
         }
+        
+        if ( ( (Math.abs(xi) > 0.9) || (Math.abs(yi) > 0.9) || (Math.abs(zi) > 0.9))
+                && ( (Math.abs(xj) > 0.9) || (Math.abs(yj) > 0.9) || (Math.abs(zj) > 0.9))
+                && ( (Math.abs(xk) > 0.9) || (Math.abs(yk) > 0.9) || (Math.abs(zk) > 0.9))) {
+
+            if (Math.abs(xi) < 0.9) {
+                xi = 0;
+            }
+
+            if (Math.abs(yi) < 0.9) {
+                yi = 0;
+            }
+
+            if (Math.abs(zi) < 0.9) {
+                zi = 0;
+            }
+
+            if (Math.abs(xj) < 0.9) {
+                xj = 0;
+            }
+
+            if (Math.abs(yj) < 0.9) {
+                yj = 0;
+            }
+
+            if (Math.abs(zj) < 0.9) {
+                zj = 0;
+            }
+
+            if (Math.abs(xk) < 0.9) {
+                xk = 0;
+            }
+
+            if (Math.abs(yk) < 0.9) {
+                yk = 0;
+            }
+
+            if (Math.abs(zk) < 0.9) {
+                zk = 0;
+            }
+
+            if (xi > 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
+            } else if (xi < 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_L2R_TYPE;
+            } else if (yi > 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yi < 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (zi > 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_I2S_TYPE;
+            } else if (zi < 0.0) {
+                axisOrientation[0] = FileInfoBase.ORI_S2I_TYPE;
+            }
+
+            if (xj > 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_R2L_TYPE;
+            } else if (xj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_L2R_TYPE;
+            } else if (yj > 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (zj > 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_I2S_TYPE;
+            } else if (zj < 0.0) {
+                axisOrientation[1] = FileInfoBase.ORI_S2I_TYPE;
+            }
+
+            if (xk > 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_R2L_TYPE;
+            } else if (xk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
+            } else if (yk > 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (zk > 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
+            } else if (zk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_S2I_TYPE;
+            }
+
+            return axisOrientation;
+        }
 
         mat.set(0, 0, xi);
         mat.set(0, 1, xj);
@@ -1596,6 +1681,8 @@ public class FileMGH extends FileBase {
 
         return axisOrientation;
     }
+    
+    
 
     /**
      * Helper method to calculate the offset for getting only the middle NIFTI image slice from the 3D file.
