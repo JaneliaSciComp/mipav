@@ -1,6 +1,6 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
-import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -107,7 +107,7 @@ public class PlugInAlgorithmBrainSubcortical extends AlgorithmBase {
 
 		System.gc();
 		System.out.println("PlugIn Brain Subcortical Analysis Finish Running.  MIPAV Quits. ");
-		System.exit(0);
+		// System.exit(0);
 	}
     
     /**
@@ -1133,7 +1133,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		float fineRateZ = 3.0f;
 		boolean maxOfMinResol = true;
 		boolean doSubsample = true;
-		boolean doMultiThread = true;
+		boolean doMultiThread = false;
 		boolean fastMode = true;
 		int bracketBound = 10;
 		int maxIterations = 2;
@@ -1143,6 +1143,20 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		instanceB = _instanceB;
 
 		if (flagLeftHippocampus) {
+			
+			regImage_LeftHippocampus = (ModelImage)image_LeftHippocampus.clone();
+			/*
+			int imageOrient = image_LeftHippocampus.getFileInfo(0).getImageOrientation();
+			int []axisOrient = image_LeftHippocampus.getFileInfo(0).getAxisOrientation();
+			
+			FileInfoMGH fileInfo = new FileInfoMGH(image_LeftHippocampus.getImageName(), null, FileUtility.MGH);
+			
+            fileInfo.setImageOrientation(imageOrient);
+			fileInfo.setAxisOrientation(axisOrient);
+			// fileInfo.setOrigin(newOrigin);
+			FileInfoMGH[] fileInfos = {fileInfo};
+			regImage_LeftHippocampus.setFileInfo(fileInfos);
+			*/
 			regLeftHippocampus = new AlgorithmRegOAR3D(image_LeftHippocampus,
 					instanceB.image_LeftHippocampus, cost, DOF, interp,
 					rotateBeginX, rotateEndX, coarseRateX, fineRateX,
@@ -1544,6 +1558,10 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
                     regImage_LeftHippocampus.calcMinMax();
                     regImage_LeftHippocampus.setImageName(name);
                     regImage_LeftHippocampus.setType(myImage.getType());
+                    
+                    regImage_LeftHippocampus.copyFileTypeInfo(image_LeftHippocampus);
+                    // new ViewJFrameImage(regImage_LeftHippocampus);
+                    /// regImage_LeftHippocampus.copyFileTypeInfo(image_LeftHippocampus);
                     
                     if (transform != null) {
                         transform.finalize();
@@ -3031,8 +3049,55 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 	    int length = 4 * volSize;
 		int L1 = 0, L2 = 0, L1andL2 = 0;
 	    
-	    ModelImage destImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), sectionName+"_comparedRGB");
 		
+	    ModelImage destImage = new ModelImage(ModelStorageBase.ARGB, srcImage.getExtents(), sectionName+"_comparedRGB");
+		/*
+	    FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[destImage.getExtents()[2]];
+	    for (int i = 0; i < fileInfoBases.length; i++) {
+	    	 fileInfoBases[i] = new FileInfoImageXML(destImage.getImageName(), null, FileUtility.XML);
+	            fileInfoBases[i].setEndianess(srcImage.getFileInfo()[0].getEndianess());
+	            fileInfoBases[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+	            fileInfoBases[i].setResolutions(srcImage.getFileInfo()[0].getResolutions());
+	            fileInfoBases[i].setExtents(srcImage.getExtents());
+	            fileInfoBases[i].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
+	            fileInfoBases[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
+	            fileInfoBases[i].setOrigin(srcImage.getFileInfo()[0].getOrigin());
+	            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);       
+	    }
+	    destImage.setFileInfo(fileInfoBases);
+        */
+	    for (int i = 0; i < srcImage.getExtents()[2]; i++) {
+	    
+		    boolean endianness = srcImage.getFileInfo(i).getEndianess();
+	        int modality = srcImage.getFileInfo(i).getModality();
+	        float[] res = srcImage.getFileInfo(i).getResolutions();
+	        int[] exts = srcImage.getFileInfo(i).getExtents();
+	        int[] units = srcImage.getFileInfo(i).getUnitsOfMeasure();
+			int imageOrient = srcImage.getFileInfo(i).getImageOrientation();
+			int []axisOrient = srcImage.getFileInfo(i).getAxisOrientation();
+			float[] origin = srcImage.getFileInfo(i).getOrigin();
+			System.err.println("origin[0] = " + origin[0] + "origin[1] = " + origin[1] + "origin[2] = " + origin[2]);
+			
+			
+			FileInfoImageXML fileInfo = new FileInfoImageXML(sectionName+"_comparedRGB", null, FileUtility.XML);
+			/// fileInfo.setDataType(ModelStorageBase.FLOAT);    
+			fileInfo.setEndianess(endianness);
+	        fileInfo.setExtents(exts);
+	        fileInfo.setModality(modality);
+	        fileInfo.setResolutions(res);
+	        fileInfo.setUnitsOfMeasure(units);
+	        fileInfo.setImageOrientation(imageOrient);
+			fileInfo.setAxisOrientation(axisOrient);
+			fileInfo.setOrigin(origin);
+        
+		 
+			destImage.setFileInfo(fileInfo, i);
+         }
+        
+		
+        // FileInfoImageXML[] fileInfos = {fileInfo};
+        // destImage.setFileInfo(fileInfos);
+	    
 		try {
 			
 			srcImage.exportData(0, volSize, sourceBuffer);
@@ -3061,6 +3126,8 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 			}
 			
 			destImage.importData(0, buffer, false);
+			destImage.calcMinMax();
+			new ViewJFrameImage(destImage);
 			saveComparedImage(destImage, rootDirectory);
 			
 			// Overlap:            		   V(L1 & L2 ) 
@@ -3077,8 +3144,8 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 			
 			myData.add(new StatisticsData(sectionName, overlapInPercent, differenceInPercent));
 			
-			destImage.disposeLocal();
-			destImage = null;
+			// destImage.disposeLocal();
+			// destImage = null;
 			
 		} catch ( IOException e ) {
 			MipavUtil.displayError("IOException on srcImage.exportData(0, volSize, sourceBuffer).");
