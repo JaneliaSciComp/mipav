@@ -166,7 +166,7 @@ public class PlugInBrainSubcorticalRegistration implements PlugInGeneric, Comman
 	 * Call the Brain subcortical dialog to run registration. 
 	 */
 	public void run() {
-		// ViewUserInterface.getReference().setAppFrameVisible(false);
+		ViewUserInterface.getReference().setAppFrameVisible(false);
 		new PlugInDialogBrainSubcortical(ViewUserInterface.getReference()
 				.getMainFrame(), inputDir, outputDir, caseCompareDir, regSection);
 	}
