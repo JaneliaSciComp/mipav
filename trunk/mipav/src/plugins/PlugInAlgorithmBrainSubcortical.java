@@ -107,7 +107,7 @@ public class PlugInAlgorithmBrainSubcortical extends AlgorithmBase {
 
 		System.gc();
 		System.out.println("PlugIn Brain Subcortical Analysis Finish Running.  MIPAV Quits. ");
-		// System.exit(0);
+		System.exit(0);
 	}
     
     /**
@@ -3076,7 +3076,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 			int imageOrient = srcImage.getFileInfo(i).getImageOrientation();
 			int []axisOrient = srcImage.getFileInfo(i).getAxisOrientation();
 			float[] origin = srcImage.getFileInfo(i).getOrigin();
-			System.err.println("origin[0] = " + origin[0] + "origin[1] = " + origin[1] + "origin[2] = " + origin[2]);
+			// System.err.println("origin[0] = " + origin[0] + "origin[1] = " + origin[1] + "origin[2] = " + origin[2]);
 			
 			
 			FileInfoImageXML fileInfo = new FileInfoImageXML(sectionName+"_comparedRGB", null, FileUtility.XML);
@@ -3127,7 +3127,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 			
 			destImage.importData(0, buffer, false);
 			destImage.calcMinMax();
-			new ViewJFrameImage(destImage);
+			// new ViewJFrameImage(destImage);
 			saveComparedImage(destImage, rootDirectory);
 			
 			// Overlap:            		   V(L1 & L2 ) 
