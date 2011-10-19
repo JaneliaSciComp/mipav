@@ -17,8 +17,8 @@ import java.util.zip.*;
  *
  * <p>The MGH definition is: [right] = [xr yr zr] [ xsize * x] + [rorigin] [anterior] = [xa ya za] [ ysize * y] + [aorigin]
  * [superior] = [xs ys zs] [ zsize * z] + [sorigin] Now in going to MIPAV a change must occur. MGH has L->R and P->A while
- * MIPAV uses R->L and A->P, so this would cause xr, yr, zr, rorigin, xa, ya, za, and aorigin to be multiplied by -1.
- * cr, ca, and cs refer to the center point of the scanner coordinate system.</p>
+ * MIPAV uses R->L in all axes and A->P in axes 0 and 1 and P->A in axis 2, so this would cause xr, yr, zr, rorigin,
+ * xa, ya, za, and aorigin to be multiplied by -1. cr, ca, and cs refer to the center point of the scanner coordinate system.</p>
  *
  * <p>A 284 byte header always precedes the data buffer In version 1 if the goodRASFlag <= 0, then only the first 30
  * bytes are read. If the goodRASFlag > 0, then the first 90 bytes are read</p>
@@ -520,7 +520,7 @@ public class FileMGH extends FileBase {
 
         origin = new float[3];
 
-        for (j = 0; j < 3; j++) {
+        for (j = 0; j < 2; j++) {
 
             if (axisOrientation[j] == FileInfoBase.ORI_R2L_TYPE) {
                 origin[j] = -(width / 2.0f) * resolutions[0];
@@ -535,6 +535,19 @@ public class FileMGH extends FileBase {
             } else if (axisOrientation[j] == FileInfoBase.ORI_S2I_TYPE) {
                 origin[j] = (depth / 2.0f) * resolutions[2];
             }
+        }
+        if (axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE) {
+            origin[2] = -(width / 2.0f) * resolutions[0];
+        } else if (axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE) {
+            origin[2] = (width / 2.0f) * resolutions[0];
+        } else if (axisOrientation[2] == FileInfoBase.ORI_A2P_TYPE) {
+            origin[2] = (height / 2.0f) * resolutions[1];
+        } else if (axisOrientation[2] == FileInfoBase.ORI_P2A_TYPE) {
+            origin[2] = -(height / 2.0f) * resolutions[1];
+        } else if (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE) {
+            origin[2] = -(depth / 2.0f) * resolutions[2];
+        } else if (axisOrientation[2] == FileInfoBase.ORI_S2I_TYPE) {
+            origin[2] = (depth / 2.0f) * resolutions[2];
         }
 
         fileInfo.setOrigin(origin);
@@ -1288,9 +1301,9 @@ public class FileMGH extends FileBase {
             } else if (xk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
             } else if (yk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
-            } else if (yk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (yk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
             } else if (zk > 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
             } else if (zk < 0.0) {
@@ -1474,9 +1487,9 @@ public class FileMGH extends FileBase {
             } else if (xk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
             } else if (yk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
-            } else if (yk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+            } else if (yk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
             } else if (zk > 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
             } else if (zk < 0.0) {
@@ -1663,11 +1676,11 @@ public class FileMGH extends FileBase {
                 break;
 
             case -2:
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
                 break;
 
             case 2:
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
             case -3:
@@ -1735,10 +1748,10 @@ public class FileMGH extends FileBase {
                 fileInfo[i].setOrigin(origin);
                 axisOrient = fileInfo[i].getAxisOrientation(2);
 
-                if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_A2P_TYPE) ||
+                if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
                         (axisOrient == FileInfoBase.ORI_I2S_TYPE)) {
                     origin[2] += resolutions[2];
-                } else { // ORI_L2R_TYPE, ORI_P2A_TYPE, ORI_S2I_TYPE
+                } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
                     origin[2] -= resolutions[2];
                 }
             }
@@ -1751,10 +1764,10 @@ public class FileMGH extends FileBase {
                     fileInfo[(i * image.getExtents()[2]) + j].setOrigin(origin);
                     axisOrient = fileInfo[i].getAxisOrientation(2);
 
-                    if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_A2P_TYPE) ||
+                    if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
                             (axisOrient == FileInfoBase.ORI_I2S_TYPE)) {
                         origin[2] += resolutions[2];
-                    } else { // ORI_L2R_TYPE, ORI_P2A_TYPE, ORI_S2I_TYPE
+                    } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
                         origin[2] -= resolutions[2];
                     }
                 }
