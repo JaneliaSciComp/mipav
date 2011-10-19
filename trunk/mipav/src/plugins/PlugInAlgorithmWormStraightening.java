@@ -10,6 +10,7 @@ import javax.vecmath.Matrix3f;
 import javax.vecmath.Point3f;
 import javax.vecmath.Vector3d;
 
+import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmArcLength;
@@ -31,6 +32,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
@@ -266,7 +268,33 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 				//System.out.println(boxSliceVertices[3].X + " , " + boxSliceVertices[3].Y + " " + boxSliceVertices[3].Z);
 
 				wormImage.exportDiagonal(0, i, wormImageExtents, boxSliceVertices, values, true);
+				
+				VOIContour kBox = new VOIContour(true);
+				for ( int pt = 0; pt < 4; pt++ )
+				{
+					kBox.addElement( boxSliceVertices[pt].X, boxSliceVertices[pt].Y, boxSliceVertices[pt].Z );
+				}
 
+                short sID = (short)(wormImage.getVOIs().getUniqueID());
+                String kName = kBox.getClass().getName();
+                int nameIndex = kName.lastIndexOf('.') + 1;
+                kName = kName.substring(nameIndex);
+                VOI kBoxVOI = new VOI( sID,  kName + "_" + sID, kBox.getType(), .7f );
+                kBoxVOI.setOpacity(1f);
+                kBoxVOI.getCurves().add(kBox);
+				
+				
+
+    			Vector3f tanVectorNN = bSplineAlgo.bSplineJetXYZ(1, floatIndex, xPoints, yPoints, zPoints);
+				VOIContour kTangent = new VOIContour(false);
+				kTangent.addElement( position.x, position.y, position.z );
+				Vector3f kNewPos = new Vector3f( position.x + tanVectorNN.X, position.y + tanVectorNN.Y, position.z + tanVectorNN.Z );
+				kTangent.addElement( kNewPos.X, kNewPos.Y, kNewPos.Z );
+				kBoxVOI.getCurves().add(kTangent);
+                kTangent.update( new ColorRGBA(0,1,0,1) );
+                
+                wormImage.registerVOI( kBoxVOI );
+				
 				resultImage.importData(i*values.length, values, false);
 				start = start + resultSliceSize;
 			}catch(IOException e) {
