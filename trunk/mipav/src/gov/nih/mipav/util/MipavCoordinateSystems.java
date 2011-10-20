@@ -817,12 +817,17 @@ public class MipavCoordinateSystems {
 
         final int[] extents = kImage.getExtents();
         final float[] afRes = kImage.getResolutions(0);
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             if ( (axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
                 afLowerRight[i] = afUpperLeft[i] + ((extents[i] - 1) * afRes[i]);
             } else {
                 afLowerRight[i] = afUpperLeft[i] - ((extents[i] - 1) * afRes[i]);
             }
+        }
+        if ( (axisOrient[2] == 1) || (axisOrient[2] == 3) || (axisOrient[2] == 5)) {
+            afLowerRight[2] = afUpperLeft[2] + ((extents[2] - 1) * afRes[2]);
+        } else {
+            afLowerRight[2] = afUpperLeft[2] - ((extents[2] - 1) * afRes[2]);
         }
 
         
