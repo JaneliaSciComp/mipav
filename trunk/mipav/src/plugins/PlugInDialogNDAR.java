@@ -136,6 +136,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     
     private String data_dictionary_server_url = "http://ndardemo.nih.gov/NewDataDictionary/dataDictionary?wsdl";
     
+    
+    
+    //private String data_dictionary_server_url = "http://ndar-stage-apps.cit.nih.gov/NewDataDictionary/dataDictionary?wsdl";
+    
     //private String data_dictionary_server_url = "http://ndarportal.nih.gov/NewDataDictionary/dataDictionary?wsdl";
     
     private List<XmlDataType> dataTypes;
@@ -771,6 +775,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             String outputFileNameBase;
 
             if (imageFile != null) {
+
                 // this means we are working with the image datastructure
                 printlnToLog("Creating submission file for " + name);
                 printlnToLog("Opening: " + imageFile + ", multifile: " + multifiles.get(i));
@@ -828,74 +833,247 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 printlnToLog("");
 
             } else {
+       
                 // this means that this is another data structure besides image
 
                 printlnToLog("Creating submission file for " + name);
 
-                final String dsName = name.substring(0, name.indexOf("_NDAR"));
+                String dsName = name.substring(0, name.indexOf("_NDAR"));
 
                 outputFileNameBase = guid + "_" + dsName + "_" + System.currentTimeMillis();
+                
+                //if the data_structure contains image_file or image_thumbnail_file, just copy them over to submission
+                //package
+            
+                LinkedHashMap<String, String> infoMap = infoList.get(i);
+                Set keySet = infoMap.keySet();
+                Iterator iter = keySet.iterator();
+                String key;
+                String value;
+                File f;
+                String csvDir = "";
+                String copyFromImageFilePath = "";
+                String copyFromImageThumbnailPath = "";
+                String copyToImageFilePath = "";
+                String copyToImageThumbnailPath = "";
+                while (iter.hasNext()) {
+                    key = (String) iter.next();
+                    value = infoMap.get(key);
+                    if (key.equalsIgnoreCase("image_file")) {
 
-                // copy all other file to this new dir
-                final File allOtherFilesFile = new File(outputDirBase + outputFileNameBase);
-                if (allOtherFilesFile.mkdir()) {
-                    final ArrayList<File> files = allOtherFilesAL.get(i);
-                    if (files != null && files.size() > 0) {
-                        for (int k = 0; k < files.size(); k++) {
-                            final File f = files.get(k);
-                            File destFile = new File(outputDirBase + outputFileNameBase + File.separator + f.getName());
-                            // check for collision
-                            if (destFile.exists()) {
-                                // collision!
-                                String prefix = f.getName().substring(0, f.getName().lastIndexOf("."));
-                                String suffix = f.getName().substring(f.getName().lastIndexOf(".") + 1,
-                                        f.getName().length());
-                                destFile = new File(outputDirBase + outputFileNameBase + File.separator + prefix + "_"
-                                        + collisionCounter + "." + suffix);
+                      value = value.replace("\\", File.separator);
+                      value = value.replace("/", File.separator);
+                      f = new File(value);
+                      if(!f.exists()) {
+                    	  //must be a relative path based on csv file
+                    	  if(csvFile != null) {
+                    		  csvDir = csvFile.getParentFile().getAbsolutePath() + File.separator;
+                    	  }
+                    	  f = new File(csvDir + value);
+                    	  if(f.exists()) {
+                    		  copyFromImageFilePath = csvDir + value;
+                    		  copyToImageFilePath = value;
+                    	  }
+                      }else {
+                    	  copyFromImageFilePath = value;
+                    	  copyToImageFilePath = value.substring(value.lastIndexOf(File.separator)+1, value.length());
+                      }
+                      
+                      
+                    
+                    }else if (key.equalsIgnoreCase("image_thumbnail_file")) {
 
-                                final LinkedHashMap<String, String> infoMap = infoList.get(i);
-
-                                final Set keySet = infoMap.keySet();
-                                final Iterator iter = keySet.iterator();
-                                String key;
-                                String value;
-                                while (iter.hasNext()) {
-                                    key = (String) iter.next();
-                                    value = infoMap.get(key);
-                                    if (value.equals(f.getAbsolutePath())) {
-                                        prefix = value.substring(0, value.lastIndexOf("."));
-                                        suffix = value.substring(value.lastIndexOf(".") + 1, value.length());
-                                        infoMap.put(key, prefix + "_" + collisionCounter + "." + suffix + "_collision");
-                                        break;
-
-                                    }
-
-                                }
-
-                                collisionCounter++;
-                            }
-
-                            printlnToLog("Copying " + f.getName() + " to " + destFile.getAbsolutePath());
-
-                            try {
-                                final InputStream in = new FileInputStream(f);
-                                final OutputStream out = new FileOutputStream(destFile);
-
-                                final byte[] buf = new byte[1024];
-                                int len;
-                                while ( (len = in.read(buf)) > 0) {
-                                    out.write(buf, 0, len);
-                                }
-                                in.close();
-                                out.close();
-                            } catch (final Exception e) {
-                                e.printStackTrace();
-                            }
-                        }
-
+                    	value = value.replace("\\", File.separator);
+                        value = value.replace("/", File.separator);
+                    	 f = new File(value);
+                         if(!f.exists()) {
+                       	  //must be a relative path based on csv file
+                       	  if(csvFile != null) {
+                       		  csvDir = csvFile.getParentFile().getAbsolutePath() + File.separator;
+                       	  }
+                       	  f = new File(csvDir + value);
+                       	  if(f.exists()) {
+                       		copyFromImageThumbnailPath = csvDir + value;
+                       		copyToImageThumbnailPath = value;
+                       	  }
+                         }else {
+                        	 copyFromImageThumbnailPath = value;
+                        	 copyToImageThumbnailPath = value.substring(value.lastIndexOf(File.separator)+1, value.length());
+                         }
                     }
                 }
 
+               if(copyToImageFilePath.contains(File.separator)) {
+            	   //make directories
+            	   String dir = outputDirBase + File.separator + copyToImageFilePath.substring(0, copyToImageFilePath.lastIndexOf(File.separator));
+            	   File f1 = new File(dir);
+            	   f1.mkdirs();
+            	   
+            	   File f2 =  new File(outputDirBase + File.separator + copyToImageFilePath);
+            	   
+            	   try {
+                       final InputStream in = new FileInputStream(copyFromImageFilePath);
+                       final OutputStream out = new FileOutputStream(f2);
+
+                       final byte[] buf = new byte[1024];
+                       int len;
+                       while ( (len = in.read(buf)) > 0) {
+                           out.write(buf, 0, len);
+                       }
+                       in.close();
+                       out.close();
+                   } catch (final Exception e) {
+                       e.printStackTrace();
+                   }
+            	   
+            	   
+               }else {
+            	   //just copy it over without making directories
+            	   File f2 =  new File(outputDirBase + File.separator + copyToImageFilePath);
+            	   
+            	   try {
+                       final InputStream in = new FileInputStream(copyFromImageFilePath);
+                       final OutputStream out = new FileOutputStream(f2);
+
+                       final byte[] buf = new byte[1024];
+                       int len;
+                       while ( (len = in.read(buf)) > 0) {
+                           out.write(buf, 0, len);
+                       }
+                       in.close();
+                       out.close();
+                   } catch (final Exception e) {
+                       e.printStackTrace();
+                   }
+               }
+            
+               
+               
+               
+               
+               
+               
+               if(copyToImageThumbnailPath.contains(File.separator)) {
+            	   //make directories
+            	   String dir = outputDirBase + File.separator + copyToImageThumbnailPath.substring(0, copyToImageThumbnailPath.lastIndexOf(File.separator));
+            	   File f1 = new File(dir);
+            	   f1.mkdirs();
+            	   
+            	   File f2 =  new File(outputDirBase + File.separator + copyToImageThumbnailPath);
+            	   
+            	   try {
+                       final InputStream in = new FileInputStream(copyFromImageFilePath);
+                       final OutputStream out = new FileOutputStream(f2);
+
+                       final byte[] buf = new byte[1024];
+                       int len;
+                       while ( (len = in.read(buf)) > 0) {
+                           out.write(buf, 0, len);
+                       }
+                       in.close();
+                       out.close();
+                   } catch (final Exception e) {
+                       e.printStackTrace();
+                   }
+            	   
+            	   
+               }else {
+            	   //just copy it over without making directories
+            	   File f2 =  new File(outputDirBase + File.separator + copyToImageThumbnailPath);
+            	   
+            	   try {
+                       final InputStream in = new FileInputStream(copyFromImageFilePath);
+                       final OutputStream out = new FileOutputStream(f2);
+
+                       final byte[] buf = new byte[1024];
+                       int len;
+                       while ( (len = in.read(buf)) > 0) {
+                           out.write(buf, 0, len);
+                       }
+                       in.close();
+                       out.close();
+                   } catch (final Exception e) {
+                       e.printStackTrace();
+                   }
+               }
+               
+               
+               
+               
+               
+               
+               
+               
+                
+                
+
+                // copy all other file to this new dir
+                final File allOtherFilesFile = new File(outputDirBase + outputFileNameBase);
+              
+                ArrayList<File> files = allOtherFilesAL.get(i);
+                if(files != null && files.size() > 0) {
+                
+	                if (allOtherFilesFile.mkdir()) {
+	                
+	                    
+	                    if (files != null && files.size() > 0) {
+	                        for (int k = 0; k < files.size(); k++) {
+	                            f = files.get(k);
+	                   
+	                            File destFile = new File(outputDirBase + outputFileNameBase + File.separator + f.getName());
+	                            // check for collision
+	                            if (destFile.exists()) {
+	                                // collision!
+	                                String prefix = f.getName().substring(0, f.getName().lastIndexOf("."));
+	                                String suffix = f.getName().substring(f.getName().lastIndexOf(".") + 1,
+	                                        f.getName().length());
+	                                destFile = new File(outputDirBase + outputFileNameBase + File.separator + prefix + "_"
+	                                        + collisionCounter + "." + suffix);
+	
+	                               infoMap = infoList.get(i);
+	
+	                                keySet = infoMap.keySet();
+	                                iter = keySet.iterator();
+	                              
+	                                while (iter.hasNext()) {
+	                                    key = (String) iter.next();
+	                                    value = infoMap.get(key);
+	                                    if (value.equals(f.getAbsolutePath())) {
+	                                        prefix = value.substring(0, value.lastIndexOf("."));
+	                                        suffix = value.substring(value.lastIndexOf(".") + 1, value.length());
+	                                        infoMap.put(key, prefix + "_" + collisionCounter + "." + suffix + "_collision");
+	                                        break;
+	
+	                                    }
+	
+	                                }
+	
+	                                collisionCounter++;
+	                            }
+	
+	                            printlnToLog("Copying " + f.getName() + " to " + destFile.getAbsolutePath());
+	
+	                            try {
+	                                final InputStream in = new FileInputStream(f);
+	                                final OutputStream out = new FileOutputStream(destFile);
+	
+	                                final byte[] buf = new byte[1024];
+	                                int len;
+	                                while ( (len = in.read(buf)) > 0) {
+	                                    out.write(buf, 0, len);
+	                                }
+	                                in.close();
+	                                out.close();
+	                            } catch (final Exception e) {
+	                                e.printStackTrace();
+	                            }
+	                        }
+	
+	                    }
+	                }
+            	}
+
+             
                 writeXMLFile(outputDirBase, outputFileNameBase, imageFile, null, i);
 
                 printlnToLog("");
@@ -967,10 +1145,21 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final String shortname = ds.getShortname();
                 if (dsName.equalsIgnoreCase(shortname)) {
                     final LinkedHashMap<String, String> infoMap = infoList.get(counter);
-                    final String n = ds.getName().toLowerCase();
+                    String n = ds.getName().toLowerCase();
+
                     final String v = ds.getVersion().replaceFirst("^0", "");
+                    
+                    char c1 = n.charAt(n.length()-1);
+            		if(Character.isDigit(c1)) {
+            			n = n.substring(0, n.length()-1);
+            		}
+            		char c2 = n.charAt(n.length()-1);
+            		if(Character.isDigit(c2)) {
+            			n = n.substring(0, n.length()-1);
+            		}
+                    
                     openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-                    parse(ds, outputFileNameBase, infoMap);
+                    parse(ds, outputFileNameBase, infoMap, imageFile);
                     openTag("data_structure", false);
                     break;
                 }
@@ -990,7 +1179,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @param ds
      */
     private void parse(final DataStruct ds2, final String outputFileNameBase,
-            final LinkedHashMap<String, String> infoMap) {
+            final LinkedHashMap<String, String> infoMap, File imageFile) {
         Vector<XMLAttributes> attr;
         XMLAttributes xmlAttributes;
 
@@ -1003,25 +1192,46 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final String name = de.getName();
                 String value = "";
                 String v;
-                if (name.equalsIgnoreCase("image_file")) {
-                    value = outputFileNameBase + ".zip";
-                } else if (name.equalsIgnoreCase("image_thumbnail_file")) {
-                    value = outputFileNameBase + ".jpg";
-                } else {
-                    // need to get appropriat value
+                if(imageFile != null) {
+                	if (name.equalsIgnoreCase("image_file")) {
+                        value = outputFileNameBase + ".zip";
+                    } else if (name.equalsIgnoreCase("image_thumbnail_file")) {
+                        value = outputFileNameBase + ".jpg";
+                    } else {
+                        // need to get appropriat value
 
-                    final Set keySet = infoMap.keySet();
-                    final Iterator iter = keySet.iterator();
-                    String key;
-                    while (iter.hasNext()) {
-                        key = (String) iter.next();
-                        if (key.equalsIgnoreCase(name)) {
-                            v = infoMap.get(key);
-                            value = v;
-                            break;
+                        Set keySet = infoMap.keySet();
+                        Iterator iter = keySet.iterator();
+                        String key;
+                        while (iter.hasNext()) {
+                            key = (String) iter.next();
+                            if (key.equalsIgnoreCase(name)) {
+                                v = infoMap.get(key);
+                                value = v;
+                                break;
+                            }
                         }
                     }
+                }else {
+                
+                        // need to get appropriat value
+
+                        Set keySet = infoMap.keySet();
+                        Iterator iter = keySet.iterator();
+                        String key;
+                        while (iter.hasNext()) {
+                            key = (String) iter.next();
+                            if (key.equalsIgnoreCase(name)) {
+                                v = infoMap.get(key);
+                                value = v;
+                                break;
+                            }
+                        }
+                    
                 }
+                
+                
+                
                 if ( !value.trim().equalsIgnoreCase("")) {
 
                     final File f = new File(value);
@@ -1940,7 +2150,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             tabScrollPane.setPreferredSize(new Dimension(600, 200));
             tabbedPane.addTab(dataStructureName, tabScrollPane);
-            
+           
             for (IDataStructure ds : iDataStructures)
     		{
 
@@ -2767,44 +2977,45 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public void populateFieldsFromInProcessState(final TreeMap<JLabel, JComponent> labelsAndComps,
                 final LinkedHashMap<String, String> infoMap2) {
-
-            final Set keySet = infoMap2.keySet();
-            final Iterator iter = keySet.iterator();
-            String key;
-            String value;
-            while (iter.hasNext()) {
-                key = (String) iter.next();
-                value = infoMap2.get(key);
-                /*if(!value.equals("")) {
-                	System.out.println(" * " + key + " * " + value);
-                }*/
-                final Set keySet2 = labelsAndComps.keySet();
-                final Iterator iter2 = keySet2.iterator();
-                //System.out.println();
-                while (iter2.hasNext()) {
-                    final JLabel l = (JLabel) iter2.next();
-                    final Component comp = labelsAndComps.get(l);
-                    final String name = comp.getName();
-                    //System.out.println("--- " + name);
-                    if (name.equalsIgnoreCase(key)) {
-                        if (comp instanceof JTextField) {
-                            final JTextField t = (JTextField) comp;
-                            t.setText(value);
-
-                        } else if (comp instanceof JComboBox) {
-                            final JComboBox c = (JComboBox) comp;
-
-                            for (int k = 0; k < c.getItemCount(); k++) {
-                                final String item = (String) c.getItemAt(k);
-                                if (value.equalsIgnoreCase(item)) {
-                                    c.setSelectedIndex(k);
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
+        	if(infoMap2 != null) {
+	            final Set keySet = infoMap2.keySet();
+	            final Iterator iter = keySet.iterator();
+	            String key;
+	            String value;
+	            while (iter.hasNext()) {
+	                key = (String) iter.next();
+	                value = infoMap2.get(key);
+	                /*if(!value.equals("")) {
+	                	System.out.println(" * " + key + " * " + value);
+	                }*/
+	                final Set keySet2 = labelsAndComps.keySet();
+	                final Iterator iter2 = keySet2.iterator();
+	                //System.out.println();
+	                while (iter2.hasNext()) {
+	                    final JLabel l = (JLabel) iter2.next();
+	                    final Component comp = labelsAndComps.get(l);
+	                    final String name = comp.getName();
+	                    //System.out.println("--- " + name);
+	                    if (name.equalsIgnoreCase(key)) {
+	                        if (comp instanceof JTextField) {
+	                            final JTextField t = (JTextField) comp;
+	                            t.setText(value);
+	
+	                        } else if (comp instanceof JComboBox) {
+	                            final JComboBox c = (JComboBox) comp;
+	
+	                            for (int k = 0; k < c.getItemCount(); k++) {
+	                                final String item = (String) c.getItemAt(k);
+	                                if (value.equalsIgnoreCase(item)) {
+	                                    c.setSelectedIndex(k);
+	                                }
+	                            }
+	                        }
+	                        break;
+	                    }
+	                }
+	            }
+        	}
         }
         
         public int determineImageHeaderDescrepencies(ModelImage img) {
@@ -3317,6 +3528,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
+
         	//System.out.println("in parseDataStructForValidation");
             String value = "";
             String key = "";
@@ -3357,7 +3569,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         required = de.getRequired();
                         type = de.getType();
                         size = de.getSize();
+
                         valuerange = de.getValuerange();
+
                         if (required.equalsIgnoreCase("Required")) {
                             if (value.trim().equalsIgnoreCase("")) {
                                 errs.add(labelText + " is a required field");
@@ -3373,7 +3587,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             if ( !value.trim().equalsIgnoreCase("")) {
                                 try {
                                     final int intValue = Integer.valueOf(value.trim()).intValue();
-                                    if (valuerange.contains("+")) {
+                                    if (valuerange != null && valuerange.contains("+")) {
                                         // test int if its in valuerange
                                         final int min = Integer.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
@@ -3387,7 +3601,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                             }
                                         }
 
-                                    } else if (valuerange.contains(" to ")) {
+                                    } else if (valuerange != null && valuerange.contains(" to ")) {
                                         final int min = Integer.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf(" to ")).trim()).intValue();
                                         final int max = Integer.valueOf(
@@ -3406,7 +3620,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             if ( !value.trim().equalsIgnoreCase("")) {
                                 try {
                                     final float floatValue = Float.valueOf(value.trim()).floatValue();
-                                    if (valuerange.contains("+")) {
+                                    if (valuerange != null  && valuerange.contains("+")) {
                                         // test int if its in valuerange
                                         final float min = Float.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
@@ -3419,7 +3633,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                                 errs.add(labelText + " must be greater than " + min);
                                             }
                                         }
-                                    } else if (valuerange.contains(" to ")) {
+                                    } else if (valuerange != null && valuerange.contains(" to ")) {
                                         final float min = Float.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf(" to ")).trim())
                                                 .floatValue();
