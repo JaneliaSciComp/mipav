@@ -284,6 +284,10 @@ public class FileInfoMGH extends FileInfoBase {
     public void setMatrix(TransMatrix matrix) {
         this.matrix = matrix;
     }
+    
+    public TransMatrix getMatrix() {
+    	return matrix;
+    }
 
     
     /**
