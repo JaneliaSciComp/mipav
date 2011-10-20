@@ -371,6 +371,26 @@ public class AlgorithmFlip extends AlgorithmBase {
                     } // if (matHolder != null)    
                 } // if (fileInfo[0] instanceof FileInfoNIFTI)
                 
+                if (fileInfo[0] instanceof FileInfoMGH) {
+                	TransMatrix matrix = ((FileInfoMGH)fileInfo[0]).getMatrix();
+                	for (j = 0; j < 4; j++) {
+	                	if ((orient == FileInfoBase.ORI_R2L_TYPE) || (orient == FileInfoBase.ORI_L2R_TYPE)) {
+	                	    matrix.set(0, j, -matrix.get(0, j));	
+	                	}
+	                	else if ((orient == FileInfoBase.ORI_A2P_TYPE) || (orient == FileInfoBase.ORI_P2A_TYPE)) {
+	                	    matrix.set(1, j, -matrix.get(1, j));	
+	                	}
+	                	else {
+	                	    matrix.set(2, j, -matrix.get(2, j));
+	                	}
+                	}
+                	
+                	
+                	for (i = 0; i < fileInfo.length; i++) {
+                		((FileInfoMGH)fileInfo[i]).setMatrix(matrix);
+                	}
+                }
+                
                 for (i = 0; i < fileInfo.length; i++) {
                 	if (( orient == FileInfoBase.ORI_R2L_TYPE) || (orient == FileInfoBase.ORI_P2A_TYPE)
                             || (orient == FileInfoBase.ORI_I2S_TYPE) || (orient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
