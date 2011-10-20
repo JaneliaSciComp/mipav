@@ -58,6 +58,7 @@ import gov.nih.mipav.view.dialogs.JDialogAGVF;
 import gov.nih.mipav.view.dialogs.JDialogBSmooth;
 import gov.nih.mipav.view.dialogs.JDialogBSnake;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogBoundingVOIs;
 import gov.nih.mipav.view.dialogs.JDialogEditCircleDiameter;
 import gov.nih.mipav.view.dialogs.JDialogEditSquareLength;
 import gov.nih.mipav.view.dialogs.JDialogEvolveBoundaryManual;
@@ -889,6 +890,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             final JDialogTrim trimSettings = new JDialogTrim(m_kParent.getFrame(), getActiveImage());
 
             trimSettings.setVisible(true);
+        }
+        else if (command.equals("BoundingVOIs")) {
+        	m_bDefaultImage = true;
+        	m_kTempImage = m_kVOIManagers.get(m_iActive).getLocalImage();
+            if ( m_kTempImage != getActiveImage() )
+            {
+            	m_bDefaultImage = false;
+            	m_kTempImage = (ModelImage)m_kTempImage.clone();
+            }
+            saveVOIs(command);
+            JDialogBoundingVOIs kBound = new JDialogBoundingVOIs(m_kParent.getFrame(), m_kTempImage);
+            kBound.setVOIManager(this);
         }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN.getActionCommand())) {
             new ViewJFrameGraph("Graph", true);
