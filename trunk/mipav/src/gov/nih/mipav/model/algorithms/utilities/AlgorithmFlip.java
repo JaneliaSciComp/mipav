@@ -372,7 +372,12 @@ public class AlgorithmFlip extends AlgorithmBase {
                 } // if (fileInfo[0] instanceof FileInfoNIFTI)
                 
                 for (i = 0; i < fileInfo.length; i++) {
-                	position = new Vector3f(0, 0, i);
+                	if (( orient == FileInfoBase.ORI_R2L_TYPE) || (orient == FileInfoBase.ORI_P2A_TYPE)
+                            || (orient == FileInfoBase.ORI_I2S_TYPE) || (orient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
+                        position = new Vector3f(0, 0, i);
+                    } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
+                        position = new Vector3f(0, 0, -i);
+                    }
                 	out = new Vector3f(position);
                     MipavCoordinateSystems.fileToScanner(position, out, srcImage);
                     origin = new float[3];
