@@ -901,7 +901,13 @@ public class FileMGH extends FileBase {
         sliceSize = extents[0] * extents[1];
         dataType = image.getFileInfo(0).getDataType();
         resolutions = image.getFileInfo(0).getResolutions();
-        matrix = image.getMatrix();
+        FileInfoBase fileInfo = image.getFileInfo()[0];
+        if (fileInfo instanceof FileInfoMGH) {
+        	matrix = ((FileInfoMGH)fileInfo).getMatrix();
+        }
+        else {
+            matrix = image.getMatrix();
+        }
 
         if (matrix == null) {
             matrix = new TransMatrix(4);
