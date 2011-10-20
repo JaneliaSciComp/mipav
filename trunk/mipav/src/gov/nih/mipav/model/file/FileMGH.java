@@ -803,6 +803,7 @@ public class FileMGH extends FileBase {
      * @see        FileRaw
      */
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
+    	System.out.println("I am in here");
         int offset;
 
         if (fileInfo == null) { // if no file info yet, make it.
@@ -1301,9 +1302,9 @@ public class FileMGH extends FileBase {
             } else if (xk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
             } else if (yk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
-            } else if (yk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
             } else if (zk > 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
             } else if (zk < 0.0) {
@@ -1487,9 +1488,9 @@ public class FileMGH extends FileBase {
             } else if (xk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_L2R_TYPE;
             } else if (yk > 0.0) {
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
-            } else if (yk < 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+            } else if (yk < 0.0) {
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
             } else if (zk > 0.0) {
                 axisOrientation[2] = FileInfoBase.ORI_I2S_TYPE;
             } else if (zk < 0.0) {
@@ -1676,11 +1677,11 @@ public class FileMGH extends FileBase {
                 break;
 
             case -2:
-                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
+                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
                 break;
 
             case 2:
-                axisOrientation[2] = FileInfoBase.ORI_P2A_TYPE;
+                axisOrientation[2] = FileInfoBase.ORI_A2P_TYPE;
                 break;
 
             case -3:
