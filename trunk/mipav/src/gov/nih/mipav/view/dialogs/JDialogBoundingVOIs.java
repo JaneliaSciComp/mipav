@@ -537,7 +537,7 @@ public class JDialogBoundingVOIs extends JDialogBase {
         curvePanel.add(sideLabel, gbc);
 
         sideText = new JTextField(10);
-        sideText.setText("3");
+        sideText.setText("1");
         sideText.setFont(serif12);
         sideText.setEnabled(true);
         gbc.gridx = 1;
