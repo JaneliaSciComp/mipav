@@ -1,34 +1,24 @@
 package gov.nih.mipav.view.dialogs;
 
-import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlurSep;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileInfoDicom;
-import gov.nih.mipav.model.file.FileUtility;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.io.IOException;
-import java.util.BitSet;
+import java.util.Vector;
 
 import javax.swing.*;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
 public class JDialogBoundingVOIs extends JDialogBase {
 
     /**  */
-    private static final long serialVersionUID = -2170631279185094655L;
+    //private static final long serialVersionUID;
     
-    private JTextField textChangeX;
-    
-    /** DOCUMENT ME! */
-    private int boundaryDir = AlgorithmSnake.OUT_DIR;
-
-    /** DOCUMENT ME! */
-    private JComboBox boundaryDirBox;
 
     /** DOCUMENT ME! */
     private int groupNum;
@@ -43,9 +33,6 @@ public class JDialogBoundingVOIs extends JDialogBase {
     private JCheckBox removeOriginalCheckBox;
 
     /** DOCUMENT ME! */
-    private float scaleX = 0;
-
-    /** DOCUMENT ME! */
     private VOI srcVOI;
 
     /** DOCUMENT ME! */
@@ -56,15 +43,32 @@ public class JDialogBoundingVOIs extends JDialogBase {
     
     private JCheckBox innerCurveCheckBox;
     
+    private boolean doInner = true;
+    
     private JLabel innerDistanceLabel;
     
     private JTextField innerDistanceText;
     
+    private float innerDistance = 2.0f;
+    
     private JCheckBox outerCurveCheckBox;
+    
+    private boolean doOuter = true;
     
     private JLabel outerDistanceLabel;
     
     private JTextField outerDistanceText;
+    
+    private float outerDistance = 2.0f;
+    
+    private float maxDistance;
+    
+    /** Maximum number of points to take from each side of a point on a curve in determining a tangent */
+    private int sidePointsForTangent;
+    
+    private JTextField sideText;
+    
+    private JLabel sideLabel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -132,19 +136,55 @@ public class JDialogBoundingVOIs extends JDialogBase {
         if (source == OKButton) {
 
             removeOriginal = removeOriginalCheckBox.isSelected();
+            
+            maxDistance = (float)(Math.min(image.getExtents()[0], image.getExtents()[1])/2.0);
+            
+            doInner = innerCurveCheckBox.isSelected();
+            
+            if (doInner) {
 
-            tmpStr = textChangeX.getText();
+	            tmpStr = innerDistanceText.getText();
+	
+	            if (testParameter(tmpStr, 1, maxDistance)) {
+	                innerDistance = Float.valueOf(tmpStr).floatValue();
+	            } else {
+	                innerDistanceText.requestFocus();
+	                innerDistanceText.selectAll();
+	
+	                return;
+	            }
+            } // if (doInner)
 
-            if (testParameter(tmpStr, 1, 50)) {
-                scaleX = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textChangeX.requestFocus();
-                textChangeX.selectAll();
-
-                return;
+            doOuter = outerCurveCheckBox.isSelected();
+            
+            if ((!doInner) && (!doOuter)) {
+            	MipavUtil.displayError("Must select inner or outer or both check boxes");
+            	return;
             }
+            
+            if (doOuter) {
 
-            boundaryDir = boundaryDirBox.getSelectedIndex();
+	            tmpStr = outerDistanceText.getText();
+	
+	            if (testParameter(tmpStr, 1, maxDistance)) {
+	                outerDistance = Float.valueOf(tmpStr).floatValue();
+	            } else {
+	                outerDistanceText.requestFocus();
+	                outerDistanceText.selectAll();
+	
+	                return;
+	            }
+            } // if (doOuter)
+            
+            tmpStr = sideText.getText();
+            if (testParameter(tmpStr, 1, 10)) {
+            	sidePointsForTangent = Integer.valueOf(tmpStr).intValue();
+            }
+            else {
+            	sideText.requestFocus();
+            	sideText.selectAll();
+            	return;
+            }
 
             VOIBaseVector curves = srcVOI.getCurves();
             VOIBase srcContour = null;
@@ -153,7 +193,7 @@ public class JDialogBoundingVOIs extends JDialogBase {
                 if ( curves.elementAt(i).isActive() )
                 {
                     srcContour = curves.elementAt(i);
-                    evolveContour( srcContour );
+                    generateBoundaryContours( srcContour );
                 }
             }
 
@@ -201,124 +241,224 @@ public class JDialogBoundingVOIs extends JDialogBase {
         
     }
     
-    private void evolveContour ( VOIBase srcContour )
+    private void generateBoundaryContours ( VOIBase srcContour )
     {
+    	
+        int index;
+        int i;
+        int j;
+        int k;
+        int m;
         if ( srcContour == null || (srcContour.size() == 0) )
         {
             return;
         }
         int slice = (int)srcContour.elementAt(0).Z;
-        int size = image.getDataSize();
-        if ( image.isColorImage() )
-        {
-            size /= 4;
-        }
-        BitSet mask = new BitSet( size );
-        int[] extents = image.getExtents();
-        srcContour.setMaskSlice( mask, extents[0], false, VOI.ADDITIVE ); 
         
-        int[] extentsSlice = new int[]{extents[0],extents[1]};
-        ModelImage maskImage = new ModelImage(ModelStorageBase.BOOLEAN, extentsSlice, "Binary Image");
-        for (int i = 0; i < size; i++) {
-            if ( boundaryDir == 0 )
-            {
-                maskImage.set(i, mask.get(i) );
-            }
-            else
-            {
-                maskImage.set(i, !mask.get(i) );
-            }
+        int nPoints = srcContour.size();
+        Vector3f point;
+        float xPoints[] = new float[nPoints + 2*sidePointsForTangent];
+        float yPoints[] = new float[nPoints + 2*sidePointsForTangent];
+        Vector<Vector3f> innerV = new Vector<Vector3f>();
+        Vector<Vector3f> outerV = new Vector<Vector3f>();
+        float tangentX;
+        float tangentY;
+        float xCenteredPoints[] = new float[2*sidePointsForTangent+1];
+        float yCenteredPoints[] = new float[2*sidePointsForTangent+1];
+        double xSqSum;
+        double ySqSum;
+        double xySum;
+        double var;
+        double x1t;
+        double x2t;
+        double y1t;
+        double y2t;
+        double slope;
+        double d1;
+        double d2;
+        double xDist;
+        double yDist;
+        for (i = 0; i < nPoints; i++) {
+        	point = (srcContour.get(i));
+            xPoints[i + sidePointsForTangent] = point.X;
+            yPoints[i + sidePointsForTangent] = point.Y;	
         }
-
-        float[] resolutions = image.getResolutions(slice);
-        float sigmaX = scaleX * resolutions[0] / 4;
-        float sigmaY = scaleX * resolutions[1] / 4;
-        System.err.println( sigmaX + " " + sigmaY );
-
-        // Make algorithm
-        float[] sigmas = new float[]{sigmaX,sigmaY,0};
-        AlgorithmGaussianBlurSep gaussianBlurSepAlgo = new AlgorithmGaussianBlurSep(maskImage, sigmas, true, true);
-        gaussianBlurSepAlgo.run();
+        for (i = sidePointsForTangent - 1, j = 0; i >= 0; i--, j++) {
+        	xPoints[i] = xPoints[nPoints - 1 - j];
+        	yPoints[i] = yPoints[nPoints - 1 - j];
+        }
+        for (i = nPoints, j = 0; i <= nPoints + sidePointsForTangent - 1; i++, j++) {
+        	xPoints[i] = xPoints[j];
+        	yPoints[i] = yPoints[j];
+        }
+        for (i = sidePointsForTangent, j = 0; i <= sidePointsForTangent + nPoints - 1; i++, j++) {
+        	if (sidePointsForTangent == 1) {
+                tangentX = (xPoints[i+1] - xPoints[i-1])/2.0f;
+                tangentY = (yPoints[i+1] - yPoints[i-1])/2.0f;
+                if (tangentY == 0.0f) {
+                    slope = Double.POSITIVE_INFINITY;
+                }
+                else {
+                    slope = -tangentX/tangentY;
+                }
+            } // if (sidePointsForTangent == 1)
+        	else { // sidePointsForTangent > 1
+        		// Center all points for tangent point touching curve at (0, 0)
+                // That is, use an x axis and a y axis going thru the tangent point
+        		for (k = 0, m = i - sidePointsForTangent; m <= i + sidePointsForTangent; m++, k++) {
+                    xCenteredPoints[k] = xPoints[m] - xPoints[i];
+                    yCenteredPoints[k] = yPoints[m] - yPoints[i];
+                }
+        		xSqSum = 0.0;
+                ySqSum = 0.0;
+                xySum = 0.0;
+                for (k = 0; k < xCenteredPoints.length; k++) {
+                    xSqSum += xCenteredPoints[k]*xCenteredPoints[k];
+                    ySqSum += yCenteredPoints[k]*yCenteredPoints[k];
+                    xySum += xCenteredPoints[k]*yCenteredPoints[k];
+                }
+                if (xySum != 0.0) {
+                    var = Math.sqrt(ySqSum*ySqSum - 2.0 * xSqSum * ySqSum + xSqSum * xSqSum + 4.0 * xySum * xySum);
+                    x1t = 0.5 * ((-ySqSum + xSqSum + var)/xySum);
+                    x2t = 0.5 * ((-ySqSum + xSqSum - var)/xySum);
+                    y1t = 1.0;
+                    y2t = 1.0;
+                }
+                else {
+                    // If all points are symmetric to either this new x axis or this new y axis, then
+                    // their product sum is 0 and the tangentX, tangentY must be 1,0 or 0,1
+                    x1t = 1.0;
+                    x2t = 0.0;
+                    y1t = 0.0;
+                    y2t = 1.0;
+                }
+                // x1t, y1t and x2t, y2t are perpindicular.  To find the solution, calculate the sum of
+                // distances from the curve points to the line for the 2 cases
+                // The shortest distance is the correct solution
+                // Distance from AX + BY + C = 0 to P1 is 
+                // abs((A*x1 + B*y1 + C))/sqrt(A**2 + B**2)
+                // Here A = slope, B = -1, and C = 0.
+                d1 = 0.0;
+                for (k = 0; k < xCenteredPoints.length; k++) {
+                    if (x1t == 0.0) {
+                        // Infinite slope thru (0,0)
+                        d1 += Math.abs(yCenteredPoints[k]);
+                    }
+                    else if (y1t == 0.0) {
+                        // Zero slope thru (0, 0)
+                        d1 += Math.abs(xCenteredPoints[k]);
+                    }
+                    else {
+                        slope = y1t/x1t;
+                        d1 += Math.abs((slope * xCenteredPoints[k] - yCenteredPoints[k])/Math.sqrt(slope*slope + 1));
+                    }
+                }
+                d2 = 0.0;
+                for (k = 0; k < xCenteredPoints.length; k++) {
+                    if (x2t == 0.0) {
+                        // Infinite slope thru (0,0)
+                        d2 += Math.abs(yCenteredPoints[k]);
+                    }
+                    else if (y2t == 0.0) {
+                        // Zero slope thru (0, 0)
+                        d2 += Math.abs(xCenteredPoints[k]);
+                    }
+                    else {
+                        slope = y2t/x2t;
+                        d2 += Math.abs((slope * xCenteredPoints[k] - yCenteredPoints[k])/Math.sqrt(slope*slope + 1));
+                    }
+                }
+                if (d1 < d2) {
+                    tangentX = (float)x1t;
+                    tangentY = (float)y1t;
+                }
+                else {
+                    tangentX = (float)x2t;
+                    tangentY = (float)y2t;
+                }
+                if (tangentY == 0.0f) {
+                    slope = Double.POSITIVE_INFINITY;
+                    
+                }
+                else {
+                    slope = -tangentX/tangentY;
+                }    
+        	} // else sidePointsForTangent > 1
+        	if (doInner) {
+        		if (Double.isInfinite(slope)) {
+        			if (srcContour.contains(xPoints[i], yPoints[i] + innerDistance)) {
+        		         point = new Vector3f(xPoints[i], yPoints[i] + innerDistance, slice);
+        		         innerV.add(point);
+        			}
+        			else if (srcContour.contains(xPoints[i], yPoints[i] - innerDistance)) {
+        				point = new Vector3f(xPoints[i], yPoints[i] - innerDistance, slice);
+       		            innerV.add(point);	
+        			}
+        		} // if (Double.isInfinite(slope))
+        		else {
+        		    xDist = innerDistance/Math.sqrt(1.0 + slope*slope);
+        		    yDist = xDist*slope;
+        		    if (srcContour.contains((float)(xPoints[i] + xDist), (float)(yPoints[i] + yDist))) {
+       		           point = new Vector3f((float)(xPoints[i] + xDist), (float)(yPoints[i] + yDist), slice);
+       		           innerV.add(point);
+       			    }
+       			    else if (srcContour.contains((float)(xPoints[i] - xDist), (float)(yPoints[i] - yDist))) {
+       				    point = new Vector3f((float)(xPoints[i] - xDist), (float)(yPoints[i] - yDist), slice);
+      		            innerV.add(point);	
+       			    }
+        		}
+        	} // if (doInner)
+        	if (doOuter) {
+        		if (Double.isInfinite(slope)) {
+        			if (!srcContour.contains(xPoints[i], yPoints[i] + outerDistance)) {
+        		         point = new Vector3f(xPoints[i], yPoints[i] + outerDistance, slice);
+        		         outerV.add(point);
+        			}
+        			else if (!srcContour.contains(xPoints[i], yPoints[i] - outerDistance)) {
+        				point = new Vector3f(xPoints[i], yPoints[i] - outerDistance, slice);
+       		            outerV.add(point);	
+        			}
+        		} // if (Double.isInfinite(slope))
+        		else {
+        		    xDist = outerDistance/Math.sqrt(1.0 + slope*slope);
+        		    yDist = xDist*slope;
+        		    if (!srcContour.contains((float)(xPoints[i] + xDist), (float)(yPoints[i] + yDist))) {
+       		           point = new Vector3f((float)(xPoints[i] + xDist), (float)(yPoints[i] + yDist), slice);
+       		           outerV.add(point);
+       			    }
+       			    else if (!srcContour.contains((float)(xPoints[i] - xDist), (float)(yPoints[i] - yDist))) {
+       				    point = new Vector3f((float)(xPoints[i] - xDist), (float)(yPoints[i] - yDist), slice);
+      		            outerV.add(point);	
+       			    }
+        		}
+        	} // if (doOuter)
+        } // for (i = sidePointsForTangent, j = 0; i <= sidePointsForTangent + nPoints - 1; i++, j++)
         
-
-        final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
-        ModelImage resultImage = (ModelImage) maskImage.clone();
-        resultImage.setImageName(name);
-
-        if ( (resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
-            // For 2D Dicom set secondary capture tags only for fileinfo(0)
-            if (resultImage.getExtents().length == 2) {
-                ((FileInfoDicom) (resultImage.getFileInfo(0))).setSecondaryCaptureTags();
-            } else {
-                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                    ((FileInfoDicom) (resultImage.getFileInfo(i))).setSecondaryCaptureTags();
-                }
-            }
+        short sID = (short)(image.getVOIs().getUniqueID());
+        String kName = srcContour.getClass().getName();
+        index = kName.lastIndexOf('.') + 1;
+        kName = kName.substring(index);
+        VOI resultVOI = new VOI(sID, kName + "_" + sID, srcContour.getType(), -1 );
+        if (doInner) {
+        	Vector3f pt[] = new Vector3f[innerV.size()];
+        	for (i = 0; i < innerV.size(); i++) {
+        		pt[i] = innerV.elementAt(i);
+        	}
+        	resultVOI.importCurve(pt);
         }
-        try {
-            resultImage.importData(0, gaussianBlurSepAlgo.getResultBuffer(), true);
-        } catch (final IOException e) {
-            resultImage.disposeLocal();
-            MipavUtil.displayError("Algorithm Gausssian Blur importData: Image(s) Locked.");
-            return;
+        if (doOuter) {
+        	Vector3f pt[] = new Vector3f[outerV.size()];
+        	for (i = 0; i < outerV.size(); i++) {
+        		pt[i] = outerV.elementAt(i);
+        	}
+        	resultVOI.importCurve(pt);
         }
-        // The algorithm has completed and produced a new image to
-        // be displayed.
-        if (resultImage.isColorImage()) {
-            JDialogBase.updateFileInfo(image, resultImage);
+       
+        if (removeOriginal) {
+            image.getVOIs().removeElementAt(groupNum);
         }
-        resultImage.clearMask();
+        image.registerVOI( resultVOI );
         
-        if ( boundaryDir == 1 )
-        {
-            //Subtract the inverted and expanded mask from the original.
-            for ( int i = 0; i < size; i++ )
-            {
-                if ( mask.get(i) == false )
-                {
-                    resultImage.set(i, false);
-                }
-                else if ( mask.get(i) && resultImage.getBoolean(i) )
-                {
-                    resultImage.set(i, false);
-                }
-                else if ( mask.get(i) )
-                {
-                    resultImage.set(i, true);
-                }
-            }
-        }
-        
-        final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(resultImage);
-        VOIExtractionAlgo.run();
-        VOIVector resultVOIs = resultImage.getVOIs();
-        for ( int i = 0; i < resultVOIs.size(); i++ )
-        {
-            // The algorithm has completed and produced a new image to be displayed.
-            short sID = (short)(image.getVOIs().getUniqueID());
-            String kName = srcContour.getClass().getName();
-            int index = kName.lastIndexOf('.') + 1;
-            kName = kName.substring(index);
-            VOI resultVOI = new VOI(sID, kName + "_" + sID, srcContour.getType(), -1 );
-            for ( int j = 0; j < resultVOIs.elementAt(i).getCurves().size(); j++ )
-            {
-                VOIBase kCurve = resultVOIs.elementAt(i).getCurves().elementAt(j);
-                for ( int k = 0; k < kCurve.size(); k++ )
-                {
-                    kCurve.elementAt(k).Z = slice;
-                }
-                kCurve.update();
-                resultVOI.importCurve( kCurve );
-            }
-            if (removeOriginal) {
-                resultVOI.setColor(voiColor);
-                image.getVOIs().removeElementAt(groupNum);
-            }
-            image.registerVOI( resultVOI );
-        }
-        resultImage.disposeLocal();
-        maskImage.disposeLocal();
-        mask = null;        
     }
 
     /**
@@ -342,21 +482,27 @@ public class JDialogBoundingVOIs extends JDialogBase {
         curvePanel.setForeground(Color.black);
         curvePanel.setBorder(buildTitledBorder("Curve specifications"));
         
+        removeOriginalCheckBox = new JCheckBox("Remove original selected VOI", false);
+        removeOriginalCheckBox.setFont(serif12);
+        removeOriginalCheckBox.setForeground(Color.black);
+        curvePanel.add(removeOriginalCheckBox, gbc);
+        
         innerCurveCheckBox = new JCheckBox("Inner curve", true);
         innerCurveCheckBox.setFont(serif12);
         innerCurveCheckBox.setForeground(Color.black);
         innerCurveCheckBox.addActionListener(this);
+        gbc.gridy = 1;
         curvePanel.add(innerCurveCheckBox, gbc);
         
         innerDistanceLabel = new JLabel("Enter distance from VOI in pixels ");
         innerDistanceLabel.setForeground(Color.black);
         innerDistanceLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         curvePanel.add(innerDistanceLabel, gbc);
         
         innerDistanceText = new JTextField(10);
-        innerDistanceText.setText("2");
+        innerDistanceText.setText("2.0");
         innerDistanceText.setFont(serif12);
         gbc.gridx = 1;
         curvePanel.add(innerDistanceText, gbc);
@@ -366,23 +512,36 @@ public class JDialogBoundingVOIs extends JDialogBase {
         outerCurveCheckBox.setForeground(Color.black);
         outerCurveCheckBox.addActionListener(this);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         curvePanel.add(outerCurveCheckBox, gbc);
         
         outerDistanceLabel = new JLabel("Enter distance from VOI in pixels ");
         outerDistanceLabel.setForeground(Color.black);
         outerDistanceLabel.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         curvePanel.add(outerDistanceLabel, gbc);
         
         outerDistanceText = new JTextField(10);
-        outerDistanceText.setText("2");
+        outerDistanceText.setText("2.0");
         outerDistanceText.setFont(serif12);
         gbc.gridx = 1;
         curvePanel.add(outerDistanceText, gbc);
 
-        
+        sideLabel = new JLabel("Curve points on each side for tangent ");
+        sideLabel.setForeground(Color.black);
+        sideLabel.setFont(serif12);
+        sideLabel.setEnabled(true);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        curvePanel.add(sideLabel, gbc);
+
+        sideText = new JTextField(10);
+        sideText.setText("3");
+        sideText.setFont(serif12);
+        sideText.setEnabled(true);
+        gbc.gridx = 1;
+        curvePanel.add(sideText, gbc);
 
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
