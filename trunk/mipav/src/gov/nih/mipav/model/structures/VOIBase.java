@@ -18,6 +18,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Plane3f;
 import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 
 /**
  * Base which holds the functions common to both Contour, Line and Point type VOI. Abstract class.
@@ -389,19 +390,56 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * 
      * @return returns the area
      */
+    /*public double area() {
+        double result = 0;
+        Vector3d prevVector = new Vector3d();
+        Vector3d currentVector = new Vector3d();
+        Vector3d cross = new Vector3d();
+        if (size() >= 3) {
+        	Vector3f v1 = get(1);
+        	Vector3f v0 = get(0);
+        	Vector3d v1d = new Vector3d((double)v1.X, (double)v1.Y, (double)v1.Z);
+        	Vector3d v0d = new Vector3d((double)v0.X, (double)v0.Y, (double)v0.Z);
+            prevVector.Sub(v1d, v0d);
+
+            for (int i = 2; i < size(); i++) {
+            	Vector3f vi = get(i);
+            	Vector3d vid = new Vector3d((double)vi.X, (double)vi.Y, (double)vi.Z);
+                currentVector.Sub(vid, v0d);
+                cross.Cross(currentVector, prevVector);
+                result += cross.Length() * 0.5;
+                prevVector.X = currentVector.X;
+                prevVector.Y = currentVector.Y;
+                prevVector.Z = currentVector.Z;
+            }
+
+            // if result is negative then points are ordered clockwise
+            // if result is positive then points are ordered counter-clockwise
+            if (result < 0) {
+                result = -result;
+            }
+        }
+
+        // System.out.println("Contour Area = " + result);
+        return result;
+    }*/
+    
     public float area() {
         float result = 0;
         Vector3f prevVector = new Vector3f();
         Vector3f currentVector = new Vector3f();
         Vector3f cross = new Vector3f();
         if (size() >= 3) {
+        	
             prevVector.Sub(get(1), get(0));
 
             for (int i = 2; i < size(); i++) {
                 currentVector.Sub(get(i), get(0));
                 cross.Cross(currentVector, prevVector);
                 result += cross.Length() * 0.5;
-                prevVector = currentVector;
+                prevVector.X = currentVector.X;
+                prevVector.Y = currentVector.Y;
+                prevVector.Z = currentVector.Z;
             }
 
             // if result is negative then points are ordered clockwise
