@@ -25,21 +25,60 @@ abstract public class T2Map
 	protected int verbose = 0;
 
 	Vector volumes = new Vector(5);
+	//Fitting type subclasses
+	public enum FittingType {
+		BiExp(T2MapBiExp.class, "Bi-exponential"),
+		BiExpFixedT2(T2MapBiExpFixedT2.class, "Bi-exp w/ fixed T2"),
+		BiExpSweep(T2MapBiExpSweep.class, "Bi-exp w/ sweep"),
+		L1(T2MapL1.class, "L1"),
+		MonoExp(T2MapMonoExp.class, "Mono-exponential"),
+		NNLS(T2MapNNLS.class, "NNLS"), 
+		MultiExp(null, "Multi-exponential");
+		
+		private String name;
+		
+		FittingType(Class c, String name) {
+			this.name = name;
+		}
+		
+		/* (non-Javadoc)
+		 * @see java.lang.Enum#toString()
+		 */
+		@Override
+		public String toString() {
+			return name;
+		}
+	}
+	
 	
 	// Noise Estimators.
 
-	/** No noise estimation. */
-	public static final int NE_NONE = 1;
+	public enum NoiseEstimation {
+		/** No noise estimation. */
+		NE_NONE("None"),
+		/** Estimate the noise across the rows */
+		NE_ACROSS_ROW("Across Row"),
+		/** Estimate the noise across the columns. */
+		NE_ACROSS_COLUMN("Across Column"),
+		/** Estimate the noise in the image (gradientMethod). */
+		NE_ACROSS_IMAGE("Across Slice");
+		
+		private String name;
 
-	/** Estimate the noise across the rows */
-	public static final int NE_ACROSS_ROW = 2;
+		NoiseEstimation(String name) {
+			this.name = name;
+		}
 
-	/** Estimate the noise across the columns. */
-    public static final int NE_ACROSS_COLUMN = 3;
+		/* (non-Javadoc)
+		 * @see java.lang.Enum#toString()
+		 */
+		@Override
+		public String toString() {
+			return name;
+		}
+	}
 
-	/** Estimate the noise in the image (gradientMethod). */
-    public static final int NE_ACROSS_IMAGE = 4;
-    private int noise_estimate = NE_ACROSS_ROW;
+    private NoiseEstimation noise_estimate = NoiseEstimation.NE_ACROSS_ROW;
 
 	// Used to speed up the standard deviation calculations
 	private int ne_prev_row = -1;
@@ -421,10 +460,10 @@ abstract public class T2Map
 
 		switch( noise_estimate )
 		{
-			case T2Map.NE_NONE:
+			case NE_NONE:
 				Arrays.fill(stds, 1.0);
 				break;
-			case T2Map.NE_ACROSS_ROW:
+			case NE_ACROSS_ROW:
 				if( ne_prev_row != row )
 				{
 					stdAcrossRow(img, row, slice, stds);
@@ -432,7 +471,7 @@ abstract public class T2Map
 					updated = true;
 				}
 				break;
-			case T2Map.NE_ACROSS_COLUMN:
+			case NE_ACROSS_COLUMN:
 				if( ne_prev_col != col )
 				{
 					stdAcrossColumn(img, col, slice, stds);
@@ -440,7 +479,7 @@ abstract public class T2Map
 					updated = true;
 				}
 				break;
-			case T2Map.NE_ACROSS_IMAGE:
+			case NE_ACROSS_IMAGE:
 					if( !ne_image_calculated )
 					{
 						stdAcrossImage(img, slice, stds);
@@ -606,19 +645,19 @@ abstract public class T2Map
 	{
 		if( ne.indexOf("row") != -1 )
 		{
-			setNoiseEstimateMethod( NE_ACROSS_ROW );
+			setNoiseEstimateMethod( NoiseEstimation.NE_ACROSS_ROW.toString() );
 		}
 		else if( ne.indexOf("col") != -1 )
 		{
-			setNoiseEstimateMethod( NE_ACROSS_COLUMN );
+			setNoiseEstimateMethod( NoiseEstimation.NE_ACROSS_COLUMN.toString() );
 		}
 		else if( ne.indexOf("image") != -1 )
 		{
-			setNoiseEstimateMethod( NE_ACROSS_IMAGE );
+			setNoiseEstimateMethod( NoiseEstimation.NE_ACROSS_IMAGE.toString() );
 		}
 		else if( ne.indexOf("none") != -1 )
 		{
-			setNoiseEstimateMethod( NE_NONE );
+			setNoiseEstimateMethod( NoiseEstimation.NE_NONE.toString() );
 		}
 		else   
 		{
@@ -630,7 +669,7 @@ abstract public class T2Map
 	/** 
 	 *  Set the noise estimation method.
 	 */
-	public void setNoiseEstimateMethod( final int noise_estimate )
+	public void setNoiseEstimateMethod( final NoiseEstimation noise_estimate )
 	{
 		this.noise_estimate = noise_estimate;
 	}
