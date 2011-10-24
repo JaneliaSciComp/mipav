@@ -1,8 +1,11 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2Map.FittingType;
+import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2Map.NoiseEstimation;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
@@ -38,6 +41,18 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
     
     /** DOCUMENT ME! */
     private AlgorithmBase genericAlgo = null;
+
+	private JCheckBox chi2CheckBox;
+
+	private JCheckBox myelinSliceCheckBox;
+
+	private JTextField teRangeField;
+
+	private JCheckBox useFlipEstimateCheckBox;
+
+	private JComboBox noiseEstimateComboBox;
+
+	private JComboBox fittingTypeComboBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -219,8 +234,10 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
    
     private void init() 
     {
-        setForeground(Color.black);
-        setTitle("T2 Mapping of the Brain");
+    	GuiBuilder builder = new GuiBuilder(this);
+    	
+    	setForeground(Color.black);
+        setTitle("T2 Mapping");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -235,31 +252,19 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder(""));
+        mainPanel.setBorder(MipavUtil.buildTitledBorder("Display parameters"));
         //TODO must be changed when not run from Eclipse
-        JLabel labelVOI = new JLabel("Begin the T2 mapping of the Brain?");
-        labelVOI.setForeground(Color.black);
-        labelVOI.setFont(serif12);
-        mainPanel.add(labelVOI, gbc);
+        chi2CheckBox = builder.buildCheckBox("Display chi^2 image", false);
+        mainPanel.add(chi2CheckBox.getParent(), gbc);
+        gbc.gridy++;
+        
+        myelinSliceCheckBox = builder.buildCheckBox("Display myelin slice image", true);
+        mainPanel.add(myelinSliceCheckBox.getParent(), gbc);
+        gbc.gridy++;
 
         getContentPane().add(mainPanel, BorderLayout.NORTH);
-
-        // Build the Panel that holds the OK and CANCEL Buttons
-        JPanel OKCancelPanel = new JPanel();
-
-        // size and place the OK button
-        buildOKButton();
-        OKCancelPanel.add(OKButton, BorderLayout.WEST);
-
-        // size and place the CANCEL button
-        buildCancelButton();
-        OKCancelPanel.add(cancelButton, BorderLayout.EAST);
-        getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
         
         JPanel mainPanel2 = new JPanel(new GridBagLayout());
-    	   
-        setForeground(Color.black);
-        setTitle("Enter T2 Values");
 
         mainPanel2 = new JPanel();
         mainPanel2.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
@@ -275,27 +280,62 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
         gbc2.gridy = 0;
         gbc2.fill = GridBagConstraints.HORIZONTAL;
 
-        JPanel paramPanel = new JPanel(new GridLayout(-1, 2));
+        GridBagConstraints gbcParam = new GridBagConstraints();
+        gbcParam.gridwidth = 1;
+        gbcParam.gridheight = 1;
+        gbcParam.anchor = GridBagConstraints.WEST;
+        gbcParam.weightx = 1;
+        gbcParam.insets = new Insets(3, 3, 3, 3);
+        gbcParam.gridx = 0;
+        gbcParam.gridy = 0;
+        gbcParam.fill = GridBagConstraints.HORIZONTAL;
+        
+        JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
-        paramPanel.setBorder(buildTitledBorder("Algorithm parameters"));
-        mainPanel2.add(paramPanel);
-
+        paramPanel.setBorder(MipavUtil.buildTitledBorder("Fitting parameters"));
+        noiseEstimateComboBox = builder.buildComboBox("Noise estimation method: ", NoiseEstimation.values(), 1);
+        paramPanel.add(noiseEstimateComboBox.getParent(), gbcParam);
+        gbcParam.gridy++;
+        fittingTypeComboBox = builder.buildComboBox("Fitting type: ", FittingType.values());
+        paramPanel.add(fittingTypeComboBox.getParent(), gbcParam);
+        gbcParam.gridy++;
+        useFlipEstimateCheckBox = builder.buildCheckBox("Use estimated flip angle", false);
+        paramPanel.add(useFlipEstimateCheckBox.getParent(), gbcParam);
+        mainPanel2.add(paramPanel, gbc2);
+        
+        
+        JPanel tePanel = new JPanel(new GridBagLayout());
+        tePanel.setBorder(MipavUtil.buildTitledBorder("Acquisition parameters"));
+        gbcParam = new GridBagConstraints();
+        gbcParam.gridwidth = 1;
+        gbcParam.gridheight = 1;
+        gbcParam.anchor = GridBagConstraints.WEST;
+        gbcParam.weightx = 1;
+        gbcParam.insets = new Insets(3, 3, 3, 3);
+        gbcParam.gridx = 0;
+        gbcParam.gridy = 0;
+        gbcParam.fill = GridBagConstraints.HORIZONTAL;
+        teRangeField = builder.buildField("Time range: ", "80 - 160");
+        tePanel.add(teRangeField.getParent(), gbcParam);
+        gbcParam.gridy++;
+        
         int numTimeSlices = image.getExtents()[3];
         int base = 80;
         for (int i = 0; i < numTimeSlices; i++) 
         {
-        	JLabel labelK = createLabel("Time " +i);
-        	paramPanel.add(labelK);
-        	JTextField textK = createTextField(String.valueOf(base+i*20));
-        	paramPanel.add(textK);
-        	txtField.add(textK);
+        	txtField.add(builder.buildIntegerField("Time "+i, base+i*20));
+        	tePanel.add(txtField.get(i).getParent(), gbcParam);
+        	gbcParam.gridy++;
         }
         
         gbc2.gridx = 0;
         gbc2.gridy = 2;
-        mainPanel2.add(paramPanel, gbc2);
+        mainPanel2.add(tePanel, gbc2);
+        gbc2.gridy++;
+        
 
         mainDialogPanel.add(mainPanel2, BorderLayout.CENTER);
+        mainDialogPanel.add(builder.buildOKCancelPanel(), BorderLayout.SOUTH);
 
         getContentPane().add(mainDialogPanel, BorderLayout.CENTER);
 

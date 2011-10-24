@@ -12,6 +12,10 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileDicom;
 
+import gov.nih.mipav.model.file.DicomDictionary;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagInfo;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
@@ -25,6 +29,8 @@ import javax.swing.*;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -423,7 +429,18 @@ public class PlugInDialogAnonymizeDICOM extends JDialogStandaloneScriptablePlugi
 			}
             if(info instanceof FileInfoDicom) {
             	FileDicomTagTable tagTable = ((FileInfoDicom) info).getTagTable();
-            	currentTagEditor = new JDialogDicomTagSelector(tagTable.getTagList(), parent, true);
+            	Hashtable<FileDicomKey, FileDicomTagInfo> infoHash = DicomDictionary.getDicomTagTable();
+            	Hashtable<FileDicomKey, FileDicomTag> tagHash = new Hashtable<FileDicomKey, FileDicomTag>();
+            	Iterator<FileDicomKey> itr = infoHash.keySet().iterator();
+            	long time = System.currentTimeMillis();
+            	while(itr.hasNext()) {
+            		FileDicomKey key = itr.next();
+            		if(!key.toString().contains("x")) {
+            			tagHash.put(key, new FileDicomTag(infoHash.get(key)));
+            		}
+            	}
+            	System.out.println("Constructed tag selector in: "+(System.currentTimeMillis()-time));
+            	currentTagEditor = new JDialogDicomTagSelector(tagHash, parent, true);
             }
 		}
     	
