@@ -61,6 +61,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
 
 	private int xDim, yDim, zDim;
+	private int maxDim;
+	private int minDim;
 
 	private int[] resultExtents = new int[3];
 
@@ -77,15 +79,13 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		xDim = wormImage.getExtents()[0];
 		yDim = wormImage.getExtents()[1];
 		zDim = wormImage.getExtents()[2];
-
-
-		centerModel = new Point3f((xDim - 1)/2f, (yDim - 1)/2f, (zDim - 1)/2f);
+		
+		maxDim = Math.max( Math.max( xDim, yDim ), zDim );
+		minDim = Math.min( Math.min( xDim, yDim ), zDim );
 
 		resols[0] = wormImage.getResolutions(0)[0];
 		resols[1] = wormImage.getResolutions(0)[1];
 		resols[2] = wormImage.getResolutions(0)[2];
-
-
 
 
 		xBox = (xDim - 1) * resols[0];
@@ -100,7 +100,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		if (zBox > maxBox) {
 			maxBox = zBox;
 		}
-
+		
+		
 		// Normalize the size
 		// xBox range between 0 - 1.
 		xBox = xBox / maxBox;
@@ -152,15 +153,15 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	private void doPlanes() {
 		//first create empty result image and set up voi to transfer points to result image\
 		//!!!!!!!!!!!!!!!!!!NEED TO REMOVE THAT -1 AT SOME POINT
-		resultExtents[0] = 400;
-		resultExtents[1] = 400;
-		resultExtents[2] = 400;
+		resultExtents[0] = maxDim;
+		resultExtents[1] = maxDim;
+		resultExtents[2] = interpolationPts;
 
 		//resultExtents = wormImage.getExtents();
 
 		float[] res = {wormImage.getResolutions(0)[0], wormImage.getResolutions(0)[1],wormImage.getResolutions(0)[2]};
 		resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, "RESULT IMAGE");
-		resultImage.setResolutions(res);
+		//resultImage.setResolutions(res);
 		FileInfoBase[] fileInfoBases = resultImage.getFileInfo();
 		for (int i = 0; i < fileInfoBases.length; i++) {
 			fileInfoBases[i].setEndianess(wormImage.getFileInfo()[0].getEndianess());
@@ -223,7 +224,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		//!!!!!!make sure you comment this out when wanting to populate result image
 		//wormImage.setAll(0);
 
-		javax.vecmath.Vector3f imageOrientationVectZ = new javax.vecmath.Vector3f(0,0,1);
+		javax.vecmath.Vector3f kNormalVM = new javax.vecmath.Vector3f(0,0,1);
 		float angle;
 
 		//Vector3f[] tanVectors = new Vector3f[interpolationPts-1];
@@ -231,6 +232,8 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		float[] values;
 		int start = 0;
 		int resultSliceSize = resultExtents[0] * resultExtents[1];
+		
+		Vector3f kNormal = new Vector3f( Vector3f.UNIT_Z );
 		for(int i=0;i< Math.min( interpolationPts-1, resultExtents[2]-1);i++) {
 
 			//determining tangent vector at point
@@ -245,19 +248,22 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 			Point3f position = new Point3f(point.X, point.Y, point.Z );
 
 			// Angle between the tangent and the 'default' z-direction:
-			angle = tanVector.Angle(Vector3f.UNIT_Z);             
+			angle = tanVector.Angle(kNormal);             
 			javax.vecmath.Vector3f rotationAxis = new javax.vecmath.Vector3f();
 
 			// rotation axis is the cross product of the 'default' z-direction and the tangent:
 			javax.vecmath.Vector3f tangentVect = new javax.vecmath.Vector3f(tanVector.X, tanVector.Y, tanVector.Z );
-			rotationAxis.cross( tangentVect, imageOrientationVectZ );
+			rotationAxis.cross( kNormalVM, tangentVect );
 
 			// Create a rotation angle-degrees about the rotation axis:
 			Transform3D transformTotal = new Transform3D();
 			transformTotal.setRotation( new AxisAngle4f( rotationAxis, angle ) );
+			//System.err.println( tangentVect + "               " +  (float)((360 * angle) / (2.0 * Math.PI)) + "                  " + rotationAxis );
 			// Transform boxSliceVertices (rotation, and then transate to position)
 			setProbeTG(transformTotal, position );
-			
+						
+			kNormal = new Vector3f( tanVector );
+			kNormalVM = new javax.vecmath.Vector3f( tangentVect );
 			//now we call export diagonal and pass in those vertices
 			values = new float[resultExtents[0] * resultExtents[1]]; 
 			try {
@@ -279,10 +285,11 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
                 String kName = kBox.getClass().getName();
                 int nameIndex = kName.lastIndexOf('.') + 1;
                 kName = kName.substring(nameIndex);
-                VOI kBoxVOI = new VOI( sID,  kName + "_" + sID, kBox.getType(), .7f );
+                float fAngle = (float)((360 * angle) / (2.0 * Math.PI));
+                VOI kBoxVOI = new VOI( sID,  kName + "_" + sID + "_" + fAngle, kBox.getType(), .7f );
                 kBoxVOI.setOpacity(1f);
                 kBoxVOI.getCurves().add(kBox);
-				
+                kBox.update( new ColorRGBA(0,0,1,1) );			
 				
 
     			Vector3f tanVectorNN = bSplineAlgo.bSplineJetXYZ(1, floatIndex, xPoints, yPoints, zPoints);
@@ -365,9 +372,9 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 	private void testOutputRotateY() {
 		//first create empty result image and set up voi to transfer points to result image\
 		//!!!!!!!!!!!!!!!!!!NEED TO REMOVE THAT -1 AT SOME POINT
-		resultExtents[0] = 400;
-		resultExtents[1] = 400;
-		resultExtents[2] = 400;
+		resultExtents[0] = xDim;
+		resultExtents[1] = yDim;
+		resultExtents[2] = zDim;
 
 		//resultExtents = wormImage.getExtents();
 
@@ -391,7 +398,7 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
 			Transform3D transformTotal = new Transform3D();
 			transformTotal.setRotation( new AxisAngle4f( new javax.vecmath.Vector3f(0, 1, 0), (float)(Math.PI / 2f) ) );
-			setProbeTG(transformTotal, new Point3f( (xDim - 1) * (i/400f), (yDim - 1)/2f, (zDim - 1)/2f )  );
+			setProbeTG(transformTotal, new Point3f( (xDim - 1) * (i/400f), (yDim - 1)/2f, (zDim - 1)/2f)  );
 
 			//now we call export diagonal and pass in those vertices
 			values = new float[resultExtents[0] * resultExtents[1]]; 
@@ -404,6 +411,33 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
 				wormImage.exportDiagonal(0, i, wormImageExtents, boxSliceVertices, values, true);
 
+				
+
+				
+				VOIContour kBox = new VOIContour(true);
+				for ( int pt = 0; pt < 4; pt++ )
+				{
+					kBox.addElement( boxSliceVertices[pt].X, boxSliceVertices[pt].Y, boxSliceVertices[pt].Z );
+				}
+				float perimeter = 0;
+				perimeter += boxSliceVertices[0].Distance(boxSliceVertices[1]);
+				perimeter += boxSliceVertices[1].Distance(boxSliceVertices[2]);
+				perimeter += boxSliceVertices[2].Distance(boxSliceVertices[3]);
+				perimeter += boxSliceVertices[3].Distance(boxSliceVertices[0]);
+
+                short sID = (short)(wormImage.getVOIs().getUniqueID());
+                String kName = kBox.getClass().getName();
+                int nameIndex = kName.lastIndexOf('.') + 1;
+                kName = kName.substring(nameIndex);
+                VOI kBoxVOI = new VOI( sID,  kName + "_" + sID, kBox.getType(), .7f );
+                kBoxVOI.setOpacity(1f);
+                kBoxVOI.getCurves().add(kBox);
+                //System.err.println( perimeter );				
+                
+                wormImage.registerVOI( kBoxVOI );
+				
+				
+				
 				resultImage.importData(i*values.length, values, false);
 			}catch(IOException e) {
 				e.printStackTrace();
@@ -429,8 +463,11 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 
 
 	public void setProbeTG(final Transform3D kTransform, Point3f kPosition) {
+		transformBoxSlices(kTransform, kPosition);
+		
+		/*
 
-		/* Get the translation and inverse translation transforms: */
+		// Get the translation and inverse translation transforms: 
 		final javax.vecmath.Vector3f kTranslateVector = new javax.vecmath.Vector3f();
 		kTransform.get(kTranslateVector);
 
@@ -440,22 +477,20 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		final Transform3D kTranslateInv = new Transform3D();
 		kTranslateInv.setTranslation(new javax.vecmath.Vector3f( -kTranslateVector.x, -kTranslateVector.y, -kTranslateVector.z));
 
-		/* Get the rotation transform: */
+		// Get the rotation transform: 
 		final Matrix3f kRotationMatrix = new Matrix3f();
 		kTransform.getRotationScale(kRotationMatrix);
 
 		final Transform3D kRotate = new Transform3D();
 		kRotate.setRotationScale(kRotationMatrix);
 
-		/*
-		 * Concatenate the three transformations to rotate about the probe position:
-		 */
+		// Concatenate the three transformations to rotate about the probe position:
 		final Transform3D kTransformTotal = new Transform3D();
 		kTransformTotal.mul(kTranslate);
 		kTransformTotal.mul(kRotate);
 		kTransformTotal.mul(kTranslateInv);
 
-		transformBoxSlices(kTransformTotal, kPosition);
+		transformBoxSlices(kTransformTotal, kPosition);*/
 	}
 
 	/**
@@ -470,33 +505,58 @@ public class PlugInAlgorithmWormStraightening extends AlgorithmBase {
 		}
 		Point3f[] outVertices = new Point3f[4];
 
-		if (boxSliceVertices == null) {
+		//if (boxSliceVertices == null) {
 			boxSliceVertices = new Vector3f[4];
-		}
+		//}
 
+			centerModel.x = 0;
+			centerModel.y = 0;
+			centerModel.z = 0;
 		for (int i = 0; i < 4; i++) {
 			outVertices[i] = new Point3f();
-			if (boxSliceVertices[i] == null) {
+			//if (boxSliceVertices[i] == null) {
 				boxSliceVertices[i] = new Vector3f();
-			}
+			//}
 
 			// Rotate the points in the bounding box:
 				// verts is a 'unit' cube centered at (0,0,0) with
 			// corners from (-1,-1,-1) -> (1,1,1)
-			kTransform.transform(verts[i], outVertices[i]);
-			//System.err.println( verts[i] + "                  " + outVertices[i] );
+				kTransform.transform(verts[i], outVertices[i]);
+				
+
+				verts[i].x = outVertices[i].x;
+				verts[i].y = outVertices[i].y;
+				verts[i].z = outVertices[i].z;
+			//System.err.println( verts2[i] + "                  " + outVertices[i] );
 
 			// Shift so the position is back to the cube with corners from (0,0,0) -> (2,2,2)
-			outVertices[i].x += centerShift.x;
-			outVertices[i].y += centerShift.y;
-			outVertices[i].z += centerShift.z;
-			//System.err.println( outVertices[i] );
+				outVertices[i].x += centerShift.x;
+				outVertices[i].y += centerShift.y;
+				outVertices[i].z += centerShift.z;
+				//System.err.println( outVertices[i] );
+				outVertices[i].x /= 2f;
+				outVertices[i].y /= 2f;
+				outVertices[i].z /= 2f;
+				
 
 			// Scale back to the image dimensions:
-			boxSliceVertices[i].X = (xDim - 1) * outVertices[i].x/2f;
-			boxSliceVertices[i].Y = (yDim - 1) * outVertices[i].y/2f;
-			boxSliceVertices[i].Z = (zDim - 1) * outVertices[i].z/2f;
+				boxSliceVertices[i].X = (xDim - 1) * outVertices[i].x;
+				boxSliceVertices[i].Y = (yDim - 1) * outVertices[i].y;
+				boxSliceVertices[i].Z = (zDim - 1) * outVertices[i].z;
+				//boxSliceVertices[i].X = (minDim - 1) * outVertices[i].x;
+				//boxSliceVertices[i].Y = (minDim - 1) * outVertices[i].y;
+				//boxSliceVertices[i].Z = (minDim - 1) * outVertices[i].z;
 
+			centerModel.x += boxSliceVertices[i].X;
+			centerModel.y += boxSliceVertices[i].Y;
+			centerModel.z += boxSliceVertices[i].Z;
+		}
+
+		centerModel.x /= 4f;
+		centerModel.y /= 4f;
+		centerModel.z /= 4f;
+
+		for (int i = 0; i < 4; i++) {
 			// move from the center of the volume to the position:
 			// (centerModel and kPosition are in image-index coordinates)
 			boxSliceVertices[i].X += (kPosition.x - centerModel.x);
