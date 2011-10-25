@@ -384,6 +384,26 @@ public abstract class VOIBase extends Vector<Vector3f> {
     public void addElement(int x, int y, int z) {
         addElement(new Vector3f(x, y, z));
     }
+    
+    public double area() {
+    	int i;
+    	double result = 0;
+    	Vector3f vc = new Vector3f();
+    	for (i = 0; i < size()-1; i++) {
+    		Vector3f vp = get(i);
+    		vc = get(i+1);
+    		result += ((double)vp.X) * ((double)vc.Y) - ((double)vc.X)* ((double)vp.Y);
+    	}
+	    Vector3f v0 = get(0);
+	    result += ((double)vc.X) * ((double)v0.Y) - ((double)v0.X) * ((double)vc.Y);
+	    if (result < 0) {
+	        result = -result;
+	    }
+	    result = 0.5 * result;
+	
+	    // System.out.println("Contour Area = " + result);
+	    return result;
+    }
 
     /**
      * Calculates the area of contour using vector cross product method - fast !!
@@ -391,6 +411,8 @@ public abstract class VOIBase extends Vector<Vector3f> {
      * @return returns the area
      */
     /*public double area() {
+    	// Does not work on VOI with concavities
+    	// Only works if lines from 0 to all other points is totally enclosed in VOI
         double result = 0;
         Vector3d prevVector = new Vector3d();
         Vector3d currentVector = new Vector3d();
@@ -423,35 +445,6 @@ public abstract class VOIBase extends Vector<Vector3f> {
         // System.out.println("Contour Area = " + result);
         return result;
     }*/
-    
-    public float area() {
-        float result = 0;
-        Vector3f prevVector = new Vector3f();
-        Vector3f currentVector = new Vector3f();
-        Vector3f cross = new Vector3f();
-        if (size() >= 3) {
-        	
-            prevVector.Sub(get(1), get(0));
-
-            for (int i = 2; i < size(); i++) {
-                currentVector.Sub(get(i), get(0));
-                cross.Cross(currentVector, prevVector);
-                result += cross.Length() * 0.5;
-                prevVector.X = currentVector.X;
-                prevVector.Y = currentVector.Y;
-                prevVector.Z = currentVector.Z;
-            }
-
-            // if result is negative then points are ordered clockwise
-            // if result is positive then points are ordered counter-clockwise
-            if (result < 0) {
-                result = -result;
-            }
-        }
-
-        // System.out.println("Contour Area = " + result);
-        return result;
-    }
 
 
     /**
