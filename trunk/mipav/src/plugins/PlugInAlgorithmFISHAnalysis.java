@@ -465,14 +465,14 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             boolean flagVOI = false;
             VOI cRGVOIs = allRGVOIs.VOIAt(rgvoisCnt);
             Vector3f geomCentercRGVOIs = cRGVOIs.getGeometricCenter();
-            int areacRGVOIs = cRGVOIs.area();
+            int areacRGVOIs = (int)cRGVOIs.area();
             VOIBase cRGVOIsPoly = cRGVOIs.getCurves().elementAt(0);
             // UI.setDataText("\n Number of polygons in C = " + rgvoisCnt + ", " + cRGVOIsPoly.length);
 
             for (int rgvoisCnt1 = rgvoisCnt + 1; rgvoisCnt1 < allRGVOIs.size(); rgvoisCnt1++) {
                 VOI nRGVOIs = allRGVOIs.VOIAt(rgvoisCnt1);
                 Vector3f centmassnRGVOIs = nRGVOIs.getGeometricCenter();
-                int areanRGVOIs = nRGVOIs.area();
+                int areanRGVOIs = (int)nRGVOIs.area();
                 VOIBase nRGVOIsPoly = nRGVOIs.getCurves().elementAt(0);
 
                 // UI.setDataText("\n  Number of polygons in N = "  + rgvoisCnt1 + ", " +  nRGVOIsPoly.length);
