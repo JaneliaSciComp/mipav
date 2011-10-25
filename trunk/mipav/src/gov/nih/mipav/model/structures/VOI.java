@@ -593,11 +593,11 @@ public class VOI extends ModelSerialCloneable {
 	 *
 	 * @return  returns the area
 	 */
-	public int area() {
+	public double area() {
 		if ( curveType != CONTOUR ) {
 			return 0;
 		}
-		int totalArea = 0;
+		double totalArea = 0;
 		for (int i = 0; i < curves.size(); i++) {
 			totalArea += curves.elementAt(i).area();
 		}
