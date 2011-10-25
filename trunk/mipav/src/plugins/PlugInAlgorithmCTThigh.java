@@ -330,7 +330,7 @@ public class PlugInAlgorithmCTThigh extends AlgorithmBase {
             if (sortedCurves[sliceIdx].size() == 3) {
                 
                 // find the curve with the greatest area (the thigh curve)
-                float maxArea = ((VOIContour)sortedCurves[sliceIdx].get(0)).area();
+                float maxArea = (float)((VOIContour)sortedCurves[sliceIdx].get(0)).area();
                 int maxIdx = 0;
                 for (int idx = 1; idx < sortedCurves[sliceIdx].size(); idx++) {
                     if (((VOIContour)sortedCurves[sliceIdx].get(idx)).area() > maxArea) {
