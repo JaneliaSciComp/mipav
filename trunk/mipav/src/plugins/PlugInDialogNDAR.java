@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 
+import gov.nih.ndar.model.abstraction.dictionary.IConditional;
 import gov.nih.ndar.model.abstraction.dictionary.IDataElement;
 import gov.nih.ndar.model.abstraction.dictionary.IDataStructure;
 import gov.nih.ndar.model.transfer.dictionary.XmlDataDictionary;
@@ -41,8 +42,6 @@ import com.sun.jimi.core.*;
 
 public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionListener, ChangeListener, ItemListener,
         TreeSelectionListener, MouseListener, PreviewImageContainer {
-
-    /** Scrolling text area for log output */
     private WidgetFactory.ScrollTextArea logOutputArea;
 
     private JScrollPane listPane;
@@ -2078,7 +2077,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      * @author pandyan
      * 
      */
-    private class InfoDialog extends JDialog implements ActionListener, WindowListener {
+    private class InfoDialog extends JDialog implements ActionListener, WindowListener, ItemListener, FocusListener {
         private final PlugInDialogNDAR owner;
 
         private final JTabbedPane tabbedPane = new JTabbedPane();
@@ -2095,7 +2094,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         private boolean launchedFromInProcessState = false;
 
-        private JLabel requiredLabel;
+        private JLabel requiredLabel, conditionalLabel;
 
         private String dataStructureName;
 
@@ -2298,6 +2297,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             OKPanel.add(cancelButton);
 
             requiredLabel = new JLabel("<html>* Required data elements are in <font color=\"red\">red</font></html>");
+            //conditionalLabel = new JLabel("<html>* Conditional data elements are in <font color=\"blue\">blue</font></html>");
 
             gbc.fill = GridBagConstraints.BOTH;
             gbc.anchor = GridBagConstraints.EAST;
@@ -2305,13 +2305,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             gbc.gridx = 0;
             gbc.gridy = 0;
             mainPanel.add(requiredLabel, gbc);
-            gbc.gridy = 1;
+            //gbc.gridy = 1;
+            //mainPanel.add(conditionalLabel, gbc);
+            
+            gbc.gridy = 2;
             gbc.weightx = 1;
             gbc.weighty = 1;
             mainPanel.add(tabbedPane, gbc);
             gbc.weightx = 0;
             gbc.weighty = 0;
-            gbc.gridy = 2;
+            gbc.gridy = 3;
             mainPanel.add(OKPanel, gbc);
 
             getContentPane().add(mainPanel);
@@ -2762,11 +2765,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                   
 
                     final String v = dataElement.getValueRange();
-                   
-
+                    
+                    final String c = dataElement.getRequiredCondition();
+                    
                     final String parentDataStruct = ds2.getName();
                     final String parentDataStructShortName = ds2.getShortname();
-                    final DataElement de = new DataElement(n, d, sh, t, s, r, v, parentDataStruct,
+                    final DataElement de = new DataElement(n, d, sh, t, s, r, v, c, parentDataStruct,
                             parentDataStructShortName);
                     ds2.add(de);
 
@@ -2776,27 +2780,41 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     } else {
                         l = new JLabel(sh);
                     }*/
-                    l = new JLabel(n);
+                    if(sh != null && !sh.equals("")) {
+                    	l = new JLabel(sh);
+                    }else {
+                    	l = new JLabel(n);
+                    }
+                    
                     l.setName(n);
-                    l.setToolTipText(sh);
+                    l.setToolTipText(n);
                    /* System.out.println("^^^ " + n);
                     System.out.println("^^^-- " + sh);
                     System.out.println("^^^--" + t);
                     System.out.println("^^^--" + s);
                     System.out.println("^^^--" + v);
                     System.out.println();*/
+                    //System.out.println("^^^ " + n);
+                    //System.out.println("^^^ " + r);
+                    //System.out.println("^^^ " + c);
+                    //System.out.println();
                     // if valuerange is enumeration, create a combo box...otherwise create a textfield
                     if (v!= null && v.contains(";") && t != null && !t.equalsIgnoreCase("DATE")) {
                         final JComboBox cb = new JComboBox();
                         cb.setName(n);
                         final String[] items = v.split(";");
+                        cb.addItem("");
                         for (final String element : items) {
                             final String item = element.trim();
                             cb.addItem(item);
                         }
+                        cb.addItemListener(this);
                         if (r.equalsIgnoreCase("Required")) {
                             l.setForeground(Color.red);
-                        }
+                        }/*else if(r.equalsIgnoreCase("Conditional")) {
+                        	l.setForeground(Color.blue);
+                        }*/
+                        
                         labelsAndComps.put(l, cb);
                     } else {
                         final JTextField tf = new JTextField(20);
@@ -2810,7 +2828,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             tooltip += ".  Value range: " + v;
                         }
                         tf.setToolTipText(tooltip);
-
+                        tf.addFocusListener(this);
                         if (n.equalsIgnoreCase("image_num_dimensions")) {
                             tf.setEnabled(false);
                         } else if (n.equalsIgnoreCase("image_extent1")) {
@@ -2830,7 +2848,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                         if (r.equalsIgnoreCase("Required")) {
                             l.setForeground(Color.red);
-                        }
+                        }/*else if(r.equalsIgnoreCase("Conditional")) {
+                        	l.setForeground(Color.blue);
+                        }*/
                         labelsAndComps.put(l, tf);
                     }
                     // }
@@ -2865,7 +2885,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          * parses the OMElement
          * 
          * @param ds
-         */
+         *//*
         private void parse(final OMElement omElement, final DataStruct ds2, final String shortname,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
             final Iterator iter = omElement.getChildElements();
@@ -2970,7 +2990,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     // }
                 }
             }
-        }
+        }*/
 
         /**
          * populates dialog from completed state
@@ -3211,29 +3231,39 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final int nDims = img.getNDims();
             final int modality = img.getFileInfo(0).getModality();
             final String modalityString = FileInfoBase.getModalityStr(modality);
+            //System.out.println(modalityString);
+            final int fileFormatInt = img.getFileInfo(0).getFileFormat();
+            final String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
+            //System.out.println(fileFormatString);
+          
             final float sliceThickness = img.getFileInfo(0).getSliceThickness();
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
             // get index for extents
-            final Set keySet = labelsAndComps.keySet();
-            final Iterator iter = keySet.iterator();
+            Set keySet = labelsAndComps.keySet();
+            Iterator iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final String l = label.getName();
                 final JComponent comp = labelsAndComps.get(label);
                 if (l.equalsIgnoreCase("image_num_dimensions")) {
                     ((JTextField) comp).setText(String.valueOf(nDims));
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_extent1")) {
                     ((JTextField) comp).setText(String.valueOf(exts[0]));
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_extent2")) {
                     ((JTextField) comp).setText(String.valueOf(exts[1]));
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_extent3")) {
                     if (img.getNDims() > 2) {
                         ((JTextField) comp).setText(String.valueOf(exts[2]));
+                        label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("image_extent4")) {
                     if (img.getNDims() > 3) {
                         ((JTextField) comp).setText(String.valueOf(exts[3]));
+                        label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("image_extent5")) {
                     // for now...nothing
@@ -3245,6 +3275,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             jc.setSelectedIndex(k);
                         }
                     }
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_unit2")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
@@ -3253,6 +3284,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             jc.setSelectedIndex(k);
                         }
                     }
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_unit3")) {
                     if (img.getNDims() > 2) {
                         final JComboBox jc = (JComboBox) comp;
@@ -3262,6 +3294,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 jc.setSelectedIndex(k);
                             }
                         }
+                        label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("image_unit4")) {
                     if (img.getNDims() > 3) {
@@ -3272,20 +3305,25 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 jc.setSelectedIndex(k);
                             }
                         }
+                        label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("image_unit5")) {
                     // for now...nothing
                 } else if (l.equalsIgnoreCase("image_resolution1")) {
                     ((JTextField) comp).setText(String.valueOf(res[0]));
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_resolution2")) {
                     ((JTextField) comp).setText(String.valueOf(res[1]));
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_resolution3")) {
                     if (img.getNDims() > 2) {
                         ((JTextField) comp).setText(String.valueOf(res[2]));
+                        label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("image_resolution4")) {
                     if (img.getNDims() > 3) {
                         ((JTextField) comp).setText(String.valueOf(res[3]));
+                        label.setForeground(Color.red);
                     }
                 } else if (l.equalsIgnoreCase("image_resolution5")) {
                     // for now...nothing
@@ -3297,12 +3335,23 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             jc.setSelectedIndex(k);
                         }
                     }
-                } else if (l.equalsIgnoreCase("image_slice_thickness")) {
+                    label.setForeground(Color.red);
+                } else if (l.equalsIgnoreCase("image_file_format")) {
+                    final JComboBox jc = (JComboBox) comp;
+                    for (int k = 0; k < jc.getItemCount(); k++) {
+                        final String item = (String) jc.getItemAt(k);
+                        if (fileFormatString.equalsIgnoreCase(item)) {
+                            jc.setSelectedIndex(k);
+                        }
+                    }
+                    label.setForeground(Color.red);
+                }else if (l.equalsIgnoreCase("image_slice_thickness")) {
                     if (sliceThickness == 0) {
                         ((JTextField) comp).setText("");
                     } else {
                         ((JTextField) comp).setText(String.valueOf(sliceThickness));
                     }
+                    label.setForeground(Color.red);
                 } else if (l.equalsIgnoreCase("image_orientation")) {
                     final JComboBox jc = (JComboBox) comp;
                     for (int k = 0; k < jc.getItemCount(); k++) {
@@ -3311,7 +3360,72 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                             jc.setSelectedIndex(k);
                         }
                     }
+                    label.setForeground(Color.red);
                 }
+            }
+            
+            if(fileFormatString.equalsIgnoreCase("dicom") && modalityString.equalsIgnoreCase("Magnetic Resonance")) {
+            	//System.out.println("need to extract dicom tags");
+            	
+            	FileInfoDicom fileInfoDicom = (FileInfoDicom)img.getFileInfo(0);
+            	
+            	String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+            	String echoTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0081"));
+            	String repetitionTime = (String) (fileInfoDicom.getTagTable().getValue("0018,0080"));
+            	String manufacturer = (String) (fileInfoDicom.getTagTable().getValue("0008,0070"));
+            	String softwareVersion = (String) (fileInfoDicom.getTagTable().getValue("0018,1020"));
+            	String magnaticFieldStrength = (String) (fileInfoDicom.getTagTable().getValue("0018,0087"));
+            	String flipAngle = (String) (fileInfoDicom.getTagTable().getValue("0018,1314"));
+            	String acquisitionMatrix = (String) (fileInfoDicom.getTagTable().getValue("0018,1310"));
+            	String patientPosition = (String) (fileInfoDicom.getTagTable().getValue("0018,5100"));
+            	String photoInterp = (String) (fileInfoDicom.getTagTable().getValue("0028,0002"));
+            	String scannerType = (String) (fileInfoDicom.getTagTable().getValue("0018,0023"));
+            	
+            	keySet = labelsAndComps.keySet();
+                iter = keySet.iterator();
+                while (iter.hasNext()) {
+                	 final JLabel label = (JLabel) iter.next();
+                     final String l = label.getName();
+                     final JComponent comp = labelsAndComps.get(label);
+                     if (l.equalsIgnoreCase("mri_field_of_view_pd")) {
+                         ((JTextField) comp).setText(fieldOfView);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("mri_echo_time_pd")) {
+                         ((JTextField) comp).setText(echoTime);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("mri_repetition_time_pd")) {
+                         ((JTextField) comp).setText(repetitionTime);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("scanner_manufacturer_pd")) {
+                         ((JTextField) comp).setText(manufacturer);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("scanner_software_versions_pd")) {
+                         ((JTextField) comp).setText(softwareVersion);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("magnetic_field_strength")) {
+                         ((JTextField) comp).setText(magnaticFieldStrength);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("flip_angle")) {
+                         ((JTextField) comp).setText(flipAngle);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("acquisition_matrix")) {
+                         ((JTextField) comp).setText(acquisitionMatrix);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("patient_position")) {
+                         ((JTextField) comp).setText(patientPosition);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("photomet_interpret")) {
+                         ((JTextField) comp).setText(photoInterp);
+                         label.setForeground(Color.red);
+                     }else if (l.equalsIgnoreCase("scanner_type_pd")) {
+                         ((JTextField) comp).setText(scannerType);
+                         label.setForeground(Color.red);
+                     }
+                	
+                }
+            	
+            	//String fieldOfView = (String) (fileInfoDicom.getTagTable().getValue("0018,1100"));
+            	
             }
         }
 
@@ -3518,6 +3632,194 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             return errs;
 
         }
+        
+        public boolean isNumber(String exp) {
+        	
+        	try {
+        		Double.parseDouble(exp);
+        	}catch(NumberFormatException e) {
+        		return false;
+        	}
+        	
+        	
+        	
+        	return true;
+        }
+        
+        
+        
+        public double getNumber(String exp) {
+        	return Double.parseDouble(exp);
+        	
+        }
+        
+        public boolean evaluateStringExpression(String op1, String oper, String op2) {
+        	if(op1.startsWith("'")) {
+        		op1 = op1.substring(1, op1.length()-1);
+        	}
+        	
+        	if(op2.startsWith("'")) {
+        		op2 = op2.substring(1, op2.length()-1);
+        	}
+        	
+        	
+        	//need to special case for MRI
+        	if(op1.equalsIgnoreCase("Magnetic Resonance")) {
+        		op1 = "MRI";
+        	}
+        	
+
+        	
+        	if(oper.equals("=")) {
+        		if(op1.equals(op2)) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}else if(oper.equals("!=")) {
+        		if(!op1.equals(op2)) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        		
+        	}
+        	
+
+        	return false;
+        }
+        
+        
+        
+        
+        public boolean evaluateNumberExpression(String op1, String oper, String op2) {
+        	double d1 = getNumber(op1);
+        	double d2 = getNumber(op2);
+        	if(oper.equals("=")) {
+        		if(d1 == d2) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}else if(oper.equals("<")) {
+        		if(d1 < d2) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}else if(oper.equals(">")) {
+        		if(d1 > d2) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}else if(oper.equals("!=")) {
+        		if(d1 != d2) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}else if(oper.equals("<=")) {
+        		if(d1 <= d2) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}else if(oper.equals(">=")) {
+        		if(d1 >= d2) {
+        			return true;
+        		}else {
+        			return false;
+        		}
+        	}
+        	
+        	
+        	
+        	
+        	return false;
+        }
+        
+        
+        public boolean testCondition(String[] tokens) {
+        	String value = "";
+        	String key;
+        	for(int i=0;i<tokens.length;i++) {
+        		String token = tokens[i];
+        		if(token.startsWith("#")) {
+        			//get the corresponding value from this component
+        			//and replace
+        			String name = token.substring(1, token.length());
+        			 Set keySet = labelsAndComps.keySet();
+                     Iterator iter = keySet.iterator();
+                     while (iter.hasNext()) {
+                         final JLabel label = (JLabel) iter.next();
+                         final JComponent comp = labelsAndComps.get(label);
+                         key = label.getName();
+                        
+                         if (comp instanceof JTextField) {
+                             value = ((JTextField) comp).getText().trim();
+                         } else if (comp instanceof JComboBox) {
+                             value = (String) ( ((JComboBox) comp).getSelectedItem());
+                         }
+                         if (key.equalsIgnoreCase(name)) {
+                             tokens[i] = value;
+                             break;
+                         }
+                     }
+        		}
+        	}
+        	
+
+        	boolean testCondition = false;
+        	String intersect = "";
+        	for(int i=0;i<tokens.length;) {
+        		boolean t = false;
+        		String op1 = tokens[i];
+        		String oper = tokens[i+1];
+        		String op2 = tokens[i+2];
+        		
+        		if(isNumber(op1)) {
+        			t = evaluateNumberExpression(op1, oper, op2);
+        			
+        		}else {
+        			t = evaluateStringExpression(op1, oper, op2);
+        			
+        		}
+        		
+        		
+        		if(intersect.equals("")) {
+    				testCondition = t;
+    			}else {
+    				if(intersect.equalsIgnoreCase("AND")) {
+    					if(testCondition && t) {
+    						testCondition = true;
+    					}else {
+    						testCondition = false;
+    					}
+    				}else if(intersect.equalsIgnoreCase("OR")) {
+    					if(testCondition || t) {
+    						testCondition = true;
+    					}else {
+    						testCondition = false;
+    					}
+    				}
+    			}
+        		
+        		
+        		if(i+3<tokens.length) {
+        			intersect = tokens[i+3];
+        		}
+        		
+        		i = i+4;
+        		
+        	}
+        	
+        	
+        	
+        	
+        	
+        	return testCondition;
+        }
 
         /**
          * validates fields
@@ -3529,7 +3831,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         public void parseDataStructForValidation(final DataStruct ds2, final ArrayList<String> errs,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
 
-        	//System.out.println("in parseDataStructForValidation");
             String value = "";
             String key = "";
             String labelText = "";
@@ -3538,6 +3839,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             String type = "";
             String size = "";
             boolean found = false;
+            String condition = "";
+            JLabel label = null;
             for (int k = 0; k < ds2.size(); k++) {
                 final Object o1 = ds2.get(k);
                 if (o1 instanceof DataElement) {
@@ -3546,11 +3849,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     final String name = de.getName();
 
                     // need to get appropriat value
-                    final Set keySet = labelsAndComps.keySet();
-                    final Iterator iter = keySet.iterator();
+                    Set keySet = labelsAndComps.keySet();
+                    Iterator iter = keySet.iterator();
                     while (iter.hasNext()) {
-                        final JLabel label = (JLabel) iter.next();
-                        final JComponent comp = labelsAndComps.get(label);
+                        label = (JLabel) iter.next();
+                        JComponent comp = labelsAndComps.get(label);
                         key = label.getName();
                         labelText = label.getText();
                         if (comp instanceof JTextField) {
@@ -3583,6 +3886,51 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 }
                             }
                         }
+                        if(required.equalsIgnoreCase("Conditional")) {
+                        	
+                        	condition = de.getCondition();
+
+                        	condition = condition.replaceAll("<=", " <= ");
+                        	condition = condition.replaceAll(">=", " >= ");
+                        	condition = condition.replaceAll("!=", " != ");
+                        	condition = condition.replaceAll("AND", " AND ");
+                        	condition = condition.replaceAll("OR", " OR ");
+                    	
+                    		
+                    		String[] tokens = condition.split("\\s+");
+                    		String s2 = "";
+                    		for(int i=0;i<tokens.length;i++) {
+                    			String token = tokens[i];
+                    			if(!token.equals("<=") && !token.equals(">=") && !token.equals("!=")) {
+                    				token = token.replaceAll("=", " = ");
+                    				
+                    			}
+                    			s2 = s2 + token + " ";
+                    				
+                    		}
+                    		
+                    		
+                    		String[] tokens2 = s2.split("\\s+");
+                        	
+                    		boolean test = testCondition(tokens2);
+
+                    		if(test == true) {
+                    			label.setForeground(Color.red);
+                    		}else {
+                    			label.setForeground(Color.black);
+                    		}
+                        	if(test == true && value.trim().equals("")) {
+                        		errs.add(labelText + " is a required field");
+                        	}
+                        	
+                        	
+                        	
+                        	
+                        	
+                        	
+                        	
+                        }
+                        
                         if (type.equalsIgnoreCase("Integer")) {
                             if ( !value.trim().equalsIgnoreCase("")) {
                                 try {
@@ -3796,11 +4144,32 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             public int compare(final Object oA, final Object oB) {
                 final JLabel lA = (JLabel) oA;
                 final JLabel lB = (JLabel) oB;
-                final String aText = lA.getText();
-                final String bText = lB.getText();
+                final String aText = lA.getName();
+                final String bText = lB.getName();
                 return aText.compareTo(bText);
             }
         }
+
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			validateFields();
+			
+			
+			
+			
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			validateFields();
+			
+		}
 
     }
 
@@ -3878,13 +4247,15 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         private final String required;
 
         private final String valuerange;
+        
+        private final String condition;
 
         private final String parentDataStruct;
 
         private final String parentDataStructShortname;
 
         public DataElement(final String name, final String desc, final String shortDesc, final String type,
-                final String size, final String required, final String valuerange, final String parentDataStruct,
+                final String size, final String required, final String valuerange, final String condition, final String parentDataStruct,
                 final String parentDataStructShortname) {
             this.name = name;
             this.desc = desc;
@@ -3893,6 +4264,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             this.size = size;
             this.required = required;
             this.valuerange = valuerange;
+            this.condition = condition;
             this.parentDataStruct = parentDataStruct;
             this.parentDataStructShortname = parentDataStructShortname;
         }
@@ -3907,6 +4279,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         public String getSize() {
             return size;
+        }
+        
+        public String getCondition() {
+            return condition;
         }
 
         public String getRequired() {
