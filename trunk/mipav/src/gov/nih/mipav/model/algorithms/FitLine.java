@@ -9,9 +9,6 @@ import gov.nih.mipav.view.*;
  * y = mx + b;.
  */
 public class FitLine extends NLFittedFunction {
-	private double xSeries[];
-	private double ySeries[];
-	private double chisq;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
 	/**
