@@ -271,7 +271,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     private AlgorithmTransform transform2 = null;
 
     /** Flag to determine if there are weighted images or not. */
-    private final boolean weighted;
+    private boolean weighted;
 
     /** DOCUMENT ME! */
     private int weightedInputPixels = 0;
@@ -453,6 +453,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             final boolean doSubsample, final boolean doMultiThread) {
     	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
+    	weighted = true;
         refWeight = _refWeight;
         inputWeight = _inputWeight;
 
@@ -589,6 +590,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             final int _bracketBound, final int _baseNumIter, final int _numMinima) {
     	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
+    	weighted = true;
         bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
