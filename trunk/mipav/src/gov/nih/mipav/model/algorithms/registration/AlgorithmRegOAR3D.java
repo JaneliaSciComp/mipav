@@ -319,7 +319,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
     private AlgorithmTransform transform2 = null;
 
     /** Flag to determine if there are weighted images or not. */
-    private final boolean weighted;
+    private boolean weighted;
 
     /** DOCUMENT ME! */
     private int weightedInputPixels = 0;
@@ -375,6 +375,51 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _fineRateZ Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param _maxResol If true is the maximum of the minimum resolution of the two datasets when resampling.
      * @param _doSubsample If true then subsample
+     * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
+     *            one immediately
+     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
+     *            of Powell's algorithm.
+     * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
+     *            be an integer multiple of baseNumIter
+     * @param _numMinima Number of minima from level 8 to test at level 4
+     */
+    public AlgorithmRegOAR3D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
+            final int _interp, final float _rotateBeginX, final float _rotateEndX, final float _coarseRateX,
+            final float _fineRateX, final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY,
+            final float _fineRateY, final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ,
+            final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, 
+            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+
+        this(_imageA, _imageB, _costChoice, _DOF, _interp,
+            _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
+            _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
+            _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
+            _maxResol, _doSubsample, false,
+            _fastMode, _bracketBound, _baseNumIter, _numMinima);  
+    }
+    
+    /**
+     * Creates new automatic linear registration algorithm and sets necessary variables.
+     * 
+     * @param _imageA Reference image (register input image to reference image).
+     * @param _imageB Input image (register input image to reference image).
+     * @param _costChoice Choice of cost functions, like correlation ratio or mutual information.
+     * @param _DOF Degrees of freedom for registration
+     * @param _interp Interpolation method used in transformations.
+     * @param _rotateBeginX Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEndX End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRateX Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRateX Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param _rotateBeginY Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEndY End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRateY Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRateY Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param _rotateBeginZ Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEndZ End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRateZ Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRateZ Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param _maxResol If true is the maximum of the minimum resolution of the two datasets when resampling.
+     * @param _doSubsample If true then subsample
      * @param _doMultiThread
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
@@ -391,54 +436,64 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
             final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
 
-        super(null, _imageB);
-        refImage = _imageA;
-        inputImage = _imageB;
-
-        if (inputImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        costChoice = _costChoice;
-        DOF = _DOF;
-        interp = _interp;
-        resRef = refImage.getFileInfo(0).getResolutions();
-        resInput = inputImage.getFileInfo(0).getResolutions();
-        rotateBeginX = _rotateBeginX;
-        rotateEndX = _rotateEndX;
-        coarseRateX = _coarseRateX;
-        fineRateX = _fineRateX;
-        coarseNumX = (int) ( (_rotateEndX - rotateBeginX) / coarseRateX) + 1;
-        fineNumX = (int) ( (_rotateEndX - rotateBeginX) / fineRateX) + 1;
-        rotateBeginY = _rotateBeginY;
-        rotateEndY = _rotateEndY;
-        coarseRateY = _coarseRateY;
-        fineRateY = _fineRateY;
-        coarseNumY = (int) ( (_rotateEndY - rotateBeginY) / coarseRateY) + 1;
-        fineNumY = (int) ( (_rotateEndY - rotateBeginY) / fineRateY) + 1;
-        rotateBeginZ = _rotateBeginZ;
-        rotateEndZ = _rotateEndZ;
-        coarseRateZ = _coarseRateZ;
-        fineRateZ = _fineRateZ;
-        coarseNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / coarseRateZ) + 1;
-        fineNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / fineRateZ) + 1;
+        this(_imageA, _imageB, null, null, _costChoice, _DOF, _interp,
+            _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
+            _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
+            _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
+            _maxResol, _doSubsample, _doMultiThread,
+            _fastMode, _bracketBound, _baseNumIter, _numMinima);  
         weighted = false;
-        maxResol = _maxResol;
-        doSubsample = _doSubsample;
-        doMultiThread = _doMultiThread;
-        fastMode = _fastMode;
-
-        if (fastMode) {
-            fullAnalysisMode = false;
-        }
-
-        bracketBound = _bracketBound;
-        baseNumIter = _baseNumIter;
-        numMinima = _numMinima;
     }
 
+    /**
+     * Creates new automatic linear registration algorithm and sets necessary variables.
+     * 
+     * @param _imageA Reference image (register input image to reference image).
+     * @param _imageB Input image (register input image to reference image).
+     * @param _refWeight Reference weighted image, used to give certain areas of the image greater impact on the
+     *            registration.
+     * @param _inputWeight Input weighted image, used to give certain areas of the image greater impact on the
+     *            registration.
+     * @param _costChoice Choice of cost functions, like correlation ratio or mutual information.
+     * @param _DOF Degrees of freedom for registration
+     * @param _interp Interpolation method used in transformations.
+     * @param _rotateBeginX Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEndX End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRateX Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRateX Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param _rotateBeginY Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEndY End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRateY Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRateY Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param _rotateBeginZ Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEndZ End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRateZ Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRateZ Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param _maxResol If true is the maximum of the minimum resolution of the two datasets when resampling.
+     * @param _doSubsample If true then subsample
+     * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
+     *            one immediately
+     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
+     *            of Powell's algorithm.
+     * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
+     *            be an integer multiple of baseNumIter
+     * @param _numMinima Number of minima from level 8 to test at level 4
+     */
+    public AlgorithmRegOAR3D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
+            final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
+            final float _rotateBeginX, final float _rotateEndX, final float _coarseRateX, final float _fineRateX,
+            final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY, final float _fineRateY,
+            final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ, final float _fineRateZ,
+            final boolean _maxResol, final boolean _doSubsample, 
+            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp,
+                _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
+                _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
+                _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
+                _maxResol, _doSubsample, false,
+                _fastMode, _bracketBound, _baseNumIter, _numMinima);  
+    }
+    
     /**
      * Creates new automatic linear registration algorithm and sets necessary variables.
      * 
@@ -516,7 +571,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         fineRateZ = _fineRateZ;
         coarseNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / coarseRateZ) + 1;
         fineNumZ = (int) ( (_rotateEndZ - rotateBeginZ) / fineRateZ) + 1;
-        weighted = true;
+        
         maxResol = _maxResol;
         doSubsample = _doSubsample;
         doMultiThread = _doMultiThread;
@@ -525,6 +580,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         if (fastMode) {
             fullAnalysisMode = false;
         }
+        
+        weighted = true;
 
         bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
