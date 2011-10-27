@@ -140,7 +140,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     /**
      * This gives weights for the input image - higher weights mean a greater impact in that area on the registration.
      */
-    private ModelImage inputWeight;
+    private ModelImage inputWeight = null;
 
     /** Interpolation method. */
     private final int interp;
@@ -196,7 +196,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * This gives weights for the reference image - higher weights mean a greater impact in that area on the
      * registration.
      */
-    private ModelImage refWeight;
+    private ModelImage refWeight = null;
 
     /** DOCUMENT ME! */
     private boolean resampleInput;
@@ -398,7 +398,30 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         weighted = false;
         this.doSubsample = doSubsample;
         this.doMultiThread = doMultiThread;
-
+    }
+    
+    /**
+     * Creates new automatic linear registration algorithm and sets necessary variables.
+     * 
+     * @param _imageA Reference image (register input image to reference image).
+     * @param _imageB Input image (register input image to reference image).
+     * @param _costChoice Choice of cost functions, like correlation ratio or mutual information.
+     * @param _DOF Degrees of freedom for registration
+     * @param _interp Interpolation method used in transformations.
+     * @param _rotateBegin Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEnd End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param doSubsample If true subsample
+     * 
+     * <p>
+     * Constructor without weighting and without advanced settings (bracket, num iter).
+     * </p>
+     */
+    public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
+            final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
+            final float _fineRate, final boolean doSubsample) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false);
     }
 
     /**
@@ -428,42 +451,40 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
             final boolean doSubsample, final boolean doMultiThread) {
-        super(null, _imageB);
-        refImage = _imageA;
-        inputImage = _imageB;
-
-        if (inputImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
         refWeight = _refWeight;
         inputWeight = _inputWeight;
-        costChoice = _costChoice;
-        DOF = _DOF;
 
-        if (DOF == 3) {
-            rigidFlag = true;
-        }
-
-        if (DOF == 6) {
-            DOF = 7; // use 2 shears
-        }
-
-        interp = _interp;
-        resRef = refImage.getFileInfo(0).getResolutions();
-        resInput = inputImage.getFileInfo(0).getResolutions();
-        rotateBegin = _rotateBegin;
-        rotateEnd = _rotateEnd;
-        coarseRate = _coarseRate;
-        fineRate = _fineRate;
-        coarseNum = (int) ( (rotateEnd - rotateBegin) / coarseRate) + 1;
-        fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
-        weighted = true;
-        this.doSubsample = doSubsample;
-        this.doMultiThread = doMultiThread;
-
+    }
+    
+    /**
+     * Creates new automatic linear registration algorithm and sets necessary variables.
+     * 
+     * @param _imageA Reference image (register input image to reference image).
+     * @param _imageB Input image (register input image to reference image).
+     * @param _refWeight Reference weighted image, used to give certain areas of the image greater impact on the
+     *            registration.
+     * @param _inputWeight Input weighted image, used to give certain areas of the image greater impact on the
+     *            registration.
+     * @param _costChoice Choice of cost functions, like correlation ratio or mutual information.
+     * @param _DOF Degrees of freedom for registration
+     * @param _interp Interpolation method used in transformations.
+     * @param _rotateBegin Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEnd End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param doSubsample If true subsample
+     * 
+     * <p>
+     * Constructor with weighting and without advanced settings (bracket, num iter).
+     * </p>
+     */
+    public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
+            final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
+            final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
+            final boolean doSubsample) {
+    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false);
     }
 
     /**
@@ -495,43 +516,42 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             final float _fineRate, final boolean doSubsample, final boolean doMultiThread,
             final int _bracketBound, final int _baseNumIter,
             final int _numMinima) {
-        super(null, _imageB);
-        refImage = _imageA;
-        inputImage = _imageB;
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
-        if (inputImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        costChoice = _costChoice;
-        DOF = _DOF;
-
-        if (DOF == 3) {
-            rigidFlag = true;
-        }
-
-        if (DOF == 6) {
-            DOF = 7; // use 2 shears
-        }
-
-        interp = _interp;
-        resRef = refImage.getFileInfo(0).getResolutions();
-        resInput = inputImage.getFileInfo(0).getResolutions();
-        rotateBegin = _rotateBegin;
-        rotateEnd = _rotateEnd;
-        coarseRate = _coarseRate;
-        fineRate = _fineRate;
-        coarseNum = (int) ( (rotateEnd - rotateBegin) / coarseRate) + 1;
-        fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
-        weighted = false;
-        this.doSubsample = doSubsample;
-        this.doMultiThread = doMultiThread;
         bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
+    }
+    
+    /**
+     * Creates new automatic linear registration algorithm and sets necessary variables.
+     * 
+     * @param _imageA Reference image (register input image to reference image).
+     * @param _imageB Input image (register input image to reference image).
+     * @param _costChoice Choice of cost functions, like correlation ratio or mutual information.
+     * @param _DOF Degrees of freedom for registration
+     * @param _interp Interpolation method used in transformations.
+     * @param _rotateBegin Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEnd End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param doSubsample If true subsample
+     * @param doMultiThread
+     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
+     *            of Powell's algorithm.
+     * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
+     *            be an integer multiple of baseNumIter
+     * @param _numMinima Number of minima from level 8 to test at level 4
+     * 
+     * <p>
+     * Constructor without weighting and with advanced settings (bracket, num iter) set.
+     * </p>
+     */
+    public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
+            final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
+            final float _fineRate, final boolean doSubsample, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _bracketBound, _baseNumIter, _numMinima);
     }
 
     /**
@@ -567,45 +587,49 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
             final boolean doSubsample, final boolean doMultiThread, 
             final int _bracketBound, final int _baseNumIter, final int _numMinima) {
-        super(null, _imageB);
-        refImage = _imageA;
-        inputImage = _imageB;
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
-        if (inputImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        refWeight = _refWeight;
-        inputWeight = _inputWeight;
-        costChoice = _costChoice;
-        DOF = _DOF;
-
-        if (DOF == 3) {
-            rigidFlag = true;
-        }
-
-        if (DOF == 6) {
-            DOF = 7; // use 2 shears
-        }
-
-        interp = _interp;
-        resRef = refImage.getFileInfo(0).getResolutions();
-        resInput = inputImage.getFileInfo(0).getResolutions();
-        rotateBegin = _rotateBegin;
-        rotateEnd = _rotateEnd;
-        coarseRate = _coarseRate;
-        fineRate = _fineRate;
-        coarseNum = (int) ( (rotateEnd - rotateBegin) / coarseRate) + 1;
-        fineNum = (int) ( (rotateEnd - rotateBegin) / fineRate) + 1;
-        weighted = true;
-        this.doSubsample = doSubsample;
-        this.doMultiThread = doMultiThread;
         bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
+        refWeight = _refWeight;
+        inputWeight = _inputWeight;
 
+    }
+    
+    /**
+     * Creates new automatic linear registration algorithm and sets necessary variables.
+     * 
+     * @param _imageA Reference image (register input image to reference image).
+     * @param _imageB Input image (register input image to reference image).
+     * @param _refWeight Reference weighted image, used to give certain areas of the image greater impact on the
+     *            registration.
+     * @param _inputWeight Input weighted image, used to give certain areas of the image greater impact on the
+     *            registration.
+     * @param _costChoice Choice of cost functions, like correlation ratio or mutual information.
+     * @param _DOF Degrees of freedom for registration
+     * @param _interp Interpolation method used in transformations.
+     * @param _rotateBegin Beginning of coarse sampling range (i.e., -60 degrees).
+     * @param _rotateEnd End of coarse sampling range (i.e., 60 degrees).
+     * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
+     * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
+     * @param doSubsample If true subsample
+     * @param doMultiThread
+     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
+     *            of Powell's algorithm.
+     * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
+     *            be an integer multiple of baseNumIter
+     * @param _numMinima Number of minima from level 8 to test at level 4
+     * 
+     * <p>
+     * Constructor with weighting and with advanced settings (bracket, num iter) set.
+     * </p>
+     */
+    public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
+            final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
+            final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
+            final boolean doSubsample, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _bracketBound, _baseNumIter, _numMinima);
     }
 
     // ~ Methods
