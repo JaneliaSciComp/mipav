@@ -17,8 +17,6 @@ import gov.nih.mipav.view.*;
 public class FitLorentz extends NLFittedFunction {	
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
-	private double xSeries[];
-	private double ySeries[];
     
     /**Location in xSeries where Gaussian data starts */
     private int dataStart;
@@ -36,8 +34,6 @@ public class FitLorentz extends NLFittedFunction {
     private double gamma;
     
     private int iters;
-    
-    private double chisq;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

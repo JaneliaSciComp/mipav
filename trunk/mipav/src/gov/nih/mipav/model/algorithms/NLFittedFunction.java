@@ -17,7 +17,12 @@ public abstract class NLFittedFunction extends NLConstrainedEngine {
 	public static final double EPSILON = .005;
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 	
-    
+	/** Original xData */
+	protected double xSeries[];
+	/** Original y data */
+	protected double ySeries[];
+	/**Total error as X^2 */
+	protected double chisq;
     
     /**Fitted y-data, based on original x points.*/
     protected double[] yDataFitted;

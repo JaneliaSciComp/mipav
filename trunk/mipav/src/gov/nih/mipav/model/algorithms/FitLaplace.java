@@ -15,8 +15,6 @@ import gov.nih.mipav.view.*;
 public class FitLaplace extends NLFittedFunction {
 	
 	//~ Instance fields ------------------------------------------------------------------------------------------------
-	private double xSeries[];
-	private double ySeries[];
     
     /**Location in xSeries where Gaussian data starts */
     private int dataStart;
@@ -34,8 +32,6 @@ public class FitLaplace extends NLFittedFunction {
     private double beta;
     
     private int iters;
-    
-    private double chisq;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

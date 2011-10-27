@@ -15,8 +15,6 @@ import gov.nih.mipav.view.*;
  * @version  0.1
  */
 public class FitGaussian extends NLFittedFunction {
-	private double xSeries[];
-	private double ySeries[];
 
     /**Location in xSeries where Gaussian data starts */
     private int dataStart;
@@ -37,8 +35,6 @@ public class FitGaussian extends NLFittedFunction {
     private double rSquared;
     
     private int iters;
-    
-    private double chisq;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

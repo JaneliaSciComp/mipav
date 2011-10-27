@@ -15,9 +15,7 @@ import gov.nih.mipav.view.*;
 public class FitExponential extends NLFittedFunction {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-	private double xSeries[];
-	private double ySeries[];
-	private double chisq;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
