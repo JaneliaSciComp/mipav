@@ -254,9 +254,9 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
                 //}
             }
         }
-        xOffset = 0 - xMin;
-        yOffset = 0 - yMin;
-        zOffset = 0 - zMin;
+        xOffset = 0;// - xMin;
+        yOffset = 0;// - yMin;
+        zOffset = 0;// - zMin;
         System.out.println("Slice "+z+" xRange: "+xMin+", "+xMax+" yRange: "+yMin+", "+yMax+" zRange: "+zMin+", "+zMax);
         
         int imageVal = 0;
@@ -325,7 +325,7 @@ public class PlugInAlgorithmDicomStitch extends AlgorithmBase {
         mat.Set(1, 1, (float)(xyCos[4].doubleValue()*spacing[1].doubleValue()));
         mat.Set(2, 1, (float)(xyCos[5].doubleValue()*spacing[1].doubleValue()));
        
-        mat.Set(0, 2, position[1].floatValue());
+        mat.Set(0, 2, position[1].floatValue()); //should be 1
         mat.Set(1, 2, position[0].floatValue());
         mat.Set(2, 2, position[2].floatValue());
         
