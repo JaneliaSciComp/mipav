@@ -1133,7 +1133,7 @@ class BrainSubcorticalInstance implements AlgorithmInterface {
 		float fineRateZ = 3.0f;
 		boolean maxOfMinResol = true;
 		boolean doSubsample = true;
-		boolean doMultiThread = false;
+		boolean doMultiThread = true;
 		boolean fastMode = true;
 		int bracketBound = 10;
 		int maxIterations = 2;
