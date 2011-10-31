@@ -670,6 +670,8 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("Reached end of file while attempting to read: "+getFilePointer()+"\n", Preferences.DEBUG_FILEIO);
                 key = new FileDicomKey("7FE0,0010"); //process image tag
                 vrBytes = new byte[]{'O','W'};
+                int imageLoc = locateImageTag(0, numEmbeddedImages);
+                seek(imageLoc);
             }
             int bPtrOld = getFilePointer();
             try {
@@ -836,7 +838,7 @@ public class FileDicom extends FileDicomBase {
                 } 
             case OB:
                 if(name.matches(FileDicom.IMAGE_TAG) && !inSequence) { //can be either OW or OB
-                    return processImageData(extents, numEmbeddedImages); //finished reading image tags and all image data, get final image for display
+                    return processImageData(extents, numEmbeddedImages, getFilePointer()+(fileInfo.getVr_type() == VRtype.IMPLICIT ? 4 : 0)); //finished reading image tags and all image data, get final image for display
                 }
                 data = getByte(tagVM, elementLength, endianess);
                 tagTable.setValue(key, data, elementLength);
@@ -1112,10 +1114,14 @@ public class FileDicom extends FileDicomBase {
     }
 
     /**
-     * Processes image data returning whether the header should continue to be read.
+     * Processes image data from the defined image tag location.  When the image tag's location is unknown, use locateImageTag to find it
      */
-    private boolean processImageData(int[] extents, int imageNumber) throws IOException {
-        fileInfo.setInfoFromTags();
+    private boolean processImageData(int[] extents2, int imageNumber, int imageTagLoc) throws IOException {
+    	if(imageTagLoc != locateImageTag(0, numEmbeddedImages)) {
+    		Preferences.debug("If not embedded image, image loading location may be incorrect at "+imageTagLoc, Preferences.DEBUG_FILEIO);
+    	}
+    	
+    	fileInfo.setInfoFromTags();
         
         final int imageLength = extents[0] * extents[1] * fileInfo.bitsAllocated / 8;
 
@@ -1132,7 +1138,6 @@ public class FileDicom extends FileDicomBase {
             fileInfo.displayType = fileInfo.getDataType();
         }
         
-        int imageTagLoc = locateImageTag(0, imageNumber);
         if ( !encapsulated) {
             if (fileInfo.getVr_type() == VRtype.IMPLICIT) {
                 Preferences.debug("Implicit image tag loading from "+imageTagLoc+"\n", Preferences.DEBUG_FILEIO);
@@ -1157,10 +1162,10 @@ public class FileDicom extends FileDicomBase {
         
         imageLoadReady = true;
         return !imageLoadReady;
-    }
+		
+	}
 
-    
-    /**
+	/**
      * Helper method for dicom files that do not specify a valid extents
      */
     private int[] guessImageLength(int[] extents) throws IOException {
