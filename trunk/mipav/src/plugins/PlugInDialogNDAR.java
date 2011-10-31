@@ -3664,9 +3664,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         	
         	
         	//need to special case for MRI
-        	if(op1.equalsIgnoreCase("Magnetic Resonance")) {
+        	/*if(op1.equalsIgnoreCase("Magnetic Resonance")) {
         		op1 = "MRI";
-        	}
+        	}*/
         	
 
         	
