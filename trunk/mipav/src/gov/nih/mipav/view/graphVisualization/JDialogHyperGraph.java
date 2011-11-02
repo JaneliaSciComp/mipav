@@ -1123,8 +1123,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 	@Override
 	public void componentHidden(ComponentEvent e) {
 		// TODO Auto-generated method stub
-		System.out.println("component hidden");
-		
+	
 	}
 
 	@Override
@@ -1134,7 +1133,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 
 	@Override
 	public void componentResized(ComponentEvent e) {
-		System.out.println("component resized");
+		
 		/*if(graphPanel.isBGImageShowing()) {
 		
 			Image image = null;
@@ -1162,7 +1161,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 
 	@Override
 	public void componentShown(ComponentEvent e) {
-		System.out.println("component shown");
+		
 		
 	}
 
@@ -1174,7 +1173,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 
 	@Override
 	public void mouseDragged(MouseEvent arg0) {
-		System.out.println("mouse dragged");
+	
 		
 	}
 
