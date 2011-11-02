@@ -1129,7 +1129,7 @@ public class JDialogHyperGraph extends JFrame implements ActionListener, Compone
 
 	@Override
 	public void componentMoved(ComponentEvent e) {
-		System.out.println("component moved");
+
 	}
 
 	@Override
