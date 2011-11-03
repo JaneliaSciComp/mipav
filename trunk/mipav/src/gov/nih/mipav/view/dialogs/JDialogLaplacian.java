@@ -3,6 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGradientMagnitude;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmLaplacian;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -47,6 +50,9 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private boolean image25D = false;
+    
+    /** Indicates whether user wants openCL for processing. */
+    private JCheckBox useOCLCheckbox;
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
@@ -316,7 +322,21 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_laplacian");
+        String name = makeImageName(image.getImageName(), "_laplacian");  
+
+        // Check if the algorithm should use OpenCL, calculate and return:
+        if ( useOCLCheckbox.isSelected() )
+    	{
+    		float[] sigmas = sigmasPanel.getNormalizedSigmas();
+
+    		OpenCLAlgorithmLaplacian laplacianAlgo = new OpenCLAlgorithmLaplacian(image, sigmas,
+    				outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
+
+    		// Hide the dialog since the algorithm is about to run.
+    		setVisible(false);
+    		laplacianAlgo.run();
+    		return;
+        }
 
         if (image.getNDims() == 2) { // source image is 2D
 
@@ -604,6 +624,13 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         algoPanel.addOnNextLine(image25DCheckbox);
         image25DCheckbox.setSelected(false);
         image25DCheckbox.addItemListener(this);
+        
+        useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
+        useOCLCheckbox.setFont(serif12);
+        useOCLCheckbox.setForeground(Color.black);
+    	useOCLCheckbox.setEnabled(false);
+    	useOCLCheckbox.setEnabled(OpenCLAlgorithmFFT.isOCLAvailable());
+        algoPanel.addOnNextLine(useOCLCheckbox);
 
         if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);

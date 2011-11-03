@@ -2088,7 +2088,7 @@ public class SurfaceRender extends RenderViewBase implements KeyListener {
             return false;
         }
         /* update the boxSliceVertices based on probe rotations: */
-        transformBoxSlices(m_kProbeTransform);
+		transformBoxSlices(m_kProbeTransform);
 
         boolean bReturn = false;
         final boolean[] bUpdate = {false, false, false};

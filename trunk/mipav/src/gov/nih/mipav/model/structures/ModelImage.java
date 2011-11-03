@@ -5183,4 +5183,46 @@ public class ModelImage extends ModelStorageBase {
         throw new IOException("Export data error - bounds incorrect");
     }
 
+    
+    /**
+     * Export data into values array.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void exportDataUseMask(final int start, final int length, final float[] values)
+            throws IOException {
+        int i, j;
+
+        if ( (start >= 0) && ( (start + length) <= getSize()) && (length <= values.length)) {
+
+            try {
+                setLock(ModelStorageBase.W_LOCKED);
+                for (i = start, j = 0; j < length; i++, j++) {
+                	if ( mask != null ) {
+                		if (mask.get(j)) {                        	                        	
+                			values[j] = getFloat(i);
+                		} else {
+                			values[j] = 0;
+                		}
+                	} else {
+                		values[j] =  getFloat(i);
+                	}
+                }                	
+
+            } catch (final IOException error) {
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return;
+        }
+
+        throw new IOException("Export data error - bounds incorrect");
+    }
+
 }

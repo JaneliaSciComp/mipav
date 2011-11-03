@@ -186,38 +186,4 @@ public class VolumeImageNormalGM extends VolumeImageViewer
             e.printStackTrace();
         }
     }
-    
-    /*
-    private void SaveImage(int iZ)
-    {
-        Raster kRaster = ((OpenGLRenderer)m_pkRenderer).Screenshot().getData();
-        int iWidth = kRaster.getWidth();
-        int iHeight = kRaster.getHeight();
-        if ( m_kOutputImage == null )
-        {
-            m_kOutputImage = new ModelImage( ModelStorageBase.ARGB, new int[]{iWidth, iHeight, m_kImage.getExtents()[2]}, m_kImageName );
-        }
-
-        DataBuffer kBuffer = kRaster.getDataBuffer();
-        SampleModel kSampleModel = kRaster.getSampleModel();
-        int iSize = iWidth * iHeight;
-        float[] samples = new float[ kSampleModel.getNumBands() ];
-        try {
-            byte[] aucData = new byte[iSize * 4];
-            for ( int y = 0; y < iHeight; y++)
-            {
-            for ( int x = 0; x < iWidth; x++)
-            {
-            	kSampleModel.getPixel(x,y,samples,kBuffer);
-                aucData[y*iWidth + 0] = (byte)255;
-                aucData[y*iWidth + 1] = (byte) samples[0];
-                aucData[y*iWidth + 2] = (byte) samples[1];
-                aucData[y*iWidth + 3] = (byte) samples[2];
-            }
-            }
-            m_kOutputImage.importData( iZ * iSize * 4, aucData, false );
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    } */
 }

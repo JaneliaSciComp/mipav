@@ -170,6 +170,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase implements Algorit
 
             return;
         }
+        final long startTime = System.currentTimeMillis();
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
@@ -239,6 +240,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase implements Algorit
                 calcInPlace34D();
             }
         }
+        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
     /**

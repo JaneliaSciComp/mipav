@@ -157,7 +157,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
     /** Current contour bounding-box. */
     protected Vector3f[] m_akImageMinMax = new Vector3f[]{ new Vector3f(), new Vector3f() };    
     /** Contour color. */
-    protected ColorRGBA m_kColor = new ColorRGBA();
+    protected ColorRGBA m_kColor = new ColorRGBA(1,0,0,1);
 
     /** Data structure for drawing this contour in the GPU VolumeRenderer */
     protected transient VolumeVOI m_kVolumeVOI;   
