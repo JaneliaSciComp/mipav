@@ -245,6 +245,7 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
 
             return;
         }
+        final long startTime = System.currentTimeMillis();
 
         if (srcImage.getNDims() == 2) {
             makeKernels2D();
@@ -328,6 +329,8 @@ public class AlgorithmLaplacian extends AlgorithmBase implements AlgorithmInterf
                 calcInPlace2D(srcImage.getExtents()[2]);
             }
         }
+        
+        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
     /**

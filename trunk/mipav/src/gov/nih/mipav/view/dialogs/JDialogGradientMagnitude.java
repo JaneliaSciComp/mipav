@@ -5,6 +5,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitude;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGradientMagnitude;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -74,6 +76,9 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
+    
+    /** Indicates whether user wants openCL for processing. */
+    private JCheckBox useOCLCheckbox;
 
     /** DOCUMENT ME! */
     private JPanelAlgorithmOutputOptions outputOptionsPanel;
@@ -332,6 +337,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         }
 
         dispose();
+        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
     /**
@@ -384,7 +390,17 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         Object source = event.getSource();
 
         if (source == image25DCheckbox) {
-            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
+            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());    
+        }
+        if (source == sepCheckbox) {
+        	useOCLCheckbox.removeItemListener(this);
+            useOCLCheckbox.setSelected(Preferences.isGpuCompEnabled() && useOCLCheckbox.isEnabled() && !sepCheckbox.isSelected());
+        	useOCLCheckbox.addItemListener(this);
+        }
+        if ( source == useOCLCheckbox ) {
+        	sepCheckbox.removeItemListener(this);
+        	sepCheckbox.setSelected(!sepCheckbox.isSelected());
+        	sepCheckbox.addItemListener(this);
         }
     }
 
@@ -461,13 +477,33 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     	displayProgressBar = flag;
     }
     
+    long startTime;
+    
     /**
      * Once all the necessary variables are set, call the Gradient Magnitude algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_gmag");
-        displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
+        startTime = System.currentTimeMillis();
+    	String name = makeImageName(image.getImageName(), "_gmag");
+    	displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
+    	
+        // Check if the algorithm should use OpenCL, calculate and return:
+    	if ( useOCLCheckbox.isSelected() )
+    	{
+    		float[] sigmas = sigmaPanel.getNormalizedSigmas();
+
+    		OpenCLAlgorithmGradientMagnitude gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(image, sigmas,
+    				outputOptionsPanel.isProcessWholeImageSet(), image25D);
+    		gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+    		gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+    		gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+
+    		// Hide the dialog since the algorithm is about to run.
+    		setVisible(false);
+    		gradientMagAlgo.run();
+    		return;
+        }
         if (separable) { // kernel is separable
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
@@ -851,8 +887,13 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
         sigmaPanel = new JPanelSigmas(image);
 
-        sepCheckbox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true);
+        sepCheckbox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true, this);
         image25DCheckbox = WidgetFactory.buildCheckBox("Process each slice independently (2.5D)", false, this);
+        useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
+        useOCLCheckbox.setFont(serif12);
+        useOCLCheckbox.setForeground(Color.black);
+    	useOCLCheckbox.setEnabled(false);
+    	useOCLCheckbox.setEnabled(OpenCLAlgorithmFFT.isOCLAvailable());
 
         if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
@@ -863,6 +904,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         PanelManager kernelOptionsPanelManager = new PanelManager("Options");
         kernelOptionsPanelManager.add(sepCheckbox);
         kernelOptionsPanelManager.addOnNextLine(image25DCheckbox);
+        kernelOptionsPanelManager.addOnNextLine(useOCLCheckbox);
 
         colorChannelPanel = new JPanelColorChannels(image);
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);

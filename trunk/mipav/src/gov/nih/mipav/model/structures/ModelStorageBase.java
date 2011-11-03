@@ -1900,7 +1900,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 || (bufferType == DataType.ARGB_FLOAT)) {
             buffFactor = 4;
         }
-
+        
         /* Calculate the slopes for traversing the data in x,y,z: */
         float xSlopeX = verts[1].X - verts[0].X;
         float ySlopeX = verts[1].Y - verts[0].Y;

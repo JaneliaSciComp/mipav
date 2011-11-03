@@ -133,8 +133,8 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
          {
              return;
          }
-         m_iWhichShader = CMP;
-         for (int i = 0; i < (int)m_kAlphaState.size(); i++)
+         m_iWhichShader = CMP;         
+         for ( int i = 0; i < (int)m_kAlphaState.size(); i++)
          {
              m_kAlphaState.set(i, new AlphaState());
              m_kAlphaState.get(i).BlendEnabled = true;

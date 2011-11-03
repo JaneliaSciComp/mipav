@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -60,6 +62,9 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
+    
+    /** Indicates whether user wants openCL for processing. */
+    private JCheckBox useOCLCheckbox;
 
     /** DOCUMENT ME! */
     private JPanelAlgorithmOutputOptions outputOptionsPanel;
@@ -335,6 +340,16 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents( !image25DCheckbox.isSelected());
         }
+        if (source == sepCheckbox) {
+        	useOCLCheckbox.removeItemListener(this);
+            useOCLCheckbox.setSelected(Preferences.isGpuCompEnabled() && useOCLCheckbox.isEnabled() && !sepCheckbox.isSelected());
+        	useOCLCheckbox.addItemListener(this);
+        }
+        if ( source == useOCLCheckbox ) {
+        	sepCheckbox.removeItemListener(this);
+        	sepCheckbox.setSelected(!sepCheckbox.isSelected());
+        	sepCheckbox.addItemListener(this);
+        }
     }
 
     /**
@@ -415,6 +430,23 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     protected void callAlgorithm() {
         final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
         displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
+        
+        // Check if the algorithm should use OpenCL, calculate and return:
+    	if ( useOCLCheckbox.isSelected() )
+    	{
+    		float[] sigmas = sigmaPanel.getNormalizedSigmas();
+
+    		OpenCLAlgorithmGaussianBlur blurAlgo = new OpenCLAlgorithmGaussianBlur(image, sigmas,
+    				outputOptionsPanel.isProcessWholeImageSet(), image25D);
+    		blurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+    		blurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+    		blurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+
+    		// Hide the dialog since the algorithm is about to run.
+    		setVisible(false);
+    		blurAlgo.run();
+    		return;
+        }
         if ( (image.getNDims() == 2) && separable) { // source image is 2D and
             // kernel is separable
 
@@ -882,8 +914,13 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
 
         sigmaPanel = new JPanelSigmas(image);
 
-        sepCheckbox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true);
+        sepCheckbox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true, this);
         image25DCheckbox = WidgetFactory.buildCheckBox("Process each slice independently (2.5D)", false, this);
+        useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
+        useOCLCheckbox.setFont(serif12);
+        useOCLCheckbox.setForeground(Color.black);
+    	useOCLCheckbox.setEnabled(false);
+    	useOCLCheckbox.setEnabled(OpenCLAlgorithmFFT.isOCLAvailable());
 
         if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
@@ -894,6 +931,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         final PanelManager kernelOptionsPanelManager = new PanelManager("Options");
         kernelOptionsPanelManager.add(sepCheckbox);
         kernelOptionsPanelManager.addOnNextLine(image25DCheckbox);
+        kernelOptionsPanelManager.addOnNextLine(useOCLCheckbox);
 
         colorChannelPanel = new JPanelColorChannels(image);
         outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);

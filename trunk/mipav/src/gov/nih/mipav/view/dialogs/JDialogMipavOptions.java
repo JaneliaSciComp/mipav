@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.util.ThreadUtil;
 
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
+import gov.nih.mipav.model.algorithms.OpenCLInfo;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
 import gov.nih.mipav.model.structures.ModelImage;
 
@@ -64,6 +65,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** GPU computing enabled check box */
     private JCheckBox gpuCompEnabledCheckBox;
+
+    /** DOCUMENT ME! */
+    private JButton gpuInfoButton;
 
     /** Dicom Receiver check box */
     private JCheckBox dicomReceiverOnStart;
@@ -770,6 +774,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else if (command.equals("editUserDef")) {
             final JDialogEditUserDefinedFileTypes editUserDefDialog = new JDialogEditUserDefinedFileTypes();
             MipavUtil.centerInComponent(this, editUserDefDialog);
+        } else if (command.equals("GPU Info")) {
+        	OpenCLInfo.main(null);
         } else {
             // any other button on the dialog: allow user to select "apply"
             // OKButton.setEnabled(true); // doesn't act correctly when open and then new image frame is added.
@@ -1797,15 +1803,28 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gpuCompEnabledCheckBox.setFont(MipavUtil.font12);
         gpuCompEnabledCheckBox.setForeground(Color.black);
         gpuCompEnabledCheckBox.addActionListener(this);
-        gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbl.setConstraints(gpuCompEnabledCheckBox, gbc);
         otherPanel.add(gpuCompEnabledCheckBox);
 
         // preset the choices.
         gpuCompEnabledCheckBox.setSelected(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable());
         gpuCompEnabledCheckBox.setEnabled(OpenCLAlgorithmBase.isOCLAvailable());
+        
+
+        gpuInfoButton = new JButton("GPU Info");
+        gpuInfoButton.setToolTipText(logFilename);
+        gpuInfoButton.setFont(MipavUtil.font12);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gpuInfoButton.setEnabled(OpenCLAlgorithmBase.isOCLAvailable());
+        gpuInfoButton.addActionListener(this);
+        gpuInfoButton.setActionCommand("GPU Info");
+
+        otherPanel.add(gpuInfoButton, gbc);
     }
 
     /**

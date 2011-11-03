@@ -81,6 +81,7 @@ import java.util.BitSet;
 import java.util.Vector;
 
 import javax.media.opengl.GLCapabilities;
+import javax.media.opengl.GLContext;
 import javax.media.opengl.GLDrawableFactory;
 import javax.media.opengl.GLException;
 import javax.media.opengl.GLPbuffer;
@@ -1375,6 +1376,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	return new GLCanvas(caps, sharedDrawable.getContext());
     }
 
+
+    public GLContext getSharedContext()
+    {
+    	return sharedDrawable.getContext();
+    }
+
     @Override
     public void paintToShortMask()
     {
@@ -2100,10 +2107,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     {
 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        m_kVolumeImageA.GenerateNormalFiles( this );
+        m_kVolumeImageA.GenerateNormalFiles( this, false );
         if ( m_kVolumeImageB.GetImage() != null )
         {
-            m_kVolumeImageB.GenerateNormalFiles( this );
+            m_kVolumeImageB.GenerateNormalFiles( this, false );
         }
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         

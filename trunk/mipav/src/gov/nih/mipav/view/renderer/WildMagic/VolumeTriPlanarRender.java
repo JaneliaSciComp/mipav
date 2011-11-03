@@ -1,9 +1,13 @@
 package gov.nih.mipav.view.renderer.WildMagic;
 
+import static java.lang.System.nanoTime;
+import static java.lang.System.out;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmVolumeNormals;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIVector;
@@ -35,11 +39,15 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.IOException;
 import java.util.Vector;
 
+import javax.media.opengl.GL3bc;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+
+import org.jocl.CL;
 
 import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -68,6 +76,7 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
+import WildMagic.LibRenderers.OpenGLRenderer.TextureID;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -435,7 +444,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 m_kVolumeRayCast.CMPMode();
 		 }
 	 }
-
+	 
 	 /**
 	  * Crop the clipped volume.
 	  */
@@ -499,7 +508,77 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		 Render();
 		 UpdateFrameCount();
 
+		 if ( m_iUpdateNormals == 0 )
+		 {			
+			 long time = nanoTime();
+			 ModelImage kImage = m_kVolumeImageA.GetImage();
+			 Texture kImageTexture = m_kVolumeImageA.GetVolumeTarget();
+			 OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals(kImage, (GL3bc)arg0.getGL().getGL3bc(), 
+					 (TextureID)kImageTexture.GetIdentifier(null));
+			 oclNormals.run();
+			 time = nanoTime() - time;
+			 out.println("OCL GPU-Shared Texture computation took: "+(time/1000000)+"ms");	 
+			 ModelImage result = oclNormals.getDestImage();
+			 m_kVolumeImageA.CopyNormalFiles(0, result);
+			 m_iUpdateNormals = -1;
+		 }
+		 if ( m_iUpdateNormals == 1 )
+		 {
+			 long time = nanoTime();
+			 ModelImage kImage = m_kVolumeImageA.GetImage();
+			 OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals( kImage, CL.CL_DEVICE_TYPE_GPU );
+			 oclNormals.run();
+			 time = nanoTime() - time;
+			 out.println("OCL GPU computation took: "+(time/1000000)+"ms");
+			 m_iUpdateNormals = -1;
+		 }
 
+		 if ( m_iUpdateNormals == 2 )
+		 {
+			 long time = nanoTime();
+			 ModelImage kImage = m_kVolumeImageA.GetImage();
+			 OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals( kImage, CL.CL_DEVICE_TYPE_CPU );
+			 oclNormals.run();
+			 time = nanoTime() - time;
+			 out.println("OCL CPU computation took: "+(time/1000000)+"ms");
+			 m_iUpdateNormals = -1;
+		 }
+		 if ( m_iUpdateNormals == 3 )
+		 {
+			 long time = nanoTime();
+			 ModelImage kImage = m_kVolumeImageA.GetImage();
+			 int width  = kImage.getExtents().length > 0 ? kImage.getExtents()[0] : 1;
+			 int height = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
+			 int depth  = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
+			 float[] input = new float[ width * height * depth ];
+			 try {
+				 kImage.exportData( 0, input.length, input );
+			 } catch (IOException e) {
+				 e.printStackTrace();
+			 }
+
+
+			 float[] output = new float[ width * height * depth * 4 ];
+			 NormalKernel(input, output, width, height, depth, 1, width*height*depth );
+
+			 ModelImage destImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, kImage.getExtents(), kImage.getImageName() + "Normals" );
+
+			 try {
+				 destImage.importData(output);
+			 } catch (IOException e) {
+				 e.printStackTrace();
+			 }
+			 destImage.calcMinMax();
+			 //new ViewJFrameImage(destImage);
+			 time = nanoTime() - time;
+			 out.println("CPU computation took: "+(time/1000000)+"ms");
+			 m_iUpdateNormals = -1;
+		 }
+		 if ( m_iUpdateNormals == 4 )
+		 {
+			 m_kVolumeImageA.GenerateNormalFiles( m_kParent, true );
+			 m_iUpdateNormals = -1;
+		 }
 
 		 if ( m_bSurfaceUpdate )
 		 {
@@ -513,7 +592,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 }
 			 UpdateSceneRotation();
 			 updateLighting( m_akLights );
-			 VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
+			 //VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
 		 }
 		 if ( m_bCrop )
 		 {
@@ -1213,6 +1292,21 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  super.keyPressed(e);
 		  switch (ucKey)
 		  {
+		  case '0':
+			  m_iUpdateNormals = 0;
+			  break;
+		  case '1':
+			  m_iUpdateNormals = 1;
+			  break;
+		  case '2':
+			  m_iUpdateNormals = 2;
+			  break;
+		  case '3':
+			  m_iUpdateNormals = 3;
+			  break;
+		  case '4':
+			  m_iUpdateNormals = 4;
+			  break;
 		  case 'b':
 			  m_bDisplaySecond = !m_bDisplaySecond;
 			  return;
@@ -2829,9 +2923,22 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			  m_pkRenderer.ClearBuffers();
 			  if ( !m_bDisplaySecond )
 			  {
+				  /*
+				  RenderWithTransparency(true);    
+				  m_pkRenderer.SetCamera(m_pkScreenCamera);
+				  m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+				  m_pkRenderer.ClearBuffers();
+				  m_pkRenderer.Draw( m_pkPlane ); 
+				  m_pkRenderer.SetCamera(m_spkCamera); */
+				  //RenderWithTransparency(true);            
 				  for ( int i = 0; i < m_kDisplayList.size(); i++ )
 				  {
-					  m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true, true );
+				  	  m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true, true );
+				  }
+				  if ( m_bSnapshot || m_bWriteImage )
+				  {
+					  writeImage();
+					  m_bWriteImage = false;
 				  }
 				  m_pkRenderer.DisplayBackBuffer();
 			  }
@@ -2962,6 +3069,31 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	   */
 	  private void RenderWithTransparency(boolean bPreRender)
 	  {
+		  if ( bPreRender )
+		  {
+
+
+			 // m_pkRenderer.SetCamera(m_pkScreenCamera);
+
+			  m_kFBO.Enable();
+			  m_kFBO.DrawBuffers(new int[]{3});
+				  
+			  m_pkRenderer.SetBackgroundColor( m_kBackgroundColor );
+			  m_pkRenderer.ClearBuffers();
+
+			  for ( int i = 0; i < m_kDisplayList.size(); i++ )
+			  {
+			  	  m_kDisplayList.get(i).Render( m_pkRenderer, m_kCuller, true, true );
+			  }
+			  
+			   m_kFBO.Disable(); 
+
+			 // m_pkRenderer.SetCamera(m_spkCamera);
+			  
+			  return;
+		  }
+		  
+		  
 		  // First: render opaque objects to an off-screen color/depth buffer
 		  m_kFBO.Enable();
 		  m_kFBO.DrawBuffers(new int[]{0});
@@ -3130,5 +3262,58 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		   super.UpdateSceneRotation();
 		   m_kSceneToWorld.Copy(m_kVolumeRayCast.GetWorld());
 	   }
+	   
+		void NormalKernel(  float[] a, float[] b, int width, int height, int depth, int color, int numElements) {
+
+			for ( int iGID = 0; iGID < a.length; iGID++ )
+			{
+				// bound check, equivalent to the limit on a 'for' loop
+				if (iGID >= numElements)  {
+					break;
+				}
+				int indexTemp = iGID;
+				int x = indexTemp % width;
+				indexTemp -= x;
+				indexTemp /= width;
+				int y = indexTemp % height;
+				indexTemp -= y;
+				indexTemp /= height;
+				int z = indexTemp;
+				int sliceSize = width*height;
+				int[] index = new int[14];
+				index[0] = z * sliceSize + (y-1)*width + (x-1);
+				index[2] = z * sliceSize + y*width + (x-1);
+				index[3] = z * sliceSize + y*width + (x+1);
+				index[4] = z * sliceSize + (y+1)*width + (x-1);
+				index[5] = z * sliceSize + (y+1)*width + (x+1);
+				index[6] = z * sliceSize + (y+1)*width + x;
+				index[7] = z * sliceSize + (y-1)*width + x;
+				index[8] = (z-1) * sliceSize + y*width + (x-1);
+				index[9] = (z+1) * sliceSize + y*width + (x-1);
+				index[10] = (z-1) * sliceSize + y*width + x;
+				index[11] = (z+1) * sliceSize + y*width + x;
+				index[12] = (z-1) * sliceSize + y*width + (x+1);
+				index[13] = (z+1) * sliceSize + y*width + (x+1);
+				// The default:
+				float val = a[iGID];
+				float[] values = new float[14];
+				for ( int i = 0; i < 14; i++ ) {
+					values[i] = val;
+					if ( (index[i] < numElements) && (index[i] >= 0)  ) {
+						values[i] = a[index[i]];
+					}
+				}
+				float fDX = (float)(0.71f * (values[0] - values[1]) + (values[2] - values[3]) + .71 * (values[4] - values[5]));
+				float fDY = (float)(0.71f * (values[0] - values[4]) + (values[6] - values[7]) + .71 * (values[1] - values[5]));
+				float fDZ = (float)(0.71f * (values[8] - values[9]) + (values[10] - values[11]) + .71 * (values[12] - values[13]));
+				float length = (float)Math.sqrt( fDX*fDX + fDY*fDY + fDZ*fDZ);
+				// add the vector elements
+				b[iGID*4 + 0] = 1;
+				b[iGID*4 + 1] = fDX/length;
+				b[iGID*4 + 2] = fDY/length;
+				b[iGID*4 + 3] = fDZ/length;
+			}
+		}
+
 
 }
