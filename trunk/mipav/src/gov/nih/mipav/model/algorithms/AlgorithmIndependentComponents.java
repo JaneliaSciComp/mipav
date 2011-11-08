@@ -1074,7 +1074,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        	try {
 	                destImage[p].importData(0, result, true);
 	            } catch (IOException error) {
-	                displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
+	                displayError("AlgorithmIndependentComponents: IOException on averaged destination image import data");
 
 	                setCompleted(false);
 
@@ -1340,7 +1340,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        	try {
 	                destImage[p].importData(0, result, true);
 	            } catch (IOException error) {
-	                displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
+	                displayError("AlgorithmIndependentComponents: IOException on averaged destination image import data");
 	
 	                setCompleted(false);
 	
@@ -1628,7 +1628,7 @@ public class AlgorithmIndependentComponents extends AlgorithmBase {
 	        	try {
 	                destImage[p].importData(0, result, true);
 	            } catch (IOException error) {
-	                displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
+	                displayError("AlgorithmIndependentComponents: IOException on averaged destination image import data");
 	
 	                setCompleted(false);
 	
