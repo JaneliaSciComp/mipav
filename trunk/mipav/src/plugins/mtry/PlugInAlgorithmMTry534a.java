@@ -30,6 +30,7 @@ import java.io.IOException;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoBase.ImageOrientation;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
@@ -303,9 +304,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	
         FileInfoBase.copyCoreInfo(minImage.getFileInfo(), destImage.getFileInfo());
         
-        for(int i=0; i<destImage.getFileInfo().length; i++) {
-            destImage.getFileInfo(i).setSliceThickness(minImage.getFileInfo(i).getSliceThickness());
-        }	
+        setImageAttributes(destImage);
     }
     
     /**
@@ -348,6 +347,7 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         }
         try {
             reconImage.importData(0, mag, true);
+            setImageAttributes(reconImage);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -356,7 +356,17 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         return reconImage;
     }
 
-    private int doMaxMinReplace(double[] t1Real) {
+    private void setImageAttributes(ModelImage baseImage) {
+    	baseImage.setResolutions(new float[]{.6f, .6f, .6f});
+        for(int i=0; i<baseImage.getFileInfo().length; i++) {
+        	baseImage.getFileInfo(i).setSliceThickness(0);
+        	baseImage.getFileInfo(i).setAxisOrientation(new int[]{ImageOrientation.AXIAL.getXOrient().getLegacyNum(), 
+        															ImageOrientation.AXIAL.getYOrient().getLegacyNum(),
+        															ImageOrientation.AXIAL.getZOrient().getLegacyNum()});
+        }
+	}
+
+	private int doMaxMinReplace(double[] t1Real) {
         int replace = 0;
         for(int i=0; i<t1Real.length; i++) {
             if(t1Real[i] - funcMin > funcMax - funcMin) {
