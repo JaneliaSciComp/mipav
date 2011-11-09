@@ -31,6 +31,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.ImageOrientation;
+import gov.nih.mipav.model.file.FileInfoBase.Modality;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
@@ -363,6 +364,8 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
         	baseImage.getFileInfo(i).setAxisOrientation(new int[]{ImageOrientation.AXIAL.getXOrient().getLegacyNum(), 
         															ImageOrientation.AXIAL.getYOrient().getLegacyNum(),
         															ImageOrientation.AXIAL.getZOrient().getLegacyNum()});
+        	baseImage.getFileInfo(i).setImageOrientation(ImageOrientation.AXIAL.getLegacyNum());
+        	baseImage.getFileInfo(i).setModality(Modality.MAGNETIC_RESONANCE.getLegacyNum());
         }
 	}
 
