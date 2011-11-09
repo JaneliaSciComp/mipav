@@ -649,6 +649,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 		public String toString() {
 			return dispString;
 		}
+		
+		public int getLegacyNum() {
+			return legacyNum;
+		}
     }
     
     /** Axis orientation unknown. */
@@ -692,6 +696,18 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     		this.xAxis = xAxis;
     		this.yAxis = yAxis;
     		this.zAxis = zAxis;
+    	}
+    	
+    	public AxisOrientation getXOrient() {
+    		return xAxis;
+    	}
+    	
+    	public AxisOrientation getYOrient() {
+    		return yAxis;
+    	}
+    	
+    	public AxisOrientation getZOrient() {
+    		return zAxis;
     	}
     }
     
