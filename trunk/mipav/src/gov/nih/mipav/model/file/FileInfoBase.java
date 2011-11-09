@@ -478,12 +478,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         ICG(36, "ICG");
     	
     	/** The legacy number that can be used to reference a modality. */
-    	private int leagacyNum;
+    	private int legacyNum;
     	/** The way this modality will be displayed to the user. */
 		private String printDisp;
 
-		Modality(int leagacyNum, String printDisp) {
-    		this.leagacyNum = leagacyNum;
+		Modality(int legacyNum, String printDisp) {
+    		this.legacyNum = legacyNum;
     		this.printDisp = printDisp;
     	}
 
@@ -492,6 +492,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 		 */
 		public String toString() {
 			return printDisp;
+		}
+		
+		public int getLegacyNum() {
+			return legacyNum;
 		}
     	
     }
@@ -696,6 +700,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     		this.xAxis = xAxis;
     		this.yAxis = yAxis;
     		this.zAxis = zAxis;
+    	}
+    	
+    	public int getLegacyNum() {
+    		return legacyNum;
     	}
     	
     	public AxisOrientation getXOrient() {
