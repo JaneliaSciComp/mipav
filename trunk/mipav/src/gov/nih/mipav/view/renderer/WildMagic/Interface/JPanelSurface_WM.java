@@ -102,9 +102,6 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** Save surface button. */
     private JButton saveSurfaceButton;
     
-    /** Save surface button. */
-    private JButton levelSButton, levelVButton, levelWButton, levelXMLButton, levelSTLButton, levelPLYButton;
-
     /** Paint tool-bar (contained in the SurfacePaint class) */
     private SurfacePaint_WM m_kSurfacePaint = null;
 
@@ -130,7 +127,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     private JScrollPane scroller;
 
     /** Smooth button. */
-    private JButton smooth1Button, smooth2Button, smooth3Button;
+    private JButton invertNormals, smooth1Button, smooth2Button, smooth3Button;
 
     /** Polyline list box in the dialog for surfaces. */
     private JList polylineList;
@@ -240,7 +237,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         String command = event.getActionCommand();
 
         if (command.equals("Add")) {
-            addSurface();
+        	try {
+            addSurface(); } catch ( NullPointerException e ) {}
         } 
         else if (command.equals("Remove")) {
             removeSurface();
@@ -284,11 +282,6 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if (command.equals("saveSurface")) {
             saveSurfaces( surfaceList.getSelectedIndices(), command );        	
         }
-        //else if (command.equals("LevelXML") || command.equals("LevelW") || command.equals("LevelS") ||
-        //        command.equals("LevelV") || command.equals("LevelSTL") || command.equals("LevelPLY"))
-        //{
-        //    saveSurfaces( surfaceList.getSelectedIndices(), command );
-        //} 
         else if (command.equals("Smooth")) {
             smoothSurface(surfaceList.getSelectedIndices(), JDialogSmoothMesh.SMOOTH1);
         } else if (command.equals("Smooth2")) {
@@ -298,6 +291,10 @@ public class JPanelSurface_WM extends JInterfaceBase
         } 
         else if (command.equals("Decimate")) {
             decimate(surfaceList.getSelectedIndices());
+        }
+        else if ( command.equals("InvertNormals") )
+        {
+        	invertNormals(surfaceList.getSelectedIndices());
         }
     }
 
@@ -858,28 +855,18 @@ public class JPanelSurface_WM extends JInterfaceBase
         toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         toolBar.setFloatable(false);
 
+        invertNormals = toolbarBuilder.buildButton("InvertNormals", "Reverses triangle order", "decimate");
         smooth1Button = toolbarBuilder.buildButton("Smooth", "Smooth level 1", "sm1");
         smooth2Button = toolbarBuilder.buildButton("Smooth2", "Smooth level 2", "sm2");
         smooth3Button = toolbarBuilder.buildButton("Smooth3", "Smooth level 3", "sm3");
         decimateButton = toolbarBuilder.buildButton("Decimate", "Decimate the surface", "decimate");
         saveSurfaceButton = toolbarBuilder.buildButton("saveSurface", "Save surface to a file", "save");
-        //levelSButton = toolbarBuilder.buildButton("LevelS", "Save single level (.sur)", "levelssave");
-        //levelVButton = toolbarBuilder.buildButton("LevelV", "Save single level (.wrl)", "levelvsave");
-        //levelWButton = toolbarBuilder.buildButton("LevelW", "Save multi objects (.wrl)", "levelwsave");
-        //levelXMLButton = toolbarBuilder.buildButton("LevelXML", "Save xml surface (.xml)", "savexml");
-        //levelSTLButton = toolbarBuilder.buildButton("LevelSTL", "Save STL binary surface (.stl)", "savestl");
-        //levelPLYButton = toolbarBuilder.buildButton("LevelPLY", "Save PLY surface (.ply)", "saveply");
+        toolBar.add(invertNormals);
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
         toolBar.add(smooth3Button);
         toolBar.add(decimateButton);
         toolBar.add(saveSurfaceButton);
-        //toolBar.add(levelSButton);
-        //toolBar.add(levelVButton);
-        //toolBar.add(levelWButton);
-        //toolBar.add(levelXMLButton);
-        //toolBar.add(levelSTLButton);
-        //toolBar.add(levelPLYButton);
 
         JPanel toolBarPanel = new JPanel();
         toolBarPanel.setLayout(new BorderLayout());
@@ -943,6 +930,32 @@ public class JPanelSurface_WM extends JInterfaceBase
 
             for (int j = 0; j < detailSliderLabels.length; j++) {
                 detailSliderLabels[j].setEnabled(true);
+            }
+        }
+    }
+
+    /**
+     * Decimate the selected surfaces.
+     * @param  aiSelected   selected surfaces.
+     */
+    private void invertNormals(int[] aiSelected) {
+        
+        if ( m_kVolumeViewer != null )
+        {           
+            for (int i = 0; i < aiSelected.length; i++) {
+            	
+                TriMesh kMesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
+                IndexBuffer kIBuffer = kMesh.IBuffer;
+                int[] aiData = kIBuffer.GetData();
+                for ( int j = 0; j < (aiData.length - 2); j += 3 )
+                {
+                	int temp = aiData[j+1];
+                	aiData[j+1] = aiData[j+2];
+                	aiData[j+2] = temp;
+                }
+                kMesh.UpdateMS(true);
+                kMesh.IBuffer.Release();
+                kMesh.VBuffer.Release();
             }
         }
     }
@@ -1521,17 +1534,12 @@ public class JPanelSurface_WM extends JInterfaceBase
     private void setElementsEnabled(boolean flag) {
         saveSurfaceButton.setEnabled(flag);
         
-        //levelSButton.setEnabled(flag);
-        //levelVButton.setEnabled(flag);
-        //levelWButton.setEnabled(flag);
         decimateButton.setEnabled(flag);
         colorButton.setEnabled(flag);
+        invertNormals.setEnabled(flag);
         smooth1Button.setEnabled(flag);
         smooth2Button.setEnabled(flag);
         smooth3Button.setEnabled(flag);
-        //levelXMLButton.setEnabled(flag);
-        //levelSTLButton.setEnabled(flag);
-        //levelPLYButton.setEnabled(flag);
 
         colorLabel.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);

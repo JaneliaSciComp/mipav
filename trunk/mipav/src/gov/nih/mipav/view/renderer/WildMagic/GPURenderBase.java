@@ -731,6 +731,10 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
      */
     protected void UpdateSceneRotation()
     {
+    	if ( m_spkScene == null )
+    	{
+    		return;
+    	}
         m_spkScene.UpdateGS();
         m_kCuller.ComputeVisibleSet(m_spkScene);
         
