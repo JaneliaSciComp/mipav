@@ -411,7 +411,12 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
         findBufferMinMax(srcBuffer, 0, srcBuffer.length); // calculates largest and smallest pixel values
         srcMin = bufMin;
-        idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
+        if (idealWidth >= ((bufMax - bufMin)/1024.0)) {
+            idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
+        }
+        else {
+        	idealBins = 256;
+        }
         Preferences.debug("idealBins = " + idealBins + "\n", Preferences.DEBUG_ALGORITHM);
 
         int type = srcImage.getType();
