@@ -79,6 +79,7 @@ public class VolumeNode extends VolumeObject
             return;
         }
         m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
         kCuller.ComputeVisibleSet(m_kScene);
         kRenderer.DrawScene(kCuller.GetVisibleSet());
     }

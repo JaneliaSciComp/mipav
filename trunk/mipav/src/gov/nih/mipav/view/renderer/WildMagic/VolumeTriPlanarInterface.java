@@ -589,12 +589,13 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                     dualPane.setDividerLocation(0.5f);
                     m_kLightsPanel.enableLight(0, true);
                     addNode(kMeshLines);
+                    insertTab("BrainSurface", brainsurfaceFlattenerRender.getMainPanel());
                 } else {
                     MipavUtil.displayError(surfaceGUI.getSelectedSurface()
                             + " is not a closed mesh. Unable to open brain flattener view.");
+                    brainsurfaceFlattenerRender = null;
                 }
             }
-            insertTab("BrainSurface", brainsurfaceFlattenerRender.getMainPanel());
             resizePanel();
         } else if (command.equals("FlyThru")) {
             if (m_kFlyThroughRender == null) {
@@ -2490,7 +2491,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
     private void disposeRenderers() {
-
+        if (brainsurfaceFlattenerRender != null) {
+        	brainsurfaceFlattenerRender.setVisible(false);
+        	brainsurfaceFlattenerRender.dispose();
+        	bf_flyPanel.remove(brainsurfaceFlattenerRender.GetCanvas());
+        }
     	
         if (raycastRenderWM != null) {
             raycastRenderWM.setVisible(false);

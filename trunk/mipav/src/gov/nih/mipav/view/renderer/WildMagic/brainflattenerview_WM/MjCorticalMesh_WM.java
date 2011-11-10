@@ -175,21 +175,22 @@ public class MjCorticalMesh_WM {
         m_fMaxAvrConvexity = 0.0f;
         m_afAvrConvexity = null;
     }
-    /*
+    
+    
+   
     public boolean CheckManifold()
     {
-        for (int i = 0; i < m_akEdge.length; i++) {
+    	if ( !m_kBasicMesh.IsValid() )
+    	{
+    		return false;
+    	}
+        for (int i = 0; i < m_kBasicMesh.GetEQuantity(); i++) {
             if ( m_akEdge[i].T[1] == -1 )
             {
-                return false;
+            	return false;
             }
         }
         return true;
-    }
-*/
-    public boolean CheckManifold()
-    {
-        return m_kBasicMesh.IsValid();
     }
 
     /**
