@@ -422,11 +422,14 @@ public class AlgorithmAHElocal extends AlgorithmBase {
         bufMax = sortBuffer[kernel.length - 1];
 
         // calculates how many there ought to be given idealwidth formula above
-        if (idealWidth == 0.0f) {
-            idealBins = 5;
-        } else {
+        if (idealWidth >= ((bufMax - bufMin)/1024.0)) {
             idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
         }
+        else {
+        	idealBins = 256;
+        }
+        
+        
         // Preferences.debug("idealBins = " + idealBins + "\n", Preferences.DEBUG_ALGORITHM);
 
         int type = srcImage.getType();
