@@ -897,10 +897,11 @@ public class AlgorithmAHE extends AlgorithmBase {
 
         // findBufferMinMax(srcBuffer, 0, sliceLength); // calculates largest and smallest pixel values in a sector
         // image minimum; used as offset for images to build Histo
-        if (idealWidth == 0.0f) {
-            idealBins = 5;
-        } else {
+        if (idealWidth >= ((bufMax - bufMin)/1024.0)) {
             idealBins = (int) (((bufMax - bufMin) / idealWidth) + 0.5f);
+        }
+        else {
+        	idealBins = 256;
         }
 
         Preferences.debug("idealBins = " + idealBins + "\n", Preferences.DEBUG_ALGORITHM);
