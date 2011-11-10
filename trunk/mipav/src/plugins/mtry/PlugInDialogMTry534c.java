@@ -70,7 +70,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogMTry534b extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
+public class PlugInDialogMTry534c extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -86,7 +86,7 @@ public class PlugInDialogMTry534b extends JDialogScriptableBase implements Algor
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmMTry534b mTryAlgo = null;
+    private PlugInAlgorithmMTry534c mTryAlgo = null;
 
     
     private String[] titles;
@@ -131,7 +131,7 @@ public class PlugInDialogMTry534b extends JDialogScriptableBase implements Algor
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogMTry534b() { }
+    public PlugInDialogMTry534c() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -139,7 +139,7 @@ public class PlugInDialogMTry534b extends JDialogScriptableBase implements Algor
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogMTry534b(Frame theParentFrame, ModelImage im) {
+    public PlugInDialogMTry534c(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -178,7 +178,7 @@ public class PlugInDialogMTry534b extends JDialogScriptableBase implements Algor
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmMTry534b) {
+       if (algorithm instanceof PlugInAlgorithmMTry534c) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if (algorithm.isCompleted() == true) {
@@ -221,7 +221,7 @@ public class PlugInDialogMTry534b extends JDialogScriptableBase implements Algor
             
             resultImage = new ModelImage(ModelImage.FLOAT, new int[]{minImage.getExtents()[0],minImage.getExtents()[1],(minImage.getExtents()[2]/(2*numChannel))}, "T1Map");
             
-            mTryAlgo = new PlugInAlgorithmMTry534b(resultImage, minImage, medImage, maxImage, 
+            mTryAlgo = new PlugInAlgorithmMTry534c(resultImage, minImage, medImage, maxImage, 
                                                     t1Min, t1Max, precision, invTimeMin, invTimeMed, invTimeMax, 
                                                     doReconstruct, numChannel);
 

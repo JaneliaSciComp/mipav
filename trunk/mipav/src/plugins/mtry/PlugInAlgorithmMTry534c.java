@@ -46,7 +46,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmMTry534b extends AlgorithmBase {
+public class PlugInAlgorithmMTry534c extends AlgorithmBase {
 
     /** Selected images with varying inverstion times. */
     private ModelImage minImage, medImage, maxImage;
@@ -79,7 +79,7 @@ public class PlugInAlgorithmMTry534b extends AlgorithmBase {
      * @param numChannel 
      * @param  srcImg       Source image model, requires 3D images.
      */
-    public PlugInAlgorithmMTry534b(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
+    public PlugInAlgorithmMTry534c(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
             double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, 
             boolean doReconstruct, int numChannel) {
         super(resultImage, minImage);
@@ -361,12 +361,12 @@ findClosest:while(t1ValIndex+1 < t1Val.length) {
     	baseImage.setResolutions(new float[]{.6f, .6f, .6f});
         for(int i=0; i<baseImage.getFileInfo().length; i++) {
         	baseImage.getFileInfo(i).setSliceThickness(0);
-        	baseImage.getFileInfo(i).setAxisOrientation(new int[]{ImageOrientation.AXIAL.getXOrient().getLegacyNum(), 
-        															ImageOrientation.AXIAL.getYOrient().getLegacyNum(),
-        															ImageOrientation.AXIAL.getZOrient().getLegacyNum()});
-        	baseImage.getFileInfo(i).setImageOrientation(ImageOrientation.AXIAL.getLegacyNum());
-        	baseImage.getFileInfo(i).setModality(Modality.MAGNETIC_RESONANCE.getLegacyNum());
-        }
+        	baseImage.getFileInfo(i).setAxisOrientation(new int[]{FileInfoBase.ORI_R2L_TYPE, 
+        															FileInfoBase.ORI_A2P_TYPE,
+        															FileInfoBase.ORI_I2S_TYPE});
+        	baseImage.getFileInfo(i).setImageOrientation(FileInfoBase.AXIAL);
+        	baseImage.getFileInfo(i).setModality(FileInfoBase.MAGNETIC_RESONANCE);
+        }	//TODO: use enums
 	}
 
 	private int doMaxMinReplace(double[] t1Real) {
