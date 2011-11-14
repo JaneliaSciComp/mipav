@@ -549,10 +549,9 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
     }
 
     /** 
-     * Calculate idealWidth.
+     * Calculate idealWidth for bins.
      */
     private float getIdealWidth(float[] srcBuffer) {
-    	// find the ideal bin width
         float[] sortBuffer = new float[srcBuffer.length];
 
         for (int i = 0; i < srcBuffer.length; i++) {
