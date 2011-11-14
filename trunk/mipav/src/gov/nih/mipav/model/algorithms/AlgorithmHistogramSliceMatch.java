@@ -411,23 +411,8 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
         float baseRange; // range of the reference slice
         float srcMin; // min for equalized slice
         float baseMin; // min for reference slice
-        float[] sortBuffer;
-        float idealWidth;
+        float idealWidth = getIdealWidth(srcBuffer);
         int idealBins;
-
-        // find the ideal bin width
-        sortBuffer = new float[srcBuffer.length];
-
-        for (i = 0; i < srcBuffer.length; i++) {
-            sortBuffer[i] = srcBuffer[i];
-        }
-
-        Arrays.sort(sortBuffer);
-        idealWidth = (float) (2.0f *
-                                  (sortBuffer[(3 * srcBuffer.length / 4) - 1] -
-                                       sortBuffer[(srcBuffer.length / 4) - 1]) *
-                                  Math.pow(srcBuffer.length, -1.0 / 3.0));
-        sortBuffer = null;
 
         findBufferMinMax(srcBuffer, 0, srcBuffer.length); // calculates largest and smallest pixel values for equalized slice
         srcMin = bufMin;
@@ -586,6 +571,22 @@ public class AlgorithmHistogramSliceMatch extends AlgorithmBase {
     }
 
     /**
+     * find the ideal bin width
+     */
+    private float getIdealWidth(float[] srcBuffer) {
+        float[] sortBuffer = new float[srcBuffer.length];
+
+        for (int i = 0; i < srcBuffer.length; i++) {
+            sortBuffer[i] = srcBuffer[i];
+        }
+
+        Arrays.sort(sortBuffer);
+        return (float) (2.0f * (sortBuffer[(3 * srcBuffer.length / 4) - 1] -
+                                       sortBuffer[(srcBuffer.length / 4) - 1]) *
+                                  Math.pow(srcBuffer.length, -1.0 / 3.0));
+	}
+
+	/**
      * Finds the local maximum and minimum values in the given range in order, as given by the starting and stoping
      * values.
      *
