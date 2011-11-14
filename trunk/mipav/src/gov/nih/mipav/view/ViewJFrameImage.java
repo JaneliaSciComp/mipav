@@ -1105,6 +1105,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogAnyTwoImagesSNR(this, getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
+        } else if (command.equals("fuzzyMin")) {
+        	new JDialogFuzzyMinimization(this, getActiveImage());
         } else if (command.equals("Calculator")) {
             // whether valid images are available is handled in the image calculator
             new JDialogImageCalculator(this, getActiveImage());
