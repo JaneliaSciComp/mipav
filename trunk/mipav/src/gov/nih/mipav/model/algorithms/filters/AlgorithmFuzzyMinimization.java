@@ -10,7 +10,23 @@ import java.util.*;
 
 
 /**
- 
+   This algorithm performs minimization of fuzziness, a reduction of the amount of fuzziness.  This method is probably the first
+   fuzzy approach to image enhancement and is also known in the literature as contrast intensification operator.  The main idea
+   is to reduce the amount of image fuzziness.  The algorithm is as follows:
+   1.) Gray-level fuzzification (u(g) denotes the degree of brightness)
+        u(g) = pow(1 + (gmax - g)/Fd, -Fe)
+        where Fd and Fe are the exponential and denominational fuzzifiers that control the amount of grayness ambiguity in the 
+        membership plane.  Suitable values for Fe are 1 and 2.  Fd is computed from a user selected crossover gray scale value, gc,
+        at which u(gc) = 0.5.
+   2.) Membership modification using successive application of Zadeh's intensification operator
+       u'(g) = 2*u(g)*u(g) if 0 <= u(g) <= 0.5
+       u'(g) = 1 - 2*[1 - u(g)]*[1 - u(g)] if 0.5 < u(g) <= 1
+   3.) New gray-levels by defuzzification 
+       g' = gmax - Fd*(pow(u'(g), -1.0/Fe) - 1.0) 
+   4.) Linearly rescale g' levels so that min and max among g' match min and max of original g.
+   
+   Reference: Tizhoosh, H. R., "Fuzzy Image Enhancement: An Overview," in Fuzzy Techniques in Image Processing,
+   E. Kerre and M. Nachtegael, eds., Springer-Verlag, New York, 2000, pp. 140-141.
  */
 public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 
@@ -27,8 +43,10 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
     /** number of times to filter the image. */
     private int iterations;
     
+    /** The crossover gray scale value at which u(crossVal) = 0.5 */
     private double crossVal;
     
+    /** Exponential fuzzifier between 1.0 and 2.0 */
     private double expFuzzifier;
 
     /** contains VOI. */
@@ -40,20 +58,19 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
      * Constructor for images in which changes are returned to the source image.
      *
      * @param  srcImg    Source image model.
-     * @param  iters     Number of interations of the fuzzy minimization filter.
-     * @param  crossVal
-     * @param  expFuzzifier    exponential fuzzifier
-     * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
+     * @param  iters     Number of iterations of the fuzzy minimization filter.
+     * @param  crossVal  crossover gray scale value at which u(crossVal) = 0.5
+     * @param  expFuzzifier    exponential fuzzifier between 1.0 and 2.0
+     * @param  maskFlag  Flag that indicates that the fuzzy minimization filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmFuzzyMinimization(ModelImage srcImg, int iters, double crossVal, double expFuzzifier, boolean maskFlag) {
         super(null, srcImg);
 
-        // else, already false
         entireImage = maskFlag;
         iterations = iters;
         this.crossVal = crossVal;
-        this.expFuzzifier = expFuzzifier; // inside magnitude bounds of pixel value to adjust
+        this.expFuzzifier = expFuzzifier;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -65,10 +82,10 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
      *
      * @param  destImg   Image model where result image is stored.
      * @param  srcImg    Source image model.
-     * @param  iters     Number of iterations of the median filter.
-     * @param crossVal
-     * @param  expFuzzifier exponential fuzzifier
-     * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
+     * @param  iters     Number of iterations of the fuzzy minimization filter.
+     * @param crossVal   crossover gray scale value at which u(crossVal) = 0.5
+     * @param  expFuzzifier exponential fuzzifier between 1.0 and 2.0
+     * @param  maskFlag  Flag that indicates that the fuzzy minimization filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmFuzzyMinimization(ModelImage destImg, ModelImage srcImg, int iters, double crossVal, double expFuzzifier,
@@ -76,11 +93,10 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 
         super(destImg, srcImg);
 
-        // else, already false
         entireImage = maskFlag;
         iterations = iters;
         this.crossVal = crossVal;
-        this.expFuzzifier = expFuzzifier; // inside magnitude bounds of pixel value
+        this.expFuzzifier = expFuzzifier;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -127,22 +143,27 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 
 
     /**
-     * Median filters the source image. Replaces the original image with the filtered image.
+     * Fuzzy minimization filtering of the source image. Replaces the original image with the filtered image.
      */
     private void calcStoreInPlace() {
 
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-        double[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
+        double[] resultBuffer;
         int i;
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
+        double minVal;
         double maxVal;
+        double resultMin;
+        double resultMax;
         double denomFuzzifier;
         double diff;
         double expVal;
         int index;
         int iters;
+        double slope;
+        double intercept;
 
         try {
 
@@ -182,6 +203,7 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 	        Collections.sort(srcList);
 	        uniqueValues = srcList.size();
 	        resultBuffer = new double[uniqueValues];
+	        minVal = srcList.get(0);
 	        maxVal = srcList.get(uniqueValues-1);
 	        denomFuzzifier = (maxVal - crossVal)/(Math.exp(-Math.log(0.5)/expFuzzifier) - 1.0);
 	        for (i = 0; i < uniqueValues; i++) {
@@ -195,6 +217,15 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 	        	}
 	        	expVal = Math.pow(resultBuffer[i],-1.0/expFuzzifier);
 	        	resultBuffer[i] = maxVal - denomFuzzifier*(expVal - 1.0);
+	        }
+	        resultMin = resultBuffer[0];
+	        resultMax = resultBuffer[uniqueValues-1];
+	        // slope * resultMin + intercept = minVal
+	        // slope * resultMax + intercept = maxVal
+	        slope = (maxVal - minVal)/(resultMax - resultMin);
+	        intercept = minVal - slope * resultMin;
+	        for (i = 0; i < uniqueValues; i++) {
+	        	resultBuffer[i] = slope * resultBuffer[i] + intercept;
 	        }
 	        
 	        for (i = 0; i < length; i++) {
@@ -229,28 +260,32 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
     
 
     /**
-     * This function produces a new image that has been median filtered and places filtered image in the destination
-     * image.
+     * This function produces a new image that has had fuzzy minimization filtering
      */
     private void calcStoreInDest() {
 
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-        double[] resultBuffer; // copy-to buffer (for pixel data) for image-data after filtering
+        double[] resultBuffer; 
         int i;
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
+        double minVal;
         double maxVal;
+        double resultMin;
+        double resultMax;
         double denomFuzzifier;
         double diff;
         double expVal;
         int index;
         int iters;
+        double slope;
+        double intercept;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
         } catch (IOException error) {
-            errorCleanUp("Algorithm Median reports: destination image locked", false);
+            errorCleanUp("Algorithm Fuzzy Minimization reports: destination image locked", false);
 
             return;
         }
@@ -292,6 +327,7 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 	        Collections.sort(srcList);
 	        uniqueValues = srcList.size();
 	        resultBuffer = new double[uniqueValues];
+	        minVal = srcList.get(0);
 	        maxVal = srcList.get(uniqueValues-1);
 	        denomFuzzifier = (maxVal - crossVal)/(Math.exp(-Math.log(0.5)/expFuzzifier) - 1.0);
 	        for (i = 0; i < uniqueValues; i++) {
@@ -305,6 +341,15 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 	        	}
 	        	expVal = Math.pow(resultBuffer[i],-1.0/expFuzzifier);
 	        	resultBuffer[i] = maxVal - denomFuzzifier*(expVal - 1.0);
+	        }
+	        resultMin = resultBuffer[0];
+	        resultMax = resultBuffer[uniqueValues-1];
+	        // slope * resultMin + intercept = minVal
+	        // slope * resultMax + intercept = maxVal
+	        slope = (maxVal - minVal)/(resultMax - resultMin);
+	        intercept = minVal - slope * resultMin;
+	        for (i = 0; i < uniqueValues; i++) {
+	        	resultBuffer[i] = slope * resultBuffer[i] + intercept;
 	        }
 	        
 	        for (i = 0; i < length; i++) {
@@ -329,7 +374,7 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
-            errorCleanUp("Algorithm Median reports: destination image still locked", true);
+            errorCleanUp("Algorithm Fuzzy Minimization reports: destination image still locked", true);
 
             return;
         }
