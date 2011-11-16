@@ -265,9 +265,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
 
                 try {
 
-                    // Make result image of float type
-                    // resultImage     = new ModelImage(image.getType(), destExtents, name, userInterface);
-                    resultImage = (ModelImage) image.clone();
+                    resultImage     = (ModelImage) image.clone();
                     resultImage.setImageName(name);
                     if (resultImage.getNDims() >= 3) {
                     	zDim = resultImage.getExtents()[2];
