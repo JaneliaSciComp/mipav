@@ -15,15 +15,18 @@ import java.util.*;
    g' = (udark(g)*gmin + ugray(g)*gmid + ubright(g)*gmax)/(udark(g) + ugray(g) + ubright(g))
    gmin and gmax are the minimum and maximum gray scale levels.
    By default gmid = (gmin + gmax)/2.0, but the user can select other values between gmin and gmax.
-   Note that in reference 2 the authors used gmin = 0, gmid = 200, gmax = 255.
+   Note that in reference 3 the authors used gmin = 0, gmid = 200, gmax = 255.
    udark(g) is a straight line segment going from 1 at gmin to 0 at gmid.
    ugray(g) has 2 line segments.  The first goes from 0 at gmin to 1 at gmid.  The second goes from 1
    at gmid to 0 at gmax.
    udark is a straight line segment going from 0 at gmid to 1 at gmax.
    
-   Reference: 1.) Tizhoosh, H. R., "Fuzzy Image Enhancement: An Overview," in Fuzzy Techniques in Image Processing,
+   References: 
+   1.) Digital Image Processing Third Edition by Rafael C. Gonzalez and Richard E. Woods, Section 3.8.4
+   Using Fuzzy Sets for Intensity Transformations, Pearson Prentice Hall, 2008, pp. 186-189.
+   2.) Tizhoosh, H. R., "Fuzzy Image Enhancement: An Overview," in Fuzzy Techniques in Image Processing,
    E. Kerre and M. Nachtegael, eds., Springer-Verlag, New York, 2000, pp. 147-148.
-   2.) Tizhoosh HR, Krell G, and Michaelis B., "On Fuzzy Image Enhancement of Megavoltage Images in Radiation Therapy,"
+   3.) Tizhoosh HR, Krell G, and Michaelis B., "On Fuzzy Image Enhancement of Megavoltage Images in Radiation Therapy,"
    in Proceedings of FUZZ-IEEE'97 (Barcelona), pp. 1399-1404, 1997.
  */
 public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
