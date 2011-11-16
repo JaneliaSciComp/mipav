@@ -224,11 +224,11 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
         int index;
-
+        
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
         } catch (IOException error) {
-            errorCleanUp("Algorithm Rule Based Contrast Enhancement reports: destination image locked", false);
+            errorCleanUp("Algorithm Fuzzy Minimization reports: destination image locked" + error, false);
 
             return;
         }
@@ -290,6 +290,7 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
     	    buffer[i] = resultBuffer[index];
         }
         srcList.clear();
+        destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
         
        
         if (threadStopped) {
