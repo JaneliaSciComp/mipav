@@ -13,6 +13,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.IOException;
 
 import java.util.*;
 
@@ -278,7 +279,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
                         rbceAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+                    MipavUtil.displayError("Dialog Rule Based Contrast Enhancement: unable to allocate enough memory");
 
                     if (resultImage != null) {
                         resultImage.disposeLocal(); // Clean up memory of result image
@@ -329,7 +330,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
                         rbceAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+                    MipavUtil.displayError("Dialog Rule Based Contrast Enhancement: unable to allocate enough memory");
 
                     return;
                 }
@@ -392,7 +393,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));
 
-        JLabel labelgmid = new JLabel("gray level at which ugray = 1.0 > " + image.getMin() + " to < " + image.getMax());
+        JLabel labelgmid = new JLabel("gray level at which ugray = 1.0 (> " + image.getMin() + " to < " + image.getMax() + ")");
         labelgmid.setForeground(Color.black);
         labelgmid.setFont(serif12);
         gbc.gridx = 0;
