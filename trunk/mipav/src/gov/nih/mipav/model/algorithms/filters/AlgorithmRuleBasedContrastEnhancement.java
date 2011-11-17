@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
 import gov.nih.mipav.model.structures.*;
 
 import java.io.*;
@@ -13,13 +14,14 @@ import java.util.*;
    This algorithm uses an equation with 3 membership functions, udark, ugray, and ubright, to transform a gray level g
    to a new gray level g' for histogram enhancement.
    g' = (udark(g)*gmin + ugray(g)*gmid + ubright(g)*gmax)/(udark(g) + ugray(g) + ubright(g))
-   gmin and gmax are the minimum and maximum gray scale levels.
-   By default gmid = (gmin + gmax)/2.0, but the user can select other values between gmin and gmax.
+   gmin and gmax are the new user selected minimum and maximum gray scale levels, with 
+   gmin < srcMin and gmax > srcMax
+   By default gmid = (srcMin + srcMax)/2.0, but the user can select other values between srcMin and srcMax.
    Note that in reference 3 the authors used gmin = 0, gmid = 200, gmax = 255.
-   udark(g) is a straight line segment going from 1 at gmin to 0 at gmid.
+   udark(g) has 2 straight line segment.  The first stays at 1 from gmin to srcMin.  The second goes from goes from 1 at gmin to 0 at gmid.
    ugray(g) has 2 line segments.  The first goes from 0 at gmin to 1 at gmid.  The second goes from 1
    at gmid to 0 at gmax.
-   udark is a straight line segment going from 0 at gmid to 1 at gmax.
+   udark has 2 straight line segments.  The first goes from 0 at gmid to 1 at srcMax.  The second stays at 1 from srcMax to gmax.
    
    References: 
    1.) Digital Image Processing Third Edition by Rafael C. Gonzalez and Richard E. Woods, Section 3.8.4
@@ -36,10 +38,13 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    
+    /** The new image minimum.  Must have gmin < srcMin */
+	private double gmin;
     /** Gray scale value at which ugray(g) = 1.0.
-     * By default gmid = (gmin + gmax)/2.0, but it can assume any value between gmin and gmax */
+     * By default gmid = (srcMin + srcMmax)/2.0, but it can assume any value between srcMin and srcMax */
     private double gmid;
+    /** The new image maximum.  Must have gmax > srcMax */
+    private double gmax;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -47,12 +52,16 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
      * Constructor for images in which changes are returned to the source image.
      *
      * @param  srcImg    Source image model.
+     * @param  gmin      The new image minimum
      * @param  gmid      Gray scale value at which ugray(g) = 1.0
+     * @param  gmax      The new image maximum
      */
-    public AlgorithmRuleBasedContrastEnhancement(ModelImage srcImg, double gmid) {
+    public AlgorithmRuleBasedContrastEnhancement(ModelImage srcImg, double gmin, double gmid, double gmax) {
         super(null, srcImg);
 
+        this.gmin = gmin;
         this.gmid = gmid;
+        this.gmax = gmax;
     }
 
     /**
@@ -60,13 +69,17 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
      *
      * @param  destImg   Image model where result image is stored.
      * @param  srcImg    Source image model.
+     * @param  gmin      The new image minimum
      * @param  gmid      Gray scale value at which ugray(g) = 1.0
+     * @param  gmax      The new image maximum
      */
-    public AlgorithmRuleBasedContrastEnhancement(ModelImage destImg, ModelImage srcImg, double gmid) {
+    public AlgorithmRuleBasedContrastEnhancement(ModelImage destImg, ModelImage srcImg, double gmin, double gmid, double gmax) {
 
         super(destImg, srcImg);
 
+        this.gmin = gmin;
         this.gmid = gmid;
+        this.gmax = gmax;
     }
 
     
@@ -114,8 +127,6 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
 
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-        double gmin;
-        double gmax;
         double g;
         double udark;
         double ugray;
@@ -125,6 +136,8 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
         int index;
+        double srcMin = srcImage.getMin();
+        double srcMax = srcImage.getMax();
 
         try {
 
@@ -153,9 +166,6 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
             return;
         }
         
-        gmin = srcImage.getMin();
-        gmax = srcImage.getMax();
-        
         for (i = 0; i < length; i++) {
         	if (!srcList.contains(buffer[i])) {
     	        srcList.add(buffer[i]);	
@@ -167,13 +177,13 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         for (i = 0; i < uniqueValues; i++) {
            g = srcList.get(i);
            if (g <= gmid) {
-        	   ugray = (g - gmin)/(gmid - gmin);
+        	   ugray = (g - srcMin)/(gmid - srcMin);
         	   udark = 1.0 - ugray;
         	   ubright = 0.0;
            }
            else {
         	   udark = 0.0;
-        	   ubright = (g - gmid)/(gmax - gmid);
+        	   ubright = (g - gmid)/(srcMax - gmid);
         	   ugray = 1.0 - ubright;
            }
            resultBuffer[i] = (udark*gmin + ugray*gmid + ubright*gmax)/(udark + ugray + ubright);
@@ -185,11 +195,17 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         }
         srcList.clear();
         
+        AlgorithmChangeType convertType = new AlgorithmChangeType(srcImage, ModelStorageBase.DOUBLE, srcImage.getMin(),
+                srcImage.getMax(), gmin, gmax, false);
+        convertType.run();
+        convertType = null;
+        
         if (threadStopped) {
             finalize();
 
             return;
         }
+        
 
         try { // place buffer data into the image
             srcImage.importData(0, buffer, true);
@@ -213,8 +229,6 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
 
         int length; // total number of data-elements (pixels) in image
         double[] buffer; // data-buffer (for pixel data) which is the "heart" of the image
-        double gmin;
-        double gmax;
         double g;
         double udark;
         double ugray;
@@ -224,6 +238,8 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
         int index;
+        double srcMin = srcImage.getMin();
+        double srcMax = srcImage.getMax();
         
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -259,9 +275,6 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
             return;
         }
         
-        gmin = srcImage.getMin();
-        gmax = srcImage.getMax();
-        
         for (i = 0; i < length; i++) {
         	if (!srcList.contains(buffer[i])) {
     	        srcList.add(buffer[i]);	
@@ -273,13 +286,13 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         for (i = 0; i < uniqueValues; i++) {
            g = srcList.get(i);
            if (g <= gmid) {
-        	   ugray = (g - gmin)/(gmid - gmin);
+        	   ugray = (g - srcMin)/(gmid - srcMin);
         	   udark = 1.0 - ugray;
         	   ubright = 0.0;
            }
            else {
         	   udark = 0.0;
-        	   ubright = (g - gmid)/(gmax - gmid);
+        	   ubright = (g - gmid)/(srcMax - gmid);
         	   ugray = 1.0 - ubright;
            }
            resultBuffer[i] = (udark*gmin + ugray*gmid + ubright*gmax)/(udark + ugray + ubright);
