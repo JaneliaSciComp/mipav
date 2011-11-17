@@ -85,6 +85,18 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
     private JTextField textCross;
     
     private double crossVal;
+    
+    private JLabel labelgmin;
+    
+    private JTextField textgmin;
+    
+    private double gmin;
+    
+    private JLabel labelgmax;
+    
+    private JTextField textgmax;
+    
+    private double gmax;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -241,6 +253,22 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
     	this.crossVal = crossVal;
     }
     
+    /**
+     * 
+     * @param gmin
+     */
+    public void setgmin(double gmin) {
+    	this.gmin = gmin;
+    }
+    
+    /**
+     * 
+     * @param gmax
+     */
+    public void setgmax(double gmax) {
+    	this.gmax = gmax;
+    }
+    
 
     /**
      * Accessor that sets the exponential fuzzifier.
@@ -282,7 +310,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
 
                     // Make algorithm
                    fuzzyMinAlgo = new AlgorithmFuzzyMinimization(resultImage, image, iters, crossVal, expFuzzifier,
-                                                     outputPanel.isProcessWholeImageSet());
+                                                     gmin, gmax, outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -320,7 +348,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     fuzzyMinAlgo = new AlgorithmFuzzyMinimization(image, iters, crossVal, expFuzzifier,
-                                                     outputPanel.isProcessWholeImageSet());
+                                                     gmin, gmax, outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -396,6 +424,8 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
         setIters(scriptParameters.getNumIterations());
         setCrossoverValue(scriptParameters.getParams().getDouble("crossover_value"));
         setExpFuzzifier(scriptParameters.getParams().getDouble("exponential_fuzzifier"));
+        setgmin(scriptParameters.getParams().getDouble("gmin"));
+        setgmax(scriptParameters.getParams().getDouble("gmax"));
     }
 
     /**
@@ -410,6 +440,8 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
         scriptParameters.storeNumIterations(iters);
         scriptParameters.getParams().put(ParameterFactory.newParameter("crossover_value", crossVal));
         scriptParameters.getParams().put(ParameterFactory.newParameter("exponential_fuzzifier", expFuzzifier));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gmin", gmin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gmax", gmax));
     }
 
     
@@ -495,6 +527,46 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
         gbc.anchor = GridBagConstraints.EAST;
         gbl.setConstraints(textExpFuzzifier, gbc);
         paramPanel.add(textExpFuzzifier); // add input
+        
+        labelgmin = createLabel("New minimum value (<= " + minVal + "):");
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(labelgmin, gbc);
+        paramPanel.add(labelgmin); // add the instructions
+
+
+        textgmin = createTextField(String.valueOf(minVal)); // make & set input
+        textgmin.setColumns(10);
+        textgmin.setMaximumSize(textgmin.getPreferredSize()); // don't let it get any bigger
+
+        // than what it prefers
+        textgmin.setHorizontalAlignment(JTextField.CENTER);
+        textgmin.setFont(serif12);
+        MipavUtil.makeNumericsOnly(textgmin, true);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbl.setConstraints(textgmin, gbc);
+        paramPanel.add(textgmin); // add input
+        
+        labelgmax = createLabel("New maximum value (>= " + maxVal + "):");
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(labelgmax, gbc);
+        paramPanel.add(labelgmax); // add the instructions
+
+
+        textgmax = createTextField(String.valueOf(maxVal)); // make & set input
+        textgmax.setColumns(10);
+        textgmax.setMaximumSize(textgmax.getPreferredSize()); // don't let it get any bigger
+
+        // than what it prefers
+        textgmax.setHorizontalAlignment(JTextField.CENTER);
+        textgmax.setFont(serif12);
+        MipavUtil.makeNumericsOnly(textgmax, true);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbl.setConstraints(textgmax, gbc);
+        paramPanel.add(textgmax); // add input
         setupBox.add(paramPanel);
         
         outputPanel = new JPanelAlgorithmOutputOptions(image);
@@ -556,6 +628,28 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
         } else {
             textExpFuzzifier.requestFocus();
             textExpFuzzifier.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textgmin.getText();
+
+        if (testParameter(tmpStr, -Double.MAX_VALUE, minVal)) {
+            gmin = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textgmin.requestFocus();
+            textgmin.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textgmax.getText();
+
+        if (testParameter(tmpStr, maxVal, Double.MAX_VALUE)) {
+            gmax = Double.valueOf(tmpStr).doubleValue();
+        } else {
+            textgmax.requestFocus();
+            textgmax.selectAll();
 
             return false;
         }
