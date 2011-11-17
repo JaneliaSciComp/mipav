@@ -12,15 +12,15 @@ import java.util.*;
 
 /**
    This algorithm uses an equation with 3 membership functions, udark, ugray, and ubright, to transform a gray level g
-   to a new gray level g' for histogram enhancement.
+   to a new gray level g' in a double data type image for histogram enhancement.
    g' = (udark(g)*gmin + ugray(g)*gmid + ubright(g)*gmax)/(udark(g) + ugray(g) + ubright(g))
    gmin and gmax are the new user selected minimum and maximum gray scale levels, with 
    gmin < srcMin and gmax > srcMax
    By default gmid = (srcMin + srcMax)/2.0, but the user can select other values between srcMin and srcMax.
    Note that in reference 3 the authors used gmin = 0, gmid = 200, gmax = 255.
-   udark(g) has 2 straight line segment.  The first stays at 1 from gmin to srcMin.  The second goes from goes from 1 at gmin to 0 at gmid.
-   ugray(g) has 2 line segments.  The first goes from 0 at gmin to 1 at gmid.  The second goes from 1
-   at gmid to 0 at gmax.
+   udark(g) has 2 straight line segments.  The first stays at 1 from gmin to srcMin.  The second goes from goes from 1 at srcMin to 0 at gmid.
+   ugray(g) has 2 line segments.  The first goes from 0 at srcMin to 1 at gmid.  The second goes from 1
+   at gmid to 0 at srcMax.
    udark has 2 straight line segments.  The first goes from 0 at gmid to 1 at srcMax.  The second stays at 1 from srcMax to gmax.
    
    References: 
