@@ -17,16 +17,29 @@ import java.util.*;
         u(g) = pow(1 + (gmax - g)/Fd, -Fe)
         where Fd and Fe are the exponential and denominational fuzzifiers that control the amount of grayness ambiguity in the 
         membership plane.  Suitable values for Fe are 1 and 2.  Fd is computed from a user selected crossover gray scale value, gc,
-        at which u(gc) = 0.5.
+        at which u(gc) = 0.5.  gmax is the maximum gray level in the new image.  gmax >= srcMax.
+        alpha = pow(1 + (gmax - gmin)/Fd, -Fe)
+        gmin <= srcMin
    2.) Membership modification using successive application of Zadeh's intensification operator
-       u'(g) = 2*u(g)*u(g) if 0 <= u(g) <= 0.5
-       u'(g) = 1 - 2*[1 - u(g)]*[1 - u(g)] if 0.5 < u(g) <= 1
+       for (iters = 1; iters <= iterations; iters++) {
+           u(g) = 2*u(g)*u(g) if 0 <= u(g) <= 0.5
+           u(g) = 1 - 2*[1 - u(g)]*[1 - u(g)] if 0.5 < u(g) <= 1
+           if (u(g) < alpha) {
+           // This prevents the gray level from decreasing below gmin
+               u(g) = alpha
+           }
+       } // for (iters = 1; iters <= iterations; iters++)
+       This operation decreases values of u(g) which are <= 0.5 and increases those values of u(g)which are above 0.5.
+       As the number of iterations approaches infinity, a 2 level binary image is produced.  The amount of contrast
+       enhancement can be increased either by increasing the number of iterations or by increasing the value of Fe.
+       Values below the crossover value will be decreased and values above the crossover value will be increased. 
    3.) New gray-levels by defuzzification 
-       g' = gmax - Fd*(pow(u'(g), -1.0/Fe) - 1.0) 
-   4.) Linearly rescale g' levels so that min and max among g' match min and max of original g.
+       g' = gmax - Fd*(pow(u(g), -1.0/Fe) - 1.0) 
    
-   Reference: Tizhoosh, H. R., "Fuzzy Image Enhancement: An Overview," in Fuzzy Techniques in Image Processing,
+   References: 1.) Tizhoosh, H. R., "Fuzzy Image Enhancement: An Overview," in Fuzzy Techniques in Image Processing,
    E. Kerre and M. Nachtegael, eds., Springer-Verlag, New York, 2000, pp. 140-141.
+   2.) Sankar K. Pal and Robert A. King, "Image Enhancement Using Smoothing with Fuzzy Sets", IEEE Transactions on
+   Systems, Man, and Cybernetics, vol. smc-11, no. 7, July, 1981.
  */
 public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 
@@ -48,6 +61,12 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
     
     /** Exponential fuzzifier between 1.0 and 2.0 */
     private double expFuzzifier;
+    
+    /** The new minimum level gmin <= srcMin */
+    private double gmin;
+    
+    /** The new maximum level gmax >= srcMax */
+    private double gmax;
 
     /** contains VOI. */
     private BitSet mask = null;
@@ -61,16 +80,21 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
      * @param  iters     Number of iterations of the fuzzy minimization filter.
      * @param  crossVal  crossover gray scale value at which u(crossVal) = 0.5
      * @param  expFuzzifier    exponential fuzzifier between 1.0 and 2.0
+     * @param  gmin      The new minimum level gmin <= srcMin
+     * @param  gmax      The new maximum level gmax >= srcMax
      * @param  maskFlag  Flag that indicates that the fuzzy minimization filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmFuzzyMinimization(ModelImage srcImg, int iters, double crossVal, double expFuzzifier, boolean maskFlag) {
+    public AlgorithmFuzzyMinimization(ModelImage srcImg, int iters, double crossVal, double expFuzzifier, 
+    		double gmin, double gmax, boolean maskFlag) {
         super(null, srcImg);
 
         entireImage = maskFlag;
         iterations = iters;
         this.crossVal = crossVal;
         this.expFuzzifier = expFuzzifier;
+        this.gmin = gmin;
+        this.gmax = gmax;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -85,11 +109,13 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
      * @param  iters     Number of iterations of the fuzzy minimization filter.
      * @param crossVal   crossover gray scale value at which u(crossVal) = 0.5
      * @param  expFuzzifier exponential fuzzifier between 1.0 and 2.0
+     * @param  gmin      The new minimum level gmin <= srcMin
+     * @param  gmax      The new maximum level gmax >= srcMax
      * @param  maskFlag  Flag that indicates that the fuzzy minimization filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmFuzzyMinimization(ModelImage destImg, ModelImage srcImg, int iters, double crossVal, double expFuzzifier,
-                           boolean maskFlag) {
+                           double gmin, double gmax, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -97,6 +123,8 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
         iterations = iters;
         this.crossVal = crossVal;
         this.expFuzzifier = expFuzzifier;
+        this.gmin = gmin;
+        this.gmax = gmax;
 
         if (entireImage == false) {
             mask = srcImage.generateVOIMask();
@@ -153,17 +181,13 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
         int i;
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
-        double minVal;
-        double maxVal;
-        double resultMin;
-        double resultMax;
         double denomFuzzifier;
         double diff;
         double expVal;
         int index;
         int iters;
-        double slope;
-        double intercept;
+        double alpha;
+        double maxVal;
 
         try {
 
@@ -192,22 +216,23 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
             return;
         }
         
-        for (iters = 0; iters < iterations; iters++) {
-	        for (i = 0; i < length; i++) {
-	        	if (entireImage || mask.get(i)) {
-	        	    if (!srcList.contains(buffer[i])) {
-	        	        srcList.add(buffer[i]);	
-	        	    }
-	        	}
-	        }
-	        Collections.sort(srcList);
-	        uniqueValues = srcList.size();
-	        resultBuffer = new double[uniqueValues];
-	        minVal = srcList.get(0);
-	        maxVal = srcList.get(uniqueValues-1);
-	        denomFuzzifier = (maxVal - crossVal)/(Math.exp(-Math.log(0.5)/expFuzzifier) - 1.0);
-	        for (i = 0; i < uniqueValues; i++) {
-	        	resultBuffer[i] = Math.pow(1.0 + (maxVal - srcList.get(i))/denomFuzzifier, -expFuzzifier);
+        
+        for (i = 0; i < length; i++) {
+        	if (entireImage || mask.get(i)) {
+        	    if (!srcList.contains(buffer[i])) {
+        	        srcList.add(buffer[i]);	
+        	    }
+        	}
+        }
+        Collections.sort(srcList);
+        uniqueValues = srcList.size();
+        resultBuffer = new double[uniqueValues];
+        maxVal = srcList.get(uniqueValues-1);
+        denomFuzzifier = (maxVal - crossVal)/(Math.exp(-Math.log(0.5)/expFuzzifier) - 1.0);
+        alpha = Math.pow(1.0 + (gmax - gmin)/denomFuzzifier, -expFuzzifier);
+        for (i = 0; i < uniqueValues; i++) {
+        	resultBuffer[i] = Math.pow(1.0 + (gmax - srcList.get(i))/denomFuzzifier, -expFuzzifier);
+        	for (iters = 0; iters < iterations; iters++) {
 	        	if (resultBuffer[i] <= 0.5) {
 	        		resultBuffer[i] = 2.0*resultBuffer[i]*resultBuffer[i];
 	        	}
@@ -215,28 +240,24 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 	        		diff = 1.0 - resultBuffer[i];
 	        		resultBuffer[i] = 1.0 - 2.0*diff*diff;
 	        	}
-	        	expVal = Math.pow(resultBuffer[i],-1.0/expFuzzifier);
-	        	resultBuffer[i] = maxVal - denomFuzzifier*(expVal - 1.0);
-	        }
-	        resultMin = resultBuffer[0];
-	        resultMax = resultBuffer[uniqueValues-1];
-	        // slope * resultMin + intercept = minVal
-	        // slope * resultMax + intercept = maxVal
-	        slope = (maxVal - minVal)/(resultMax - resultMin);
-	        intercept = minVal - slope * resultMin;
-	        for (i = 0; i < uniqueValues; i++) {
-	        	resultBuffer[i] = slope * resultBuffer[i] + intercept;
-	        }
-	        
-	        for (i = 0; i < length; i++) {
-	        	if (entireImage || mask.get(i)) {
-	        	    index = Collections.binarySearch(srcList, buffer[i]);
-	        	    buffer[i] = resultBuffer[index];
+	        	if (resultBuffer[i] < alpha) {
+	        		// Keep the lowest gray scale level from being less than gmin
+	        		resultBuffer[i] = alpha;
 	        	}
-            }
-	        srcList.clear();
+        	} // for (iters = 0; iters < iterations; iters++)
+        	expVal = Math.pow(resultBuffer[i],-1.0/expFuzzifier);
+        	resultBuffer[i] = maxVal - denomFuzzifier*(expVal - 1.0);
+        } // for (i = 0; i < uniqueValues; i++)
         
-        } // for (iters = 0; iters < iterations; iters++)
+        for (i = 0; i < length; i++) {
+        	if (entireImage || mask.get(i)) {
+        	    index = Collections.binarySearch(srcList, buffer[i]);
+        	    buffer[i] = resultBuffer[index];
+        	}
+        }
+        srcList.clear();
+        
+        
         
         if (threadStopped) {
             finalize();
@@ -270,17 +291,13 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
         int i;
         ArrayList <Double> srcList = new ArrayList<Double>();
         int uniqueValues;
-        double minVal;
         double maxVal;
-        double resultMin;
-        double resultMax;
         double denomFuzzifier;
         double diff;
         double expVal;
         int index;
         int iters;
-        double slope;
-        double intercept;
+        double alpha;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -316,22 +333,22 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
             return;
         }
         
-        for (iters = 0; iters < iterations; iters++) {
-	        for (i = 0; i < length; i++) {
-	        	if (entireImage || mask.get(i)) {
-	        	    if (!srcList.contains(buffer[i])) {
-	        	        srcList.add(buffer[i]);	
-	        	    }
-	        	}
-	        }
-	        Collections.sort(srcList);
-	        uniqueValues = srcList.size();
-	        resultBuffer = new double[uniqueValues];
-	        minVal = srcList.get(0);
-	        maxVal = srcList.get(uniqueValues-1);
-	        denomFuzzifier = (maxVal - crossVal)/(Math.exp(-Math.log(0.5)/expFuzzifier) - 1.0);
-	        for (i = 0; i < uniqueValues; i++) {
-	        	resultBuffer[i] = Math.pow(1.0 + (maxVal - srcList.get(i))/denomFuzzifier, -expFuzzifier);
+        for (i = 0; i < length; i++) {
+        	if (entireImage || mask.get(i)) {
+        	    if (!srcList.contains(buffer[i])) {
+        	        srcList.add(buffer[i]);	
+        	    }
+        	}
+        }
+        Collections.sort(srcList);
+        uniqueValues = srcList.size();
+        resultBuffer = new double[uniqueValues];
+        maxVal = srcList.get(uniqueValues-1);
+        denomFuzzifier = (maxVal - crossVal)/(Math.exp(-Math.log(0.5)/expFuzzifier) - 1.0);
+        alpha = Math.pow(1.0 + (gmax - gmin)/denomFuzzifier, -expFuzzifier);
+        for (i = 0; i < uniqueValues; i++) {
+        	resultBuffer[i] = Math.pow(1.0 + (gmax - srcList.get(i))/denomFuzzifier, -expFuzzifier);
+        	for (iters = 0; iters < iterations; iters++) {
 	        	if (resultBuffer[i] <= 0.5) {
 	        		resultBuffer[i] = 2.0*resultBuffer[i]*resultBuffer[i];
 	        	}
@@ -339,28 +356,24 @@ public class AlgorithmFuzzyMinimization extends AlgorithmBase {
 	        		diff = 1.0 - resultBuffer[i];
 	        		resultBuffer[i] = 1.0 - 2.0*diff*diff;
 	        	}
-	        	expVal = Math.pow(resultBuffer[i],-1.0/expFuzzifier);
-	        	resultBuffer[i] = maxVal - denomFuzzifier*(expVal - 1.0);
-	        }
-	        resultMin = resultBuffer[0];
-	        resultMax = resultBuffer[uniqueValues-1];
-	        // slope * resultMin + intercept = minVal
-	        // slope * resultMax + intercept = maxVal
-	        slope = (maxVal - minVal)/(resultMax - resultMin);
-	        intercept = minVal - slope * resultMin;
-	        for (i = 0; i < uniqueValues; i++) {
-	        	resultBuffer[i] = slope * resultBuffer[i] + intercept;
-	        }
-	        
-	        for (i = 0; i < length; i++) {
-	        	if (entireImage || mask.get(i)) {
-	        	    index = Collections.binarySearch(srcList, buffer[i]);
-	        	    buffer[i] = resultBuffer[index];
+	        	if (resultBuffer[i] < alpha) {
+	        		// Keep the lowest gray scale level from being less than gmin
+	        		resultBuffer[i] = alpha;
 	        	}
-	        }
-	        srcList.clear();
-
-        } // for (iters = 0; iters < iterations; iters++)
+        	} // for (iters = 0; iters < iterations; iters++)
+        	expVal = Math.pow(resultBuffer[i],-1.0/expFuzzifier);
+        	resultBuffer[i] = maxVal - denomFuzzifier*(expVal - 1.0);
+        } // for (i = 0; i < uniqueValues; i++)
+        
+        for (i = 0; i < length; i++) {
+        	if (entireImage || mask.get(i)) {
+        	    index = Collections.binarySearch(srcList, buffer[i]);
+        	    buffer[i] = resultBuffer[index];
+        	}
+        }
+        srcList.clear();
+        
+        
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
        
         if (threadStopped) {
