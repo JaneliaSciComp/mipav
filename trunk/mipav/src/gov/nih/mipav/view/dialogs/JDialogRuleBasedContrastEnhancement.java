@@ -47,12 +47,20 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+    
+    private JTextField textgmin;
+    
+    private double gmin;
 
     /** DOCUMENT ME! */
     private JTextField textgmid;
 
     /** DOCUMENT ME! */
     private double gmid;
+    
+    private JTextField textgmax;
+    
+    private double gmax;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -241,7 +249,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
 
                 try {
 
-                    resultImage     = (ModelImage) image.clone();
+                    resultImage     = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
                     resultImage.setImageName(name);
                     if (resultImage.getNDims() >= 3) {
                     	zDim = resultImage.getExtents()[2];
@@ -257,7 +265,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
                     }
 
                     // Make algorithm
-                    rbceAlgo = new AlgorithmRuleBasedContrastEnhancement(resultImage, image, gmid);
+                    rbceAlgo = new AlgorithmRuleBasedContrastEnhancement(resultImage, image, gmin, gmid, gmax);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -294,7 +302,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    rbceAlgo = new AlgorithmRuleBasedContrastEnhancement(image, gmid);
+                    rbceAlgo = new AlgorithmRuleBasedContrastEnhancement(image, gmin, gmid, gmax);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed or failed. See algorithm performed event.
@@ -365,7 +373,9 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
+        gmin = scriptParameters.getParams().getDouble("gmin");
         gmid = scriptParameters.getParams().getDouble("gmid");
+        gmax = scriptParameters.getParams().getDouble("gmax");
 
     }
 
@@ -376,7 +386,9 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gmin", gmin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("gmid", gmid));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gmax", gmax));
     }
 
     /**
@@ -392,12 +404,25 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));
+        
+        JLabel labelgmin = new JLabel("New image min ( < " + image.getMin() + ")");
+        labelgmin.setForeground(Color.black);
+        labelgmin.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        paramPanel.add(labelgmin, gbc);
+
+        textgmin = new JTextField(10);
+        textgmin.setText("");
+        textgmin.setFont(serif12);
+        gbc.gridx = 1;
+        paramPanel.add(textgmin, gbc);
 
         JLabel labelgmid = new JLabel("gray level at which ugray = 1.0 (> " + image.getMin() + " to < " + image.getMax() + ")");
         labelgmid.setForeground(Color.black);
         labelgmid.setFont(serif12);
         gbc.gridx = 0;
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         paramPanel.add(labelgmid, gbc);
 
         textgmid = new JTextField(10);
@@ -405,6 +430,19 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         textgmid.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(textgmid, gbc);
+        
+        JLabel labelgmax = new JLabel("New image max ( > " + image.getMax() + ")");
+        labelgmax.setForeground(Color.black);
+        labelgmax.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        paramPanel.add(labelgmax, gbc);
+
+        textgmax = new JTextField(10);
+        textgmax.setText("");
+        textgmax.setFont(serif12);
+        gbc.gridx = 1;
+        paramPanel.add(textgmax, gbc);
 
         JPanel destinationPanel = new JPanel(new GridLayout(2, 1));
         destinationPanel.setForeground(Color.black);
@@ -468,6 +506,23 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
+        
+        tmpStr = textgmin.getText();
+
+        if (testParameter(tmpStr, -Double.MAX_VALUE, image.getMin())) {
+            gmin = Double.valueOf(tmpStr).doubleValue();
+            if (gmin == image.getMin()) {
+            	textgmin.requestFocus();
+                textgmin.selectAll();
+
+                return false;	
+            }
+        } else {
+            textgmin.requestFocus();
+            textgmin.selectAll();
+
+            return false;
+        }
 
         tmpStr = textgmid.getText();
 
@@ -482,6 +537,23 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         } else {
             textgmid.requestFocus();
             textgmid.selectAll();
+
+            return false;
+        }
+        
+        tmpStr = textgmax.getText();
+
+        if (testParameter(tmpStr, image.getMax(), Double.MAX_VALUE)) {
+            gmax = Double.valueOf(tmpStr).doubleValue();
+            if (gmax == image.getMax()) {
+            	textgmax.requestFocus();
+                textgmax.selectAll();
+
+                return false;	
+            }
+        } else {
+            textgmax.requestFocus();
+            textgmax.selectAll();
 
             return false;
         }
@@ -540,7 +612,9 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         try {
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
+            table.put(new ParameterDouble("gmin", -Double.MAX_VALUE));
             table.put(new ParameterDouble("gmid", 0.0));
+            table.put(new ParameterDouble("gmax", Double.MAX_VALUE));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
