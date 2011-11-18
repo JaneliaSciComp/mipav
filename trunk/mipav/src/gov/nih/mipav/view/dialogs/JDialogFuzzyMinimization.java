@@ -286,15 +286,62 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_fuzzyMin");
         int zDim;
+        int newType;
 
-        
+            
 
             if (outputPanel.isOutputNewImageSet()) {
 
                 try {
+                	newType = image.getType();
+                    if (newType == ModelStorageBase.DOUBLE) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.FLOAT) {
+                    	if ((gmin < -Float.MAX_VALUE) || (gmax > Float.MAX_VALUE)) {
+                    		newType = ModelStorageBase.DOUBLE;
+                    	}
+                    }
+                    else if ((gmin < Long.MIN_VALUE) || (gmax > Long.MAX_VALUE)) {
+                    	newType = ModelStorageBase.DOUBLE;
+                    }
+                    else if (newType == ModelStorageBase.LONG) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.UINTEGER) {
+                    	if ((gmin < 0) || (gmax > 4294967295L)) {
+                    	    newType = ModelStorageBase.LONG;
+                    	}
+                    }
+                    else if ((gmin < Integer.MIN_VALUE) || (gmax > Integer.MAX_VALUE)) {
+                    	newType = ModelStorageBase.LONG;
+                    }
+                    else if (newType == ModelStorageBase.INTEGER) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.USHORT) {
+                    	if ((gmin < 0) || (gmax > 65535)) {
+                    		newType = ModelStorageBase.INTEGER;
+                    	}
+                    }
+                    else if ((gmin < -32768) || (gmax > 32767)) {
+                    	newType = ModelStorageBase.INTEGER;
+                    }
+                    else if (newType == ModelStorageBase.SHORT) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.UBYTE) {
+                    	if ((gmin < 0) || (gmax > 255)) {
+                    		newType = ModelStorageBase.SHORT;
+                    	}
+                    }
+                    else if (newType == ModelStorageBase.BYTE) {
+                    	if ((gmin < -128) || (gmax > 127)) {
+                    		newType = ModelStorageBase.SHORT;
+                    	}
+                    }
 
-                    resultImage     = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
+                    resultImage     = new ModelImage(newType, image.getExtents(), name);
                     if (resultImage.getNDims() >= 3) {
                     	zDim = resultImage.getExtents()[2];
                     }
@@ -707,6 +754,8 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
             table.put(new ParameterInt(AlgorithmParameters.NUM_ITERATIONS, 1));
             table.put(new ParameterDouble("crossover_value", 0.0));
             table.put(new ParameterDouble("exponential_fuzzifier", 1.0));
+            table.put(new ParameterDouble("gmin",0.0));
+            table.put(new ParameterDouble("gmax",255.0));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
