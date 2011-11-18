@@ -12,7 +12,7 @@ import java.util.*;
 
 /**
    This algorithm uses an equation with 3 membership functions, udark, ugray, and ubright, to transform a gray level g
-   to a new gray level g' in a double data type image for histogram enhancement.
+   to a new gray level g' for histogram enhancement.  Data type is promoted if necessary.
    g' = (udark(g)*gmin + ugray(g)*gmid + ubright(g)*gmax)/(udark(g) + ugray(g) + ubright(g))
    gmin and gmax are the new user selected minimum and maximum gray scale levels, with 
    gmin < srcMin and gmax > srcMax
@@ -138,6 +138,7 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         int index;
         double srcMin = srcImage.getMin();
         double srcMax = srcImage.getMax();
+        int newType;
 
         try {
 
@@ -195,10 +196,60 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
         }
         srcList.clear();
         
-        AlgorithmChangeType convertType = new AlgorithmChangeType(srcImage, ModelStorageBase.DOUBLE, srcImage.getMin(),
-                srcImage.getMax(), gmin, gmax, false);
-        convertType.run();
-        convertType = null;
+        newType = srcImage.getType();
+        if (newType == ModelStorageBase.DOUBLE) {
+        	
+        }
+        else if (newType == ModelStorageBase.FLOAT) {
+        	if ((gmin < -Float.MAX_VALUE) || (gmax > Float.MAX_VALUE)) {
+        		newType = ModelStorageBase.DOUBLE;
+        	}
+        }
+        else if ((gmin < Long.MIN_VALUE) || (gmax > Long.MAX_VALUE)) {
+        	newType = ModelStorageBase.DOUBLE;
+        }
+        else if (newType == ModelStorageBase.LONG) {
+        	
+        }
+        else if (newType == ModelStorageBase.UINTEGER) {
+        	if ((gmin < 0) || (gmax > 4294967295L)) {
+        	    newType = ModelStorageBase.LONG;
+        	}
+        }
+        else if ((gmin < Integer.MIN_VALUE) || (gmax > Integer.MAX_VALUE)) {
+        	newType = ModelStorageBase.LONG;
+        }
+        else if (newType == ModelStorageBase.INTEGER) {
+        	
+        }
+        else if (newType == ModelStorageBase.USHORT) {
+        	if ((gmin < 0) || (gmax > 65535)) {
+        		newType = ModelStorageBase.INTEGER;
+        	}
+        }
+        else if ((gmin < -32768) || (gmax > 32767)) {
+        	newType = ModelStorageBase.INTEGER;
+        }
+        else if (newType == ModelStorageBase.SHORT) {
+        	
+        }
+        else if (newType == ModelStorageBase.UBYTE) {
+        	if ((gmin < 0) || (gmax > 255)) {
+        		newType = ModelStorageBase.SHORT;
+        	}
+        }
+        else if (newType == ModelStorageBase.BYTE) {
+        	if ((gmin < -128) || (gmax > 127)) {
+        		newType = ModelStorageBase.SHORT;
+        	}
+        }
+        
+        if (srcImage.getType() != newType) {
+        	AlgorithmChangeType convertType = new AlgorithmChangeType(srcImage, newType, srcImage.getMin(),
+                    srcImage.getMax(), gmin, gmax, false);
+            convertType.run();
+            convertType = null;
+        }
         
         if (threadStopped) {
             finalize();
