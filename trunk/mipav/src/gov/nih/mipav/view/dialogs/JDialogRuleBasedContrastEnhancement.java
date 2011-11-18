@@ -236,7 +236,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
     }
     
     /**
-     * Once all the necessary variables are set, call the median algorithm based on what type of image this is and
+     * Once all the necessary variables are set, call the rule based contrast enhancement algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
@@ -451,7 +451,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));
         
-        JLabel labelgmin = new JLabel("New image min ( < " + image.getMin() + ")");
+        JLabel labelgmin = new JLabel("New image min ( <= " + image.getMin() + ")");
         labelgmin.setForeground(Color.black);
         labelgmin.setFont(serif12);
         gbc.gridx = 0;
@@ -477,7 +477,7 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
         gbc.gridx = 1;
         paramPanel.add(textgmid, gbc);
         
-        JLabel labelgmax = new JLabel("New image max ( > " + image.getMax() + ")");
+        JLabel labelgmax = new JLabel("New image max ( >= " + image.getMax() + ")");
         labelgmax.setForeground(Color.black);
         labelgmax.setFont(serif12);
         gbc.gridx = 0;
@@ -557,12 +557,6 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
 
         if (testParameter(tmpStr, -Double.MAX_VALUE, image.getMin())) {
             gmin = Double.valueOf(tmpStr).doubleValue();
-            if (gmin == image.getMin()) {
-            	textgmin.requestFocus();
-                textgmin.selectAll();
-
-                return false;	
-            }
         } else {
             textgmin.requestFocus();
             textgmin.selectAll();
@@ -591,17 +585,16 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
 
         if (testParameter(tmpStr, image.getMax(), Double.MAX_VALUE)) {
             gmax = Double.valueOf(tmpStr).doubleValue();
-            if (gmax == image.getMax()) {
-            	textgmax.requestFocus();
-                textgmax.selectAll();
-
-                return false;	
-            }
         } else {
             textgmax.requestFocus();
             textgmax.selectAll();
 
             return false;
+        }
+        
+        if ((gmin == image.getMin())  && (gmax == image.getMax())) {
+        	MipavUtil.displayError("Must have either gmin < " + image.getMin() + " or gmax > " + image.getMax());
+        	return false;
         }
 
         return true;
