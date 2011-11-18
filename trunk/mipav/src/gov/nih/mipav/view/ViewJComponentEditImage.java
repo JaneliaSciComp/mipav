@@ -614,9 +614,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
     public static final String[] getScannerPositionLabels(final ModelImage image, final Vector3f position) {
         final DecimalFormat nf = new DecimalFormat("#####0.0##");
         final Vector3f kOut = new Vector3f(position);
-        if (image.getNDims() >= 3) {
-            MipavCoordinateSystems.fileToScanner(position, kOut, image);
-        }
+        MipavCoordinateSystems.fileToScanner(position, kOut, image);
 
         final float[] tCoord = new float[3];
         tCoord[0] = kOut.X;
