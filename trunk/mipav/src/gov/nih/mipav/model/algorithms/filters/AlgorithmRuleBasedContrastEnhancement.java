@@ -15,7 +15,8 @@ import java.util.*;
    to a new gray level g' for histogram enhancement.  Data type is promoted if necessary.
    g' = (udark(g)*gmin + ugray(g)*gmid + ubright(g)*gmax)/(udark(g) + ugray(g) + ubright(g))
    gmin and gmax are the new user selected minimum and maximum gray scale levels, with 
-   gmin < srcMin and gmax > srcMax
+   gmin <= srcMin and gmax >= srcMax.  Must have gmin < srcMin or gmax > srcMax.
+   If we were to have gmin == srcMin and gmax = srcMax, then the image would be unchanged after processing.
    By default gmid = (srcMin + srcMax)/2.0, but the user can select other values between srcMin and srcMax.
    Note that in reference 3 the authors used gmin = 0, gmid = 200, gmax = 255.
    udark(g) has 2 straight line segments.  The first stays at 1 from gmin to srcMin.  The second goes from goes from 1 at srcMin to 0 at gmid.
@@ -38,12 +39,12 @@ public class AlgorithmRuleBasedContrastEnhancement extends AlgorithmBase {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** The new image minimum.  Must have gmin < srcMin */
+    /** The new image minimum.  Must have gmin <= srcMin */
 	private double gmin;
     /** Gray scale value at which ugray(g) = 1.0.
      * By default gmid = (srcMin + srcMmax)/2.0, but it can assume any value between srcMin and srcMax */
     private double gmid;
-    /** The new image maximum.  Must have gmax > srcMax */
+    /** The new image maximum.  Must have gmax >= srcMax */
     private double gmax;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
