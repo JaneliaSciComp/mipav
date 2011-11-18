@@ -242,15 +242,61 @@ public class JDialogRuleBasedContrastEnhancement extends JDialogScriptableBase i
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_contrastEnhancement");
         int zDim;
-
+        int newType;
         
 
             if (displayLoc == NEW) {
 
                 try {
+                	newType = image.getType();
+                    if (newType == ModelStorageBase.DOUBLE) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.FLOAT) {
+                    	if ((gmin < -Float.MAX_VALUE) || (gmax > Float.MAX_VALUE)) {
+                    		newType = ModelStorageBase.DOUBLE;
+                    	}
+                    }
+                    else if ((gmin < Long.MIN_VALUE) || (gmax > Long.MAX_VALUE)) {
+                    	newType = ModelStorageBase.DOUBLE;
+                    }
+                    else if (newType == ModelStorageBase.LONG) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.UINTEGER) {
+                    	if ((gmin < 0) || (gmax > 4294967295L)) {
+                    	    newType = ModelStorageBase.LONG;
+                    	}
+                    }
+                    else if ((gmin < Integer.MIN_VALUE) || (gmax > Integer.MAX_VALUE)) {
+                    	newType = ModelStorageBase.LONG;
+                    }
+                    else if (newType == ModelStorageBase.INTEGER) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.USHORT) {
+                    	if ((gmin < 0) || (gmax > 65535)) {
+                    		newType = ModelStorageBase.INTEGER;
+                    	}
+                    }
+                    else if ((gmin < -32768) || (gmax > 32767)) {
+                    	newType = ModelStorageBase.INTEGER;
+                    }
+                    else if (newType == ModelStorageBase.SHORT) {
+                    	
+                    }
+                    else if (newType == ModelStorageBase.UBYTE) {
+                    	if ((gmin < 0) || (gmax > 255)) {
+                    		newType = ModelStorageBase.SHORT;
+                    	}
+                    }
+                    else if (newType == ModelStorageBase.BYTE) {
+                    	if ((gmin < -128) || (gmax > 127)) {
+                    		newType = ModelStorageBase.SHORT;
+                    	}
+                    }
 
-                    resultImage     = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
-                    resultImage.setImageName(name);
+                    resultImage     = new ModelImage(newType, image.getExtents(), name);
                     if (resultImage.getNDims() >= 3) {
                     	zDim = resultImage.getExtents()[2];
                     }
