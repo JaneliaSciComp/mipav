@@ -122,6 +122,13 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 		//first run b-spline algorithm on input points VOI
 		VOIVector VOIs = wormImage.getVOIs();
+		// reverses order of voi points:
+		//Vector<VOIBase> points = VOIs.VOIAt(0).getCurves();
+		//int size = points.size();
+		//for ( int i = size-1; i >= 0; i-- )
+		//{
+		//	points.add( points.remove( i ) );
+		//}
 
 		smoothAlgo = new AlgorithmBSmooth(wormImage, VOIs.VOIAt(0), interpolationPts, false);
 		smoothAlgo.run();
@@ -137,10 +144,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 		//update image
 		wormImage.notifyImageDisplayListeners();
-
-
-		//testOutputZ();
-		//testOutputRotateY();
 
 		//call the method that does the work
 		doPlanes();
@@ -162,9 +165,7 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		//!!!!!!!!!!!!!!!!!!NEED TO REMOVE THAT -1 AT SOME POINT
 		resultExtents[0] = diameter;
 		resultExtents[1] = diameter;
-		resultExtents[2] = interpolationPts-1;
-
-		//resultExtents = wormImage.getExtents();
+		resultExtents[2] = interpolationPts-2;
 
 		float[] res = {wormImage.getResolutions(0)[0], wormImage.getResolutions(0)[1],wormImage.getResolutions(0)[2]};
 		resultImage = new ModelImage(ModelStorageBase.FLOAT, resultExtents, "RESULT IMAGE");
@@ -178,8 +179,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		VOI newPtVOI = new VOI((short) 0, "point3D.voi", VOI.POINT, -1.0f);
 		newPtVOI.setUID(newPtVOI.hashCode());
 		resultImage.registerVOI(newPtVOI);
-
-
 
 
 		//In order to determine the perpendicular plane along each point, we also need the tangent vector (normal vector to plane) at that
@@ -232,12 +231,13 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		int start = 0;
 		int resultSliceSize = resultExtents[0] * resultExtents[1];
 
+		Vector3f lpsOrigin = new Vector3f();
 		Vector3f lpsPosition = new Vector3f();
 		Vector3f lpsPositionPrev = new Vector3f();
 		Vector3f kNormal = new Vector3f( Vector3f.UNIT_X );
 		float lineLength = 0;
 		int count = 0;
-		for(int i=0;i< Math.min( interpolationPts-1, resultExtents[2]-1);i++) {
+		for(int i=0;i< Math.min( interpolationPts-2, resultExtents[2]-1);i++) {
 
 			//determining tangent vector at point
 			int index = i;
@@ -278,13 +278,10 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			// Create a rotation angle-degrees about the rotation axis:
 			Matrix3f transformTotal = new Matrix3f();
 			transformTotal.FromAxisAngle( rotationAxis, angle );
-			//System.err.println( tangentVect + "               " +  (float)((360 * angle) / (2.0 * Math.PI)) + "                  " + rotationAxis );
-			// Transform boxSliceVertices (rotation, and then transate to position)
 			transformBoxSlices(transformTotal, point, tanVector);
 
 			kNormal = new Vector3f( tanVector );
 			//now we call export diagonal and pass in those vertices
-
 
 			values = new float[resultExtents[0] * resultExtents[1]]; 
 			try {
@@ -294,11 +291,12 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 				//System.out.println(boxSliceVertices[2].X + " , " + boxSliceVertices[2].Y + " " + boxSliceVertices[2].Z);
 				//System.out.println(boxSliceVertices[3].X + " , " + boxSliceVertices[3].Y + " " + boxSliceVertices[3].Z);
 
-				//wormImage.exportDiagonal(0, i, wormImageExtents, boxSliceVertices, values, true);
 				wormImage.exportDiagonal(0, i, resultExtents, boxSliceVertices, values, true);
-				//wormImage.exportDiagonal(0, i, resultExtents, boxIntersection, values, true);
 
-
+				if ( i == 0 )
+				{
+					MipavCoordinateSystems.fileToScanner( boxSliceVertices[0], lpsOrigin, wormImage );
+				}
 
 				VOIContour kBox = new VOIContour(true);
 				for ( int pt = 0; pt < 4; pt++ )
@@ -328,9 +326,10 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 		res[2] = lineLength / (float)count;
 		resultImage.setResolutions(res);
+		float[] alpsOrigin = new float[]{ lpsOrigin.X, lpsOrigin.Y, lpsOrigin.Z };
 		fileInfoBases = resultImage.getFileInfo();
 		for (int i = 0; i < fileInfoBases.length; i++) {
-			fileInfoBases[i].setResolutions(res);
+			fileInfoBases[i].setOrigin(alpsOrigin);
 		}
 
 
@@ -379,61 +378,17 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			// corners from (-1,-1,-1) -> (1,1,1)
 			kTransform.Mult(verts[i], outVertices[i]);
 
-
 			verts[i].X = outVertices[i].X;
 			verts[i].Y = outVertices[i].Y;
 			verts[i].Z = outVertices[i].Z;
-			//System.err.println( verts2[i] + "                  " + outVertices[i] );
-
 		}
-		/*
-		kTransform = new Transform3D();
-		int a = 0;
-		float angle = 0;
-		float diff =  Math.abs(verts[0].y - verts[1].y);
-		float minDiff = Float.MAX_VALUE;
-		int minAngle = 0;
-		while ( (a < 360) && (0.001 < diff) )
-		{
-			a++;
-			angle = (float)(a * (2f*Math.PI)/(360f));
-			kTransform.setIdentity();
-			kTransform.setRotation( new AxisAngle4f( new javax.vecmath.Vector3f( tangentVect.X, tangentVect.Y, tangentVect.Z), angle ) );
-			for (int i = 0; i < 4; i++) {
-
-				Point3f in = new Point3f( verts[i].x, verts[i].y, verts[i].z );
-				kTransform.transform(in, outVertices[i]);
-			}
-			diff =  Math.abs(outVertices[0].y - outVertices[1].y);
-			if ( diff < minDiff )
-			{
-				minDiff = diff;
-				minAngle = a;
-			}
-			//System.err.println( diff + "    " + a + "    " + outVertices[0].y + " " + outVertices[1].y + "              " + outVertices[2].y + " " + outVertices[3].y  );
-		}
-
-
-		angle = (float)(minAngle * (2f*Math.PI)/(360f));
-		kTransform.setIdentity();
-		kTransform.setRotation( new AxisAngle4f( new javax.vecmath.Vector3f( tangentVect.X, tangentVect.Y, tangentVect.Z), angle ) );
-		for (int i = 0; i < 4; i++) {
-
-			Point3f in = new Point3f( verts[i].x, verts[i].y, verts[i].z );
-			kTransform.transform(in, outVertices[i]);
-
-			verts[i].x = outVertices[i].x;
-			verts[i].y = outVertices[i].y;
-			verts[i].z = outVertices[i].z;
-		}
-		 */
-		//System.err.println( a + "    " + outVertices[0].y + " " + outVertices[1].y + "              " + outVertices[2].y + " " + outVertices[3].y );
+		
 		for (int i = 0; i < 4; i++) {			
 			// Shift so the position is back to the cube with corners from (0,0,0) -> (2,2,2)
 			outVertices[i].X += centerShift.X;
 			outVertices[i].Y += centerShift.Y;
 			outVertices[i].Z += centerShift.Z;
-			//System.err.println( outVertices[i] );
+
 			outVertices[i].X /= 2f;
 			outVertices[i].Y /= 2f;
 			outVertices[i].Z /= 2f;
@@ -461,258 +416,14 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 			boxSliceVertices[i].Z += (kPosition.Z - centerModel.Z);
 		}
 	}
-
-
-
-
+	
+	
 	/**
-	 * Translate from normalized plane coordinates to Model coordinates:
-	 * 
-	 * @param screen the input point to be transformed from normalized plane coordinates
-	 * @param model the output point in Model coordinates
+	 * Sets up the initial bounding box for the diagonal slice sample based on the first tangent in the bspline.
+	 * @param kNormal
+	 * @param kTangent
+	 * @return
 	 */
-	/* private void ScreenToModel(javax.vecmath.Vector3f screen, Vector3f model) {
-        model.X = Math.round( ( (screen.x + xBox) * ((float) xDim - 1)) / (2.0f * xBox));
-        model.Y = Math.round( ( (screen.y - yBox) * ((float) yDim - 1)) / ( -2.0f * yBox));
-        model.Z = Math.round( ( (screen.z - zBox) * ((float) zDim - 1)) / ( -2.0f * zBox));
-    }*/
-
-
-
-
-
-
-
-
-	private Vector3f[] boxIntersection = new Vector3f[4];
-	private void getPlaneIntersection( Vector3f tangent, Vector3f position )
-	{
-		Plane3f kPlane = new Plane3f( tangent, position );
-		Vector3f kOrigin = new Vector3f();
-		Vector3f kDirection = new Vector3f();
-
-		Vector3f[] kBox = new Vector3f[8];
-		kBox[0] = new Vector3f(0,0,0);
-		kBox[1] = new Vector3f(xDim,0,0);
-		kBox[2] = new Vector3f(xDim,yDim,0);
-		kBox[3] = new Vector3f(0,yDim,0);
-
-		kBox[4] = new Vector3f(0,0,zDim);
-		kBox[5] = new Vector3f(xDim,0,zDim);
-		kBox[6] = new Vector3f(xDim,yDim,zDim);
-		kBox[7] = new Vector3f(0,yDim,zDim);
-
-		Vector<Vector3f> intersectionPoints = new Vector<Vector3f>();
-
-		// 0-1 intersection:
-		kOrigin = new Vector3f( kBox[0] );
-		kDirection.Sub( kBox[1], kBox[0] );
-		float length = kDirection.Normalize();
-		Segment3f kLine = new Segment3f(kOrigin, kDirection, length);		
-		IntrSegment3Plane3f kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 1-2 intersection:
-		kOrigin = new Vector3f( kBox[1] );
-		kDirection.Sub( kBox[2], kBox[1] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-
-		// 3-2 intersection:
-		kOrigin = new Vector3f( kBox[2] );
-		kDirection.Sub( kBox[3], kBox[2] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 3-0 intersection:
-		kOrigin = new Vector3f( kBox[0] );
-		kDirection.Sub( kBox[3], kBox[0] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 4-0 intersection:
-		kOrigin = new Vector3f( kBox[0] );
-		kDirection.Sub( kBox[4], kBox[0] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 5-1 intersection:
-		kOrigin = new Vector3f( kBox[1] );
-		kDirection.Sub( kBox[5], kBox[1] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 6-2 intersection:
-		kOrigin = new Vector3f( kBox[2] );
-		kDirection.Sub( kBox[6], kBox[2] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 7-3 intersection:
-		kOrigin = new Vector3f( kBox[3] );
-		kDirection.Sub( kBox[7], kBox[3] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-
-		// 4-5 intersection:
-		kOrigin = new Vector3f( kBox[4] );
-		kDirection.Sub( kBox[5], kBox[4] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-
-		// 6-5 intersection:
-		kOrigin = new Vector3f( kBox[5] );
-		kDirection.Sub( kBox[6], kBox[5] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-		// 7-6 intersection:
-		kOrigin = new Vector3f( kBox[6] );
-		kDirection.Sub( kBox[7], kBox[6] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-
-
-		// 4-7 intersection:
-		kOrigin = new Vector3f( kBox[4] );
-		kDirection.Sub( kBox[7], kBox[4] );
-		length = kDirection.Normalize();
-		kLine = new Segment3f(kOrigin, kDirection, length);		
-		kIntersect = new IntrSegment3Plane3f( kLine, kPlane );
-		if ( kIntersect.Find() )
-		{
-			float t = kIntersect.GetSegmentParameter();	
-			Vector3f kIntersection =  new Vector3f( kOrigin.X + kDirection.X * t, kOrigin.Y + kDirection.Y * t, kOrigin.Z + kDirection.Z * t );
-			intersectionPoints.add( kIntersection );
-		}
-
-		System.err.println( "Plane box intersection points: " + intersectionPoints.size() );
-
-
-
-		VOIContour kVOI = new VOIContour(true);
-		for ( int b = 0; b < 4; b++ )
-		{
-			float minDist = Float.MAX_VALUE;
-			int index = 0;
-			for ( int pt = 0; pt < intersectionPoints.size(); pt++ )
-			{
-				float dist = boxSliceVertices[b].Distance( intersectionPoints.elementAt(pt) );
-				if ( dist < minDist )
-				{
-					minDist = dist;
-					index = pt;
-				}
-			}
-			kVOI.addElement( intersectionPoints.elementAt(index) );
-			boxIntersection[b] = new Vector3f( intersectionPoints.elementAt(index) );
-		}
-
-		short sID = (short)(wormImage.getVOIs().getUniqueID());
-		String kName = kBox.getClass().getName();
-		int nameIndex = kName.lastIndexOf('.') + 1;
-		kName = kName.substring(nameIndex);
-		VOI kBoxVOI = new VOI( sID,  kName + "_" + sID, kVOI.getType(), .7f );
-		kBoxVOI.setOpacity(1f);
-		kBoxVOI.getCurves().add(kVOI);
-		kVOI.update( new ColorRGBA(0,0,1,1) );		
-
-		wormImage.registerVOI( kBoxVOI );
-
-
-	}
-
-
-
 	private Vector3f findClosestNormal( Vector3f kNormal, Vector3f kTangent )
 	{
 		float angle = kTangent.Angle(kNormal);      
@@ -759,12 +470,10 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 
 		if (minVec.equals(kNormal) )
 		{
-			System.err.println( minAngle + " " + minVec );
 			return kNormal;
 		}
 		if ( minVec.equals(Vector3f.UNIT_X ) )
 		{
-			System.err.println( "X        " + minAngle + " " + minVec );
 			verts[0] = new Vector3f(0,-1,-1);
 			verts[1] = new Vector3f(0,-1, 1);
 			verts[2] = new Vector3f(0, 1, 1);
@@ -773,7 +482,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		}
 		if ( minVec.equals(Vector3f.UNIT_X_NEG ) )
 		{
-			System.err.println( "X_NEG      " + minAngle + " " + minVec );
 			verts[0] = new Vector3f(0, 1, 1);
 			verts[1] = new Vector3f(0, 1,-1);
 			verts[2] = new Vector3f(0,-1,-1);
@@ -782,7 +490,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		}
 		if ( minVec.equals(Vector3f.UNIT_Y ) )
 		{
-			System.err.println( "Y        " + minAngle + " " + minVec );
 			verts[0] = new Vector3f(-1, 0,-1);
 			verts[1] = new Vector3f( 1, 0,-1);
 			verts[2] = new Vector3f( 1, 0, 1);
@@ -791,7 +498,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		}
 		if ( minVec.equals(Vector3f.UNIT_Y_NEG ) )
 		{
-			System.err.println( "Y_NEG      " + minAngle + " " + minVec );
 			verts[0] = new Vector3f( 1, 0, 1);
 			verts[1] = new Vector3f(-1, 0, 1);
 			verts[2] = new Vector3f(-1, 0,-1);
@@ -800,7 +506,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		}
 		if ( minVec.equals(Vector3f.UNIT_Z ) )
 		{
-			System.err.println( "Z        " + minAngle + " " + minVec );
 			verts[0] = new Vector3f(-1,-1, 0);
 			verts[1] = new Vector3f( 1,-1, 0);
 			verts[2] = new Vector3f( 1, 1, 0);
@@ -809,7 +514,6 @@ public class PlugInAlgorithmWormStraighteningAutomatic extends PlugInAlgorithmWo
 		}
 		if ( minVec.equals(Vector3f.UNIT_Z_NEG ) )
 		{
-			System.err.println( "Z_NEG      " + minAngle + " " + minVec );
 			verts[0] = new Vector3f( 1,-1, 0);
 			verts[1] = new Vector3f(-1,-1, 0);
 			verts[2] = new Vector3f(-1, 1, 0);
