@@ -86,8 +86,8 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
      *
      * @param  srcImg    Source image model.
      * @param  srcThreshold original image threshold
-     * @param  enhancedThreshold enhanced image threshold
      * @param  autoThreshold If true, ignore srcThreshold and calculate best value
+     * @param  enhancedThreshold enhanced image threshold
      * @param  theta1    angular equivalence of black band
      * @param  theta2    angular equivalence of white band
      * @param  p1        black region exponent
@@ -97,15 +97,15 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the fuzzy minimization filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmFuzzMinDeAndChatterji(ModelImage srcImg, double srcThreshold, double enhancedThreshold, boolean autoThreshold,
+    public AlgorithmFuzzMinDeAndChatterji(ModelImage srcImg, double srcThreshold, boolean autoThreshold, double enhancedThreshold,
     		double theta1, double theta2, double p1, double p2,
     		double gmin, double gmax, boolean maskFlag) {
         super(null, srcImg);
 
         entireImage = maskFlag;
         this.srcThreshold = srcThreshold;
-        this.enhancedThreshold = enhancedThreshold;
         this.autoThreshold = autoThreshold;
+        this.enhancedThreshold = enhancedThreshold;
         this.theta1 = theta1;
         this.theta2 = theta2;
         this.p1 = p1;
@@ -124,8 +124,8 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
      * @param  destImg   Image model where result image is stored.
      * @param  srcImg    Source image model.
      * @param  srcThreshold original image threshold
-     * @param  enhancedThreshold enhanced image threshold
      * @param  autoThreshold If true, ignore srcThreshold and calculate best value
+     * @param  enhancedThreshold enhanced image threshold
      * @param  theta1    angular equivalence of black band
      * @param  theta2    angular equivalence of white band
      * @param  p1        black region exponent
@@ -135,16 +135,16 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the fuzzy minimization filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmFuzzMinDeAndChatterji(ModelImage destImg, ModelImage srcImg, double srcThreshold, double enhancedThreshold, 
-    		               boolean autoThreshold, double theta1, double theta2, double p1, double p2,
+    public AlgorithmFuzzMinDeAndChatterji(ModelImage destImg, ModelImage srcImg, double srcThreshold, boolean autoThreshold, 
+    		               double enhancedThreshold, double theta1, double theta2, double p1, double p2,
                            double gmin, double gmax, boolean maskFlag) {
 
         super(destImg, srcImg);
 
         entireImage = maskFlag;
         this.srcThreshold = srcThreshold;
-        this.enhancedThreshold = enhancedThreshold;
         this.autoThreshold = autoThreshold;
+        this.enhancedThreshold = enhancedThreshold;
         this.theta1 = theta1;
         this.theta2 = theta2;
         this.p1 = p1;
