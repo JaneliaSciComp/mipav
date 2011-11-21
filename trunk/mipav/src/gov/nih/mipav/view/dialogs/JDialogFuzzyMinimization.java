@@ -636,6 +636,9 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
      */
     private boolean setVariables() {
         String tmpStr;
+        image.calcMinMax();
+    	minVal = image.getMin();
+    	maxVal = image.getMax();
 
         // verify iteration is within bounds
         tmpStr = textNIter.getText();
