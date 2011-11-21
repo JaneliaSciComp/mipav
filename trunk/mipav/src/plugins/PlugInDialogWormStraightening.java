@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Vector;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -49,11 +50,13 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
 	
 	private JButton wormImageBrowseButton, pointsFileBrowseButton;
 	
-	private JTextField wormImageTextField, pointsFileTextField, interpolationPtsTextField;
+	private JTextField wormImageTextField, pointsFileTextField, interpolationPtsTextField, diameterTextField;
 	
 	private JTextArea outputTextArea;
 
-	private JLabel wormImageLabel, pointsFileLabel, interpolationPtsLabel;
+	private JLabel wormImageLabel, pointsFileLabel, interpolationPtsLabel, diameterLabel;
+	
+	private JCheckBox algorithmCheck;
 	
 	private JPanel mainPanel;
 	
@@ -146,6 +149,12 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
 		interpolationPtsTextField.setBackground(Color.white);
 		interpolationPtsTextField.setBorder(new LineBorder(Color.black));
 		
+		diameterLabel = new JLabel( "Estimate diameter (voxels): " );
+		diameterTextField = new JTextField(5);
+		diameterTextField.setBackground(Color.white);
+		diameterTextField.setBorder(new LineBorder(Color.black));
+		
+		
 		outputTextArea = new JTextArea(15, 70);
 		outputTextArea.setEditable(false);
 		outputTextArea.setBackground(Color.lightGray);
@@ -188,7 +197,7 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
 		mainPanel.add(pointsFileBrowseButton, gbc);
 		
 		
-		
+
 		
 		gbc.gridx = 0;
 		gbc.gridy = 2;
@@ -200,10 +209,24 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
 		gbc.insets = new Insets(15,5,15,0);
 		mainPanel.add(interpolationPtsTextField, gbc);
 		
-		
-		
 		gbc.gridx = 0;
 		gbc.gridy = 3;
+		gbc.insets = new Insets(15,5,15,0);
+		mainPanel.add(diameterLabel, gbc);
+		
+		gbc.gridx = 1;
+		gbc.gridy = 3;
+		gbc.insets = new Insets(15,5,15,0);
+		mainPanel.add(diameterTextField, gbc);
+		
+		algorithmCheck = new JCheckBox( "Use Automatic Straightening", false );		
+		gbc.gridx = 0;
+		gbc.gridy = 4;
+		gbc.insets = new Insets(15,5,15,0);
+		mainPanel.add(algorithmCheck, gbc);
+		
+		gbc.gridx = 0;
+		gbc.gridy = 5;
 		gbc.gridwidth = 3;
 		gbc.insets = new Insets(15,5,15,0);
 		mainPanel.add(scrollPane, gbc);
@@ -279,24 +302,46 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
 	
 	protected void callAlgorithm() {
 		int interpolationPts = Integer.parseInt(interpolationPtsTextField.getText().trim());
-		alg = new PlugInAlgorithmWormStraightening(wormImage,interpolationPts);
+		int diameter = Integer.parseInt(diameterTextField.getText().trim());
 		
-		alg.addListener(this);
-		
-		
-		if (isRunInSeparateThread()) {
+		if ( algorithmCheck.isSelected() )
+		{
+			alg = new PlugInAlgorithmWormStraighteningAutomatic(wormImage,interpolationPts, diameter);
 
-			// Start the thread as a low priority because we wish to still
-			// have user interface work fast.
-			if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
-				MipavUtil.displayError("A thread is already running on this object");
+			alg.addListener(this);
+
+
+			if (isRunInSeparateThread()) {
+
+				// Start the thread as a low priority because we wish to still
+				// have user interface work fast.
+				if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+					MipavUtil.displayError("A thread is already running on this object");
+				}
+			} else {
+				alg.run();
 			}
-		} else {
-			alg.run();
 		}
-		
-		
-		
+		else
+		{
+			alg = new PlugInAlgorithmWormStraightening(wormImage,interpolationPts);
+
+			alg.addListener(this);
+
+
+			if (isRunInSeparateThread()) {
+
+				// Start the thread as a low priority because we wish to still
+				// have user interface work fast.
+				if (alg.startMethod(Thread.MIN_PRIORITY) == false) {
+					MipavUtil.displayError("A thread is already running on this object");
+				}
+			} else {
+				alg.run();
+			}
+		}
+
+
 		
 	}
 	
@@ -336,12 +381,18 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
                 vjf = new ViewJFrameImage(wormImage);
                 
                 wormImageTextField.setText(currDir);
-                updateRes();
+                //updateRes();
                 
                 wormImage.getParentFrame().initResolutions();
                 wormImage.getParentFrame().updateImageExtents();
                 wormImage.getParentFrame().componentResized(null);
-                
+
+                int minExtent = Math.min( wormImage.getExtents()[0], wormImage.getExtents()[1]);
+                if ( wormImage.getExtents().length > 2 )
+                {
+                	minExtent = Math.min( minExtent, wormImage.getExtents()[2]);
+                }
+                diameterTextField.setText(String.valueOf(minExtent));
             }
         }else if(command.equals("pointsFileBrowse")) {
         	JFileChooser chooser = new JFileChooser();
