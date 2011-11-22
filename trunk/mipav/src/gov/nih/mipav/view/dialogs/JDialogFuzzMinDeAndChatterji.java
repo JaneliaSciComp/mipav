@@ -173,12 +173,12 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
             //MipavUtil.showHelp("");
         } else if (source == autoCheckBox) {
         	if (autoCheckBox.isSelected()) {
-        		labelSrcThreshold.setEnabled(true);
-        		textSrcThreshold.setEnabled(true);
+        		labelSrcThreshold.setEnabled(false);
+        		textSrcThreshold.setEnabled(false);
         	}
         	else {
-        		labelSrcThreshold.setEnabled(false);
-        		textSrcThreshold.setEnabled(false);	
+        		labelSrcThreshold.setEnabled(true);
+        		textSrcThreshold.setEnabled(true);	
         	}
         }
     }
@@ -591,7 +591,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         paramPanel.setForeground(Color.black);
         paramPanel.setBorder(buildTitledBorder("Parameters")); // set the border ... "Parameters"
         
-        labelSrcThreshold = createLabel("Crossover value (> " + minVal + " to < " + maxVal + "):");
+        labelSrcThreshold = createLabel("Source threshold (> " + minVal + " to < " + maxVal + "):");
         labelSrcThreshold.setEnabled(false);
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
@@ -616,12 +616,12 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         autoCheckBox = new JCheckBox("Auto determination of source threshold", true);
         autoCheckBox.setFont(serif12);
         autoCheckBox.addActionListener(this);
-        gbc.gridwidth = 2;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(autoCheckBox, gbc);
         paramPanel.add(autoCheckBox); // add the instructions
         
-        labelEnhancedThreshold = createLabel("Crossover value (> new minimum value to < new maximum value ):");
+        labelEnhancedThreshold = createLabel("Enahnced threshold (> new minimum value to < new maximum value ):");
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(labelEnhancedThreshold, gbc);
