@@ -628,7 +628,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         paramPanel.add(labelEnhancedThreshold); // add the instructions
 
 
-        textEnhancedThreshold = createTextField(""); // make & set input
+        textEnhancedThreshold = createTextField(String.valueOf(crossVal)); // make & set input
         textEnhancedThreshold.setColumns(10);
         textEnhancedThreshold.setMaximumSize(textEnhancedThreshold.getPreferredSize()); // don't let it get any bigger
 
