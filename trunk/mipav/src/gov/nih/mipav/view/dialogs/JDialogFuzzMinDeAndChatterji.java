@@ -621,7 +621,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         gbl.setConstraints(autoCheckBox, gbc);
         paramPanel.add(autoCheckBox); // add the instructions
         
-        labelEnhancedThreshold = createLabel("Enahnced threshold (> new minimum value to < new maximum value ):");
+        labelEnhancedThreshold = createLabel("Enhanced threshold (> new minimum value to < new maximum value ):");
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(labelEnhancedThreshold, gbc);
