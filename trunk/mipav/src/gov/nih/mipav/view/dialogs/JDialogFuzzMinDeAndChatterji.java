@@ -592,7 +592,6 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         paramPanel.setBorder(buildTitledBorder("Parameters")); // set the border ... "Parameters"
         
         labelSrcThreshold = createLabel("Source threshold (> " + minVal + " to < " + maxVal + "):");
-        labelSrcThreshold.setEnabled(false);
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(labelSrcThreshold, gbc);
@@ -600,7 +599,6 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
 
 
         textSrcThreshold = createTextField(String.valueOf(crossVal)); // make & set input
-        textSrcThreshold.setEnabled(false);
         textSrcThreshold.setColumns(10);
         textSrcThreshold.setMaximumSize(textSrcThreshold.getPreferredSize()); // don't let it get any bigger
         
@@ -613,7 +611,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         gbl.setConstraints(textSrcThreshold, gbc);
         paramPanel.add(textSrcThreshold); // add inpu
         
-        autoCheckBox = new JCheckBox("Auto determination of source threshold", true);
+        autoCheckBox = new JCheckBox("Auto determination of source threshold", false);
         autoCheckBox.setFont(serif12);
         autoCheckBox.addActionListener(this);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
@@ -940,7 +938,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
             table.put(new ParameterDouble("source_threshold", 0.0));
-            table.put(new ParameterBoolean("auto_threshold",true));
+            table.put(new ParameterBoolean("auto_threshold",false));
             table.put(new ParameterDouble("enhanced_threshold", 1.0));
             table.put(new ParameterDouble("theta1", 45.0));
             table.put(new ParameterDouble("theta2", 45.0));
