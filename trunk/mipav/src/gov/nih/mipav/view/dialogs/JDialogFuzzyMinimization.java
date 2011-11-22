@@ -161,7 +161,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFuzzyMinimization) {
-            System.err.println("Median Elapsed: " + algorithm.getElapsedTime());
+            System.err.println("Fuzzy Minimization Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
 
             if ((fuzzyMinAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -172,7 +172,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
 
                 try {
 
-                    // resultImage.setImageName("Median: "+image.getImageName());
+                    // resultImage.setImageName("Fuzzy Minimization: "+image.getImageName());
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -379,7 +379,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
                         fuzzyMinAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+                    MipavUtil.displayError("Dialog Fuzzy Minimization: unable to allocate enough memory");
 
                     if (resultImage != null) {
                         resultImage.disposeLocal(); // Clean up memory of result image
@@ -431,7 +431,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
                         fuzzyMinAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog median: unable to allocate enough memory");
+                    MipavUtil.displayError("Dialog Fuzzy Minimization: unable to allocate enough memory");
 
                     return;
                 }
@@ -727,7 +727,7 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
             }
 
             public String getShortLabel() {
-                return new String("Fuzzy inimization");
+                return new String("Fuzzy minimization");
             }
 
             public String getLabel() {
