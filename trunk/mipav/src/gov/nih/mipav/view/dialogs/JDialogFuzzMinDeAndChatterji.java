@@ -788,7 +788,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         
         autoThreshold = autoCheckBox.isSelected();
         
-        if (autoThreshold) {
+        if (!autoThreshold) {
 	        // verify crossover value if within bounds
 	        tmpStr = textSrcThreshold.getText();
 	
@@ -806,7 +806,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
 	
 	            return false;
 	        }
-        } // if (autoThreshold)
+        } // if (!autoThreshold)
         
         tmpStr = textgmin.getText();
 
