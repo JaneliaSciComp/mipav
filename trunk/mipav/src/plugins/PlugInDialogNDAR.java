@@ -62,8 +62,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     private ViewTableModel sourceTableModel;
 
-    private String outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-            + "NDAR_Imaging_Submission" + File.separator;
+    private String outputDirBase;
 
     /** Length of the NDAR GUID */
     private static final int GUID_LENGTH = 12;
@@ -199,6 +198,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
         if (response == JOptionPane.YES_OPTION) {
+            outputDirBase = Preferences.getProperty(Preferences.PREF_NDAR_PLUGIN_OUTPUT_DIR); 
+            if (outputDirBase == null) {
+                outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator + "NDAR_Imaging_Submission" + File.separator;
+                Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_OUTPUT_DIR, outputDirBase);
+            }
+            
             init();
             setVisible(true);
             validate();
@@ -347,12 +352,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final JFileChooser chooser = new JFileChooser();
 
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-            chooser.setDialogTitle("Choose output directory");
+            chooser.setDialogTitle("Choose output directory for Validation Tool files");
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
 
                 outputDirBase = chooser.getSelectedFile().getAbsolutePath() + File.separator;
+                Preferences.setProperty(Preferences.PREF_NDAR_PLUGIN_OUTPUT_DIR, outputDirBase);
 
             }
         }
@@ -452,7 +458,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     private void init() {
-        setTitle("NDAR Image Submission Package Creation Tool v2.0");
+        setTitle("NDAR Image Submission Package Creation Tool v2.1");
 
         dataStructures = new ArrayList<DataStruct>();
 
@@ -465,11 +471,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         leftPanel = new JPanel(new GridBagLayout());
         leftPanel.setBorder(buildTitledBorder("Preview image"));
-        leftPanel.setPreferredSize(new Dimension(200, 350));
+        leftPanel.setPreferredSize(new Dimension(200, 300));
 
         previewPanel = new JPanel();
         previewPanel.setBorder(buildTitledBorder("Preview image"));
-        previewPanel.setPreferredSize(new Dimension(200, 300));
+        previewPanel.setPreferredSize(new Dimension(200, 250));
 
         gbc3.gridy = 0;
         gbc3.gridx = 0;
@@ -501,18 +507,10 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         pack();
         validate();
         this.setMinimumSize(this.getSize());
+        this.setResizable(true);
         // this.setSize(new Dimension(610, 537));
     }
     
-    
-    
-    
-    
-    
-    
-    
-    
-
     /**
      * Build a panel for the zip and metadata file creation log.
      */
@@ -530,12 +528,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         logOutputArea.getTextArea().setEditable(false);
         logOutputArea.getTextArea().setRows(10);
         outputDirPanel = new JPanel();
-        outputDirLabel = new JLabel("Output Directory ");
+        outputDirLabel = new JLabel("Output Directory for Validation Tool ");
         outputDirTextField = new JTextField(30);
         outputDirTextField.setEditable(false);
         outputDirTextField.setToolTipText(outputDirBase);
         outputDirTextField.setText(outputDirBase);
-        outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory", "outputDirBrowse", this);
+        outputDirButton = WidgetFactory.buildTextButton("Browse", "Choose Output Directory for Validation Tool files", "outputDirBrowse", this);
         outputDirButton.setPreferredSize(MipavUtil.defaultButtonSize);
         outputDirPanel.add(outputDirLabel);
         outputDirPanel.add(outputDirTextField);
@@ -564,7 +562,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         sourceTable = new JTable(sourceTableModel);
         sourceTable.addMouseListener(this);
-        sourceTable.setPreferredScrollableViewportSize(new Dimension(500, 350));
+        sourceTable.setPreferredScrollableViewportSize(new Dimension(650, 300));
         sourceTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         sourceTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
@@ -1072,7 +1070,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 	                }
             	}
 
-             
+                // TODO: switch to CSV?
                 writeXMLFile(outputDirBase, outputFileNameBase, imageFile, null, i);
 
                 printlnToLog("");
@@ -1081,9 +1079,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         }
 
-        printlnToLog("*** Submission package processing complete. ***");
-        
-        
+        printlnToLog("*** Submission pre-processing complete. ***");
+        printlnToLog("*** Output files have been generated in directory " + outputDirBase + " ***");
+        printlnToLog("*** To submit to NDAR, run the NDAR Validation Tool to package the files for submission. ***");
         
        //need to delete all tempDirs that were created
         if(tempDirs.size() > 0) {
@@ -1425,8 +1423,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         removeSourceButton.addActionListener(this);
         removeSourceButton.setActionCommand("RemoveSource");
 
-        finishButton = new JButton("Finish");
-        finishButton.setToolTipText("Finish");
+        finishButton = new JButton("Generate Files");
+        finishButton.setToolTipText("Generate Files");
         finishButton.addActionListener(this);
         finishButton.setActionCommand("Finish");
 
