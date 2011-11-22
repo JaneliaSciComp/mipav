@@ -42,15 +42,6 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
-    /** false = apply algorithm only to VOI regions. */
-    private boolean image25D = false; // flag indicating if slices should be processed independently
-
-    /** DOCUMENT ME! */
-    private int iters;
-
-    /** DOCUMENT ME! */
-    private JLabel labelExpFuzzifier;
-
     
     private AlgorithmFuzzMinDeAndChatterji fuzzMinAlgo = null;
 
@@ -62,15 +53,6 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private double expFuzzifier;
-
-    /** DOCUMENT ME! */
-    private JTextField textNIter;
-
-    /** DOCUMENT ME! */
-    private JTextField textExpFuzzifier; // textfield to hold exponential fuzzifier value (1.0-2.0).
-
-    /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
@@ -79,10 +61,6 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
     private double minVal;
     
     private double maxVal;
-    
-    private JLabel labelCross;
-    
-    private JTextField textCross;
     
     private double crossVal;
     
@@ -182,6 +160,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
+        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -192,6 +171,15 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else if (source == autoCheckBox) {
+        	if (autoCheckBox.isSelected()) {
+        		labelSrcThreshold.setEnabled(true);
+        		textSrcThreshold.setEnabled(true);
+        	}
+        	else {
+        		labelSrcThreshold.setEnabled(false);
+        		textSrcThreshold.setEnabled(false);	
+        	}
         }
     }
 
@@ -208,7 +196,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFuzzMinDeAndChatterji) {
-            System.err.println("Median Elapsed: " + algorithm.getElapsedTime());
+            System.err.println("FuzzMinDeAndChatterji Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
 
             if ((fuzzMinAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -219,7 +207,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
 
                 try {
 
-                    // resultImage.setImageName("Median: "+image.getImageName());
+                    // resultImage.setImageName("FuzzMinDeAndChatterji: "+image.getImageName());
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -275,29 +263,68 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         return resultImage;
     }
     
-
-    /**
-     * Accessor that sets the number of iterations.
-     *
-     * @param  num  Value to set iterations to (should be between 1 and 20).
-     */
-    public void setIters(int num) {
-        iters = num;
-    }
-
-    /**
-     * Accessor that sets the kernel shape.
-     *
-     * @param  shape  Value to set size to (0 == square, 1 == cross).
-     */
     
     /**
-     * Accessor that sets the crossover value at which the membership function = 0.5
+     * Accessor that sets the srcThreshold value
      * 
-     * @param crossVal
+     * @param srcThreshold
      */
-    public void setCrossoverValue(double crossVal) {
-    	this.crossVal = crossVal;
+    public void setSrcThreshold(double srcThreshold) {
+    	this.srcThreshold = srcThreshold;
+    }
+    
+    /**
+     * Accessor that sets the autoThreshold value
+     * 
+     * @param autoThreshold
+     */
+    public void setAutoThreshold(boolean autoThreshold) {
+    	this.autoThreshold = autoThreshold;
+    }
+    
+    /**
+     * Accessor that sets the enahncedThreshold value
+     * 
+     * @param enchancedThreshold
+     */
+    public void setEnhancedThreshold(double enhancedThreshold) {
+    	this.enhancedThreshold = enhancedThreshold;
+    }
+    
+    /**
+     * Accessor that sets the theta1 value
+     * 
+     * @param theta1
+     */
+    public void setTheta1(double theta1) {
+    	this.theta1 = theta1;
+    }
+    
+    /**
+     * Accessor that sets the theta2 value
+     * 
+     * @param theta2
+     */
+    public void setTheta2(double theta2) {
+    	this.theta2 = theta2;
+    }
+    
+    /**
+     * Accessor that sets the p1 value
+     * 
+     * @param p1
+     */
+    public void setP1(double p1) {
+    	this.p1 = p1;
+    }
+    
+    /**
+     * Accessor that sets the p2 value
+     * 
+     * @param p2
+     */
+    public void setP2(double p2) {
+    	this.p2 = p2;
     }
     
     /**
@@ -314,16 +341,6 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
      */
     public void setgmax(double gmax) {
     	this.gmax = gmax;
-    }
-    
-
-    /**
-     * Accessor that sets the exponential fuzzifier.
-     *
-     * @param  dev  Value to set the exponential fuzzifier to (should be between 1.0 and 2.0).
-     */
-    public void setExpFuzzifier(double expFuzzifier) {
-        this.expFuzzifier = expFuzzifier;
     }
 
     /**
@@ -518,9 +535,13 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         scriptParameters.setOutputOptionsGUI(outputPanel);
 
-        setIters(scriptParameters.getNumIterations());
-        setCrossoverValue(scriptParameters.getParams().getDouble("crossover_value"));
-        setExpFuzzifier(scriptParameters.getParams().getDouble("exponential_fuzzifier"));
+        setSrcThreshold(scriptParameters.getParams().getDouble("source_threshold"));
+        setAutoThreshold(scriptParameters.getParams().getBoolean("auto_threshold"));
+        setEnhancedThreshold(scriptParameters.getParams().getDouble("enhanced_threshold"));
+        setTheta1(scriptParameters.getParams().getDouble("theta1"));
+        setTheta2(scriptParameters.getParams().getDouble("theta2"));
+        setP1(scriptParameters.getParams().getDouble("p1"));
+        setP2(scriptParameters.getParams().getDouble("p2"));
         setgmin(scriptParameters.getParams().getDouble("gmin"));
         setgmax(scriptParameters.getParams().getDouble("gmax"));
     }
@@ -532,11 +553,14 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         scriptParameters.storeInputImage(image);
 
         scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
 
-        scriptParameters.storeNumIterations(iters);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("crossover_value", crossVal));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("exponential_fuzzifier", expFuzzifier));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("source_threshold", srcThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("auto_threshold", autoThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("enhanced_threshold", enhancedThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("theta1", theta1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("theta2", theta2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("p1", p1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("p2", p2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("gmin", gmin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("gmax", gmax));
     }
@@ -591,6 +615,7 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         
         autoCheckBox = new JCheckBox("Auto determination of source threshold", true);
         autoCheckBox.setFont(serif12);
+        autoCheckBox.addActionListener(this);
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.WEST;
         gbl.setConstraints(autoCheckBox, gbc);
@@ -823,6 +848,46 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
             return false;
         }
         
+        tmpStr = textTheta1.getText();
+        if (testParameter(tmpStr,0.0,90.0)) {
+        	theta1 = Double.valueOf(tmpStr).doubleValue();
+        }
+        else {
+        	textTheta1.requestFocus();
+        	textTheta1.selectAll();
+        	return false;
+        }
+        
+        tmpStr = textTheta2.getText();
+        if (testParameter(tmpStr,0.0,90.0)) {
+        	theta2 = Double.valueOf(tmpStr).doubleValue();
+        }
+        else {
+        	textTheta2.requestFocus();
+        	textTheta2.selectAll();
+        	return false;
+        }
+        
+        tmpStr = textP1.getText();
+        if (testParameter(tmpStr,0.0,1.0)) {
+        	p1 = Double.valueOf(tmpStr).doubleValue();
+        }
+        else {
+        	textP1.requestFocus();
+        	textP1.selectAll();
+        	return false;
+        }
+        
+        tmpStr = textP2.getText();
+        if (testParameter(tmpStr,0.0,1.0)) {
+        	p2 = Double.valueOf(tmpStr).doubleValue();
+        }
+        else {
+        	textP2.requestFocus();
+        	textP2.selectAll();
+        	return false;
+        }
+        
         
         return true;
     }
@@ -839,23 +904,23 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
             }
 
             public String getDescription() {
-                return new String("Applies fuzzy minimization.");
+                return new String("Applies fuzzy minimization De and Chatterji.");
             }
 
             public String getDescriptionLong() {
-                return new String("Applies fuzzy minimization.");
+                return new String("Applies fuzzy minimization De and Chatterji.");
             }
 
             public String getShortLabel() {
-                return new String("Fuzzy inimization");
+                return new String("Fuzzy minimization De and Chatterji");
             }
 
             public String getLabel() {
-                return new String("Fuzzy minimization");
+                return new String("Fuzzy minimization De and Chatterji");
             }
 
             public String getName() {
-                return new String("Fuzzy Minimization");
+                return new String("Fuzzy Minimization De and Chatterji");
             }
         };
     }
@@ -874,9 +939,13 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, true));
-            table.put(new ParameterInt(AlgorithmParameters.NUM_ITERATIONS, 1));
-            table.put(new ParameterDouble("crossover_value", 0.0));
-            table.put(new ParameterDouble("exponential_fuzzifier", 1.0));
+            table.put(new ParameterDouble("source_threshold", 0.0));
+            table.put(new ParameterBoolean("auto_threshold",true));
+            table.put(new ParameterDouble("enhanced_threshold", 1.0));
+            table.put(new ParameterDouble("theta1", 45.0));
+            table.put(new ParameterDouble("theta2", 45.0));
+            table.put(new ParameterDouble("p1", 0.5));
+            table.put(new ParameterDouble("p2", 0.5));
             table.put(new ParameterDouble("gmin",0.0));
             table.put(new ParameterDouble("gmax",255.0));
             } catch (final ParserException e) {
