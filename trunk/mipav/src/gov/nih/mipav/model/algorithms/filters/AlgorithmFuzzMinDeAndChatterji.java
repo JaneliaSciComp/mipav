@@ -300,7 +300,7 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
                 	diff = srcList.get(j) - mean1;
                 	variance1 += diff*diff*frequency[j];
                 }
-                variance1 = variance1/sum1;
+                variance1 = variance1/(sum1-1.0);
                 std1 = Math.sqrt(variance1);
                 zeta1 = 0.0;
                 for (j = 0; j <= i; j++) {
@@ -321,7 +321,7 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
                 	diff = srcList.get(j) - mean2;
                 	variance2 += diff*diff*frequency[j];
                 }
-                variance2 = variance2/sum2;
+                variance2 = variance2/(sum2-1.0);
                 std2 = Math.sqrt(variance2);
                 zeta2 = 0.0;
                 for (j = i+1; j <= uniqueValues-1; j++) {
@@ -561,7 +561,7 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
                 	diff = srcList.get(j) - mean1;
                 	variance1 += diff*diff*frequency[j];
                 }
-                variance1 = variance1/sum1;
+                variance1 = variance1/(sum1-1.0);
                 std1 = Math.sqrt(variance1);
                 zeta1 = 0.0;
                 for (j = 0; j <= i; j++) {
@@ -582,7 +582,7 @@ public class AlgorithmFuzzMinDeAndChatterji extends AlgorithmBase {
                 	diff = srcList.get(j) - mean2;
                 	variance2 += diff*diff*frequency[j];
                 }
-                variance2 = variance2/sum2;
+                variance2 = variance2/(sum2-1.0);
                 std2 = Math.sqrt(variance2);
                 zeta2 = 0.0;
                 for (j = i+1; j <= uniqueValues-1; j++) {
