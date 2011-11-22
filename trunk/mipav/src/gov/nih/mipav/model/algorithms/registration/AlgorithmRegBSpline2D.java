@@ -3,6 +3,8 @@ package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Curves.*;
 import WildMagic.LibFoundation.Mathematics.*;
+import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -10,6 +12,7 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.text.*;
+import java.util.BitSet;
 
 
 /**
@@ -116,9 +119,25 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
                 ModelSimpleImage[] akSimpleImageSourceMap = kReg.createImageSourceMap();
                 ModelSimpleImage kSimpleImageResult = kSimpleImageSourceOrig.createMappedImage2d(akSimpleImageSourceMap[0],
                                                                                                  akSimpleImageSourceMap[1]);
-                akSimpleImageSourceMap = null;
+                
                 m_kImageResult.importData(0, kSimpleImageResult.data, true);
                 kSimpleImageResult = null;
+                
+                if (m_kImageSource.getVOIs().size() != 0) {
+                	int sourceXDim = m_kImageSource.getExtents()[0];
+                	int sourceYDim = m_kImageSource.getExtents()[1];
+                	int srcLength = sourceXDim * sourceYDim;
+                	int targetXDim = m_kImageTarget.getExtents()[0];
+                	int targetYDim = m_kImageTarget.getExtents()[1];
+                	int targetLength = targetXDim * targetYDim;
+                	float kImageMapX[] = new float[targetLength];
+                	akSimpleImageSourceMap[0].exportData(kImageMapX, 0, targetLength);
+                	float kImageMapY[] = new float[targetLength];
+                	akSimpleImageSourceMap[1].exportData(kImageMapY, 0, targetLength);
+                	float imgBuffer[] = new float[srcLength];
+                	transform2DVOI(m_kImageSource, m_kImageResult, imgBuffer, kImageMapX, kImageMapY);
+                }
+                akSimpleImageSourceMap = null;
 
                 // Access the deformation image if specified.
                 if (null != m_kImageDeformation) {
@@ -141,6 +160,141 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
         kReg = null;
         disposeLocal();
         
+    }
+    
+    /**
+     * Transforms and resamples a 2D VOI using nearest neighbor interpolation.
+     * 
+     * <ol>
+     * For each VOI in VOIVector:
+     * <li>Export VOIs as a mask image</li>
+     * <li>Transform mask</li>
+     * <li>Extract VOI contours from mask image and put in new image.</li>
+     * </ol>
+     * 
+     * @param image Image where VOIs are stored
+     * @param imgBuffer Image array
+     * @param xfrm Transformation matrix to be applied
+     */
+    private void transform2DVOI(ModelImage image, ModelImage destImage, final float[] imgBuffer, float[] kImageMapX, float[] kImageMapY) {
+
+        int i;
+        int X0pos, Y0pos;
+        float value;
+        int roundX, roundY;
+        int index;
+        int index2;
+        int indexC;
+        int iXdim = image.getExtents()[0];
+        int iYdim = image.getExtents()[1];
+        int length = iXdim * iYdim;
+        int index2Size;
+        ModelImage maskImage;
+        float fillValue = 0.0f;
+
+        ModelImage tmpMask;
+        VOIVector voiVector;
+
+        
+        
+        voiVector = image.getVOIs();
+        
+        if (voiVector.size() == 0) {
+            return;
+        }
+
+        indexC = -1;
+        for (index = 0; index < voiVector.size(); index++) {
+        	VOI presentVOI = voiVector.elementAt(index);
+        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		VOIBaseVector curves = presentVOI.getCurves();	
+        		index2Size = curves.size();
+        	}
+        	else {
+        		index2Size = 1;
+        	}
+        	for (index2 = 0; index2 < index2Size; index2++) {
+        		indexC++;
+		        try {
+		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+		        } catch (final OutOfMemoryError error) {
+		            throw error;
+		        }
+		        maskImage.clearMask();
+		        
+		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+
+				BitSet mask = maskImage.getMask();
+
+				
+				for (i = 0; i < length; i++) {
+
+					if (mask.get(i)) {
+						maskImage.set(i, indexC + 1);
+					}
+				}
+		        maskImage.clearMask();
+		        maskImage.calcMinMax();
+		        tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+		
+		        try {
+		            maskImage.exportData(0, length, imgBuffer); // locks and releases lock
+		        } catch (final IOException error) {
+		            displayError("Algorithm VOI transform: Image(s) locked");
+		            setCompleted(false);
+		
+		            return;
+		        }
+		        
+		        int iNumSamplesTrgX = destImage.getExtents()[0];
+		        int iNumSamplesTrgY = destImage.getExtents()[1];
+		        int iNumSamplesSrcX = image.getExtents()[0];
+		        int iNumSamplesSrcY = image.getExtents()[1];
+		        int iLimitSrcX = iNumSamplesSrcX - 1;
+		        int iLimitSrcY = iNumSamplesSrcY - 1;
+
+		        for (int iY = 0; iY < iNumSamplesTrgY; iY++) {
+
+		            for (int iX = 0; iX < iNumSamplesTrgX; iX++) {
+
+		                int iIndexTrg = iX + (iY * iNumSamplesTrgX);
+
+		                float fX = iLimitSrcX * kImageMapX[iIndexTrg];
+		                float fY = iLimitSrcY * kImageMapY[iIndexTrg];
+		                value = fillValue;
+		                roundX = (int)(fX + 0.5f);
+		                if ( (fX >= -0.5f) && (fX < iXdim)) {
+		                	roundY = (int) (fY + 0.5f);
+		            		
+		                    if ( (fY >= -0.5f) && (fY < iYdim)) {
+		                        X0pos = Math.min(roundX, iXdim - 1);
+		                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+		                        value = imgBuffer[Y0pos + X0pos];
+		                    } // end if Y in bounds	
+		                }
+		                tmpMask.set(iX, iY, value); 
+		            }
+		        }
+		
+		        
+		
+		        if (threadStopped) {
+		            return;
+		        }
+		
+		        // ******* Make algorithm for VOI extraction.
+		        tmpMask.calcMinMax();
+		
+		        final AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+		
+		        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+		        VOIExtAlgo.run();
+		        destImage.addVOIs(tmpMask.getVOIs());
+		        tmpMask.disposeLocal();
+		        maskImage.disposeLocal();
+        	} // for (index2 = 0; index2 < curves.size(); index2++)
+        } // for (index = 0; index < voiVector.size(); index++)
+       
     }
 
     /**
