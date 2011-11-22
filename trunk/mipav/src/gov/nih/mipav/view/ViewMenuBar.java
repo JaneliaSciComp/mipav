@@ -198,6 +198,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
                 menuBuilder.makeMenu("Fuzzy", false, new JMenuItem[] {
                 	    menuBuilder.buildMenuItem("Fuzzy minimization", "fuzzyMin", 0, null, false),
+                	    menuBuilder.buildMenuItem("Fuzzy minimization De and Chatterji", "FuzzMinDeAndChatterji", 0, null, false),
                 	    menuBuilder.buildMenuItem("Rule based contrast enhancement","rbcEnhancement", 0, null, false),}),
                 menuBuilder.makeMenu("Histogram tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("2D histogram", "histTwoDim", 0, null, false),
@@ -1121,6 +1122,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
             menuBuilder.setMenuItemEnabled("Fuzzy minimization", false);
+            menuBuilder.setMenuItemEnabled("Fuzzy minimization De and Chatterji", false);
             menuBuilder.setMenuItemEnabled("Rule based contrast enhancement", false);
             menuBuilder.setMenuItemEnabled("Grays -> RGB", false);
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
@@ -1182,6 +1184,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("FFT", true);
         menuBuilder.setMenuItemEnabled("Filters (wavelet)", true);
         menuBuilder.setMenuItemEnabled("Fuzzy minimization", true);
+        menuBuilder.setMenuItemEnabled("Fuzzy minimization De and Chatterji", true);
         menuBuilder.setMenuItemEnabled("Rule based contrast enhancement", true);
         menuBuilder.setMenuItemEnabled("Anisotropic diffusion", true);
         menuBuilder.setMenuItemEnabled("Boundary attenuation", true);
