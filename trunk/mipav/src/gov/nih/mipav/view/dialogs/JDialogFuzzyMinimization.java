@@ -42,9 +42,6 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
-    /** false = apply algorithm only to VOI regions. */
-    private boolean image25D = false; // flag indicating if slices should be processed independently
-
     /** DOCUMENT ME! */
     private int iters;
 
@@ -482,7 +479,6 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
         scriptParameters.storeInputImage(image);
 
         scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
 
         scriptParameters.storeNumIterations(iters);
         scriptParameters.getParams().put(ParameterFactory.newParameter("crossover_value", crossVal));
