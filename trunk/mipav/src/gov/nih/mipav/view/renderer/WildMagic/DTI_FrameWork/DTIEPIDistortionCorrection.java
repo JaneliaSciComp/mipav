@@ -1,5 +1,9 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,37 +14,75 @@ import java.util.List;
 
 import Jama.Matrix;
 
-public class DTIEPIDistortionCorrection {
+public class DTIEPIDistortionCorrection extends AlgorithmBase {
+    // The ImageData ordering, such as in vol3d = new float[rows][columns][slices] in ImageDataFloat, 
+	// is opposite the storage order actually used in ModelImage in which the slices change least frequently
+	// and the rows change most frequently as you increment thru the data.  The ModelImage ordering would correspond
+	// to float[slices][columns][rows]
 	
 	//Internal Variables
 	int XN, YN, ZN; 
 	float[] dimRes;
+	// Assume this means stored in color
 	int chN = 3;
+	ModelImage destImage[];
+	List<File> DWDirectionToB0TransformationsFileList;
+	// Rigid B0 to Structural Transformation Matrix
+	Matrix rigidB0toStruct;
+	
+	// Before calling create destImage[] array with:
+	// int numImages = DWDirectionToB0TransformationsFileList.size();
+	//ModelImage destImage[] = new ModelImage[numImages];
+	// for (i = 0; i < numImages; i++) {
+	    // String fileName = DWDirectionToB0TransformationsFileList.get(i).getName();
+	    // int index = fileName.indexOf('.');
+	    // String newName = fileName.substring(0,index) + "_combDefField";
+	    // destImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), newName);
+    // } // for (i = 0; i < numImages; i++)
+	
+	public DTIEPIDistortionCorrection(ModelImage destImage[], ModelImage srcImage, List<File> DWDirectionToB0TransformationsFileList,
+			Matrix rigidB0toStruct) {
+		super(null, srcImage);
+		this.destImage = destImage;
+		this.DWDirectionToB0TransformationsFileList = DWDirectionToB0TransformationsFileList;
+		this.rigidB0toStruct = rigidB0toStruct;
+	}
 	
 	public void runAlgorithm() {
-		/*this.setLabel("combine Volumes");
+		//this.setLabel("combine Volumes");
+		ModelImage EPIDistortionCorrectionFieldImage = srcImage;
+		XN = EPIDistortionCorrectionFieldImage.getExtents()[0];
+		YN = EPIDistortionCorrectionFieldImage.getExtents()[1];
+		ZN = EPIDistortionCorrectionFieldImage.getExtents()[2];
+		dimRes = EPIDistortionCorrectionFieldImage.getResolutions(0);
+		// Use 4 rather than chN = 3 because we store ARGB
+		int sliceSize = XN * YN;
+		int length = 4 * sliceSize * ZN;
+		float EPICorrectDef[] = new float[length];
+		try {
+			EPIDistortionCorrectionFieldImage.exportData(0, length, EPICorrectDef);
+		}
+		catch (IOException error) {
+			errorCleanUp("IOException on EPICorrectionDefImage.exportData: " + error, true);
+			return;
+		}
 		
-		ImageData EPICorrectDef = inParamEPICorrection.getImageData(); 
+		float currentDef[][][][];
+		float[][][][] EPICorrectDefSplit = new float[chN][XN][YN][ZN];
+		for (int c = 0; c < chN; c++) {
+		    for (int x = 0; x < XN; x++) {
+		    	for (int y = 0; y < YN; y++) {
+		    		for (int z = 0; z < ZN; z++) {
+		    			EPICorrectDefSplit[c][x][y][z] = EPICorrectDef[c + 4*(x + y*XN + z*sliceSize)];
+		    		}
+		    	}
+		    }
+		}
+		EPICorrectDef = null;
 		
-		ImageData[] currentDef = new ImageDataFloat[chN];
-		ImageData[] EPICorrectDefSplit = RegistrationUtilities.split4DImageDataIntoArray(EPICorrectDef);
-		XN = EPICorrectDef.getRows();
-		YN = EPICorrectDef.getCols();
-		ZN = EPICorrectDef.getSlices();
-
-		dimRes = EPICorrectDef.getHeader().getDimResolutions();
-		//Matrix inMatrix =  inParamMatrix.getValue(); 
-		
-		//currentDef = applyTransformation(currentDef, inMatrix);
-		
-		//List<File> DWtoB0Trans = inParamDWtoB0Transform.getValue();
-		//List<File> correctDWtoStructTrans = inParamTransDWCorrectedToStruct.getValue();
-		ArrayList<double[][]> arrayDWtoB0Trans = readMultiMatrices(inParamDWtoB0Transform.getValue());
-		//ArrayList<double[][]> arraycorrectDWtoStructTrans = readMultiMatrices(inParamRigidB0toStruct.getValue());
+		ArrayList<double[][]> arrayDWtoB0Trans = readMultiMatrices(DWDirectionToB0TransformationsFileList);
 		Matrix m;
-		Matrix rigidB0toStruct = inParamRigidB0toStruct.getValue();
 		double[][] matarray;
-		//if (arrayDWtoB0Trans.size() != arraycorrectDWtoStructTrans.size()) System.out.format("Transform Size Mismatch!");
 		
 		for (int i = 0; i < arrayDWtoB0Trans.size(); i++){
 			//File currentFile = DWtoB0Trans.get(i);
@@ -66,18 +108,33 @@ public class DTIEPIDistortionCorrection {
 				
 			currentDef=createDefFieldFromTransMatrix(m);
 			currentDef=applyDeformation(currentDef, EPICorrectDefSplit);
-			for(int c = 0; c < chN; c++) {
-				currentDef[c].setName(inParamDWtoB0Transform.getValue().get(i).getName().replace(".","_") + "_combDefField");
-				currentDef[c].setHeader(inParamEPICorrection.getImageData().getHeader());
-			}
 			
-			ImageData outVolume = RegistrationUtilities.combineImageDataArrayTo4D(currentDef);
-				//outVolume.setHeader(inParamEPICorrection.getImageData().getHeader());
-				//outVolume.setName(inParamDWtoB0Transform.getValue().get(i).getName().replace(".","_") + "_combDefField");
-				outParamCombDefField.add(outVolume);
-				outParamCombDefField.writeAndFreeNow(alg);
+			float outputBuffer[] = new float[length];
+			for (int c = 0; c < chN; c++) {
+			    for (int x = 0; x < XN; x++) {
+			    	for (int y = 0; y < YN; y++) {
+			    		for (int z = 0; z < ZN; z++) {
+			    			outputBuffer[c + 4*(x + y*XN + z*sliceSize)] = currentDef[c][x][y][z];
+			    		}
+			    	}
+			    }
+			}
+			currentDef = null;
+			
+			try {
+                destImage[i].importData(0, outputBuffer, true);
+            } catch (IOException error) {
+                errorCleanUp("IOException on destImage[" + i + "].importData: " + error, true);
 
-		}*/
+                return;
+            }
+
+            JDialogBase.updateFileInfo(srcImage,destImage[i]);
+			
+		} // for (int i = 0; i < arrayDWtoB0Trans.size(); i++)
+		
+		setCompleted(true);
+		return;
 		
 	}
 	
@@ -152,7 +209,7 @@ public class DTIEPIDistortionCorrection {
 		}
 	}
 	
-	public float[][][][] applyDeformation(float[][][][] currentDef, double[][][][] epiDef){
+	public float[][][][] applyDeformation(float[][][][] currentDef, float[][][][] epiDef){
 		double[] currentVec = new double[chN];
 		double[] newVec = new double[chN];
 		
@@ -172,7 +229,7 @@ public class DTIEPIDistortionCorrection {
 			for(int j = 0; j < YN; j++)
 				for(int k = 0; k < ZN; k++){
 					
-					for(int c = 0; c < chN; c++) newVec[c] = epiDef[c][i][j][k]; 
+					for(int c = 0; c < chN; c++) newVec[c] = (double)epiDef[c][i][j][k]; 
 					
 					//get current deformation at where the new deformation is pointing
 					for(int c = 0; c < chN; c++) currentVec[c] = TrilinearInterpolation(currentDef[c], XN, YN, ZN, 
