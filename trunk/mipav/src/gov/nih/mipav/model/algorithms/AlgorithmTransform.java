@@ -5850,13 +5850,17 @@ public class AlgorithmTransform extends AlgorithmBase {
 		        // ******* Make algorithm for VOI extraction.
 		        tmpMask.calcMinMax();
 		
-		        final AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+		        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
 		
 		        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
 		        VOIExtAlgo.run();
+		        VOIExtAlgo.finalize();
+		        VOIExtAlgo = null;
 		        destImage.addVOIs(tmpMask.getVOIs());
 		        tmpMask.disposeLocal();
+		        tmpMask = null;
 		        maskImage.disposeLocal();
+		        maskImage = null;
         	} // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
        
@@ -5888,11 +5892,16 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index2;
         int indexC;
         int sliceSize = iXdim * iYdim;
-        int length = sliceSize * iZdim;
         int index2Size;
+        VOIBaseVector curves = null;
+        int xBounds[] = new int[2];
+        int yBounds[] = new int[2];
+        int zBounds[] = new int[2];
+        int zFound[] = new int[iZdim];
+        boolean duplicateZ = false;
 
         float T00, T01, T02, T10, T11, T12;
-        ModelImage tmpMask;
+        ModelImage tmpMask = null;
         VOIVector voiVector;
 
         final int mod = Math.max(1, oXdim / 50);
@@ -5914,13 +5923,50 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (index = 0; index < voiVector.size(); index++) {
         	VOI presentVOI = voiVector.elementAt(index);
         	if (presentVOI.getCurveType() == VOI.CONTOUR) {
-        		VOIBaseVector curves = presentVOI.getCurves();	
+        		curves = presentVOI.getCurves();	
         		index2Size = curves.size();
         	}
         	else {
         		index2Size = 1;
         	}
+            for (i = 0; i < iZdim; i++) {
+            	zFound[i] = 0;
+            }
         	for (index2 = 0; index2 < index2Size; index2++) {
+        		if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		    curves.get(index2).getBounds(xBounds, yBounds, zBounds);	
+        		}
+        		else {
+        			presentVOI.getBounds(xBounds, yBounds, zBounds);
+        		}
+        		duplicateZ = false;
+        		for (i = zBounds[0]; i <= zBounds[1]; i++) {
+        			zFound[i]++;
+        			if (zFound[i] >= 2) {
+        				duplicateZ = true;
+        			}
+        		}
+        		if (duplicateZ) {
+		        	duplicateZ = false;
+		        	for (i = 0; i < iZdim; i++) {
+		        		zFound[i] = 0;
+		        	}
+			        tmpMask.calcMinMax();
+			
+			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+			
+			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+			        VOIExtAlgo.run();
+			        VOIExtAlgo.finalize();
+			        VOIExtAlgo = null;
+			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.disposeLocal();
+			        tmpMask = null;
+			        maskImage.disposeLocal();
+			        maskImage = null;
+			        index2--;
+			        continue;
+		        }
         		indexC++;
 		        try {
 		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
@@ -5934,7 +5980,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 				BitSet mask = maskImage.getMask();
 
 				
-				for (i = 0; i < length; i++) {
+				for (i = zBounds[0]*sliceSize; i < (zBounds[1]+1)*sliceSize; i++) {
 
 					if (mask.get(i)) {
 						maskImage.set(i, indexC + 1);
@@ -5942,9 +5988,11 @@ public class AlgorithmTransform extends AlgorithmBase {
 				}
 		        maskImage.clearMask();
 		        maskImage.calcMinMax();
-		        tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+		        if ((tmpMask == null) || (duplicateZ)) {
+		            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+		        }
 		
-		        for (z = 0; z < iZdim; z++) {
+		        for (z = zBounds[0]; z <= zBounds[1]; z++) {
 		            if ( ( (z % mod) == 0)) {
 		                fireProgressStateChanged((int) ( ((float) z / iZdim * 100) + .5));
 		            }
@@ -6006,18 +6054,28 @@ public class AlgorithmTransform extends AlgorithmBase {
 			        if (threadStopped) {
 			            return;
 			        }
-		        } // for (z = 0; z < iZdim; z++)
+		        } // for (z = zBounds[0]; z <= zBounds[1]; z++)
 		
 		        // ******* Make algorithm for VOI extraction.
-		        tmpMask.calcMinMax();
-		
-		        final AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-		
-		        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-		        VOIExtAlgo.run();
-		        destImage.addVOIs(tmpMask.getVOIs());
-		        tmpMask.disposeLocal();
-		        maskImage.disposeLocal();
+		        if (index2 == curves.size()-1) {
+		        	duplicateZ = false;
+		        	for (i = 0; i < iZdim; i++) {
+		        		zFound[i] = 0;
+		        	}
+			        tmpMask.calcMinMax();
+			
+			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+			
+			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+			        VOIExtAlgo.run();
+			        VOIExtAlgo.finalize();
+			        VOIExtAlgo = null;
+			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.disposeLocal();
+			        tmpMask = null;
+			        maskImage.disposeLocal();
+			        maskImage = null;
+		        }
         	} // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
        
