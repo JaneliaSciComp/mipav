@@ -5947,6 +5947,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         			}
         		}
         		if (duplicateZ) {
+        			indexC++;
 		        	duplicateZ = false;
 		        	for (i = 0; i < iZdim; i++) {
 		        		zFound[i] = 0;
@@ -5967,7 +5968,6 @@ public class AlgorithmTransform extends AlgorithmBase {
 			        index2--;
 			        continue;
 		        }
-        		indexC++;
 		        try {
 		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
 		        } catch (final OutOfMemoryError error) {
@@ -6058,6 +6058,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 		
 		        // ******* Make algorithm for VOI extraction.
 		        if (index2 == curves.size()-1) {
+		        	indexC++;
 		        	duplicateZ = false;
 		        	for (i = 0; i < iZdim; i++) {
 		        		zFound[i] = 0;
