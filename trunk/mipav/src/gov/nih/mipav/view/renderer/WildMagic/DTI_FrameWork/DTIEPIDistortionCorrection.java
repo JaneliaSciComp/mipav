@@ -73,7 +73,7 @@ public class DTIEPIDistortionCorrection extends AlgorithmBase {
 		    for (int x = 0; x < XN; x++) {
 		    	for (int y = 0; y < YN; y++) {
 		    		for (int z = 0; z < ZN; z++) {
-		    			EPICorrectDefSplit[c][x][y][z] = EPICorrectDef[c + 4*(x + y*XN + z*sliceSize)];
+		    			EPICorrectDefSplit[c][x][y][z] = EPICorrectDef[c + 1 + 4*(x + y*XN + z*sliceSize)];
 		    		}
 		    	}
 		    }
@@ -114,7 +114,7 @@ public class DTIEPIDistortionCorrection extends AlgorithmBase {
 			    for (int x = 0; x < XN; x++) {
 			    	for (int y = 0; y < YN; y++) {
 			    		for (int z = 0; z < ZN; z++) {
-			    			outputBuffer[c + 4*(x + y*XN + z*sliceSize)] = currentDef[c][x][y][z];
+			    			outputBuffer[c + 1 + 4*(x + y*XN + z*sliceSize)] = currentDef[c][x][y][z];
 			    		}
 			    	}
 			    }
