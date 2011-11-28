@@ -73,18 +73,14 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     /** this is an arraylist of selected DataStruct Objects * */
     private ArrayList<DataStruct> dataStructures = null;
 
-    /** tab level counter for writing xml header. */
-    protected int tabLevel = 0;
-
-    /** Buffered writer for writing to XML file */
+    /** Buffered writer for writing to CSV file */
     protected BufferedWriter bw;
 
     protected FileWriter fw;
-
-    protected static final String TAB = "\t";
-
-    /** XML encoding string. */
-    protected static final String XML_ENCODING = "UTF-8";
+    
+    private Hashtable<String, String> csvStructRowData;
+    
+    private static final String CSV_OUTPUT_DELIM = ",";
 
     private OMElement dataStructElement, documentElement;
 
@@ -133,8 +129,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     //private OMElement publishedDataStructs = null;
     
     private String data_dictionary_server_url = "http://ndardemo.nih.gov/NewDataDictionary/dataDictionary?wsdl";
-    
-    
     
     //private String data_dictionary_server_url = "http://ndar-stage-apps.cit.nih.gov/NewDataDictionary/dataDictionary?wsdl";
     
@@ -752,16 +746,66 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     }
 
     /**
-     * Create the ZIP(s) containing the original image files and the XML meta-data for each image dataset.
+     * Create the ZIP(s) containing the original image files and the meta-data for each image dataset.
      */
     private void createSubmissionFiles() {
 
         final File outputDirFile = new File(outputDirBase);
         if ( !outputDirFile.exists()) {
             outputDirFile.mkdirs();
-
         }
+        
         final int numDataStructs = sourceTableModel.getRowCount();
+        
+        // TODO: new export to CSV
+        
+        // for each data structure chosen by the user, create a place to put rows of csv data
+        csvStructRowData = new Hashtable<String, String>();
+        for (int i = 0; i < numDataStructs; i++) {
+            String tableName = (String) sourceTableModel.getValueAt(i, 0);
+            String lowerName = tableName.substring(0, tableName.indexOf("_NDAR")).toLowerCase();
+            if (!csvStructRowData.containsKey(lowerName)) {
+                DataStruct structInfo = null;
+                for (DataStruct struct : dataStructures) {
+                    if (struct.getName().equalsIgnoreCase(lowerName)) {
+                        structInfo = struct;
+                    }
+                }
+                
+                String n = lowerName;
+                final String v = structInfo.getVersion().replaceFirst("^0", "");
+                
+                char c1 = n.charAt(n.length()-1);
+                if(Character.isDigit(c1)) {
+                    n = n.substring(0, n.length()-1);
+                }
+                char c2 = n.charAt(n.length()-1);
+                if(Character.isDigit(c2)) {
+                    n = n.substring(0, n.length()-1);
+                }
+                
+                // # commas at end = # fields in struct - 2 (for name & version)
+                String cStr = "";
+                for (int j = 0; j < structInfo.size() - 2; j++) {
+                    cStr += CSV_OUTPUT_DELIM;
+                }
+                
+                String elementHeader = ((DataElement)structInfo.get(0)).getName();
+                for (int j = 1; j < structInfo.size(); j++) {
+                    elementHeader += CSV_OUTPUT_DELIM + ((DataElement)structInfo.get(j)).getName();
+                }
+                
+                String structHeader = n + CSV_OUTPUT_DELIM + v + cStr + "\n";
+                structHeader += elementHeader + "\n";
+                csvStructRowData.put(lowerName, structHeader);
+            }
+        }
+        
+        for (String lowerName : csvStructRowData.keySet()) {
+            System.out.println("**** " + lowerName);
+            System.out.println(csvStructRowData.get(lowerName));
+        }
+        
         for (int i = 0; i < numDataStructs; i++) {
             int collisionCounter = 1;
             final String name = (String) sourceTableModel.getValueAt(i, 0);
@@ -823,8 +867,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     continue;
                 }
 
-                writeXMLFile(outputDirBase, outputFileNameBase, imageFile, origImage, i);
-
+                DataStruct curStruct = null;
+                for (DataStruct ds : dataStructures) {
+                    if (ds.getName().equalsIgnoreCase(dsName)) {
+                        curStruct = ds;
+                        break;
+                    }
+                }
+                
+                String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, origImage, i);
+                if (!newRow.equals("")) {
+                    String lowerName = dsName.toLowerCase();
+                    String data = csvStructRowData.get(lowerName);
+                    data += newRow + "\n";
+                    csvStructRowData.put(lowerName, data);
+                }
+                
                 origImage.disposeLocal();
 
                 printlnToLog("");
@@ -843,8 +901,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 //package
             
                 LinkedHashMap<String, String> infoMap = infoList.get(i);
-                Set keySet = infoMap.keySet();
-                Iterator iter = keySet.iterator();
+                Set<String> keySet = infoMap.keySet();
+                Iterator<String> iter = keySet.iterator();
                 String key;
                 String value;
                 File f;
@@ -944,12 +1002,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                    }
                }
             
-               
-               
-               
-               
-               
-               
                if(copyToImageThumbnailPath.contains(File.separator)) {
             	   //make directories
             	   String dir = outputDirBase + File.separator + copyToImageThumbnailPath.substring(0, copyToImageThumbnailPath.lastIndexOf(File.separator));
@@ -993,16 +1045,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                        e.printStackTrace();
                    }
                }
-               
-               
-               
-               
-               
-               
-               
-               
-                
-                
 
                 // copy all other file to this new dir
                 final File allOtherFilesFile = new File(outputDirBase + outputFileNameBase);
@@ -1069,14 +1111,53 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 	                    }
 	                }
             	}
-
-                // TODO: switch to CSV?
-                writeXMLFile(outputDirBase, outputFileNameBase, imageFile, null, i);
+                
+                DataStruct curStruct = null;
+                for (DataStruct ds : dataStructures) {
+                    if (ds.getName().equalsIgnoreCase(dsName)) {
+                        curStruct = ds;
+                        break;
+                    }
+                }
+                
+                String newRow = getCSVDataRow(outputDirBase, outputFileNameBase, curStruct, imageFile, null, i);
+                if (!newRow.equals("")) {
+                    String lowerName = dsName.toLowerCase();
+                    String data = csvStructRowData.get(lowerName);
+                    data += newRow + "\n";
+                    csvStructRowData.put(lowerName, data);
+                }
 
                 printlnToLog("");
-
             }
-
+        }
+        
+        // write out the built up CSV data for each struct
+        try {
+            for (String lowerName : csvStructRowData.keySet()) {
+                final String csvFileName = lowerName + "_output_" + System.currentTimeMillis() + ".csv";
+                
+                printlnToLog("Writing " + lowerName + " to CSV file: " + outputDirBase + csvFileName);
+                
+                final File csvFile = new File(outputDirBase + csvFileName);
+                fw = new FileWriter(csvFile);
+                bw = new BufferedWriter(fw);
+                
+                bw.write(csvStructRowData.get(lowerName));
+                
+                bw.close();
+            }
+            
+            printlnToLog("");
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            printlnToLog("Unable to write CSV output file(s).");
+        } finally {
+            try {
+                bw.close();
+            } catch (Exception e) {
+                // Do nothing
+            }
         }
 
         printlnToLog("*** Submission pre-processing complete. ***");
@@ -1102,87 +1183,29 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
         
         isFinished = true;
-
     }
-
+    
     /**
-     * writes out xml file
+     * writes out csv file
      * 
      * @param outputDirBase
      * @param outputFileNameBase
      * @param imageFile
      * @param origImage
      */
-    private void writeXMLFile(final String outputDirBase, final String outputFileNameBase, final File imageFile,
-            final ModelImage origImage, final int counter) {
-
-        try {
-
-            final String name = (String) sourceTableModel.getValueAt(counter, 0);
-
-            final String dsName = name.substring(0, name.indexOf("_NDAR"));
-
-            final String xmlFileName = outputFileNameBase + ".xml";
-
-            final String xmlHeader = "<?xml version=\"1.0\" ?>";
-            final String xmlSchema = "http://www.w3.org/2001/XMLSchema-instance";
-            final String xsd = "schema.xsd";
-
-            final File xmlFile = new File(outputDirBase + xmlFileName);
-            fw = new FileWriter(xmlFile);
-            bw = new BufferedWriter(fw);
-            bw.write(xmlHeader);
-            bw.newLine();
-            openTag("data_set xmlns:xsi=\"" + xmlSchema + "\" xsi:noNamespaceSchemaLocation=\"" + xsd + "\"", true);
-            // TODO: temporarily changed data structure name to lower case, since that's what the Validation Tool
-            // expects
-
-            for (int k = 0; k < dataStructures.size(); k++) {
-                final DataStruct ds = dataStructures.get(k);
-                final String shortname = ds.getShortname();
-                if (dsName.equalsIgnoreCase(shortname)) {
-                    final LinkedHashMap<String, String> infoMap = infoList.get(counter);
-                    String n = ds.getName().toLowerCase();
-
-                    final String v = ds.getVersion().replaceFirst("^0", "");
-                    
-                    char c1 = n.charAt(n.length()-1);
-            		if(Character.isDigit(c1)) {
-            			n = n.substring(0, n.length()-1);
-            		}
-            		char c2 = n.charAt(n.length()-1);
-            		if(Character.isDigit(c2)) {
-            			n = n.substring(0, n.length()-1);
-            		}
-                    
-                    openTag("data_structure name=\"" + n + "\" version=\"" + v + "\"", true);
-                    parse(ds, outputFileNameBase, infoMap, imageFile);
-                    openTag("data_structure", false);
-                    break;
-                }
-
-            }
-
-            openTag("data_set", false);
-
-            bw.close();
-        } catch (final Exception e) {
-            e.printStackTrace();
+    private final String getCSVDataRow(final String outputDirBase, final String outputFileNameBase, DataStruct ds, final File imageFile,
+            final ModelImage origImage, int counter) {
+        String csvRow = new String();
+        
+        if (ds == null) {
+            return csvRow;
         }
-    }
+        
+        final LinkedHashMap<String, String> infoMap = infoList.get(counter);
+        
+        for (int k = 0; k < ds.size(); k++) {
 
-    /**
-     * 
-     * @param ds
-     */
-    private void parse(final DataStruct ds2, final String outputFileNameBase,
-            final LinkedHashMap<String, String> infoMap, File imageFile) {
-        Vector<XMLAttributes> attr;
-        XMLAttributes xmlAttributes;
-
-        for (int k = 0; k < ds2.size(); k++) {
-
-            final Object o1 = ds2.get(k);
+            final Object o1 = ds.get(k);
             if (o1 instanceof DataElement) {
                 // data element
                 final DataElement de = (DataElement) o1;
@@ -1190,18 +1213,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 String value = "";
                 String v;
                 if(imageFile != null) {
-                	if (name.equalsIgnoreCase("image_file")) {
+                    if (name.equalsIgnoreCase("image_file")) {
                         value = outputFileNameBase + ".zip";
                     } else if (name.equalsIgnoreCase("image_thumbnail_file")) {
                         value = outputFileNameBase + ".jpg";
                     } else {
-                        // need to get appropriat value
-
-                        Set keySet = infoMap.keySet();
-                        Iterator iter = keySet.iterator();
-                        String key;
-                        while (iter.hasNext()) {
-                            key = (String) iter.next();
+                        // need to get appropriate value
+                        for (String key : infoMap.keySet()) {
                             if (key.equalsIgnoreCase(name)) {
                                 v = infoMap.get(key);
                                 value = v;
@@ -1210,147 +1228,49 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         }
                     }
                 }else {
-                
-                        // need to get appropriat value
-
-                        Set keySet = infoMap.keySet();
-                        Iterator iter = keySet.iterator();
-                        String key;
-                        while (iter.hasNext()) {
-                            key = (String) iter.next();
-                            if (key.equalsIgnoreCase(name)) {
-                                v = infoMap.get(key);
-                                value = v;
-                                break;
-                            }
+                    // need to get appropriate value
+                    for (String key : infoMap.keySet()) {
+                        if (key.equalsIgnoreCase(name)) {
+                            v = infoMap.get(key);
+                            value = v;
+                            break;
                         }
-                    
-                }
-                
-                
-                
-                if ( !value.trim().equalsIgnoreCase("")) {
-
-                    final File f = new File(value);
-                    if (f.isFile() || value.endsWith("_collision")) {
-                        if (value.endsWith("_collision")) {
-                            value = value.substring(0, value.indexOf("_collision"));
-                            final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value
-                                    .length());
-                            value = outputFileNameBase + File.separator + filename;
-                        } else {
-                            final String filename = f.getName();
-                            value = outputFileNameBase + File.separator + filename;
-                        }
-
                     }
-
-                    attr = new Vector<XMLAttributes>();
-                    xmlAttributes = new XMLAttributes("name", name);
-                    attr.add(xmlAttributes);
-                    xmlAttributes = new XMLAttributes("value", value);
-                    attr.add(xmlAttributes);
-                    closedTag("data_element", attr);
                 }
-            }
+                
+                // TODO: should we be outputting all fields? - if not, need to not include element name in header
+                
+                //if ( !value.trim().equalsIgnoreCase("")) {
+                final File f = new File(value);
+                if (f.isFile() || value.endsWith("_collision")) {
+                    if (value.endsWith("_collision")) {
+                        value = value.substring(0, value.indexOf("_collision"));
+                        final String filename = value.substring(value.lastIndexOf(File.separator) + 1, value
+                                .length());
+                        value = outputFileNameBase + File.separator + filename;
+                    } else {
+                        final String filename = f.getName();
+                        value = outputFileNameBase + File.separator + filename;
+                    }
+                }
+                
+                // escape commas in values - if there's a comma, put quotes around the value and double up any existing quotes
+                if (value.contains(",")) {
+                    value = "\"" + value.replaceAll("\"", "\"\"") + "\""; 
+                }
 
+                if (k == 0) {
+                    csvRow = value;
+                } else {
+                    csvRow += CSV_OUTPUT_DELIM + value;
+                }
+                //}
+            }
         }
+        
+        return csvRow;
     }
-
-    /**
-     * Simple function to write an xml formatted open ended tag (value not included).
-     * 
-     * @param bw writer to use
-     * @param tag tag name
-     * @param start is this a start or end tag
-     */
-    public final void openTag(final String tag, boolean start) {
-
-        try {
-
-            if ( !start) {
-
-                // done with this container
-                tabLevel--;
-            }
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(PlugInDialogNDAR.TAB);
-            }
-
-            if (start) {
-                bw.write("<" + tag + ">");
-
-                // indent the contained tags
-                tabLevel++;
-            } else {
-                bw.write("</" + tag + ">");
-            }
-
-            bw.newLine();
-        } catch (final IOException ex) {}
-    }
-
-    /**
-     * Simple function to write an xml formatted closed tag including the tag value.
-     * 
-     * @param bw write to use
-     * @param tag tag name
-     * @param val tag value
-     */
-    protected final void closedTag(final String tag, final String val) {
-
-        try {
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(PlugInDialogNDAR.TAB);
-            }
-
-            // entity-ize some xml-unfriendly characters and convert to the XML charset
-            String writeVal = val.trim().replaceAll("&", "&amp;");
-            writeVal = writeVal.trim().replaceAll("\"", "&quot;");
-            writeVal = writeVal.trim().replaceAll("<", "&lt;");
-            writeVal = writeVal.trim().replaceAll(">", "&gt;");
-            writeVal = new String(writeVal.getBytes(PlugInDialogNDAR.XML_ENCODING));
-
-            bw.write("<" + tag + ">" + writeVal + "</" + tag + ">");
-            bw.newLine();
-        } catch (final IOException ex) {}
-    }
-
-    /**
-     * Writes a closed tag where no value is specified, only attributes.
-     */
-    public final void closedTag(final String tag, final Vector<XMLAttributes> attr) {
-
-        try {
-
-            for (int i = 0; i < tabLevel; i++) {
-                bw.write(PlugInDialogNDAR.TAB);
-            }
-
-            bw.write("<" + tag);
-
-            String attrStr;
-            for (int i = 0; i < attr.size(); i++) {
-
-                attrStr = attr.elementAt(i).getValue().trim().replaceAll("&", "&amp;");
-                attrStr = attrStr.trim().replaceAll("\"", "&quot;");
-                attrStr = attrStr.trim().replaceAll("<", "&lt;");
-                attrStr = attrStr.trim().replaceAll(">", "&gt;");
-                attrStr = new String(attrStr.getBytes(PlugInDialogNDAR.XML_ENCODING));
-
-                bw.write(" " + attr.elementAt(i).getName() + "=\"" + attrStr + "\"");
-            }
-
-            bw.write("/>");
-
-            bw.newLine();
-        } catch (final IOException ex) {}
-
-        attr.clear();
-    }
-
+    
     /**
      * Adds a set of files to a ZIP archive.
      * 
@@ -3231,7 +3151,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final String modalityString = FileInfoBase.getModalityStr(modality);
             //System.out.println(modalityString);
             final int fileFormatInt = img.getFileInfo(0).getFileFormat();
-            final String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
+            String fileFormatString = FileUtility.getFileTypeStr(fileFormatInt);
+            if (fileFormatString.equalsIgnoreCase("xml")) {
+                fileFormatString = "mipav xml";
+            } else if (fileFormatString.equalsIgnoreCase("mat")) {
+                fileFormatString.equalsIgnoreCase("matlab");
+            }
             //System.out.println(fileFormatString);
           
             final float sliceThickness = img.getFileInfo(0).getSliceThickness();
@@ -3937,15 +3862,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                         // test int if its in valuerange
                                         final int min = Integer.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
-                                        if (min == 0) {
-                                            if (intValue <= min) {
-                                                errs.add(labelText + " must be greater than 0");
-                                            }
-                                        } else {
+                                        // TODO: I think that 0 should be included in allowed range
+                                        //if (min == 0) {
+                                        //    if (intValue <= min) {
+                                        //        errs.add(labelText + " must be greater than 0");
+                                        //    }
+                                        //} else {
                                             if (intValue < min) {
-                                                errs.add(labelText + " must be greater than " + min);
+                                                errs.add(labelText + " must be greater than or equal to " + min);
                                             }
-                                        }
+                                        //}
 
                                     } else if (valuerange != null && valuerange.contains(" to ")) {
                                         final int min = Integer.valueOf(
@@ -3970,15 +3896,16 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                         // test int if its in valuerange
                                         final float min = Float.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
-                                        if (min == 0) {
-                                            if (floatValue <= min) {
-                                                errs.add(labelText + " must be greater than 0");
-                                            }
-                                        } else {
+                                        // TODO: I think that 0 should be included in allowed range
+                                        //if (min == 0) {
+                                        //    if (floatValue <= min) {
+                                        //        errs.add(labelText + " must be greater than 0");
+                                        //    }
+                                        //} else {
                                             if (floatValue < min) {
-                                                errs.add(labelText + " must be greater than " + min);
+                                                errs.add(labelText + " must be greater than or equal to " + min);
                                             }
-                                        }
+                                        //}
                                     } else if (valuerange != null && valuerange.contains(" to ")) {
                                         final float min = Float.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf(" to ")).trim())
@@ -4305,31 +4232,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         public String getParentDataStructShortname() {
             return parentDataStructShortname;
-        }
-
-    }
-
-    /**
-     * Class used to store an xml tag's attribute (name and value)
-     * 
-     */
-    public class XMLAttributes {
-
-        private final String name;
-
-        private final String value;
-
-        public XMLAttributes(final String n, final String v) {
-            name = n;
-            value = v;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getValue() {
-            return value;
         }
 
     }
