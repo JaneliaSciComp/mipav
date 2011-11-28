@@ -5876,8 +5876,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param kTM Transformation matrix to be applied
      */
     private void transform25DVOI(final ModelImage image, final float[] imgBuffer, final TransMatrix kTM) {
-
-        int i, j;
+    	int i, j, z;
         int iAdj, jAdj;
         int X0pos, Y0pos;
         float X, Y;
@@ -5885,12 +5884,18 @@ public class AlgorithmTransform extends AlgorithmBase {
         float value;
         float imm, jmm;
         int roundX, roundY;
-        int z;
+        int index;
+        int index2;
+        int indexC;
+        int sliceSize = iXdim * iYdim;
+        int length = sliceSize * iZdim;
+        int index2Size;
 
         float T00, T01, T02, T10, T11, T12;
         ModelImage tmpMask;
+        VOIVector voiVector;
 
-        final int mod = Math.max(1, iZdim / 50);
+        final int mod = Math.max(1, oXdim / 50);
 
         T00 = kTM.M00;
         T01 = kTM.M01;
@@ -5898,79 +5903,124 @@ public class AlgorithmTransform extends AlgorithmBase {
         T10 = kTM.M10;
         T11 = kTM.M11;
         T12 = kTM.M12;
-        final int sliceSize = iXdim * iYdim;
+        
+        voiVector = image.getVOIs();
+        
+        if (voiVector.size() == 0) {
+            return;
+        }
 
-        maskImage = image.generateShortImage(1);
-        tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+        indexC = -1;
+        for (index = 0; index < voiVector.size(); index++) {
+        	VOI presentVOI = voiVector.elementAt(index);
+        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		VOIBaseVector curves = presentVOI.getCurves();	
+        		index2Size = curves.size();
+        	}
+        	else {
+        		index2Size = 1;
+        	}
+        	for (index2 = 0; index2 < index2Size; index2++) {
+        		indexC++;
+		        try {
+		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+		        } catch (final OutOfMemoryError error) {
+		            throw error;
+		        }
+		        maskImage.clearMask();
+		        
+		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
 
-        for (z = 0; z < iZdim; z++) {
-            if ( ( (z % mod) == 0)) {
-                fireProgressStateChanged((int) ( ((float) z / iZdim * 100) + .5));
-            }
-            try {
-                maskImage.exportData(z * sliceSize, sliceSize, imgBuffer); // locks and releases lock
-            } catch (final IOException error) {
-                displayError("Algorithm VOI transform: Image(s) locked");
-                setCompleted(false);
+				BitSet mask = maskImage.getMask();
 
-                return;
-            }
+				
+				for (i = 0; i < length; i++) {
 
-            for (i = 0; (i < oXdim) && !threadStopped; i++) {
+					if (mask.get(i)) {
+						maskImage.set(i, indexC + 1);
+					}
+				}
+		        maskImage.clearMask();
+		        maskImage.calcMinMax();
+		        tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+		
+		        for (z = 0; z < iZdim; z++) {
+		            if ( ( (z % mod) == 0)) {
+		                fireProgressStateChanged((int) ( ((float) z / iZdim * 100) + .5));
+		            }
+		            try {
+		                maskImage.exportData(z * sliceSize, sliceSize, imgBuffer); // locks and releases lock
+		            } catch (final IOException error) {
+		                displayError("Algorithm VOI transform: Image(s) locked");
+		                setCompleted(false);
 
-                if (pad) {
-                    iAdj = i - AlgorithmTransform.margins[0];
-                } else {
-                    iAdj = i;
-                }
-
-                imm = iAdj * oXres;
-                temp1 = (imm * T00) + T02;
-                temp2 = (imm * T10) + T12;
-
-                for (j = 0; (j < oYdim) && !threadStopped; j++) {
-
-                    // transform i,j
-                    if (pad) {
-                        jAdj = j - AlgorithmTransform.margins[1];
-                    } else {
-                        jAdj = j;
-                    }
-
-                    jmm = jAdj * oYres;
-                    value = fillValue; // if transformed out of bounds.
-                    X = (temp1 + (jmm * T01)) / iXres;
-                    roundX = (int) (X + 0.5f);
-
-                    if ( (X >= -0.5f) && (X < iXdim)) {
-                        Y = (temp2 + (jmm * T11)) / iYres;
-                        roundY = (int) (Y + 0.5f);
-
-                        if ( (Y >= -0.5f) && (Y < iYdim)) {
-                            X0pos = Math.min(roundX, iXdim - 1);
-                            Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
-                            value = imgBuffer[Y0pos + X0pos];
-                        } // end if Y in bounds
-                    } // end if X in bounds
-
-                    tmpMask.set(i, j, z, value);
-                } // end for j
-            } // end for i
-
-            if (threadStopped) {
-                return;
-            }
-        } // for (z = 0; z < iZdim; z++)
-        // ******* Make algorithm for VOI extraction.
-        tmpMask.calcMinMax();
-
-        final AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-
-        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
-        VOIExtAlgo.run();
-        destImage.setVOIs(tmpMask.getVOIs());
-        tmpMask.disposeLocal();
-        maskImage.disposeLocal();
+		                return;
+		            }
+		        
+		
+			        for (i = 0; (i < oXdim) && !threadStopped; i++) {
+			
+			            if ( ( (i % mod) == 0)) {
+			                fireProgressStateChanged((int) ( ((float) i / oXdim * 100) + .5));
+			            }
+			
+			            if (pad) {
+			                iAdj = i - AlgorithmTransform.margins[0];
+			            } else {
+			                iAdj = i;
+			            }
+			
+			            imm = iAdj * oXres;
+			            temp1 = (imm * T00) + T02;
+			            temp2 = (imm * T10) + T12;
+			
+			            for (j = 0; (j < oYdim) && !threadStopped; j++) {
+			
+			                // transform i,j
+			                if (pad) {
+			                    jAdj = j - AlgorithmTransform.margins[1];
+			                } else {
+			                    jAdj = j;
+			                }
+			
+			                jmm = jAdj * oYres;
+			                value = fillValue; // if transformed out of bounds.
+			                X = (temp1 + (jmm * T01)) / iXres;
+			                roundX = (int) (X + 0.5f);
+			
+			                if ( (X >= -0.5f) && (X < iXdim)) {
+			                    Y = (temp2 + (jmm * T11)) / iYres;
+			                    roundY = (int) (Y + 0.5f);
+			
+			                    if ( (Y >= -0.5f) && (Y < iYdim)) {
+			                        X0pos = Math.min(roundX, iXdim - 1);
+			                        Y0pos = Math.min(roundY, iYdim - 1) * iXdim;
+			                        value = imgBuffer[Y0pos + X0pos];
+			                    } // end if Y in bounds
+			                } // end if X in bounds
+			
+			                tmpMask.set(i, j, z, value);
+			            } // end for j
+			        } // end for i
+			
+			        if (threadStopped) {
+			            return;
+			        }
+		        } // for (z = 0; z < iZdim; z++)
+		
+		        // ******* Make algorithm for VOI extraction.
+		        tmpMask.calcMinMax();
+		
+		        final AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+		
+		        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+		        VOIExtAlgo.run();
+		        destImage.addVOIs(tmpMask.getVOIs());
+		        tmpMask.disposeLocal();
+		        maskImage.disposeLocal();
+        	} // for (index2 = 0; index2 < curves.size(); index2++)
+        } // for (index = 0; index < voiVector.size(); index++)
+       
     }
 
     /**
