@@ -5967,6 +5967,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			        VOIExtAlgo.finalize();
 			        VOIExtAlgo = null;
 			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.resetVOIs();
 			        for (z = 0; z < oZdim; z++) {
 			        	for (j = 0; j < oYdim; j++) {
 			        		for (i = 0; i < oXdim; i++) {
@@ -6076,6 +6077,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 			        VOIExtAlgo.finalize();
 			        VOIExtAlgo = null;
 			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.resetVOIs();
 			        for (z = 0; z < oZdim; z++) {
 			        	for (j = 0; j < oYdim; j++) {
 			        		for (i = 0; i < oXdim; i++) {
