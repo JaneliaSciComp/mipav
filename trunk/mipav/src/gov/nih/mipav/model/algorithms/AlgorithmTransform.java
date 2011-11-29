@@ -5919,7 +5919,13 @@ public class AlgorithmTransform extends AlgorithmBase {
             return;
         }
 
-        indexC = -1;
+        indexC = 0;
+        try {
+            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+        } catch (final OutOfMemoryError error) {
+            throw error;
+        }
         for (index = 0; index < voiVector.size(); index++) {
         	VOI presentVOI = voiVector.elementAt(index);
         	if (presentVOI.getCurveType() == VOI.CONTOUR) {
@@ -5961,18 +5967,17 @@ public class AlgorithmTransform extends AlgorithmBase {
 			        VOIExtAlgo.finalize();
 			        VOIExtAlgo = null;
 			        destImage.addVOIs(tmpMask.getVOIs());
-			        tmpMask.disposeLocal();
-			        tmpMask = null;
-			        maskImage.disposeLocal();
-			        maskImage = null;
+			        for (z = 0; z < oZdim; z++) {
+			        	for (j = 0; j < oYdim; j++) {
+			        		for (i = 0; i < oXdim; i++) {
+			        			tmpMask.set(i, j, z, fillValue);
+			        		}
+			        	}
+			        }
 			        index2--;
 			        continue;
 		        }
-		        try {
-		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
-		        } catch (final OutOfMemoryError error) {
-		            throw error;
-		        }
+		        
 		        maskImage.clearMask();
 		        
 		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
@@ -5985,12 +5990,11 @@ public class AlgorithmTransform extends AlgorithmBase {
 					if (mask.get(i)) {
 						maskImage.set(i, indexC + 1);
 					}
+					else {
+						maskImage.set(i, 0);
+					}
 				}
-		        maskImage.clearMask();
-		        maskImage.calcMinMax();
-		        if ((tmpMask == null) || (duplicateZ)) {
-		            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
-		        }
+		  
 		
 		        for (z = zBounds[0]; z <= zBounds[1]; z++) {
 		            if ( ( (z % mod) == 0)) {
@@ -6072,13 +6076,20 @@ public class AlgorithmTransform extends AlgorithmBase {
 			        VOIExtAlgo.finalize();
 			        VOIExtAlgo = null;
 			        destImage.addVOIs(tmpMask.getVOIs());
-			        tmpMask.disposeLocal();
-			        tmpMask = null;
-			        maskImage.disposeLocal();
-			        maskImage = null;
+			        for (z = 0; z < oZdim; z++) {
+			        	for (j = 0; j < oYdim; j++) {
+			        		for (i = 0; i < oXdim; i++) {
+			        			tmpMask.set(i, j, z, fillValue);
+			        		}
+			        	}
+			        }
 		        }
         	} // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
+        maskImage.disposeLocal();
+        maskImage = null;
+        tmpMask.disposeLocal();
+        tmpMask = null;
        
     }
 
