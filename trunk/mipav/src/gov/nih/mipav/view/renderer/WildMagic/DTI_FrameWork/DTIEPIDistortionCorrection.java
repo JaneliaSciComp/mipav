@@ -23,7 +23,8 @@ public class DTIEPIDistortionCorrection extends AlgorithmBase {
 	//Internal Variables
 	int XN, YN, ZN; 
 	float[] dimRes;
-	// Assume this means stored in color
+	// Assume stored in 4D float with x, y, and z deformation field components rather
+	// than time in the fourth dimension
 	int chN = 3;
 	ModelImage destImage[];
 	List<File> DWDirectionToB0TransformationsFileList;
@@ -55,9 +56,8 @@ public class DTIEPIDistortionCorrection extends AlgorithmBase {
 		YN = EPIDistortionCorrectionFieldImage.getExtents()[1];
 		ZN = EPIDistortionCorrectionFieldImage.getExtents()[2];
 		dimRes = EPIDistortionCorrectionFieldImage.getResolutions(0);
-		// Use 4 rather than chN = 3 because we store ARGB
 		int sliceSize = XN * YN;
-		int length = 4 * sliceSize * ZN;
+		int length = chN * sliceSize * ZN;
 		float EPICorrectDef[] = new float[length];
 		try {
 			EPIDistortionCorrectionFieldImage.exportData(0, length, EPICorrectDef);
@@ -73,7 +73,7 @@ public class DTIEPIDistortionCorrection extends AlgorithmBase {
 		    for (int x = 0; x < XN; x++) {
 		    	for (int y = 0; y < YN; y++) {
 		    		for (int z = 0; z < ZN; z++) {
-		    			EPICorrectDefSplit[c][x][y][z] = EPICorrectDef[c + 1 + 4*(x + y*XN + z*sliceSize)];
+		    			EPICorrectDefSplit[c][x][y][z] = EPICorrectDef[x + y*XN + z*sliceSize + c*ZN*sliceSize];
 		    		}
 		    	}
 		    }
@@ -114,7 +114,7 @@ public class DTIEPIDistortionCorrection extends AlgorithmBase {
 			    for (int x = 0; x < XN; x++) {
 			    	for (int y = 0; y < YN; y++) {
 			    		for (int z = 0; z < ZN; z++) {
-			    			outputBuffer[c + 1 + 4*(x + y*XN + z*sliceSize)] = currentDef[c][x][y][z];
+			    			outputBuffer[x + y*XN + z*sliceSize + c*ZN*sliceSize] = currentDef[c][x][y][z];
 			    		}
 			    	}
 			    }
