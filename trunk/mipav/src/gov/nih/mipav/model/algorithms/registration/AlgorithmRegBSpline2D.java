@@ -178,7 +178,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
      */
     private void transform2DVOI(ModelImage image, ModelImage destImage, final float[] imgBuffer, float[] kImageMapX, float[] kImageMapY) {
 
-        int i;
+        int i, j;
         int X0pos, Y0pos;
         float value;
         int roundX, roundY;
@@ -204,6 +204,18 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
         }
 
         indexC = -1;
+        int iNumSamplesTrgX = destImage.getExtents()[0];
+        int iNumSamplesTrgY = destImage.getExtents()[1];
+        int iNumSamplesSrcX = image.getExtents()[0];
+        int iNumSamplesSrcY = image.getExtents()[1];
+        int iLimitSrcX = iNumSamplesSrcX - 1;
+        int iLimitSrcY = iNumSamplesSrcY - 1;
+        try {
+            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+        } catch (final OutOfMemoryError error) {
+            throw error;
+        }
         for (index = 0; index < voiVector.size(); index++) {
         	VOI presentVOI = voiVector.elementAt(index);
         	if (presentVOI.getCurveType() == VOI.CONTOUR) {
@@ -215,11 +227,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
         	}
         	for (index2 = 0; index2 < index2Size; index2++) {
         		indexC++;
-		        try {
-		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
-		        } catch (final OutOfMemoryError error) {
-		            throw error;
-		        }
+		        
 		        maskImage.clearMask();
 		        
 		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
@@ -232,10 +240,10 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 					if (mask.get(i)) {
 						maskImage.set(i, indexC + 1);
 					}
+					else {
+						maskImage.set(i, 0);
+					}
 				}
-		        maskImage.clearMask();
-		        maskImage.calcMinMax();
-		        tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
 		
 		        try {
 		            maskImage.exportData(0, length, imgBuffer); // locks and releases lock
@@ -246,12 +254,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 		            return;
 		        }
 		        
-		        int iNumSamplesTrgX = destImage.getExtents()[0];
-		        int iNumSamplesTrgY = destImage.getExtents()[1];
-		        int iNumSamplesSrcX = image.getExtents()[0];
-		        int iNumSamplesSrcY = image.getExtents()[1];
-		        int iLimitSrcX = iNumSamplesSrcX - 1;
-		        int iLimitSrcY = iNumSamplesSrcY - 1;
+		        
 
 		        for (int iY = 0; iY < iNumSamplesTrgY; iY++) {
 
@@ -290,11 +293,18 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
 		        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
 		        VOIExtAlgo.run();
 		        destImage.addVOIs(tmpMask.getVOIs());
-		        tmpMask.disposeLocal();
-		        maskImage.disposeLocal();
+		        tmpMask.resetVOIs();
+		        for (j = 0; j < iNumSamplesTrgY; j++) {
+	        		for (i = 0; i < iNumSamplesTrgX; i++) {
+	        			tmpMask.set(i, j, fillValue);
+	        		}
+	        	}
         	} // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
-       
+        tmpMask.disposeLocal();
+        tmpMask = null;
+        maskImage.disposeLocal();
+        maskImage = null;
     }
 
     /**
