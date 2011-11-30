@@ -5756,6 +5756,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         }
 
         indexC = -1;
+        try {
+            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+        } catch (final OutOfMemoryError error) {
+            throw error;
+        }
         for (index = 0; index < voiVector.size(); index++) {
         	VOI presentVOI = voiVector.elementAt(index);
         	if (presentVOI.getCurveType() == VOI.CONTOUR) {
@@ -5767,11 +5773,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         	}
         	for (index2 = 0; index2 < index2Size; index2++) {
         		indexC++;
-		        try {
-		            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
-		        } catch (final OutOfMemoryError error) {
-		            throw error;
-		        }
+		        
 		        maskImage.clearMask();
 		        
 		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
@@ -5784,13 +5786,15 @@ public class AlgorithmTransform extends AlgorithmBase {
 					if (mask.get(i)) {
 						maskImage.set(i, indexC + 1);
 					}
+					else {
+						maskImage.set(i, 0);
+					}
 				}
-		        maskImage.clearMask();
-		        maskImage.calcMinMax();
-		        tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+		        
 		
 		        try {
 		            maskImage.exportData(0, length, imgBuffer); // locks and releases lock
+		            
 		        } catch (final IOException error) {
 		            displayError("Algorithm VOI transform: Image(s) locked");
 		            setCompleted(false);
@@ -5857,12 +5861,18 @@ public class AlgorithmTransform extends AlgorithmBase {
 		        VOIExtAlgo.finalize();
 		        VOIExtAlgo = null;
 		        destImage.addVOIs(tmpMask.getVOIs());
-		        tmpMask.disposeLocal();
-		        tmpMask = null;
-		        maskImage.disposeLocal();
-		        maskImage = null;
+		        tmpMask.resetVOIs();
+		        for (j = 0; j < oYdim; j++) {
+	        		for (i = 0; i < oXdim; i++) {
+	        			tmpMask.set(i, j, fillValue);
+	        		}
+	        	}
         	} // for (index2 = 0; index2 < curves.size(); index2++)
         } // for (index = 0; index < voiVector.size(); index++)
+        tmpMask.disposeLocal();
+        tmpMask = null;
+        maskImage.disposeLocal();
+        maskImage = null;
        
     }
 
