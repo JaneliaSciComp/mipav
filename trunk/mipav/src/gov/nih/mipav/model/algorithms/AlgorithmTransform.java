@@ -6111,11 +6111,9 @@ public class AlgorithmTransform extends AlgorithmBase {
         int iAdj, jAdj, kAdj;
         int X0pos, Y0pos, Z0pos;
         float X, Y, Z;
-        float temp1, temp2;
         float value;
         float imm, jmm, kmm;
         float k1, k2, k3, j1, j2, j3;
-        int roundX, roundY;
         int index;
         int index2;
         int indexC;
@@ -6132,8 +6130,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         float T00, T01, T02, T03, T10, T11, T12, T13, T20, T21, T22, T23;
         ModelImage tmpMask = null;
         VOIVector voiVector;
-
-        final int mod = Math.max(1, oXdim / 50);
 
         T00 = kTM.M00;
         T01 = kTM.M01;
