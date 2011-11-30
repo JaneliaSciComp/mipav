@@ -206,10 +206,8 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
         indexC = -1;
         int iNumSamplesTrgX = destImage.getExtents()[0];
         int iNumSamplesTrgY = destImage.getExtents()[1];
-        int iNumSamplesSrcX = image.getExtents()[0];
-        int iNumSamplesSrcY = image.getExtents()[1];
-        int iLimitSrcX = iNumSamplesSrcX - 1;
-        int iLimitSrcY = iNumSamplesSrcY - 1;
+        int iLimitSrcX = iXdim - 1;
+        int iLimitSrcY = iYdim - 1;
         try {
             maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
             tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
