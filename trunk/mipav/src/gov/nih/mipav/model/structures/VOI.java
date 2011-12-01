@@ -2068,13 +2068,11 @@ public class VOI extends ModelSerialCloneable {
 		VOIPoint voiPt = null;
 
 		if (curveType == POINT) {
-			voiPt = new VOIPoint();
+			voiPt = new VOIPoint(POINT, point);
+			curves.addElement(voiPt);
 		} else {
 			return;
 		}
-
-		voiPt.set(0, point);
-		curves.addElement(voiPt);
 	}
 
 	/**

@@ -376,38 +376,49 @@ public class JPanelClip extends JPanelRendererJ3D
 
         if ((source == extractButtonA) || (source == extractButtonS)) {
             // extract arbitrary clipping plane.
-
-        	WildMagic.LibFoundation.Mathematics.Vector3f[] pts;
-
-            pts = getAClipPlanePts();
-
+        	WildMagic.LibFoundation.Mathematics.Vector3f[] pts = getAClipPlanePts();
             ModelImage img = renderBase.getImageA();
-            float[] plane = img.getPlane(pts[0], pts[1], pts[2], pts[3]);
+            
+            final float xRes = img.getFileInfo(0).getResolutions()[0];
+            final float yRes = img.getFileInfo(0).getResolutions()[1];
+            final float zRes = img.getFileInfo(0).getResolutions()[2];
 
             int length = (int)
                              Math.round(Math.sqrt(((pts[2].X - pts[0].X) * (pts[2].X - pts[0].X)) +
                                                   ((pts[2].Y - pts[0].Y) * (pts[2].Y - pts[0].Y)) +
                                                   ((pts[2].Z - pts[0].Z) * (pts[2].Z - pts[0].Z))));
             int width = (int)
-                            Math.round(Math.sqrt(((pts[1].X - pts[0].X) * (pts[1].X - pts[0].X)) +
-                                                 ((pts[1].Y - pts[0].Y) * (pts[1].Y - pts[0].Y)) +
-                                                 ((pts[1].Z - pts[0].Z) * (pts[1].Z - pts[0].Z))));
+                    Math.round(Math.sqrt(((pts[1].X - pts[0].X) * (pts[1].X - pts[0].X)) +
+                                         ((pts[1].Y - pts[0].Y) * (pts[1].Y - pts[0].Y)) +
+                                         ((pts[1].Z - pts[0].Z) * (pts[1].Z - pts[0].Z))));
+            float newXRes = 
+            		Math.round(Math.sqrt(xRes * ((pts[1].X - pts[0].X) * (pts[1].X - pts[0].X)) +
+                                         yRes * ((pts[1].Y - pts[0].Y) * (pts[1].Y - pts[0].Y)) +
+                                         zRes * ((pts[1].Z - pts[0].Z) * (pts[1].Z - pts[0].Z))));
+            float newYRes = 
+            		Math.round(Math.sqrt(xRes * ((pts[2].X - pts[0].X) * (pts[2].X - pts[0].X)) +
+            				             yRes * ((pts[2].Y - pts[0].Y) * (pts[2].Y - pts[0].Y)) +
+                                         zRes * ((pts[2].Z - pts[0].Z) * (pts[2].Z - pts[0].Z))));
+            newXRes /= width;
+            newYRes /= length;
 
-            int[] ext = new int[2];
-
-            ext[0] = width;
-            ext[1] = length;
-
-            ModelImage resultImage = new ModelImage(renderBase.getImageA().getType(), ext, "Image plane");
-
+            int[] ext = new int[]{width,length};
+            float[] values = new float[ext[0] * ext[1]];
             try {
-                resultImage.importData(0, plane, true);
+            	WildMagic.LibFoundation.Mathematics.Vector3f temp = new WildMagic.LibFoundation.Mathematics.Vector3f( pts[2] );
+            	pts[2].Copy( pts[3] );
+            	pts[3].Copy( temp );
+				img.exportDiagonal(0, 0, ext, pts, values, true);
+			} catch (IOException e) { }
+            ModelImage resultImage = new ModelImage(img.getType(), ext, "Image plane");
+            resultImage.setResolutions( new float[]{newXRes, newYRes} );
+            try {
+            	resultImage.importData(0, values, true);
             } catch (IOException er) {
                 return;
             }
-
-            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-            plane = null;
+            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));            
+            
         } else if (source instanceof JButton) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick color", new OkColorListener((JButton) source),
                                                  new CancelListener());
@@ -3105,7 +3116,8 @@ public class JPanelClip extends JPanelRendererJ3D
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
         shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
-
+		PickTool.setCapabilities(shape, PickTool.INTERSECT_FULL);
+        
         try {
             clipSliceA_BG.addChild(shape);
         } catch (RestrictedAccessException error) { }
@@ -5301,8 +5313,14 @@ public class JPanelClip extends JPanelRendererJ3D
         y = vIn.y;
         z = vIn.z;
 
+        Transform3D result = new Transform3D();
+        renderBase.getSceneRootTG().getTransform(result);
+        result.invert();
+        result.transform(vIn);
+        
+        
+/*
         Transform3D trans = new Transform3D();
-
         // Set the invert of the scale: transformNode3d.setScale( 0.45f );
         trans.setScale(1 / 0.45f);
         trans.setTranslation(new javax.vecmath.Vector3f(-x, -y, -z));
@@ -5323,6 +5341,7 @@ public class JPanelClip extends JPanelRendererJ3D
         trans.setTranslation(new javax.vecmath.Vector3f(x, y, z));
 
         trans.transform(vIn);
+        */
     }
 
     /**
