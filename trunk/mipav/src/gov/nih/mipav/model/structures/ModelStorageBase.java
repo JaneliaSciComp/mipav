@@ -1946,8 +1946,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 final int index = ( (iIndex * iFactor) + (jIndex * jFactor) + (kIndex * kFactor) + (tSlice * tFactor));
 
                 /* Bounds checking, if out of bounds, set to zero: */
-                if ( ( (x < 0) || (x >= dimExtents[0])) || ( (y < 0) || (y >= dimExtents[1]))
-                        || ( (z < 0) || (z >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
+                if ( ( (iIndex < 0) || (iIndex >= dimExtents[0])) || ( (jIndex < 0) || (jIndex >= dimExtents[1]))
+                        || ( (kIndex < 0) || (kIndex >= dimExtents[2])) || ( (index < 0) || ( (index * buffFactor) > dataSize))) {
 
                     if ( (bufferType == DataType.ARGB) || (bufferType == DataType.ARGB_USHORT)
                             || (bufferType == DataType.ARGB_FLOAT)) {
@@ -2018,6 +2018,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
+    
     /**
      * Export magnitude data to values array.
      * 
@@ -3216,7 +3217,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             return ( ( (1 - dz) * b1) + (dz * b2));
         } else {
-            return 0;
+            return (float) this.min;
         }
     }
 

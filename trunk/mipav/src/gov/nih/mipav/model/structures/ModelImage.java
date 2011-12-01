@@ -1685,6 +1685,7 @@ public class ModelImage extends ModelStorageBase {
      * @param botRight the bottom right point of the plane; must be in the image coord system. not really used..
      * 
      * @return a float buffer containing the extracted plane (size == image.getSliceSize() 2).
+     * @deprecated
      */
     public final float[] getPlane(final Vector3f topLeft, final Vector3f topRight, final Vector3f botLeft,
             final Vector3f botRight) {
