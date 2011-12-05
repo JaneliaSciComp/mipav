@@ -1111,6 +1111,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         	new JDialogFuzzMinDeAndChatterji(this, getActiveImage());
         } else if (command.equals("rbcEnhancement")) {
         	new JDialogRuleBasedContrastEnhancement(this, getActiveImage());
+        } else if (command.equals("fireEdgeExtraction")) {
+        	new JDialogFIREEdgeExtraction(this, getActiveImage());
         } else if (command.equals("Calculator")) {
             // whether valid images are available is handled in the image calculator
             new JDialogImageCalculator(this, getActiveImage());
