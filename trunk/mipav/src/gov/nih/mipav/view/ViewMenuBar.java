@@ -4,6 +4,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.awt.Component;
+import java.awt.Menu;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
@@ -197,6 +198,7 @@ public class ViewMenuBar {
                         // null, null, null),
                         menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
                 menuBuilder.makeMenu("Fuzzy", false, new JMenuItem[] {
+                		menuBuilder.buildMenuItem("Edge extraction by FIRE operators", "fireEdgeExtraction", 0, null, false),
                 	    menuBuilder.buildMenuItem("Fuzzy minimization", "fuzzyMin", 0, null, false),
                 	    menuBuilder.buildMenuItem("Fuzzy minimization De and Chatterji", "FuzzMinDeAndChatterji", 0, null, false),
                 	    menuBuilder.buildMenuItem("Rule based contrast enhancement","rbcEnhancement", 0, null, false),}),
@@ -1121,6 +1123,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("SWI", false);
             menuBuilder.setMenuItemEnabled("Filters (homomorphic)", false);
             menuBuilder.setMenuItemEnabled("Filters (wavelet)", false);
+            menuBuilder.setMenuItemEnabled("Edge extraction by FIRE operators", false);
             menuBuilder.setMenuItemEnabled("Fuzzy minimization", false);
             menuBuilder.setMenuItemEnabled("Fuzzy minimization De and Chatterji", false);
             menuBuilder.setMenuItemEnabled("Rule based contrast enhancement", false);
@@ -1183,6 +1186,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", true);
         menuBuilder.setMenuItemEnabled("FFT", true);
         menuBuilder.setMenuItemEnabled("Filters (wavelet)", true);
+        menuBuilder.setMenuItemEnabled("Edge extraction by FIRE operators", true);
         menuBuilder.setMenuItemEnabled("Fuzzy minimization", true);
         menuBuilder.setMenuItemEnabled("Fuzzy minimization De and Chatterji", true);
         menuBuilder.setMenuItemEnabled("Rule based contrast enhancement", true);
