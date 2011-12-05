@@ -159,7 +159,12 @@ public class VolumeImage implements Serializable {
 
 		// See if the render files directory exists for this image, if not create it.
 		String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), "");
-		m_kDir = kImage.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
+		try {
+			m_kDir = kImage.getFileInfo()[0].getFileDirectory().concat(kImageName + "_RenderFiles" + File.separator);
+		} catch ( NullPointerException e )
+		{
+			m_kDir = new String(kImageName + "_RenderFiles" + File.separator);
+		}
 		final File kDir = new File(m_kDir);
 		if ( !kDir.exists()) {
 			try {

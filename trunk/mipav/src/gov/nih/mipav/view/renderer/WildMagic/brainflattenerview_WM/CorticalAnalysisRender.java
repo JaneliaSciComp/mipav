@@ -17,6 +17,7 @@ import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
+import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
@@ -121,8 +122,6 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 	/** Scene-graph node for displaying correspondence points on the TriMesh surface. */
 	private Node m_kMeshPoints = null;
 
-	private Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
-
 	//~ Constructors ---------------------------------------------------------------------------------------------------
 
 
@@ -139,6 +138,26 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
 				m_eBuffering, m_eMultisampling,
 				m_iWidth, m_iHeight );
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
+		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );       
+
+		m_kAnimator = kAnimator;
+		m_kVolumeImageA = kVolumeImageA;
+		m_kVolumeImageB = kVolumeImageB;
+		m_kParent = kParent;
+
+
+		m_kPanel = new JPanelBrainSurfaceFlattener_WM(this, kParent);
+	}
+	
+	public CorticalAnalysisRender( GLCanvas kCanvas, VolumeTriPlanarInterface kParent, Animator kAnimator, 
+			VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  ) {
+		super();
+		m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
+				m_eBuffering, m_eMultisampling,
+				m_iWidth, m_iHeight, kCanvas );
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
 		((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       

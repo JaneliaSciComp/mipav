@@ -54,6 +54,7 @@ import javax.swing.event.ListSelectionListener;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Meshes.VETMesh;
 import WildMagic.LibGraphics.Detail.ClodMesh;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.WireframeState;
@@ -127,7 +128,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     private JScrollPane scroller;
 
     /** Smooth button. */
-    private JButton invertNormals, smooth1Button, smooth2Button, smooth3Button;
+    private JButton invertNormals, smooth1Button, smooth2Button, smooth3Button, extractConnected;
 
     /** Polyline list box in the dialog for surfaces. */
     private JList polylineList;
@@ -295,6 +296,10 @@ public class JPanelSurface_WM extends JInterfaceBase
         else if ( command.equals("InvertNormals") )
         {
         	invertNormals(surfaceList.getSelectedIndices());
+        }
+        else if ( command.equals("ExtractConnected") )
+        {
+        	extractConnectedComponents(surfaceList.getSelectedIndices());
         }
     }
 
@@ -855,6 +860,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         toolBar.setFloatable(false);
 
+        extractConnected = toolbarBuilder.buildButton("ExtractConnected", "Extract connected components", "decimate");
         invertNormals = toolbarBuilder.buildButton("InvertNormals", "Reverses triangle order", "decimate");
         smooth1Button = toolbarBuilder.buildButton("Smooth", "Smooth level 1", "sm1");
         smooth2Button = toolbarBuilder.buildButton("Smooth2", "Smooth level 2", "sm2");
@@ -862,6 +868,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         decimateButton = toolbarBuilder.buildButton("Decimate", "Decimate the surface", "decimate");
         saveSurfaceButton = toolbarBuilder.buildButton("saveSurface", "Save surface to a file", "save");
         toolBar.add(invertNormals);
+        toolBar.add(extractConnected);
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
         toolBar.add(smooth3Button);
@@ -956,6 +963,57 @@ public class JPanelSurface_WM extends JInterfaceBase
                 kMesh.UpdateMS(true);
                 kMesh.IBuffer.Release();
                 kMesh.VBuffer.Release();
+            }
+        }
+    }
+
+    /**
+     * Decimate the selected surfaces.
+     * @param  aiSelected   selected surfaces.
+     */
+    private void extractConnectedComponents(int[] aiSelected) {
+        
+        if ( m_kVolumeViewer != null )
+        {           
+            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            int iSize = kList.getSize();
+            for (int i = 0; i < aiSelected.length; i++) {
+            	
+                TriMesh kMesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
+                VETMesh kVETMesh = new VETMesh(2 * kMesh.VBuffer.GetVertexQuantity(), .9f, 2 * kMesh.IBuffer
+                        .GetIndexQuantity(), .9f, 2 * kMesh.GetTriangleQuantity(), .9f, kMesh.IBuffer.GetData());
+
+                final Vector<VETMesh> kComponents = new Vector<VETMesh>();
+                kVETMesh.GetComponents(kComponents);
+                
+                if ( kComponents.size() > 1 )
+                {
+                	System.err.println( kComponents.size() );
+                	int largest = 0;
+                	int max = 0;
+                	for ( int j = 0; j < kComponents.size(); j++ )
+                	{
+                		if ( kComponents.elementAt(j).GetTriangleQuantity() > max )
+                		{
+                			max = kComponents.elementAt(j).GetTriangleQuantity();
+                			largest = j;
+                		}
+                	}
+                	VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
+                	IndexBuffer kIBuffer = new IndexBuffer( kComponents.elementAt(largest).GetTriangles() );
+                	TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
+                	mesh.SetName(kMesh.GetName() + "_" + largest );
+
+                	SurfaceState kSurface = new SurfaceState( mesh, mesh.GetName() );
+
+                	System.err.println( mesh.GetName() );
+                	m_kVolumeViewer.addSurface(kSurface);
+
+                	kList.add( iSize, mesh.GetName() );
+
+                	m_akSurfaceStates.add( kSurface );        
+                	m_kVolumeViewer.addSurface( kSurface );
+                }
             }
         }
     }
@@ -1536,6 +1594,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         
         decimateButton.setEnabled(flag);
         colorButton.setEnabled(flag);
+        extractConnected.setEnabled(flag);
         invertNormals.setEnabled(flag);
         smooth1Button.setEnabled(flag);
         smooth2Button.setEnabled(flag);

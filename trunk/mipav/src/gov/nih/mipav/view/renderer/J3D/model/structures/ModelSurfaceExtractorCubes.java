@@ -1,5 +1,10 @@
 package gov.nih.mipav.view.renderer.J3D.model.structures;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Meshes.TriangleKey;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibImagics.Extraction.ExtractSurfaceCubes;
 
 import gov.nih.mipav.model.structures.*;
@@ -82,65 +87,59 @@ public class ModelSurfaceExtractorCubes extends ExtractSurfaceCubes {
         float[] coord = new float[3];
         float[] tCoord = new float[3];
         float fLevel = iLevel + 0.1f;
+		Vector<Vector3f> vertices = new Vector<Vector3f>();
+		Vector<TriangleKey> triangles = new Vector<TriangleKey>();
+		super.ExtractContour(fLevel, vertices, triangles);
 
-        HashSet<Triangle> kTSet = new HashSet<Triangle>();
-        HashMap<WildMagic.LibFoundation.Mathematics.Vector3f,Integer> kVMap = 
-        	new HashMap<WildMagic.LibFoundation.Mathematics.Vector3f,Integer> ();
-        super.ExtractContour(fLevel, kVMap, kTSet);
+		Vector<Vector3f> newVertices = new Vector<Vector3f>();
+		Vector<TriangleKey> newTriangles = new Vector<TriangleKey>();
+		super.MakeUnique(vertices, triangles, newVertices, newTriangles);
 
-        // pack vertices and triangle connectivity into arrays
-        int iVQuantity = kVMap.size();
-        int iTQuantity = kTSet.size();
+		// pack vertices and triangle connectivity into arrays
+		int iVQuantity = newVertices.size();
+		int iTQuantity = newTriangles.size();
 
-        if ((iVQuantity == 0) || (iTQuantity == 0)) {
-            return null;
-        }
+		if ((iVQuantity == 0) || (iTQuantity == 0)) {
+			return null;
+		}
 
-        Point3f[] akVertex = new Point3f[iVQuantity];
-        Iterator kVIter = kVMap.entrySet().iterator();
-        Map.Entry kEntry = null;
+		Vector3f[] akVertex = new Vector3f[iVQuantity];
+		for ( int i = 0; i < iVQuantity; i++ )
+		{
+			Vector3f kV = newVertices.elementAt(i);
+			if (dicomMatrix != null) {
 
-        while (kVIter.hasNext()) {
-            kEntry = (Map.Entry) kVIter.next();
+				// Change the voxel coordinate into millimeters
+				coord[0] = kV.X * m_fXDelta;
+				coord[1] = kV.Y * m_fYDelta;
+				coord[2] = kV.Z * m_fZDelta;
 
-            WildMagic.LibFoundation.Mathematics.Vector3f kV =
-                (WildMagic.LibFoundation.Mathematics.Vector3f) kEntry.getKey();
-            Integer kInt = (Integer) kEntry.getValue();
+				// Convert the point to axial millimeter DICOM space
+				dicomMatrix.transform(coord, tCoord);
 
-            if (dicomMatrix != null) {
+				// Add in the DICOM origin
+				tCoord[0] = tCoord[0] + m_afStartLocation[0];
+				tCoord[1] = tCoord[1] + m_afStartLocation[1];
+				tCoord[2] = tCoord[2] + m_afStartLocation[2];
+				akVertex[i] = new Vector3f(tCoord[0], tCoord[1], tCoord[2]);
+			} else {
+				kV.X = (kV.X * m_fXDelta * m_aiDirection[0]) + m_afStartLocation[0];
+				kV.Y = (kV.Y * m_fYDelta * m_aiDirection[1]) + m_afStartLocation[1];
+				kV.Z = (kV.Z * m_fZDelta * m_aiDirection[2]) + m_afStartLocation[2];
+				akVertex[i] = new Vector3f(kV);
+			}
+		}
 
-                // Change the voxel coordinate into millimeters
-                coord[0] = kV.X * m_fXDelta;
-                coord[1] = kV.Y * m_fYDelta;
-                coord[2] = kV.Z * m_fZDelta;
+		int[] aiConnect = new int[3 * iTQuantity];
+		int iIndex = 0;
 
-                // Convert the point to axial millimeter DICOM space
-                dicomMatrix.transform(coord, tCoord);
-
-                // Add in the DICOM origin
-                tCoord[0] = tCoord[0] + m_afStartLocation[0];
-                tCoord[1] = tCoord[1] + m_afStartLocation[1];
-                tCoord[2] = tCoord[2] + m_afStartLocation[2];
-                akVertex[kInt.intValue()] = new Point3f(tCoord[0], tCoord[1], tCoord[2]);
-            } else {
-                kV.X = (kV.X * m_fXDelta * m_aiDirection[0]) + m_afStartLocation[0];
-                kV.Y = (kV.Y * m_fYDelta * m_aiDirection[1]) + m_afStartLocation[1];
-                kV.Z = (kV.Z * m_fZDelta * m_aiDirection[2]) + m_afStartLocation[2];
-                akVertex[kInt.intValue()] = new Point3f( kV.X, kV.Y, kV.Z );
-            }
-        }
-
-        int[] aiConnect = new int[3 * iTQuantity];
-        int iIndex = 0;
-        Iterator kTIter = kTSet.iterator();
-
-        while (kTIter.hasNext()) {
-            Triangle kT = (Triangle) kTIter.next();
-            aiConnect[iIndex++] = kT.m_iV0;
-            aiConnect[iIndex++] = kT.m_iV1;
-            aiConnect[iIndex++] = kT.m_iV2;
-        }
-
+		for ( int i = 0; i < iTQuantity; i++ )
+		{
+			TriangleKey kT = newTriangles.elementAt(i);
+			aiConnect[iIndex++] = kT.V[0];
+			aiConnect[iIndex++] = kT.V[1];
+			aiConnect[iIndex++] = kT.V[2];
+		}
         return new ModelTriangleMesh(akVertex, aiConnect);
     }
 }

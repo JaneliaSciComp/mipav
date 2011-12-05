@@ -488,6 +488,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 dispose(arg0);
 			 return;
 		 }
+		 if ( m_kDeleteList.size () > 0 )
+		 {
+			 for ( int i = m_kDeleteList.size() -1; i >= 0; i-- )
+			 {
+				 VolumeObject kObj = m_kDeleteList.remove(0);
+				 kObj.dispose(m_pkRenderer);
+			 }
+		 }
 
 
 		 if ( m_kFBO == null || m_bFirstRender )
@@ -1568,8 +1576,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 					  {
 						  m_bSurfaceUpdate = true;                        
 					  }
-					  kObj.dispose(m_pkRenderer);
-					  kObj = null;
+					  m_kDeleteList.add(kObj);
 				  }
 			  }
 		  }
