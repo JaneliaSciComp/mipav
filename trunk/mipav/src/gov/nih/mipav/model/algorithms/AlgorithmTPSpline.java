@@ -13,8 +13,8 @@ import java.io.*;
 /**
  * Thin plate spline Warning: If the supplied (x,y) data set in setupTPSpline2D is nearly collinear, singular matrices
  * will result and a matrix inversion will fail. This code calculating the function f at interpolated points is a port
- * of software from Magic Software, Inc. at www.magic-software.com. Reference: Thin Plate Splines by David Eberly of
- * Magic Software at www.magic-software.com
+ * of software from Geometric Tools at www.geometrictools.com. Reference: Thin Plate Splines by David Eberly of
+ * Geometric Tools at http://www.geometrictools.com/SampleMathematics/ThinPlateSplines/ThinPlateSplines.html.
  *
  * <p>The Eberly Thin plate splines 2D is a physically based 2D interpolation scheme for arbitrarily spaced tabulated
  * data (xi,yi,f(xi,yi)). These splines are the generalization of the natural cubic splines in 1D. The spline surface
