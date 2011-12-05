@@ -109,6 +109,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     protected int m_iCaptureFPS;
     
     protected boolean m_bShared = false;
+
+    protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
+    
     /**
      * Default GPURenderBase constructor.
      */

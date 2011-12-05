@@ -96,15 +96,11 @@ public class VolumeCalcEffect extends VolumeClipEffect
         SetVShader(0,new VertexShader("TextureV"));
         PixelShader kPShader = new PixelShader("SurfaceExtract", false);
         SetPShader(0,kPShader);
-        kPShader.SetTextureQuantity(4);
+        kPShader.SetTextureQuantity(2);
         kPShader.SetImageName(0,kVolumeImage.GetVolumeTarget().GetImage().GetName());
         kPShader.SetTexture(0, kVolumeImage.GetVolumeTarget() );
         kPShader.SetImageName(1,kVolumeImage.GetColorMapTarget().GetImage().GetName());
         kPShader.SetTexture(1, kVolumeImage.GetColorMapTarget() );
-        kPShader.SetImageName(2,kVolumeImage.GetNormalMapTarget().GetImage().GetName());
-        kPShader.SetTexture(2, kVolumeImage.GetNormalMapTarget() );
-        kPShader.SetImageName(3,kVolumeImage.GetOpacityMapGMTarget().GetImage().GetName());
-        kPShader.SetTexture(3, kVolumeImage.GetOpacityMapGMTarget() );
         m_bIsColor = kVolumeImage.GetImage().isColorImage();
         this.m_afClipAll = kClip.m_afClipAll;
         this.m_afDoClip = kClip.m_afDoClip;

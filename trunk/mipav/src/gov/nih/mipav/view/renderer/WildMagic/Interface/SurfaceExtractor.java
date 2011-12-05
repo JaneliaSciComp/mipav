@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -135,6 +136,73 @@ public class SurfaceExtractor extends ExtractSurfaceTetra {
 
                 akVertex[kInt.intValue()] = new Vector3f(fX, fY, fZ);
             }
+        }
+
+        int[] aiConnect = new int[3 * iTQuantity];
+        int iIndex = 0;
+
+        Iterator kTIter = m_kTSet.iterator();
+
+        while (kTIter.hasNext()) {
+            Triangle kT = (Triangle) kTIter.next();
+            aiConnect[iIndex++] = kT.m_iV0;
+            aiConnect[iIndex++] = kT.m_iV1;
+            aiConnect[iIndex++] = kT.m_iV2;
+        }
+        return new TriMesh(new VertexBuffer(akVertex), new IndexBuffer(aiConnect));
+    }
+
+    public TriMesh getLevelSurface( int iLevel, Vector<int[]> kTriTable ) {
+
+        HashSet<Triangle> kTSet = new HashSet<Triangle>();
+        HashMap<Vertex,Integer> kVMap = new HashMap<Vertex,Integer> ();
+        super.ExtractContour((int)iLevel, kTriTable, kVMap, kTSet);
+
+        // The extraction assumes linear interpolation (decomposition of image
+        // domain into tetrahedra).  To make the extraction fast, the arrays
+        // make no attempt to store only unique values.  This supports rapid
+        // interactive exploration of various level sets in an image until a
+        // desired one is found.  At that time call makeUnique to eliminate
+        // the redundant information.
+        float[] coord = new float[3];
+        float[] tCoord = new float[3];
+
+        // pack vertices and triangle connectivity into arrays
+        int iVQuantity = m_kVMap.size();
+        int iTQuantity = m_kTSet.size();
+
+        if ((iVQuantity == 0) || (iTQuantity == 0)) {
+            return null;
+        }
+
+        Vector3f[] akVertex = new Vector3f[iVQuantity];
+        Iterator kVIter = m_kVMap.entrySet().iterator();
+        Map.Entry kEntry = null;
+
+
+        float xBox = (m_iXBound - 1) * m_fXDelta;
+        float yBox = (m_iYBound - 1) * m_fYDelta;
+        float zBox = (m_iZBound - 1) * m_fZDelta;
+        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        while (kVIter.hasNext()) {
+            kEntry = (Map.Entry) kVIter.next();
+
+            Vertex kV = (Vertex) kEntry.getKey();
+            Integer kInt = (Integer) kEntry.getValue();
+
+            // Get floating point vertex coordinates
+            float fX = (kV.m_iXNumer / (float) kV.m_iXDenom);
+            float fY = (kV.m_iYNumer / (float) kV.m_iYDenom);
+
+            // In AlgorithmExtractSurface.extractSurface only padded
+            // in the z direction with 1 blank slice in front and
+            // 1 blank slice in back.
+            float fZ = (kV.m_iZNumer / (float) kV.m_iZDenom) - 1.0f;
+
+            fX = ((2.0f * (fX * m_fXDelta)) - xBox)/(2.0f*maxBox);
+            fY = ((2.0f * (fY * m_fYDelta)) - yBox)/(2.0f*maxBox);
+            fZ = ((2.0f * (fZ * m_fZDelta)) - zBox)/(2.0f*maxBox);
+            akVertex[kInt.intValue()] = new Vector3f(fX, fY, fZ);
         }
 
         int[] aiConnect = new int[3 * iTQuantity];

@@ -578,7 +578,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         } else if (command.equals("BrainSurface")) {
             if (brainsurfaceFlattenerRender == null) {
                 brainsurfaceFlattenerRender = new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(
-                        this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
+                		new GLCanvas(caps, sharedDrawable.getContext()), this, m_kAnimator, m_kVolumeImageA, m_kVolumeImageB);
                 final TriMesh kSurface = raycastRenderWM.getSurface(surfaceGUI.getSelectedSurface());
                 final Node kMeshLines = brainsurfaceFlattenerRender.getPanel().displayCorticalAnalysis(kSurface,
                         raycastRenderWM.getSurfaceCenter(surfaceGUI.getSelectedSurface()));
