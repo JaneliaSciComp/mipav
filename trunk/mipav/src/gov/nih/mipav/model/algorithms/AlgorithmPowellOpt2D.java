@@ -68,9 +68,8 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      * @return              a full transformation vector.
      */
     public double[] constructPoint(double[] defaultPoint, double[] point) {
-    	if(point == null || (point.length != 2 && point.length != 3 && 
-    	   point.length != 4 && point.length != 5 && point.length != 7)){
-    	    gov.nih.mipav.view.MipavUtil.displayError("The transformation vector either is null or has invlid length!");
+    	if(point == null){
+    	    gov.nih.mipav.view.MipavUtil.displayError("The transformation vector either is null!");
     		return null;
     	}
     	
@@ -88,7 +87,9 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
     	//System.err.println("");
     	
         // set up parts of transform properly
-        if (point.length == 2) {
+    	if (point.length == 1) {
+            workingPoint[0] = point[0];
+        } else if (point.length == 2) {
             workingPoint[1] = point[0];
             workingPoint[2] = point[1];
         } else if ((point.length == 3) && (rigid == true)) {
@@ -155,6 +156,9 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
         double[] point = new double[dof];
         
         // set up initial point properly
+        if (dof == 1) {
+            point[0] = startPoint[0]; // rotation
+        }
         if (dof == 2) {
             point[0] = startPoint[1];
             point[1] = startPoint[2];
@@ -201,13 +205,18 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      */
     public void updatePoint(double[] point, double cost, Vectornd v) {
         double[] finalPoint = v.getPoint();
-        if(dof == 2){
+        if(dof == 1){
+            /**
+             * rotation only.
+             */
+            finalPoint[0] = point[0];
+        } else if(dof == 2){
             /**
              * x and y translations.
              */
             finalPoint[1] = point[0];
             finalPoint[2] = point[1];
-        }else if (dof == 3 && rigid) {
+        } else if (dof == 3 && rigid) {
             /**
              * rotation, and x, y translations.
              */

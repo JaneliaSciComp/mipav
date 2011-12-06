@@ -429,37 +429,10 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
                 
                //need to set default # of interpolation points
                VOIVector VOIs = wormImage.getVOIs();
-
-               Vector<VOIBase> contours = VOIs.VOIAt(0).getCurves();
-               
-               
-                
+               Vector<VOIBase> contours = VOIs.VOIAt(0).getCurves();                                           
                int nPoints = contours.size();
-               
-
-
-               float[] xPoints = new float[nPoints];
-               float[] yPoints = new float[nPoints];
-               float[] zPoints = new float[nPoints];
-
-               for (int i = 0; i < nPoints; i++) {
-            	   Vector3f point = ((VOIPoint)contours.get(i)).exportPoint();
-                   xPoints[i] = point.X;
-                   yPoints[i] = point.Y;
-                   zPoints[i] = point.Z;
-               }
-               
-               
-               
-               AlgorithmArcLength arcLength = new AlgorithmArcLength(xPoints, yPoints, zPoints);
-
-               int defaultPts = 100;
-
+               int defaultPts = 100; // 10 * (nPoints - 1)
                interpolationPtsTextField.setText(String.valueOf(defaultPts));
-
-                
-                
-                
             }
         }else if(command.equals("ok")) {
         	callAlgorithm();

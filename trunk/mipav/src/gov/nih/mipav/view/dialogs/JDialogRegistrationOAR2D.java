@@ -636,7 +636,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     xfrm  = reg2.getTransform();
 
-                    System.err.println( xfrm );
+                    //System.err.println( xfrm );
                     transform = new AlgorithmTransform(matchImage, xfrm, interp2, xresA, yresA, xdimA,
                                                        ydimA, true, false, pad);
 
@@ -942,7 +942,21 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         // (event.getSource() == voiRadio))
         else if (event.getSource() == comboBoxDOF) {
 
-            if (comboBoxDOF.getSelectedIndex() == 0) {
+        	if (comboBoxDOF.getSelectedIndex() == 0) { // rotation only
+                rotateBeginText.setEnabled(true);
+                rotateEndText.setEnabled(true);
+                coarseRateText.setEnabled(true);
+                fineRateText.setEnabled(false);
+                labelRotateRange.setEnabled(true);
+                labelRotateRangeTo.setEnabled(true);
+                labelRotateDegrees.setEnabled(true);
+                labelCoarse.setEnabled(true);
+                labelCoarseDegrees.setEnabled(true);
+                labelFine.setEnabled(false);
+                labelFineDegrees.setEnabled(false);
+                sampleCheckBox.setSelected(false);
+                sampleCheckBox.setEnabled(false);
+            } else if (comboBoxDOF.getSelectedIndex() == 1) {
                 rotateBeginText.setEnabled(false);
                 rotateEndText.setEnabled(false);
                 coarseRateText.setEnabled(false);
@@ -1679,12 +1693,13 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         comboBoxDOF.setFont(MipavUtil.font12);
         comboBoxDOF.setBackground(Color.white);
         comboBoxDOF.setToolTipText("Degrees of freedom");
+        comboBoxDOF.addItem("Rotation only - 1");
         comboBoxDOF.addItem("Translations - 2");
         comboBoxDOF.addItem("Rigid - 3");
         comboBoxDOF.addItem("Global rescale - 4");
         comboBoxDOF.addItem("Specific rescale - 5");
         comboBoxDOF.addItem("Affine - 6");
-        comboBoxDOF.setSelectedIndex(4);
+        comboBoxDOF.setSelectedIndex(5);
         comboBoxDOF.addItemListener(this);
 
         JLabel labelCost = new JLabel("Cost function:");
@@ -2176,12 +2191,13 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         comboBoxDOF.setFont(MipavUtil.font12);
         comboBoxDOF.setBackground(Color.white);
         comboBoxDOF.setToolTipText("Degrees of freedom");
+        comboBoxDOF.addItem("Rotation only - 1");
         comboBoxDOF.addItem("Translations - 2");
         comboBoxDOF.addItem("Rigid - 3");
         comboBoxDOF.addItem("Global rescale - 4");
         comboBoxDOF.addItem("Specific rescale - 5");
         comboBoxDOF.addItem("Affine - 6");
-        comboBoxDOF.setSelectedIndex(DOF - 2);
+        comboBoxDOF.setSelectedIndex(DOF - 1);
         comboBoxDOF.addItemListener(this);
 
         JLabel labelCost = new JLabel("Cost function:");
@@ -2620,22 +2636,26 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         switch (comboBoxDOF.getSelectedIndex()) {
 
             case 0:
-                DOF = 2;
+                DOF = 1;
                 break;
 
             case 1:
-                DOF = 3;
+                DOF = 2;
                 break;
 
             case 2:
-                DOF = 4;
+                DOF = 3;
                 break;
 
             case 3:
-                DOF = 5;
+                DOF = 4;
                 break;
 
             case 4:
+                DOF = 5;
+                break;
+                
+            case 5:
                 DOF = 6;
                 break;
 
