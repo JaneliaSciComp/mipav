@@ -115,10 +115,12 @@ public class Statistics {
         hyper = new Hypergeometric(0.5, (v + 1.0)/2.0, 1.5, -x*x/v, result);
         hyper.run();
         ansR[0] = 0.5 + x*(g1[0]/(Math.sqrt(v*Math.PI)*g2[0]))*result[0];
+        System.out.println("ansR[0] = " + ansR[0]);
+        // In fact JTEM produces error message Z is not inner point of the unit disc when I run circle generation.
         // JTEM Solution (Produces same result testR.getRe() = result[0].
-        Complex testR = HyperGeometric2F1.evaluateSeries( new Complex(0.5), new Complex((v + 1.0)/2.0),
-        		new Complex(1.5), new Complex(-x*x/v) );
-        System.err.println( result[0] + "   " + testR.getRe() );
+        //Complex testR = HyperGeometric2F1.evaluateSeries( new Complex(0.5), new Complex((v + 1.0)/2.0),
+        		//new Complex(1.5), new Complex(-x*x/v) );
+        //System.err.println( result[0] + "   " + testR.getRe() );
         return;
     }
     
