@@ -1672,6 +1672,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             answer = levelOne(simpleRef, simpleInput, item);
             // createTerrain();
         } // if (DOF >= 3)
+        else if ( DOF == 1 ){
+            Preferences.debug(" Starting level 1 ************************************************\n",
+            		Preferences.DEBUG_ALGORITHM);
+            answer = levelOne2DRotation(simpleRef, simpleInput);
+        }
         else {
             Preferences.debug(" Starting level 1 ************************************************\n",
             		Preferences.DEBUG_ALGORITHM);
@@ -1708,7 +1713,10 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
     public double getCost() {
         return answer.cost;
+    }
 
+    public double getRotation() {
+        return answer.initial[0];
     }
 
     @SuppressWarnings("unused")
@@ -2274,7 +2282,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     private double[] getTolerance(final int DOF) {
         final double[] tols = new double[DOF];
 
-        if (DOF == 2) {
+        if (DOF == 1) {
+            tols[0] = ( (180. / Math.PI) / maxDim); // rotation
+        } else if (DOF == 2) {
             tols[0] = tols[1] = 0.5; // translations
         } else if ( (DOF == 3) && (rigidFlag == true)) {
             tols[0] = ( (180. / Math.PI) / maxDim); // rotation
@@ -2928,6 +2938,88 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         cost.disposeLocal();
         powell.disposeLocal();
 
+        return item2;
+    }
+
+    /**
+     * Only used for rotations only = 1 degrees of freedom levelEight, levelFour, and levelTwo are skipped Takes the
+     * two images, no subsampling. Sets up the cost function with the images and the weighted images, Performs one
+     * optimization run, with 2 degrees of freedom Returns the best minimum.
+     * 
+     * @param ref Reference image.
+     * @param input Input image.
+     * 
+     * @return Best minimum after optimization.
+     */
+    private MatrixListItem levelOne2DRotation(final ModelSimpleImage ref, final ModelSimpleImage input) {
+        int degree;
+        AlgorithmPowellOptBase powell;
+        final AlgorithmCostFunctions2D cost = new AlgorithmCostFunctions2D(ref, input, costChoice, 256, 1);
+        if ( (m_kGPUCost != null)
+                && ( (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU) || (costChoice == AlgorithmCostFunctions2D.NORMALIZED_MUTUAL_INFORMATION_GPU_LM))) {
+            m_kGPUCost.initImages(ref, input, 256);
+            cost.setGPUCost(m_kGPUCost);
+        }
+        if (weighted) {
+            cost.setRefWgtImage(simpleWeightRef);
+            cost.setInputWgtImage(simpleWeightInput);
+        }
+
+        final Vector2f cog = new Vector2f( input.xDim / 2, input.yDim / 2 );
+        final double[] initial = new double[7];
+
+        initial[0] = 0; // initial rotation
+        initial[1] = 0; // initial translations
+        initial[2] = 0;
+        initial[3] = initial[4] = 1; // initial scaling
+        initial[5] = initial[6] = 0; // initial skewing
+
+        degree = DOF;
+
+        maxIter = baseNumIter * 2;
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, bracketBound);
+        powell.setMultiThreadingEnabled(doMultiThread);
+        powell.setUseJTEM(doJTEM);               
+
+        //fireProgressStateChanged("Optimizing at coarse samples");
+        Vectornd[] initials = new Vectornd[coarseNum + 1];
+        initials[0] = new Vectornd(initial, true);
+        for (int i = 0; (i < coarseNum) && !threadStopped; i++) {
+            fireProgressStateChanged( (i + 1) * 10 / coarseNum);
+
+            initial[0] = rotateBegin + (i * coarseRate);
+            initials[i + 1] = new Vectornd(initial, true);
+        }
+
+        powell.setPoints(initials);
+
+        //Vectornd[] initials = new Vectornd[1];
+        //initials[0] = new Vectornd(initial, true);
+
+        powell.setPoints(initials);
+        powell.run();
+        
+        int minIndex = 0;
+        double minCost = Float.MAX_VALUE;
+        MatrixListItem item2 =  new MatrixListItem(powell.getCost(0), powell.getMatrix(0, input.xRes), powell.getPoint(0));
+    	
+        for ( int i = 0; i < initials.length; i++ )
+        {
+        	 item2 =  new MatrixListItem(powell.getCost(i), powell.getMatrix(i, input.xRes), powell.getPoint(i));
+        	 if ( item2.getCost() < minCost )
+        	 {
+        		 minCost = item2.getCost();
+        		 minIndex = i;
+        	 }        	
+        }
+        item2 =  new MatrixListItem(powell.getCost(minIndex), powell.getMatrix(minIndex, input.xRes), powell.getPoint(minIndex));
+        
+        Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
+
+        fireProgressStateChanged(100);
+
+        cost.disposeLocal();
+        powell.disposeLocal();
         return item2;
     }
 
