@@ -8,6 +8,7 @@ import Jama.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
+import java.util.BitSet;
 
 
 /**
@@ -1572,6 +1573,9 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int resultIndex;
         int tmpb1, tmpb2, tmpb3, tmpb4;
         float tmpa1, tmpa2, tmpa3, tmpa4;
+        VOIVector voiVector;
+        VOI presentVOI;
+        boolean nonPointVOIPresent = false;
 
         fireProgressStateChanged(0);
         fireProgressStateChanged("Performing base to match grid transformation...");
@@ -1841,6 +1845,18 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 } // for (i = 0; i < yDimA; i++)
             } // for (zNum = 0; zNum < zDimB; zNum++)
         } // else color
+        
+        voiVector = matchImage.getVOIs();
+        for (i = 0; i < voiVector.size(); i++) {
+            presentVOI = matchImage.getVOIs().VOIAt(i);
+            if (presentVOI.getCurveType() != VOI.POINT) {
+                nonPointVOIPresent = true;	
+            }
+        }
+        
+        if (nonPointVOIPresent) {
+            transform25DVOI(matchImage, resultImage, imgBuf);	
+        }
 
         try {
             resultImage.importData(0, resultBuf, true);
@@ -1856,6 +1872,224 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         setCompleted(true);
 
         return;
+    }
+    
+    private void transform25DVOI(final ModelImage image, ModelImage destImage, final float[] imgBuffer) {
+    	int i, j, k;
+        int X0pos, Y0pos;
+        float X, Y;
+        float value;
+        int index;
+        int index2;
+        int indexC;
+        int iXdim = image.getExtents()[0];
+        int iYdim = image.getExtents()[1];
+        int sliceSize = iXdim * iYdim;
+        int iZdim = 1;
+        if (image.getNDims() > 2) {
+        	iZdim = image.getExtents()[2];
+        }
+        ModelImage maskImage;
+        float fillValue = 0.0f;
+        int index2Size;
+        VOIBaseVector curves = null;
+        int xBounds[] = new int[2];
+        int yBounds[] = new int[2];
+        int zBounds[] = new int[2];
+        int zFound[] = new int[iZdim];
+        boolean duplicateZ = false;
+        int oXdim = destImage.getExtents()[0];
+        int oYdim = destImage.getExtents()[1];
+        int oZdim = 1;
+        if (destImage.getNDims() > 2) {
+        	oZdim = destImage.getExtents()[2];
+        }
+        float[] result = new float[2];
+        int m;
+        double dx, dy;
+        double fT;
+        double U;
+
+
+        ModelImage tmpMask = null;
+        VOIVector voiVector;
+        
+        voiVector = image.getVOIs();
+        
+        if (voiVector.size() == 0) {
+            return;
+        }
+
+        indexC = 0;
+        try {
+            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+        } catch (final OutOfMemoryError error) {
+            throw error;
+        }
+        for (index = 0; index < voiVector.size(); index++) {
+        	VOI presentVOI = voiVector.elementAt(index);
+        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		curves = presentVOI.getCurves();	
+        		index2Size = curves.size();
+        	}
+        	else if (presentVOI.getCurveType() == VOI.POINT) {
+        		continue;
+        	}
+        	else {
+        		index2Size = 1;
+        	}
+            for (i = 0; i < iZdim; i++) {
+            	zFound[i] = 0;
+            }
+        	for (index2 = 0; index2 < index2Size; index2++) {
+        		if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		    curves.get(index2).getBounds(xBounds, yBounds, zBounds);	
+        		}
+        		else {
+        			presentVOI.getBounds(xBounds, yBounds, zBounds);
+        		}
+        		duplicateZ = false;
+        		for (i = zBounds[0]; i <= zBounds[1]; i++) {
+        			zFound[i]++;
+        			if (zFound[i] >= 2) {
+        				duplicateZ = true;
+        			}
+        		}
+        		if (duplicateZ) {
+        			indexC++;
+		        	duplicateZ = false;
+		        	for (i = 0; i < iZdim; i++) {
+		        		zFound[i] = 0;
+		        	}
+			        tmpMask.calcMinMax();
+			
+			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+			
+			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+			        VOIExtAlgo.run();
+			        VOIExtAlgo.finalize();
+			        VOIExtAlgo = null;
+			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.resetVOIs();
+			        for (k = 0; k < oZdim; k++) {
+			        	for (j = 0; j < oYdim; j++) {
+			        		for (i = 0; i < oXdim; i++) {
+			        			tmpMask.set(i, j, k, fillValue);
+			        		}
+			        	}
+			        }
+			        index2--;
+			        continue;
+		        }
+		        
+		        maskImage.clearMask();
+		        
+		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+
+				BitSet mask = maskImage.getMask();
+
+				
+				for (i = zBounds[0]*sliceSize; i < (zBounds[1]+1)*sliceSize; i++) {
+
+					if (mask.get(i)) {
+						maskImage.set(i, indexC + 1);
+					}
+					else {
+						maskImage.set(i, 0);
+					}
+				}
+		  
+		
+		        for (k = zBounds[0]; k <= zBounds[1]; k++) {
+		            
+		            try {
+		                maskImage.exportData(k * sliceSize, sliceSize, imgBuffer); // locks and releases lock
+		            } catch (final IOException error) {
+		                displayError("AlgorithmTPSpline: Image(s) locked");
+		                setCompleted(false);
+
+		                return;
+		            }
+		            
+		            for (i = 0; i < oYdim; i++) {
+
+	                    for (j = 0; j < oXdim; j++) {
+	                        result[0] = C[N][0] + (C[N + 1][0] * j) + (C[N + 2][0] * i);
+	                        result[1] = C[N][1] + (C[N + 1][1] * j) + (C[N + 2][1] * i);
+
+	                        for (m = 0; m < N; m++) {
+	                            dx = x[m] - j;
+	                            dy = y[m] - i;
+	                            fT = Math.sqrt((dx * dx) + (dy * dy));
+	                            U = kernel(fT);
+	                            result[0] += C[m][0] * U;
+	                            result[1] += C[m][1] * U;
+	                        }
+
+	                        value = fillValue; // remains zero if transformed out of bounds
+	                        X = result[0];
+
+	                        if ((X >= 0) && (X <= (iXdim - 1))) {
+	                            Y = result[1];
+
+	                            if ((Y >= 0) && (Y <= (iYdim - 1))) {
+	                                // bi-linear interp. set intensity of i,j to new transformed coordinates if x,y is
+	                                // within dimensions of image
+
+	                                X0pos = (int) (X + 0.5f);
+	                                X0pos = Math.min(X0pos, iXdim-1);
+	                                Y0pos = ((int) (Y + 0.5f)) * iXdim;
+	                                Y0pos = Math.min(Y0pos, (iYdim-1)*iXdim);
+	                                value = imgBuffer[Y0pos + X0pos];
+	                                
+
+	                            } // if ((Y >= 0) && (Y < (iYdim-1)))
+	                        } // if ((X >= 0) && (X < (iXdim-1)))
+	                        tmpMask.set(j, i, k, value);
+	                    } // for (j = 0; j < oXdim; j++)
+	                } // for (i = 0; i < oYdim; i++)
+		        
+		
+			       
+			
+			        if (threadStopped) {
+			            return;
+			        }
+		        } // for (k = zBounds[0]; k <= zBounds[1]; k++)
+		
+		        // ******* Make algorithm for VOI extraction.
+		        if (index2 == curves.size()-1) {
+		        	indexC++;
+		        	duplicateZ = false;
+		        	for (i = 0; i < iZdim; i++) {
+		        		zFound[i] = 0;
+		        	}
+			        tmpMask.calcMinMax();
+			
+			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+			
+			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+			        VOIExtAlgo.run();
+			        VOIExtAlgo.finalize();
+			        VOIExtAlgo = null;
+			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.resetVOIs();
+			        for (k = 0; k < oZdim; k++) {
+			        	for (j = 0; j < oYdim; j++) {
+			        		for (i = 0; i < oXdim; i++) {
+			        			tmpMask.set(i, j, k, fillValue);
+			        		}
+			        	}
+			        }
+		        }
+        	} // for (index2 = 0; index2 < curves.size(); index2++)
+        } // for (index = 0; index < voiVector.size(); index++)
+        maskImage.disposeLocal();
+        maskImage = null;
+        tmpMask.disposeLocal();
+        tmpMask = null;
+       
     }
     
     
@@ -1946,6 +2180,9 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int resultIndex;
         float tmpa1, tmpa2, tmpa3, tmpa4, tmpa5, tmpa6, tmpa7, tmpa8;
         int index000, index001, index010, index011, index100, index101, index110, index111;
+        VOIVector voiVector;
+        VOI presentVOI;
+        boolean nonPointVOIPresent = false;
 
         fireProgressStateChanged(0);
         fireProgressStateChanged("Performing base to match grid transformation...");
@@ -2480,10 +2717,252 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         } // else color
 
         resultImage.calcMinMax();
+        
+        voiVector = matchImage.getVOIs();
+        for (i = 0; i < voiVector.size(); i++) {
+            presentVOI = matchImage.getVOIs().VOIAt(i);
+            if (presentVOI.getCurveType() != VOI.POINT) {
+                nonPointVOIPresent = true;	
+            }
+        }
+        
+        if (nonPointVOIPresent) {
+        	imgBuf = new float[xDimB*yDimB*zDimB];
+            transform3DVOI(matchImage, resultImage, imgBuf);	
+        }
 
         setCompleted(true);
 
         return;
+    }
+    
+    private void transform3DVOI(final ModelImage image, ModelImage destImage, final float[] imgBuffer) {
+    	int i, j, k;
+        int X0pos, Y0pos, Z0pos;
+        float X, Y, Z;
+        float value;
+        int index;
+        int index2;
+        int indexC;
+        int iXdim = image.getExtents()[0];
+        int iYdim = image.getExtents()[1];
+        int iZdim = image.getExtents()[2];
+        int sliceSize = iXdim * iYdim;
+        int length = sliceSize * iZdim;
+        ModelImage maskImage;
+        float fillValue = 0.0f;
+        int index2Size;
+        VOIBaseVector curves = null;
+        int xBounds[] = new int[2];
+        int yBounds[] = new int[2];
+        int zBounds[] = new int[2];
+        int zFound[] = new int[iZdim];
+        boolean duplicateZ = false;
+        int oXdim = destImage.getExtents()[0];
+        int oYdim = destImage.getExtents()[1];
+        int oZdim = destImage.getExtents()[2];
+        float[] result = new float[3];
+        int m;
+        double dx, dy, dz;
+        double fT;
+        double U;
+
+        ModelImage tmpMask = null;
+        VOIVector voiVector;
+        
+        voiVector = image.getVOIs();
+        
+        if (voiVector.size() == 0) {
+            return;
+        }
+
+        indexC = 0;
+
+        try {
+            maskImage = new ModelImage(ModelStorageBase.SHORT, image.getExtents(), "Short Image");
+            tmpMask = new ModelImage(ModelStorageBase.SHORT, destImage.getExtents(), null);
+        } catch (final OutOfMemoryError error) {
+            throw error;
+        }
+        for (k = 0; k < oZdim; k++) {
+        	for (j = 0; j < oYdim; j++) {
+        		for (i = 0; i < oXdim; i++) {
+        			tmpMask.set(i, j, k, fillValue);
+        		}
+        	}
+        }
+      
+        for (index = 0; index < voiVector.size(); index++) {
+        	VOI presentVOI = voiVector.elementAt(index);
+        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		curves = presentVOI.getCurves();	
+        		index2Size = curves.size();
+        	}
+        	else if (presentVOI.getCurveType() == VOI.POINT) {
+        		continue;
+        	}
+        	else {
+        		index2Size = 1;
+        	}
+            for (i = 0; i < iZdim; i++) {
+            	zFound[i] = 0;
+            }
+        	for (index2 = 0; index2 < index2Size; index2++) {
+        		if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		    curves.get(index2).getBounds(xBounds, yBounds, zBounds);	
+        		}
+        		else {
+        			presentVOI.getBounds(xBounds, yBounds, zBounds);
+        		}
+        		duplicateZ = false;
+        		for (i = zBounds[0]; i <= zBounds[1]; i++) {
+        			zFound[i]++;
+        			if (zFound[i] >= 2) {
+        				duplicateZ = true;
+        			}
+        		}
+        		if (duplicateZ) {
+        			indexC++;
+		        	duplicateZ = false;
+		        	for (i = 0; i < iZdim; i++) {
+		        		zFound[i] = 0;
+		        	}
+			        tmpMask.calcMinMax();
+			
+			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+			
+			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+			        VOIExtAlgo.run();
+			        VOIExtAlgo.finalize();
+			        VOIExtAlgo = null;
+			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.resetVOIs();
+			        for (k = 0; k < oZdim; k++) {
+			        	for (j = 0; j < oYdim; j++) {
+			        		for (i = 0; i < oXdim; i++) {
+			        			tmpMask.set(i, j, k, fillValue);
+			        		}
+			        	}
+			        }
+			        index2--;
+			        continue;
+		        }
+		        
+		        maskImage.clearMask();
+		        
+		        (voiVector.elementAt(index)).createOneElementBinaryMask3D(maskImage.getMask(), iXdim, iYdim, false, false, index2);
+
+				BitSet mask = maskImage.getMask();
+
+				
+				for (i = 0; i < length; i++) {
+
+					if (mask.get(i)) {
+						maskImage.set(i, indexC + 1);
+					}
+					else {
+						maskImage.set(i, 0);
+					}
+				}
+		  
+		
+	            try {
+	                maskImage.exportData(0, length, imgBuffer); // locks and releases lock
+	            } catch (final IOException error) {
+	                displayError("Algorithm VOI transform: Image(s) locked");
+	                setCompleted(false);
+
+	                return;
+	            }
+	            
+	            for (i = 0; i < oZdim; i++) {
+
+	                for (j = 0; j < oYdim; j++) {
+
+	                    for (k = 0; k < oXdim; k++) {
+	                        result[0] = C[N][0] + (C[N + 1][0] * k) + (C[N + 2][0] * j) + (C[N + 3][0] * i);
+	                        result[1] = C[N][1] + (C[N + 1][1] * k) + (C[N + 2][1] * j) + (C[N + 3][1] * i);
+	                        result[2] = C[N][2] + (C[N + 1][2] * k) + (C[N + 2][2] * j) + (C[N + 3][2] * i);
+
+	                        for (m = 0; m < N; m++) {
+	                            dx = x[m] - k;
+	                            dy = y[m] - j;
+	                            dz = z[m] - i;
+	                            fT = Math.sqrt((dx * dx) + (dy * dy) + (dz * dz));
+	                            U = kernel(fT);
+	                            result[0] += C[m][0] * U;
+	                            result[1] += C[m][1] * U;
+	                            result[2] += C[m][2] * U;
+	                        }
+
+	                        value = fillValue; // remains zero if transformed out of bounds
+	                        X = result[0];
+
+	                        if ((X >= 0) && (X <= (iXdim - 1))) {
+	                            Y = result[1];
+
+	                            if ((Y >= 0) && (Y <= (iYdim - 1))) {
+	                                Z = result[2];
+
+	                                if ((Z >= 0) && (Z <= (iZdim - 1))) {
+
+	                                    // Preferences.debug(X+", "+Y+", "+Z, Preferences.DEBUG_ALGORITHM);
+	                                    // set intensity of i,j,k to new transformed coordinate if
+	                                    // x,y,z is w/in dimensions of image
+	                                	X0pos = (int) (X + 0.5f);
+		                                X0pos = Math.min(X0pos, iXdim-1);
+		                                Y0pos = ((int) (Y + 0.5f)) * iXdim;
+		                                Y0pos = Math.min(Y0pos, (iYdim-1)*iXdim);
+		                                Z0pos = ((int) (Z + 0.5f)) * sliceSize;
+		                                Z0pos = Math.min(Z0pos, (iZdim-1)*sliceSize);
+		                                value = imgBuffer[Z0pos + Y0pos + X0pos];
+	                                    
+	                                } // if Z in bounds
+	                            } // if Y in bounds
+	                        } // if X in bounds
+	                        tmpMask.set(k, j, i, value);
+	                    } // for k
+	                } // for j
+	            } // for i
+		        
+		       
+		        if (threadStopped) {
+		            return;
+		        }
+		
+		        // ******* Make algorithm for VOI extraction.
+		        if (index2 == curves.size()-1) {
+		        	indexC++;
+		        	duplicateZ = false;
+		        	for (i = 0; i < iZdim; i++) {
+		        		zFound[i] = 0;
+		        	}
+			        tmpMask.calcMinMax();
+			
+			        AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
+			
+			        VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
+			        VOIExtAlgo.run();
+			        VOIExtAlgo.finalize();
+			        VOIExtAlgo = null;
+			        destImage.addVOIs(tmpMask.getVOIs());
+			        tmpMask.resetVOIs();
+			        for (k = 0; k < oZdim; k++) {
+			        	for (j = 0; j < oYdim; j++) {
+			        		for (i = 0; i < oXdim; i++) {
+			        			tmpMask.set(i, j, k, fillValue);
+			        		}
+			        	}
+			        }
+		        }
+        	} // for (index2 = 0; index2 < curves.size(); index2++)
+        } // for (index = 0; index < voiVector.size(); index++)
+        maskImage.disposeLocal();
+        maskImage = null;
+        tmpMask.disposeLocal();
+        tmpMask = null;
+
+        
     }
     
     /**
