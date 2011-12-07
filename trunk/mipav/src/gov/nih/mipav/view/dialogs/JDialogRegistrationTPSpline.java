@@ -288,46 +288,80 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
         Vector3f[] ptA = null; // new Vector3f[nPtsA];
         Vector3f[] ptB = null; // new Vector3f[nPtsB];
         int i;
-        Vector<VOIBase> curvesB;
-        Vector<VOIBase> curvesM;
+        int j;
+        int num;
+        Vector<VOIBase> curves;
+        VOIVector voiVector;
+        VOI presentVOI;
+        
+        if (baseImage.getVOIs().size() == 0) {
+            MipavUtil.displayError("Select points before clicking OK");
 
-        if ((baseImage.getNDims() == 3) && (matchImage.getNDims() == 3)) {
-            curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-            nPtsA = curvesB.size();
-
-            Preferences.debug("nPtsA = " + nPtsA,Preferences.DEBUG_ALGORITHM);
-
-            curvesM = matchImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-            nPtsB += curvesM.size();
-
-            Preferences.debug("nPtsB = " + nPtsB,Preferences.DEBUG_ALGORITHM);
-
-            try {
-                ptA = new Vector3f[nPtsA];
-                ptB = new Vector3f[nPtsB];
-            } catch (OutOfMemoryError error) {
-                ptA = null;
-                ptB = null;
-                System.gc();
-                MipavUtil.displayError("JDialogRegistrationTPSpline: Out of memory on ptA");
-
-                return;
+            return;
+        }
+        
+        if (baseImage.getNDims() != matchImage.getNDims()) {
+        	MipavUtil.displayError("baseImage and matchImage must have the same number of dimensions");
+        }
+    
+    	voiVector = baseImage.getVOIs();
+        for (i = 0; i < voiVector.size(); i++) {
+            presentVOI = baseImage.getVOIs().VOIAt(i);
+            if (presentVOI.getCurveType() == VOI.POINT) {
+            	curves = presentVOI.getCurves();
+            	nPtsA += curves.size();
             }
+        }
 
-                tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
-                for (i = 0; i < tmpptA.length; i++) {
-                    //ptNum = (int) (Short.valueOf(((VOIPoint) curvesB[s].elementAt(i)).getLabel()).shortValue()) - 1;
-                    ptA[i] = tmpptA[i];
-                }
+        Preferences.debug("nPtsA = " + nPtsA + "\n",Preferences.DEBUG_ALGORITHM);
+        ptA = new Vector3f[nPtsA];
+        for (i = 0, num = 0; i < voiVector.size(); i++) {
+            presentVOI = baseImage.getVOIs().VOIAt(i);
+            if (presentVOI.getCurveType() == VOI.POINT) {
+            	tmpptA = presentVOI.exportAllPoints();
+            	for (j = 0; j < tmpptA.length; j++) {
+            		ptA[num++] = tmpptA[j];
+            	}
+            }
+        }
 
-                tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
-                for (i = 0; i < tmpptB.length; i++) {
-                    //ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[s].elementAt(i)).getLabel()).shortValue()) - 1;
-                    // ptNum = (int)(Short.valueOf(((VOIPoint)tmpptB[i]).getLabel()).shortValue());
-                    ptB[i] = tmpptB[i];
-                }
+        voiVector = matchImage.getVOIs();
+        for (i = 0; i < voiVector.size(); i++) {
+            presentVOI = matchImage.getVOIs().VOIAt(i);
+            if (presentVOI.getCurveType() == VOI.POINT) {
+            	curves = presentVOI.getCurves();
+            	nPtsB += curves.size();
+            }
+        }
 
-            coplanar = true;
+        if (nPtsA != nPtsB) {
+            MipavUtil.displayError("Both images must have the same number of points");
+
+            return;
+        }
+
+        Preferences.debug("nPtsB = " + nPtsB + "\n",Preferences.DEBUG_ALGORITHM);
+        ptB = new Vector3f[nPtsB];
+        for (i = 0, num = 0; i < voiVector.size(); i++) {
+            presentVOI = matchImage.getVOIs().VOIAt(i);
+            if (presentVOI.getCurveType() == VOI.POINT) {
+            	tmpptB = presentVOI.exportAllPoints();
+            	for (j = 0; j < tmpptB.length; j++) {
+            		ptB[num++] = tmpptB[j];
+            	}
+            }
+        }
+    
+        
+
+        if ((nPtsA < (DIM+1)) || (nPtsB < (DIM+1))) {
+            MipavUtil.displayError("Must select at least " + (DIM + 1) + " points.");
+
+            return;
+        }
+        
+        if (DIM == 3) {
+        	coplanar = true;
 
             for (i = 0; (i < ptA.length) && coplanar; i++) {
 
@@ -335,40 +369,9 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                     coplanar = false;
                 }
             }
-
-        } else if ((baseImage.getNDims() == 2) && (matchImage.getNDims() == 2)) {
-            curvesB = baseImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-            nPtsA = curvesB.size();
-            Preferences.debug("nPtsA = " + nPtsA,Preferences.DEBUG_ALGORITHM);
-
-            curvesM = matchImage.getVOIs().VOIAt(0).getCurves(); // curves[s] holds all VOIs in slice s
-            nPtsB = curvesM.size();
-            Preferences.debug("nPtsB = " + nPtsB,Preferences.DEBUG_ALGORITHM);
-
-            try {
-                ptA = new Vector3f[nPtsA];
-                ptB = new Vector3f[nPtsB];
-            } catch (OutOfMemoryError error) {
-                ptA = null;
-                ptB = null;
-                System.gc();
-                MipavUtil.displayError("JDialogRegistrationTPSpline: Out of memory.");
-
-                return;
-            }
-
-            tmpptA = baseImage.getVOIs().VOIAt(0).exportAllPoints();
-            for (i = 0; i < tmpptA.length; i++) {
-                //ptNum = (int) (Short.valueOf(((VOIPoint) curvesB[0].elementAt(i)).getLabel()).shortValue()) - 1;
-                ptA[i] = tmpptA[i];
-            }
-
-            tmpptB = matchImage.getVOIs().VOIAt(0).exportAllPoints();
-            for (i = 0; i < tmpptB.length; i++) {
-                //ptNum = (int) (Short.valueOf(((VOIPoint) curvesM[0].elementAt(i)).getLabel()).shortValue()) - 1;
-                ptB[i] = tmpptB[i];
-            }
         }
+
+        
 
         if ((DIM == 2) || (coplanar)) {
 
