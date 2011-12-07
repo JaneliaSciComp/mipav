@@ -2402,7 +2402,11 @@ public class FilePARREC extends FileBase {
         //Vector Slices = outInfo.getSlices();
         //Vector SliceParameters = outInfo.getSliceParameters();
         //following info is slice specific....so can not get it only from outInfo
-        for (int i = 0; i < (extents[2] * extents[3]); i++) {
+        int sliceNum = extents[2];
+        if (extents.length > 3) {
+        	sliceNum = sliceNum * extents[3];
+        }
+        for (int i = 0; i < sliceNum; i++) {
             FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
             String tag = fileInfoPR.getSliceInfo();
             fp.println(tag);
