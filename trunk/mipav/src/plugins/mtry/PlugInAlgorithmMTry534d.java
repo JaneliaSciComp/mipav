@@ -46,7 +46,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmMTry534c extends AlgorithmBase {
+public class PlugInAlgorithmMTry534d extends AlgorithmBase {
 
     /** Selected images with varying inverstion times. */
     private ModelImage minImage, medImage, maxImage;
@@ -79,7 +79,7 @@ public class PlugInAlgorithmMTry534c extends AlgorithmBase {
      * @param numChannel 
      * @param  srcImg       Source image model, requires 3D images.
      */
-    public PlugInAlgorithmMTry534c(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
+    public PlugInAlgorithmMTry534d(ModelImage resultImage, ModelImage minImage, ModelImage medImage, ModelImage maxImage, 
             double t1Min, double t1Max, double precision, double invTimeMin, double invTimeMed, double invTimeMax, 
             boolean doReconstruct, int numChannel) {
         super(resultImage, minImage);
