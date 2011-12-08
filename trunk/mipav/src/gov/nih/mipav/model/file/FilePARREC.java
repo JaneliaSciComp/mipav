@@ -1669,6 +1669,7 @@ public class FilePARREC extends FileBase {
             for (int i = 0; i < extents[2]; i++) {
                 FileInfoPARREC newFileInfo = (FileInfoPARREC) fileInfo.clone();
                 newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                newFileInfo.setSliceInfo((String)Slices.get(i));
                 image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
             }
         } else if (image.getNDims() == 4) { // If there is more than one image
