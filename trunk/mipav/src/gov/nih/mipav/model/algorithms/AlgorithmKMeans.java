@@ -25,6 +25,31 @@ import java.io.RandomAccessFile;
  * algorithm will run the same with each run when Hierarchical grouping initialization and maxmin
  * initialization are used.  Global k-means and fast global k-means will run the same with each run.
  * 
+ * Initialization methods are only chosen with k-means; initialization methods are not chosen with 
+ * global K-means and with fast global k-means.
+ * 
+ * In The maxmin initialization first select the 2 points that are farthest apart as seeds.  For each
+ * additional seed find the minimum distance from each nonseed point to any of the seed points.  The new
+ * seed point will be the point that yields the maximum of these minimum distances.
+ * 
+ * In hierarchical grouping all n points are initially considered as n groups of 1 member.  The number of groups is
+ * decreased by 1 with each iteration from n to n-1 to n-2 until the desired number of groups has been obtained.
+ * At each step the sum over all groups of the error sum of squares of each group is minimized.  The error sum of
+ * squares of a group of n members is 
+ * (sum from i = 1 to n of (xi - xaverage)**2 + (yi - yaverage)**2 + (zi - zaverage)**2)
+ * where xaverage, yaverage, and zaverage are for all members of 1 group.
+ * With n groups n*(n-1)/2 possible groupings to go from n to n-1 groups are tried to find the n-1 grouping with the lowest
+ * sum over all groups of the error sum of squares.
+ * 
+ * In Bradley-Fayyad we perform k-means on 10 subsamples, each on 1/10 of all the points, chosen at random.  The initial
+ * centroids are chosen at random and then 1/10 of the data points are selected at random.  When a
+ * subsample k-means finishes, if a centroid does not have any members, then the initial centroid is reassigned 
+ * to the point which is farthest from its assigned cluster centroid, and k-means is run again from these new initial
+ * centroids.  The final centroids cmi from each of the 10 subsample runs are grouped into a common set cm.  10 k-means runs are
+ * performed on this common cm centroid set, each starting with a cmi from a subsample run.  Let the final resulting centroids
+ * from each of these 10 runs be fmi.  Then the fmi which has the lowest sum over all groups of the error sum of squares of
+ * each group will be chosen as the initial starting centroids for the full sample run.
+ * 
  * The global k-means problem solves a problem with m clusters by sequentially solving all intermediate
  * problems with 1,2, ..., m-1 clusters.  At the start of a run with m clusters the first m-1 clusters
  * are put at positions corresponding to their final locations in the m-1 cluster problem.  For global
