@@ -2,6 +2,7 @@ package gov.nih.mipav.model.algorithms.t2mapping.t2map;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
 import java.util.*;
@@ -39,7 +40,8 @@ abstract public class T2Map
 		
 		FittingType(Class c, String name) {
 			this.name = name;
-		}
+			
+;		}
 		
 		/* (non-Javadoc)
 		 * @see java.lang.Enum#toString()
@@ -136,10 +138,10 @@ abstract public class T2Map
 		t2fitter = new T2FitMonoExp(TEValues);
 	}
 	
-	
-	public T2Map()
-	{
-	}
+	/**
+	 * Default constructor.
+	 */
+	public T2Map(){}
 
 	/*
 	 *  Abstract methods....
@@ -203,10 +205,8 @@ abstract public class T2Map
 	/** Should we do flip angle estimation? */
 	public void setUseFlip( final MCVolume alpha_map )
 	{
-		if( estimateFlip )
-		{
+		if( estimateFlip ) {
 			System.out.println("t2map: Can't estimate flip angle *and* use a flip angle map at the same time.");
-			System.exit(-1);
 	  	}
 
 		this.alpha_map = (MCVolume)alpha_map.clone();
@@ -266,7 +266,7 @@ abstract public class T2Map
 				frame.setLocation(screen.width/2-nCols/2,screen.height/2-nRows/2);
 
 				frame.setResizable(true);
-				frame.show();
+				frame.setVisible(true);
 			}
 			catch( InternalError e )
 			{ 
@@ -292,7 +292,7 @@ abstract public class T2Map
 				progressFrame.getContentPane().add( progressBar );
 				Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 				progressFrame.setLocation(screen.width/2-128,screen.height/2-128);
-				progressFrame.show();
+				progressFrame.setVisible(true);
 			}
 			catch( InternalError e )
 			{
@@ -487,8 +487,8 @@ abstract public class T2Map
 					}
 				break;
 			default:
-				System.out.println("T2Map: Unknown noise estimate type.");
-				System.exit(-1);
+				MipavUtil.displayError("T2Map: Unknown noise estimate type.");
+				
 				break;
 		}
 
@@ -509,9 +509,9 @@ abstract public class T2Map
 		}
 		catch( OutOfMemoryError e )
 		{
-			System.out.println("ModelImage: Could not allocate " + xDim +
+			MipavUtil.displayError("ModelImage: Could not allocate " + xDim +
 				" " + yDim + " " + numSlices + " " + TEValues.length );
-			System.exit(-1);
+			
 		}
 		
 		if( volumes.elementAt(channel) == null )
@@ -522,8 +522,7 @@ abstract public class T2Map
 		return toreturn;
 	}
 	
-	private void allocVolume(int channel) 
-	{
+	private void allocVolume(int channel) {
 		volumes.set(channel, new Volume(xDim, yDim , numSlices) );
 		
 	}
@@ -661,8 +660,7 @@ abstract public class T2Map
 		}
 		else   
 		{
-			System.out.println("t2map: Unknown noise estimate type " + ne);
-			System.exit(-1);
+			MipavUtil.displayError("t2map: Unknown noise estimate type " + ne);
 		}
 	}
 
@@ -675,19 +673,35 @@ abstract public class T2Map
 	}
 
 
-	public void setXDim(int xDim) {this.xDim = xDim;}
+	public void setXDim(int xDim) {
+		this.xDim = xDim;
+	}
 
-	public int getXDim() {return xDim;	}
+	public int getXDim() {
+		return xDim;	
+	}
 
-	public void setYDim(int yDim) {this.yDim = yDim;}
+	public void setYDim(int yDim) {
+		this.yDim = yDim;
+	}
 
-	public int getYDim() {return yDim;}
+	public int getYDim() {
+		return yDim;
+	}
 
-	public void setNumSlices(int numSlices) {this.numSlices = numSlices;	}
+	public void setNumSlices(int numSlices) {
+		this.numSlices = numSlices;	
+	}
 
-	public int getNumSlices() {return numSlices;}
+	public int getNumSlices() {
+		return numSlices;
+	}
 
-	public void setTEValues(double[] tEValuesIn) {TEValues = tEValuesIn;}
+	public void setTEValues(double[] tEValuesIn) {
+		TEValues = tEValuesIn;
+	}
 
-	public double[] getTEValues() {return TEValues;}
+	public double[] getTEValues() {
+		return TEValues;
+	}
 }
