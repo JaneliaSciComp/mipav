@@ -93,6 +93,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     // Value is the point position
     private double pos[][];
     
+    // subscript goes from 0 to nPoints-1 for each point
+    // Value is the weight or number of occurrences of each point
+    private double weight[];
+    
     // First subscript x = 0, y = 1, z = 2, t = 3
     // Second subscript 0 to numberClusters-1 for each cluster
     // Value is the cluster position
@@ -161,7 +165,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	 */
 	public void actionPerformed(ActionEvent event) {
 		int dimPt;
-		float buffer[];
+		double buffer[];
 		int length;
 		int i;
 		int x, y, z, t;
@@ -177,6 +181,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		double blueMin;
 		double blueMax;
 		String fileNameBase = null;
+		boolean readWeight;
 		Object source = event.getSource();
 		String command = event.getActionCommand();
 		 if (command.equals("OK")) {
@@ -298,7 +303,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		         for (i = 0; i < nDims; i++) {
 		        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
 		         }
-		         buffer = new float[length];
+		         buffer = new double[length];
 		         try {
 		        	 image.exportData(0, length, buffer);
 		         }
@@ -323,6 +328,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	             textImage.setText(image.getImageFileName());
 		         groupNum = new int[nPoints];
 	             pos = new double[nDims][nPoints];
+	             weight = new double[nPoints];
 	             if (nDims >= 4) {
 	            	 tDim = extents[3];
 	             }
@@ -351,6 +357,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		        			 for (x = 0; x < xDim; x++) {
 		        			     index = x + y*xDim + z*sliceSize + t*volume;
 		        			     if (buffer[index] > 0) {
+		        			    	 weight[nval] = buffer[index];
 		        			         pos[0][nval] = x;
 		        			         if (nDims >= 2) {
 		        			        	 pos[1][nval] = y;
@@ -572,6 +579,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                    nPoints = Integer.valueOf(line.substring(start, end)).intValue();
 	                    groupNum = new int[nPoints];
 	                    pos = new double[nDims][nPoints];
+	                    weight = new double[nPoints];
 	                    nval = 0;
 	                    dimPt = 0;
 	                    l3: while (true) {
@@ -591,6 +599,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                        }
 	                    	start = 0;
 	                    	end = 0;
+	                    	readWeight = false;
 	                    	while (start < line.length()) {
 		                    	for (; ((start < line.length()) && (Character.isSpaceChar(line.charAt(start)))); start++);
 		                        end = start;
@@ -599,6 +608,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	                                       (line.charAt(end) == '+') || (line.charAt(end) == '-'))); end++);
 		                        if (start == end) {
 		                            continue l3;
+		                        }
+		                        if (!readWeight) {
+		                        	readWeight = true;
+		                        	weight[nval] = Double.valueOf(line.substring(start, end)).doubleValue();
+		                        	start = end;
+		                        	continue;
 		                        }
 		                         pos[dimPt][nval] = Double.valueOf(line.substring(start, end)).doubleValue();
 		                        if (dimPt == nDims-1) {
@@ -700,7 +715,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,algoSelection,pos,scale,groupNum,centroidPos,resultsFileName,
+			 alg = new AlgorithmKMeans(image,algoSelection,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
 					                   useColorHistogram);
 			 
@@ -802,11 +817,17 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 1;
         mainPanel.add(choiceLabel2, gbc);
         
-        JLabel choiceLabel3 = new JLabel("A color or multispectral image is segmented");
+        JLabel choiceLabel3 = new JLabel("Point value gives weighing");
         choiceLabel3.setForeground(Color.black);
         choiceLabel3.setFont(serif12);
         gbc.gridy = 2;
         mainPanel.add(choiceLabel3, gbc);
+        
+        JLabel choiceLabel4 = new JLabel("A color or multispectral image is segmented");
+        choiceLabel4.setForeground(Color.black);
+        choiceLabel4.setFont(serif12);
+        gbc.gridy = 3;
+        mainPanel.add(choiceLabel4, gbc);
         
         buttonImage = new JButton("Choose an image");
         buttonImage.setForeground(Color.black);
@@ -816,7 +837,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonImage.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         mainPanel.add(buttonImage, gbc);
 
         textImage = new JTextField();
@@ -831,7 +852,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         colorHistogramBox.setForeground(Color.black);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         mainPanel.add(colorHistogramBox, gbc);
         
         buttonPointsFile = new JButton("Open a file of point locations");
@@ -842,7 +863,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonPointsFile.setPreferredSize(new Dimension(225, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         mainPanel.add(buttonPointsFile, gbc);
         
         textPointsFile = new JTextField();
@@ -856,7 +877,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         mainPanel.add(algorithmLabel, gbc);
         
         algorithmGroup = new ButtonGroup();
@@ -867,7 +888,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(kMeansAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         mainPanel.add(kMeansAlgo, gbc);
         
         globalAlgo = new JRadioButton("Global k-means", false);
@@ -877,7 +898,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(globalAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         mainPanel.add(globalAlgo, gbc);
         
         fastGlobalAlgo = new JRadioButton("Fast global k-means", false);
@@ -887,7 +908,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(fastGlobalAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         mainPanel.add(fastGlobalAlgo, gbc);
         
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
@@ -895,7 +916,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -910,7 +931,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -920,7 +941,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -929,7 +950,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -938,7 +959,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -947,7 +968,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         mainPanel.add(maxMinInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
