@@ -71,7 +71,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     // Take resolutions from any black and white image
     // Use 1.0 in every dimension if not scaled or if color image.
-    // Subscript goes from 0 to nDims - 1
+    // Subscript goes from 0 to nDims - 1 for black and white
+    // and from 0 to 1 for color.
     private double scale[];
     
     private String directoryPoints;
