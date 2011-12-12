@@ -69,8 +69,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private int extents[];
     
-    // Take resolutions from the image
-    // Use 1.0 in every dimension if not scaled.
+    // Take resolutions from any black and white image
+    // Use 1.0 in every dimension if not scaled or if color image.
     // Subscript goes from 0 to nDims - 1
     private double scale[];
     
@@ -416,7 +416,14 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 
 	                if (fileNamePoints != null) {
 	                	filePoints = new File(directoryPoints + fileNamePoints);
-	                	resultsFileName = directoryPoints + fileNamePoints + "_kmeans.txt";
+	                	i = fileNamePoints.indexOf(".");
+	    				if (i > 0) {
+	    					fileNameBase = chooser.getSelectedFile().getName().substring(0,i);
+	    				}
+	    				else {
+	    					fileNameBase = new String(chooser.getSelectedFile().getName());
+	    				}
+	                	resultsFileName = directoryPoints + fileNameBase + "_kmeans.txt";
 	                    
 	                    try {
 	                        br = new BufferedReader(new InputStreamReader(new FileInputStream(filePoints)));
