@@ -399,14 +399,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    Preferences.debug("Colors found = " + colorsFound + "\n", Preferences.DEBUG_ALGORITHM);
 		    pos = new double[2][colorsFound];
 		    groupNum = new int[colorsFound];
-		    if (useColorHistogram) {
-		    	weight = new double[colorsFound];
-		    	totalWeight = new double[numberClusters];
+		    
+	    	weight = new double[colorsFound];
+	    	totalWeight = new double[numberClusters];
+	    	if (useColorHistogram) {
 		    	for (i = 0; i < colorsFound; i++) {
 		    		weight[i] = ((double)instances[i])/((double)length);
 		    	}
-		    	instances = null;
-		    } // if (useColorHistogram)
+	    	}
+	    	else {
+	    		for (i = 0; i < colorsFound; i++) {
+	    		    weight[i] = 1.0;
+	    		}
+	    	}
+	    	instances = null;
 		    
 		    fireProgressStateChanged("Converting RGB to CIELAB");
 		    for (i = 0; i < colorsFound; i++) {
