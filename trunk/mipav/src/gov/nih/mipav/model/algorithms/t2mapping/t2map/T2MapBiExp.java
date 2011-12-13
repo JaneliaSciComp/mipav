@@ -6,7 +6,7 @@ import gov.nih.mipav.model.algorithms.t2mapping.t2fit.T2FitBiExp;
 import gov.nih.mipav.model.algorithms.t2mapping.t2bin.T2Distribution;
 import gov.nih.mipav.model.algorithms.t2mapping.cj.volume.*;
 
-public class T2MapBiExp extends T2Map
+public class T2MapBiExp extends T2MapNLEngine
 {
 	private double[] output = null;
 
