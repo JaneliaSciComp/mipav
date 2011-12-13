@@ -283,6 +283,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double distSquaredToNearestCluster[];
         double bn = 0.0;
         double bnMax;
+        double minClusterDistance;
+        double maxClusterDistance;
+        int index = 0;
         //int bestClusterStart;
         
         for (i = 0; i < scale.length; i++) {
@@ -1296,70 +1299,68 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		}
     		if (equalScale) {
     			for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
+    				maxClusterDistance = 0.0;
 	    			for (i = 0; i < nPoints; i++) {
 	    			    if (groupNum[i] == -1) {
-	    			    	for (j = 0; j < currentClusters; j++) {
-	    			    		minDistSquaredSet[j] = Double.MAX_VALUE;
-	    			    	}
+	    			    	minClusterDistance = Double.MAX_VALUE;
 	    			    	for (j = 0; j < currentClusters; j++) {
 	    			    	    distSquared = 0.0;
 	    			    	    for (k = 0; k < nDims; k++) {
 	    			    	    	diff = pos[k][i] - centroidPos[k][j];
 	    			    	    	distSquared += diff*diff;
 	    			    	    } // for (k = 0; k < nDims; k++)
-	    			    	    if (distSquared < minDistSquaredSet[j]) {
-	    			    	    	minDistSquaredSet[j] = distSquared;
-	    			    	    	minIndexSet[j] = i;
+	    			    	    if (distSquared < minClusterDistance) {
+	    			    	    	minClusterDistance = distSquared;
 	    			    	    }
 	    			    	} // for (j = 0; j < currentClusters; j++)
+	    			    	if (minClusterDistance > maxClusterDistance) {
+	    			    		maxClusterDistance = minClusterDistance;
+	    			    		index = i;
+	    			    		for (j = 0; j < nDims; j++) {
+	    			    			centroidPos[j][currentClusters] = pos[j][i];
+	    			    		}
+	    			    	}
 	    			    } // if (groupNum[i] == -1)
 	    			} // for (i = 0; i < nPoints; i++)
-	    			maxDistSquared = 0.0;
-	    			for (i = 0; i < currentClusters; i++) {
-	    			    if (minDistSquaredSet[i] > maxDistSquared) {
-	    			    	maxDistSquared = minDistSquaredSet[i];
-	    			    	newIndex = minIndexSet[i];
-	    			    }
-	    			} // for (i = 0; i < currentClusters; i++)
-	    			for (i = 0; i < nDims; i++) {
-	    				centroidPos[i][currentClusters] = pos[i][newIndex];
-	    			}
-	    			groupNum[newIndex] = currentClusters;
+	    			groupNum[index] = currentClusters;
 	    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)	
     		} // if (equalScale)
     		else { // not equalScale
-	    		for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
+    			for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
+    				maxClusterDistance = 0.0;
 	    			for (i = 0; i < nPoints; i++) {
 	    			    if (groupNum[i] == -1) {
-	    			    	for (j = 0; j < currentClusters; j++) {
-	    			    		minDistSquaredSet[j] = Double.MAX_VALUE;
-	    			    	}
+	    			    	minClusterDistance = Double.MAX_VALUE;
 	    			    	for (j = 0; j < currentClusters; j++) {
 	    			    	    distSquared = 0.0;
 	    			    	    for (k = 0; k < nDims; k++) {
 	    			    	    	diff = pos[k][i] - centroidPos[k][j];
 	    			    	    	distSquared += scale2[k]*diff*diff;
 	    			    	    } // for (k = 0; k < nDims; k++)
-	    			    	    if (distSquared < minDistSquaredSet[j]) {
-	    			    	    	minDistSquaredSet[j] = distSquared;
-	    			    	    	minIndexSet[j] = i;
+	    			    	    if (distSquared < minClusterDistance) {
+	    			    	    	minClusterDistance = distSquared;
 	    			    	    }
 	    			    	} // for (j = 0; j < currentClusters; j++)
+	    			    	if (minClusterDistance > maxClusterDistance) {
+	    			    		maxClusterDistance = minClusterDistance;
+	    			    		index = i;
+	    			    		for (j = 0; j < nDims; j++) {
+	    			    			centroidPos[j][currentClusters] = pos[j][i];
+	    			    		}
+	    			    	}
 	    			    } // if (groupNum[i] == -1)
 	    			} // for (i = 0; i < nPoints; i++)
-	    			maxDistSquared = 0.0;
-	    			for (i = 0; i < currentClusters; i++) {
-	    			    if (minDistSquaredSet[i] > maxDistSquared) {
-	    			    	maxDistSquared = minDistSquaredSet[i];
-	    			    	newIndex = minIndexSet[i];
-	    			    }
-	    			} // for (i = 0; i < currentClusters; i++)
-	    			for (i = 0; i < nDims; i++) {
-	    				centroidPos[i][currentClusters] = pos[i][newIndex];
-	    			}
-	    			groupNum[newIndex] = currentClusters;
-	    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)
+	    			groupNum[index] = currentClusters;
+	    		} // for (currentClusters = 2; currentClusters < numberClusters; currentClusters++)		
     		} // else not equalScale
+            Preferences.debug("Maxmin initialization returns inital centroids at:\n", Preferences.DEBUG_ALGORITHM);
+            
+            for (i = 0; i < numberClusters; i++) {
+            	Preferences.debug("Initial centroid " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
+            	for (j = 0; j < nDims; j++) {
+            		Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", Preferences.DEBUG_ALGORITHM);
+            	}
+            }
     		break;
     	} // switch(initSelection)
     	
