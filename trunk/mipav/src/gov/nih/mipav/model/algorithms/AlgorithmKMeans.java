@@ -231,6 +231,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double centroidStartPos[][];
         int groupsPresent;
         int pointsInGroup[];
+        double weightInGroup[];
         int highestGroupPresent;
         int hierGroup[][];
         double essGroup[];
@@ -243,7 +244,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double newess;
         double bestnewess = 0.0;
         int newPointsInGroup;
+        double newWeightInGroup;
         int bestNewPointsInGroup = 0;
+        double bestNewWeightInGroup = 0.0;
         boolean found;
         int groupIndex;
         int currentClusters;
@@ -1096,8 +1099,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		break;
     	case HIERARCHICAL_GROUPING_INIT:
     		pointsInGroup = new int[nPoints];
+    		weightInGroup = new double[nPoints];
     		for (i = 0; i < nPoints; i++) {
     			pointsInGroup[i] = 1;
+    			weightInGroup[i] = weight[i];
     		}
     		highestGroupPresent = nPoints - 1;
     		hierGroup = new int[nPoints][];
@@ -1117,19 +1122,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    				for (j = i+1; j <= highestGroupPresent; j++) {
 		    					if (pointsInGroup[j] > 0) {
 		    					    newPointsInGroup = pointsInGroup[i] + pointsInGroup[j];
+		    					    newWeightInGroup = weightInGroup[i] + weightInGroup[j];
 		    					    newess = 0.0;
 		    					    for (m = 0; m < nDims; m++) {
 		    					        sum = 0.0;
 		    					        sumSq = 0.0;
 		    					        for (n = 0; n < pointsInGroup[i]; n++) {
-		    					        	sum += pos[m][hierGroup[i][n]];
-		    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]];
+		    					        	sum += pos[m][hierGroup[i][n]]*weight[hierGroup[i][n]];
+		    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]]*weight[hierGroup[i][n]];
 		    					        }
 		    					        for (n = 0; n < pointsInGroup[j]; n++) {
-		    					        	sum += pos[m][hierGroup[j][n]];
-		    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]];
+		    					        	sum += pos[m][hierGroup[j][n]]*weight[hierGroup[j][n]];
+		    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]]*weight[hierGroup[j][n]];
 		    					        }
-		    					        newess += (sumSq - sum*sum/newPointsInGroup);
+		    					        newess += (sumSq - sum*sum/newWeightInGroup);
 		    					    } // for (m = 0; m < nDims; m++)
 		    					    essIncrease = newess - (essGroup[i] + essGroup[j]);
 		    					    if (essIncrease < minessIncrease) {
@@ -1138,6 +1144,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    					    	bestSecondIndex = j;
 		    					    	bestnewess = newess;
 		    					    	bestNewPointsInGroup = newPointsInGroup;
+		    					    	bestNewWeightInGroup = newWeightInGroup;
 		    					    } // if (essIncrease < minessIncrease)
 		    					} // if (pointsInGroup[j] > 0)
 		    				} // for (j = i+1; j <= highestGroupPresent; j++)
@@ -1148,6 +1155,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    		}
 		    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
 		    		pointsInGroup[bestSecondIndex] = 0;
+		    		weightInGroup[bestFirstIndex] = bestNewWeightInGroup;
+		    		weightInGroup[bestSecondIndex] = 0.0;
 		    		essGroup[bestFirstIndex] = bestnewess;
 		    		found = false;
 		    		for (i = highestGroupPresent; (i >= 0) && (!found); i--) {
@@ -1166,19 +1175,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    				for (j = i+1; j <= highestGroupPresent; j++) {
 		    					if (pointsInGroup[j] > 0) {
 		    					    newPointsInGroup = pointsInGroup[i] + pointsInGroup[j];
+		    					    newWeightInGroup = weightInGroup[i] + weightInGroup[j];
 		    					    newess = 0.0;
 		    					    for (m = 0; m < nDims; m++) {
 		    					        sum = 0.0;
 		    					        sumSq = 0.0;
 		    					        for (n = 0; n < pointsInGroup[i]; n++) {
-		    					        	sum += pos[m][hierGroup[i][n]];
-		    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]];
+		    					        	sum += pos[m][hierGroup[i][n]]*weight[hierGroup[i][n]];
+		    					        	sumSq += pos[m][hierGroup[i][n]]*pos[m][hierGroup[i][n]]*weight[hierGroup[i][n]];
 		    					        }
 		    					        for (n = 0; n < pointsInGroup[j]; n++) {
-		    					        	sum += pos[m][hierGroup[j][n]];
-		    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]];
+		    					        	sum += pos[m][hierGroup[j][n]]*weight[hierGroup[j][n]];
+		    					        	sumSq += pos[m][hierGroup[j][n]]*pos[m][hierGroup[j][n]]*weight[hierGroup[j][n]];
 		    					        }
-		    					        newess += scale2[m]*(sumSq - sum*sum/newPointsInGroup);
+		    					        newess += scale2[m]*(sumSq - sum*sum/newWeightInGroup);
 		    					    } // for (m = 0; m < nDims; m++)
 		    					    essIncrease = newess - (essGroup[i] + essGroup[j]);
 		    					    if (essIncrease < minessIncrease) {
@@ -1187,6 +1197,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    					    	bestSecondIndex = j;
 		    					    	bestnewess = newess;
 		    					    	bestNewPointsInGroup = newPointsInGroup;
+		    					    	bestNewWeightInGroup = newWeightInGroup;
 		    					    } // if (essIncrease < minessIncrease)
 		    					} // if (pointsInGroup[j] > 0)
 		    				} // for (j = i+1; j <= highestGroupPresent; j++)
@@ -1197,6 +1208,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 		    		}
 		    		pointsInGroup[bestFirstIndex] = bestNewPointsInGroup;
 		    		pointsInGroup[bestSecondIndex] = 0;
+		    		weightInGroup[bestFirstIndex] = bestNewWeightInGroup;
+		    		weightInGroup[bestSecondIndex] = 0.0;
 		    		essGroup[bestFirstIndex] = bestnewess;
 		    		found = false;
 		    		for (i = highestGroupPresent; (i >= 0) && (!found); i--) {
@@ -1213,17 +1226,22 @@ public class AlgorithmKMeans extends AlgorithmBase {
     				centroidPos[j][i] = 0.0;
     			}
     		}
-    		for (i = 0; (i < highestGroupPresent) && (groupIndex < numberClusters-1); i++) {
+    		Preferences.debug("Hierarchical grouping returns inital centroids at:\n", Preferences.DEBUG_ALGORITHM);
+    		for (i = 0; (i <= highestGroupPresent) && (groupIndex < numberClusters-1); i++) {
     			if (pointsInGroup[i] > 0) {
     			    groupIndex++;
+    			    Preferences.debug("Initial centroid " + (groupIndex+1) + "\n", Preferences.DEBUG_ALGORITHM);
+    			    totalWeight[groupIndex] = 0.0;
     			    for (j = 0; j < pointsInGroup[i]; j++) {
+    			    	totalWeight[groupIndex] += weight[hierGroup[i][j]];
     			    	groupNum[hierGroup[i][j]] = groupIndex;
     			    	for (k = 0; k < nDims; k++) {
-    			    	    centroidPos[k][groupIndex] += pos[k][hierGroup[i][j]];	
+    			    	    centroidPos[k][groupIndex] += pos[k][hierGroup[i][j]]*weight[hierGroup[i][j]];	
     			    	}
     			    } // for (j = 0; j < pointsInGroup[i]; j++)
     			    for (j = 0; j < nDims; j++) {
-    			    	centroidPos[j][groupIndex] = centroidPos[j][groupIndex]/pointsInGroup[i];
+    			    	centroidPos[j][groupIndex] = centroidPos[j][groupIndex]/totalWeight[groupIndex];
+    			    	Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][groupIndex] + "\n", Preferences.DEBUG_ALGORITHM);
     			    }
     			} // if (pointsInGroun[i] > 0)
     		}
