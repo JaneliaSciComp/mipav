@@ -6,7 +6,7 @@ import gov.nih.mipav.model.algorithms.t2mapping.t2bin.T2Distribution;
 import gov.nih.mipav.model.algorithms.t2mapping.cj.volume.*;
 import gov.nih.mipav.model.algorithms.t2mapping.cj.fileformats.*;
 
-public class T2MapMonoExp extends T2Map
+public class T2MapMonoExp extends T2MapNLEngine
 {
 	public T2MapMonoExp()
 	{

@@ -1,6 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2Map.FittingType;
-import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2Map.NoiseEstimation;
+import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2MapNLEngine.FittingType;
+import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2MapNLEngine.NoiseEstimation;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 

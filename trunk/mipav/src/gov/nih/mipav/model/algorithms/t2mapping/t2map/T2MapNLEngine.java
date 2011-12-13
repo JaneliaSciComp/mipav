@@ -21,7 +21,7 @@ import gov.nih.mipav.model.algorithms.t2mapping.t2fit.*;
  *  the noise in the image.
  *
  */
-abstract public class T2Map
+abstract public class T2MapNLEngine
 {
 	protected int verbose = 0;
 
@@ -128,7 +128,7 @@ abstract public class T2Map
 	
 	
 	
-	public T2Map(int xDimIn, int yDimIn, int numSlicesIn, double[] TEValuesIn)
+	public T2MapNLEngine(int xDimIn, int yDimIn, int numSlicesIn, double[] TEValuesIn)
 	{
 		setXDim(xDimIn);
 		setYDim(yDimIn);
@@ -141,7 +141,7 @@ abstract public class T2Map
 	/**
 	 * Default constructor.
 	 */
-	public T2Map(){}
+	public T2MapNLEngine(){}
 
 	/*
 	 *  Abstract methods....

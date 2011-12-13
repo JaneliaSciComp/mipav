@@ -10,7 +10,7 @@ import gov.nih.mipav.model.algorithms.t2mapping.cj.fileformats.*;
 /** T2MapClass is responsible to calculate the T2 spectrum through a volume
  *  of points, to contain the results and to save the results.
  */
-public class T2MapL1 extends T2Map
+public class T2MapL1 extends T2MapNLEngine
 {
 	private double[] t2s = null;
 	private int num_solutions = 0;

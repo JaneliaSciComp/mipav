@@ -9,7 +9,7 @@ import gov.nih.mipav.model.algorithms.t2mapping.cj.fileformats.*;
 /** T2MapClass is responsible to calculate the T2 spectrum through a volume
  *  of points, to contain the results and to save the results.
  */
-public class T2MapNNLS extends T2Map
+public class T2MapNNLS extends T2MapNLEngine
 {
 //	/** The T2Fit routine to use */
 //	private T2FitNNLS t2fitter = null;
