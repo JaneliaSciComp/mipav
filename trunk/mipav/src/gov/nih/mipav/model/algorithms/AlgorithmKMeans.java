@@ -13,12 +13,11 @@ import java.io.RandomAccessFile;
 
 
 /**
- * With a small number of records, it is feasible use RANDOM_INIT to perform multiple restarts efficiently.
+ * With a small number of records, it is feasible to use RANDOM_INIT to perform multiple restarts efficiently.
  * With a small sample size, the subsampling for initialization is not effective in the Bradley-Fayyad
- * initialization.  The Bradley-Fayyad initialization is useful when applied to smaller data sets, but
- * it is best suited for large-scale data.  By initializing a general clustering algorithm near the nodes,
- * not only are the true clusters found more often, but it follows that the clustering algorithm will 
- * iterate fewer times prior to convergence.
+ * initialization.  The Bradley-Fayyad method is best suited for large-scale data.  By initializing a general
+ * clustering algorithm near the nodes, not only are the true clusters found more often, but it follows that
+ * the clustering algorithm will iterate fewer times prior to convergence.
  * 
  * The k-means algorithm will run differently with each run when random initialization and Bradley
  * Fayyad initialization are used since random number generation is used in selection.  The k-means
@@ -28,7 +27,7 @@ import java.io.RandomAccessFile;
  * Initialization methods are only chosen with k-means; initialization methods are not chosen with 
  * global K-means and with fast global k-means.
  * 
- * In The maxmin initialization first select the 2 points that are farthest apart as seeds.  For each
+ * In the maxmin initialization first select the 2 points that are farthest apart as seeds.  For each
  * additional seed find the minimum distance from each nonseed point to any of the seed points.  The new
  * seed point will be the point that yields the maximum of these minimum distances.
  * 
@@ -41,7 +40,7 @@ import java.io.RandomAccessFile;
  * With n groups n*(n-1)/2 possible groupings to go from n to n-1 groups are tried to find the n-1 grouping with the lowest
  * sum over all groups of the error sum of squares.
  * 
- * In Bradley-Fayyad we perform k-means on 10 subsamples, each on 1/10 of all the points, chosen at random.  The initial
+ * In Bradley-Fayyad we perform k-means on 10 subsamples, each with 1/10 of all the points, chosen at random.  The initial
  * centroids are chosen at random and then 1/10 of the data points are selected at random.  When a
  * subsample k-means finishes, if a centroid does not have any members, then the initial centroid is reassigned 
  * to the point which is farthest from its assigned cluster centroid, and k-means is run again from these new initial
@@ -104,9 +103,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	// K-means, global k-means, or fast global k-means
 	private int algoSelection;
 	
-	// Take resolutions from the image
-    // Use 1.0 in every dimension if not scaled.
-    // Subscript goes from 0 to nDims - 1
+	// Take resolutions from any black and white image.
+    // Use 1.0 in every dimension if not scaled or if colored image.
+    // Subscript goes from 0 to nDims - 1 for black and white
+	// and for 0 to 1 for color.
     private double scale[];
     
     // First subscript x = 0, y = 1, z = 2, t = 3
@@ -225,7 +225,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         boolean haveCMPoint;
         int CMPointsAdded = 0;
         double localFM[][][];
-        double totalDistSquared[];
+        double totalDistSquared;
         double minTotalDistSquared;
         int bestFMIndex = 0;
         double centroidStartPos[][];
@@ -733,7 +733,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                    	    	    for (n = 0; n < nDims; n++) {
 	                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
 	                    	    	        distSquared = distSquared + diff*diff;
-	                    	    	    } // for (n = 0; n < nDims; n++)'
+	                    	    	    } // for (n = 0; n < nDims; n++)
 	                    	    	    if (distSquared > maxDistSquared) {
 	                    	    	    	maxDistSquared = distSquared;
 	                    	    	    	maxDistPoint = m;
@@ -767,7 +767,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     groupNum[maxDistPoint] = s;
                     totalWeight[clusterWithMaxDistPoint] -= subsampleWeight[maxDistPoint];
                     for (k = 0; k < nDims; k++) {
-                    	centroidPos[k][s] = subsamplePos[k][maxDistPoint]*subsampleWeight[maxDistPoint];
+                    	// No subsampleWeight because initializing with 1 point
+                    	centroidPos[k][s] = subsamplePos[k][maxDistPoint];
                     }
                     totalWeight[s] = subsampleWeight[maxDistPoint];
                     for (k = 0; k < nDims; k++) {
@@ -1035,10 +1036,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
             } // for (i = 0; i < subsampleNumber; i++)
                 
             // The refined initial point is chosen as the localFM[][][i] having minimal distortion over unionCM
-            totalDistSquared = new double[subsampleNumber];
             minTotalDistSquared = Double.MAX_VALUE;
             if (equalScale) {
             	for (i = 0; i < subsampleNumber; i++) {
+            		totalDistSquared = 0.0;
 	                for (j = 0; j < subsampleSize; j++) {
 	                    minDistSquared = Double.MAX_VALUE;
 	                    for (k = 0; k < numberClusters; k++) {
@@ -1051,16 +1052,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                        	minDistSquared = distSquared;
 	                        }
 	                    } // for (k = 0; k < numberClusters; k++)
-	                    totalDistSquared[i] = totalDistSquared[i] + minDistSquared;
+	                    totalDistSquared = totalDistSquared + minDistSquared;
 	                } // for (j = 0; j < subsampleSize; j++)
-	                if (totalDistSquared[i] < minTotalDistSquared) {
-	                	minTotalDistSquared = totalDistSquared[i];
+	                if (totalDistSquared < minTotalDistSquared) {
+	                	minTotalDistSquared = totalDistSquared;
 	                	bestFMIndex = i;
 	                }
 	            } // for (i = 0; i < subsampleNumber; i++)	
             } // if (equalScale)
             else { // not equalScale
 	            for (i = 0; i < subsampleNumber; i++) {
+	            	totalDistSquared = 0.0;
 	                for (j = 0; j < subsampleSize; j++) {
 	                    minDistSquared = Double.MAX_VALUE;
 	                    for (k = 0; k < numberClusters; k++) {
@@ -1073,10 +1075,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                        	minDistSquared = distSquared;
 	                        }
 	                    } // for (k = 0; k < numberClusters; k++)
-	                    totalDistSquared[i] = totalDistSquared[i] + minDistSquared;
+	                    totalDistSquared = totalDistSquared + minDistSquared;
 	                } // for (j = 0; j < subsampleSize; j++)
-	                if (totalDistSquared[i] < minTotalDistSquared) {
-	                	minTotalDistSquared = totalDistSquared[i];
+	                if (totalDistSquared < minTotalDistSquared) {
+	                	minTotalDistSquared = totalDistSquared;
 	                	bestFMIndex = i;
 	                }
 	            } // for (i = 0; i < subsampleNumber; i++)
