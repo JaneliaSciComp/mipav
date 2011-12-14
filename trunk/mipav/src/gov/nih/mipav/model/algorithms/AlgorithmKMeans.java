@@ -1660,28 +1660,16 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		for (j = 0; j < nDims; j++) {
     			centroidPos[j][0] = 0.0;
     		}
-	    	if (useColorHistogram) {
-	    		totalWeight[0] = 0.0;
-	    		for (i = 0; i < nPoints; i++) {
-	    			totalWeight[0] += weight[i];
-		    		for (j = 0; j < nDims; j++) {
-		    			centroidPos[j][0] += pos[j][i]*weight[i];
-		    		}
-		    	}
+    		totalWeight[0] = 0.0;
+    		for (i = 0; i < nPoints; i++) {
+    			totalWeight[0] += weight[i];
 	    		for (j = 0; j < nDims; j++) {
-	    			centroidPos[j][0] = centroidPos[j][0]/totalWeight[0];
+	    			centroidPos[j][0] += pos[j][i]*weight[i];
 	    		}
-	    	} // if (useColorHistogram)
-	    	else { // no color histogram
-		    	for (i = 0; i < nPoints; i++) {
-		    		for (j = 0; j < nDims; j++) {
-		    			centroidPos[j][0] += pos[j][i]*weight[i];
-		    		}
-		    	}
-	    		for (j = 0; j < nDims; j++) {
-	    			centroidPos[j][0] = centroidPos[j][0]/totalWeight[0];
-	    		}
-	    	} // else no colorHistogram
+	    	}
+    		for (j = 0; j < nDims; j++) {
+    			centroidPos[j][0] = centroidPos[j][0]/totalWeight[0];
+    		}
 	    	if (equalScale) {
 		    	for (i = 0; i < nPoints; i++) {
 		    		for (j = 0; j < nDims; j++) {
@@ -1823,50 +1811,28 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	    			centroidPos[j][i] = 0.0;
 	    	    		}
 	    	    	}
-	    	    	if (useColorHistogram) {
-	    	    	    for (i = 0; i < presentClusters; i++) {
-	    	    	    	totalWeight[i] = 0.0;
-	    	    	    }
-	    	    		for (i = 0; i < nPoints; i++) {
-	    	    			totalWeight[groupNum[i]] += weight[i];
-	    		    		for (j = 0; j < nDims; j++) {
-	    		    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
-	    		    		}
-	    		    	}
-	    		    	clustersWithoutPoints = 0;
-	    		    	for (i = 0; i < presentClusters; i++) {
-	    		    		if (totalWeight[i] <= 1.0E-10) {
-	    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
-	    		    					Preferences.DEBUG_ALGORITHM);
-	    		    			clustersWithoutPoints++;
-	    		    		}
-	    		    		else {
-	    			    		for (j = 0; j < nDims; j++) {
-	    			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-	    			    		}
-	    		    		} // else
-	    		    	}	
-	    	    	} // if (useColorHistogram)
-	    	    	else { // no color histogram
-	    		    	for (i = 0; i < nPoints; i++) {
-	    		    		for (j = 0; j < nDims; j++) {
-	    		    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
-	    		    		}
-	    		    	}
-	    		    	clustersWithoutPoints = 0;
-	    		    	for (i = 0; i < presentClusters; i++) {
-	    		    		if (totalWeight[i] <= 1.0E-10) {
-	    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
-	    		    					Preferences.DEBUG_ALGORITHM);
-	    		    			clustersWithoutPoints++;
-	    		    		}
-	    		    		else {
-	    			    		for (j = 0; j < nDims; j++) {
-	    			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-	    			    		}
-	    		    		} // else
-	    		    	}
-	    	    	} // else no colorHistogram
+    	    	    for (i = 0; i < presentClusters; i++) {
+    	    	    	totalWeight[i] = 0.0;
+    	    	    }
+    	    		for (i = 0; i < nPoints; i++) {
+    	    			totalWeight[groupNum[i]] += weight[i];
+    		    		for (j = 0; j < nDims; j++) {
+    		    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
+    		    		}
+    		    	}
+    		    	clustersWithoutPoints = 0;
+    		    	for (i = 0; i < presentClusters; i++) {
+    		    		if (totalWeight[i] <= 1.0E-10) {
+    		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
+    		    					Preferences.DEBUG_ALGORITHM);
+    		    			clustersWithoutPoints++;
+    		    		}
+    		    		else {
+    			    		for (j = 0; j < nDims; j++) {
+    			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
+    			    		}
+    		    		} // else
+    		    	}	
 	    	    	if (equalScale) {
 		    	    	for (i = 0; i < nPoints; i++) {
 		    	    		distSquaredToNearestCluster[i] = 0.0;
