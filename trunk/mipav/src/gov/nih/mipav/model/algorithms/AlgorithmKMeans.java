@@ -250,15 +250,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
         boolean found;
         int groupIndex;
         int currentClusters;
-        double minDistSquaredSet[] = null;
-        int minIndexSet[] = null;
-        int newIndex = 0;
         int length = 0;
         int colors[] = null;
-		//Vector<Vector3f> colors;
 		int[] indexTable = null;
 		int colorsFound;
-		//Vector3f colorVector;
 		double varR, varG, varB;
 		// Observer = 2 degrees, Illuminant = D65
         double XN = 95.047;
@@ -286,7 +281,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double minClusterDistance;
         double maxClusterDistance;
         int index = 0;
-        //int bestClusterStart;
         
         for (i = 0; i < scale.length; i++) {
         	scale2[i] = scale[i]*scale[i];
@@ -1293,10 +1287,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		}
     		groupNum[bestFirstIndex] = 0;
     		groupNum[bestSecondIndex] = 1;
-    		if (numberClusters > 2) {
-    		    minDistSquaredSet = new double[numberClusters - 1];
-    		    minIndexSet = new int[numberClusters - 1];
-    		}
     		if (equalScale) {
     			for (currentClusters = 2; currentClusters < numberClusters; currentClusters++) {
     				maxClusterDistance = 0.0;
@@ -1459,54 +1449,30 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    			centroidPos[j][i] = 0.0;
 	    		}
 	    	}
-	    	if (useColorHistogram) {
-	    	    for (i = 0; i < numberClusters; i++) {
-	    	    	totalWeight[i] = 0.0;
-	    	    }
-	    		for (i = 0; i < nPoints; i++) {
-	    			totalWeight[groupNum[i]] += weight[i];
+    	    for (i = 0; i < numberClusters; i++) {
+    	    	totalWeight[i] = 0.0;
+    	    }
+    		for (i = 0; i < nPoints; i++) {
+    			totalWeight[groupNum[i]] += weight[i];
+	    		for (j = 0; j < nDims; j++) {
+	    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
+	    		}
+	    	}
+	    	clustersWithoutPoints = 0;
+	    	for (i = 0; i < numberClusters; i++) {
+	    		if (totalWeight[i] <= 1.0E-10) {
+	    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
+	    			clustersWithoutPoints++;
+	    		}
+	    		else {
+		    		Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
 		    		for (j = 0; j < nDims; j++) {
-		    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
+		    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
+		    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
+		    					Preferences.DEBUG_ALGORITHM);
 		    		}
-		    	}
-		    	clustersWithoutPoints = 0;
-		    	for (i = 0; i < numberClusters; i++) {
-		    		if (totalWeight[i] <= 1.0E-10) {
-		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
-		    			clustersWithoutPoints++;
-		    		}
-		    		else {
-			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
-			    		for (j = 0; j < nDims; j++) {
-			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
-			    					Preferences.DEBUG_ALGORITHM);
-			    		}
-		    		} // else
-		    	}	
-	    	} // if (useColorHistogram)
-	    	else { // no color histogram
-		    	for (i = 0; i < nPoints; i++) {
-		    		for (j = 0; j < nDims; j++) {
-		    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
-		    		}
-		    	}
-		    	clustersWithoutPoints = 0;
-		    	for (i = 0; i < numberClusters; i++) {
-		    		if (totalWeight[i] <= 1.0E-10) {
-		    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", Preferences.DEBUG_ALGORITHM);
-		    			clustersWithoutPoints++;
-		    		}
-		    		else {
-			    		Preferences.debug("Cluster centroid " + (i+1) + ":\n", Preferences.DEBUG_ALGORITHM);
-			    		for (j = 0; j < nDims; j++) {
-			    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-			    			Preferences.debug("Dimension " + (j+1) + " at " + centroidPos[j][i] + "\n", 
-			    					Preferences.DEBUG_ALGORITHM);
-			    		}
-		    		} // else
-		    	}
-	    	} // else no colorHistogram
+	    		} // else
+	    	}	
     	} // while (changeOccurred)
     	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n", Preferences.DEBUG_ALGORITHM);
     	break;
@@ -1523,28 +1489,16 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		for (j = 0; j < nDims; j++) {
     			centroidPosStart[j][0] = 0.0;
     		}
-	    	if (useColorHistogram) {
-	    		totalWeight[0] = 0.0;
-	    		for (i = 0; i < nPoints; i++) {
-	    			totalWeight[0] += weight[i];
-		    		for (j = 0; j < nDims; j++) {
-		    			centroidPosStart[j][0] += pos[j][i]*weight[i];
-		    		}
-		    	}
+    		totalWeight[0] = 0.0;
+    		for (i = 0; i < nPoints; i++) {
+    			totalWeight[0] += weight[i];
 	    		for (j = 0; j < nDims; j++) {
-	    			centroidPosStart[j][0] = centroidPosStart[j][0]/totalWeight[0];
+	    			centroidPosStart[j][0] += pos[j][i]*weight[i];
 	    		}
-	    	} // if (useColorHistogram)
-	    	else { // no color histogram
-		    	for (i = 0; i < nPoints; i++) {
-		    		for (j = 0; j < nDims; j++) {
-		    			centroidPosStart[j][0] += pos[j][i]*weight[i];
-		    		}
-		    	}
-	    		for (j = 0; j < nDims; j++) {
-	    			centroidPosStart[j][0] = centroidPosStart[j][0]/totalWeight[0];
-	    		}
-	    	} // else no colorHistogram
+	    	}
+    		for (j = 0; j < nDims; j++) {
+    			centroidPosStart[j][0] = centroidPosStart[j][0]/totalWeight[0];
+    		}
 	    	for (presentClusters = 2; presentClusters <= numberClusters; presentClusters++) {
 	    		Preferences.debug("Present cluster number = " + presentClusters + "\n", Preferences.DEBUG_ALGORITHM);
 	    		fireProgressStateChanged("Present cluster number = " + presentClusters);
@@ -1556,7 +1510,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    	    		for (j = 0; j < presentClusters-1; j++) {
 	    	    			centroidPos[i][j] = centroidPosStart[i][j];
 	    	    		}
-	    	    		centroidPos[i][presentClusters-1] = pos[i][initialClusterLocation]*weight[initialClusterLocation];
+	    	    		// No weight since just one point is being assigned
+	    	    		centroidPos[i][presentClusters-1] = pos[i][initialClusterLocation];
 	    	    	}
 	    	    	while (changeOccurred) {
 	    	    		iteration++;
@@ -1651,50 +1606,28 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		    			centroidPos[j][i] = 0.0;
 	    		    		}
 	    		    	}
-	    		    	if (useColorHistogram) {
-	    		    	    for (i = 0; i < presentClusters; i++) {
-	    		    	    	totalWeight[i] = 0.0;
-	    		    	    }
-	    		    		for (i = 0; i < nPoints; i++) {
-	    		    			totalWeight[groupNum[i]] += weight[i];
-	    			    		for (j = 0; j < nDims; j++) {
-	    			    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
-	    			    		}
-	    			    	}
-	    			    	clustersWithoutPoints = 0;
-	    			    	for (i = 0; i < presentClusters; i++) {
-	    			    		if (totalWeight[i] <= 1.0E-10) {
-	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
-	    			    					Preferences.DEBUG_ALGORITHM);
-	    			    			clustersWithoutPoints++;
-	    			    		}
-	    			    		else {
-	    				    		for (j = 0; j < nDims; j++) {
-	    				    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-	    				    		}
-	    			    		} // else
-	    			    	}	
-	    		    	} // if (useColorHistogram)
-	    		    	else { // no color histogram
-	    			    	for (i = 0; i < nPoints; i++) {
-	    			    		for (j = 0; j < nDims; j++) {
-	    			    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
-	    			    		}
-	    			    	}
-	    			    	clustersWithoutPoints = 0;
-	    			    	for (i = 0; i < presentClusters; i++) {
-	    			    		if (totalWeight[i] <= 1.0E-10) {
-	    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
-	    			    					Preferences.DEBUG_ALGORITHM);
-	    			    			clustersWithoutPoints++;
-	    			    		}
-	    			    		else {
-	    				    		for (j = 0; j < nDims; j++) {
-	    				    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
-	    				    		}
-	    			    		} // else
-	    			    	}
-	    		    	} // else no colorHistogram
+    		    	    for (i = 0; i < presentClusters; i++) {
+    		    	    	totalWeight[i] = 0.0;
+    		    	    }
+    		    		for (i = 0; i < nPoints; i++) {
+    		    			totalWeight[groupNum[i]] += weight[i];
+    			    		for (j = 0; j < nDims; j++) {
+    			    			centroidPos[j][groupNum[i]] += pos[j][i]*weight[i];
+    			    		}
+    			    	}
+    			    	clustersWithoutPoints = 0;
+    			    	for (i = 0; i < presentClusters; i++) {
+    			    		if (totalWeight[i] <= 1.0E-10) {
+    			    			Preferences.debug("Cluster centroid " + (i+1) + " has no points\n", 
+    			    					Preferences.DEBUG_ALGORITHM);
+    			    			clustersWithoutPoints++;
+    			    		}
+    			    		else {
+    				    		for (j = 0; j < nDims; j++) {
+    				    			centroidPos[j][i] = centroidPos[j][i]/totalWeight[i];
+    				    		}
+    			    		} // else
+    			    	}	
 	    	    	} // while (changeOccurred)
 	    	    	Preferences.debug("There are " + clustersWithoutPoints + " clusters without points\n", 
 	    	    			Preferences.DEBUG_ALGORITHM);	
