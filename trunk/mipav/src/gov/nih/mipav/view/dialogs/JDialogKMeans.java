@@ -53,6 +53,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	
 	private static final int FAST_GLOBAL_K_MEANS = 2;
 	
+    private static final int EUCLIDEAN_SQUARED = 0;
+	
+	private static final int CITY_BLOCK = 1;
+	
 	/** source image. **/
     private ModelImage image;
     
@@ -152,6 +156,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private boolean useColorHistogram = false;
     
     private JLabel initLabel;
+    
+    private int distanceMeasure = EUCLIDEAN_SQUARED;
 	
 	
 	public JDialogKMeans() {
@@ -723,7 +729,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		 try {
 		
-			 alg = new AlgorithmKMeans(image,algoSelection,pos,scale,groupNum,weight,centroidPos,resultsFileName,
+			 alg = new AlgorithmKMeans(image,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
 					                   useColorHistogram);
 			 
