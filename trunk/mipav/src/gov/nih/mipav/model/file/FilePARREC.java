@@ -1822,10 +1822,7 @@ public class FilePARREC extends FileBase {
         String version = outInfo.getVersion();
         //Set the number of slices
         extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
-        int sliceNum = extents[2];
-        if (extents.length > 3) {
-        	sliceNum = sliceNum * extents[3];
-        }
+        
         PrintStream fp = new PrintStream(new File(fileNames[0]));
         fp.println("# === DATA DESCRIPTION FILE ======================================================");
         fp.println("#");
@@ -1862,7 +1859,7 @@ public class FilePARREC extends FileBase {
         for(int i=0;i<generalInfoList.size();i++) {
         	String info = generalInfoList.get(i);
         	if (info.indexOf("Max. number of slices/locations") >= 0) {
-        		info = ".    Max. number of slices/locations    :   " + String.valueOf(sliceNum);
+        		info = ".    Max. number of slices/locations    :   " + String.valueOf(extents[2]);
         	}
         	fp.println(info);
         }
@@ -2423,6 +2420,10 @@ public class FilePARREC extends FileBase {
         //Vector SliceParameters = outInfo.getSliceParameters();
         //following info is slice specific....so can not get it only from outInfo
         
+        int sliceNum = extents[2];
+        if (extents.length > 3) {
+        	sliceNum = sliceNum * extents[3];
+        }
         for (int i = 0; i < sliceNum; i++) {
             FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
             String tag = fileInfoPR.getSliceInfo();
