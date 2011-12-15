@@ -2338,6 +2338,7 @@ public class FilePARREC extends FileBase {
         fp.println("#  The rest of this file contains ONE line per image, this line contains the following information:");
         fp.println("#");
         
+        SliceMap = buildParSliceMap();
         ArrayList<String> imageInfoList = outInfo.getImageInfoList();
         int idx = 0;
         int xyIndex = -1;
@@ -2346,30 +2347,12 @@ public class FilePARREC extends FileBase {
         	if(info.compareToIgnoreCase("#  recon resolution (x y)                   (2*integer)")==0) {
         		xyIndex = idx;
         	}
-        	if (info.indexOf("(integer)") >= 0) {
-        		idx++;
-        	}
-        	else if (info.indexOf("(2*integer)") >= 0) {
-        		idx += 2;
-        	}
-        	else if (info.indexOf("(3*integer)") >= 0) {
-        		idx += 3;
-        	}
-        	else if (info.indexOf("(4*integer)") >= 0) {
-        		idx += 4;
-        	}
-        	else if (info.indexOf("(float)") >= 0) {
-        		idx++;
-        	}
-        	else if (info.indexOf("(2*float)") >= 0) {
-        		idx += 2;
-        	}
-        	else if (info.indexOf("(3*float)") >= 0) {
-        		idx += 3;
-        	}
-        	else if (info.indexOf("(4*float)") >= 0) {
-        		idx += 4;
-        	}
+        	Integer I = (Integer)SliceMap.get(info);
+            if(I==null) {
+                Preferences.debug("FilePARREC:wirteHeader. Bad slice info;"+info + "\n", Preferences.DEBUG_FILEIO);
+                return;
+            }
+            idx += I.intValue();
         	fp.println(info);
         }
         
@@ -2447,7 +2430,7 @@ public class FilePARREC extends FileBase {
             	String[] values = tag.split("\\s+");
             	values[xyIndex] = String.valueOf(extents[0]);
             	values[xyIndex+1] = String.valueOf(extents[1]);
-            	tag = values[0] + " ";
+            	tag = values[0] + "  ";
             	for (int j = 1; j < values.length-1; j++) {
             	    tag += values[j] + "  ";	
             	}
