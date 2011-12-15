@@ -5721,7 +5721,6 @@ public class FileAfni extends FileBase {
                             }
                         } // else if (nameString.equalsIgnoreCase("BRICK_STATS"))
                         else if (nameString.equalsIgnoreCase("WARP_DATA")) {
-
                             if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                                 raFile.close();
                                 throw new IOException("ERROR! Should not have WARP_DATA with a +orig file");
@@ -5735,9 +5734,13 @@ public class FileAfni extends FileBase {
                             } else { // presentViewType == FileInfoAfni.AFNI_TLRC
 
                                 if (countEntries < 360) {
-                                    raFile.close();
-                                    throw new IOException("WARP_DATA has only " + countEntries +
-                                                          " values instead of the 360 required with a +tlrc .HEADER");
+                                    // there seem to be some files with TLRC indicators that have only 30 entries in WARP_DATA, so we won't error out here
+                                    if (countEntries == 30) {
+                                        //presentViewType = FileInfoAfni.AFNI_ACPC;
+                                    } else {
+                                        raFile.close();
+                                        throw new IOException("WARP_DATA has only " + countEntries + " values instead of the 360 required with a +tlrc .HEADER");
+                                    }
                                 }
                             }
 
