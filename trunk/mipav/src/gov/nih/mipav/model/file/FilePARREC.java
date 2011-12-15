@@ -1100,9 +1100,9 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 2);
-                if(fov1!=fov3) {
+                /*if(fov1!=fov3) {
                     fov1 = Math.max(fov1,fov3); fov3=fov1;
-                }
+                }*/
                 fileInfo.setResolutions(fov1/dim1,0);
                 fileInfo.setResolutions(fov3/dim2,1);
                 fileInfo.setResolutions(fov2/numSlices,2);
@@ -1115,9 +1115,9 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE, 2);
-                if(fov2!=fov1) {
+                /*if(fov2!=fov1) {
                     fov2 = Math.max(fov2,fov1); fov1=fov2;
-                }
+                }*/
                 fileInfo.setResolutions(fov2/dim1,0);
                 fileInfo.setResolutions(fov1/dim2,1);
                 fileInfo.setResolutions(fov3/numSlices,2);
@@ -1131,9 +1131,9 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 2);
 
-                if(fov2!=fov3) {
+                /*if(fov2!=fov3) {
                     fov2 = Math.max(fov2,fov3); fov3=fov2;
-                }
+                }*/
                 fileInfo.setResolutions(fov2/dim1,0);
                 fileInfo.setResolutions(fov3/dim2,1);
                 fileInfo.setResolutions(fov1/numSlices,2);
@@ -2339,10 +2339,14 @@ public class FilePARREC extends FileBase {
         ArrayList<String> imageInfoList = outInfo.getImageInfoList();
         int idx = 0;
         int xyIndex = -1;
+        int orIndex = -1;
         for(int i=0;i<imageInfoList.size();i++) {
         	String info = imageInfoList.get(i);
         	if(info.compareToIgnoreCase("#  recon resolution (x y)                   (2*integer)")==0) {
         		xyIndex = idx;
+        	}
+        	else if(info.indexOf("#  slice orientation ( TRA/SAG/COR )        (integer)")>=0) {
+        		orIndex = idx;
         	}
         	Integer I = (Integer)SliceMap.get(info);
             if(I==null) {
@@ -2427,10 +2431,23 @@ public class FilePARREC extends FileBase {
         for (int i = 0; i < sliceNum; i++) {
             FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
             String tag = fileInfoPR.getSliceInfo();
-            if (xyIndex >= 0) {
+            if ((xyIndex >= 0) || (orIndex >= 0)) {
             	String[] values = tag.split("\\s+");
-            	values[xyIndex] = String.valueOf(extents[0]);
-            	values[xyIndex+1] = String.valueOf(extents[1]);
+            	if (xyIndex >= 0) {
+            	    values[xyIndex] = String.valueOf(extents[0]);
+            	    values[xyIndex+1] = String.valueOf(extents[1]);
+            	}
+            	if (orIndex >= 0) {
+            		if (writeImage.getImageOrientation() == FileInfoBase.AXIAL) {
+            			values[orIndex] = String.valueOf(1);
+            		}
+            		else if (writeImage.getImageOrientation() == FileInfoBase.SAGITTAL) {
+            			values[orIndex] = String.valueOf(2);
+            		}
+            		else if (writeImage.getImageOrientation() == FileInfoBase.CORONAL) {
+            			values[orIndex] = String.valueOf(3);
+            		}
+            	}
             	tag = values[0] + "  ";
             	for (int j = 1; j < values.length-1; j++) {
             	    tag += values[j] + "  ";	
