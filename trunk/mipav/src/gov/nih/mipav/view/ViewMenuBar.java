@@ -410,6 +410,7 @@ public class ViewMenuBar {
         return menuBuilder.makeMenu("DICOM", true, new JComponent[] {
                 menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),
                 menuBuilder.buildMenuItem("DICOMDIR browser", "BrowseDICOMDIR", 0, null, true),
+                menuBuilder.buildMenuItem("Load DWIDIR", "LoadDWIDIR", 0, null, true),
                 menuBuilder.buildMenuItem("Anonymize DICOM directory", "AnonymizeDirectory", 0, null, true),
                 menuBuilder.buildMenuItem("DICOM database access", "QueryDatabase", 0, "database.gif", true),
                 menuBuilder.buildCheckBoxMenuItem("Activate DICOM receiver", "Dicom", Preferences
@@ -498,6 +499,7 @@ public class ViewMenuBar {
     public JMenu makeSystemsAnalysisMenu() {
         return menuBuilder.makeMenu("Systems analysis", 'S', false, new JComponent[] {
                 menuBuilder.makeMenu("DTI", false, new JMenuItem[] {
+                        menuBuilder.buildMenuItem("DTI Pipeline", "dtiPipeline", 0, null, false),
                         menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
                         menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
                         menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)}),
@@ -663,8 +665,9 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Convert 4D to Single 3D", "Convert4Dto3D", 0, null, false),
                         menuBuilder.buildMenuItem("Convert 4D to Multiple 3D", "Convert4DtoMultiple3D", 0, null, false), 
                         menuBuilder.buildMenuItem("Convert 4D to RGB", "Convert4DtoRGB", 0, null, false),
-                        menuBuilder.buildMenuItem("Extract 3D subset from 4D", "Subset", 0, null, false),
-                        menuBuilder.buildMenuItem("Remove time volumes", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Extract volume", "Subset", 0, null, false),
+                        menuBuilder.buildMenuItem("Insert volume", null, 0, null, false),
+                        menuBuilder.buildMenuItem("Remove volumes", null, 0, null, false),
                         menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
                         menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),
                         menuBuilder.buildMenuItem("4D Image math", "4DImageCalculator", 0, null, false),}),
@@ -1034,12 +1037,13 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Convert 4D to Multiple 3D", false);
             menuBuilder.setMenuItemEnabled("4D Image math", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
-            menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
+            menuBuilder.setMenuItemEnabled("Extract volume", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
             menuBuilder.setMenuItemEnabled("Mosaic to 3D volume", false);
             menuBuilder.setMenuItemEnabled("Mosaic to 4D volume", true);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
-            menuBuilder.setMenuItemEnabled("Remove time volumes", false);
+            menuBuilder.setMenuItemEnabled("Insert volume", false);
+            menuBuilder.setMenuItemEnabled("Remove volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
@@ -1063,7 +1067,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("Extract slices", false);
             menuBuilder.setMenuItemEnabled("Replace slice", false);
-            menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
+            menuBuilder.setMenuItemEnabled("Extract volume", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("Light box", false);
@@ -1075,7 +1079,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Insert slice", false);
             menuBuilder.setMenuItemEnabled("Remove slices", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
-            menuBuilder.setMenuItemEnabled("Remove time volumes", false);
+            menuBuilder.setMenuItemEnabled("Insert volume", false);
+            menuBuilder.setMenuItemEnabled("Remove volumes", false);
             menuBuilder.setMenuItemEnabled("Manual 2D series", true);
             menuBuilder.setMenuItemEnabled("Constrained optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 2.5D", false);
@@ -1270,9 +1275,10 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("4D Image math", true);
         menuBuilder.setMenuItemEnabled("Denoising BLS GSM", true);
 
-        menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", true);
+        menuBuilder.setMenuItemEnabled("Extract volume", true);
         // menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", true);
-        menuBuilder.setMenuItemEnabled("Remove time volumes", true);
+        menuBuilder.setMenuItemEnabled("Insert volume", true);
+        menuBuilder.setMenuItemEnabled("Remove volumes", true);
         menuBuilder.setMenuItemEnabled("Swap dims 3<->4", true);
         menuBuilder.setMenuItemEnabled("Swap dims 1<->4", true);
         menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", true);
