@@ -237,15 +237,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         	
         	JFileChooser chooser = new JFileChooser();
         	chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-	        chooser.setDialogTitle("Choose gradient file");
+	        chooser.setDialogTitle("Choose CSV file");
 	        int returnValue = chooser.showOpenDialog(this);
 	        if (returnValue == JFileChooser.APPROVE_OPTION) {
 	        	csvFile = chooser.getSelectedFile();
 	        	readCSVFile();
-	        	
 	        }
-        	
-        	
         }else if (command.equalsIgnoreCase("RemoveSource")) {
             final int selected = sourceTable.getSelectedRow();
             final String key = (String) sourceTable.getValueAt(selected, 0);
@@ -343,7 +340,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             new InfoDialog(this, dsName, true,true,null);
 
         } else if (command.equalsIgnoreCase("outputDirBrowse")) {
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new JFileChooser(outputDirBase);
 
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             chooser.setDialogTitle("Choose output directory for Validation Tool files");
