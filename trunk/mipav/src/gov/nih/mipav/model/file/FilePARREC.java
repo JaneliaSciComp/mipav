@@ -954,7 +954,7 @@ public class FilePARREC extends FileBase {
                 ori =Integer.valueOf(values[idx]);
             } else if(tag.compareToIgnoreCase("#  recon resolution (x y)                   (2*integer)")==0) {
                 dim1 =Integer.valueOf(values[idx]);
-                dim2 =Integer.valueOf(values[idx]);
+                dim2 =Integer.valueOf(values[idx+1]);
             } else if(tag.compareToIgnoreCase("#  image pixel size (in bits)               (integer)")==0) {
                 bpp = Integer.valueOf(values[idx]);
             } else if(tag.compareToIgnoreCase("#  rescale intercept                        (float)")== 0) {
@@ -1822,6 +1822,10 @@ public class FilePARREC extends FileBase {
         String version = outInfo.getVersion();
         //Set the number of slices
         extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
+        int sliceNum = extents[2];
+        if (extents.length > 3) {
+        	sliceNum = sliceNum * extents[3];
+        }
         PrintStream fp = new PrintStream(new File(fileNames[0]));
         fp.println("# === DATA DESCRIPTION FILE ======================================================");
         fp.println("#");
@@ -1853,10 +1857,13 @@ public class FilePARREC extends FileBase {
             default: ori=1;
 
         }
-       */ 
+       */
         ArrayList<String> generalInfoList = outInfo.getGeneralInfoList();
         for(int i=0;i<generalInfoList.size();i++) {
         	String info = generalInfoList.get(i);
+        	if (info.indexOf("Max. number of slices/locations") >= 0) {
+        		info = ".    Max. number of slices/locations    :   " + String.valueOf(sliceNum);
+        	}
         	fp.println(info);
         }
         
@@ -2332,8 +2339,37 @@ public class FilePARREC extends FileBase {
         fp.println("#");
         
         ArrayList<String> imageInfoList = outInfo.getImageInfoList();
+        int idx = 0;
+        int xyIndex = -1;
         for(int i=0;i<imageInfoList.size();i++) {
         	String info = imageInfoList.get(i);
+        	if(info.compareToIgnoreCase("#  recon resolution (x y)                   (2*integer)")==0) {
+        		xyIndex = idx;
+        	}
+        	if (info.indexOf("(integer)") >= 0) {
+        		idx++;
+        	}
+        	else if (info.indexOf("(2*integer)") >= 0) {
+        		idx += 2;
+        	}
+        	else if (info.indexOf("(3*integer)") >= 0) {
+        		idx += 3;
+        	}
+        	else if (info.indexOf("(4*integer)") >= 0) {
+        		idx += 4;
+        	}
+        	else if (info.indexOf("(float)") >= 0) {
+        		idx++;
+        	}
+        	else if (info.indexOf("(2*float)") >= 0) {
+        		idx += 2;
+        	}
+        	else if (info.indexOf("(3*float)") >= 0) {
+        		idx += 3;
+        	}
+        	else if (info.indexOf("(4*float)") >= 0) {
+        		idx += 4;
+        	}
         	fp.println(info);
         }
         
@@ -2403,13 +2439,20 @@ public class FilePARREC extends FileBase {
         //Vector Slices = outInfo.getSlices();
         //Vector SliceParameters = outInfo.getSliceParameters();
         //following info is slice specific....so can not get it only from outInfo
-        int sliceNum = extents[2];
-        if (extents.length > 3) {
-        	sliceNum = sliceNum * extents[3];
-        }
+        
         for (int i = 0; i < sliceNum; i++) {
             FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
             String tag = fileInfoPR.getSliceInfo();
+            if (xyIndex >= 0) {
+            	String[] values = tag.split("\\s+");
+            	values[xyIndex] = String.valueOf(extents[0]);
+            	values[xyIndex+1] = String.valueOf(extents[1]);
+            	tag = values[0] + " ";
+            	for (int j = 1; j < values.length-1; j++) {
+            	    tag += values[j] + "  ";	
+            	}
+            	tag = tag + values[values.length-1];
+            }   
             fp.println(tag);
         }
         
