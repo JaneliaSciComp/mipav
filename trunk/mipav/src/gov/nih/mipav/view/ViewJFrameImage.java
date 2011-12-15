@@ -18,6 +18,7 @@ import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 import gov.nih.mipav.view.renderer.WildMagic.VOI.*;
 
@@ -444,6 +445,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildDICOMFrame();
         } else if (command.equals("BrowseDICOMDIR")) {
             userInterface.buildDICOMDIRFrame();
+        } else if (command.equals("LoadDWIDIR")) {
+            userInterface.buildDICOMDIRFrame();   
         } else if (command.equals("OpenNewGraph")) {
             new ViewJFrameGraph("Graph", true);
         } else if (command.equals("QueryDatabase")) {
@@ -1654,6 +1657,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // }
         else if (command.equals("Insert slice")) {
             new JDialogInsertSlice(this, getActiveImage());
+        } else if (command.equals("Insert volume")) {
+           new JDialogInsertVolume(this, getActiveImage());
         } else if (command.equals("InsertMSlices")) {
             new JDialogInsertMissingSlices(this, getActiveImage());
         } else if (command.equals("Add margins")) {
@@ -1672,7 +1677,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogRemoveSlices(this, getActiveImage());
         } else if (command.equals("padding")) {
             new JDialogPadImages(this, getActiveImage());
-        } else if (command.equals("Remove time volumes")) {
+        } else if (command.equals("Remove volumes")) {
             new JDialogRemoveTSlices(this, getActiveImage());
         } else if (command.equals("Replace slice")) {
             new JDialogReplaceSlice(this, getActiveImage());
@@ -2451,7 +2456,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.invokeDTIframe();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
-        } else if (command.equals("estimateTensor")) {
+        }else if (command.equals("dtiPipeline")) { 
+            new DTIPipeline();
+        }else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
         } else if (command.equals("fiberTracking")) {
             new JDialogDTIFiberTracking();
