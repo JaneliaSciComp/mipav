@@ -2652,16 +2652,16 @@ public class AlgorithmKMeans extends AlgorithmBase {
         			    for (j = 0; j < pointsInGroup[i]; j++) {
         			    	totalWeight[groupIndex] += weight[hierGroup[i][j]];
         			    	groupNum[hierGroup[i][j]] = groupIndex;
+	        	    		for (k = 0; k < nDims; k++) {
+	        	    		    medianList[k][groupIndex].clear();
+	        	    		}
+	        	    		for (k = 0; k < nDims; k++) {
+	        	    			medianList[k][groupIndex].add(new positionWeightItem(pos[k][hierGroup[i][j]],weight[hierGroup[i][j]]));
+	        	    		}
+	        	    		for (k = 0; k < nDims; k++) {
+	        	    			Collections.sort(medianList[k][groupIndex], new positionWeightComparator());
+	        	    		}
         			    } // for (j = 0; j < pointsInGroup[i]; j++)
-        	    		for (k = 0; k < nDims; k++) {
-        	    		    medianList[k][groupIndex].clear();
-        	    		}
-        	    		for (k = 0; k < nDims; k++) {
-        	    			medianList[k][groupIndex].add(new positionWeightItem(pos[k][hierGroup[i][j]],weight[hierGroup[i][j]]));
-        	    		}
-        	    		for (k = 0; k < nDims; k++) {
-        	    			Collections.sort(medianList[k][groupIndex], new positionWeightComparator());
-        	    		}
         			    for (j = 0; j < nDims; j++) {
         			    	m = 0;
         	                preMedianWeight = 0.0;
