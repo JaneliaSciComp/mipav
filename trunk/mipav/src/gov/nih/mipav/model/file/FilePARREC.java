@@ -913,14 +913,14 @@ public class FilePARREC extends FileBase {
             }
         }
 
-        float fov1=0, fov2=0, fov3=0;
+        float fovRL=0, fovIS=0, fovAP=0;
         s = (String)VolParameters.get("scn_fov");
         if(s!=null) {
             ss = s.trim().split("\\s+");
             if(ss.length==3) {
-                fov1 = Float.valueOf(ss[0]);
-                fov2 = Float.valueOf(ss[1]);
-                fov3 = Float.valueOf(ss[2]);
+                fovRL = Float.valueOf(ss[0]);
+                fovIS = Float.valueOf(ss[1]);
+                fovAP = Float.valueOf(ss[2]);
             } else {
                 Preferences.debug("FilePARREC:readHeader. FOV doesn't make sense: "+s+ "\n", Preferences.DEBUG_FILEIO);
                 return false;
@@ -1100,12 +1100,9 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 2);
-                /*if(fov1!=fov3) {
-                    fov1 = Math.max(fov1,fov3); fov3=fov1;
-                }*/
-                fileInfo.setResolutions(fov1/dim1,0);
-                fileInfo.setResolutions(fov3/dim2,1);
-                fileInfo.setResolutions(fov2/numSlices,2);
+                fileInfo.setResolutions(fovRL/dim1,0);
+                fileInfo.setResolutions(fovAP/dim2,1);
+                fileInfo.setResolutions(fovIS/numSlices,2);
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
 //                fileInfo.setSliceThickness(fov2/numSlices);
@@ -1115,12 +1112,9 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE, 2);
-                /*if(fov2!=fov1) {
-                    fov2 = Math.max(fov2,fov1); fov1=fov2;
-                }*/
-                fileInfo.setResolutions(fov2/dim1,0);
-                fileInfo.setResolutions(fov1/dim2,1);
-                fileInfo.setResolutions(fov3/numSlices,2);
+                fileInfo.setResolutions(fovAP/dim1,0);
+                fileInfo.setResolutions(fovIS/dim2,1);
+                fileInfo.setResolutions(fovRL/numSlices,2);
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
                 //fileInfo.setSliceThickness(fov3/numSlices);
@@ -1130,13 +1124,9 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 2);
-
-                /*if(fov2!=fov3) {
-                    fov2 = Math.max(fov2,fov3); fov3=fov2;
-                }*/
-                fileInfo.setResolutions(fov2/dim1,0);
-                fileInfo.setResolutions(fov3/dim2,1);
-                fileInfo.setResolutions(fov1/numSlices,2);
+                fileInfo.setResolutions(fovRL/dim1,0);
+                fileInfo.setResolutions(fovIS/dim2,1);
+                fileInfo.setResolutions(fovAP/numSlices,2);
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
 //                fileInfo.setSliceThickness(fov1/numSlices);
@@ -2424,11 +2414,11 @@ public class FilePARREC extends FileBase {
         //Vector SliceParameters = outInfo.getSliceParameters();
         //following info is slice specific....so can not get it only from outInfo
         
-        int sliceNum = extents[2];
+        int totalSlices = extents[2];
         if (extents.length > 3) {
-        	sliceNum = sliceNum * extents[3];
+        	totalSlices = totalSlices * extents[3];
         }
-        for (int i = 0; i < sliceNum; i++) {
+        for (int i = 0; i < totalSlices; i++) {
             FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
             String tag = fileInfoPR.getSliceInfo();
             if ((xyIndex >= 0) || (orIndex >= 0)) {
