@@ -1511,10 +1511,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	    		groupNum[i] = 0;
 	    	}
     		centroidPosStart = new double[nDims][numberClusters];
-    		totalWeight[0] = 0;
-    		for (i = 0; i < nPoints; i++) {
-    		    totalWeight[0] += weight[i];
-    		}
     		for (j = 0; j < nDims; j++) {
     			centroidPosStart[j][0] = 0.0;
     		}
@@ -1681,10 +1677,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		for (i = 0; i < nPoints; i++) {
 	    		groupNum[i] = 0;
 	    	}
-    		totalWeight[0] = 0.0;
-    		for (i = 0; i < nPoints; i++) {
-    			totalWeight[0] += weight[i];
-    		}
     		distSquaredToNearestCluster = new double[nPoints];
     		for (j = 0; j < nDims; j++) {
     			centroidPos[j][0] = 0.0;
@@ -2915,10 +2907,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	    		groupNum[i] = 0;
     	    	}
         		centroidPosStart = new double[nDims][numberClusters];
-        		totalWeight[0] = 0;
-        		for (i = 0; i < nPoints; i++) {
-        		    totalWeight[0] += weight[i];
-        		}
         		totalWeight[0] = 0.0;
         		for (i = 0; i < nPoints; i++) {
         			totalWeight[0] += weight[i];
