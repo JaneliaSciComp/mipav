@@ -304,7 +304,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double postMedianWeight;
         double weightFraction;
         double totalDistCityBlock;
-        double minTotalDistCityBlock;
         double totalMinDistCityBlock = 0.0;
         double bestTotalMinDistCityBlock;
         
@@ -2453,7 +2452,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 } // for (i = 0; i < subsampleNumber; i++)
                     
                 // The refined initial point is chosen as the localFM[][][i] having minimal distortion over unionCM
-                minTotalDistCityBlock = Double.MAX_VALUE;
+                totalMinDistCityBlock = Double.MAX_VALUE;
                 if (equalScale) {
                 	for (i = 0; i < subsampleNumber; i++) {
                 		totalDistCityBlock = 0.0;
@@ -2471,8 +2470,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	                    } // for (k = 0; k < numberClusters; k++)
     	                    totalDistCityBlock = totalDistCityBlock + minDistCityBlock;
     	                } // for (j = 0; j < subsampleSize; j++)
-    	                if (totalDistCityBlock < minTotalDistCityBlock) {
-    	                	minTotalDistCityBlock = totalDistCityBlock;
+    	                if (totalDistCityBlock < totalMinDistCityBlock) {
+    	                	totalMinDistCityBlock = totalDistCityBlock;
     	                	bestFMIndex = i;
     	                }
     	            } // for (i = 0; i < subsampleNumber; i++)	
@@ -2494,8 +2493,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	                    } // for (k = 0; k < numberClusters; k++)
     	                    totalDistCityBlock = totalDistCityBlock + minDistCityBlock;
     	                } // for (j = 0; j < subsampleSize; j++)
-    	                if (totalDistCityBlock < minTotalDistCityBlock) {
-    	                	minTotalDistCityBlock = totalDistCityBlock;
+    	                if (totalDistCityBlock < totalMinDistCityBlock) {
+    	                	totalMinDistCityBlock = totalDistCityBlock;
     	                	bestFMIndex = i;
     	                }
     	            } // for (i = 0; i < subsampleNumber; i++)
