@@ -2649,12 +2649,12 @@ public class AlgorithmKMeans extends AlgorithmBase {
         			    groupIndex++;
         			    Preferences.debug("Initial centroid " + (groupIndex+1) + "\n", Preferences.DEBUG_ALGORITHM);
         			    totalWeight[groupIndex] = 0.0;
+        			    for (k = 0; k < nDims; k++) {
+        	    		    medianList[k][groupIndex].clear();
+        	    		}
         			    for (j = 0; j < pointsInGroup[i]; j++) {
         			    	totalWeight[groupIndex] += weight[hierGroup[i][j]];
         			    	groupNum[hierGroup[i][j]] = groupIndex;
-	        	    		for (k = 0; k < nDims; k++) {
-	        	    		    medianList[k][groupIndex].clear();
-	        	    		}
 	        	    		for (k = 0; k < nDims; k++) {
 	        	    			medianList[k][groupIndex].add(new positionWeightItem(pos[k][hierGroup[i][j]],weight[hierGroup[i][j]]));
 	        	    		}
