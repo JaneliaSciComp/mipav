@@ -16,6 +16,15 @@ import java.util.Comparator;
 
 
 /**
+ * This program can be run to find the mean of centroids using Euclidean squared distances or the program
+ * can be run to find the median of centroids using city-block or Manhattan distances.  Using medians with
+ * city-block distances is probably best in cases of noise and outlier data points since a few outliers can
+ * greatly affect the mean value.  Median components are found separately for each dimension.  Also note that the 
+ * k-means does not work well in finding clusters with nonconvex shapes or very different sizes.
+ * 
+ * The dialog checkbox Scale variables to unit variance allow combining variables using different scales
+ * such as temperature in degrees Fahrenheit and wind speed in miles per hour.
+ * 
  * With a small number of records, it is feasible to use RANDOM_INIT to perform multiple restarts efficiently.
  * With a small sample size, the subsampling for initialization is not effective in the Bradley-Fayyad
  * initialization.  The Bradley-Fayyad method is best suited for large-scale data.  By initializing a general
@@ -83,6 +92,8 @@ import java.util.Comparator;
      Image and Vision Computing, Volume 29, No. 4, 2011, pp. 260-271.
  5.) "The global k-means clustering algorithm" by Aristidis Likas, Nikos Vlassis, and
      Jakob J. Verbeek, Pattern Recognition, Volume 36, 2003, pp. 451-461.
+ 6.) Data Mining Concepts and Techniques by Jiawei Han and Micheline Kamber, Section 8.4
+     Partitioning Methods, Morgan Kaufmann Publishers, 2001, pp. 348-353.
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
