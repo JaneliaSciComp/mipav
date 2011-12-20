@@ -164,6 +164,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JRadioButton euclideanSquared;
     
     private JRadioButton cityBlock;
+    
+    private JCheckBox unitVarianceCheckBox;
+    
+    private boolean scaleVariablesToUnitVariance;
 	
 	
 	public JDialogKMeans() {
@@ -903,12 +907,21 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 1;
         mainPanel.add(textPointsFile, gbc);
         
+        unitVarianceCheckBox = new JCheckBox("Scale variables to unit variance", false);
+        unitVarianceCheckBox.setFont(serif12);
+        unitVarianceCheckBox.setForeground(Color.black);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        mainPanel.add(unitVarianceCheckBox, gbc);
+        
+        
         JLabel algorithmLabel = new JLabel("Choose an algorithm");
         algorithmLabel.setForeground(Color.black);
         algorithmLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         mainPanel.add(algorithmLabel, gbc);
         
         algorithmGroup = new ButtonGroup();
@@ -919,7 +932,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(kMeansAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         mainPanel.add(kMeansAlgo, gbc);
         
         globalAlgo = new JRadioButton("Global k-means", false);
@@ -929,7 +942,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(globalAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         mainPanel.add(globalAlgo, gbc);
         
         fastGlobalAlgo = new JRadioButton("Fast global k-means", false);
@@ -939,7 +952,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         algorithmGroup.add(fastGlobalAlgo);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         mainPanel.add(fastGlobalAlgo, gbc);
         
         JLabel distanceLabel = new JLabel("Choose an distance measure");
@@ -947,7 +960,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 11;
+        gbc.gridy = 12;
         mainPanel.add(distanceLabel, gbc);
         
         distanceGroup = new ButtonGroup();
@@ -958,7 +971,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(euclideanSquared);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 13;
         mainPanel.add(euclideanSquared, gbc);
         
         cityBlock = new JRadioButton("City block distance with median centroids", false);
@@ -968,7 +981,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         distanceGroup.add(cityBlock);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 13;
+        gbc.gridy = 14;
         mainPanel.add(cityBlock, gbc);
         
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
@@ -976,7 +989,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 14;
+        gbc.gridy = 15;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -991,7 +1004,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -1001,7 +1014,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -1010,7 +1023,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy = 18;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -1019,7 +1032,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy = 19;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -1028,7 +1041,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 20;
         mainPanel.add(maxMinInit, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
@@ -1041,10 +1054,34 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private boolean setVariables() {
     	String tmpStr;
+    	int i;
+    	double totalWeight;
+    	int dim;
+    	double totalSum = 0.0;
+    	double totalSumSquared = 0.0;
+    	double variance;
     	if (!havePoints) {
     	    MipavUtil.displayError("Must obtain points from a text file or an image");
     	    return false;
     	}
+    	
+    	scaleVariablesToUnitVariance = unitVarianceCheckBox.isSelected();
+    	if (scaleVariablesToUnitVariance) {
+    		totalWeight = 0.0;
+    		for (i = 0; i < nPoints; i++) {
+    			totalWeight += weight[i];
+    		}
+    		for (dim = 0; dim < nDims; dim++) {
+    		     totalSum = 0.0;
+    		     totalSumSquared = 0.0;
+    		     for (i = 0; i < nPoints; i++) {
+    		    	 totalSum += weight[i]*pos[dim][i];
+    		    	 totalSumSquared += weight[i]*pos[dim][i]*pos[dim][i];
+    		     }
+    		     variance = (totalSumSquared - totalSum*totalSum/totalWeight)/(totalWeight - 1.0);
+    		     scale[dim] = 1.0/Math.sqrt(variance);
+    		} // for (dim = 0; dim < nDims; dim++) 
+    	} // if (scaleVariablesToUnitVariance)
     	
     	if (kMeansAlgo.isSelected()) {
     		algoSelection = K_MEANS;
