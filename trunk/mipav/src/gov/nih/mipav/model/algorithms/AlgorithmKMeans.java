@@ -164,6 +164,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     
     // Euclidean squared using means or city-block using median
     private int distanceMeasure;
+    
+    private boolean scaleVariablesToUnitVariance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -173,7 +175,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     public AlgorithmKMeans(ModelImage image, int algoSelection, int distanceMeasure,
     		               double[][] pos, double[] scale, int groupNum[], double weight[],
     		               double[][] centroidPos, String resultsFileName, int initSelection, float[] redBuffer,
-    		               float[] greenBuffer, float[] blueBuffer, double scaleMax, boolean useColorHistogram) {
+    		               float[] greenBuffer, float[] blueBuffer, double scaleMax, boolean useColorHistogram,
+    		               boolean scaleVariablesToUnitVariance) {
 
         this.image = image;
         this.algoSelection = algoSelection;
@@ -190,6 +193,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         this.blueBuffer = blueBuffer;
         this.scaleMax = scaleMax;
         this.useColorHistogram = useColorHistogram;
+        this.scaleVariablesToUnitVariance = scaleVariablesToUnitVariance;
     }
 
     
@@ -3242,6 +3246,46 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		setCompleted(false);
     		return;	
     	}
+    	switch(algoSelection) {
+    	case K_MEANS:
+    		dataString += "Algorithm selection = k-means\n";
+    		switch(initSelection) {
+    		case RANDOM_INIT:
+    			dataString += "Initializatin selection = random initialization\n";
+    			break;
+    		case BRADLEY_FAYYAD_INIT:
+    			dataString += "Initialization selection = Bradley-Fayyad refinement initialization\n";
+    			break;
+    		case HIERARCHICAL_GROUPING_INIT:
+    		    dataString += "Initialization selection = hierarchical grouping\n";
+    		    break;
+    		case MAXMIN_INIT:
+    			dataString += "Initialization selection = maxmin\n";
+    			break;
+    		}
+    		break;
+    	case GLOBAL_K_MEANS:
+    		dataString += "Algorithm selection = global k-means\n";
+    		break;
+    	case FAST_GLOBAL_K_MEANS:
+    		dataString += "Algorithm selection = fast global k-means\n";
+    		break;
+    	}
+    	switch(distanceMeasure) {
+    	case EUCLIDEAN_SQUARED:
+    		dataString += "Distance measure = Euclidean squared distances with mean centroids\n";
+    		break;
+    	case CITY_BLOCK:
+    		dataString += "Distance measure = city block distances with median centroids\n";
+    		break;
+    	}
+    	if (scaleVariablesToUnitVariance) {
+    		dataString += "Variables scaled to unit variance\n";
+    	}
+    	else {
+    		dataString += "Variables not scaled to unit variance\n";
+    	}
+    	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n";
     	for (i = 0; i < numberClusters; i++) {
     		dataString += "Cluster centroid " + (i+1) + ":\n";
     		for (j = 0; j < nDims; j++) {
