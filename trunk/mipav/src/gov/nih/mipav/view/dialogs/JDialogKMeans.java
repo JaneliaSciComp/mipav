@@ -168,6 +168,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JCheckBox unitVarianceCheckBox;
     
     private boolean scaleVariablesToUnitVariance;
+    
+    private JLabel resultsFileNameLabel;
+    
+    private JTextField resultsFileNameText;
 	
 	
 	public JDialogKMeans() {
@@ -264,6 +268,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 					fileNameBase = new String(chooser.getSelectedFile().getName());
 				}
 	         	resultsFileName = chooser.getCurrentDirectory() + File.separator + fileNameBase + "_kmeans.txt";
+	         	resultsFileNameLabel.setEnabled(true);
+            	resultsFileNameText.setEnabled(true);
+            	resultsFileNameText.setText(resultsFileName);
          		if (image.isComplexImage()) {
          			MipavUtil.displayError("Image cannot be a complex image");
          		    image.disposeLocal();
@@ -271,6 +278,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
          		    return;	
          		}
 	         } 
+	         else {
+	        	 return;
+	         }
 	         nDims = image.getNDims();
 	         extents = image.getExtents();
 	         length = extents[0];
@@ -452,6 +462,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    					fileNameBase = new String(chooser.getSelectedFile().getName());
 	    				}
 	                	resultsFileName = directoryPoints + fileNameBase + "_kmeans.txt";
+	                	resultsFileNameLabel.setEnabled(true);
+	                	resultsFileNameText.setEnabled(true);
+	                	resultsFileNameText.setText(resultsFileName);
 	                    
 	                    try {
 	                        br = new BufferedReader(new InputStreamReader(new FileInputStream(filePoints)));
@@ -752,7 +765,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 			 alg = new AlgorithmKMeans(image,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
-					                   useColorHistogram);
+					                   useColorHistogram, scaleVariablesToUnitVariance);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -1043,6 +1056,23 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 20;
         mainPanel.add(maxMinInit, gbc);
+        
+        resultsFileNameLabel = new JLabel("Results file name:");
+        resultsFileNameLabel.setForeground(Color.black);
+        resultsFileNameLabel.setFont(serif12);
+        resultsFileNameLabel.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 21;
+        mainPanel.add(resultsFileNameLabel, gbc);
+        
+        resultsFileNameText = new JTextField(40);
+        resultsFileNameText.setText("");
+        resultsFileNameText.setForeground(Color.black);
+        resultsFileNameText.setFont(serif12);
+        resultsFileNameText.setEnabled(false);
+        gbc.gridx = 1;
+        mainPanel.add(resultsFileNameText, gbc);
     
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -1125,6 +1155,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	else if (maxMinInit.isSelected()) {
     		initSelection = MAXMIN_INIT;
     	}	
+    	
+    	resultsFileName = resultsFileNameText.getText();
     	
     	return true;
     }
