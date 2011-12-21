@@ -321,6 +321,15 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double totalDistCityBlock;
         double totalMinDistCityBlock = 0.0;
         double bestTotalMinDistCityBlock;
+        double groupMean[][];
+        double totalMean[];
+        double totalGroupWeight[];
+        double completeWeight;
+        double withinGroupSumOfSquares[];
+        double betweenGroupsSumOfSquares[];
+        double withinTrace;
+        double betweenTrace;
+        double CalinskiAndHarabaszFigureOfMerit;
         
         for (i = 0; i < scale.length; i++) {
         	scale2[i] = scale[i]*scale[i];
@@ -3101,6 +3110,46 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	break;
     	} // switch(distanceMeasure)
     	
+    	groupMean = new double[nDims][numberClusters];
+    	totalMean = new double[nDims];
+    	totalGroupWeight = new double[numberClusters];
+    	completeWeight = 0.0;
+    	for (i = 0; i < nPoints; i++) {
+    		totalGroupWeight[groupNum[i]] += weight[i];
+    		for (j = 0; j < nDims; j++) {
+    		    groupMean[j][groupNum[i]] += weight[i]*pos[j][i];
+    		}
+    	}
+    	for (i = 0; i < numberClusters; i++) {
+    		completeWeight += totalGroupWeight[i];
+    		for (j = 0; j < nDims; j++) {
+    			totalMean[j] += groupMean[j][i];
+    			groupMean[j][i] = groupMean[j][i]/totalGroupWeight[i];
+    		}
+    	}
+    	for (j = 0; j < nDims; j++) {
+    		totalMean[j] = totalMean[j]/completeWeight;
+    	}
+    	withinGroupSumOfSquares = new double[nDims];
+    	betweenGroupsSumOfSquares = new double[nDims];
+    	for (i = 0; i < nPoints; i++) {
+    		for (j = 0; j < nDims; j++) {
+    			withinGroupSumOfSquares[j] += weight[i]*(pos[j][i] - groupMean[j][groupNum[i]])*(pos[j][i] - groupMean[j][groupNum[i]]);
+    		}
+    	}
+    	for (i = 0; i < numberClusters; i++) {
+    		for (j = 0; j < nDims; j++) {
+    			betweenGroupsSumOfSquares[j] += totalGroupWeight[i]*(groupMean[j][i] - totalMean[j])*(groupMean[j][i] - totalMean[j]);
+    		}
+    	}
+    	betweenTrace = 0.0;
+    	withinTrace = 0.0;
+    	for (j = 0; j < nDims; j++) {
+    		betweenTrace += betweenGroupsSumOfSquares[j];
+    		withinTrace += withinGroupSumOfSquares[j];
+    	}
+    	CalinskiAndHarabaszFigureOfMerit = (betweenTrace/(numberClusters - 1.0))/(withinTrace/(completeWeight - numberClusters));
+    	
     	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
     		buffer = new byte[length];
     		for(i = 0; i < length; i++) {
@@ -3286,6 +3335,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		dataString += "Variables not scaled to unit variance\n";
     	}
     	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n";
+    	dataString += "Calinski and Harabasz figure of merit for number of clusters = " + 
+    	               String.valueOf(CalinskiAndHarabaszFigureOfMerit) +"\n";
+    	dataString += "The ideal number of clusters should give the largest figure of merit\n";
+    	
     	for (i = 0; i < numberClusters; i++) {
     		dataString += "Cluster centroid " + (i+1) + ":\n";
     		for (j = 0; j < nDims; j++) {
