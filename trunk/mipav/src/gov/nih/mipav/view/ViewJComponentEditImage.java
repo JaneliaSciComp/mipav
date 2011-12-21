@@ -3153,7 +3153,11 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 // if checkerboarding is OFF, this means blending should be enabled
                 if ( ! (frame instanceof ViewJFrameLightBox)) {
-                    cleanBuffer(ViewJComponentBase.BOTH);
+                	if(frame instanceof ViewJFrameTriImage) {
+                		cleanBuffer(ViewJComponentBase.BOTH);
+                	}else {
+                		cleanBuffer(ViewJComponentBase.IMAGE_A);
+                	}
                 }
 
                 if ( !isCheckerboarded()) {
