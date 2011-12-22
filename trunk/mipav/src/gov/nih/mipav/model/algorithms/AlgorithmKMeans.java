@@ -99,6 +99,12 @@ import java.util.Comparator;
  * sum of squares and W = the within group sum of squares.  Then the Calinski and Harabasz figure of merit
  * equals = (B/(number of clusters -1))/(W/(totalWeight - number of clusters), where the weight of each point 
  * equals 1 in an unweighted data set or the totalWeight = the number of points in an unweighted data set.
+ * 
+ * The sum of squared deviations from cluster centroids from 2 different runs can be used in an 'F test'
+ * proposed by Beale.  Let SD denote the sum of the squared deviations from cluster centroids in the sample.
+ * Then a divison of n objects into g2 clusters is significantly better than a division into g1 clusters (g2 > g1) 
+ * if the test statistic F(g1,g2) = ((SD1 - SD2)/SD2)/([(n-g1)/(n-g2)]*((g2/g1)**(2/nDims)) - 1) exceeds the
+ * critical value from an F distribution with nDims*(g2 - g1) and nDims*(n - g2) degrees of freedom.
  References:
  1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
      by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
@@ -348,7 +354,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double completeWeight;
         double withinGroupSumOfSquares[];
         double betweenGroupsSumOfSquares[];
-        double withinTrace;
+        double sumOfSquaredDeviationsFromClusterCentroids;
         double betweenTrace;
         double CalinskiAndHarabaszFigureOfMerit;
         
@@ -3166,12 +3172,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		}
     	}
     	betweenTrace = 0.0;
-    	withinTrace = 0.0;
+    	sumOfSquaredDeviationsFromClusterCentroids = 0.0;
     	for (j = 0; j < nDims; j++) {
     		betweenTrace += betweenGroupsSumOfSquares[j];
-    		withinTrace += withinGroupSumOfSquares[j];
+    		sumOfSquaredDeviationsFromClusterCentroids += withinGroupSumOfSquares[j];
     	}
-    	CalinskiAndHarabaszFigureOfMerit = (betweenTrace/(numberClusters - 1.0))/(withinTrace/(completeWeight - numberClusters));
+    	CalinskiAndHarabaszFigureOfMerit = (betweenTrace/(numberClusters - 1.0))/
+    	                                   (sumOfSquaredDeviationsFromClusterCentroids/(completeWeight - numberClusters));
     	
     	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
     		buffer = new byte[length];
@@ -3358,6 +3365,8 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		dataString += "Variables not scaled to unit variance\n";
     	}
     	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n";
+    	dataString += "Sum of squared deviations from cluster centroids = " +
+    	               String.valueOf(sumOfSquaredDeviationsFromClusterCentroids) + "\n";
     	dataString += "Calinski and Harabasz figure of merit for number of clusters = " + 
     	               String.valueOf(CalinskiAndHarabaszFigureOfMerit) +"\n";
     	dataString += "The ideal number of clusters should give the largest figure of merit\n";
