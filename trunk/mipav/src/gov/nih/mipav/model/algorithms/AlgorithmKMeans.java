@@ -16,6 +16,18 @@ import java.util.Comparator;
 
 
 /**
+ * This program can be run on data of any dimensionality.  However, VOIs will only be placed in images
+ * for 2D and 3D data. 
+ * 
+ * The data file format is as follows:
+ * # is used to start any comment line
+ * number of dimensions nDims
+ * extents[0] ... extents[nDims-1], length of each dimension
+ * scale[0] ... scale[nDims-1], scale factor of each dimension
+ * nPoints, number of points
+ * For each point a line of the form
+ * weight pos[0] ... pos[nDims-1]
+ * 
  * This program can be run to find the mean of centroids using Euclidean squared distances or the program
  * can be run to find the median of centroids using city-block or Manhattan distances.  Using medians with
  * city-block distances is probably best in cases of noise and outlier data points since a few outliers can
@@ -81,6 +93,12 @@ import java.util.Comparator;
  * Consider a point xi, two cluster centers ca and cb and a distance metric d.  Using the triangle 
  * inequality, we have d(ca,cb) <= d(xi,ca) + d(xi,cb).  Therefore, if we know that 2d(xi,ca) <= d(ca,cb),
  * we can conclude that d(xi,ca) <= d(xi,cb) without having to calculate d(xi,cb).
+ * 
+ * By doing runs with different number of clusters and seeing which run gives the highest Calinski and
+ * Harabasz figure of merit, the ideal number of clusters can be determined.  Let B = the between groups
+ * sum of squares and W = the within group sum of squares.  Then the Calinski and Harabasz figure of merit
+ * equals = (B/(number of clusters -1))/(W/(totalWeight - number of clusters), where the weight of each point 
+ * equals 1 in an unweighted data set or the totalWeight = the number of points in an unweighted data set.
  References:
  1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
      by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
@@ -94,6 +112,9 @@ import java.util.Comparator;
      Jakob J. Verbeek, Pattern Recognition, Volume 36, 2003, pp. 451-461.
  6.) Data Mining Concepts and Techniques by Jiawei Han and Micheline Kamber, Section 8.4
      Partitioning Methods, Morgan Kaufmann Publishers, 2001, pp. 348-353.
+ 7.) Cluster Analysis Fourth Edition by Brian S. Everitt, Sabine Landau, and Morven
+     Leese, Arnold Publishers, 2001, Chapter 5, Optimization Clustering Techniques,
+     pp. 90-117.
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
@@ -3117,7 +3138,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	for (i = 0; i < nPoints; i++) {
     		totalGroupWeight[groupNum[i]] += weight[i];
     		for (j = 0; j < nDims; j++) {
-    		    groupMean[j][groupNum[i]] += weight[i]*pos[j][i];
+    		    groupMean[j][groupNum[i]] += weight[i]*scale[j]*pos[j][i];
     		}
     	}
     	for (i = 0; i < numberClusters; i++) {
@@ -3134,12 +3155,14 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	betweenGroupsSumOfSquares = new double[nDims];
     	for (i = 0; i < nPoints; i++) {
     		for (j = 0; j < nDims; j++) {
-    			withinGroupSumOfSquares[j] += weight[i]*(pos[j][i] - groupMean[j][groupNum[i]])*(pos[j][i] - groupMean[j][groupNum[i]]);
+    			withinGroupSumOfSquares[j] += weight[i]*scale2[j]*(pos[j][i] - groupMean[j][groupNum[i]])*
+    			                                                  (pos[j][i] - groupMean[j][groupNum[i]]);
     		}
     	}
     	for (i = 0; i < numberClusters; i++) {
     		for (j = 0; j < nDims; j++) {
-    			betweenGroupsSumOfSquares[j] += totalGroupWeight[i]*(groupMean[j][i] - totalMean[j])*(groupMean[j][i] - totalMean[j]);
+    			betweenGroupsSumOfSquares[j] += totalGroupWeight[i]*scale2[j]*
+    			(groupMean[j][i] - totalMean[j])*(groupMean[j][i] - totalMean[j]);
     		}
     	}
     	betweenTrace = 0.0;
