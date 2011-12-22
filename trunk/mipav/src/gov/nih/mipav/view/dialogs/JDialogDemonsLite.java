@@ -31,7 +31,7 @@ import javax.swing.*;
 public class JDialogDemonsLite extends JDialogScriptableBase 
 	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
     
-    private     AlgorithmDemonsLite 		algo = null;
+    private     AlgorithmDemonsLite 	algo = null;
     private     ModelImage              image;                // source image
     private     ModelImage              targetImage;          // image to deform to
     
