@@ -715,7 +715,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 		
 
-		if (((nDims >= 2) && (nDims <= 4)  && (image == null)) || ((image != null) && (image.isColorImage()))) {
+		if (((nDims >= 2) && (nDims <= 3)  && (image == null)) || ((image != null) && (image.isColorImage()))) {
 			if ((image != null) && (image.isColorImage())) {
 				scaleMax = Math.max(scaleMax, image.getMax());
 				image = new ModelImage(ModelStorageBase.BYTE, extents, 
@@ -755,7 +755,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	            centroidPos = new double[nDims][numberClusters];
 			} // else 
 		    
-		} // if (((nDims >= 2) && (nDims <= 4)  && (image == null)) || ((image != null) && (image.isColorImage())))
+		} // if (((nDims >= 2) && (nDims <= 3)  && (image == null)) || ((image != null) && (image.isColorImage())))
 		else {
 			centroidPos = new double[nDims][numberClusters];
 		}
