@@ -20,64 +20,64 @@ package gov.nih.mipav.model.algorithms.registration;
 public class DemonsRegistrationLite {
 		
 	// numerical quantities
-	private static final	float   INF=1e30f;
-	private static final	float   ZERO=1e-30f;
+	private static final float INF=1e30f;
+	private static final float ZERO=1e-30f;
 	
 	// convenience tags
-	private static final	int   X=0;
-	private static final	int   Y=1;
-	private static final	int   Z=2;
-	private static final	int   T=3;
+	private static final int X=0;
+	private static final int Y=1;
+	private static final int Z=2;
+	private static final int T=3;
 	
 	// flag labels
-	public static final	int   FLUID 			= 301;
-	public static final	int   DIFFUSION 		= 302;
+	public static final	int FLUID = 301;
+	public static final	int DIFFUSION = 302;
 	
 	
 	// data buffers
-	private 	float[]		image;  		// source image
-	private 	float[]	    target;			// target image
-	private 	float[]		fixed;  			// fixed image (multiscale)
-	private 	float[]	    moving;				// moving image (multiscale)
-	private		float[][]		c;				// transform from target space to original space (multiscale)
-	private		float[][]		s;				// transform from target space to original space (multiscale)
-	private		float[][]		u;				// transform update from target space to original space (multiscale)
-	private static	int[]	nix,niy,niz;   	// image dimensions (pyramid)
-	private static	int[]	ntx,nty,ntz;   	// target dimensions (pyramid)
-	private static	float	rix,riy,riz;   	// image resolutions (no pyramid)
-	private static	float	rtx,rty,rtz;   	// target resolutions (no pyramid)
-	private		float		imin, imax;
-	private		float		tmin, tmax;
+	private float[]	image;  		// source image
+	private float[] target;			// target image
+	private float[] fixed;  			// fixed image (multiscale)
+	private float[] moving;				// moving image (multiscale)
+	private	float[][] c;				// transform from target space to original space (multiscale)
+	private	float[][] s;				// transform from target space to original space (multiscale)
+	private	float[][] u;				// transform update from target space to original space (multiscale)
+	private int[] nix,niy,niz;   	// image dimensions (pyramid)
+	private int[] ntx,nty,ntz;   	// target dimensions (pyramid)
+	private float rix,riy,riz;   	// image resolutions (no pyramid)
+	private float rtx,rty,rtz;   	// target resolutions (no pyramid)
+	private	float imin, imax;
+	private	float tmin, tmax;
 	
-	private static	int		nmx,nmy,nmz;   	// image dimensions (no pyramid)
-	private static	int		nfx,nfy,nfz;   	// target dimensions (no pyramid)
-	private static	float	rmx,rmy,rmz;   	// image resolutions (no pyramid)
-	private static	float	rfx,rfy,rfz;   	// target resolutions (no pyramid)
-	private 	float[][]	transform;		// prior transform matrix (for instance from prior alignment)		
+	private int nmx,nmy,nmz;   	// image dimensions (no pyramid)
+	private int nfx,nfy,nfz;   	// target dimensions (no pyramid)
+	private float rmx,rmy,rmz;   	// image resolutions (no pyramid)
+	private float rfx,rfy,rfz;   	// target resolutions (no pyramid)
+	private float[][] transform;		// prior transform matrix (for instance from prior alignment)		
 	
 	// pyramid handling
-	private		int			levels;		// number of levels in the pyramid
-	private		int			Niter;		// iterations for the first pass at a level
+	private	int	levels;		// number of levels in the pyramid
+	private	int Niter;		// iterations for the first pass at a level
 	
 	// parameters
-	private		float		smoothingKernel; 	// smoothing kernel size
-	private		float		spatialScale; 		// scale of transformation
-	private		int		regType;
+	private	float smoothingKernel; 	// smoothing kernel size
+	private	float spatialScale; 		// scale of transformation
+	private	int	regType;
 	
 	// computation variables
-	private		float			sigma2; 		// scale of transformation
+	private	float sigma2; 		// scale of transformation
 	
 
-	private		float[][]		gaussKernel;
-	private		int				kx,ky,kz;
+	private	float[][] gaussKernel;
+	private	int	kx,ky,kz;
     
 	// computation flags
-	private 	boolean 		isWorking;
-	private 	boolean 		isCompleted;
+	private boolean isWorking;
+	private boolean isCompleted;
 	
 	// for debug and display
-	static final boolean		debug=true;
-	static final boolean		verbose=true;
+	private static final boolean debug=true;
+	private static final boolean verbose=true;
     private boolean do2D = false;
     
 	/**
