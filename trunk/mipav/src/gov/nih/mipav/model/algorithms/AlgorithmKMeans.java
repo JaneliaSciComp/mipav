@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+//import Jama.Matrix;
+
 
 /**
  * This program can be run on data of any dimensionality.  However, VOIs will only be placed in images
@@ -31,8 +33,13 @@ import java.util.Comparator;
  * This program can be run to find the mean of centroids using Euclidean squared distances or the program
  * can be run to find the median of centroids using city-block or Manhattan distances.  Using medians with
  * city-block distances is probably best in cases of noise and outlier data points since a few outliers can
- * greatly affect the mean value.  Median components are found separately for each dimension.  Also note that the 
- * k-means does not work well in finding clusters with nonconvex shapes or very different sizes.
+ * greatly affect the mean value.  Median components are found separately for each dimension.  
+ * 
+ * The Euclidean squared metric is scale-dependent.  Different solutions may be obtained from the raw data
+ * and from the data scaled in some way.  The Euclidean squared method does not work well in finding clusters
+ * with nonconvex shapes or very different sizes. The Euclidean squared metric may impose a spherical structure
+ * on the observed clusters even when the observed clusters are of other shapes.  For example, the Euclidean
+ * squared measure may fail on 2 well separated elliptical clusters.
  * 
  * The dialog checkbox Scale variables to unit variance allow combining variables using different scales
  * such as temperature in degrees Fahrenheit and wind speed in miles per hour.
@@ -104,7 +111,15 @@ import java.util.Comparator;
  * proposed by Beale.  Let SD denote the sum of the squared deviations from cluster centroids in the sample.
  * Then a divison of n objects into g2 clusters is significantly better than a division into g1 clusters (g2 > g1) 
  * if the test statistic F(g1,g2) = ((SD1 - SD2)/SD2)/([(n-g1)/(n-g2)]*((g2/g1)**(2/nDims)) - 1) exceeds the
- * critical value from an F distribution with nDims*(g2 - g1) and nDims*(n - g2) degrees of freedom.
+ * critical value from an F distribution with nDims*(g2 - g1) and nDims*(n - g2) degrees of freedom.  Experience
+ * with Beale's rule suggest that it will only be successful when the clusters are fairly well separated and
+ * approximately spherical in shape.
+ * 
+ * Marriott proposed finding the ideal number of groups g by finding the minimum of
+ * g*g*determinant(withinGroupSumOfSquaresMatrix), where the matrix is nDims by nDims.  For unimodal distributions
+ * the minimum value is likely to be g = 1.  For strongly grouped distributions the minimum will indicate the 
+ * appropriate value of g. For a uniform distribution the value will be constant over different group numbers.
+ * However, this would not work upon testing.  I obtained values like -1E-75 and 0.
  References:
  1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
      by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
@@ -357,6 +372,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double sumOfSquaredDeviationsFromClusterCentroids;
         double betweenTrace;
         double CalinskiAndHarabaszFigureOfMerit;
+        //double withinGroupArray[][];
+        //Matrix withinGroupMatrix;
+        //double withinGroupDeterminant;
         
         for (i = 0; i < scale.length; i++) {
         	scale2[i] = scale[i]*scale[i];
@@ -3180,6 +3198,18 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	CalinskiAndHarabaszFigureOfMerit = (betweenTrace/(numberClusters - 1.0))/
     	                                   (sumOfSquaredDeviationsFromClusterCentroids/(completeWeight - numberClusters));
     	
+    	/*withinGroupArray = new double[nDims][nDims];
+    	for (i = 0; i < numberClusters; i++) {
+    		for (j = 0; j < nDims; j++) {
+    			for (k = 0; k < nDims; k++) {
+    				withinGroupArray[j][k] += weight[i]*scale[j]*(pos[j][i] - groupMean[j][groupNum[i]])*
+                    scale[k]*(pos[k][i] - groupMean[k][groupNum[i]]);
+    			}
+    		}
+    	}
+    	withinGroupMatrix = new Matrix(withinGroupArray);
+    	withinGroupDeterminant = withinGroupMatrix.det();*/
+    	
     	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
     		buffer = new byte[length];
     		for(i = 0; i < length; i++) {
@@ -3369,7 +3399,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	               String.valueOf(sumOfSquaredDeviationsFromClusterCentroids) + "\n";
     	dataString += "Calinski and Harabasz figure of merit for number of clusters = " + 
     	               String.valueOf(CalinskiAndHarabaszFigureOfMerit) +"\n";
-    	dataString += "The ideal number of clusters should give the largest figure of merit\n";
+    	dataString += "The ideal number of clusters should give the largest figure of merit\n\n";
+    	//dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix) = " + 
+    	              //String.valueOf(numberClusters*numberClusters*withinGroupDeterminant) + "\n";
+    	//dataString += "The ideal number of clusters should give the lowest value\n";
     	
     	for (i = 0; i < numberClusters; i++) {
     		dataString += "Cluster centroid " + (i+1) + ":\n";
