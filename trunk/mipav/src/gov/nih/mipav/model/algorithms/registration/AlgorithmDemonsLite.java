@@ -29,23 +29,23 @@ public class AlgorithmDemonsLite extends AlgorithmBase {
 
     // Fuzzy images require 1 image for each class
     // Hard images 1 image with assigned clusters
-    private ModelImage  srcImage;
-    private ModelImage  targetImage;
-    private ModelImage[]	destImage;
-	private String      output;
+    private ModelImage srcImage;
+    private ModelImage targetImage;
+    private ModelImage[] destImage;
+	private String output;
 
-	private     int         nix,niy,niz;
-	private float           rix,riy,riz;
-    private     int         ntx,nty,ntz;
-	private float           rtx,rty,rtz;
+	private int nix,niy,niz;
+	private float rix,riy,riz;
+    private int ntx,nty,ntz;
+	private float rtx,rty,rtz;
     
     // algorithm parameters
-	private DemonsRegistrationLite		algorithm;
-	private float   	smoothing;
-	private float   	scale;
-	private int			levels;
-	private int			Ni;
-	private int			regType;
+	private DemonsRegistrationLite algorithm;
+	private float smoothing;
+	private float scale;
+	private int levels;
+	private int	Ni;
+	private int	regType;
 	
     // Test images for 2D registration
     private ModelImage circleImage;
