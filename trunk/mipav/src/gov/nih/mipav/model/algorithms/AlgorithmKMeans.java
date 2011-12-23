@@ -13,8 +13,7 @@ import java.io.RandomAccessFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-
-//import Jama.Matrix;
+import Jama.Matrix;
 
 
 /**
@@ -39,7 +38,8 @@ import java.util.Comparator;
  * and from the data scaled in some way.  The Euclidean squared method does not work well in finding clusters
  * with nonconvex shapes or very different sizes. The Euclidean squared metric may impose a spherical structure
  * on the observed clusters even when the observed clusters are of other shapes.  For example, the Euclidean
- * squared measure may fail on 2 well separated elliptical clusters.
+ * squared measure may fail on 2 well separated elliptical clusters.  The Euclidean metric tends to find
+ * groups with similar numbers of points.
  * 
  * The dialog checkbox Scale variables to unit variance allow combining variables using different scales
  * such as temperature in degrees Fahrenheit and wind speed in miles per hour.
@@ -119,7 +119,8 @@ import java.util.Comparator;
  * g*g*determinant(withinGroupSumOfSquaresMatrix), where the matrix is nDims by nDims.  For unimodal distributions
  * the minimum value is likely to be g = 1.  For strongly grouped distributions the minimum will indicate the 
  * appropriate value of g. For a uniform distribution the value will be constant over different group numbers.
- * However, this would not work upon testing.  I obtained values like -1E-75 and 0.
+ * If g*g*determinant(withinGroupSumOfSquaresMatrix)/determinant(totalSumOfSquaresMatrix) > 1 for all numbers of
+ * clusters, then the distribution should be regarded as a single group.
  References:
  1.) "A systematic evaluation of different methods for initializing the K-means clustering algorithm"
      by Anna D. Peterson, Arka. P. Ghosh, and Ranjan Maitra, IEEE Transactions on Knowledge and
@@ -136,6 +137,8 @@ import java.util.Comparator;
  7.) Cluster Analysis Fourth Edition by Brian S. Everitt, Sabine Landau, and Morven
      Leese, Arnold Publishers, 2001, Chapter 5, Optimization Clustering Techniques,
      pp. 90-117.
+ 8.) "Practical Problems in Cluster Analysis" by F.H.C. Marriott, Biometrics, Vol. 27,
+     September, 1971, pp. 501-514.
  */
 public class AlgorithmKMeans extends AlgorithmBase {
 	
@@ -372,9 +375,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double sumOfSquaredDeviationsFromClusterCentroids;
         double betweenTrace;
         double CalinskiAndHarabaszFigureOfMerit;
-        //double withinGroupArray[][];
-        //Matrix withinGroupMatrix;
-        //double withinGroupDeterminant;
+        double withinGroupArray[][];
+        Matrix withinGroupMatrix;
+        double withinGroupDeterminant;
+        double totalSumArray[][];
+        Matrix totalSquaresMatrix;
+        double totalSquaresDeterminant;
+        double MarriottFigureOfMerit;
         
         for (i = 0; i < scale.length; i++) {
         	scale2[i] = scale[i]*scale[i];
@@ -3198,7 +3205,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	CalinskiAndHarabaszFigureOfMerit = (betweenTrace/(numberClusters - 1.0))/
     	                                   (sumOfSquaredDeviationsFromClusterCentroids/(completeWeight - numberClusters));
     	
-    	/*withinGroupArray = new double[nDims][nDims];
+    	withinGroupArray = new double[nDims][nDims];
     	for (i = 0; i < numberClusters; i++) {
     		for (j = 0; j < nDims; j++) {
     			for (k = 0; k < nDims; k++) {
@@ -3208,7 +3215,19 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		}
     	}
     	withinGroupMatrix = new Matrix(withinGroupArray);
-    	withinGroupDeterminant = withinGroupMatrix.det();*/
+    	withinGroupDeterminant = withinGroupMatrix.det();
+    	MarriottFigureOfMerit = numberClusters*numberClusters*withinGroupDeterminant;
+    	totalSumArray = new double[nDims][nDims];
+    	for (i = 0; i < numberClusters; i++) {
+    		for (j = 0; j < nDims; j++) {
+    			for (k = 0; k < nDims; k++) {
+    				totalSumArray[j][k] += weight[i]*scale[j]*(pos[j][i] - totalMean[j])*
+                    scale[k]*(pos[k][i] - totalMean[k]);
+    			}
+    		}
+    	}
+    	totalSquaresMatrix = new Matrix(totalSumArray);
+    	totalSquaresDeterminant = totalSquaresMatrix.det();
     	
     	if ((redBuffer != null) || (greenBuffer != null) || (blueBuffer != null)) {
     		buffer = new byte[length];
@@ -3394,15 +3413,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	else {
     		dataString += "Variables not scaled to unit variance\n";
     	}
-    	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n";
+    	dataString += "Number of clusters = " + String.valueOf(numberClusters) + "\n\n";
     	dataString += "Sum of squared deviations from cluster centroids = " +
     	               String.valueOf(sumOfSquaredDeviationsFromClusterCentroids) + "\n";
     	dataString += "Calinski and Harabasz figure of merit for number of clusters = " + 
     	               String.valueOf(CalinskiAndHarabaszFigureOfMerit) +"\n";
     	dataString += "The ideal number of clusters should give the largest figure of merit\n\n";
-    	//dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix) = " + 
-    	              //String.valueOf(numberClusters*numberClusters*withinGroupDeterminant) + "\n";
-    	//dataString += "The ideal number of clusters should give the lowest value\n";
+    	dataString += "Marriott figure of merit for the number of clusters = ";
+    	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix) = " + 
+    	              String.valueOf(MarriottFigureOfMerit) + "\n";
+    	dataString += "The ideal number of clusters should give the lowest value\n";
+    	dataString += "(number of clusters)*(number of clusters)*determinant(withinGroupMatrix)/determinant(totalSquaresMatrix) = " + 
+    	              String.valueOf(MarriottFigureOfMerit/totalSquaresDeterminant) + "\n";
+    	dataString += "If this value is constant and equal to 1 for all numbers of clusters, then the population is uniform\n";
+    	dataString += "If this value > 1 for all numbers of clusters, then only a single group is present\n\n";
     	
     	for (i = 0; i < numberClusters; i++) {
     		dataString += "Cluster centroid " + (i+1) + ":\n";
