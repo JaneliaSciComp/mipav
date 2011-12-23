@@ -65,45 +65,55 @@ public class FileTiff extends FileBase {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Tiff Types. */
-    public static final int BYTE = 1; // 8 bit unsigned
+    public enum Type {
+        /** 8 bit unsigned */
+        BYTE(1),
+        /** 7 bit ASCII */
+        ASCII(2),
+        /** 16 bit unsigned */
+        SHORT(3),
+        /** 32 bit unsigned, 4 bytes like C */
+        LONG(4),
+        /** 2 longs 1st numerator */
+        RATIONAL(5),
+        /** 8 bit signed */
+        SBYTE(6),
+        /** 8 bit undefined */
+        UNDEFINED(7),
+        /** 16 bit signed */
+        SSHORT(8),
+        /** 32 bit signed, again only 4 bytes */
+        SLONG(9),
+        /** signed rational with two longs, 1st numerator */
+        SRATIONAL(10),
+        /** single precision 4 byte IEEE format */
+        FLOAT(11),
+        /** double precision 8 byte IEEE format */
+        DOUBLE(12),
+        /** The IFD type is identical to LONG, except that it is only used to point to other valid IFDs */
+        IFD(13);
+        
+        /** Number of type as specified by TIFF 6 format */
+        private int v6Num;
 
-    /** DOCUMENT ME! */
-    public static final int ASCII = 2; // 7 bit ASCII
-
-    /** DOCUMENT ME! */
-    public static final int SHORT = 3; // 16 bit unsigned
-
-    /** DOCUMENT ME! */
-    public static final int LONG = 4; // 32 bit unsigned ****** 4 bytes !!!!
-
-    /** DOCUMENT ME! */
-    public static final int RATIONAL = 5; // 2 longs 1st numerator
-
-    /** 2nd denom. */
-    public static final int SBYTE = 6; // 8 bit signed
-
-    /** DOCUMENT ME! */
-    public static final int UNDEFINED = 7; // 8 bit undefined
-
-    /** DOCUMENT ME! */
-    public static final int SSHORT = 8; // 16 bit signed
-
-    /** DOCUMENT ME! */
-    public static final int SLONG = 9; // 32 bit signed
-
-    /** DOCUMENT ME! */
-    public static final int SRATIONAL = 10; //
-
-    /** DOCUMENT ME! */
-    public static final int FLOAT = 11; // single precision 4 byte IEEE format
-
-    /** DOCUMENT ME! */
-    public static final int DOUBLE = 12; // double precision 8 byte IEEE format
-    
-    /** The IFD type is identical to LONG, except that it is only used to point
-     *  to other valid IFDs
-     */
-    public static final int IFD = 13;
+        Type(int v6Num) {
+            this.v6Num = v6Num;
+        }
+        
+        public static Type getTypeFromNum(int v6Num) {
+            for(Type t : Type.values()) {
+                if(t.v6Num == v6Num) {
+                    return t;
+                }
+            }
+            
+            return Type.UNDEFINED;
+        }
+        
+        public int getv6Num() {
+            return v6Num;
+        }
+    }
 
     /** Tiff Tags. */
     public static final int NEW_SUBFILE_TYPE = 254;
@@ -6018,7 +6028,7 @@ public class FileTiff extends FileBase {
         int iExifStart = 0;
         int i1;
         int tag;
-        int type;
+        Type type;
         int count;
         int ecount;
         long[] valueArray = new long[MAX_IFD_LENGTH];
@@ -6068,16 +6078,16 @@ public class FileTiff extends FileBase {
                 foundTag43314 = true;
             }
 
-            type = getUnsignedShort(endianess);
+            type = Type.getTypeFromNum(getUnsignedShort(endianess));
             count = getInt(endianess);
 
-            if ((type == SHORT) && (count == 1)) {
+            if ((type == Type.SHORT) && (count == 1)) {
                 valueArray[0] = getUnsignedShort(endianess);
                 getUnsignedShort(endianess);
-            } else if ((type == SHORT) && (count == 2)) {
+            } else if ((type == Type.SHORT) && (count == 2)) {
                 valueArray[0] = getUnsignedShort(endianess);
                 valueArray[1] = getUnsignedShort(endianess);
-            } else if ((type == SHORT) && (count >= 3)) {
+            } else if ((type == Type.SHORT) && (count >= 3)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6088,9 +6098,9 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if (((type == LONG) || (type == IFD)) && (count == 1)) {
+            } else if (((type == Type.LONG) || (type == Type.IFD)) && (count == 1)) {
                 valueArray[0] = getUInt(endianess);
-            } else if (((type == LONG) || (type == IFD)) && (count >= 2)) {
+            } else if (((type == Type.LONG) || (type == Type.IFD)) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6101,9 +6111,9 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == SLONG) && (count == 1)) {
+            } else if ((type == Type.SLONG) && (count == 1)) {
                 valueArray[0] = getInt(endianess);
-            } else if ((type == SLONG) && (count >= 2)) {
+            } else if ((type == Type.SLONG) && (count >= 2)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6114,7 +6124,7 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == RATIONAL) || (type == SRATIONAL)) {
+            } else if ((type == Type.RATIONAL) || (type == Type.SRATIONAL)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6126,7 +6136,7 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if (type == DOUBLE) {
+            } else if (type == Type.DOUBLE) {
                 value_offset = getInt(endianess);
                 saveLocus = raFile.getFilePointer();
                 raFile.seek(value_offset);
@@ -6134,36 +6144,36 @@ public class FileTiff extends FileBase {
                     valueDouble[i1] = getDouble(endianess);
                 }
                 raFile.seek(saveLocus);
-            } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count == 0)) {
+            } else if (((type == Type.BYTE) || (type == Type.UNDEFINED) || (type == Type.ASCII)) && (count == 0)) {
                 raFile.seek(raFile.getFilePointer() + 4);
                 // raFile.readUnsignedByte();
                 // raFile.readUnsignedByte();
                 // raFile.readUnsignedByte();
                 // raFile.readUnsignedByte();
-            } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count == 1)) {
+            } else if (((type == Type.BYTE) || (type == Type.UNDEFINED) || (type == Type.ASCII)) && (count == 1)) {
                 valueArray[0] = raFile.readUnsignedByte();
                 raFile.seek(raFile.getFilePointer() + 3);
                 // raFile.readUnsignedByte();
                 // raFile.readUnsignedByte();
                 // raFile.readUnsignedByte();
-            } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count == 2)) {
+            } else if (((type == Type.BYTE) || (type == Type.UNDEFINED) || (type ==Type. ASCII)) && (count == 2)) {
                 valueArray[0] = raFile.readUnsignedByte();
                 valueArray[1] = raFile.readUnsignedByte();
                 raFile.seek(raFile.getFilePointer() + 2);
                 // raFile.readUnsignedByte();
                 // raFile.readUnsignedByte();
-            } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count == 3)) {
+            } else if (((type == Type.BYTE) || (type == Type.UNDEFINED) || (type == Type.ASCII)) && (count == 3)) {
                 valueArray[0] = raFile.readUnsignedByte();
                 valueArray[1] = raFile.readUnsignedByte();
                 valueArray[2] = raFile.readUnsignedByte();
                 raFile.seek(raFile.getFilePointer() + 1);
                 // raFile.readUnsignedByte();
-            } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count == 4)) {
+            } else if (((type == Type.BYTE) || (type == Type.UNDEFINED) || (type == Type.ASCII)) && (count == 4)) {
                 valueArray[0] = raFile.readUnsignedByte();
                 valueArray[1] = raFile.readUnsignedByte();
                 valueArray[2] = raFile.readUnsignedByte();
                 valueArray[3] = raFile.readUnsignedByte();
-            } else if (((type == BYTE) || (type == UNDEFINED) || (type == ASCII)) && (count > 4)) {
+            } else if (((type == Type.BYTE) || (type == Type.UNDEFINED) || (type == Type.ASCII)) && (count > 4)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6174,30 +6184,30 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == SBYTE) && (count == 1)) {
+            } else if ((type == Type.SBYTE) && (count == 1)) {
                 valueArray[0] = raFile.readByte();
                 raFile.seek(raFile.getFilePointer() + 3);
                 // raFile.readByte();
                 // raFile.readByte();
                 // raFile.readByte();
-            } else if ((type == SBYTE) && (count == 2)) {
+            } else if ((type == Type.SBYTE) && (count == 2)) {
                 valueArray[0] = raFile.readByte();
                 valueArray[1] = raFile.readByte();
                 raFile.seek(raFile.getFilePointer() + 2);
                 // raFile.readByte();
                 // raFile.readByte();
-            } else if ((type == SBYTE) && (count == 3)) {
+            } else if ((type == Type.SBYTE) && (count == 3)) {
                 valueArray[0] = raFile.readByte();
                 valueArray[1] = raFile.readByte();
                 valueArray[2] = raFile.readByte();
                 raFile.seek(raFile.getFilePointer() + 1);
                 // raFile.readByte();
-            } else if ((type == SBYTE) && (count == 4)) {
+            } else if ((type == Type.SBYTE) && (count == 4)) {
                 valueArray[0] = raFile.readByte();
                 valueArray[1] = raFile.readByte();
                 valueArray[2] = raFile.readByte();
                 valueArray[3] = raFile.readByte();
-            } else if ((type == SBYTE) && (count > 4)) {
+            } else if ((type == Type.SBYTE) && (count > 4)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6208,13 +6218,13 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == SSHORT) && (count == 1)) {
+            } else if ((type == Type.SSHORT) && (count == 1)) {
                 valueArray[0] = getSignedShort(endianess);
                 getSignedShort(endianess);
-            } else if ((type == SSHORT) && (count == 2)) {
+            } else if ((type == Type.SSHORT) && (count == 2)) {
                 valueArray[0] = getSignedShort(endianess);
                 valueArray[1] = getSignedShort(endianess);
-            } else if ((type == SSHORT) && (count >= 3)) {
+            } else if ((type == Type.SSHORT) && (count >= 3)) {
                 value_offset = getInt(endianess);
 
                 saveLocus = raFile.getFilePointer();
@@ -6225,9 +6235,9 @@ public class FileTiff extends FileBase {
                 }
 
                 raFile.seek(saveLocus);
-            } else if ((type == FLOAT) && (count == 1)) {
+            } else if ((type == Type.FLOAT) && (count == 1)) {
                 valueFloat = getFloat(endianess);
-            } else if ((type == FLOAT) && (count > 1)) {
+            } else if ((type == Type.FLOAT) && (count > 1)) {
 
                 // Ignore these fields for now
                 value_offset = getInt(endianess);
@@ -6314,28 +6324,28 @@ public class FileTiff extends FileBase {
                 }
             }
 
-            if ((type == RATIONAL) || (type == SRATIONAL)) {
+            if ((type == Type.RATIONAL) || (type == Type.SRATIONAL)) {
                 ecount = 2 * count;
             } else {
                 ecount = count;
             }
 
-            if ((type != DOUBLE) && (type != FLOAT) && debuggingFileIO) {
+            if ((type != Type.DOUBLE) && (type != Type.FLOAT) && debuggingFileIO) {
 
                 for (i1 = 0; ((i1 < ecount) && (i1 < MAX_IFD_LENGTH)); i1++) {
                     Preferences.debug("FileTiff.openIFD: value[" + (i1 + 1) + "] = " + valueArray[i1] + "\n",
                                       Preferences.DEBUG_FILEIO);
                 }
-            } else if ((type == DOUBLE) && (count == 1) && debuggingFileIO) {
+            } else if ((type == Type.DOUBLE) && (count == 1) && debuggingFileIO) {
                 Preferences.debug("FileTiff.openIFD: value = " + valueDouble[0] + "\n", Preferences.DEBUG_FILEIO);
-            } else if ((type == FLOAT) && (count == 1) && debuggingFileIO) {
+            } else if ((type == Type.FLOAT) && (count == 1) && debuggingFileIO) {
                 Preferences.debug("FileTiff.openIFD: value = " + valueFloat + "\n", Preferences.DEBUG_FILEIO);
             }
 
             switch (tag) {
 
                 case SUBFILE_TYPE:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("SUBFILE_TYPE has illegal TYPE = " + type + "\n");
                     }
                     
@@ -6364,7 +6374,7 @@ public class FileTiff extends FileBase {
                     
                     break;
                 case NEW_SUBFILE_TYPE:
-                    if (type != LONG) {
+                    if (type != Type.LONG) {
                         throw new IOException("NEW_SUBFILE_TYPE has illegal TYPE = " + type + "\n");
                     }
 
@@ -6402,7 +6412,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case IMAGE_WIDTH:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("IMAGE_WIDTH has illegal TYPE = " + type + "\n");
                     }
 
@@ -6418,7 +6428,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case IMAGE_LENGTH:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("IMAGE_LENGTH has illegal TYPE = " + type + "\n");
                     }
 
@@ -6434,7 +6444,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case FILL_ORDER:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException ("FILL_ORDER has illegal type = " + type + "\n");
                     }
                     
@@ -6461,7 +6471,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case BITS_PER_SAMPLE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("BITS_PER_SAMPLE has illegal type = " + type + "\n");
                     }
 
@@ -6495,7 +6505,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case ROWS_PER_STRIP:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("ROWS_PER-STRIP has illegal type = " + type + "\n");
                     }
 
@@ -6513,7 +6523,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case STRIP_OFFSETS:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("STRIP_OFFSETS has illegal type = " + type + "\n");
                     }
 
@@ -6541,7 +6551,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case STRIP_BYTE_COUNTS:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("STRIP_BYTE_COUNTS has illegal type = " + type + "\n");
                     }
 
@@ -6569,7 +6579,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case PAGE_NUMBER:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("PAGE_NUMBER has illegal type = " + type + "\n");
                     }
                     
@@ -6589,7 +6599,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case PHOTO_INTERP:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("PHOTO_INTERP has illegal type = " + type + "\n");
                     }
 
@@ -6682,7 +6692,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case SAMPLES_PER_PIXEL:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("SAMPLES_PER_PIXEL has illegal type = " + type + "\n");
                     }
 
@@ -6699,7 +6709,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case SUBIFDS:
-                    if ((type != LONG) && (type != IFD)) {
+                    if ((type != Type.LONG) && (type != Type.IFD)) {
                         throw new IOException("SUBIFDS has illegal type = " + type + "\n");
                     }
                     
@@ -6714,7 +6724,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case PLANAR_CONFIG:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("PLANAR_CONFIG has illegal type = " + type + "\n");
                     }
 
@@ -6744,7 +6754,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case COMPRESSION:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("COMPRESSION has illegal type = " + type + "\n");
                     }
 
@@ -6837,7 +6847,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case T4OPTIONS:
-                    if (type != LONG) {
+                    if (type != Type.LONG) {
                         throw new IOException("T4OPTIONS has illegal type = " + type + "\n");
                     }
                     
@@ -6888,7 +6898,7 @@ public class FileTiff extends FileBase {
                     
                     
                 case T6OPTIONS:
-                    if (type != LONG) {
+                    if (type != Type.LONG) {
                         throw new IOException("T6OPTIONS has illegal type = " + type + "\n");
                     }
                     
@@ -6912,7 +6922,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case ORIENTATION:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("ORIENTATION has illegal type = " + type + "\n");
                     }
 
@@ -7015,7 +7025,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case COLOR_MAP:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("COLOR_MAP has illegal type = " + type + "\n");
                     }
 
@@ -7071,7 +7081,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case YCBCR_COEFFICIENTS:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("YCBCR_CEOFFICIENTS has illegal type = " + type + "\n");
                     }
 
@@ -7104,7 +7114,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case YCBCR_SUBSAMPLING:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("YCBCR_SUBSAMPLING has illegal type = " + type + "\n");
                     }
                     
@@ -7154,7 +7164,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case YCBCR_POSITIONING:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("YCBCR_POSITIONING has illegal type = " + type + "\n");
                     }
                     
@@ -7179,7 +7189,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case REFERENCE_BLACK_WHITE:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("REFERENCE_BLACK_WHITE has illegal type = " + type + "\n");
                     }
 
@@ -7224,155 +7234,33 @@ public class FileTiff extends FileBase {
                     break;
 
                 case RESOLUTION_UNIT:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("RESOLUTION_UNIT has illegal type = " + type + "\n");
-                    }
-
-                    if (count != 1) {
+                    } else if (count != 1) {
                         throw new IOException("RESOLUTION_UNIT has illegal count = " + count + "\n");
-                    } else if ((valueArray[0] < 1) || (valueArray[0] > 17)) {
+                    } else if ((valueArray[0] < 1) || (valueArray[0] > 3)) {
                         throw new IOException("RESOLUTION_UNIT has illegal value = " + valueArray[0] + "\n");
                     }
-
-                    if (valueArray[0] == Unit.MILLIMETERS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MILLIMETERS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLIMETERS\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.UNKNOWN_MEASURE.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = UNKNOWN\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.INCHES.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.INCHES.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = INCHES\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.MILS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MILS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILS\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.CENTIMETERS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = CENTIMETERS\n",
-                                              Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.ANGSTROMS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.ANGSTROMS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = ANGSTROMS\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.NANOMETERS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.NANOMETERS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOMETERS\n",
-                                              Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.MICROMETERS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MICROMETERS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROMETERS\n",
-                                              Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.METERS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.METERS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = METERS\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.KILOMETERS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.KILOMETERS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = KILOMETERS\n",
-                                              Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.MILES.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MILES.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILES\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.NANOSEC.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.NANOSEC.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = NANOSEC\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.MICROSEC.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MICROSEC.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MICROSEC\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.MILLISEC.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MILLISEC.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MILLISEC\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.SECONDS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.SECONDS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = SECONDS\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.MINUTES.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.MINUTES.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = MINUTES\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.HOURS.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.HOURS.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = HOURS\n", Preferences.DEBUG_FILEIO);
-                        }
-                    } else if (valueArray[0] == Unit.HZ.getLegacyNum()) {
-                        fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 0);
-                        fileInfo.setUnitsOfMeasure(Unit.HZ.getLegacyNum(), 1);
-
-                        if (debuggingFileIO) {
-                            Preferences.debug("FileTiff.openIFD: Resolution Unit = HERTZ\n", Preferences.DEBUG_FILEIO);
-                        }
+                    
+                    if(valueArray[0] == 1) {
+                    	fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE, 0);
+                        fileInfo.setUnitsOfMeasure(Unit.UNKNOWN_MEASURE, 1);
+                    } else if(valueArray[0] == 2) {
+                    	fileInfo.setUnitsOfMeasure(Unit.INCHES, 0);
+                        fileInfo.setUnitsOfMeasure(Unit.INCHES, 1);
+                    } else if(valueArray[0] == 3) {
+                    	fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS, 0);
+                    	fileInfo.setUnitsOfMeasure(Unit.CENTIMETERS, 1);
                     }
+
+                    Preferences.debug("FileTiff.openIFD: Resolution Unit = "+fileInfo.getUnitsOfMeasure(0)+"\n", Preferences.DEBUG_FILEIO);
 
                     break;
 
                 case XRESOLUTION:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("XRESOLUTION has illegal type = " + type + "\n");
                     }
-
                     if (count != 1) {
                         throw new IOException("XRESOLUTION has illegal count = " + count + "\n");
                     }
@@ -7389,10 +7277,9 @@ public class FileTiff extends FileBase {
                     break;
 
                 case YRESOLUTION:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("YRESOLUTION has illegal type = " + type + "\n");
                     }
-
                     if (count != 1) {
                         throw new IOException("YRESOLUTION has illegal count = " + count + "\n");
                     }
@@ -7408,8 +7295,8 @@ public class FileTiff extends FileBase {
 
                     break;
 
-                case ZRESOLUTION:
-                    if (type != DOUBLE) {
+                case ZRESOLUTION: //a reusable tag used only for EchoTech
+                    if (type != Type.DOUBLE) {
                         throw new IOException("ZRESOLUTION has illegal type = " + type + "\n");
                     }
 
@@ -7428,7 +7315,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case TRESOLUTION:
-                    if (type != DOUBLE) {
+                    if (type != Type.DOUBLE) {
                         throw new IOException("TRESOLUTION has illegal type = " + type + "\n");
                     }
 
@@ -7447,7 +7334,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case XPOSITION:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("XPOSITION has illegal type = " + type + "\n");
                     }
 
@@ -7467,7 +7354,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case YPOSITION:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("YPOSITION has illegal type = " + type + "\n");
                     }
 
@@ -7487,7 +7374,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case TILE_WIDTH:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("TILE_WIDTH has illegal type = " + type + "\n");
                     }
 
@@ -7510,7 +7397,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case TILE_LENGTH:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("TILE_LENGTH has illegal type = " + type + "\n");
                     }
 
@@ -7535,7 +7422,7 @@ public class FileTiff extends FileBase {
                 case TILE_OFFSETS:
 
                     // System.err.println("Tiles per image: " + count);
-                    if (type != LONG) {
+                    if (type != Type.LONG) {
                         throw new IOException("TILE_OFFSETS has illegal type = " + type + "\n");
                     }
 
@@ -7580,7 +7467,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case TILE_BYTE_COUNTS:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("TILE_BYTE_COUNTS has illegal type = " + type + "\n");
                     }
 
@@ -7623,7 +7510,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case IMAGE_DESCRIPTION:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("IMAGE_DESCRIPTION has illegal type = " + type + "\n");
                     }
 
@@ -7642,7 +7529,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case PAGE_NAME:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("PAGE_NAME has illegal type = " + type + "\n");
                     }
 
@@ -7661,7 +7548,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case MAKE:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("MAKE has illegal type = " + type + "\n");
                     }
 
@@ -7679,7 +7566,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case MODEL:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("MODEL has illegal type = " + type + "\n");
                     }
 
@@ -7697,7 +7584,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case MIN_SAMPLE_VALUE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("MIN_SAMPLE_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -7712,7 +7599,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case MAX_SAMPLE_VALUE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("MAX_SAMPLE_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -7727,7 +7614,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case SOFTWARE:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("SOFTWARE has illegal type = " + type + "\n");
                     }
 
@@ -7744,7 +7631,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case DOCUMENT_NAME:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("DOCUMENT_NAME has illegal type = " + type + "\n");
                     }
 
@@ -7761,7 +7648,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case INK_NAMES:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("INK_NAMES has illegal type = " + type + "\n");
                     }
 
@@ -7778,7 +7665,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case ARTIST:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("ARTIST has illegal type = " + type + "\n");
                     }
 
@@ -7795,7 +7682,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case HOST_COMPUTER:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("HOST_COMPUTER has illegal type = " + type + "\n");
                     }
 
@@ -7813,7 +7700,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case COPYRIGHT:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("COPYRIGHT has illegal type = " + type + "\n");
                     }
 
@@ -7831,7 +7718,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case DATE_TIME:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("DATE_TIME has illegal type = " + type + "\n");
                     }
 
@@ -7852,7 +7739,7 @@ public class FileTiff extends FileBase {
                 case SAMPLE_FORMAT:
 
                     // Default is 1, unsigned integer data
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("SAMPLE_FORMAT has illegal type = " + type + "\n");
                     }
 
@@ -7879,7 +7766,7 @@ public class FileTiff extends FileBase {
                     break;
 
                 case PREDICTOR:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("PREDICTOR has illegal type = " + type + "\n");
                     }
 
@@ -7910,7 +7797,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case XMP:
-                    if ((type != BYTE) && (type != UNDEFINED)) {
+                    if ((type != Type.BYTE) && (type != Type.UNDEFINED)) {
                         throw new IOException("XMP has illegal type = " + type + "\n");
                     }
                     
@@ -7921,7 +7808,7 @@ public class FileTiff extends FileBase {
                     
                     
                 case JPEG_TABLES:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("JPEG_TABLES has illegal type = " + type + "\n");
                     }
                     
@@ -7939,7 +7826,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFIFD:
-                    if (type != LONG) {
+                    if (type != Type.LONG) {
                         throw new IOException("EXIFIFD has illegal type = " + type + "\n");
                     }
                     
@@ -7967,7 +7854,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXPOSURE_TIME:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_EXPOSURE_TIME has illegal type = " + type + "\n");
                     }
 
@@ -7985,7 +7872,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FNUMBER:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_FNUMBER has illegal type = " + type + "\n");
                     }
 
@@ -8003,7 +7890,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXPOSURE_PROGRAM:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_EXPOSURE_PROGRAM has illegal type = " + type + "\n");
                     }
                     
@@ -8061,7 +7948,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_ISO_SPEED_RATINGS:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_ISO_SPEED_RATINGS has illegal type = " + type + "\n");
                     }
                     
@@ -8077,7 +7964,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXIF_VERSION:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("EXIFTAG_EXIF_VERSION has illegal type = " + type + "\n");
                     }
                     
@@ -8097,7 +7984,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_DATE_TIME_ORIGINAL:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("EXIFTAG_DATE_TIME_ORIGINAL has illegal type = " + type + "\n");
                     }
                     
@@ -8118,7 +8005,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_DATE_TIME_DIGITIZED:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("EXIFTAG_DATE_TIME_DIGITIZED has illegal type = " + type + "\n");
                     }
                     
@@ -8139,7 +8026,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXPOSURE_BIAS_VALUE:
-                    if (type != SRATIONAL) {
+                    if (type != Type.SRATIONAL) {
                         throw new IOException("EXIFTAG_EXPOSURE_BIAS_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -8157,7 +8044,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_MAX_APERTURE_VALUE:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_MAX_APERTURE_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -8175,7 +8062,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_METERING_MODE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_METERING_MODE has illegal type = " + type + "\n");
                     }
                     
@@ -8221,7 +8108,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_LIGHT_SOURCE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_LIGHT_SOURCE has illegal type = " + type + "\n");
                     }
                     
@@ -8315,7 +8202,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FLASH:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_FLASH has illegal type = " + type + "\n");
                     }
                     
@@ -8420,7 +8307,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FOCAL_LENGTH:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_FOCAL_LENGTH has illegal type = " + type + "\n");
                     }
 
@@ -8438,7 +8325,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_MAKER_NOTE:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("EXIFTAG_MAKER_NOTE has illegal type = " + type + "\n");
                     }
                     
@@ -8454,7 +8341,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_USER_COMMENT:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("EXIFTAG_USER_COMMENT has illegal type = " + type + "\n");
                     }
                     
@@ -8504,7 +8391,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FLASHPIX_VERSION:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("EXIFTAG_FLASHPIX_VERSION has illegal type = " + type + "\n");
                     }
                     
@@ -8524,7 +8411,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_COLOR_SPACE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_COLOR_SPACE has illegal type = " + type + "\n");
                     }
                     
@@ -8552,7 +8439,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FILE_SOURCE:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("EXIFTAG_FILE_SOURCE has illegal type = " + type + "\n");
                     }
                     
@@ -8576,7 +8463,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SCENE_TYPE:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("EXIFTAG_SCENE_TYPE has illegal type = " + type + "\n");
                     }
                     
@@ -8601,7 +8488,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_CUSTOM_RENDERED:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_CUSTOM_RENDERED has illegal type = " + type + "\n");
                     }
                     
@@ -8630,7 +8517,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXPOSURE_MODE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_EXPOSURE_MODE has illegal type = " + type + "\n");
                     }
                     
@@ -8664,7 +8551,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_WHITE_BALANCE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_WHITE_BALANCE has illegal type = " + type + "\n");
                     }
                     
@@ -8693,7 +8580,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_DIGITAL_ZOOM_RATIO:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_DIGITAL_ZOOM_RATIO has illegal type = " + type + "\n");
                     }
 
@@ -8716,7 +8603,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SCENE_CAPTURE_TYPE:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_SCENE_CAPTURE_TYPE has illegal type = " + type + "\n");
                     }
                     
@@ -8753,7 +8640,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_GAIN_CONTROL:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_GAIN_CONTROL has illegal type = " + type + "\n");
                     }
                     
@@ -8794,7 +8681,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_CONTRAST:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_CONTRAST has illegal type = " + type + "\n");
                     }
                     
@@ -8830,7 +8717,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SATURATION:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_SATURATION has illegal type = " + type + "\n");
                     }
                     
@@ -8866,7 +8753,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SHARPNESS:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_SHARPNESS has illegal type = " + type + "\n");
                     }
                     
@@ -8902,7 +8789,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SHUTTER_SPEED_VALUE:
-                    if (type != SRATIONAL) {
+                    if (type != Type.SRATIONAL) {
                         throw new IOException("EXIFTAG_SHUTTER_SPEED_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -8920,7 +8807,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_APERTURE_VALUE:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_APERTURE_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -8938,7 +8825,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_BRIGHTNESS_VALUE:
-                    if (type != SRATIONAL) {
+                    if (type != Type.SRATIONAL) {
                         throw new IOException("EXIFTAG_BRIGHTNESS_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -8961,7 +8848,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FOCAL_PLANE_X_RESOLUTION:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_FOCAL_PLANE_X_RESOLUTION has illegal type = " + type + "\n");
                     }
 
@@ -8981,7 +8868,7 @@ public class FileTiff extends FileBase {
                     break;
                   
                 case EXIFTAG_FOCAL_PLANE_Y_RESOLUTION:
-                    if (type != RATIONAL) {
+                    if (type != Type.RATIONAL) {
                         throw new IOException("EXIFTAG_FOCAL_PLANE_Y_RESOLUTION has illegal type = " + type + "\n");
                     }
 
@@ -9001,7 +8888,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT has illegal type = " + type + "\n");
                     }
                     
@@ -9034,7 +8921,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SENSING_METHOD:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXIFTAG_SENSING_METHOD has illegal type = " + type + "\n");
                     }
                     
@@ -9082,7 +8969,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_PIXEL_X_DIMENSION:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("EXIFTAG_PIXEL_X_DIMENSION has illegal type = " + type + "\n");
                     }
                     
@@ -9097,7 +8984,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_PIXEL_Y_DIMENSION:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("EXIFTAG_PIXEL_Y_DIMENSION has illegal type = " + type + "\n");
                     }
                     
@@ -9112,7 +8999,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case STONITS:
-                    if (type != DOUBLE) {
+                    if (type != Type.DOUBLE) {
                         throw new IOException("STONITS has illegal type = " + type + "\n");
                     }
                     
@@ -9128,7 +9015,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case GDAL_METADATA:
-                    if (type != ASCII) {
+                    if (type != Type.ASCII) {
                         throw new IOException("GDAL_METADATA has illegal type = " + type + "\n");
                     }
 
@@ -9146,7 +9033,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case BAD_FAX_LINES:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("BAD_FAX_LINES has illegal type = " + type + "\n");
                     }
                     
@@ -9164,7 +9051,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case CLEAN_FAX_DATA:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("CLEAN_FAX_DATA has illegal type = " + type + "\n");
                     }
                     
@@ -9197,7 +9084,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case CONSECUTIVE_BAD_FAX_LINES:
-                    if ((type != SHORT) && (type != LONG)) {
+                    if ((type != Type.SHORT) && (type != Type.LONG)) {
                         throw new IOException("CONSECUTIVE_BAD_FAX_LINES has illegal type = " + type + "\n");
                     }
                     
@@ -9215,7 +9102,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case THRESHHOLDING:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("THRESHHOLDING has illegal type = " + type + "\n");
                     }
                     
@@ -9251,7 +9138,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case HALFTONE_HINTS:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("HALFTONE_HINTS has illegal type = " + type + "\n");
                     }
                     
@@ -9272,7 +9159,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXTRA_SAMPLES:
-                    if (type != SHORT) {
+                    if (type != Type.SHORT) {
                         throw new IOException("EXTRA_SAMPLES has illegal type = " + type + "\n");
                     }
                     
@@ -9315,7 +9202,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case PHOTOSHOP:
-                    if (type != BYTE) {
+                    if (type != Type.BYTE) {
                         throw new IOException("PHOTOSHOP has illegal type = " + type + "\n");
                     }
                     
@@ -9693,7 +9580,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case ICC_PROFILE:
-                    if ((type != UNDEFINED) && (type != BYTE)) {
+                    if ((type != Type.UNDEFINED) && (type != Type.BYTE)) {
                         throw new IOException("ICC_PROFILE has illegal type = " + type + "\n");
                     }
                     
@@ -9703,7 +9590,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case IPTC:
-                    if ((type != UNDEFINED) && (type != BYTE) && (type != LONG)) {
+                    if ((type != Type.UNDEFINED) && (type != Type.BYTE) && (type != Type.LONG)) {
                         throw new IOException("IPTC has illegal type = " + type + "\n");
                     }
                     
@@ -9713,7 +9600,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case DOT_RANGE:
-                    if ((type != BYTE) && (type != SHORT)) {
+                    if ((type != Type.BYTE) && (type != Type.SHORT)) {
                         throw new IOException("DOT_RANGE Has illegal type = " + type + "\n");
                     }
                     
@@ -9726,7 +9613,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case IMAGE_SOURCE_DATA:
-                    if (type != UNDEFINED) {
+                    if (type != Type.UNDEFINED) {
                         throw new IOException("IMAGE_SOURCE_DATA has illegal type = " + type + "\n");
                     }
                     
@@ -9736,7 +9623,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case MODEL_PIXEL_SCALE:
-                    if (type != DOUBLE) {
+                    if (type != Type.DOUBLE) {
                         throw new IOException("MODEL_PIXEL_SCALE has illegal type = " + type + "\n");
                     }
                     
@@ -9755,7 +9642,7 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case MODEL_TIEPOINT:
-                    if (type != DOUBLE) {
+                    if (type != Type.DOUBLE) {
                         throw new IOException("MODEL_TIEPOINT has illegal type = " + type + "\n");
                     }
                     
@@ -15979,13 +15866,13 @@ public class FileTiff extends FileBase {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    private void writeIFD(int tag, int type, int count, int value, int value2) throws IOException {
+    private void writeIFD(int tag, Type type, int count, int value, int value2) throws IOException {
         boolean endianess = image.getFileInfo(0).getEndianess();
         writeShort((short) tag, endianess);
-        writeShort((short) type, endianess);
+        writeShort((short) type.getv6Num(), endianess);
         writeInt(count, endianess);
 
-        if ((type == SHORT) && (count < 3)) {
+        if ((type == Type.SHORT) && (count < 3)) {
             writeShort((short) value, endianess);
             writeShort((short) value2, endianess);
         } else {
@@ -16024,120 +15911,51 @@ public class FileTiff extends FileBase {
         int zResCount = 0;
         int tResCount = 0;
         int rgbCount = 0;
-        int resXYUnit = 0;
-        int resYUnit = 0;
-        int resZUnit = 0;
-        float xResol = (float) 0.0;
-        float yResol = (float) 0.0;
+        Unit resXYUnit = Unit.getUnitFromLegacyNum(image.getFileInfo(index).getUnitsOfMeasure(0));
+        Unit resYUnit = Unit.getUnitFromLegacyNum(image.getFileInfo(index).getUnitsOfMeasure(1));
+        Unit resZUnit = Unit.UNKNOWN_MEASURE;
+        float xResol = image.getFileInfo(index).getResolutions()[0];
+        float yResol = image.getFileInfo(index).getResolutions()[1];
 
         // TIFF 6.0 standard only allows 3 different units of measurement -
         // 1 for no unit, 2 for inch, and 3 for centimeter.
         // This unit of measurement must be applied to both the
         // X and Y resolution.
-        resXYUnit = image.getFileInfo(index).getUnitsOfMeasure(0);
-        resYUnit = image.getFileInfo(index).getUnitsOfMeasure(1);
-        xResol = image.getFileInfo(index).getResolutions()[0];
-        yResol = image.getFileInfo(index).getResolutions()[1];
-
-        if ((resXYUnit != Unit.UNKNOWN_MEASURE.getLegacyNum()) && (resXYUnit != Unit.INCHES.getLegacyNum()) &&
-                (resXYUnit != Unit.MILS.getLegacyNum()) &&
-                (resXYUnit != Unit.CENTIMETERS.getLegacyNum()) && (resXYUnit != Unit.MILLIMETERS.getLegacyNum()) &&
-                (resXYUnit != Unit.METERS.getLegacyNum()) && (resXYUnit != Unit.ANGSTROMS.getLegacyNum()) &&
-                (resXYUnit != Unit.NANOMETERS.getLegacyNum()) && (resXYUnit != Unit.MICROMETERS.getLegacyNum()) &&
-                (resXYUnit != Unit.MILES.getLegacyNum()) && (resXYUnit != Unit.KILOMETERS.getLegacyNum())) {
-            resXYUnit = Unit.UNKNOWN_MEASURE.getLegacyNum();
+        
+        switch(resXYUnit) {
+        case INCHES:
+        case MILS:    
+        case MILES:
+        	xResol = (float) resXYUnit.convertTo(xResol, Unit.INCHES);
+        	yResol = (float) resYUnit.convertTo(yResol, Unit.INCHES);
+        	resXYUnit = Unit.INCHES;
+        	break;
+        	
+        case CENTIMETERS:
+        case ANGSTROMS:
+        case NANOMETERS:
+        case MICROMETERS:
+        case METERS:
+        case MILLIMETERS:
+        case KILOMETERS:
+        	xResol = (float) resXYUnit.convertTo(xResol, Unit.CENTIMETERS);
+        	yResol = (float) resYUnit.convertTo(yResol, Unit.CENTIMETERS);
+        	resXYUnit = Unit.CENTIMETERS;
+        	break;
+        	
+        default:
+            resXYUnit = Unit.UNKNOWN_MEASURE;
         }
-
-        if (resXYUnit == Unit.ANGSTROMS.getLegacyNum()) {
-            resXYUnit = Unit.CENTIMETERS.getLegacyNum();
-            xResol = 1.0e-8f * xResol;
-        } else if (resXYUnit == Unit.NANOMETERS.getLegacyNum()) {
-            resXYUnit = Unit.CENTIMETERS.getLegacyNum();
-            xResol = 1.0e-7f * xResol;
-        } else if (resXYUnit == Unit.MICROMETERS.getLegacyNum()) {
-            resXYUnit = Unit.CENTIMETERS.getLegacyNum();
-            xResol = 1.0e-4f * xResol;
-        } else if (resXYUnit == Unit.MILLIMETERS.getLegacyNum()) {
-            resXYUnit = Unit.CENTIMETERS.getLegacyNum();
-            xResol = 0.1f * xResol;
-        } else if (resXYUnit == Unit.METERS.getLegacyNum()) {
-            resXYUnit = Unit.CENTIMETERS.getLegacyNum();
-            xResol = 100.0f * xResol;
-        } else if (resXYUnit == Unit.KILOMETERS.getLegacyNum()) {
-            resXYUnit = Unit.CENTIMETERS.getLegacyNum();
-            xResol = 1.0e5f * xResol;
-        } else if (resXYUnit == Unit.MILES.getLegacyNum()) {
-            resXYUnit = Unit.INCHES.getLegacyNum();
-            xResol = 63360.0f * xResol;
-        } else if (resXYUnit == Unit.MILS.getLegacyNum()) {
-            resXYUnit = Unit.INCHES.getLegacyNum();
-            xResol = 1.0e-3f * xResol;
-        }
-
-        if (resXYUnit == Unit.CENTIMETERS.getLegacyNum()) {
-
-            // Change the Y resolution units to centimeters
-            if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
-                yResol = 1.0e-8f * yResol;
-            } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
-                yResol = 1.0e-7f * yResol;
-            } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
-                yResol = 1.0e-4f * yResol;
-            } else if (resYUnit == Unit.MILLIMETERS.getLegacyNum()) {
-                yResol = 0.1f * yResol;
-            } else if (resYUnit == Unit.INCHES.getLegacyNum()) {
-                yResol = 2.54f * yResol;
-            } else if (resYUnit == Unit.MILS.getLegacyNum()) {
-                yResol = 2.54e-3f * yResol;
-            } else if (resYUnit == Unit.METERS.getLegacyNum()) {
-                yResol = 100.0f * yResol;
-            } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
-                yResol = 1.0e5f * yResol;
-            } else if (resYUnit == Unit.MILES.getLegacyNum()) {
-                yResol = 1.6093e5f * yResol;
-            }
-        } // if (resXYUnit == Unit.CENTIMETERS.getLegacyNum())
-        else if (resXYUnit == Unit.INCHES.getLegacyNum()) {
-
-            // Change the Y resolution units to inches
-            if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
-                yResol = 3.937e-9f * yResol;
-            } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
-                yResol = 3.937e-8f * yResol;
-            } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
-                yResol = 3.937e-5f * yResol;
-            } else if (resYUnit == Unit.MILLIMETERS.getLegacyNum()) {
-                yResol = 3.937e-2f * yResol;
-            } else if (resYUnit == Unit.CENTIMETERS.getLegacyNum()) {
-                yResol = 3.937e-1f * yResol;
-            } else if (resYUnit == Unit.METERS.getLegacyNum()) {
-                yResol = 39.37f * yResol;
-            } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
-                yResol = 3.937e4f * yResol;
-            } else if (resYUnit == Unit.MILES.getLegacyNum()) {
-                yResol = 63360.0f * yResol;
-            } else if (resYUnit == Unit.MILS.getLegacyNum()) {
-                yResol = 1.0e-3f * yResol;
-            }
-        } // else if (resXYUnit == Unit.INCHES.getLegacyNum())
 
         zRes = -1.0;
 
         if ((image.getNDims() > 2) && (image.getFileInfo(index).getResolutions().length > 2)) {
             zRes = (double) (image.getFileInfo(index).getResolutions()[2]);
-            resZUnit = image.getFileInfo(index).getUnitsOfMeasure(2);
-
+            resZUnit = Unit.getUnitFromLegacyNum(image.getFileInfo(index).getUnitsOfMeasure(2));
+            
             // The EchoTech standard uses mm for the ResolutionZ field,
             // so convert to millimeters
-            if (resZUnit == Unit.METERS.getLegacyNum()) {
-                zRes = 1000.0f * zRes;
-            } else if (resZUnit == Unit.CENTIMETERS.getLegacyNum()) {
-                zRes = 10.0f * zRes;
-            } else if (resZUnit == Unit.INCHES.getLegacyNum()) {
-                zRes = 25.4f * zRes;
-            } else if (resZUnit == Unit.MICROMETERS.getLegacyNum()) {
-                zRes = 1.0e-3f * zRes;
-            }
+            zRes = resZUnit.convertTo(zRes, Unit.MILLIMETERS);
         }
 
         tRes = -1.0;
@@ -16268,82 +16086,80 @@ public class FileTiff extends FileBase {
         sampleFormatOffset = (int) raFile.getFilePointer() +
                              (2 + (nDirEntries * 12) + 4 + resolutionCount + rgbCount + zResCount + tResCount);
         writeShort(nDirEntries, endianess);
-        writeIFD(IMAGE_WIDTH, SHORT, 1, image.getExtents()[0], 0);
-        writeIFD(IMAGE_LENGTH, SHORT, 1, image.getExtents()[1], 0);
+        writeIFD(IMAGE_WIDTH, Type.SHORT, 1, image.getExtents()[0], 0);
+        writeIFD(IMAGE_LENGTH, Type.SHORT, 1, image.getExtents()[1], 0);
 
         if (type != ModelStorageBase.BOOLEAN) {
 
             if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
                 (type == ModelStorageBase.ARGB_FLOAT)) {
-                writeIFD(BITS_PER_SAMPLE, SHORT, 3, bitsPerSampleOffset, 0);
+                writeIFD(BITS_PER_SAMPLE, Type.SHORT, 3, bitsPerSampleOffset, 0);
             } else {
-                writeIFD(BITS_PER_SAMPLE, SHORT, 1, bitsPerSample, 0);
+                writeIFD(BITS_PER_SAMPLE, Type.SHORT, 1, bitsPerSample, 0);
             }
         }
 
         if (writePackBit == false) {
-            writeIFD(COMPRESSION, SHORT, 1, 1, 0);
+            writeIFD(COMPRESSION, Type.SHORT, 1, 1, 0);
         } else {
-            writeIFD(COMPRESSION, SHORT, 1, (short) 32773, 0);
+            writeIFD(COMPRESSION, Type.SHORT, 1, (short) 32773, 0);
         }
 
-        writeIFD(PHOTO_INTERP, SHORT, 1, image.getFileInfo(index).getPhotometric(), 0);
-        writeIFD(STRIP_OFFSETS, LONG, 1, imageOffset, 0);
+        writeIFD(PHOTO_INTERP, Type.SHORT, 1, image.getFileInfo(index).getPhotometric(), 0);
+        writeIFD(STRIP_OFFSETS, Type.LONG, 1, imageOffset, 0);
 
         if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
             (type == ModelStorageBase.ARGB_FLOAT)) {
-            writeIFD(SAMPLES_PER_PIXEL, SHORT, 1, 3, 0);
+            writeIFD(SAMPLES_PER_PIXEL, Type.SHORT, 1, 3, 0);
         }
 
-        writeIFD(ROWS_PER_STRIP, LONG, 1, image.getExtents()[1], 0);
+        writeIFD(ROWS_PER_STRIP, Type.LONG, 1, image.getExtents()[1], 0);
         if (type == ModelStorageBase.BOOLEAN) {
-            writeIFD(STRIP_BYTE_COUNTS, LONG, 1, image.getExtents()[1] * ((image.getExtents()[0] + 7) >> 3), 0);    
+            writeIFD(STRIP_BYTE_COUNTS, Type.LONG, 1, image.getExtents()[1] * ((image.getExtents()[0] + 7) >> 3), 0);    
         }
         else {
-            writeIFD(STRIP_BYTE_COUNTS, LONG, 1, theStripCount * bytesPerSample * samplesPerPixel, 0);
+            writeIFD(STRIP_BYTE_COUNTS, Type.LONG, 1, theStripCount * bytesPerSample * samplesPerPixel, 0);
         }
-        writeIFD(XRESOLUTION, RATIONAL, 1, resolutionOffset, 0);
-        writeIFD(YRESOLUTION, RATIONAL, 1, resolutionOffset + 8, 0);
+        writeIFD(XRESOLUTION, Type.RATIONAL, 1, resolutionOffset, 0);
+        writeIFD(YRESOLUTION, Type.RATIONAL, 1, resolutionOffset + 8, 0);
 
         if (zRes >= 0.0) {
-            writeIFD(ZRESOLUTION, DOUBLE, 1, zResOffset, 0);
+            writeIFD(ZRESOLUTION, Type.DOUBLE, 1, zResOffset, 0);
         }
 
         if (tRes >= 0.0) {
-            writeIFD(TRESOLUTION, DOUBLE, 1, tResOffset, 0);
+            writeIFD(TRESOLUTION, Type.DOUBLE, 1, tResOffset, 0);
         }
 
         if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
             (type == ModelStorageBase.ARGB_FLOAT)) {
-            writeIFD(PLANAR_CONFIG, SHORT, 1, 1, 0); // chucky format (rgb,rgb,rgb ...) baseline tiff
+            writeIFD(PLANAR_CONFIG, Type.SHORT, 1, 1, 0); // chucky format (rgb,rgb,rgb ...) baseline tiff
         }
 
-        if (resXYUnit == Unit.INCHES.getLegacyNum()) {
-            writeIFD(RESOLUTION_UNIT, SHORT, 1, 2, 0);
-        }
-        else if (resXYUnit == Unit.CENTIMETERS.getLegacyNum()) {
-        	writeIFD(RESOLUTION_UNIT, SHORT, 1, 3, 0);	
-        }
-        else {
-        	writeIFD(RESOLUTION_UNIT, SHORT, 1, 1, 0);		
+        if (resXYUnit == Unit.INCHES) {
+            writeIFD(RESOLUTION_UNIT, Type.SHORT, 1, 2, 0);
+        } else if (resXYUnit == Unit.CENTIMETERS) {
+        	writeIFD(RESOLUTION_UNIT, Type.SHORT, 1, 3, 0);	
+        } else { //unknown measure
+        	writeIFD(RESOLUTION_UNIT, Type.SHORT, 1, 1, 0);		
         }
 
         if ((LUT != null) && ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.UBYTE)) &&
                 (image.getFileInfo(index).getPhotometric() == 3)) {
-            writeIFD(COLOR_MAP, SHORT, 768, LUTOffset, 0);
+            writeIFD(COLOR_MAP, Type.SHORT, 768, LUTOffset, 0);
         }
 
         if ((type == ModelStorageBase.BOOLEAN) || (type == ModelStorageBase.UBYTE) ||
                 (type == ModelStorageBase.USHORT) || (type == ModelStorageBase.UINTEGER)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 1, 1, 0);
+            writeIFD(SAMPLE_FORMAT, Type.SHORT, 1, 1, 0);
         } else if ((type == ModelStorageBase.BYTE) || (type == ModelStorageBase.SHORT) ||
                        (type == ModelStorageBase.INTEGER)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 1, 2, 0);
+            writeIFD(SAMPLE_FORMAT, Type.SHORT, 1, 2, 0);
         } else if ((type == ModelStorageBase.ARGB) || (type == ModelStorageBase.ARGB_USHORT) ||
                    (type == ModelStorageBase.ARGB_FLOAT)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 3, sampleFormatOffset, 0);
+            writeIFD(SAMPLE_FORMAT, Type.SHORT, 3, sampleFormatOffset, 0);
         } else if ((type == ModelStorageBase.FLOAT) || (type == ModelStorageBase.DOUBLE)) {
-            writeIFD(SAMPLE_FORMAT, SHORT, 1, 3, 0);
+            writeIFD(SAMPLE_FORMAT, Type.SHORT, 1, 3, 0);
         }
 
         writeInt(nextIFD, endianess);
