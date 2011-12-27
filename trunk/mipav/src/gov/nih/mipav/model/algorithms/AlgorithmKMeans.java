@@ -388,7 +388,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
         Matrix dpMatrix;
         Matrix dMatrix;
         double minDistMahalanobis;
+        double minTotalDistMahalanobis;
         double distMahalanobis;
+        double totalDistMahalanobis;
+        double maxDistMahalanobis;
+        int ii;
+        int jj;
+        Matrix inverseArray[];
         
         
         for (i = 0; i < scale.length; i++) {
@@ -3215,7 +3221,13 @@ public class AlgorithmKMeans extends AlgorithmBase {
         		localCM = new double[nDims][numberClusters][subsampleNumber];
         		unionCM = new double[nDims][numberClusters*subsampleNumber];
         		centroidStartPos = new double[nDims][numberClusters];
+        		dpMatrix = new Matrix(1, nDims);
+    	    	dMatrix = new Matrix(nDims, 1);
+    	    	groupMean = new double[nDims][numberClusters];
+    	    	totalGroupWeight = new double[numberClusters];
+    	    	withinGroupArray = new double[nDims][nDims];
         		randomGen = new RandomNumberGen();
+        		inverseArray = new Matrix[subsampleNumber];
         	    // 1.) Randomly choose one point as the starting centroid of each cluster
     	    	for (i = 0; i < numberClusters; i++) {
     	    		startingPointIndex[i] = -1;
@@ -3276,7 +3288,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	Preferences.debug("Iteration = 1 on part 1 subsample number " + (i+1), 
                 			Preferences.DEBUG_ALGORITHM);
                 	iteration++;
-                	changeOccurred = false;
                 	for (j = 0; j < numberClusters; j++) {
             			totalWeight[j] = 0.0;
             			for (k = 0; k < numberClusters; k++) {
@@ -3384,32 +3395,41 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        	    		}
         	    		} // else 
         	    	}
-        	    	groupMean = new double[nDims][numberClusters];
-        	    	totalGroupWeight = new double[numberClusters];
-        	    	for (i = 0; i < subsampleSize; i++) {
-        	    		totalGroupWeight[groupNum[i]] += subsampleWeight[i];
+        	    	
+        	    	for (ii = 0; ii < numberClusters; ii++) {
+        	    		totalGroupWeight[ii] = 0.0;
         	    		for (j = 0; j < nDims; j++) {
-        	    		    groupMean[j][groupNum[i]] += subsampleWeight[i]*scale[j]*subsamplePos[j][i];
+        	    			groupMean[j][ii] = 0.0;
         	    		}
         	    	}
-        	    	for (i = 0; i < numberClusters; i++) {
-        	    		for (j = 0; j < nDims; j++) {
-        	    			groupMean[j][i] = groupMean[j][i]/totalGroupWeight[i];
+        	    	for (j = 0; j < nDims; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			withinGroupArray[j][k] = 0.0;
         	    		}
         	    	}
-        	    	withinGroupArray = new double[nDims][nDims];
-        	    	for (i = 0; i < numberClusters; i++) {
+        	    	
+        	    	for (ii = 0; ii < subsampleSize; ii++) {
+        	    		totalGroupWeight[groupNum[ii]] += subsampleWeight[ii];
+        	    		for (j = 0; j < nDims; j++) {
+        	    		    groupMean[j][groupNum[ii]] += subsampleWeight[ii]*subsamplePos[j][ii];
+        	    		}
+        	    	}
+        	    	for (ii = 0; ii < numberClusters; ii++) {
+        	    		for (j = 0; j < nDims; j++) {
+        	    			groupMean[j][ii] = groupMean[j][ii]/totalGroupWeight[ii];
+        	    		}
+        	    	}
+        	    	
+        	    	for (ii = 0; ii < subsampleSize; ii++) {
         	    		for (j = 0; j < nDims; j++) {
         	    			for (k = 0; k < nDims; k++) {
-        	    				withinGroupArray[j][k] += subsampleWeight[i]*scale[j]*(pos[j][i] - groupMean[j][groupNum[i]])*
-        	                    scale[k]*(pos[k][i] - groupMean[k][groupNum[i]]);
+        	    				withinGroupArray[j][k] += subsampleWeight[ii]*(subsamplePos[j][ii] - groupMean[j][groupNum[ii]])*
+        	                    (subsamplePos[k][ii] - groupMean[k][groupNum[ii]]);
         	    			}
         	    		}
         	    	}
         	    	withinGroupMatrix = new Matrix(withinGroupArray);
         	    	withinGroupInverse = withinGroupMatrix.inverse();
-        	    	dpMatrix = new Matrix(1, nDims);
-        	    	dMatrix = new Matrix(nDims, 1);
 
                     while (changeOccurred){
                     	fireProgressStateChanged("Iteration = " + iteration + " on part 1 subsample number " + (i+1));
@@ -3460,6 +3480,39 @@ public class AlgorithmKMeans extends AlgorithmBase {
             	    			centroidPos[k][groupNum[j]] += subsamplePos[k][j]*subsampleWeight[j];
             	    		}
             	    	}
+            	    	for (ii = 0; ii < numberClusters; ii++) {
+            	    		totalGroupWeight[ii] = 0.0;
+            	    		for (j = 0; j < nDims; j++) {
+            	    			groupMean[j][ii] = 0.0;
+            	    		}
+            	    	}
+            	    	for (j = 0; j < nDims; j++) {
+            	    		for (k = 0; k < nDims; k++) {
+            	    			withinGroupArray[j][k] = 0.0;
+            	    		}
+            	    	}
+            	    	for (ii = 0; ii < subsampleSize; ii++) {
+            	    		totalGroupWeight[groupNum[ii]] += subsampleWeight[ii];
+            	    		for (j = 0; j < nDims; j++) {
+            	    		    groupMean[j][groupNum[ii]] += subsampleWeight[ii]*subsamplePos[j][ii];
+            	    		}
+            	    	}
+            	    	for (ii = 0; ii < numberClusters; ii++) {
+            	    		for (j = 0; j < nDims; j++) {
+            	    			groupMean[j][ii] = groupMean[j][ii]/totalGroupWeight[ii];
+            	    		}
+            	    	}
+            	 
+            	    	for (ii = 0; ii < subsampleSize; ii++) {
+            	    		for (j = 0; j < nDims; j++) {
+            	    			for (k = 0; k < nDims; k++) {
+            	    				withinGroupArray[j][k] += subsampleWeight[ii]*(subsamplePos[j][ii] - groupMean[j][groupNum[ii]])*
+            	                    (subsamplePos[k][ii] - groupMean[k][groupNum[ii]]);
+            	    			}
+            	    		}
+            	    	}
+            	    	withinGroupMatrix = new Matrix(withinGroupArray);
+            	    	withinGroupInverse = withinGroupMatrix.inverse();
             	    	clustersWithoutPoints = 0;
             	    	for (j = 0; j < numberClusters; j++) {
             	    		if (totalWeight[j] <= 1.0E-10) {
@@ -3484,47 +3537,30 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     	while (totalWeight[s] > 1.0E-10) {
                     	    s++;	
                     	}
-                    	maxDistSquared = 0.0;
-                    	if (equalScale) {
-                    		for (k = 0; k < numberClusters; k++) {
-    	                    	if (totalWeight[k] > 1.0E-10) {
-    	                    	    for (m = 0; m < subsampleSize; m++) {
-    	                    	    	if (groupNum[m] == k) {
-    	                    	    	    distSquared = 0.0;
-    	                    	    	    for (n = 0; n < nDims; n++) {
-    	                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
-    	                    	    	        distSquared = distSquared + diff*diff;
-    	                    	    	    } // for (n = 0; n < nDims; n++)
-    	                    	    	    if (distSquared > maxDistSquared) {
-    	                    	    	    	maxDistSquared = distSquared;
-    	                    	    	    	maxDistPoint = m;
-    	                    	    	    	clusterWithMaxDistPoint = k;
-    	                    	    	    }
-    	                    	    	} // if (groupNum[m] == k)
-    	                    	    } // for (m = 0; m < subsampleSize; m++)
-    	                    	} // if (pointsInCluster[k] > 1)
-    	                    } // for (k = 0; k < numberClusters; k++)	
-                    	} // if (equalScale)
-                    	else { // not equalScale
-    	                    for (k = 0; k < numberClusters; k++) {
-    	                    	if (totalWeight[k] > 1.0E-10) {
-    	                    	    for (m = 0; m < subsampleSize; m++) {
-    	                    	    	if (groupNum[m] == k) {
-    	                    	    	    distSquared = 0.0;
-    	                    	    	    for (n = 0; n < nDims; n++) {
-    	                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
-    	                    	    	        distSquared = distSquared + scale2[n]*diff*diff;
-    	                    	    	    } // for (n = 0; n < nDims; n++)'
-    	                    	    	    if (distSquared > maxDistSquared) {
-    	                    	    	    	maxDistSquared = distSquared;
-    	                    	    	    	maxDistPoint = m;
-    	                    	    	    	clusterWithMaxDistPoint = k;
-    	                    	    	    }
-    	                    	    	} // if (groupNum[m] == k)
-    	                    	    } // for (m = 0; m < subsampleSize; m++)
-    	                    	} // if (pointsInCluster[k] > 1)
-    	                    } // for (k = 0; k < numberClusters; k++)
-                    	} // else not equalScale
+                    	maxDistMahalanobis = 0.0;
+                   
+                		for (k = 0; k < numberClusters; k++) {
+	                    	if (totalWeight[k] > 1.0E-10) {
+	                    	    for (m = 0; m < subsampleSize; m++) {
+	                    	    	if (groupNum[m] == k) {
+	                    	    	    distSquared = 0.0;
+	                    	    	    for (n = 0; n < nDims; n++) {
+	                    	    	        diff = subsamplePos[n][m] - centroidPos[n][k];
+	                    	    	        dpMatrix.set(0, n, diff);
+	    	        	    	    	    dMatrix.set(n, 0, diff);
+	                    	    	    } // for (n = 0; n < nDims; n++)
+	                    	    	    distMahalanobis = ((dpMatrix.times(withinGroupInverse)).times(dMatrix)).get(0,0);
+	                    	    	    if (distMahalanobis > maxDistMahalanobis) {
+	                    	    	    	maxDistMahalanobis = distMahalanobis;
+	                    	    	    	maxDistPoint = m;
+	                    	    	    	clusterWithMaxDistPoint = k;
+	                    	    	    }
+	                    	    	} // if (groupNum[m] == k)
+	                    	    } // for (m = 0; m < subsampleSize; m++)
+	                    	} // if (pointsInCluster[k] > 1)
+	                    } // for (k = 0; k < numberClusters; k++)	
+                  
+                    	
                         groupNum[maxDistPoint] = s;
                         totalWeight[clusterWithMaxDistPoint] -= subsampleWeight[maxDistPoint];
                         for (k = 0; k < nDims; k++) {
@@ -3546,6 +3582,39 @@ public class AlgorithmKMeans extends AlgorithmBase {
                         	centroidPos[k][clusterWithMaxDistPoint] = 
                         		centroidPos[k][clusterWithMaxDistPoint]/totalWeight[clusterWithMaxDistPoint];
                         }
+                        for (ii = 0; ii < numberClusters; ii++) {
+            	    		totalGroupWeight[ii] = 0.0;
+            	    		for (jj = 0; jj < nDims; jj++) {
+            	    			groupMean[jj][ii] = 0.0;
+            	    		}
+            	    	}
+            	    	for (jj = 0; jj < nDims; jj++) {
+            	    		for (k = 0; k < nDims; k++) {
+            	    			withinGroupArray[jj][k] = 0.0;
+            	    		}
+            	    	}
+            	    	for (ii = 0; ii < subsampleSize; ii++) {
+            	    		totalGroupWeight[groupNum[ii]] += subsampleWeight[ii];
+            	    		for (jj = 0; jj < nDims; jj++) {
+            	    		    groupMean[jj][groupNum[ii]] += subsampleWeight[ii]*subsamplePos[jj][ii];
+            	    		}
+            	    	}
+            	    	for (ii = 0; ii < numberClusters; ii++) {
+            	    		for (jj = 0; jj < nDims; jj++) {
+            	    			groupMean[jj][ii] = groupMean[jj][ii]/totalGroupWeight[ii];
+            	    		}
+            	    	}
+            	 
+            	    	for (ii = 0; ii < subsampleSize; ii++) {
+            	    		for (jj = 0; jj < nDims; jj++) {
+            	    			for (k = 0; k < nDims; k++) {
+            	    				withinGroupArray[jj][k] += subsampleWeight[ii]*(subsamplePos[jj][ii] - groupMean[jj][groupNum[ii]])*
+            	                    (subsamplePos[k][ii] - groupMean[k][groupNum[ii]]);
+            	    			}
+            	    		}
+            	    	}
+            	    	withinGroupMatrix = new Matrix(withinGroupArray);
+            	    	withinGroupInverse = withinGroupMatrix.inverse();
                     } // for (j = 0; j < clustersWithoutPoints; j++)
                     if (clustersWithoutPoints > 0) {
                         	Preferences.debug("Redoing k means on subsample number " + (i+1) + "\n", Preferences.DEBUG_ALGORITHM);
@@ -3559,86 +3628,37 @@ public class AlgorithmKMeans extends AlgorithmBase {
                             	changeOccurred = false;
                             	for (j = 0; j < numberClusters; j++) {
                         			totalWeight[j] = 0.0;
-                        			for (k = 0; k < numberClusters; k++) {
-                        				centroidDistances[j][k] = 0.0;
-                        			}
                         		}
-                            	if (equalScale) {
-                            		for (j = 0; j < numberClusters; j++) {
-                        				for (k = j+1; k < numberClusters; k++) {
-                        					for (m = 0; m < nDims; m++) {
-                        						diff = centroidPos[m][j] - centroidPos[m][k];
-                        						centroidDistances[j][k] += diff*diff;
-                        					} // for (m = 0; m < nDims; m++)
-                        					centroidDistances[j][k] /= 4.0;
-                        				} // for (k = j+1; k < numberClusters; k++)
-                        			} // for (j = 0; j < numberClusters; j++)
-                            		for (j = 0; j < subsampleSize; j++) {
-    	                	    	    minDistSquared = 0.0;
-    	                	    	    originalGroupNum = groupNum[j];
-    	                	    	    for (m = 0; m < nDims; m++) {
-                    	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
-                    	    	    	    minDistSquared = minDistSquared + diff*diff;
-                    	    	    	}
-    	                	    	    groupNum[j] = 0;
-    	                	    	    for (k = 1; k < numberClusters; k++) {
-    	                	    	    	// Use triangle inequality to avoid unnecessary calculations
-    	    	    		    	    	if (minDistSquared > centroidDistances[groupNum[j]][k]) {
-    		                	    	    	distSquared = 0.0;
-    		                	    	    	for (m = 0; m < nDims; m++) {
-    		                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-    		                	    	    	    distSquared = distSquared + diff*diff;
-    		                	    	    	}
-    		                	    	    	if (distSquared < minDistSquared) {
-    		                	    	    		minDistSquared = distSquared;
-    		                	    	    		groupNum[j] = k;
-    		                	    	    	}
-    	    	    		    	    	} // if (minDistSquared > centroidDistances[groupNum[j]][k])
-    	                	    	    } // for (k = 1; k < numberClusters; k++)
-    	                	    	    totalWeight[groupNum[j]] += subsampleWeight[j];
-    	                	    	    if (originalGroupNum != groupNum[j]) {
-    	                	    	    	changeOccurred = true;
-    	                	    	    }
-    	                	    	} // for (j = 0; j < subsampleSize; j++)	
-                            	} // if (equalScale)
-                            	else { // not equalScale
-                            		for (j = 0; j < numberClusters; j++) {
-                        				for (k = j+1; k < numberClusters; k++) {
-                        					for (m = 0; m < nDims; m++) {
-                        						diff = centroidPos[m][j] - centroidPos[m][k];
-                        						centroidDistances[j][k] += scale2[m]*diff*diff;
-                        					} // for (m = 0; m < nDims; m++)
-                        					centroidDistances[j][k] /= 4.0;
-                        				} // for (k = j+1; k < numberClusters; k++)
-                        			} // for (j = 0; j < numberClusters; j++)
-    	                	    	for (j = 0; j < subsampleSize; j++) {
-    	                	    	    minDistSquared = 0.0;
-    	                	    	    originalGroupNum = groupNum[j];
-    	                	    	    for (m = 0; m < nDims; m++) {
-                    	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
-                    	    	    	    minDistSquared = minDistSquared + scale2[m]*diff*diff;
-                    	    	    	}
-    	                	    	    groupNum[j] = 0;
-    	                	    	    for (k = 1; k < numberClusters; k++) {
-    	                	    	    	// Use triangle inequality to avoid unnecessary calculations
-    	    	    		    	    	if (minDistSquared > centroidDistances[groupNum[j]][k]) {
-    		                	    	    	distSquared = 0.0;
-    		                	    	    	for (m = 0; m < nDims; m++) {
-    		                	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
-    		                	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
-    		                	    	    	}
-    		                	    	    	if (distSquared < minDistSquared) {
-    		                	    	    		minDistSquared = distSquared;
-    		                	    	    		groupNum[j] = k;
-    		                	    	    	}
-    	    	    		    	    	} // if (minDistSquared > centroidDistances[groupNum[j]][k])
-    	                	    	    } // for (k = 1; k < numberClusters; k++)
-    	                	    	    totalWeight[groupNum[j]] += subsampleWeight[j];
-    	                	    	    if (originalGroupNum != groupNum[j]) {
-    	                	    	    	changeOccurred = true;
-    	                	    	    }
-    	                	    	} // for (j = 0; j < subsampleSize; j++)
-                            	} // else not equalScale
+                           
+                        		
+                        		for (j = 0; j < subsampleSize; j++) {
+        	        	    	    originalGroupNum = groupNum[j];
+        	        	    	    for (m = 0; m < nDims; m++) {
+                	    	    		diff = subsamplePos[m][j] - centroidPos[m][0];
+                	    	    	    dpMatrix.set(0, m, diff);
+                	    	    	    dMatrix.set(m, 0, diff);
+                	    	    	}
+        	        	    	    minDistMahalanobis = ((dpMatrix.times(withinGroupInverse)).times(dMatrix)).get(0,0);
+        	        	    	    groupNum[j] = 0;
+        	        	    	    for (k = 1; k < numberClusters; k++) {
+        	        	    	    	for (m = 0; m < nDims; m++) {
+        	        	    	    		diff = subsamplePos[m][j] - centroidPos[m][k];
+        	        	    	    		dpMatrix.set(0, m, diff);
+        	        	    	    	    dMatrix.set(m, 0, diff);
+        	        	    	    	}
+        	        	    	    	distMahalanobis = ((dpMatrix.times(withinGroupInverse)).times(dMatrix)).get(0,0);
+        	        	    	    	if (distMahalanobis < minDistMahalanobis) {
+        	        	    	    		minDistMahalanobis = distMahalanobis;
+        	        	    	    		groupNum[j] = k;
+        	        	    	    	}
+        	        	    	    } // for (k = 1; k < numberClusters; k++)
+        	        	    	    totalWeight[groupNum[j]] += subsampleWeight[j];
+        	        	    	    if (originalGroupNum != groupNum[j]) {
+        	        	    	    	changeOccurred = true;
+        	        	    	    }
+        	        	    	} // for (j = 0; j < subsampleSize; j++)	
+                         
+                            	
                     	    	for (j = 0; j < numberClusters; j++) {
                     	    		for (k = 0; k < nDims; k++) {
                     	    			centroidPos[k][j] = 0.0;
@@ -3649,6 +3669,40 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     	    			centroidPos[k][groupNum[j]] += subsamplePos[k][j]*subsampleWeight[j];
                     	    		}
                     	    	}
+                    	    	for (ii = 0; ii < numberClusters; ii++) {
+                    	    		totalGroupWeight[ii] = 0.0;
+                    	    		for (j = 0; j < nDims; j++) {
+                    	    			groupMean[j][ii] = 0.0;
+                    	    		}
+                    	    	}
+                    	    	for (j = 0; j < nDims; j++) {
+                    	    		for (k = 0; k < nDims; k++) {
+                    	    			withinGroupArray[j][k] = 0.0;
+                    	    		}
+                    	    	}
+                    	    	for (ii = 0; ii < subsampleSize; ii++) {
+                    	    		totalGroupWeight[groupNum[ii]] += subsampleWeight[ii];
+                    	    		for (j = 0; j < nDims; j++) {
+                    	    		    groupMean[j][groupNum[ii]] += subsampleWeight[ii]*subsamplePos[j][ii];
+                    	    		}
+                    	    	}
+                    	    	for (ii = 0; ii < numberClusters; ii++) {
+                    	    		for (j = 0; j < nDims; j++) {
+                    	    			groupMean[j][ii] = groupMean[j][ii]/totalGroupWeight[ii];
+                    	    		}
+                    	    	}
+                    	 
+                    	    	for (ii = 0; ii < subsampleSize; ii++) {
+                    	    		for (j = 0; j < nDims; j++) {
+                    	    			for (k = 0; k < nDims; k++) {
+                    	    				withinGroupArray[j][k] += subsampleWeight[ii]*(subsamplePos[j][ii] - groupMean[j][groupNum[ii]])*
+                    	                    (subsamplePos[k][ii] - groupMean[k][groupNum[ii]]);
+                    	    			}
+                    	    		}
+                    	    	}
+                    	    	withinGroupMatrix = new Matrix(withinGroupArray);
+                    	    	withinGroupInverse = withinGroupMatrix.inverse();
+                            	
                     	    	clustersWithoutPoints = 0;
                     	    	for (j = 0; j < numberClusters; j++) {
                     	    		if (totalWeight[j] <= 1.0E-10) {
@@ -3709,6 +3763,96 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 	}
                 	changeOccurred = true;
                     iteration = 1;
+                    fireProgressStateChanged("Iteration = " + iteration + " on part 2 subsample number " + (i+1));
+                	Preferences.debug("Iteration = " + iteration + " on part 2 subsample number " + (i+1), 
+                			Preferences.DEBUG_ALGORITHM);
+                	iteration++;
+                	for (j = 0; j < numberClusters; j++) {
+            			totalWeight[j] = 0.0;
+            		}
+                	if (equalScale) {
+                		for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
+	        	    	    	    distSquared = distSquared + diff*diff;
+	        	    	    	}
+	        	    	    	if (distSquared < minDistSquared) {
+	        	    	    		minDistSquared = distSquared;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    totalWeight[groupNum[j]] += 1.0;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)	
+                	} // if (equalScale)
+                	else { // not equalScale
+	        	    	for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistSquared = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
+	        	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
+	        	    	    	}
+	        	    	    	if (distSquared < minDistSquared) {
+	        	    	    		minDistSquared = distSquared;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    totalWeight[groupNum[j]] += 1.0;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)
+                	} // else not equalScale
+        	    	for (j = 0; j < numberClusters; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			centroidPos[k][j] = 0.0;
+        	    		}
+        	    	}
+        	    	for (j = 0; j < subsampleSize; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			centroidPos[k][groupNum[j]] += unionCM[k][j];
+        	    		}
+        	    	}
+        	    	for (ii = 0; ii < numberClusters; ii++) {
+        	    		for (j = 0; j < nDims; j++) {
+        	    			groupMean[j][ii] = 0.0;
+        	    		}
+        	    	}
+        	    	for (j = 0; j < nDims; j++) {
+        	    		for (k = 0; k < nDims; k++) {
+        	    			withinGroupArray[j][k] = 0.0;
+        	    		}
+        	    	}
+        	    	for (ii = 0; ii < subsampleSize; ii++) {
+        	    		for (j = 0; j < nDims; j++) {
+        	    		    groupMean[j][groupNum[ii]] += unionCM[j][ii];
+        	    		}
+        	    	}
+        	    	for (ii = 0; ii < numberClusters; ii++) {
+        	    		for (j = 0; j < nDims; j++) {
+        	    			groupMean[j][ii] = groupMean[j][ii]/totalWeight[ii];
+        	    		}
+        	    	}
+        	 
+        	    	for (ii = 0; ii < subsampleSize; ii++) {
+        	    		for (j = 0; j < nDims; j++) {
+        	    			for (k = 0; k < nDims; k++) {
+        	    				withinGroupArray[j][k] += (unionCM[j][ii] - groupMean[j][groupNum[ii]])*
+        	                    (unionCM[k][ii] - groupMean[k][groupNum[ii]]);
+        	    			}
+        	    		}
+        	    	}
+        	    	withinGroupMatrix = new Matrix(withinGroupArray);
+        	    	withinGroupInverse = withinGroupMatrix.inverse();
                     while (changeOccurred){
                     	fireProgressStateChanged("Iteration = " + iteration + " on part 2 subsample number " + (i+1));
                     	Preferences.debug("Iteration = " + iteration + " on part 2 subsample number " + (i+1), 
@@ -3718,48 +3862,28 @@ public class AlgorithmKMeans extends AlgorithmBase {
                     	for (j = 0; j < numberClusters; j++) {
                 			totalWeight[j] = 0.0;
                 		}
-                    	if (equalScale) {
-                    		for (j = 0; j < subsampleSize; j++) {
-    	        	    	    minDistSquared = Double.MAX_VALUE;
-    	        	    	    originalGroupNum = groupNum[j];
-    	        	    	    for (k = 0; k < numberClusters; k++) {
-    	        	    	    	distSquared = 0.0;
-    	        	    	    	for (m = 0; m < nDims; m++) {
-    	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
-    	        	    	    	    distSquared = distSquared + diff*diff;
-    	        	    	    	}
-    	        	    	    	if (distSquared < minDistSquared) {
-    	        	    	    		minDistSquared = distSquared;
-    	        	    	    		groupNum[j] = k;
-    	        	    	    	}
-    	        	    	    } // for (k = 0; k < numberClusters; k++)
-    	        	    	    totalWeight[groupNum[j]] += 1.0;
-    	        	    	    if (originalGroupNum != groupNum[j]) {
-    	        	    	    	changeOccurred = true;
-    	        	    	    }
-    	        	    	} // for (j = 0; j < subsampleSize; j++)	
-                    	} // if (equalScale)
-                    	else { // not equalScale
-    	        	    	for (j = 0; j < subsampleSize; j++) {
-    	        	    	    minDistSquared = Double.MAX_VALUE;
-    	        	    	    originalGroupNum = groupNum[j];
-    	        	    	    for (k = 0; k < numberClusters; k++) {
-    	        	    	    	distSquared = 0.0;
-    	        	    	    	for (m = 0; m < nDims; m++) {
-    	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
-    	        	    	    	    distSquared = distSquared + scale2[m]*diff*diff;
-    	        	    	    	}
-    	        	    	    	if (distSquared < minDistSquared) {
-    	        	    	    		minDistSquared = distSquared;
-    	        	    	    		groupNum[j] = k;
-    	        	    	    	}
-    	        	    	    } // for (k = 0; k < numberClusters; k++)
-    	        	    	    totalWeight[groupNum[j]] += 1.0;
-    	        	    	    if (originalGroupNum != groupNum[j]) {
-    	        	    	    	changeOccurred = true;
-    	        	    	    }
-    	        	    	} // for (j = 0; j < subsampleSize; j++)
-                    	} // else not equalScale
+                		for (j = 0; j < subsampleSize; j++) {
+	        	    	    minDistMahalanobis = Double.MAX_VALUE;
+	        	    	    originalGroupNum = groupNum[j];
+	        	    	    for (k = 0; k < numberClusters; k++) {
+	        	    	    	distSquared = 0.0;
+	        	    	    	for (m = 0; m < nDims; m++) {
+	        	    	    		diff = unionCM[m][j] - centroidPos[m][k];
+	        	    	    	    dpMatrix.set(0, m, diff);
+	        	    	    	    dMatrix.set(m, 0, diff);
+	        	    	    	}
+	        	    	    	distMahalanobis = ((dpMatrix.times(withinGroupInverse)).times(dMatrix)).get(0,0);
+	        	    	    	if (distMahalanobis < minDistMahalanobis) {
+	        	    	    		minDistMahalanobis = distMahalanobis;
+	        	    	    		groupNum[j] = k;
+	        	    	    	}
+	        	    	    } // for (k = 0; k < numberClusters; k++)
+	        	    	    totalWeight[groupNum[j]] += 1.0;
+	        	    	    if (originalGroupNum != groupNum[j]) {
+	        	    	    	changeOccurred = true;
+	        	    	    }
+	        	    	} // for (j = 0; j < subsampleSize; j++)	
+                    	
             	    	for (j = 0; j < numberClusters; j++) {
             	    		for (k = 0; k < nDims; k++) {
             	    			centroidPos[k][j] = 0.0;
@@ -3785,6 +3909,38 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	        	    		}
             	    		} // else 
             	    	}
+            	    	for (ii = 0; ii < numberClusters; ii++) {
+            	    		for (j = 0; j < nDims; j++) {
+            	    			groupMean[j][ii] = 0.0;
+            	    		}
+            	    	}
+            	    	for (j = 0; j < nDims; j++) {
+            	    		for (k = 0; k < nDims; k++) {
+            	    			withinGroupArray[j][k] = 0.0;
+            	    		}
+            	    	}
+            	    	for (ii = 0; ii < subsampleSize; ii++) {
+            	    		for (j = 0; j < nDims; j++) {
+            	    		    groupMean[j][groupNum[ii]] += unionCM[j][ii];
+            	    		}
+            	    	}
+            	    	for (ii = 0; ii < numberClusters; ii++) {
+            	    		for (j = 0; j < nDims; j++) {
+            	    			groupMean[j][ii] = groupMean[j][ii]/totalWeight[ii];
+            	    		}
+            	    	}
+            	 
+            	    	for (ii = 0; ii < subsampleSize; ii++) {
+            	    		for (j = 0; j < nDims; j++) {
+            	    			for (k = 0; k < nDims; k++) {
+            	    				withinGroupArray[j][k] += (unionCM[j][ii] - groupMean[j][groupNum[ii]])*
+            	                    (unionCM[k][ii] - groupMean[k][groupNum[ii]]);
+            	    			}
+            	    		}
+            	    	}
+            	    	withinGroupMatrix = new Matrix(withinGroupArray);
+            	    	inverseArray[i] = withinGroupMatrix.inverse();
+
                     } // while (changeOccurred)
                     Preferences.debug("There are " + clustersWithoutPoints +
                     		          " clusters without points on subsample number " + (i+1) + "\n", 
@@ -3797,53 +3953,31 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 } // for (i = 0; i < subsampleNumber; i++)
                     
                 // The refined initial point is chosen as the localFM[][][i] having minimal distortion over unionCM
-                minTotalDistSquared = Double.MAX_VALUE;
-                if (equalScale) {
-                	for (i = 0; i < subsampleNumber; i++) {
-                		totalDistSquared = 0.0;
-    	                for (j = 0; j < subsampleSize; j++) {
-    	                    minDistSquared = Double.MAX_VALUE;
-    	                    for (k = 0; k < numberClusters; k++) {
-    	                        distSquared = 0.0;
-    	                        for (m = 0; m < nDims; m++) {
-    	                        	diff = unionCM[m][j] - localFM[m][k][i];
-    	                        	distSquared = distSquared + diff*diff;
-    	                        }
-    	                        if (distSquared < minDistSquared) {
-    	                        	minDistSquared = distSquared;
-    	                        }
-    	                    } // for (k = 0; k < numberClusters; k++)
-    	                    totalDistSquared = totalDistSquared + minDistSquared;
-    	                } // for (j = 0; j < subsampleSize; j++)
-    	                if (totalDistSquared < minTotalDistSquared) {
-    	                	minTotalDistSquared = totalDistSquared;
-    	                	bestFMIndex = i;
-    	                }
-    	            } // for (i = 0; i < subsampleNumber; i++)	
-                } // if (equalScale)
-                else { // not equalScale
-    	            for (i = 0; i < subsampleNumber; i++) {
-    	            	totalDistSquared = 0.0;
-    	                for (j = 0; j < subsampleSize; j++) {
-    	                    minDistSquared = Double.MAX_VALUE;
-    	                    for (k = 0; k < numberClusters; k++) {
-    	                        distSquared = 0.0;
-    	                        for (m = 0; m < nDims; m++) {
-    	                        	diff = unionCM[m][j] - localFM[m][k][i];
-    	                        	distSquared = distSquared + scale2[m]*diff*diff;
-    	                        }
-    	                        if (distSquared < minDistSquared) {
-    	                        	minDistSquared = distSquared;
-    	                        }
-    	                    } // for (k = 0; k < numberClusters; k++)
-    	                    totalDistSquared = totalDistSquared + minDistSquared;
-    	                } // for (j = 0; j < subsampleSize; j++)
-    	                if (totalDistSquared < minTotalDistSquared) {
-    	                	minTotalDistSquared = totalDistSquared;
-    	                	bestFMIndex = i;
-    	                }
-    	            } // for (i = 0; i < subsampleNumber; i++)
-                } // else not equalScale
+                minTotalDistMahalanobis = Double.MAX_VALUE;
+         
+            	for (i = 0; i < subsampleNumber; i++) {
+            		totalDistMahalanobis = 0.0;
+	                for (j = 0; j < subsampleSize; j++) {
+	                    minDistMahalanobis = Double.MAX_VALUE;
+	                    for (k = 0; k < numberClusters; k++) {
+	                        for (m = 0; m < nDims; m++) {
+	                        	diff = unionCM[m][j] - localFM[m][k][i];
+	                        	dpMatrix.set(0, m, diff);
+	                        	dMatrix.set(m, 0, diff);
+	                        }
+	                        distMahalanobis = ((dpMatrix.times(inverseArray[i])).times(dMatrix)).get(0,0);
+	                        if (distMahalanobis < minDistMahalanobis) {
+	                        	minDistMahalanobis = distMahalanobis;
+	                        }
+	                    } // for (k = 0; k < numberClusters; k++)
+	                    totalDistMahalanobis = totalDistMahalanobis + minDistMahalanobis;
+	                } // for (j = 0; j < subsampleSize; j++)
+	                if (totalDistMahalanobis < minTotalDistMahalanobis) {
+	                	minTotalDistMahalanobis = totalDistMahalanobis;
+	                	bestFMIndex = i;
+	                }
+	            } // for (i = 0; i < subsampleNumber; i++)	
+                
                 Preferences.debug("Refinement algorithm returns inital centroids at:\n", Preferences.DEBUG_ALGORITHM);
                 
                 for (i = 0; i < numberClusters; i++) {
