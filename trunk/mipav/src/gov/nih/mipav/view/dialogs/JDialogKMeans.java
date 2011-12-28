@@ -57,6 +57,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	
 	private static final int CITY_BLOCK = 1;
 	
+	private static final int MAHALANOBIS_SQUARED = 2;
+	
 	/** source image. **/
     private ModelImage image;
     
@@ -165,6 +167,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private JRadioButton cityBlock;
     
+    private JRadioButton mahalanobis;
+    
     private JCheckBox unitVarianceCheckBox;
     
     private boolean scaleVariablesToUnitVariance;
@@ -233,15 +237,28 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	     hierarchicalInit.setEnabled(false);
 	    	     maxMinInit.setEnabled(false);	 
 	    	 } // else
-	     } else if ((source == euclideanSquared) || (source == cityBlock)) {
+	     } else if ((source == euclideanSquared) || (source == cityBlock) || (source == mahalanobis)) {
 	    	 if (euclideanSquared.isSelected()) {
+	    		 globalAlgo.setEnabled(true);
 	    		 fastGlobalAlgo.setEnabled(true);
 	    	 }
-	    	 else {
+	    	 else if (cityBlock.isSelected()){
 	    		 if (fastGlobalAlgo.isSelected()) {
 	    			 fastGlobalAlgo.setSelected(false);
 	    			 globalAlgo.setSelected(true);
 	    		 }
+	    		 fastGlobalAlgo.setEnabled(false);
+	    	 }
+	    	 else {
+	    		 if (globalAlgo.isSelected()){
+	    			 globalAlgo.setSelected(false);
+	    			 euclideanSquared.setSelected(true);
+	    		 }
+	    		 else if (fastGlobalAlgo.isSelected()) {
+	    			 fastGlobalAlgo.setSelected(false);
+	    			 euclideanSquared.setSelected(true);
+	    		 }
+	    		 globalAlgo.setEnabled(false);
 	    		 fastGlobalAlgo.setEnabled(false);
 	    	 }
 	     } else if (command.equals("AddImageBrowse")) {
@@ -997,12 +1014,22 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 14;
         mainPanel.add(cityBlock, gbc);
         
+        mahalanobis = new JRadioButton("Mahalanobis squared distance with mean centroids", false);
+        mahalanobis.setFont(serif12);
+        mahalanobis.setForeground(Color.black);
+        mahalanobis.addActionListener(this);
+        distanceGroup.add(mahalanobis);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 15;
+        mainPanel.add(mahalanobis, gbc);
+        
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
         clustersLabel.setForeground(Color.black);
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 15;
+        gbc.gridy = 16;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -1017,7 +1044,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 17;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -1027,7 +1054,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy = 18;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -1036,7 +1063,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy = 19;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -1045,7 +1072,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 20;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -1054,7 +1081,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy = 21;
         mainPanel.add(maxMinInit, gbc);
         
         resultsFileNameLabel = new JLabel("Results file name:");
@@ -1063,7 +1090,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         resultsFileNameLabel.setEnabled(false);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy = 22;
         mainPanel.add(resultsFileNameLabel, gbc);
         
         resultsFileNameText = new JTextField(40);
@@ -1126,8 +1153,11 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	if (euclideanSquared.isSelected()) {
     		distanceMeasure = EUCLIDEAN_SQUARED;
     	}
-    	else {
+    	else if (cityBlock.isSelected()){
     		distanceMeasure = CITY_BLOCK;
+    	}
+    	else {
+    		distanceMeasure = MAHALANOBIS_SQUARED;
     	}
     	
     	useColorHistogram = colorHistogramBox.isSelected();
