@@ -401,7 +401,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         Matrix dMatrix;
         double minDistMahalanobis;
         double totalMinDistMahalanobis = 0.0;
-        double bestTotalMinDistMahalanobis;
         double distMahalanobis;
         double totalDistMahalanobis;
         double maxDistMahalanobis;
