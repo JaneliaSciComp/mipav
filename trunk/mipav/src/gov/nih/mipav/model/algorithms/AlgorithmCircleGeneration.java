@@ -7,6 +7,8 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 import java.util.*;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 import de.jtem.numericalMethods.calculus.function.RealFunctionOfOneVariable;
 import de.jtem.numericalMethods.calculus.integration.RungeKuttaFehlbergIntegrator;
 
@@ -118,11 +120,16 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     // nearest neighbor distance is <= maximumNearestNeighborDistance.
     public static final int AGGREGATED = 2;
     
+    // The first initialRandomCircles are generated at random.  The remaining circles are only accepted if the 
+    // nearest neighbor distance is <= a bounding ellipse characterized by a semiMajorAxis, semiMinorAxis, and
+    // angle phi
+    public static final int AGGREGATED_ELLIPSE = 3;
+    
     // Regular patterns can arise from inhibition or repulsion mechanisms which constrain objects to remain a
     // certain distance from each other.  The first circle is generated at random.  All other circles are only
     // accepted if the nearest neighbor distance is >= minimumNearestNeighborDistance and 
     // <= maximumNearestNeighborDistance.
-    public static final int REGULAR = 3;
+    public static final int REGULAR = 4;
     
     // Very small and large distances between neighboring objects are allowed, but not intermediate distances.
     // Such constrained patterns are found in nature due to growth patterns.
@@ -134,7 +141,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     // less than the lowestForbiddenNNDistance and greater than the highestRegenerationNNDistance, but is regular
     // in the range from the lowestForbiddenNNDistance to the highestRegenerationNNDistnace with a peak of 
     // significance at an NN Distance just above the hgihestForbiddenNNDistance.
-    public static final int CONSTRAINED = 4;
+    public static final int CONSTRAINED = 5;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -162,6 +169,14 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     private double highestForbiddenNNDistance;
     
     private double highestRegenerationNNDistance;
+    
+    // Used in AGGREGATED_ELLIPTICAL
+    private double semiMajorAxis;
+    
+    private double semiMinorAxis;
+    
+    // Angle the ellipse semiMajorAxis makes with the x-axis in radians
+    private double phi;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -184,10 +199,14 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
      * @param  lowestForbiddenNNDistance Used in CONSTRAINED
      * @param  highestForbiddenNNDistance Used in CONSTRAINED
      * @param  highestRegeneerationNNDistance Used in CONSTRAINED
+     * @param  semiMajorAxis used in AGGREGATED_ELIPTICAL
+     * @param  semiMinorAxis used in AGGREGATED_ELLIPTICAL
+     * @param  phi used in AGGREGATED_ELLIPTICAL
      */
     public AlgorithmCircleGeneration(ModelImage srcImage, int radius, int numCircles, int pattern,
             int initialRandomCircles, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance,
-            double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance) {
+            double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance,
+            double semiMajorAxis, double semiMinorAxis, double phi) {
         super(null, srcImage);
         this.radius = radius;
         this.numCircles = numCircles;
@@ -198,6 +217,9 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         this.lowestForbiddenNNDistance = lowestForbiddenNNDistance;
         this.highestForbiddenNNDistance = highestForbiddenNNDistance;
         this.highestRegenerationNNDistance = highestRegenerationNNDistance;
+        this.semiMajorAxis = semiMajorAxis;
+        this.semiMinorAxis = semiMinorAxis;
+        this.phi = phi;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -315,6 +337,17 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         double a2;
         double b2;
         double t;
+        int xMaskEllipseDim;
+        int yMaskEllipseDim;
+        VOI boundaryVOI;
+        byte maskEllipse[];
+        double theta;
+        double angle;
+        VOIBaseVector boundaryCurves;
+        VOIBase boundaryBase = null;
+        Vector<Vector3f> boundaryV = new Vector<Vector3f>();
+        float xPos;
+        float yPos;
         
         IntTorquato95ModelMean meanTorquato95Model;
         IntTorquato95ModelMean2 meanTorquato95Model2;
@@ -366,6 +399,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 numRandomCircles = numCircles;
                 break;
             case AGGREGATED:
+            case AGGREGATED_ELLIPSE:
                 numRandomCircles = initialRandomCircles;
                 break;
             case REGULAR:
@@ -419,7 +453,30 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             System.out.println(circlesDrawn + " random circles drawn.  " + numCircles + " random circles requested.");
         }
         
-        if ((pattern == AGGREGATED) && (circlesDrawn == initialRandomCircles)) {
+        if (((pattern == AGGREGATED) || (pattern == AGGREGATED_ELLIPSE)) && (circlesDrawn == initialRandomCircles)) {
+        	if (pattern == AGGREGATED_ELLIPSE) {
+        		// Create a mask for setting ellipses
+                xMaskEllipseDim = (int)(2 * Math.ceil(semiMajorAxis) + 1);
+                yMaskEllipseDim = xMaskEllipseDim;
+                maskEllipse = new byte[xMaskEllipseDim * yMaskEllipseDim];
+                boundaryVOI = new VOI((short)0, "boundaryVOI", VOI.CONTOUR, -1 );
+                for (theta = 0; theta < 3600; theta++) {
+                	angle = theta * Math.PI/1800;
+                    x = (int)Math.round(Math.ceil(semiMajorAxis) + semiMajorAxis*Math.cos(angle)*Math.cos(phi) - semiMinorAxis*Math.sin(angle)*Math.sin(phi));	
+                    y = (int)Math.round(Math.ceil(semiMajorAxis) + semiMajorAxis*Math.cos(angle)*Math.sin(phi) + semiMinorAxis*Math.sin(angle)*Math.cos(phi));
+                    if (maskEllipse[x + y * xMaskEllipseDim] == 0) {
+                        maskEllipse[x + y * xMaskEllipseDim] = 1;
+                        boundaryV.add(new Vector3f(x, y, 0.0f));
+                    }
+                }
+                Vector3f pt[] = new Vector3f[boundaryV.size()];
+            	for (i = 0; i < boundaryV.size(); i++) {
+            		pt[i] = boundaryV.elementAt(i);
+            	}
+            	boundaryVOI.importCurve(pt);
+            	boundaryCurves = boundaryVOI.getCurves();
+            	boundaryBase = boundaryCurves.elementAt(0);	
+        	}
             for (i = initialRandomCircles+1; i <= numCircles; i++) {
                 found = false;
                 attempts = 0;
@@ -440,15 +497,26 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                                     }
                                 }
                             } // for (y = 0; y <= 2*radius; y++)
-                            for (j = 0; j < i-1; j++) {         
-                                xDistSquared = circleXCenter[j] - xCenter;
-                                xDistSquared = xDistSquared * xDistSquared;
-                                yDistSquared = circleYCenter[j] - yCenter;
-                                yDistSquared = yDistSquared * yDistSquared;
-                                distSquared = xDistSquared + yDistSquared;
-                                if (distSquared <= maximumNNDistanceSquared) {
-                                    break attemptloop;
-                                }  
+                            if (pattern == AGGREGATED) {
+	                            for (j = 0; j < i-1; j++) {         
+	                                xDistSquared = circleXCenter[j] - xCenter;
+	                                xDistSquared = xDistSquared * xDistSquared;
+	                                yDistSquared = circleYCenter[j] - yCenter;
+	                                yDistSquared = yDistSquared * yDistSquared;
+	                                distSquared = xDistSquared + yDistSquared;
+	                                if (distSquared <= maximumNNDistanceSquared) {
+	                                    break attemptloop;
+	                                }  
+	                            }
+                            } // if (pattern == AGGREGATED)
+                            else {
+                            	for (j = 0; j < i-1; j++) {
+                            	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
+                            	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[j] - yCenter);
+                            	    if (boundaryBase.contains(xPos, yPos)) {
+                            	    	break attemptloop;
+                            	    }
+                            	}
                             }
                             found = false;
                             attempts++;
@@ -471,7 +539,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 Preferences.debug(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.\n", 
                 		Preferences.DEBUG_ALGORITHM);
                 System.out.println(circlesDrawn + " circles drawn.  " + numCircles + " circles requested.");
-        } // if ((pattern == AGGREGATED) && (circlesDrawn == initialRandomCircles))
+        } // if (((pattern == AGGREGATED) || (pattern == AGGREGATED_ELLIPTICAL)) && (circlesDrawn == initialRandomCircles))
         
         if (pattern == REGULAR) {
             for (i = 2; i <= numCircles; i++) {
