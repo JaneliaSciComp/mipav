@@ -392,16 +392,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());    
         }
-        if (source == sepCheckbox) {
-        	useOCLCheckbox.removeItemListener(this);
-            useOCLCheckbox.setSelected(Preferences.isGpuCompEnabled() && useOCLCheckbox.isEnabled() && !sepCheckbox.isSelected());
-        	useOCLCheckbox.addItemListener(this);
-        }
-        if ( source == useOCLCheckbox ) {
-        	sepCheckbox.removeItemListener(this);
-        	sepCheckbox.setSelected(!sepCheckbox.isSelected());
-        	sepCheckbox.addItemListener(this);
-        }
     }
 
     /**
@@ -494,7 +484,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     		float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
     		OpenCLAlgorithmGradientMagnitude gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(image, sigmas,
-    				outputOptionsPanel.isProcessWholeImageSet(), image25D);
+    				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
     		gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
     		gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
     		gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());

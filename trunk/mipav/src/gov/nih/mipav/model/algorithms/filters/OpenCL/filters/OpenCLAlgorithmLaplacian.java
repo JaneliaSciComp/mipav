@@ -434,9 +434,6 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 		int[] imageSize = new int[]{width, height};
 		int[] maskSize = kExtents_2D;
 		int[] maskOrigins = kOrigins_2D;
-		
-		// Enable exceptions and subsequently omit error checks in this sample
-		//CL.setExceptionsEnabled(true);
 
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Laplacian.cl");
@@ -557,9 +554,6 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
 		int[] maskSize_3D = new int[]{kExtents_3D[0], kExtents_3D[1], kExtents_3D[2], 0};
 		int[] maskOrigins_3D = new int[]{kOrigins_3D[0], kOrigins_3D[1], kOrigins_3D[2], 0};
 		
-		// Enable exceptions and subsequently omit error checks in this sample
-		//CL.setExceptionsEnabled(true);
-
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Laplacian.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 

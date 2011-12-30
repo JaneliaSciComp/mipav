@@ -60,7 +60,6 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	public OpenCLAlgorithmBase(final ModelImage destImg, final ModelImage srcImg, final boolean entireImage, final long type) {
 
 		super(destImg, srcImg);
-
 		width  = srcImg.getExtents().length > 0 ? srcImg.getExtents()[0] : 1;
 		height = srcImg.getExtents().length > 1 ? srcImg.getExtents()[1] : 1;
 		depth  = srcImg.getExtents().length > 2 ? srcImg.getExtents()[2] : 1;
@@ -79,12 +78,21 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	{
 		cl_platform_id platform = null;
 
+		int[] errcode = new int[1];
 		int numPlatforms[] = new int[1];
-		clGetPlatformIDs(0, null, numPlatforms);
+		errcode[0] = clGetPlatformIDs(0, null, numPlatforms);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
 
 		//System.out.println("Number of platforms: "+numPlatforms[0]);
 		cl_platform_id platforms[] = new cl_platform_id[numPlatforms[0]];
-		clGetPlatformIDs(platforms.length, platforms, null);
+		errcode[0] = clGetPlatformIDs(platforms.length, platforms, null);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
 
 		// Collect all devices of all platforms
 		for (int i=0; i<platforms.length; i++)
@@ -93,6 +101,8 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
 			// Obtain the number of devices for the current platform
 			int numDevices[] = new int[1];
+			try
+			{
 			if ( CL.CL_SUCCESS == clGetDeviceIDs(platforms[i], iType, 0, null, numDevices) )
 			{
 				//System.out.println("Number of devices in platform "+platformName+": "+numDevices[0]);
@@ -100,7 +110,11 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 				{
 					cl_device_id devicesArray[] = new cl_device_id[numDevices[0]];
 					//System.out.println ( stringFor_errorCode( clGetDeviceIDs(platforms[i], iType, numDevices[0], devicesArray, null) ) );
-					clGetDeviceIDs(platforms[i], iType, numDevices[0], devicesArray, null);
+					errcode[0] = clGetDeviceIDs(platforms[i], iType, numDevices[0], devicesArray, null);
+					if ( errcode[0] != CL.CL_SUCCESS )
+					{
+						System.err.println( stringFor_errorCode(errcode[0]) );
+					}
 					if ( devicesArray.length > 0)
 					{
 						device = devicesArray[0];
@@ -108,6 +122,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 					}
 				}
 			}
+			} catch ( org.jocl.CLException e ) {}
 		}
 
 		if ( device == null )
@@ -126,7 +141,13 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
 		cl = clCreateContext(
 				contextProperties, 1, new cl_device_id[]{device}, 
-				null, null, null);
+				null, null, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+		
+		CL.setExceptionsEnabled(true);
 	}
 
 	/**
@@ -413,7 +434,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	 * @param fileName The name of the file to read.
 	 * @return The contents of the file
 	 */
-	protected String readFile(String fileName)
+	public static String readFile(String fileName)
 	{
 		try
 		{

@@ -13,6 +13,8 @@ import static org.jocl.CL.clEnqueueReadBuffer;
 import static org.jocl.CL.clReleaseMemObject;
 import static org.jocl.CL.clSetKernelArg;
 import static org.jocl.CL.stringFor_errorCode;
+import gov.nih.mipav.model.GaussianKernelFactory;
+import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.GenerateGaussian;
 import gov.nih.mipav.model.algorithms.OpenCLAlgorithmBase;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -67,8 +69,8 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
      * @param  maskFlag  VOI Masking
      * @param  img25D    calculate per slice or for 3D volume
      */
-    public OpenCLAlgorithmGaussianBlur(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D) {
-        this(null, srcImg, sigmas, maskFlag, img25D);
+    public OpenCLAlgorithmGaussianBlur(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean separable, boolean img25D) {
+        this(null, srcImg, sigmas, maskFlag, separable, img25D);
     }
 
     /**
@@ -80,12 +82,13 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
      * @param  maskFlag  the mask flag
      * @param  img25D    the 2.5D indicator
      */
-    public OpenCLAlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
+    public OpenCLAlgorithmGaussianBlur(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean separable,
                                  boolean img25D) {
         super(destImg, srcImg, maskFlag, CL.CL_DEVICE_TYPE_GPU);
 
         this.sigmas = sigmas;
-        image25D = img25D;
+		this.separable = separable;
+		this.image25D = img25D;
     }
 
     /**
@@ -118,24 +121,48 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
         }
         final long startTime = System.currentTimeMillis();
 
-        if (srcImage.getNDims() == 2) {
-            makeKernels2D();
-        } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
-            makeKernels2D();
-            makeKernels3D();
-        } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
-            makeKernels2D();
-        } else if (srcImage.getNDims() == 4) {
-            makeKernels2D();
-            makeKernels3D();
-        }
+        if ( !separable )
+        {
+        	if (srcImage.getNDims() == 2) {
+        		makeKernels2D();
+        	} else if ((srcImage.getNDims() == 3) && (image25D == false)) {
+        		makeKernels2D();
+        		makeKernels3D();
+        	} else if ((srcImage.getNDims() == 3) && (image25D == true)) {
+        		makeKernels2D();
+        	} else if (srcImage.getNDims() == 4) {
+        		makeKernels2D();
+        		makeKernels3D();
+        	}
+		}
 
         if (srcImage.getNDims() == 2) {
-        	gaussianBlur25D();
+        	if ( !separable )
+			{
+				gaussianBlur25D();
+			}
+        	else
+        	{
+				gaussianBlurSep25D();
+        	}
         } else if ((srcImage.getNDims() == 3) && (image25D == false)) {
-        	gaussianBlur3D(0);
+        	if ( !separable )
+			{
+				gaussianBlur3D(0);
+			}
+        	else
+        	{
+				gaussianBlurSep3D(0);
+        	}
         } else if ((srcImage.getNDims() == 3) && (image25D == true)) {
-        	gaussianBlur25D();
+        	if ( !separable )
+			{
+				gaussianBlur25D();
+			}
+        	else
+        	{
+				gaussianBlurSep25D();
+        	}
         } else if (srcImage.getNDims() == 4) {
         	gaussianBlur4D();
         }
@@ -291,9 +318,6 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		int[] maskSize = kExtents_2D;
 		int[] maskOrigins = kOrigins_2D;
 		
-		// Enable exceptions and subsequently omit error checks in this sample
-		//CL.setExceptionsEnabled(true);
-
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
@@ -325,6 +349,64 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
         {
             clSetKernelArg(kernel, sliceArg, Sizeof.cl_int, Pointer.to(new int[]{i}));
             clEnqueueNDRangeKernel(commandQueue, kernel, 2, null, globalWorkSize, null, 0, null, null);
+		}
+    	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
+		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_blur" );
+		
+		clReleaseMemObject(inputBuffer);
+		clReleaseMemObject(outputBuffer);
+	}
+	
+	private void gaussianBlurSep25D()
+	{
+		initCL(m_iDeviceType, null);
+		
+		int elementCount = width * height * depth * color;		
+		float[] input = new float[ elementCount ];
+		try {
+			if ( this.entireImage )
+			{
+				srcImage.exportData( 0, input.length, input );
+			}
+			else
+			{
+				srcImage.exportDataUseMask( 0, input.length, input );
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		float[] output = new float[ elementCount ];
+
+		int[] errcode = new int[1];
+		cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+				Sizeof.cl_float * input.length, Pointer.to(input), errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		cl_mem outputBuffer = clCreateBuffer(cl, CL.CL_MEM_WRITE_ONLY,
+				Sizeof.cl_float * output.length, null, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		// Convolve Seperable:
+		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(sigmas);
+		gkf.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
+		Kernel gaussianKernel = gkf.createKernel();
+		OpenCLAlgorithmConvolver.convolveSep2D( cl, device, 
+				inputBuffer, outputBuffer, width, height, depth, elementCount, gaussianKernel, 
+				color, colorMask );
+
+		// create command queue:
+		cl_command_queue commandQueue = 
+				clCreateCommandQueue(cl, device, 0, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
     	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
 		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_blur" );
@@ -395,9 +477,6 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		int[] maskSize_3D = new int[]{kExtents_3D[0], kExtents_3D[1], kExtents_3D[2], 0};
 		int[] maskOrigins_3D = new int[]{kOrigins_3D[0], kOrigins_3D[1], kOrigins_3D[2], 0};
 		
-		// Enable exceptions and subsequently omit error checks in this sample
-		//CL.setExceptionsEnabled(true);
-
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
@@ -468,6 +547,62 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		clReleaseMemObject(outputBuffer);
 	}
 	
+
+	private void gaussianBlurSep3D( int time )
+	{
+		initCL(m_iDeviceType, null);
+		
+		int elementCount = width * height * depth * color;		
+		float[] input = new float[ elementCount ];
+		try {
+			if ( this.entireImage )
+			{
+				srcImage.exportData( time * input.length, input.length, input );
+			}
+			else
+			{
+				srcImage.exportDataUseMask( time * input.length, input.length, input );
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		float[] output = new float[ elementCount ];
+
+		int[] errcode = new int[1];
+		cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+				Sizeof.cl_float * input.length, Pointer.to(input), errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		cl_mem outputBuffer = clCreateBuffer(cl, CL.CL_MEM_WRITE_ONLY,
+				Sizeof.cl_float * output.length, null, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		// Convolve Seperable:
+		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(sigmas);
+		gkf.setKernelType(GaussianKernelFactory.BLUR_KERNEL);
+		Kernel gaussianKernel = gkf.createKernel();
+		OpenCLAlgorithmConvolver.convolveSep3D( cl, device, 
+				inputBuffer, outputBuffer, width, height, depth, elementCount, gaussianKernel, 
+				color, colorMask, false );
+
+        
+		// create command queue:
+		cl_command_queue commandQueue = 
+				clCreateCommandQueue(cl, device, 0, null);
+    	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
+		saveImage(output, time, srcImage.getType(), srcImage.getImageName() + "_blur" );
+		
+		clReleaseMemObject(inputBuffer);
+		clReleaseMemObject(outputBuffer);
+	}
+	
 	/**
 	 * Calls gaussianBlur3D for each volume in the time series image.
 	 */
@@ -475,7 +610,14 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 	{
 		for ( int i = 0; i < time; i++ )
 		{
-			gaussianBlur3D(i);
+			if ( !separable )
+			{
+				gaussianBlur3D(i);
+			}
+			else
+			{
+				gaussianBlurSep3D(i);
+			}
 		}
 	}
 }
