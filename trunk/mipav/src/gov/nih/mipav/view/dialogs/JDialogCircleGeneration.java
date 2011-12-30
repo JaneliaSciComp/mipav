@@ -58,6 +58,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     
     private JRadioButton aggregatedButton;
     
+    private JRadioButton aggregatedEllipseButton;
+    
     private JRadioButton regularButton;
     
     private JRadioButton constrainedButton;
@@ -81,6 +83,24 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     private JTextField maximumDistanceText;
     
     private double maximumNearestNeighborDistance = 15.0;
+    
+    private JLabel semiMajorAxisLabel;
+    
+    private JTextField semiMajorAxisText;
+    
+    private double semiMajorAxis = 	15.0;
+    
+    private JLabel semiMinorAxisLabel;
+    
+    private JTextField semiMinorAxisText;
+    
+    private JLabel phiLabel;
+    
+    private JTextField phiText;
+    
+    private double phi = 0.0;
+    
+    private double semiMinorAxis = 	10.0;
     
     private JLabel lowestForbiddenLabel;
     
@@ -135,8 +155,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
-        } else if ((source == randomButton) || (source == aggregatedButton) || (source == regularButton) ||
-                   (source == constrainedButton)) {
+        } else if ((source == randomButton) || (source == aggregatedButton) || (source == aggregatedEllipseButton) ||
+        		   (source == regularButton) || (source == constrainedButton)) {
             if (randomButton.isSelected()) {
                 initialCirclesLabel.setEnabled(false);
                 initialCirclesText.setEnabled(false);
@@ -150,6 +170,12 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 highestForbiddenText.setEnabled(false);
                 highestRegenerationLabel.setEnabled(false);
                 highestRegenerationText.setEnabled(false);
+                semiMajorAxisLabel.setEnabled(false);
+                semiMajorAxisText.setEnabled(false);
+                semiMinorAxisLabel.setEnabled(false);
+                semiMinorAxisText.setEnabled(false);
+                phiLabel.setEnabled(false);
+                phiText.setEnabled(false);
             }
             else if (aggregatedButton.isSelected()) {
                 initialCirclesLabel.setEnabled(true);
@@ -164,6 +190,32 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 highestForbiddenText.setEnabled(false);
                 highestRegenerationLabel.setEnabled(false);
                 highestRegenerationText.setEnabled(false);
+                semiMajorAxisLabel.setEnabled(false);
+                semiMajorAxisText.setEnabled(false);
+                semiMinorAxisLabel.setEnabled(false);
+                semiMinorAxisText.setEnabled(false);
+                phiLabel.setEnabled(false);
+                phiText.setEnabled(false);
+            }
+            else if (aggregatedEllipseButton.isSelected()) {
+            	initialCirclesLabel.setEnabled(true);
+                initialCirclesText.setEnabled(true);
+                minimumDistanceLabel.setEnabled(false);
+                minimumDistanceText.setEnabled(false);
+                maximumDistanceLabel.setEnabled(false);
+                maximumDistanceText.setEnabled(false);
+                lowestForbiddenLabel.setEnabled(false);
+                lowestForbiddenText.setEnabled(false);
+                highestForbiddenLabel.setEnabled(false);
+                highestForbiddenText.setEnabled(false);
+                highestRegenerationLabel.setEnabled(false);
+                highestRegenerationText.setEnabled(false);
+                semiMajorAxisLabel.setEnabled(true);
+                semiMajorAxisText.setEnabled(true);
+                semiMinorAxisLabel.setEnabled(true);
+                semiMinorAxisText.setEnabled(true);
+                phiLabel.setEnabled(true);
+                phiText.setEnabled(true);	
             }
             else if (regularButton.isSelected()){
                 initialCirclesLabel.setEnabled(false);
@@ -180,6 +232,12 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 highestForbiddenText.setEnabled(false);
                 highestRegenerationLabel.setEnabled(false);
                 highestRegenerationText.setEnabled(false);
+                semiMajorAxisLabel.setEnabled(false);
+                semiMajorAxisText.setEnabled(false);
+                semiMinorAxisLabel.setEnabled(false);
+                semiMinorAxisText.setEnabled(false);
+                phiLabel.setEnabled(false);
+                phiText.setEnabled(false);
             }
             else {
                 initialCirclesLabel.setEnabled(false);
@@ -193,7 +251,13 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 highestForbiddenLabel.setEnabled(true);
                 highestForbiddenText.setEnabled(true);
                 highestRegenerationLabel.setEnabled(true);
-                highestRegenerationText.setEnabled(true);   
+                highestRegenerationText.setEnabled(true); 
+                semiMajorAxisLabel.setEnabled(false);
+                semiMajorAxisText.setEnabled(false);
+                semiMinorAxisLabel.setEnabled(false);
+                semiMinorAxisText.setEnabled(false);
+                phiLabel.setEnabled(false);
+                phiText.setEnabled(false);
             }
         }
     }
@@ -284,7 +348,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             // Make algorithm
             cAlgo = new AlgorithmCircleGeneration(resultImage, radius, numCircles, pattern, initialRandomCircles,
                         minimumNearestNeighborDistance, maximumNearestNeighborDistance, lowestForbiddenNNDistance,
-                        highestForbiddenNNDistance, highestRegenerationNNDistance);
+                        highestForbiddenNNDistance, highestRegenerationNNDistance, semiMajorAxis, semiMinorAxis,
+                        phi);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -421,13 +486,22 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridy = 5;
         paramPanel.add(aggregatedButton, gbc6);
         
+        aggregatedEllipseButton = new JRadioButton("Aggregated ellipse pattern", false);
+        aggregatedEllipseButton.setFont(serif12);
+        aggregatedEllipseButton.setForeground(Color.black);
+        aggregatedEllipseButton.addActionListener(this);
+        patternGroup.add(aggregatedEllipseButton);
+        gbc6.gridx = 0;
+        gbc6.gridy = 6;
+        paramPanel.add(aggregatedEllipseButton, gbc6);
+        
         regularButton = new JRadioButton("Regular pattern", false);
         regularButton.setFont(serif12);
         regularButton.setForeground(Color.black);
         regularButton.addActionListener(this);
         patternGroup.add(regularButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 6;
+        gbc6.gridy = 7;
         paramPanel.add(regularButton, gbc6);
         
         constrainedButton = new JRadioButton("Constrained pattern", false);
@@ -436,7 +510,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         constrainedButton.addActionListener(this);
         patternGroup.add(constrainedButton);
         gbc6.gridx = 0;
-        gbc6.gridy = 7;
+        gbc6.gridy = 8;
         paramPanel.add(constrainedButton, gbc6);
         
         initialCirclesLabel = new JLabel("Initial circles randomly generated ");
@@ -444,7 +518,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         initialCirclesLabel.setFont(serif12);
         initialCirclesLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 8;
+        gbc6.gridy = 9;
         paramPanel.add(initialCirclesLabel, gbc6);
         
         initialCirclesText = new JTextField(10);
@@ -459,7 +533,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         minimumDistanceLabel.setFont(serif12);
         minimumDistanceLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 9;
+        gbc6.gridy = 10;
         paramPanel.add(minimumDistanceLabel, gbc6);
         
         minimumDistanceText = new JTextField(10);
@@ -474,7 +548,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         maximumDistanceLabel.setFont(serif12);
         maximumDistanceLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 10;
+        gbc6.gridy = 11;
         paramPanel.add(maximumDistanceLabel, gbc6);
         
         maximumDistanceText = new JTextField(10);
@@ -484,12 +558,57 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridx = 1;
         paramPanel.add(maximumDistanceText, gbc6);
         
+        semiMajorAxisLabel = new JLabel("Maximum semi-major axis distance ");
+        semiMajorAxisLabel.setForeground(Color.black);
+        semiMajorAxisLabel.setFont(serif12);
+        semiMajorAxisLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 12;
+        paramPanel.add(semiMajorAxisLabel, gbc6);
+        
+        semiMajorAxisText = new JTextField(10);
+        semiMajorAxisText.setText(String.valueOf(semiMajorAxis));
+        semiMajorAxisText.setFont(serif12);
+        semiMajorAxisText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(semiMajorAxisText, gbc6);
+        
+        semiMinorAxisLabel = new JLabel("Maximum semi-minor axis distance ");
+        semiMinorAxisLabel.setForeground(Color.black);
+        semiMinorAxisLabel.setFont(serif12);
+        semiMinorAxisLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 13;
+        paramPanel.add(semiMinorAxisLabel, gbc6);
+        
+        semiMinorAxisText = new JTextField(10);
+        semiMinorAxisText.setText(String.valueOf(semiMinorAxis));
+        semiMinorAxisText.setFont(serif12);
+        semiMinorAxisText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(semiMinorAxisText, gbc6);
+        
+        phiLabel = new JLabel("Angle semi-major axis makes with x-axis in degrees ");
+        phiLabel.setForeground(Color.black);
+        phiLabel.setFont(serif12);
+        phiLabel.setEnabled(false);
+        gbc6.gridx = 0;
+        gbc6.gridy = 14;
+        paramPanel.add(phiLabel, gbc6);
+        
+        phiText = new JTextField(10);
+        phiText.setText(String.valueOf(phi));
+        phiText.setFont(serif12);
+        phiText.setEnabled(false);
+        gbc6.gridx = 1;
+        paramPanel.add(phiText, gbc6);
+        
         lowestForbiddenLabel = new JLabel("Lowest forbidden intermediate nearest neighbor distance ");
         lowestForbiddenLabel.setForeground(Color.black);
         lowestForbiddenLabel.setFont(serif12);
         lowestForbiddenLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 11;
+        gbc6.gridy = 15;
         paramPanel.add(lowestForbiddenLabel, gbc6);
         
         lowestForbiddenText = new JTextField(10);
@@ -504,7 +623,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         highestForbiddenLabel.setFont(serif12);
         highestForbiddenLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 12;
+        gbc6.gridy = 16;
         paramPanel.add(highestForbiddenLabel, gbc6);
         
         highestForbiddenText = new JTextField(10);
@@ -519,7 +638,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         highestRegenerationLabel.setFont(serif12);
         highestRegenerationLabel.setEnabled(false);
         gbc6.gridx = 0;
-        gbc6.gridy = 13;
+        gbc6.gridy = 17;
         paramPanel.add(highestRegenerationLabel, gbc6);
         
         highestRegenerationText = new JTextField(10);
@@ -604,6 +723,68 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 maximumDistanceText.requestFocus();
                 maximumDistanceText.selectAll();
                 return false;
+            }
+        }
+        else if (aggregatedEllipseButton.isSelected()) {
+        	pattern = AlgorithmCircleGeneration.AGGREGATED_ELLIPSE;
+            initialRandomCircles = Integer.valueOf(initialCirclesText.getText()).intValue();
+            if (initialRandomCircles < 1) {
+                MipavUtil.displayError("The number of initial random circles must be at least 1");
+                initialCirclesText.requestFocus();
+                initialCirclesText.selectAll();
+                return false;
+            }
+            if (initialRandomCircles >= numCircles) {
+                MipavUtil.displayError("The number of initial random circles must be less than the number of circles");
+                initialCirclesText.requestFocus();
+                initialCirclesText.selectAll();
+                return false;
+            }
+            
+            if (!testParameter(semiMajorAxisText.getText(), 0, 1000000)) {
+                semiMajorAxisText.requestFocus();
+                semiMajorAxisText.selectAll();
+
+                return false;
+            } else {
+                semiMajorAxis = Double.valueOf(semiMajorAxisText.getText()).doubleValue();
+                if (semiMajorAxis < 2.0 * radius) {
+                    MipavUtil.displayError("The semi-major axis distance must be a least 2.0 * radius");
+                    semiMajorAxisText.requestFocus();
+                    semiMajorAxisText.selectAll();
+                    return false;
+                }
+            }
+            
+            if (!testParameter(semiMinorAxisText.getText(), 0, 1000000)) {
+                semiMinorAxisText.requestFocus();
+                semiMinorAxisText.selectAll();
+
+                return false;
+            } else {
+                semiMinorAxis = Double.valueOf(semiMinorAxisText.getText()).doubleValue();
+                if (semiMinorAxis > semiMajorAxis) {
+                	semiMinorAxisText.requestFocus();
+                    semiMinorAxisText.selectAll();	
+                    MipavUtil.displayError("The semi-minor axis cannot be greater than the semi-major axis");
+                    return false;
+                }
+                if (semiMinorAxis < 2.0 * radius) {
+                    MipavUtil.displayError("The semi-minor axis distance must be a least 2.0 * radius");
+                    semiMinorAxisText.requestFocus();
+                    semiMinorAxisText.selectAll();
+                    return false;
+                }
+            }
+            
+            if (!testParameter(phiText.getText(), -Double.MAX_VALUE, Double.MAX_VALUE)) {
+            	phiText.requestFocus();
+            	phiText.selectAll();
+            	return false;
+            }
+            else {
+            	phi = Double.valueOf(phiText.getText()).doubleValue();
+            	phi = phi * Math.PI/180.0;
             }
         }
         else if (regularButton.isSelected()){
