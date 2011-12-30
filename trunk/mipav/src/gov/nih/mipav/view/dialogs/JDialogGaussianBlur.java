@@ -340,16 +340,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents( !image25DCheckbox.isSelected());
         }
-        if (source == sepCheckbox) {
-        	useOCLCheckbox.removeItemListener(this);
-            useOCLCheckbox.setSelected(Preferences.isGpuCompEnabled() && useOCLCheckbox.isEnabled() && !sepCheckbox.isSelected());
-        	useOCLCheckbox.addItemListener(this);
-        }
-        if ( source == useOCLCheckbox ) {
-        	sepCheckbox.removeItemListener(this);
-        	sepCheckbox.setSelected(!sepCheckbox.isSelected());
-        	sepCheckbox.addItemListener(this);
-        }
     }
 
     /**
@@ -437,7 +427,7 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     		float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
     		OpenCLAlgorithmGaussianBlur blurAlgo = new OpenCLAlgorithmGaussianBlur(image, sigmas,
-    				outputOptionsPanel.isProcessWholeImageSet(), image25D);
+    				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
     		blurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
     		blurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
     		blurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());

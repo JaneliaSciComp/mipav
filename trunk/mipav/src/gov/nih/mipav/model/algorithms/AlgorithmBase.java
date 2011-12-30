@@ -40,6 +40,9 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** If true process each image of a 3D volume independently. */
     protected boolean image25D = false;
 
+    /** If true convolution kernels are separable. */
+    protected boolean separable = false;
+
     /** Mask indicating which voxels to process. If true process voxel else skip. */
     protected BitSet mask = null;
 

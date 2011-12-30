@@ -121,8 +121,6 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
-		// Enable exceptions and subsequently omit error checks in this sample
-		//CL.setExceptionsEnabled(true);
 
 		String source = readFile("src/kernels/VolumeNormals.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
@@ -201,7 +199,6 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 
 		long[] tex_globalWorkSize = new long[]{ width, height, depth };
 
-		CL.setExceptionsEnabled(true);
 		String source = readFile("src/kernels/VolumeNormals.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
 				new String[]{ source }, null, errcode);

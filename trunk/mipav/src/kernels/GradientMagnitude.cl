@@ -84,8 +84,8 @@ __kernel void gradientMagnitude25D_Color(
     int gz = slice;
     int globalIndex = gz * imageSize.x * imageSize.y + gy * imageSize.x + gx;
     float passThrough_red = input[ globalIndex * 4 + 1];
-    float passThrough_green = input[ globalIndex * 4 + 1];
-    float passThrough_blue = input[ globalIndex * 4 + 1];
+    float passThrough_green = input[ globalIndex * 4 + 2];
+    float passThrough_blue = input[ globalIndex * 4 + 3];
     float sumX_red = 0;
     float sumY_red = 0;
     float sumX_green = 0;
@@ -189,7 +189,7 @@ __kernel void gradientMagnitude25D_Color(
        }
        else
        {
-          output[globalIndex * 4 + 3] = passThrough_green;
+          output[globalIndex * 4 + 3] = passThrough_blue;
        } 
     }
 }
@@ -306,8 +306,8 @@ __kernel void gradientMagnitude3D_Color(
     int gz = slice;
     int globalIndex = gz * imageSize.x * imageSize.y + gy * imageSize.x + gx;
     float passThrough_red = input[ globalIndex * 4 + 1];
-    float passThrough_green = input[ globalIndex * 4 + 1];
-    float passThrough_blue = input[ globalIndex * 4 + 1];
+    float passThrough_green = input[ globalIndex * 4 + 2];
+    float passThrough_blue = input[ globalIndex * 4 + 3];
     float sumX_red = 0;
     float sumY_red = 0;
     float sumZ_red = 0;
@@ -440,7 +440,7 @@ __kernel void gradientMagnitude3D_Color(
        }
        else
        {
-          output[globalIndex * 4 + 3] = passThrough_green;
+          output[globalIndex * 4 + 3] = passThrough_blue;
        } 
     }
 }

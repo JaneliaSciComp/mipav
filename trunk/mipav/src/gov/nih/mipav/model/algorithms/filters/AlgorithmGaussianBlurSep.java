@@ -72,7 +72,12 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase implements Algorithm
     public AlgorithmGaussianBlurSep(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D) {
         super(null, srcImg);
 
-        this.sigmas = sigmas;
+		image25D = img25D;
+		if(image25D){
+			this.sigmas = new float[]{sigmas[0], sigmas[1]};
+		}else{
+			this.sigmas = sigmas;
+		}
         entireImage = maskFlag;
         image25D = img25D;
     }
