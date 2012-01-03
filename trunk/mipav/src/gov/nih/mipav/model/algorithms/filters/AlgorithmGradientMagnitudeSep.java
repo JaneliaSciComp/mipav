@@ -5,7 +5,9 @@ import gov.nih.mipav.model.Kernel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmSeparableConvolver;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.IOException;
@@ -170,10 +172,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 
 			gkf.setKernelType(GaussianKernelFactory.Z_DERIVATIVE_KERNEL);
 			gaussianKernel = gkf.createKernel();
-
 			float[] zDerivativeBuffer = calculateDerivativeImage(buffer, bufferExtents, color,
 					gaussianKernel.getData(), progressFrom, progressTo);
-
 			if (threadStopped) {
 				return;
 			}
@@ -284,7 +284,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
 	private float[] calculateDerivativeImage(float[] imgData, int[] imgExtents, boolean color,
 			float[][] kernelData, int progressFrom, int progressTo) {
 		AlgorithmSeparableConvolver convolver = new AlgorithmSeparableConvolver(
-				imgData, imgExtents, kernelData, color);
+				imgData, imgExtents, kernelData, color);		
+		
 		convolver.setNumberOfThreads(Preferences.getNumberOfThreads());
 		convolver.setProgressValues(generateProgressValues(progressFrom,
 				progressTo));

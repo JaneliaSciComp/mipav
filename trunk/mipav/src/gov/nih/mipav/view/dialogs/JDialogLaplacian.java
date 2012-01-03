@@ -144,7 +144,38 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
+        if ( algorithm instanceof OpenCLAlgorithmLaplacian )
+        {
+        	if ( algorithm.isCompleted() )
+        	{
+        		if ( displayInNewFrame )
+        		{
+        			new ViewJFrameImage( algorithm.getDestImage() );
+        		}
+        		else
+        		{
+        			// These next lines set the titles in all frames where the source image is displayed to
+        			// image name so as to indicate that the image is now unlocked!
+        			// The image frames are enabled and then registered to the userinterface.
+        			final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
+        			for (int i = 0; i < imageFrames.size(); i++) {
+        				((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+        				((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+        				if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+        					userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+        				}
+        			}
+
+        			if (parentFrame != null) {
+        				userInterface.registerFrame(parentFrame);
+        			}
+
+        			image.notifyImageDisplayListeners(null, true);
+        		}
+        	}
+        }
         if (algorithm instanceof AlgorithmLaplacian) {
             image.clearMask();
 
@@ -323,15 +354,36 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_laplacian");  
+    	displayInNewFrame = outputPanel.isOutputNewImageSet();
 
         // Check if the algorithm should use OpenCL, calculate and return:
         if ( useOCLCheckbox.isSelected() )
     	{
     		float[] sigmas = sigmasPanel.getNormalizedSigmas();
 
-    		OpenCLAlgorithmLaplacian laplacianAlgo = new OpenCLAlgorithmLaplacian(image, sigmas,
-    				outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
+    		OpenCLAlgorithmLaplacian laplacianAlgo; 
+    		if ( displayInNewFrame )
+    		{
+        		laplacianAlgo= new OpenCLAlgorithmLaplacian(new ModelImage( image.getType(), image.getExtents(), name ), image, sigmas,
+        				outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
+    		}
+    		else
+    		{
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+    			laplacianAlgo= new OpenCLAlgorithmLaplacian(image, sigmas,
+    					outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
+    		}
+
+    		laplacianAlgo.addListener(this);
     		// Hide the dialog since the algorithm is about to run.
     		setVisible(false);
     		laplacianAlgo.run();
