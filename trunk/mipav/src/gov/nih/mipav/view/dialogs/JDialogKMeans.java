@@ -59,6 +59,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	
 	private static final int MAHALANOBIS_SQUARED = 2;
 	
+	private static final int S_METRIC = 3;
+	
 	/** source image. **/
     private ModelImage image;
     
@@ -169,6 +171,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     
     private JRadioButton mahalanobis;
     
+    private JRadioButton SButton;
+    
     private JCheckBox unitVarianceCheckBox;
     
     private boolean scaleVariablesToUnitVariance;
@@ -176,6 +180,12 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JLabel resultsFileNameLabel;
     
     private JTextField resultsFileNameText;
+    
+    private JLabel axesRatioLabel;
+    
+    private JTextField axesRatioText;
+    
+    private double axesRatio[];
 	
 	
 	public JDialogKMeans() {
@@ -237,7 +247,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	     hierarchicalInit.setEnabled(false);
 	    	     maxMinInit.setEnabled(false);	 
 	    	 } // else
-	     } else if ((source == euclideanSquared) || (source == cityBlock) || (source == mahalanobis)) {
+	     } else if ((source == euclideanSquared) || (source == cityBlock) || (source == mahalanobis) ||
+	    		    (source == SButton)) {
 	    	 if (euclideanSquared.isSelected()) {
 	    		 globalAlgo.setEnabled(true);
 	    		 fastGlobalAlgo.setEnabled(true);
@@ -249,17 +260,20 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 }
 	    		 fastGlobalAlgo.setEnabled(false);
 	    	 }
-	    	 else {
+	    	 else if (mahalanobis.isSelected()){
 	    		 if (globalAlgo.isSelected()){
 	    			 globalAlgo.setSelected(false);
-	    			 euclideanSquared.setSelected(true);
+	    			 kMeansAlgo.setSelected(true);
 	    		 }
 	    		 else if (fastGlobalAlgo.isSelected()) {
 	    			 fastGlobalAlgo.setSelected(false);
-	    			 euclideanSquared.setSelected(true);
+	    			 kMeansAlgo.setSelected(true);
 	    		 }
 	    		 globalAlgo.setEnabled(false);
 	    		 fastGlobalAlgo.setEnabled(false);
+	    	 }
+	    	 else {
+	    		 
 	    	 }
 	     } else if (command.equals("AddImageBrowse")) {
 	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
@@ -994,7 +1008,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         mainPanel.add(distanceLabel, gbc);
         
         distanceGroup = new ButtonGroup();
-        euclideanSquared = new JRadioButton("Euclidean squared distance with mean centroids", true);
+        euclideanSquared = new JRadioButton("Euclidean squared distance with mean centroids works"+
+        		" on spherical clusters same size", true);
         euclideanSquared.setFont(serif12);
         euclideanSquared.setForeground(Color.black);
         euclideanSquared.addActionListener(this);
@@ -1014,7 +1029,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 14;
         mainPanel.add(cityBlock, gbc);
         
-        mahalanobis = new JRadioButton("Mahalanobis squared distance with mean centroids", false);
+        mahalanobis = new JRadioButton("Mahalanobis squared distance with mean centroids works"+
+        		" on ellipsoidal clusters same orientation same size", false);
         mahalanobis.setFont(serif12);
         mahalanobis.setForeground(Color.black);
         mahalanobis.addActionListener(this);
@@ -1024,10 +1040,40 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 15;
         mainPanel.add(mahalanobis, gbc);
         
+        /*SButton = new JRadioButton("S metric with mean centroids works"+
+        		" on ellipsoidal clusters different orientation same size", false);
+        SButton.setFont(serif12);
+        SButton.setForeground(Color.black);
+        SButton.addActionListener(this);
+        distanceGroup.add(SButton);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 16;
+        mainPanel.add(SButton, gbc);
+        
+        axesRatioLabel = new JLabel("Ratio of other axes in decreasing size order to first separated by commas:");
+        axesRatioLabel.setForeground(Color.black);
+        axesRatioLabel.setFont(serif12);
+        axesRatioLabel.setEnabled(false);
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 17;
+        mainPanel.add(axesRatioLabel, gbc);
+        
+        axesRatioText = new JTextField("");
+        axesRatioText.setForeground(Color.black);
+        axesRatioText.setFont(serif12);
+        axesRatioText.setEnabled(false);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = 2;
+        gbc.gridy = 18;
+        mainPanel.add(axesRatioText, gbc);*/
+        
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
         clustersLabel.setForeground(Color.black);
         clustersLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 16;
         mainPanel.add(clustersLabel, gbc);
