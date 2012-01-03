@@ -180,8 +180,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		}
 
 		System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
-
-		new ViewJFrameImage(destImage);		
+		setCompleted(true);
 	}
 
 	/**
@@ -667,13 +666,6 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 
-		cl_mem outputBuffer = clCreateBuffer(cl, CL.CL_MEM_WRITE_ONLY,
-				Sizeof.cl_float * output.length, null, errcode);
-		if ( errcode[0] != CL.CL_SUCCESS )
-		{
-			System.err.println( stringFor_errorCode(errcode[0]) );
-		}
-
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
@@ -717,7 +709,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		int arg = 0;
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivX));
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivY));
-		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputBuffer));
+		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(inputBuffer));
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
 		if ( color != 1 )
 		{
@@ -744,17 +736,16 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( "clFinish " + stringFor_errorCode(errcode[0]) );
 		}
-		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputDerivX);
 		clReleaseMemObject(outputDerivY);
-		errcode[0] = clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
+		errcode[0] = clEnqueueReadBuffer(commandQueue, inputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
 		if ( errcode[0] != CL.CL_SUCCESS )
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_gm" );
 
-		clReleaseMemObject(outputBuffer);
+		clReleaseMemObject(inputBuffer);
 	}
 
 	/**
@@ -783,7 +774,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		float[] output = new float[ elementCount ];
 
 		int[] errcode = new int[1];
-		cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 				Sizeof.cl_float * input.length, Pointer.to(input), errcode);
 		if ( errcode[0] != CL.CL_SUCCESS )
 		{
@@ -810,14 +801,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
-
-		cl_mem outputBuffer = clCreateBuffer(cl, CL.CL_MEM_WRITE_ONLY,
-				Sizeof.cl_float * output.length, null, errcode);
-		if ( errcode[0] != CL.CL_SUCCESS )
-		{
-			System.err.println( stringFor_errorCode(errcode[0]) );
-		}
-
+		
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
@@ -871,7 +855,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivX));
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivY));
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivZ));
-		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputBuffer));
+		clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(inputBuffer));
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, depth, 0}));
 		clSetKernelArg(magnitude, arg++, Sizeof.cl_int, Pointer.to(new int[]{kExtentsZ[2]}));
 		if ( color != 1 )
@@ -899,18 +883,17 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( "clFinish " + stringFor_errorCode(errcode[0]) );
 		}
-		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputDerivX);
 		clReleaseMemObject(outputDerivY);
 		clReleaseMemObject(outputDerivZ);
-		errcode[0] = clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
+		errcode[0] = clEnqueueReadBuffer(commandQueue, inputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
 		if ( errcode[0] != CL.CL_SUCCESS )
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
 		saveImage(output, time, srcImage.getType(), srcImage.getImageName() + "_gm" );
 
-		clReleaseMemObject(outputBuffer);
+		clReleaseMemObject(inputBuffer);
 	}
 
 	/**

@@ -98,10 +98,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
      */
     public OpenCLAlgorithmLaplacian(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D,
                               float ampFactor) {
-        super(null, srcImg, maskFlag, CL.CL_DEVICE_TYPE_GPU);
-
-        destImage = null; // Calc in place
-        srcImage = srcImg;
+        super(destImg, srcImg, maskFlag, CL.CL_DEVICE_TYPE_GPU);
         this.sigmas = sigmas;
         entireImage = maskFlag;
         image25D = img25D;
@@ -215,8 +212,7 @@ public class OpenCLAlgorithmLaplacian extends OpenCLAlgorithmBase {
         }
             
         System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
-		
-		new ViewJFrameImage(destImage);		
+		setCompleted(true);
     }
     
     

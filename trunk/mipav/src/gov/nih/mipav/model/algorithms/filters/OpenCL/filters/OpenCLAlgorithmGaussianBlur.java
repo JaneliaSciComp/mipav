@@ -169,7 +169,6 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
             
         System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
 		
-		new ViewJFrameImage(destImage);		
         setCompleted(true);
     }
 

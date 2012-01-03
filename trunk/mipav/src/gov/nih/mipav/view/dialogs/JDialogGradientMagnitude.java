@@ -6,6 +6,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitude;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGradientMagnitudeSep;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmGradientMagnitude;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileUtility;
@@ -168,6 +169,39 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         }
         String name = makeImageName(image.getImageName(), "_gmag");
 
+
+        if ( algorithm instanceof OpenCLAlgorithmGradientMagnitude )
+        {
+        	if ( algorithm.isCompleted() )
+        	{
+        		if ( displayInNewFrame )
+        		{
+        			new ViewJFrameImage( algorithm.getDestImage() );
+        		}
+        		else
+        		{
+        			// These next lines set the titles in all frames where the source image is displayed to
+        			// image name so as to indicate that the image is now unlocked!
+        			// The image frames are enabled and then registered to the userinterface.
+        			final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+        			for (int i = 0; i < imageFrames.size(); i++) {
+        				((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+        				((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+        				if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+        					userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+        				}
+        			}
+
+        			if (parentFrame != null) {
+        				userInterface.registerFrame(parentFrame);
+        			}
+
+        			image.notifyImageDisplayListeners(null, true);
+        		}
+        	}
+        }
         if (algorithm instanceof AlgorithmGradientMagnitude) {
             image.clearMask();
 
@@ -482,12 +516,33 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     	if ( useOCLCheckbox.isSelected() )
     	{
     		float[] sigmas = sigmaPanel.getNormalizedSigmas();
+    		OpenCLAlgorithmGradientMagnitude gradientMagAlgo;
+    		if ( displayInNewFrame )
+    		{
+    			gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(new ModelImage( image.getType(), image.getExtents(), name ), image, sigmas,
+        				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+    		}
+    		else
+    		{
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
-    		OpenCLAlgorithmGradientMagnitude gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(image, sigmas,
-    				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+    			gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(image, sigmas,
+        				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+    		}
+
+    		
     		gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
     		gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
     		gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+    		gradientMagAlgo.addListener(this);
 
     		// Hide the dialog since the algorithm is about to run.
     		setVisible(false);

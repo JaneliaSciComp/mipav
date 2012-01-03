@@ -147,6 +147,39 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         }
         final String name = JDialogBase.makeImageName(image.getImageName(), "_gblur");
 
+        if ( algorithm instanceof OpenCLAlgorithmGaussianBlur )
+        {
+        	if ( algorithm.isCompleted() )
+        	{
+        		if ( displayInNewFrame )
+        		{
+        			new ViewJFrameImage( algorithm.getDestImage() );
+        		}
+        		else
+        		{
+        			// These next lines set the titles in all frames where the source image is displayed to
+        			// image name so as to indicate that the image is now unlocked!
+        			// The image frames are enabled and then registered to the userinterface.
+        			final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+        			for (int i = 0; i < imageFrames.size(); i++) {
+        				((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+        				((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+        				if ( ((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+        					userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+        				}
+        			}
+
+        			if (parentFrame != null) {
+        				userInterface.registerFrame(parentFrame);
+        			}
+
+        			image.notifyImageDisplayListeners(null, true);
+        		}
+        	}
+        }
+        
         if (algorithm instanceof AlgorithmGaussianBlur) {
             Preferences.debug("Gaussian Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
@@ -425,12 +458,31 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     	if ( useOCLCheckbox.isSelected() )
     	{
     		float[] sigmas = sigmaPanel.getNormalizedSigmas();
+    		OpenCLAlgorithmGaussianBlur blurAlgo;
+    		if ( displayInNewFrame )
+    		{
+    			blurAlgo = new OpenCLAlgorithmGaussianBlur(new ModelImage( image.getType(), image.getExtents(), name ), image, 
+    					sigmas, outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);    			
+    		}
+    		else
+    		{
+                final Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
-    		OpenCLAlgorithmGaussianBlur blurAlgo = new OpenCLAlgorithmGaussianBlur(image, sigmas,
-    				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+    			blurAlgo = new OpenCLAlgorithmGaussianBlur(image, sigmas,
+    					outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
+    		}
     		blurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
     		blurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
     		blurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
+    		blurAlgo.addListener(this);
 
     		// Hide the dialog since the algorithm is about to run.
     		setVisible(false);

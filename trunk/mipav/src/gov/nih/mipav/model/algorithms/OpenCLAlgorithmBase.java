@@ -215,15 +215,22 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	{
 		if ( destImage == null )
 		{
-			destImage = new ModelImage( type, srcImage.getExtents(), name );
+			try {
+				srcImage.importData(i* data.length, data, false);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			srcImage.calcMinMax();
 		}
-		try {
-			destImage.importData(i* data.length, data, false);
-		} catch (IOException e) {
-			e.printStackTrace();
+		else
+		{
+			try {
+				destImage.importData(i* data.length, data, false);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			destImage.calcMinMax();
 		}
-		destImage.calcMinMax();
-		//new ViewJFrameImage(destImage);
 	}
 
 	public static boolean isOCLAvailable()
