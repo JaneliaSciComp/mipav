@@ -423,7 +423,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
      * 
      * @return false when rate is unsupported
      */
-    public boolean setSubsampling(int subSample) {
+    public boolean setSubsamplingRate(int subSample) {
         if(by2Button != null && by4Button != null && by8Button != null) {
             by2Button.setSelected(false);
             by4Button.setSelected(false);
