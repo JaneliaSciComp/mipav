@@ -1002,7 +1002,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param image Created blank image.
      */
     public ModelImage createEmptyImage(FileInfoBase fileInfo) {
-        ModelImage image = null;
         final int[] extents = {256, 256, 32};
         final int[] units = {7, 7, 7, -1, -1};
         final float[] res = {1.0f, 1.0f, 1.0f, 1.0f, 1.0f};
@@ -1016,31 +1015,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             fileInfo.setEndianess(false);
             fileInfo.setOffset(0);
         }
-
-        try {
-            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), "BlankImage");
-        } catch (final OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-            MipavUtil.displayError("FileIO: " + error);
-
-            return null;
-        }
-
-        if (fileInfo.getExtents().length > 2) { // Set file info
-
-            for (int i = 0; i < fileInfo.getExtents()[2]; i++) {
-                image.setFileInfo(fileInfo, i);
-            }
-        } else {
-            image.setFileInfo(fileInfo, 0);
-        }
-        return image;
+        
+        return createBlankImage(fileInfo);
     }
 
     /**
@@ -1468,7 +1444,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param fileInfo This object contains the enough image information to build a ModelImage with nothing inside (eg.
      *            blank image).
      */
-    public void createBlankImage(FileInfoBase fileInfo) {
+    public ModelImage createBlankImage(FileInfoBase fileInfo) {
         ModelImage image = null;
 
         if (fileInfo == null) {
@@ -1476,7 +1452,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             rawIODialog.setVisible(true);
 
             if (rawIODialog.isCancelled() == true) {
-                return;
+                return null;
             }
 
             fileInfo = new FileInfoImageXML("BlankImage", null, FileUtility.RAW);
@@ -1500,7 +1476,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             System.gc();
             MipavUtil.displayError("FileIO: " + error);
 
-            return;
+            return null;
         }
 
         if (fileInfo.getExtents().length > 2) { // Set file info
@@ -1516,10 +1492,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new ViewJFrameImage(image, null, getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
         } catch (final OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory");
+            
+            return null;
         }
 
         ProvenanceRecorder.getReference().addLine(new ActionCreateBlankImage(image));
         ScriptRecorder.getReference().addLine(new ActionCreateBlankImage(image));
+        
+        return image;
     }
 
     /**
