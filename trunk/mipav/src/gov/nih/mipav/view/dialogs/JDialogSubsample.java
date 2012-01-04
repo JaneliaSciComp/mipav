@@ -415,6 +415,37 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     public void setProcessIndep(boolean processIndep) {
         this.processIndep = processIndep;
     }
+    
+    /**
+     * Accessor that programatically sets the subsampling amount
+     *
+     * @param  subSample the subsampling rate, allowable values are 2, 4, and 8
+     * 
+     * @return false when rate is unsupported
+     */
+    public boolean setSubsampling(int subSample) {
+        if(by2Button != null && by4Button != null && by8Button != null) {
+            by2Button.setSelected(false);
+            by4Button.setSelected(false);
+            by8Button.setSelected(false);
+            if(subSample == 2) {
+                by2Button.setSelected(true);
+            } else if(subSample == 4) {
+                by4Button.setSelected(true);
+            } else if(subSample == 8) {
+                by8Button.setSelected(true);
+            } 
+        }
+        
+        if(subSample == 2 || subSample == 4 || subSample == 8) {
+            denom = subSample;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    
 
     /**
      * Method for calling the Subsample algorithm.
