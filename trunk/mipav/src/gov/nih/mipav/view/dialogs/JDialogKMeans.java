@@ -252,6 +252,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	 if (euclideanSquared.isSelected()) {
 	    		 globalAlgo.setEnabled(true);
 	    		 fastGlobalAlgo.setEnabled(true);
+	    		 axesRatioLabel.setEnabled(false);
+	    		 axesRatioText.setEnabled(false);
 	    	 }
 	    	 else if (cityBlock.isSelected()){
 	    		 if (fastGlobalAlgo.isSelected()) {
@@ -259,6 +261,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    			 globalAlgo.setSelected(true);
 	    		 }
 	    		 fastGlobalAlgo.setEnabled(false);
+	    		 axesRatioLabel.setEnabled(false);
+	    		 axesRatioText.setEnabled(false);
 	    	 }
 	    	 else if (mahalanobis.isSelected()){
 	    		 if (globalAlgo.isSelected()){
@@ -271,9 +275,22 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 }
 	    		 globalAlgo.setEnabled(false);
 	    		 fastGlobalAlgo.setEnabled(false);
+	    		 axesRatioLabel.setEnabled(false);
+	    		 axesRatioText.setEnabled(false);
 	    	 }
 	    	 else {
-	    		 
+	    		 if (globalAlgo.isSelected()){
+	    			 globalAlgo.setSelected(false);
+	    			 kMeansAlgo.setSelected(true);
+	    		 }
+	    		 else if (fastGlobalAlgo.isSelected()) {
+	    			 fastGlobalAlgo.setSelected(false);
+	    			 kMeansAlgo.setSelected(true);
+	    		 }
+	    		 globalAlgo.setEnabled(false);
+	    		 fastGlobalAlgo.setEnabled(false);
+	    		 axesRatioLabel.setEnabled(true);
+	    		 axesRatioText.setEnabled(true);
 	    	 }
 	     } else if (command.equals("AddImageBrowse")) {
 	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
@@ -796,7 +813,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 			 alg = new AlgorithmKMeans(image,algoSelection,distanceMeasure,pos,scale,groupNum,weight,centroidPos,resultsFileName,
 					                   initSelection,redBuffer, greenBuffer, blueBuffer, scaleMax,
-					                   useColorHistogram, scaleVariablesToUnitVariance);
+					                   useColorHistogram, scaleVariablesToUnitVariance, axesRatio);
 			 
 			 
 			 //This is very important. Adding this object as a listener allows the algorithm to
@@ -1040,7 +1057,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 15;
         mainPanel.add(mahalanobis, gbc);
         
-        /*SButton = new JRadioButton("S metric with mean centroids works"+
+        SButton = new JRadioButton("S metric with mean centroids works"+
         		" on ellipsoidal clusters different orientation same size", false);
         SButton.setFont(serif12);
         SButton.setForeground(Color.black);
@@ -1067,7 +1084,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 2;
         gbc.gridy = 18;
-        mainPanel.add(axesRatioText, gbc);*/
+        mainPanel.add(axesRatioText, gbc);
         
         JLabel clustersLabel = new JLabel("Choose the number of clusters");
         clustersLabel.setForeground(Color.black);
@@ -1075,7 +1092,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.gridx = 0;
-        gbc.gridy = 16;
+        gbc.gridy = 19;
         mainPanel.add(clustersLabel, gbc);
         
         textClusters = new JTextField(10);
@@ -1090,7 +1107,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initLabel.setFont(serif12);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 17;
+        gbc.gridy = 20;
         mainPanel.add(initLabel, gbc);
         
         initGroup = new ButtonGroup();
@@ -1100,7 +1117,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(randomInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 18;
+        gbc.gridy = 21;
         mainPanel.add(randomInit, gbc);
         
         BradleyInit = new JRadioButton("Bradley-Fayyad Refinement", false);
@@ -1109,7 +1126,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(BradleyInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 19;
+        gbc.gridy = 22;
         mainPanel.add(BradleyInit, gbc);
         
         hierarchicalInit = new JRadioButton("Hierarchical grouping", false);
@@ -1118,7 +1135,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(hierarchicalInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 20;
+        gbc.gridy = 23;
         mainPanel.add(hierarchicalInit, gbc);
         
         maxMinInit = new JRadioButton("MaxMin", false);
@@ -1127,7 +1144,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         initGroup.add(maxMinInit);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 21;
+        gbc.gridy = 24;
         mainPanel.add(maxMinInit, gbc);
         
         resultsFileNameLabel = new JLabel("Results file name:");
@@ -1136,7 +1153,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         resultsFileNameLabel.setEnabled(false);
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 22;
+        gbc.gridy = 25;
         mainPanel.add(resultsFileNameLabel, gbc);
         
         resultsFileNameText = new JTextField(40);
@@ -1163,6 +1180,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	double totalSum = 0.0;
     	double totalSumSquared = 0.0;
     	double variance;
+    	String activeString;
+    	double lastRatio = 1.0;
     	if (!havePoints) {
     	    MipavUtil.displayError("Must obtain points from a text file or an image");
     	    return false;
@@ -1202,8 +1221,68 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     	else if (cityBlock.isSelected()){
     		distanceMeasure = CITY_BLOCK;
     	}
-    	else {
+    	else if (mahalanobis.isSelected()){
     		distanceMeasure = MAHALANOBIS_SQUARED;
+    	}
+    	else {
+    		distanceMeasure = S_METRIC;
+    		axesRatio = new double[nDims-1];
+    		tmpStr = axesRatioText.getText();
+    		lastRatio = 1.0;
+    		for (dim = 1; dim < nDims - 1; dim++) {
+    		    i = tmpStr.indexOf(",");
+    		    if (i < 0) {
+    		    	MipavUtil.displayError("for dim = " + (dim +1) + " expected comma missing");
+    		    	axesRatioText.selectAll();
+    		    	axesRatioText.requestFocus();
+    		    	return false;
+    		    }
+    		    activeString = tmpStr.substring(0, i);
+    		    tmpStr = tmpStr.substring(i+1);
+    		    if (tmpStr == null) {
+    		    	axesRatioText.selectAll();
+    		    	axesRatioText.requestFocus();
+    		    	return false;	
+    		    }
+    		    axesRatio[dim-1] = Double.parseDouble(activeString);
+    		    if (axesRatio[dim-1] <= 0.0) {
+    		    	MipavUtil.displayError("for dim = " + (dim +1) + " axis ratio must be positive");
+    		    	axesRatioText.selectAll();
+    		    	axesRatioText.requestFocus();
+    		    	return false;	
+    		    }
+    		    if (axesRatio[dim-1] > 1.0) {
+    		    	MipavUtil.displayError("for dim = " + (dim +1) + " axis ratio exceeds 1.0");
+    		    	axesRatioText.selectAll();
+    		    	axesRatioText.requestFocus();
+    		    	return false;	
+    		    }
+    		    if (axesRatio[dim-1] > lastRatio) {
+    		    	MipavUtil.displayError("for dim = " + (dim +1) + " axis ratio exceeds last axis ratio");
+    		    	axesRatioText.selectAll();
+    		    	axesRatioText.requestFocus();
+    		    	return false;		
+    		    }
+    		} // for (dim = 1; dim < nDims - 1; dim++)
+    		axesRatio[nDims-2] = Double.parseDouble(tmpStr);
+		    if (axesRatio[nDims-2] <= 0.0) {
+		    	MipavUtil.displayError("for dim = nDims axis ratio must be positive");
+		    	axesRatioText.selectAll();
+		    	axesRatioText.requestFocus();
+		    	return false;	
+		    }
+		    if (axesRatio[dim-1] > 1.0) {
+		    	MipavUtil.displayError("for dim = nDims axis ratio exceeds 1.0");
+		    	axesRatioText.selectAll();
+		    	axesRatioText.requestFocus();
+		    	return false;	
+		    }
+		    if (axesRatio[dim-1] > lastRatio) {
+		    	MipavUtil.displayError("for dim = nDims axis ratio exceeds last axis ratio");
+		    	axesRatioText.selectAll();
+		    	axesRatioText.requestFocus();
+		    	return false;		
+		    }
     	}
     	
     	useColorHistogram = colorHistogramBox.isSelected();
