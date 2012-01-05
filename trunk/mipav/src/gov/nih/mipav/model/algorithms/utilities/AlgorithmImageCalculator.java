@@ -190,23 +190,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
      */
     public AlgorithmImageCalculator(ModelImage srcImgA, ModelImage srcImgB, int type, int _clipMode, boolean maskFlag,
                                     String adOpString) {
-        super(null, srcImgA); // this algorithm will associate srcImgA with srcImage for output.
-        srcImageA = srcImgA;
-        srcImageB = srcImgB;
-        entireImage = maskFlag;
-        opType = type;
-        clipMode = _clipMode;
-        this.adOpString = adOpString;
-        setClipValues();
-
-        if (entireImage == false) {
-            mask = srcImageA.generateVOIMask();
-        }
-
-        if (srcImageA.isColorImage()) {
-            colorFactor = 4;
-        }
-
+        this(null, srcImgA, srcImgB, type, _clipMode, maskFlag, adOpString);
     }
 
     /**
