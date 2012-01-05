@@ -5821,6 +5821,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                	totalWeightRemoved = 0.0;
 	                	for (j = 0; j < nDims; j++) {
 	                		centroidPosRemoved[j] = 0.0;
+	                		WkDiagRemoved[j] = 0;
 	                	}
 	                	if (equalScale) {
 	                		for (i = 0; i < nPoints; i++) {
