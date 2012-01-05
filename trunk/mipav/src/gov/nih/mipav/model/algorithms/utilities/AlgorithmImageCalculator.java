@@ -179,7 +179,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates a new AlgorithmImageCalculator object.
+     * Creates a new AlgorithmImageCalculator object using srcImgA <operator> srcImgB.
      *
      * @param  srcImgA     source image A model
      * @param  srcImgB     source image B model
