@@ -449,6 +449,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
         double WkAdded[][];
         double totalWeightAdded;
         double centroidPosAdded[];
+        double centroidPosBestAdded[];
         double eigenvalueAdded[];
         double eigenvalueAddedReverse[];
         double SkAdded;
@@ -4565,6 +4566,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
     		
 	        centroidPosRemoved = new double[nDims];
 	        centroidPosAdded = new double[nDims];
+	        centroidPosBestAdded = new double[nDims];
 	        
     		switch(algoSelection) {
         	case K_MEANS:
@@ -5760,6 +5762,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                                SkReduced = Sk[i] + Sk[groupNum[pointNum]] - SkAdded - SkRemoved;
 	                                bestGroup = i;
 	                                SkBestAdded = SkAdded;
+	                                for (j = 0; j < nDims; j++) {
+	                                	centroidPosBestAdded[j] = centroidPosAdded[j];
+	                                }
 	               	        	}
 	                    	} // if (i != groupNum[pointNum])
 	                    } // for (i = 0; i < numberClusters; i++)
@@ -5769,6 +5774,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                    	groupNum[pointNum] = bestGroup;
 	                    	Sk[originalGroup] = SkRemoved;
 	                    	Sk[bestGroup] = SkBestAdded;
+	                    	for (j = 0; j < nDims; j++) {
+	                    		centroidPos[j][originalGroup] = centroidPosRemoved[j];
+	                    		centroidPos[j][bestGroup] = centroidPosBestAdded[j];
+	                    	}
 	                    }
 	                } // for (pointNum = 0; pointNum < nPoints; pointNum++)
 	    	    	
@@ -5946,6 +5955,9 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                                groupkReduced = groupk[i] + groupk[groupNum[pointNum]] - groupkAdded - groupkRemoved;
 	                                bestGroup = i;
 	                                groupkBestAdded = groupkAdded;
+	                                for (j = 0; j < nDims; j++) {
+	                                	centroidPosBestAdded[j] = centroidPosAdded[j];
+	                                }
 	               	        	}
 	                    	} // if (i != groupNum[pointNum])
 	                    } // for (i = 0; i < numberClusters; i++)
@@ -5955,6 +5967,10 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                    	groupNum[pointNum] = bestGroup;
 	                    	groupk[originalGroup] = groupkRemoved;
 	                    	groupk[bestGroup] = groupkBestAdded;
+	                    	for (j = 0; j < nDims; j++) {
+	                    		centroidPos[j][originalGroup] = centroidPosRemoved[j];
+	                    		centroidPos[j][bestGroup] = centroidPosBestAdded[j];
+	                    	}
 	                    }
 	                } // for (pointNum = 0; pointNum < nPoints; pointNum++)
 	    	    	
