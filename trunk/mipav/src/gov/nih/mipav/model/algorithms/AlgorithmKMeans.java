@@ -51,6 +51,19 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * groups with similar numbers of points.  The Mahalanobis metric minimizing det(W) can find ellipsoidal
  * distributions with the same size and orientation.
  * 
+ * The S metric minimizes S = Sum over all clusters of Sk.  Let Wk be the within cluster sum of squares of 
+ * cluster k.  w1k, w2k, ..., wnDimsk are the eigenvalues in descending order from the eigenvalue
+ * decomposition of Wk.  The clusters must be ellipsoidal shapes of the same size and different orientations.
+ * Specify a known ellipsoidal shape that applies to all the clusters in the distribution.
+ * Put the axes ratio of all ellipsoidal axes to the largest ellipsoidal axis in descending order, where the 
+ * first ratio of the largest axis to itself is 1.0.  Sk = w1k/(ellipsoidal axis ratio 1)**2 + 
+ * w2k/(ellipsoidal axis ratio 2)**2 + ... + wnDimsk/(ellipsoidal axis ratio nDims)**2.  Minimize S by
+ * going thru all the points 1 at a time and for each point checking to see which cluster yields the
+ * lowest value of S.  For each point we test its possible removal from its present cluster and its
+ * possible addition to every other cluster.  After doing all the points, we keep doing more iterations
+ * of all the points until no cluster changes occur.  Since we don't initially know the withinGroupSumOfSquares
+ * for each cluster, initialization is performed with the Euclidean metric.
+ * 
  * The dialog checkbox Scale variables to unit variance allow combining variables using different scales
  * such as temperature in degrees Fahrenheit and wind speed in miles per hour.
  * 
