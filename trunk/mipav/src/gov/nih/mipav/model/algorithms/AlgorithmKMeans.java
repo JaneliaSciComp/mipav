@@ -5773,6 +5773,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                } // for (pointNum = 0; pointNum < nPoints; pointNum++)
 	    	    	
 	        	} // while (changeOccurred)
+	        	
 	    	} // if (distanceMeasure == S_METRIC)
 	    	else if (distanceMeasure == SPHERES_DIFFERENT_SIZES) {
 	    		WkDiag = new double[numberClusters][nDims];
@@ -5872,7 +5873,7 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                	groupkRemoved = totalWeightRemoved*Math.log(trWkRemoved/totalWeightRemoved);
 	                    for (i = 0; i < numberClusters; i++) {
 	                    	if (i != groupNum[pointNum]) {
-	                            // For other groups find Sk with point added
+	                            // For other groups find groupk with point added
 	                    		totalWeightAdded = 0.0;
 	                        	for (j = 0; j < nDims; j++) {
 	                        		centroidPosAdded[j] = 0.0;
@@ -5958,7 +5959,14 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	                } // for (pointNum = 0; pointNum < nPoints; pointNum++)
 	    	    	
 	        	} // while (changeOccurred)
+		        
 	    	} // else if (distanceMeasure == SPHERES_DIFFERENT_SIZES)
+	    	for (j = 0; j < numberClusters; j++) {
+    			totalWeight[j] = 0.0;
+    		}
+        	for (i = 0; i < nPoints; i++) {
+        		totalWeight[groupNum[i]] += weight[i];
+        	}
             clustersWithoutPoints = 0;
             for (i = 0; i < numberClusters; i++) {
             	if (totalWeight[i] <= 1.0E-10) {
