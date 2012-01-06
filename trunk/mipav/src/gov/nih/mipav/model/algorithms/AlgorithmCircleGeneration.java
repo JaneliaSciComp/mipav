@@ -127,11 +127,13 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     
     public static final int AGGREGATED_ELLIPSE_RANDOM_ORIENTATION = 4;
     
+    public static final int AGGREGATED_CIRCLES_DIFFERENT_SIZES = 5;
+    
     // Regular patterns can arise from inhibition or repulsion mechanisms which constrain objects to remain a
     // certain distance from each other.  The first circle is generated at random.  All other circles are only
     // accepted if the nearest neighbor distance is >= minimumNearestNeighborDistance and 
     // <= maximumNearestNeighborDistance.
-    public static final int REGULAR = 5;
+    public static final int REGULAR = 6;
     
     // Very small and large distances between neighboring objects are allowed, but not intermediate distances.
     // Such constrained patterns are found in nature due to growth patterns.
@@ -143,7 +145,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     // less than the lowestForbiddenNNDistance and greater than the highestRegenerationNNDistance, but is regular
     // in the range from the lowestForbiddenNNDistance to the highestRegenerationNNDistnace with a peak of 
     // significance at an NN Distance just above the hgihestForbiddenNNDistance.
-    public static final int CONSTRAINED = 6;
+    public static final int CONSTRAINED = 7;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -179,6 +181,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     
     // Angle the ellipse semiMajorAxis makes with the x-axis in radians
     private double phi;
+    
+    private double smallestToLargestClusterRatio;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -201,14 +205,15 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
      * @param  lowestForbiddenNNDistance Used in CONSTRAINED
      * @param  highestForbiddenNNDistance Used in CONSTRAINED
      * @param  highestRegeneerationNNDistance Used in CONSTRAINED
-     * @param  semiMajorAxis used in AGGREGATED_ELIPTICAL
-     * @param  semiMinorAxis used in AGGREGATED_ELLIPTICAL
-     * @param  phi used in AGGREGATED_ELLIPTICAL
+     * @param  semiMajorAxis used in AGGREGATED_ELIPSE
+     * @param  semiMinorAxis used in AGGREGATED_ELLIPSE
+     * @param  phi used in AGGREGATED_ELLIPSE
+     * @param  smallestToLargestClusterRatio used in AGGREGATED_CIRCLES_DIFFERENT_SIZES
      */
     public AlgorithmCircleGeneration(ModelImage srcImage, int radius, int numCircles, int pattern,
             int initialRandomCircles, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance,
             double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance,
-            double semiMajorAxis, double semiMinorAxis, double phi) {
+            double semiMajorAxis, double semiMinorAxis, double phi, double smallestToLargestClusterRatio) {
         super(null, srcImage);
         this.radius = radius;
         this.numCircles = numCircles;
@@ -222,6 +227,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         this.semiMajorAxis = semiMajorAxis;
         this.semiMinorAxis = semiMinorAxis;
         this.phi = phi;
+        this.smallestToLargestClusterRatio = smallestToLargestClusterRatio;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -356,6 +362,13 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         float yPos;
         int ellipseOrientation = 0;
         double minDistSquared;
+        int numCirclesInCluster[] = null;
+        double ratio;
+        double totalRatioSum;
+        double var;
+        int circlesSpecified;
+        int clusterIndex = 0;
+        int circlesFoundInCluster[] = null;
         
         IntTorquato95ModelMean meanTorquato95Model;
         IntTorquato95ModelMean2 meanTorquato95Model2;
@@ -411,6 +424,34 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             case AGGREGATED_ELLIPSE_RANDOM_ORIENTATION:
                 numRandomCircles = initialRandomCircles;
                 break;
+            case AGGREGATED_CIRCLES_DIFFERENT_SIZES:
+            	numRandomCircles = initialRandomCircles;
+            	numCirclesInCluster = new int[initialRandomCircles];
+            	circlesFoundInCluster = new int[initialRandomCircles];
+            	if (initialRandomCircles == 1) {
+            		numCirclesInCluster[0] = initialRandomCircles;
+            	}
+            	else if (initialRandomCircles == 2) {
+            		numCirclesInCluster[1] = (int)Math.round(numCircles/(1.0 + smallestToLargestClusterRatio));
+            		numCirclesInCluster[0] = numCircles - numCirclesInCluster[1];
+            	}
+            	else if (initialRandomCircles > 2) {
+            		ratio = Math.pow(smallestToLargestClusterRatio, 1.0/(initialRandomCircles - 1.0));
+            		totalRatioSum = 1.0;
+            		var = ratio;
+            		for (i = 0; i < initialRandomCircles-1; i++) {
+            			totalRatioSum = totalRatioSum + var;
+            			var = var * ratio;
+            		}
+            		numCirclesInCluster[initialRandomCircles-1] = (int)Math.round(numCircles/totalRatioSum);
+            		circlesSpecified = numCirclesInCluster[initialRandomCircles-1];
+            		for (i = initialRandomCircles - 2; i >= 1; i--) {
+            			numCirclesInCluster[i] = (int)Math.round(numCirclesInCluster[i+1] * ratio);
+            			circlesSpecified += numCirclesInCluster[i];
+            		}
+            		numCirclesInCluster[0] = numCircles - circlesSpecified;
+            	}
+            	break;
             case REGULAR:
             case CONSTRAINED:
                 numRandomCircles = 1;
@@ -462,7 +503,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             System.out.println(circlesDrawn + " random circles drawn.  " + numCircles + " random circles requested.");
         }
         
-        if (((pattern == AGGREGATED) || (pattern == AGGREGATED_ELLIPSE) || (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION))
+        if (((pattern == AGGREGATED) || (pattern == AGGREGATED_ELLIPSE) || (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION) ||
+        	 (pattern == AGGREGATED_CIRCLES_DIFFERENT_SIZES))
         		&& (circlesDrawn == initialRandomCircles)) {
         	if (pattern == AGGREGATED_ELLIPSE) {
         		// Create a mask for setting ellipses
@@ -549,6 +591,32 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 	                                }  
 	                            }
                             } // if (pattern == AGGREGATED)
+                            else if (pattern == AGGREGATED_CIRCLES_DIFFERENT_SIZES) {
+                            	minDistSquared = Double.MAX_VALUE;
+                                for (j = 0; j < initialRandomCircles; j++) {
+                                	xDistSquared = circleXCenter[j] - xCenter;
+	                                xDistSquared = xDistSquared * xDistSquared;
+	                                yDistSquared = circleYCenter[j] - yCenter;
+	                                yDistSquared = yDistSquared * yDistSquared;
+	                                distSquared = xDistSquared + yDistSquared;
+	                                if (distSquared < minDistSquared) {
+	                                    minDistSquared = distSquared;
+	                                    clusterIndex = j;
+	                                }
+                            	}
+                            	for (j = 0; j < i-1; j++) {         
+	                                xDistSquared = circleXCenter[j] - xCenter;
+	                                xDistSquared = xDistSquared * xDistSquared;
+	                                yDistSquared = circleYCenter[j] - yCenter;
+	                                yDistSquared = yDistSquared * yDistSquared;
+	                                distSquared = xDistSquared + yDistSquared;
+	                                if ((distSquared <= maximumNNDistanceSquared) && 
+	                                    (circlesFoundInCluster[clusterIndex] <= numCirclesInCluster[clusterIndex])) {
+	                                	circlesFoundInCluster[clusterIndex]++;
+	                                    break attemptloop;
+	                                }  
+	                            }	
+                            }
                             else if (pattern == AGGREGATED_ELLIPSE){
                             	for (j = 0; j < i-1; j++) {
                             	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
