@@ -1086,7 +1086,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         gbc.gridy = 16;
         mainPanel.add(SButton, gbc);
         
-        differentSpheresButton = new JRadioButton("nklog tr(Wk/nk) metric with mean centroids works on different size spheres",false);
+        differentSpheresButton = new JRadioButton("nk*log tr(Wk/nk) metric with mean centroids works on different size spheres",false);
         differentSpheresButton.setFont(serif12);
         differentSpheresButton.setForeground(Color.black);
         differentSpheresButton.addActionListener(this);
