@@ -129,11 +129,13 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     
     public static final int AGGREGATED_CIRCLES_DIFFERENT_SIZES = 5;
     
+    public static final int AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES = 6;
+    
     // Regular patterns can arise from inhibition or repulsion mechanisms which constrain objects to remain a
     // certain distance from each other.  The first circle is generated at random.  All other circles are only
     // accepted if the nearest neighbor distance is >= minimumNearestNeighborDistance and 
     // <= maximumNearestNeighborDistance.
-    public static final int REGULAR = 6;
+    public static final int REGULAR = 7;
     
     // Very small and large distances between neighboring objects are allowed, but not intermediate distances.
     // Such constrained patterns are found in nature due to growth patterns.
@@ -145,7 +147,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     // less than the lowestForbiddenNNDistance and greater than the highestRegenerationNNDistance, but is regular
     // in the range from the lowestForbiddenNNDistance to the highestRegenerationNNDistnace with a peak of 
     // significance at an NN Distance just above the hgihestForbiddenNNDistance.
-    public static final int CONSTRAINED = 7;
+    public static final int CONSTRAINED = 8;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -425,6 +427,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 numRandomCircles = initialRandomCircles;
                 break;
             case AGGREGATED_CIRCLES_DIFFERENT_SIZES:
+            case AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES:
             	numRandomCircles = initialRandomCircles;
             	numCirclesInCluster = new int[initialRandomCircles];
             	circlesFoundInCluster = new int[initialRandomCircles];
@@ -504,7 +507,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         }
         
         if (((pattern == AGGREGATED) || (pattern == AGGREGATED_ELLIPSE) || (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION) ||
-        	 (pattern == AGGREGATED_CIRCLES_DIFFERENT_SIZES))
+        	 (pattern == AGGREGATED_CIRCLES_DIFFERENT_SIZES) || 
+        	 (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES))
         		&& (circlesDrawn == initialRandomCircles)) {
         	if (pattern == AGGREGATED_ELLIPSE) {
         		// Create a mask for setting ellipses
@@ -529,7 +533,8 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             	boundaryCurves = boundaryVOI.getCurves();
             	boundaryBase = boundaryCurves.elementAt(0);	
         	}
-        	else if (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION) {
+        	else if ((pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION) ||
+        			 (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES)) {
         		xMaskEllipseDim = (int)(2 * Math.ceil(semiMajorAxis) + 1);
                 yMaskEllipseDim = xMaskEllipseDim;
                 maskEllipseArray = new byte[initialRandomCircles][xMaskEllipseDim * yMaskEllipseDim];
@@ -626,7 +631,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                             	    }
                             	}
                             }
-                            else {
+                            else if (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION){
                             	minDistSquared = Double.MAX_VALUE;
                                 for (j = 0; j < initialRandomCircles; j++) {
                                 	xDistSquared = circleXCenter[j] - xCenter;
@@ -643,6 +648,29 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                             	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
                             	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[j] - yCenter);
                             	    if (boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) {
+                            	    	break attemptloop;
+                            	    }
+                            	}	
+                            }
+                            else if (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES){
+                            	minDistSquared = Double.MAX_VALUE;
+                                for (j = 0; j < initialRandomCircles; j++) {
+                                	xDistSquared = circleXCenter[j] - xCenter;
+	                                xDistSquared = xDistSquared * xDistSquared;
+	                                yDistSquared = circleYCenter[j] - yCenter;
+	                                yDistSquared = yDistSquared * yDistSquared;
+	                                distSquared = xDistSquared + yDistSquared;
+	                                if (distSquared < minDistSquared) {
+	                                    minDistSquared = distSquared;
+	                                    ellipseOrientation = j;
+	                                }
+                            	}
+                            	for (j = 0; j < i-1; j++) {
+                            	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
+                            	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[j] - yCenter);
+                            	    if ((boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) && 
+	                                    (circlesFoundInCluster[ellipseOrientation] <= numCirclesInCluster[ellipseOrientation])) {
+	                                	circlesFoundInCluster[ellipseOrientation]++;
                             	    	break attemptloop;
                             	    }
                             	}	
