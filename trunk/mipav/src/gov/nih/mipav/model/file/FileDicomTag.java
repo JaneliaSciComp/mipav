@@ -1266,22 +1266,15 @@ public class FileDicomTag extends ModelSerialCloneable {
      * @return DOCUMENT ME!
      */
     private String fromVisibleStringToPatientSex(final String tempValue) {
-        String sex = new String();
-        String temp = new String();
-        final StringTokenizer spaceTok = new StringTokenizer(tempValue, " ");
-
-        if (spaceTok.hasMoreTokens()) {
-            temp = spaceTok.nextToken();
-
-            if ( (temp.equalsIgnoreCase("Male")) || (temp.equals("M"))) {
-                sex = "M"; // male
-            } else if ( (temp.equalsIgnoreCase("Female")) || (temp.equals("F"))) {
-                sex = "F"; // female
-            } else if ( (temp.equalsIgnoreCase("Other")) || (temp.equals("O"))) {
-                sex = "O"; // other
-            } else {
-                sex = ""; // sex is a type 2 tag but not required
-            }
+        String sex = tempValue.trim().toLowerCase();
+        if(sex.contains("female") || sex.contains("f")) {
+        	sex = "F";
+        } else if(sex.contains("male") || sex.contains("m")){
+        	sex = "M";
+        } else if(sex.contains("other") || sex.contains("o")){
+        	sex = "O";
+        } else {
+        	sex = ""; //sex is type 2 but not required
         }
 
         return sex;
