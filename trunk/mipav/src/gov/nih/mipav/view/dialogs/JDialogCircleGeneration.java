@@ -130,7 +130,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
     
     private JTextField ratioText;
     
-    private double smallestToLargestClusterRatio = 0.1;
+    private double smallestToLargestAxisRatio = 0.1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -440,7 +440,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
             cAlgo = new AlgorithmCircleGeneration(resultImage, radius, numCircles, pattern, initialRandomCircles,
                         minimumNearestNeighborDistance, maximumNearestNeighborDistance, lowestForbiddenNNDistance,
                         highestForbiddenNNDistance, highestRegenerationNNDistance, semiMajorAxis, semiMinorAxis,
-                        phi, smallestToLargestClusterRatio);
+                        phi, smallestToLargestAxisRatio);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -677,7 +677,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         gbc6.gridx = 1;
         paramPanel.add(maximumDistanceText, gbc6);
         
-        ratioLabel = new JLabel("Smallest to largest cluster ratio");
+        ratioLabel = new JLabel("Smallest to largest axis ratio");
         ratioLabel.setForeground(Color.black);
         ratioLabel.setFont(serif12);
         ratioLabel.setEnabled(false);
@@ -686,7 +686,7 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
         paramPanel.add(ratioLabel, gbc6);
         
         ratioText = new JTextField(10);
-        ratioText.setText(String.valueOf(smallestToLargestClusterRatio));
+        ratioText.setText(String.valueOf(smallestToLargestAxisRatio));
         ratioText.setFont(serif12);
         ratioText.setEnabled(false);
         gbc6.gridx = 1;
@@ -883,9 +883,9 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 return false;
             }
             
-            smallestToLargestClusterRatio = Double.valueOf(ratioText.getText()).doubleValue();
-            if (smallestToLargestClusterRatio > 1.0) {
-            	MipavUtil.displayError("The smallest to largest cluster ratio cannot exceed 1.0");
+            smallestToLargestAxisRatio = Double.valueOf(ratioText.getText()).doubleValue();
+            if (smallestToLargestAxisRatio > 1.0) {
+            	MipavUtil.displayError("The smallest to largest axis ratio cannot exceed 1.0");
             	ratioText.requestFocus();
             	ratioText.selectAll();
             	return false;
@@ -1058,9 +1058,9 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 }
             }
             
-            smallestToLargestClusterRatio = Double.valueOf(ratioText.getText()).doubleValue();
-            if (smallestToLargestClusterRatio > 1.0) {
-            	MipavUtil.displayError("The smallest to largest cluster ratio cannot exceed 1.0");
+            smallestToLargestAxisRatio = Double.valueOf(ratioText.getText()).doubleValue();
+            if (smallestToLargestAxisRatio > 1.0) {
+            	MipavUtil.displayError("The smallest to largest axis ratio cannot exceed 1.0");
             	ratioText.requestFocus();
             	ratioText.selectAll();
             	return false;
