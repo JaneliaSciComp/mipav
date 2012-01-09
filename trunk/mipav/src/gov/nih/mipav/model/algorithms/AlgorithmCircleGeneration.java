@@ -184,7 +184,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
     // Angle the ellipse semiMajorAxis makes with the x-axis in radians
     private double phi;
     
-    private double smallestToLargestClusterRatio;
+    private double smallestToLargestMajorAxisRatio;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -210,12 +210,12 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
      * @param  semiMajorAxis used in AGGREGATED_ELIPSE
      * @param  semiMinorAxis used in AGGREGATED_ELLIPSE
      * @param  phi used in AGGREGATED_ELLIPSE
-     * @param  smallestToLargestClusterRatio used in AGGREGATED_CIRCLES_DIFFERENT_SIZES
+     * @param  smallestToLargestMajorAxisRatio used in AGGREGATED_CIRCLES_DIFFERENT_SIZES
      */
     public AlgorithmCircleGeneration(ModelImage srcImage, int radius, int numCircles, int pattern,
             int initialRandomCircles, double minimumNearestNeighborDistance, double maximumNearestNeighborDistance,
             double lowestForbiddenNNDistance, double highestForbiddenNNDistance, double highestRegenerationNNDistance,
-            double semiMajorAxis, double semiMinorAxis, double phi, double smallestToLargestClusterRatio) {
+            double semiMajorAxis, double semiMinorAxis, double phi, double smallestToLargestMajorAxisRatio) {
         super(null, srcImage);
         this.radius = radius;
         this.numCircles = numCircles;
@@ -229,7 +229,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         this.semiMajorAxis = semiMajorAxis;
         this.semiMinorAxis = semiMinorAxis;
         this.phi = phi;
-        this.smallestToLargestClusterRatio = smallestToLargestClusterRatio;
+        this.smallestToLargestMajorAxisRatio = smallestToLargestMajorAxisRatio;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -371,6 +371,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
         int circlesSpecified;
         int clusterIndex = 0;
         int circlesFoundInCluster[] = null;
+        double axisRatio[] = null;
         
         IntTorquato95ModelMean meanTorquato95Model;
         IntTorquato95ModelMean2 meanTorquato95Model2;
@@ -428,31 +429,21 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                 break;
             case AGGREGATED_CIRCLES_DIFFERENT_SIZES:
             case AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES:
+            	axisRatio = new double[initialRandomCircles];
             	numRandomCircles = initialRandomCircles;
-            	numCirclesInCluster = new int[initialRandomCircles];
-            	circlesFoundInCluster = new int[initialRandomCircles];
             	if (initialRandomCircles == 1) {
-            		numCirclesInCluster[0] = initialRandomCircles;
+            		axisRatio[0] = 1.0;
             	}
             	else if (initialRandomCircles == 2) {
-            		numCirclesInCluster[1] = (int)Math.round(numCircles/(1.0 + smallestToLargestClusterRatio));
-            		numCirclesInCluster[0] = numCircles - numCirclesInCluster[1];
+            		axisRatio[1] = 1.0;
+            		axisRatio[0] = smallestToLargestMajorAxisRatio;
             	}
             	else if (initialRandomCircles > 2) {
-            		ratio = Math.pow(smallestToLargestClusterRatio, 1.0/(initialRandomCircles - 1.0));
-            		totalRatioSum = 1.0;
-            		var = ratio;
-            		for (i = 0; i < initialRandomCircles-1; i++) {
-            			totalRatioSum = totalRatioSum + var;
-            			var = var * ratio;
+            		ratio = Math.pow(smallestToLargestMajorAxisRatio, 1.0/(initialRandomCircles - 1.0));
+            		axisRatio[initialRandomCircles-1] = 1.0;
+            		for (i = initialRandomCircles - 2; i >= 0; i--) {
+            			axisRatio[i] = axisRatio[i+1] * ratio;
             		}
-            		numCirclesInCluster[initialRandomCircles-1] = (int)Math.round(numCircles/totalRatioSum);
-            		circlesSpecified = numCirclesInCluster[initialRandomCircles-1];
-            		for (i = initialRandomCircles - 2; i >= 1; i--) {
-            			numCirclesInCluster[i] = (int)Math.round(numCirclesInCluster[i+1] * ratio);
-            			circlesSpecified += numCirclesInCluster[i];
-            		}
-            		numCirclesInCluster[0] = numCircles - circlesSpecified;
             	}
             	break;
             case REGULAR:
@@ -533,8 +524,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
             	boundaryCurves = boundaryVOI.getCurves();
             	boundaryBase = boundaryCurves.elementAt(0);	
         	}
-        	else if ((pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION) ||
-        			 (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES)) {
+        	else if (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION) {
         		xMaskEllipseDim = (int)(2 * Math.ceil(semiMajorAxis) + 1);
                 yMaskEllipseDim = xMaskEllipseDim;
                 maskEllipseArray = new byte[initialRandomCircles][xMaskEllipseDim * yMaskEllipseDim];
@@ -564,6 +554,38 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 	            	boundaryBaseArray[j] = boundaryCurvesArray[j].elementAt(0);	
                 } // for (j = 0; j < initialRandomCircles; j++)
         	}
+        	else if (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES) {
+       		    xMaskEllipseDim = (int)(2 * Math.ceil(semiMajorAxis) + 1);
+               yMaskEllipseDim = xMaskEllipseDim;
+               maskEllipseArray = new byte[initialRandomCircles][xMaskEllipseDim * yMaskEllipseDim];
+               boundaryVOIArray = new VOI[initialRandomCircles];
+               boundaryCurvesArray = new VOIBaseVector[initialRandomCircles];
+               boundaryBaseArray = new VOIBase[initialRandomCircles];
+               for (j = 0; j < initialRandomCircles; j++) {
+	                boundaryVOIArray[j] = new VOI((short)j, "boundaryVOI"+ String.valueOf(j), VOI.CONTOUR, -1 );
+	                boundaryV = null;
+	                boundaryV = new Vector<Vector3f>();
+	                phi = randomGen.genUniformRandomNum(0, 3599) * Math.PI/1800;
+	                for (theta = 0; theta < 3600; theta++) {
+	                	angle = theta * Math.PI/1800;
+	                    x = (int)Math.round(Math.ceil(semiMajorAxis) + semiMajorAxis*axisRatio[j]*Math.cos(angle)*Math.cos(phi)
+	                    		- semiMinorAxis*axisRatio[j]*Math.sin(angle)*Math.sin(phi));	
+	                    y = (int)Math.round(Math.ceil(semiMajorAxis) + semiMajorAxis*axisRatio[j]*Math.cos(angle)*Math.sin(phi) 
+	                    		+ semiMinorAxis*axisRatio[j]*Math.sin(angle)*Math.cos(phi));
+	                    if (maskEllipseArray[j][x + y * xMaskEllipseDim] == 0) {
+	                        maskEllipseArray[j][x + y * xMaskEllipseDim] = 1;
+	                        boundaryV.add(new Vector3f(x, y, 0.0f));
+	                    }
+	                }
+	                Vector3f pt[] = new Vector3f[boundaryV.size()];
+	            	for (i = 0; i < boundaryV.size(); i++) {
+	            		pt[i] = boundaryV.elementAt(i);
+	            	}
+	            	boundaryVOIArray[j].importCurve(pt);
+	            	boundaryCurvesArray[j] = boundaryVOIArray[j].getCurves();
+	            	boundaryBaseArray[j] = boundaryCurvesArray[j].elementAt(0);	
+               } // for (j = 0; j < initialRandomCircles; j++)
+       	}
             for (i = initialRandomCircles+1; i <= numCircles; i++) {
                 found = false;
                 attempts = 0;
@@ -615,9 +637,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 	                                yDistSquared = circleYCenter[j] - yCenter;
 	                                yDistSquared = yDistSquared * yDistSquared;
 	                                distSquared = xDistSquared + yDistSquared;
-	                                if ((distSquared <= maximumNNDistanceSquared) && 
-	                                    (circlesFoundInCluster[clusterIndex] <= numCirclesInCluster[clusterIndex])) {
-	                                	circlesFoundInCluster[clusterIndex]++;
+	                                if (distSquared <= maximumNNDistanceSquared*axisRatio[clusterIndex]*axisRatio[clusterIndex]) {
 	                                    break attemptloop;
 	                                }  
 	                            }	
@@ -668,9 +688,7 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
                             	for (j = 0; j < i-1; j++) {
                             	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
                             	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[j] - yCenter);
-                            	    if ((boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) && 
-	                                    (circlesFoundInCluster[ellipseOrientation] <= numCirclesInCluster[ellipseOrientation])) {
-	                                	circlesFoundInCluster[ellipseOrientation]++;
+                            	    if (boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) { 
                             	    	break attemptloop;
                             	    }
                             	}	
