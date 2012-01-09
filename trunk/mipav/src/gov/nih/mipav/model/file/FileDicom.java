@@ -1134,7 +1134,7 @@ public class FileDicom extends FileDicomBase {
 
         if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
             fileInfo.displayType = ModelStorageBase.FLOAT;
-        } else {
+        } else if(fileInfo.displayType == -1){ //if displayType has not been set
             fileInfo.displayType = fileInfo.getDataType();
         }
         
@@ -1786,8 +1786,6 @@ public class FileDicom extends FileDicomBase {
                 }
             }
         }
-        
-        // End of Matt changes for 2/2003
     }
 
     /**
