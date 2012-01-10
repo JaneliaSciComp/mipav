@@ -664,13 +664,11 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 	                                    ellipseOrientation = j;
 	                                }
                             	}
-                            	for (j = 0; j < i-1; j++) {
-                            	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
-                            	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[j] - yCenter);
-                            	    if (boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) {
-                            	    	break attemptloop;
-                            	    }
-                            	}	
+                        	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[ellipseOrientation] - xCenter);
+                        	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[ellipseOrientation] - yCenter);
+                        	    if (boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) {
+                        	    	break attemptloop;
+                        	    }
                             }
                             else if (pattern == AGGREGATED_ELLIPSE_RANDOM_ORIENTATION_DIFFERENT_SIZES){
                             	minDistSquared = Double.MAX_VALUE;
@@ -685,13 +683,11 @@ public class AlgorithmCircleGeneration extends AlgorithmBase {
 	                                    ellipseOrientation = j;
 	                                }
                             	}
-                            	for (j = 0; j < i-1; j++) {
-                            	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[j] - xCenter);
-                            	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[j] - yCenter);
-                            	    if (boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) { 
-                            	    	break attemptloop;
-                            	    }
-                            	}	
+                        	    xPos = (float)(Math.ceil(semiMajorAxis) + circleXCenter[ellipseOrientation] - xCenter);
+                        	    yPos = (float)(Math.ceil(semiMajorAxis) + circleYCenter[ellipseOrientation] - yCenter);
+                        	    if (boundaryBaseArray[ellipseOrientation].contains(xPos, yPos)) { 
+                        	    	break attemptloop;
+                        	    }	
                             }
                             found = false;
                             attempts++;
