@@ -69,7 +69,7 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * 
  * Minimizing S* = sum over all k of nk * log(Sk/nk) finds ellipsoidal shapes of different sizes and 
  * orientations.  As with the S metric the axes ratios of the ellipsoidal axes must be known and 
- * specified.
+ * specified. Cannot get S* to work.
  * 
  * The dialog checkbox Scale variables to unit variance allow combining variables using different scales
  * such as temperature in degrees Fahrenheit and wind speed in miles per hour.
@@ -6134,18 +6134,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 			WkRemoved[j][k] = 0.0;
                 		}
                 	}
-                	if (equalScale) {
-                		for (i = 0; i < nPoints; i++) {
-                			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
-	                			totalWeightRemoved += weight[i];
-	            	    		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
-	            	    		}
-                			}
-            	    	}
-                		for (j = 0; j < nDims; j++) {
-                			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
-                		}
+                	
+                	for (i = 0; i < nPoints; i++) {
+            			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
+                			totalWeightRemoved += weight[i];
+            	    		for (j = 0; j < nDims; j++) {
+            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
+            	    		}
+            			}
+        	    	}
+            		for (j = 0; j < nDims; j++) {
+            			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
+            		}
+            		
+                	if (equalScale) {	
                 		for (i = 0; i < nPoints; i++) {
                 			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
 	        		    		for (j = 0; j < nDims; j++) {
@@ -6158,17 +6160,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         		    	}
         	    	} // if (equalScale)
         	    	else {
-        	    		for (i = 0; i < nPoints; i++) {
-                			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
-	                			totalWeightRemoved += weight[i];
-	            	    		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
-	            	    		}
-                			}
-            	    	}	
-        	    		for (j = 0; j < nDims; j++) {
-                			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
-                		}
         	    		for (i = 0; i < nPoints; i++) {
                 			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
 	        		    		for (j = 0; j < nDims; j++) {
@@ -6199,22 +6190,24 @@ public class AlgorithmKMeans extends AlgorithmBase {
                         			WkAdded[j][k] = 0.0;
                         		}
                         	}
+                        	
+                        	for (ii = 0; ii < nPoints; ii++) {
+                    			if (i == groupNum[ii]) {
+    	                			totalWeightAdded += weight[ii];
+    	            	    		for (j = 0; j < nDims; j++) {
+    	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
+    	            	    		}
+                    			}
+                	    	}
+                    		totalWeightAdded += weight[pointNum];
+                    		for (j = 0; j < nDims; j++) {
+            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
+            	    		}
+                    		for (j = 0; j < nDims; j++) {
+                    			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
+                    		}
+                    		
                         	if (equalScale) {
-                        		for (ii = 0; ii < nPoints; ii++) {
-                        			if (i == groupNum[ii]) {
-        	                			totalWeightAdded += weight[ii];
-        	            	    		for (j = 0; j < nDims; j++) {
-        	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
-        	            	    		}
-                        			}
-                    	    	}
-                        		totalWeightAdded += weight[pointNum];
-                        		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
-	            	    		}
-                        		for (j = 0; j < nDims; j++) {
-                        			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
-                        		}
                         		for (ii = 0; ii < nPoints; ii++) {
                         			if (i == groupNum[ii]) {
         	        		    		for (j = 0; j < nDims; j++) {
@@ -6233,21 +6226,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        		    		}
                 	    	} // if (equalScale)
                 	    	else {
-                	    		for (ii = 0; ii < nPoints; ii++) {
-                        			if (i == groupNum[ii]) {
-        	                			totalWeightAdded += weight[ii];
-        	            	    		for (j = 0; j < nDims; j++) {
-        	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
-        	            	    		}
-                        			}
-                    	    	}	
-                	    		totalWeightAdded += weight[pointNum];
-                        		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
-	            	    		}
-                	    		for (j = 0; j < nDims; j++) {
-                        			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
-                        		}
                 	    		for (ii = 0; ii < nPoints; ii++) {
                         			if (i == groupNum[ii]) {
         	        		    		for (j = 0; j < nDims; j++) {
@@ -6349,18 +6327,20 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 		centroidPosRemoved[j] = 0.0;
                 		WkDiagRemoved[j] = 0;
                 	}
-                	if (equalScale) {
-                		for (i = 0; i < nPoints; i++) {
-                			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
-	                			totalWeightRemoved += weight[i];
-	            	    		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
-	            	    		}
-                			}
-            	    	}
-                		for (j = 0; j < nDims; j++) {
-                			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
-                		}
+                	
+                	for (i = 0; i < nPoints; i++) {
+            			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
+                			totalWeightRemoved += weight[i];
+            	    		for (j = 0; j < nDims; j++) {
+            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
+            	    		}
+            			}
+        	    	}
+            		for (j = 0; j < nDims; j++) {
+            			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
+            		}
+            		
+                	if (equalScale){
                 		for (i = 0; i < nPoints; i++) {
                 			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
 	        		    		for (j = 0; j < nDims; j++) {
@@ -6371,17 +6351,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         		    	}
         	    	} // if (equalScale)
         	    	else {
-        	    		for (i = 0; i < nPoints; i++) {
-                			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
-	                			totalWeightRemoved += weight[i];
-	            	    		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
-	            	    		}
-                			}
-            	    	}	
-        	    		for (j = 0; j < nDims; j++) {
-                			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
-                		}
         	    		for (i = 0; i < nPoints; i++) {
                 			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
 	        		    		for (j = 0; j < nDims; j++) {
@@ -6404,22 +6373,24 @@ public class AlgorithmKMeans extends AlgorithmBase {
                         		centroidPosAdded[j] = 0.0;
                         		WkDiagAdded[j] = 0.0;
                         	}
+                        	
+                        	for (ii = 0; ii < nPoints; ii++) {
+                    			if (i == groupNum[ii]) {
+    	                			totalWeightAdded += weight[ii];
+    	            	    		for (j = 0; j < nDims; j++) {
+    	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
+    	            	    		}
+                    			}
+                	    	}
+                    		totalWeightAdded += weight[pointNum];
+                    		for (j = 0; j < nDims; j++) {
+            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
+            	    		}
+                    		for (j = 0; j < nDims; j++) {
+                    			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
+                    		}
+                    		
                         	if (equalScale) {
-                        		for (ii = 0; ii < nPoints; ii++) {
-                        			if (i == groupNum[ii]) {
-        	                			totalWeightAdded += weight[ii];
-        	            	    		for (j = 0; j < nDims; j++) {
-        	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
-        	            	    		}
-                        			}
-                    	    	}
-                        		totalWeightAdded += weight[pointNum];
-                        		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
-	            	    		}
-                        		for (j = 0; j < nDims; j++) {
-                        			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
-                        		}
                         		for (ii = 0; ii < nPoints; ii++) {
                         			if (i == groupNum[ii]) {
         	        		    		for (j = 0; j < nDims; j++) {
@@ -6434,21 +6405,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        		    		}
                 	    	} // if (equalScale)
                 	    	else {
-                	    		for (ii = 0; ii < nPoints; ii++) {
-                        			if (i == groupNum[ii]) {
-        	                			totalWeightAdded += weight[ii];
-        	            	    		for (j = 0; j < nDims; j++) {
-        	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
-        	            	    		}
-                        			}
-                    	    	}	
-                	    		totalWeightAdded += weight[pointNum];
-                        		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
-	            	    		}
-                	    		for (j = 0; j < nDims; j++) {
-                        			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
-                        		}
                 	    		for (ii = 0; ii < nPoints; ii++) {
                         			if (i == groupNum[ii]) {
         	        		    		for (j = 0; j < nDims; j++) {
@@ -6571,18 +6527,19 @@ public class AlgorithmKMeans extends AlgorithmBase {
                 			WkRemoved[j][k] = 0.0;
                 		}
                 	}
-                	if (equalScale) {
-                		for (i = 0; i < nPoints; i++) {
-                			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
-	                			totalWeightRemoved += weight[i];
-	            	    		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
-	            	    		}
-                			}
-            	    	}
-                		for (j = 0; j < nDims; j++) {
-                			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
-                		}
+                	
+                	for (i = 0; i < nPoints; i++) {
+            			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
+                			totalWeightRemoved += weight[i];
+            	    		for (j = 0; j < nDims; j++) {
+            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
+            	    		}
+            			}
+        	    	}
+            		for (j = 0; j < nDims; j++) {
+            			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
+            		}
+                	if (equalScale) {	
                 		for (i = 0; i < nPoints; i++) {
                 			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
 	        		    		for (j = 0; j < nDims; j++) {
@@ -6595,17 +6552,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
         		    	}
         	    	} // if (equalScale)
         	    	else {
-        	    		for (i = 0; i < nPoints; i++) {
-                			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
-	                			totalWeightRemoved += weight[i];
-	            	    		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosRemoved[j] += pos[j][i]*weight[i];
-	            	    		}
-                			}
-            	    	}	
-        	    		for (j = 0; j < nDims; j++) {
-                			centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
-                		}
         	    		for (i = 0; i < nPoints; i++) {
                 			if ((groupNum[i] == groupNum[pointNum]) && (i != pointNum)) {
 	        		    		for (j = 0; j < nDims; j++) {
@@ -6637,22 +6583,24 @@ public class AlgorithmKMeans extends AlgorithmBase {
                         			WkAdded[j][k] = 0.0;
                         		}
                         	}
+                        	
+                        	for (ii = 0; ii < nPoints; ii++) {
+                    			if (i == groupNum[ii]) {
+    	                			totalWeightAdded += weight[ii];
+    	            	    		for (j = 0; j < nDims; j++) {
+    	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
+    	            	    		}
+                    			}
+                	    	}
+                    		totalWeightAdded += weight[pointNum];
+                    		for (j = 0; j < nDims; j++) {
+            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
+            	    		}
+                    		for (j = 0; j < nDims; j++) {
+                    			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
+                    		}
+                    		
                         	if (equalScale) {
-                        		for (ii = 0; ii < nPoints; ii++) {
-                        			if (i == groupNum[ii]) {
-        	                			totalWeightAdded += weight[ii];
-        	            	    		for (j = 0; j < nDims; j++) {
-        	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
-        	            	    		}
-                        			}
-                    	    	}
-                        		totalWeightAdded += weight[pointNum];
-                        		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
-	            	    		}
-                        		for (j = 0; j < nDims; j++) {
-                        			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
-                        		}
                         		for (ii = 0; ii < nPoints; ii++) {
                         			if (i == groupNum[ii]) {
         	        		    		for (j = 0; j < nDims; j++) {
@@ -6671,21 +6619,6 @@ public class AlgorithmKMeans extends AlgorithmBase {
 	        		    		}
                 	    	} // if (equalScale)
                 	    	else {
-                	    		for (ii = 0; ii < nPoints; ii++) {
-                        			if (i == groupNum[ii]) {
-        	                			totalWeightAdded += weight[ii];
-        	            	    		for (j = 0; j < nDims; j++) {
-        	            	    			centroidPosAdded[j] += pos[j][ii]*weight[ii];
-        	            	    		}
-                        			}
-                    	    	}	
-                	    		totalWeightAdded += weight[pointNum];
-                        		for (j = 0; j < nDims; j++) {
-	            	    			centroidPosAdded[j] += pos[j][pointNum]*weight[pointNum];
-	            	    		}
-                	    		for (j = 0; j < nDims; j++) {
-                        			centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
-                        		}
                 	    		for (ii = 0; ii < nPoints; ii++) {
                         			if (i == groupNum[ii]) {
         	        		    		for (j = 0; j < nDims; j++) {
