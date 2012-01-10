@@ -119,9 +119,8 @@ public class PlugInAlgorithmT2Mapping extends AlgorithmBase {
     //	   Entering TE values        
 
         // simple error check up front
-        if ((srcImage.getNDims() != 2) && srcImage.getNDims() != 3 && srcImage.getNDims() != 4) 
-        {
-            MipavUtil.displayError("PlugInAlgorithmT2Mapping::init() Error image is not 2 or 3 or 4 dimensions");
+        if (srcImage.getNDims() < 4) {
+            MipavUtil.displayError("PlugInAlgorithmT2Mapping::init() Image must be a 4D image");
             return;
         } 
 

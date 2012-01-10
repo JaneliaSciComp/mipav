@@ -64,7 +64,7 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
     	
     }
 
-    /**
+	/**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
      *
      * @param  theParentFrame  Parent frame.
@@ -143,16 +143,14 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
             } 
-            else if (resultImage != null)
-            {
+            else if (resultImage != null) {
                 // algorithm failed but result image still has garbage
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
                 System.gc();
             }
 
-            if (algorithm.isCompleted()) 
-            {
+            if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
 
@@ -308,6 +306,7 @@ public class PlugInDialogT2Mapping extends JDialogScriptableBase implements Algo
         tePanel.setBorder(MipavUtil.buildTitledBorder("Acquisition parameters"));
         gbcParam = new GridBagConstraints();
         gbcParam.gridwidth = 1;
+        
         gbcParam.gridheight = 1;
         gbcParam.anchor = GridBagConstraints.WEST;
         gbcParam.weightx = 1;
