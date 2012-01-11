@@ -45,19 +45,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      *
      */
     public enum UnitType {
-        NONE(Unit.UNKNOWN_MEASURE),
-        LENGTH(Unit.METERS),
-        TIME(Unit.SECONDS),
-        FREQUENCY(Unit.HZ),
-        CONCENTRATION(Unit.PPM),
-        VELOCITY(Unit.METERS_PER_SEC),
-        ANGLE(Unit.DEGREES);
-        
-        private Unit base;
-
-        UnitType(Unit base) {
-            this.base = base;
-        }
+        NONE,
+        LENGTH,
+        TIME,
+        FREQUENCY,
+        CONCENTRATION,
+        VELOCITY,
+        ANGLE;
         
         public static Unit[] getUnitsOfType(UnitType t) {
             ArrayList<Unit> arUnit = new ArrayList<Unit>();
@@ -75,7 +69,24 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
         
         public Unit getBase() {
-            return base;
+            switch(this) {
+            case NONE:
+            	return Unit.UNKNOWN_MEASURE;
+            case LENGTH:
+            	return Unit.METERS;
+            case TIME:
+            	return Unit.SECONDS;
+            case FREQUENCY:
+            	return Unit.HZ;
+            case CONCENTRATION:
+            	return Unit.PPM;
+            case VELOCITY:
+            	return Unit.METERS_PER_SEC;
+            case ANGLE:
+            	return Unit.DEGREES;
+            }
+            
+            return Unit.UNKNOWN_MEASURE;
         }
         
     }
