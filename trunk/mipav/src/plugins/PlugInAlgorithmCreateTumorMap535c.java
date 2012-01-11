@@ -50,7 +50,7 @@ import gov.nih.mipav.view.dialogs.JDialogSubsample;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmCreateTumorMap535b extends AlgorithmBase {
+public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
 
     /** Whether to perform a gaussian blur */
     private boolean doGaussian;
@@ -60,7 +60,7 @@ public class PlugInAlgorithmCreateTumorMap535b extends AlgorithmBase {
     private double zRes;
     private int initRadius;
     private double tumorChange;
-    private PlugInDialogCreateTumorMap535b.TumorSimMode simMode;
+    private PlugInDialogCreateTumorMap535c.TumorSimMode simMode;
     private int xCenter;
     private int yCenter;
     private int zCenter;
@@ -79,16 +79,19 @@ public class PlugInAlgorithmCreateTumorMap535b extends AlgorithmBase {
      * @param subsample 
      *
      */
-	public PlugInAlgorithmCreateTumorMap535b(int xyDim, int zDim, double xyRes,
-            double zRes, int initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap535b.TumorSimMode simMode, int intensity, int subsampleAmount) {
+	public PlugInAlgorithmCreateTumorMap535c(int xyDim, int zDim, double xyRes,
+            double zRes, double initRadius, double tumorChange,
+            PlugInDialogCreateTumorMap535c.TumorSimMode simMode, int intensity, int subsampleAmount) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
         this.xyRes = xyRes;
         this.zRes = zRes;
         
-        this.initRadius = initRadius;
+        this.initRadius = (int) Math.round(initRadius/xyRes);
+        if(xyRes != zRes) {
+        	MipavUtil.displayError("Program will not display correct size tumor, CircleUtil cannot handle different values for xyResolution and zResolution");
+        }
         if(tumorChange >= 2) {
             tumorChange /= 100;
         } else if(tumorChange >= 1) {
@@ -101,10 +104,6 @@ public class PlugInAlgorithmCreateTumorMap535b extends AlgorithmBase {
     }
     
 	//  ~ Methods --------------------------------------------------------------------------------------------------------
-	
-	public void doGaussian(boolean doGaussian) {
-		this.doGaussian = doGaussian;
-	}
 
         
     /**
@@ -137,10 +136,20 @@ public class PlugInAlgorithmCreateTumorMap535b extends AlgorithmBase {
         
         largerRadius = defineLargerRadius();
         
-        Random r = new Random(); //ensures entire tumor is inside image
-        xCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
-        yCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
-        zCenter = r.nextInt(zDim-2*largerRadius)+largerRadius;
+        Random r = new Random(); 
+        if(xyDim-2*largerRadius < 0) {
+        	xCenter = r.nextInt(xyDim);
+            yCenter = r.nextInt(xyDim);
+        } else { //ensures entire tumor is inside image
+        	xCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
+            yCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
+        }
+        
+        if(zDim-2*largerRadius < 0) {
+        	zCenter = r.nextInt(zDim);
+        } else {
+        	zCenter = r.nextInt(zDim-2*largerRadius)+largerRadius;
+        }
         
         Preferences.debug("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         Preferences.data("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
