@@ -53,9 +53,16 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     
     /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
+    private boolean useOCL;
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
+    
+    /** DOCUMENT ME! */
+    private boolean separable = true;
+
+    /** DOCUMENT ME! */
+    private JCheckBox sepCheckbox;
 
     /** DOCUMENT ME! */
     private JLabel labelAmpFact;
@@ -150,7 +157,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         	{
         		if ( displayInNewFrame )
         		{
-        			new ViewJFrameImage( algorithm.getDestImage() );
+        			resultImage = algorithm.getDestImage();
+        			new ViewJFrameImage( resultImage );
         		}
         		else
         		{
@@ -258,6 +266,20 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         if (source == image25DCheckbox) {
             sigmasPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
+        if (source == sepCheckbox || source == useOCLCheckbox) {
+        	sepCheckbox.removeItemListener(this);
+        	useOCLCheckbox.removeItemListener(this);
+        	if ( source == useOCLCheckbox )
+        	{
+        		sepCheckbox.setEnabled(useOCLCheckbox.isSelected());
+        		if ( !sepCheckbox.isEnabled() )
+        		{
+        			sepCheckbox.setSelected(false);
+        		}
+        	}
+        	sepCheckbox.addItemListener(this);
+        	useOCLCheckbox.addItemListener(this);
+        }
     }
 
     /**
@@ -274,6 +296,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                 outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
                 outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
 
+                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
 
                 sigmasPanel.setSigmaX(MipavUtil.getFloat(st));
@@ -347,6 +370,17 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     	displayProgressBar = flag;
     }
     
+    
+    public void setSeparable(boolean separable) {
+        this.separable = separable;
+        sepCheckbox.setSelected( this.separable );
+    }
+
+    public void setUseOCL(boolean useOCL) {
+        this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+        useOCLCheckbox.setSelected( this.useOCL );
+    }
+    
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -357,15 +391,15 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     	displayInNewFrame = outputPanel.isOutputNewImageSet();
 
         // Check if the algorithm should use OpenCL, calculate and return:
-        if ( useOCLCheckbox.isSelected() )
+        if ( useOCL )
     	{
     		float[] sigmas = sigmasPanel.getNormalizedSigmas();
 
     		OpenCLAlgorithmLaplacian laplacianAlgo; 
     		if ( displayInNewFrame )
     		{
-        		laplacianAlgo= new OpenCLAlgorithmLaplacian(new ModelImage( image.getType(), image.getExtents(), name ), image, sigmas,
-        				outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
+        		laplacianAlgo= new OpenCLAlgorithmLaplacian(new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), name ), image, sigmas,
+        				outputPanel.isProcessWholeImageSet(), separable, image25D, ampFactor);
     		}
     		else
     		{
@@ -380,7 +414,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
     			laplacianAlgo= new OpenCLAlgorithmLaplacian(image, sigmas,
-    					outputPanel.isProcessWholeImageSet(), image25D, ampFactor);
+    					outputPanel.isProcessWholeImageSet(), separable, image25D, ampFactor);
     		}
 
     		laplacianAlgo.addListener(this);
@@ -671,6 +705,9 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         textAmpFact = createTextField("1.0");
         algoPanel.add(textAmpFact);
 
+        sepCheckbox = WidgetFactory.buildCheckBox("Use separable convolution kernels", true, this);
+        algoPanel.addOnNextLine(sepCheckbox);
+        
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
         image25DCheckbox.setFont(serif12);
         algoPanel.addOnNextLine(image25DCheckbox);
@@ -680,8 +717,13 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
         useOCLCheckbox.setFont(serif12);
         useOCLCheckbox.setForeground(Color.black);
-    	useOCLCheckbox.setEnabled(false);
-    	useOCLCheckbox.setEnabled(OpenCLAlgorithmFFT.isOCLAvailable());
+    	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+    	if ( !useOCLCheckbox.isEnabled() && OpenCLAlgorithmFFT.isOCLAvailable() )
+    	{
+    		useOCLCheckbox.setToolTipText( "see Help->Mipav Options->Other to enable GPU computing");
+    	}
+    	sepCheckbox.setEnabled(useOCLCheckbox.isSelected());
+    	sepCheckbox.setSelected(useOCLCheckbox.isSelected());
         algoPanel.addOnNextLine(useOCLCheckbox);
 
         if (image.getNDims() != 3) {
@@ -715,6 +757,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         System.gc();
 
         image25D = image25DCheckbox.isSelected();
+        separable = sepCheckbox.isSelected();
+        useOCL = useOCLCheckbox.isSelected();
 
         if (!sigmasPanel.testSigmaValues()) {
             return false;

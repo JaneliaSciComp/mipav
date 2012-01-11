@@ -983,3 +983,93 @@ __kernel void magnitude_color(
     
 
 
+__kernel void negSum25D(
+
+    __global float *inputX,
+    __global float *inputY,
+    __global float *output,
+    const int4 imageSize,
+    const int slice )
+{
+    int gx = get_global_id(0);
+    int gy = get_global_id(1);
+    int gz = slice;
+    int globalIndex = gz * imageSize.x * imageSize.y + gy * imageSize.x + gx;
+    output[globalIndex] = - ( inputX[globalIndex] + inputY[globalIndex] );
+}
+    
+
+
+__kernel void negSum(
+
+    __global float *inputX,
+    __global float *inputY,
+    __global float *inputZ,
+    __global float *output,
+    const int4 imageSize,
+    const int slice )
+{
+    int gx = get_global_id(0);
+    int gy = get_global_id(1);
+    int gz = slice;
+    int globalIndex = gz * imageSize.x * imageSize.y + gy * imageSize.x + gx;
+	output[globalIndex] = - ( inputX[globalIndex] + inputY[globalIndex] + inputZ[globalIndex] );
+}
+    
+
+
+__kernel void gradientMagnitude25D(
+
+    __global float *input,
+    __global float *output,
+    const int4 imageSize,
+    const int totalSize,
+    const int slice )
+{
+    int gx = get_global_id(0);
+    int gy = get_global_id(1);
+    int gz = slice;
+    int globalIndex = gz * imageSize.x * imageSize.y + gy * imageSize.x + gx;
+    float gradX = 0, gradY = 0;
+    if ( (gx == 0) && (globalIndex + 1 < totalSize) )
+    {
+       gradX = 2 * input[globalIndex + 1] - input[globalIndex];
+    }
+    else if ( (gx == imageSize.x - 1) && (globalIndex - 1 >= 0) )
+    {
+       gradX = 2 * input[globalIndex] - input[globalIndex - 1];
+    }
+    else if ( globalIndex + 1 < totalSize && globalIndex - 1 >= 0 )
+    {
+       gradX = input[globalIndex + 1] - input[globalIndex - 1];
+    }
+    if ( gy == 0 )
+    {
+       int indexY = gz * imageSize.x * imageSize.y + (gy + 1) * imageSize.x + gx;
+       if ( indexY < totalSize )
+       {
+          gradY = 2 * (input[indexY] - input[globalIndex]);
+       }
+    }
+    else if ( gy == imageSize.y - 1 )
+    {
+       int indexY  = gz * imageSize.x * imageSize.y + (gy - 1) * imageSize.x + gx;
+       if ( indexY >= 0 )
+       {
+          gradY = 2 * (input[globalIndex] - input[indexY]);
+       }
+    }
+    else
+    {
+       int indexY1 = gz * imageSize.x * imageSize.y + (gy + 1) * imageSize.x + gx;    
+       int indexY2  = gz * imageSize.x * imageSize.y + (gy - 1) * imageSize.x + gx;
+       if ( indexY1 < totalSize &&  indexY2 >= 0 )
+       {
+          gradY = 2 * (input[indexY1] - input[indexY2]);
+       }
+    }
+    
+    output[globalIndex] = sqrt( gradX * gradX + gradY * gradY );
+}
+    
+

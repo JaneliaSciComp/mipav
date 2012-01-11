@@ -211,7 +211,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		super.finalize();
 	}
 
-	public void saveImage(float[] data, int i, int type, String name )
+	public void saveImage(float[] data, int i, boolean calcMinMax )
 	{
 		if ( destImage == null )
 		{
@@ -220,7 +220,10 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			srcImage.calcMinMax();
+			if ( calcMinMax )
+			{
+				srcImage.calcMinMax();
+			}
 		}
 		else
 		{
@@ -229,7 +232,10 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			destImage.calcMinMax();
+			if ( calcMinMax )
+			{
+				destImage.calcMinMax();
+			}
 		}
 	}
 

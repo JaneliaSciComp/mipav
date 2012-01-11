@@ -681,11 +681,9 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * Starts the convolution of the source image with the provided kernel.
      */
     public void runAlgorithm() {
-        final long start = System.currentTimeMillis();
         beforeExecute();
         execute();
         afterExecute();
-        System.out.println("Time consumed: " + (System.currentTimeMillis() - start));
     }
 
     /**

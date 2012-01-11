@@ -516,20 +516,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		 Render();
 		 UpdateFrameCount();
 
-		 if ( m_iUpdateNormals == 0 )
-		 {			
-			 long time = nanoTime();
-			 ModelImage kImage = m_kVolumeImageA.GetImage();
-			 Texture kImageTexture = m_kVolumeImageA.GetVolumeTarget();
-			 OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals(kImage, (GL3bc)arg0.getGL().getGL3bc(), 
-					 (TextureID)kImageTexture.GetIdentifier(null));
-			 oclNormals.run();
-			 time = nanoTime() - time;
-			 out.println("OCL GPU-Shared Texture computation took: "+(time/1000000)+"ms");	 
-			 ModelImage result = oclNormals.getDestImage();
-			 m_kVolumeImageA.CopyNormalFiles(0, result);
-			 m_iUpdateNormals = -1;
-		 }
 		 if ( m_iUpdateNormals == 1 )
 		 {
 			 long time = nanoTime();
@@ -538,54 +524,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 oclNormals.run();
 			 time = nanoTime() - time;
 			 out.println("OCL GPU computation took: "+(time/1000000)+"ms");
-			 m_iUpdateNormals = -1;
-		 }
-
-		 if ( m_iUpdateNormals == 2 )
-		 {
-			 long time = nanoTime();
-			 ModelImage kImage = m_kVolumeImageA.GetImage();
-			 OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals( kImage, CL.CL_DEVICE_TYPE_CPU );
-			 oclNormals.run();
-			 time = nanoTime() - time;
-			 out.println("OCL CPU computation took: "+(time/1000000)+"ms");
-			 m_iUpdateNormals = -1;
-		 }
-		 if ( m_iUpdateNormals == 3 )
-		 {
-			 long time = nanoTime();
-			 ModelImage kImage = m_kVolumeImageA.GetImage();
-			 int width  = kImage.getExtents().length > 0 ? kImage.getExtents()[0] : 1;
-			 int height = kImage.getExtents().length > 1 ? kImage.getExtents()[1] : 1;
-			 int depth  = kImage.getExtents().length > 2 ? kImage.getExtents()[2] : 1;
-			 float[] input = new float[ width * height * depth ];
-			 try {
-				 kImage.exportData( 0, input.length, input );
-			 } catch (IOException e) {
-				 e.printStackTrace();
-			 }
-
-
-			 float[] output = new float[ width * height * depth * 4 ];
-			 NormalKernel(input, output, width, height, depth, 1, width*height*depth );
-
-			 ModelImage destImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, kImage.getExtents(), kImage.getImageName() + "Normals" );
-
-			 try {
-				 destImage.importData(output);
-			 } catch (IOException e) {
-				 e.printStackTrace();
-			 }
-			 destImage.calcMinMax();
-			 //new ViewJFrameImage(destImage);
-			 time = nanoTime() - time;
-			 out.println("CPU computation took: "+(time/1000000)+"ms");
-			 m_iUpdateNormals = -1;
-		 }
-		 if ( m_iUpdateNormals == 4 )
-		 {
-			 m_kVolumeImageA.GenerateNormalFiles( m_kParent, true );
-			 m_iUpdateNormals = -1;
+			 m_iUpdateNormals = -1; 
+			 ModelImage result = oclNormals.getDestImage();
+			 m_kVolumeImageA.CopyNormalFiles(0, result);
 		 }
 
 		 if ( m_bSurfaceUpdate )
@@ -811,20 +752,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	 {
 		 m_pkRenderer.ReleaseTexture( imageA.GetVolumeTarget() );
 		 m_pkRenderer.ReleaseTexture( imageA.GetColorMapTarget() );
-		 m_pkRenderer.ReleaseTexture( imageA.GetNormalMapTarget() );
+		 if ( imageA.GetImage().isColorImage() )
+		 {
+			 m_pkRenderer.ReleaseTexture( imageA.GetNormalMapTarget() );
+		 }
 		 m_pkRenderer.ReleaseTexture( imageA.GetGradientMapTarget() );
 		 m_pkRenderer.ReleaseTexture( imageA.GetOpacityMapGMTarget() );
-		 m_pkRenderer.ReleaseTexture( imageA.GetLaplaceMapTarget() );
 		 m_pkRenderer.ReleaseTexture( imageA.GetSurfaceTarget() );
 		 m_pkRenderer.ReleaseTexture( imageA.GetScratchTarget() );
 		 if ( imageB.GetImage() != null )
 		 {
 			 m_pkRenderer.ReleaseTexture( imageB.GetVolumeTarget() );
 			 m_pkRenderer.ReleaseTexture( imageB.GetColorMapTarget() );
-			 m_pkRenderer.ReleaseTexture( imageB.GetNormalMapTarget() );
+			 if ( imageB.GetImage().isColorImage() )
+			 {
+				 m_pkRenderer.ReleaseTexture( imageB.GetNormalMapTarget() );
+			 }
 			 m_pkRenderer.ReleaseTexture( imageB.GetGradientMapTarget() );
 			 m_pkRenderer.ReleaseTexture( imageB.GetOpacityMapGMTarget() );
-			 m_pkRenderer.ReleaseTexture( imageB.GetLaplaceMapTarget() );
 			 m_pkRenderer.ReleaseTexture( imageB.GetSurfaceTarget() );   
 			 m_pkRenderer.ReleaseTexture( imageB.GetScratchTarget() );     	
 		 }
@@ -2856,20 +2801,24 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	  {
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetVolumeTarget() );
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetColorMapTarget() );
-		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetNormalMapTarget() );
+		  if ( m_kVolumeImageA.GetImage().isColorImage() )
+		  {
+			  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetNormalMapTarget() );
+		  }
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetGradientMapTarget() );
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetOpacityMapGMTarget() );
-		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetLaplaceMapTarget() );
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetSurfaceTarget() );
 		  m_pkRenderer.LoadTexture( m_kVolumeImageA.GetScratchTarget() );
 		  if ( m_kVolumeImageB.GetImage() != null )
 		  {
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetVolumeTarget() );
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetColorMapTarget() );
-			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetNormalMapTarget() );
+			  if ( m_kVolumeImageB.GetImage().isColorImage() )
+			  {
+				  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetNormalMapTarget() );
+			  }
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetGradientMapTarget() );
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetOpacityMapGMTarget() );
-			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetLaplaceMapTarget() );
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetSurfaceTarget() );   
 			  m_pkRenderer.LoadTexture( m_kVolumeImageB.GetScratchTarget() );     	
 		  }

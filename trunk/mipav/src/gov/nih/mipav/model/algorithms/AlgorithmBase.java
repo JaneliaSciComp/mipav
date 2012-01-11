@@ -570,8 +570,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         if(threadStopped){
         	return;
         }
-        computeElapsedTime();
-
+        double timeinSec = computeElapsedTime();
+        Preferences.debug( "Elapsed time: " + timeinSec + "\n", Preferences.DEBUG_ALGORITHM);
         notifyListeners(this);
 
         /// finalize();
