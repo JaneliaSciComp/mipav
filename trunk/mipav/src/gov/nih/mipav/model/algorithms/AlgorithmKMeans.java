@@ -37,7 +37,7 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * city-block distances is probably best in cases of noise and outlier data points since a few outliers can
  * greatly affect the mean value.  Median components are found separately for each dimension. The 
  * determinant(withinGroupSumOfSquaresMatrix) = det(W) is minimized by minimizing the Mahalanobis squared distance,
- * which equals the (distance vector)' * (withinGroupSumOfSquaresMatrix) * (distance vector).
+ * which equals the (distance vector)' * (withinGroupSumOfSquaresMatrix).inverse() * (distance vector).
  * The distance is between a centroid and a point.  However, we don't initially know the 
  * withinGroupSumOfSquaresMatrix so we can't initially use the Mahalanobis squared distance.  We must 
  * initialize with the Euclidean squared distance in order to obtain a withinGroupSumOfSquaresDistance. 
