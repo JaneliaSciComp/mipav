@@ -42,9 +42,9 @@ import java.awt.*;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGeneratePostTreatment535b implements PlugInAlgorithm {
+public class PlugInGeneratePostTreatment535c implements PlugInAlgorithm {
 
-    public static final String[] CATEGORY = {"Dana Farber Project", "Simulation", "535b"};
+    public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "535c"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ public class PlugInGeneratePostTreatment535b implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogGeneratePostTreatment535b(parentFrame, image);
+            new PlugInDialogGeneratePostTreatment535c(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInDialogGeneratePostTreatment only runs on an image frame.");
         }

@@ -23,6 +23,8 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -34,6 +36,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Vector;
@@ -52,7 +55,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogCreateTumorMap535c extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -75,13 +78,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
     private ModelImage resultImage = null;
     
     /** This is your algorithm */
-    private PlugInAlgorithmCreateTumorMap535b tumorSimAlgo = null;
-
-    /** The check box for whether a blur should be performed. */
-	private JCheckBox check;
-
-	/** The variable representing whether the blur should be performed. */
-	private boolean doGaussian;
+    private PlugInAlgorithmCreateTumorMap535c tumorSimAlgo = null;
 
     private JTextField initRadiusText;
 
@@ -105,7 +102,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
 
     private double xyRes, zRes;
 
-    private int initRadius;
+    private double initRadius;
 
     private double tumorChange;
 
@@ -117,6 +114,9 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
 
     private int subsample;
 
+    /** Units of image */
+	private JComboBox unitsCombo;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -124,7 +124,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogCreateTumorMap535b() { }
+    public PlugInDialogCreateTumorMap535c() { }
 
     /**
      * Sets up variables but does not show dialog.
@@ -132,7 +132,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogCreateTumorMap535b(boolean modal) {
+    public PlugInDialogCreateTumorMap535c(boolean modal) {
         super(modal); 
         
         init();
@@ -170,7 +170,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmCreateTumorMap535b) {
+       if (algorithm instanceof PlugInAlgorithmCreateTumorMap535c) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((tumorSimAlgo.isCompleted() == true)) {
@@ -201,7 +201,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap535b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity, subsample);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap535c(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity, subsample);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -296,6 +296,18 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
         zResText = gui.buildDecimalField("Z Resolution: ", .117);
         imageSizePanel.add(zResText.getParent(), gbc);
         
+        gbc.gridy++;
+        gbc.gridx = 0;
+        Unit[] units = UnitType.getUnitsOfType(UnitType.LENGTH);
+        int selected = 0;
+        for(int i=0; i<units.length; i++) {
+        	if(units[i] == Unit.MILLIMETERS) {
+        		selected = i;
+        	}
+        }
+        unitsCombo = gui.buildComboBox("Units of image: ", UnitType.getUnitsOfType(UnitType.LENGTH), selected);
+        imageSizePanel.add(unitsCombo.getParent(), gbc);
+        
         gbc.gridy = 0;
         gbc.gridx = 0;
         mainPanel.add(imageSizePanel, gbc);
@@ -308,8 +320,22 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
         tumorSimPanel.add(intensityText.getParent(), gbc);
         
         gbc.gridy++;
-        initRadiusText = gui.buildIntegerField("Radius of initial tumor: ", 30);
-        tumorSimPanel.add(initRadiusText.getParent(), gbc);
+        JPanel panel = new JPanel();
+        FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
+        panel.setLayout(flow);
+        
+        final JLabel measureLabel = new JLabel("Radius of initial tumor (in "+Unit.MILLIMETERS.getAbbrev()+"): ");
+        panel.add(measureLabel, flow);
+        
+        initRadiusText = gui.buildDecimalField("", 3);
+        panel.add(initRadiusText, flow);
+        tumorSimPanel.add(panel, gbc);
+        
+        unitsCombo.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+				measureLabel.setText("Radius of initial tumor (in "+((Unit)unitsCombo.getSelectedItem()).getAbbrev()+"): ");
+			}
+        });
         
         gbc.gridy++;
         subSampleCombo = gui.buildComboBox("Subsampling amount: ", new Integer[] {8, 4, 2}, 0);
@@ -353,7 +379,7 @@ public class PlugInDialogCreateTumorMap535b extends JDialogScriptableBase implem
     	    xyRes = Double.valueOf(xyResText.getText());
     	    zRes = Double.valueOf(zResText.getText());
     	    
-    	    initRadius = Integer.valueOf(initRadiusText.getText());
+    	    initRadius = Double.valueOf(initRadiusText.getText());
     	    
     	    subsample = Integer.valueOf(subSampleCombo.getSelectedItem().toString());
     	    
