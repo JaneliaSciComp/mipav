@@ -15,6 +15,8 @@ public class GaussianKernelFactory implements KernelFactory {
 	private float[] sigmas;
 	private int[] extents;
 	private int kernelType;
+	private int derivativeOrder = 1;
+	private int extentScale = 8;
 	
 	public int getKernelType() {
 		return kernelType;
@@ -22,6 +24,14 @@ public class GaussianKernelFactory implements KernelFactory {
 
 	public void setKernelType(int kernelType) {
 		this.kernelType = kernelType;
+	}
+
+	public void setDerivativeOrder(int derivativeOrder) {
+		this.derivativeOrder = derivativeOrder;
+	}
+	
+	public void setExtentScale(int extentScale) {
+		this.extentScale = extentScale;
 	}
 
 	private GaussianKernelFactory(float[] sigmas){
@@ -105,7 +115,7 @@ public class GaussianKernelFactory implements KernelFactory {
 		kExtents[0] = xkDim;
 		lsigmas[0] = sigmas[0];
         float[] gxDerivativeData = new float[xkDim];
-        derivativeOrder[0] = 1;
+        derivativeOrder[0] = this.derivativeOrder;
         GenerateGaussian g = new GenerateGaussian(gxDerivativeData, kExtents, lsigmas, derivativeOrder);
         g.calc(false);
         
@@ -154,7 +164,7 @@ public class GaussianKernelFactory implements KernelFactory {
         int ykDim = determineExtent(sigmas[1]);
 		kExtents[0] = ykDim;
         float[] gyDerivativeData = new float[ykDim];
-        derivativeOrder[0] = 1;
+        derivativeOrder[0] = this.derivativeOrder;
         g = new GenerateGaussian(gyDerivativeData, kExtents, lsigmas, derivativeOrder);
         g.calc(false);
         
@@ -203,7 +213,7 @@ public class GaussianKernelFactory implements KernelFactory {
 		int zkDim = determineExtent(sigmas[2]);
 		kExtents[0] = zkDim;
 		float[] gzDerivativeData = new float[zkDim];
-		derivativeOrder[0] = 1;
+		derivativeOrder[0] = this.derivativeOrder;
 		g = new GenerateGaussian(gzDerivativeData, kExtents, lsigmas,
 				derivativeOrder);
 		g.calc(false);
@@ -213,7 +223,7 @@ public class GaussianKernelFactory implements KernelFactory {
 	}
 	
 	private int determineExtent(float sigma){
-		int extent = Math.round(8 * sigma);
+		int extent = Math.round(extentScale * sigma);
 		if(extent % 2 == 0){
 			extent++;
 		}

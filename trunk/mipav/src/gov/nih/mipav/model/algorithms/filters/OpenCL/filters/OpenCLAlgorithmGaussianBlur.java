@@ -119,7 +119,6 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 
             return;
         }
-        final long startTime = System.currentTimeMillis();
 
         if ( !separable )
         {
@@ -165,10 +164,7 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
         	}
         } else if (srcImage.getNDims() == 4) {
         	gaussianBlur4D();
-        }
-            
-        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
-		
+        }		
         setCompleted(true);
     }
 
@@ -350,7 +346,7 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
             clEnqueueNDRangeKernel(commandQueue, kernel, 2, null, globalWorkSize, null, 0, null, null);
 		}
     	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
-		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_blur" );
+		saveImage(output, 0, true );
 		
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
@@ -408,7 +404,7 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
     	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
-		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_blur" );
+		saveImage(output, 0, true );
 		
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
@@ -540,7 +536,7 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
         	}
 		}
     	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
-		saveImage(output, time, srcImage.getType(), srcImage.getImageName() + "_blur" );
+		saveImage(output, time, true );
 		
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
@@ -596,7 +592,7 @@ public class OpenCLAlgorithmGaussianBlur extends OpenCLAlgorithmBase {
 		cl_command_queue commandQueue = 
 				clCreateCommandQueue(cl, device, 0, null);
     	clEnqueueReadBuffer(commandQueue, outputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
-		saveImage(output, time, srcImage.getType(), srcImage.getImageName() + "_blur" );
+		saveImage(output, time, true );
 		
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);

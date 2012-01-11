@@ -807,14 +807,15 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
+        if ( m_kVolumeImageA.GetImage().isColorImage() )
+        {
+        	kPShader.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
+            kPShader.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());
+        }
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
         kPShader.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
         kPShader.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        kPShader.SetImageName(iTex, m_kVolumeImageA.GetLaplaceMapTarget().GetName());
-        kPShader.SetTexture(iTex++, m_kVolumeImageA.GetLaplaceMapTarget());
         
           
         if ( m_kVolumeImageB.GetImage() != null )
@@ -823,14 +824,15 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
+            if ( m_kVolumeImageB.GetImage().isColorImage() )
+            {
+            	kPShader.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
+                kPShader.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());
+            }
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
             kPShader.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
             kPShader.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-            kPShader.SetImageName(iTex, m_kVolumeImageB.GetLaplaceMapTarget().GetName());
-            kPShader.SetTexture(iTex++, m_kVolumeImageB.GetLaplaceMapTarget());
         }
     }
     

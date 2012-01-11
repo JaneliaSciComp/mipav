@@ -87,14 +87,6 @@ public class VolumeImage implements Serializable {
 	/** Texture object for volume gradient magnitude data: */
 	private Texture m_kVolumeGMTarget;
 
-	/** Data storage for volume second derivative: */
-	private GraphicsImage[] m_kVolumeLaplace;
-	/** Set to true if the Volume Laplace texture map has been initialized. */
-	private boolean m_bLaplaceInit = false;
-
-	/** Texture object for data: */
-	private Texture m_kVolumeLaplaceTarget;
-
 	/** Data storage for surfaces: */
 	private GraphicsImage m_kSurfaceImage;
 
@@ -328,11 +320,8 @@ public class VolumeImage implements Serializable {
 				if (kReturn == null) {
 					kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucData2,
 							kImageName);
-					//kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_L8, iXBound, iYBound, iZBound, aucData,
-					//        kImageName);
 				} else {
 					kReturn.SetData(aucData2, iXBound, iYBound, iZBound);
-					//kReturn.SetData(aucData, iXBound, iYBound, iZBound);
 				}
 			} catch (final IOException e) {
 				e.printStackTrace();
@@ -349,6 +338,107 @@ public class VolumeImage implements Serializable {
 		}
 		return kReturn;
 	}
+
+
+	private void addNormals(final ModelImage kImage, final int iTimeSlice) {
+		final int iXBound = kImage.getExtents()[0];
+		final int iYBound = kImage.getExtents()[1];
+		final int iZBound = kImage.getExtents()[2];
+
+		int iSize = iXBound * iYBound * iZBound;
+		byte[] aucData = new byte[iSize * 4];
+		try {
+			kImage.exportDataUseMask(iTimeSlice * iSize * 4, iSize * 4, true, aucData);
+			byte[] volumeData = m_kVolume[iTimeSlice].GetData();
+			for (int i = 0; i < iSize; i++) {
+				volumeData[i*4 + 1] = aucData[i*4 + 1];
+				volumeData[i*4 + 2] = aucData[i*4 + 2];
+				volumeData[i*4 + 3] = aucData[i*4 + 3];
+			}
+		} catch (final IOException e) {
+			e.printStackTrace();
+		}
+		m_kVolumeTarget.Reload(true);
+	}
+
+
+	private GraphicsImage createGM_Laplace(final ModelImage kImageGM, final ModelImage kImageL,
+			final GraphicsImage kVolumeImage, 
+			final int iTimeSlice, final boolean bSwap) {
+
+		GraphicsImage kReturn = kVolumeImage;
+		final int iXBound = kImageGM.getExtents()[0];
+		final int iYBound = kImageGM.getExtents()[1];
+		final int iZBound = kImageGM.getExtents()[2];
+
+		int iSize = iXBound * iYBound * iZBound;
+		byte[] aucDataL = new byte[iSize];
+
+		if ( kImageL != null )
+		{
+			try {
+				kImageL.exportDataUseMask(iTimeSlice * iSize, iSize, false, aucDataL);
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+		}
+
+		byte[] aucDataGM = null;
+		if (kImageGM.isColorImage()) {
+			iSize *= 4;
+			aucDataGM = new byte[iSize];
+			try {
+				kImageGM.exportDataUseMask(iTimeSlice * iSize, iSize, false, aucDataGM);
+				if (bSwap) {
+					for (int i = 0, j = 0; i < iSize; i += 4) {
+						aucDataGM[i] = aucDataGM[i + 1];
+						aucDataGM[i + 1] = aucDataGM[i + 2];
+						aucDataGM[i + 2] = aucDataGM[i + 3];
+						if ( kImageL != null )
+						{
+							aucDataGM[i + 3] = aucDataL[j++];
+						}
+					}
+				}
+				kImageGM.importData( iTimeSlice * iSize, aucDataGM, false );
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+			if (kReturn == null) {
+				kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucDataGM,
+						kImageGM.getImageName());
+			} else {
+				kReturn.SetData(aucDataGM, iXBound, iYBound, iZBound);
+			}
+		} else {
+			aucDataGM = new byte[iSize];
+			try {
+				kImageGM.exportDataUseMask(iTimeSlice * iSize, iSize, false, aucDataGM);
+				byte[] aucData2 = new byte[iSize*4];
+				for (int i = 0; i < iSize; i++) {
+					aucData2[i * 4 + 0] = aucDataGM[i];
+					aucData2[i * 4 + 1] = aucDataGM[i];
+					aucData2[i * 4 + 2] = aucDataGM[i];
+					if ( kImageL != null )
+					{
+						aucData2[i * 4 + 3] = aucDataL[i];
+					}
+				}
+
+				if (kReturn == null) {
+					kReturn = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, aucData2,
+							kImageGM.getImageName());
+				} else {
+					kReturn.SetData(aucData2, iXBound, iYBound, iZBound);
+				}
+			} catch (final IOException e) {
+				e.printStackTrace();
+			}
+
+		}
+		return kReturn;
+	}
+
 
 
 	/**
@@ -394,15 +484,19 @@ public class VolumeImage implements Serializable {
 	 * @param kImage a new ModelImage containing the calculated Normals.
 	 */
 	public void CopyNormalFiles(final int i, final ModelImage kImage) {
-		kImage.calcMinMax();
-		//new ViewJFrameImage(kImage);
+		final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
+				+ i);
 		JDialogBase.updateFileInfo( m_kImage, kImage );
-		ModelImage.saveImage( kImage, kImage.getImageName() + ".xml", m_kDir );
-		//kImage.saveImage(m_kDir, kImage.getImageName(), FileUtility.XML, false, false);
-		m_kNormal[i] = VolumeImage.UpdateData(kImage, 0, null, m_kNormal[i], m_kNormalMapTarget, kImage.getImageName(),
-				true, true);
-		testNormalsTime = nanoTime() - testNormalsTime;
-		out.println("GPGPU computation took: "+(testNormalsTime/1000000)+"ms");					
+		ModelImage.saveImage( kImage, kImageName + ".xml", m_kDir );
+		if ( m_kImage.isColorImage() )
+		{
+			m_kNormal[i] = VolumeImage.UpdateData(kImage, 0, null, m_kNormal[i], m_kNormalMapTarget, kImage.getImageName(),
+					true, true);
+		}
+		else
+		{
+			addNormals(kImage, i);
+		}
 	}
 
 	/**
@@ -461,13 +555,19 @@ public class VolumeImage implements Serializable {
 		m_kVolumeTarget.dispose();
 		m_kVolumeTarget = null;
 
-		for (final GraphicsImage element : m_kNormal) {
-			element.dispose();
+		if ( m_kNormal != null )
+		{
+			for (final GraphicsImage element : m_kNormal) {
+				element.dispose();
+			}
+			m_kNormal = null;
 		}
-		m_kNormal = null;
-		m_kNormalMapTarget.dispose();
-		m_kNormalMapTarget = null;
-
+		if ( m_kNormalMapTarget != null )
+		{
+			m_kNormalMapTarget.dispose();
+			m_kNormalMapTarget = null;
+		}
+		
 		m_kScratchTarget.dispose();
 		m_kScratchTarget = null;
 
@@ -483,12 +583,6 @@ public class VolumeImage implements Serializable {
 		m_kVolumeGMTarget.dispose();
 		m_kVolumeGMTarget = null;
 
-		for (final GraphicsImage element : m_kVolumeLaplace) {
-			element.dispose();
-		}
-		m_kVolumeLaplace = null;
-		m_kVolumeLaplaceTarget.dispose();
-		m_kVolumeLaplaceTarget = null;
 
 		m_kOpacityMap_GM.dispose();
 		m_kOpacityMap_GM = null;
@@ -523,21 +617,7 @@ public class VolumeImage implements Serializable {
 	 * function launches the GPU-based Normal calculation.  That calculation when finished calls the CopyNormalFiles
 	 * which writes the calculated normals to disk and updates the Normal map on the GPU for rendering.
 	 */
-	public void GenerateNormalFiles( VolumeTriPlanarInterface parentFrame, boolean bForce ) {
-		// Return if already initialized.
-		if ( bForce )
-		{
-			testNormalsTime = nanoTime();
-			if ( !m_bNormalsInit || bForce )
-			{
-				for (int i = 0; i < m_iTimeSteps; i++) {
-					VolumeImageNormalGM.main( parentFrame.newSharedCanvas(), parentFrame, this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
-							.getFileInfo(0).getFileName(), "_Normal_" + i));
-				}
-				m_bNormalsInit = true;
-			}
-		}
-		
+	public void GenerateNormalFiles( VolumeTriPlanarInterface parentFrame ) {
 		if ( m_bNormalsInit )
 		{
 			return;
@@ -547,7 +627,6 @@ public class VolumeImage implements Serializable {
 		for (int i = 0; i < m_iTimeSteps; i++) {
 			final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
 					+ i);
-			// System.err.println( kImageName );
 			ModelImage kNormal = ReadFromDisk(kImageName + ".xml", m_kDir);
 			if ( kNormal != null && !checkImage( kNormal, m_akImages[i] ) )
 			{
@@ -556,8 +635,7 @@ public class VolumeImage implements Serializable {
 			}
 			if ( kNormal != null )
 			{
-				m_kNormal[i] = VolumeImage.UpdateData(kNormal, 0, null, m_kNormal[i], m_kNormalMapTarget, kNormal
-						.getImageName(), true, true);
+				addNormals(kNormal, i);	
 				kNormal.disposeLocal();
 				m_bNormalsInit = true;
 			}
@@ -566,19 +644,38 @@ public class VolumeImage implements Serializable {
 		out.println("read normal file took: "+(time/1000000)+"ms");		
 		// If the Normal map is still not initialized -- no matching file on disk, then launch the GPU-based
 		// Normal map generator.
-		testNormalsTime = nanoTime();
+		long testNormalsTime = nanoTime();
 		if ( !m_bNormalsInit )
 		{
 			for (int i = 0; i < m_iTimeSteps; i++) {
-				VolumeImageNormalGM.main( parentFrame.newSharedCanvas(), parentFrame, this, m_akImages[i], m_kNormalMapTarget, i, ModelImage.makeImageName(m_kImage
-						.getFileInfo(0).getFileName(), "_Normal_" + i));
+				OpenCLAlgorithmVolumeNormals oclNormals = new OpenCLAlgorithmVolumeNormals( m_akImages[i], CL.CL_DEVICE_TYPE_GPU );
+				oclNormals.run();
+				ModelImage result = oclNormals.getDestImage();				
+
+				final String kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), "_Normal_"
+						+ i);
+				JDialogBase.updateFileInfo( m_kImage, result );
+				ModelImage.saveImage( result, kImageName + ".xml", m_kDir );
+				
+				if ( m_kImage.isColorImage() )
+				{
+					m_kNormal[i] = VolumeImage.UpdateData(result, i, null, m_kNormal[i], m_kNormalMapTarget, result.getImageName(),
+							true, true);
+				}
+				else
+				{
+					addNormals(result, i);
+				}
+				
+				result.disposeLocal();
 			}
 			m_bNormalsInit = true;
 		}
-		
-		
+		testNormalsTime = nanoTime() - testNormalsTime;
+		out.println("GPGPU computation took: "+(testNormalsTime/1000000)+"ms");		
+
+
 	}
-	private long testNormalsTime;
 
 	/**
 	 * Return the Color Map Texture.
@@ -753,14 +850,6 @@ public class VolumeImage implements Serializable {
 	}
 
 	/**
-	 * Return the 2nd derivative texture.
-	 * @return 2nd derivative texture.
-	 */
-	public Texture GetLaplaceMapTarget() {
-		return m_kVolumeLaplaceTarget;
-	}
-
-	/**
 	 * Return the surface mask Texture.
 	 * @return surface mask Texture.
 	 */
@@ -842,7 +931,43 @@ public class VolumeImage implements Serializable {
 	 */
 	public void SetGradientMagnitude(ModelImage kGradientMagnitude, boolean bComputeLaplace, String kPostfix )
 	{
-		GradientMagnitudeImage(m_kImage, kGradientMagnitude, bComputeLaplace );
+		if ( !m_bGMInit )
+		{
+			for (int i = 0; i < m_iTimeSteps; i++) {
+				ModelImage kImageLaplace = null;
+				ModelImage kImageGM = getGradientMagnitude( m_akImages[i], i );
+				if ( !m_akImages[i].isColorImage() )
+				{
+					kImageLaplace = getLaplace( m_akImages[i], i );			
+					m_kVolumeGM[i] = createGM_Laplace(kImageGM, kImageLaplace, m_kVolumeGM[i], i, true);
+				}
+				else
+				{
+					m_kVolumeGM[i] = createGM_Laplace(kImageGM, null, m_kVolumeGM[i], i, true);				
+				}
+
+
+				kImageGM.calcMinMax();
+				m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );	
+
+				ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+				if (kImageFrame != null) {
+					kImageFrame.close();
+				}
+				kImageGM.disposeLocal();
+				if ( kImageLaplace != null )
+				{
+					kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageLaplace);
+					if (kImageFrame != null) {
+						kImageFrame.close();
+					}
+					kImageLaplace.disposeLocal();
+				}
+			}
+			m_kVolumeGMTarget.SetImage(m_kVolumeGM[m_iTimeSlice]);
+			m_kVolumeGMTarget.Reload(true);
+			m_bGMInit = true;
+		}
 
 		if ( bComputeLaplace )
 		{
@@ -1231,122 +1356,189 @@ public class VolumeImage implements Serializable {
 	 * @param kImage input image
 	 * @param kGradientMagnitude input Gradient Magnitude image, or null.
 	 * @param bComputeLaplace when true the Laplace image is also calculated or read from dis.
-	 */
 	private void GradientMagnitudeImage(final ModelImage kImage, ModelImage kGradientMagnitude, 
 			boolean bComputeLaplace) {
 
 
 		if ( !m_bGMInit )
 		{
+			ModelImage[] kImageGM = new ModelImage[m_iTimeSteps];
+			String[] kImageName = new String[m_iTimeSteps];
 			for (int i = 0; i < m_iTimeSteps; i++) {
-				final String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String("_GM_"
-						+ i));
+				kImageName[i] = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String("_GM_" + i));
 
-				ModelImage kImageGM = null;
 				if ( kGradientMagnitude != null && checkImage(kImage, kGradientMagnitude ))
 				{
 					m_kVolumeGM[i] = VolumeImage.UpdateData(kGradientMagnitude, i, null, m_kVolumeGM[i], 
 							m_kVolumeGMTarget, m_kVolumeGM[i].GetName(), true, false);
-					ModelImage.saveImage( kGradientMagnitude, kImageName + ".xml", m_kDir );
+					ModelImage.saveImage( kGradientMagnitude, kImageName[i] + ".xml", m_kDir );
 				}
 				else
 				{
-					kImageGM = ReadFromDisk(kImageName + ".xml", m_kDir);
-					if ( kImageGM != null && !checkImage(kImage, kImageGM ) )
+					kImageGM[i] = ReadFromDisk(kImageName[i] + ".xml", m_kDir);
+					if ( kImageGM[i] != null && !checkImage(kImage, kImageGM[i] ) )
 					{
-						kImageGM.disposeLocal();
-						kImageGM = null;
+						kImageGM[i].disposeLocal();
+						kImageGM[i] = null;
 					}
-					if (kImageGM == null) {
-						if (m_iTimeSteps == 1) {
-							kImageGM = (ModelImage) kImage.clone();
-						} else {
-							kImageGM = (ModelImage) m_akImages[i].clone();
-						}
-						JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude(null, kImageGM);
+					if (kImageGM[i] == null) {
+						JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude(null, m_akImages[i]);
 						kCalcMagnitude.setVisible(false);
-						kCalcMagnitude.setOutputNewImage(false);
+						kCalcMagnitude.setOutputNewImage(true);
 						kCalcMagnitude.setDisplayProgressBar(true);
 						kCalcMagnitude.setSeparateThread(false);
+						kCalcMagnitude.setSeparable(true);
+						kCalcMagnitude.setUseOCL(true);
 						kCalcMagnitude.actionPerformed(new ActionEvent(this, 0, "OK"));
+						kImageGM[i] = kCalcMagnitude.getResultImage();
 						kCalcMagnitude = null;
-						if (kImageGM != null) {
-							kImageGM.setImageDirectory( m_kDir );
-							kImageGM.setImageName( kImageName + ".xml" );
-							ModelImage.saveImage(kImageGM, kImageName + ".xml", m_kDir );
-							//kImageGM.saveImage(m_kDir, kImageName + ".xml", FileUtility.XML, false, false);
+					}
+					if (kImageGM[i] == null) {
+						System.err.println("Gradient magnitude calculation returned null");
+						m_kVolumeGM[i] = VolumeImage.UpdateData(kImage, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName[i], true, false);
+					} else {
+						kImageGM[i].calcMinMax();
+						m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM[i].getMin(), (float)kImageGM[i].getMax() );
+
+						if ( !( bComputeLaplace && !m_kImage.isColorImage() ) )
+						{
+							m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM[i], 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName[i], true, false);
 						}
 					}
-					if (kImageGM == null) {
-						System.err.println("Gradient magnitude calculation returned null");
-						m_kVolumeGM[i] = VolumeImage.UpdateData(kImage, i, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true, false);
-					} else {
-						kImageGM.calcMinMax();
-						m_akGradientMagMinMax[i] = new Vector2f( (float)kImageGM.getMin(), (float)kImageGM.getMax() );
-						m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM, 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName, true, false);
+				}
+			}
+
+
+			if ( bComputeLaplace && !m_kImage.isColorImage() )
+			{
+				for (int i = 0; i < m_iTimeSteps; i++) {
+					final String kImageNameL = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String(
+							"_Laplacian_" + i));
+					ModelImage kImageGMGM = null;
+					kImageGMGM = ReadFromDisk(kImageNameL + ".xml", m_kDir);
+					if ( kImageGMGM != null && !checkImage(kImage, kImageGMGM ) )
+					{
+						kImageGMGM.disposeLocal();
+						kImageGMGM = null;
 					}
-					final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+					if (kImageGMGM == null) {
+						final JDialogLaplacian kCalcLaplacian = new JDialogLaplacian(null, m_akImages[i]);
+						kCalcLaplacian.setVisible(false);
+						kCalcLaplacian.setOutputNewImage(true);
+						kCalcLaplacian.setDisplayProgressBar(true);
+						kCalcLaplacian.setSeparateThread(false);
+						kCalcLaplacian.setUseOCL(true);
+						kCalcLaplacian.setSeparable(true);
+						kCalcLaplacian.actionPerformed(new ActionEvent(this, 0, "OK"));
+						kImageGMGM = kCalcLaplacian.getResultImage();
+					}
+					if (kImageGMGM != null) {
+						m_kVolumeGM[i] = createGM_Laplace(kImageGM[i], kImageGMGM, m_kVolumeGM[i], i, true);
+					} else {
+						m_kVolumeGM[i] = VolumeImage.UpdateData(kImageGM[i], 0, null, m_kVolumeGM[i], m_kVolumeGMTarget, kImageName[i], true, false);
+					}
+					final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
 					if (kImageFrame != null) {
 						kImageFrame.close();
-					} else if (kImageGM != null) {
-						kImageGM.disposeLocal();
-						kImageGM = null;
+					} else if (kImageGMGM != null) {
+						kImageGMGM.disposeLocal();
+						kImageGMGM = null;
 					}
 				}
 			}
+
 			m_bGMInit = true;
 			m_kVolumeGMTarget.SetImage(m_kVolumeGM[0]);
-		}
+			m_kVolumeGMTarget.Reload(true);
+			
+			for ( int i = 0; i < kImageGM.length; i++ )
+			{
+				if (kImageGM[i] != null) {
 
+					kImageGM[i].setImageDirectory( m_kDir );
+					kImageGM[i].setImageName( kImageName[i] + ".xml" );
+					ModelImage.saveImage(kImageGM[i], kImageName[i] + ".xml", m_kDir );
+					
 
-		if ( bComputeLaplace && !m_bLaplaceInit && !m_kImage.isColorImage() )
-		{
-			for (int i = 0; i < m_iTimeSteps; i++) {
-				final String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String(
-						"_Laplacian_" + i));
-				ModelImage kImageGMGM = null;
-				kImageGMGM = ReadFromDisk(kImageName + ".xml", m_kDir);
-				if ( kImageGMGM != null && !checkImage(kImage, kImageGMGM ) )
-				{
-					kImageGMGM.disposeLocal();
-					kImageGMGM = null;
-				}
-				if (kImageGMGM == null) {
-					if (m_iTimeSteps == 1) {
-						kImageGMGM = (ModelImage) kImage.clone();
-					} else {
-						kImageGMGM = (ModelImage) m_akImages[i].clone();
+					final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM[i]);
+					if (kImageFrame != null) {
+						kImageFrame.close();
 					}
-					final JDialogLaplacian kCalcLaplacian = new JDialogLaplacian(null, kImageGMGM);
-					kCalcLaplacian.setVisible(false);
-					kCalcLaplacian.setOutputNewImage(false);
-					kCalcLaplacian.setDisplayProgressBar(true);
-					kCalcLaplacian.setSeparateThread(false);
-					kCalcLaplacian.actionPerformed(new ActionEvent(this, 0, "OK"));
-					if (kImageGMGM != null) {
-						kImageGMGM.calcMinMax(); 
-						kImageGMGM.setImageDirectory( m_kDir );
-						kImageGMGM.setImageName( kImageName + ".xml" );
-						ModelImage.saveImage(kImageGMGM, kImageName + ".xml", m_kDir );
-					}
-				}
-				if (kImageGMGM != null) {
-					m_kVolumeLaplace[i] = VolumeImage.UpdateData(kImageGMGM, 0, null, m_kVolumeLaplace[i], m_kVolumeLaplaceTarget, kImageName,
-							true, false);
-				} else {
-					System.err.println("Laplacian calculation returned null");
-				}
-				final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGMGM);
-				if (kImageFrame != null) {
-					kImageFrame.close();
-				} else if (kImageGMGM != null) {
-					kImageGMGM.disposeLocal();
-					kImageGMGM = null;
+						
+					kImageGM[i].disposeLocal();
+					kImageGM[i] = null;
 				}
 			}
-			m_kVolumeLaplaceTarget.SetImage(m_kVolumeLaplace[0]);
-			m_bLaplaceInit = true;
 		}
+	}
+	 */
+	
+	private ModelImage getGradientMagnitude( ModelImage kImage, int i )
+	{
+		String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String("_GM_" + i));
+		ModelImage kImageGM = ReadFromDisk(kImageName + ".xml", m_kDir);
+		if ( kImageGM != null && !checkImage(kImage, kImageGM ) )
+		{
+			kImageGM.disposeLocal();
+			kImageGM = null;
+		}
+		if (kImageGM == null) {
+			JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude(null, m_akImages[i]);
+			kCalcMagnitude.setVisible(false);
+			kCalcMagnitude.setOutputNewImage(true);
+			kCalcMagnitude.setDisplayProgressBar(true);
+			kCalcMagnitude.setSeparateThread(false);
+			kCalcMagnitude.setSeparable(true);
+			kCalcMagnitude.setUseOCL(true);
+			kCalcMagnitude.actionPerformed(new ActionEvent(this, 0, "OK"));
+			kImageGM = kCalcMagnitude.getResultImage();
+			kCalcMagnitude = null;
+
+			kImageGM.setImageDirectory( m_kDir );
+			kImageGM.setImageName( kImageName + ".xml" );
+			JDialogBase.updateFileInfo( kImage, kImageGM );
+			ModelImage.saveImage(kImageGM, kImageName + ".xml", m_kDir );
+
+			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageGM);
+			if (kImageFrame != null) {
+				kImageFrame.setVisible(false);
+			}
+		}
+		return kImageGM;
+	}
+	
+	
+	private ModelImage getLaplace( ModelImage kImage, int i )
+	{
+		String kImageName = ModelImage.makeImageName(kImage.getFileInfo(0).getFileName(), new String("_Laplacian_" + i));
+		ModelImage kImageL = ReadFromDisk(kImageName + ".xml", m_kDir);
+		if ( kImageL != null && !checkImage(kImage, kImageL ) )
+		{
+			kImageL.disposeLocal();
+			kImageL = null;
+		}
+		if (kImageL == null) {
+			JDialogLaplacian kCalcLaplacian = new JDialogLaplacian(null, m_akImages[i]);
+			kCalcLaplacian.setVisible(false);
+			kCalcLaplacian.setOutputNewImage(true);
+			kCalcLaplacian.setDisplayProgressBar(true);
+			kCalcLaplacian.setSeparateThread(false);
+			kCalcLaplacian.setUseOCL(true);
+			kCalcLaplacian.setSeparable(true);
+			kCalcLaplacian.actionPerformed(new ActionEvent(this, 0, "OK"));
+			kImageL = kCalcLaplacian.getResultImage();
+			kCalcLaplacian = null;
+
+			kImageL.setImageDirectory( m_kDir );
+			kImageL.setImageName( kImageName + ".xml" );
+			JDialogBase.updateFileInfo( kImage, kImageL );
+			ModelImage.saveImage(kImageL, kImageName + ".xml", m_kDir );
+			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(kImageL);
+			if (kImageFrame != null) {
+				kImageFrame.setVisible(false);
+			}
+		}
+		return kImageL;
 	}
 
 	/**
@@ -1358,7 +1550,14 @@ public class VolumeImage implements Serializable {
 		// Create LUTS for the ModelImage:
 		initLUT();
 		// Initialize Texture Maps:
-		initImages();
+		if ( !m_kImage.isColorImage() )
+		{
+			initImages();
+		}
+		else
+		{
+			initImagesColor();
+		}
 
 		if (kProgress != null) {
 			kProgress.updateValueImmed(kProgress.getValue() + iProgress);
@@ -1386,8 +1585,6 @@ public class VolumeImage implements Serializable {
 		final int[] aiExtents = m_kImage.getExtents();
 		final int iNDims = aiExtents.length;
 		String kImageName;
-		//GraphicsImage.FormatMode type = m_kImage.isColorImage() ? GraphicsImage.FormatMode.IT_RGBA8888 :
-		//	GraphicsImage.FormatMode.IT_L8;
 		GraphicsImage.FormatMode type = GraphicsImage.FormatMode.IT_RGBA8888 ;
 
 
@@ -1402,7 +1599,124 @@ public class VolumeImage implements Serializable {
 		// Allocate a 3D GraphicsImage for each 3D Volume
 		m_kVolume = new GraphicsImage[m_iTimeSteps];
 		m_kVolumeGM = new GraphicsImage[m_iTimeSteps];
-		m_kVolumeLaplace = new GraphicsImage[m_iTimeSteps];
+		m_akGradientMagMinMax = new Vector2f[m_iTimeSteps];
+
+		final int[] aiSubset = new int[] {aiExtents[0], aiExtents[1], aiExtents[2]};
+		
+		for (int i = 0; i < m_iTimeSteps; i++) {
+
+			if ( m_iTimeSteps > 1 )
+			{
+				// Will generate the ModelImage GraphicsImage representation and separate the 4D ModelImage into
+				// the 3D Subset image.
+				m_akImages[i] = new ModelImage(m_kImage.getType(), aiSubset, JDialogBase.makeImageName(m_kImage
+						.getImageName(), "_" + i));
+				JDialogBase.updateFileInfo( m_kImage, m_akImages[i] );
+				m_kVolume[i] = VolumeImage.UpdateData(m_kImage, i, m_akImages[i], null, m_kVolumeTarget, m_akImages[i]
+						.getImageName(), true, false);
+				m_akImages[i].copyFileTypeInfo(m_kImage);
+				m_akImages[i].calcMinMax();
+			}
+			else
+			{
+				// Already 3D, just generate the GraphicsImage:
+				m_akImages[0] = m_kImage;
+				m_kVolume[0] = VolumeImage.UpdateData(m_kImage, m_iTimeSlice, null, null, m_kVolumeTarget, m_kImage
+						.getImageName(), true, false);
+			}
+
+			// Allocate GraphcisImage for Gradient Magnitude Texture:
+			kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), 
+					new String("_GM_" + i));              
+			m_kVolumeGM[i] = new GraphicsImage(type, iXBound, iYBound, iZBound,
+					(byte[])null, kImageName);
+
+		}
+		// Initialize the Gradient Magnitude Texture and set its GraphicsImage:
+		m_kVolumeGMTarget = new Texture();
+		m_kVolumeGMTarget.SetImage(m_kVolumeGM[0]);
+		m_kVolumeGMTarget.SetShared(true);
+		m_kVolumeGMTarget.SetFilterType(Texture.FilterType.LINEAR);
+		m_kVolumeGMTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
+		m_kVolumeGMTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
+		m_kVolumeGMTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
+		
+		// Initialize the ModelImage Texture and set its GraphicsImage:
+		m_kVolumeTarget = new Texture();
+		m_kVolumeTarget.SetImage(m_kVolume[0]);
+		m_kVolumeTarget.SetShared(true);
+		m_kVolumeTarget.SetFilterType(Texture.FilterType.LINEAR);
+		m_kVolumeTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
+		m_kVolumeTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
+		m_kVolumeTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
+
+		// Initialize the ColorMap Texture and set its GraphicsImage:
+		m_kColorMapTarget = new Texture();
+		m_kColorMapTarget.SetImage(m_kColorMap);
+		m_kColorMapTarget.SetShared(true);
+
+		// Initialize the Normal Map Texture and set its GraphicsImage:
+		m_kScratchTarget = new Texture();
+		m_kScratchTarget.SetImage(new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound,
+				(byte[])null, "ScratchBuffer"));
+		m_kScratchTarget.SetShared(true);
+		m_kScratchTarget.SetFilterType(Texture.FilterType.LINEAR);
+		m_kScratchTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
+		m_kScratchTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
+		m_kScratchTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
+
+		// Initialize the Opacity Map for the Gradient Magnitude Texture and set its GraphicsImage:
+		m_kOpacityMapTarget_GM = new Texture();
+		m_kOpacityMapTarget_GM.SetImage(m_kOpacityMap_GM);
+		m_kOpacityMapTarget_GM.SetShared(true);
+
+		// Initialize the Surface Mask Texture and set its GraphicsImage:
+		m_kSurfaceImage = new GraphicsImage(GraphicsImage.FormatMode.IT_RGBA8888, iXBound, iYBound, iZBound, new byte[4* iXBound
+		                                                                                                              * iYBound * iZBound], "SurfaceImage");
+		m_kSurfaceTarget = new Texture();
+		m_kSurfaceTarget.SetImage(m_kSurfaceImage);
+		m_kSurfaceTarget.SetShared(true);
+		m_kSurfaceTarget.SetFilterType(Texture.FilterType.LINEAR);
+		m_kSurfaceTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
+		m_kSurfaceTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
+		m_kSurfaceTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
+
+		// Calculate the scale factors for rendering the volume with a unit cube:
+		InitScale();
+	}
+	
+
+	private void initImagesColor() {
+		m_fDRRNormalize = computeIntegralNormalizationFactor();
+		// Initialize Color Map GraphicsImage:
+		m_kColorMap = VolumeImage.InitColorMap(m_kLUT, m_kRGBT, m_kPostfix);
+		// Initialize Opacity Map for the GradientMagnitude image:
+		m_kOpacityMap_GM = InitOpacityMap(m_kImage, new String(m_kPostfix + "_GM"));
+
+		final int iXBound = m_kImage.getExtents()[0];
+		final int iYBound = m_kImage.getExtents()[1];
+		final int iZBound = m_kImage.getExtents()[2];
+
+		/*
+		 * Map the ModelImage volume data to a texture image, including for the ModelImage gradient magnitude data:
+		 */
+		final int[] aiExtents = m_kImage.getExtents();
+		final int iNDims = aiExtents.length;
+		String kImageName;
+		GraphicsImage.FormatMode type = GraphicsImage.FormatMode.IT_RGBA8888 ;
+
+
+		if (iNDims == 3) { // ModelImage is 3D:
+			m_iTimeSteps = 1;
+		}
+		else {             // ModelImage is 4D:
+			m_iTimeSteps = aiExtents[3];
+		}
+		// A 4D ModelImage is separated into the 3D Volumes:
+		m_akImages = new ModelImage[m_iTimeSteps];
+		// Allocate a 3D GraphicsImage for each 3D Volume
+		m_kVolume = new GraphicsImage[m_iTimeSteps];
+		m_kVolumeGM = new GraphicsImage[m_iTimeSteps];
 		m_kNormal = new GraphicsImage[m_iTimeSteps];
 		m_akGradientMagMinMax = new Vector2f[m_iTimeSteps];
 
@@ -1439,12 +1753,6 @@ public class VolumeImage implements Serializable {
 					new String("_GM_" + i));              
 			m_kVolumeGM[i] = new GraphicsImage(type, iXBound, iYBound, iZBound,
 					(byte[])null, kImageName);
-
-			// Allocate the GraphicsImage for the Laplace Texture:
-			kImageName = ModelImage.makeImageName(m_kImage.getFileInfo(0).getFileName(), 
-					new String( "_Laplacian_" + i));
-			m_kVolumeLaplace[i] = new GraphicsImage(type, iXBound, iYBound, iZBound,
-					(byte[])null, kImageName);
 		}
 		// Initialize the Gradient Magnitude Texture and set its GraphicsImage:
 		m_kVolumeGMTarget = new Texture();
@@ -1454,15 +1762,6 @@ public class VolumeImage implements Serializable {
 		m_kVolumeGMTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
 		m_kVolumeGMTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
 		m_kVolumeGMTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
-
-		// Initialize the Laplace Texture and set its GraphicsImage:
-		m_kVolumeLaplaceTarget = new Texture();
-		m_kVolumeLaplaceTarget.SetImage(m_kVolumeLaplace[0]);
-		m_kVolumeLaplaceTarget.SetShared(true);
-		m_kVolumeLaplaceTarget.SetFilterType(Texture.FilterType.LINEAR);
-		m_kVolumeLaplaceTarget.SetWrapType(0, Texture.WrapType.CLAMP_BORDER);
-		m_kVolumeLaplaceTarget.SetWrapType(1, Texture.WrapType.CLAMP_BORDER);
-		m_kVolumeLaplaceTarget.SetWrapType(2, Texture.WrapType.CLAMP_BORDER);
 
 		// Initialize the ModelImage Texture and set its GraphicsImage:
 		m_kVolumeTarget = new Texture();
@@ -1641,12 +1940,7 @@ public class VolumeImage implements Serializable {
 			m_kVolumeGMTarget.SetImage(m_kVolumeGM[m_iTimeSlice]);
 			m_kVolumeGMTarget.Reload(true);        	
 		}
-		if ( m_bLaplaceInit )
-		{
-			m_kVolumeLaplaceTarget.SetImage(m_kVolumeLaplace[m_iTimeSlice]);
-			m_kVolumeLaplaceTarget.Reload(true);
-		}
-		if ( m_bNormalsInit )
+		if ( m_bNormalsInit && m_kImage.isColorImage() )
 		{
 			m_kNormalMapTarget.SetImage(m_kNormal[m_iTimeSlice]);
 			m_kNormalMapTarget.Reload(true);

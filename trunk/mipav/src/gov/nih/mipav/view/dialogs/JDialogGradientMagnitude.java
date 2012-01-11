@@ -77,9 +77,10 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
-    
+      
     /** Indicates whether user wants openCL for processing. */
     private JCheckBox useOCLCheckbox;
+    private boolean useOCL = false;
 
     /** DOCUMENT ME! */
     private JPanelAlgorithmOutputOptions outputOptionsPanel;
@@ -176,7 +177,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         	{
         		if ( displayInNewFrame )
         		{
-        			new ViewJFrameImage( algorithm.getDestImage() );
+        			resultImage = algorithm.getDestImage();
+        			new ViewJFrameImage( resultImage );
         		}
         		else
         		{
@@ -371,7 +373,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         }
 
         dispose();
-        System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
     }
 
     /**
@@ -481,6 +482,12 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
      */
     public void setSeparable(boolean separable) {
         this.separable = separable;
+        sepCheckbox.setSelected( this.separable );
+    }
+
+    public void setUseOCL(boolean useOCL) {
+        this.useOCL = useOCL & (Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+        useOCLCheckbox.setSelected( this.useOCL );
     }
     
     /**
@@ -501,19 +508,17 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     	displayProgressBar = flag;
     }
     
-    long startTime;
     
     /**
      * Once all the necessary variables are set, call the Gradient Magnitude algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        startTime = System.currentTimeMillis();
     	String name = makeImageName(image.getImageName(), "_gmag");
     	displayInNewFrame = outputOptionsPanel.isOutputNewImageSet();
     	
         // Check if the algorithm should use OpenCL, calculate and return:
-    	if ( useOCLCheckbox.isSelected() )
+    	if ( useOCL )
     	{
     		float[] sigmas = sigmaPanel.getNormalizedSigmas();
     		OpenCLAlgorithmGradientMagnitude gradientMagAlgo;
@@ -937,8 +942,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
         useOCLCheckbox.setFont(serif12);
         useOCLCheckbox.setForeground(Color.black);
-    	useOCLCheckbox.setEnabled(false);
-    	useOCLCheckbox.setEnabled(OpenCLAlgorithmFFT.isOCLAvailable());
+    	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+    	if ( !useOCLCheckbox.isEnabled() && OpenCLAlgorithmFFT.isOCLAvailable() )
+    	{
+    		useOCLCheckbox.setToolTipText( "see Help->Mipav Options->Other to enable GPU computing");
+    	}
 
         if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
@@ -986,7 +994,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         }
 
         separable = sepCheckbox.isSelected();
-
+        useOCL = useOCLCheckbox.isSelected();
+        
         return true;
     }
 

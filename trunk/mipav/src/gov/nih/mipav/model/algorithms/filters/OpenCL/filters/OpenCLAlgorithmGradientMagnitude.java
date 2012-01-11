@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.filters.OpenCL.filters;
 
 
+import static org.jocl.CL.CL_DEVICE_MAX_MEM_ALLOC_SIZE;
 import static org.jocl.CL.CL_MEM_COPY_HOST_PTR;
 import static org.jocl.CL.CL_TRUE;
 import static org.jocl.CL.clBuildProgram;
@@ -128,7 +129,6 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 
 			return;
 		}
-		final long startTime = System.currentTimeMillis();
 		if ( !separable )
 		{
 			if (srcImage.getNDims() == 2) {
@@ -178,8 +178,6 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		} else if (srcImage.getNDims() == 4) {
 			gradientMagnitude4D();
 		}
-
-		System.out.println("Time Consumed : " + (System.currentTimeMillis() - startTime));
 		setCompleted(true);
 	}
 
@@ -426,7 +424,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( "ReadBuffer " + stringFor_errorCode(errcode[0]) );
 		}
-		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_gm" );
+		saveImage(output, 0, true );
 
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
@@ -613,7 +611,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
-		saveImage(output, time, srcImage.getType(), srcImage.getImageName() + "_gm" );
+		saveImage(output, time, true );
 
 		clReleaseMemObject(inputBuffer);
 		clReleaseMemObject(outputBuffer);
@@ -628,6 +626,13 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		initCL(m_iDeviceType, null);				
 
 		int elementCount = width * height * depth * color;		
+		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+		if ( (Sizeof.cl_float * elementCount) > maxAllocSize )
+		{
+			gradientMagnitudeSep25DSlices();
+			return;
+		}
+
 		float[] input = new float[ elementCount ];
 		try {
 			if ( this.entireImage )
@@ -645,7 +650,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		float[] output = new float[ elementCount ];
 
 		int[] errcode = new int[1];
-		cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
+		cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
 				Sizeof.cl_float * input.length, Pointer.to(input), errcode);
 		if ( errcode[0] != CL.CL_SUCCESS )
 		{
@@ -743,9 +748,134 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
-		saveImage(output, 0, srcImage.getType(), srcImage.getImageName() + "_gm" );
+		saveImage(output, 0, true );
 
 		clReleaseMemObject(inputBuffer);
+	}
+
+
+	private void gradientMagnitudeSep25DSlices( )
+	{
+		// Convolve Seperable X:
+		GaussianKernelFactory gkf = GaussianKernelFactory.getInstance(sigmas);
+		gkf.setKernelType(GaussianKernelFactory.X_DERIVATIVE_KERNEL);
+		Kernel gaussianKernelX = gkf.createKernel();
+
+		gkf = GaussianKernelFactory.getInstance(sigmas);
+		gkf.setKernelType(GaussianKernelFactory.Y_DERIVATIVE_KERNEL);
+		Kernel gaussianKernelY = gkf.createKernel();
+
+		int[] errcode = new int[1];
+
+
+		// Read the program source code and create the program
+		String source = readFile("src/kernels/Convolve.cl");
+		cl_program program = clCreateProgramWithSource(cl, 1, 
+				new String[]{ source }, null, null);
+		clBuildProgram(program, 0, null, "-cl-mad-enable", null, null);
+
+		// Set up 3D Kernel:
+		String kernelName = (color == 1) ? "magnitude25D" : "magnitude25D_color";
+		cl_kernel magnitude = clCreateKernel(program, kernelName, null);
+
+
+		// create command queue:
+		cl_command_queue commandQueue = 
+				clCreateCommandQueue(cl, device, 0, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		long globalWorkSize[] = new long[]{width,height};  
+
+
+
+		int elementCount = width * height * color;
+
+
+		float[] output = new float[ elementCount ];
+		cl_mem outputDerivX = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE,
+				Sizeof.cl_float * output.length, null, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}
+
+		cl_mem outputDerivY = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE,
+				Sizeof.cl_float * output.length, null, errcode);
+		if ( errcode[0] != CL.CL_SUCCESS )
+		{
+			System.err.println( stringFor_errorCode(errcode[0]) );
+		}      
+		
+
+		float[] input = new float[ elementCount ];
+		for ( int i = 0; i < depth; i++ )
+		{
+			try {
+				if ( this.entireImage )
+				{
+					srcImage.exportData( i * input.length, input.length, input );
+				}
+				else
+				{
+					srcImage.exportDataUseMask( i * input.length, input.length, input );
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			cl_mem inputBuffer = clCreateBuffer(cl, CL.CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR,
+					Sizeof.cl_float * input.length, Pointer.to(input), errcode);
+			if ( errcode[0] != CL.CL_SUCCESS )
+			{
+				System.err.println( stringFor_errorCode(errcode[0]) );
+			}
+
+			OpenCLAlgorithmConvolver.convolveSep2D( cl, device, 
+					inputBuffer, outputDerivX, width, height, 1, elementCount, gaussianKernelX, 
+					color, colorMask );
+
+			// Convolve Seperable Y:
+			OpenCLAlgorithmConvolver.convolveSep2D( cl, device, 
+					inputBuffer, outputDerivY, width, height, 1, elementCount, gaussianKernelY, 
+					color, colorMask );
+
+
+			// Calculate magnitude:
+			int arg = 0;
+			clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivX));
+			clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(outputDerivY));
+			clSetKernelArg(magnitude, arg++, Sizeof.cl_mem, Pointer.to(inputBuffer));
+			clSetKernelArg(magnitude, arg++, Sizeof.cl_int4, Pointer.to(new int[]{width, height, 1, 0}));
+			if ( color != 1 )
+			{
+				clSetKernelArg(magnitude, arg++, Sizeof.cl_int4, Pointer.to(colorMask));
+			}
+			clSetKernelArg(magnitude, arg, Sizeof.cl_int, Pointer.to(new int[]{0}));
+			
+			errcode[0] = clEnqueueNDRangeKernel(commandQueue, magnitude, 2, null, globalWorkSize, null, 0, null, null);
+			if ( errcode[0] != CL.CL_SUCCESS )
+			{
+				System.err.println( i + " " + stringFor_errorCode(errcode[0]) );
+			}
+
+			errcode[0] = clFinish(commandQueue);
+			if ( errcode[0] != CL.CL_SUCCESS )
+			{
+				System.err.println( "clFinish " + stringFor_errorCode(errcode[0]) );
+			}
+			errcode[0] = clEnqueueReadBuffer(commandQueue, inputBuffer, CL_TRUE, 0, Sizeof.cl_float * output.length, Pointer.to(output), 0, null, null);
+			if ( errcode[0] != CL.CL_SUCCESS )
+			{
+				System.err.println( stringFor_errorCode(errcode[0]) );
+			}
+			saveImage(output, i, (i == depth-1) );
+
+			clReleaseMemObject(inputBuffer);
+		}
+		clReleaseMemObject(outputDerivX);
+		clReleaseMemObject(outputDerivY);
 	}
 
 	/**
@@ -757,6 +887,13 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		initCL(m_iDeviceType, null);				
 
 		int elementCount = width * height * depth * color;		
+		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
+		if ( (Sizeof.cl_float * elementCount) > maxAllocSize )
+		{
+			gradientMagnitudeSep25DSlices();
+			return;
+		}
+		
 		float[] input = new float[ elementCount ];
 		try {
 			if ( this.entireImage )
@@ -801,7 +938,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
-		
+
 		// Read the program source code and create the program
 		String source = readFile("src/kernels/Convolve.cl");
 		cl_program program = clCreateProgramWithSource(cl, 1, 
@@ -891,7 +1028,7 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 		{
 			System.err.println( stringFor_errorCode(errcode[0]) );
 		}
-		saveImage(output, time, srcImage.getType(), srcImage.getImageName() + "_gm" );
+		saveImage(output, time, true );
 
 		clReleaseMemObject(inputBuffer);
 	}

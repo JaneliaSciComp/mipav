@@ -402,7 +402,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         	// it the image is not a power of two only enable OCL if the slice is a power of two
         	// and the 25D checkbox is selected.
             if ( image.isSlicePowerOfTwo() && !image.isPowerOfTwo() ) {
-            	useOCLCheckbox.setEnabled(image25DCheckbox.isSelected() && OpenCLAlgorithmFFT.isOCLAvailable());
+            	useOCLCheckbox.setEnabled(image25DCheckbox.isSelected() && Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
             	if ( !useOCLCheckbox.isEnabled() )
             	{
             		useOCLCheckbox.setSelected(false);
@@ -1064,10 +1064,10 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         useOCLCheckbox.setForeground(Color.black);
     	useOCLCheckbox.setEnabled(false);
         if ( image.isPowerOfTwo() ) {
-        	useOCLCheckbox.setEnabled(true && OpenCLAlgorithmFFT.isOCLAvailable());
+        	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
         }
         else if ( image.isSlicePowerOfTwo() ) {
-        	useOCLCheckbox.setEnabled(image25DCheckbox.isSelected() && OpenCLAlgorithmFFT.isOCLAvailable());
+        	useOCLCheckbox.setEnabled(image25DCheckbox.isSelected() && Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
         }
         useOCLCheckbox.setSelected(Preferences.isGpuCompEnabled() && useOCLCheckbox.isEnabled());
         optionsPanel.add(useOCLCheckbox);

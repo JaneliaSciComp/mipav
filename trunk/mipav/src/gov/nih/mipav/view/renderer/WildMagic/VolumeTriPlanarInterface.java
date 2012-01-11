@@ -2108,10 +2108,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     {
 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
-        m_kVolumeImageA.GenerateNormalFiles( this, false );
+        m_kVolumeImageA.GenerateNormalFiles( this );
         if ( m_kVolumeImageB.GetImage() != null )
         {
-            m_kVolumeImageB.GenerateNormalFiles( this, false );
+            m_kVolumeImageB.GenerateNormalFiles( this );
         }
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         

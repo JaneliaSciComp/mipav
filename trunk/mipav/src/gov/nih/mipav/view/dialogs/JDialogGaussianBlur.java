@@ -961,8 +961,11 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
         useOCLCheckbox.setFont(serif12);
         useOCLCheckbox.setForeground(Color.black);
-    	useOCLCheckbox.setEnabled(false);
-    	useOCLCheckbox.setEnabled(OpenCLAlgorithmFFT.isOCLAvailable());
+    	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+    	if ( !useOCLCheckbox.isEnabled() && OpenCLAlgorithmFFT.isOCLAvailable() )
+    	{
+    		useOCLCheckbox.setToolTipText( "see Help->Mipav Options->Other to enable GPU computing");
+    	}
 
         if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);

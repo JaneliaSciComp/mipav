@@ -358,7 +358,6 @@ public class OpenCLAlgorithmConvolver {
 			System.err.println( "clFinish " + stringFor_errorCode(errcode[0]) );
 		}
 
-
 		// Set up 2D Kernel:		
 		arg = 0;
 		clSetKernelArg(kernelZ, arg++, Sizeof.cl_mem, Pointer.to(outputXY));
