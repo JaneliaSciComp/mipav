@@ -247,13 +247,60 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	     BradleyInit.setEnabled(true);
 	    	     hierarchicalInit.setEnabled(true);
 	    	     maxMinInit.setEnabled(true);
+	    	     cityBlock.setEnabled(true);
+	    	     mahalanobis.setEnabled(true);
+	    	     SButton.setEnabled(true);
+	    	     differentSpheresButton.setEnabled(true);
 	    	 } // if (kMeansAlgo.isSelected())
+	    	 else if (globalAlgo.isSelected()){
+	    		 initLabel.setEnabled(false);
+	    		 randomInit.setEnabled(false);
+	    	     BradleyInit.setEnabled(false);
+	    	     hierarchicalInit.setEnabled(false);
+	    	     maxMinInit.setEnabled(false);
+	    	     if (mahalanobis.isSelected()) {
+	    	    	 mahalanobis.setSelected(false);
+	    	    	 euclideanSquared.setSelected(true);
+	    	     }
+	    	     if (SButton.isSelected()) {
+	    	    	 SButton.setSelected(false);
+	    	    	 euclideanSquared.setSelected(true);
+	    	     }
+	    	     if (differentSpheresButton.isSelected()) {
+	    	        differentSpheresButton.setSelected(false);
+	    	        euclideanSquared.setSelected(true);
+	    	     }
+	    	     cityBlock.setEnabled(true);
+	    	     mahalanobis.setEnabled(false);
+	    	     SButton.setEnabled(false);
+	    	     differentSpheresButton.setEnabled(false);
+	    	 } // else if (globalAlgo.isSlelected())
 	    	 else {
 	    		 initLabel.setEnabled(false);
 	    		 randomInit.setEnabled(false);
 	    	     BradleyInit.setEnabled(false);
 	    	     hierarchicalInit.setEnabled(false);
-	    	     maxMinInit.setEnabled(false);	 
+	    	     maxMinInit.setEnabled(false);
+	    	     if (cityBlock.isSelected()) {
+	    	    	 cityBlock.setSelected(false);
+	    	    	 euclideanSquared.setSelected(true);
+	    	     }
+	    	     if (mahalanobis.isSelected()) {
+	    	    	 mahalanobis.setSelected(false);
+	    	    	 euclideanSquared.setSelected(true);
+	    	     }
+	    	     if (SButton.isSelected()) {
+	    	    	 SButton.setSelected(false);
+	    	    	 euclideanSquared.setSelected(true);
+	    	     }
+	    	     if (differentSpheresButton.isSelected()) {
+	    	        differentSpheresButton.setSelected(false);
+	    	        euclideanSquared.setSelected(true);
+	    	     }
+	    	     cityBlock.setEnabled(false);
+	    	     mahalanobis.setEnabled(false);
+	    	     SButton.setEnabled(false);
+	    	     differentSpheresButton.setEnabled(false);
 	    	 } // else
 	     } else if ((source == euclideanSquared) || (source == cityBlock) || (source == mahalanobis) ||
 	    		 (source == SButton) || (source == differentSpheresButton)) {
@@ -265,6 +312,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 axesRatioText.setEnabled(false);
 	    	 }
 	    	 else if (cityBlock.isSelected()){
+	    		 globalAlgo.setEnabled(true);
 	    		 if (fastGlobalAlgo.isSelected()) {
 	    			 fastGlobalAlgo.setSelected(false);
 	    			 globalAlgo.setSelected(true);
