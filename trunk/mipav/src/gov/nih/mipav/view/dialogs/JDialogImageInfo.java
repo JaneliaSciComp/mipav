@@ -20,12 +20,7 @@ import java.text.DecimalFormat;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableCellEditor;
-import javax.swing.text.JTextComponent;
-import gov.nih.mipav.model.file.FilePARREC;
-import java.lang.*;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
