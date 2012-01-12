@@ -4737,7 +4737,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         JFileChooser chooser;
         
         FilePaintBitmap filePaint;
-        String extension = ".pbm";
         
         ModelImage kImage = m_kParent.getActiveImage();
         BitSet paintBitmap = kImage.getParentFrame().getComponentImage().getPaintBitmap();
@@ -4950,9 +4949,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * use format x,y,z,a,r,g,b on each line and if complex use format x,y,z,real,imaginary on each line.
      */
     private void saveVOIIntensitiesTo(String voiIntensitiesPath) {
-        String fileName;
-        String directory;
-        JFileChooser chooser;
         File textFile;
         RandomAccessFile raFile;
         ModelImage selectedImage = null;
