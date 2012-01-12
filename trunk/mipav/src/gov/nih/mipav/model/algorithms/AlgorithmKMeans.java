@@ -699,11 +699,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
         		return;	
         	}
         	for (i = 0; i < numberClusters; i++) {
-        		dataString += "Cluster centroid " + (i+1) + ":\n";
-        		for (j = 0; j < nDims; j++) {
-        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+        		
+        		if (totalWeight[i] <= 1.0E-10) {
+        			dataString += "Cluster centroid " + (i+1) + " has no points.\n";	
         		}
-        		dataString += "\n";
+        		else {
+        			dataString += "Cluster centroid " + (i+1) + " :\n";
+	        		for (j = 0; j < nDims; j++) {
+	        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+	        		}
+	        		dataString += "\n";
+        		}
         	}
         	
         	try {
@@ -875,11 +881,17 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	dataString += "If this value > 1 for all numbers of clusters, then only a single group is present\n\n";
     	
     	for (i = 0; i < numberClusters; i++) {
-    		dataString += "Cluster centroid " + (i+1) + ":\n";
-    		for (j = 0; j < nDims; j++) {
-    			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+    		
+    		if (totalWeight[i] <= 1.0E-10) {
+    			dataString += "Cluster centroid " + (i+1) + " has no points.\n";	
     		}
-    		dataString += "\n";
+    		else {
+    			dataString += "Cluster centroid " + (i+1) + " :\n";
+        		for (j = 0; j < nDims; j++) {
+        			dataString += "Dimension " + (j+1) + " = " + centroidPos[j][i] + "\n";
+        		}
+        		dataString += "\n";
+    		}
     	}
     	
     	for (i = 0; i < nPoints; i++) {
@@ -979,9 +991,19 @@ public class AlgorithmKMeans extends AlgorithmBase {
         int pointNum;
         int bestGroup;
         int group;
-        double minimumDistance;
-        double bestMinimumDistance;
         int originalGroup;
+        double distSquaredArray[];
+        double originalDistSquared;
+        double distSquaredRemoved;
+        double distSquaredAdded;
+        double bestDistSquaredAdded = 0.0;
+        double centroidPosRemoved[];
+        double centroidPosAdded[];
+        double bestCentroidPosAdded[];
+        double totalWeightRemoved;
+        double totalWeightAdded;
+        double bestTotalWeightAdded = 0.0;
+        double distSquaredReduced = 0.0;
 		switch(algoSelection) {
     	case K_MEANS:
     
@@ -2344,6 +2366,24 @@ public class AlgorithmKMeans extends AlgorithmBase {
     	} // switch(algoSelection)
 		// Follow up the batch algorithm with an incremental algorithm
 		Preferences.debug("Following batch algorithm with incremental algorithm\n");
+		distSquaredArray = new double[numberClusters];
+		centroidPosRemoved = new double[nDims];
+		centroidPosAdded = new double[nDims];
+		bestCentroidPosAdded = new double[nDims];
+		for (i = 0; i < nPoints; i++) {
+			if (equalScale) {
+				for (j = 0; j < nDims; j++) {
+					diff = pos[j][i] - centroidPos[j][groupNum[i]];
+					distSquaredArray[groupNum[i]] += diff * diff * weight[i];
+				}
+			}
+			else {
+				for (j = 0; j < nDims; j++) {
+					diff = pos[j][i] - centroidPos[j][groupNum[i]];
+					distSquaredArray[groupNum[i]] += diff * diff * weight[i] * scale2[j];
+				}	
+			}
+		} // for (i = 0; i < nPoints; i++)
 		changeOccurred = true;
 		while (changeOccurred) {
 			fireProgressStateChanged("Iteration = " + iteration);
@@ -2352,74 +2392,105 @@ public class AlgorithmKMeans extends AlgorithmBase {
 			changeOccurred = false;
 			
 	        for (pointNum = 0; pointNum < nPoints; pointNum++) {
+	        	distSquaredReduced = 0.0;
 	            bestGroup = groupNum[pointNum];
-	            bestMinimumDistance = 0.0;
-	            if (equalScale) {
-		            for (j = 0; j < nDims; j++) {
-		                diff = pos[j][pointNum] - centroidPos[j][bestGroup];	
-		                bestMinimumDistance += diff * diff;
-		            }
+	            originalDistSquared = distSquaredArray[bestGroup];
+	            totalWeightRemoved = 0.0;
+	            for (j = 0; j < nDims; j++) {
+	            	centroidPosRemoved[j] = 0.0;
 	            }
+	            for (i = 0; i < nPoints; i++) {
+	            	if ((groupNum[i] == bestGroup) && (i != pointNum)) {
+	            	    totalWeightRemoved += weight[i];
+	            	    for (j = 0; j < nDims; j++) {
+	            	    	centroidPosRemoved[j] += weight[i] * pos[j][i];
+	            	    }
+	            	}	
+	            } // for (i = 0; i < nPoints; i++)
+	            for (j = 0; j < nDims; j++) {
+	            	centroidPosRemoved[j] = centroidPosRemoved[j]/totalWeightRemoved;
+	            }
+	            distSquaredRemoved = 0.0;
+	            if (equalScale) {
+		            for (i = 0; i < nPoints; i++) {
+		            	if ((groupNum[i] == bestGroup) && (i != pointNum)) {
+		            	    for (j = 0; j < nDims; j++) {
+		            	    	diff = pos[j][i] - centroidPosRemoved[j];
+		            	    	distSquaredRemoved += diff * diff * weight[i];
+		            	    }
+		            	}
+		            } // for (i = 0; i < nPoints; i++)
+	            } // if (equalScale)
 	            else {
-	            	for (j = 0; j < nDims; j++) {
-	            		diff = pos[j][pointNum] - centroidPos[j][bestGroup];
-	            		bestMinimumDistance += diff * diff * scale2[j];
-	            	}
+	            	for (i = 0; i < nPoints; i++) {
+		            	if ((groupNum[i] == bestGroup) && (i != pointNum)) {
+		            	    for (j = 0; j < nDims; j++) {
+		            	    	diff = pos[j][i] - centroidPosRemoved[j];
+		            	    	distSquaredRemoved += diff * diff * weight[i] * scale2[j];
+		            	    }
+		            	}
+		            } // for (i = 0; i < nPoints; i++)	
 	            }
 	            for (group = 0; group < numberClusters; group++) {
 	                if (group != groupNum[pointNum])  {
-	                	minimumDistance = 0.0;
-	                	if (equalScale) {
-	                		for (j = 0; j < nDims; j++) {
-	                			diff = pos[j][pointNum] - centroidPos[j][group];
-	                			minimumDistance += diff * diff;
+	                	totalWeightAdded = 0.0;
+	                	for (j = 0; j < nDims; j++) {
+	                		centroidPosAdded[j] = 0.0;
+	                	}
+	                	for (i = 0; i < nPoints; i++) {
+	                		if ((groupNum[i] == group) || (i == pointNum)) {
+	                			totalWeightAdded += weight[i];
+	                			for (j = 0; j < nDims; j++) {
+	                				centroidPosAdded[j] += weight[i] * pos[j][i];
+	                			}
 	                		}
+	                	} // for (i = 0; i < nPoints; i++)
+	                	for (j = 0; j < nDims; j++) {
+	                		centroidPosAdded[j] = centroidPosAdded[j]/totalWeightAdded;
 	                	}
-	                	else {
-	                		for (j = 0; j < nDims; j++) {
-	                			diff = pos[j][pointNum] - centroidPos[j][group];
-	                			minimumDistance += diff * diff * scale2[j];
-	                		}
-	                	}
-	                	if (minimumDistance < bestMinimumDistance) {
-	                	    bestMinimumDistance = minimumDistance;
-	                	    bestGroup = group;
-	                	}
+	                	distSquaredAdded = 0.0;
+	    	            if (equalScale) {
+	    		            for (i = 0; i < nPoints; i++) {
+	    		            	if ((groupNum[i] == group) || (i == pointNum)) {
+	    		            	    for (j = 0; j < nDims; j++) {
+	    		            	    	diff = pos[j][i] - centroidPosAdded[j];
+	    		            	    	distSquaredAdded += diff * diff * weight[i];
+	    		            	    }
+	    		            	}
+	    		            } // for (i = 0; i < nPoints; i++)
+	    	            } // if (equalScale)
+	    	            else {
+	    	            	for (i = 0; i < nPoints; i++) {
+	    		            	if ((groupNum[i] == group) || (i == pointNum)) {
+	    		            	    for (j = 0; j < nDims; j++) {
+	    		            	    	diff = pos[j][i] - centroidPosAdded[j];
+	    		            	    	distSquaredAdded += diff * diff * weight[i] * scale2[j];
+	    		            	    }
+	    		            	}
+	    		            } // for (i = 0; i < nPoints; i++)	
+	    	            }
+	    	            if (originalDistSquared + distSquaredArray[group] - distSquaredRemoved - distSquaredAdded > distSquaredReduced) {
+	    	            	distSquaredReduced = originalDistSquared + distSquaredArray[group] - distSquaredRemoved - distSquaredAdded;
+	    	            	bestGroup = group;
+	    	            	bestTotalWeightAdded = totalWeightAdded;
+	    	            	bestDistSquaredAdded = distSquaredAdded;
+	    	            	for (j = 0; j < nDims; j++) {
+	    	            		bestCentroidPosAdded[j] = centroidPosAdded[j];
+	    	            	}
+	    	            }
 	                } // if (group != groupNum[pointNum])
 	            } // for (group = 0; group < numberClusters; group++)
 	            if (bestGroup != groupNum[pointNum]) {
 	            	changeOccurred = true;
 	            	originalGroup = groupNum[pointNum];
 	            	groupNum[pointNum] = bestGroup;
-	            	totalWeight[originalGroup] = 0.0;
+	            	distSquaredArray[originalGroup] = distSquaredRemoved;
+	            	distSquaredArray[bestGroup] = bestDistSquaredAdded;
+	            	totalWeight[originalGroup] = totalWeightRemoved;
+	            	totalWeight[bestGroup] = bestTotalWeightAdded;
 	            	for (j = 0; j < nDims; j++) {
-	            		centroidPos[j][originalGroup] = 0.0;
-	            	}
-	            	for (i = 0; i < nPoints; i++) {
-	            		if ((groupNum[i] == originalGroup) && (i != pointNum)) {
-	            		    totalWeight[originalGroup] += weight[i];
-	            		    for (j = 0; j < nDims; j++) {
-	            		    	centroidPos[j][originalGroup] += weight[i] * pos[j][i];
-	            		    }
-	            		} // if ((groupNum[i] == originalGroup) && (i != pointNum))
-	            	} // for (i = 0; i < nPoints; i++)
-	            	for (j = 0; j < nDims; j++) {
-	            		centroidPos[j][originalGroup] = centroidPos[j][originalGroup]/totalWeight[originalGroup];
-	            	}
-	            	totalWeight[bestGroup] = 0.0;
-	            	for (j = 0; j < nDims; j++) {
-	            		centroidPos[j][bestGroup] = 0.0;
-	            	}
-	            	for (i = 0; i < nPoints; i++) {
-	            		if ((groupNum[i]  == bestGroup) || (i == pointNum)) {
-	            			totalWeight[bestGroup] += weight[i];
-	            			for (j = 0; j < nDims; j++) {
-	            				centroidPos[j][bestGroup] += weight[i] * pos[j][i];
-	            			}
-	            		}
-	            	} // for (i = 0; i < nPoints; i++)
-	            	for (j = 0; j < nDims; j++) {
-	            		centroidPos[j][bestGroup] = centroidPos[j][bestGroup]/totalWeight[bestGroup];
+	            		centroidPos[j][originalGroup] = centroidPosRemoved[j];
+	            		centroidPos[j][bestGroup] = bestCentroidPosAdded[j];
 	            	}
 	            } // if (bestGroup != groupNum[pointNum]
 	        } // for (pointNum = 0; pointNum < nPoints; pointNum)
