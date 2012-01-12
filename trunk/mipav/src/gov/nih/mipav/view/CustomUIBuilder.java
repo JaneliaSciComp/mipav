@@ -76,7 +76,8 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_OPEN_VOI_ALL = new UIParams("Open all VOIs", "Open all VOIs", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_OPEN_VOI_ALL_FROM = new UIParams("Open all VOIs from...", "Open all VOIs from...", UIParams.INVALID_MNEMONIC, null, "open" );
     public static final UIParams PARAM_OPEN_VOI_LABEL = new UIParams("Open label(s)...", "Open labels", UIParams.INVALID_MNEMONIC, null, "open");
-
+    
+    public static final UIParams PARAM_OPEN_PAINT = new UIParams("Open Paint", "Open Paint", UIParams.INVALID_MNEMONIC, null, "open");
 
     public static final UIParams PARAM_SAVE_SELECTED_CONTOURS = new UIParams("Save selected contours", "SaveSelectedContours", UIParams.INVALID_MNEMONIC, null,  "save");
     public static final UIParams PARAM_SAVE_SELECTED_CONTOURS_AS = new UIParams("Save selected contours as","SaveSelectedContoursAs", UIParams.INVALID_MNEMONIC, null, "save");
