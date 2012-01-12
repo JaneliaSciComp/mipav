@@ -9,6 +9,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FilePaintBitmap;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileVOI;
 import gov.nih.mipav.model.provenance.ProvenanceRecorder;
@@ -541,6 +542,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 ScriptRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage(), directory));
                 ProvenanceRecorder.getReference().addLine(new ActionSaveVOIIntensities(getActiveImage(), directory));
             }
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_PAINT.getActionCommand())) {
+            savePaint();
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_SAVE_PAINT_AS.getActionCommand())) {
+            savePaintAs();
         } 
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL.getActionCommand())) {
             saveLabels(false);
@@ -4661,6 +4668,80 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing VOI");
+        }
+
+    }
+    
+    private void savePaint() {
+
+        FilePaintBitmap filePaint;
+        String extension = ".pbm";
+        
+        ModelImage kImage = m_kParent.getActiveImage();
+        BitSet paintBitmap = kImage.getParentFrame().getComponentImage().getPaintBitmap();
+        if (paintBitmap == null) {
+        	return;
+        }
+
+        try {
+            filePaint = new FilePaintBitmap(kImage.getImageName() + extension,
+            		  kImage.getFileInfo(0).getFileDirectory(), kImage);
+            filePaint.writePaintBitmap(paintBitmap);
+            
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing paint bitmap" + error);
+        }
+    }
+
+    
+    /**
+     * This method allows the user to choose how to save the paint bitmap.
+     */
+    private void savePaintAs() {
+        String fileName;
+        String directory;
+        JFileChooser chooser;
+        
+        FilePaintBitmap filePaint;
+        String extension = ".pbm";
+        
+        ModelImage kImage = m_kParent.getActiveImage();
+        BitSet paintBitmap = kImage.getParentFrame().getComponentImage().getPaintBitmap();
+        if (paintBitmap == null) {
+        	return;
+        }
+
+        chooser = new JFileChooser();
+        chooser.setDialogTitle("Save Paint as");
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".pbm"}));
+
+        final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            fileName = chooser.getSelectedFile().getName();
+            
+            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+            ViewUserInterface.getReference().setDefaultDirectory(directory);
+        } else {
+            return;
+        }
+
+        try {
+
+            if (!fileName.endsWith(".pbm")) {
+                fileName += ".pbm";
+            }
+            filePaint = new FilePaintBitmap(kImage.getImageName() + extension,
+          		  kImage.getFileInfo(0).getFileDirectory(), kImage);
+          filePaint.writePaintBitmap(paintBitmap);
+            
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing paint bitmap");
         }
 
     }
