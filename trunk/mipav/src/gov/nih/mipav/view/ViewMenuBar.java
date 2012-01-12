@@ -765,6 +765,8 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL_FROM, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_LABEL, true)}),
                                 ViewMenuBar.separator,
+                                menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_PAINT, true),
+                                ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Save VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS, true),
                                         menuBuilder
