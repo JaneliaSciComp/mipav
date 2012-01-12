@@ -52,6 +52,7 @@ import gov.nih.mipav.view.ViewJPopupPt;
 import gov.nih.mipav.view.ViewJPopupVOI;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewOpenVOIUI;
+import gov.nih.mipav.view.ViewOpenPaintUI;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
@@ -450,6 +451,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_LABEL.getActionCommand())) {
             openVOI(false, true);
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_OPEN_PAINT.getActionCommand())) {
+
+            boolean success = openPaint(false);
+
+            if (success) {
+                ScriptRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
+                ProvenanceRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
+            }else {
+            	MipavUtil.displayError("Paint bitmap failed to open for this image");
+            }
         } 
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS.getActionCommand())) {
             saveVOI(false);
@@ -3704,7 +3716,29 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } catch (final OutOfMemoryError error) {
 
             if ( !quietMode) {
-                MipavUtil.displayError("Out of memory: ViewJFrameBase.openVOI");
+                MipavUtil.displayError("Out of memory: VOIManagerInterface.openVOI");
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+    
+    private boolean openPaint(boolean quietMode) {
+        ViewOpenPaintUI openPaint = null;
+        
+        try {
+        	openPaint = new ViewOpenPaintUI();
+            BitSet paintBitmap = openPaint.open(m_kParent.getActiveImage());
+        	if (paintBitmap == null) {
+        		return false;
+        	}
+        }
+        catch (final OutOfMemoryError error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Out of memory: VOIManagerInterface.openPaint");
             }
 
             return false;
@@ -4736,9 +4770,8 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             if (!fileName.endsWith(".pbm")) {
                 fileName += ".pbm";
             }
-            filePaint = new FilePaintBitmap(kImage.getImageName() + extension,
-          		  kImage.getFileInfo(0).getFileDirectory(), kImage);
-          filePaint.writePaintBitmap(paintBitmap);
+            filePaint = new FilePaintBitmap(fileName, directory, kImage);
+            filePaint.writePaintBitmap(paintBitmap);
             
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing paint bitmap");
