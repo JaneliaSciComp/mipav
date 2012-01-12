@@ -778,6 +778,10 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_LABEL, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_LABEL, true)}),
                                 ViewMenuBar.separator,
+                                menuBuilder.makeMenu("Save Paint", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_PAINT, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_PAINT_AS, true)}),
+                                ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Edit VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_UNDO, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_REDO, true),
