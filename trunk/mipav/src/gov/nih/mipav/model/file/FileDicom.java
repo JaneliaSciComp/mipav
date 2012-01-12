@@ -749,8 +749,12 @@ public class FileDicom extends FileDicomBase {
 
             // the tag was not found in the dictionary..
             if (vr == null) {
-                vr = VR.UN;
-                tagVM = 0;
+                if(Integer.parseInt(key.getElement(), 16) == 0) {
+                    vr = VR.UL;
+                } else {
+                    vr = VR.UN;
+                    tagVM = 1;
+                }
             }
         } else { // Explicit VR
             try {
@@ -768,7 +772,7 @@ public class FileDicom extends FileDicomBase {
             }
 
             if ( !DicomDictionary.containsTag(key)) {
-                tagVM = 0;
+                tagVM = 1;
                 
                 if(isSiemensMRI && name.startsWith("0019")) {
                     processSiemensMRITag(name, key, vr, tagVM, tagTable);
@@ -870,7 +874,7 @@ public class FileDicom extends FileDicomBase {
                 }
                 tagTable.setValue(key, data, elementLength);
 
-                Preferences.debug(tagTable.get(name).getName() + "\t\t(" + name + ");\t ("+vr.getType()+") value = " + data
+                Preferences.debug("\t(" + name + ");\t ("+vr.getType()+") value = " + data
                         + " element length = " + elementLength + "\n", Preferences.DEBUG_FILEIO);
             }
         } catch (final OutOfMemoryError e) {
