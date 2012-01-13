@@ -52,24 +52,23 @@ import gov.nih.mipav.view.dialogs.JDialogSubsample;
 
 public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
 
-    /** Whether to perform a gaussian blur */
-    private boolean doGaussian;
-    private int xyDim;
-    private int zDim;
-    private double xyRes;
-    private double zRes;
+    /** Image dimensions */
+    private int xyDim, zDim;
+    /** Image resolutions */
+    private double xyRes, zRes;
     private int initRadius;
     private double tumorChange;
     private PlugInDialogCreateTumorMap535c.TumorSimMode simMode;
-    private int xCenter;
-    private int yCenter;
-    private int zCenter;
+    /** Center of created scphere */
+    private int xCenter, yCenter, zCenter;
     private int largerRadius;
     private int intensity;
-    private ModelImage image1a;
-    private ModelImage image2a;
+    /** Result images */
+    private ModelImage image1a, image2a;
     private int[][] sphere;
     private int subsampleAmount;
+    /** Whether boundary checking is necessary during sphere population */
+    private boolean doBoundCheck;
     
     
 
@@ -136,10 +135,12 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         
         largerRadius = defineLargerRadius();
         
+        doBoundCheck = false;
         Random r = new Random(); 
         if(xyDim-2*largerRadius < 0) {
         	xCenter = r.nextInt(xyDim);
             yCenter = r.nextInt(xyDim);
+            doBoundCheck = true;
         } else { //ensures entire tumor is inside image
         	xCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
             yCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
@@ -149,6 +150,7 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         	zCenter = r.nextInt(zDim);
         } else {
         	zCenter = r.nextInt(zDim-2*largerRadius)+largerRadius;
+        	doBoundCheck = true;
         }
         
         Preferences.debug("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
@@ -195,7 +197,17 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
 
     private void populateSphere(int radius, double intensity, ModelImage image) {
         sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, radius);
+        int xyDimBound = xyDim-1;
+        int zDimBound = zDim-1;
+        
         for(int i=0; i<sphere.length; i++) {
+            if(doBoundCheck) {
+                if(sphere[i][0] > xyDimBound || sphere[i][0] < 0 ||
+                        sphere[i][1] > xyDimBound || sphere[i][1] < 0 || 
+                        sphere[i][2] > zDimBound || sphere[i][2] < 0) {
+                    continue;
+                }
+            }
             image.set(sphere[i][0], sphere[i][1], sphere[i][2], intensity);
         }
     }
