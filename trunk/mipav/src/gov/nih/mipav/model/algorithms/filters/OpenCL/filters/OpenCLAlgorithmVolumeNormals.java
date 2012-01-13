@@ -95,7 +95,7 @@ public class OpenCLAlgorithmVolumeNormals extends OpenCLAlgorithmBase {
 
 		initCL(m_iDeviceType, null);
 		long maxAllocSize = getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( (Sizeof.cl_float * elementCount) > maxAllocSize )
+		if ( ((Sizeof.cl_float * elementCount) > maxAllocSize) || ((Sizeof.cl_float * (width * height * depth * 4)) > maxAllocSize) )
 		{
 			calcNormalsSlices();
 			return;
