@@ -174,9 +174,12 @@ public class FileIO {
             } else if (fileType == FileUtility.GE_SIGNA4X) {
                 fType = FileUtility.GE_SIGNA4X_MULTIFILE;
             } else if (fileType == FileUtility.GE_GENESIS) {
+                
                 fType = FileUtility.GE_GENESIS_MULTIFILE;
             } else if (fileType == FileUtility.MAGNETOM_VISION) {
                 fType = FileUtility.MAGNETOM_VISION_MULTIFILE;
+            } else {
+                
             }
         }
 
@@ -9601,6 +9604,29 @@ public class FileIO {
         imageFile.finalize();
         imageFile = null;
         return image;
+    }
+    
+    private ModelImage createMultifile(ModelImage origImage, String fileDir, String fileName, boolean quiet) {
+        String[] fileList = FileUtility.getFileList(fileDir, fileName, quiet); // get series of files in the chosen dir
+        int nFiles = fileList.length;
+        
+        if(nFiles == 1) {// The multiFile flag is true but there is only one image in the directory with the prefix name so read and return image as a single file.
+            return origImage;
+        }
+        
+        int[] newExtents = new int[origImage.getExtents().length+1];
+        for(int i=0; i<origImage.getExtents().length; i++) {
+            newExtents[i] = origImage.getExtents()[i];
+        }
+        newExtents[origImage.getExtents().length] = nFiles;
+        
+        return new ModelImage(origImage.getDataType(), newExtents, origImage.getImageFileName());
+        
+        
+    }
+    
+    private ModelImage convertToMultifile(ModelImage existingMultifileImage, ModelImage origImage, int[] extents, int pos) {
+        return null;
     }
 
     /**
