@@ -79,6 +79,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     protected float m_fMaxLength = 1f;
 
     protected float[] m_afBlendParam = new float[]{1f,0f,0f,0f};
+    protected float[] m_afABBlendParam = new float[]{1f,0f,0f,0f};
     protected ModelRGB m_kRGBT;
     protected boolean m_bGradientMag = false;
     protected float m_fSamples;
@@ -324,12 +325,11 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
     {
     	Blend(m_afBlendParam[0]);
         SetColorImage(pkCProgram);
-        setABBlend(1.0f);
         setRGBTA(m_kRGBT);
         setVolumeSamples( m_fSamples );
         if ( m_kVolumeImageB.GetImage() != null )
         {
-            setABBlend(0.5f);
+            this.setABBlend(0.5f);
             if ( pkCProgram.GetUC("ShowB") != null ) 
             {    
                 pkCProgram.GetUC("ShowB").GetData()[0] = 1;
@@ -400,6 +400,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
      */
     public void setABBlend(float fBlend)
     {
+    	m_afABBlendParam[0] = fBlend;
         Program kCProgram = GetCProgram(0);  
         if ( (kCProgram != null) && kCProgram.GetUC("ABBlend") != null ) 
         {
@@ -551,7 +552,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         }
     }
 
-    public void setVolumeSamples( float fSample )
+    public int setVolumeSamples( float fSample )
     {
     	m_fSamples = fSample;    	
         m_iPasses = Math.max(1, (int)(fSample * ms_iMaxSamples));
@@ -570,6 +571,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         {
             pkCProgram.GetUC("StepSize").GetData()[0] = m_fMaxLength/(float)m_iPasses;
         }
+        return m_iPasses;
     }
     /**
      * Change to the Surface mode pixel shader program.

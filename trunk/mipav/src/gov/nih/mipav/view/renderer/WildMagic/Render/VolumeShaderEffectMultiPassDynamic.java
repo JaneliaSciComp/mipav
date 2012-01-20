@@ -10,6 +10,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Rendering.Texture;
 import WildMagic.LibGraphics.Shaders.PixelShader;
+import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Shaders.VertexShader;
 
 
@@ -28,10 +29,20 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform float iPass;" + "\n"
     	+ "" + "\n";
 	
-	private static String colorMap = ""
+	private static String basicParametersB = ""
+		+ "uniform sampler3D jVolumeImageB; " + "\n"
+    	+ "uniform float ABBlend;" + "\n";
+
+	private static String colorMapA = ""
     	+ "uniform sampler1D cColorMapA;" + "\n";
 	
-	private static String colorMapGM = ""
+	private static String colorMapB = ""
+	    	+ "uniform sampler1D kColorMapB;" + "\n";
+
+	private static String colorMapGMA = ""
+    	+ "uniform sampler1D gOpacityMapA_GM;" + "\n";
+
+	private static String colorMapGMB = ""
     	+ "uniform sampler1D gOpacityMapA_GM;" + "\n";
 
     private static String blendParameters = ""
@@ -51,8 +62,11 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec4 clipEyeInv;" + "\n"
     	+ "" + "\n";
 
-    private static String lightingParametersBasicColor = ""
+    private static String lightingParametersBasicColorA = ""
     	+ "uniform sampler3D eNormalMapA;" + "\n";
+
+    private static String lightingParametersBasicColorB = ""
+    	+ "uniform sampler3D mNormalMapB;" + "\n";
     		
     private static String lightingParametersBasic = ""
     	+ "uniform vec3 MaterialEmissive;" + "\n"
@@ -71,8 +85,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec4 Light#ModelPosition;" + "\n"
     	+ "uniform vec4 Light#ModelDirection;" + "\n";
     
-    private static String gradientMagnitudeParameters = ""
+    private static String gradientMagnitudeParametersA = ""
     	+ "uniform sampler3D fVolumeImageA_GM;" + "\n"
+    	+ "" + "\n";
+    
+    private static String gradientMagnitudeParametersB = ""
+    	+ "uniform sampler3D nVolumeImageB_GM;" + "\n"
     	+ "" + "\n";
         
     private static String multiHistogramWidgetParameters = ""
@@ -88,7 +106,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "" + "\n";
 
     private static String multiHistogramWidgetColorParameters = ""
-    	+ "uniform sampler1D jColorMap#;" + "\n"
+    	+ "uniform sampler1D hColorMap#;" + "\n"
     	+ "" + "\n";
     
     private static String mainSetup = ""
@@ -96,21 +114,17 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "vec2 texc = ((outPos.xy / outPos.w) + 1.0) * 0.5;" + "\n"
     	+ "vec3 back_position  = texture2D(aSceneImage, texc).xyz;" + "\n"
     	+ "if ( (back_position.x == 0) && (back_position.y == 0) && (back_position.z == 0) ) {" + "\n"
-    	//+ "   gl_FragColor = BackgroundColor;" + "\n"
     	+ "   discard;" + "\n"
     	+ "   return;" + "\n"
     	+ "}" + "\n"
     	+ "vec3 start = gl_TexCoord[0].xyz;" + "\n"
     	+ "vec3 dir = back_position - start;" + "\n"
     	+ "dir = normalize(dir);" + "\n"
-    	+ "vec4 color = vec4(0.0);" + "\n"
-    	+ "float opacity = 1.0;" + "\n"
     	+ "float fPos = iPass;" + "\n"
     	+ "vec3 position = start + fPos * StepSize * dir;" + "\n"
     	+ "vec3 dir2 = position - start;" + "\n"
     	+ "dir = back_position - start;" + "\n"
-    	+ "if ( length(dir2) > length(dir) ) {" + "\n"
-    	//+ "   gl_FragColor = vec4(0);" + "\n"
+    	+ "if ( dot(dir2,dir2) > dot(dir,dir) ) {" + "\n"
     	+ "   discard;" + "\n"
     	+ "   return;" + "\n"
     	+ "}" + "\n";
@@ -119,20 +133,40 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform vec3 ColorLUTOnA;" + "\n"
     	+ "\n";
 
-    private static String readImage = ""
+    private static String readImageA = ""
+        + "vec4 color = vec4(0.0);" + "\n"
+        + "float opacity = 1.0;" + "\n"
     	+ "color = texture3D(bVolumeImageA,position);" + "\n"
     	+ "vec4 normal = vec4(color.g, color.b, color.a, 0);" + "\n"
     	+ "color = vec4(color.r, color.r, color.r, color.r);" + "\n";
-    
 
-    private static String readImageColor = ""
+    private static String readImageB = ""
+        + "vec4 color = vec4(0.0);" + "\n"
+        + "float opacity = 1.0;" + "\n"
+    	+ "color = texture3D(jVolumeImageB,position);" + "\n"
+    	+ "vec4 normal = vec4(color.g, color.b, color.a, 0);" + "\n"
+    	+ "color = vec4(color.r, color.r, color.r, color.r);" + "\n";
+
+
+    private static String readImageColorA = ""
+        + "vec4 color = vec4(0.0);" + "\n"
+        + "float opacity = 1.0;" + "\n"
     	+ "color = texture3D(bVolumeImageA,position);" + "\n";
 
-    private static String readColorMap = ""
+    private static String readImageColorB = ""
+        + "vec4 color = vec4(0.0);" + "\n"
+        + "float opacity = 1.0;" + "\n"
+    	+ "color = texture3D(jVolumeImageB,position);" + "\n";
+
+    private static String readColorMapA = ""
     	+ "color = texture1D(cColorMapA,color.r);" + "\n"
     	+ "opacity = color.a;" + "\n";
 
-    private static String readColorMapRGB = ""
+    private static String readColorMapB = ""
+    	+ "color = texture1D(kColorMapB,color.r);" + "\n"
+    	+ "opacity = color.a;" + "\n";
+
+    private static String readColorMapRGBA = ""
     	+ "vec4 colorTemp = vec4(0);" + "\n"
     	+ "opacity = 0;" + "\n"
     	+ "if ( ColorLUTOnA.x != 0.0 ) {" + "\n"
@@ -160,31 +194,95 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "   color.b = 0.0;" + "\n"
     	+ "}" + "\n";
 
-    private static String gradientMagnitudeComposite = ""
+    private static String readColorMapRGBB = ""
+    	+ "vec4 colorTemp = vec4(0);" + "\n"
+    	+ "opacity = 0;" + "\n"
+    	+ "if ( ColorLUTOnA.x != 0.0 ) {" + "\n"
+    	+ "   colorTemp = texture1D(kColorMapB,color.r);" + "\n"
+    	+ "   color.r = colorTemp.r;" + "\n"
+    	+ "   opacity += colorTemp.a;" + "\n"
+    	+ "}" + "\n"
+    	+ "else {" + "\n"
+    	+ "   color.r = 0.0;" + "\n"
+    	+ "}" + "\n"
+    	+ "if ( ColorLUTOnA.y != 0.0 ) {" + "\n"
+    	+ "   colorTemp = texture1D(kColorMapB,color.g);" + "\n"
+    	+ "   color.g = colorTemp.g;" + "\n"
+    	+ "   opacity += colorTemp.a;" + "\n"
+    	+ "}" + "\n"
+    	+ "else {" + "\n"
+    	+ "   color.g = 0.0;" + "\n"
+    	+ "}" + "\n"
+    	+ "if ( ColorLUTOnA.z != 0.0 ) {" + "\n"
+    	+ "   colorTemp = texture1D(kColorMapB,color.b);" + "\n"
+    	+ "   color.b = colorTemp.b;" + "\n"
+    	+ "   opacity += colorTemp.a;" + "\n"
+    	+ "}" + "\n"
+    	+ "else {" + "\n"
+    	+ "   color.b = 0.0;" + "\n"
+    	+ "}" + "\n";
+
+    private static String gradientMagnitudeCompositeA = ""
         	+ "vec4 colorGM = texture3D(fVolumeImageA_GM,position);" + "\n"
-        	+ "float opacityGM = texture1D(gOpacityMapA_GM,colorGM.r).r;" + "\n"
+        	+ "float opacityGM = texture1D(gOpacityMapA_GM,colorGM.r).r;" + "\n";
+
+    private static String gradientMagnitudeCompositeOpacityA = ""
+        	+ "opacity = opacity * opacityGM;" + "\n";
+
+    private static String gradientMagnitudeCompositeB = ""
+        	+ "vec4 colorGM = texture3D(nVolumeImageB_GM,position);" + "\n"
+        	+ "float opacityGM = texture1D(oOpacityMapB_GM,colorGM.r).r;" + "\n"
         	+ "opacity = opacity * opacityGM;" + "\n";
     
-    private static String colorComposite = ""
-    	+ "gl_FragColor.rgb = color.rgb;" + "\n"
-    	+ "gl_FragColor.a = opacity;" + "\n";
-
     private static String blendComposite = ""
-    	+ "gl_FragColor.a *= Blend;" + "\n";
+    	+ "opacity *= Blend;" + "\n";
 
     private static String compositeMIP_DRR = ""
-    	+ "gl_FragColor.rgb *= opacity;" + "\n";
+    	+ "color.rgb *= opacity;" + "\n";
     private static String blendMIP_DRR = ""
-    	+ "gl_FragColor.rgb *= Blend * opacity;" + "\n";
+    	+ "color.rgb *= Blend * opacity;" + "\n";
+
+    private static String calcColorAStart = ""
+    	+ "vec4 calcColorA(vec3 position) {" + "\n";
+
+    private static String calcColorBStart = ""
+    	+ "vec4 calcColorB(vec3 position) {" + "\n";
+    
+    private static String calcColorEnd = ""
+        + "color.a = opacity;" + "\n"
+        + "return color;" + "\n"
+        + "\n" + "}" + "\n";
+
+    private static String calcColorA = ""
+   		+ "vec4 colorA = calcColorA(position);" + "\n";
+    
+    private static String calcColorB = ""
+       	+ "vec4 colorB = calcColorB(position);" + "\n";
+
+    private static String finalColorA = ""
+    	+ "gl_FragColor.rgb = colorA.rgb;" + "\n"
+    	+ "gl_FragColor.a = colorA.a;" + "\n";
+
+    private static String finalColorB = ""
+    	+ "gl_FragColor.rgb = colorB.rgb;" + "\n"
+    	+ "gl_FragColor.a = colorB.a;" + "\n";
+
+    private static String finalColorAB = ""
+    	+ "gl_FragColor.rgb = (ABBlend * colorA.rgb) + ((1 - ABBlend) * colorB.rgb);" + "\n"
+    	+ "gl_FragColor.a = (ABBlend * colorA.a) + ((1 - ABBlend) * colorB.a);" + "\n";
     
     private static String mainEnd = ""
-        + "if ( gl_FragColor.a == 0 ) {" + "\n"
-    	+ "   discard;" + "\n"
-    	+ "}" + "\n"
-        + "if ( (gl_FragColor.r == 0) && (gl_FragColor.g == 0) && (gl_FragColor.b == 0) ) {" + "\n"
-    	+ "   discard;" + "\n"
-    	+ "}" + "\n"
-    	+ "}" + "\n";
+            + "if ( gl_FragColor == vec4(0) ) {" + "\n"
+        	+ "   discard;" + "\n"
+        	+ "}" + "\n"
+        	+ "}" + "\n";
+        //+ "if ( gl_FragColor.a == 0 ) {" + "\n"
+    	//+ "   discard;" + "\n"
+    	//+ "}" + "\n"
+        //+ "if ( (gl_FragColor.r == 0) && (gl_FragColor.g == 0) && (gl_FragColor.b == 0) ) {" + "\n"
+    	//+ "   discard;" + "\n"
+    	//+ "}" + "\n"
+    	//+ "}" + "\n";
     
     private static String clipSetup = ""
     	+ "float bClipped = 0.0;"
@@ -239,8 +337,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "local_normal = normalize( local_normal );" + "\n"
     	+ "" + "\n";
 
-    public static String surfaceInitColor = ""
+    public static String surfaceInitColorA = ""
         	+ "vec4 normal = texture3D(eNormalMapA,position);" + "\n"
+        	+ "normal.w = 0.0;" + "\n";
+
+    public static String surfaceInitColorB = ""
+        	+ "vec4 normal = texture3D(mNormalMapB,position);" + "\n"
         	+ "normal.w = 0.0;" + "\n";
     
     public static String surfaceCompositeInit = ""
@@ -353,8 +455,17 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "" + "\n";
 
 
-    private static String multiHistogramInit = ""
+    private static String multiHistogramInitA = ""
     	+ "vec4 colorGM = texture3D(fVolumeImageA_GM,position);" + "\n"
+    	+ "float fMapZ = colorGM.a;" + "\n"
+    	+ "float multiHOpacityTemp = 0;" + "\n"
+    	+ "float multiHOpacitySum = 0;" + "\n"
+    	+ "vec4 multiHColorSum = 0;" + "\n"
+    	+ "vec4 widgetColor = 0;" + "\n"
+    	+ "" + "\n";
+
+    private static String multiHistogramInitB = ""
+    	+ "vec4 colorGM = texture3D(nVolumeImageB_GM,position);" + "\n"
     	+ "float fMapZ = colorGM.a;" + "\n"
     	+ "float multiHOpacityTemp = 0;" + "\n"
     	+ "float multiHOpacitySum = 0;" + "\n"
@@ -380,7 +491,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "widgetColor = LevColor#;" + "\n"
     	+ "" + "\n";
     private static String multiHistogramReadColorMap = ""
-        + "widgetColor = texture1D(jColorMap#, multiHOpacityTemp );" + "\n"
+        + "widgetColor = texture1D(hColorMap#, multiHOpacityTemp );" + "\n"
         + "widgetColor.a = LevColor#.a;" + "\n"
     	+ "" + "\n";
     private static String multiHistogramCompositeColorMap = ""
@@ -424,14 +535,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        if ( m_kVolumeImageB.GetImage() == null )
-        {
+        //if ( m_kVolumeImageB.GetImage() == null )
+        //{
             m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", createProgramText(), true );
-        }
-        else
-        {
-            m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
-        }
+        //}
+        //else
+        //{
+         //   m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
+        //}
         initTexturesVol(m_kPShaderCMP);
                  
         SetVShader(0,m_pkVShader);
@@ -442,13 +553,27 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     /**
      * Sets the blend factor shader parameter between imageA and imageB.
      * @param fBlend blend factor (range = 0-1).
-     */
     public void Blend(float fBlend)
     {       
     	super.Blend(fBlend);
         checkPixelProgram();
     }
+     */
 
+    /**
+     * Sets the blend factor shader parameter between imageA and imageB.
+     * @param fBlend blend factor (range = 0-1).
+     */
+    public void setABBlend(float fBlend)
+    {
+    	m_afABBlendParam[0] = fBlend;
+        Program kCProgram = GetCProgram(0);  
+        if ( (kCProgram != null) && kCProgram.GetUC("ABBlend") != null ) 
+        {
+            kCProgram.GetUC("ABBlend").GetData()[0] = fBlend;
+        }
+        checkPixelProgram();
+    }
 
     /**
      * memory cleanup.
@@ -587,6 +712,16 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	checkPixelProgram();
     }
     
+    private boolean useImageA()
+    {
+    	return ((m_kVolumeImageA.GetImage() != null) && (m_afABBlendParam[0] != 0));
+    }
+    
+    private boolean useImageB()
+    {
+    	return ((m_kVolumeImageB.GetImage() != null) && (m_afABBlendParam[0] != 1.0));
+    }
+    
     private void checkPixelProgram()
     {
     	boolean bReloadShaderProgram = false;
@@ -600,17 +735,16 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		// remove clip parameters
     		bReloadShaderProgram = true;
     	}
-    	/*
-        if ( (m_afBlendParam[0] != 1.0) && !m_kPShaderCMP.GetProgram().GetProgramText().contains(blendParameters) )
+        if ( (m_afABBlendParam[0] != 1.0) && !m_kPShaderCMP.GetProgram().GetProgramText().contains(basicParametersB) )
         {
         	// add blend to the program:
     		bReloadShaderProgram = true;
         }
-        else if ( (m_afBlendParam[0] == 1.0) && m_kPShaderCMP.GetProgram().GetProgramText().contains(blendParameters))
+        else if ( (m_afABBlendParam[0] == 1.0) && m_kPShaderCMP.GetProgram().GetProgramText().contains(basicParametersB))
         {
         	// remove blend from the program:
     		bReloadShaderProgram = true;
-        } */
+        } 
         if ( isClipAE() && !m_kPShaderCMP.GetProgram().GetProgramText().contains(clipAEParameters) )
         {
         	// add arbitrary/eye clipping to the program:
@@ -621,12 +755,22 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         	// remove arbitrary/eye clipping from the program:
     		bReloadShaderProgram = true;
         }
-        if ( m_bGradientMag && !m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParameters) )
+        if ( useImageA() && m_bGradientMag && !m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersA) )
         {
         	// add gradient magnitude to the program:
     		bReloadShaderProgram = true;
         }
-        else if ( !m_bGradientMag && !m_bMultiHisto && m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParameters))
+        else if ( useImageA() && !m_bGradientMag && !m_bMultiHisto && m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersA))
+        {
+        	// remove gradient magnitude clipping from the program:
+    		bReloadShaderProgram = true;
+        }
+        if ( useImageB() && m_bGradientMag && !m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersB) )
+        {
+        	// add gradient magnitude to the program:
+    		bReloadShaderProgram = true;
+        }
+        else if ( useImageB() && !m_bGradientMag && !m_bMultiHisto && m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersB))
         {
         	// remove gradient magnitude clipping from the program:
     		bReloadShaderProgram = true;
@@ -653,12 +797,22 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         }
         
         
-        if ( m_bMultiHisto && !m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParameters))
+        if ( useImageA() && m_bMultiHisto && !m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersA))
         {
         	// add multihistogram widget to program
     		bReloadShaderProgram = true;
         }
-        else if ( !m_bMultiHisto && m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParameters))
+        else if ( useImageA() && !m_bMultiHisto && m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersA))
+        {
+        	// remove multihistogram widget from program
+    		bReloadShaderProgram = true;
+        }
+        if ( useImageB() && m_bMultiHisto && !m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersB))
+        {
+        	// add multihistogram widget to program
+    		bReloadShaderProgram = true;
+        }
+        else if ( useImageB() && !m_bMultiHisto && m_kPShaderCMP.GetProgram().GetProgramText().contains(gradientMagnitudeParametersB))
         {
         	// remove multihistogram widget from program
     		bReloadShaderProgram = true;
@@ -714,19 +868,30 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	if ( bReloadShaderProgram )
     	{
     		m_kPShaderCMP.GetProgram().SetProgramText( createProgramText() );
-    		GetCProgram(0).Release();
+    		if ( GetCProgram(0) != null )
+    		{
+    			GetCProgram(0).Release();
+    		}
     	}
     }
     
     private String createProgramText()
     {
-    	boolean bAddColorMap_Textures = false;
-    	boolean bAddColorMapGM_Textures = false;
-    	boolean bAddGM_Textures = false;
-    	boolean bAddNormal_Textures = false;
+    	boolean bAddColorMap_TexturesA = false;
+    	boolean bAddColorMapGM_TexturesA = false;
+    	boolean bAddGM_TexturesA = false;
+    	boolean bAddNormal_TexturesA = false;
+    	
+
+    	boolean bAddColorMap_TexturesB = false;
+    	boolean bAddColorMapGM_TexturesB = false;
+    	boolean bAddGM_TexturesB = false;
+    	boolean bAddNormal_TexturesB = false;
+    	
     	boolean bAddWidgetColorMap_Textures = false;
 
     	String text = "";
+    	// Start Parameters:
     	// Add Helper Functions if necessary:
     	if ( (m_iWhichShader == SUR || m_iWhichShader == CMP_SUR) )
     	{
@@ -743,10 +908,23 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	
     	// GLSL Program parameters:
     	text += basicParameters;
+		if ( useImageB() )
+		{
+			text += basicParametersB;
+		}
+		
     	if ( !m_bMultiHisto )
     	{
-    		text += colorMap;
-    		bAddColorMap_Textures = true;
+    		if ( useImageA() )
+    		{
+    			text += colorMapA;
+    			bAddColorMap_TexturesA = true;
+    		}
+    		if ( useImageB() )
+    		{
+    			text += colorMapB;
+    			bAddColorMap_TexturesB = true;
+    		}
     	}
     	if ( m_kVolumeImageA.GetImage().isColorImage() )
     	{
@@ -756,10 +934,15 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	boolean bLightsOn = false;
     	if ( (m_iWhichShader == SUR || m_iWhichShader == CMP_SUR) )
     	{
-    		if ( m_kVolumeImageA.GetImage().isColorImage() )
+    		if ( useImageA() && m_kVolumeImageA.GetImage().isColorImage() )
     		{
-    			bAddNormal_Textures = true;
-        		text += lightingParametersBasicColor;
+    			bAddNormal_TexturesA = true;
+        		text += lightingParametersBasicColorA;
+    		}
+    		if ( useImageB() && m_kVolumeImageB.GetImage().isColorImage() )
+    		{
+    			bAddNormal_TexturesB = true;
+        		text += lightingParametersBasicColorB;
     		}
     		text += lightingParametersBasic;
     		// for ## Lights
@@ -777,13 +960,25 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	
     	if ( m_bGradientMag || m_bMultiHisto )
     	{
-    		text += gradientMagnitudeParameters;
+    		if ( useImageA() ) {
+    			text += gradientMagnitudeParametersA;
+        		bAddGM_TexturesA = true;
+    		}
+    		if ( useImageB() ) {
+    			text += gradientMagnitudeParametersB;
+        		bAddGM_TexturesB = true;
+    		}
         	if ( !m_bMultiHisto )
         	{
-        		text += colorMapGM;
-        		bAddColorMapGM_Textures = true;
+        		if ( useImageA() ) {
+        			text += colorMapGMA;
+        			bAddColorMapGM_TexturesA = true;
+        		}
+        		if ( useImageB() ) {
+        			text += colorMapGMB;
+        			bAddColorMapGM_TexturesB = true;
+        		}
         	}
-    		bAddGM_Textures = true;
     	}
     	if ( m_bMultiHisto )
     	{
@@ -814,7 +1009,19 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		text += blendParameters;
     	}
+    	// End Parameters
     	
+    	// add generated color code:
+    	if ( useImageA() )
+    	{
+    		text += createColorFunctionA( bLightsOn );
+    	}
+    	if ( useImageB() )
+    	{
+    		text += createColorFunctionB( bLightsOn );
+    	}
+    	
+    	// Start code:
     	// main code to compute position in volume:
     	text += mainSetup;
 
@@ -830,28 +1037,155 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		text += clipEnd;
     	}
+    	// end setup:
+    	
+    	// generate color function:
+    	if ( useImageA() )
+    	{
+    		text += calcColorA;
+    	}
+    	if ( useImageB() )
+    	{
+    		text += calcColorB;
+    	}
+    	
+    	if ( useImageA() && !useImageB() )
+    	{
+    		text += finalColorA;
+    	}
+    	else if ( !useImageA() && useImageB() )
+    	{
+    		text += finalColorB;
+    	}
+    	else if ( useImageA() && useImageB() )
+    	{
+    		text += finalColorAB;
+    	}
 
+    	
+    	// GLSL Program closing bracket: 
+    	text += mainEnd;
+    	// Done generating program text.
+    	
+    	// Add the used textures to the shader program data structures:
+    	int iTex = 0;
+    	if ( m_kPShaderCMP != null )
+    	{
+    		m_kPShaderCMP.SetImageName(iTex, m_kSceneTarget.GetName());
+    		m_kPShaderCMP.SetTexture(iTex++, m_kSceneTarget);
+
+    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
+    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+    	}
+    	if ( bAddColorMap_TexturesA && (m_kPShaderCMP != null))
+    	{
+    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName());
+    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget());   
+    	}
+    	if ( bAddNormal_TexturesA && (m_kPShaderCMP != null) )
+    	{
+    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
+    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());    		
+    	}
+    	if ( bAddGM_TexturesA && (m_kPShaderCMP != null) )
+    	{
+    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
+    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
+        	if ( bAddColorMapGM_TexturesA && (m_kPShaderCMP != null))
+        	{
+        		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
+        		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
+        	}
+    	}
+    	if ( bAddWidgetColorMap_Textures && (m_kPShaderCMP != null) )
+    	{
+    		for ( int i = 0; i < m_iUsedWidgets; i++ )
+    		{
+    			if ( (m_akLevWidget[i].UseWidget[0] != 0f) && (m_akLevWidget[i].UseColorMap[0] != -1f) )
+    			{
+    				Texture kMap = VolumeTriPlanarRender.getHistogramLUTTexture( (int)m_akLevWidget[i].UseColorMap[0], false );
+    				//System.err.println( iTex + " " + i + " " + kMap.GetName() );
+    	    		m_kPShaderCMP.SetImageName(iTex, kMap.GetName());
+    	    		m_kPShaderCMP.SetTexture(iTex++, kMap);       				
+    			}
+    		}    				
+    	}
+    	
+    	
+    	if ( useImageB() )
+    	{
+    		if ( m_kPShaderCMP != null )
+    		{
+    			m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageB.GetVolumeTarget().GetName() );
+    			m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageB.GetVolumeTarget() );
+    		}
+    		if ( bAddColorMap_TexturesB && (m_kPShaderCMP != null))
+    		{
+    			m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageB.GetColorMapTarget().GetName());
+    			m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageB.GetColorMapTarget());   
+    		}
+    		if ( bAddNormal_TexturesB && (m_kPShaderCMP != null) )
+    		{
+    			m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageB.GetNormalMapTarget().GetName());
+    			m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageB.GetNormalMapTarget());    		
+    		}
+    		if ( bAddGM_TexturesB && (m_kPShaderCMP != null) )
+    		{
+    			m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageB.GetGradientMapTarget().GetName());
+    			m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageB.GetGradientMapTarget());
+    			if ( bAddColorMapGM_TexturesB && (m_kPShaderCMP != null))
+    			{
+    				m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
+    				m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
+    			}
+    		}
+    	}
+    	
+    	if ( m_kPShaderCMP != null )
+    	{
+    		for ( int i = 0; i < m_kPShaderCMP.GetTextureQuantity(); i++ )
+    		{
+    			Texture tex = m_kPShaderCMP.GetTexture(i);
+    			if ( tex != null )
+    			{
+    				if ( tex.GetImage() != null )
+    				{
+    					//System.err.println( i + " " + tex.GetImage().GetName() );
+    				}
+    			}
+    		}
+    	}
+    	
+		System.err.println( text );
+    	return text;
+    }
+    
+    private String createColorFunctionA(boolean bLightsOn)
+    {
+    	String text = calcColorAStart;
+
+    	// Start color computation:
 		if ( m_kVolumeImageA.GetImage().isColorImage() )
 		{
-			text += readImageColor;
+			text += readImageColorA;
 		}
 		else
 		{
-			text += readImage;
+			text += readImageA;
 		}
 		
     	if ( (m_iWhichShader == SUR || m_iWhichShader == CMP_SUR) && bLightsOn )
     	{
     		if ( m_kVolumeImageA.GetImage().isColorImage() )
     		{
-    			text += surfaceInitColor;
+    			text += surfaceInitColorA;
     		}
     		text += surfaceInit;
     	}
 
     	if ( m_bMultiHisto )
     	{
-    		text += multiHistogramInit;
+    		text += multiHistogramInitA;
     		if ( m_kVolumeImageA.GetImage().isColorImage() )
     		{
     			text += multiHistogramInitMapColor;
@@ -888,17 +1222,21 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	}
     	else
     	{
+    		if ( m_bGradientMag )
+    		{
+    			text += gradientMagnitudeCompositeA;
+    		}
     		if ( m_kVolumeImageA.GetImage().isColorImage() )
     		{
-    			text += readColorMapRGB;
+    			text += readColorMapRGBA;
     		}
     		else
     		{
-    			text += readColorMap;
+    			text += readColorMapA;
     		}
     		if ( m_bGradientMag )
     		{
-    			text += gradientMagnitudeComposite;
+    			text += gradientMagnitudeCompositeOpacityA;
     		}
     	}
     	
@@ -954,8 +1292,9 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		}
     		text += surfaceFinish;
     	}
+    	// end color computation:
     	
-    	text += colorComposite;   	
+    	// Start Blend:
     	
     	//if ( m_afBlendParam[0] != 1.0 )
     	{
@@ -976,67 +1315,170 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     			text += compositeMIP_DRR;
     		}
     	}*/
-    	
-    	// GLSL Program closing bracket: 
-    	text += mainEnd;
-    	
-    	//System.err.println( text );
-
-    	int iTex = 0;
-    	if ( m_kPShaderCMP != null )
-    	{
-    		m_kPShaderCMP.SetImageName(iTex, m_kSceneTarget.GetName());
-    		m_kPShaderCMP.SetTexture(iTex++, m_kSceneTarget);
-
-    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
-    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
-    	}
-    	if ( bAddColorMap_Textures && (m_kPShaderCMP != null))
-    	{
-    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetColorMapTarget().GetName());
-    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetColorMapTarget());   
-    	}
-    	if ( bAddNormal_Textures && (m_kPShaderCMP != null) )
-    	{
-    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetNormalMapTarget().GetName());
-    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetNormalMapTarget());    		
-    	}
-    	if ( bAddGM_Textures && (m_kPShaderCMP != null) )
-    	{
-    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetGradientMapTarget().GetName());
-    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetGradientMapTarget());
-        	if ( bAddColorMapGM_Textures && (m_kPShaderCMP != null))
-        	{
-        		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetOpacityMapGMTarget().GetName() );
-        		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetOpacityMapGMTarget() );
-        	}
-    	}
-    	if ( bAddWidgetColorMap_Textures && (m_kPShaderCMP != null) )
-    	{
-    		for ( int i = 0; i < m_iUsedWidgets; i++ )
-    		{
-    			if ( (m_akLevWidget[i].UseWidget[0] != 0f) && (m_akLevWidget[i].UseColorMap[0] != -1f) )
-    			{
-    				Texture kMap = VolumeTriPlanarRender.getHistogramLUTTexture( (int)m_akLevWidget[i].UseColorMap[0], false );
-    				//System.err.println( iTex + " " + i + " " + kMap.GetName() );
-    	    		m_kPShaderCMP.SetImageName(iTex, kMap.GetName());
-    	    		m_kPShaderCMP.SetTexture(iTex++, kMap);       				
-    			}
-    		}    				
-    	}
-    	if (m_kPShaderCMP != null )
-    	{
-    		for ( int i = 0; i < m_kPShaderCMP.GetTextureQuantity(); i++ )
-    		{
-    			//System.err.println( m_kPShaderCMP.GetTexture(i).GetName() ); 
-    		}
-    	}
-    	if ( m_kPShaderCMP != null )
-    	{
-    		//System.err.println( text );
-    	}
+    	// end Blend
+    	text += calcColorEnd;
     	return text;
     }
+    
+    
+
+    
+    private String createColorFunctionB(boolean bLightsOn)
+    {
+    	String text = calcColorBStart;
+
+    	// Start color computation:
+		if ( m_kVolumeImageB.GetImage().isColorImage() )
+		{
+			text += readImageColorB;
+		}
+		else
+		{
+			text += readImageB;
+		}
+		
+    	if ( (m_iWhichShader == SUR || m_iWhichShader == CMP_SUR) && bLightsOn )
+    	{
+    		if ( m_kVolumeImageB.GetImage().isColorImage() )
+    		{
+    			text += surfaceInitColorB;
+    		}
+    		text += surfaceInit;
+    	}
+
+    	if ( m_bMultiHisto )
+    	{
+    		text += multiHistogramInitB;
+    		if ( m_kVolumeImageB.GetImage().isColorImage() )
+    		{
+    			text += multiHistogramInitMapColor;
+    		}
+    		else
+    		{
+    			text += multiHistogramInitMap;
+    		}
+    		for ( int i = 0; i < m_iUsedWidgets; i++ )
+    		{
+    			if ( m_akLevWidget[i].UseWidget[0] != 0f )
+    			{
+    				if ( m_akLevWidget[i].Radius[0] != -1 )
+    				{
+    					text += multiHistogramCompositeCircle.replaceAll( "#", String.valueOf(i) );
+    				}
+    				else
+    				{
+    					text += multiHistogramComposite.replaceAll( "#", String.valueOf(i) );
+    				}
+
+    				if ( m_akLevWidget[i].UseColorMap[0] != -1f )
+    				{
+    					text += multiHistogramReadColorMap.replaceAll( "#", String.valueOf(i) );
+    				}
+    				text += multiHistogramCompositeColorMap.replaceAll( "#", String.valueOf(i) );
+    			}
+    		}
+			text += multiHistogramFinish;    		
+			if ( m_iWhichShader == SUR )
+			{
+				text += multiHistoSurfaceCompositeInit;
+			}
+    	}
+    	else
+    	{
+    		if ( m_kVolumeImageB.GetImage().isColorImage() )
+    		{
+    			text += readColorMapRGBB;
+    		}
+    		else
+    		{
+    			text += readColorMapB;
+    		}
+    		if ( m_bGradientMag )
+    		{
+    			text += gradientMagnitudeCompositeB;
+    		}
+    	}
+    	
+    	
+    	if ( (m_iWhichShader == SUR || m_iWhichShader == CMP_SUR) && bLightsOn )
+    	{
+    		if ( m_iWhichShader == CMP_SUR )
+    		{
+    			text += surfaceCompositeInit;
+    		}
+    		
+    		for ( int i = 0; i < m_aafLight.length; i++ )
+    		{
+    			if ( m_aafLight[i][0] != -1 )
+    			{
+    				// first light is static light:
+    				if ( i == 0 )
+    				{
+        				switch ( (int)m_aafLight[i][0] )
+        				{
+        				case 0: // ambient
+        					text += surfaceAmbient.replaceAll("#", String.valueOf(i) );
+        					break;
+        				case 1: // directional
+        					text += surfaceDirectionalStatic.replaceAll("#", String.valueOf(i) );
+        					break;
+        				case 2: // point
+        					text += surfacePointStatic.replaceAll("#", String.valueOf(i) );
+        					break;
+        				default: // spot
+        					text += surfaceSpotStatic.replaceAll("#", String.valueOf(i) );
+        					break;
+        				}       	
+    				}
+    				else {
+    					switch ( (int)m_aafLight[i][0] )
+    					{
+    					case 0: // ambient
+    						text += surfaceAmbient.replaceAll("#", String.valueOf(i) );
+    						break;
+    					case 1: // directional
+    						text += surfaceDirectional.replaceAll("#", String.valueOf(i) );
+    						break;
+    					case 2: // point
+    						text += surfacePoint.replaceAll("#", String.valueOf(i) );
+    						break;
+    					default: // spot
+    						text += surfaceSpot.replaceAll("#", String.valueOf(i) );
+    						break;
+    					}
+    				}
+    			}
+    		}
+    		text += surfaceFinish;
+    	}
+    	// end color computation:
+    	
+    	// Start Blend:
+    	
+    	//if ( m_afBlendParam[0] != 1.0 )
+    	{
+    		if ( m_iWhichShader != MIP && m_iWhichShader != DRR )
+    		{
+    			text += blendComposite;
+    		}
+    		else if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
+    		{
+    			text += blendMIP_DRR;
+    		}
+    	}
+    	/*
+    	else
+    	{
+    		if ( m_iWhichShader == MIP || m_iWhichShader == DRR )
+    		{
+    			text += compositeMIP_DRR;
+    		}
+    	}*/
+    	// end Blend
+    	text += calcColorEnd;
+    	return text;
+    }
+    
     
     private static String multiHistogramFunctions = ""
     	+ "float computeX( float fY, float fInvY0MY1, vec4 LevLine ) {" + "\n"
