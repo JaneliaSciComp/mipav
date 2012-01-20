@@ -886,9 +886,10 @@ public class OpenCLAlgorithmGradientMagnitude extends OpenCLAlgorithmBase {
 	{
 		initCL(m_iDeviceType, null);				
 
+		int nBuffers = 4; // 4 buffers needed for the computation.
 		int elementCount = width * height * depth * color;		
 		long maxAllocSize = OpenCLAlgorithmBase.getLong(device, CL_DEVICE_MAX_MEM_ALLOC_SIZE);
-		if ( (Sizeof.cl_float * elementCount) > maxAllocSize )
+		if ( (Sizeof.cl_float * elementCount * nBuffers) > maxAllocSize )
 		{
 			gradientMagnitudeSep25DSlices();
 			return;

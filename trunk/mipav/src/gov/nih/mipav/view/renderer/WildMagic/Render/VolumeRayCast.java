@@ -280,18 +280,18 @@ public class VolumeRayCast extends VolumeObject
 
     public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
     {
-    	if ( m_kVolumeImageB.GetImage() != null )
-    	{
-    		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-                targetTexture);
-    	}
-    	else
-    	{    		
+    	//if ( m_kVolumeImageB.GetImage() != null )
+    	//{
+    	//	m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
+        //        targetTexture);
+    	//}
+    	//else
+    	//{    		
     		//m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
             //        targetTexture);
     		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB,
     				targetTexture);
-    	}
+    	//}
         kRenderer.LoadResources(m_kVolumeShaderEffect);
         kRenderer.LoadResources(m_kMesh);
         m_kScene.UpdateGS();
@@ -416,12 +416,13 @@ public class VolumeRayCast extends VolumeObject
             m_kVolumeShaderEffect.Blend(fBlend);
         }
     }
-    public void setVolumeSamples( float fSample )
+    public int setVolumeSamples( float fSample )
     {
         boolean bTemp = m_bDisplay;
         m_bDisplay = false;
-        m_kVolumeShaderEffect.setVolumeSamples( fSample );
+        int samples = m_kVolumeShaderEffect.setVolumeSamples( fSample );
         m_bDisplay = bTemp;
+        return samples;
     }
     /**
      * Display the volume in Surface mode.

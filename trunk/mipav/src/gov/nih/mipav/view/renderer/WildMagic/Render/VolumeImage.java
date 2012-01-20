@@ -635,7 +635,15 @@ public class VolumeImage implements Serializable {
 			}
 			if ( kNormal != null )
 			{
-				addNormals(kNormal, i);	
+				if ( m_kImage.isColorImage() )
+				{
+					m_kNormal[i] = VolumeImage.UpdateData(kNormal, i, null, m_kNormal[i], m_kNormalMapTarget, kNormal.getImageName(),
+							true, true);
+				}
+				else
+				{
+					addNormals(kNormal, i);	
+				}
 				kNormal.disposeLocal();
 				m_bNormalsInit = true;
 			}

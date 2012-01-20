@@ -802,6 +802,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         // fills in the rest of the 'constant' portion of the matrix.
         double[]fullPoint = constructPoint(savedStartPoint, x);
         double r = costFunction.cost(convertToMatrix(fullPoint));
+        //System.err.println( fullPoint[0] + " " + r );
         return r;
     }
 
