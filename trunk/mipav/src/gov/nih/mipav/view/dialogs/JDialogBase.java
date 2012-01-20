@@ -726,6 +726,98 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
             }
         }
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.NIFTI) {
+        	FileInfoNIFTI   fileInfoNIFTI;
+        	MatrixHolder matHolder = null;
+        	MatrixHolder resultMatHolder = null;
+            TransMatrix[] matrixArray = null;
+            TransMatrix matrixQ = null;
+            TransMatrix matrixS = null;
+            int i;
+        	fileInfoNIFTI = (FileInfoNIFTI)(image.getFileInfo()[0].clone());
+            if (resultImage.getNDims() == 3) {
+            	for (i = 0; i < resultImage.getExtents()[2]; i++) {
+            		resultImage.setFileInfo((FileInfoNIFTI)fileInfoNIFTI.clone(),i);
+            	}
+            }
+            else if (resultImage.getNDims() == 4) {
+            	for (i = 0; i < resultImage.getExtents()[2]*resultImage.getExtents()[3]; i++) {
+            		resultImage.setFileInfo((FileInfoNIFTI)fileInfoNIFTI.clone(),i);
+            	}	
+            }
+            
+            matHolder = image.getMatrixHolder();
+
+            if (matHolder != null) {
+                matrixArray = matHolder.getNIFTICompositeMatrices();
+
+                if (matrixArray != null) {
+
+                    if (matrixArray.length >= 1) {
+
+                        if (matrixArray[0] != null) {
+
+                            if (matrixArray[0].isQform()) {
+                            	matrixQ = new TransMatrix(4);
+                                for (i = 0; i < 4; i++) {
+                                	for (j = 0; j < 4; j++) {
+                                		matrixQ.set(i, j, matrixArray[0].get(i, j));
+                                	}
+                                }
+                                matrixQ.setIsNIFTI(true);
+                                matrixQ.setIsQform(true);
+                            } else {
+                            	matrixS = new TransMatrix(4);
+                                for (i = 0; i < 4; i++) {
+                                	for (j = 0; j < 4; j++) {
+                                		matrixS.set(i, j, matrixArray[0].get(i, j));
+                                	}
+                                }
+                                matrixS.setIsNIFTI(true);
+                                matrixS.setIsQform(false);   
+                            }
+                        } // if (matrixArray[0] != null)
+                    } // if (matrixArray.length >= 1)
+
+                    if (matrixArray.length >= 2) {
+
+                        if (matrixArray[1] != null) {
+
+                            if (matrixArray[1].isQform()) {
+                            	matrixQ = new TransMatrix(4);
+                                for (i = 0; i < 4; i++) {
+                                	for (j = 0; j < 4; j++) {
+                                		matrixQ.set(i, j, matrixArray[1].get(i, j));
+                                	}
+                                }
+                                matrixQ.setIsNIFTI(true);
+                                matrixQ.setIsQform(true);   
+                            } else {
+                            	matrixS = new TransMatrix(4);
+                                for (i = 0; i < 4; i++) {
+                                	for (j = 0; j < 4; j++) {
+                                		matrixS.set(i, j, matrixArray[1].get(i, j));
+                                	}
+                                }
+                                matrixS.setIsNIFTI(true);
+                                matrixS.setIsQform(false);       
+                            }
+                        } // if (matrixArray[1] != null)
+                    } // if (matrixArray.length >= 2)
+                } // if (matrixArray != null)
+            } // if (matHolder != null)
+            
+            resultMatHolder = resultImage.getMatrixHolder();
+            if (resultMatHolder != null) {
+            	resultMatHolder.clearMatrices();
+            	if (matrixQ != null) {
+            		resultMatHolder.addMatrix(matrixQ);
+            	}
+            	if (matrixS != null) {
+            		resultMatHolder.addMatrix(matrixS);
+            	}
+            }
+		} // if (image.getFileInfo()[0].getFileFormat() == FileUtility.NIFTI)
     }
     
     /**
