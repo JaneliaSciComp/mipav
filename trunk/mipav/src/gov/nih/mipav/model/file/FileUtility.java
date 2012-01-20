@@ -249,6 +249,9 @@ public class FileUtility {
     
     /** Vista file extension .v */
     public static final int VISTA = 70;
+    
+    /** Bmp multifile */
+    public static final int BMP_MULTIFILE = 71;
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
             "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
@@ -257,7 +260,9 @@ public class FileUtility {
             "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile", "nrrd", "osm", "pcx",
             "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga", "tiff",
             "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml",
-            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat"};
+            "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "bmp multifile"};
+
+    
 
     /**
      * Returns the file type associated with a string.
