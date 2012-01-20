@@ -53,7 +53,7 @@ public class FileBMP extends FileBase {
     private int[] imageExtents = null;
 
     /** DOCUMENT ME! */
-    private float[] imgBuffer = null;
+    private Number[] imgBuffer = null;
 
     /** DOCUMENT ME! */
     private float[] imgResols = new float[2];
@@ -116,7 +116,7 @@ public class FileBMP extends FileBase {
      *
      * @return  buffer of image.
      */
-    public float[] getImageBuffer() {
+    public Number[] getImageBuffer() {
         return imgBuffer;
     }
 
@@ -1376,6 +1376,28 @@ public class FileBMP extends FileBase {
                 image.importData(0, byteBuffer2, true);	
             } // else if ((biBitCount == 32) && (biCompression == BI_BITFIELDS)) 
             
+            if (multiFile) {
+                Object obj = image.exportData(0, image.getSliceSize());
+                System.out.println(obj.getClass());
+                imgBuffer = new Number[image.getSliceSize()];
+                if(obj instanceof byte[]) {
+                    
+                    byte[] bAr = new byte[image.getSliceSize()];
+                    System.out.println(image.getSliceSize() +" vs "+bAr.length);
+                    System.arraycopy(obj, 0, bAr, 0, bAr.length);
+                    index = 0;
+                    for(byte b : bAr) {
+                        imgBuffer[index++] = Byte.valueOf(b);
+                    }
+                } else if(obj instanceof float[]) {
+                    float[] fAr = new float[image.getSliceSize()];
+                    System.arraycopy(image.exportData(0, image.getSliceSize()), image.getSliceSize(), fAr, 0, fAr.length);
+                    index = 0;
+                    for(float f : fAr) {
+                        imgBuffer[index++] = Float.valueOf(f);
+                    }
+                }
+            }
             image.calcMinMax();
             fireProgressStateChanged(100);
             
