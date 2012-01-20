@@ -178,8 +178,8 @@ public class FileIO {
                 fType = FileUtility.GE_GENESIS_MULTIFILE;
             } else if (fileType == FileUtility.MAGNETOM_VISION) {
                 fType = FileUtility.MAGNETOM_VISION_MULTIFILE;
-            } else {
-                
+            } else if (fileType == FileUtility.BMP){
+                fType = FileUtility.BMP_MULTIFILE;
             }
         }
 
@@ -2063,6 +2063,10 @@ public class FileIO {
                 case FileUtility.BMP:
                 	image = readBMP(fileName, fileDir, one);
                 	break;
+                	
+                case FileUtility.BMP_MULTIFILE:
+                    image = readBMPMulti(fileName, fileDir, one);
+                    break;
             
                 case FileUtility.LIFF:
                     image = readLIFF(fileName, fileDir, one);
@@ -7217,6 +7221,8 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
+            
+            
             error.printStackTrace();
 
             return null;
@@ -9606,7 +9612,221 @@ public class FileIO {
         return image;
     }
     
-    private ModelImage createMultifile(ModelImage origImage, String fileDir, String fileName, boolean quiet) {
+    private ModelImage readBMPMulti(final String fileName, final String fileDir, final boolean one) {
+        
+        
+        float[] resols;
+        int[] units;
+        int[] extents; // extent of image (!def!)
+        int length = 0;
+        int i;
+        FileInfoBase myFileInfo;
+        String[] fileList;
+        FileBMP imageFile;
+        ModelImage image = null;
+        int nFiles;
+        
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet); // get series of files in the chosen dir
+            nFiles = fileList.length;
+            imageFile = new FileBMP(fileName, fileDir); // read in files
+            imageFile.setFileName(fileList[0]);
+
+            if (nFiles == 1) { // The multiFile flag is true but there is only one image in the
+                // directory with the prefix name so read and return image as a single file.
+                image = imageFile.readImage(false, false);
+                LUT = imageFile.getModelLUT();
+                imageFile.finalize();
+                imageFile = null;
+
+                return image;
+            } else {
+                imageFile.readImage(true, false);
+            }
+        } catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Out of memory: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        myFileInfo = imageFile.getFileInfo();
+
+        try {
+            resols = new float[5];
+            units = new int[5];
+
+            if (myFileInfo.getExtents().length == 3) {
+                extents = new int[4];
+                extents[2] = myFileInfo.getExtents()[2];
+                extents[3] = nFiles;
+                length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1] * myFileInfo.getExtents()[2];
+            } else if ( (myFileInfo.getExtents().length == 2) && (nFiles > 1)) {
+                extents = new int[3];
+                extents[2] = nFiles;
+                length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
+            } else {
+                extents = new int[2];
+                length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
+            }
+
+            extents[0] = myFileInfo.getExtents()[0]; // copy out current [0,1] coords
+            extents[1] = myFileInfo.getExtents()[1]; // so all 3 ([0,1,2]) may be added
+
+            resols[0] = myFileInfo.getResolutions()[0];
+            resols[1] = myFileInfo.getResolutions()[1];
+            resols[2] = 1;
+            
+            units[0] = myFileInfo.getUnitsOfMeasure(0);
+            units[1] = myFileInfo.getUnitsOfMeasure(1);
+            units[2] = myFileInfo.getUnitsOfMeasure(1);
+            
+            myFileInfo.setExtents(extents);
+
+            image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName());
+            createProgressBar(null, FileUtility.trimNumbersAndSpecial(fileName) + FileUtility.getExtension(fileName),
+                    FileIO.FILE_READ);
+
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: Out of memory: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        image.setFileInfo(myFileInfo, 0);
+        imageFile.finalize();
+        imageFile = null;
+
+        try {
+            imageFile = new FileBMP(fileList[0], fileDir);
+        } catch (final IOException error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            return null;
+        }
+
+        // loop through image and store data in image model
+        for (i = 0; i < nFiles; i++) {
+
+            try {
+                progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nFiles - 1) * 100));
+                (imageFile).setFileName(fileList[i]);
+
+                // fileTIFF.testme(i);
+                (imageFile).readImage(true, false);
+                myFileInfo = (imageFile).getFileInfo();
+                myFileInfo.setExtents(extents);
+                myFileInfo.setResolutions(resols);
+                myFileInfo.setUnitsOfMeasure(units);
+
+                if (nFiles > 1) {
+                    myFileInfo.setMultiFile(true);
+                }
+
+                image.setFileInfo(myFileInfo, i);
+
+                // float[] tmpBuffer = fileTIFF.getImageBuffer();
+                if (image.isColorImage()) {
+                    image.importData(i * 4 * length, (Number[]) (imageFile).getImageBuffer(), false);
+                } else {
+                    image.importData(i * length, (Number[]) (imageFile).getImageBuffer(), false);
+                }
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\n" + "number in the file "
+                            + myFileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Out of memory: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+        }
+
+        imageFile.finalize();
+        imageFile = null;
+        return image;
+    }
+    
+    private ModelImage createMultifile(FileInfoBase myFileInfo, ModelImage origImage, String fileDir, String fileName, boolean quiet) {
         String[] fileList = FileUtility.getFileList(fileDir, fileName, quiet); // get series of files in the chosen dir
         int nFiles = fileList.length;
         
@@ -9620,8 +9840,12 @@ public class FileIO {
         }
         newExtents[origImage.getExtents().length] = nFiles;
         
-        return new ModelImage(origImage.getDataType(), newExtents, origImage.getImageFileName());
+        ModelImage image = new ModelImage(origImage.getDataType(), newExtents, origImage.getImageFileName());
+        myFileInfo.setExtents(newExtents);
         
+        image.setFileInfo(myFileInfo, 0);
+        
+        return image;
         
     }
     
