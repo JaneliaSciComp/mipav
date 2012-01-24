@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
 
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -27,6 +28,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 
 
@@ -39,7 +41,11 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
    
    public ModelImage DWIImage;
    
+   public String DWIDir;
+   
    public ModelImage T2Image;
+   
+   public ModelImage DWINewB0Image;
     
     /** DOCUMENT ME! */
     private JButton goBackButton;
@@ -56,6 +62,10 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
     
     private JPanelDTIRegistrationEddyCurrent35D eddyCurReg;
     
+    private JPanelDTIPreprocessing DTIPreprocessing;
+    
+    private JPanelEPIDistortionCorrection EPIpanel;
+    
     private JPanelT2Load t2load;
 
     /** DOCUMENT ME! */
@@ -70,6 +80,12 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
     public ViewJFrameImage DWIframe;
     
     public ViewJFrameImage T2frame;
+    
+    public ViewJFrameImage DWINewB0Frame;
+    
+    public TransMatrix [] arrayTransMatrix;
+    
+    public TransMatrix b0toStructMatrix;
 
     
    
@@ -97,7 +113,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
      */
 
     public void init() {
-        System.out.println("working");
+
         setForeground(Color.black);
         setTitle("DTI Pipeline");
 
@@ -109,8 +125,9 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
         setTitle("DTI Pipeline");
         tabbedPane.addTab("Import Data", null, buildImportDataPanel());
-        tabbedPane.addTab("T2 Image Registration", null, buildT2Panel());
-        tabbedPane.addTab("Motion Correction/Eddy Current", null, buildRegEddyCurPanel());
+        //tabbedPane.addTab("T2 Image Registration", null, buildT2Panel());
+        //tabbedPane.addTab("Motion Correction/Eddy Current", null, buildRegEddyCurPanel());
+        tabbedPane.addTab("Pre-processing", null, buildPreprocessingPanel());
         tabbedPane.addTab("EPI Distortion Correction", null, buildEPIPanel());
         tabbedPane.addTab("Tensor Estimation", null, buildTensorPanel());
         tabbedPane.addTab("Fiber Tracking/ Statistics", null, buildFiberTrackingPanel());
@@ -148,15 +165,24 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
      */
     public void actionPerformed(final ActionEvent event) {
         final String command = event.getActionCommand();
-        System.out.println("actionperformed");
 
         if (command.equals("next1")){
             DWIImage = importData.m_kDWIImage;
             DWIframe = importData.frame;
             dtiparams = DWIImage.getDTIParameters();
+            DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
+
+            
+
 
             if (dtiparams.getbValues() != null && dtiparams.getGradients() != null){
-                System.out.println("bothnotnull");
+                tabbedPane.setSelectedIndex(1);
+                nextButton.setEnabled(false);
+                goBackButton.setEnabled(true);
+                goBackButton.setActionCommand("back1");
+            }
+            
+            else if (dtiparams.getbValues() != null && dtiparams.getGradients() != null){
                 tabbedPane.setSelectedIndex(1);
                 nextButton.setEnabled(false);
                 goBackButton.setEnabled(true);
@@ -168,10 +194,9 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
             
            if (importData.useT2CheckBox.isSelected()){
                if (importData.m_kT2Image !=null){
-                   System.out.println("t2imagenotnull");
                    T2Image = importData.m_kT2Image;
                    T2frame = importData.t2frame;
-                   eddyCurReg.epiCheckBox.setEnabled(true);
+                   //eddyCurReg.epiCheckBox.setEnabled(true);
                }
                else{
                    MipavUtil.displayError("Please load T2 image"); 
@@ -180,7 +205,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
            }
            
            if (T2Image != null) {
-               t2load.matrixComboBox.addItem(T2Image.getImageDirectory());   
+               //t2load.matrixComboBox.addItem(T2Image.getImageDirectory());   
            }
 
 
@@ -190,10 +215,31 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
         }
         
         else if (command.equals("back1")){
-            System.out.println("backworking");
             tabbedPane.setSelectedIndex(0);
             nextButton.setEnabled(true);
             goBackButton.setEnabled(false);
+        }
+        
+        else if (command.equals("next2")){
+            /*if (t2load.newB0DWIRegImage !=null){
+                DWINewB0Image = t2load.newB0DWIRegImage;
+                tabbedPane.setSelectedIndex(2);
+                nextButton.setEnabled(false);
+                goBackButton.setEnabled(true);
+                goBackButton.setActionCommand("back2");
+            }*/
+            
+            if (DTIPreprocessing.result35RegImage !=null){
+                System.out.println("result35 not null");
+                DWINewB0Image = DTIPreprocessing.result35RegImage;
+                arrayTransMatrix = DTIPreprocessing.arrayTransMatrix;
+                b0toStructMatrix = DTIPreprocessing.b0toStructMatrix;
+                tabbedPane.setSelectedIndex(2);
+                nextButton.setEnabled(false);
+                goBackButton.setEnabled(true);
+                goBackButton.setActionCommand("back2");
+            }
+            
         }
         
    
@@ -204,18 +250,13 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
     private JScrollPane buildImportDataPanel() {
         
         importData = new JPanelDTIImportData(this);
-        System.out.println("working1");
+
         return importData.scrollPane;
     }
     
     private JPanel buildT2Panel() {
-        System.out.println("working3");
+
         t2load = new JPanelT2Load(this);
-        final JPanel wholePanel = new JPanel();
-        //wholePanel.setLayout(new BoxLayout(wholePanel, BoxLayout.Y_AXIS));
-        //final JScrollPane scrollPane = new JScrollPane(wholePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                //ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        //wholePanel.setPreferredSize(new Dimension(595, 200));
 
         return t2load.mainT2Panel;
 
@@ -223,56 +264,43 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
     private JPanel buildRegEddyCurPanel() {
 
-        System.out.println("working2");
         eddyCurReg = new JPanelDTIRegistrationEddyCurrent35D(this);
-
-        //wholePanel.setLayout(new BoxLayout(wholePanel, BoxLayout.Y_AXIS));
-        //final JScrollPane scrollPane = new JScrollPane(wholePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                //ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        //wholePanel.setPreferredSize(new Dimension(595, 200));
 
         return eddyCurReg.mainRegPanel ;
     }
+    private JPanel buildPreprocessingPanel() {
+        
+        DTIPreprocessing = new JPanelDTIPreprocessing(this);
+        
+        return DTIPreprocessing.mainPrePanel ;
+    }
 
     private JPanel buildEPIPanel() {
-        System.out.println("working3");
-        final JPanel wholePanel = new JPanel();
-        //wholePanel.setLayout(new BoxLayout(wholePanel, BoxLayout.Y_AXIS));
-        //final JScrollPane scrollPane = new JScrollPane(wholePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                //ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        //wholePanel.setPreferredSize(new Dimension(595, 200));
+        
+        EPIpanel = new JPanelEPIDistortionCorrection(this);
 
-        return wholePanel;
+        return EPIpanel.mainEPIPanel ;
 
     }
 
     private JPanel buildTensorPanel() {
-        System.out.println("working4");
+
         final JPanel wholePanel = new JPanel();
-        //wholePanel.setLayout(new BoxLayout(wholePanel, BoxLayout.Y_AXIS));
-        //final JScrollPane scrollPane = new JScrollPane(wholePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                //ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        //wholePanel.setPreferredSize(new Dimension(595, 200));
 
         return wholePanel;
 
     }
 
     private JPanelDTIFiberTracking buildFiberTrackingPanel() {
-        System.out.println("working5");
+
         fiberTrack = new JPanelDTIFiberTracking(image);
-        //final JPanel wholePanel = new JPanel();
-        //wholePanel.setLayout(new BoxLayout(wholePanel, BoxLayout.Y_AXIS));
-        //final JScrollPane scrollPane = new JScrollPane(wholePanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                //ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        //wholePanel.setPreferredSize(new Dimension(595, 200));
 
         return fiberTrack;
 
     }
 
     private JPanel buildVisuzalizationPanel() {
-        System.out.println("working6");
+
         
         visualization = new JPanelDTIVisualization(image); 
         //final JPanel wholePanel = new JPanel();
