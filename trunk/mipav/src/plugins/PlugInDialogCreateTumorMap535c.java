@@ -108,7 +108,7 @@ public class PlugInDialogCreateTumorMap535c extends JDialogScriptableBase implem
 
     private TumorSimMode simMode;
 
-    private int intensity;
+    private double intensity;
 
     private JComboBox subSampleCombo;
 
@@ -316,7 +316,7 @@ public class PlugInDialogCreateTumorMap535c extends JDialogScriptableBase implem
         tumorSimPanel.setForeground(Color.black);
         tumorSimPanel.setBorder(buildTitledBorder("Tumor simulation parameters"));
         
-        intensityText = gui.buildIntegerField("Intensity value: ", 1300);
+        intensityText = gui.buildDecimalField("Intensity value: ", 1300);
         tumorSimPanel.add(intensityText.getParent(), gbc);
         
         gbc.gridy++;
@@ -385,7 +385,7 @@ public class PlugInDialogCreateTumorMap535c extends JDialogScriptableBase implem
     	    
     	    tumorChange = Double.valueOf(percentChangeText.getText());
     	    
-    	    intensity = Integer.valueOf(intensityText.getText());
+    	    intensity = Double.valueOf(intensityText.getText());
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
 	        return false;
