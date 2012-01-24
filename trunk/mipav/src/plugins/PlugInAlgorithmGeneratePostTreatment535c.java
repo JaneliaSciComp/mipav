@@ -129,25 +129,45 @@ public class PlugInAlgorithmGeneratePostTreatment535c extends AlgorithmBase {
     } // end runAlgorithm()
 
     private void reportStatistics(ModelImage postTreatment2) {
-        double sumIntensitiesSlice = 0;
-        double sumIntensitiesTotal = 0;
+        double sumIntensitiesSlice = 0, sumPosIntensitiesSlice = 0, sumNegIntensitiesSlice = 0;
+        double sumIntensitiesTotal = 0, sumPosIntensitiesTotal = 0, sumNegIntensitiesTotal = 0;
         double intensity = 0;
-        int numPixelsSlice = 0, numPixelsTotal = 0;
+        int numPixelsSlice = 0, numNegPixelsSlice = 0, numPosPixelsSlice = 0, 
+                numPixelsTotal = 0, numPosPixelsTotal = 0, numNegPixelsTotal = 0;
+        Preferences.data("Slice number\tTotal pixels\tTotal Avg\tNeg Pixels\tNeg Average\tPos Pixels\tPos Average\n");       
         int z = 0;
         for(int i=0; i<postTreatment.getDataSize(); i++) {
             if(i != 0 && i % postTreatment.getSliceSize() == 0) {
                 if(sumIntensitiesSlice > 0) {
                     sumIntensitiesTotal += sumIntensitiesSlice;
+                    sumPosIntensitiesTotal += sumPosIntensitiesSlice;
+                    sumNegIntensitiesTotal += sumNegIntensitiesSlice;
+                    
                     numPixelsTotal += numPixelsSlice;
-                    Preferences.data("Average intensity of non-zero values in slice "+z+":\t"+(sumIntensitiesSlice/numPixelsSlice)+"\n");
-                    Preferences.data("Number of non-zero pixels in slice "+z+":\t"+numPixelsSlice+"\n\n");
+                    numPosPixelsTotal += numPosPixelsSlice;
+                    numNegPixelsTotal += numNegPixelsSlice;
+                    
+                    printData("Slice "+z, numPixelsSlice, sumIntensitiesSlice, numNegPixelsSlice, sumNegIntensitiesSlice, numPosPixelsSlice, sumPosIntensitiesSlice);
                 }
                 sumIntensitiesSlice = 0;
+                sumPosIntensitiesSlice = 0;
+                sumNegIntensitiesSlice = 0;
+                
                 numPixelsSlice = 0;
+                numPosPixelsSlice = 0;
+                numNegPixelsSlice = 0;
+                
                 z++;
             }
             intensity = postTreatment.get(i).doubleValue();
             if(intensity != 0) {
+                if(intensity > 0) {
+                    sumPosIntensitiesSlice += intensity;
+                    numPosPixelsSlice++;
+                } else { //intensity < 0
+                    sumNegIntensitiesSlice += intensity;
+                    numNegPixelsSlice++;
+                }
                 sumIntensitiesSlice += intensity;
                 numPixelsSlice++;
             }
@@ -155,13 +175,25 @@ public class PlugInAlgorithmGeneratePostTreatment535c extends AlgorithmBase {
         
         if(sumIntensitiesSlice > 0) {
             sumIntensitiesTotal += sumIntensitiesSlice;
+            sumPosIntensitiesTotal += sumPosIntensitiesSlice;
+            sumNegIntensitiesTotal += sumNegIntensitiesSlice;
+            
             numPixelsTotal += numPixelsSlice;
-            Preferences.data("Average intensity of non-zero values in slice "+z+":\t"+(sumIntensitiesSlice/numPixelsSlice)+"\n");
-            Preferences.data("Number of non-zero pixels in slice "+z+":\t"+numPixelsSlice+"\n\n");
+            numPosPixelsTotal += numPosPixelsSlice;
+            numNegPixelsTotal += numNegPixelsSlice;
+            
+            printData("Slice "+z, numPixelsSlice, sumIntensitiesSlice, numNegPixelsSlice, sumNegIntensitiesSlice, numPosPixelsSlice, sumPosIntensitiesSlice);
         }
         
-        Preferences.data("Average intensity of non-zero values in all slices:\t"+(sumIntensitiesTotal/numPixelsTotal)+"\n");
-        Preferences.data("Number of non-zero pixels in all slices:\t"+numPixelsTotal+"\n\n");
+        printData("All slices", numPixelsTotal, sumIntensitiesTotal, numNegPixelsTotal, sumNegIntensitiesTotal, numPosPixelsTotal, sumPosIntensitiesTotal);
+    }
+
+    private void printData(String string, int numPixels, double sumIntensities, 
+                                            int numNegPixels, double sumNegIntensities, 
+                                            int numPosPixels, double sumPosIntensities) {
+        Preferences.data(string+"\t"+numPixels+"\t"+(sumIntensities/numPixels)+"\t"+
+                                            numNegPixels+"\t"+(sumNegIntensities/numNegPixels)+"\t"+
+                                            numPosPixels+"\t"+(sumPosIntensities/numPosPixels));
     }
 
     private ModelImage subtractImages(ModelImage destImage, ModelImage imagea, ModelImage imageb) {
