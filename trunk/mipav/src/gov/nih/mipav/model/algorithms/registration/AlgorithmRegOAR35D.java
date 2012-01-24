@@ -2,11 +2,13 @@ package gov.nih.mipav.model.algorithms.registration;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
+
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Dimension;
 import java.io.*;
 
 import java.util.*;
@@ -154,6 +156,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private boolean doColor;
+    
+    private TransMatrix [] VolumesToReferenceTransformations;
 
     /** Maximum degrees of freedom when running the optimization. */
     private int DOF;
@@ -181,6 +185,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
     /** This is the image in which internal registration will be performed. */
     private ModelImage inputImage;
+    
+
+    private ModelImage resultImage;
 
     /** Image used to import a volume from inputWeight. */
     private ModelImage inputw_1;
@@ -338,6 +345,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private ModelImage weightVolumeImage = null;
+    
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -785,13 +794,14 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         output_1 = null;
         weightVolumeImage = null;
 
-        inputImage = null;
+        //May comment this out at some point
+        //inputImage = null;
         buffer = null;
         bufferIW = null;
         bufferW = null;
         bufferA = null;
 
-        answer = null;
+        //answer = null;
 
         System.gc();
     }
@@ -820,6 +830,18 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      */
     public float[][] getTrans() {
         return trans;
+    }
+    
+    public TransMatrix[] getArrayTransMatrix(){
+        return VolumesToReferenceTransformations;
+    }
+    
+    public TransMatrix getTransform() {
+        return answer.matrix;
+    }
+    
+    public double getAnswer() {
+        return answer.cost;
     }
 
     /**
@@ -861,6 +883,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         float[] resIso = null;
         int volumeSize;
         MatrixListItem item;
+        
+
 
         if (inputImage.getNDims() != 4) {
             MipavUtil.displayError("" + inputImage.getNDims() + "D registration not supported.");
@@ -947,6 +971,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform = new AlgorithmTransform(inputImage, new TransMatrix(4), interp, resIso[0], resIso[1], resIso[2],
                                                extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
             transform.run();
+            
 
             if (transform.isCompleted() == false) {
                 setCompleted(false);
@@ -956,6 +981,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             }
 
             isoImage = transform.getTransformedImage();
+            
+
+            
 
             if (transform != null) {
                 transform.finalize();
@@ -1568,6 +1596,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         }
 
         int endIndex = inputImage.getExtents()[3] - 1;
+        
+        VolumesToReferenceTransformations= new TransMatrix[inputImage.getExtents()[3]];
 
         if (useOutsideReferenceVolume) {
             endIndex++;
@@ -1773,6 +1803,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             time = System.currentTimeMillis();
             Preferences.debug(" Starting level 1 ************************************************\n",Preferences.DEBUG_ALGORITHM);
             answer = levelOne(simpleRef_1, simpleInput_1, item, baseNumIter);
+            
 
             time = System.currentTimeMillis() - time;
             Preferences.debug(" Level 1 min = " + ((float) time / 60000.0f) + "\n",Preferences.DEBUG_ALGORITHM);
@@ -1821,6 +1852,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iResols[2],
                                                iExtents[0], iExtents[1], iExtents[2], false, true, false);
             transform.run();
+            
+            final TransMatrix finalMatrix = getTransform();
+            VolumesToReferenceTransformations[m] = finalMatrix;
 
             if (output_1 != null) {
                 output_1.disposeLocal();
@@ -1957,8 +1991,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                     System.err.println("Caught IOException in RegOAR35D");
 
                 }
-
+            
             } // if ((iNumber == inputImage.getExtents()[3] - 1) && regToAdjImage)
+            
             else if (resample && regToAdjImage) {
                 transform = new AlgorithmTransform(input1, answer.matrix, interp2, resIso[0], resIso[1], resIso[2],
                                                    extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
@@ -2289,14 +2324,56 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             System.gc();
             System.gc();
         } // for (int m = 0; m < inputImage.getExtents()[3]-1; m++)
+        
 
         inputImage.calcMinMax();
 
 
+        boolean testImages = false;
+        
+        if (testImages) {
+            generateTestImages();
+            return;
+        }
         disposeLocal();
         finalize();
         setCompleted(true);
     }
+    
+    /**
+     * A test of the diffeomorphic demons is to transform a circle image to a letter C image.
+     *
+     */
+    public void generateTestImages() {
+        int x, y;
+        int xDist;
+        int yDist;
+        int yDistSquared;
+        int radius = 128;
+        int yoff;
+        int radiusSquared = radius * radius;
+        int extents[] = new int[2];
+        int innerRad = 64;
+        int innerRadSquared = innerRad * innerRad;
+        int halfCOpen = (int)Math.round(innerRad/2.5);
+        extents[0] = 512;
+        extents[1] = 512;
+        int sliceSize = extents[0] * extents[1];
+        float buffer[] = new float[sliceSize];
+        for (y = 0; y < extents[1]; y ++) {
+            yoff = y * extents[0];
+            yDist = y - 256;
+            yDistSquared = yDist * yDist;
+            for (x = 0; x < extents[0]; x++) {
+                xDist = x - 256;
+                if ((xDist*xDist + yDistSquared) <= radiusSquared) {
+                    buffer[x + yoff] = 100.0f;
+                }
+            }
+        }
+
+
+    } 
 
     /**
      * allows the user to pass in an OUTSIDE reference volume.
@@ -3807,6 +3884,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 }
             }
         }
+        
+
 
         resultImage.calcMinMax();
 
