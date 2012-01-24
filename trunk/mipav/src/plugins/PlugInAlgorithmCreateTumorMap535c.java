@@ -62,7 +62,7 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
     /** Center of created scphere */
     private int xCenter, yCenter, zCenter;
     private int largerRadius;
-    private int intensity;
+    private double intensity;
     /** Result images */
     private ModelImage image1a, image2a;
     private int[][] sphere;
@@ -80,7 +80,7 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
      */
 	public PlugInAlgorithmCreateTumorMap535c(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap535c.TumorSimMode simMode, int intensity, int subsampleAmount) {
+            PlugInDialogCreateTumorMap535c.TumorSimMode simMode, double intensity, int subsampleAmount) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
