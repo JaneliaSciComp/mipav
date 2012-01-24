@@ -56,7 +56,8 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
     private int xyDim, zDim;
     /** Image resolutions */
     private double xyRes, zRes;
-    private int initRadius;
+    /** Tumor radius in units of image */
+    private double initRadius;
     private double tumorChange;
     private PlugInDialogCreateTumorMap535c.TumorSimMode simMode;
     /** Center of created scphere */
@@ -87,10 +88,7 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         this.xyRes = xyRes;
         this.zRes = zRes;
         
-        this.initRadius = (int) Math.round(initRadius/xyRes);
-        if(xyRes != zRes) {
-        	MipavUtil.displayError("Program will not display correct size tumor, CircleUtil cannot handle different values for xyResolution and zResolution");
-        }
+        this.initRadius = initRadius;
         if(tumorChange >= 2) {
             tumorChange /= 100;
         } else if(tumorChange >= 1) {
@@ -133,7 +131,7 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         image2a.getParentFrame().setVisible(false);
         image2a.setImageName("image2a");
         
-        largerRadius = defineLargerRadius();
+        largerRadius = (int) Math.round(defineLargerRadius());
         
         doBoundCheck = false;
         Random r = new Random(); 
@@ -195,8 +193,8 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         return subsample.getResultImage();
     }
 
-    private void populateSphere(int radius, double intensity, ModelImage image) {
-        sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, radius);
+    private void populateSphere(double radius, double intensity, ModelImage image) {
+        sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, xyRes, xyRes, zRes, radius);
         int xyDimBound = xyDim-1;
         int zDimBound = zDim-1;
         
@@ -212,16 +210,16 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         }
     }
     
-    private int getChangedRadius() {
+    private double getChangedRadius() {
         
-        int newRadius = 0;
+        double newRadius = 0;
         switch(simMode) {
         case grow:
-            newRadius = (int) (initRadius*(1+tumorChange)+1); //round up
+            newRadius = (int) (initRadius*(1+tumorChange));
             break;
             
         case shrink:
-            newRadius = (int) (initRadius*(tumorChange)); //concat
+            newRadius = (int) (initRadius*(tumorChange));
             break;
             
         case none:
@@ -256,12 +254,12 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         return newIntensity;
     }
 
-    private int defineLargerRadius() {
+    private double defineLargerRadius() {
         
-        int largerRadius = 0;
+        double largerRadius = 0;
         switch(simMode) {
         case grow:
-            largerRadius = (int) (initRadius*(1+tumorChange)+1);
+            largerRadius = (int) (initRadius*(1+tumorChange));
             break;
             
         case shrink:
