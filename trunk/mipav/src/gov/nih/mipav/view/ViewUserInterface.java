@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
@@ -953,6 +954,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             invokeDTIframe();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
+        }else if (command.equals("dtiPipeline")) { 
+            new DTIPipeline();
         } else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
         } else if (command.equals("fiberTracking")) {
@@ -1091,6 +1094,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         new JDialogDicomDir(this.getMainFrame());
     }
+    
+
+
 
     /**
      * Builds menus for the User Interface.
@@ -2238,7 +2244,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public void openImageFrame() {
         final ViewOpenFileUI openFile = new ViewOpenFileUI(true);
-
         final boolean stackFlag = getLastStackFlag();
 
         // set the filter type to the preferences saved filter
