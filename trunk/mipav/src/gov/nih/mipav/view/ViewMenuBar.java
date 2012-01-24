@@ -410,7 +410,6 @@ public class ViewMenuBar {
         return menuBuilder.makeMenu("DICOM", true, new JComponent[] {
                 menuBuilder.buildMenuItem("DICOM browser", "BrowseDICOM", 0, null, true),
                 menuBuilder.buildMenuItem("DICOMDIR browser", "BrowseDICOMDIR", 0, null, true),
-                menuBuilder.buildMenuItem("Load DWIDIR", "LoadDWIDIR", 0, null, true),
                 menuBuilder.buildMenuItem("Anonymize DICOM directory", "AnonymizeDirectory", 0, null, true),
                 menuBuilder.buildMenuItem("DICOM database access", "QueryDatabase", 0, "database.gif", true),
                 menuBuilder.buildCheckBoxMenuItem("Activate DICOM receiver", "Dicom", Preferences
