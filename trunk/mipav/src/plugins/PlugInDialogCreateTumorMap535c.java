@@ -338,7 +338,7 @@ public class PlugInDialogCreateTumorMap535c extends JDialogScriptableBase implem
         });
         
         gbc.gridy++;
-        subSampleCombo = gui.buildComboBox("Subsampling amount: ", new Integer[] {8, 4, 2}, 0);
+        subSampleCombo = gui.buildComboBox("Subsampling amount: ", new Integer[] {8, 4, 2, 0}, 0);
         tumorSimPanel.add(subSampleCombo.getParent(), gbc);
         
         gbc.gridy++;

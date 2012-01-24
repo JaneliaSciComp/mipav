@@ -157,8 +157,11 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         populateSphere(initRadius, intensity, image1a);
         populateSphere(getChangedRadius(), getChangedIntensity(), image2a);
         
-        image1a = subsample(image1a);       
-        image2a = subsample(image2a);
+        if(subsampleAmount != 0) {
+            image1a = subsample(image1a);       
+            image2a = subsample(image2a);
+        }
+        
         image1a.setImageName("image1a");
         for(int i=0; i<image1a.getFileInfo().length; i++) {
             image1a.getFileInfo(i).setFileDirectory(Preferences.getPreferencesDir());
@@ -168,9 +171,11 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
             image2a.getFileInfo(i).setFileDirectory(Preferences.getPreferencesDir());
         }
         
-        xCenter = (int) Math.round(((double)xCenter)/subsampleAmount);
-        yCenter = (int) Math.round(((double)yCenter)/subsampleAmount);
-        zCenter = (int) Math.round(((double)zCenter)/subsampleAmount);
+        if(subsampleAmount != 0) {
+            xCenter = (int) Math.round(((double)xCenter)/subsampleAmount);
+            yCenter = (int) Math.round(((double)yCenter)/subsampleAmount);
+            zCenter = (int) Math.round(((double)zCenter)/subsampleAmount);
+        }
         
         Preferences.debug("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         Preferences.data("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+"\n");
