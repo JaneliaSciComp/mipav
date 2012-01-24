@@ -14,6 +14,24 @@ import java.util.ArrayList;
 
 public class CircleUtil {
     
+    public static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, double xRes, double yRes, double zRes, double radius) {
+        double largestRes = xRes > yRes ? (xRes > zRes ? xRes : zRes) : (yRes > zRes ? yRes : zRes);
+        double smallestRes = xRes < yRes ? (xRes < zRes ? xRes : zRes) : (yRes < zRes ? yRes : zRes);
+        
+        int pixRadius = (int) Math.round(radius / smallestRes);
+        
+        int[][] sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, pixRadius);
+        
+        for(int i=0; i<sphere.length; i++) {
+            sphere[i][0] = (int) Math.round(sphere[i][0]/xRes);
+            sphere[i][1] = (int) Math.round(sphere[i][1]/yRes);
+            sphere[i][2] = (int) Math.round(sphere[i][2]/zRes);
+        }
+        
+        return sphere;
+    }
+    
+    
     /**
      * 
      * Calculates the points of an approximate sphere whose center is at <code>(xCenter, yCenter, zCenter)</code>
@@ -22,10 +40,8 @@ public class CircleUtil {
      * @return  Array of (x,y,z) coordinates of an approximate sphere.
      */
     
-    public static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius)
-    {
-        if(radius>1)
-        {
+    public static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius) {
+        if(radius>1) {
             int[][] quadrant1 = getQuadrantBoundaryPoints(radius, 1);
             int[][] quadrant2 = getQuadrantBoundaryPoints(radius, 2);
             //int j = 0, k=0;
@@ -82,8 +98,7 @@ public class CircleUtil {
      * @return  Array of (x,y) coordinates of an approximate circle.
      */
     
-    public static int[][] get2DPointsInCircle(int xCenter, int yCenter, int r)
-    {
+    public static int[][] get2DPointsInCircle(int xCenter, int yCenter, int r) {
         if(r>1) {
             ArrayList<int[]> points = new ArrayList<int[]>();
             int[] corner = new int[2];
@@ -133,8 +148,7 @@ public class CircleUtil {
      * @return  Array of points of an approximate sphere.
      */
     
-    public static int[] get1DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius, int xDim, int yDim)
-    {
+    public static int[] get1DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius, int xDim, int yDim) {
         int[][] spherePoints = get3DPointsInSphere(xCenter, yCenter, zCenter, radius);
         int[] convertedPoints = new int[spherePoints.length];
         for(int i=0; i<spherePoints.length; i++) {
@@ -151,8 +165,7 @@ public class CircleUtil {
      * @return  Array of points of an approximate sphere.
      */
     
-    public static int[] get1DPointsInSphere(int value, int radius, int xDim, int yDim)
-    {
+    public static int[] get1DPointsInSphere(int value, int radius, int xDim, int yDim) {
         int z = value / (xDim*yDim);
         int y = (value - z*(xDim*yDim)) / xDim;
         int x = value - z*(xDim*yDim) - y*xDim;
@@ -167,8 +180,7 @@ public class CircleUtil {
      * @return  Array of points of an approximate sphere.
      */
     
-    public static int[] get1DPointsInCircle(int xCenter, int yCenter, int zCenter, int radius, int dimX, int dimY)
-    {
+    public static int[] get1DPointsInCircle(int xCenter, int yCenter, int zCenter, int radius, int dimX, int dimY) {
         int[][] circlePoints = get2DPointsInCircle(xCenter, yCenter, radius);
         int[] convertedPoints = new int[circlePoints.length];
         for(int i=0; i<circlePoints.length; i++) {
@@ -192,8 +204,7 @@ public class CircleUtil {
      * @author senseneyj
      */
     
-    public static int[][] getQuadrantBoundaryPoints(int radius, int quadrant)
-    {
+    public static int[][] getQuadrantBoundaryPoints(int radius, int quadrant) {
         ArrayList<int[]> quadrantPoints = new ArrayList<int[]>();
         int x = 0, y = 0, dx = 0, dy = 0;
         if(quadrant == 1 || quadrant == 2) {
@@ -211,8 +222,7 @@ public class CircleUtil {
         else
             return null;
         int epsilon, epsilonX, epsilonY, epsilonXY;
-        while(((quadrant == 1 || quadrant == 2) && x>0) || ((quadrant == 3 || quadrant == 4) && x<0))
-        {
+        while(((quadrant == 1 || quadrant == 2) && x>0) || ((quadrant == 3 || quadrant == 4) && x<0)) {
             int[] temp = new int[2];
             temp[0] = x;
             temp[1] = y;
@@ -243,23 +253,19 @@ public class CircleUtil {
         return quadrantArray;
     }
     
-    private static int computeEpsilon(int x, int y, int r)
-    {
+    private static int computeEpsilon(int x, int y, int r) {
         return (int)(Math.pow(x, 2) + Math.pow(y, 2) - Math.pow(r, 2));
     }
     
-    private static int computeEpsilonX(int epsilon, int x, int dx)
-    {
+    private static int computeEpsilonX(int epsilon, int x, int dx) {
         return epsilon + 2*x*dx + 1;
     }
     
-    private static int computeEpsilonY(int epsilon, int y, int dy)
-    {
+    private static int computeEpsilonY(int epsilon, int y, int dy) {
         return epsilon + 2*y*dy + 1;
     }
     
-    private static int computeEpsilonXY(int epsilon, int x, int dx, int y, int dy)
-    {
+    private static int computeEpsilonXY(int epsilon, int x, int dx, int y, int dy) {
        return epsilon + 2*x*dx + 2*y*dy + 2;
     }
 }
