@@ -138,7 +138,7 @@ public class PlugInAlgorithmGeneratePostTreatment535c extends AlgorithmBase {
         int z = 0;
         for(int i=0; i<postTreatment.getDataSize(); i++) {
             if(i != 0 && i % postTreatment.getSliceSize() == 0) {
-                if(sumIntensitiesSlice > 0) {
+                if(numPixelsTotal > 0) {
                     sumIntensitiesTotal += sumIntensitiesSlice;
                     sumPosIntensitiesTotal += sumPosIntensitiesSlice;
                     sumNegIntensitiesTotal += sumNegIntensitiesSlice;
@@ -173,7 +173,7 @@ public class PlugInAlgorithmGeneratePostTreatment535c extends AlgorithmBase {
             }
         }
         
-        if(sumIntensitiesSlice > 0) {
+        if(numPixelsTotal > 0) {
             sumIntensitiesTotal += sumIntensitiesSlice;
             sumPosIntensitiesTotal += sumPosIntensitiesSlice;
             sumNegIntensitiesTotal += sumNegIntensitiesSlice;
