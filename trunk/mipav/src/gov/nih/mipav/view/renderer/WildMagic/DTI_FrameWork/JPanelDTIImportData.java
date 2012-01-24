@@ -325,8 +325,6 @@ import javax.swing.table.DefaultTableModel;
         public void actionPerformed(final ActionEvent event) {
             final String command = event.getActionCommand();
             
-            System.out.println("actworking");
-            
 
             if (command.equals("applyTable")) {
                 if (m_kDWIImage != null){ 
@@ -371,6 +369,7 @@ import javax.swing.table.DefaultTableModel;
                           m_kDWIImage.setDTIParameters(dtiparams);
                           
                           if (useT2CheckBox.isSelected()){
+                              useT2CheckBox.setSelected(true);
                               if (m_kT2Image != null){
                                   pipeline.nextButton.setEnabled(true);
                                   pipeline.nextButton.setActionCommand("next1");
@@ -389,7 +388,6 @@ import javax.swing.table.DefaultTableModel;
                  }
                   else if (dtiparams == null){
     
-                      System.out.println("gradcreatetableworking");
                           if (srcTableModel.getRowCount() != 0){
                               newDTIparams = new DTIParameters(numVolumes);
                               if (srcTableModel.getValueAt(0, 1) != ""){
@@ -397,7 +395,6 @@ import javax.swing.table.DefaultTableModel;
                                   for (int i = 0; i < numVolumes; i++) {      
                                       flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
                                       }
-                                  System.out.println("settingbvals");
                                  newDTIparams.setbValues(flBvalueArr);
                               }
                               
@@ -566,7 +563,7 @@ import javax.swing.table.DefaultTableModel;
                     }
                     
                     else{
-                        MipavUtil.displayError("No active image is selected");
+                        MipavUtil.displayError("No DWI active image is selected");
                         openedImageCheckBox.setSelected(false);
                      }
 
@@ -607,7 +604,32 @@ import javax.swing.table.DefaultTableModel;
                     pipeline.tabbedPane.setSelectedIndex(1);  
                 }*/
                 
-            }
+        } /*else if (command.equals("useT2Image")) {
+                if (useT2CheckBox.isSelected()){
+                    t2FileLabel.setForeground(Color.lightGray);
+                    openT2Button.setEnabled(false);
+                    textT2image.setEnabled(false);
+                    
+                        if (ui.getActiveImageFrame() != null){
+                            t2frame = ui.getActiveImageFrame();
+                            m_kT2Image = t2frame.getImageA();
+                            pipeline.repaint();
+                        }
+                        
+                        else{
+                            MipavUtil.displayError("No T2 active image is selected");
+                            useT2CheckBox.setSelected(false);
+                         }
+
+                    }
+                    else{
+                        t2FileLabel.setForeground(Color.BLACK);
+                        textT2image.setEnabled(true);
+                        textT2image.setBackground(Color.WHITE);
+                        openT2Button.setEnabled(true); 
+                        //pipeline.nextButton.setEnabled(false);
+                    }
+        }*/
             
         }
               
@@ -811,7 +833,7 @@ import javax.swing.table.DefaultTableModel;
             
             /*final JPanel t2OpenPanel = new JPanel();
             t2OpenPanel.setBorder(buildTitledBorder("Upload T2 Image"));*/
-            useT2CheckBox = new JCheckBox("Use T2 Image to Register to B0");
+            useT2CheckBox = new JCheckBox("Use Structural Image as Reference Space (ex: T2 Image)");
             //useT2CheckBox.setBorderPainted(true);
             useT2CheckBox.addActionListener(this);
             useT2CheckBox.setActionCommand("useT2Image");
@@ -828,12 +850,12 @@ import javax.swing.table.DefaultTableModel;
             
             t2FileLabel = new JLabel("T2 Image: ");
             t2FileLabel.setFont(serif12);
-            t2FileLabel.setEnabled(false);
+            t2FileLabel.setEnabled(true);
             gbc.gridx = 1;
             gbc.gridy = 2;
             gbc.weightx = 1;
             gbc.fill = GridBagConstraints.HORIZONTAL;
-            DWIOpenPanel.add(t2FileLabel,gbc);
+            //DWIOpenPanel.add(t2FileLabel,gbc);
             
             textT2image = new JTextField();
             textT2image.setPreferredSize(new Dimension(275, 21));
@@ -870,8 +892,8 @@ import javax.swing.table.DefaultTableModel;
             gbc2.gridx = 0;
             gbc2.gridy = 0;
             gbc2.weightx = .5;
-            gbc2.weighty = 0;
-            gbc2.gridwidth = 2;
+            gbc2.weighty = 0;  
+            gbc2.gridwidth = 1;
             gbc2.fill = GridBagConstraints.BOTH;
             srcPanel.add(DWIOpenPanel, gbc2);
             
@@ -881,7 +903,7 @@ import javax.swing.table.DefaultTableModel;
             gbc2.gridy = 0;
             gbc2.weightx = .5;
             gbc2.weighty = 0;
-            gbc2.gridwidth = 2;
+            gbc2.gridwidth = 1;
             gbc2.fill = GridBagConstraints.BOTH;
             //srcPanel.add(t2OpenPanel, gbc2);
             
@@ -912,7 +934,6 @@ import javax.swing.table.DefaultTableModel;
             }
             
             if (dtiparams != null){
-                System.out.println("dtiparams2working");
                 m_kDWIImage.setDTIParameters(dtiparams);
                 
                 if (dtiparams.getNumVolumes() != 0){
@@ -939,7 +960,6 @@ import javax.swing.table.DefaultTableModel;
                      }
                     }
                     if (dtiparams.getGradients() != null){ 
-                        System.out.println("gradsworking");
                         for (int i = 0; i < numVolumes; i++) {
                              // Populate Gradient column
                              float[][] flGradArr = dtiparams.getGradients();
@@ -953,14 +973,12 @@ import javax.swing.table.DefaultTableModel;
             }
    
             if (isPARREC) {
-                System.out.println("parrecworking");
     
                 if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
                         || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
     
     
                     if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4")) {
-                        System.out.println("v3orv4");
                         //Determine if Philips PAR/REC is version 3 or 4 to determine which gradient table dialog to be displayed
                         final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
                         final GridBagConstraints gbc = new GridBagConstraints();
@@ -1305,7 +1323,7 @@ import javax.swing.table.DefaultTableModel;
                    
             if (inverted.equals("Yes")){
                 invertedLabel.setForeground(Color.red);
-                System.err.println("Inverted must be NO");
+                MipavUtil.displayError("Inverted must be NO");
             }
             
             if(isJonesBox.isSelected() && inverted.equals("No")){
@@ -1322,12 +1340,12 @@ import javax.swing.table.DefaultTableModel;
                     }
                     else{
                         osLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " or Operating System "+ os + " are not consistent with gradient table choice - expected 32,35, or 31 dimensions");
+                        MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " or Operating System "+ os + " are not consistent with gradient table choice - expected 32,35, or 31 dimensions");
                     }
                 }
                 
                 else{
-                    System.err.println("Gradient Table Creator "+"Jones30 is valid only for the KIRBY scanners");
+                    MipavUtil.displayError("Gradient Table Creator "+"Jones30 is valid only for the KIRBY scanners");
                 }
             }
             
@@ -1344,7 +1362,7 @@ import javax.swing.table.DefaultTableModel;
                     }       
                 }           
                 else{
-                    System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
+                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
                 }            
             }
             
@@ -1360,7 +1378,7 @@ import javax.swing.table.DefaultTableModel;
                     }            
                 }           
                 else{
-                    System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
+                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
                 } 
             } 
             
@@ -1380,7 +1398,7 @@ import javax.swing.table.DefaultTableModel;
                     }           
                 }
                 else{
-                    System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 35 dimensions");
+                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 35 dimensions");
                 } 
             }
             else if(gradResWOP.equals("NoLow")){
@@ -1391,7 +1409,7 @@ import javax.swing.table.DefaultTableModel;
                      }           
                 }
                 else{
-                    System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
+                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
                 } 
             }
             
@@ -1403,7 +1421,7 @@ import javax.swing.table.DefaultTableModel;
                      }           
             }
                 else{
-                    System.err.println("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
+                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
                 }              
             }
             
@@ -1415,12 +1433,12 @@ import javax.swing.table.DefaultTableModel;
                      }          
                 }
                 else{
-                    System.err.println("Gradient Table Creator"+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 34 dimensions");
+                    MipavUtil.displayError("Gradient Table Creator"+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 34 dimensions");
                 }
             }
             
             else{
-                System.err.println("Gradient Table Creator "+"Could not determine a table!");
+                MipavUtil.displayError("Gradient Table Creator "+"Could not determine a table!");
             }              
         }
             angulationCorrection(gradCreatetable);   
@@ -1984,7 +2002,7 @@ import javax.swing.table.DefaultTableModel;
                         rev_Tfsd = rev_Tfsd_p;
                     }else{
                         fatShiftLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Anterior-Posterior-- foldover ");
+                        MipavUtil.displayError("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Anterior-Posterior-- foldover ");
                         Tfsd = null;
                         rev_Tfsd = null;
                     }
@@ -2002,14 +2020,16 @@ import javax.swing.table.DefaultTableModel;
                         rev_Tfsd = rev_Tfsd_m;
                     }else{
                         fatShiftLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Right-Left-- foldover ");
+                        MipavUtil.displayError("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Right-Left-- foldover ");
                         Tfsd = null;
                         rev_Tfsd = null;
                     }
 
                 }
                 else {
+                    
                     fatShiftLabel.setForeground(Color.red);
+                    MipavUtil.displayError("Fat Shift Label Error");
                     Tprep=null;
                     rev_Tprep=null;
                     Tfsd = null;
@@ -2028,7 +2048,7 @@ import javax.swing.table.DefaultTableModel;
                         rev_Tfsd = rev_Tfsd_m;
                     }else{
                         fatShiftLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Superior-Inferior OR FH-- foldover ");
+                        MipavUtil.displayError("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Superior-Inferior OR FH-- foldover ");
                         Tfsd = null;
                         rev_Tfsd = null;
                     }
@@ -2044,7 +2064,7 @@ import javax.swing.table.DefaultTableModel;
                         rev_Tfsd = rev_Tfsd_m;
                     }else{
                         fatShiftLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Right-Left-- foldover ");
+                        MipavUtil.displayError("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Right-Left-- foldover ");
                         Tfsd = null;
                         rev_Tfsd = null;
                     }
@@ -2069,7 +2089,7 @@ import javax.swing.table.DefaultTableModel;
                         rev_Tfsd = rev_Tfsd_m;
                     }else{
                         fatShiftLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Superior-Inferior OR FH-- foldover ");
+                        MipavUtil.displayError("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Superior-Inferior OR FH-- foldover ");
                         Tfsd = null;
                         rev_Tfsd = null;
                     }
@@ -2086,7 +2106,7 @@ import javax.swing.table.DefaultTableModel;
                         rev_Tfsd = rev_Tfsd_m;
                     }else{
                         fatShiftLabel.setForeground(Color.red);
-                        System.err.println("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Anterior-Posterior OR FH-- foldover ");
+                        MipavUtil.displayError("Gradient Table Creator: " + fatshiftBox.getSelectedItem() + " is not consistent with --Anterior-Posterior OR FH-- foldover ");
                         Tfsd = null;
                         rev_Tfsd = null;
                     }
@@ -2161,7 +2181,6 @@ import javax.swing.table.DefaultTableModel;
             textDWIDataimage.setText(openFile.getImagePath());
             m_kDWIImage = openFile.getImage();
             if (m_kDWIImage != null){
-                System.out.println("workingint");
                 getImageDTIParams();                       
             }
             Vector<Frame> imageFrameVector = ui.getImageFrameVector();
