@@ -67,6 +67,11 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
     /** Label for the avi compression parameter. */
     public static final String AVI_COMPRESSION = "avi_compression";
+    
+    /** Label for the parameter indicating whether .nii or .hdr/.img is used in nifti file writes */
+    public static final String NIFTI_EXTENSION = "nifti_extension";
+    
+    
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -299,6 +304,16 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n",
                         Preferences.DEBUG_SCRIPTING);
             }
+        } else if (fileType == FileUtility.NIFTI) {
+        	try {
+        		String niftiExtension = parameters.getString(NIFTI_EXTENSION);
+        		opts.setNIFTIExtension(niftiExtension);
+        	} catch (ParameterException pe) {
+
+                // the above params are optional
+                Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n",
+                        Preferences.DEBUG_SCRIPTING);
+            }
         }
 
         if (image.getNDims() >= 3) {
@@ -378,6 +393,10 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
         if ( (options.getFileType() == FileUtility.AVI)) {
             parameters.put(ParameterFactory.newInt(AVI_COMPRESSION, options.getAVICompression()));
+        }
+        
+        if (options.getFileType() == FileUtility.NIFTI) {
+        	parameters.put(ParameterFactory.newString(NIFTI_EXTENSION, FileUtility.getExtension(options.getFileName())));
         }
 
         if (nDims == 3) {
