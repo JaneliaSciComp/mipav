@@ -177,7 +177,7 @@ public class JDialogUnknownIO extends JDialogBase {
      * 
      * @return The image type.
      */
-    public int getImageType() {
+    public int getFileType() {
         return imageType;
     }
 
