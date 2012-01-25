@@ -17,15 +17,21 @@ public class CircleUtil {
     public static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, double xRes, double yRes, double zRes, double radius) {
         double largestRes = xRes > yRes ? (xRes > zRes ? xRes : zRes) : (yRes > zRes ? yRes : zRes);
         double smallestRes = xRes < yRes ? (xRes < zRes ? xRes : zRes) : (yRes < zRes ? yRes : zRes);
-        
-        int pixRadius = (int) Math.round(radius / smallestRes);
-        
-        int[][] sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, pixRadius);
-        
-        for(int i=0; i<sphere.length; i++) {
-            sphere[i][0] = (int) Math.round(sphere[i][0]/xRes);
-            sphere[i][1] = (int) Math.round(sphere[i][1]/yRes);
-            sphere[i][2] = (int) Math.round(sphere[i][2]/zRes);
+        int[][] sphere = null;
+        if(smallestRes < 1) { //contraction of resulting sphere into pixel space
+            int pixRadius = (int) Math.round(radius / smallestRes);
+            
+            sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, pixRadius);
+            
+            for(int i=0; i<sphere.length; i++) {
+                System.out.print(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]+" changed to ");
+                sphere[i][0] = (int) Math.round(sphere[i][0]/xRes);
+                sphere[i][1] = (int) Math.round(sphere[i][1]/yRes);
+                sphere[i][2] = (int) Math.round(sphere[i][2]/zRes);
+                System.out.println(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]);
+            }
+        } else { //smallestRes >= 1, so expansion of sphere
+            int imgRadius = (int) Math.round(radius*largestRes);
         }
         
         return sphere;
