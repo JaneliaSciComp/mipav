@@ -327,7 +327,7 @@ public class FileIO {
         if (unknownIODialog.isCancelled()) {
             fileType = FileUtility.ERROR;
         } else {
-            fileType = unknownIODialog.getImageType();
+            fileType = unknownIODialog.getFileType();
         }
 
         return fileType;
@@ -2781,10 +2781,10 @@ public class FileIO {
                         {
                             modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
                         }
-
+                        System.out.println("Free: "+Runtime.getRuntime().freeMemory());
+                        //System.gc();
                         modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
                         FileIO.copyResolutions(modelImageTemp, modelImageResult, i);
-
                         modelImageResult.importData(i * oneSliceBuffer.length, oneSliceBuffer, false);
 
                         if (is3DDicom) {
