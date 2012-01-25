@@ -396,7 +396,10 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         }
         
         if (options.getFileType() == FileUtility.NIFTI) {
-        	parameters.put(ParameterFactory.newString(NIFTI_EXTENSION, FileUtility.getExtension(options.getFileName())));
+        	String ext = FileUtility.getExtension(options.getFileName());
+        	if ((ext.equalsIgnoreCase(".hdr")) || (ext.equalsIgnoreCase(".img"))) {
+        	    parameters.put(ParameterFactory.newString(NIFTI_EXTENSION, ext));
+        	}
         }
 
         if (nDims == 3) {
