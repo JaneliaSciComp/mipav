@@ -96,6 +96,8 @@ public class FileWriteOptions {
     
     /**Whether dicom files are saved in enhanced format. */
     private boolean doEnhanced;
+    
+    private String niftiExtension = null;
 
     /** DOCUMENT ME! */
     private float opacity;
@@ -499,6 +501,10 @@ public class FileWriteOptions {
      */
     public float getMJPEGQuality() {
         return this.mjpegQuality;
+    }
+    
+    public String getNIFTIExtension() {
+    	return this.niftiExtension;
     }
 
     /**
@@ -958,6 +964,15 @@ public class FileWriteOptions {
      */
     public void setMultiFile(boolean flag) {
         multiFile = flag;
+    }
+    
+    /**
+     * Accessor that sets whether or not nifti should be written as a combined .nii file or
+     * as separate .hdr and .img files.
+     * @param niftiExtension
+     */
+    public void setNIFTIExtension(String niftiExtension) {
+    	this.niftiExtension = niftiExtension;
     }
 
     /**
