@@ -3200,6 +3200,13 @@ public class FileIO {
 
             fileType = image.getFileInfo(0).getFileFormat();
         }
+        
+        if (fileType == FileUtility.NIFTI) {
+        	if (options.getNIFTIExtension() != null) {
+        	    String niftiExtension = options.getNIFTIExtension();
+        	    options.setFileName(options.getFileName().substring(0, index) + niftiExtension);
+        	}
+        }
 
         if (fileType == FileUtility.UNDEFINED) { // if type is still undef, look for user input (when not quiet)
             fileType = options.getFileType(); // get saved file type from options
