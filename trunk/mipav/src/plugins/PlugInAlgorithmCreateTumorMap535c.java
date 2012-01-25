@@ -157,6 +157,8 @@ public class PlugInAlgorithmCreateTumorMap535c extends AlgorithmBase {
         populateSphere(initRadius, intensity, image1a);
         populateSphere(getChangedRadius(), getChangedIntensity(), image2a);
         
+        image1a.getParentFrame().setVisible(true);
+        
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       
             image2a = subsample(image2a);
