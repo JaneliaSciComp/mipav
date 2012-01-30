@@ -1577,6 +1577,10 @@ public class ModelImage extends ModelStorageBase {
         useMask = bOn;
     }
 
+    public boolean useMask() {
+        return useMask;
+    }
+
     /**
      * Accessor that returns transformation matrix.
      * 

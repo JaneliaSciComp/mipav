@@ -567,6 +567,14 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     public void setABBlend(float fBlend)
     {
     	m_afABBlendParam[0] = fBlend;
+    	if ( fBlend == 0 )
+    	{
+    		System.err.println( fBlend );
+    	}
+    	if ( fBlend == 1 )
+    	{
+    		System.err.println( fBlend );
+    	}
         Program kCProgram = GetCProgram(0);  
         if ( (kCProgram != null) && kCProgram.GetUC("ABBlend") != null ) 
         {
@@ -745,6 +753,16 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         	// remove blend from the program:
     		bReloadShaderProgram = true;
         } 
+        if ( (m_afABBlendParam[0] == 0.0) && m_kPShaderCMP.GetProgram().GetProgramText().contains(finalColorAB))
+        {
+        	// remove blend from the program:
+    		bReloadShaderProgram = true;
+        } 
+        else if ( ((m_afABBlendParam[0] < 1.0) && (m_afABBlendParam[0] > 0.0)) && !m_kPShaderCMP.GetProgram().GetProgramText().contains(finalColorAB))
+        {
+        	// remove blend from the program:
+    		bReloadShaderProgram = true;
+        } 
         if ( isClipAE() && !m_kPShaderCMP.GetProgram().GetProgramText().contains(clipAEParameters) )
         {
         	// add arbitrary/eye clipping to the program:
@@ -775,12 +793,12 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
         	// remove gradient magnitude clipping from the program:
     		bReloadShaderProgram = true;
         }
-        if ( (m_iWhichShader == SUR) && !m_kPShaderCMP.GetProgram().GetProgramText().contains(lightingParametersBasic))
+        if ( ((m_iWhichShader == SUR) || (m_iWhichShader == CMP_SUR)) && !m_kPShaderCMP.GetProgram().GetProgramText().contains(lightingParametersBasic))
         {
         	// add lighting to program
     		bReloadShaderProgram = true;
         }
-        else if ( (m_iWhichShader != SUR) && m_kPShaderCMP.GetProgram().GetProgramText().contains(lightingParametersBasic))
+        else if ( ((m_iWhichShader != SUR) && (m_iWhichShader != CMP_SUR)) && m_kPShaderCMP.GetProgram().GetProgramText().contains(lightingParametersBasic))
         {
         	// remove lighting from program
     		bReloadShaderProgram = true;
@@ -1073,9 +1091,11 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	{
     		m_kPShaderCMP.SetImageName(iTex, m_kSceneTarget.GetName());
     		m_kPShaderCMP.SetTexture(iTex++, m_kSceneTarget);
-
-    		m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
-    		m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+    		if ( useImageA() )
+    		{
+    			m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageA.GetVolumeTarget().GetName() );
+    			m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageA.GetVolumeTarget() );
+    		}
     	}
     	if ( bAddColorMap_TexturesA && (m_kPShaderCMP != null))
     	{
@@ -1137,21 +1157,6 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     			{
     				m_kPShaderCMP.SetImageName(iTex, m_kVolumeImageB.GetOpacityMapGMTarget().GetName() );
     				m_kPShaderCMP.SetTexture(iTex++, m_kVolumeImageB.GetOpacityMapGMTarget() );
-    			}
-    		}
-    	}
-    	
-    	if ( m_kPShaderCMP != null )
-    	{
-    		for ( int i = 0; i < m_kPShaderCMP.GetTextureQuantity(); i++ )
-    		{
-    			Texture tex = m_kPShaderCMP.GetTexture(i);
-    			if ( tex != null )
-    			{
-    				if ( tex.GetImage() != null )
-    				{
-    					//System.err.println( i + " " + tex.GetImage().GetName() );
-    				}
     			}
     		}
     	}

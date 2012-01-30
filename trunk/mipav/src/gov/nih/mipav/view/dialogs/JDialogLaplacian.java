@@ -398,7 +398,9 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
     		OpenCLAlgorithmLaplacian laplacianAlgo; 
     		if ( displayInNewFrame )
     		{
-        		laplacianAlgo= new OpenCLAlgorithmLaplacian(new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), name ), image, sigmas,
+    			resultImage = new ModelImage( ModelStorageBase.FLOAT, image.getExtents(), name );
+    			JDialogBase.updateFileInfo( image, resultImage );
+        		laplacianAlgo= new OpenCLAlgorithmLaplacian(resultImage, image, sigmas,
         				outputPanel.isProcessWholeImageSet(), separable, image25D, ampFactor);
     		}
     		else

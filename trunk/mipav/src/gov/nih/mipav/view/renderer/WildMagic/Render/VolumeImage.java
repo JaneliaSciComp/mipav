@@ -1035,6 +1035,7 @@ public class VolumeImage implements Serializable {
 	 * @param bCopytoCPU when true the data is copied from the GPU GraphicsImage into the ModelImage
 	 */
 	public void UpdateData(final ModelImage kImage, final boolean bCopytoCPU) {
+		System.err.println( "UPDATEDATA CALLED" );
 		m_kImage = kImage;
 		if (bCopytoCPU) {
 			VolumeImage.UpdateData(m_kImage, m_iTimeSlice, m_akImages[m_iTimeSlice], m_kVolume[m_iTimeSlice],
@@ -1267,7 +1268,6 @@ public class VolumeImage implements Serializable {
 			//int maxB = Integer.MIN_VALUE;
 			//int minB = Integer.MAX_VALUE;
 			for (int i = 0; i < 256 * 256; ++i) {
-				int iVal = new Float((afCount[i] / max) * 255f).intValue();
 				abHisto[i] = new Float((afCount[i] / max) * 255f).byteValue();
 				//maxB = ( iVal > maxB ) ? iVal : maxB;
 				//minB = ( iVal < minB ) ? iVal : minB;
@@ -1492,6 +1492,7 @@ public class VolumeImage implements Serializable {
 		}
 		if (kImageGM == null) {
 			JDialogGradientMagnitude kCalcMagnitude = new JDialogGradientMagnitude(null, m_akImages[i]);
+			kCalcMagnitude.setOutputNewImageType( m_akImages[i].isColorImage() ? ModelStorageBase.ARGB_FLOAT : ModelStorageBase.FLOAT );
 			kCalcMagnitude.setVisible(false);
 			kCalcMagnitude.setOutputNewImage(true);
 			kCalcMagnitude.setDisplayProgressBar(true);
