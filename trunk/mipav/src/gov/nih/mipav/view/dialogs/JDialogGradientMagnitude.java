@@ -84,6 +84,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JPanelAlgorithmOutputOptions outputOptionsPanel;
+    
+    private int outputImageType;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -122,6 +124,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     public JDialogGradientMagnitude(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
+        outputImageType = image.getType();
         userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
@@ -500,6 +503,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         outputOptionsPanel.setOutputNewImage(flag);
     }
     
+    public void setOutputNewImageType(int type)
+    {
+        outputImageType = type;
+    }
+    
     /**
      * Set the display progress bar flag. 
      * @param flag  display or not
@@ -524,7 +532,9 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
     		OpenCLAlgorithmGradientMagnitude gradientMagAlgo;
     		if ( displayInNewFrame )
     		{
-    			gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(new ModelImage( image.getType(), image.getExtents(), name ), image, sigmas,
+    			resultImage = new ModelImage( outputImageType, image.getExtents(), name );
+    			JDialogBase.updateFileInfo( image, resultImage );
+    			gradientMagAlgo = new OpenCLAlgorithmGradientMagnitude(resultImage, image, sigmas,
         				outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);
     		}
     		else

@@ -238,6 +238,8 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
                 nextButton.setEnabled(false);
                 goBackButton.setEnabled(true);
                 goBackButton.setActionCommand("back2");
+                
+                ModelImage tensorImage = EstimateTensorLLMSE.estimate( DWINewB0Image, true );
             }
             
         }

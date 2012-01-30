@@ -461,7 +461,9 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
     		OpenCLAlgorithmGaussianBlur blurAlgo;
     		if ( displayInNewFrame )
     		{
-    			blurAlgo = new OpenCLAlgorithmGaussianBlur(new ModelImage( image.getType(), image.getExtents(), name ), image, 
+    			resultImage = new ModelImage( image.getType(), image.getExtents(), name );
+    			JDialogBase.updateFileInfo( image, resultImage );
+    			blurAlgo = new OpenCLAlgorithmGaussianBlur(resultImage, image, 
     					sigmas, outputOptionsPanel.isProcessWholeImageSet(), separable, image25D);    			
     		}
     		else

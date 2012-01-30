@@ -329,7 +329,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         setVolumeSamples( m_fSamples );
         if ( m_kVolumeImageB.GetImage() != null )
         {
-            this.setABBlend(0.5f);
+            //this.setABBlend(0.5f);
             if ( pkCProgram.GetUC("ShowB") != null ) 
             {    
                 pkCProgram.GetUC("ShowB").GetData()[0] = 1;
