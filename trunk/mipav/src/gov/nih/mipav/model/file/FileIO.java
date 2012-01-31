@@ -407,6 +407,7 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
+        boolean valid = false; // !valid, !performSort, !fourthDimensional
 
         FileDicomTagTable[] childrenTagTables;
 
@@ -755,7 +756,7 @@ public class FileIO {
              * sent to this method was found using the getFileList() method, all the names are in lexicographical order.
              * This is the default ordering if neither sorting method works, or if performSort is false.
              */
-            boolean valid = false; // !valid, !performSort, !fourthDimensional
+            
 
             // will force sorting to go by input order.
             boolean fourthDimensional = false; // 4th dimensional
@@ -787,10 +788,16 @@ public class FileIO {
                 // let's deal with that possibility:
                 if ( (nImages > 1) && !valid) {
 
-                    savedFileInfos = tryPartitionByMediaUID(savedFileInfos);
-                    for(int i=0; i<savedFileInfos.length; i++) {
-                        fileList[i] = savedFileInfos[i].getFileName();
+                    indicies = tryPartitionByMediaUID(savedFileInfos);
+                    if(indicies  != null) {
+                        valid = true;
                     }
+                }
+                
+                if ( (nImages > 1) && !valid) {
+                    //for(int i=0; i<savedFileInfos.length; i++) {
+                    //    fileList[i] = savedFileInfos[i].getFileName();
+                    //}
                     
                     // Follow-on ordering:
                     // pre-order the orientation numbers to match the instance
@@ -1151,7 +1158,8 @@ public class FileIO {
             } else {
                 filename = fileList[i];
                 start = 0;
-                location = i;
+                location = indicies[i];
+
 
                 if (nImages == 1) {
                     location = 0;
@@ -1640,43 +1648,46 @@ public class FileIO {
     /**
      * partition into image subsets using media instance uids
      */
-    private FileInfoDicom[] tryPartitionByMediaUID(FileInfoDicom[] savedFileInfos) {
+    private int[] tryPartitionByMediaUID(FileInfoDicom[] savedFileInfos) {
         try {
             
-            HashMap<Integer, ArrayList<FileInfoDicom>> v = new HashMap<Integer, ArrayList<FileInfoDicom>>();
+            HashMap<Integer, ArrayList<Object[]>> v = new HashMap<Integer, ArrayList<Object[]>>();
             String[] mediaStringAr;
             Integer mediaInt;
             for(int i=0; i<savedFileInfos.length; i++) {
                 mediaStringAr = savedFileInfos[i].getTagTable().getValue("0002,0003").toString().split("\\.");
                 mediaInt = Integer.valueOf(mediaStringAr[mediaStringAr.length-2]);
                 if(!v.containsKey(mediaInt)) {
-                    v.put(mediaInt, new ArrayList<FileInfoDicom>());
+                    v.put(mediaInt, new ArrayList<Object[]>());
                 } 
                 
-                v.get(mediaInt).add(savedFileInfos[i]);
+                v.get(mediaInt).add(new Object[]{savedFileInfos[i], i});
             }
             
             //sort each sub-collection by instance number
-            ArrayList<FileInfoDicom> ar = new ArrayList<FileInfoDicom>();
-            for(Integer i : v.keySet()) {   
-                Collections.sort(v.get(i), new Comparator<FileInfoDicom>(){
-                    public int compare(FileInfoDicom arg0, FileInfoDicom arg1) {
-                        return arg0.instanceNumber - arg1.instanceNumber;
+            ArrayList<Object[]> ar = new ArrayList<Object[]>();
+            ArrayList<Integer> keySet;
+            Collections.sort(keySet = new ArrayList<Integer>(v.keySet()));
+            for(Integer i : keySet) {   
+                Collections.sort(v.get(i), new Comparator<Object[]>(){
+                    
+                    public int compare(Object[] arg0, Object[] arg1) {
+                        return ((FileInfoDicom)arg0[0]).instanceNumber - ((FileInfoDicom)arg1[0]).instanceNumber;
                     }   
                 });
                 ar.addAll(v.get(i));
             }
             
-            savedFileInfos = ar.toArray(new FileInfoDicom[ar.size()]);
-            
-            for(int i=0; i<20; i++) {
-                System.out.println(savedFileInfos[i].getTagTable().getValue("0002,0003").toString()+"\t"+savedFileInfos[i].instanceNumber+"\t"+savedFileInfos[i].getFileName());
+            int[] indices = new int[savedFileInfos.length];
+            for(int i=0; i<indices.length; i++) {
+                indices[i] = (Integer) ar.get(i)[1];
             }
+            return indices;
         } catch(Exception e) {
             Preferences.debug("Failed to partition based on media instance uids");
         }
         
-        return savedFileInfos;
+        return null;
     }
 
     private String[] removeFromImageList(String selectedFileName, String[] fileList) {
