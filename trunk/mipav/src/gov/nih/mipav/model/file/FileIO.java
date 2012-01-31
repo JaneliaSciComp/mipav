@@ -762,9 +762,10 @@ public class FileIO {
 
             if (performSort) {
 
+              
                 // sort so that instance numbers are in ascending order.
                 // rint is the index to associate input file-list with the
-                // instance number
+                // instance number  
                 if ( !FileIO.sort(instanceNums, rint, nImages)) {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
@@ -786,6 +787,11 @@ public class FileIO {
                 // let's deal with that possibility:
                 if ( (nImages > 1) && !valid) {
 
+                    savedFileInfos = tryPartitionByMediaUID(savedFileInfos);
+                    for(int i=0; i<savedFileInfos.length; i++) {
+                        fileList[i] = savedFileInfos[i].getFileName();
+                    }
+                    
                     // Follow-on ordering:
                     // pre-order the orientation numbers to match the instance
                     // numbers. This is done to accomodate 4D dicom sets.
@@ -1145,7 +1151,7 @@ public class FileIO {
             } else {
                 filename = fileList[i];
                 start = 0;
-                location = indicies[i];
+                location = i;
 
                 if (nImages == 1) {
                     location = 0;
@@ -1629,6 +1635,48 @@ public class FileIO {
         }
         
         return image;
+    }
+
+    /**
+     * partition into image subsets using media instance uids
+     */
+    private FileInfoDicom[] tryPartitionByMediaUID(FileInfoDicom[] savedFileInfos) {
+        try {
+            
+            HashMap<Integer, ArrayList<FileInfoDicom>> v = new HashMap<Integer, ArrayList<FileInfoDicom>>();
+            String[] mediaStringAr;
+            Integer mediaInt;
+            for(int i=0; i<savedFileInfos.length; i++) {
+                mediaStringAr = savedFileInfos[i].getTagTable().getValue("0002,0003").toString().split("\\.");
+                mediaInt = Integer.valueOf(mediaStringAr[mediaStringAr.length-2]);
+                if(!v.containsKey(mediaInt)) {
+                    v.put(mediaInt, new ArrayList<FileInfoDicom>());
+                } 
+                
+                v.get(mediaInt).add(savedFileInfos[i]);
+            }
+            
+            //sort each sub-collection by instance number
+            ArrayList<FileInfoDicom> ar = new ArrayList<FileInfoDicom>();
+            for(Integer i : v.keySet()) {   
+                Collections.sort(v.get(i), new Comparator<FileInfoDicom>(){
+                    public int compare(FileInfoDicom arg0, FileInfoDicom arg1) {
+                        return arg0.instanceNumber - arg1.instanceNumber;
+                    }   
+                });
+                ar.addAll(v.get(i));
+            }
+            
+            savedFileInfos = ar.toArray(new FileInfoDicom[ar.size()]);
+            
+            for(int i=0; i<20; i++) {
+                System.out.println(savedFileInfos[i].getTagTable().getValue("0002,0003").toString()+"\t"+savedFileInfos[i].instanceNumber+"\t"+savedFileInfos[i].getFileName());
+            }
+        } catch(Exception e) {
+            Preferences.debug("Failed to partition based on media instance uids");
+        }
+        
+        return savedFileInfos;
     }
 
     private String[] removeFromImageList(String selectedFileName, String[] fileList) {
@@ -2704,14 +2752,16 @@ public class FileIO {
             {
                 modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
             }
-
+            
             // create a buffer to hold exchange image data between temp and result images
             oneSliceBuffer = new float[modelImageTemp.getExtents()[0] * modelImageTemp.getExtents()[1]];
 
             // the first slice has already been read. instead of re-reading it in the loop, export to buffer and save
             // an iteration
             modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
-
+            
+            System.out.println("Free: "+Runtime.getRuntime().freeMemory());
+            
             // the result image's dimensions (possibly subsampled dimensions)
 
             if (numTimePoints > 1) {
@@ -2786,7 +2836,7 @@ public class FileIO {
                         modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
                         FileIO.copyResolutions(modelImageTemp, modelImageResult, i);
                         modelImageResult.importData(i * oneSliceBuffer.length, oneSliceBuffer, false);
-
+                        
                         if (is3DDicom) {
                             final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
                             final FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(),
@@ -4910,7 +4960,6 @@ public class FileIO {
         boolean flag = true;
         int stop = size - 1, i, tmp2;
         float tmp;
-
         while (stop > 0) {
 
             for (i = 0; i < stop; i++) {
