@@ -145,7 +145,7 @@ public class FileInfoDicom extends FileInfoBase {
     public int displayType;
 
     /** DICOM instance number. */
-    public int instanceNumber = 1;
+    public int instanceNumber = -1;
 
     /** Whether the tag currently being processed and read in is a sequence tag. */
     public boolean isCurrentTagSQ = false;
@@ -900,7 +900,7 @@ public class FileInfoDicom extends FileInfoBase {
                 	Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
                 
             } else if (tagKey.equals("0020,0013")) { // type 2
-                instanceNumber = Integer.parseInt(tag.getValue(false).toString());
+                instanceNumber = Integer.parseInt(tag.getValue(true).toString());
             } else if (tagKey.equals("0020,1041")) { // type 3
                 sliceLocation =  Float.valueOf(tag.getValue(true).toString()).floatValue();
             } else if (tagKey.equals("0028,0030") &&
