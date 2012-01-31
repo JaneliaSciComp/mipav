@@ -1668,6 +1668,9 @@ public class FileIO {
             ArrayList<Object[]> ar = new ArrayList<Object[]>();
             ArrayList<Integer> keySet;
             Collections.sort(keySet = new ArrayList<Integer>(v.keySet()));
+            if(keySet.size() <= 1) {
+                return null; //only done when multiple SOP
+            }
             for(Integer i : keySet) {   
                 Collections.sort(v.get(i), new Comparator<Object[]>(){
                     
