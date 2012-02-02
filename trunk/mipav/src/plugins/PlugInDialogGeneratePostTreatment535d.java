@@ -52,7 +52,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGeneratePostTreatment535c generatePostAlgo = null;
+    private PlugInAlgorithmGeneratePostTreatment535d generatePostAlgo = null;
 
     /** The check box for whether a blur should be performed. */
 	private JCheckBox check;
@@ -105,7 +105,7 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGeneratePostTreatment535c() { }
+    public PlugInDialogGeneratePostTreatment535d() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -113,7 +113,7 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGeneratePostTreatment535c(Frame theParentFrame, ModelImage im) {
+    public PlugInDialogGeneratePostTreatment535d(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -152,7 +152,7 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment535c) {
+        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment535d) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generatePostAlgo.isCompleted() == true)) {
@@ -188,7 +188,7 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment535c(image1, image1Intensity, image1Scale, image1Noise,
+            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment535d(image1, image1Intensity, image1Scale, image1Noise,
                                                                             image2, image2Intensity, image2Scale, image2Noise);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -227,8 +227,6 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
      */
     protected void setGUIFromParams() {
     	image = scriptParameters.retrieveInputImage();
-
-    	doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
     } //end setGUIFromParams()
 
     /**
@@ -236,13 +234,11 @@ public class PlugInDialogGeneratePostTreatment535c extends JDialogScriptableBase
      */
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.storeInputImage(image);
-   
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
     } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generate post treatment map 535c");
+        setTitle("Generate post treatment map 535d");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
