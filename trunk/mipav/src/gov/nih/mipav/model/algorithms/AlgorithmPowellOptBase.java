@@ -361,12 +361,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
     /**
      * Minimizes the point along the given vector direction. Given an initial point and a guess as to how far from that
      * point we should go to look for a minimum.
-     * @param startPoint
      * @param pt
      * @param directions
      * @param bestCost
      */
-    public void lineMinimization(double[] startPoint, double[] pt, double[] directions, double[]bestCost) { 
+    public void lineMinimization(double[] pt, double[] directions, double[]bestCost) { 
         // Set up tolerances in direction of line minimization.
         // "unit_directions" is a unit vector in the direction of "directions"
         double tol = 0, sum = 0;
@@ -385,11 +384,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
         }
 
         double unit_tolerance = Math.abs(1 / tol);        
-        savedStartPoint = new double[startPoint.length];
-        for ( int i = 0; i < startPoint.length; i++ )
-        {
-        	savedStartPoint[i] = startPoint[i];
-        }
         BrentOnLine brentOnLine = new BrentOnLine(pt, directions, this);
         bestCost[0] = brentOnLine.search(unit_tolerance);
     }
@@ -494,6 +488,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                     for (int j = 0; j < dof; j++) {
                         System.arraycopy(point, 0, pts[j], 0, dof);
                     }
+                    savedStartPoint = new double[v.getPoint().length];
+                    for ( int j = 0; j < v.getPoint().length; j++ )
+                    {
+                    	savedStartPoint[j] = v.getPoint()[j];
+                    }
                     final CountDownLatch doneSignal = new CountDownLatch(dof);
 
                     for (int k = 0; k < dof; k++) {
@@ -512,7 +511,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                         // "+i +".\n", Preferences.DEBUG_ALGORITHM);
                         Runnable task = new Runnable() {
                             public void run() {
-                                lineMinimization(v.getPoint(), pts[index], directions,
+                                lineMinimization(pts[index], directions,
                                         costs[index]);
                                 doneSignal.countDown();
                             }
@@ -589,6 +588,11 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
                 if ((progress % progressModulus) == 0) {
                     fireProgressStateChanged((int) (progress / progressModulus));
                 }
+                savedStartPoint = new double[v.getPoint().length];
+                for ( int i = 0; i < v.getPoint().length; i++ )
+                {
+                	savedStartPoint[i] = v.getPoint()[i];
+                }
                 for (int i = 0; (i < dof) && ((parent == null)?true:!parent.isThreadStopped()); i++) {
                     // directions should hold "1" for i and "0" for all other
                     // dimensions.
@@ -600,7 +604,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
 
                     // Preferences.debug("Calling lineMinimization for dimension
                     // "+i +".\n", Preferences.DEBUG_ALGORITHM);
-                    lineMinimization(v.getPoint(), point, directions, cost);
+                    lineMinimization(point, directions, cost);
                     min = cost[0];
                     if (Math.abs(point[i] - originalPoint[i]) > tolerance[i]) {
                         keepGoing = true;
