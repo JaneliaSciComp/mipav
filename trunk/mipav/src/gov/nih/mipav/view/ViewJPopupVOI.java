@@ -54,6 +54,8 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
     /** DOCUMENT ME! */
     private JMenuItem itemProps;
+    
+    private JMenuItem itemTrim;
 
     /** DOCUMENT ME! */
     private JMenu orderSubMenu;
@@ -87,6 +89,8 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         voiHandler = handler;
 
         itemProps = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PROPERTIES, this, false);
+        
+        itemTrim = ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_TRIM, this, false);
 
         selectionMenu = ViewMenuBuilder.buildMenu("Select", 0, false);
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, this, false));
@@ -284,6 +288,8 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
            
             popup.add(itemProps);
+            popup.addSeparator();
+            popup.add(itemTrim);
             popup.addSeparator();
             popup.add(selectionMenu);
             popup.add(editSubMenu);
