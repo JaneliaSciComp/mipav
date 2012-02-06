@@ -44,6 +44,7 @@ public class CustomUIBuilder {
 	
     /** VOI Actions/Properties */
     public static final UIParams PARAM_VOI_PROPERTIES = new UIParams("View VOI Properties", "VOIProperties", 'P', "View VOI Properties", null );
+    public static final UIParams PARAM_VOI_TRIM = new UIParams("Trim parameter", "Trim", 0, "Trim points from contour", null);
     public static final UIParams PARAM_VOI_STATISTICS = new UIParams("Statistics generator", "VOIStistics", 'G', null, null );
     public static final UIParams PARAM_VOI_LOGICAL_OPERATIONS = new UIParams("VOI Logical Operations", "VOILogicalOperations", UIParams.INVALID_MNEMONIC, null, null );
     public static final UIParams PARAM_VOI_EDIT_CIRCLE_DIAM = new UIParams("Edit Circle Diameter", "editCircleDiameter", UIParams.INVALID_MNEMONIC, "Edit Circle Diameter", null );
