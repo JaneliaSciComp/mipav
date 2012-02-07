@@ -650,7 +650,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
    
 
         buffer = null;
-        centroids = null;
         buffer2 = null;
         System.gc();
 
@@ -1068,7 +1067,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             fireProgressStateChanged("Iterations finished");
      
         for (int m = 0; m < centroids.length; m++) {
-            Preferences.debug(" Centoid " + i + " = " + centroids[m], Preferences.DEBUG_ALGORITHM);
+            Preferences.data(" Centoid " + (m+1) + " = " + centroids[m]+"\n");
         }
 
         buffer = null;
