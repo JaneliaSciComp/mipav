@@ -658,33 +658,10 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * ) ..., the basis vectors. At the end, "point" is the best point found and functionAtBest is the value at "point".
      */
     public void runAlgorithm() {
-    	if(this.multiThreadingEnabled){
-        	final CountDownLatch doneSignal = new CountDownLatch(nthreads);
-    		float step = (float)(points.length)/nthreads;
-    		for(int i = 0; i < nthreads; i++){
-    			final int fstart = (int)(i*step);
-    			int end = (int)(step*(i+1));    			
-    			if(i == nthreads-1){
-    				end = points.length;
-    			}
-    			final int fend = end;
-    			Runnable task = new Runnable(){
-    				public void run(){
-    					optimizeBlock(fstart, fend);
-    					doneSignal.countDown();
-    				}
-    			};
-    			ThreadUtil.mipavThreadPool.execute(task);
-    		}
-            try {
-                doneSignal.await();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-    	
-    	}else{
-    		optimizeBlock(0, points.length);
-    	}
+    	// Cannot use multiThreading in runAlgorithm because this would result in multiple copies of optimizeBlock and
+    	// optimize running at the same time.  But each version of optimize would use the same global savedStartPoint,
+    	// leading to a conflict.
+    	optimizeBlock(0, points.length);
     }
 
     public boolean isParallelPowell() {
