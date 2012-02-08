@@ -2173,7 +2173,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 {
                     powellMT[index].setParallelPowell(false);
                 }
-                powellMT[index].setMultiThreadingEnabled(false);
                 
                 Vectornd[] initials = new Vectornd[coarseNumZ];
                 for (int k = 0; (k < coarseNumZ); k++) {
@@ -2236,7 +2235,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         powell.setProgress(0);
         powell.setProgressModulus(coarseNumX * coarseNumY * coarseNumZ * maxIter / 100);
         this.linkProgressToAlgorithm(powell);
-        powell.setMultiThreadingEnabled(doMultiThread);
 
         final MatrixListItem[][][] matrixList = new MatrixListItem[fineNumX][fineNumY][fineNumZ];
 
@@ -2429,7 +2427,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         {
         	powell.setParallelPowell(false);
         }
-        powell.setMultiThreadingEnabled(doMultiThread);
         powell.setMinProgressValue((int) (progressFrom + 5 * (progressTo - progressFrom) / 6));
         powell.setMaxProgressValue((int) progressTo);
         this.linkProgressToAlgorithm(powell);
@@ -2536,7 +2533,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         }
         powell.setMinProgressValue((int) progressFrom);
         powell.setMaxProgressValue((int) (progressFrom + (progressTo - progressFrom) / 5));
-        powell.setMultiThreadingEnabled(doMultiThread);
         for (final Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = en.nextElement();
             item.cost = powell.measureCost(item.initial);
@@ -2795,7 +2791,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         final AlgorithmPowellOpt3D powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
                 maxIter, bracketBound);
         powell.setUseJTEM(doJTEM);
-        powell.setMultiThreadingEnabled(false);
 
         final Vectornd[] initialPoints = new Vectornd[1];
         initialPoints[0] = new Vectornd(item.initial);
@@ -2896,7 +2891,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         	powell.setParallelPowell(false);
         }
         
-        powell.setMultiThreadingEnabled(false);
         fireProgressStateChanged("Measuring costs of minima");
 
         for (final Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
@@ -2945,7 +2939,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             powell.setUseJTEM(doJTEM);
             initialPoints[0] = new Vectornd(item.initial);
             powell.setPoints(initialPoints);
-            powell.setMultiThreadingEnabled(false);
 
         	powell.setParallelPowell(doMultiThread);
             if ( doJTEM )
@@ -2978,8 +2971,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
                 powell.setUseJTEM(doJTEM);
                 initialPoints[0] = new Vectornd(item.initial);
                 powell.setPoints(initialPoints);
-                powell.setMultiThreadingEnabled(false);
-                //powell.setParallelPowell(false);
             	powell.setParallelPowell(doMultiThread);
                 if ( doJTEM )
                 {
