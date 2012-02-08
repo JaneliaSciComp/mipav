@@ -57,6 +57,12 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
 
     /** DOCUMENT ME! */
     private JTextField bracketBoundText, maxIterationsText, numMinText;
+    
+    /** When true, the full version of JTEM Powell search is used in the registration algorithm. */
+    private boolean doJTEM;
+    
+    /** Turns on the JTEM full version of Powell's algorithm on or off */
+    private JCheckBox jtemCheckbox;
 
     /** DOCUMENT ME! */
     private JButton buttonWeightInput;
@@ -710,6 +716,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
             }
 
         }
+        reg35.setJTEM(doJTEM);
 
         // Start the thread as a low priority because we wish to still have user interface work fast.
         reg35.addListener(this);
@@ -875,6 +882,13 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         fastModeCheckbox.setEnabled(true);
         fastModeCheckbox.addItemListener(this);
         fastModeCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        jtemCheckbox = new JCheckBox("Full Powell's Method");
+        jtemCheckbox.setFont(serif12);
+        jtemCheckbox.setForeground(Color.black);
+        jtemCheckbox.setSelected(false);
+        jtemCheckbox.setEnabled(true);
+        jtemCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 
         settingsPanel.add(bracketPanel);
@@ -884,6 +898,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         settingsPanel.add(numMinPanel);
         settingsPanel.add(Box.createVerticalStrut(15));
         settingsPanel.add(fastModeCheckbox);
+        settingsPanel.add(jtemCheckbox);
 
         advancedDialog.getContentPane().add(settingsPanel, BorderLayout.NORTH);
 
