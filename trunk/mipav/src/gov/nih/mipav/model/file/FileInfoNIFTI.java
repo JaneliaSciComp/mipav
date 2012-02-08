@@ -532,13 +532,13 @@ public class FileInfoNIFTI extends FileInfoBase {
     private byte sliceCode = 0;
 
     /** Time used to acquire 1 slice. */
-    private float sliceDuration = -1.0f;
+    private float sliceDuration = 0.0f;
 
     /** Slice timing pattern ends with slice = (sliceEnd + 1) */
-    private short sliceEnd = -1;
+    private short sliceEnd = 0;
 
     /** Slice timing pattern starts with slice = (sliceStart + 1) */
-    private short sliceStart = -1;
+    private short sliceStart = 0;
 
 
     /** Source bits per pixel : 1,8,16,32,64,128 24(rgb). */
