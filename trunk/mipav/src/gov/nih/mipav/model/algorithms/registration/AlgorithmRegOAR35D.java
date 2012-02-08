@@ -6,9 +6,9 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.*;
 
-import java.awt.Dimension;
 import java.io.*;
 
 import java.util.*;
@@ -187,8 +187,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     private ModelImage inputImage;
     
 
-    private ModelImage resultImage;
-
     /** Image used to import a volume from inputWeight. */
     private ModelImage inputw_1;
 
@@ -346,7 +344,10 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private ModelImage weightVolumeImage = null;
     
-
+    /** Turns the full version of Powell's algorithm on/off. When off the JTEM line minimization used.  */
+    private boolean doJTEM = false;
+    
+    private boolean doMultiThread = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -514,6 +515,15 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    /**
+     * Turns the full version of Powell's algorithm on/off.
+     * @param bOn
+     */
+    public void setJTEM(boolean bOn)
+    {
+    	doJTEM = bOn;
+    }
 
     /**
      * Calculates the center of mass (gravity) of a 3D image. In image space where the upper left hand corner of the
@@ -893,6 +903,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             return;
         }
 
+        doMultiThread = Preferences.isMultiThreadingEnabled()  &&
+		(ThreadUtil.getAvailableCores() > 1);
         
         Preferences.debug(getConstructionInfo(),Preferences.DEBUG_ALGORITHM);
 
@@ -2945,6 +2957,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             nDims = 4;
         }
         powell = new AlgorithmPowellOpt3D(this, cog, nDims, cost, getTolerance(nDims), maxIter, bracketBound);
+        powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(doMultiThread);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
 
         double[] initial = new double[12];
 
@@ -3172,6 +3190,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         maxIter = baseNumIter * 7;
         powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter,
                                           bracketBound);
+        powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(doMultiThread);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
 
         MatrixListItem item;
         initials = new Vectornd[minima.size()];
@@ -3267,6 +3291,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
                                                                maxIter, bracketBound);
+        powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(doMultiThread);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item.cost = powell.measureCost(en.nextElement().initial);
@@ -3458,6 +3488,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost,
                 getTolerance(degree), maxIter, bracketBound);
+        powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(doMultiThread);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(item.initial);
         powell.setPoints(initials);
@@ -3535,6 +3571,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost,
                 getTolerance(degree), maxIter, bracketBound);
+        powell.setUseJTEM(doJTEM);
+    	powell.setParallelPowell(doMultiThread);
+        if ( doJTEM )
+        {
+        	powell.setParallelPowell(false);
+        }
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item.cost = powell.measureCost(en.nextElement().initial);
@@ -3562,6 +3604,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         if (DOF > 7) {
             degree = 9;
             powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, bracketBound);
+            powell.setUseJTEM(doJTEM);
+        	powell.setParallelPowell(doMultiThread);
+            if ( doJTEM )
+            {
+            	powell.setParallelPowell(false);
+            }
             powell.setPoints(initials);
             powell.run();
 
@@ -3574,6 +3622,12 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             if (DOF > 9) {
                 degree = 12;
                 powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, getTolerance(12), maxIter, bracketBound);
+                powell.setUseJTEM(doJTEM);
+            	powell.setParallelPowell(doMultiThread);
+                if ( doJTEM )
+                {
+                	powell.setParallelPowell(false);
+                }
                 powell.setPoints(initials);
                 powell.run();
 
