@@ -53,11 +53,11 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
     
     private ModelImage[] EPI4dto3dArray;
     
-    private ModelImage [] currentDef;
+    private float currentDef[][][][];
     
     private ModelImage EPI4dto3dVolume;
     
-    private int XN, YN, ZN, TN;
+    private int XN, YN, ZN,TN, chN;
 
     float[] dimRes;
     
@@ -88,7 +88,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
         String tmpStr;
         if (command.equals("TEST")){ 
             if(pipeline.DWINewB0Image !=null){
-                //EPIAlgorithm();
+                EPIAlgorithm();
             }
         }
         
@@ -162,6 +162,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
         YN = pipeline.DWINewB0Image.getExtents()[1];
         ZN = pipeline.DWINewB0Image.getExtents()[2];
         TN = pipeline.DWINewB0Image.getExtents()[3];
+        chN = 3;
         dimRes = pipeline.DWINewB0Image.getResolutions(0);
         int sliceSize = XN * YN;
         int length = TN * sliceSize * ZN;
@@ -173,7 +174,6 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
         
         EPI4dto3dArray = new ModelImage[TN];
         
-        currentDef = new ModelImage[3];
         
         float[] imageBuffer = new float[sliceSize*ZN];
         
@@ -213,19 +213,22 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
                 for(int j=0; j<4; j++){
                     for(int k=0; k<4; k++){                            
                         m.set(j, k, pipeline.arrayTransMatrix[i].Get(j, k));
+                        //m.print(4, 6);
                         //System.out.println("matrixm" +m.print(4, 6));
                         b0toStruct.set(j, k, pipeline.b0toStructMatrix.Get(j, k));                           
                         //System.out.println("b0toStruct" +b0toStruct);
                     }                   
                 }
-                System.out.println("transmatrix" +pipeline.arrayTransMatrix[i]);
+                //System.out.println("transmatrix" +pipeline.arrayTransMatrix[i]);
                 //m.print(4, 6);
                 //System.out.println("b0toStructMatrix" +pipeline.b0toStructMatrix);
                 //b0toStruct.print(4, 6);
                 m = b0toStruct.times(m);
+                System.out.println("m");
                 m.print(4, 6);
                 
-                //currentDef=createDefFieldFromTransMatrix(m);
+                currentDef=createDefFieldFromTransMatrix(m);
+                currentDef=applyDeformation(currentDef, EPI4dto3dArray);
 
         }
     
@@ -233,16 +236,29 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
     
     }
     
-   /* public ModelImage[] applyDeformation(ModelImage[] currentDef, ModelImage[] epiDef){
+    public float[][][][] applyDeformation(float[][][][] currentDef, ModelImage[] epiDef){
         double[] currentVec = new double[3];
         double[] newVec = new double[3];
         
-        ModelImage[] newDef = new ModelImage[3];
-        for (int c = 0; c < 3; c++) 
-            newDef[c] = (ModelImage) currentDef[c].clone();
+        float[][][][] newDef = new float[chN][XN][YN][ZN];
+        for (int c = 0; c < chN; c++) {
+            for(int i = 0; i < XN; i++) {
+                for(int j = 0; j < YN; j++) {
+                    for(int k = 0; k < ZN; k++){
+                       newDef[c][i][j][k] = currentDef[c][i][j][k]; 
+                    }
+                }
+            }
+        }
+        System.out.println("newDef2[0][127][127][10]" +newDef[0][127][127][10]);
+        System.out.println("newDef2[1][127][127][10]" +newDef[1][127][127][10]);
+        System.out.println("newDef2[2][127][127][10]" +newDef[2][127][127][10]);
+        System.out.println("newDef[0][55][34][7]" +newDef[0][55][34][7]);
+        System.out.println("newDef[1][55][34][7]" +newDef[1][55][34][7]);
+        System.out.println("newDef[2][55][34][7]" +newDef[2][55][34][7]);
         
 
-        for(int i = 0; i < XN; i++)
+        /*for(int i = 0; i < XN; i++)
             for(int j = 0; j < YN; j++)
                 for(int k = 0; k < ZN; k++){
                     
@@ -254,32 +270,37 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
                     
                     for(int c = 0; c < chN; c++) newDef[c].set(i,j,k, newVec[c]+currentVec[c]);
                     
-                }
+                }*/
         return newDef;          
         
-    }*/
+    }
     
-    public ModelImage[] createDefFieldFromTransMatrix(Matrix newTrans){
+    public float[][][][] createDefFieldFromTransMatrix(Matrix newTrans){
         double[] currentVec = new double[3];
         double[] newVec = new double[3];
-        ModelImage[] newDef = new ModelImage[3];
-        
-        for(int ch = 0; ch < 3; ch++){ 
-            newDef[ch] = new ModelImage(pipeline.DWINewB0Image.getType(), epiExtents, "newDefArray");
-        }
+        float[][][][] newDef = new float[chN][XN][YN][ZN];
+;
+        //System.out.println("dimRes[0]" +dimRes[0]);
+        //System.out.println("dimRes[1]" +dimRes[1]);
+        //System.out.println("dimRes[2]" +dimRes[2]);
             for(int i = 0; i < XN; i++){
                 for(int j = 0; j < YN; j++){
                     for(int k = 0; k < ZN; k++){                    
                     newVec[0] = i*dimRes[0];
                     newVec[1] = j*dimRes[1];
                     newVec[2] = k*dimRes[2];
+                    
                                         
                     Matrix v = new Matrix(new double[]{newVec[0],newVec[1],newVec[2],1},4);
+                    
                     Matrix vp = newTrans.solve(v);
+
                     
                     for(int ch = 0; ch < 3; ch++) {
+                        //System.out.println("i: " +i +"j: " +j +"k: " +k +"ch: " +ch );
+                        //System.out.println("ch: " +ch);
                         newVec[ch] = vp.get(ch,0) - newVec[ch];
-                        newDef[ch].set(i,j,k, newVec[ch]/dimRes[ch]);
+                        newDef[ch][i][j][k] = (float)( newVec[ch]/dimRes[ch]);
                     }
                     
                     //get current deformation at where the new deformation is pointing
@@ -293,6 +314,12 @@ public class JPanelEPIDistortionCorrection extends JPanel implements AlgorithmIn
                 }
             
         }
+            System.out.println("newDef[0][127][127][10]" +newDef[0][127][127][10]);
+            System.out.println("newDef[1][127][127][10]" +newDef[1][127][127][10]);
+            System.out.println("newDef[2][127][127][10]" +newDef[2][127][127][10]);
+            System.out.println("newDef[0][55][34][7]" +newDef[0][55][34][7]);
+            System.out.println("newDef[1][55][34][7]" +newDef[1][55][34][7]);
+            System.out.println("newDef[2][55][34][7]" +newDef[2][55][34][7]);
         
         return newDef;
         
