@@ -163,7 +163,7 @@ public class FileDicom extends FileDicomBase {
     /** Whether MIPAV should be written to this dicom file as the secondary stamp * */
     private boolean stampSecondary = true;
 
-    private boolean isEnhanced = true;
+    private boolean isEnhanced = false;
 
     private FileDicomTagTable[] enhancedTagTables;
 
@@ -1004,7 +1004,8 @@ public class FileDicom extends FileDicomBase {
 
         // ENHANCED DICOM per frame
         if (name.equals("5200,9230")) {
-            int numSlices = 0;
+            isEnhanced = true;
+        	int numSlices = 0;
             sq = getSequence(endianess, len);
             final Vector<FileDicomSQItem> v = sq.getSequence();
             Iterator<FileDicomTag> itr = v.get(0).getTagList().values().iterator();
