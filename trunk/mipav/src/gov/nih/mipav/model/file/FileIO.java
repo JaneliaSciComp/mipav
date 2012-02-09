@@ -407,7 +407,6 @@ public class FileIO {
         String studyIDMaster;
         String seriesNoMaster;
         String acqNoMaster;
-        boolean valid = false; // !valid, !performSort, !fourthDimensional
 
         FileDicomTagTable[] childrenTagTables;
 
@@ -579,7 +578,7 @@ public class FileIO {
             return null;
         }
 
-        int[] indicies = null;
+        int[] indices = null;
         final int[] orient = new int[3]; // for FileInfoBase values. eg:FileInfoBase.ORI_S2I_TYPE;
         int pBarVal = 0;
 
@@ -595,7 +594,7 @@ public class FileIO {
             // buffer as indicated by the slice numbers provided in indicies.
             // the values are set to the values of either zOri or rint (after
             // the sorting has been done) as needed, depending on sorting.
-            indicies = new int[nListImages];
+            indices = new int[nListImages];
 
             int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
             final int[] rint = new int[nListImages]; // sorted image instance values.
@@ -760,42 +759,41 @@ public class FileIO {
 
             // will force sorting to go by input order.
             boolean fourthDimensional = false; // 4th dimensional
+            boolean validInstanceSort = false, validOriSort = false;
 
-            if (performSort) {
+			if (performSort) {
 
               
                 // sort so that instance numbers are in ascending order.
                 // rint is the index to associate input file-list with the
                 // instance number  
-                if ( !FileIO.sort(instanceNums, rint, nImages)) {
+				if (!(validInstanceSort = FileIO.sort(instanceNums, rint, nImages))) {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
-                }
-
-                valid = true; // original ordering in case nImages == 1;
-
-                // sort so that zOrients is now in ascending order.
-                // zOri[i] represents where in the image buffer image
-                // number i should be stored; so that if the images were
-                // read in 1, 10, 11... (which happens often),
-                // zOri[1] = 1 but zOri[2] = 2, rather than 10.
-                if (nImages > 1) {
-                    valid = FileIO.sort(zOrients, zOri, nImages);
-                }
-
-                // If valid is false then one or more of the images has the
-                // same position. Most likely it is a 4D dataset.
-                // let's deal with that possibility:
-                if ( (nImages > 1) && !valid) {
-
-                    indicies = tryPartitionByMediaUID(savedFileInfos);
-                    if(indicies  != null) {
-                        valid = true;
-                    }
+                } else {
+                	indices = rint;
                 }
                 
-                if ( (nImages > 1) && !valid) {
-                    //for(int i=0; i<savedFileInfos.length; i++) {
+                // If valid is false then one or more of the images has the
+                // same position. Most likely it is a 4D dataset.
+                // one possible way to deal with it:
+                
+                //if ( (nImages > 1) && !valid) {
+                //    indicies = tryPartitionByMediaUID(savedFileInfos);
+                //    if(indicies  != null) {
+                //        valid = true;
+                //    }
+                //}
+                
+                if ( (nImages > 1) && !validInstanceSort) {
+                	// sort so that zOrients is now in ascending order.
+                    // zOri[i] represents where in the image buffer image
+                    // number i should be stored; so that if the images were
+                    // read in 1, 10, 11... (which happens often),
+                    // zOri[1] = 1 but zOri[2] = 2, rather than 10.
+                	validOriSort = FileIO.sort(zOrients, zOri, nImages);
+                	
+                	//for(int i=0; i<savedFileInfos.length; i++) {
                     //    fileList[i] = savedFileInfos[i].getFileName();
                     //}
                     
@@ -917,6 +915,7 @@ public class FileIO {
 
                     timezonesList.clear();
                     timezonesList = null;
+                    validOriSort = true;
                     System.gc();
                 } else {
                     Preferences.debug("Not a 4D Dataset\n", Preferences.DEBUG_FILEIO);
@@ -981,53 +980,30 @@ public class FileIO {
             // System.out.println( " xcos = " + xCos + " ycos = " + yCos + " zcos = " + zCos );
             if ( (xCos > yCos) && (xCos > zCos)) {
                 orientation = FileInfoBase.SAGITTAL;
-
-                if (valid) {
-                    indicies = zOri;
-                } else if ( !valid && fourthDimensional) {
-                    indicies = zOri;
-                    Preferences.debug("Reading image as 4th Dimensional.\n", Preferences.DEBUG_FILEIO);
-                } else {
-                    indicies = rint;
-                }
             } else if ( (yCos > xCos) && (yCos > zCos)) {
                 orientation = FileInfoBase.CORONAL;
-
-                if (valid == true) {
-                    indicies = zOri;
-                } else if ( !valid && fourthDimensional) {
-                    indicies = zOri;
-                    Preferences.debug("Reading image as a 4th Dimensional " + "order.\n", Preferences.DEBUG_FILEIO);
-                } else {
-                    indicies = rint;
-                }
             } else if ( (zCos > xCos) && (zCos > yCos)) {
                 orientation = FileInfoBase.AXIAL;
-
-                if (valid == true) {
-                    indicies = zOri;
-                } else if ( !valid && fourthDimensional) {
-                    indicies = zOri;
-                    Preferences.debug("Reading image as a 4th Dimensional " + "order.\n", Preferences.DEBUG_FILEIO);
-                } else {
-                    indicies = rint;
-                }
-            } // matrix was null, set orients based on instance number
-
-            // problems if we reach this point!
-            else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) {
+            } else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) { //fallback methods, these should not be reached
                 orientation = FileInfoBase.AXIAL;
-                indicies = rint;
+                indices = rint;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
             } else { // xLocation, yLocation, and zLocation were probably undefined and instance numbers equal.
                 orientation = FileInfoBase.AXIAL;
-                indicies = zOri;
+                indices = zOri;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
             }
+            
+            if(validOriSort) {
+            	indices = zOri;
+            } 
+
+            // problems if we reach this point!
+            
         }
 
         // need to determine if it is ENHANCED DICOM and if its 4D
@@ -1046,8 +1022,15 @@ public class FileIO {
                 enhancedNumVolumes = nImages / enhancedNumSlices;
                 extents[3] = enhancedNumVolumes;
             } else {
-                extents = new int[3];
-                extents[2] = nImages;
+            	if(refFileInfo.getTagTable().getValue("0020,0105") != null) {
+            		extents = new int[4];
+
+            		extents[3] = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,0105").toString()).intValue();
+            		extents[2] = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue();
+            	} else {
+            		extents = new int[3];
+            		extents[2] = nImages;
+            	}
             }
         } else {
             extents = new int[2];
@@ -1158,7 +1141,7 @@ public class FileIO {
             } else {
                 filename = fileList[i];
                 start = 0;
-                location = indicies[i];
+                location = indices[i];
 
 
                 if (nImages == 1) {
