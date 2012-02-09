@@ -54,6 +54,7 @@ import javax.swing.JComponent;
     import javax.swing.JTextField;
     import javax.swing.ScrollPaneConstants;
     import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
     import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
@@ -83,6 +84,8 @@ import javax.swing.table.DefaultTableModel;
         private JPanel mainPanel;
         
         private Font serif12;
+        
+        private Font serif12b;
         
         /** TextArea of main dialogfor text output.* */
         private JTextArea outputTextArea;
@@ -188,7 +191,13 @@ import javax.swing.table.DefaultTableModel;
         private JLabel t2FileLabel;
         
         /** DOCUMENT ME! */
+        private JLabel bvalGradFileLabel;
+        
+        /** DOCUMENT ME! */
         private JTextField textT2image; 
+        
+        /** DOCUMENT ME! */
+        private JTextField textBvalGradFile;
         
         /** DOCUMENT ME! */
         private JButton openT2Button; 
@@ -297,6 +306,26 @@ import javax.swing.table.DefaultTableModel;
         public ViewJFrameImage t2frame;
         
         private JCheckBox preProcessedBox;
+
+        private JRadioButton browseDWIButton;
+
+        private JRadioButton activeDWIButton;
+
+        private JPanel DWIOpenPanel;
+
+        private JPanel t2OpenPanel;
+
+        private JPanel loadTable;
+
+        private JPanel DWIButtonPanel;
+
+        private ViewOpenFileUI openFile;
+
+        private JButton loadBValGradFileButton;
+
+        private JButton clearDWITableButton;
+
+        private JButton saveBvalGradButton;
         
 
 
@@ -325,6 +354,8 @@ import javax.swing.table.DefaultTableModel;
         public void actionPerformed(final ActionEvent event) {
             final String command = event.getActionCommand();
             
+    
+            
 
             if (command.equals("applyTable")) {
                 if (m_kDWIImage != null){ 
@@ -332,7 +363,7 @@ import javax.swing.table.DefaultTableModel;
                   if (dtiparams != null){                   
                                // Populate Gradient column
                       if (srcTableModel.getRowCount() != 0){
-                          if (srcTableModel.getValueAt(0, 1) != ""){
+                          if (!srcTableModel.getValueAt(0, 1).equals("")){
                               float [] flBvalueArr= new float[numVolumes]; 
                               for (int i = 0; i < numVolumes; i++) {      
                                   flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
@@ -340,26 +371,26 @@ import javax.swing.table.DefaultTableModel;
                              dtiparams.setbValues(flBvalueArr);
                           }
                           
-                          if (srcTableModel.getValueAt(0, 3) != ""){
+                          if (!srcTableModel.getValueAt(0, 3).equals("")){
                               float[][] flGradArr = new float[numVolumes][3];
                               for (int i = 0; i < numVolumes; i++) {
-                                  if (srcTableModel.getValueAt(i, 2) != ""){
+                                  if (!srcTableModel.getValueAt(i, 2).equals("")){
                                       flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
                                       }
                                       else{
                                           flGradArr[i][0]= (float) 0.0;
                                           }
-                                  if (srcTableModel.getValueAt(i, 3) != ""){
+                                  if (!srcTableModel.getValueAt(i, 3).equals("")){
                                       flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
                                       }
                                       else{
                                           flGradArr[i][1]= (float) 0.0;
                                           }
-                                  if (srcTableModel.getValueAt(i, 4) != ""){
+                                  if (!srcTableModel.getValueAt(i, 4).equals("")){
                                       flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
                                       }
                                       else{
-                                          flGradArr[i][1]= (float) 0.0;
+                                          flGradArr[i][2]= (float) 0.0;
                                       }
                                   }
                           
@@ -368,8 +399,7 @@ import javax.swing.table.DefaultTableModel;
                           dtiparams.setNumVolumes(numVolumes);
                           m_kDWIImage.setDTIParameters(dtiparams);
                           
-                          if (useT2CheckBox.isSelected()){
-                              useT2CheckBox.setSelected(true);
+                          if (useT2CheckBox.isSelected()==false){
                               if (m_kT2Image != null){
                                   pipeline.nextButton.setEnabled(true);
                                   pipeline.nextButton.setActionCommand("next1");
@@ -385,55 +415,80 @@ import javax.swing.table.DefaultTableModel;
                           }
 
                       }
+                      
+                      
                  }
+                  
                   else if (dtiparams == null){
-    
-                          if (srcTableModel.getRowCount() != 0){
-                              newDTIparams = new DTIParameters(numVolumes);
-                              if (srcTableModel.getValueAt(0, 1) != ""){
-                                  float [] flBvalueArr= new float[numVolumes]; 
-                                  for (int i = 0; i < numVolumes; i++) {      
+                      //System.out.println("numVolumes: " +numVolumes);
+                      //System.out.println("srcTablemodelvalue: " +srcTableModel.getValueAt(m_kDWIImage.getExtents()[3]-1, 0));
+                      if (m_kDWIImage.getExtents()[3] == numVolumes ||srcTableModel.getValueAt(m_kDWIImage.getExtents()[3], 0).equals("")){
+                          numVolumes = m_kDWIImage.getExtents()[3];
+                          if (srcTableModel.getRowCount() != 0 ){
+                              newDTIparams = new DTIParameters(m_kDWIImage.getExtents()[3]);
+                              if (!srcTableModel.getValueAt(0, 1).equals("")){
+                                  float [] flBvalueArr= new float[m_kDWIImage.getExtents()[3]]; 
+                                  for (int i = 0; i < m_kDWIImage.getExtents()[3]; i++) {
                                       flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                      //System.out.println("flBvalueArr: " +flBvalueArr[i]);
                                       }
                                  newDTIparams.setbValues(flBvalueArr);
                               }
                               
-                              if (srcTableModel.getValueAt(0, 3) != ""){
-                                  float[][] flGradArr = new float[numVolumes][3];
+                              if (!srcTableModel.getValueAt(0, 3).equals("")){
+                                  float[][] flGradArr = new float[m_kDWIImage.getExtents()[3]][3];
                                   for (int i = 0; i < numVolumes; i++) {
-                                      if (srcTableModel.getValueAt(i, 2) != ""){
+                                      if (!srcTableModel.getValueAt(i, 2).equals("")){
                                           flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
                                           }
                                           else{
                                               flGradArr[i][0]= (float) 0.0;
                                           }
-                                      if (srcTableModel.getValueAt(i, 3) != ""){
+                                      if (!srcTableModel.getValueAt(i, 3).equals("")){
                                           flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
                                           }
                                           else{
                                               flGradArr[i][1]= (float) 0.0;
                                           }
-                                      if (srcTableModel.getValueAt(i, 4) != ""){
+                                      if (!srcTableModel.getValueAt(i, 4).equals("")){
                                           flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
                                           }
                                           else{
                                               flGradArr[i][1]= (float) 0.0;
                                           }
                                       }
+                                  
                               
                               newDTIparams.setGradients(flGradArr);
                               }
-                              newDTIparams.setNumVolumes(numVolumes);
+                              //System.out.println("@"+srcTableModel.getValueAt(1, 1)+"@");
+                              if (!srcTableModel.getValueAt(0, 2).equals("")){
+                                  //System.out.println("emptystring");
+                              }
+                              newDTIparams.setNumVolumes(m_kDWIImage.getExtents()[3]);
                               m_kDWIImage.setDTIParameters(newDTIparams);
                               pipeline.nextButton.setEnabled(true);
                               pipeline.nextButton.setActionCommand("next1");
                           }
+                          
                   }
+                      else{
+                          MipavUtil.displayError("Please enter " +m_kDWIImage.getExtents()[3] +" rows of bvalues and gradients"); 
+                      }
+                  }
+                  //System.out.println("flGradArr: " +newDTIparams.getGradients()[1][0]);
                 }
+                
+                
+               
                 else{
                     MipavUtil.displayError("Please select a 4D DWI dataset");
                 }
+
+                
+
             }
+            
             
             
        else if (command.equals("bvalGradBrowse")) {
@@ -449,7 +504,22 @@ import javax.swing.table.DefaultTableModel;
             final int returnValue = chooser.showOpenDialog(this);
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 currDir = chooser.getSelectedFile().getAbsolutePath();
-                readBValGradientFile(currDir);
+                try{
+                    readBValGradientFile(currDir);
+                    DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
+                    loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File"));
+                    saveBvalGradButton.setEnabled(true);
+                    isDWICellEditBox.setEnabled(true);
+                    bvalGradAppButton.setEnabled(true);
+                }
+                catch (Exception e){
+                    DWIButtonPanel.setBorder(buildTitledBorder("Table Options"));
+                    bvalGradAppButton.setEnabled(false);
+                    saveBvalGradButton.setEnabled(false);
+                    isDWICellEditBox.setEnabled(false);
+                    loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File"));
+                    
+                }
             }
             
         }else if (command.equals("DWICellEditSwitch")){
@@ -457,14 +527,25 @@ import javax.swing.table.DefaultTableModel;
                     if (en == true){
                     srcBvalGradTable.setBackground(Color.white);    
                     srcBvalGradTable.setEnabled(true);
-                    
+                    clearDWITableButton.setEnabled(true);
+                    negXCheckBox.setEnabled(true);
+                    negYCheckBox.setEnabled(true);
+                    negZCheckBox.setEnabled(true);                
                     }   
                  
                     else {
                         //Color c = new Color(10,10,10,10);
                         srcBvalGradTable.setBackground(Color.lightGray);
                         srcBvalGradTable.setEnabled(false);
+                        clearDWITableButton.setEnabled(false);
+                        negXCheckBox.setEnabled(false);
+                        negYCheckBox.setEnabled(false);
+                        negZCheckBox.setEnabled(false);
+
                     }
+
+         
+
             
             } else if (command.equals("DWITableDeleteButton")){
                        srcBvalGradTable.setBackground(Color.white);
@@ -550,26 +631,55 @@ import javax.swing.table.DefaultTableModel;
                  }
             
             } else if (command.equals("openedImage")) {
-                if (openedImageCheckBox.isSelected()){
-                dwiFileLabel.setForeground(Color.lightGray);
+                //System.out.println("openedImage");
+                if (activeDWIButton.isSelected()){
+                //dwiFileLabel.setForeground(Color.lightGray);
                 openDWIButton.setEnabled(false);
                 textDWIDataimage.setEnabled(false);
                 
                     if (ui.getActiveImageFrame() != null){
                         frame = ui.getActiveImageFrame();
                         m_kDWIImage = frame.getImageA();
-                        getImageDTIParams(); 
-                        pipeline.repaint();
+                            if (m_kDWIImage != null && m_kDWIImage.is4DImage()==true){
+                                getImageDTIParams(); 
+                                DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
+                                browseDWIButton.setEnabled(false);
+                                activeDWIButton.setEnabled(false);
+                                textDWIDataimage.setEnabled(false);
+                                openDWIButton.setEnabled(false);
+                                t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
+                                t2FileLabel.setEnabled(true);
+                                textT2image.setEnabled(true);
+                                openT2Button.setEnabled(true);
+                                useT2CheckBox.setEnabled(true);
+                                pipeline.repaint();
+                        }
+                            else{
+                                m_kDWIImage = null;
+                                MipavUtil.displayError("Please select a 4D DWI Image"); 
+                                openedImageCheckBox.setSelected(false);
+                                //dwiFileLabel.setForeground(Color.BLACK);
+                                textDWIDataimage.setEnabled(true);
+                                textDWIDataimage.setBackground(Color.WHITE);
+                                openDWIButton.setEnabled(true); 
+                                DWIOpenPanel.setBorder(highlightTitledBorder("Upload DWI Image"));
+                                t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));
+                                t2FileLabel.setEnabled(false);
+                                textT2image.setEnabled(false);
+                                openT2Button.setEnabled(false);
+                                useT2CheckBox.setEnabled(false);
+                        }
                     }
                     
                     else{
                         MipavUtil.displayError("No DWI active image is selected");
-                        openedImageCheckBox.setSelected(false);
+                        textDWIDataimage.setEnabled(true);
+                        textDWIDataimage.setBackground(Color.WHITE);
+                        openDWIButton.setEnabled(true); 
                      }
 
                 }
                 else{
-                    dwiFileLabel.setForeground(Color.BLACK);
                     textDWIDataimage.setEnabled(true);
                     textDWIDataimage.setBackground(Color.WHITE);
                     openDWIButton.setEnabled(true); 
@@ -578,58 +688,101 @@ import javax.swing.table.DefaultTableModel;
                 
                 
             } else if (command.equals("browseDWIFile")) {
-                loadDWIFile();
-                pipeline.repaint();
-                
-            }else if (command.equals("useT2Image")) {
-                if (useT2CheckBox.isSelected()){
+                try{
+                    loadDWIFile();
+                    DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
+                    browseDWIButton.setEnabled(false);
+                    activeDWIButton.setEnabled(false);
+                    textDWIDataimage.setEnabled(false);
+                    openDWIButton.setEnabled(false);
+                    t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
                     t2FileLabel.setEnabled(true);
                     textT2image.setEnabled(true);
                     openT2Button.setEnabled(true);
+                    useT2CheckBox.setEnabled(true);
+                    pipeline.repaint();
                 }
-                else{
+                catch (Exception e){
+                    MipavUtil.displayError("Error loading DWI File");
+                }
+                
+            }else if (command.equals("SkipT2")) {
+                if (useT2CheckBox.isSelected()){
                     t2FileLabel.setEnabled(false);
                     textT2image.setEnabled(false);
                     openT2Button.setEnabled(false);
+                    useT2CheckBox.setEnabled(false);
+                    bvalGradFileLabel.setEnabled(true);
+                    loadBValGradFileButton.setEnabled(true);
+                    t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));
+                    if (dtiparams != null){ 
+                        DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
+                        bvalGradAppButton.setEnabled(true);
+                        saveBvalGradButton.setEnabled(true);
+                        isDWICellEditBox.setEnabled(true);
+                    }
+                    else{
+                        loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File"));  
+                    }
+                }
+                else{
+                    t2FileLabel.setEnabled(true);
+                    textT2image.setEnabled(true);
+                    openT2Button.setEnabled(true);
+                    useT2CheckBox.setEnabled(true);
+                    bvalGradFileLabel.setEnabled(false);
+                    loadBValGradFileButton.setEnabled(false);
+                    t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
+                    loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File"));
                 }
                 
             }else if (command.equals("browseT2File")) {
-                loadT2File();
-                pipeline.repaint();
+                try{
+                    loadT2File();
+                    if (m_kT2Image.getExtents()[0] == m_kDWIImage.getExtents()[0] && m_kT2Image.getExtents()[1] == m_kDWIImage.getExtents()[1]){
+                        textT2image.setText(openFile.getImagePath());
+                        t2FileLabel.setEnabled(false);
+                        textT2image.setEnabled(false);
+                        openT2Button.setEnabled(false);
+                        useT2CheckBox.setEnabled(false);
+                        bvalGradFileLabel.setEnabled(true);
+                        textBvalGradFile.setEnabled(true);
+                        loadBValGradFileButton.setEnabled(true);
+                        t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));
+                        if (dtiparams != null){ 
+                            DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
+                            saveBvalGradButton.setEnabled(true);
+                            isDWICellEditBox.setEnabled(true);
+                            bvalGradAppButton.setEnabled(true);
+                        }
+                        else{
+                            loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File"));  
+                        }
+                        
+                        pipeline.repaint();
+                    }
+                    else{
+                        MipavUtil.displayError("Structural Image and DWI Image X,Y, and Z extents must be the same");
+                        t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
+                        t2FileLabel.setEnabled(true);
+                        textT2image.setEnabled(true);
+                        openT2Button.setEnabled(true);
+                        useT2CheckBox.setEnabled(true);
+                        textBvalGradFile.setEnabled(false);
+                        bvalGradFileLabel.setEnabled(false);
+                        loadBValGradFileButton.setEnabled(false);
+                        DWIButtonPanel.setBorder(buildTitledBorder("Table Options"));
+                        
+                    }
+                }
+                catch (Exception e){
+                    MipavUtil.displayError("Error loading Structural Image");
+                }
         } else if (command.equals("preProcessed")){
             if (preProcessedBox.isSelected()){
                 pipeline.tabbedPane.setSelectedIndex(4);
                 }
-                /*else{
-                    pipeline.tabbedPane.setSelectedIndex(1);  
-                }*/
-                
-        } /*else if (command.equals("useT2Image")) {
-                if (useT2CheckBox.isSelected()){
-                    t2FileLabel.setForeground(Color.lightGray);
-                    openT2Button.setEnabled(false);
-                    textT2image.setEnabled(false);
-                    
-                        if (ui.getActiveImageFrame() != null){
-                            t2frame = ui.getActiveImageFrame();
-                            m_kT2Image = t2frame.getImageA();
-                            pipeline.repaint();
-                        }
-                        
-                        else{
-                            MipavUtil.displayError("No T2 active image is selected");
-                            useT2CheckBox.setSelected(false);
-                         }
-
-                    }
-                    else{
-                        t2FileLabel.setForeground(Color.BLACK);
-                        textT2image.setEnabled(true);
-                        textT2image.setBackground(Color.WHITE);
-                        openT2Button.setEnabled(true); 
-                        //pipeline.nextButton.setEnabled(false);
-                    }
-        }*/
+        }
             
         }
               
@@ -684,47 +837,52 @@ import javax.swing.table.DefaultTableModel;
             srcBvalGradTable.setBackground(Color.lightGray);
             srcBvalGradTable.setEnabled(false);
 
-            final JPanel DWIButtonPanel = new JPanel();
-            final JButton loadBValGradFileButton = new JButton("Load B-Value/Grad File");
-            loadBValGradFileButton.addActionListener(this);
-            loadBValGradFileButton.setActionCommand("bvalGradBrowse");
+            DWIButtonPanel = new JPanel();
+            DWIButtonPanel.setBorder(buildTitledBorder("Table Options "));
+
            
-            final JButton saveBvalGradButton = new JButton("Save Table As");
+            saveBvalGradButton = new JButton("Save Table As");
+            saveBvalGradButton.setEnabled(false);
             saveBvalGradButton.addActionListener(this);
             saveBvalGradButton.setActionCommand("saveBvalGrad");
             
             isDWICellEditBox = new JCheckBox("Edit Table", false);
+            isDWICellEditBox.setEnabled(false);
             isDWICellEditBox.addActionListener(this);
             isDWICellEditBox.setActionCommand("DWICellEditSwitch");
             
-            final JButton clearDWITableButton = new JButton("Clear");
+            clearDWITableButton = new JButton("Clear");
+            clearDWITableButton.setEnabled(false);
             clearDWITableButton.addActionListener(this);
             clearDWITableButton.setActionCommand("DWITableDeleteButton");
             
             negXCheckBox = new JCheckBox("+/- x");
+            negXCheckBox.setEnabled(false);
             negXCheckBox.addActionListener(this);
             negXCheckBox.setActionCommand("NegX");
 
-            negYCheckBox = new JCheckBox("+/- y");;
+            negYCheckBox = new JCheckBox("+/- y");
+            negYCheckBox.setEnabled(false);
             negYCheckBox.addActionListener(this);
             negYCheckBox.setActionCommand("NegY");
 
             negZCheckBox = new JCheckBox("+/- z");
+            negZCheckBox.setEnabled(false);
             negZCheckBox.addActionListener(this);
             negZCheckBox.setActionCommand("NegZ");
 
-            DWIButtonPanel.add(loadBValGradFileButton);
-            DWIButtonPanel.add(saveBvalGradButton);
-            DWIButtonPanel.add(isDWICellEditBox);
+
+            DWIButtonPanel.add(isDWICellEditBox);          
             DWIButtonPanel.add(clearDWITableButton);
             DWIButtonPanel.add(negXCheckBox );
             DWIButtonPanel.add(negYCheckBox );
             DWIButtonPanel.add(negZCheckBox );
+            DWIButtonPanel.add(saveBvalGradButton);
             
 
 
             gbc2.gridx = 0;
-            gbc2.gridy = 2;
+            gbc2.gridy = 3;
             gbc2.anchor = GridBagConstraints.NORTHWEST;
             gbc2.weightx = .75;
             gbc2.weighty = 1;
@@ -733,7 +891,7 @@ import javax.swing.table.DefaultTableModel;
             final JScrollPane srcImagesScrollPane = new JScrollPane(srcBvalGradTable);
             srcPanel.add(srcImagesScrollPane, gbc2);
             gbc2.gridx = 0;
-            gbc2.gridy = 3;
+            gbc2.gridy = 4;
             gbc2.weightx = 1;
             gbc2.weighty = 0;
             gbc2.gridwidth = 2;
@@ -742,13 +900,13 @@ import javax.swing.table.DefaultTableModel;
             srcPanel.add(DWIButtonPanel, gbc2);
             
             final JPanel BvalGradApply = new JPanel();
-            BvalGradApply.setBorder(buildTitledBorder("Application"));
+            //BvalGradApply.setBorder(buildTitledBorder("Application"));
             
             bvalGradAppButton = new JButton("Apply Table");
             //openDWIButton.setToolTipText("Browse dwi dataset image file");
             bvalGradAppButton.addActionListener(this);
             bvalGradAppButton.setActionCommand("applyTable");
-            bvalGradAppButton.setEnabled(true);
+            bvalGradAppButton.setEnabled(false);
             gbc.gridx = 0;
             gbc.gridy = 1;
             //gbc.weightx = 1;
@@ -756,7 +914,7 @@ import javax.swing.table.DefaultTableModel;
             gbc.fill = GridBagConstraints.NORTHWEST;
             BvalGradApply.add(bvalGradAppButton);
             
-            preProcessedBox = new JCheckBox("Image Has Been Pre-processed");
+            preProcessedBox = new JCheckBox("Skip Pre-processing");
             preProcessedBox.setActionCommand("preProcessed");
             preProcessedBox.setSelected(false);
             preProcessedBox.setEnabled(true);
@@ -766,10 +924,10 @@ import javax.swing.table.DefaultTableModel;
             //gbc.weightx = 1;
             gbc.insets = new Insets(0, 0, 10, 0);
             gbc.fill = GridBagConstraints.NORTHWEST;
-            BvalGradApply.add(preProcessedBox);
+            //BvalGradApply.add(preProcessedBox);
             
             gbc2.gridx = 0;
-            gbc2.gridy = 4;
+            gbc2.gridy = 5;
             gbc2.weightx = 1;
             gbc2.weighty = 0;
             gbc2.gridwidth = 2;
@@ -777,12 +935,22 @@ import javax.swing.table.DefaultTableModel;
             srcPanel.add(BvalGradApply, gbc2);
             
             
-            final JPanel DWIOpenPanel = new JPanel(new GridBagLayout());
-            DWIOpenPanel.setBorder(buildTitledBorder("Input Options"));
-            openedImageCheckBox = new JCheckBox("Use DWI 4D Active Image");
-            //openedImageCheckBox.setBorderPainted(true);
-            openedImageCheckBox.addActionListener(this);
-            openedImageCheckBox.setActionCommand("openedImage");
+            DWIOpenPanel = new JPanel(new GridBagLayout());
+            //DWIOpenPanel.setBorder(buildTitledBorder("Input Options " +"(load DWI dataset, optional: load reference structural image for EPI distortion correction)"));
+            DWIOpenPanel.setBorder(highlightTitledBorder("Upload DWI Image"));
+            browseDWIButton = new JRadioButton("DWI Image Browse");
+            browseDWIButton.setSelected(true); 
+            browseDWIButton.setFont(serif12);
+            activeDWIButton = new JRadioButton("Use Active DWI image");
+            activeDWIButton.setFont(serif12);
+            activeDWIButton.addActionListener(this);
+            activeDWIButton.setActionCommand("openedImage");
+                      
+            ButtonGroup group = new ButtonGroup();
+            group.add(browseDWIButton);
+            group.add(activeDWIButton);
+
+            
             gbc.gridx = 0;
             gbc.gridy = 1;
             gbc.weightx = 1;
@@ -792,103 +960,39 @@ import javax.swing.table.DefaultTableModel;
             gbc.fill = GridBagConstraints.NONE;
             gbc.anchor = GridBagConstraints.WEST;
             gbc.insets = new Insets(0, 2, 0, 2);
-            DWIOpenPanel.add(openedImageCheckBox,gbc);
-
+            //DWIOpenPanel.add(openedImageCheckBox,gbc);
+            DWIOpenPanel.add(browseDWIButton,gbc);
            
-            
-            dwiFileLabel = new JLabel("DWI Dataset Image: ");
-            dwiFileLabel.setFont(serif12);
-            dwiFileLabel.setEnabled(true);
-            gbc.gridx = 1;
+            gbc.gridx = 2;
             gbc.gridy = 1;
             gbc.weightx = 1;
             gbc.fill = GridBagConstraints.HORIZONTAL;
-            DWIOpenPanel.add(dwiFileLabel,gbc);
-            
+            //DWIOpenPanel.add(dwiFileLabel,gbc);
+            DWIOpenPanel.add(activeDWIButton,gbc);
+                                   
             textDWIDataimage = new JTextField();
-            textDWIDataimage.setPreferredSize(new Dimension(275, 21));
+            textDWIDataimage.setPreferredSize(new Dimension(75, 21));
             textDWIDataimage.setEditable(true);
             textDWIDataimage.setBackground(Color.white);
             textDWIDataimage.setFont(MipavUtil.font12);
-            gbc.gridx = 2;
-            gbc.gridy = 1;
-            gbc.weightx = 1;
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.weightx = 0.25;
             gbc.fill = GridBagConstraints.HORIZONTAL;
             DWIOpenPanel.add(textDWIDataimage,gbc);
-            
-            
+                        
             openDWIButton = new JButton("Browse");
-            //openDWIButton.setToolTipText("Browse dwi dataset image file");
+            openDWIButton.setPreferredSize(new Dimension(100, 21));
             openDWIButton.addActionListener(this);
             openDWIButton.setActionCommand("browseDWIFile");
             openDWIButton.setEnabled(true);
-            gbc.gridx = 3;
-            gbc.gridy = 1;
-            gbc.weightx = 1;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            DWIOpenPanel.add(openDWIButton,gbc);
-
-
-
-            
-            /*final JPanel t2OpenPanel = new JPanel();
-            t2OpenPanel.setBorder(buildTitledBorder("Upload T2 Image"));*/
-            useT2CheckBox = new JCheckBox("Use Structural Image as Reference Space (ex: T2 Image)");
-            //useT2CheckBox.setBorderPainted(true);
-            useT2CheckBox.addActionListener(this);
-            useT2CheckBox.setActionCommand("useT2Image");
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            gbc.weightx = 1;
-            gbc.gridwidth = 1;
-            gbc.gridheight = 1;
-            gbc.weightx = 0;
-            gbc.fill = GridBagConstraints.NONE;
-            gbc.anchor = GridBagConstraints.WEST;
-            gbc.insets = new Insets(0, 2, 0, 2);
-            DWIOpenPanel.add(useT2CheckBox,gbc);
-            
-            t2FileLabel = new JLabel("T2 Image: ");
-            t2FileLabel.setFont(serif12);
-            t2FileLabel.setEnabled(true);
             gbc.gridx = 1;
             gbc.gridy = 2;
-            gbc.weightx = 1;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            //DWIOpenPanel.add(t2FileLabel,gbc);
+            gbc.weightx = 0.25;
+            gbc.fill = GridBagConstraints.NONE;
+            DWIOpenPanel.add(openDWIButton,gbc);
             
-            textT2image = new JTextField();
-            textT2image.setPreferredSize(new Dimension(275, 21));
-            textT2image.setEnabled(false);
-            textT2image.setBackground(Color.white);
-            textT2image.setFont(MipavUtil.font12);
-            gbc.gridx = 2;
-            gbc.gridy = 2;
-            gbc.weightx = 1;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            DWIOpenPanel.add(textT2image,gbc);
-            
-            
-            openT2Button = new JButton("Browse");
-            //openDWIButton.setToolTipText("Browse dwi dataset image file");
-            openT2Button.addActionListener(this);
-            openT2Button.setActionCommand("browseT2File");
-            openT2Button.setEnabled(false);
-            gbc.gridx = 3;
-            gbc.gridy = 2;
-            gbc.weightx = 1;
-            gbc.fill = GridBagConstraints.HORIZONTAL;
-            DWIOpenPanel.add(openT2Button,gbc);
-
            
-            /*gbc2.gridx = 0;
-            gbc2.gridy = 1;
-            gbc2.weightx = 1;
-            gbc2.weighty = 0;
-            gbc2.gridwidth = 2;
-            gbc2.fill = GridBagConstraints.BOTH;
-            srcPanel.add(t2OpenPanel, gbc2);*/
-            
             gbc2.gridx = 0;
             gbc2.gridy = 0;
             gbc2.weightx = .5;
@@ -896,16 +1000,115 @@ import javax.swing.table.DefaultTableModel;
             gbc2.gridwidth = 1;
             gbc2.fill = GridBagConstraints.BOTH;
             srcPanel.add(DWIOpenPanel, gbc2);
+
+
+
             
-            final JPanel t2OpenPanel = new JPanel();
-            t2OpenPanel.setBorder(buildTitledBorder("Upload T2 Image"));
-            gbc2.gridx = 1;
-            gbc2.gridy = 0;
+            t2OpenPanel = new JPanel(new GridBagLayout());
+            t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));            
+            t2FileLabel = new JLabel("Structural Image(ex: T2 Image): ");
+            t2FileLabel.setFont(serif12);
+            t2FileLabel.setEnabled(false);
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.weightx = 1;
+            gbc.gridwidth = 1;
+            gbc.gridheight = 1;
+            gbc.weightx = 0;
+            gbc.fill = GridBagConstraints.NONE;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.insets = new Insets(0, 2, 0, 2);
+            t2OpenPanel.add(t2FileLabel,gbc);
+            
+            textT2image = new JTextField();
+            textT2image.setPreferredSize(new Dimension(100, 21));
+            textT2image.setEnabled(false);
+            textT2image.setBackground(Color.white);
+            textT2image.setFont(MipavUtil.font12);
+            gbc.gridx = 1;
+            gbc.gridy = 1;
+            gbc.weightx = 0.15;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            t2OpenPanel.add(textT2image,gbc);
+            
+            
+            openT2Button = new JButton("Browse");
+            openT2Button.addActionListener(this);
+            openT2Button.setActionCommand("browseT2File");
+            openT2Button.setEnabled(false);
+            gbc.gridx = 2;
+            gbc.gridy = 1;
+            gbc.weightx = 0.25;
+            gbc.fill = GridBagConstraints.NONE;
+            t2OpenPanel.add(openT2Button,gbc);
+            
+            useT2CheckBox = new JCheckBox("Skip");
+            useT2CheckBox.setActionCommand("SkipT2");
+            useT2CheckBox.setSelected(false);
+            useT2CheckBox.setEnabled(false);
+            useT2CheckBox.setFont(serif12);
+            useT2CheckBox.addActionListener(this);
+            gbc.gridx = 3;
+            gbc.gridy = 1;
+            gbc.weightx = 0.25;
+            gbc.fill = GridBagConstraints.NONE;
+            t2OpenPanel.add(useT2CheckBox,gbc);
+            
+            
+            gbc2.gridx = 0;
+            gbc2.gridy = 1;
             gbc2.weightx = .5;
+            gbc2.weighty = 0;  
+            gbc2.gridwidth = 1;
+            gbc2.fill = GridBagConstraints.BOTH;
+            srcPanel.add(t2OpenPanel, gbc2);
+            
+            loadTable = new JPanel(new GridBagLayout());
+            loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File"));
+            
+            bvalGradFileLabel = new JLabel("Bvalue/Gradient File: ");
+            bvalGradFileLabel.setFont(serif12);
+            bvalGradFileLabel.setEnabled(false);
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.weightx = 1;
+            gbc.gridwidth = 1;
+            gbc.gridheight = 1;
+            gbc.weightx = 0;
+            gbc.fill = GridBagConstraints.NONE;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.insets = new Insets(0, 2, 0, 2);
+            loadTable.add(bvalGradFileLabel,gbc);
+            
+            textBvalGradFile = new JTextField();
+            textBvalGradFile.setPreferredSize(new Dimension(100, 21));
+            textBvalGradFile.setEnabled(false);
+            textBvalGradFile.setBackground(Color.white);
+            textBvalGradFile.setFont(MipavUtil.font12);
+            gbc.gridx = 1;
+            gbc.gridy = 1;
+            gbc.weightx = 0.25;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+            loadTable.add(textBvalGradFile,gbc);
+            
+            loadBValGradFileButton = new JButton("Browse");
+            loadBValGradFileButton.addActionListener(this);
+            loadBValGradFileButton.setEnabled(false);
+            loadBValGradFileButton.setActionCommand("bvalGradBrowse");
+            gbc.gridx = 2;
+            gbc.gridy = 1;
+            gbc.weightx = 0.25;
+            gbc.fill = GridBagConstraints.NONE;
+            loadTable.add(loadBValGradFileButton,gbc);
+            
+            
+            gbc2.gridx = 0;
+            gbc2.gridy = 2;
+            gbc2.weightx = 1;
             gbc2.weighty = 0;
             gbc2.gridwidth = 1;
             gbc2.fill = GridBagConstraints.BOTH;
-            //srcPanel.add(t2OpenPanel, gbc2);
+            srcPanel.add(loadTable, gbc2);
             
 
             scrollPane = new JScrollPane(srcPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -1100,7 +1303,7 @@ import javax.swing.table.DefaultTableModel;
                             gbc.gridx = 0;
                             GradCreatorPanel.add(applyGradOptions,gbc);
                              
-                            gbc2.gridy = 2;
+                            gbc2.gridy = 3;
                             gbc2.gridx = 1;
                             gbc2.gridwidth = 1;
                             gbc2.weightx = .25;
@@ -1187,7 +1390,7 @@ import javax.swing.table.DefaultTableModel;
                             gbc.gridx = 0;
                             GradCreatorPanel.add(applyGradOptions,gbc);
                              
-                            gbc2.gridy = 2;
+                            gbc2.gridy = 3;
                             gbc2.gridx = 1;
                             gbc2.gridwidth = 1;
                             gbc2.weightx = .25;
@@ -1205,6 +1408,11 @@ import javax.swing.table.DefaultTableModel;
         private TitledBorder buildTitledBorder(String title) {
             return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
                                     Color.black);
+        }
+        
+        private TitledBorder highlightTitledBorder(String title){
+            return new TitledBorder(new LineBorder( Color.black, 2), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                    Color.black);
         }
 
        
@@ -2202,23 +2410,22 @@ import javax.swing.table.DefaultTableModel;
         
         public void loadT2File() {
 
-            ViewOpenFileUI openFile = new ViewOpenFileUI(true);          
+           openFile = new ViewOpenFileUI(true);          
             final boolean stackFlag = getLastStackFlag();
             ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag);
             final FileIO fileIO = new FileIO();
-            textT2image.setText(openFile.getImagePath());
             m_kT2Image = openFile.getImage();
-
             Vector<Frame> imageFrameVector = ui.getImageFrameVector();
-            for (int i = 0; i<imageFrameVector.size(); i++){
-                String imageFrameName = imageFrameVector.get(i).getName();
-                String openedFileName = openFile.getFileName();
-                if (openedFileName.equals(imageFrameName)){
-                    t2frame = (ViewJFrameImage) imageFrameVector.get(i);
-                    break;
+                for (int i = 0; i<imageFrameVector.size(); i++){
+                    String imageFrameName = imageFrameVector.get(i).getName();
+                    String openedFileName = openFile.getFileName();
+                    if (openedFileName.equals(imageFrameName)){
+                        t2frame = (ViewJFrameImage) imageFrameVector.get(i);
+                        break;
+                    }
                 }
-            }
-            
+
+
 
 
             
@@ -2252,6 +2459,7 @@ import javax.swing.table.DefaultTableModel;
             try {
                 String str;
                 final File file = new File(gradientFilePath);
+                textBvalGradFile.setText(gradientFilePath);
                 final RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
                 String firstLine = raFile.readLine();
@@ -2307,6 +2515,8 @@ import javax.swing.table.DefaultTableModel;
                     // this is FSL
 
                     // String line;
+                    try{
+                    //System.out.println("fsl");
 
                     int decimalCount = 0;
                     StringBuffer buffFirstLine = new StringBuffer(firstLine);
@@ -2319,8 +2529,9 @@ import javax.swing.table.DefaultTableModel;
                         }
 
                     }
+                    //System.out.println("decimal count: " +decimalCount);
 
-                    if (decimalCount > 4) {
+                    //if (decimalCount > 4) {
                         raFile.seek(0);
                         numVolumes = decimalCount;
 
@@ -2401,8 +2612,13 @@ import javax.swing.table.DefaultTableModel;
                         }
 
                     }
+                    catch (Exception e){
+                        MipavUtil.displayError("Invalid Bval/Gradient Text File");
+                        
+                    }
 
-                    else {
+                    /*else {
+                        System.out.println("line count = 0");
                         String line;
                         int lineCount = 0;
                         // counts number of lines in file
@@ -2440,7 +2656,7 @@ import javax.swing.table.DefaultTableModel;
 
                         }
 
-                    }
+                    }*/
 
                 }
                 raFile.close();
