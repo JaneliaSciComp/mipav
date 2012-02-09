@@ -192,21 +192,20 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
                     MipavUtil.displayError("Please load B-values and Gradients");
                 }
             
-           if (importData.useT2CheckBox.isSelected()){
+           if (importData.useT2CheckBox.isSelected() == false){
                if (importData.m_kT2Image !=null){
+                   System.out.println("t2imagenotnull");
                    T2Image = importData.m_kT2Image;
                    T2frame = importData.t2frame;
                    //eddyCurReg.epiCheckBox.setEnabled(true);
                }
                else{
-                   MipavUtil.displayError("Please load T2 image"); 
-                   tabbedPane.setSelectedIndex(0);
+                   MipavUtil.displayError("Error loading T2 image"); 
+                   tabbedPane.setSelectedIndex(1);
                }
            }
            
-           if (T2Image != null) {
-               //t2load.matrixComboBox.addItem(T2Image.getImageDirectory());   
-           }
+
 
 
             
@@ -230,10 +229,12 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
             }*/
             
             if (DTIPreprocessing.result35RegImage !=null){
-                System.out.println("result35 not null");
+                //System.out.println("result35 not null");
                 DWINewB0Image = DTIPreprocessing.result35RegImage;
                 arrayTransMatrix = DTIPreprocessing.arrayTransMatrix;
+                //System.out.println("arraTransMat: " +arrayTransMatrix[0]);
                 b0toStructMatrix = DTIPreprocessing.b0toStructMatrix;
+                //System.out.println("b0toStructMatrix: "+b0toStructMatrix);
                 tabbedPane.setSelectedIndex(2);
                 nextButton.setEnabled(false);
                 goBackButton.setEnabled(true);
