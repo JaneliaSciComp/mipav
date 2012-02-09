@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -180,6 +181,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
     /** DOCUMENT ME! */
     private JRadioButton weightRadio;
 
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -330,6 +332,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         float[][] posR = null;
         float[][] trans = null;
         float[][] posT = null;
+        
 
         if (algorithm instanceof AlgorithmRegOAR35D) {
 
@@ -703,6 +706,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
                                            refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
                                            doSubsample, fastMode, bracketBound, maxIterations, numMinima);
         } else {
+            System.out.println("regelse");
 
             reg35 = new AlgorithmRegOAR35D(matchImage, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
                                            rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
@@ -716,6 +720,8 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
             }
 
         }
+        
+        doJTEM = jtemCheckbox.isSelected();
         reg35.setJTEM(doJTEM);
 
         // Start the thread as a low priority because we wish to still have user interface work fast.
