@@ -10,6 +10,7 @@ import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmInsertVolume;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRemoveTSlices;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
+import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -183,16 +184,18 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     private String newB0DWIRegString;
 
     private int[] newB0DWIRegExtents;
-    
+
     private int[] epiExtents;
-    
-    public TransMatrix [] arrayTransMatrix;
-    
+
+    public TransMatrix[] arrayTransMatrix;
+
     public TransMatrix b0toStructMatrix;
-    
+
     private ModelImage[] EPI4dto3dArray;
-    
+
     private ModelImage EPI4dto3dVolume;
+
+    private DTIParameters dtiRegParams;
 
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
@@ -220,9 +223,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         if (command.equals("OK")) {
             if (pipeline.T2Image != null) {
+                System.out.println("t2image");
                 callT2Algorithm();
+                setVariables();
                 callReg35Algorithm();
             } else {
+                setVariables();
                 callReg35Algorithm();
             }
 
@@ -240,7 +246,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                 if (result35RegImage != null) {
                     try {
                         new ViewJFrameImage(result35RegImage, null, new Dimension(610, 200));
-                        
+
                         pipeline.nextButton.setEnabled(true);
                         pipeline.nextButton.setActionCommand("next2");
                     } catch (final OutOfMemoryError error) {
@@ -300,11 +306,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         if (algorithm instanceof AlgorithmRegOAR3D) {
             if (reg3.isCompleted()) {
+                //System.out.println("reg3 completed");
 
                 matrixDirectory = (String) matrixComboBox.getSelectedItem();
 
                 b0toStructMatrix = reg3.getTransform();
-
+                //System.out.println("test: " + b0toStructMatrix);
 
                 if (transformB0Checkbox.isSelected()) {
                     final int xdimA = refT2image.getExtents()[0];
@@ -316,8 +323,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
                     final String name = JDialogBase.makeImageName(matchB0image.getImageName(), "_RegisteredB0toT2");
 
-                    transform = new AlgorithmTransform(matchB0image, b0toStructMatrix, 0, xresA, yresA, zresA, xdimA, ydimA,
-                            zdimA, true, false, pad);
+                    transform = new AlgorithmTransform(matchB0image, b0toStructMatrix, 0, xresA, yresA, zresA, xdimA,
+                            ydimA, zdimA, true, false, pad);
 
                     transform.setUpdateOriginFlag(true);
                     transform.setFillValue(Float.valueOf("0.0"));
@@ -395,12 +402,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                 yCen = yOrig * resY;
                 zCen = zOrig * resZ;
                 b0toStructMatrix.Inverse();
-                xCenNew = xCen * b0toStructMatrix.Get(0, 0) + yCen * b0toStructMatrix.Get(0, 1) + zCen * b0toStructMatrix.Get(0, 2)
-                        + b0toStructMatrix.Get(0, 3);
-                yCenNew = xCen * b0toStructMatrix.Get(1, 0) + yCen * b0toStructMatrix.Get(1, 1) + zCen * b0toStructMatrix.Get(1, 2)
-                        + b0toStructMatrix.Get(1, 3);
-                zCenNew = xCen * b0toStructMatrix.Get(2, 0) + yCen * b0toStructMatrix.Get(2, 1) + zCen * b0toStructMatrix.Get(2, 2)
-                        + b0toStructMatrix.Get(2, 3);
+                xCenNew = xCen * b0toStructMatrix.Get(0, 0) + yCen * b0toStructMatrix.Get(0, 1) + zCen
+                        * b0toStructMatrix.Get(0, 2) + b0toStructMatrix.Get(0, 3);
+                yCenNew = xCen * b0toStructMatrix.Get(1, 0) + yCen * b0toStructMatrix.Get(1, 1) + zCen
+                        * b0toStructMatrix.Get(1, 2) + b0toStructMatrix.Get(1, 3);
+                zCenNew = xCen * b0toStructMatrix.Get(2, 0) + yCen * b0toStructMatrix.Get(2, 1) + zCen
+                        * b0toStructMatrix.Get(2, 2) + b0toStructMatrix.Get(2, 3);
                 Preferences.debug("The geometric center of " + matchB0image.getImageName() + " at (" + xCen + ", "
                         + yCen + ", " + zCen + ")\n", Preferences.DEBUG_ALGORITHM);
                 if (resultB0toT2Image != null) {
@@ -451,14 +458,27 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             matrixDirectory = (String) matrixComboBox.getSelectedItem();
             final TransMatrix finalMatrix = reg35.getTransform();
             arrayTransMatrix = reg35.getArrayTransMatrix();
+            //Testing
+            /*for (int i = 0; i < arrayTransMatrix.length; i++) {
+                System.out.println("TestarrayTransMatrix: " + arrayTransMatrix[i]);
+            }*/
             JTextField[][] textMatrix = new JTextField[4][4];
-           
 
             result35RegImage = reg35.getTransformedImage();
             if (result35RegImage != null) {
                 result35RegImage.calcMinMax();
                 result35RegImage.setImageName(pipeline.DWIImage.getImageName() + comboBoxDOF.getSelectedItem());
-                createArrayTransMatrixTXT(); 
+                createArrayTransMatrixTXT();
+                dtiRegParams = new DTIParameters(result35RegImage.getExtents()[3]);
+                dtiRegParams = pipeline.DWIImage.getDTIParameters();
+                //Testing
+                /*System.out.println("dtiRegparamsvol: " + dtiRegParams.getNumVolumes());
+                if (dtiRegParams.getNumVolumes() == result35RegImage.getExtents()[3]) {
+                    System.out.println("dtiRegparamsvol1: " + dtiRegParams.getNumVolumes());
+                    for (int i = 0; i < dtiRegParams.getNumVolumes(); i++) {
+                        System.out.println("dtibvalsparamsvol1: " + dtiRegParams.getbValues()[i]);
+                    }
+                }*/
             }
 
         }
@@ -486,6 +506,25 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         reg35 = new AlgorithmRegOAR35D(dwi35RegImage, cost, DOF, interp, interp, registerTo, sliceNum, rotateBegin,
                 rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+        //Testing
+        /*System.out.println("costChoice" + cost);
+        System.out.println("int _DOF" + DOF);
+        System.out.println("_interp" + interp);
+        System.out.println("_interp2" + interp);
+        System.out.println("mode" + registerTo);
+        System.out.println("refImageNum" + sliceNum);
+        System.out.println(" _rotateBegin" + rotateBegin);
+        System.out.println("_rotateEnd" + rotateEnd);
+        System.out.println("_coarseRate" + coarseRate);
+        System.out.println("_fineRate" + fineRate);
+        System.out.println("doGraph" + doGraph);
+        System.out.println("doSubsample" + doSubsample);
+        System.out.println("fastMode" + fastMode);
+        System.out.println("_bracketBound" + bracketBound);
+        System.out.println("_baseNumIter" + maxIterations);
+        System.out.println("_numMinima" + numMinima);*/
+        // System.out.println("doJTEM" +doJTEM);
+        // System.out.println("doMultiThread" +doMultiThread);
 
         // Start the thread as a low priority because we wish to still have user interface work fast.
         reg35.addListener(this);
@@ -807,7 +846,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         return helpButton;
     }
-    
+
     /**
      * This method creates the B-Value/Gradient file for DTI Tab
      * 
@@ -815,27 +854,27 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      */
     public void createArrayTransMatrixTXT() {
 
-
         try {
             StringBuffer sb;
             int padLength;
-            File arrayMatFile = new File(matrixDirectory +pipeline.DWIImage.getImageName()+"TransMats"+".mtx");
+            File arrayMatFile = new File(matrixDirectory + pipeline.DWIImage.getImageName() + "TransMats" + ".mtx");
             FileOutputStream outputStream = new FileOutputStream(arrayMatFile);
             PrintStream printStream = new PrintStream(outputStream);
-            String matrixString = ""; 
+            String matrixString = "";
             String[] matrixArr = new String[pipeline.DWIImage.getExtents()[3]];
-                                 
-          
-            for (int i = 0; i < pipeline.DWIImage.getExtents()[3]-1; i++) {  
-                printStream.print("TransMatrix" +" " +i + ":");
+
+            for (int i = 0; i < pipeline.DWIImage.getExtents()[3] - 1; i++) {
+                printStream.print("TransMatrix" + " " + i + ":");
                 printStream.println();
                 for (int j = 0; j < 4; j++) {
-                        matrixString = "\t" + Float.toString(arrayTransMatrix[i].Get(j, 0))+"    "+ Float.toString(arrayTransMatrix[i].Get(j, 1))+"    "
-                        + Float.toString(arrayTransMatrix[i].Get(j, 2))+"    "+ Float.toString(arrayTransMatrix[i].Get(j, 3));
-                        printStream.print(matrixString);
-                        printStream.println();              
-            }                             
-          }
+                    matrixString = "\t" + Float.toString(arrayTransMatrix[i].Get(j, 0)) + "    "
+                            + Float.toString(arrayTransMatrix[i].Get(j, 1)) + "    "
+                            + Float.toString(arrayTransMatrix[i].Get(j, 2)) + "    "
+                            + Float.toString(arrayTransMatrix[i].Get(j, 3));
+                    printStream.print(matrixString);
+                    printStream.println();
+                }
+            }
             printStream.println();
             printStream.print("Using cost function, " + comboBoxCostFunct.getSelectedItem());
             printStream.print(", the cost is " + Double.toString(reg35.getAnswer()));
@@ -846,26 +885,20 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             printStream.print("with a X coarse rate of " + 15.0 + " and X fine rate of " + 6.0);
             printStream.println();
             printStream.print("Y Rotations from " + -30.0 + " to " + 30.0 + ", ");
-            printStream.print("with a Y coarse rate of " + 15.0+ " and Y fine rate of " + 6.0);
+            printStream.print("with a Y coarse rate of " + 15.0 + " and Y fine rate of " + 6.0);
             printStream.println();
-            printStream.print("Z Rotations from " + -30.0 + " to " + 30.0  + ", ");
-            printStream.print("with a Z coarse rate of " + 15.0 + " and Z fine rate of " + 6.0 );
+            printStream.print("Z Rotations from " + -30.0 + " to " + 30.0 + ", ");
+            printStream.print("with a Z coarse rate of " + 15.0 + " and Z fine rate of " + 6.0);
             printStream.println();
 
-            
-        }catch(Exception e) {
+        } catch (Exception e) {
             Preferences.debug("! ERROR: " + e.toString() + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("! ERROR: Creation of arrarTrans<atrix file failed....exiting algorithm \n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("! ERROR: Creation of arrarTrans<atrix file failed....exiting algorithm \n",
+                    Preferences.DEBUG_ALGORITHM);
 
-            }
-        
-        
-        
-                
         }
-    
 
-
+    }
 
     /**
      * Sets the variables needed to call the registration algorithm based on the values entered in the dialog.
