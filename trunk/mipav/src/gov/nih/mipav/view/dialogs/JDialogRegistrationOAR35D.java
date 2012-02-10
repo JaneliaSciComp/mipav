@@ -1703,6 +1703,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         } // if (voisOnly)
 
         doSubsample = sampleCheckBox.isSelected();
+        doJTEM = jtemCheckbox.isSelected();
 
         return true;
     }
