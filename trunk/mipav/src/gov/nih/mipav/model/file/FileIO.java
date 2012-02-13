@@ -581,6 +581,8 @@ public class FileIO {
         int[] indices = null;
         final int[] orient = new int[3]; // for FileInfoBase values. eg:FileInfoBase.ORI_S2I_TYPE;
         int pBarVal = 0;
+        
+        boolean validInstanceSort = false, validOriSort = false;
 
         if ( !refFileInfo.isMultiFrame()) {
 
@@ -757,10 +759,6 @@ public class FileIO {
              */
             
 
-            // will force sorting to go by input order.
-            boolean fourthDimensional = false; // 4th dimensional
-            boolean validInstanceSort = false, validOriSort = false;
-
 			if (performSort) {
 
               
@@ -906,10 +904,8 @@ public class FileIO {
                             }
                         }
 
-                        fourthDimensional = true;
                         Preferences.debug("4D, translation passes!  " + t + " slices!\n", Preferences.DEBUG_FILEIO);
                     } catch (final ArrayIndexOutOfBoundsException enumTooFar) {
-                        fourthDimensional = false;
                         Preferences.debug("NOT 4D, and DICOM translation fail!\n", Preferences.DEBUG_FILEIO);
                     }
 
@@ -1022,11 +1018,15 @@ public class FileIO {
                 enhancedNumVolumes = nImages / enhancedNumSlices;
                 extents[3] = enhancedNumVolumes;
             } else {
-            	if(refFileInfo.getTagTable().getValue("0020,0105") != null) {
+            	int sliceDim = 0, timeDim = 0;
+                if(validInstanceSort && refFileInfo.getTagTable().getValue("0020,0105") != null && refFileInfo.getTagTable().getValue("0020,1002") != null &&
+            	        (timeDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,0105").toString()).intValue()) > 1 && 
+            	        (sliceDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue()) > 1 &&
+            	        sliceDim*timeDim == nImages) {
             		extents = new int[4];
 
-            		extents[3] = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,0105").toString()).intValue();
-            		extents[2] = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue();
+            		extents[3] = timeDim;
+            		extents[2] = sliceDim;
             	} else {
             		extents = new int[3];
             		extents[2] = nImages;
