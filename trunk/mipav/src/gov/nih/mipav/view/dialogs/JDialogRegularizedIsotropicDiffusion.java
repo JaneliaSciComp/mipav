@@ -4,7 +4,6 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
-import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmRegularizedIsotropicDiffusion;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -193,6 +192,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
             } else {
                 resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
             }
+            /*
             if ( doOCL )
             {
             	OpenCLAlgorithmRegularizedIsotropicDiffusion regIsoDiffusionAlgorithm = new OpenCLAlgorithmRegularizedIsotropicDiffusion(resultImage, srcImage, numIterations,
@@ -200,7 +200,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
             	regIsoDiffusionAlgorithm.addListener(this);
             	regIsoDiffusionAlgorithm.run();
             	return;
-            }
+            }*/
 
             regIsoDiffusionAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage, srcImage, numIterations,
                                                                              stdDev, contrast, do25D);
@@ -351,7 +351,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
         }
         gbc.gridy++;
         gbc.gridx = 0;
-        parameterPanel.add(useOCLCheckbox, gbc);
+        //parameterPanel.add(useOCLCheckbox, gbc);
 
 
         return parameterPanel;
