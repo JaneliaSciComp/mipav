@@ -945,9 +945,19 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                                 final String grads = arr[1].trim();
                                 final String[] arr2 = grads.split("\\s+");
                                 System.out.println("arr2:"+arr2);
-                                srcTableModel.setValueAt(arr2[0], i, 2);
-                                srcTableModel.setValueAt(arr2[1], i, 3);
-                                srcTableModel.setValueAt(arr2[2], i, 4);
+                                if ( arr2.length == 3 )
+                                {
+                                	srcTableModel.setValueAt(arr2[0], i, 2);
+                                	srcTableModel.setValueAt(arr2[1], i, 3);
+                                	srcTableModel.setValueAt(arr2[2], i, 4);
+                                }
+                                else if ( arr2.length == 4 )
+                                {
+                                	srcTableModel.setValueAt(arr2[0], i, 1);
+                                	srcTableModel.setValueAt(arr2[1], i, 2);
+                                	srcTableModel.setValueAt(arr2[2], i, 3);
+                                	srcTableModel.setValueAt(arr2[3], i, 4);
+                                }
                             }
                         }
 

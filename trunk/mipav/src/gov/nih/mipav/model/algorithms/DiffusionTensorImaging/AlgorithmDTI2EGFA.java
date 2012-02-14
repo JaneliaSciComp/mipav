@@ -59,27 +59,10 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         m_kEigenVectorImage = null;
         m_kEigenValueImage = null;
         m_kFAImage = null;
-
-        if ( m_kADCImage !=  null )
-        {
-            m_kADCImage.disposeLocal();
-            m_kADCImage = null;
-        }
-        if ( m_kTraceImage !=  null )
-        {
-            m_kTraceImage.disposeLocal();
-            m_kTraceImage = null;
-        }
-        if ( m_kRAImage !=  null )
-        {
-            m_kRAImage.disposeLocal();
-            m_kRAImage = null;
-        }
-        if ( m_kVRImage !=  null )
-        {
-            m_kVRImage.disposeLocal();
-            m_kVRImage = null;
-        }
+        m_kADCImage = null;
+        m_kVRImage = null;
+        m_kTraceImage = null;
+        m_kRAImage = null;
         System.gc();
     }
 
@@ -185,6 +168,10 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
             for ( int j = 0; j < 6; j++ )
             {
                 afTensorData[j] = m_kDTI.getFloat(i + j*iLen);
+                if ( afTensorData[j] == Float.NaN )
+                {
+                	afTensorData[j] = 0;
+                }
                 if ( afTensorData[j] != 0 )
                 {
                     bAllZero = false;

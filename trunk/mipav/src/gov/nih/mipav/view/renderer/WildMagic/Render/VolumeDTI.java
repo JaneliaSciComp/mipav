@@ -706,6 +706,10 @@ public class VolumeDTI extends VolumeObject
 			for ( int j = 0; j < 6; j++ )
 			{
 				afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
+                if ( afTensorData[j] == Float.NaN )
+                {
+                	afTensorData[j] = 0;
+                }
 				if ( afTensorData[j] != 0 )
 				{
 					bAllZero = false;
@@ -901,8 +905,6 @@ public class VolumeDTI extends VolumeObject
 		MakeArrow();
 
 		afTensorData = null;
-		kDTIImage.disposeLocal();
-		kDTIImage = null;
 	}
 
 

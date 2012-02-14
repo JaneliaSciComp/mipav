@@ -108,6 +108,27 @@ implements ChangeListener {
         setSize( 1331, 925 );
         setVisible(true);
     }
+    
+
+    public VolumeTriPlanarInterfaceDTI(ModelImage colorTensorImage, ModelImage tensorImage, ModelImage eigenVectorImage,
+    		ModelImage eigenValueImage, ModelImage fAImage ) {
+        super(colorTensorImage, null);
+        m_kEigenVectorImage = eigenVectorImage;
+        m_kEigenValueImage = eigenValueImage;
+        m_kAnisotropyImage = fAImage;
+        m_kDTIImage = tensorImage; 
+        m_kDTIColorImage = colorTensorImage;
+        
+        buildDTIParametersPanel();
+
+        try {
+            setIconImage(MipavUtil.getIconImage("4plane_16x16.gif"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        setSize( 1331, 925 );
+        setVisible(true);        
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -157,8 +178,11 @@ implements ChangeListener {
 
         m_kVolumeImageA = new VolumeImage( _m_kDTIColorImage, "A", null, 0 );
         m_kVolumeImageB = new VolumeImage();
-    	
-    	constructRenderers();
+
+        /** Progress bar show up during the volume view frame loading */
+        ViewJProgressBar progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
+                null, null);
+    	constructRenderers(progressBar);
         gpuPanel.setVisible(true);
         raycastRenderWM.setVisible(true);
     	m_kAnimator.start();
@@ -328,20 +352,20 @@ implements ChangeListener {
      */
     protected void configureFrame() {
         super.configureFrame( );
-        buildDTIimageLoadPanel();
+        if ( m_kVolumeImageA == null )
+        {
+        	buildDTIimageLoadPanel();
+        }
     }
 
     /**
      * Construct the volume rendering methods based on the choices made from
      * the resample dialog. This method is called by the Resample dialog.
      */
-    protected void constructRenderers() {
+    protected void constructRenderers(final ViewJProgressBar progressBar) {
 
     	initShared();
     	
-        /** Progress bar show up during the volume view frame loading */
-        ViewJProgressBar progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
-                null, null);
         progressBar.updateValue(0, true);
         MipavUtil.centerOnScreen(progressBar);
         progressBar.setVisible(true);
@@ -399,5 +423,12 @@ implements ChangeListener {
         super.removeSurface(kSurfaceName);
         DTIparamsPanel.remove3DVOI( kSurfaceName );
     }
-    
+
+    public void processDTI()
+    {
+    	if ( DTIparamsPanel != null )
+    	{
+    		DTIparamsPanel.processDTI();
+    	}
+    }
 }

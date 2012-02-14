@@ -8,11 +8,14 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.awt.Dimension;
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+
+import javax.vecmath.GMatrix;
 
 import Jama.*;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
@@ -24,9 +27,16 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
  * 
  * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
+/**
+ * @author alexa
+ *
+ */
 public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateInterface, AlgorithmInterface {
     /** Mask Image for masking brain regions during tensor calculation: */
     private ModelImage m_kMaskImage = null;
+    
+    /** DWI Image 4D series of weighted diffusion images */
+    private ModelImage m_kDWIImage = null;
 
     /** B0 weighted image: */
     private ModelImage m_kB0Image = null;
@@ -65,10 +75,13 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
     private int[] m_aiMatrixEntries;
 
     /** Format of the raw data: (float, int, dicom, etc.) */
-    private String m_kRawImageFormat = null;
+    private String m_kRawImageFormat = "";
 
     /** Output DTI Image: */
     private ModelImage m_kDTI = null;
+    
+    /** When true, use the ModelImage DTI parameters. */
+    private boolean m_bUseDTIParameters = false;
 
     /** handle to BSE Algorithm * */
     private AlgorithmBrainSurfaceExtractor alg;
@@ -115,6 +128,60 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         m_bDisplayB0 = bDisplayB0;
     }
 
+    
+
+    public AlgorithmDWI2DTI(final ModelImage kDWIImage, ModelImage maskImage ) {
+        m_kMaskImage = maskImage;
+        m_kDWIImage = kDWIImage;
+        m_iDimX =   kDWIImage.getExtents().length > 0 ? kDWIImage.getExtents()[0] : 1;
+        m_iDimY =   kDWIImage.getExtents().length > 1 ? kDWIImage.getExtents()[1] : 1;
+        m_iSlices = kDWIImage.getExtents().length > 2 ? kDWIImage.getExtents()[2] : 1;    
+		int dimDW = kDWIImage.getExtents().length > 3 ? kDWIImage.getExtents()[3] : 1;
+		
+		DTIParameters dtiparams = kDWIImage.getDTIParameters();
+		dimDW = Math.min( dimDW, dtiparams.getNumVolumes() );
+
+		float[] bvalues = dtiparams.getbValues();
+		float[][] grads = dtiparams.getGradients();
+		m_kBMatrix = new GMatrixf( dimDW, 7 );
+		for ( int i = 0; i < dimDW; i++ )
+		{
+			m_kBMatrix.Set(i, 0, bvalues[i] * grads[i][0] * grads[i][0]);
+			m_kBMatrix.Set(i, 1, bvalues[i] * grads[i][0] * grads[i][1] * 2);
+			m_kBMatrix.Set(i, 2, bvalues[i] * grads[i][0] * grads[i][2] * 2);
+			m_kBMatrix.Set(i, 3, bvalues[i] * grads[i][1] * grads[i][1]);
+			m_kBMatrix.Set(i, 4, bvalues[i] * grads[i][1] * grads[i][2] * 2);
+			m_kBMatrix.Set(i, 5, bvalues[i] * grads[i][2] * grads[i][2]);
+			m_kBMatrix.Set(i, 6, 1);
+		}
+
+        m_iWeights = dimDW;
+        int nb = 0;
+        m_aiMatrixEntries = new int[m_iWeights];
+        for (int iRow = 0; iRow < m_iWeights; iRow++) {
+
+            boolean gotit = false;
+            for (int j = 0; j < nb; j++) {
+                if ( m_kBMatrix.GetRow(iRow).equals( m_kBMatrix.GetRow(j) ) ) {
+                    gotit = true;
+                    m_aiMatrixEntries[iRow] = j;
+                    break;
+                }
+            }
+            if ( !gotit) {
+                m_aiMatrixEntries[iRow] = nb;
+                nb = nb + 1;
+            }
+        }
+        m_iBOrig = nb;
+        
+        m_fMeanNoise = 0f;
+        m_aakDWIList = null;
+        m_kRawImageFormat = null;
+        m_bDisplayB0 = false;
+        m_bUseDTIParameters = true;
+    }
+    
     public void algorithmPerformed(final AlgorithmBase algorithm) {
 
     }
@@ -135,7 +202,6 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             createMaskImage();
         }
         createDWIImage();
-
     }
 
     /**
@@ -541,7 +607,17 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
      */
     private float[] readSliceWeight(final int iSlice, final int iWeight) {
         float[] buffer = null;
-        if (m_kRawImageFormat.equals("dicom")) {
+        if ( m_bUseDTIParameters && (m_kDWIImage != null) )
+        {
+        	try {
+                buffer = new float[m_iDimY * m_iDimX];
+				m_kDWIImage.exportData( iWeight * m_iSlices * m_iDimY * m_iDimX + iSlice * m_iDimX * m_iDimX,
+						m_iDimY * m_iDimX, buffer );
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+        else if (m_kRawImageFormat.equals("dicom")) {
             buffer = readDicomWeight(iSlice, iWeight);
         } else if (m_kRawImageFormat.equals("float")) {
             buffer = readFloatWeight(iSlice, iWeight);
@@ -589,14 +665,14 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
 
             // now need to handle the stuff from algorithm performed
             final BitSet paintMask = alg.getComputedPaintMask();
-            (m_kB0Frame).getImageA().setMask(paintMask);
-            (m_kB0Frame).setActiveImage(ViewJFrameBase.IMAGE_A);
+            m_kB0Frame.getImageA().setMask(paintMask);
+            m_kB0Frame.setActiveImage(ViewJFrameBase.IMAGE_A);
 
             alg.finalize();
 
             // necessary for paint to appear when using 'extract to paint' option
             if (m_kB0Frame != null) {
-                (m_kB0Frame).getComponentImage().setPaintMask(m_kB0Image.getMask());
+                m_kB0Frame.getComponentImage().setPaintMask(m_kB0Image.getMask());
             }
 
             m_kB0Image.notifyImageDisplayListeners(null, true);
@@ -649,7 +725,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         // kProgressBar = null;
         return norm;
     }
-
+    
     /**
      * Second step in processing the diffusion weighted images. This function is called once the brain extractor is
      * complete. The brain image is transformed into a mask image, which is passed to this function. The mask image
@@ -701,11 +777,21 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         // kProgressBar.dispose();
 
         final int[] extents = new int[] {m_iDimX, m_iDimY, m_iSlices, 6};
-        m_kDTI = new ModelImage(ModelStorageBase.FLOAT, extents, new String("DiffusionTensorImage"));
+		String name = new String("DiffusionTensorImage");
+        if ( m_bUseDTIParameters && m_kDWIImage != null )
+        {
+    		name = JDialogBase.makeImageName(m_kDWIImage.getImageName(), "_tensor");        	
+        }
+        m_kDTI = new ModelImage(ModelStorageBase.FLOAT, extents, name);
         try {
             m_kDTI.importData(0, afTensorData, true);
         } catch (final IOException e) {
             e.printStackTrace();
+        }
+        if ( m_bUseDTIParameters && m_kDWIImage != null )
+        {
+    		JDialogBase.updateFileInfo( m_kDWIImage, m_kDTI );       	
+    		m_kDTI.setImageDirectory( m_kDWIImage.getImageDirectory() );
         }
 
         setCompleted(true);
@@ -921,9 +1007,24 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(
                     m_kB0Frame.getComponentImage().commitPaintToMask());
             m_kB0Image.removeImageDisplayListener(this);
-            m_kB0Image = null;
         }
         return false;
+    }
+    
+    public void deleteImages()
+    {
+    	if ( m_kB0Frame != null )
+    	{
+    		m_kB0Frame.close();
+    		m_kB0Frame = null;
+    	}
+    	if ( m_kMaskImage != null )
+    	{
+			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_kMaskImage);
+			if (kImageFrame != null) {
+				kImageFrame.close();
+			}
+    	}
     }
 
     /** ViewImageUpdateInterface : stub */

@@ -3498,4 +3498,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         // rightPane.setDividerLocation( 0.618f );
         // updatePlanes();
     }
+    
+    public void processDTI() {}
 }

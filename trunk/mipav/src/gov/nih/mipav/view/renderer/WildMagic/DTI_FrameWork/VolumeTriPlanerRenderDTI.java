@@ -64,6 +64,13 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
         super(kShared, kCanvas, kParent, kAnimator, kVolumeImageA, kVolumeImageB );
     }
 
+
+    public void init(GLAutoDrawable arg0) {	
+    	super.init(arg0);
+    	enableSlicePickable(true);
+    	m_kParent.processDTI();
+    }
+
     public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
             VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
     {
