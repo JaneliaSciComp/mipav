@@ -1161,7 +1161,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     		}
     	}
     	
-		System.err.println( text );
+		//System.err.println( text );
     	return text;
     }
     

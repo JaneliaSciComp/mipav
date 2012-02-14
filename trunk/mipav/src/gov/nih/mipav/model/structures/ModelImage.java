@@ -3755,6 +3755,12 @@ public class ModelImage extends ModelStorageBase {
         options.setOptionsSet(true);
         int end = kImage.getExtents().length > 2 ? kImage.getExtents()[2] - 1 : 0;
         options.setEndSlice(end);
+        if ( kImage.getExtents().length > 3 )
+        {
+        	options.setBeginTime(0);
+        	end = kImage.getExtents()[3] - 1;
+        	options.setEndTime(end);
+        }
         options.doPutInQuicklist(false);
         fileIO.writeImage(kImage, options);
     }

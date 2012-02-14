@@ -41,11 +41,18 @@ import javax.swing.border.TitledBorder;
 
 public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
     
+	public static final String TraceImageName = "TraceImage";
+	public static final String RAImageName = "RAImage";
+	public static final String VRImageName = "VolumeRatioImage";
+	public static final String ADCImageName = "ADCImage";
+	public static final String EigenValueImageName = "EigenValueImage";
+	public static final String EigenVectorImageName = "EigenVectorImage";
+	public static final String FAImageName = "FAImage";
+	public static final String ColorMapImageName = "ColorMapImage";
+	public static final String TrackFileName = "TractData.bin";
+	
     private JTextField tensorImageTextField, outputDirTextField;
     
-    /** src image * */
-    private ModelImage image;
-
     /** current directory * */
     private String currDir = null;
 
@@ -65,11 +72,55 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
     private JTextField maxAngleTextField;
 
 
-//-----------------------------------------------------------------------------------------------------------------------
-    public JPanelDTIFiberTracking(ModelImage img) {
+    /**
+     * Constructs the Fiber Tracking input panel:
+     */
+    public JPanelDTIFiberTracking() {
         super();
-        this.image = img;
         init();
+    }
+    
+    public void setInputImage( ModelImage image )
+    {
+    	tensorImage = image;
+    	tensorImageTextField.setText( image.getImageName() );
+    	outputDirTextField.setText( image.getImageDirectory() );
+    }
+    
+    /**
+     * Return the tensor image.
+     * @return tensor image.
+     */
+    public ModelImage getTensorImage()
+    {
+    	return tensorImage;
+    }
+    
+    public ModelImage getEigenVectorImage()
+    {
+    	return eigenVectorImage;
+    }
+    public ModelImage getEigenValueImage()
+    {
+    	return eigenValueImage;
+    }
+    public ModelImage getFAImage()
+    {
+    	return FAImage;
+    }
+    
+    public ModelImage getColorMapImage()
+    {
+    	return rgbImage;
+    }
+    
+    /**
+     * Returns the output directory for the derived image calculations.
+     * @return output directory for the derived image calculations.
+     */
+    public String getOutputDirectory()
+    {
+    	return outputDirTextField.getText();
     }
 
     private void init() {
@@ -238,6 +289,7 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
                 }
 
                 tensorImageTextField.setText(currDir);
+                outputDirTextField.setText(tensorImage.getImageDirectory());
             }
         } else if (command.equals("outputDirBrowse")) {
             final JFileChooser chooser = new JFileChooser();
@@ -253,25 +305,7 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
                 outputDirTextField.setText(currDir);
             }
         } else if (command.equals("ok")) {
-            boolean success = validateData();
-            if ( !success) {
-                return;
-            }
-
-            setCursor(new Cursor(Cursor.WAIT_CURSOR));
-
-            calcEigenVectorImage();
-
-            createRGBImage();
-
-            trackFibers();
-
-            MipavUtil.displayInfo("Fiber file and statistics saved under  " + outputDirTextField.getText());
-
-            setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-
-            cleanup();
-
+        	createDerivedImages();
         } else if (command.equals("cancel")) {
             cleanup();
             //dispose();
@@ -280,93 +314,82 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
     }
 
     /** Calls AlgorithmDTI2EGFA to create an Apparent Diffusion Coefficient Image, 
- * Functional Anisotropy Image, Color Image, Eigen Value Image, Eigen Vector Image, Relative Anisotropy Image,
- * Trace Image, and Volume Ratio Image. */
- 
-    private void calcEigenVectorImage() {
-        final int[] extents = tensorImage.getExtents();
-        float[] res = tensorImage.getFileInfo(0).getResolutions();
-        final float[] saveRes = new float[] {res[0], res[1], res[2], res[3]};
-
-        /*
-         * if ( m_bUseXRes ) { saveRes[0] = m_fResX; } if ( m_bUseYRes ) { saveRes[1] = m_fResY; } if ( m_bUseZRes ) {
-         * saveRes[2] = m_fResZ; }
-         */
-
-        final float[] newRes = new float[extents.length];
-        final int[] volExtents = new int[extents.length];
-        boolean originalVolPowerOfTwo = true;
-        int volSize = 1;
-        for (int i = 0; i < extents.length; i++) {
-            volExtents[i] = MipavMath.dimPowerOfTwo(extents[i]);
-            volSize *= volExtents[i];
-
-            if ( (i < 3) && volExtents[i] != extents[i]) {
-                originalVolPowerOfTwo = false;
-            }
-            newRes[i] = (res[i] * (extents[i])) / (volExtents[i]);
-            saveRes[i] = (saveRes[i] * (extents[i])) / (volExtents[i]);
-        }
-
-        if ( !originalVolPowerOfTwo) {
-            AlgorithmTransform transformFunct = new AlgorithmTransform(tensorImage, new TransMatrix(4),
-                    AlgorithmTransform.TRILINEAR, newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
-                    volExtents[2], false, true, false);
-            transformFunct.setRunningInSeparateThread(false);
-            transformFunct.run();
-
-            if (transformFunct.isCompleted() == false) {
-                transformFunct.finalize();
-                transformFunct = null;
-            }
-
-            final ModelImage kDTIScaled = transformFunct.getTransformedImage();
-            kDTIScaled.calcMinMax();
-
-            if (transformFunct != null) {
-                transformFunct.disposeLocal();
-            }
-            transformFunct = null;
-
-            tensorImage.disposeLocal();
-            tensorImage = null;
-            tensorImage = kDTIScaled;
-
-            res = tensorImage.getFileInfo(0).getResolutions();
-        }
+     * Functional Anisotropy Image, Color Image, Eigen Value Image, Eigen Vector Image, Relative Anisotropy Image,
+     * Trace Image, and Volume Ratio Image. */
+     private void calcEigenVectorImage() {
 
         AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(tensorImage);
         kAlgorithm.run();
-        eigenVectorImage = kAlgorithm.getEigenVectorImage();
-        FAImage = kAlgorithm.getFAImage();
+        
         traceImage = kAlgorithm.getTraceImage();
-        traceImage.saveImage(outputDirTextField.getText() + File.separator, "TraceImage.xml", FileUtility.XML, false);
+        traceImage.setImageName( TraceImageName );
+		ModelImage.saveImage( traceImage, traceImage.getImageName() + ".xml", outputDirTextField.getText() );
+		traceImage.disposeLocal();
+		
         raImage = kAlgorithm.getRAImage();
-        raImage.saveImage(outputDirTextField.getText() + File.separator, "RAImage.xml", FileUtility.XML, false);
+        raImage.setImageName( RAImageName );
+		ModelImage.saveImage( raImage, raImage.getImageName() + ".xml", outputDirTextField.getText() );
+		raImage.disposeLocal();		
+		
         vrImage = kAlgorithm.getVRImage();
-        vrImage
-                .saveImage(outputDirTextField.getText() + File.separator, "VolumeRatioImage.xml", FileUtility.XML,
-                        false);
+        vrImage.setImageName( VRImageName );
+		ModelImage.saveImage( vrImage, vrImage.getImageName() + ".xml", outputDirTextField.getText() );
+		vrImage.disposeLocal();
+		
         adcImage = kAlgorithm.getADCImage();
-        adcImage.saveImage(outputDirTextField.getText() + File.separator, "ADCImage.xml", FileUtility.XML, false);
+        adcImage.setImageName( ADCImageName );
+		ModelImage.saveImage( adcImage, adcImage.getImageName() + ".xml", outputDirTextField.getText() );
+		adcImage.disposeLocal();
+		
+		// The remaining images the calling function must close:
         eigenValueImage = kAlgorithm.getEigenValueImage();
-        eigenValueImage.saveImage(outputDirTextField.getText() + File.separator, "EigenValueImage.xml",
-                FileUtility.XML, false);
-        // tensorImage.saveImage(outputDirTextField.getText(), "DTI.xml", FileUtility.XML, true);
-        eigenVectorImage.saveImage(outputDirTextField.getText() + File.separator, "EigenVectorImage.xml",
-                FileUtility.XML, true);
-        FAImage.saveImage(outputDirTextField.getText() + File.separator, "FAImage.xml",
-                FileUtility.XML, true);
+        eigenValueImage.setImageName( EigenValueImageName );
+		ModelImage.saveImage( eigenValueImage, eigenValueImage.getImageName() + ".xml", outputDirTextField.getText() );
+
+        eigenVectorImage = kAlgorithm.getEigenVectorImage();
+        eigenVectorImage.setImageName( EigenVectorImageName );
+		ModelImage.saveImage( eigenVectorImage, eigenVectorImage.getImageName() + ".xml", outputDirTextField.getText() );
+
+        FAImage = kAlgorithm.getFAImage();
+        FAImage.setImageName( FAImageName );
+		ModelImage.saveImage( FAImage, FAImage.getImageName() + ".xml", outputDirTextField.getText() );
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
+    }
+    
+    
+    /**
+     * Creates the images derived from the tensor image. The following images are generated:
+     * eigen vector image with eigen vectors
+     * eigen value image with eigen values
+     * functional anisotropy image
+     * trace image
+     * ra image
+     * volume ratio image
+     * adc image
+     * rgb color image displaying the eigen vectors weighted by the functional anisotropy as RGB.
+     */
+    public void createDerivedImages()
+    {
+        boolean success = validateData();
+        if ( !success) {
+            return;
+        }
 
-        // The resolutions should be reset after the FiberTracts are calculated (See JDialogDTIInput.java)
-        /*
-         * if ( m_bUseXRes || m_bUseYRes || m_bUseZRes ) { for ( int i = 0; i < tensorImage.getFileInfo().length; i++ ) {
-         * tensorImage.getFileInfo(i).setResolutions(saveRes); tensorImage.getFileInfo(i).setSliceThickness(saveRes[2]); } }
-         */
+        setCursor(new Cursor(Cursor.WAIT_CURSOR));
+
+        calcEigenVectorImage();
+
+        createRGBImage();
+
+        trackFibers();
+
+        setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     }
 
+    /**
+     * Creates a color map image by combing the three eigen values into an RGB image and multiplying by the functional anisotropy. 
+     */
     public void createRGBImage() {
         // gamma factor
         final float gamma = 1.8f;
@@ -518,23 +541,24 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         }
 
         rgbImage.calcMinMax();
-        rgbImage.saveImage(outputDirTextField.getText() + File.separator, "ColorMapImage.xml", FileUtility.XML, false);
+        rgbImage.setImageName( ColorMapImageName );
+		ModelImage.saveImage( rgbImage, rgbImage.getImageName() + ".xml", outputDirTextField.getText() );
         // new ViewJFrameImage(eigenVectorImage);
         // new ViewJFrameImage(FAImage);
         // new ViewJFrameImage(rgbImage);
 
         // return rgbImage;
     }
-
-    /** Calls AlgorithmDTITRACT to calculate fiber bundle tracts 
-    */
     
+    /**
+     * Calls AlgorithmDTITRACT to calculate fiber bundle tracts 
+     */
     private void trackFibers() {
         final float fFAMin = Float.valueOf(faMinThresholdTextField.getText()).floatValue();
         final float fFAMax = Float.valueOf(faMaxThresholdTextField.getText()).floatValue();
         final float fMaxAngle = Float.valueOf(maxAngleTextField.getText()).floatValue();
         AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(tensorImage, FAImage, eigenVectorImage,
-                eigenValueImage, outputDirTextField.getText() + File.separator + "TractData.bin", negXCheckBox
+                eigenValueImage, outputDirTextField.getText() + File.separator + TrackFileName, negXCheckBox
                         .isSelected(), negYCheckBox.isSelected(), negZCheckBox.isSelected(), fFAMin, fFAMax, fMaxAngle);
         kTractAlgorithm.run();
         kTractAlgorithm.disposeLocal();

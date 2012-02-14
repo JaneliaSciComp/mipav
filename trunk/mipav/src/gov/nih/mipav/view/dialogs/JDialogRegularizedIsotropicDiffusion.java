@@ -3,11 +3,14 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmFFT;
+import gov.nih.mipav.model.algorithms.filters.OpenCL.filters.OpenCLAlgorithmRegularizedIsotropicDiffusion;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -31,12 +34,14 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JCheckBox checkBox25D;
+    private JCheckBox useOCLCheckbox;
 
     /** DOCUMENT ME! */
     private float contrast = 0.15f;
 
     /** DOCUMENT ME! */
     private boolean do25D = true;
+    private boolean doOCL = false;
 
     /** DOCUMENT ME! */
     private int numIterations = 1;
@@ -180,13 +185,21 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
         String name;
 
         name = makeImageName(srcImage.getImageName(), "_rid");
-
+        
         try {
 
             if (srcImage.isColorImage()) {
                 resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name);
             } else {
                 resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
+            }
+            if ( doOCL )
+            {
+            	OpenCLAlgorithmRegularizedIsotropicDiffusion regIsoDiffusionAlgorithm = new OpenCLAlgorithmRegularizedIsotropicDiffusion(resultImage, srcImage, numIterations,
+                        stdDev, contrast, do25D);
+            	regIsoDiffusionAlgorithm.addListener(this);
+            	regIsoDiffusionAlgorithm.run();
+            	return;
             }
 
             regIsoDiffusionAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage, srcImage, numIterations,
@@ -298,6 +311,14 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
             checkBox25D = new JCheckBox("Process each slice separately", true);
             checkBox25D.setFont(serif12);
         }
+        useOCLCheckbox = WidgetFactory.buildCheckBox("Use OpenCL", false, this);
+        useOCLCheckbox.setFont(serif12);
+        useOCLCheckbox.setForeground(Color.black);
+    	useOCLCheckbox.setEnabled(Preferences.isGpuCompEnabled() && OpenCLAlgorithmFFT.isOCLAvailable());
+    	if ( !useOCLCheckbox.isEnabled() && OpenCLAlgorithmFFT.isOCLAvailable() )
+    	{
+    		useOCLCheckbox.setToolTipText( "see Help->Mipav Options->Other to enable GPU computing");
+    	}
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
@@ -328,6 +349,9 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase
             gbc.gridx = 0;
             parameterPanel.add(checkBox25D, gbc);
         }
+        gbc.gridy++;
+        gbc.gridx = 0;
+        parameterPanel.add(useOCLCheckbox, gbc);
 
 
         return parameterPanel;

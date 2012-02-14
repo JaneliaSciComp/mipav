@@ -41,10 +41,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
     private JLabel dtiFileLabel, dtiColorFileLabel, dtiEVFileLabel, dtiEValueFileLabel, dtiFAFileLabel;
 
     private JButton computeButton;
-    
-    /** src image * */
-    private ModelImage image;
-    
+        
     /** main panel * */
     private JPanel mainPanel;
 
@@ -82,10 +79,9 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 
     /** Fiber bundle tract file input path name text box. */
     private JTextField m_kTractPath;
-
-    public JPanelDTIVisualization(ModelImage img) {
+    
+    public JPanelDTIVisualization() {
         super();
-        this.image = img;
         init();
 
     }
@@ -103,8 +99,8 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        buildDTIColorLoadPanel();
         buildDTILoadPanel();
+        buildDTIColorLoadPanel();
         buildEVLoadPanel();
         buildFALoadPanel();
         buildEValueLoadPanel();
@@ -125,7 +121,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
         computeButton.addActionListener(this);
         computeButton.setActionCommand("compute");
         computeButton.setVisible(true);
-        computeButton.setEnabled(true);
+        computeButton.setEnabled(false);
         computeButton.setPreferredSize(new Dimension(90, 30));
 
         buttonPanel.add(computeButton, gbc);
@@ -259,28 +255,66 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
             loadFAFile();
         } else if (command.equals("browseEValueFile")) {
             loadEValueFile();
-        } else if (command.equalsIgnoreCase("compute")) {
-            /*//already processDTI();
-            setParentDir();
-            setTractParams();
-            // already setDTIimage();
-            setEVimage();
-            setEValueimage();
-            setFAimage();
-            setDTIColorImage();
-            parentFrame.setDTIParamsActive();
-            setDTIimage();
-            parentFrame.getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax,
-                    m_kTractPath, m_kDTIImage);
-            parentFrame.getParamPanel().processTractFile();*/
-        }
+        } else if (command.equalsIgnoreCase("compute")) {       
+        	if ( m_kDTIColorImage == null )
+        	{
+                final FileIO fileIO = new FileIO();
+                m_kDTIColorImage = fileIO.readImage(textDTIColorImage.getText());
+        	}
+        	if ( m_kEigenVectorImage == null )
+        	{
+                final FileIO fileIO = new FileIO();
+                m_kEigenVectorImage = fileIO.readImage(textEVimage.getText());
+        	}
+        	if ( m_kEigenValueImage == null )
+        	{
+                final FileIO fileIO = new FileIO();
+                m_kEigenValueImage = fileIO.readImage(textEValueImage.getText());
+        	}
+        	if ( m_kAnisotropyImage == null )
+        	{
+                final FileIO fileIO = new FileIO();
+                m_kAnisotropyImage = fileIO.readImage(textFAimage.getText());
+        	}
+        	
+        	
+        	VolumeTriPlanarInterfaceDTI dtiViz = new VolumeTriPlanarInterfaceDTI( m_kDTIColorImage, m_kDTIImage, 
+        			m_kEigenVectorImage, m_kEigenValueImage, m_kAnisotropyImage );
 
+            m_kTractFile = new File(m_kTractPath.getText());
+        	dtiViz.getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax,
+                    m_kTractPath, m_kDTIImage);
+        }
+        if ( !textDTIimage.getText().isEmpty() && !textDTIColorImage.getText().isEmpty() && 
+        		!textFAimage.getText().isEmpty() && !textEVimage.getText().isEmpty() &&
+        		!textEValueImage.getText().isEmpty() &&  !m_kTractPath.getText().isEmpty() )
+        {
+        	computeButton.setEnabled(true);
+        }
+    }
+    
+    public void enableLoad()
+    {
+        if ( !textDTIimage.getText().isEmpty() && !textDTIColorImage.getText().isEmpty() && 
+        		!textFAimage.getText().isEmpty() && !textEVimage.getText().isEmpty() &&
+        		!textEValueImage.getText().isEmpty() &&  !m_kTractPath.getText().isEmpty() )
+        {
+        	computeButton.setEnabled(true);
+        }
     }
 
     public void setTractParams() {
         //parentFrame.setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath);
     }
 
+
+
+    public void setTractFile( String tractFileName )
+    {
+        m_kTractPath.setText(tractFileName);
+    }
+
+    
     /**
      * Launches the JFileChooser for the user to select the tract file. Stores the File for the tract file but does not
      * read the file.
@@ -291,18 +325,6 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
         chooser.setDialogTitle("Choose Diffusion Tensor Tract file");
         final int returnValue = chooser.showOpenDialog(this);
         if (returnValue == JFileChooser.APPROVE_OPTION) {
-            String kDTIName = new String(chooser.getSelectedFile().getName());
-            final String kTract = new String("_tract");
-            kDTIName = kDTIName.substring(0, kDTIName.length() - kTract.length());
-            final FileIO fileIO = new FileIO();
-
-            /*
-             * m_kDTIImage = fileIO.readImage(kDTIName, chooser .getCurrentDirectory() + File.separator); if
-             * (m_kDTIImage.getNDims() != 4) { MipavUtil .displayError("Diffusion Tensor file does not have correct
-             * dimensions"); if (m_kDTIImage != null) { m_kDTIImage.disposeLocal(); m_kDTIImage = null; } } if
-             * (m_kDTIImage.getExtents()[3] != 6) { MipavUtil .displayError("Diffusion Tensor does not have correct
-             * dimensions"); if (m_kDTIImage != null) { m_kDTIImage.disposeLocal(); m_kDTIImage = null; } }
-             */
             m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
             if ( !m_kTractFile.exists() || !m_kTractFile.canRead()) {
                 m_kTractFile = null;
@@ -602,6 +624,16 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
     }
 
     /**
+     * Set the DTI image
+     * @param DTI image
+     */
+    public void setDTIImage( ModelImage dtiImage )
+    {
+    	m_kDTIImage = dtiImage;
+        textDTIimage.setText(m_kDTIImage.getImageDirectory() + File.separator + m_kDTIImage.getImageFileName());
+    }
+    
+    /**
      * Launches the JFileChooser for the user to select the Diffusion Tensor Image. Loads the tensor data.
      */
     public void loadDTIFile() {
@@ -619,7 +651,45 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 
             textDTIimage.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+            
+            
+            String dir = chooser.getSelectedFile().getParent() + File.separator;
+            File test = new File( dir + JPanelDTIFiberTracking.ColorMapImageName + ".xml" );
+            if ( test != null && test.exists() )
+            {
+            	textDTIColorImage.setText(test.getAbsolutePath());
+            }
+            test = new File( dir + JPanelDTIFiberTracking.FAImageName + ".xml");
+            if ( test != null && test.exists() )
+            {
+            	textFAimage.setText(test.getAbsolutePath());
+            }
+            test = new File( dir + JPanelDTIFiberTracking.EigenVectorImageName + ".xml");
+            if ( test != null && test.exists() )
+            {
+            	textEVimage.setText(test.getAbsolutePath());
+            }
+            test = new File( dir + JPanelDTIFiberTracking.EigenValueImageName + ".xml");
+            if ( test != null && test.exists() )
+            {
+            	textEValueImage.setText(test.getAbsolutePath());
+            }
+            test = new File( dir + JPanelDTIFiberTracking.TrackFileName);
+            if ( test != null && test.exists() )
+            {
+            	m_kTractPath.setText(test.getAbsolutePath());
+            }
         }
+    }
+
+    /**
+     * Set the DTI Color image
+     * @param DTI Color Image
+     */
+    public void setDTIColorImage( ModelImage dtiColorImage )
+    {
+    	m_kDTIColorImage = dtiColorImage;
+    	textDTIColorImage.setText(m_kDTIColorImage.getImageDirectory() + File.separator + m_kDTIColorImage.getImageName() );
     }
 
     public void loadDTIColorFile() {
@@ -642,6 +712,16 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
         }
     }
 
+    /**
+     * Set the eigen vector image
+     * @param eigen vector image
+     */
+    public void setEVImage( ModelImage evImage )
+    {
+    	m_kEigenVectorImage = evImage;
+    	textEVimage.setText(m_kEigenVectorImage.getImageDirectory() + File.separator + m_kEigenVectorImage.getImageFileName());
+    }
+
     public void loadEVFile() {
         final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
@@ -660,6 +740,16 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
         }
     }
 
+    /**
+     * Set the functional anisotropy image
+     * @param eigen vector image
+     */
+    public void setFAImage( ModelImage faImage )
+    {
+    	m_kAnisotropyImage = faImage;
+    	textFAimage.setText(m_kAnisotropyImage.getImageDirectory() + File.separator + m_kAnisotropyImage.getImageFileName());
+    }
+
     public void loadFAFile() {
         final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
@@ -675,6 +765,16 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
             textFAimage.setText(chooser.getSelectedFile().getAbsolutePath());
             Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
         }
+    }
+
+    /**
+     * Set the eigen value image
+     * @param eigen value image
+     */
+    public void setEValueImage( ModelImage evImage )
+    {
+    	m_kEigenValueImage = evImage;
+    	textEValueImage.setText(m_kEigenValueImage.getImageDirectory() + File.separator + m_kEigenValueImage.getImageFileName());
     }
 
     public void loadEValueFile() {
@@ -700,6 +800,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
      * @param srcImage source image need to be resampled
      */
     private ModelImage resampleImage(ModelImage srcImage) {
+    	/*
         final int[] extents = srcImage.getExtents();
         final float[] res = srcImage.getFileInfo(0).getResolutions();
         float[] saveRes;
@@ -741,6 +842,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
             srcImage.calcMinMax();
 
         }
+        */
         return srcImage;
 
     }
