@@ -6696,7 +6696,8 @@ public class FileTiff extends FileBase {
                 		;
                 	}
                 	else if (type == Type.LONG) {
-                		Preferences.debug("SAMPLES_PER_PIXEL illegally used Type.LONG instead of Type.SHORT\n");
+                		Preferences.debug("SAMPLES_PER_PIXEL illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
                 	}
                 	else {
                         throw new IOException("SAMPLES_PER_PIXEL has illegal type = " + type + "\n");
