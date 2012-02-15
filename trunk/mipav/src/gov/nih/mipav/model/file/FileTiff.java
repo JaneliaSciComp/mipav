@@ -6444,7 +6444,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case FILL_ORDER:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("FILL_ORDER illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException ("FILL_ORDER has illegal type = " + type + "\n");
                     }
                     
@@ -6471,7 +6480,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case BITS_PER_SAMPLE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("BITS_PER_SAMPLE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("BITS_PER_SAMPLE has illegal type = " + type + "\n");
                     }
 
@@ -6579,7 +6597,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case PAGE_NUMBER:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("PAGE_NUMBER illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("PAGE_NUMBER has illegal type = " + type + "\n");
                     }
                     
@@ -6599,7 +6626,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case PHOTO_INTERP:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("PHOTO_INTERP illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("PHOTO_INTERP has illegal type = " + type + "\n");
                     }
 
@@ -6696,8 +6732,10 @@ public class FileTiff extends FileBase {
                 		;
                 	}
                 	else if (type == Type.LONG) {
-                		Preferences.debug("SAMPLES_PER_PIXEL illegally used Type.LONG instead of Type.SHORT\n",
+                		if (debuggingFileIO) {
+                		    Preferences.debug("SAMPLES_PER_PIXEL illegally used Type.LONG instead of Type.SHORT\n",
                 				          Preferences.DEBUG_FILEIO);
+                		}
                 	}
                 	else {
                         throw new IOException("SAMPLES_PER_PIXEL has illegal type = " + type + "\n");
@@ -6731,7 +6769,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case PLANAR_CONFIG:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("PLANAR_CONFIG illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("PLANAR_CONFIG has illegal type = " + type + "\n");
                     }
 
@@ -6761,7 +6808,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case COMPRESSION:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("COMPRESSION illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("COMPRESSION has illegal type = " + type + "\n");
                     }
 
@@ -6929,7 +6985,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case ORIENTATION:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("ORIENTATION illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("ORIENTATION has illegal type = " + type + "\n");
                     }
 
@@ -7032,7 +7097,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case COLOR_MAP:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("COLOR_MAP illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("COLOR_MAP has illegal type = " + type + "\n");
                     }
 
@@ -7121,7 +7195,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case YCBCR_SUBSAMPLING:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("YCBCR_SUBSAMPLING illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("YCBCR_SUBSAMPLING has illegal type = " + type + "\n");
                     }
                     
@@ -7171,7 +7254,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case YCBCR_POSITIONING:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("YCBCR_POSITIONING illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("YCBCR_POSITIONING has illegal type = " + type + "\n");
                     }
                     
@@ -7241,9 +7333,20 @@ public class FileTiff extends FileBase {
                     break;
 
                 case RESOLUTION_UNIT:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("RESOLUTION_UNIT illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("RESOLUTION_UNIT has illegal type = " + type + "\n");
-                    } else if (count != 1) {
+                	}
+                	
+                    if (count != 1) {
                         throw new IOException("RESOLUTION_UNIT has illegal count = " + count + "\n");
                     } else if ((valueArray[0] < 1) || (valueArray[0] > 3)) {
                         throw new IOException("RESOLUTION_UNIT has illegal value = " + valueArray[0] + "\n");
@@ -7591,7 +7694,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case MIN_SAMPLE_VALUE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("MIN_SAMPLE_VALUE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("MIN_SAMPLE_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -7606,7 +7718,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case MAX_SAMPLE_VALUE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("MAX_SAMPLE_VALUE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("MAX_SAMPLE_VALUE has illegal type = " + type + "\n");
                     }
 
@@ -7746,7 +7867,16 @@ public class FileTiff extends FileBase {
                 case SAMPLE_FORMAT:
 
                     // Default is 1, unsigned integer data
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("SAMPLE_FORMAT illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("SAMPLE_FORMAT has illegal type = " + type + "\n");
                     }
 
@@ -7773,7 +7903,16 @@ public class FileTiff extends FileBase {
                     break;
 
                 case PREDICTOR:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("PREDICTOR illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("PREDICTOR has illegal type = " + type + "\n");
                     }
 
@@ -7897,7 +8036,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXPOSURE_PROGRAM:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_EXPOSURE_PROGRAM illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_EXPOSURE_PROGRAM has illegal type = " + type + "\n");
                     }
                     
@@ -7955,7 +8103,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_ISO_SPEED_RATINGS:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_ISO_SPEED_RATINGS illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_ISO_SPEED_RATINGS has illegal type = " + type + "\n");
                     }
                     
@@ -8069,7 +8226,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_METERING_MODE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_METERING_MODE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_METERING_MODE has illegal type = " + type + "\n");
                     }
                     
@@ -8115,7 +8281,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_LIGHT_SOURCE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_LIGHT_SOURCE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_LIGHT_SOURCE has illegal type = " + type + "\n");
                     }
                     
@@ -8209,7 +8384,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FLASH:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_FLASH illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_FLASH has illegal type = " + type + "\n");
                     }
                     
@@ -8418,7 +8602,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_COLOR_SPACE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_COLOR_SPACE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_COLOR_SPACE has illegal type = " + type + "\n");
                     }
                     
@@ -8495,7 +8688,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_CUSTOM_RENDERED:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_CUSTOM_RENDERED illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_CUSTOM_RENDERED has illegal type = " + type + "\n");
                     }
                     
@@ -8524,7 +8726,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_EXPOSURE_MODE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_EXPOSURE_MODE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_EXPOSURE_MODE has illegal type = " + type + "\n");
                     }
                     
@@ -8558,7 +8769,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_WHITE_BALANCE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_WHITE_BALANCE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_WHITE_BALANCE has illegal type = " + type + "\n");
                     }
                     
@@ -8610,7 +8830,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SCENE_CAPTURE_TYPE:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_SCENE_CAPTURE_TYPE illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_SCENE_CAPTURE_TYPE has illegal type = " + type + "\n");
                     }
                     
@@ -8647,7 +8876,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_GAIN_CONTROL:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		Preferences.debug("EXIFTAG_GAIN_CONTROL illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_GAIN_CONTROL has illegal type = " + type + "\n");
                     }
                     
@@ -8688,7 +8926,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_CONTRAST:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_CONTRAST illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_CONTRAST has illegal type = " + type + "\n");
                     }
                     
@@ -8724,7 +8971,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SATURATION:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_SATURATION illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_SATURATION has illegal type = " + type + "\n");
                     }
                     
@@ -8760,7 +9016,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SHARPNESS:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_SHARPNESS illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_SHARPNESS has illegal type = " + type + "\n");
                     }
                     
@@ -8895,7 +9160,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_FOCAL_PLANE_RESOLUTION_UNIT has illegal type = " + type + "\n");
                     }
                     
@@ -8928,7 +9202,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXIFTAG_SENSING_METHOD:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXIFTAG_SENSING_METHOD illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXIFTAG_SENSING_METHOD has illegal type = " + type + "\n");
                     }
                     
@@ -9058,7 +9341,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case CLEAN_FAX_DATA:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("CLEAN_FAX_DATA illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("CLEAN_FAX_DATA has illegal type = " + type + "\n");
                     }
                     
@@ -9109,7 +9401,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case THRESHHOLDING:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("THRESHOLDING illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("THRESHHOLDING has illegal type = " + type + "\n");
                     }
                     
@@ -9145,7 +9446,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case HALFTONE_HINTS:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("HALFTONE_HINTS illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("HALFTONE_HINTS has illegal type = " + type + "\n");
                     }
                     
@@ -9166,7 +9476,16 @@ public class FileTiff extends FileBase {
                     break;
                     
                 case EXTRA_SAMPLES:
-                    if (type != Type.SHORT) {
+                	if (type == Type.SHORT) {
+                		;
+                	}
+                	else if (type == Type.LONG) {
+                		if (debuggingFileIO) {
+                		    Preferences.debug("EXTRA_SAMPLES illegally used Type.LONG instead of Type.SHORT\n",
+                				          Preferences.DEBUG_FILEIO);
+                		}
+                	}
+                	else {
                         throw new IOException("EXTRA_SAMPLES has illegal type = " + type + "\n");
                     }
                     
