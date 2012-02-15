@@ -595,6 +595,8 @@ public class Preferences {
     
     public static final String PREF_NDAR_PLUGIN_OUTPUT_DIR = "NDAROutputDir";
     
+    public static final String PREF_NDAR_PLUGIN_CSV_DIR = "NDARCSVDir";
+    
     public static final String PREF_PAINT_OPACITY = "paintOpacity";
 
     /**
