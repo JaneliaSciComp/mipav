@@ -50,7 +50,9 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 	public static final String FAImageName = "FAImage";
 	public static final String ColorMapImageName = "ColorMapImage";
 	public static final String TrackFileName = "TractData.bin";
-	
+
+	/** Parent DTI pipeline framework */
+    private DTIPipeline pipeline;
     private JTextField tensorImageTextField, outputDirTextField;
     
     /** current directory * */
@@ -75,8 +77,9 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
     /**
      * Constructs the Fiber Tracking input panel:
      */
-    public JPanelDTIFiberTracking() {
+    public JPanelDTIFiberTracking(DTIPipeline pipeline) {
         super();
+        this.pipeline = pipeline;
         init();
     }
     
@@ -310,7 +313,10 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
             cleanup();
             //dispose();
         }
-
+        if ((tensorImage != null) && (outputDirTextField.getText() != null))
+        {
+        	pipeline.nextButton.setEnabled(true);
+        }
     }
 
     /** Calls AlgorithmDTI2EGFA to create an Apparent Diffusion Coefficient Image, 
