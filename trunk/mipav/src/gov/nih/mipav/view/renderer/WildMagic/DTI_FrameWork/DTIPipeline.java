@@ -396,7 +396,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 	private JPanelDTIFiberTracking buildFiberTrackingPanel() {
 
-		fiberTrack = new JPanelDTIFiberTracking();
+		fiberTrack = new JPanelDTIFiberTracking(this);
 
 		return fiberTrack;
 
@@ -435,17 +435,29 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 
 
-	@Override
 	public void stateChanged(ChangeEvent e) {
 		if ( e.getSource() == tabbedPane )
 		{
 			if ( tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION )
 			{
-				nextButton.setEnabled(true);
+				if ( currentImage != null ) {
+					nextButton.setEnabled(true);
+				}
+				else {
+					nextButton.setEnabled(false);
+				}
 			}
-			if ( tabbedPane.getSelectedIndex() == FIBER_TRACKING )
+			if ( tabbedPane.getSelectedIndex() == FIBER_TRACKING ) {
+				if ( (fiberTrack.getTensorImage() != null) && (fiberTrack.getOutputDirectory() != null) ) {
+					nextButton.setEnabled(true);
+				}
+				else {
+					nextButton.setEnabled(false);
+				}
+			}
+			if ( tabbedPane.getSelectedIndex() == VISUALIZATION )
 			{
-				nextButton.setEnabled(true);
+				nextButton.setEnabled(false);
 			}
 		}
 	}
