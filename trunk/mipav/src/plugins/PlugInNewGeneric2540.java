@@ -42,7 +42,7 @@ import java.awt.*;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInNewGeneric2 implements PlugInAlgorithm {
+public class PlugInNewGeneric2540 implements PlugInAlgorithm {
 
 	//public static final String[] CATEGORY = {"Test", "A", "B"};
 
@@ -60,7 +60,7 @@ public class PlugInNewGeneric2 implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogNewGeneric2(parentFrame, image);
+            new PlugInDialogNewGeneric2540(parentFrame, image);
         } else {
             MipavUtil.displayError("PlugInNewGeneric only runs on an image frame.");
         }

@@ -156,7 +156,7 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmNewGeneric2) {
+       if (algorithm instanceof PlugInAlgorithmTre4D) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
             

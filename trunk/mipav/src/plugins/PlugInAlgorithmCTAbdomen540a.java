@@ -48,7 +48,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * @date June 2008
  *
  */
-public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements AlgorithmInterface {
+public class PlugInAlgorithmCTAbdomen540a extends AlgorithmBase implements AlgorithmInterface {
     
     /** X dimension of the CT image */
     private int xDim;
@@ -126,7 +126,7 @@ public class PlugInAlgorithmCTAbdomen extends AlgorithmBase implements Algorithm
      * @param  imageDir     Directory of the source image
      * @param  color        Color of the VOI
      */
-    public PlugInAlgorithmCTAbdomen(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
+    public PlugInAlgorithmCTAbdomen540a(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
         this.imageDir = imageDir+File.separator;

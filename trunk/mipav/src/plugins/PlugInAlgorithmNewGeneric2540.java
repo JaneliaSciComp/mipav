@@ -35,7 +35,7 @@ import gov.nih.mipav.model.structures.ModelImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
+public class PlugInAlgorithmNewGeneric2540 extends AlgorithmBase {
 
 	    /** Whether to perform a gaussian blur */
 		private boolean doGaussian;
@@ -46,7 +46,7 @@ public class PlugInAlgorithmNewGeneric2 extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmNewGeneric2(ModelImage resultImage, ModelImage srcImg) {
+    public PlugInAlgorithmNewGeneric2540(ModelImage resultImage, ModelImage srcImg) {
         super(resultImage, srcImg);
         }
         

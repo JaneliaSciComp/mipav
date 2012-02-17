@@ -1,10 +1,14 @@
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology2D;
 import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
+import gov.nih.mipav.model.algorithms.AlgorithmRegionGrow;
 import gov.nih.mipav.model.algorithms.AlgorithmThresholdDual;
 import gov.nih.mipav.model.algorithms.AlgorithmVOIExtractionPaint;
+
+import gov.nih.mipav.model.structures.CubeBounds;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.Point3D;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
 import gov.nih.mipav.model.structures.VOIContour;
@@ -16,14 +20,14 @@ import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewUserInterface;
 
 import java.awt.Color;
+import java.awt.Point;
 import java.io.File;
 import java.io.IOException;
 import java.util.BitSet;
 import java.util.Vector;
 
 
-
-public class PlugInAlgorithmCTBone extends AlgorithmBase {
+public class PlugInAlgorithmCTMarrow540a extends AlgorithmBase {
     
     /** X dimension of the CT image */
     private int xDim;
@@ -36,9 +40,9 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
 
     /** Slice size for xDim*yDim */
     private int sliceSize;
-
-    private ModelImage boneImage;
     
+    private ModelImage boneImage;
+    private ModelImage boneMarrowImage;
     // center-of-mass array for region 1 and 2 (the thresholded bone)
     private int[] x1CMs;
     private int[] y1CMs;
@@ -48,24 +52,24 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     // temp buffer to store slices.  Needed in many member functions.
     private short[] sliceBuffer;
 
+    private short boneMarrowLabel = 20;
     private short boneLabel = 3;
     
     private boolean initializedFlag = false;
     
     private BitSet volumeBitSet;
     
-    private String imageDir;
-
-    /**The final left outside bone VOI*/
-    private VOI leftBoneVOI;
+    /**The final left marrow VOI*/
+    private VOI leftMarrowVOI;
     
-    /**The final right outside bone VOI*/
-    private VOI rightBoneVOI;
+    /**The final right marrow VOI*/
+    private VOI rightMarrowVOI;
+
+    private String imageDir;
     
     private Color voiColor;
     
-    private long segmentationTimeBone = 0;
-    
+    private long segmentationTimeMarrow = 0;
     
     /**
      * Constructor.
@@ -73,14 +77,14 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTBone(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
+    public PlugInAlgorithmCTMarrow540a(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
         this.imageDir = imageDir+File.separator;
         this.voiColor = color;
         
-        leftBoneVOI = null;
-        rightBoneVOI = null;
+        leftMarrowVOI = null;
+        rightMarrowVOI = null;
     }
 
     
@@ -146,10 +150,18 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         }
 
         // set values that depend on the source image being a 2D or 3D image
-        if (srcImage.getNDims() == 2) 
+        if (srcImage.getNDims() == 2)
             zDim = 1;
-         else if (srcImage.getNDims() == 3) 
+        else if (srcImage.getNDims() == 3)
             zDim = srcImage.getExtents()[2];
+
+        // make the label images and initialize their resolutions
+        boneMarrowImage  = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), "boneMarrowImage");
+       
+        // make the resolutions of the images the same as the source image
+        for (int i = 0; i < zDim; i++) {
+            boneMarrowImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[i].getResolutions());
+        }
         
         volumeBitSet = new BitSet();
                
@@ -165,112 +177,109 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         long totalTime = System.currentTimeMillis();
     	long time = System.currentTimeMillis();
         boolean doVOI = false;
-        // compute the bone label image
-        doVOI =  segmentBone();
-        ViewUserInterface.getReference().getMessageFrame().append("Bone segmentation: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
+        doVOI = segmentBone();
+        if(doVOI)
+        	doVOI = segmentBoneMarrow();
+        ViewUserInterface.getReference().getMessageFrame().append("Bone marrow segmentation: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
 
         time = System.currentTimeMillis();
         VOI totalVOI = null;
         if(doVOI)
-        	totalVOI = makeBoneVOI();
-        ViewUserInterface.getReference().getMessageFrame().append("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
+        	totalVOI = makeBoneMarrowVOI();
+        
         if(totalVOI != null) {
-        	rightBoneVOI = makeRightBoneVOI(totalVOI);
-        	leftBoneVOI = makeLeftBoneVOI(totalVOI);
-        	
-        	// I don't know how the above work, but the bone in the right leg is 
-        	// in the left half of the image plane.
-        	
+	        //ShowImage(boneMarrowImage, "boneImage");
+	        ViewUserInterface.getReference().getMessageFrame().append("Bone/Bone marrow VOIs: "+(System.currentTimeMillis() - time)+"\n", ViewJFrameMessage.DEBUG);
+	
+	        rightMarrowVOI = makeRightMarrowVOI(totalVOI);
+	        leftMarrowVOI = makeLeftMarrowVOI(totalVOI);
+	        
+	        // Right leg marrow VOI is the left most in the image
             int[] rightBoundsX = new int [2];
             int[] rightBoundsY = new int [2];
             int[] rightBoundsZ = new int [2];
             VOIContour rightCurve;
-            rightCurve = ((VOIContour)rightBoneVOI.getCurves().get(0));
+            rightCurve = ((VOIContour)rightMarrowVOI.getCurves().get(0));
             rightCurve.getBounds(rightBoundsX, rightBoundsY, rightBoundsZ);
         
             int[] leftBoundsX = new int [2];
             int[] leftBoundsY = new int [2];
             int[] leftBoundsZ = new int [2];
             VOIContour leftCurve;
-            leftCurve = ((VOIContour)leftBoneVOI.getCurves().get(0));
+            leftCurve = ((VOIContour)leftMarrowVOI.getCurves().get(0));
             leftCurve.getBounds(leftBoundsX, leftBoundsY, leftBoundsZ);
             
-            //rightX should be to the LEFT of leftx in this orientation
-            float rightX = ((VOIContour)rightBoneVOI.getCurves().get(0)).get(0).X;
-            float leftX = ((VOIContour)leftBoneVOI.getCurves().get(0)).get(0).X;
+          //rightX should be to the LEFT of leftx in this orientation
+            float rightX = ((VOIContour)rightMarrowVOI.getCurves().get(0)).get(0).X;
+            float leftX = ((VOIContour)leftMarrowVOI.getCurves().get(0)).get(0).X;
             
             // the rightBoneVOI should be the leftmost
             if (rightX > leftX) {
-                VOI tmp = rightBoneVOI;
-                rightBoneVOI = leftBoneVOI;
-                leftBoneVOI = tmp;
+                VOI tmp = rightMarrowVOI;
+                rightMarrowVOI = leftMarrowVOI;
+                leftMarrowVOI = tmp;
             }
             
-            rightBoneVOI.setName("Right Bone");
-            leftBoneVOI.setName("Left Bone");
-            segmentationTimeBone = (System.currentTimeMillis() - totalTime);
-            System.err.println("Total time for bone segmentation: "+segmentationTimeBone);
+            rightMarrowVOI.setName("Right Marrow");
+            leftMarrowVOI.setName("Left Marrow");
+            segmentationTimeMarrow = (System.currentTimeMillis() - totalTime);
+            System.err.println("Total time for marrow segmentation: "+segmentationTimeMarrow);
 	        
-	        // save the VOI to a file(s)
+	     // save the VOI to a file(s)
+	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
 	        ViewUserInterface.getReference().getMessageFrame().append("directory: " +imageDir+"\n", ViewJFrameMessage.DEBUG);
 	        ViewJFrameImage frame = new ViewJFrameImage(srcImage);
 	    	srcImage.unregisterAllVOIs();
-	    	srcImage.registerVOI(rightBoneVOI);
-	    	srcImage.registerVOI(leftBoneVOI);
+	    	srcImage.registerVOI(rightMarrowVOI);
+	    	srcImage.registerVOI(leftMarrowVOI);
 	    	frame.saveAllVOIsTo(imageDir);
+	    	frame.setVisible(false);
 	    	frame.dispose();
         } else
-        	System.err.println("No automatic VOI created");
-        
+        	System.err.println("Automatic VOIs not created");
    } // end segmentImage()
     
     /**
-     * Produces left outside bone VOI.
-     * @param totalVOI VOI of both bones (inside and outside)
+     * Produces left marrow VOI.
+     * @param totalVOI VOI of both marrow (left and right)
      * @return multi-curve VOI
      */
-    private VOI makeRightBoneVOI(VOI totalVOI) {
+    private VOI makeLeftMarrowVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
-    	Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
-    	for(int i=0; i<zDim; i++) {
-    		for(int j=1; j<curves[i].size(); j++)
-    			tempVOI.getCurves().removeElement( curves[i].elementAt(j) );
-    	}
-    	tempVOI.setName("Right Bone");
+        Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
+    	for(int i=0; i<zDim; i++) 
+    		tempVOI.getCurves().removeElement( curves[i].elementAt(1) );
+    	tempVOI.setName("Left Marrow");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
     /**
-     * Produces right outside bone VOI.
-     * @param totalVOI VOI of both bones (inside and outside)
+     * Produces right marrow VOI.
+     * @param totalVOI VOI of both marrow (left and right)
      * @return multi-curve VOI
      */
-    private VOI makeLeftBoneVOI(VOI totalVOI) {
+    private VOI makeRightMarrowVOI(VOI totalVOI) {
     	VOI tempVOI = (VOI)totalVOI.clone();
         Vector<VOIBase>[] curves = totalVOI.getSortedCurves(zDim);
-    	for(int i=0; i<zDim; i++) {
-            for(int j=0; j<curves[i].size(); j++) {
-                if ( j != 1 )
-                    tempVOI.getCurves().removeElement( curves[i].elementAt(j) );
-    		}
-    	}
-    	tempVOI.setName("Left Bone");
+    	for(int i=0; i<zDim; i++) 
+            tempVOI.getCurves().removeElement( curves[i].elementAt(0) );
+    	tempVOI.setName("Right Marrow");
     	tempVOI.setColor(voiColor);
     	return tempVOI;
     }
     
     
-    // create a voi for the bone.  Assumes the boneImage has been created.
-    private VOI makeBoneVOI() {
-        // make the volumeBitSet for the boneImage
+    // create a voi for the bone marrow.  Assumes the boneMarrowImage has been created.
+    private VOI makeBoneMarrowVOI() {
+        // make the volumeBitSet for the boneMarrowImage
         int sliceByteOffset;
         for (int volumeIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
             sliceByteOffset = sliceNum * sliceSize;
             try {
-                boneImage.exportData(sliceByteOffset, sliceSize, sliceBuffer);
+                boneMarrowImage.exportData(sliceByteOffset, sliceSize, sliceBuffer);
             } catch (IOException ex) {
-                System.err.println("Error exporting data");
+                System.err.println("makeBonMarrow() Error exporting data");
             }
             for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, volumeIdx++) {
                 if (sliceBuffer[sliceIdx] > 0) {
@@ -279,9 +288,9 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
             } // end for (int sliceIdx = 0; ...)
         } // end for(int sliceNum = 0; ...)
         
-        // volumeBitSet should be set for the bone
+        // volumeBitSet should be set for the bone marrow
         short voiID = 0;
-        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(boneImage,
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(boneMarrowImage,
                 volumeBitSet, xDim, yDim, zDim, voiID);
 
         algoPaintToVOI.setRunningInSeparateThread(false);
@@ -289,106 +298,119 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         setCompleted(true);
         
         // make sure we got one VOI composed of two curves
-        VOIVector vois = boneImage.getVOIs();
+        VOIVector vois = boneMarrowImage.getVOIs();
         if(vois.size() != 1) {
-            System.err.println("makeBoneVOI() Error, did not get 1 VOI");
+            MipavUtil.displayError("makeBoneMarrowVOI() Error, did not get 1 VOI");
             return null;
         }
         VOI theVOI = vois.get(0);
-        theVOI.setName("Bone");
-        if (theVOI.getCurves().size()/zDim != 4) { //4 curves per slice expected
-        	System.err.println("makeBoneVOI() Error, did not get 4 curves in the VOI.  Expected 1 outside and 1 inside for both legs.");
+        theVOI.setName("Bone Marrow");
+        if (theVOI.getCurves().size()/zDim != 2) { // 2 curves per slice expected
+            MipavUtil.displayError("makeBoneMarrowVOI() Error, did not get 2 curves in the VOI");
             return null;
         }
-        
         return theVOI;
-    } // end makeBoneVOI()
+    } // end makeBoneMarrowVOI()
     
     
-    
-    // return true if the average and standard deviation of the distance between the center-of-mass
-    // for the two bone regions on each slice are "close" (within 10 pixels)
-    private boolean boneRegionsOK() {
-        if (zDim == 0) return true;
-        
-        // compute the distance of adjacent CMs
-        float[] distances1 = new float [zDim];
-        float[] distances2 = new float [zDim - 1];
-        float dx, dy;
-        for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
-            // distance between CM of region 1
-            dx = x1CMs[sliceNum] - x1CMs[sliceNum + 1];
-            dy = y1CMs[sliceNum] - y1CMs[sliceNum + 1];
-            distances1[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
+    /**
+	 * Uses a fixed threshold range to identify bone in CT images
+	 */
+	private boolean segmentBone() {
+	    // thresholds for bone in CT images
+	    float[] thresholds = { 750.0f, 2000.0f };
+	    boneImage = threshold(srcImage, thresholds);
+	    
+	    // make the resolutions of the bone image the same as the source image
+	    for (int i = 0; i < zDim; i++) {
+	        boneImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[i].getResolutions());
+	    }
+	
+	    // filter by cardinality.  Keep only connected objects that are about the size of the CT bones
+	    // bones should be 200 to 5000 pixels per slice
+	    
+	    if (srcImage.getNDims() == 2) {
+	        IDObjects2D(boneImage, 200 * zDim, 5000 * zDim);
+	    } else if (srcImage.getNDims() == 3) {
+	        IDObjects3D(boneImage, 200 * zDim, 5000 * zDim);
+	    }
+	    
+	    // make sure we only found 2 objects
+	    int numBones = (int)boneImage.getMax();
+	    if (numBones != 2) {
+	        System.err.println("computeBoneImage() Did NOT find two leg bones!!!");
+	        return false;
+	    }
+	    // compute center-of-mass for each region on each slice
+	    return computeBoneCMs();
+	} // end segmentBone(...)
 
-            // distance between CM of region 2
-            dx = x2CMs[sliceNum] - x2CMs[sliceNum + 1];
-            dy = y2CMs[sliceNum] - y2CMs[sliceNum + 1];
-            distances2[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
-        } // end for (int sliceNum = 0; ...)
-        
-        // compute mean and standard deviation of the distances
-        float sum1 = 0.0f, sum2 = 0.0f;
-        for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
-            sum1 += distances1[sliceNum];
-            sum2 += distances2[sliceNum];
-        } // end for (int sliceNum = 0; ...)
-        float meanDistance1 = sum1 / (zDim - 1);
-        float meanDistance2 = sum2 / (zDim - 1);
-        
-       sum1 = sum2 = 0.0f;
-       for (int sliceNum = 0; sliceNum < zDim - 1; sliceNum++) {
-           dx = distances1[sliceNum] - meanDistance1;
-           sum1 += (dx * dx);
 
-           dx = distances2[sliceNum] - meanDistance2;
-           sum2 += (dx * dx);
-       } // end for (int sliceNum = 0; ...)
-       float stdDev1 = (float)Math.sqrt(sum1 / (zDim - 1));
-       float stdDev2 = (float)Math.sqrt(sum2 / (zDim - 1));
+
+	// Bone marrow in CT images is "inside" the bone
+    private boolean segmentBoneMarrow() {
+	   float[] thresholds = { 750.0f, 2000.0f };
+       boneImage = threshold(srcImage, thresholds);
+	   
+       // Detected bone regions are likely correct, find the marrow using a seeded region grow
+       BitSet boneMarrow1Bitmap = new BitSet();
        
-       if (Math.abs(meanDistance1 - meanDistance2) > 10.0f ||
-           Math.abs(stdDev1 - stdDev2) > 10.0f) {
-        return false;
-       }
+       // seed point is the center-of-mass of the bone on the first slice
+       // center-of-masses were computed when we checked to see if the segmented bones were similar on each slice 
+       regionGrow((short)x1CMs[0], (short)y1CMs[0], (short)0, boneMarrow1Bitmap);
        
-       // see that the distance between the center-of-mass for the two bones is close
-       float maxDistance = 0.0f;
-       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
-           // distance between CM of region 1
-           dx = x1CMs[sliceNum] - x2CMs[sliceNum];
-           dy = y1CMs[sliceNum] - y2CMs[sliceNum];
-           distances1[sliceNum] = (float)Math.sqrt(dx*dx + dy*dy);
-           if (distances1[sliceNum] > maxDistance) {
-               maxDistance = distances1[sliceNum];
+       BitSet boneMarrow2Bitmap = new BitSet();
+       regionGrow((short)x2CMs[0], (short)y2CMs[0], (short)0, boneMarrow2Bitmap);
+
+       // make the boneMarrow label image slice by slice from the 3D region grown BitSet
+       // bitSetIdx is a cumulative index into the 3D BitSet
+       for (int bitSetIdx = 0, sliceNum = 0; sliceNum < zDim; sliceNum++) {
+           for (int sliceIdx = 0; sliceIdx < sliceSize; sliceIdx++, bitSetIdx++) {
+               if (boneMarrow1Bitmap.get(bitSetIdx) || boneMarrow2Bitmap.get(bitSetIdx)) {
+                   sliceBuffer[sliceIdx] = boneMarrowLabel;
+               } else {
+                   sliceBuffer[sliceIdx] = 0;
+               }
+           } // end for (int sliceIdx = 0; ...)
+           
+           // save the sliceBuffer into the boneMarrowImage
+           try {
+               boneMarrowImage.importData(sliceNum * sliceSize, sliceBuffer, false);
+           } catch (IOException ex) {
+               System.err.println("computeBoneMarrowImage(): Error importing data");
+               return false;
            }
-       } // end for (int sliceNum = 0; ...)
-
-       // mean distance between the bones on each slice
-       sum1 = 0.0f;
-       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
-           sum1 += distances1[sliceNum];
-       } // end for (int sliceNum = 0; ...)
-       meanDistance1 = sum1 / zDim;
-
-       // standard deviation of the distance between the bones 
-       sum1 = 0.0f;
-       for (int sliceNum = 0; sliceNum < zDim; sliceNum++) {
-           dx = distances1[sliceNum] - meanDistance1;
-           sum1 += (dx * dx);
-       } // end for (int sliceNum = 0; ...)
-       stdDev1 = (float)Math.sqrt(sum1 / zDim);
-
-       // maxDistance between the bones on each slice should be close to the mean distance, so maxDistance
-       // should be close to 0
-       maxDistance -= meanDistance1;
-       if ((maxDistance + 3.0f * stdDev1) > 30.0f) {
-    	   System.err.println("boneRegionsOK() (max - mean) distance + 3 * (std dev.) of bone is greater than 30");
-    	   return false;
-       }
-       // Detected bone regions seems reasonable
+       } // end for (int bitSetIdx = 0, sliceNum = 0; ...)
        return true;
-    } // end boneRegionsOK(...)
+    } // end segmentBoneMarrow(...)
+   
+   
+   
+   private void regionGrow(short seedX, short seedY, short seedZ, BitSet seedPaintBitmap) {
+        try {
+            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(boneImage, 1.0f, 1.0f);
+
+            regionGrowAlgo.setRunningInSeparateThread(false);
+
+            if (boneImage.getNDims() == 2) {
+                regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(seedX, seedY), -1,
+                        false, false, null, 0,
+                        0, -1, -1, false);
+            } else if (boneImage.getNDims() == 3) {
+                CubeBounds regionGrowBounds;
+                regionGrowBounds = new CubeBounds(xDim, 0, yDim, 0, zDim, 0);
+                regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3D(seedX, seedY, seedZ), -1,
+                                                    false, false, null, 0,
+                                                    0, -1, -1, false,
+                                                    0, regionGrowBounds);
+//                ViewUserInterface.getReference().getMessageFrame().append("Count: " +count+"\n", ViewJFrameMessage.DEBUG);
+            }
+        } catch (OutOfMemoryError error) {
+            System.gc();
+            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
+        }
+
+    } // end regionGrow()
     
     
     
@@ -438,50 +460,7 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
     
     
     
-    /**
-     * Uses a fixed threshold range to identify bone in CT images
-     */
-    private boolean segmentBone() {
-    	
-    	// thresholds for bone in CT images
-        float[] thresholds = { 750.0f, 2000.0f };
-        boneImage = threshold(srcImage, thresholds);
-        
-        // make the resolutions of the bone image the same as the source image
-        for (int i = 0; i < zDim; i++) {
-            boneImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[i].getResolutions());
-        }
 
-        // filter by cardinality.  Keep only connected objects that are about the size of the CT bones
-        // bones should be 200 to 5000 pixels per slice
-        
-        if (srcImage.getNDims() == 2) {
-            IDObjects2D(boneImage, 200 * zDim, 5000 * zDim);
-        } else if (srcImage.getNDims() == 3) {
-            IDObjects3D(boneImage, 200 * zDim, 5000 * zDim);
-        }
-        
-        // make sure we only found 2 objects
-        int numBones = (int)boneImage.getMax();
-        if (numBones != 2) {
-            System.err.println("computeBoneImage() Did NOT find two leg bones!!!");
-            return false;
-        }
-        
-        // One bone has a label value of 1 and the other has a value of 2
-        // test to insure we got a reasonable bone segmentation
-        // compute center-of-mass for each region on each slice
-        if(!computeBoneCMs())
-        	return false;
-        // compute statics about the center-of-mass for each region on each slice
-        // and insures that the distance and standard deviations of the distances between
-        // the center-of-mass for each region between each slice are "close"
-        if (!boneRegionsOK()) {
-            System.err.println("Error segmentBone(), Bone segmentation error");
-            return false;
-        }
-        return true;
-    } // end segmentBone(...)
     
     
     
@@ -538,22 +517,21 @@ public class PlugInAlgorithmCTBone extends AlgorithmBase {
         cloneImg.setImageName(Name);
         new ViewJFrameImage(cloneImg);
     }
-
     
-    public VOI getLeftBoneVOI() {
-		return leftBoneVOI;
+	public VOI getLeftMarrowVOI() {
+		return leftMarrowVOI;
 	}
 
 
 
-	public VOI getRightBoneVOI() {
-		return rightBoneVOI;
+	public VOI getRightMarrowVOI() {
+		return rightMarrowVOI;
 	}
 
 
 
-	public long getSegmentationTimeBone() {
-		return segmentationTimeBone;
+	public long getSegmentationTimeMarrow() {
+		return segmentationTimeMarrow;
 	}
     
 
