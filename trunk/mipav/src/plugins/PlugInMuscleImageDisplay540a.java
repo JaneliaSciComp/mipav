@@ -5212,7 +5212,7 @@ public class PlugInMuscleImageDisplay540a extends ViewJFrameImage implements Alg
 	    }
 	    
 	    protected void buildCheckBoxPanel() {
-	        checkBoxPanel = new PlugInStatisticsList();
+	        checkBoxPanel = new PlugInStatisticsList540a();
 	    }
 	    
 	    /**
@@ -5262,21 +5262,21 @@ public class PlugInMuscleImageDisplay540a extends ViewJFrameImage implements Alg
 	    protected void writeLogHeader() {
 	        super.writeLogHeader();
             
-            for(int i=VOIStatisticList.statisticDescription.length; i< PlugInStatisticsList.extendedStatisticsDescription.length; i++) {
+            for(int i=VOIStatisticList.statisticDescription.length; i< PlugInStatisticsList540a.extendedStatisticsDescription.length; i++) {
                 
                 String str = new String();
                 //add statistic to column list if selected by user
                 if (checkList[i]) {
-                    if ( (PlugInStatisticsList.extendedStatisticsDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits)
+                    if ( (PlugInStatisticsList540a.extendedStatisticsDescription[i].indexOf("Volume") != -1) && (xUnits == yUnits)
                             && (xUnits == zUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                         str = "cm^3";
-                        logModel.addColumn(PlugInStatisticsList.extendedStatisticsDescription[i] + " (" + str + ")");
-                    } else if ( (PlugInStatisticsList.extendedStatisticsDescription[i].indexOf("Area") != -1)
+                        logModel.addColumn(PlugInStatisticsList540a.extendedStatisticsDescription[i] + " (" + str + ")");
+                    } else if ( (PlugInStatisticsList540a.extendedStatisticsDescription[i].indexOf("Area") != -1)
                             && (xUnits == yUnits) && (xUnits != Unit.UNKNOWN_MEASURE.getLegacyNum())) {
                         str = "cm^2";
-                        logModel.addColumn(PlugInStatisticsList.extendedStatisticsDescription[i] + " (" + str + ")");
+                        logModel.addColumn(PlugInStatisticsList540a.extendedStatisticsDescription[i] + " (" + str + ")");
                     } else {
-                        logModel.addColumn(PlugInStatisticsList.extendedStatisticsDescription[i]);
+                        logModel.addColumn(PlugInStatisticsList540a.extendedStatisticsDescription[i]);
                     }
                 }
             }
@@ -5316,7 +5316,7 @@ public class PlugInMuscleImageDisplay540a extends ViewJFrameImage implements Alg
 	        }
 	        
 	        // for each column in the row, print the statistic:
-	        for (int k = VOIStatisticList.statisticDescription.length; k < PlugInStatisticsList.extendedStatisticsDescription.length; k++) {
+	        for (int k = VOIStatisticList.statisticDescription.length; k < PlugInStatisticsList540a.extendedStatisticsDescription.length; k++) {
 
 	            if (checkList[k]) {
 	                //Guaranteed to not be color image
