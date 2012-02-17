@@ -166,9 +166,6 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
             key = e.nextElement();
             
             name = key.getKey();
-            if(name.equals("0010,21C0")) {
-                System.out.println("Stop");
-            }
             
             final String tagName = "(" + name + ")";
             if (tags != null) {
