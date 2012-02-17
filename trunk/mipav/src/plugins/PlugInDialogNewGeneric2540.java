@@ -230,7 +230,7 @@ public class PlugInDialogNewGeneric2540 extends JDialogScriptableBase implements
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generic Plugin");
+        setTitle("Generic Plugin 5.4.0");
         try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
