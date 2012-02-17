@@ -23,6 +23,8 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
+import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -34,9 +36,10 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
-import java.util.Collections;
-import java.util.Enumeration;
+import java.util.ArrayList;
+import java.util.Vector;
 
 import javax.swing.*;
 
@@ -52,71 +55,86 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogCreateTumorMap540a extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /**declare UID */
-
+    
+    /** Type of tumor simulation */
+    public enum TumorSimMode {
+        intensify,
+        deintensify,
+        shrink,
+        grow,
+        none;
+    }
+    
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Result image. */
     private ModelImage resultImage = null;
-
-    /** This source image is typically set by the constructor */
-    private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGeneratePostTreatment535d generatePostAlgo = null;
+    private PlugInAlgorithmCreateTumorMap540a tumorSimAlgo = null;
 
-    /** The check box for whether a blur should be performed. */
-	private JCheckBox check;
+    private JTextField initRadiusText;
 
-	/** The variable representing whether the blur should be performed. */
-	private boolean doGaussian;
+    private JComboBox growthShrinkCombo;
 
-    private JComboBox image1Combo;
-
-    private JTextField image1IntensityText, image2IntensityText;
-
-    private JComboBox image2Combo;
-
-    private JTextField image1ScaleText, image2ScaleText;
-    
-    private JTextField image1NoiseText, image2NoiseText;
+    private JTextField percentChangeText;
 
     private JPanel okCancelPanel;
 
-    private double image1Intensity, image2Intensity;
+    private JTextField xyDimText;
 
-    private ModelImage image1, image2;
+    private JTextField zDimText;
 
-    private double image1Scale, image2Scale;
+    private JTextField xyResText;
 
-    private double image1Noise, image2Noise;
+    private JTextField zResText;
+    
+    private JTextField intensityText;
 
-    private JCheckBox doInterImagesCheckBox;
+    private int xyDim, zDim;
 
-    private boolean doInterImages;
+    private double xyRes, zRes;
+
+    private double initRadius;
+
+    private double tumorChange;
+
+    private TumorSimMode simMode;
+
+    private double intensity;
+
+    private JComboBox subSampleCombo;
+
+    private int subsample;
+
+    /** Units of image */
+	private JComboBox unitsCombo;
+
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGeneratePostTreatment535d() { }
+    public PlugInDialogCreateTumorMap540a() { }
 
     /**
-     * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
+     * Sets up variables but does not show dialog.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGeneratePostTreatment535d(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, false);
-
-        image = im;
+    public PlugInDialogCreateTumorMap540a(boolean modal) {
+        super(modal); 
+        
         init();
     }
     
@@ -152,27 +170,22 @@ public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment535d) {
+       if (algorithm instanceof PlugInAlgorithmCreateTumorMap540a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
-            if ((generatePostAlgo.isCompleted() == true)) {
-                if(doInterImages) {
-                    new ViewJFrameImage(generatePostAlgo.getImage1b());
-                    new ViewJFrameImage(generatePostAlgo.getImage2b());
-                    new ViewJFrameImage(generatePostAlgo.getImage1c());
-                    new ViewJFrameImage(generatePostAlgo.getImage2c());
-                }
-                new ViewJFrameImage(generatePostAlgo.getPostTreatment());
+            if ((tumorSimAlgo.isCompleted() == true)) {
+                tumorSimAlgo.getImage1a().getParentFrame().setVisible(true);
+                tumorSimAlgo.getImage2a().getParentFrame().setVisible(true);
+                
             } 
 
-            if (generatePostAlgo.isCompleted()) {
-                
+            if (tumorSimAlgo.isCompleted()) {
                 insertScriptLine();
             }
 
-            if (generatePostAlgo != null) {
-                generatePostAlgo.finalize();
-                generatePostAlgo = null;
+            if (tumorSimAlgo != null) {
+                tumorSimAlgo.finalize();
+                tumorSimAlgo = null;
             }
 
             dispose();
@@ -188,14 +201,13 @@ public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment535d(image1, image1Intensity, image1Scale, image1Noise,
-                                                                            image2, image2Intensity, image2Scale, image2Noise);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap540a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity, subsample);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            generatePostAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", generatePostAlgo);
+            tumorSimAlgo.addListener(this);
+            createProgressBar("Creating images", " ...", tumorSimAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -203,11 +215,11 @@ public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
-                if (generatePostAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (tumorSimAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                generatePostAlgo.run();
+                tumorSimAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -226,24 +238,28 @@ public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
-    	image = scriptParameters.retrieveInputImage();
+    	//image = scriptParameters.retrieveInputImage();
+
+    	//doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
     } //end setGUIFromParams()
 
     /**
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    	scriptParameters.storeInputImage(image);
+    	//scriptParameters.storeInputImage(image);
+   
+        //scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
     } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generate post treatment map 535d");
+        setTitle("Create tumor maps 540a");
         try {
-            setIconImage(MipavUtil.getIconImage("divinci.gif"));
-        } catch (FileNotFoundException e) {
-            Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
-        }
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
+		}
         
         GuiBuilder gui = new GuiBuilder(this);
 
@@ -260,72 +276,81 @@ public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
 
-        JPanel image1Panel = new JPanel(new GridBagLayout());
-        image1Panel.setForeground(Color.black);
-        image1Panel.setBorder(buildTitledBorder("Image 1 parameters"));
+        JPanel imageSizePanel = new JPanel(new GridBagLayout());
+        imageSizePanel.setForeground(Color.black);
+        imageSizePanel.setBorder(buildTitledBorder("Image size parameters"));
         
-        int numDefault1=0, numDefault2=0, i=0;
-        Enumeration<String> imageList = ViewUserInterface.getReference().getRegisteredImageNames();
-        while(imageList.hasMoreElements()) {
-            String name = imageList.nextElement();
-            if(name.contains("1a")) {
-                numDefault1 = i;
-            } else if(name.contains("2a")) {
-                numDefault2 = i;
-            }
-            i++;
+        xyDimText = gui.buildIntegerField("X/Y Dimension: ", 256);
+        imageSizePanel.add(xyDimText.getParent(), gbc);
+        
+        gbc.gridx++;
+        zDimText = gui.buildIntegerField("Z Dimension: ", 256);
+        imageSizePanel.add(zDimText.getParent(), gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        xyResText = gui.buildDecimalField("X/Y Resolution: ", .117);
+        imageSizePanel.add(xyResText.getParent(), gbc);
+        
+        gbc.gridx++;
+        zResText = gui.buildDecimalField("Z Resolution: ", .117);
+        imageSizePanel.add(zResText.getParent(), gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        Unit[] units = UnitType.getUnitsOfType(UnitType.LENGTH);
+        int selected = 0;
+        for(int i=0; i<units.length; i++) {
+        	if(units[i] == Unit.MILLIMETERS) {
+        		selected = i;
+        	}
         }
-        Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
+        unitsCombo = gui.buildComboBox("Units of image: ", UnitType.getUnitsOfType(UnitType.LENGTH), selected);
+        imageSizePanel.add(unitsCombo.getParent(), gbc);
         
-        image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
-        image1Panel.add(image1Combo.getParent(), gbc);
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        mainPanel.add(imageSizePanel, gbc);
         
-        gbc.gridx++;
-        image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", 1300);
-        image1Panel.add(image1IntensityText.getParent(), gbc);
+        JPanel tumorSimPanel = new JPanel(new GridBagLayout());
+        tumorSimPanel.setForeground(Color.black);
+        tumorSimPanel.setBorder(buildTitledBorder("Tumor simulation parameters"));
+        
+        intensityText = gui.buildDecimalField("Intensity value: ", 1300);
+        tumorSimPanel.add(intensityText.getParent(), gbc);
         
         gbc.gridy++;
-        gbc.gridx = 0;
-        image1ScaleText = gui.buildDecimalField("Partial volume scaling: ", .67);
-        image1Panel.add(image1ScaleText.getParent(), gbc);
+        JPanel panel = new JPanel();
+        FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
+        panel.setLayout(flow);
         
-        gbc.gridx++;
-        image1NoiseText = gui.buildDecimalField("Image 1 noise: ", 10);
-        image1Panel.add(image1NoiseText.getParent(), gbc);
-         
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        mainPanel.add(image1Panel, gbc);
+        final JLabel measureLabel = new JLabel("Radius of initial tumor (in "+Unit.MILLIMETERS.getAbbrev()+"): ");
+        panel.add(measureLabel, flow);
         
-        JPanel image2Panel = new JPanel(new GridBagLayout());
-        image2Panel.setForeground(Color.black);
-        image2Panel.setBorder(buildTitledBorder("Image 2 parameters"));
+        initRadiusText = gui.buildDecimalField("", 3);
+        panel.add(initRadiusText, flow);
+        tumorSimPanel.add(panel, gbc);
         
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        image2Combo = gui.buildComboBox("Image 2: ", imageAr, numDefault2);
-        image2Panel.add(image2Combo.getParent(), gbc);
-        
-        gbc.gridx++;
-        image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", 1729);
-        image2Panel.add(image2IntensityText.getParent(), gbc);
+        unitsCombo.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e) {
+				measureLabel.setText("Radius of initial tumor (in "+((Unit)unitsCombo.getSelectedItem()).getAbbrev()+"): ");
+			}
+        });
         
         gbc.gridy++;
-        gbc.gridx = 0;
-        image2ScaleText = gui.buildDecimalField("Partial volume scaling: ", .67);
-        image2Panel.add(image2ScaleText.getParent(), gbc);
+        subSampleCombo = gui.buildComboBox("Subsampling amount: ", new Integer[] {8, 4, 2, 0}, 0);
+        tumorSimPanel.add(subSampleCombo.getParent(), gbc);
         
-        gbc.gridx++;
-        image2NoiseText = gui.buildDecimalField("Image 2 noise: ", 10);
-        image2Panel.add(image2NoiseText.getParent(), gbc);  
+        gbc.gridy++;
+        growthShrinkCombo = gui.buildComboBox("Simulate tumor: ", TumorSimMode.values());
+        tumorSimPanel.add(growthShrinkCombo.getParent(), gbc);
+        
+        gbc.gridy++;      
+        percentChangeText = gui.buildDecimalField("Percentage change: ", .33);
+        tumorSimPanel.add(percentChangeText.getParent(), gbc);
         
         gbc.gridy = 1;
-        gbc.gridx = 0;
-        mainPanel.add(image2Panel, gbc);
-        
-        gbc.gridy++;
-        doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
-        mainPanel.add(doInterImagesCheckBox.getParent(), gbc);
+        mainPanel.add(tumorSimPanel, gbc);
         
         gbc.gridy++;
         okCancelPanel = gui.buildOKCancelPanel();
@@ -346,34 +371,28 @@ public class PlugInDialogGeneratePostTreatment535d extends JDialogScriptableBase
      * @return
      */
 	private boolean setVariables() {
-		try {
-		    image1Intensity = Double.valueOf(image1IntensityText.getText());
-		    image1Scale = Double.valueOf(image1ScaleText.getText());
-		    image1Noise = Double.valueOf(image1NoiseText.getText());
-		    
-		    image2Intensity = Double.valueOf(image2IntensityText.getText());
-		    image2Scale = Double.valueOf(image2ScaleText.getText());
-            image2Noise = Double.valueOf(image2NoiseText.getText());
-		    
-		} catch(NumberFormatException nfe) {
-            MipavUtil.displayError("Input error, enter numerical values only.");
-            return false;
-        }
-		System.out.println(image1Combo.getSelectedItem().toString());
-		image1 = ViewUserInterface.getReference().getRegisteredImageByName(image1Combo.getSelectedItem().toString());
-		if(image1 == null) {
-		    MipavUtil.displayError(image1Combo.getSelectedItem().toString()+" is not a valid image name.");
-		    return false;
-		}
-		System.out.println(image2Combo.getSelectedItem().toString());
-		image2 = ViewUserInterface.getReference().getRegisteredImageByName(image2Combo.getSelectedItem().toString());
-		if(image2 == null) {
-            MipavUtil.displayError(image2Combo.getSelectedItem().toString()+" is not a valid image name.");
-            return false;
-        }
 		
-		doInterImages = doInterImagesCheckBox.isSelected();
-		
+	    try {
+    	    xyDim = Integer.valueOf(xyDimText.getText());
+    	    zDim = Integer.valueOf(zDimText.getText());
+    	    
+    	    xyRes = Double.valueOf(xyResText.getText());
+    	    zRes = Double.valueOf(zResText.getText());
+    	    
+    	    initRadius = Double.valueOf(initRadiusText.getText());
+    	    
+    	    subsample = Integer.valueOf(subSampleCombo.getSelectedItem().toString());
+    	    
+    	    tumorChange = Double.valueOf(percentChangeText.getText());
+    	    
+    	    intensity = Double.valueOf(intensityText.getText());
+	    } catch(NumberFormatException nfe) {
+	        MipavUtil.displayError("Input error, enter numerical values only.");
+	        return false;
+	    }
+	    
+	    simMode = (TumorSimMode)growthShrinkCombo.getSelectedItem();
+	    
 		return true;
 	} //end setVariables()
 }
