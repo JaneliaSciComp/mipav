@@ -2002,7 +2002,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // initMacintoshJDKversionCheck();
 
         initCreateMessageBar();
-        initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV)", "MIPAV: ");
+        initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV) - v" + MipavUtil.getVersion(), "MIPAV: ");
         initDicomReceiver();
 
         mainFrame.pack();
