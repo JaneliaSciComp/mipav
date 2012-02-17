@@ -16,6 +16,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIFiberTracking;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
 
@@ -951,7 +953,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("loadEG_FA")) {
             new JDialogDTIInput(JDialogDTIInput.EG_FA);
         } else if (command.equals("loadDTIFrame")) {
-            invokeDTIframe();
+        	JPanelDTIVisualization.createFrame();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
         }else if (command.equals("dtiPipeline")) { 
@@ -959,9 +961,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
         } else if (command.equals("fiberTracking")) {
-            new JDialogDTIFiberTracking();
+            JPanelDTIFiberTracking.createFrame();
         } else if (command.equals("dtiVisualization")) {
-            invokeDTIframe();
+        	JPanelDTIVisualization.createFrame();
         } else if (command.equals("HyperGraph")) {
         	new JDialogHyperGraph(null, null);
         } else if (command.equals("treT1")) {
@@ -981,19 +983,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("KMeans")) {
         	new JDialogKMeans();
         }
-
-    }
-
-    /**
-     * Calling the DTI framework with blank image during initialization.
-     */
-    public void invokeDTIframe() {
-
-        final ModelImage imageA = createEmptyImage(null);
-        new VolumeTriPlanarInterfaceDTI(imageA);
-        //final VolumeTriPlanarInterfaceDTI kWM = new VolumeTriPlanarInterfaceDTI(imageA);
-        // kWM.constructRenderers();
-        imageA.disposeLocal();
 
     }
 

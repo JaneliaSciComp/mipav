@@ -1,56 +1,34 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-import java.awt.event.*;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 
+import java.awt.event.MouseEvent;
 
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-
-import WildMagic.LibFoundation.Mathematics.*;
-import WildMagic.LibGraphics.Collision.*;
-import WildMagic.LibGraphics.SceneGraph.*;
-import WildMagic.LibRenderers.OpenGLRenderer.*;
-
-
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.media.opengl.*;
+import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.awt.GLCanvas;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
+
 import com.jogamp.opengl.util.Animator;
 
 public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
 {
-    public VolumeTriPlanerRenderDTI( )
-    {
-        super();
-        m_pkRenderer = new OpenGLRenderer( m_eFormat, m_eDepth, m_eStencil,
-                m_eBuffering, m_eMultisampling,
-                m_iWidth, m_iHeight );
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addGLEventListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addKeyListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseListener( this );       
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseMotionListener( this );               
-        ((OpenGLRenderer)m_pkRenderer).GetCanvas().addMouseWheelListener( this );  
-    }
-        
-    /**
-     * Construct the Volume/Surface/Tri-Planar renderer.
-     * @param kParent parent user-interface and frame.
-     * @param kAnimator animator used to display the canvas.
-     * @param kVolumeImageA volume data and textures for ModelImage A.
-     * @param kVolumeImageB volume data and textures for ModelImage B.
-     */
-    public VolumeTriPlanerRenderDTI( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
-            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
-    {
-        super(kParent, kAnimator, kVolumeImageA, kVolumeImageB);
-    }
-        
+	
+    /** */
+	private static final long serialVersionUID = 237088312722258458L;
+	
+	private boolean m_bSlicePickPending = false;
+
+
+    private boolean m_bSlicePickEnabled = false;
+
+    private boolean updatingFiberTrack = false;
+
+
     /**
      * Construct the Volume/Surface/Tri-Planar renderer.
      * @param kParent parent user-interface and frame.
@@ -64,24 +42,90 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
         super(kShared, kCanvas, kParent, kAnimator, kVolumeImageA, kVolumeImageB );
     }
 
+    /**
+     * Enable the tri-planar slice pickable. 
+     * @param bEnabled   pickable or not
+     */
+    public void enableSlicePickable(boolean bEnabled) {
+        m_bSlicePickEnabled = bEnabled;
 
-    public void init(GLAutoDrawable arg0) {	
+        for ( int i = 0; i < m_kDisplayList.size(); i++ )
+        {
+            if ( m_kDisplayList.get(i) instanceof VolumeSlices )
+            {
+                m_kDisplayList.get(i).SetPickable( bEnabled );
+            }
+        }
+    }
+
+    @Override
+	public void init(GLAutoDrawable arg0) {	
     	super.init(arg0);
     	enableSlicePickable(true);
     	m_kParent.processDTI();
     }
 
-    public void loadImage( VolumeTriPlanarInterfaceDTI kParent, Animator kAnimator, 
-            VolumeImage kVolumeImageA, VolumeImage kVolumeImageB  )
+
+    /** Rotates the object with a virtual trackball:
+     * @param e the MouseEvent
+     */
+    @Override
+	public void mouseDragged(MouseEvent e)
     {
-        m_kParent = kParent;
-        m_kAnimator = kAnimator;
-        m_kVolumeImageA = kVolumeImageA;
-        m_kVolumeImageB = kVolumeImageB;
-        m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
+        if ( !getSculptEnabled() )
+        {
+            super.mouseDragged(e);
+            if ( e.isControlDown() && m_bSlicePickEnabled )
+            {
+                m_iXPick = e.getX();
+                m_iYPick = e.getY();
+                m_bSlicePickPending = true;
+            }
+        }
     }
 
-    protected void Pick()
+    /** Rotates the object with a virtual trackball:
+     * @param e the MouseEvent
+     */
+    @Override
+	public void mousePressed(MouseEvent e)
+    {
+        super.mousePressed(e);
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
+        if ( e.isControlDown() && m_bSlicePickEnabled )
+        {
+            m_iXPick = e.getX();
+            m_iYPick = e.getY();
+            m_bSlicePickPending = true;
+            updatingFiberTrack = true;
+            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().updateCounter();
+        }
+    }
+    /** Rotates the object with a virtual trackball:
+     * @param e the MouseEvent
+     */
+    @Override
+	public void mouseReleased(MouseEvent e)
+    {
+        super.mouseReleased(e);
+        if ( m_bGeodesicEnabled )
+        {
+            return;
+        }
+        if ( updatingFiberTrack && m_bSlicePickEnabled ) {
+            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().addFiberTract();
+            updatingFiberTrack = false;
+        }
+    }
+    @Override
+	protected void Pick()
     {
         super.Pick();
 
@@ -138,84 +182,5 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
             }
         }
     }
-
-
-    /** Rotates the object with a virtual trackball:
-     * @param e the MouseEvent
-     */
-    public void mousePressed(MouseEvent e)
-    {
-        super.mousePressed(e);
-        if ( m_bGeodesicEnabled )
-        {
-            return;
-        }
-        if ( e.isControlDown() && m_bSlicePickEnabled )
-        {
-            m_iXPick = e.getX();
-            m_iYPick = e.getY();
-            m_bSlicePickPending = true;
-            updatingFiberTrack = true;
-            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().updateCounter();
-        }
-    }
-
-    /** Rotates the object with a virtual trackball:
-     * @param e the MouseEvent
-     */
-    public void mouseReleased(MouseEvent e)
-    {
-        super.mouseReleased(e);
-        if ( m_bGeodesicEnabled )
-        {
-            return;
-        }
-        if ( updatingFiberTrack && m_bSlicePickEnabled ) {
-            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().addFiberTract();
-            updatingFiberTrack = false;
-        }
-    }
-
-    /** Rotates the object with a virtual trackball:
-     * @param e the MouseEvent
-     */
-    public void mouseDragged(MouseEvent e)
-    {
-        if ( m_bGeodesicEnabled )
-        {
-            return;
-        }
-        if ( !getSculptEnabled() )
-        {
-            super.mouseDragged(e);
-            if ( e.isControlDown() && m_bSlicePickEnabled )
-            {
-                m_iXPick = e.getX();
-                m_iYPick = e.getY();
-                m_bSlicePickPending = true;
-            }
-        }
-    }
-
-
-    /**
-     * Enable the tri-planar slice pickable. 
-     * @param bEnabled   pickable or not
-     */
-    public void enableSlicePickable(boolean bEnabled) {
-        m_bSlicePickEnabled = bEnabled;
-
-        for ( int i = 0; i < m_kDisplayList.size(); i++ )
-        {
-            if ( m_kDisplayList.get(i) instanceof VolumeSlices )
-            {
-                m_kDisplayList.get(i).SetPickable( bEnabled );
-            }
-        }
-    }
-
-    private boolean m_bSlicePickPending = false;
-    private boolean m_bSlicePickEnabled = false;
-    private boolean updatingFiberTrack = false;
 
 }

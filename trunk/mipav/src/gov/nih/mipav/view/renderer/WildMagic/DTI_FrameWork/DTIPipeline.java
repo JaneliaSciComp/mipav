@@ -403,7 +403,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 	}
 
 	private JPanel buildVisuzalizationPanel() {
-		visualization = new JPanelDTIVisualization();
+		visualization = new JPanelDTIVisualization(this);
 		return visualization;
 	}
 
@@ -420,6 +420,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			// Set up the fiber tracking panel inputs:
 			tabbedPane.setSelectedIndex(FIBER_TRACKING);
 			fiberTrack.setInputImage( tensorImage );
+			nextButton.setEnabled(true);
 			// save the tensor image
 			ModelImage.saveImage( tensorImage, tensorImage.getImageName() + ".xml", tensorImage.getImageDirectory() );
 			currentImage = tensorImage;
