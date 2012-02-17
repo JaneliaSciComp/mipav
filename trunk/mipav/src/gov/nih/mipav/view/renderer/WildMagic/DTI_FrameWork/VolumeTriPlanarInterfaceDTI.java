@@ -1,33 +1,23 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
+import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 
-import gov.nih.mipav.view.*;
-
-
-import gov.nih.mipav.view.renderer.WildMagic.*;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.*;
-import gov.nih.mipav.view.renderer.WildMagic.Render.*;
-
-
-import java.awt.event.*;
+import java.awt.event.WindowEvent;
 import java.io.File;
 
-import javax.swing.*;
-import javax.swing.event.*;
-
-
-import java.awt.Frame;
-import java.awt.event.WindowAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
-
-import javax.media.opengl.*;
 import javax.media.opengl.awt.GLCanvas;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.ChangeListener;
+
 import com.jogamp.opengl.util.Animator;
 
 public class VolumeTriPlanarInterfaceDTI extends VolumeTriPlanarInterface 
@@ -39,9 +29,6 @@ implements ChangeListener {
     private static final long serialVersionUID = 1898957906984534260L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    private JPanelDTILoad DTIimageLoadPanel;
-    
-    private JPanelDTIFiberTrack DTIFiberTrackPanel;
     
     private JPanelDTIParametersPanel DTIparamsPanel;
 
@@ -134,27 +121,115 @@ implements ChangeListener {
 
 
     
-    public void setParentDir(String _path) {
-       m_kParentDir = _path;
+    public void buildDTIParametersPanel() {
+    	DTIParametersPanel = new JPanel();
+    	
+    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
+    	
+    	DTIParametersPanel.add(DTIparamsPanel.getMainPanel());
+    	
+    	maxPanelWidth = Math.max(DTIParametersPanel.getPreferredSize().width, maxPanelWidth);
+    	
+    	tabbedPane.addTab("Fibers", null, DTIParametersPanel);
     }
     
-    public void setEVimage(ModelImage _m_kEigenVectorImage) {
-        m_kEigenVectorImage = _m_kEigenVectorImage;
+    public void create3DVOI( boolean bIntersection )
+    {
+        super.create3DVOI(bIntersection);
+        DTIparamsPanel.add3DVOI( m_kVOIName );
     }
     
-    public void setEValueimage(ModelImage _m_kEigenValueImage) {
-        m_kEigenValueImage = _m_kEigenValueImage;
+    /**
+     * Dispose memory.
+     *
+     * @param  flag  call super dispose or not
+     */
+    public void disposeLocal(boolean flag) {
+        super.disposeLocal(flag);
+
+        if ( m_kEigenVectorImage != null )
+        {
+            m_kEigenVectorImage.disposeLocal();
+            m_kEigenVectorImage = null;
+        }
+        if ( m_kEigenValueImage != null )
+        {
+            m_kEigenValueImage.disposeLocal();
+            m_kEigenValueImage = null;
+        }
+        if ( m_kAnisotropyImage != null )
+        {
+            m_kAnisotropyImage.disposeLocal();
+            m_kAnisotropyImage = null;
+        }
+        
+        if ( DTIparamsPanel != null ) {
+        	DTIparamsPanel.disposeLocal();
+        	DTIparamsPanel = null;
+        }
+        
+        if ( m_kDTIImage != null )
+        {
+        	m_kDTIImage.removeImageDisplayListener(this);
+            m_kDTIImage.disposeLocal();
+            m_kDTIImage = null;
+        }            
+                
+        if ( m_kDTIColorImage != null )
+        {
+        	m_kDTIColorImage.removeImageDisplayListener(this);
+            m_kDTIColorImage.disposeLocal();
+            m_kDTIColorImage = null;
+        }
+        
+      
+        
     }
     
-    public void setFAimage(ModelImage _m_kAnisotropyImage) {
-    	m_kAnisotropyImage = _m_kAnisotropyImage;
-    }
+    public ModelImage getDTIimage() { 
+		return m_kDTIImage;
+	}
     
-    public void setDTIimage(ModelImage _m_kDTIImage) {
-	    m_kDTIImage = (ModelImage)_m_kDTIImage.clone();
+    public ModelImage getEValueimage() { 
+       return m_kEigenValueImage;
     }
 	
     
+    
+    public ModelImage getEVimage() { 
+       return m_kEigenVectorImage;
+    }
+    
+    public ModelImage getFAimage() { 
+    	return m_kAnisotropyImage;
+    }
+    
+    public JPanelLights_WM getLightControl() {
+    	return m_kLightsPanel;
+    }
+    
+    public JPanelDTIParametersPanel getParamPanel() {
+    	return DTIparamsPanel;
+    }
+    
+    public String getParentDir() {
+    	return m_kParentDir;
+    }
+    
+	public void processDTI()
+    {
+    	if ( DTIparamsPanel != null )
+    	{
+    		DTIparamsPanel.processDTI();
+    	}
+    }
+	
+    
+    public void removeSurface(String kSurfaceName)
+    {       
+        super.removeSurface(kSurfaceName);
+        DTIparamsPanel.remove3DVOI( kSurfaceName );
+    }
     
     public void setDTIColorImage(ModelImage _m_kDTIColorImage) {
     	
@@ -192,53 +267,8 @@ implements ChangeListener {
         getParamPanel().processDTI();
     }
     
-    public String getParentDir() {
-    	return m_kParentDir;
-    }
-    
-    public ModelImage getEVimage() { 
-       return m_kEigenVectorImage;
-    }
-    
-    public ModelImage getEValueimage() { 
-       return m_kEigenValueImage;
-    }
-    
-    public ModelImage getFAimage() { 
-    	return m_kAnisotropyImage;
-    }
-    
-	public ModelImage getDTIimage() { 
-		return m_kDTIImage;
-	}
-	
-
-    public void buildDTIimageLoadPanel() {
-    	JPanel DTIimagePanel = new JPanel();
-    	
-    	DTIimageLoadPanel = new JPanelDTILoad(this);
-    	
-    	DTIimagePanel.add(DTIimageLoadPanel.getMainPanel());
-    	
-    	maxPanelWidth = Math.max(DTIimagePanel.getPreferredSize().width, maxPanelWidth);
-    	
-    	tabbedPane.addTab("DWI / DTI", null, DTIimagePanel);
-    }
-    
-    public void buildDTIFiberTrackPanel() {
-    	DTIFiberPanel = new JPanel();
-
-    	DTIFiberTrackPanel = new JPanelDTIFiberTrack(this);
-    	
-    	DTIFiberPanel.add(DTIFiberTrackPanel.getMainPanel());
-    	
-    	maxPanelWidth = Math.max(DTIFiberPanel.getPreferredSize().width, maxPanelWidth);
-    	
-    	tabbedPane.addTab("Fiber Tracks", null, DTIFiberPanel);
-    }
-    
-    public void setFiberTrackActive() {
-    	insertTab("Fiber Tracks", DTIFiberPanel);
+    public void setDTIimage(ModelImage _m_kDTIImage) {
+	    m_kDTIImage = (ModelImage)_m_kDTIImage.clone();
     }
     
     public void setDTIParamsActive() {
@@ -249,23 +279,29 @@ implements ChangeListener {
     	// getParamPanel().processTractFile();
     }
     
-    public JPanelDTIParametersPanel getParamPanel() {
-    	return DTIparamsPanel;
+    
+    public void setEValueimage(ModelImage _m_kEigenValueImage) {
+        m_kEigenValueImage = _m_kEigenValueImage;
     }
     
-    public void buildDTIParametersPanel() {
-    	DTIParametersPanel = new JPanel();
-    	
-    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
-    	
-    	DTIParametersPanel.add(DTIparamsPanel.getMainPanel());
-    	
-    	maxPanelWidth = Math.max(DTIParametersPanel.getPreferredSize().width, maxPanelWidth);
-    	
-    	tabbedPane.addTab("Fibers", null, DTIParametersPanel);
+    public void setEVimage(ModelImage _m_kEigenVectorImage) {
+        m_kEigenVectorImage = _m_kEigenVectorImage;
+    }
+    
+    public void setFAimage(ModelImage _m_kAnisotropyImage) {
+    	m_kAnisotropyImage = _m_kAnisotropyImage;
     }
     
     
+    public void setFiberTrackActive() {
+    	insertTab("Fiber Tracks", DTIFiberPanel);
+    }
+
+    
+    public void setParentDir(String _path) {
+       m_kParentDir = _path;
+    }
+
     public void setTractParams(File _m_kTractFile, JTextField _m_kTractsLimit, JTextField _m_kTractsMin, JTextField _m_kTractsMax, JTextField _m_kTractPath) {
     	m_kTractFile = _m_kTractFile;
     	m_kTractsLimit = _m_kTractsLimit;
@@ -274,63 +310,7 @@ implements ChangeListener {
     	m_kTractPath = _m_kTractPath;
     }
     
-    public JPanelLights_WM getLightControl() {
-    	return m_kLightsPanel;
-    }
-    
-    /**
-     * Dispose memory.
-     *
-     * @param  flag  call super dispose or not
-     */
-    public void disposeLocal(boolean flag) {
-        super.disposeLocal(flag);
 
-        if ( m_kEigenVectorImage != null )
-        {
-            m_kEigenVectorImage.disposeLocal();
-            m_kEigenVectorImage = null;
-        }
-        if ( m_kEigenValueImage != null )
-        {
-            m_kEigenValueImage.disposeLocal();
-            m_kEigenValueImage = null;
-        }
-        if ( m_kAnisotropyImage != null )
-        {
-            m_kAnisotropyImage.disposeLocal();
-            m_kAnisotropyImage = null;
-        }
-        
-        if ( DTIparamsPanel != null ) {
-        	DTIparamsPanel.disposeLocal();
-        	DTIparamsPanel = null;
-        }
-        
-        if ( DTIimageLoadPanel != null ) {
-        	DTIimageLoadPanel.disposeLocal();
-        	DTIimageLoadPanel = null;
-        }        
-       
-        if ( m_kDTIImage != null )
-        {
-        	m_kDTIImage.removeImageDisplayListener(this);
-            m_kDTIImage.disposeLocal();
-            m_kDTIImage = null;
-        }            
-                
-        if ( m_kDTIColorImage != null )
-        {
-        	m_kDTIColorImage.removeImageDisplayListener(this);
-            m_kDTIColorImage.disposeLocal();
-            m_kDTIColorImage = null;
-        }
-        
-      
-        
-    }
-    
-    
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)
      */
@@ -346,18 +326,7 @@ implements ChangeListener {
 			}
 		}).start();
     }
-
-    /**
-     * Constructs main frame structures for image canvas.
-     */
-    protected void configureFrame() {
-        super.configureFrame( );
-        if ( m_kVolumeImageA == null )
-        {
-        	buildDTIimageLoadPanel();
-        }
-    }
-
+    
     /**
      * Construct the volume rendering methods based on the choices made from
      * the resample dialog. This method is called by the Resample dialog.
@@ -409,26 +378,5 @@ implements ChangeListener {
         }
         super.resizePanel();        
         panelToolbar.getHeight();
-    }
-    
-
-    public void create3DVOI( boolean bIntersection )
-    {
-        super.create3DVOI(bIntersection);
-        DTIparamsPanel.add3DVOI( m_kVOIName );
-    }
-    
-    public void removeSurface(String kSurfaceName)
-    {       
-        super.removeSurface(kSurfaceName);
-        DTIparamsPanel.remove3DVOI( kSurfaceName );
-    }
-
-    public void processDTI()
-    {
-    	if ( DTIparamsPanel != null )
-    	{
-    		DTIparamsPanel.processDTI();
-    	}
     }
 }
