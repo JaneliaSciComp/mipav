@@ -28,10 +28,11 @@ public class CircleUtil {
                 sphere[i][0] = (int) Math.round(sphere[i][0]/xRes);
                 sphere[i][1] = (int) Math.round(sphere[i][1]/yRes);
                 sphere[i][2] = (int) Math.round(sphere[i][2]/zRes);
-                System.out.println(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]);
+                //System.out.println(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]);
             }
         } else { //smallestRes >= 1, so expansion of sphere
             int imgRadius = (int) Math.round(radius*largestRes);
+            
         }
         
         return sphere;
