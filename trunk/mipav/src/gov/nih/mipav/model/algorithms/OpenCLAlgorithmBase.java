@@ -467,7 +467,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
                 return null;
             }
             
-            System.err.println( fileURL );
+            //System.err.println( fileURL );
             //String fileLocation = fileURL.getPath() + File.separator + fileName;
             //FileInputStream file = new FileInputStream( fileLocation );
 
