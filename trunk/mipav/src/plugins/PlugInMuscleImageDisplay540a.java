@@ -50,7 +50,7 @@ import org.apache.pdfbox.pdmodel.font.PDType1Font;
  * @author Justin Senseney (senseneyj@mail.nih.gov)
  *
  */
-public class PlugInMuscleImageDisplay extends ViewJFrameImage implements AlgorithmInterface {
+public class PlugInMuscleImageDisplay540a extends ViewJFrameImage implements AlgorithmInterface {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
     
@@ -140,22 +140,22 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     private int colorChoice = 0;
     
     /**Buffer containing exact copies of VOIs on file system along with program relevant material.*/
-    private Map<String, PlugInSelectableVOI> voiBuffer;
+    private Map<String, PlugInSelectableVOI540a> voiBuffer;
     
     /**The top-level group of threads used for calculating. */
     private ThreadGroup calcGroup = new ThreadGroup("CalcVOI");
     
     /**The algorithm for producing bones automatically. */
-    private PlugInAlgorithmCTBone boneSeg;
+    private PlugInAlgorithmCTBone540a boneSeg;
     
     /**The algorithm for producing marrow automatically. */
-    private PlugInAlgorithmCTMarrow marrowSeg;
+    private PlugInAlgorithmCTMarrow540a marrowSeg;
     
     /**The algorithm for producing a thighs automatically. */
-    private PlugInAlgorithmCTThigh thighSeg;
+    private PlugInAlgorithmCTThigh540a thighSeg;
     
     /**The algorithm for producing an abdomen automatically. */
-    private PlugInAlgorithmCTAbdomen abdomenSeg;
+    private PlugInAlgorithmCTAbdomen540a abdomenSeg;
     
     /**A map indicating whether a VOI of a particular name should be calculated. */
     private TreeMap<String, Boolean> calcTree;
@@ -170,7 +170,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     private boolean standAlone;
     
     /**All MuscleCalculations currently in progress. */
-    private ArrayList<MuscleCalculation> muscleCalcList;
+    private ArrayList<MuscleCalculation540a> muscleCalcList;
 
     /** The PDF file used for stastics display. **/
 	private PDDocument doc;
@@ -234,8 +234,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      * @param symmetry
      * @param multipleSlices
      */
-    public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
-            PlugInSelectableVOI[][] voiList,  
+    public PlugInMuscleImageDisplay540a(ModelImage image, String[] titles,
+            PlugInSelectableVOI540a[][] voiList,  
             ImageType imageType, Symmetry symmetry, boolean multipleSlices) {
 
     	super(image);
@@ -269,8 +269,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      * @param symmetry
      * @param standAlone
      */
-    public PlugInMuscleImageDisplay(ModelImage image, String[] titles,
-            PlugInSelectableVOI[][] voiList, 
+    public PlugInMuscleImageDisplay540a(ModelImage image, String[] titles,
+            PlugInSelectableVOI540a[][] voiList, 
             ImageType imageType, Symmetry symmetry, 
             boolean standAlone, boolean multipleSlices) {
     	
@@ -310,14 +310,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     }
     
     private void commonConstructor(ModelImage image, String[] titles,
-	        PlugInSelectableVOI[][] voiList,  
+	        PlugInSelectableVOI540a[][] voiList,  
 	        ImageType imageType, Symmetry symmetry, boolean standAlone, boolean multipleSlices) {
 		this.setImageA(image); 
 	    this.titles = titles; 
 	    this.mirrorArr = new String[voiList.length][]; 
 	    this.noMirrorArr = new String[voiList.length][]; 
 	    this.calcTree = new TreeMap<String, Boolean>(); 
-	    this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI>()); 
+	    this.voiBuffer = Collections.synchronizedMap(new TreeMap<String, PlugInSelectableVOI540a>()); 
 	    this.standAlone = standAlone;
 	    this.imageType = imageType; 
 	    this.symmetry = symmetry; 
@@ -360,15 +360,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        return;
 	    }
 	    progressBar.updateValue(5);
-	    imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR;
+	    imageDir = getImageA().getFileInfo(getViewableSlice()).getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR;
 	    
 	    //Propagate children relationship backwards
 	    setDependents();
 	}
 
-	private void commonInitializer(PlugInSelectableVOI[][] voiList) {
+	private void commonInitializer(PlugInSelectableVOI540a[][] voiList) {
 		//store musclecalculations for tracking
-		muscleCalcList = new ArrayList<MuscleCalculation>();
+		muscleCalcList = new ArrayList<MuscleCalculation540a>();
 		
 		//Automatic segmentation here
 	    progressBar.setMessage("Creating algorithms...");
@@ -422,7 +422,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    Iterator<String> itr = voiBuffer.keySet().iterator();
 	    
 	    while(itr.hasNext()) {
-	    	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+	    	PlugInSelectableVOI540a voi = voiBuffer.get(itr.next());
 	    	if(voi.getCalcEligible() && !voi.isEmpty()) {
 	    		long timeVOI = System.currentTimeMillis();
 		        voi.setLastModified(timeVOI);
@@ -432,9 +432,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    //always perform new calculation here, no need to check, kill any previous calculations
 	    itr = voiBuffer.keySet().iterator();
 	    while(itr.hasNext()) {
-	    	PlugInSelectableVOI voi = voiBuffer.get(itr.next());
+	    	PlugInSelectableVOI540a voi = voiBuffer.get(itr.next());
 	    	if(voi.getCalcEligible() && !voi.isEmpty()) {
-		        MuscleCalculation muscleCalc = new MuscleCalculation(voi, voi.getName());
+		        MuscleCalculation540a muscleCalc = new MuscleCalculation540a(voi, voi.getName());
 		        Thread calc = new Thread(calcGroup, muscleCalc, voi.getName());
 		        calc.start();
 	    	}
@@ -454,7 +454,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         } else if(command.equals(DialogPrompt.CALCULATE)) {
         	lockToPanel(resultTabLoc, "Analysis"); //includes making visible
         	if(imageType.equals(ImageType.Abdomen) && voiBuffer.get("Liver").getTotalArea() != 0) {
-        		MuscleCalculation muscleCalc = new MuscleCalculation(voiBuffer.get("Liver"), "Liver");
+        		MuscleCalculation540a muscleCalc = new MuscleCalculation540a(voiBuffer.get("Liver"), "Liver");
                 Thread calc = new Thread(calcGroup, muscleCalc, "Liver");
                 calc.start();
         	}
@@ -522,14 +522,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			
 		Vector<VOIBase> firstVOI = null;
 		Vector<VOIBase> secondVOI = null;
-		PlugInSelectableVOI firstBufferVOI = null;
-		PlugInSelectableVOI secondBufferVOI = null;
-		if(algorithm instanceof PlugInAlgorithmCTThigh) {
-			if(((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI() != null && 
-					((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI() != null) {
+		PlugInSelectableVOI540a firstBufferVOI = null;
+		PlugInSelectableVOI540a secondBufferVOI = null;
+		if(algorithm instanceof PlugInAlgorithmCTThigh540a) {
+			if(((PlugInAlgorithmCTThigh540a)algorithm).getLeftThighVOI() != null && 
+					((PlugInAlgorithmCTThigh540a)algorithm).getRightThighVOI() != null) {
 				ViewUserInterface.getReference().getMessageFrame().append("Thigh VOIs completed correctly\n", ViewJFrameMessage.DEBUG);
-				firstVOI = ((PlugInAlgorithmCTThigh)algorithm).getLeftThighVOI().getCurves();
-				secondVOI = ((PlugInAlgorithmCTThigh)algorithm).getRightThighVOI().getCurves();
+				firstVOI = ((PlugInAlgorithmCTThigh540a)algorithm).getLeftThighVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTThigh540a)algorithm).getRightThighVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Thigh");
 				secondBufferVOI = voiBuffer.get("Right Thigh");
 				for(int j=0; j<firstVOI.size(); j++) {
@@ -540,15 +540,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
-				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTThigh)algorithm).getSegmentationTimeThigh());
-				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTThigh)algorithm).getSegmentationTimeThigh());
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTThigh540a)algorithm).getSegmentationTimeThigh());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTThigh540a)algorithm).getSegmentationTimeThigh());
 			}
-		} else if(algorithm instanceof PlugInAlgorithmCTMarrow) {
-			if(((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI() != null && 
-					((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI() != null) {
+		} else if(algorithm instanceof PlugInAlgorithmCTMarrow540a) {
+			if(((PlugInAlgorithmCTMarrow540a)algorithm).getLeftMarrowVOI() != null && 
+					((PlugInAlgorithmCTMarrow540a)algorithm).getRightMarrowVOI() != null) {
 				ViewUserInterface.getReference().getMessageFrame().append("Marrow VOIs completed correctly\n", ViewJFrameMessage.DEBUG);
-				firstVOI = ((PlugInAlgorithmCTMarrow)algorithm).getLeftMarrowVOI().getCurves();
-				secondVOI = ((PlugInAlgorithmCTMarrow)algorithm).getRightMarrowVOI().getCurves();
+				firstVOI = ((PlugInAlgorithmCTMarrow540a)algorithm).getLeftMarrowVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTMarrow540a)algorithm).getRightMarrowVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Marrow");
 				secondBufferVOI = voiBuffer.get("Right Marrow");
 				for(int j=0; j<firstVOI.size(); j++) {
@@ -559,15 +559,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
-				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTMarrow)algorithm).getSegmentationTimeMarrow());
-				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTMarrow)algorithm).getSegmentationTimeMarrow());
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTMarrow540a)algorithm).getSegmentationTimeMarrow());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTMarrow540a)algorithm).getSegmentationTimeMarrow());
 			}
-		} else if(algorithm instanceof PlugInAlgorithmCTBone) {
-			if(((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI() != null && 
-					((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI() != null) {
+		} else if(algorithm instanceof PlugInAlgorithmCTBone540a) {
+			if(((PlugInAlgorithmCTBone540a)algorithm).getLeftBoneVOI() != null && 
+					((PlugInAlgorithmCTBone540a)algorithm).getRightBoneVOI() != null) {
 				ViewUserInterface.getReference().getMessageFrame().append("Bone VOIs completed correctly\n", ViewJFrameMessage.DEBUG);
-				firstVOI = ((PlugInAlgorithmCTBone)algorithm).getLeftBoneVOI().getCurves();
-				secondVOI = ((PlugInAlgorithmCTBone)algorithm).getRightBoneVOI().getCurves();
+				firstVOI = ((PlugInAlgorithmCTBone540a)algorithm).getLeftBoneVOI().getCurves();
+				secondVOI = ((PlugInAlgorithmCTBone540a)algorithm).getRightBoneVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Left Bone");
 				secondBufferVOI = voiBuffer.get("Right Bone");
 				for(int j=0; j<firstVOI.size(); j++) {
@@ -578,28 +578,28 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				}
 				firstBufferVOI.setComputerGenerated(true);
 				secondBufferVOI.setComputerGenerated(true);
-				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone)algorithm).getSegmentationTimeBone());
-				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone)algorithm).getSegmentationTimeBone());
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone540a)algorithm).getSegmentationTimeBone());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone540a)algorithm).getSegmentationTimeBone());
 			}
-		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen) {
-			if(((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI() != null) {
+		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen540a) {
+			if(((PlugInAlgorithmCTAbdomen540a)algorithm).getAbdomenVOI() != null) {
 				ViewUserInterface.getReference().getMessageFrame().append("Abdomen alg completed\n", ViewJFrameMessage.DEBUG);
-				firstVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getAbdomenVOI().getCurves();
+				firstVOI = ((PlugInAlgorithmCTAbdomen540a)algorithm).getAbdomenVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Abdomen");
 				for(int j=0; j<firstVOI.size(); j++) {
 				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
-				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeAbd());
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen540a)algorithm).getSegmentationTimeAbd());
 			}
-			if(((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI() != null) {
-				secondVOI = ((PlugInAlgorithmCTAbdomen)algorithm).getSubcutaneousVOI().getCurves();
+			if(((PlugInAlgorithmCTAbdomen540a)algorithm).getSubcutaneousVOI() != null) {
+				secondVOI = ((PlugInAlgorithmCTAbdomen540a)algorithm).getSubcutaneousVOI().getCurves();
 				secondBufferVOI = voiBuffer.get("Subcutaneous area");
 				for(int j=0; j<secondVOI.size(); j++) {
 				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				secondBufferVOI.setComputerGenerated(true);
-				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen)algorithm).getSegmentationTimeSub());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen540a)algorithm).getSegmentationTimeSub());
 			}
 		}
 	
@@ -874,7 +874,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @return a panel where 0 is first
 	 */
 	public int getLocationStatus(String name) {
-		int loc = PlugInSelectableVOI.INVALID_LOC_NUMBER;
+		int loc = PlugInSelectableVOI540a.INVALID_LOC_NUMBER;
 		if(voiBuffer.get(name) != null) {
 			loc = voiBuffer.get(name).getLocation();
 		}
@@ -924,11 +924,11 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @param name
 	 * @return
 	 */
-	public PlugInSelectableVOI loadVOI(String name) {
+	public PlugInSelectableVOI540a loadVOI(String name) {
 		String fileDir;
-		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
+		fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator;
 		String ext = name.contains(".xml") ? "" : ".xml";
-		PlugInSelectableVOI temp = voiBuffer.get(name);
+		PlugInSelectableVOI540a temp = voiBuffer.get(name);
 		temp.getCurves().removeAllElements();
 		
 	    if(new File(fileDir+name+ext).exists()) {
@@ -963,7 +963,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    getActiveImage().unregisterAllVOIs();
 	    int colorChoice = new Random().nextInt(colorPick.length);
 	    String fileDir;
-	    fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
+	    fileDir = getActiveImage().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator;
 	    File allVOIs = new File(fileDir);
 	    if(allVOIs.isDirectory()) {
 	        for(int i=0; i<voiName.length; i++) {
@@ -981,9 +981,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                if(voiVec.length > 1) {
 	                    MipavUtil.displayError("Invalid VOI from location:\n"+fileDir+"\nWith name: "+fileName);
 	                } else {
-	                	if(voiBuffer.get(voiVec[0].getName()).getColor().equals(PlugInSelectableVOI.INVALID_COLOR)) {
+	                	if(voiBuffer.get(voiVec[0].getName()).getColor().equals(PlugInSelectableVOI540a.INVALID_COLOR)) {
 	                    	Color c = hasColor(voiVec[0]);
-	                        if(!(c = hasColor(voiVec[0])).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+	                        if(!(c = hasColor(voiVec[0])).equals(PlugInSelectableVOI540a.INVALID_COLOR)) {
 	                            voiVec[0].setColor(c);
 	                        } else {
 	                            voiVec[0].setColor(c = colorPick[colorChoice++ % colorPick.length]);
@@ -1254,19 +1254,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			ModelImage srcImage = (ModelImage)getActiveImage().clone();
 			if(voiBuffer.get("Left Bone").isEmpty() && voiBuffer.get("Right Bone").isEmpty()) {
 		        ModelImage resultImage = (ModelImage)srcImage.clone();
-		    	boneSeg = new PlugInAlgorithmCTBone(resultImage, srcImage, imageDir, voiBuffer.get("Left Bone").getColor());
+		    	boneSeg = new PlugInAlgorithmCTBone540a(resultImage, srcImage, imageDir, voiBuffer.get("Left Bone").getColor());
 		    	performSegmentation(boneSeg, resultImage);
 			}
 	    	
 			if(voiBuffer.get("Left Marrow").isEmpty() && voiBuffer.get("Right Marrow").isEmpty()) {
 		    	ModelImage resultImage2 = (ModelImage)srcImage.clone();
-		    	marrowSeg = new PlugInAlgorithmCTMarrow(resultImage2, srcImage, imageDir, voiBuffer.get("Left Marrow").getColor());
+		    	marrowSeg = new PlugInAlgorithmCTMarrow540a(resultImage2, srcImage, imageDir, voiBuffer.get("Left Marrow").getColor());
 		    	performSegmentation(marrowSeg, resultImage2);
 			}
 	    	
 			if(voiBuffer.get("Left Thigh").isEmpty() && voiBuffer.get("Right Thigh").isEmpty()) {
 		    	ModelImage resultImage3 = (ModelImage)srcImage.clone();
-		    	thighSeg = new PlugInAlgorithmCTThigh(resultImage3, srcImage, imageDir, voiBuffer.get("Left Thigh").getColor());
+		    	thighSeg = new PlugInAlgorithmCTThigh540a(resultImage3, srcImage, imageDir, voiBuffer.get("Left Thigh").getColor());
 		    	performSegmentation(thighSeg, resultImage3);
 			}
 		} else if(imageType.equals(ImageType.Abdomen)) {
@@ -1279,7 +1279,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 															JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 				if(segment == 0) {
 	    			ModelImage resultImage = (ModelImage)srcImage.clone();
-	    			abdomenSeg = new PlugInAlgorithmCTAbdomen(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
+	    			abdomenSeg = new PlugInAlgorithmCTAbdomen540a(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
 	    			performSegmentation(abdomenSeg, resultImage);
 				}
 			}
@@ -1353,12 +1353,12 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		while(voiItr.hasNext()) {
 			
 			String name = voiItr.next();
-			PlugInSelectableVOI v = loadVOI(name);
+			PlugInSelectableVOI540a v = loadVOI(name);
 			ViewUserInterface.getReference().getMessageFrame().append("Just loaded: "+v.getName()+"\t has area: "+v.isEmpty()+"\n", ViewJFrameMessage.DEBUG);
-			Color c = PlugInSelectableVOI.INVALID_COLOR;
+			Color c = PlugInSelectableVOI540a.INVALID_COLOR;
 			v.isEmpty();
-			if((c = v.getColor()).equals(PlugInSelectableVOI.INVALID_COLOR)) {
-	        	if((c = hasColor(v)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+			if((c = v.getColor()).equals(PlugInSelectableVOI540a.INVALID_COLOR)) {
+	        	if((c = hasColor(v)).equals(PlugInSelectableVOI540a.INVALID_COLOR)) {
 	                v.setColor(c = colorPick[colorChoice++ % colorPick.length]);
 	        	} else {
 	        		v.setColor(c);
@@ -1482,7 +1482,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	private void getVOIs(int pane) {
 		
 		Iterator<String> voiItr = voiBuffer.keySet().iterator();
-		PlugInSelectableVOI v;
+		PlugInSelectableVOI540a v;
 		while(voiItr.hasNext()) {
 			String name = voiItr.next();
 		
@@ -1499,7 +1499,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Otherwise this method returns PlugInSelectableVOI.INVALID_COLOR.
 	 */
 	private Color hasColor(VOI voi) {
-	    Color c = PlugInSelectableVOI.INVALID_COLOR;
+	    Color c = PlugInSelectableVOI540a.INVALID_COLOR;
 	    Iterator<String> voiListItr = voiBuffer.keySet().iterator();
 	    boolean colorFound = false;
 	    String side1 = "", side2 = ""; 
@@ -1564,7 +1564,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
      */
     private void initMuscleButtons(int pane) {
     	VOIVector vec = getActiveImage().getVOIs();
-    	PlugInSelectableVOI temp = null;
+    	PlugInSelectableVOI540a temp = null;
     	for(int i=0; i<vec.size(); i++) {
         	if((temp = voiBuffer.get(vec.get(i).getName())) != null) { 
         		((MuscleDialogPrompt)tabs[pane]).setButton(temp);
@@ -1720,10 +1720,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * Propagate inverse of children relationship as dependents to keep calculations correct.
 	 */
 	private void setDependents() {
-		Iterator<PlugInSelectableVOI> itr = voiBuffer.values().iterator();
+		Iterator<PlugInSelectableVOI540a> itr = voiBuffer.values().iterator();
 		
 		while(itr.hasNext()) {
-			PlugInSelectableVOI voi = (PlugInSelectableVOI)itr.next();
+			PlugInSelectableVOI540a voi = (PlugInSelectableVOI540a)itr.next();
 			for(int i=0; i<voi.getChildren().length; i++) {
 				voi.getChildren()[i].addDependent(voi);
 			}
@@ -1826,7 +1826,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * The containing frame
 		 */
-		protected final PlugInMuscleImageDisplay muscleFrame;
+		protected final PlugInMuscleImageDisplay540a muscleFrame;
 		/**
 		 * The title of this DialogPrompt
 		 */
@@ -1841,7 +1841,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	 * @param theParentFrame the containing frame
     	 * @param title
     	 */
-    	public DialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title) {
+    	public DialogPrompt(PlugInMuscleImageDisplay540a theParentFrame, String title) {
     		this.muscleFrame = theParentFrame;
     		this.title = title;
     	}
@@ -1853,7 +1853,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
     	 * @param buttonString the list of buttons to replace buttonStringList
     	 */
     	@SuppressWarnings("unused")
-    	public DialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title, String[] buttonString) {
+    	public DialogPrompt(PlugInMuscleImageDisplay540a theParentFrame, String title, String[] buttonString) {
     		this.muscleFrame = theParentFrame;
     		this.title = title;
     		this.buttonStringList = buttonString;
@@ -2010,7 +2010,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
          * Constructor that only requires containing frame. Title equals "VOI"
          * @param theParentFrame the containing frame.
          */
-        public VoiDialogPrompt(PlugInMuscleImageDisplay theParentFrame) {
+        public VoiDialogPrompt(PlugInMuscleImageDisplay540a theParentFrame) {
             super(theParentFrame, "VOI");
 
             setButtons(buttonStringList);
@@ -2053,19 +2053,19 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                 updateImages(true);
             } else if (command.equals(OK)) {
             
-                    PlugInSelectableVOI goodVoi = checkVoi(); //check voi has correct number of curves, etc
+                    PlugInSelectableVOI540a goodVoi = checkVoi(); //check voi has correct number of curves, etc
                     if ( goodVoi != null ) { 
                         voiChangeState = true;
                         //save modified/created VOI to file
                         getActiveImage().unregisterAllVOIs();
                         getActiveImage().registerVOI(goodVoi);
-                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay.VOI_DIR+File.separator;
+                        String dir = getImageA().getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator;
                         saveAllVOIsTo(dir);
 
                         MipavUtil.displayInfo(objectName+" VOI saved in folder\n " + dir);
                         completed = true;
                         warningText.setText("");
-                        PlugInSelectableVOI voi;
+                        PlugInSelectableVOI540a voi;
                         (voi = voiBuffer.get(goodVoi.getName())).setCreated(true);
                         voi.setComputerGenerated(false);
                         for(int i=0; i<buttonGroup.length; i++) {
@@ -2077,13 +2077,13 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                         voi.setLastModified(System.currentTimeMillis());
                         //always perform new calculation here, no need to check
                         if(voiBuffer.get(objectName).getCalcEligible()) {
-	                        MuscleCalculation muscleCalc = new MuscleCalculation(goodVoi, objectName);
+	                        MuscleCalculation540a muscleCalc = new MuscleCalculation540a(goodVoi, objectName);
 	                        Thread calc = new Thread(calcGroup, muscleCalc, objectName);
 	                        calc.start();
-	                        PlugInSelectableVOI[] dependents = voiBuffer.get(objectName).getDependents();
+	                        PlugInSelectableVOI540a[] dependents = voiBuffer.get(objectName).getDependents();
 	                        //Perform calculations on all VOIs that depend on this VOI
 	                        for(int i=0; i<dependents.length; i++) {
-	                        	MuscleCalculation muscleCalcDep = new MuscleCalculation(dependents[i], dependents[i].getName());
+	                        	MuscleCalculation540a muscleCalcDep = new MuscleCalculation540a(dependents[i], dependents[i].getName());
 	                        	Thread calcDep = new Thread(calcGroup, muscleCalcDep, dependents[i].getName());
 		                        calcDep.start();
 	                        }
@@ -2286,7 +2286,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * @return VOI created by user.  Null if no such VOI was created.
 		 */
 		
-		private PlugInSelectableVOI checkVoi() {
+		private PlugInSelectableVOI540a checkVoi() {
 		    VOIVector srcVOI = muscleFrame.getActiveImage().getVOIs();
 		    //equal to numVoi when the right  amount of VOIs have been created
 		    int countQualifiedVOIs = 0;
@@ -2306,7 +2306,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    
 		    if(goodVOI == null) {
 		        for(int i=0; i<srcVOI.size(); i++) {
-                    if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI.INVALID_LOC_NUMBER) {
+                    if(getLocationStatus(srcVOI.get(i).getName()) == PlugInSelectableVOI540a.INVALID_LOC_NUMBER) {
                         goodVOI = srcVOI.get(i);
                         break;
                     }
@@ -2482,10 +2482,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
         private JLabel[] instructionLabel;
         
         /** Check boxes for mirror object buttons. */
-        private PlugInMuscleColorButtonPanel[] mirrorCheckArr;
+        private PlugInMuscleColorButtonPanel540a[] mirrorCheckArr;
         
         /** Check boxes for non-mirror object buttons. */
-        private PlugInMuscleColorButtonPanel[] noMirrorCheckArr;
+        private PlugInMuscleColorButtonPanel540a[] noMirrorCheckArr;
 
         /** Buttons for muscles where a mirror muscle may exist. */
         private JButton[] mirrorButtonArr;
@@ -2507,7 +2507,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
          *
          * @param  theParentFrame  Parent frame.
          */
-        public MuscleDialogPrompt(PlugInMuscleImageDisplay theParentFrame, String title, String[] mirrorArr, 
+        public MuscleDialogPrompt(PlugInMuscleImageDisplay540a theParentFrame, String title, String[] mirrorArr, 
                 String[] noMirrorArr, ImageType imageType, Symmetry symmetry, int index) {
 
             super(theParentFrame, title);
@@ -2527,8 +2527,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		//calculate, help, exit
 		public void actionPerformed(ActionEvent e) {
 		    ViewUserInterface.getReference().getMessageFrame().append("Evaluating colorButtonPanel\n", ViewJFrameMessage.DEBUG);
-		    if(e.getSource() instanceof PlugInMuscleColorButton) {
-            	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
+		    if(e.getSource() instanceof PlugInMuscleColorButton540a) {
+            	PlugInMuscleColorButton540a obj = ((PlugInMuscleColorButton540a)e.getSource());
 		    	if (obj.getColorIcon().getColor() != Color.BLACK) {
             		VOIVector vec = getActiveImage().getVOIs();
             		for(int i=0; i<vec.size(); i++) {
@@ -2575,7 +2575,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		/**
 		 * Sets a particular button to the correct colors.  Used in initialization.
 		 */
-		public void setButton(PlugInSelectableVOI v) {
+		public void setButton(PlugInSelectableVOI540a v) {
 			String name = v.getName();
 			Color c = v.getColor();
 			boolean voiFound = false;
@@ -2628,7 +2628,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
          * VOIs that have a curve on the given slice to that VOIs color.
          */
         public void setSlice(int slice) {
-        	PlugInSelectableVOI temp;
+        	PlugInSelectableVOI540a temp;
         	for(int i=0; i<mirrorCheckArr.length; i++) {
         		if((temp = voiBuffer.get(mirrorButtonArr[i].getText())).getSliceSize(slice) == 0) {
 	        		mirrorCheckArr[i].setColor(Color.black);
@@ -2673,14 +2673,14 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             gbc.fill = GridBagConstraints.BOTH;
             gbc.weighty = 0;
             
-            mirrorCheckArr = new PlugInMuscleColorButtonPanel[mirrorArr.length * 2];
+            mirrorCheckArr = new PlugInMuscleColorButtonPanel540a[mirrorArr.length * 2];
             mirrorButtonArr = new JButton[mirrorArr.length * 2];
             if(mirrorArr.length > 0) {
             	gbc.gridy++;
             	add(initSymmetricalObjects(), gbc);
             }
             
-            noMirrorCheckArr = new PlugInMuscleColorButtonPanel[noMirrorArr.length];
+            noMirrorCheckArr = new PlugInMuscleColorButtonPanel540a[noMirrorArr.length];
             noMirrorButtonArr = new JButton[noMirrorArr.length];
             if(noMirrorArr.length > 0) {
             	gbc.gridy++;
@@ -2768,7 +2768,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        noMirrorButtonArr[i].addActionListener(muscleFrame);
 		        noMirrorGroup.add(noMirrorButtonArr[i]);
 		      
-		        noMirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.black, noMirrorArr[i], this);
+		        noMirrorCheckArr[i] = new PlugInMuscleColorButtonPanel540a(Color.black, noMirrorArr[i], this);
 		        
 		        gbc2.gridx = 0;
 		        gbc2.weightx = 0;
@@ -2838,7 +2838,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		        mirrorButtonArr[i].addActionListener(muscleFrame);
 		        mirrorGroup.add(mirrorButtonArr[i]);
 		
-		        mirrorCheckArr[i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorButtonArr[i].getText(), this);        
+		        mirrorCheckArr[i] = new PlugInMuscleColorButtonPanel540a(Color.BLACK, mirrorButtonArr[i].getText(), this);        
 		       
 		        if(i != 0 && i % 2 == 0) {
 		            gbc.gridy++;
@@ -2883,10 +2883,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		private String[][] noMirrorCalcItemsArr;
 		
 		/** Side check box for all symmetric objects. */
-		private PlugInMuscleColorButtonPanel[][] mirrorCheckCalcItemsArr;
+		private PlugInMuscleColorButtonPanel540a[][] mirrorCheckCalcItemsArr;
 		
 		/** Side check box for all non-symmetric objects. */
-		private PlugInMuscleColorButtonPanel[][] noMirrorCheckCalcItemsArr;
+		private PlugInMuscleColorButtonPanel540a[][] noMirrorCheckCalcItemsArr;
 		
 		/** Buttons for all symmetric objects. */
 		private JButton[][] mirrorButtonCalcItemsArr;
@@ -2913,7 +2913,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		private boolean lutOn = false;
 		
 		/**A mapping of names to color panels for easy referencing. */
-		private TreeMap<String,PlugInMuscleColorButtonPanel> checkBoxLocationTree;
+		private TreeMap<String,PlugInMuscleColorButtonPanel540a> checkBoxLocationTree;
 	
 		/**
 		 * Constructor, note is called at beginning of program, so mirrorArr and noMirrorArr
@@ -2923,7 +2923,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * @param mirrorArr
 		 * @param noMirrorArr
 		 */
-		public AnalysisDialogPrompt(PlugInMuscleImageDisplay theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
+		public AnalysisDialogPrompt(PlugInMuscleImageDisplay540a theParentFrame, String[][] mirrorArr, String[][] noMirrorArr) {
 	        super(theParentFrame, "Analysis");
 	        
 	        setButtons(buttonStringList);
@@ -2933,7 +2933,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        this.noMirrorCalcItemsArr = getCalcItems(noMirrorArr);
 	        this.mirrorCalcItemsArr = getCalcItems(mirrorArr);
 	        
-	        checkBoxLocationTree = new TreeMap<String, PlugInMuscleColorButtonPanel>();
+	        checkBoxLocationTree = new TreeMap<String, PlugInMuscleColorButtonPanel540a>();
 
 	        colorChoice = 0;
 	        
@@ -2946,8 +2946,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		public void actionPerformed(ActionEvent e) {
 			ViewUserInterface.getReference().getMessageFrame().append("Caught 2: "+e.getActionCommand()+"\n", ViewJFrameMessage.DEBUG);
 			String command = e.getActionCommand();
-			if(e.getSource() instanceof PlugInMuscleColorButton) {
-            	PlugInMuscleColorButton obj = ((PlugInMuscleColorButton)e.getSource());
+			if(e.getSource() instanceof PlugInMuscleColorButton540a) {
+            	PlugInMuscleColorButton540a obj = ((PlugInMuscleColorButton540a)e.getSource());
 		    	if (obj.getColorIcon().getColor() != Color.BLACK) {
             		VOIVector vec = getActiveImage().getVOIs();
             		for(int i=0; i<vec.size(); i++) {
@@ -3004,8 +3004,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	        	if(!exists) {
 	        		VOI rec = voiBuffer.get(text);
 	        		Color c = null;
-	        		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI.INVALID_COLOR) && 
-	        				(c = hasColor(rec)).equals(PlugInSelectableVOI.INVALID_COLOR)) {
+	        		if((c = voiBuffer.get(rec.getName()).getColor()).equals(PlugInSelectableVOI540a.INVALID_COLOR) && 
+	        				(c = hasColor(rec)).equals(PlugInSelectableVOI540a.INVALID_COLOR)) {
 	            		c = colorPick[colorChoice++ % colorPick.length];
 	            	}
 	        		rec.removeVOIListener(checkBoxLocationTree.get(text).getColorButton());
@@ -3167,10 +3167,10 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		    
 		    mainPanel.add(instructionPanel);
 		
-		    mirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr.length][];
+		    mirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel540a[mirrorCalcItemsArr.length][];
 		    mirrorButtonCalcItemsArr = new JButton[mirrorCalcItemsArr.length][];
 		    
-		    noMirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr.length][];
+		    noMirrorCheckCalcItemsArr = new PlugInMuscleColorButtonPanel540a[noMirrorCalcItemsArr.length][];
 		    noMirrorButtonCalcItemsArr = new JButton[noMirrorCalcItemsArr.length][];
 		
 		    String title = "";
@@ -3332,7 +3332,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 */
 		private JPanel initSymmetricalObjects(int index) {
 
-            mirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[mirrorCalcItemsArr[index].length * 2];
+            mirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel540a[mirrorCalcItemsArr[index].length * 2];
             mirrorButtonCalcItemsArr[index] = new JButton[mirrorCalcItemsArr[index].length * 2];
 			JPanel subPanel = new JPanel(new GridBagLayout());
             subPanel.setForeground(Color.black);
@@ -3363,7 +3363,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             
             for(int i=0; i<mirrorCalcItemsArr[index].length * 2; i++) {
                                
-            	mirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, mirrorString[i], this);
+            	mirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel540a(Color.BLACK, mirrorString[i], this);
                 
                 checkBoxLocationTree.put(mirrorString[i], mirrorCheckCalcItemsArr[index][i]);
                 
@@ -3396,7 +3396,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 */
 	    private JPanel initNonSymmetricalObjects(JPanel subPanel, int index) {
       
-	    	noMirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel[noMirrorCalcItemsArr[index].length];
+	    	noMirrorCheckCalcItemsArr[index] = new PlugInMuscleColorButtonPanel540a[noMirrorCalcItemsArr[index].length];
             noMirrorButtonCalcItemsArr[index] = new JButton[noMirrorCalcItemsArr[index].length];
 	    	
 	    	GridBagConstraints gbc = new GridBagConstraints();
@@ -3409,7 +3409,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
             
             for(int i=0; i<noMirrorCalcItemsArr[index].length; i++) {
                                
-            	noMirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel(Color.BLACK, noMirrorCalcItemsArr[index][i], this);
+            	noMirrorCheckCalcItemsArr[index][i] = new PlugInMuscleColorButtonPanel540a(Color.BLACK, noMirrorCalcItemsArr[index][i], this);
                 
                 checkBoxLocationTree.put(noMirrorCalcItemsArr[index][i], noMirrorCheckCalcItemsArr[index][i]);
                 
@@ -3537,7 +3537,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				double totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
 				double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
 				//pixels -> cm^2\
-				PlugInSelectableVOI temp;
+				PlugInSelectableVOI540a temp;
 				if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible()) {
 					
 					totalAreaCount = temp.getTotalArea();
@@ -4254,7 +4254,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
                         double totalAreaCount = 0, fatArea = 0, leanArea = 0;//, partialArea = 0;
                         double meanFatH = 0, meanLeanH = 0, meanTotalH = 0;
                         //pixels -> cm^2\
-                        PlugInSelectableVOI temp;
+                        PlugInSelectableVOI540a temp;
                         if((temp = voiBuffer.get(itrObj)) != null && temp.getCalcEligible()) {
 
                             if(i == 0) {
@@ -4439,9 +4439,9 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			 */
 			public void run() {
 				long time = System.currentTimeMillis();
-				ArrayList<PlugInSelectableVOI> calcList = new ArrayList<PlugInSelectableVOI>();
+				ArrayList<PlugInSelectableVOI540a> calcList = new ArrayList<PlugInSelectableVOI540a>();
 				Iterator<String> tempItr = voiBuffer.keySet().iterator();
-				PlugInSelectableVOI temp = null;
+				PlugInSelectableVOI540a temp = null;
 				while(tempItr.hasNext()) {
 					if((temp = voiBuffer.get(tempItr.next())).getCalcEligible()) {
 						calcList.add(temp);
@@ -4542,15 +4542,15 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 					sliceStr[i] += height+"\t";
 					
 					//insertCalculations
-					PlugInSelectableVOI temp = null;
-					ArrayList<PlugInSelectableVOI> calcItems = new ArrayList<PlugInSelectableVOI>(voiBuffer.keySet().size());
-					Iterator<PlugInSelectableVOI> firstItr = voiBuffer.values().iterator();
+					PlugInSelectableVOI540a temp = null;
+					ArrayList<PlugInSelectableVOI540a> calcItems = new ArrayList<PlugInSelectableVOI540a>(voiBuffer.keySet().size());
+					Iterator<PlugInSelectableVOI540a> firstItr = voiBuffer.values().iterator();
 					while(firstItr.hasNext()) {
 						if((temp = firstItr.next()).getCalcEligible()) {
 							calcItems.add(temp);
 						}
 					}
-					ArrayList<PlugInSelectableVOI> orderedCalcItems = (ArrayList<PlugInSelectableVOI>)calcItems.clone();
+					ArrayList<PlugInSelectableVOI540a> orderedCalcItems = (ArrayList<PlugInSelectableVOI540a>)calcItems.clone();
 					for(int j=0; j<calcItems.size(); j++) 
 						orderedCalcItems.set(calcItems.get(j).getOutputLoc(), calcItems.get(j));
 					dec = new DecimalFormat("0.##");
@@ -4580,7 +4580,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	 * @author senseneyj
 	 *
 	 */
-	private class MuscleCalculation extends Thread {
+	private class MuscleCalculation540a extends Thread {
 		
 		//~ Static fields/initializers -------------------------------------------------------------------------------------
 		
@@ -4596,7 +4596,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		//~ Instance fields -------------------------------------------------------------------------------------
 		
 		/**The current VOI being calculated.*/
-		private PlugInSelectableVOI calculateVOI;
+		private PlugInSelectableVOI540a calculateVOI;
 		
 		/**Whether the Runnable has completed.*/
 		private boolean done = false;
@@ -4609,7 +4609,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * @param newVOI the VOI to work on
 		 * @param name the name of the VOI
 		 */
-		public MuscleCalculation(PlugInSelectableVOI newVOI, String name) {
+		public MuscleCalculation540a(PlugInSelectableVOI540a newVOI, String name) {
 			super();
 			muscleCalcList.add(this);
 			this.calculateVOI = newVOI;
@@ -4640,7 +4640,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			//ViewJProgressBar progressBar = new ViewJProgressBar("Calculations", "Initializing...", 0, 100, true);
 			long time = System.currentTimeMillis();
 			
-			PlugInSelectableVOI[] children = new PlugInSelectableVOI[0];
+			PlugInSelectableVOI540a[] children = new PlugInSelectableVOI540a[0];
 			VOI v = calculateVOI;
 			double wholeMultiplier = 0.0, sliceMultiplier = 0.0;
 			
@@ -4662,7 +4662,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 				wholeMultiplier *= zRes;
 			}
 			ViewUserInterface.getReference().getMessageFrame().append("Whole Multiplier: "+wholeMultiplier+"\tSliceMultiplier: "+sliceMultiplier+"\n", ViewJFrameMessage.DEBUG);
-			PlugInSelectableVOI temp = voiBuffer.get(name);
+			PlugInSelectableVOI540a temp = voiBuffer.get(name);
 			children = temp.getChildren();
 			ArrayList<Thread> calc = new ArrayList<Thread>(children.length);
 			Thread tempThread = null;
@@ -4689,7 +4689,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 						}
 					}
 					if(!activeFound) {
-						MuscleCalculation muscleCalc = new MuscleCalculation(children[i], children[i].getName());
+						MuscleCalculation540a muscleCalc = new MuscleCalculation540a(children[i], children[i].getName());
 			            //No thread group this time since just joining all later
 						calc.add(tempThread = new Thread(muscleCalc));
 			            tempThread.start();
@@ -4718,7 +4718,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 			ViewUserInterface.getReference().getMessageFrame().append("Time spent waiting: "+(System.currentTimeMillis() - time2)+" so that "+name+" can finish.\n", ViewJFrameMessage.DEBUG);
 			
 			//note that even for 3D images this will still be called area, even though refers to volume
-			performCalculations(v, PlugInSelectableVOI.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
+			performCalculations(v, PlugInSelectableVOI540a.WHOLE_VOLUME_SLICE_NUMBER, wholeMultiplier);
 			
 			if(isInterrupted()) {
 				muscleCalcList.remove(this);
@@ -4767,7 +4767,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * Writes the statistics about this voi to a new line
 		 */
 		private void writeVoiLine() {
-			PlugInSelectableVOI v = calculateVOI;
+			PlugInSelectableVOI540a v = calculateVOI;
 			File containerFolder = new File(Preferences.getPreferencesDir()+File.separator+"SegmentationStatistics"+File.separator);
 			if(!containerFolder.exists())
 				containerFolder.mkdir();
@@ -4817,8 +4817,8 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 		 * @param multiplier
 		 */
 		private void performCalculations(VOI v2, int sliceNumber, double multiplier) {
-			PlugInSelectableVOI temp = voiBuffer.get(name);
-			PlugInSelectableVOI[] children = temp.getChildren();
+			PlugInSelectableVOI540a temp = voiBuffer.get(name);
+			PlugInSelectableVOI540a[] children = temp.getChildren();
 			//note that even for 3D images this will still be called area, even though refers to volume
 			double fatArea = getPieceCount(v2, FAT_LOWER_BOUND, FAT_UPPER_BOUND)*multiplier;
 			double partialArea = getPieceCount(v2, FAT_UPPER_BOUND, MUSCLE_LOWER_BOUND)*multiplier; 
@@ -4957,7 +4957,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	    
 	    private AlgorithmBSmooth[] smoothAlgo;
 	    
-	    private PlugInSelectableVOI[] thighVOIs;
+	    private PlugInSelectableVOI540a[] thighVOIs;
 	    
 	    private boolean[] thighCompleted;
 	    
@@ -5034,7 +5034,7 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	            return;
 	        }
 	        
-	        thighVOIs = new PlugInSelectableVOI[2];
+	        thighVOIs = new PlugInSelectableVOI540a[2];
 	        
 	        for (groupNum = 0; groupNum < nVOI; groupNum++) {
 	    
@@ -5298,43 +5298,43 @@ public class PlugInMuscleImageDisplay extends ViewJFrameImage implements Algorit
 	                //Guaranteed to not be color image
                     DecimalFormat dec = new DecimalFormat("0.00");
                     double addAmount = 0.0;
-                    if(voi instanceof PlugInSelectableVOI && ((PlugInSelectableVOI)voi).getCalcEligible()) {
+                    if(voi instanceof PlugInSelectableVOI540a && ((PlugInSelectableVOI540a)voi).getCalcEligible()) {
                         if(k == VOIStatisticList.statisticDescription.length) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getTotalArea(slice));
-                            addAmount = ((PlugInSelectableVOI)voi).getTotalArea(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getTotalArea(slice));
+                            addAmount = ((PlugInSelectableVOI540a)voi).getTotalArea(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+1) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getFatArea(slice));
-                            addAmount = ((PlugInSelectableVOI)voi).getFatArea(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getFatArea(slice));
+                            addAmount = ((PlugInSelectableVOI540a)voi).getFatArea(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+2) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getLeanArea(slice));
-                            addAmount = ((PlugInSelectableVOI)voi).getLeanArea(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getLeanArea(slice));
+                            addAmount = ((PlugInSelectableVOI540a)voi).getLeanArea(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+3) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getMeanTotalH(slice));
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanTotalH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getMeanTotalH(slice));
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanTotalH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+4) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getMeanFatH(slice));
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanFatH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getMeanFatH(slice));
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanFatH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+5) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getMeanLeanH(slice));
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getMeanLeanH(slice));
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+6) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getTotalArea());
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getTotalArea());
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+7) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getFatArea());
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getFatArea());
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+8) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getLeanArea());
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getLeanArea());
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+9) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getMeanTotalH());
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getMeanTotalH());
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+10) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getMeanFatH());
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getMeanFatH());
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         } else if(k == VOIStatisticList.statisticDescription.length+11) {
-                            rowData[count] = dec.format(((PlugInSelectableVOI)voi).getMeanLeanH());
-                            addAmount = ((PlugInSelectableVOI)voi).getMeanLeanH(slice);
+                            rowData[count] = dec.format(((PlugInSelectableVOI540a)voi).getMeanLeanH());
+                            addAmount = ((PlugInSelectableVOI540a)voi).getMeanLeanH(slice);
                         }
                         
                         if(showTotals) {
