@@ -961,6 +961,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
 
             return;
         }
+        
+        refImage.makeUnitsOfMeasureIdentical();
+        inputImage.makeUnitsOfMeasureIdentical();
 
         float minSampleRef = 1.0f;
         float minSampleInput = 1.0f;
