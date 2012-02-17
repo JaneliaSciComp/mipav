@@ -458,7 +458,7 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
         try {
             // use this long call instead of ClassLoader.getSystemResource() to work properly from a jnlp launch
-            final URL fileURL = Thread.currentThread().getContextClassLoader().getResource("kernels");
+            final URL fileURL = Thread.currentThread().getContextClassLoader().getResource("kernels/" + fileName);
             
             if (fileURL == null) {
                 Preferences.debug("Unable to open " + fileName
@@ -466,13 +466,14 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 
                 return null;
             }
-            //System.err.println( fileURL.getFile() +  " " + fileURL.getPath() );
-            String fileLocation = fileURL.getPath() + File.separator + fileName;
-            FileInputStream file = new FileInputStream( fileLocation );
+            
+            System.err.println( fileURL );
+            //String fileLocation = fileURL.getPath() + File.separator + fileName;
+            //FileInputStream file = new FileInputStream( fileLocation );
 
             // use buffering
             // this implementation reads one line at a time
-            input = new BufferedReader(new InputStreamReader(file));
+            input = new BufferedReader(new InputStreamReader(fileURL.openStream()));
 
 			StringBuffer sb = new StringBuffer();
 			while (true)
