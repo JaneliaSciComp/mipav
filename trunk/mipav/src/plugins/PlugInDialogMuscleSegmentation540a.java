@@ -237,7 +237,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
         	}
     	}
         setForeground(Color.black);
-        setTitle("NIA Muscle Segmentation");
+        setTitle("NIA Muscle Segmentation 5.4.0");
 
         
         
