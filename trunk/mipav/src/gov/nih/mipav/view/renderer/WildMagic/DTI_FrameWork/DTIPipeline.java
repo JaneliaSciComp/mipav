@@ -33,6 +33,7 @@ import java.io.File;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -236,6 +237,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			dtiparams = DWIImage.getDTIParameters();
 			DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
 
+
 			if (dtiparams.getbValues() != null && dtiparams.getGradients() != null){
 				tabbedPane.setSelectedIndex(1);
 				nextButton.setEnabled(false);
@@ -258,11 +260,17 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 					System.out.println("t2imagenotnull");
 					T2Image = importData.m_kT2Image;
 					T2frame = importData.t2frame;
+			        DTIPreprocessing.transformMatDWICheckbox.setEnabled(true);
+			        DTIPreprocessing.transformB0label.setEnabled(true);
+			        DTIPreprocessing.transformB0MatCheckbox.setEnabled(true);
+			        DTIPreprocessing.blanklabel.setEnabled(true);
+			        DTIPreprocessing.transformB0Checkbox.setEnabled(true);
+			        DTIPreprocessing.epiCheckbox.setEnabled(true);
 					//eddyCurReg.epiCheckBox.setEnabled(true);
 				}
 				else{
 					MipavUtil.displayError("Error loading T2 image"); 
-					tabbedPane.setSelectedIndex(1);
+					tabbedPane.setSelectedIndex(0);
 				}
 			}
 		}
@@ -287,6 +295,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 				DWINewB0Image = DTIPreprocessing.result35RegImage;
 				currentImage = DWINewB0Image;
 				arrayTransMatrix = DTIPreprocessing.arrayTransMatrix;
+				System.out.println("arrayTransMatrixlength" +arrayTransMatrix.length);
 				//System.out.println("arraTransMat: " +arrayTransMatrix[0]);
 				b0toStructMatrix = DTIPreprocessing.b0toStructMatrix;
 				//System.out.println("b0toStructMatrix: "+b0toStructMatrix);
@@ -295,6 +304,21 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 				goBackButton.setEnabled(true);
 				goBackButton.setActionCommand("back2");
 			}
+			
+			if (DTIPreprocessing.epiCheckbox.isSelected()){
+			    tabbedPane.setSelectedIndex(2);
+	             nextButton.setEnabled(false);
+	             goBackButton.setEnabled(true);
+	             goBackButton.setActionCommand("back2");
+			}
+			else{
+			    tabbedPane.setSelectedIndex(3);
+	              nextButton.setEnabled(false);
+	              goBackButton.setEnabled(true);
+	              goBackButton.setActionCommand("back3");
+			}
+			
+			
 
 		}       
 
