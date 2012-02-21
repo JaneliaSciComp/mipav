@@ -102,8 +102,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     /** DOCUMENT ME! */
     private JComboBox comboBoxCostFunct;
 
-    /** DOCUMENT ME! */
-    private JCheckBox transformB0Checkbox;
 
     /** DOCUMENT ME! */
     private JCheckBox transformDWICheckbox;
@@ -197,6 +195,31 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     private DTIParameters dtiRegParams;
 
+    public JCheckBox transformMatDWICheckbox;
+
+    public JLabel transformB0label;
+
+    public JCheckBox transformB0MatCheckbox;
+
+    public JCheckBox transformB0Checkbox;
+    
+    public JLabel blanklabel;
+
+    public JCheckBox epiCheckbox;
+
+    private JCheckBox skipPreCheckbox;
+
+ 
+    
+
+    private JLabel labelDOF;
+
+    private JLabel labelCost;
+
+    private JLabel labelInternal;
+
+    private JLabel labelInterp;
+
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
         // super(theParentFrame, false);
@@ -218,10 +241,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      * @param event Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
+        System.out.println("action performed event");
         String command = event.getActionCommand();
         String tmpStr;
 
-        if (command.equals("OK")) {
+        if (command.equals("RUN OAR 3.5D")) {
+            System.out.println("ok");
             if (pipeline.T2Image != null) {
                 System.out.println("t2image");
                 callT2Algorithm();
@@ -233,7 +258,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             }
 
             if (transformB0Checkbox.isSelected()) {
+                System.out.println("B0checkboxworking");
                 if (resultB0toT2Image != null) {
+                    System.out.println("B0tot2notnull");
                     try {
                         new ViewJFrameImage(resultB0toT2Image, null, new Dimension(610, 200));
                     } catch (final OutOfMemoryError error) {
@@ -247,16 +274,76 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                     try {
                         new ViewJFrameImage(result35RegImage, null, new Dimension(610, 200));
 
-                        pipeline.nextButton.setEnabled(true);
-                        pipeline.nextButton.setActionCommand("next2");
+
                     } catch (final OutOfMemoryError error) {
                         MipavUtil.displayError("Out of memory: unable to open new frame");
                     }
                 }
 
             }
+            if (transformMatDWICheckbox.isSelected()) {
+                createArrayTransMatrixTXT();               
+            }
+  
+            if (result35RegImage != null) {
+                pipeline.nextButton.setEnabled(true);
+                pipeline.nextButton.setActionCommand("next2");
+                
+            }
 
-        } else if (command.equals("Cancel")) {
+
+
+
+        } else if (command.equals("skipPre")) {
+            System.out.println("skip pre");
+            if (skipPreCheckbox.isSelected()){
+                transformMatDWICheckbox.setEnabled(false);
+                transformDWICheckbox.setEnabled(false);
+                labelInternal.setEnabled(false);
+                refImageNumText.setEnabled(false);              
+                labelDOF.setEnabled(false); 
+                comboBoxDOF.setEnabled(false);
+                labelInterp.setEnabled(false);
+                comboBoxInterp.setEnabled(false);
+                labelCost.setEnabled(false);
+                comboBoxCostFunct.setEnabled(false);
+                OKButton.setEnabled(false);
+                if (pipeline.T2Image != null){
+                    epiCheckbox.setSelected(false);
+                    epiCheckbox.setEnabled(false);
+                    transformB0label.setEnabled(false);
+                    transformB0MatCheckbox.setEnabled(false);
+                    blanklabel.setEnabled(false);
+                    transformB0Checkbox.setEnabled(false);
+                }
+
+
+                
+                pipeline.nextButton.setEnabled(true);
+                pipeline.nextButton.setActionCommand("next2");
+
+
+            }
+            else{
+                transformMatDWICheckbox.setEnabled(true);
+                transformB0label.setEnabled(true);
+                transformB0MatCheckbox.setEnabled(true);
+                labelInternal.setEnabled(true);
+                refImageNumText.setEnabled(true);              
+                labelDOF.setEnabled(true);
+                comboBoxDOF.setEnabled(true);
+                labelInterp.setEnabled(true);
+                comboBoxInterp.setEnabled(true);
+                labelCost.setEnabled(true);
+                comboBoxCostFunct.setEnabled(true);
+                OKButton.setEnabled(true);
+                
+                pipeline.nextButton.setEnabled(false);
+                pipeline.nextButton.setActionCommand("next2");
+            }
+
+
+
 
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("OAR19076");
@@ -308,12 +395,13 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             if (reg3.isCompleted()) {
                 //System.out.println("reg3 completed");
 
-                matrixDirectory = (String) matrixComboBox.getSelectedItem();
+                //matrixDirectory = (String) matrixComboBox.getSelectedItem();
 
                 b0toStructMatrix = reg3.getTransform();
                 //System.out.println("test: " + b0toStructMatrix);
 
-                if (transformB0Checkbox.isSelected()) {
+               
+                    System.out.println("bofile");
                     final int xdimA = refT2image.getExtents()[0];
                     final int ydimA = refT2image.getExtents()[1];
                     final int zdimA = refT2image.getExtents()[2];
@@ -390,7 +478,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                         transform.disposeLocal();
                         transform = null;
                     }
-                }
+                
 
                 xOrig = (matchB0image.getExtents()[0] - 1.0) / 2.0;
                 yOrig = (matchB0image.getExtents()[1] - 1.0) / 2.0;
@@ -429,20 +517,22 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
                 b0toStructMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 matchB0image.getMatrixHolder().addMatrix(b0toStructMatrix);
-
-                String message = "Using cost function, " + "Correlation ration";
-                message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";
-                message += "Some registration settings: \n";
-                message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
-                message += "with a X coarse rate of " + coarseRateX + " and X fine rate of " + fineRateX + ".\n";
-                message += "Y Rotations from " + rotateBeginY + " to " + rotateEndY + ", ";
-                message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
-                message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
-                message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
-                b0toStructMatrix.saveMatrix(matrixDirectory + File.separator + matchB0image.getImageName() + "_To_"
-                        + refT2image.getImageName() + ".mtx", message);
-                Preferences.debug("Saved " + matrixDirectory + File.separator + matchB0image.getImageName() + "_To_"
-                        + refT2image.getImageName() + ".mtx\n", Preferences.DEBUG_FILEIO);
+                System.out.println("3d mat direct: " +pipeline.T2Image.getImageDirectory() );
+                if (transformB0MatCheckbox.isSelected()) {
+                    String message = "Using cost function, " + "Correlation ration";
+                    message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";
+                    message += "Some registration settings: \n";
+                    message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                    message += "with a X coarse rate of " + coarseRateX + " and X fine rate of " + fineRateX + ".\n";
+                    message += "Y Rotations from " + rotateBeginY + " to " + rotateEndY + ", ";
+                    message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
+                    message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
+                    message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
+                    b0toStructMatrix.saveMatrix(pipeline.T2Image.getImageDirectory() + File.separator + matchB0image.getImageName() + "_To_"
+                            + refT2image.getImageName() + ".mtx", message);
+                    Preferences.debug("Saved " + pipeline.T2Image.getImageDirectory() + File.separator + matchB0image.getImageName() + "_To_"
+                            + refT2image.getImageName() + ".mtx\n", Preferences.DEBUG_FILEIO);
+                }
 
             }
 
@@ -455,7 +545,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             refT2image = null;
         }
         if (algorithm instanceof AlgorithmRegOAR35D) {
-            matrixDirectory = (String) matrixComboBox.getSelectedItem();
+            matrixDirectory = pipeline.DWIImage.getImageDirectory();
+            System.out.println("35d mat direct: " +matrixDirectory );
             final TransMatrix finalMatrix = reg35.getTransform();
             arrayTransMatrix = reg35.getArrayTransMatrix();
             //Testing
@@ -468,7 +559,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             if (result35RegImage != null) {
                 result35RegImage.calcMinMax();
                 result35RegImage.setImageName(pipeline.DWIImage.getImageName() + comboBoxDOF.getSelectedItem());
-                createArrayTransMatrixTXT();
                 dtiRegParams = new DTIParameters(result35RegImage.getExtents()[3]);
                 dtiRegParams = pipeline.DWIImage.getDTIParameters();
                 //Testing
@@ -596,21 +686,119 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      * Initializes the GUI components and displays the dialog.
      */
     private void init() {
+        System.out.println("init");
 
         setForeground(Color.black);
+        
+        /*JPanel highlightBorder = new JPanel();
+        highlightBorder.setLayout(new GridBagLayout());
+        highlightBorder.setBorder(buildTitledBorder(""));*/
+        
+        JPanel structOptPanel = new JPanel();
+        structOptPanel.setLayout(new GridBagLayout());
+        structOptPanel.setBorder(buildTitledBorder("B0 to Structural Image OAR 3D Output Options"));
+        transformB0Checkbox = new JCheckBox("Display Registered B0 to Structural Image");
+        transformB0Checkbox.setFont(serif12);
+        transformB0Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        transformB0Checkbox.setForeground(Color.black);
+        transformB0Checkbox.setSelected(true);
+        transformB0Checkbox.addActionListener(this);
+        transformB0Checkbox.setEnabled(false);
+        
+        transformB0MatCheckbox = new JCheckBox("Save Registered B0 to Structural Image Trans Matrix to directory");
+        transformB0MatCheckbox.setFont(serif12);
+        transformB0MatCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        transformB0MatCheckbox.setForeground(Color.black);
+        transformB0MatCheckbox.setSelected(true);
+        transformB0MatCheckbox.addActionListener(this);
+        transformB0MatCheckbox.setEnabled(false);
+        
+        epiCheckbox = new JCheckBox("Perform EPI Distortion Correction");
+        epiCheckbox.setFont(serif12);
+        epiCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        epiCheckbox.setForeground(Color.black);
+        epiCheckbox.setActionCommand("doEPI");
+        epiCheckbox.setSelected(false);
+        epiCheckbox.addActionListener(this);
+        epiCheckbox.setEnabled(false);
+        
+        blanklabel = new JLabel("-------------------------------------------------------------------------------" +
+        		"----------------------------------------------------------------------------------------------------------" +
+        		"----------------------------------------------------------");
+
+        blanklabel.setForeground(Color.black);
+        blanklabel.setFont(serif12);
+        blanklabel.setEnabled(false);
+        
+        transformB0label = new JLabel("Note: B0 to Structural Image OAR 3D rigid registration is performed " +
+        		"automatically when RUN OAR 3.5D button is selected");
+        transformB0label.setForeground(Color.black);
+        transformB0label.setFont(serif12);
+        transformB0label.setEnabled(false);
+        
+        
+        
+        Insets insets = new Insets(0, 2, 0, 2);
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.insets = insets;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        structOptPanel.add(transformB0Checkbox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        structOptPanel.add(transformB0MatCheckbox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        structOptPanel.add(epiCheckbox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.weightx = 1;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
+        structOptPanel.add(blanklabel, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
+        structOptPanel.add(transformB0label, gbc);
+
+        
+        
 
         JPanel optPanel = new JPanel();
         optPanel.setLayout(new GridBagLayout());
-        optPanel.setBorder(buildTitledBorder("Input Options"));
+        optPanel.setBorder(buildTitledBorder("OAR 3.5D Input Options"));
+        
+        skipPreCheckbox = new JCheckBox("Skip Pre-Processing");
+        skipPreCheckbox.setFont(serif12);
+        skipPreCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        skipPreCheckbox.setForeground(Color.black);
+        skipPreCheckbox.setActionCommand("skipPre");
+        skipPreCheckbox.addActionListener(this);
+        skipPreCheckbox.setSelected(false);
 
-        JLabel labelInternal = new JLabel("Reference DWI Volume Number: ");
+
+        labelInternal = new JLabel("Reference DWI Volume Number: ");
         labelInternal.setForeground(Color.black);
         labelInternal.setFont(serif12);
 
         refImageNumText = new JTextField("0", 2);
         refImageNumText.setEnabled(true);
 
-        final JLabel labelDOF = new JLabel("Degrees of freedom:");
+        labelDOF = new JLabel("Degrees of freedom:");
         labelDOF.setForeground(Color.black);
         labelDOF.setFont(serif12);
         labelDOF.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -624,13 +812,13 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         comboBoxDOF.setSelectedIndex(0);
         comboBoxDOF.addItemListener(this);
 
-        JLabel labelInterp = new JLabel("Interpolation:");
+        labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
         labelInterp.setFont(serif12);
         labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         comboBoxInterp = new JComboBox();
-        comboBoxInterp.setFont(serif12);
+        comboBoxInterp.setFont(MipavUtil.font12);
         comboBoxInterp.setBackground(Color.white);
         comboBoxInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
         comboBoxInterp.addItem("Trilinear");
@@ -643,7 +831,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         comboBoxInterp.setSelectedIndex(0);
         comboBoxInterp.addItemListener(this);
 
-        JLabel labelCost = new JLabel("Cost function:");
+        labelCost = new JLabel("Cost function:");
         labelCost.setForeground(Color.black);
         labelCost.setFont(serif12);
         labelCost.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -660,80 +848,87 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         comboBoxCostFunct.setSelectedIndex(0);
         comboBoxCostFunct.addItemListener(this);
 
-        Insets insets = new Insets(0, 2, 0, 2);
-        GridBagConstraints gbc = new GridBagConstraints();
-
         gbc.insets = insets;
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.WEST;
-
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.weightx = 0;
         gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        optPanel.add(labelInternal, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        optPanel.add(refImageNumText, gbc);
+        //gbc.anchor = GridBagConstraints.REMAINDER;
+        gbc.insets = new Insets(0, 2, 0, 2);
+        gbc.fill = GridBagConstraints.REMAINDER;
+        optPanel.add(skipPreCheckbox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 2, 0, 2);
+        optPanel.add(labelInternal, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 0.15;
+        gbc.fill = GridBagConstraints.REMAINDER;
+        optPanel.add(refImageNumText, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         optPanel.add(labelDOF, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         gbc.weightx = 1;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         optPanel.add(comboBoxDOF, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         optPanel.add(labelInterp, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 1;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         optPanel.add(comboBoxInterp, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 0;
         gbc.gridwidth = 1;
         optPanel.add(labelCost, gbc);
         gbc.gridx = 1;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         gbc.weightx = 1;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         optPanel.add(comboBoxCostFunct, gbc);
 
         final JPanel outPanel = new JPanel();
         outPanel.setLayout(new GridBagLayout());
-        outPanel.setBorder(buildTitledBorder("Output Options"));
+        outPanel.setBorder(buildTitledBorder("OAR 3.5D Output Options"));
+        
 
-        transformB0Checkbox = new JCheckBox("Display Registered B0 to Structural Image");
-        transformB0Checkbox.setFont(serif12);
-        transformB0Checkbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-        transformB0Checkbox.setForeground(Color.black);
-        transformB0Checkbox.setSelected(true);
-        transformB0Checkbox.addItemListener(this);
 
         transformDWICheckbox = new JCheckBox("Display Transformed DWI Dataset Image");
         transformDWICheckbox.setFont(serif12);
         transformDWICheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         transformDWICheckbox.setForeground(Color.black);
         transformDWICheckbox.setSelected(true);
-        transformDWICheckbox.addItemListener(this);
+        transformDWICheckbox.addActionListener(this);
 
-        JLabel matrixLabel = new JLabel("Matrix file directory:");
-        matrixLabel.setForeground(Color.black);
-        matrixLabel.setFont(serif12);
-        matrixLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        transformMatDWICheckbox = new JCheckBox("Save Trans Matrices from Transformed DWI dataset to directory");
+        transformMatDWICheckbox.setForeground(Color.black);
+        transformMatDWICheckbox.setFont(serif12);
+        transformMatDWICheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        transformMatDWICheckbox.setSelected(true);
+        transformMatDWICheckbox.addActionListener(this);
 
         matrixComboBox = new JComboBox();
         matrixComboBox.setFont(serif12);
@@ -750,42 +945,45 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         // refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
 
+
+
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        
+
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        outPanel.add(transformB0Checkbox, gbc);
+        //gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(transformDWICheckbox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        outPanel.add(transformDWICheckbox, gbc);
+        outPanel.add(transformMatDWICheckbox, gbc);
 
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        outPanel.add(matrixLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.gridy = 2;
+        /*gbc.gridx = 1;
+        gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.gridwidth = GridBagConstraints.HORIZONTAL;
-        ;
-        outPanel.add(matrixComboBox, gbc);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        
+        outPanel.add(matrixComboBox, gbc);*/
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
         buildCancelButton();
-        buttonPanel.add(cancelButton);
+        //buttonPanel.add(cancelButton);
         buildHelpButton();
-        buttonPanel.add(helpButton);
+        //buttonPanel.add(helpButton);
 
         mainPrePanel = new JPanel();
         mainPrePanel.setLayout(new GridBagLayout());
         // gbc.anchor = GridBagConstraints.NORTHWEST;
+
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = .5;
@@ -802,6 +1000,13 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         mainPrePanel.add(outPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
+        gbc.weightx = .5;
+        gbc.weighty = 0;
+        gbc.gridwidth = 1;
+        gbc.fill = GridBagConstraints.BOTH;
+        mainPrePanel.add(structOptPanel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.weighty = 1;
@@ -812,12 +1017,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     }
 
     private JButton buildOKButton() {
-        OKButton = new JButton("OK");
+        OKButton = new JButton("RUN OAR 3.5D");
         OKButton.addActionListener(this);
 
         // OKButton.setToolTipText("Accept values and perform action.");
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        //OKButton.setMinimumSize(new Dimension(10, 200));
+        //OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
         OKButton.setFont(serif12B);
 
         return OKButton;
