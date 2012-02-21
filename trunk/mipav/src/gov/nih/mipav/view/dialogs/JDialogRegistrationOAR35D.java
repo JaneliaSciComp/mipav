@@ -706,7 +706,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
                                            refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
                                            doSubsample, fastMode, bracketBound, maxIterations, numMinima);
         } else {
-            System.out.println("regelse");
 
             reg35 = new AlgorithmRegOAR35D(matchImage, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
                                            rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
@@ -720,8 +719,13 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
             }
 
         }
+        if (jtemCheckbox != null){
+            doJTEM = jtemCheckbox.isSelected();
+        }
+        else{
+            doJTEM = false;
+        }
         
-        doJTEM = jtemCheckbox.isSelected();
         reg35.setJTEM(doJTEM);
 
         // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -1703,7 +1707,12 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         } // if (voisOnly)
 
         doSubsample = sampleCheckBox.isSelected();
-        doJTEM = jtemCheckbox.isSelected();
+        if (jtemCheckbox != null){
+            doJTEM = jtemCheckbox.isSelected();
+        }
+        else{
+            doJTEM = false;
+        }
 
         return true;
     }
