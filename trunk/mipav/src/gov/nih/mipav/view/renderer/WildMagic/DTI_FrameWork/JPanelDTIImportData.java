@@ -58,6 +58,8 @@ import javax.swing.border.LineBorder;
     import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
+import Jama.Matrix;
+
     public class JPanelDTIImportData extends JPanel implements ActionListener{
         
         // ~ Instance fields
@@ -326,6 +328,7 @@ import javax.swing.table.DefaultTableModel;
         private JButton clearDWITableButton;
 
         private JButton saveBvalGradButton;
+
         
 
 
@@ -393,8 +396,11 @@ import javax.swing.table.DefaultTableModel;
                                           flGradArr[i][2]= (float) 0.0;
                                       }
                                   }
-                          
+
+
                               dtiparams.setGradients(flGradArr);
+                              System.out.println("bvalssize" +dtiparams.getbValues().length);
+                              System.out.println("gradientssize" +dtiparams.getGradients().length);
                           }
                           dtiparams.setNumVolumes(numVolumes);
                           m_kDWIImage.setDTIParameters(dtiparams);
@@ -2021,6 +2027,8 @@ import javax.swing.table.DefaultTableModel;
              */
             
             double[][] C = new double[A.length][B[0].length];
+            System.out.println("alengeth: " +A.length);
+            System.out.println("b0lengeth: " +B[0].length);
             for(int i=0; i<C.length; i++){
                 for(int j=0; j<C[0].length; j++){
                     C[i][j]=A[i][0]*B[0][j] + A[i][1]*B[1][j]+A[i][2]*B[2][j];
@@ -2160,6 +2168,8 @@ import javax.swing.table.DefaultTableModel;
 
             double[][] Tsom;
             double[][] rev_Tsom;
+            
+
             
 //          % Definitions for Tsom
             if (fileInfoPARREC.getSliceOrient()== 1 ){
@@ -2370,11 +2380,56 @@ import javax.swing.table.DefaultTableModel;
             for (int i = 0; i<tablein.length; i++){
             System.out.println("angCorrGT: " +(i+1) + "\t" +Double.valueOf(twoDForm.format(angCorrGT[i][0]))+ "\t" + Double.valueOf(twoDForm.format(angCorrGT[i][1]))+ "\t" + Double.valueOf(twoDForm.format(angCorrGT[i][2])));
             }*/
-            
-            for (int i = 0; i<tablein.length; i++){
-            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][0]))), i, 2);
-            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][1]))), i, 3);
-            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][2]))), i, 4);
+            //System.out.println("gradCreateTable" +gradCreatetable);
+            if (numVolumes==35){
+                for (int i = 0; i<tablein.length; i++){
+                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][0]))), i, 2);
+                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][1]))), i, 3);
+                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][2]))), i, 4);
+                }
+            }
+            else if (numVolumes==8 || numVolumes==17 || numVolumes==34 || numVolumes==32){
+
+                float[] flBvalArr = dtiparams.getbValues();
+                int bval0Count = 0;
+                for (int i = 0; i<numVolumes; i++){
+                    if (flBvalArr[i]== 0){
+                        srcTableModel.setValueAt("0", i, 2);
+                        srcTableModel.setValueAt("0", i, 3);
+                        srcTableModel.setValueAt("0", i, 4); 
+                        bval0Count = 1;
+                    }
+                    else if (i == numVolumes-1) {
+                        srcTableModel.setValueAt("100", i, 2);
+                        srcTableModel.setValueAt("100", i, 3);
+                        srcTableModel.setValueAt("100", i, 4); 
+                    }
+                    else{
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][0]))), i, 2);
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][1]))), i, 3);
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][2]))), i, 4);
+                        }
+                    
+                }
+            }
+            else if(numVolumes==31){
+                float[] flBvalArr = dtiparams.getbValues();
+                int bval0Count = 0;
+                for (int i = 0; i<numVolumes; i++){
+                    System.out.println("i" +i);
+                    if (flBvalArr[i]== 0){
+                        srcTableModel.setValueAt(0, i, 2);
+                        srcTableModel.setValueAt(0, i, 3);
+                        srcTableModel.setValueAt(0, i, 4); 
+                        bval0Count = 1;
+                    }
+                    else{
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][0]))), i, 2);
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][1]))), i, 3);
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][2]))), i, 4);
+                        }
+                }
+                
             }
 
         }
