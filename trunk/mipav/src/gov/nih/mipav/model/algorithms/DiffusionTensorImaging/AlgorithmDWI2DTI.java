@@ -9,6 +9,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 
 import java.awt.Dimension;
 import java.io.*;
@@ -16,6 +17,8 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 
 import javax.vecmath.GMatrix;
+
+import apps.EstimateSNR;
 
 import Jama.*;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
@@ -63,7 +66,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
     private final int m_iWeights;
 
     /** The mean noise value: */
-    private final float m_fMeanNoise;
+    private float m_fMeanNoise;
 
     /** General matrix storing BMatrix values. */
     private GMatrixf m_kBMatrix = null;
@@ -175,7 +178,60 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         }
         m_iBOrig = nb;
         
+
+
         m_fMeanNoise = 0f;
+		int tempDimDW = dimDW;
+		for ( int dw = 1; dw < dimDW; dw++ )
+		{
+			if ( (dtiparams.getGradients()[dw][0] == 0) &&
+					(dtiparams.getGradients()[dw][1] == 0) &&
+					(dtiparams.getGradients()[dw][2] == 0) )
+			{
+				tempDimDW--;	
+			}
+		}
+		int nB0 = 1 + (dimDW - tempDimDW);
+		double[][] b0_data = null;
+		if ( nB0 > 1 )
+		{
+			b0_data = new double[m_iDimX*m_iDimY*m_iSlices][nB0];
+			int index = 0;
+			for ( int dw = 0; dw < dimDW; dw++ )
+			{
+				if ( (dtiparams.getGradients()[dw][0] == 0) &&
+						(dtiparams.getGradients()[dw][1] == 0) &&
+						(dtiparams.getGradients()[dw][2] == 0) )
+				{
+					for ( int z = 0; z < m_iSlices; z++ )
+					{
+						for ( int y = 0; y < m_iDimY; y++ )
+						{
+							for ( int x = 0; x < m_iDimX; x++ )
+							{
+								b0_data[z*m_iDimX*m_iDimY + y*m_iDimX + x][index] = kDWIImage.getFloat( x, y, z, dw );
+							}
+						}
+					}
+					index++;
+				}
+			}
+			double[] noise_sd = new double[]{0,0};
+			if ( nB0 == 2 )
+			{
+				noise_sd = EstimateSNR.snrDiff( b0_data );
+			}
+			else if ( nB0 > 2 )
+			{
+				noise_sd = EstimateSNR.snrMult( b0_data );
+			}
+			b0_data = null;
+	        m_fMeanNoise = (float) (noise_sd[0]/noise_sd[1]);
+	        System.err.println( m_fMeanNoise + "     " + noise_sd[0] + " " + noise_sd[1]);
+		}
+
+        m_fMeanNoise = 0;
+        
         m_aakDWIList = null;
         m_kRawImageFormat = null;
         m_bDisplayB0 = false;

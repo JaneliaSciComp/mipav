@@ -170,6 +170,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afTensorData[j] = m_kDTI.getFloat(i + j*iLen);
                 if ( afTensorData[j] == Float.NaN )
                 {
+                	System.err.println( "nan" );
                 	afTensorData[j] = 0;
                 }
                 if ( afTensorData[j] != 0 )

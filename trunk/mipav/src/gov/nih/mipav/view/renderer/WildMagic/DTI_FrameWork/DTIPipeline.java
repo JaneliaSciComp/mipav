@@ -22,6 +22,7 @@ import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.GridBagConstraints;
@@ -29,11 +30,13 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
 import java.io.File;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -120,7 +123,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 	public TransMatrix b0toStructMatrix;
 
 
-
+	private JComboBox comboBoxDTI_Algorithm;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -193,6 +196,13 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 	// ~ Methods
 	// --------------------------------------------------------------------------------------------------------
 
+	private final static int DEFAULT = 0;
+	private final static int LLMSE = 1;
+	public final static int LINEAR = 2;
+	public final static int NON_LINEAR = 3;
+	public final static int RESTORE = 4;
+	public final static int WEIGHTED_LINEAR = 5;
+	
 	/**
 	 * action performed
 	 */
@@ -207,9 +217,24 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
 		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) && (currentImage != null) )
 		{
-			AlgorithmDWI2DTI calcDTI = new AlgorithmDWI2DTI( currentImage, maskImage );
-			calcDTI.addListener(this);
-			calcDTI.run();
+			switch ( comboBoxDTI_Algorithm.getSelectedIndex() ) {
+			case DEFAULT: 
+				AlgorithmDWI2DTI calcDTI = new AlgorithmDWI2DTI( currentImage, maskImage );
+				calcDTI.addListener(this);
+				calcDTI.run();
+				break;
+			case LLMSE:
+				tensorImage = EstimateTensorLLMSE.estimate( currentImage, maskImage, true );
+				finishTensorPanel();
+				break;
+			case LINEAR:
+			case NON_LINEAR:
+			case RESTORE:
+			case WEIGHTED_LINEAR:
+				tensorImage = EstimateTensorLLMSE.estimateCamino( currentImage, maskImage, comboBoxDTI_Algorithm.getSelectedIndex() );
+				finishTensorPanel();
+				break;
+			}
 		}
 		// creates the derived images from the tensor image and sets up the visualization panel inputs.
 		else if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == FIBER_TRACKING) )
@@ -410,6 +435,39 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 	        gbc.insets = new Insets(0, 10, 10, 0);
 	        gbc.fill = GridBagConstraints.CENTER;
 	        DTIloadPanel.add(openDTIimageButton, gbc);
+	        
+	        
+
+
+	        final JLabel labelDOF = new JLabel("DTI Algorithm:");
+	        labelDOF.setForeground(Color.black);
+	        labelDOF.setFont(serif12);
+	        labelDOF.setAlignmentX(Component.LEFT_ALIGNMENT);
+	        gbc.gridx = 0;
+	        gbc.gridy = 1;
+	        gbc.weightx = 1;
+	        gbc.insets = new Insets(0, 0, 10, 0);
+	        gbc.fill = GridBagConstraints.CENTER;
+	        DTIloadPanel.add(labelDOF, gbc);
+
+	        comboBoxDTI_Algorithm = new JComboBox();
+	        comboBoxDTI_Algorithm.setFont(MipavUtil.font12);
+	        comboBoxDTI_Algorithm.setBackground(Color.white);
+	        comboBoxDTI_Algorithm.setToolTipText("Select DTI Algorithm");
+	        comboBoxDTI_Algorithm.addItem("Weighted, noise-reduction");
+	        comboBoxDTI_Algorithm.addItem("LLMSE");
+	        comboBoxDTI_Algorithm.addItem("CAMINO: Linear");
+	        comboBoxDTI_Algorithm.addItem("CAMINO: Non-Linear");
+	        comboBoxDTI_Algorithm.addItem("CAMINO: Restore");
+	        comboBoxDTI_Algorithm.addItem("CAMINO: Weighted Linear");
+	        comboBoxDTI_Algorithm.setSelectedIndex(0);
+	        comboBoxDTI_Algorithm.addItemListener(this);
+	        gbc.gridx = 1;
+	        gbc.gridy = 1;
+	        gbc.weightx = 1;
+	        gbc.insets = new Insets(0, 0, 10, 0);
+	        gbc.fill = GridBagConstraints.CENTER;
+	        DTIloadPanel.add(comboBoxDTI_Algorithm, gbc);
 
 	        wholePanel.add(DTIloadPanel);
 
@@ -441,24 +499,28 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		{
 			//tensorImage = EstimateTensorLLMSE.estimate( currentImage, true );
 			tensorImage = ((AlgorithmDWI2DTI)algorithm).getDTI();
-			// Set up the fiber tracking panel inputs:
-			tabbedPane.setSelectedIndex(FIBER_TRACKING);
-			fiberTrack.setInputImage( tensorImage );
-			nextButton.setEnabled(true);
-			// save the tensor image
-			ModelImage.saveImage( tensorImage, tensorImage.getImageName() + ".xml", tensorImage.getImageDirectory() );
-			currentImage = tensorImage;
+			finishTensorPanel();
 			// delete intermediate images:
 			((AlgorithmDWI2DTI)algorithm).deleteImages();
-			if ( maskImage != null )
-			{
-				maskImage.disposeLocal();
-				maskImage = null;
-			}
 		}
 	}
 
 
+	private void finishTensorPanel()
+	{
+		// Set up the fiber tracking panel inputs:
+		tabbedPane.setSelectedIndex(FIBER_TRACKING);
+		fiberTrack.setInputImage( tensorImage );
+		nextButton.setEnabled(true);
+		// save the tensor image
+		ModelImage.saveImage( tensorImage, tensorImage.getImageName() + ".xml", tensorImage.getImageDirectory() );
+		currentImage = tensorImage;
+		if ( maskImage != null )
+		{
+			maskImage.disposeLocal();
+			maskImage = null;
+		}
+	}
 
 	public void stateChanged(ChangeEvent e) {
 		if ( e.getSource() == tabbedPane )
@@ -486,6 +548,15 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			}
 		}
 	}
+	
+
+    public void itemStateChanged(ItemEvent event) 
+    {
+    	if ( event.getSource() == comboBoxDTI_Algorithm )
+    	{
+    		//System.err.println( comboBoxDTI_Algorithm.getItemAt( comboBoxDTI_Algorithm.getSelectedIndex() ) );
+    	}
+    }
 
 
     private void loadMaskImage() {

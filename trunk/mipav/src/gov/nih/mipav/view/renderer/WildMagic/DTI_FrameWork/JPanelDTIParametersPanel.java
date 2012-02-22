@@ -817,6 +817,7 @@ implements ListSelectionListener, ChangeListener {
             int iNumTractsLimit = (new Integer(m_kTractsLimit.getText())).intValue();
             int iTractMinLength = (new Integer(m_kTractsMin.getText())).intValue();
             int iTractMaxLength = (new Integer(m_kTractsMax.getText())).intValue();
+            System.err.println( iNumTractsLimit + " " + iTractMinLength + " " + iTractMaxLength );
 
             int iNumTracts = 0;
 
