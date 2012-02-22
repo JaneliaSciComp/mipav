@@ -256,8 +256,17 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 		wasOCLChecked = true;
 
 		int numPlatforms[] = new int[1];
-		clGetPlatformIDs(0, null, numPlatforms);
-
+		
+		try 
+		{
+            clGetPlatformIDs(0, null, numPlatforms);
+        } catch(UnsatisfiedLinkError ule) 
+        {
+            System.err.println("OpenCL libs unavailable.");
+            ule.printStackTrace();
+            return false;
+        }
+		    
 		//System.out.println("Number of platforms: "+numPlatforms[0]);
 		cl_platform_id platforms[] = new cl_platform_id[numPlatforms[0]];
 		clGetPlatformIDs(platforms.length, platforms, null);
