@@ -43,7 +43,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
 
     
     private ModelImage image;
@@ -67,7 +67,7 @@ public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
      * @param image2Intensity 
      * @param doSubsample 
      */
-    public PlugInAlgorithmGenerateFusion540a(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, 
+    public PlugInAlgorithmGenerateFusion541a(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, 
                                                     boolean doAriMean, int middleSlice, File[] baseImageAr, File[] transformImageAr) {
         super(null, image1);
         
