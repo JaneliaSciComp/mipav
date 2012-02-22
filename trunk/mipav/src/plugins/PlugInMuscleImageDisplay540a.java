@@ -215,8 +215,8 @@ public class PlugInMuscleImageDisplay540a extends ViewJFrameImage implements Alg
         Unknown,
         
         /** 
-         * ImageType is defined at run time, note that maintaing this distinction allows for
-         * dependencies to be integrated, will see if this funcionality is needed.
+         * ImageType is defined at run time, note that maintaining this distinction allows for
+         * dependencies to be integrated, will see if this functionality is needed.
          */
         RunTimeDefined
     }

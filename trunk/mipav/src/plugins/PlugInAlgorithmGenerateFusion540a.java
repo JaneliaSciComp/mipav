@@ -22,9 +22,14 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import java.io.File;
+
+import javax.imageio.stream.FileImageOutputStream;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -40,53 +45,42 @@ import gov.nih.mipav.view.ViewJFrameImage;
 
 public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
 
-	/** Whether to perform a gaussian blur */
-    private double image1Intensity, image2Intensity;
-
-    private ModelImage image1a, image2a;
     
-    private ModelImage image1b, image2b;
-    
-    private ModelImage image1c, image2c;
+    private ModelImage image;
+    private boolean doAriMean;
+    private boolean doSubsample;
+    private boolean doInterImages;
+    private boolean doGeoMean;
+    private int middleSlice;
+    private File[] baseImageAr;
+    private File[] transformImageAr;
 
-    private double image1Scale, image2Scale;
-
-    private double image1Noise, image2Noise;
-
-    private ModelImage postTreatment;
-    
     /**
      * Constructor.
-     * @param image1Noise 
-     * @param image1Scale 
-     * @param image1Intensity 
+     * @param doGeoMean 
+     * @param doInterImages 
+     * @param doSubsample 
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      * @param scale 
      * @param image2Intensity 
-     * @param image1Intensity 
+     * @param doSubsample 
      */
-    public PlugInAlgorithmGenerateFusion540a(ModelImage image1, double image1Intensity, double image1Scale, double image1Noise, 
-                                                    ModelImage image2, double image2Intensity, double image2Scale, double image2Noise) {
+    public PlugInAlgorithmGenerateFusion540a(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, 
+                                                    boolean doAriMean, int middleSlice, File[] baseImageAr, File[] transformImageAr) {
         super(null, image1);
         
-        this.image1a = image1;
-        this.image2a = image2;
+        this.image = image1;
+        this.doAriMean = doAriMean;
+        this.doSubsample = doSubsample;
+        this.doInterImages = doInterImages;
+        this.doGeoMean = doGeoMean;
         
-        this.image1b = (ModelImage) image1.clone();
-        image1b.setImageName("image1b");
+        this.middleSlice = middleSlice;
         
-        this.image1Intensity = image1Intensity;
-        this.image1Scale = image1Scale;
-        this.image1Noise = image1Noise;
-        
-        this.image2b = (ModelImage) image2.clone();
-        image2b.setImageName("image2b");
-        
-        this.image2Intensity = image2Intensity;
-        this.image2Scale = image2Scale;
-        this.image2Noise = image2Noise;
+        this.baseImageAr = baseImageAr;
+        this.transformImageAr = transformImageAr;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -106,23 +100,13 @@ public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-        scaleAndRemoveTumor(image1b, image1Intensity, image1Scale, image1Noise);
-        scaleAndRemoveTumor(image2b, image2Intensity, image2Scale, image2Noise);
-        
-        
-        image1c = (ModelImage) image1b.clone();
-        image1c.setImageName("image1c");
-        image1c = subtractImages(image1c, image1a, image1b);
-        
-        image2c = (ModelImage) image2b.clone();
-        image2c.setImageName("image2c");
-        image2c = subtractImages(image2c, image2a, image2b);
-        
-        postTreatment = (ModelImage) image2c.clone();
-        postTreatment.setImageName("postTreatment");
-        postTreatment = subtractImages(postTreatment, image2c, image1c);
-        
-        reportStatistics(postTreatment);
+        FileIO io = new FileIO();
+        for(int i=0; i<transformImageAr.length; i++) {
+            
+            ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
+            ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
+            
+        }
 
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
@@ -136,8 +120,8 @@ public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
                 numPixelsTotal = 0, numPosPixelsTotal = 0, numNegPixelsTotal = 0;
         Preferences.data("Slice number\tTotal pixels\tTotal Avg\tNeg Pixels\tNeg Average\tPos Pixels\tPos Average\n");       
         int z = 0;
-        for(int i=0; i<postTreatment.getDataSize(); i++) {
-            if(i != 0 && i % postTreatment.getSliceSize() == 0) {
+        for(int i=0; i<1; i++) {
+            if(i != 0 && i %1 == 0) {
                 if(numPixelsTotal > 0) {
                     sumIntensitiesTotal += sumIntensitiesSlice;
                     sumPosIntensitiesTotal += sumPosIntensitiesSlice;
@@ -159,7 +143,7 @@ public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
                 
                 z++;
             }
-            intensity = postTreatment.get(i).doubleValue();
+            intensity = 1;
             if(intensity != 0) {
                 if(intensity > 0) {
                     sumPosIntensitiesSlice += intensity;
@@ -220,25 +204,5 @@ public class PlugInAlgorithmGenerateFusion540a extends AlgorithmBase {
                 }
             }
         }
-    }
-
-    public ModelImage getImage1b() {
-        return image1b;
-    }
-
-    public ModelImage getImage2b() {
-        return image2b;
-    }
-
-    public ModelImage getImage1c() {
-        return image1c;
-    }
-
-    public ModelImage getImage2c() {
-        return image2c;
-    }
-
-    public ModelImage getPostTreatment() {
-        return postTreatment;
     }
 }
