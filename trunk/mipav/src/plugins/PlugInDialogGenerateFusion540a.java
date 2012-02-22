@@ -34,16 +34,17 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 
 import javax.swing.*;
 
 /**
- * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
- * meaning it can be executed and recorded as part of a script.  It implements AlgorithmInterface,
- * meaning it has methods for listening to and recording the progress of an algorithm.
+ * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
  * 
  * @version  June 4, 2010
  * @see      JDialogBase
@@ -68,40 +69,52 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGenerateFusion540a generatePostAlgo = null;
-
-    /** The check box for whether a blur should be performed. */
-	private JCheckBox check;
-
-	/** The variable representing whether the blur should be performed. */
-	private boolean doGaussian;
-
-    private JComboBox image1Combo;
-
-    private JTextField image1IntensityText, image2IntensityText;
-
-    private JComboBox image2Combo;
-
-    private JTextField image1ScaleText, image2ScaleText;
-    
-    private JTextField image1NoiseText, image2NoiseText;
-
-    private JPanel okCancelPanel;
-
-    private double image1Intensity, image2Intensity;
-
-    private ModelImage image1, image2;
-
-    private double image1Scale, image2Scale;
-
-    private double image1Noise, image2Noise;
+    private PlugInAlgorithmGenerateFusion540a generateFusionAlgo = null;
 
     private JCheckBox doInterImagesCheckBox;
 
+    private JTextField mtxFileLocText;
+
+    private JTextField spimFileLocText;
+
+    private JCheckBox geometricMeanBox;
+
+    private JCheckBox arithmeticMeanBox;
+
+    private JCheckBox interImagesBox;
+
+    private JTextField middleSliceText;
+
+    private JPanel okCancelPanel;
+
+    private JTextField transformImageText;
+
+    private JTextField baseImageText;
+
+    private JCheckBox doSubsampleBox;
+
+    private String mtxFileLoc;
+
+    private File[] baseImageAr;
+
+    private File[] transformImageAr;
+
+    private boolean doSubsample;
+
     private boolean doInterImages;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    private boolean doGeoMean;
 
+    private boolean doAriMean;
+
+    private int middleSlice;
+
+    private String spimFileDir;
+
+    private String baseImage;
+
+  //~ Constructors ---------------------------------------------------------------------------------------------------
+    
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
@@ -155,24 +168,21 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
         if (algorithm instanceof PlugInAlgorithmGenerateFusion540a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
-            if ((generatePostAlgo.isCompleted() == true)) {
+            if ((generateFusionAlgo.isCompleted() == true)) {
                 if(doInterImages) {
-                    new ViewJFrameImage(generatePostAlgo.getImage1b());
-                    new ViewJFrameImage(generatePostAlgo.getImage2b());
-                    new ViewJFrameImage(generatePostAlgo.getImage1c());
-                    new ViewJFrameImage(generatePostAlgo.getImage2c());
+                    
                 }
-                new ViewJFrameImage(generatePostAlgo.getPostTreatment());
+                
             } 
 
-            if (generatePostAlgo.isCompleted()) {
+            if (generateFusionAlgo.isCompleted()) {
                 
                 insertScriptLine();
             }
 
-            if (generatePostAlgo != null) {
-                generatePostAlgo.finalize();
-                generatePostAlgo = null;
+            if (generateFusionAlgo != null) {
+                generateFusionAlgo.finalize();
+                generateFusionAlgo = null;
             }
 
             dispose();
@@ -188,14 +198,13 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGenerateFusion540a(image1, image1Intensity, image1Scale, image1Noise,
-                                                                            image2, image2Intensity, image2Scale, image2Noise);
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion540a(image, doSubsample, doInterImages, doGeoMean, doAriMean, middleSlice, baseImageAr, transformImageAr);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
-            generatePostAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", generatePostAlgo);
+            generateFusionAlgo.addListener(this);
+            createProgressBar(image.getImageName(), " ...", generateFusionAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -203,11 +212,11 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
-                if (generatePostAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                if (generateFusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                generatePostAlgo.run();
+                generateFusionAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             if (resultImage != null) {
@@ -228,7 +237,18 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
     protected void setGUIFromParams() {
     	image = scriptParameters.retrieveInputImage();
 
-    	doGaussian = scriptParameters.getParams().getBoolean("do_gaussian");
+    	doAriMean = scriptParameters.getParams().getBoolean("do_arithmetic");
+    	doGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
+    	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
+    	doSubsample = scriptParameters.getParams().getBoolean("do_subsample");
+    	
+    	middleSlice = scriptParameters.getParams().getInt("middleSlice");
+    	mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
+    	spimFileDir = scriptParameters.getParams().getFile("spimFileDir");
+    	baseImage = scriptParameters.getParams().getString("baseImage");
+    	
+    	populateFileLists();
+    	
     } //end setGUIFromParams()
 
     /**
@@ -237,12 +257,19 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.storeInputImage(image);
    
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_gaussian", doGaussian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_arithmetic", doAriMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", doGeoMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("middleSlice", middleSlice));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("spimFileDir", spimFileDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("baseImageText", baseImageText));
     } //end storeParamsFromGUI()
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generate post treatment map 540a");
+        setTitle("Generate fusion 540a");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -264,72 +291,70 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
 
-        JPanel image1Panel = new JPanel(new GridBagLayout());
-        image1Panel.setForeground(Color.black);
-        image1Panel.setBorder(buildTitledBorder("Image 1 parameters"));
+        JPanel mtxPanel = new JPanel(new GridBagLayout());
+        mtxPanel.setForeground(Color.black);
+        mtxPanel.setBorder(buildTitledBorder("File information"));
         
-        int numDefault1=0, numDefault2=0, i=0;
-        Enumeration<String> imageList = ViewUserInterface.getReference().getRegisteredImageNames();
-        while(imageList.hasMoreElements()) {
-            String name = imageList.nextElement();
-            if(name.contains("1a")) {
-                numDefault1 = i;
-            } else if(name.contains("2a")) {
-                numDefault2 = i;
+        mtxFileLocText = gui.buildFileField("Matrix file location: ", "", false, JFileChooser.FILES_ONLY);
+        mtxPanel.add(mtxFileLocText.getParent(), gbc);
+        gbc.gridy++;
+        
+        spimFileLocText = gui.buildFileField("Directory containing SPIM: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        mtxPanel.add(spimFileLocText.getParent(), gbc);
+        gbc.gridy++;
+        
+        transformImageText = gui.buildField("Transform image ", "SPIMA");
+        mtxPanel.add(transformImageText.getParent(), gbc);
+        gbc.gridx++;
+        
+        baseImageText = gui.buildField(" to image ", "SPIMB");
+        mtxPanel.add(baseImageText.getParent(), gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        
+        mtxFileLocText.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    File f = new File(mtxFileLocText.getText());
+                    if(f.getParentFile().isDirectory() && !(spimFileLocText.getText().length() > 0)) {
+                        spimFileLocText.setText(f.getParent());
+                    }
+                } catch(Exception e1) {
+                    e1.printStackTrace();
+                }
+                
             }
-            i++;
-        }
-        Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
+        });
         
-        image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
-        image1Panel.add(image1Combo.getParent(), gbc);
+        mainPanel.add(mtxPanel, gbc);
         
-        gbc.gridx++;
-        image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", 1300);
-        image1Panel.add(image1IntensityText.getParent(), gbc);
+        JPanel outputPanel = new JPanel(new GridBagLayout());
+        outputPanel.setForeground(Color.black);
+        outputPanel.setBorder(MipavUtil.buildTitledBorder("Output options"));
+        
+        gbc.gridy = 0;
+        middleSliceText = gui.buildIntegerField("Middle slice of transformation: ", 0);
+        outputPanel.add(middleSliceText.getParent(), gbc);
+        gbc.gridy++;  
         
         gbc.gridy++;
-        gbc.gridx = 0;
-        image1ScaleText = gui.buildDecimalField("Partial volume scaling: ", .67);
-        image1Panel.add(image1ScaleText.getParent(), gbc);
-        
-        gbc.gridx++;
-        image1NoiseText = gui.buildDecimalField("Image 1 noise: ", 10);
-        image1Panel.add(image1NoiseText.getParent(), gbc);
-         
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        mainPanel.add(image1Panel, gbc);
-        
-        JPanel image2Panel = new JPanel(new GridBagLayout());
-        image2Panel.setForeground(Color.black);
-        image2Panel.setBorder(buildTitledBorder("Image 2 parameters"));
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        image2Combo = gui.buildComboBox("Image 2: ", imageAr, numDefault2);
-        image2Panel.add(image2Combo.getParent(), gbc);
-        
-        gbc.gridx++;
-        image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", 1729);
-        image2Panel.add(image2IntensityText.getParent(), gbc);
-        
+        doSubsampleBox = gui.buildCheckBox("Do subsampling to match images", false);
+        outputPanel.add(doSubsampleBox.getParent(), gbc);
         gbc.gridy++;
-        gbc.gridx = 0;
-        image2ScaleText = gui.buildDecimalField("Partial volume scaling: ", .67);
-        image2Panel.add(image2ScaleText.getParent(), gbc);
+      
+        arithmeticMeanBox = gui.buildCheckBox("Show arithmetic mean", true);
+        outputPanel.add(arithmeticMeanBox.getParent(), gbc);
+        gbc.gridy++;
         
-        gbc.gridx++;
-        image2NoiseText = gui.buildDecimalField("Image 2 noise: ", 10);
-        image2Panel.add(image2NoiseText.getParent(), gbc);  
+        geometricMeanBox = gui.buildCheckBox("Show geometric mean", true);
+        outputPanel.add(geometricMeanBox.getParent(), gbc);
+        gbc.gridy++;
+        
+        interImagesBox = gui.buildCheckBox("Show transformed images", true);
+        outputPanel.add(interImagesBox.getParent(), gbc);
         
         gbc.gridy = 1;
-        gbc.gridx = 0;
-        mainPanel.add(image2Panel, gbc);
-        
-        gbc.gridy++;
-        doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
-        mainPanel.add(doInterImagesCheckBox.getParent(), gbc);
+        mainPanel.add(outputPanel, gbc);
         
         gbc.gridy++;
         okCancelPanel = gui.buildOKCancelPanel();
@@ -343,6 +368,7 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
         System.gc();
         
     } // end init()
+    
 
     /**
      * This method could ensure everything in your dialog box has been set correctly
@@ -350,34 +376,86 @@ public class PlugInDialogGenerateFusion540a extends JDialogScriptableBase implem
      * @return
      */
 	private boolean setVariables() {
-		try {
-		    image1Intensity = Double.valueOf(image1IntensityText.getText());
-		    image1Scale = Double.valueOf(image1ScaleText.getText());
-		    image1Noise = Double.valueOf(image1NoiseText.getText());
-		    
-		    image2Intensity = Double.valueOf(image2IntensityText.getText());
-		    image2Scale = Double.valueOf(image2ScaleText.getText());
-            image2Noise = Double.valueOf(image2NoiseText.getText());
-		    
+	    doGeoMean = geometricMeanBox.isSelected();
+        doAriMean = arithmeticMeanBox.isSelected();
+        doInterImages = interImagesBox.isSelected();
+        doSubsample = doSubsampleBox.isSelected();
+	    
+	    try {
+		    middleSlice = Integer.valueOf(middleSliceText.getText()).intValue();
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");
             return false;
         }
-		System.out.println(image1Combo.getSelectedItem().toString());
-		image1 = ViewUserInterface.getReference().getRegisteredImageByName(image1Combo.getSelectedItem().toString());
-		if(image1 == null) {
-		    MipavUtil.displayError(image1Combo.getSelectedItem().toString()+" is not a valid image name.");
-		    return false;
-		}
-		System.out.println(image2Combo.getSelectedItem().toString());
-		image2 = ViewUserInterface.getReference().getRegisteredImageByName(image2Combo.getSelectedItem().toString());
-		if(image2 == null) {
-            MipavUtil.displayError(image2Combo.getSelectedItem().toString()+" is not a valid image name.");
-            return false;
-        }
+	      
+	    try {
+	        mtxFileLoc = mtxFileLocText.getText();
+	        File f = new File(mtxFileLoc);
+	        if(!f.exists()) {
+	            MipavUtil.displayError("Matrix file could not be found.");
+	            return false;
+	        }
+	    } catch(Exception e) {
+	        MipavUtil.displayError("Invalid matrix file.");
+	        return false;
+	    }
+	    
+	    spimFileDir = spimFileLocText.getText();
+	    baseImage = baseImageText.getText();
+	    
+	    if(!populateFileLists()) {
+	        return false;
+	    }
 		
-		doInterImages = doInterImagesCheckBox.isSelected();
-		
+	    StringBuffer transformMessage = new StringBuffer();
+	    for(int i=0; i<baseImageAr.length; i++) {
+	        transformMessage.append("Image ").append(transformImageAr[i].getName()).append(" transformed to ").append(baseImageAr[i].getName()).append("\n");
+	    }
+	    String returnOption = JOptionPane.showInputDialog(this, "Proceed with the following operations?\n"+transformMessage, "Algorithm run confirm", JOptionPane.YES_NO_OPTION);
+	    if(returnOption.equals(JOptionPane.NO_OPTION)) {
+	        return false;
+	    }
+	    
 		return true;
 	} //end setVariables()
+
+    private boolean populateFileLists() {
+        ArrayList<File> baseImageList = new ArrayList<File>();
+        ArrayList<File> transformImageList = new ArrayList<File>();
+        try {
+            File f = new File(spimFileDir);
+            if(!f.exists() || !f.isDirectory()) {
+                MipavUtil.displayError("Spim file directory could not be found");
+                return false;
+            }
+    search:   for(File fTry : f.listFiles()) {
+                 String s = fTry.getName(); 
+                 if(!s.contains(".mtx")) {
+                    if(s.contains(baseImage)) {
+                        String[] subSection = s.split(baseImage);
+            searchSub:  for(File fTrySub : f.listFiles()) {
+                            String sSub = fTrySub.getName();
+                            for(String subParts : subSection) {
+                                if(!sSub.contains(subParts)) {
+                                    continue searchSub;
+                                }
+                            }
+                            //matching subsections have been found
+                            baseImageList.add(fTry);
+                            transformImageList.add(fTrySub);
+                            continue search;
+                        }
+                    }
+                }
+            }
+        } catch(Exception e) {
+            MipavUtil.displayError("Invalid spim directory");
+            return false;
+        }
+        
+        baseImageAr = baseImageList.toArray(new File[baseImageList.size()]);
+        transformImageAr = transformImageList.toArray(new File[transformImageList.size()]);
+        
+        return true;
+    }
 }
