@@ -987,18 +987,11 @@ public class EstimateTensorLLMSE {
 		                }
 		            }
 					tensorImage.set( x, y, z, 0, tensors[x][y][z][0] );
-					tensorImage.set( x, y, z, 1, tensors[x][y][z][1] );
-					tensorImage.set( x, y, z, 2, tensors[x][y][z][2] );
-					tensorImage.set( x, y, z, 3, tensors[x][y][z][3] );
-					tensorImage.set( x, y, z, 4, tensors[x][y][z][4] );
-					tensorImage.set( x, y, z, 5, tensors[x][y][z][5] );
-					/*
-					tensorImage.set( x, y, z, 0, tensors[x][y][z][0] );
 					tensorImage.set( x, y, z, 1, tensors[x][y][z][3] );
 					tensorImage.set( x, y, z, 2, tensors[x][y][z][5] );
 					tensorImage.set( x, y, z, 3, tensors[x][y][z][1] );
 					tensorImage.set( x, y, z, 4, tensors[x][y][z][2] );
-					tensorImage.set( x, y, z, 5, tensors[x][y][z][3] );*/
+					tensorImage.set( x, y, z, 5, tensors[x][y][z][4] );
 				}
 			}
 		}
