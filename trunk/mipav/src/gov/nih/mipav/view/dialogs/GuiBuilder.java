@@ -122,6 +122,10 @@ public class GuiBuilder implements ActionListener {
     }
     
     public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode) {
+        return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode);
+    }
+    
+    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode) {
         FlowLayout f = new FlowLayout();
         f.setAlignment(FlowLayout.LEFT);
         JPanel panel = new JPanel(f);
@@ -131,7 +135,7 @@ public class GuiBuilder implements ActionListener {
         JButton button = new JButton("Browse");
         ActionListener listener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser(Preferences.getImageDirectory());
+                JFileChooser fileChooser = new JFileChooser(initDir);
                 fileChooser.setFont(MipavUtil.defaultMenuFont);
                 fileChooser.setMultiSelectionEnabled(multiSelect);
                 fileChooser.setFileSelectionMode(fileSelectionMode);
