@@ -46,6 +46,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 
 import Jama.Matrix;
@@ -220,6 +221,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     private JLabel labelInterp;
 
+    public JPanel highlightBorderPanel;
+
+    public JPanel structOptPanel;
+
+    public ModelImage inputPreTensorImage;
+
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
         // super(theParentFrame, false);
@@ -241,14 +248,11 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      * @param event Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
-        System.out.println("action performed event");
         String command = event.getActionCommand();
         String tmpStr;
 
         if (command.equals("RUN OAR 3.5D")) {
-            System.out.println("ok");
             if (pipeline.T2Image != null) {
-                System.out.println("t2image");
                 callT2Algorithm();
                 setVariables();
                 callReg35Algorithm();
@@ -258,9 +262,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             }
 
             if (transformB0Checkbox.isSelected()) {
-                System.out.println("B0checkboxworking");
                 if (resultB0toT2Image != null) {
-                    System.out.println("B0tot2notnull");
                     try {
                         new ViewJFrameImage(resultB0toT2Image, null, new Dimension(610, 200));
                     } catch (final OutOfMemoryError error) {
@@ -295,7 +297,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 
         } else if (command.equals("skipPre")) {
-            System.out.println("skip pre");
             if (skipPreCheckbox.isSelected()){
                 transformMatDWICheckbox.setEnabled(false);
                 transformDWICheckbox.setEnabled(false);
@@ -318,9 +319,11 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                 }
 
 
-                
+
+                inputPreTensorImage = pipeline.DWIImage;
                 pipeline.nextButton.setEnabled(true);
                 pipeline.nextButton.setActionCommand("next2");
+                
 
 
             }
@@ -393,15 +396,10 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         if (algorithm instanceof AlgorithmRegOAR3D) {
             if (reg3.isCompleted()) {
-                //System.out.println("reg3 completed");
-
-                //matrixDirectory = (String) matrixComboBox.getSelectedItem();
-
                 b0toStructMatrix = reg3.getTransform();
                 //System.out.println("test: " + b0toStructMatrix);
 
                
-                    System.out.println("bofile");
                     final int xdimA = refT2image.getExtents()[0];
                     final int ydimA = refT2image.getExtents()[1];
                     final int zdimA = refT2image.getExtents()[2];
@@ -517,7 +515,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
                 b0toStructMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
                 matchB0image.getMatrixHolder().addMatrix(b0toStructMatrix);
-                System.out.println("3d mat direct: " +pipeline.T2Image.getImageDirectory() );
                 if (transformB0MatCheckbox.isSelected()) {
                     String message = "Using cost function, " + "Correlation ration";
                     message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";
@@ -546,7 +543,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         }
         if (algorithm instanceof AlgorithmRegOAR35D) {
             matrixDirectory = pipeline.DWIImage.getImageDirectory();
-            System.out.println("35d mat direct: " +matrixDirectory );
             final TransMatrix finalMatrix = reg35.getTransform();
             arrayTransMatrix = reg35.getArrayTransMatrix();
             //Testing
@@ -681,20 +677,23 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
                 Color.black);
     }
+    
+
+    
+    private TitledBorder highlightTitledBorder(String title){
+        return new TitledBorder(new LineBorder( Color.black, 2), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                Color.black);
+    }
 
     /**
      * Initializes the GUI components and displays the dialog.
      */
     private void init() {
-        System.out.println("init");
-
         setForeground(Color.black);
         
-        /*JPanel highlightBorder = new JPanel();
-        highlightBorder.setLayout(new GridBagLayout());
-        highlightBorder.setBorder(buildTitledBorder(""));*/
+
         
-        JPanel structOptPanel = new JPanel();
+        structOptPanel = new JPanel();
         structOptPanel.setLayout(new GridBagLayout());
         structOptPanel.setBorder(buildTitledBorder("B0 to Structural Image OAR 3D Output Options"));
         transformB0Checkbox = new JCheckBox("Display Registered B0 to Structural Image");
@@ -979,37 +978,54 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         //buttonPanel.add(cancelButton);
         buildHelpButton();
         //buttonPanel.add(helpButton);
+        
+        highlightBorderPanel = new JPanel();
+        highlightBorderPanel.setLayout(new GridBagLayout());
+        highlightBorderPanel.setBorder(buildTitledBorder(""));
+        highlightBorderPanel.setAlignmentX(Component.TOP_ALIGNMENT);
+        highlightBorderPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
         mainPrePanel = new JPanel();
         mainPrePanel.setLayout(new GridBagLayout());
-        // gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = .5;
         gbc.weighty = 0;
         gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPrePanel.add(optPanel, gbc);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        //gbc.fill = GridBagConstraints.BOTH;
+        highlightBorderPanel.add(optPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = .5;
         gbc.weighty = 0;
         gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPrePanel.add(outPanel, gbc);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        //gbc.fill = GridBagConstraints.BOTH;
+        highlightBorderPanel.add(outPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = .5;
         gbc.weighty = 0;
         gbc.gridwidth = 1;
-        gbc.fill = GridBagConstraints.BOTH;
-        mainPrePanel.add(structOptPanel, gbc);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        //gbc.fill = GridBagConstraints.BOTH;
+        highlightBorderPanel.add(structOptPanel, gbc);
+
+        
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        //gbc.fill = GridBagConstraints.BOTH;
+        mainPrePanel.add(highlightBorderPanel, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 2;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.weighty = 1;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         mainPrePanel.add(buttonPanel, gbc);
 
         setVisible(true);
