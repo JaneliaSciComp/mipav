@@ -115,6 +115,16 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 
     private JTextField spimBFileLocText;
 
+    private JTextField resXText;
+
+    private Component resYText;
+
+    private Component resZText;
+
+    private JTextField concurrentNumText;
+
+    private JCheckBox doThresholdBox;
+
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
@@ -305,7 +315,7 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         gbc.gridy++;
         
         spimBFileLocText = gui.buildFileField("Directory containing SPIMB: ", "", false, JFileChooser.DIRECTORIES_ONLY);
-        mtxPanel.add(spimAFileLocText.getParent(), gbc);
+        mtxPanel.add(spimBFileLocText.getParent(), gbc);
         gbc.gridy++;
         
         transformImageText = gui.buildField("Transform image ", "SPIMA");
@@ -338,6 +348,44 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         algOptionPanel.setForeground(Color.black);
         algOptionPanel.setBorder(MipavUtil.buildTitledBorder("Algorithm options"));
         
+        JLabel resLabel = new JLabel("Initial resolutions (um): ");
+        algOptionPanel.add(resLabel, gbc);
+        gbc.gridy++;
+        
+        resXText = gui.buildDecimalField("X: ", .1625);
+        algOptionPanel.add(resXText.getParent(), gbc);
+        gbc.gridx++;
+        
+        resYText = gui.buildDecimalField("Y: ", .1625);
+        algOptionPanel.add(resYText.getParent(), gbc);
+        gbc.gridx++;
+        
+        resZText = gui.buildDecimalField("Z: ", .5);
+        algOptionPanel.add(resZText.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        concurrentNumText = gui.buildIntegerField("Number of concurrent fusions: ", 
+                                                    (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors() : 1);
+        algOptionPanel.add(concurrentNumText.getParent(), gbc);
+        gbc.gridy++;
+        
+        doThresholdBox = gui.buildCheckBox("Threshold noise", false);
+        algOptionPanel.add(doThresholdBox.getParent(), gbc);
+        gbc.gridy++;
+        
+        JPanel thresholdPanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbcThreshold = new GridBagConstraints();
+        thresholdPanel.setForeground(Color.black);
+        
+        doThresholdBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(doThresholdBox.isSelected()) {
+                    
+                }
+            }
+        });
+        
         
         gbc.gridy = 1;
         gbc.gridx = 0;
@@ -357,7 +405,7 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         outputPanel.add(doSubsampleBox.getParent(), gbc);
         gbc.gridy++;
       
-        arithmeticMeanBox = gui.buildCheckBox("Show arithmetic mean", true);
+        arithmeticMeanBox = gui.buildCheckBox("Show arithmetic mean", false);
         outputPanel.add(arithmeticMeanBox.getParent(), gbc);
         gbc.gridy++;
         
