@@ -399,8 +399,6 @@ import Jama.Matrix;
 
 
                               dtiparams.setGradients(flGradArr);
-                              System.out.println("bvalssize" +dtiparams.getbValues().length);
-                              System.out.println("gradientssize" +dtiparams.getGradients().length);
                           }
                           dtiparams.setNumVolumes(numVolumes);
                           m_kDWIImage.setDTIParameters(dtiparams);
@@ -467,10 +465,7 @@ import Jama.Matrix;
                               
                               newDTIparams.setGradients(flGradArr);
                               }
-                              //System.out.println("@"+srcTableModel.getValueAt(1, 1)+"@");
-                              if (!srcTableModel.getValueAt(0, 2).equals("")){
-                                  //System.out.println("emptystring");
-                              }
+
                               newDTIparams.setNumVolumes(m_kDWIImage.getExtents()[3]);
                               m_kDWIImage.setDTIParameters(newDTIparams);
                               pipeline.nextButton.setEnabled(true);
@@ -482,7 +477,6 @@ import Jama.Matrix;
                           MipavUtil.displayError("Please enter " +m_kDWIImage.getExtents()[3] +" rows of bvalues and gradients"); 
                       }
                   }
-                  //System.out.println("flGradArr: " +newDTIparams.getGradients()[1][0]);
                 }
                 
                 
@@ -637,9 +631,7 @@ import Jama.Matrix;
                  }
             
             } else if (command.equals("openedImage")) {
-                //System.out.println("openedImage");
                 if (activeDWIButton.isSelected()){
-                //dwiFileLabel.setForeground(Color.lightGray);
                 openDWIButton.setEnabled(false);
                 textDWIDataimage.setEnabled(false);
                 
@@ -2026,9 +2018,12 @@ import Jama.Matrix;
              * @author John Bogovic
              */
             
+            
             double[][] C = new double[A.length][B[0].length];
-            System.out.println("alengeth: " +A.length);
+            /*System.out.println("alengeth: " +A.length);
             System.out.println("b0lengeth: " +B[0].length);
+            System.out.println("clength" +C.length);
+            System.out.println("c0length" +C[0].length);*/
             for(int i=0; i<C.length; i++){
                 for(int j=0; j<C[0].length; j++){
                     C[i][j]=A[i][0]*B[0][j] + A[i][1]*B[1][j]+A[i][2]*B[2][j];
