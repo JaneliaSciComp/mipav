@@ -262,8 +262,8 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
             clGetPlatformIDs(0, null, numPlatforms);
         } catch(UnsatisfiedLinkError ule) 
         {
-            System.err.println("OpenCL libs unavailable.");
-            ule.printStackTrace();
+            System.err.println("OpenCL libs unavailable, updating drivers needed to run OpenCL 1.2 code.");
+            //ule.printStackTrace();
             return false;
         }
 		    
