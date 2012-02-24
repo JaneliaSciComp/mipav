@@ -75,7 +75,7 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 
     private JTextField mtxFileLocText;
 
-    private JTextField spimFileLocText;
+    private JTextField spimAFileLocText;
 
     private JCheckBox geometricMeanBox;
 
@@ -112,6 +112,8 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
     private String spimFileDir;
 
     private String baseImage;
+
+    private JTextField spimBFileLocText;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -175,8 +177,7 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
                 
             } 
 
-            if (generateFusionAlgo.isCompleted()) {
-                
+            if (generateFusionAlgo.isCompleted()) {                
                 insertScriptLine();
             }
 
@@ -269,7 +270,7 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generate fusion 540a");
+        setTitle("Generate fusion 541a");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -299,8 +300,12 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         mtxPanel.add(mtxFileLocText.getParent(), gbc);
         gbc.gridy++;
         
-        spimFileLocText = gui.buildFileField("Directory containing SPIM: ", "", false, JFileChooser.DIRECTORIES_ONLY);
-        mtxPanel.add(spimFileLocText.getParent(), gbc);
+        spimAFileLocText = gui.buildFileField("Directory containing SPIMA: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        mtxPanel.add(spimAFileLocText.getParent(), gbc);
+        gbc.gridy++;
+        
+        spimBFileLocText = gui.buildFileField("Directory containing SPIMB: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        mtxPanel.add(spimAFileLocText.getParent(), gbc);
         gbc.gridy++;
         
         transformImageText = gui.buildField("Transform image ", "SPIMA");
@@ -316,8 +321,9 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
             public void actionPerformed(ActionEvent e) {
                 try {
                     File f = new File(mtxFileLocText.getText());
-                    if(f.getParentFile().isDirectory() && !(spimFileLocText.getText().length() > 0)) {
-                        spimFileLocText.setText(f.getParent());
+                    if(f.getParentFile().isDirectory() && !(spimAFileLocText.getText().length() > 0) && !(spimBFileLocText.getText().length() > 0)) {
+                        spimAFileLocText.setText(f.getParent());
+                        spimBFileLocText.setText(f.getParent());
                     }
                 } catch(Exception e1) {
                     e1.printStackTrace();
@@ -327,6 +333,15 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         });
         
         mainPanel.add(mtxPanel, gbc);
+        
+        JPanel algOptionPanel = new JPanel(new GridBagLayout());
+        algOptionPanel.setForeground(Color.black);
+        algOptionPanel.setBorder(MipavUtil.buildTitledBorder("Algorithm options"));
+        
+        
+        gbc.gridy = 1;
+        gbc.gridx = 0;
+        mainPanel.add(algOptionPanel, gbc);
         
         JPanel outputPanel = new JPanel(new GridBagLayout());
         outputPanel.setForeground(Color.black);
@@ -350,10 +365,12 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         outputPanel.add(geometricMeanBox.getParent(), gbc);
         gbc.gridy++;
         
+        
+        
         interImagesBox = gui.buildCheckBox("Show transformed images", true);
         outputPanel.add(interImagesBox.getParent(), gbc);
         
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         mainPanel.add(outputPanel, gbc);
         
         gbc.gridy++;
@@ -400,7 +417,7 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 	        return false;
 	    }
 	    
-	    spimFileDir = spimFileLocText.getText();
+	    spimFileDir = spimAFileLocText.getText();
 	    baseImage = baseImageText.getText();
 	    
 	    if(!populateFileLists()) {
@@ -411,8 +428,8 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 	    for(int i=0; i<baseImageAr.length; i++) {
 	        transformMessage.append("Image ").append(transformImageAr[i].getName()).append(" transformed to ").append(baseImageAr[i].getName()).append("\n");
 	    }
-	    String returnOption = JOptionPane.showInputDialog(this, "Proceed with the following operations?\n"+transformMessage, "Algorithm run confirm", JOptionPane.YES_NO_OPTION);
-	    if(returnOption.equals(JOptionPane.NO_OPTION)) {
+	    int returnOption = JOptionPane.showConfirmDialog(this, "Proceed with the following operations?\n"+transformMessage, "Algorithm run confirm", JOptionPane.YES_NO_OPTION);
+	    if(returnOption == JOptionPane.NO_OPTION) {
 	        return false;
 	    }
 	    

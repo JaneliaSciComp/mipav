@@ -62,7 +62,7 @@ public class PlugInGenerateFusion541a implements PlugInAlgorithm {
         if (parentFrame instanceof ViewJFrameImage) {
             new PlugInDialogGenerateFusion541a(parentFrame, image);
         } else {
-            MipavUtil.displayError("PlugInDialogGenerateFusion540a only runs on an image frame.");
+            MipavUtil.displayError("PlugInDialogGenerateFusion541a only runs on an image frame.");
         }
     }
 }
