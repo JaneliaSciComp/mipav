@@ -44,6 +44,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -66,6 +69,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 	/** Mask image for the tensor calculation */
 	private ModelImage maskImage = null;
+	
     JTextField textDTIimage = new JTextField();
 	
 	/** The current image in the pipeline */
@@ -73,6 +77,9 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 	/** Diffusion weighted image read from file or from active image. */
 	public ModelImage DWIImage;
+	
+	   /** Input image for tensor estimation */
+    public ModelImage inputTensorImage;
 
 	public String DWIDir;
 
@@ -101,6 +108,8 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 	private JPanelDTIRegistrationEddyCurrent35D eddyCurReg;
 
 	private JPanelDTIPreprocessing DTIPreprocessing;
+	
+	private JPanelDTIEstimateTensor estTensorPanel;
 
 	private JPanelEPIDistortionCorrection EPIpanel;
 
@@ -130,14 +139,6 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 	public DTIPipeline() {
 		super(ViewUserInterface.getReference().getMainFrame(), false);
-
-		//Testing
-		/*String fileDir = "C:\\Users\\tyrieek\\Desktop\\PARRECTest\\Landman_4.2.REC";
-        //String fileName = "DTI_2MM_FREE_39VOL_SET2_10.dcm";
-        FileIO fileIO = new FileIO();
-        image = fileIO.readImage(fileDir);
-        new ViewJFrameImage(image);*/
-
 		init();
 	}
 
@@ -190,6 +191,8 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		getContentPane().add(NextGoBackPanel, BorderLayout.SOUTH);
 		pack();
 		setVisible(true);
+		
+
 
 	}
 
@@ -215,7 +218,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		}
 		
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
-		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) && (currentImage != null) )
+		/*if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) && (currentImage != null) )
 		{
 			switch ( comboBoxDTI_Algorithm.getSelectedIndex() ) {
 			case DEFAULT: 
@@ -253,7 +256,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 				visualization.setTractFile(tensorImage.getImageDirectory() + JPanelDTIFiberTracking.TrackFileName);
 				visualization.enableLoad();
 			}
-		}
+		}*/
 
 		else if (command.equals("next1")){
 			DWIImage = importData.m_kDWIImage;
@@ -261,6 +264,8 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			DWIframe = importData.frame;
 			dtiparams = DWIImage.getDTIParameters();
 			DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
+			DTIPreprocessing.highlightBorderPanel.setBorder(highlightTitledBorder(""));
+
 
 
 			if (dtiparams.getbValues() != null && dtiparams.getGradients() != null){
@@ -270,19 +275,13 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 				goBackButton.setActionCommand("back1");
 			}
 
-			else if (dtiparams.getbValues() != null && dtiparams.getGradients() != null){
-				tabbedPane.setSelectedIndex(1);
-				nextButton.setEnabled(false);
-				goBackButton.setEnabled(true);
-				goBackButton.setActionCommand("back1");
-			}
 			else{
+			    DTIPreprocessing.highlightBorderPanel.setBorder(buildTitleBorder(""));
 				MipavUtil.displayError("Please load B-values and Gradients");
 			}
 
 			if (importData.useT2CheckBox.isSelected() == false){
 				if (importData.m_kT2Image !=null){
-					System.out.println("t2imagenotnull");
 					T2Image = importData.m_kT2Image;
 					T2frame = importData.t2frame;
 			        DTIPreprocessing.transformMatDWICheckbox.setEnabled(true);
@@ -291,13 +290,17 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			        DTIPreprocessing.blanklabel.setEnabled(true);
 			        DTIPreprocessing.transformB0Checkbox.setEnabled(true);
 			        DTIPreprocessing.epiCheckbox.setEnabled(true);
-					//eddyCurReg.epiCheckBox.setEnabled(true);
 				}
 				else{
+		          
 					MipavUtil.displayError("Error loading T2 image"); 
 					tabbedPane.setSelectedIndex(0);
 				}
+
 			}
+	        else{
+	               DTIPreprocessing.structOptPanel.setBorder(buildGrayTitledBorder("B0 to Structural Image OAR 3D Output Options"));   
+	                }
 		}
 
 		else if (command.equals("back1")){
@@ -307,47 +310,69 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		}
 
 		else if (command.equals("next2")){
-			/*if (t2load.newB0DWIRegImage !=null){
-                DWINewB0Image = t2load.newB0DWIRegImage;
-                tabbedPane.setSelectedIndex(2);
-                nextButton.setEnabled(false);
-                goBackButton.setEnabled(true);
-                goBackButton.setActionCommand("back2");
-            }*/
-
 			if (DTIPreprocessing.result35RegImage !=null){
-				//System.out.println("result35 not null");
 				DWINewB0Image = DTIPreprocessing.result35RegImage;
-				currentImage = DWINewB0Image;
-				arrayTransMatrix = DTIPreprocessing.arrayTransMatrix;
-				System.out.println("arrayTransMatrixlength" +arrayTransMatrix.length);
-				//System.out.println("arraTransMat: " +arrayTransMatrix[0]);
-				b0toStructMatrix = DTIPreprocessing.b0toStructMatrix;
-				//System.out.println("b0toStructMatrix: "+b0toStructMatrix);
-				tabbedPane.setSelectedIndex(2);
-				nextButton.setEnabled(false);
-				goBackButton.setEnabled(true);
-				goBackButton.setActionCommand("back2");
 			}
 			
 			if (DTIPreprocessing.epiCheckbox.isSelected()){
-			    tabbedPane.setSelectedIndex(2);
-	             nextButton.setEnabled(false);
-	             goBackButton.setEnabled(true);
-	             goBackButton.setActionCommand("back2");
+			    if (T2Image != null && DWINewB0Image !=null){
+	                 arrayTransMatrix = DTIPreprocessing.arrayTransMatrix;
+	                 b0toStructMatrix = DTIPreprocessing.b0toStructMatrix;
+    			     tabbedPane.setSelectedIndex(2);
+    	             nextButton.setEnabled(false);
+    	             goBackButton.setEnabled(true);
+    	             goBackButton.setActionCommand("back2");
+			    }
 			}
 			else{
-			    tabbedPane.setSelectedIndex(3);
+			      if (DWINewB0Image !=null){
+			          inputTensorImage = DWINewB0Image;  
+			      }
+			      else if (DTIPreprocessing.inputPreTensorImage != null){			          
+			          inputTensorImage = DTIPreprocessing.inputPreTensorImage;
+			      }
+
+	              tabbedPane.setSelectedIndex(3);
+	              estTensorPanel.maskOpenPanel.setBorder(highlightTitledBorder("Upload Mask Image"));
+	              estTensorPanel.maskLabel.setEnabled(true);
+	              estTensorPanel.openMaskImageButton.setEnabled(true);
+	              estTensorPanel.textMaskimage.setEnabled(true);
 	              nextButton.setEnabled(false);
 	              goBackButton.setEnabled(true);
 	              goBackButton.setActionCommand("back3");
+			      }
 			}
+	      else if (command.equals("back2")){
+	            tabbedPane.setSelectedIndex(1);
+	            nextButton.setEnabled(true);
+	            goBackButton.setEnabled(false);
+	        }
+	      else if (command.equals("back3")){
+	            tabbedPane.setSelectedIndex(2);
+	            nextButton.setEnabled(true);
+	            goBackButton.setEnabled(false);
+	        }
 			
 			
 
-		}       
+		       
 
 	}
+	
+    private TitledBorder highlightTitledBorder(String title){
+        return new TitledBorder(new LineBorder( Color.black, 2), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                Color.black);
+    }
+    
+    private TitledBorder buildTitleBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                Color.black);
+    }
+    
+    private TitledBorder buildGrayTitledBorder(String title) {
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                Color.gray);
+    }
 
 	private JScrollPane buildImportDataPanel() {
 
@@ -384,96 +409,12 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		return EPIpanel.mainEPIPanel ;
 
 	}
-
+	
 	private JPanel buildTensorPanel() {
-
-		final JPanel wholePanel = new JPanel();
-
-	        final JPanel DTIloadPanel = new JPanel();
-	        DTIloadPanel.setLayout(new GridBagLayout());
-	        DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
-
-	        final GridBagConstraints gbc = new GridBagConstraints();
-
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        gbc.gridwidth = 1;
-	        gbc.gridheight = 1;
-	        gbc.weightx = 0;
-	        gbc.fill = GridBagConstraints.CENTER;
-	        gbc.anchor = GridBagConstraints.WEST;
-
-	        JButton openDTIimageButton = new JButton("Browse");
-	        openDTIimageButton.setToolTipText("Browse mask image file");
-	        openDTIimageButton.addActionListener(this);
-	        openDTIimageButton.setActionCommand("browseMaskFile");
-	        openDTIimageButton.setEnabled(true);
-
-	        textDTIimage.setPreferredSize(new Dimension(275, 21));
-	        textDTIimage.setEditable(true);
-	        textDTIimage.setBackground(Color.white);
-	        textDTIimage.setFont(MipavUtil.font12);
-
-	        JLabel dtiFileLabel = new JLabel("Mask Image: ");
-	        dtiFileLabel.setEnabled(true);
-
-	        gbc.gridx = 0;
-	        gbc.gridy = 0;
-	        gbc.weightx = 1;
-	        gbc.insets = new Insets(0, 0, 10, 0);
-	        gbc.fill = GridBagConstraints.CENTER;
-
-	        DTIloadPanel.add(dtiFileLabel, gbc);
-	        gbc.gridx = 1;
-	        gbc.gridy = 0;
-	        gbc.weightx = 1;
-	        gbc.fill = GridBagConstraints.CENTER;
-	        DTIloadPanel.add(textDTIimage, gbc);
-	        gbc.gridx = 2;
-	        gbc.gridy = 0;
-	        gbc.weightx = 1;
-	        gbc.insets = new Insets(0, 10, 10, 0);
-	        gbc.fill = GridBagConstraints.CENTER;
-	        DTIloadPanel.add(openDTIimageButton, gbc);
-	        
-	        
-
-
-	        final JLabel labelDOF = new JLabel("DTI Algorithm:");
-	        labelDOF.setForeground(Color.black);
-	        labelDOF.setFont(serif12);
-	        labelDOF.setAlignmentX(Component.LEFT_ALIGNMENT);
-	        gbc.gridx = 0;
-	        gbc.gridy = 1;
-	        gbc.weightx = 1;
-	        gbc.insets = new Insets(0, 0, 10, 0);
-	        gbc.fill = GridBagConstraints.CENTER;
-	        DTIloadPanel.add(labelDOF, gbc);
-
-	        comboBoxDTI_Algorithm = new JComboBox();
-	        comboBoxDTI_Algorithm.setFont(MipavUtil.font12);
-	        comboBoxDTI_Algorithm.setBackground(Color.white);
-	        comboBoxDTI_Algorithm.setToolTipText("Select DTI Algorithm");
-	        comboBoxDTI_Algorithm.addItem("Weighted, noise-reduction");
-	        comboBoxDTI_Algorithm.addItem("LLMSE");
-	        comboBoxDTI_Algorithm.addItem("CAMINO: Linear");
-	        comboBoxDTI_Algorithm.addItem("CAMINO: Non-Linear");
-	        comboBoxDTI_Algorithm.addItem("CAMINO: Restore");
-	        comboBoxDTI_Algorithm.addItem("CAMINO: Weighted Linear");
-	        comboBoxDTI_Algorithm.setSelectedIndex(0);
-	        comboBoxDTI_Algorithm.addItemListener(this);
-	        gbc.gridx = 1;
-	        gbc.gridy = 1;
-	        gbc.weightx = 1;
-	        gbc.insets = new Insets(0, 0, 10, 0);
-	        gbc.fill = GridBagConstraints.CENTER;
-	        DTIloadPanel.add(comboBoxDTI_Algorithm, gbc);
-
-	        wholePanel.add(DTIloadPanel);
-
-
-		return wholePanel;
-
+	    
+	    estTensorPanel = new JPanelDTIEstimateTensor(this);
+	    return estTensorPanel.wholeTensorPanel ;
+	    
 	}
 
 	private JPanelDTIFiberTracking buildFiberTrackingPanel() {
