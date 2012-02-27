@@ -109,21 +109,33 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 
     private int middleSlice;
 
-    private String spimFileDir;
+    private String spimAFileDir;
 
     private String baseImage;
 
     private JTextField spimBFileLocText;
 
-    private JTextField resXText;
-
-    private Component resYText;
-
-    private Component resZText;
+    private JTextField resXText, resYText, resZText;
 
     private JTextField concurrentNumText;
 
     private JCheckBox doThresholdBox;
+
+    private JTextField thresholdIntensityText;
+
+    private boolean doThreshold;
+
+    private double resX;
+
+    private double resY;
+
+    private double resZ;
+
+    private int concurrentNum;
+
+    private String spimBFileDir;
+
+    private double thresholdIntensity;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -209,7 +221,9 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541a(image, doSubsample, doInterImages, doGeoMean, doAriMean, middleSlice, baseImageAr, transformImageAr);
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541a(image, doSubsample, doInterImages, doGeoMean, doAriMean, doThreshold, 
+                                                                         resX, resY, resZ, concurrentNum, thresholdIntensity,
+                                                                                mtxFileLoc, middleSlice, baseImageAr, transformImageAr);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -252,10 +266,14 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
     	doGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
     	doSubsample = scriptParameters.getParams().getBoolean("do_subsample");
+    	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
     	middleSlice = scriptParameters.getParams().getInt("middleSlice");
+    	
     	mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
-    	spimFileDir = scriptParameters.getParams().getFile("spimFileDir");
+    	spimAFileDir = scriptParameters.getParams().getFile("spimAFileDir");
+    	spimBFileDir = scriptParameters.getParams().getFile("spimBFileDir");
+    	
     	baseImage = scriptParameters.getParams().getString("baseImage");
     	
     	populateFileLists();
@@ -272,9 +290,14 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", doGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("middleSlice", middleSlice));
+       
         scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("spimFileDir", spimFileDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", spimAFileDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", spimBFileDir));
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("baseImageText", baseImageText));
     } //end storeParamsFromGUI()
    
@@ -318,12 +341,17 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         mtxPanel.add(spimBFileLocText.getParent(), gbc);
         gbc.gridy++;
         
+        JPanel transformPanel = new JPanel();
+        FlowLayout transformFlow = new FlowLayout(FlowLayout.LEFT);
+        transformPanel.setLayout(transformFlow);
+        
         transformImageText = gui.buildField("Transform image ", "SPIMA");
-        mtxPanel.add(transformImageText.getParent(), gbc);
-        gbc.gridx++;
+        transformPanel.add(transformImageText.getParent());
         
         baseImageText = gui.buildField(" to image ", "SPIMB");
-        mtxPanel.add(baseImageText.getParent(), gbc);
+        transformPanel.add(baseImageText.getParent());
+        
+        mtxPanel.add(transformPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 0;
         
@@ -352,21 +380,26 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         algOptionPanel.add(resLabel, gbc);
         gbc.gridy++;
         
+        JPanel resPanel = new JPanel(new GridBagLayout());
+        resPanel.setForeground(Color.black);
+        FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
+        resPanel.setLayout(flow);
+        
         resXText = gui.buildDecimalField("X: ", .1625);
-        algOptionPanel.add(resXText.getParent(), gbc);
-        gbc.gridx++;
+        resPanel.add(resXText.getParent());
         
         resYText = gui.buildDecimalField("Y: ", .1625);
-        algOptionPanel.add(resYText.getParent(), gbc);
-        gbc.gridx++;
+        resPanel.add(resYText.getParent());
         
         resZText = gui.buildDecimalField("Z: ", .5);
-        algOptionPanel.add(resZText.getParent(), gbc);
+        resPanel.add(resZText.getParent());
+        
+        algOptionPanel.add(resPanel, gbc);
         gbc.gridy++;
         gbc.gridx = 0;
         
         concurrentNumText = gui.buildIntegerField("Number of concurrent fusions: ", 
-                                                    (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors() : 1);
+                                                    (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors()-2 : 1);
         algOptionPanel.add(concurrentNumText.getParent(), gbc);
         gbc.gridy++;
         
@@ -374,17 +407,25 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         algOptionPanel.add(doThresholdBox.getParent(), gbc);
         gbc.gridy++;
         
-        JPanel thresholdPanel = new JPanel(new GridBagLayout());
+        final JPanel thresholdPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbcThreshold = new GridBagConstraints();
         thresholdPanel.setForeground(Color.black);
         
+        gbcThreshold.gridx = 0;
+        gbcThreshold.gridy = 0;
+        
+        thresholdIntensityText = gui.buildDecimalField("Threshold value", 10);
+        thresholdPanel.add(thresholdIntensityText.getParent(), gbcThreshold);
+        
+        algOptionPanel.add(thresholdPanel, gbc);
+        
         doThresholdBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if(doThresholdBox.isSelected()) {
-                    
-                }
+                thresholdPanel.setVisible(doThresholdBox.isSelected());
             }
         });
+        
+        thresholdPanel.setVisible(doThresholdBox.isSelected());
         
         
         gbc.gridy = 1;
@@ -445,9 +486,18 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         doAriMean = arithmeticMeanBox.isSelected();
         doInterImages = interImagesBox.isSelected();
         doSubsample = doSubsampleBox.isSelected();
+        doThreshold = doThresholdBox.isSelected();
 	    
 	    try {
 		    middleSlice = Integer.valueOf(middleSliceText.getText()).intValue();
+		    
+		    concurrentNum = Integer.valueOf(concurrentNumText.getText()).intValue();
+		    
+		    thresholdIntensity = Double.valueOf(thresholdIntensityText.getText()).doubleValue();
+		    
+		    resX = Double.valueOf(resXText.getText()).doubleValue();
+		    resY = Double.valueOf(resYText.getText()).doubleValue();
+		    resZ = Double.valueOf(resZText.getText()).doubleValue();
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");
             return false;
@@ -465,7 +515,8 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
 	        return false;
 	    }
 	    
-	    spimFileDir = spimAFileLocText.getText();
+	    spimAFileDir = spimAFileLocText.getText();
+	    spimBFileDir = spimBFileLocText.getText();
 	    baseImage = baseImageText.getText();
 	    
 	    if(!populateFileLists()) {
@@ -488,33 +539,36 @@ public class PlugInDialogGenerateFusion541a extends JDialogScriptableBase implem
         ArrayList<File> baseImageList = new ArrayList<File>();
         ArrayList<File> transformImageList = new ArrayList<File>();
         try {
-            File f = new File(spimFileDir);
-            if(!f.exists() || !f.isDirectory()) {
-                MipavUtil.displayError("Spim file directory could not be found");
+            File fA = new File(spimAFileDir);
+            File fB = new File(spimBFileDir);
+            if(!fA.exists() || !fA.isDirectory()) {
+                MipavUtil.displayError("Spim file directories could not be found");
                 return false;
             }
-    search:   for(File fTry : f.listFiles()) {
+    search:   for(File fTry : fA.listFiles()) {
                  String s = fTry.getName(); 
                  if(!s.contains(".mtx")) {
                     if(s.contains(baseImage)) {
                         String[] subSection = s.split(baseImage);
-            searchSub:  for(File fTrySub : f.listFiles()) {
+            searchSub:  for(File fTrySub : fB.listFiles()) {
                             String sSub = fTrySub.getName();
-                            for(String subParts : subSection) {
-                                if(!sSub.contains(subParts)) {
-                                    continue searchSub;
+                            if(!s.contains(".mtx")) {
+                                for(String subParts : subSection) {
+                                    if(!sSub.contains(subParts)) {
+                                        continue searchSub;
+                                    }
                                 }
+                                //matching subsections have been found
+                                baseImageList.add(fTry);
+                                transformImageList.add(fTrySub);
+                                continue search;
                             }
-                            //matching subsections have been found
-                            baseImageList.add(fTry);
-                            transformImageList.add(fTrySub);
-                            continue search;
                         }
                     }
                 }
             }
         } catch(Exception e) {
-            MipavUtil.displayError("Invalid spim directory");
+            MipavUtil.displayError("Invalid spim directories");
             return false;
         }
         

@@ -22,6 +22,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 
 import javax.imageio.stream.FileImageOutputStream;
@@ -29,10 +30,12 @@ import javax.imageio.stream.FileImageOutputStream;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
  * This class implements a basic algorithm that performs operations on 2D and 3D images. 
@@ -54,6 +57,12 @@ public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
     private int middleSlice;
     private File[] baseImageAr;
     private File[] transformImageAr;
+    private boolean doThreshold;
+    private double resX;
+    private double resY;
+    private double resZ;
+    private double thresholdIntensity;
+    private String mtxFileLoc;
 
     /**
      * Constructor.
@@ -66,9 +75,16 @@ public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
      * @param scale 
      * @param image2Intensity 
      * @param doSubsample 
+     * @param middleSlice2 
+     * @param thresholdIntensity 
+     * @param resZ 
+     * @param resY 
+     * @param resX 
+     * @param doThreshold 
+     * @param mtxFileLoc 
      */
-    public PlugInAlgorithmGenerateFusion541a(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, 
-                                                    boolean doAriMean, int middleSlice, File[] baseImageAr, File[] transformImageAr) {
+    public PlugInAlgorithmGenerateFusion541a(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+                                                    double resX, double resY, double resZ, int middleSlice, double thresholdIntensity, String mtxFileLoc, int middleSlice2, File[] baseImageAr, File[] transformImageAr) {
         super(null, image1);
         
         this.image = image1;
@@ -76,9 +92,15 @@ public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
         this.doSubsample = doSubsample;
         this.doInterImages = doInterImages;
         this.doGeoMean = doGeoMean;
+        this.doThreshold = doThreshold;
         
         this.middleSlice = middleSlice;
+        this.resX = resX;
+        this.resY = resY;
+        this.resZ = resZ;
+        this.thresholdIntensity = thresholdIntensity;
         
+        this.mtxFileLoc = mtxFileLoc;
         this.baseImageAr = baseImageAr;
         this.transformImageAr = transformImageAr;
     }
@@ -106,103 +128,65 @@ public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
             ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
             ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
             
+            baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
+            transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
+            
+            if(doThreshold) {
+                threshold(baseImage);
+                threshold(transformImage);
+            }
+            
+            AlgorithmRotate rotate = new AlgorithmRotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
+            rotate.run(); //transform image should hav been replaced
+            
+            JDialogScriptableTransform transform = new JDialogScriptableTransform();
+            transform.setPadFlag(true);
+            transform.readTransformMatrixFile(mtxFileLoc);
+            transform.setImage25D(false);
+            transform.setSeparateThread(false);
+            transform.actionPerformed(new ActionEvent(this, 0, "OK"));
+            transformImage = transform.getResultImage();
+            if(doInterImages) {
+                new ViewJFrameImage(transformImage);
+            }
+            
+            discardSlices(baseImage, transformImage, middleSlice);
+            
+            if(doAriMean) {
+                calcAriMean(baseImage, transformImage);
+            }
+            
+            if(doGeoMean) {
+                calcGeoMean(baseImage, transformImage);
+            }
         }
 
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
 
-    private void reportStatistics(ModelImage postTreatment2) {
-        double sumIntensitiesSlice = 0, sumPosIntensitiesSlice = 0, sumNegIntensitiesSlice = 0;
-        double sumIntensitiesTotal = 0, sumPosIntensitiesTotal = 0, sumNegIntensitiesTotal = 0;
-        double intensity = 0;
-        int numPixelsSlice = 0, numNegPixelsSlice = 0, numPosPixelsSlice = 0, 
-                numPixelsTotal = 0, numPosPixelsTotal = 0, numNegPixelsTotal = 0;
-        Preferences.data("Slice number\tTotal pixels\tTotal Avg\tNeg Pixels\tNeg Average\tPos Pixels\tPos Average\n");       
-        int z = 0;
-        for(int i=0; i<1; i++) {
-            if(i != 0 && i %1 == 0) {
-                if(numPixelsTotal > 0) {
-                    sumIntensitiesTotal += sumIntensitiesSlice;
-                    sumPosIntensitiesTotal += sumPosIntensitiesSlice;
-                    sumNegIntensitiesTotal += sumNegIntensitiesSlice;
-                    
-                    numPixelsTotal += numPixelsSlice;
-                    numPosPixelsTotal += numPosPixelsSlice;
-                    numNegPixelsTotal += numNegPixelsSlice;
-                    
-                    printData("Slice "+z, numPixelsSlice, sumIntensitiesSlice, numNegPixelsSlice, sumNegIntensitiesSlice, numPosPixelsSlice, sumPosIntensitiesSlice);
-                }
-                sumIntensitiesSlice = 0;
-                sumPosIntensitiesSlice = 0;
-                sumNegIntensitiesSlice = 0;
-                
-                numPixelsSlice = 0;
-                numPosPixelsSlice = 0;
-                numNegPixelsSlice = 0;
-                
-                z++;
-            }
-            intensity = 1;
-            if(intensity != 0) {
-                if(intensity > 0) {
-                    sumPosIntensitiesSlice += intensity;
-                    numPosPixelsSlice++;
-                } else { //intensity < 0
-                    sumNegIntensitiesSlice += intensity;
-                    numNegPixelsSlice++;
-                }
-                sumIntensitiesSlice += intensity;
-                numPixelsSlice++;
+    private void calcGeoMean(ModelImage baseImage, ModelImage transformImage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void calcAriMean(ModelImage baseImage, ModelImage transformImage) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void discardSlices(ModelImage baseImage, ModelImage transformImage,
+            int middleSlice2) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    private void threshold(ModelImage baseImage) {
+        for(int i=0; i<baseImage.getDataSize(); i++) {
+            if(baseImage.getDouble(i) <= thresholdIntensity) {
+                baseImage.set(i, 0);
             }
         }
         
-        if(numPixelsTotal > 0) {
-            sumIntensitiesTotal += sumIntensitiesSlice;
-            sumPosIntensitiesTotal += sumPosIntensitiesSlice;
-            sumNegIntensitiesTotal += sumNegIntensitiesSlice;
-            
-            numPixelsTotal += numPixelsSlice;
-            numPosPixelsTotal += numPosPixelsSlice;
-            numNegPixelsTotal += numNegPixelsSlice;
-            
-            printData("Slice "+z, numPixelsSlice, sumIntensitiesSlice, numNegPixelsSlice, sumNegIntensitiesSlice, numPosPixelsSlice, sumPosIntensitiesSlice);
-        }
-        
-        printData("All slices", numPixelsTotal, sumIntensitiesTotal, numNegPixelsTotal, sumNegIntensitiesTotal, numPosPixelsTotal, sumPosIntensitiesTotal);
-    }
-
-    private void printData(String string, int numPixels, double sumIntensities, 
-                                            int numNegPixels, double sumNegIntensities, 
-                                            int numPosPixels, double sumPosIntensities) {
-        Preferences.data(string+"\t"+numPixels+"\t"+(sumIntensities/numPixels)+"\t"+
-                                            numNegPixels+"\t"+(sumNegIntensities/numNegPixels)+"\t"+
-                                            numPosPixels+"\t"+(sumPosIntensities/numPosPixels));
-    }
-
-    private ModelImage subtractImages(ModelImage destImage, ModelImage imagea, ModelImage imageb) {
-        AlgorithmImageCalculator algo1 = new AlgorithmImageCalculator(destImage, imagea, imageb, AlgorithmImageCalculator.SUBTRACT, AlgorithmImageCalculator.PROMOTE, true, null);
-        algo1.setRunningInSeparateThread(false);
-        algo1.run();
-        //destImage.getParentFrame().setVisible(false);
-        
-        return algo1.getDestImage();
-    }
-
-    private void scaleAndRemoveTumor(ModelImage image,
-            double imageIntensity, Double imageScale, Double imageNoise) {
-        double lowerBound = imageIntensity - imageNoise;
-        double upperBound = imageIntensity + imageNoise;
-        double intensity = 0;
-        for(int i=0; i<image.getDataSize(); i++) {
-            intensity = image.getDouble(i);
-            if(intensity != 0) {
-                if(intensity >= lowerBound && intensity <= upperBound) {
-                    image.set(i, 0);
-                } else {
-                    image.set(i, intensity*imageScale);
-                }
-            }
-        }
     }
 }
