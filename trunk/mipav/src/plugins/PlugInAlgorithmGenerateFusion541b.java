@@ -46,7 +46,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
 
     
     private ModelImage image;
@@ -83,7 +83,7 @@ public class PlugInAlgorithmGenerateFusion541a extends AlgorithmBase {
      * @param doThreshold 
      * @param mtxFileLoc 
      */
-    public PlugInAlgorithmGenerateFusion541a(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int middleSlice, double thresholdIntensity, String mtxFileLoc, int middleSlice2, File[] baseImageAr, File[] transformImageAr) {
         super(null, image1);
         
