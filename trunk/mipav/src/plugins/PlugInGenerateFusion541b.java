@@ -42,7 +42,7 @@ import java.awt.*;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGenerateFusion541a implements PlugInAlgorithm {
+public class PlugInGenerateFusion541b implements PlugInAlgorithm {
 
     public static final String[] CATEGORY = {"SPIM"};
 
@@ -60,9 +60,9 @@ public class PlugInGenerateFusion541a implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogGenerateFusion541a(parentFrame, image);
+            new PlugInDialogGenerateFusion541b(parentFrame, image);
         } else {
-            MipavUtil.displayError("PlugInDialogGenerateFusion541a only runs on an image frame.");
+            MipavUtil.displayError("PlugInDialogGenerateFusion541b only runs on an image frame.");
         }
     }
 }
