@@ -62,7 +62,8 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
 	public void init(GLAutoDrawable arg0) {	
     	super.init(arg0);
     	enableSlicePickable(true);
-    	m_kParent.processDTI();
+    	setDTIImage( ((VolumeTriPlanarInterfaceDTI)m_kParent).getDTIimage(),
+    			((VolumeTriPlanarInterfaceDTI)m_kParent).getEVimage(), ((VolumeTriPlanarInterfaceDTI)m_kParent).getEValueimage());
     }
 
 
@@ -121,6 +122,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
         }
         if ( updatingFiberTrack && m_bSlicePickEnabled ) {
             ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().addFiberTract();
+            UpdateSceneRotation();
             updatingFiberTrack = false;
         }
     }

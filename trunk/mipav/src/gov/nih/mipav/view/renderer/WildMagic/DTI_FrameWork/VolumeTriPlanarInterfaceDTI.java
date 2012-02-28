@@ -4,7 +4,9 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
@@ -53,58 +55,21 @@ implements ChangeListener {
 	private JPanel DTIParametersPanel;
 	
 	  /** Tract input file. */
-    private File m_kTractFile = null;
-
-    /** For TRACTS dialog: number of tracts to display. */
-    private JTextField m_kTractsLimit;
-
-    /** For TRACTS dialog: minimum tract length to display. */
-    private JTextField m_kTractsMin;
-
-    /** For TRACTS dialog: maximum tract length to display. */
-    private JTextField m_kTractsMax;
-
-    /** Fiber bundle tract file input path name text box. */
-    private JTextField m_kTractPath;
+    private String m_kTractFileName = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
-     * Make a volume rendering frame, which contains the toolbars on the top, control panel on the left, the volume
-     * rendering panel on the right, and the three orthogonal view ( axial, sagittal, coronal, views) on the bottom
-     * right.
-     *
-     * @param  _imageA                First image to display
-     * @param  LUTa                   LUT of the imageA (if null grayscale LUT is constructed)
-     * @param  _RGBTA                 RGB table of imageA
-     * @param  _imageB                Second loaded image
-     * @param  LUTb                   LUT of the imageB
-     * @param  _RGBTB                 RGB table of imageB
-     * @param  _leftPanelRenderMode   shear warp render mode enabled or not
-     * @param  _rightPanelRenderMode  volume rendering panel render mode ( Raycast, shearwarp, etc).
-     * @param  _resampleDialog        resample dialog reference.
-     */
-    public VolumeTriPlanarInterfaceDTI(ModelImage _imageA) {
-        super();
-
-        try {
-            setIconImage(MipavUtil.getIconImage("4plane_16x16.gif"));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        setSize( 1331, 925 );
-        setVisible(true);
-    }
-    
+   
 
     public VolumeTriPlanarInterfaceDTI(ModelImage colorTensorImage, ModelImage tensorImage, ModelImage eigenVectorImage,
-    		ModelImage eigenValueImage, ModelImage fAImage ) {
+    		ModelImage eigenValueImage, ModelImage fAImage, String tractFileName ) {
         super(colorTensorImage, null);
         m_kEigenVectorImage = eigenVectorImage;
         m_kEigenValueImage = eigenValueImage;
         m_kAnisotropyImage = fAImage;
         m_kDTIImage = tensorImage; 
         m_kDTIColorImage = colorTensorImage;
+        m_kTractFileName = tractFileName;
         
         buildDTIParametersPanel();
 
@@ -124,7 +89,7 @@ implements ChangeListener {
     public void buildDTIParametersPanel() {
     	DTIParametersPanel = new JPanel();
     	
-    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
+    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM, m_kTractFileName);
     	
     	DTIParametersPanel.add(DTIparamsPanel.getMainPanel());
     	
@@ -146,18 +111,18 @@ implements ChangeListener {
      */
     public void disposeLocal(boolean flag) {
         super.disposeLocal(flag);
-
-        if ( m_kEigenVectorImage != null )
+        
+        if ( (m_kEigenVectorImage != null) && (ViewUserInterface.getReference().getFrameContainingImage(m_kEigenVectorImage) == null) )
         {
             m_kEigenVectorImage.disposeLocal();
             m_kEigenVectorImage = null;
         }
-        if ( m_kEigenValueImage != null )
+        if ( (m_kEigenValueImage != null) && (ViewUserInterface.getReference().getFrameContainingImage(m_kEigenValueImage) == null) )
         {
             m_kEigenValueImage.disposeLocal();
             m_kEigenValueImage = null;
         }
-        if ( m_kAnisotropyImage != null )
+        if ( (m_kAnisotropyImage != null) && (ViewUserInterface.getReference().getFrameContainingImage(m_kAnisotropyImage) == null)  )
         {
             m_kAnisotropyImage.disposeLocal();
             m_kAnisotropyImage = null;
@@ -168,14 +133,14 @@ implements ChangeListener {
         	DTIparamsPanel = null;
         }
         
-        if ( m_kDTIImage != null )
+        if ( (m_kDTIImage != null) && (ViewUserInterface.getReference().getFrameContainingImage(m_kDTIImage) == null)  )
         {
         	m_kDTIImage.removeImageDisplayListener(this);
             m_kDTIImage.disposeLocal();
             m_kDTIImage = null;
         }            
                 
-        if ( m_kDTIColorImage != null )
+        if ( (m_kDTIColorImage != null) && (ViewUserInterface.getReference().getFrameContainingImage(m_kDTIColorImage) == null) )
         {
         	m_kDTIColorImage.removeImageDisplayListener(this);
             m_kDTIColorImage.disposeLocal();
@@ -215,70 +180,17 @@ implements ChangeListener {
     public String getParentDir() {
     	return m_kParentDir;
     }
-    
-	public void processDTI()
-    {
-    	if ( DTIparamsPanel != null )
-    	{
-    		DTIparamsPanel.processDTI();
-    	}
-    }
-	
-    
+        
     public void removeSurface(String kSurfaceName)
     {       
         super.removeSurface(kSurfaceName);
         DTIparamsPanel.remove3DVOI( kSurfaceName );
     }
     
-    public void setDTIColorImage(ModelImage _m_kDTIColorImage) {
-    	
-    	m_kDTIColorImage = _m_kDTIColorImage;
-    	m_kDTIColorImage.setExtents(_m_kDTIColorImage.getExtents());
-    	m_kDTIColorImage.calcMinMax();
-    	
-    	//imageA = _m_kDTIColorImage;
-    	
-        //boolean bDirExists = true;
-        m_kParentDir = _m_kDTIColorImage.getFileInfo()[0].getFileDirectory();
-        String kRenderFilesDir = m_kParentDir + File.separator + "RenderFiles" + File.separator;
-        File kDir = new File( kRenderFilesDir );
-        if ( !kDir.exists() )
-        {
-            //bDirExists = false;
-            try {
-                kDir.mkdir();
-            } catch (SecurityException e) {}
-        }
-
-        m_kVolumeImageA = new VolumeImage( _m_kDTIColorImage, "A", null, 0 );
-        m_kVolumeImageB = new VolumeImage();
-
-        /** Progress bar show up during the volume view frame loading */
-        ViewJProgressBar progressBar = new ViewJProgressBar("Constructing renderers...", "Constructing renderers...", 0, 100, false,
-                null, null);
-    	constructRenderers(progressBar);
-        gpuPanel.setVisible(true);
-        raycastRenderWM.setVisible(true);
-    	m_kAnimator.start();
-        raycastRenderWM.GetCanvas().display();
-    	
-        buildDTIParametersPanel();
-        getParamPanel().processDTI();
-    }
-    
     public void setDTIimage(ModelImage _m_kDTIImage) {
 	    m_kDTIImage = (ModelImage)_m_kDTIImage.clone();
     }
-    
-    public void setDTIParamsActive() {
-    	insertTab("Fibers", DTIParametersPanel);
-    	tabbedPane.setSelectedIndex(tabbedPane.indexOfTab("Fibers") );
-    	
-        getParamPanel().setTractParams(m_kTractFile, m_kTractsLimit, m_kTractsMin, m_kTractsMax, m_kTractPath, m_kDTIImage);
-    	// getParamPanel().processTractFile();
-    }
-    
+       
     
     public void setEValueimage(ModelImage _m_kEigenValueImage) {
         m_kEigenValueImage = _m_kEigenValueImage;
@@ -301,15 +213,6 @@ implements ChangeListener {
     public void setParentDir(String _path) {
        m_kParentDir = _path;
     }
-
-    public void setTractParams(File _m_kTractFile, JTextField _m_kTractsLimit, JTextField _m_kTractsMin, JTextField _m_kTractsMax, JTextField _m_kTractPath) {
-    	m_kTractFile = _m_kTractFile;
-    	m_kTractsLimit = _m_kTractsLimit;
-    	m_kTractsMin = _m_kTractsMin;
-    	m_kTractsMax = _m_kTractsMax;
-    	m_kTractPath = _m_kTractPath;
-    }
-    
 
     /* (non-Javadoc)
      * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)

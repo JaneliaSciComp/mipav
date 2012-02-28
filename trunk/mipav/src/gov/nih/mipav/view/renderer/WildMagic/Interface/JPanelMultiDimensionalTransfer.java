@@ -135,8 +135,11 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 		m_kGroup = null;
 		scroller = null;
 		scrollPanel = null;
-		m_kMultiHistogram.dispose();
-		m_kMultiHistogram = null;
+		if ( m_kMultiHistogram != null )
+		{
+			m_kMultiHistogram.dispose();
+			m_kMultiHistogram = null;
+		}
 		super.dispose();
 	}
 
@@ -171,12 +174,15 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	 * @param  frameHeight  int height
 	 */
 	public void resizePanel(int panelWidth, int frameHeight) {
-		int iWidth = Math.max( panelWidth, m_kMultiHistogram.GetWidth() );
-		int iHeight = Math.max( frameHeight - 40, m_kMultiHistogram.GetHeight() );
-		scroller.setPreferredSize(new Dimension(iWidth, iHeight));
-		scroller.setSize(new Dimension(iWidth, iHeight));
-		scroller.revalidate();
-		histogramPanel.setSize(new Dimension(iWidth, histogramPanel.getHeight()));
+		if ( m_kMultiHistogram != null )
+		{
+			int iWidth = Math.max( panelWidth, m_kMultiHistogram.GetWidth() );
+			int iHeight = Math.max( frameHeight - 40, m_kMultiHistogram.GetHeight() );
+			scroller.setPreferredSize(new Dimension(iWidth, iHeight));
+			scroller.setSize(new Dimension(iWidth, iHeight));
+			scroller.revalidate();
+			histogramPanel.setSize(new Dimension(iWidth, histogramPanel.getHeight()));
+		}
 	}
 
 	/* (non-Javadoc)

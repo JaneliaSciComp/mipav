@@ -999,7 +999,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                 progressBar.setVisible(true);
             }
             localCosts = activeSliceBuffer;
-
+/*
             if (kImage.isColorImage()) {
                 float[] localCostsTemp = new float[length];
 
@@ -1023,7 +1023,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     progressBar.updateValueImmed(50);
                 }
             }
-
+*/
             // invert intensity so high intensity means low cost
             float maximum = -Float.MAX_VALUE;
             float minimum = Float.MAX_VALUE;

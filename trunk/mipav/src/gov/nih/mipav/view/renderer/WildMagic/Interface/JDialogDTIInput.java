@@ -1513,7 +1513,7 @@ public class JDialogDTIInput extends JInterfaceBase implements ActionListener, L
     protected void setDTIImage(final ModelImage kDTIImage, boolean bNegX, boolean bNegY, boolean bNegZ) {
         m_kDTIImage = kDTIImage;
         if (rayBasedRenderWM != null) {
-            rayBasedRenderWM.setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ);
+            rayBasedRenderWM.setDTIImage(m_kDTIImage, m_kEigenVectorImage, m_kEigenValueImage);
             rayBasedRenderWM.setEllipseMod(m_kDisplaySlider.getValue());
         }
     }

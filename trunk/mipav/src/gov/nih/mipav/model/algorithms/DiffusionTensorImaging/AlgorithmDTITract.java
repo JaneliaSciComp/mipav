@@ -44,6 +44,7 @@ public class AlgorithmDTITract extends AlgorithmBase
     private float m_fFAMin = 0;
     private float m_fFAMax = 1;
     private float m_fAngleMax = (float)Math.PI/4.0f;
+    private int m_iMinLength = 20;
 
 
 
@@ -67,7 +68,7 @@ public class AlgorithmDTITract extends AlgorithmBase
      */
     public AlgorithmDTITract( ModelImage kDTI, ModelImage kFAImage, ModelImage kEigenVectorImage, ModelImage kEigenValueImage,
                               String kFile, boolean bNegX, boolean bNegY, boolean bNegZ,
-                              float fFAMin, float fFAMax, float fMaxAngle )
+                              float fFAMin, float fFAMax, float fMaxAngle, int iMinLength )
     {
         m_kDTI = kDTI;
         m_kFAImage = kFAImage;
@@ -80,6 +81,7 @@ public class AlgorithmDTITract extends AlgorithmBase
         m_fFAMin = fFAMin;
         m_fFAMax = fFAMax;
         m_fAngleMax = (float)(fMaxAngle*Math.PI/180.0f);
+        m_iMinLength = iMinLength;
         //System.err.println( m_fFAMin + " " + m_fFAMax + " " + m_fAngleMax + " " + fMaxAngle );
     }
 
@@ -441,6 +443,10 @@ public class AlgorithmDTITract extends AlgorithmBase
                   FileOutputStream kFileWriter )
     {
         int iVQuantity = kTract.size();
+        if ( iVQuantity < m_iMinLength )
+        {
+        	return;
+        }
 
         int iBufferSize = iVQuantity*4 + 4;
         if ( m_bFirstWrite )
