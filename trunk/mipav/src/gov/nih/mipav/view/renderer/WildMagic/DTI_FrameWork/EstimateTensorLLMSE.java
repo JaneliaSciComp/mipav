@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import imaging.B_VectorScheme;
 import imaging.DW_Scheme;
@@ -353,7 +354,7 @@ public class EstimateTensorLLMSE {
 
 		float[][][][] tensors = estimate( DWdata, bvalues, grads, mask, usePartialEstimates );	
 		String name = JDialogBase.makeImageName(image.getImageName(), "_tensor");	
-		ModelImage tensorImage = makeTensorImage( tensors, name );
+		ModelImage tensorImage = makeTensorImage( tensors, null, name );
 		JDialogBase.updateFileInfo( image, tensorImage );
 		return tensorImage;
 	}
@@ -423,7 +424,7 @@ public class EstimateTensorLLMSE {
 
 	}
 
-	public static void estimateCamino(float [][][][]DWdata, 
+	private static void estimateCamino(float [][][][]DWdata, 
 			byte [][][]mask, DT_Inversion dtiFit, 
 			float [][][][]tensors,float [][][][]exitcode, float [][][][]intensity) {
 
@@ -488,7 +489,9 @@ public class EstimateTensorLLMSE {
 	 * @param maskImage input mask image (or null) 3D
 	 * @param dtiType the type of estimation (Linear, Non-Linear, Restore, Weighted-Linear).
 	 */
-	public static ModelImage estimateCamino( ModelImage image, ModelImage maskImage, int dtiType )
+	public static ModelImage estimateCamino( ModelImage image, ModelImage maskImage, int dtiType,
+			boolean bSaveExitCode, boolean bDisplayExitCode, boolean bSaveIntensity, boolean bDisplayIntensity,
+			String kOutpuDir )
 	{
 
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
@@ -619,8 +622,44 @@ public class EstimateTensorLLMSE {
 
 		estimateCamino( DWdata, mask, dtiFit, tensors, exitCode, intensity );
 		String name = JDialogBase.makeImageName(image.getImageName(), "_tensor");	
-		ModelImage tensorImage = makeTensorImage( tensors, name );
+		ModelImage tensorImage = makeTensorImage( tensors, exitCode, name );
 		JDialogBase.updateFileInfo( image, tensorImage );
+		
+		if ( bSaveExitCode )
+		{
+			name = JDialogBase.makeImageName(image.getImageName(), "_ExitCode");	
+			ModelImage exitCodeImage = makeImage( exitCode, name );
+			JDialogBase.updateFileInfo( image, exitCodeImage );
+			ModelImage.saveImage( exitCodeImage, exitCodeImage.getImageName() + ".xml", kOutpuDir );
+			if ( bDisplayExitCode )
+			{
+				new ViewJFrameImage( exitCodeImage );
+			}
+			else
+			{
+				exitCodeImage.disposeLocal();
+				exitCodeImage = null;
+			}
+		}
+		
+		if ( bSaveIntensity )
+		{
+			name = JDialogBase.makeImageName(image.getImageName(), "_Intensity");	
+			ModelImage intensityImage = makeImage( intensity, name );
+			JDialogBase.updateFileInfo( image, intensityImage );
+			ModelImage.saveImage( intensityImage, intensityImage.getImageName() + ".xml", kOutpuDir );
+			if ( bDisplayIntensity )
+			{
+				new ViewJFrameImage( intensityImage );
+			}
+			else
+			{
+				intensityImage.disposeLocal();
+				intensityImage = null;
+			}
+		}
+		
+		
 		return tensorImage;
 	}
 
@@ -961,7 +1000,7 @@ public class EstimateTensorLLMSE {
 	 * @param name name of the ModelImage
 	 * @return new ModelImage.
 	 */
-	private static ModelImage makeTensorImage( float[][][][] tensors, String name  )
+	private static ModelImage makeTensorImage( float[][][][] tensors, float[][][][] exitCode, String name  )
 	{
 		int dimX = tensors.length;
 		int dimY = tensors[0].length;
@@ -973,29 +1012,66 @@ public class EstimateTensorLLMSE {
 			{
 				for ( int x = 0; x < dimX; x++ )
 				{
-					
-		            for (int i = 0; i < 6; i++) {
-		            	tensors[x][y][z][i] = ( tensors[x][y][z][i] * 1000000); // um^2/sec
-		                if (i == 0 && tensors[x][y][z][0] < 0) {
-		                	tensors[x][y][z][0] = (float) 0.01;
-		                }
-		                if (i == 3 && tensors[x][y][z][3] < 0) {
-		                	tensors[x][y][z][3] = (float) 0.01;
-		                }
-		                if (i == 5 && tensors[x][y][z][5] < 0) {
-		                	tensors[x][y][z][5] = (float) 0.01;
-		                }
-		            }
-					tensorImage.set( x, y, z, 0, tensors[x][y][z][0] );
-					tensorImage.set( x, y, z, 1, tensors[x][y][z][3] );
-					tensorImage.set( x, y, z, 2, tensors[x][y][z][5] );
-					tensorImage.set( x, y, z, 3, tensors[x][y][z][1] );
-					tensorImage.set( x, y, z, 4, tensors[x][y][z][2] );
-					tensorImage.set( x, y, z, 5, tensors[x][y][z][4] );
+					if ( (exitCode != null) && (exitCode[x][y][z][0] == 0) )
+					{
+						for (int i = 0; i < 6; i++) {
+							tensors[x][y][z][i] = ( tensors[x][y][z][i] * 1000000); // um^2/sec
+							if (i == 0 && tensors[x][y][z][0] < 0) {
+								tensors[x][y][z][0] = (float) 0.01;
+							}
+							if (i == 3 && tensors[x][y][z][3] < 0) {
+								tensors[x][y][z][3] = (float) 0.01;
+							}
+							if (i == 5 && tensors[x][y][z][5] < 0) {
+								tensors[x][y][z][5] = (float) 0.01;
+							}
+						}
+						tensorImage.set( x, y, z, 0, tensors[x][y][z][0] );
+						tensorImage.set( x, y, z, 1, tensors[x][y][z][3] );
+						tensorImage.set( x, y, z, 2, tensors[x][y][z][5] );
+						tensorImage.set( x, y, z, 3, tensors[x][y][z][1] );
+						tensorImage.set( x, y, z, 4, tensors[x][y][z][2] );
+						tensorImage.set( x, y, z, 5, tensors[x][y][z][4] );
+					}
+					else
+					{
+						tensorImage.set( x, y, z, 0, 0 );
+						tensorImage.set( x, y, z, 1, 0 );
+						tensorImage.set( x, y, z, 2, 0 );
+						tensorImage.set( x, y, z, 3, 0 );
+						tensorImage.set( x, y, z, 4, 0 );
+						tensorImage.set( x, y, z, 5, 0 );
+					}
 				}
 			}
 		}
 		tensorImage.calcMinMax();
 		return tensorImage;
+	}
+	
+	/**
+	 * Creates and returns a ModelImage with the tensor data.
+	 * @param tensors tensor data
+	 * @param name name of the ModelImage
+	 * @return new ModelImage.
+	 */
+	private static ModelImage makeImage( float[][][][] values, String name  )
+	{
+		int dimX = values.length;
+		int dimY = values[0].length;
+		int dimZ = values[0][0].length;
+		ModelImage image = new ModelImage( ModelStorageBase.FLOAT, new int[]{dimX,dimY,dimZ}, name );
+		for ( int z = 0; z < dimZ; z++ )
+		{
+			for ( int y = 0; y < dimY; y++ )
+			{
+				for ( int x = 0; x < dimX; x++ )
+				{
+					image.set( x, y, z, values[x][y][z][0] );
+				}
+			}
+		}
+		image.calcMinMax();
+		return image;
 	}
 }

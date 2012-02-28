@@ -675,10 +675,12 @@ public class VolumeDTI extends VolumeObject
 	{
 		m_bDisplayTubes = bDisplay;
 	}
+	
+	
 	/** Sets the DTI Image for displaying the tensors as ellipsoids.
 	 * @param kDTIImage.
 	 */
-	public void setDTIImage( ModelImage kDTIImage, boolean bNegX, boolean bNegY, boolean bNegZ, Renderer kRenderer )
+	public void setDTIImage( ModelImage kDTIImage, ModelImage kEigenVectorImage, ModelImage kEigenValueImage, Renderer kRenderer )
 	{
 		ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, 100, true);
 
@@ -699,73 +701,36 @@ public class VolumeDTI extends VolumeObject
 		float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
 		float fZDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
 
-		int iCount = 0;
+		
 		for ( int i = 0; i < m_iLen; i++ )
 		{
-			boolean bAllZero = true;
-			for ( int j = 0; j < 6; j++ )
-			{
-				afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
-                if ( afTensorData[j] == Float.NaN )
-                {
-                	afTensorData[j] = 0;
-                }
-				if ( afTensorData[j] != 0 )
-				{
-					bAllZero = false;
-				}
-			}
-			if ( !bAllZero )
-			{
-				kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
-						afTensorData[3], afTensorData[1], afTensorData[5], 
-						afTensorData[4], afTensorData[5], afTensorData[2] );
+			kV1.X = kEigenVectorImage.getFloat( i +   m_iLen);
+			kV1.Y = kEigenVectorImage.getFloat( i + 1*m_iLen);
+			kV1.Z = kEigenVectorImage.getFloat( i + 2*m_iLen);
+			
+			kV2.X = kEigenVectorImage.getFloat( i + 3*m_iLen);
+			kV2.Y = kEigenVectorImage.getFloat( i + 4*m_iLen);
+			kV2.Z = kEigenVectorImage.getFloat( i + 5*m_iLen);
+			
+			kV3.X = kEigenVectorImage.getFloat( i + 6*m_iLen);
+			kV3.Y = kEigenVectorImage.getFloat( i + 7*m_iLen);
+			kV3.Z = kEigenVectorImage.getFloat( i + 8*m_iLen);
+			
 
-				if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
-				{
-					fLambda1 = kEigenValues.M22;
-					fLambda2 = kEigenValues.M11;
-					fLambda3 = kEigenValues.M00;
-					kMatrix.GetColumn(2,kV1);
-					kMatrix.GetColumn(1,kV2);
-					kMatrix.GetColumn(0,kV3);
+			fLambda1 = kEigenValueImage.getFloat( i +   m_iLen);
+			fLambda2 = kEigenValueImage.getFloat( i + 1*m_iLen);
+			fLambda3 = kEigenValueImage.getFloat( i + 2*m_iLen);
 
-					kV1.Normalize();
-					kV2.Normalize();
-					kV3.Normalize();
-					/*
-                    if ( bNegX )
-                    {
-                        kV1.X *= -1;
-                        kV2.X *= -1;
-                        kV3.X *= -1;
-                    }
-                    if ( bNegY )
-                    {
-                        kV1.Y *= -1;
-                        kV2.Y *= -1;
-                        kV3.Y *= -1;
-                    }
-                    if ( bNegZ )
-                    {
-                        kV1.Z *= -1;
-                        kV2.Z *= -1;
-                        kV3.Z *= -1;
-                    }
-					 */
-					if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
-					{}
-					else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
-					{
-						Transformation kTransform = new Transformation();
-						kTransform.SetMatrix(new Matrix3f(kV1,kV2,kV3,false));
-						Vector3f kScale = new Vector3f( fLambda1, fLambda2, fLambda3 );
-						kScale.Normalize();
-						kTransform.SetScale( kScale );
-						m_kEigenVectors.put( new Integer(i), kTransform );
-						iCount++;
-					}
-				}
+			if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+			{}
+			else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
+			{
+				Transformation kTransform = new Transformation();
+				kTransform.SetMatrix(new Matrix3f(kV1,kV2,kV3,false));
+				Vector3f kScale = new Vector3f( fLambda1, fLambda2, fLambda3 );
+				kScale.Normalize();
+				kTransform.SetScale( kScale );
+				m_kEigenVectors.put( new Integer(i), kTransform );
 			}
 			if ( (i%(m_iDimX*m_iDimY)) == 0 )
 			{
@@ -782,6 +747,7 @@ public class VolumeDTI extends VolumeObject
 		Transformation kTransform;
 		Transformation kTScale = new Transformation();
 		Transformation kTEllipse = new Transformation();
+		
 
 		Iterator<Integer> kIterator = m_kEigenVectors.keySet().iterator();
 		while ( kIterator.hasNext() )
@@ -836,6 +802,9 @@ public class VolumeDTI extends VolumeObject
 		}
 		kTEllipse = null;
 		kTScale = null;
+		
+
+		System.out.println( "VolumeDTI " + m_iLen );
 
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);

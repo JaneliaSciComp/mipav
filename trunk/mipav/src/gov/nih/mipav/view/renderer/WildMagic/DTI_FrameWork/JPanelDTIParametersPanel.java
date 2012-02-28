@@ -28,6 +28,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import java.util.*;
+
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -64,19 +65,6 @@ implements ListSelectionListener, ChangeListener {
 
     private ModelImage m_kDTIImage;
 
-    /** Tract input file. */
-    private File m_kTractFile = null;
-
-    /** For TRACTS dialog: number of tracts to display. */
-    private JTextField m_kTractsLimit;
-
-    /** For TRACTS dialog: minimum tract length to display. */
-    private JTextField m_kTractsMin;
-
-    /** For TRACTS dialog: maximum tract length to display. */
-    private JTextField m_kTractsMax;
-
-
     /** When selected, only tracts that intersect the VOI are displayed. */
     private JCheckBox m_kUseVOICheck = null;
 
@@ -92,7 +80,7 @@ implements ListSelectionListener, ChangeListener {
     private JTextField m_kTractPath;
 
     /** Which tensor nodes are already on the fiber bundle tract */
-    private boolean[] m_abVisited = null;
+    private VOIContour[] m_abVisited = null;
 
     private JCheckBox m_kNegX;
     private JCheckBox m_kNegY;
@@ -101,6 +89,7 @@ implements ListSelectionListener, ChangeListener {
     private JTextField m_kFAMinThreshold;
     private JTextField m_kFAMaxThreshold;
     private JTextField m_kMaxAngle;
+    private JTextField m_kMinLength;
 
     /*
     private JRadioButton radioLines;
@@ -130,8 +119,11 @@ implements ListSelectionListener, ChangeListener {
     private float m_fFAMin = 0.0f;
     private float m_fFAMax = 1.0f;
     private float m_fMaxAngle = (float)Math.PI/4.0f;
+    private int m_iMinTractLength;
     
     private boolean m_bDTIImageSet = false;
+    
+    private String m_kTractFileName = null;
     
     /** list to hold the glyphs type name */
     private JComboBox glyphsList;
@@ -149,13 +141,14 @@ implements ListSelectionListener, ChangeListener {
     }
     private Vector<VOIParams> m_kVOIParamsList = null;
     
-    public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay) {
+    public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay,
+    		String tractFileName ) {
         parentFrame = _parentFrame;
         m_kVolumeDisplay = _m_kVolumeDisplay;
+        m_kTractFileName = tractFileName;
         mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
        
-        // mainPanel.add(createLoadTractDialog(), BorderLayout.NORTH);
         mainPanel.add(createTractDialog(), BorderLayout.NORTH);
         mainPanel.add(createTractPanel(), BorderLayout.CENTER );
     }
@@ -231,7 +224,7 @@ implements ListSelectionListener, ChangeListener {
     public void valueChanged(ListSelectionEvent kEvent) {
         
     	if ( kEvent.getSource() == m_kTractList ) {
-        	int index = m_kTractList.getSelectedIndex();
+			int index = m_kTractList.getSelectedIndex();
         	if ( index != -1 ) {
 	        	DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
 	            String bundleName = (String)kList.get(index);
@@ -301,15 +294,9 @@ implements ListSelectionListener, ChangeListener {
 			} else if (command.equals("DisplayAll")) {
 				displayAll = displayAllCheckBox.isSelected();
 				invokeDisplayFunction();
-			} else if (command.equals("tractLoad")) {
-				loadingTrack = true;
-				loadTractFile();
-				loadingTrack = false;
-				((VolumeTriPlanerRenderDTI) m_kVolumeDisplay)
-						.enableSlicePickable(true);
-				processTractFile();
-			} else if (command.equals("Add")) {
-				processTractFile();
+			} else if (command.equals("Add")) {		    
+				createNewTracts();
+		        //processTractFile(m_kTractFileName);
 			} else if (command.equals("Remove")) {
 				removePolyline();
 			} else if (command.equals("Include")) {
@@ -385,18 +372,22 @@ implements ListSelectionListener, ChangeListener {
 	                m_fMaxAngle = (float)(m_fMaxAngle*Math.PI/180.0f);
 	            }
 	        }
+	        else if ( command.equals( "MinLengthChanged" ) )
+	        {
+	        	if (!JDialogBase.testParameterMin(m_kMinLength.getText(), 1))
+	            {
+	        		m_kMinLength.requestFocus();
+	        		m_kMinLength.selectAll();
+	            }
+	            else
+	            {
+	                m_iMinTractLength = Integer.valueOf(m_kMinLength.getText()).intValue();
+	            }
+	        }
 
 		}
         
       
-    }
-
-    public void processDTI() {
-    	// loadingTrack = true;
-		// loadTractFile();
-		// loadingTrack = false;
-		((VolumeTriPlanerRenderDTI) m_kVolumeDisplay).enableSlicePickable(true);
-		processTractFile();
     }
     
     public void updateCounter() {
@@ -453,80 +444,6 @@ implements ListSelectionListener, ChangeListener {
 
     public void addFiberTract() {
             addTract();
-    }
-
-    private JPanel createLoadTractDialog() {
-    	JPanel tractLoadPanel = new JPanel(new BorderLayout());
-    	
-    	 GridBagLayout kGBL = new GridBagLayout();
-         GridBagConstraints gbc = new GridBagConstraints();
-         gbc.fill = GridBagConstraints.HORIZONTAL;
-         gbc.weightx = 1;
-         gbc.weighty = 0;
-         gbc.anchor = GridBagConstraints.NORTHWEST;
-    	
-    	JPanel kParamsPanel = new JPanel(kGBL);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JLabel kNumberTractsLimit = new JLabel(
-        "Maximum number of tracts to display:");
-        kParamsPanel.add(kNumberTractsLimit, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        m_kTractsLimit = new JTextField("100", 5);
-        m_kTractsLimit.setBackground(Color.white);
-        kParamsPanel.add(m_kTractsLimit, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        JLabel m_kTractsMinLength = new JLabel("Minimum tract length:");
-        kParamsPanel.add(m_kTractsMinLength, gbc);
-        gbc.gridx++;
-        m_kTractsMin = new JTextField("50", 5);
-        m_kTractsMin.setBackground(Color.white);
-        kParamsPanel.add(m_kTractsMin, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        JLabel m_kTractsMaxLength = new JLabel("Maximum tract length:");
-        kParamsPanel.add(m_kTractsMaxLength, gbc);
-        gbc.gridx++;
-        m_kTractsMax = new JTextField("100", 5);
-        m_kTractsMax.setBackground(Color.white);
-        kParamsPanel.add(m_kTractsMax, gbc);
-        
-        JPanel filesPanel = new JPanel(kGBL);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        JLabel kTractLabel = new JLabel(" DTI tract file: ");
-        filesPanel.add(kTractLabel, gbc);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        gbc.weightx = 1;
-        m_kTractPath = new JTextField(15);
-        m_kTractPath.setEditable(true);
-        m_kTractPath.setBackground(Color.white);
-        filesPanel.add(m_kTractPath, gbc);
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.weightx = 0;
-        JButton kTractLoadButton = new JButton("Load");
-        kTractLoadButton.addActionListener(this);
-        kTractLoadButton.setActionCommand("tractLoad");
-        filesPanel.add(kTractLoadButton, gbc);
-        
-        Box contentBox = new Box(BoxLayout.Y_AXIS);
-
-        contentBox.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        contentBox.add(kParamsPanel);
-        contentBox.add(filesPanel);
-        
-        tractLoadPanel.add(contentBox, BorderLayout.NORTH);
-
-        tractLoadPanel.setBorder(buildTitledBorder("Load Fiber Tracts"));
-        
-        return tractLoadPanel;        	
     }
     
     /**
@@ -587,15 +504,18 @@ implements ListSelectionListener, ChangeListener {
         //kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
         
 
-        m_kFAMinThreshold = new JTextField("0.0", 4);
+        m_kFAMinThreshold = new JTextField( Double.toString(parentFrame.getFAimage().getMin()), 4);
         m_kFAMinThreshold.setActionCommand("FAMINChanged");
         m_kFAMinThreshold.addActionListener(this);
-        m_kFAMaxThreshold = new JTextField("1.0", 4);
+        m_kFAMaxThreshold = new JTextField( Double.toString(parentFrame.getFAimage().getMax()), 4);
         m_kFAMaxThreshold.setActionCommand("FAMAXChanged");
         m_kFAMaxThreshold.addActionListener(this);
         m_kMaxAngle = new JTextField("45", 4);
         m_kMaxAngle.setActionCommand("MaxAngleChanged");
         m_kMaxAngle.addActionListener(this);
+        m_kMinLength = new JTextField("20", 4);
+        m_kMinLength.setActionCommand("MinLengthChanged");
+        m_kMinLength.addActionListener(this);
         JPanel kTrackPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -614,6 +534,11 @@ implements ListSelectionListener, ChangeListener {
         kTrackPanel.add(new JLabel( "Maximum Angle (0.0-180.0):"), gbc);
         gbc.gridx = 2;
         kTrackPanel.add( m_kMaxAngle, gbc );
+        gbc.gridx = 0;
+        gbc.gridy++;
+        kTrackPanel.add(new JLabel( "Minimum tract length to display:"), gbc);
+        gbc.gridx = 2;
+        kTrackPanel.add( m_kMinLength, gbc );
         kTrackPanel.setBorder(buildTitledBorder("Fiber Generation Options for Interactive Fiber Selection"));
 
        
@@ -684,72 +609,6 @@ implements ListSelectionListener, ChangeListener {
     }
 
 
-    /**
-     * Launches the JFileChooser for the user to select the tract file. Stores
-     * the File for the tract file but does not read the file.
-     */
-    private void loadTractFile() {
-        JFileChooser chooser = new JFileChooser(new File(Preferences
-                .getProperty(Preferences.PREF_IMAGE_DIR)));
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(
-                ViewImageFileFilter.ALL));
-        chooser.setDialogTitle("Choose Diffusion Tensor Tract file");
-        int returnValue = chooser.showOpenDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            String kDTIName = new String(chooser.getSelectedFile().getName());
-            String kTract = new String("_tract");
-            kDTIName = kDTIName.substring(0, kDTIName.length()
-                    - kTract.length());
-            FileIO fileIO = new FileIO();
-            /*
-            m_kDTIImage = fileIO.readImage(kDTIName, chooser
-                    .getCurrentDirectory()
-                    + File.separator);
-            if (m_kDTIImage.getNDims() != 4) {
-                MipavUtil
-                .displayError("Diffusion Tensor file does not have correct dimensions");
-                if (m_kDTIImage != null) {
-                    m_kDTIImage.disposeLocal();
-                    m_kDTIImage = null;
-                }
-            }
-            if (m_kDTIImage.getExtents()[3] != 6) {
-                MipavUtil
-                .displayError("Diffusion Tensor does not have correct dimensions");
-                if (m_kDTIImage != null) {
-                    m_kDTIImage.disposeLocal();
-                    m_kDTIImage = null;
-                }   
-            }
-            */
-            m_kTractFile = new File(chooser.getSelectedFile().getAbsolutePath());
-            if (!m_kTractFile.exists() || !m_kTractFile.canRead()) {
-                m_kTractFile = null;
-                return;
-            }
-            int iLength = (int) m_kTractFile.length();
-            if (iLength <= 0) {
-                m_kTractFile = null;
-                return;
-            }
-            m_kTractPath.setText(chooser.getSelectedFile().getAbsolutePath());
-            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser
-                    .getCurrentDirectory().toString());
-        }
-    }
-
-    /**
-     * Pass the DTI image to the GPUVolumeRender.
-     * 
-     * @param kDTIImage
-     *            new DTI image.
-     */
-    protected void setDTIImage(ModelImage kDTIImage, boolean bNegX, boolean bNegY, boolean bNegZ) {
-        m_kDTIImage = kDTIImage;
-        m_kVolumeDisplay.setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ );
-        m_kVolumeDisplay.setEllipseMod(m_kDisplaySlider.getValue());
-    }
-
     /** Updates the number of fiber bundle tract groups. */
     protected void updateTractCount() {
         m_iBundleCount = getMinUnused(m_kBundleList);
@@ -782,30 +641,13 @@ implements ListSelectionListener, ChangeListener {
         return kBundleList.size();
     }
 
-
-    public void setTractParams(File _m_kTractFile, JTextField _m_kTractsLimit, 
-    		JTextField _m_kTractsMin, JTextField _m_kTractsMax, 
-    		JTextField _m_kTractPath, ModelImage _m_kDTIImage) {
-    	
-    	m_kDTIImage = _m_kDTIImage;
-    	m_kTractFile = _m_kTractFile;
-    	m_kTractsLimit = _m_kTractsLimit;
-    	m_kTractsMin = _m_kTractsMin;
-    	m_kTractsMax = _m_kTractsMax;
-    	m_kTractPath = _m_kTractPath;
-    
-    	
-    }
-
-
     /**
      * process the tract file. Uses the File stored from the loadTractFile fn.
      * Loads fiber bundle tracts, filters them with the user-defined display
      * parameters, and passes them to the GPUVolumeRender for display.
      */
-    public void processTractFile() {
-        if (m_kTractFile == null) {
-            // MipavUtil.displayError("Tract file must be set.");
+    private void processTractFile( String fileName ) {
+        if (fileName == null) {
             return;
         }
 
@@ -813,12 +655,6 @@ implements ListSelectionListener, ChangeListener {
             updateTractCount();
 
             boolean bTractsAdded = false;
-
-            int iNumTractsLimit = (new Integer(m_kTractsLimit.getText())).intValue();
-            int iTractMinLength = (new Integer(m_kTractsMin.getText())).intValue();
-            int iTractMaxLength = (new Integer(m_kTractsMax.getText())).intValue();
-            System.err.println( iNumTractsLimit + " " + iTractMinLength + " " + iTractMaxLength );
-
             int iNumTracts = 0;
 
             VolumeTriPlanarInterface.IntVector[] kVOIImage = null;
@@ -833,7 +669,8 @@ implements ListSelectionListener, ChangeListener {
 
             int iDimX = 0, iDimY = 0, iDimZ = 0;
             boolean bNegX = false, bNegY = false, bNegZ = false;
-            FileInputStream kFileReader = new FileInputStream(m_kTractFile);
+            File kTractFile = new File(fileName);
+            FileInputStream kFileReader = new FileInputStream(kTractFile);
             int iBufferSize = 3 * 4 + 3;
 
             byte[] racBuffer = new byte[iBufferSize];
@@ -861,29 +698,27 @@ implements ListSelectionListener, ChangeListener {
             if ( !m_bDTIImageSet )
             {
                 m_bDTIImageSet = true;
-                setDTIImage(m_kDTIImage, bNegX, bNegY, bNegZ );
-                // don't load any tracts the first time.
-                iNumTractsLimit = 0;
+                m_kVolumeDisplay.setEllipseMod(m_kDisplaySlider.getValue());;
             }
             
-            int iLength = (int) m_kTractFile.length();
+            int iLength = (int) kTractFile.length();
             int iBufferNext = iBufferSize;
             while (iBufferNext < iLength) {
-                if (iNumTracts >= iNumTractsLimit) {
-                    break;
-                }
+                //if (iNumTracts >= iNumTractsLimit) {
+                   // break;
+                //}
 
                 Vector<Integer> kTract = inputTract(kFileReader);
                 iBufferNext += kTract.size() * 4 + 4;
                 int iVQuantity = kTract.size();
-                if ((iVQuantity > iTractMinLength)
-                        && (iVQuantity < iTractMaxLength)) {
+                if ( iVQuantity >= m_iMinTractLength )
+                {
                 	if (contains(kVOIImage, iNum3DVOI, kTract)) {
-                        if (iNumTracts < iNumTractsLimit) {
+                        //if (iNumTracts < iNumTractsLimit) {
                             iNumTracts++;
                             bTractsAdded = true;
                             addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
-                        }
+                        //}
                     }
                 }
             }
@@ -893,12 +728,6 @@ implements ListSelectionListener, ChangeListener {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        /*
-        if ( m_kDTIImage != null ) {
-        	m_kDTIImage.disposeLocal();
-        	m_kDTIImage = null;
-        }
-        */
     }
     
     /** Updates the tract list user-interface. */
@@ -1565,25 +1394,31 @@ implements ListSelectionListener, ChangeListener {
      */
     public void diplayTract(int iX, int iY, int iZ)
     {
-        //System.err.println( "Picked " + iX + " " + iY + " " + iZ );
         m_kDTIImage = parentFrame.getDTIimage();
         int iDimX = m_kDTIImage.getExtents()[0];
         int iDimY = m_kDTIImage.getExtents()[1];
         int iDimZ = m_kDTIImage.getExtents()[2];
-        int iLen = m_kDTIImage.getExtents()[0] *
-        m_kDTIImage.getExtents()[1] * m_kDTIImage.getExtents()[2];
-        float[] afVectorData = new float[3];
+        int iLen = iDimX * iDimY * iDimZ;
+        if ( m_abVisited == null )
+        {
+        	m_abVisited  = new VOIContour[iLen];
+        }
+    	diplayTract( iX, iY, iZ, iDimX, iDimY, iDimZ, false );
+    }
+    
+
+    private int diplayTract(int iX, int iY, int iZ, int iDimX, int iDimY, int iDimZ, boolean bUseSizeLimit)
+    {
+        //System.err.println( "Picked " + iX + " " + iY + " " + iZ );
 /*
         iX = iDimX/3;
         iY = iDimY/3;
         iZ = iDimZ/3;
   */      
-        m_abVisited  = new boolean[iLen];
-        for ( int i = 0; i < iLen; i++ )
-        {
-            m_abVisited[i] = false;
-        }
 
+    	int count = 0;
+        int iLen = iDimX * iDimY * iDimZ;
+        float[] afVectorData = new float[3];
         Vector<Integer> kTract = new Vector<Integer>();
         Vector3f kPos = new Vector3f();
         Vector3f kV1 = new Vector3f();
@@ -1631,13 +1466,18 @@ implements ListSelectionListener, ChangeListener {
                     parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), true );
 
             //traceTract( kTract, kPos, kV1, m_kDTIImage, true );
-            m_abVisited[i] = true;
+            //m_abVisited[i] = true;
             //traceTract( kTract, kPos, kV2, m_kDTIImage, false );
             traceTract2( kTract, new Vector3f(kPos), new Vector3f(kV2), 
                     parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), false );
             int iVQuantity = kTract.size();
-            addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
+            if ( !bUseSizeLimit || (iVQuantity >= m_iMinTractLength) )
+            {
+            	addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
+            	count++;
+            }
         }
+        return count;
     }
 
     /** Traces a single fiber bundle tract starting at the input
@@ -1650,178 +1490,178 @@ implements ListSelectionListener, ChangeListener {
      * end of the tract (positive direction). When false the positions
      * are added to the beginning of the tract (negative direction).
      */
-    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
-            ModelImage dtiImage, boolean bDir )
-    {
-        int iDimX = dtiImage.getExtents()[0];
-        int iDimY = dtiImage.getExtents()[1];
-        int iDimZ = dtiImage.getExtents()[2];
-        int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
-
-        float[] afTensorData = new float[6];
-
-        boolean bDone = false;
-        Matrix3f kMatrix = new Matrix3f();
-        Vector3f kOut = new Vector3f();
-        Vector3f kNext = new Vector3f();
-        int iX;
-        int iY;
-        int iZ;
-        int i;
-        boolean bAllZero = true;
-
-        Matrix3f kEigenValues = new Matrix3f();
-        Vector3f kV0 = new Vector3f();
-        Vector3f kV1 = new Vector3f();
-        Vector3f kV2 = new Vector3f();
-        
-        while ( !bDone )
-        {
-        	kNext.Add( kStart, kDir );
-            iX = Math.round(kNext.X);
-            iY = Math.round(kNext.Y);
-            iZ = Math.round(kNext.Z);
-            i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
-
-            if ( (iZ < 0) || (iZ >= iDimZ) ||
-                    (iY < 0) || (iY >= iDimY) ||
-                    (iX < 0) || (iX >= iDimX)  )
-            {
-                bDone = true;
-                break;
-            }
-
-            bAllZero = true;
-            for ( int j = 0; j < 6; j++ )
-            {
-                afTensorData[j] = dtiImage.getFloat(i + j*iLen);
-                if ( afTensorData[j] != 0 )
-                {
-                    bAllZero = false;
-                }
-            }
-            if ( !bAllZero )
-            {
-                kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
-                        afTensorData[3], afTensorData[1], afTensorData[5], 
-                        afTensorData[4], afTensorData[5], afTensorData[2] );
-                
-                kMatrix.Mult(kDir, kOut);
-                kOut.Normalize();
-
-//                 if ( kDir.Angle(kOut) > (3.0f*Math.PI/4.0f) )
-//                 {
-//                 }
-//                 else if ( kDir.Angle(kOut) > (Math.PI/2.0f) )
-//                 {
-//                     kOut.Neg();
-//                 }
-                        
-                        
-                if ( m_abVisited[i] )
-                {
-                    bDone = true;
-                    break;
-                }
-                m_abVisited[i] = true;
-
-                if ( bDir )
-                {
-                    kTract.add( i );
-                }
-                else
-                {
-                    kTract.add( 0, i );
-                }
-                //System.err.println( iX + " " + iY + " " + iZ );
-
-                //kStart = kNext;
-                //kDir = kOut;
-                kStart.Copy(kNext);
-                kDir.Copy(kOut);
-
-                
-                /*
-                if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
-                {
-                    float fLambda1 = kEigenValues.M22;
-                    float fLambda2 = kEigenValues.M11;
-                    float fLambda3 = kEigenValues.M00;
-                    kMatrix.GetColumn(2,kV0);
-                    kMatrix.GetColumn(1,kV1);
-                    kMatrix.GetColumn(0,kV2);
-
-                    //kV0.Normalize();
-                    //kV1.Normalize();
-                    //kV2.Normalize();
-
-                    //kMatrix.SetColumn(0,kV1);
-                    //kMatrix.SetColumn(1,kV2);
-                    //kMatrix.SetColumn(2,kV3);
-                    //kMatrix = new Matrix3f(kV1,kV2,kV3,false);
-
-                    if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
-                    {
-                        kStart.Copy(kNext);
-                    }
-                    else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
-                    {
-                        kMatrix = new Matrix3f(kV0,kV1,kV2,false);
-                        kMatrix.Mult(kDir, kOut);
-                        kOut.Normalize();
-
-                        if ( kDir.Angle(kOut) > (3.0f*Math.PI/4.0f) )
-                        {
-                        }
-                        else if ( kDir.Angle(kOut) > (Math.PI/2.0f) )
-                        {
-                            kOut.Neg();
-                        }
-                        
-                        
-                        if ( m_abVisited[i] )
-                        {
-                            bDone = true;
-                            break;
-                        }
-                        m_abVisited[i] = true;
-
-                        if ( bDir )
-                        {
-                            kTract.add( i );
-                        }
-                        else
-                        {
-                            kTract.add( 0, i );
-                        }
-                        //System.err.println( iX + " " + iY + " " + iZ );
-
-                        //kStart = kNext;
-                        //kDir = kOut;
-                        kStart.Copy(kNext);
-                        kDir.Copy(kOut);
-                    }
-                    else
-                    {
-                        bDone = true;
-                        break;
-                    }
-                }
-                else
-                {
-                    bDone = true;
-                    break;
-                }
-                */
-            }
-            else
-            {
-                bDone = true;
-                break;
-            }
-        }
-        kNext = null;
-    }    
+//    private void traceTract( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
+//            ModelImage dtiImage, boolean bDir )
+//    {
+//        int iDimX = dtiImage.getExtents()[0];
+//        int iDimY = dtiImage.getExtents()[1];
+//        int iDimZ = dtiImage.getExtents()[2];
+//        int iLen = dtiImage.getExtents()[0] * dtiImage.getExtents()[1] * dtiImage.getExtents()[2];
+//
+//        float[] afTensorData = new float[6];
+//
+//        boolean bDone = false;
+//        Matrix3f kMatrix = new Matrix3f();
+//        Vector3f kOut = new Vector3f();
+//        Vector3f kNext = new Vector3f();
+//        int iX;
+//        int iY;
+//        int iZ;
+//        int i;
+//        boolean bAllZero = true;
+//
+//        Matrix3f kEigenValues = new Matrix3f();
+//        Vector3f kV0 = new Vector3f();
+//        Vector3f kV1 = new Vector3f();
+//        Vector3f kV2 = new Vector3f();
+//        
+//        while ( !bDone )
+//        {
+//        	kNext.Add( kStart, kDir );
+//            iX = Math.round(kNext.X);
+//            iY = Math.round(kNext.Y);
+//            iZ = Math.round(kNext.Z);
+//            i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
+//
+//            if ( (iZ < 0) || (iZ >= iDimZ) ||
+//                    (iY < 0) || (iY >= iDimY) ||
+//                    (iX < 0) || (iX >= iDimX)  )
+//            {
+//                bDone = true;
+//                break;
+//            }
+//
+//            bAllZero = true;
+//            for ( int j = 0; j < 6; j++ )
+//            {
+//                afTensorData[j] = dtiImage.getFloat(i + j*iLen);
+//                if ( afTensorData[j] != 0 )
+//                {
+//                    bAllZero = false;
+//                }
+//            }
+//            if ( !bAllZero )
+//            {
+//                kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
+//                        afTensorData[3], afTensorData[1], afTensorData[5], 
+//                        afTensorData[4], afTensorData[5], afTensorData[2] );
+//                
+//                kMatrix.Mult(kDir, kOut);
+//                kOut.Normalize();
+//
+////                 if ( kDir.Angle(kOut) > (3.0f*Math.PI/4.0f) )
+////                 {
+////                 }
+////                 else if ( kDir.Angle(kOut) > (Math.PI/2.0f) )
+////                 {
+////                     kOut.Neg();
+////                 }
+//                        
+//                        
+//                if ( m_abVisited[i] )
+//                {
+//                    bDone = true;
+//                    break;
+//                }
+//                m_abVisited[i] = true;
+//
+//                if ( bDir )
+//                {
+//                    kTract.add( i );
+//                }
+//                else
+//                {
+//                    kTract.add( 0, i );
+//                }
+//                //System.err.println( iX + " " + iY + " " + iZ );
+//
+//                //kStart = kNext;
+//                //kDir = kOut;
+//                kStart.Copy(kNext);
+//                kDir.Copy(kOut);
+//
+//                
+//                /*
+//                if ( Matrix3f.EigenDecomposition( kMatrix, kEigenValues ) )
+//                {
+//                    float fLambda1 = kEigenValues.M22;
+//                    float fLambda2 = kEigenValues.M11;
+//                    float fLambda3 = kEigenValues.M00;
+//                    kMatrix.GetColumn(2,kV0);
+//                    kMatrix.GetColumn(1,kV1);
+//                    kMatrix.GetColumn(0,kV2);
+//
+//                    //kV0.Normalize();
+//                    //kV1.Normalize();
+//                    //kV2.Normalize();
+//
+//                    //kMatrix.SetColumn(0,kV1);
+//                    //kMatrix.SetColumn(1,kV2);
+//                    //kMatrix.SetColumn(2,kV3);
+//                    //kMatrix = new Matrix3f(kV1,kV2,kV3,false);
+//
+//                    if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+//                    {
+//                        kStart.Copy(kNext);
+//                    }
+//                    else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
+//                    {
+//                        kMatrix = new Matrix3f(kV0,kV1,kV2,false);
+//                        kMatrix.Mult(kDir, kOut);
+//                        kOut.Normalize();
+//
+//                        if ( kDir.Angle(kOut) > (3.0f*Math.PI/4.0f) )
+//                        {
+//                        }
+//                        else if ( kDir.Angle(kOut) > (Math.PI/2.0f) )
+//                        {
+//                            kOut.Neg();
+//                        }
+//                        
+//                        
+//                        if ( m_abVisited[i] )
+//                        {
+//                            bDone = true;
+//                            break;
+//                        }
+//                        m_abVisited[i] = true;
+//
+//                        if ( bDir )
+//                        {
+//                            kTract.add( i );
+//                        }
+//                        else
+//                        {
+//                            kTract.add( 0, i );
+//                        }
+//                        //System.err.println( iX + " " + iY + " " + iZ );
+//
+//                        //kStart = kNext;
+//                        //kDir = kOut;
+//                        kStart.Copy(kNext);
+//                        kDir.Copy(kOut);
+//                    }
+//                    else
+//                    {
+//                        bDone = true;
+//                        break;
+//                    }
+//                }
+//                else
+//                {
+//                    bDone = true;
+//                    break;
+//                }
+//                */
+//            }
+//            else
+//            {
+//                bDone = true;
+//                break;
+//            }
+//        }
+//        kNext = null;
+//    }    
     
     
     private void traceTract2( Vector<Integer> kTract, Vector3f kStart, Vector3f kDir,
@@ -1903,6 +1743,8 @@ implements ListSelectionListener, ChangeListener {
             else if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
             {
                 kOut.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+                //kOut.Normalize();
+                
                 fDot = kDir.Dot( kOut );
                 if ( fDot < 0 )
                 {
@@ -1915,12 +1757,16 @@ implements ListSelectionListener, ChangeListener {
                     break;
                 }
 
-                if ( m_abVisited[i] )
+                if ( m_abVisited[i] == null )
+                {
+                	m_abVisited[i] = new VOIContour(false);
+                }
+                if ( m_abVisited[i].contains( kStart ) )
                 {
                     bDone = true;
                     break;
                 }
-                m_abVisited[i] = true;
+                m_abVisited[i].add( kStart );
 
                 if ( bDir )
                 {
@@ -2012,4 +1858,56 @@ implements ListSelectionListener, ChangeListener {
     }
 
 
+    private void createNewTracts()
+    {
+
+        m_iMinTractLength = Integer.valueOf(m_kMinLength.getText()).intValue();
+        m_fFAMin = Float.valueOf(m_kFAMinThreshold.getText()).floatValue();
+        m_fFAMax = Float.valueOf(m_kFAMaxThreshold.getText()).floatValue();
+
+        m_fMaxAngle = Float.valueOf(m_kMaxAngle.getText()).floatValue();
+    	System.err.println( m_iMinTractLength + " " + m_fFAMin + " " + m_fFAMax + " " + m_fMaxAngle );
+        m_fMaxAngle = (float)(m_fMaxAngle*Math.PI/180.0f);
+    	
+        ViewJProgressBar kProgressBar =
+            new ViewJProgressBar("Calculating Fiber Bundle Tracts ",
+                                 "Calculating tracts...", 0, 100, true);
+        
+    	ModelImage fAImage = parentFrame.getFAimage();
+    	int iDimX = fAImage.getExtents()[0];
+    	int iDimY = fAImage.getExtents()[1];
+    	int iDimZ = fAImage.getExtents()[2];
+        int iLen = iDimX * iDimY * iDimZ;
+
+        if ( m_abVisited == null )
+        {
+        	m_abVisited  = new VOIContour[iLen];
+        }
+    	
+    	float faVal;
+    	int count = 0;
+    	for ( int z = 0; z < iDimZ; z++ )
+    	{
+    		for ( int y = 0; y < iDimY; y++ )
+    		{
+    			for ( int x = 0; x < iDimX; x++ )
+    			{
+    				faVal = fAImage.getFloat(z*iDimX*iDimY + y*iDimX + x);
+    				if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
+    				{
+    					count += diplayTract(x,y,z, iDimX, iDimY, iDimZ, true);
+    				}
+    			}
+    		}
+            int iValue = (int)(100 * (float)(z+1)/iDimZ);
+            kProgressBar.updateValueImmed( iValue );
+    	}
+        kProgressBar.dispose();
+        if ( count > 0 )
+        {
+        	addTract();
+        }
+        MipavUtil.displayInfo( "Added " + count + " fiber tracts." );
+    }
+    
 }

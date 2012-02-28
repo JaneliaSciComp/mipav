@@ -51,7 +51,7 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 
-public class DTIPipeline extends JDialogBase implements AlgorithmInterface, ActionListener, ChangeListener {
+public class DTIPipeline extends JDialogBase implements ActionListener, ChangeListener {
 
 	private final static int IMPORT = 0;
 	private final static int PRE_PROCESS = 1;
@@ -66,11 +66,6 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 	/** DOCUMENT ME! */
 	protected JButton nextButton; 
-
-	/** Mask image for the tensor calculation */
-	private ModelImage maskImage = null;
-	
-    JTextField textDTIimage = new JTextField();
 	
 	/** The current image in the pipeline */
 	private ModelImage currentImage = null;
@@ -166,7 +161,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 		tabbedPane.addTab("Pre-processing", null, buildPreprocessingPanel());
 		tabbedPane.addTab("EPI Distortion Correction", null, buildEPIPanel());
 		tabbedPane.addTab("Tensor Estimation", null, buildTensorPanel());
-		tabbedPane.addTab("Fiber Tracking/ Statistics", null, buildFiberTrackingPanel());
+		tabbedPane.addTab("Tensor Statistics", null, buildFiberTrackingPanel());
 		tabbedPane.addTab("Visualization", null, buildVisuzalizationPanel());
 		tabbedPane.addChangeListener(this);
 
@@ -211,33 +206,11 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 	 */
 	public void actionPerformed(final ActionEvent event) {
 		final String command = event.getActionCommand();
-
-		if ( command.equals("browseMaskFile") )
-		{
-			loadMaskImage();
-		}
 		
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
-		/*if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) && (currentImage != null) )
+		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) && (currentImage != null) )
 		{
-			switch ( comboBoxDTI_Algorithm.getSelectedIndex() ) {
-			case DEFAULT: 
-				AlgorithmDWI2DTI calcDTI = new AlgorithmDWI2DTI( currentImage, maskImage );
-				calcDTI.addListener(this);
-				calcDTI.run();
-				break;
-			case LLMSE:
-				tensorImage = EstimateTensorLLMSE.estimate( currentImage, maskImage, true );
-				finishTensorPanel();
-				break;
-			case LINEAR:
-			case NON_LINEAR:
-			case RESTORE:
-			case WEIGHTED_LINEAR:
-				tensorImage = EstimateTensorLLMSE.estimateCamino( currentImage, maskImage, comboBoxDTI_Algorithm.getSelectedIndex() );
-				finishTensorPanel();
-				break;
-			}
+			estTensorPanel.calcTensor(currentImage);
 		}
 		// creates the derived images from the tensor image and sets up the visualization panel inputs.
 		else if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == FIBER_TRACKING) )
@@ -256,7 +229,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 				visualization.setTractFile(tensorImage.getImageDirectory() + JPanelDTIFiberTracking.TrackFileName);
 				visualization.enableLoad();
 			}
-		}*/
+		}
 
 		else if (command.equals("next1")){
 			DWIImage = importData.m_kDWIImage;
@@ -333,10 +306,12 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			      }
 
 	              tabbedPane.setSelectedIndex(3);
+	              /*
 	              estTensorPanel.maskOpenPanel.setBorder(highlightTitledBorder("Upload Mask Image"));
 	              estTensorPanel.maskLabel.setEnabled(true);
 	              estTensorPanel.openMaskImageButton.setEnabled(true);
 	              estTensorPanel.textMaskimage.setEnabled(true);
+	              */
 	              nextButton.setEnabled(false);
 	              goBackButton.setEnabled(true);
 	              goBackButton.setActionCommand("back3");
@@ -410,57 +385,30 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 
 	}
 	
-	private JPanel buildTensorPanel() {
-	    
+	private JPanel buildTensorPanel() {	    
 	    estTensorPanel = new JPanelDTIEstimateTensor(this);
-	    return estTensorPanel.wholeTensorPanel ;
-	    
+	    return estTensorPanel;	    
 	}
 
 	private JPanelDTIFiberTracking buildFiberTrackingPanel() {
-
 		fiberTrack = new JPanelDTIFiberTracking(this);
-
 		return fiberTrack;
-
 	}
 
 	private JPanel buildVisuzalizationPanel() {
-		visualization = new JPanelDTIVisualization(this);
+		visualization = new JPanelDTIVisualization(this, false);
 		return visualization;
 	}
 
 
-
-	/* 
-	 * Called when the AlgorithmDWI2DTI completes and the new diffusion tensor image is ready.
-	 */
-	public void algorithmPerformed(final AlgorithmBase algorithm) {
-		if ( algorithm instanceof AlgorithmDWI2DTI && algorithm.isCompleted() )
-		{
-			//tensorImage = EstimateTensorLLMSE.estimate( currentImage, true );
-			tensorImage = ((AlgorithmDWI2DTI)algorithm).getDTI();
-			finishTensorPanel();
-			// delete intermediate images:
-			((AlgorithmDWI2DTI)algorithm).deleteImages();
-		}
-	}
-
-
-	private void finishTensorPanel()
+	public void finishTensorPanel(ModelImage resultImage )
 	{
+		this.tensorImage = resultImage;
 		// Set up the fiber tracking panel inputs:
 		tabbedPane.setSelectedIndex(FIBER_TRACKING);
 		fiberTrack.setInputImage( tensorImage );
 		nextButton.setEnabled(true);
-		// save the tensor image
-		ModelImage.saveImage( tensorImage, tensorImage.getImageName() + ".xml", tensorImage.getImageDirectory() );
 		currentImage = tensorImage;
-		if ( maskImage != null )
-		{
-			maskImage.disposeLocal();
-			maskImage = null;
-		}
 	}
 
 	public void stateChanged(ChangeEvent e) {
@@ -469,6 +417,7 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 			if ( tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION )
 			{
 				if ( currentImage != null ) {
+					estTensorPanel.setImage(currentImage);
 					nextButton.setEnabled(true);
 				}
 				else {
@@ -488,31 +437,5 @@ public class DTIPipeline extends JDialogBase implements AlgorithmInterface, Acti
 				nextButton.setEnabled(false);
 			}
 		}
-	}
-	
-
-    public void itemStateChanged(ItemEvent event) 
-    {
-    	if ( event.getSource() == comboBoxDTI_Algorithm )
-    	{
-    		//System.err.println( comboBoxDTI_Algorithm.getItemAt( comboBoxDTI_Algorithm.getSelectedIndex() ) );
-    	}
-    }
-
-
-    private void loadMaskImage() {
-        final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-        chooser.setDialogTitle("Choose Diffusion Tensor Color image file");
-        final int returnValue = chooser.showOpenDialog(this);
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-            final FileIO fileIO = new FileIO();
-
-            maskImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory()
-                    + File.separator);
-
-            textDTIimage.setText(chooser.getSelectedFile().getAbsolutePath());
-            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
-        }
-    }
+	}	
 }

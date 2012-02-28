@@ -2325,7 +2325,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     public void windowActivated(final WindowEvent event) {
         setModified();
         resizePanel();
-        if ( (multiHistogramGUI != null) && (multiHistogramGUI.getMainPanel() != null) )
+        if ( (multiHistogramGUI != null) && (multiHistogramGUI.getHistogram() != null) )
     	{
             multiHistogramGUI.getHistogram().display();
     	}
@@ -3497,7 +3497,5 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         geodesicGUI.resizePanel(maxPanelWidth, height);
         // rightPane.setDividerLocation( 0.618f );
         // updatePlanes();
-    }
-    
-    public void processDTI() {}
+    }    
 }

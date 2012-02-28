@@ -1356,7 +1356,7 @@ public abstract class JDialogBase extends JDialog
      *
      * @return  <code>true</code> if parameters passed range test, <code>false</code> if failed.
      */
-    protected boolean testParameterMin(String str, double minValue) {
+    public static boolean testParameterMin(String str, double minValue) {
         double tmp;
 
         try {
