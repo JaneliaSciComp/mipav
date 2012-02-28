@@ -342,6 +342,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (command.equals("Script")) {
+            callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -1073,7 +1075,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      * 
      * @param fileName name of the matrix file.
      */
-    public void readTransformMatrixFile(final String fileName) {
+    public TransMatrix readTransformMatrixFile(final String fileName) {
     	
         final TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
         matrix.MakeIdentity();
@@ -1115,6 +1117,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             MipavUtil.displayError("Matrix read error");
             fileTransMatrix.MakeIdentity();
         }
+        
+        return fileTransMatrix;
     }
 
     /**
