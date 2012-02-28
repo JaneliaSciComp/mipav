@@ -541,6 +541,18 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         try {
             File fA = new File(spimAFileDir);
             File fB = new File(spimBFileDir);
+            boolean containsFiles = false;
+            for(File fTry : fA.listFiles()) {
+                if(fTry.getName().contains(baseImage)) {
+                    containsFiles = true;
+                    continue;
+                }
+            }
+            if(!containsFiles) {
+                fB = new File(spimAFileDir);
+                fA = new File(spimBFileDir);
+            }
+            
             if(!fA.exists() || !fA.isDirectory()) {
                 MipavUtil.displayError("Spim file directories could not be found");
                 return false;

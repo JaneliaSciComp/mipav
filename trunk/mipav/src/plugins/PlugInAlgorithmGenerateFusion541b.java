@@ -22,8 +22,15 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import javax.imageio.stream.FileImageOutputStream;
 
@@ -33,8 +40,12 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOI;
+import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
@@ -122,71 +133,142 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-        FileIO io = new FileIO();
+        
+        ExecutorService exec = Executors.newFixedThreadPool(1);
+        
+        ArrayList<FusionAlg> algList = new ArrayList<FusionAlg>();
         for(int i=0; i<transformImageAr.length; i++) {
+            FusionAlg algInstance = new FusionAlg(null, baseImageAr[i].getAbsolutePath(), transformImageAr[i].getAbsolutePath());
+            algList.add(algInstance);
+            exec.execute(algInstance);
+        }
+        
+        exec.shutdown();
+        
+        try {
+            exec.awaitTermination(1, TimeUnit.DAYS);
+        } catch (InterruptedException e) {
+            MipavUtil.displayError("Program did not execute correctly");
+            e.printStackTrace();
+        }
+        
+        
+    	setCompleted(true); //indicating to listeners that the algorithm completed successfully
+
+    } // end runAlgorithm()
+    
+    public class FusionAlg implements Callable, Runnable {
+
+        private ModelImage baseImage, transformImage;
+        
+        private String baseImagePath, transformImagePath;
+        
+        private Frame parentFrame;
+        
+        public FusionAlg(Frame parentFrame, String baseImagePath, String transformImagePath) {
+            this.parentFrame = parentFrame;
+            this.baseImagePath = baseImagePath;
+            this.transformImagePath = transformImagePath;
+        }
+        
+        public void run() {
+            call();
+        }
+        
+        public Boolean call() {
+            FileIO io = new FileIO();
             
-            ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
-            ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
+            baseImage = io.readImage(baseImagePath);
+            transformImage = io.readImage(transformImagePath);
             
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
+            
+            for(int i=0; i<baseImage.getFileInfo().length; i++) {
+                baseImage.getFileInfo(i).setSliceThickness(0);
+            }
+            
+            for(int i=0; i<transformImage.getFileInfo().length; i++) {
+                transformImage.getFileInfo(i).setSliceThickness(0);
+            }
             
             if(doThreshold) {
                 threshold(baseImage);
                 threshold(transformImage);
             }
             
-            AlgorithmRotate rotate = new AlgorithmRotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
-            rotate.run(); //transform image should hav been replaced
+            rotate(AlgorithmRotate.Y_AXIS_MINUS);
             
-            JDialogScriptableTransform transform = new JDialogScriptableTransform();
+            transform();
+            
+            discardSlices(middleSlice);
+            
+            if(doAriMean) {
+                calcAriMean();
+            }
+            
+            if(doGeoMean) {
+                calcGeoMean();
+            } 
+            
+            return true;
+        }
+        
+        public ModelImage getResultImage() {
+            
+            return null;
+        }
+        
+        private void transform() {
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, transformImage);
             transform.setPadFlag(true);
-            transform.readTransformMatrixFile(mtxFileLoc);
+            transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
             transform.setImage25D(false);
             transform.setSeparateThread(false);
-            transform.actionPerformed(new ActionEvent(this, 0, "OK"));
+            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             transformImage = transform.getResultImage();
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
             }
-            
-            discardSlices(baseImage, transformImage, middleSlice);
-            
-            if(doAriMean) {
-                calcAriMean(baseImage, transformImage);
-            }
-            
-            if(doGeoMean) {
-                calcGeoMean(baseImage, transformImage);
-            }
         }
 
-    	setCompleted(true); //indicating to listeners that the algorithm completed successfully
-
-    } // end runAlgorithm()
-
-    private void calcGeoMean(ModelImage baseImage, ModelImage transformImage) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    private void calcAriMean(ModelImage baseImage, ModelImage transformImage) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    private void discardSlices(ModelImage baseImage, ModelImage transformImage,
-            int middleSlice2) {
-        // TODO Auto-generated method stub
-        
-    }
-
-    private void threshold(ModelImage baseImage) {
-        for(int i=0; i<baseImage.getDataSize(); i++) {
-            if(baseImage.getDouble(i) <= thresholdIntensity) {
-                baseImage.set(i, 0);
+        private void rotate(int mode) {
+            AlgorithmRotate rotate = new AlgorithmRotate(transformImage, mode);
+            rotate.run(); //transform image replaced
+            transformImage = rotate.getDestImage();
+            if(doInterImages) {
+                ViewJFrameImage test = new ViewJFrameImage(transformImage);
             }
+            
         }
-        
+
+        private void calcGeoMean() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        private void calcAriMean() {
+            // TODO Auto-generated method stub
+            
+        }
+
+        /**
+         * Discards extraneous slices from transform image.
+         */
+        private void discardSlices(int middleSlice) {
+            // TODO Auto-generated method stub
+            
+        }
+
+        private void threshold(ModelImage baseImage) {
+            for(int i=0; i<baseImage.getDataSize(); i++) {
+                if(baseImage.getDouble(i) <= thresholdIntensity) {
+                    baseImage.set(i, 0);
+                }
+            }
+            
+        }
     }
+
+    
 }
