@@ -137,6 +137,12 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private double thresholdIntensity;
 
+    private JTextField xMovement;
+
+    private JTextField yMovement;
+
+    private JTextField zMovement;
+
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
@@ -352,6 +358,27 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         transformPanel.add(baseImageText.getParent());
         
         mtxPanel.add(transformPanel, gbc);
+        gbc.gridy++;
+        
+        JLabel dirMove = new JLabel("Post-transformation translation");
+        mtxPanel.add(dirMove.getParent());
+        gbc.gridy++;
+        
+        JPanel movementPanel = new JPanel();
+        FlowLayout movementFlow = new FlowLayout(FlowLayout.LEFT);
+        movementPanel.setLayout(movementFlow);
+        
+        xMovement = gui.buildIntegerField("X: ", 0);
+        movementPanel.add(xMovement.getParent());
+        
+        yMovement = gui.buildIntegerField("Y: ", 0);
+        movementPanel.add(yMovement.getParent());
+        
+        zMovement = gui.buildIntegerField("Z: ", 0);
+        movementPanel.add(zMovement.getParent());
+        
+        mtxPanel.add(movementPanel, gbc);
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         
