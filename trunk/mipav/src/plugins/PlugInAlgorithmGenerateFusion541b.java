@@ -74,6 +74,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     private double resZ;
     private double thresholdIntensity;
     private String mtxFileLoc;
+    private int concurrentNum;
 
     /**
      * Constructor.
@@ -95,7 +96,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      * @param mtxFileLoc 
      */
     public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
-                                                    double resX, double resY, double resZ, int middleSlice, double thresholdIntensity, String mtxFileLoc, int middleSlice2, File[] baseImageAr, File[] transformImageAr) {
+                                                    double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, int middleSlice, File[] baseImageAr, File[] transformImageAr) {
         super(null, image1);
         
         this.image = image1;
@@ -114,6 +115,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         this.mtxFileLoc = mtxFileLoc;
         this.baseImageAr = baseImageAr;
         this.transformImageAr = transformImageAr;
+        
+        this.concurrentNum = concurrentNum;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -134,11 +137,16 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      */
     public void runAlgorithm() {
         
-        ExecutorService exec = Executors.newFixedThreadPool(1);
+        ExecutorService exec = Executors.newFixedThreadPool(concurrentNum);
         
         ArrayList<FusionAlg> algList = new ArrayList<FusionAlg>();
         for(int i=0; i<transformImageAr.length; i++) {
-            FusionAlg algInstance = new FusionAlg(null, baseImageAr[i].getAbsolutePath(), transformImageAr[i].getAbsolutePath());
+            FileIO io = new FileIO();
+            
+            ModelImage baseImage = io.readImage(baseImageAr[i].getAbsolutePath());
+            ModelImage transformImage = io.readImage(transformImageAr[i].getAbsolutePath());
+            
+            FusionAlg algInstance = new FusionAlg(null, baseImage, transformImage);
             algList.add(algInstance);
             exec.execute(algInstance);
         }
@@ -161,14 +169,12 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
 
         private ModelImage baseImage, transformImage;
         
-        private String baseImagePath, transformImagePath;
-        
         private Frame parentFrame;
         
-        public FusionAlg(Frame parentFrame, String baseImagePath, String transformImagePath) {
+        public FusionAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
             this.parentFrame = parentFrame;
-            this.baseImagePath = baseImagePath;
-            this.transformImagePath = transformImagePath;
+            this.baseImage = baseImage;
+            this.transformImage = transformImage;
         }
         
         public void run() {
@@ -176,11 +182,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         }
         
         public Boolean call() {
-            FileIO io = new FileIO();
             
-            baseImage = io.readImage(baseImagePath);
-            transformImage = io.readImage(transformImagePath);
-            
+
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             
@@ -195,6 +198,10 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             if(doThreshold) {
                 threshold(baseImage);
                 threshold(transformImage);
+            }
+            
+            if(doInterImages) {
+                new ViewJFrameImage(baseImage);
             }
             
             rotate(AlgorithmRotate.Y_AXIS_MINUS);
@@ -225,6 +232,11 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
             transform.setImage25D(false);
             transform.setSeparateThread(false);
+            transform.setClipFlag(true);
+            transform.setDimAndResXYZ();
+            transform.setUnits(transformImage.getUnitsOfMeasure());
+            transform.setOutDimensions(new int[]{118,430,312});//transformImage.getExtents());
+            transform.setOutResolutions(transformImage.getResolutions(0));
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             transformImage = transform.getResultImage();
             if(doInterImages) {
