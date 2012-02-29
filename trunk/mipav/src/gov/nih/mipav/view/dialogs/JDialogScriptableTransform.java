@@ -1186,6 +1186,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         cYres = resols[1];
         cZdim = Math.round(dims[2]);
         cZres = resols[2];
+        
+        
     }
 
     /**
@@ -1286,6 +1288,18 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     public void setTransformType(final int transformType) {
         this.transformType = transformType;
+    }
+    
+    /**
+     * Accessor that sets the units.
+     * 
+     * @param units of image
+     */
+    public void setUnits(final int[] units) {
+        this.units = new int[units.length];
+        for(int i=0; i<units.length; i++) {
+            this.units[i] = units[i];
+        }
     }
 
     /**
