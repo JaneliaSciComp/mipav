@@ -137,11 +137,17 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private double thresholdIntensity;
 
-    private JTextField xMovement;
+    private JTextField xMovementText;
 
-    private JTextField yMovement;
+    private JTextField yMovementText;
 
-    private JTextField zMovement;
+    private JTextField zMovementText;
+
+    private int xMovement;
+
+    private int yMovement;
+
+    private int zMovement;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -229,7 +235,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
             
             generateFusionAlgo = new PlugInAlgorithmGenerateFusion541b(image, doSubsample, doInterImages, doGeoMean, doAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
-                                                                                mtxFileLoc, middleSlice, baseImageAr, transformImageAr);
+                                                                                mtxFileLoc, middleSlice, baseImageAr, transformImageAr, 
+                                                                                xMovement, yMovement, zMovement);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -360,22 +367,22 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         mtxPanel.add(transformPanel, gbc);
         gbc.gridy++;
         
-        JLabel dirMove = new JLabel("Post-transformation translation");
-        mtxPanel.add(dirMove.getParent());
+        JLabel dirMove = new JLabel("Enter post-transformation translation (needed since padding occurs)");
+        mtxPanel.add(dirMove, gbc);
         gbc.gridy++;
         
         JPanel movementPanel = new JPanel();
         FlowLayout movementFlow = new FlowLayout(FlowLayout.LEFT);
         movementPanel.setLayout(movementFlow);
         
-        xMovement = gui.buildIntegerField("X: ", 0);
-        movementPanel.add(xMovement.getParent());
+        xMovementText = gui.buildIntegerField("X: ", 0);
+        movementPanel.add(xMovementText.getParent());
         
-        yMovement = gui.buildIntegerField("Y: ", 0);
-        movementPanel.add(yMovement.getParent());
+        yMovementText = gui.buildIntegerField("Y: ", 0);
+        movementPanel.add(yMovementText.getParent());
         
-        zMovement = gui.buildIntegerField("Z: ", 0);
-        movementPanel.add(zMovement.getParent());
+        zMovementText = gui.buildIntegerField("Z: ", 0);
+        movementPanel.add(zMovementText.getParent());
         
         mtxPanel.add(movementPanel, gbc);
         
@@ -525,6 +532,10 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 		    resX = Double.valueOf(resXText.getText()).doubleValue();
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
 		    resZ = Double.valueOf(resZText.getText()).doubleValue();
+		    
+		    xMovement = Integer.valueOf(xMovementText.getText()).intValue();
+		    yMovement = Integer.valueOf(yMovementText.getText()).intValue();
+		    zMovement = Integer.valueOf(zMovementText.getText()).intValue();
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");
             return false;
