@@ -4,6 +4,7 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR35D;
 import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -49,6 +50,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.table.DefaultTableModel;
 
 
 public class DTIPipeline extends JDialogBase implements ActionListener, ChangeListener {
@@ -128,6 +130,10 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 
 	private JComboBox comboBoxDTI_Algorithm;
+    public float[][] gradients;
+    public float[] bvalues;
+    public int refImageNum;
+    public DefaultTableModel srcBvalGradTable;
 
 	// ~ Constructors
 	// ---------------------------------------------------------------------------------------------------
@@ -236,8 +242,18 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			currentImage = DWIImage;
 			DWIframe = importData.frame;
 			dtiparams = DWIImage.getDTIParameters();
+            gradients = dtiparams.getGradients();
+            bvalues =dtiparams.getbValues();
+            srcBvalGradTable = importData.srcTableModel;
 			DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
 			DTIPreprocessing.highlightBorderPanel.setBorder(highlightTitledBorder(""));
+			for (int i = 0; i <dtiparams.getbValues().length-1; i++){
+			    if (dtiparams.getbValues()[i] == 0 && dtiparams.getGradients()[i][0] ==0 ){
+			    DTIPreprocessing.refImageNumText.setText(String.valueOf(i));
+			    }
+			    
+			}
+			repaint();
 
 
 
@@ -258,6 +274,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 					T2Image = importData.m_kT2Image;
 					T2frame = importData.t2frame;
 			        DTIPreprocessing.transformMatDWICheckbox.setEnabled(true);
+			        DTIPreprocessing.correctGradTransCheckbox.setEnabled(true);
 			        DTIPreprocessing.transformB0label.setEnabled(true);
 			        DTIPreprocessing.transformB0MatCheckbox.setEnabled(true);
 			        DTIPreprocessing.blanklabel.setEnabled(true);
@@ -285,6 +302,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		else if (command.equals("next2")){
 			if (DTIPreprocessing.result35RegImage !=null){
 				DWINewB0Image = DTIPreprocessing.result35RegImage;
+				refImageNum = DTIPreprocessing.refVolNum;
 			}
 			
 			if (DTIPreprocessing.epiCheckbox.isSelected()){
@@ -306,12 +324,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			      }
 
 	              tabbedPane.setSelectedIndex(3);
-	              /*
-	              estTensorPanel.maskOpenPanel.setBorder(highlightTitledBorder("Upload Mask Image"));
-	              estTensorPanel.maskLabel.setEnabled(true);
-	              estTensorPanel.openMaskImageButton.setEnabled(true);
-	              estTensorPanel.textMaskimage.setEnabled(true);
-	              */
 	              nextButton.setEnabled(false);
 	              goBackButton.setEnabled(true);
 	              goBackButton.setActionCommand("back3");
