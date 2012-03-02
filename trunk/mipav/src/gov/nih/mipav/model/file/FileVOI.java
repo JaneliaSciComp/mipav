@@ -243,6 +243,15 @@ public class FileVOI extends FileXML {
 
         String VOIStr;
         VOI[] voi = null;
+        int curveNumber;
+        VOIBaseVector curves = null;
+        VOIBase base = null;
+        int pointNumber;
+        Vector3f vec = null;
+        int totalPoints = 0;
+        VOI pointVOI[] = null;
+        short id = 0;
+        int pointIndex = 0;
 
         if (isXML) {
             voi = new VOI[1];
@@ -304,8 +313,39 @@ public class FileVOI extends FileXML {
                 throw (new IOException("Not a VOI File MIPAV can read."));
             }
         }
-
-        return voi;
+        for (int i = 0; i < voi.length; i++) {
+        	VOI presentVOI = voi[i];
+        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		curves = presentVOI.getCurves();	
+        		curveNumber = curves.size();
+        		for (int j = 0; j < curveNumber; j++) {
+        		    base = curves.elementAt(j);	
+        		    pointNumber = base.size();
+        		    for (int k = 0; k < pointNumber; k++) {
+        		        totalPoints++;
+        		    }
+        		}
+        	} 
+        }
+        pointVOI = new VOI[totalPoints];
+        for (int i = 0; i < voi.length; i++) {
+        	VOI presentVOI = voi[i];
+        	if (presentVOI.getCurveType() == VOI.CONTOUR) {
+        		curves = presentVOI.getCurves();	
+        		curveNumber = curves.size();
+        		for (int j = 0; j < curveNumber; j++) {
+        		    base = curves.elementAt(j);	
+        		    pointNumber = base.size();
+        		    for (int k = 0; k < pointNumber; k++) {
+        		    	vec = base.elementAt(k);
+        		        pointVOI[pointIndex] = new VOI(id, "",VOI.POINT, 0.0f);
+        		        pointVOI[pointIndex].importPoint(vec);
+        		        pointIndex++;
+        		    }
+        		}
+        	} 
+        }
+        return pointVOI;
 
     }
 
