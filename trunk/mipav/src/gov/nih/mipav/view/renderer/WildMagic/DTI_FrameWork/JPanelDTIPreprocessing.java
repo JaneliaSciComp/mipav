@@ -92,7 +92,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     private Font serif12B;
 
     /** DOCUMENT ME! */
-    private JTextField refImageNumText;
+    public JTextField refImageNumText;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxDOF;
@@ -154,7 +154,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     private int[] destB0Extents;
 
-    private int sliceNum;
+    public int refVolNum;
+    
+    private DTIGradTableCorrectionAfterTrans gradTableRegCorrect = null;
 
     private String resultB0String;
 
@@ -209,15 +211,18 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     public JCheckBox epiCheckbox;
 
     private JCheckBox skipPreCheckbox;
-
- 
     
-
+    public JCheckBox correctGradTransCheckbox;
+   
     private JLabel labelDOF;
 
     private JLabel labelCost;
 
     private JLabel labelInternal;
+    
+    private DTIParameters dtiparams;
+    
+    private JPanelDTIImportData importData;
 
     private JLabel labelInterp;
 
@@ -226,6 +231,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     public JPanel structOptPanel;
 
     public ModelImage inputPreTensorImage;
+
+    private float[][] correctedGradients;
+
 
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
@@ -286,6 +294,25 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             if (transformMatDWICheckbox.isSelected()) {
                 createArrayTransMatrixTXT();               
             }
+            
+            if (correctGradTransCheckbox.isSelected()) {
+                gradTableRegCorrect = new DTIGradTableCorrectionAfterTrans(pipeline.gradients, pipeline.bvalues, arrayTransMatrix, refVolNum);
+                setVisible(true);
+                gradTableRegCorrect.run();
+                correctedGradients = gradTableRegCorrect.getCorrectedGradients();                
+                dtiparams = pipeline.DWIImage.getDTIParameters();
+                for (int i = 0; i < pipeline.DWIImage.getExtents()[3]; i++) {
+                    // Populate Gradient column
+                    pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][0]), i, 2);
+                    pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][1]), i, 3);
+                    pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][2]), i, 4);
+                   }
+                
+                dtiparams.setGradients(correctedGradients);
+
+            }
+            
+            
   
             if (result35RegImage != null) {
                 pipeline.nextButton.setEnabled(true);
@@ -397,8 +424,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         if (algorithm instanceof AlgorithmRegOAR3D) {
             if (reg3.isCompleted()) {
                 b0toStructMatrix = reg3.getTransform();
-                //System.out.println("test: " + b0toStructMatrix);
-
                
                     final int xdimA = refT2image.getExtents()[0];
                     final int ydimA = refT2image.getExtents()[1];
@@ -427,7 +452,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
                         for (int i = 0; i < srcB0Image.getExtents()[3] - 1; i++) {
 
-                            if (i == sliceNum) {// Finds volume based on user specified to remove
+                            if (i == refVolNum) {// Finds volume based on user specified to remove
                                 tVolumeRemove[i] = true;
                             } else {
                                 tVolumeRemove[i] = false;
@@ -458,7 +483,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                             newB0DWIRegImage = new ModelImage(srcB0Image.getType(), newB0DWIRegExtents,
                                     newB0DWIRegString);
                             insertVolumeAlgo = new AlgorithmInsertVolume(resultB0RemoveImage, newB0DWIRegImage, 3,
-                                    sliceNum, resultB0toT2Image);
+                                    refVolNum, resultB0toT2Image);
                             insertVolumeAlgo.run();
                         }
 
@@ -545,6 +570,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             matrixDirectory = pipeline.DWIImage.getImageDirectory();
             final TransMatrix finalMatrix = reg35.getTransform();
             arrayTransMatrix = reg35.getArrayTransMatrix();
+
             //Testing
             /*for (int i = 0; i < arrayTransMatrix.length; i++) {
                 System.out.println("TestarrayTransMatrix: " + arrayTransMatrix[i]);
@@ -580,7 +606,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         float rotateEnd = (float) 30.0;
         float coarseRate = (float) 15.0;
         float fineRate = (float) 6.0;
-        sliceNum = Integer.parseInt(refImageNumText.getText());
+        refVolNum = Integer.parseInt(refImageNumText.getText());
 
         if (newB0DWIRegImage != null) {
             matchDWIImage = newB0DWIRegImage;
@@ -590,29 +616,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         dwi35RegImage = (ModelImage) matchDWIImage.clone(matchDWIImage.getImageName() + "3.5RegB0&DWIDataset");
 
-        reg35 = new AlgorithmRegOAR35D(dwi35RegImage, cost, DOF, interp, interp, registerTo, sliceNum, rotateBegin,
+        reg35 = new AlgorithmRegOAR35D(dwi35RegImage, cost, DOF, interp, interp, registerTo, refVolNum, rotateBegin,
                 rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
-        //Testing
-        /*System.out.println("costChoice" + cost);
-        System.out.println("int _DOF" + DOF);
-        System.out.println("_interp" + interp);
-        System.out.println("_interp2" + interp);
-        System.out.println("mode" + registerTo);
-        System.out.println("refImageNum" + sliceNum);
-        System.out.println(" _rotateBegin" + rotateBegin);
-        System.out.println("_rotateEnd" + rotateEnd);
-        System.out.println("_coarseRate" + coarseRate);
-        System.out.println("_fineRate" + fineRate);
-        System.out.println("doGraph" + doGraph);
-        System.out.println("doSubsample" + doSubsample);
-        System.out.println("fastMode" + fastMode);
-        System.out.println("_bracketBound" + bracketBound);
-        System.out.println("_baseNumIter" + maxIterations);
-        System.out.println("_numMinima" + numMinima);*/
-        // System.out.println("doJTEM" +doJTEM);
-        // System.out.println("doMultiThread" +doMultiThread);
 
-        // Start the thread as a low priority because we wish to still have user interface work fast.
         reg35.addListener(this);
 
         setVisible(true);
@@ -634,10 +640,10 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         destB0Extents[2] = srcB0Image.getExtents()[2];
         resultB0String = srcB0Image.getImageName() + "T=" + refImageNumText.getText();
         resultB0Image = new ModelImage(srcB0Image.getType(), destB0Extents, resultB0String);
-        sliceNum = Integer.parseInt(refImageNumText.getText());
+        refVolNum = Integer.parseInt(refImageNumText.getText());
 
         if (resultB0Image != null) {
-            subsetAlgo = new AlgorithmSubset(pipeline.DWIImage, resultB0Image, AlgorithmSubset.REMOVE_T, sliceNum);
+            subsetAlgo = new AlgorithmSubset(pipeline.DWIImage, resultB0Image, AlgorithmSubset.REMOVE_T, refVolNum);
             // createProgressBar(srcB0Image.getImageName(), subsetAlgo);
             subsetAlgo.run();
         }
@@ -928,6 +934,13 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         transformMatDWICheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
         transformMatDWICheckbox.setSelected(true);
         transformMatDWICheckbox.addActionListener(this);
+        
+        correctGradTransCheckbox = new JCheckBox("Correct Gradients after Transformation");
+        correctGradTransCheckbox.setForeground(Color.black);
+        correctGradTransCheckbox.setFont(serif12);
+        correctGradTransCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+        correctGradTransCheckbox.setSelected(true);
+        correctGradTransCheckbox.addActionListener(this);
 
         matrixComboBox = new JComboBox();
         matrixComboBox.setFont(serif12);
@@ -963,6 +976,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(transformMatDWICheckbox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        outPanel.add(correctGradTransCheckbox, gbc);
 
         /*gbc.gridx = 1;
         gbc.gridy = 1;
