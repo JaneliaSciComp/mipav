@@ -415,7 +415,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
         } 
         else if (command.equals("NewVOIOtherOrientation")) {
-        	boolean success = openOtherOrientationVOI();
+        	boolean success = openOtherOrientationVOI(false);
         	if (!success) {
         		MipavUtil.displayError("VOI failed to open for this image");	
         	}
@@ -3731,7 +3731,35 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         return true;
     }
     
-    private boolean openOtherOrientationVOI() {
+    private boolean openOtherOrientationVOI(boolean quietMode) {
+    	ViewOpenVOIUI openVOI = null;
+
+        try {
+            openVOI = new ViewOpenVOIUI();
+            VOI[] newVOIs = openVOI.openOtherOrientation(m_kParent.getActiveImage());
+            if ( newVOIs == null) {
+                return false;
+            }
+            if(m_kCurrentVOIGroup != null) {
+                advanceVOIUID();
+            }
+            for ( int i = 0; i < newVOIs.length; i++ )
+            {
+                if(newVOIs[i].getColor() == null) {
+                    newVOIs[i].setColor(toolbarBuilder.getVOIColorButton().getBackground());
+                }
+                newVOIs[i].getGeometricCenter();
+                newVOIs[i].addVOIListener(this);
+                advanceVOIUID();
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quietMode) {
+                MipavUtil.displayError("Out of memory: VOIManagerInterface.openOtherOrientationVOI");
+            }
+
+            return false;
+        }
     	return true;
     }
     
