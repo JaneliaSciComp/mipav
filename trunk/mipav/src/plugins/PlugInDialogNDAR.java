@@ -132,9 +132,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     // private String data_dictionary_server_url =
     // "http://ndar-stage-apps.cit.nih.gov/NewDataDictionary/dataDictionary?wsdl";
 
-    // private String data_dictionary_server_url = "http://ndardemo.nih.gov/NewDataDictionary/dataDictionary?wsdl";
+    private String data_dictionary_server_url = "http://ndardemo.nih.gov/NewDataDictionary/dataDictionary?wsdl";
 
-    private String data_dictionary_server_url = "http://ndarportal.nih.gov/NewDataDictionary/dataDictionary?wsdl";
+    // private String data_dictionary_server_url = "http://ndarportal.nih.gov/NewDataDictionary/dataDictionary?wsdl";
 
     private List<XmlDataType> dataTypes;
 
@@ -156,7 +156,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "2.2";
+    private static final String pluginVersion = "2.3";
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
