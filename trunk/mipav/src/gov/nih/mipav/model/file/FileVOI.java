@@ -230,6 +230,84 @@ public class FileVOI extends FileXML {
         return voi;
 
     }
+    
+    /**
+     * This method read a VOI file that has been saved in the MIPAV VOI format (MIPAV *.voi, Nuages,
+     * and MIPAV *.xml).
+     * 
+     * @return the VOI read off the disk
+     * 
+     * @exception IOException if there is an error reading the file
+     */
+    public VOI[] readOtherOrientationVOI() throws IOException {
+
+        String VOIStr;
+        VOI[] voi = null;
+
+        if (isXML) {
+            voi = new VOI[1];
+
+            if (image.getNDims() > 2) {
+                voi[0] = new VOI(numVOIs, trimmedFileName);
+                voi[0].setExtension(extension);
+            } else {
+                voi[0] = new VOI(numVOIs, trimmedFileName);
+                voi[0].setExtension(extension);
+            }
+
+            if (image.getNDims() == 2) {
+
+                if ( !readXML(voi[0])) {
+                    throw (new IOException("Open VOI failed."));
+                }
+            } else {
+
+                if ( !readXML(voi[0])) {
+
+                    if ( !readCoordXML(voi[0])) {
+                        throw (new IOException("Open VOI failed."));
+                    } else {
+
+                        // System.err.println("success");
+                    }
+                }
+            }
+        } else {
+            voi = new VOI[1];
+            raFile = new RandomAccessFile(file, "r");
+            VOIStr = raFile.readLine();
+
+            if (VOIStr == null) {
+                return null;
+            }
+
+            VOIStr = VOIStr.trim();
+
+            if (VOIStr.length() < 14) {
+
+                if (VOIStr.regionMatches(true, 0, "S", 0, 1)) {
+                    voi[0] = readNaugeVOI(VOIStr);
+
+                    return voi;
+                } else {
+                    throw (new IOException("Not a VOI File MIPAV understands."));
+                }
+            }
+
+            VOIStr = VOIStr.substring(0, 14);
+
+            if (VOIStr.equals("MIPAV VOI FILE")) {
+                voi[0] = readContourVOI();
+            } else if (VOIStr.equals("MIPAV PTS FILE")) {
+                voi[0] = readPointVOI();
+            } else {
+                throw (new IOException("Not a VOI File MIPAV can read."));
+            }
+        }
+
+        return voi;
+
+    }
 
     /**
      * Writes VOIText(s) to a .lbl file (XML based)
