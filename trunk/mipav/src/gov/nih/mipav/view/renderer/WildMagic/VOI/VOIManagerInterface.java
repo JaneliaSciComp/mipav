@@ -414,6 +414,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             	MipavUtil.displayError("VOI failed to open for this image");
             }
         } 
+        else if (command.equals("NewVOIOtherOrientation")) {
+        	boolean success = openOtherOrientationVOI();
+        	if (!success) {
+        		MipavUtil.displayError("VOI failed to open for this image");	
+        	}
+        }
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI_ALL.getActionCommand())) {
             loadAllVOIs(false);
 
@@ -3723,6 +3729,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         }
 
         return true;
+    }
+    
+    private boolean openOtherOrientationVOI() {
+    	return true;
     }
     
     private boolean openPaint(boolean quietMode) {
