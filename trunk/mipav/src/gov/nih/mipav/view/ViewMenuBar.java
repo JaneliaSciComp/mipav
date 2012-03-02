@@ -877,7 +877,9 @@ public class ViewMenuBar {
                                                 menuBuilder.buildMenuItem("Save DicomMatrix", "SaveDicomMatrix", 0,
                                                         null, false),
                                                 menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
-                                                        null, false)}),
+                                                        null, false),
+                                                menuBuilder.buildMenuItem("Open other orientation",
+                                                		"NewVOIOtherOrientation", 0, null, false)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
