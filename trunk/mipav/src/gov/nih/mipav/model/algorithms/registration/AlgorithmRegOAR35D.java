@@ -349,6 +349,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     
     private boolean doMultiThread = false;
 
+    private int[] TransMatsInumber;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -380,6 +382,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                               boolean doGraph, boolean doSubsample, boolean fastMode, int _bracketBound,
                               int _baseNumIter, int _numMinima) {
         super(null, _image);
+        
         inputImage = _image;
 
         if (inputImage.isColorImage()) {
@@ -669,8 +672,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      */
     public void disposeLocal() {
 
-        // System.err.println("calling disposeLocal in algoRegOAR25D2");
-
         if (simpleInput_1 != null) {
             simpleInput_1.disposeLocal(false);
         }
@@ -842,9 +843,51 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         return trans;
     }
     
+   
+    
     public TransMatrix[] getArrayTransMatrix(){
-        return VolumesToReferenceTransformations;
+        boolean useIndexNumBreak = false;
+        int indexNumBreak = 0;
+        int counter = 0;
+        ArrayList<TransMatrix> arrayList1 = new ArrayList<TransMatrix>() ;
+        ArrayList<TransMatrix> arrayList2 = new ArrayList<TransMatrix>() ;
+        
+        if (TransMatsInumber[0] != 1){
+            if (TransMatsInumber[0]>TransMatsInumber[1]){
+                useIndexNumBreak = true;
+                for (int i = 0; i< inputImage.getExtents()[3]-1;i++){
+                    if (i < TransMatsInumber[i]){
+                        indexNumBreak++;
+                        }
+                }
+            }
+            for (int i = 0; i< inputImage.getExtents()[3]-1;i++){
+                if (i < TransMatsInumber[i]){
+                    if (useIndexNumBreak == false){
+                        arrayList1.add(i,VolumesToReferenceTransformations[i]);
+                    }
+                    else{
+                        arrayList1.add(i,VolumesToReferenceTransformations[(indexNumBreak-1)-i]);
+                    }
+                }               
+                else if (i > TransMatsInumber[i]){
+                    arrayList2.add(counter,VolumesToReferenceTransformations[(inputImage.getExtents()[3]-2)-counter]);
+                    counter++;
+                }
+            }       
+            arrayList2.addAll(arrayList1);
+            
+            for(int i=0; i< arrayList2.size(); i++){
+                VolumesToReferenceTransformations[i] = arrayList2.get(i);
+            }
+            
+           return VolumesToReferenceTransformations;
+        }
+        else{       
+            return VolumesToReferenceTransformations;
+        }
     }
+    
     
     public TransMatrix getTransform() {
         return answer.matrix;
@@ -1609,7 +1652,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         int endIndex = inputImage.getExtents()[3] - 1;
         
-        VolumesToReferenceTransformations= new TransMatrix[inputImage.getExtents()[3]];
+        VolumesToReferenceTransformations= new TransMatrix[inputImage.getExtents()[3]-1];
+        TransMatsInumber = new int[inputImage.getExtents()[3]-1];
 
         if (useOutsideReferenceVolume) {
             endIndex++;
@@ -1866,6 +1910,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform.run();
             
             final TransMatrix finalMatrix = getTransform();
+            TransMatsInumber[m] = iNumber;
             VolumesToReferenceTransformations[m] = finalMatrix;
 
             if (output_1 != null) {
@@ -2011,6 +2056,10 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                    extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
 
                 transform.run();
+                
+                final TransMatrix finalMatrix1 = getTransform();
+                TransMatsInumber[m] = iNumber;
+                VolumesToReferenceTransformations[m] = finalMatrix1;
 
                 if (output_1 != null) {
                     output_1.disposeLocal();
@@ -2106,6 +2155,10 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                        resIso[2], extentsIso[0], extentsIso[1], extentsIso[2], false,
                                                        true, false);
                     transform.run();
+                    
+                    final TransMatrix finalMatrix2 = getTransform();
+                    TransMatsInumber[m] = iNumber;
+                    VolumesToReferenceTransformations[m] = finalMatrix2;
 
                     if (output_1 != null) {
                         output_1.disposeLocal();
@@ -2237,6 +2290,9 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                            resIso[2], extentsIso[0], extentsIso[1], extentsIso[2],
                                                            false, true, false);
                         transform.run();
+                        final TransMatrix finalMatrix3 = getTransform();
+                        TransMatsInumber[m] = iNumber;
+                        VolumesToReferenceTransformations[m] = finalMatrix3;
 
                         if (output_1 != null) {
                             output_1.disposeLocal();
@@ -2336,6 +2392,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             System.gc();
             System.gc();
         } // for (int m = 0; m < inputImage.getExtents()[3]-1; m++)
+        
         
 
         inputImage.calcMinMax();
