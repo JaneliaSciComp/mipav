@@ -60,6 +60,38 @@ import javax.swing.table.DefaultTableModel;
 
 import Jama.Matrix;
 
+/**
+* <hr>
+* The copyright below only pertains to methods within JDialogImageInfo that relate to the Gradient Table Creator for
+* Philips PAR/REC files V3/V4 that is displayed in the DTI tab. Portions of code that relate to this copyright are
+* denoted with comments giving credit to software and authors.
+* 
+* <pre>
+* Copyright (c) 2011, Bennett Landman
+* All rights reserved.
+* Redistribution and use in source and binary forms, with or without 
+* modification, are permitted provided that the following conditions are met:
+* 
+*      - Redistributions of source code must retain the above copyright 
+*        notice, this list of conditions and the following disclaimer.
+*        
+*      - Redistributions in binary form must reproduce the above copyright 
+*        notice, this list of conditions and the following disclaimer in the 
+*        documentation and/or other materials provided with the distribution.
+*        
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY 
+* EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES 
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+* SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, 
+* SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
+* OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+* HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR 
+* TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, 
+* EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* 
+* </pre>
+* */
+
     public class JPanelDTIImportData extends JPanel implements ActionListener{
         
         // ~ Instance fields
@@ -130,7 +162,7 @@ import Jama.Matrix;
         private JFileChooser saveGradchooser; 
         
         /** table model for the srcimages. */
-        private DefaultTableModel srcTableModel;
+        public DefaultTableModel srcTableModel;
         
         /** DOCUMENT ME! */
         private JTextField bValueTextField;
@@ -424,8 +456,6 @@ import Jama.Matrix;
                  }
                   
                   else if (dtiparams == null){
-                      //System.out.println("numVolumes: " +numVolumes);
-                      //System.out.println("srcTablemodelvalue: " +srcTableModel.getValueAt(m_kDWIImage.getExtents()[3]-1, 0));
                       if (m_kDWIImage.getExtents()[3] == numVolumes ||srcTableModel.getValueAt(m_kDWIImage.getExtents()[3], 0).equals("")){
                           numVolumes = m_kDWIImage.getExtents()[3];
                           if (srcTableModel.getRowCount() != 0 ){
@@ -434,7 +464,6 @@ import Jama.Matrix;
                                   float [] flBvalueArr= new float[m_kDWIImage.getExtents()[3]]; 
                                   for (int i = 0; i < m_kDWIImage.getExtents()[3]; i++) {
                                       flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
-                                      //System.out.println("flBvalueArr: " +flBvalueArr[i]);
                                       }
                                  newDTIparams.setbValues(flBvalueArr);
                               }
@@ -2020,10 +2049,6 @@ import Jama.Matrix;
             
             
             double[][] C = new double[A.length][B[0].length];
-            /*System.out.println("alengeth: " +A.length);
-            System.out.println("b0lengeth: " +B[0].length);
-            System.out.println("clength" +C.length);
-            System.out.println("c0length" +C[0].length);*/
             for(int i=0; i<C.length; i++){
                 for(int j=0; j<C[0].length; j++){
                     C[i][j]=A[i][0]*B[0][j] + A[i][1]*B[1][j]+A[i][2]*B[2][j];
