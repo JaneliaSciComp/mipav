@@ -338,7 +338,7 @@ public class FileVOI extends FileXML {
         		    pointNumber = base.size();
         		    for (int k = 0; k < pointNumber; k++) {
         		    	vec = base.elementAt(k);
-        		        pointVOI[pointIndex] = new VOI(id, "",VOI.POINT, 0.0f);
+        		        pointVOI[pointIndex] = new VOI(id++, "",VOI.POINT, 0.0f);
         		        pointVOI[pointIndex].importPoint(vec);
         		        pointIndex++;
         		    }
