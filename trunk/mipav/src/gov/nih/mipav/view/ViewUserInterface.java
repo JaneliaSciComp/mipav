@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIFiberTracking;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
@@ -958,12 +959,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             new JDialogDTICreateListFile();
         }else if (command.equals("dtiPipeline")) { 
             new DTIPipeline();
-        } else if (command.equals("estimateTensor")) {
+        }else if (command.equals("dtiColor")) { 
+            new DTIColorDisplay(true);    
+        /*} else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
         } else if (command.equals("fiberTracking")) {
             JPanelDTIFiberTracking.createFrame();
         } else if (command.equals("dtiVisualization")) {
-        	JPanelDTIVisualization.createFrame();
+        	JPanelDTIVisualization.createFrame();*/
         } else if (command.equals("HyperGraph")) {
         	new JDialogHyperGraph(null, null);
         } else if (command.equals("treT1")) {
