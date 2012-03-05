@@ -18,6 +18,7 @@ import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
+import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIFiberTracking;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
@@ -2460,12 +2461,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDTICreateListFile();
         }else if (command.equals("dtiPipeline")) { 
             new DTIPipeline();
-        }else if (command.equals("estimateTensor")) {
+        }else if (command.equals("dtiColor")) { 
+            new DTIColorDisplay(true);
+        /*}else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
         } else if (command.equals("fiberTracking")) {
             JPanelDTIFiberTracking.createFrame();
         } else if (command.equals("dtiVisualization")) {
-        	JPanelDTIVisualization.createFrame();
+        	JPanelDTIVisualization.createFrame();*/
         } else if (command.equals("treT1")) {
             new JDialogTreT1(this, getActiveImage());
         } else if (command.equals("treT2")) {
