@@ -38,8 +38,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
-import java.util.Vector;
+import java.text.DecimalFormat;
 
 import javax.swing.*;
 
@@ -327,7 +326,7 @@ public class PlugInDialogCreateTumorMap541a extends JDialogScriptableBase implem
         final JLabel measureLabel = new JLabel("Radius of initial tumor (in "+Unit.MILLIMETERS.getAbbrev()+"): ");
         panel.add(measureLabel, flow);
         
-        initRadiusText = gui.buildDecimalField("", 3);
+        initRadiusText = gui.buildDecimalField("", 2.808);
         panel.add(initRadiusText, flow);
         tumorSimPanel.add(panel, gbc);
         
@@ -390,9 +389,46 @@ public class PlugInDialogCreateTumorMap541a extends JDialogScriptableBase implem
 	        MipavUtil.displayError("Input error, enter numerical values only.");
 	        return false;
 	    }
-	    
+
 	    simMode = (TumorSimMode)growthShrinkCombo.getSelectedItem();
+	    
+	    initRadius = perturbRadius(initRadius, xyRes, zRes);
 	    
 		return true;
 	} //end setVariables()
+
+    private double perturbRadius(double initRadius, double xyRes, double zRes) {
+        double minDiff = Double.MAX_VALUE, percentMin = 0.0;
+        
+        for(double j=-.1; j<.1; j+=.001) {
+            double newRadius = initRadius*(1+j);
+            double xyDiff = Math.abs(1-((newRadius/xyRes) % 1));
+            double zDiff = Math.abs(1-((newRadius/zRes) % 1));
+            double newDiff =  xyDiff+zDiff;
+            if(newDiff < minDiff) {
+                minDiff = newDiff;
+                percentMin = j;
+            }
+            if(j == 0.0) {
+                System.out.println("NewDiff: "+newDiff);
+            } else {
+                System.out.println(j+" "+newRadius+" "+newDiff+" "+minDiff);
+            }
+        }
+        
+        DecimalFormat decForm = new DecimalFormat("0.#######");
+        double newRadius = Double.valueOf(decForm.format(((1+percentMin)*initRadius))).doubleValue();
+        
+        if(newRadius != initRadius) {
+            int result = JOptionPane.showConfirmDialog(parentFrame, "Using initial radius of "+newRadius+" instead of "+initRadius+" reduces rounding errors of radius conversion to pixels.  Use new radius of "+newRadius+"?\n"+
+                                                        "\tFor example, in x/y dimensions radius will use "+decForm.format(newRadius/xyRes)+" pixels instead of "+decForm.format(initRadius/xyRes)+" pixels,\n"+
+                                                        "\tin z dimension radius will use "+decForm.format(newRadius/zRes)+" pixels instead of "+decForm.format(initRadius/zRes)+" pixels.", "Do radius change",  
+                                                        JOptionPane.YES_NO_OPTION, JOptionPane.NO_OPTION);
+            if(result == JOptionPane.YES_OPTION) {
+                return newRadius; 
+            }
+        }
+        
+        return initRadius;
+    }
 }
