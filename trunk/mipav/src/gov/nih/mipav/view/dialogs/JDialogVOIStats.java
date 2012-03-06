@@ -159,6 +159,9 @@ public class JDialogVOIStats extends JDialogBase
 
     /** Thickness of the currently selected voi */
     protected JTextField VOIThicknessField;
+    
+    /** uid of the selected voi */
+    protected JTextField UIDfield;
 
     /** The graphical representation of voiModel */
     private JTree voiTree;
@@ -174,6 +177,8 @@ public class JDialogVOIStats extends JDialogBase
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     private JPanelPixelExclusionSelector excluder;
+
+    
 
     /**
      * Constructor for the JDialogVOIStats.
@@ -264,6 +269,13 @@ public class JDialogVOIStats extends JDialogBase
             }
 
             voi.setName(VOIName.getText());
+            
+            try {
+                int uid = Integer.valueOf(UIDfield.getText()).intValue();
+                voi.setUID(uid);
+            } catch(NumberFormatException e) {
+                MipavUtil.displayError("UID must be an integer");
+            }
 
             boolean changedThickness = false;
             int thickChange = 1;
@@ -632,6 +644,7 @@ public class JDialogVOIStats extends JDialogBase
             seedValueTF.setText(String.valueOf(voi.getWatershedID()));
 
             VOIName.setText(voi.getName());
+            UIDfield.setText(Integer.valueOf(voi.getUID()).toString());
             setTitle("VOI Properties/Statistics - " + voi.getUID());
 
             VOIThicknessField.setText(new Integer(voi.getThickness()).toString());
@@ -790,17 +803,21 @@ public class JDialogVOIStats extends JDialogBase
         frameBorder = BorderFactory.createCompoundBorder(BorderFactory.createRaisedBevelBorder(),
                                                          BorderFactory.createLoweredBevelBorder());
 
-        JLabel labelName = new JLabel("Name of VOI:");
+        JLabel labelName = new JLabel("VOI name:");
         labelName.setFont(serif12);
         labelName.setForeground(Color.black);
 
-        JLabel labelColor = new JLabel("Color of VOI:");
+        JLabel labelColor = new JLabel("VOI color:");
         labelColor.setFont(serif12);
         labelColor.setForeground(Color.black);
 
-        JLabel labelThickness = new JLabel("Thickness of VOI:");
+        JLabel labelThickness = new JLabel("VOI thickness:");
         labelThickness.setFont(serif12);
         labelThickness.setForeground(Color.black);
+        
+        JLabel labelUID = new JLabel("VOI UID:");
+        labelUID.setFont(serif12);
+        labelUID.setForeground(Color.black);
 
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
@@ -813,6 +830,10 @@ public class JDialogVOIStats extends JDialogBase
         VOIThicknessField = new JTextField(3);
         VOIThicknessField.setFont(serif12);
         MipavUtil.makeNumericsOnly(VOIThicknessField, false);
+        
+        UIDfield = new JTextField(3);
+        UIDfield.setFont(serif12);
+        MipavUtil.makeNumericsOnly(UIDfield, false);
 
         JPanel namePanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
@@ -834,6 +855,19 @@ public class JDialogVOIStats extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.NONE;
+        namePanel.add(labelUID, gbc);
+
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        namePanel.add(UIDfield, gbc);
+        
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        gbc.fill = GridBagConstraints.NONE;
         namePanel.add(labelThickness, gbc);
 
         gbc.weightx = 1;
@@ -843,7 +877,7 @@ public class JDialogVOIStats extends JDialogBase
         namePanel.add(VOIThicknessField, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.weightx = 0;
         gbc.weighty = 0;
         gbc.fill = GridBagConstraints.NONE;
