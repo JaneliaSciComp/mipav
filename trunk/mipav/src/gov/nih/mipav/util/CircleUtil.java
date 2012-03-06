@@ -23,15 +23,11 @@ public class CircleUtil {
         int[][] sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, pixRadius);
         
         for(int i=0; i<sphere.length; i++) {
-            int oldZ = sphere[i][2];
-            System.out.print(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]+" changed to ");
+            //System.out.print(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]+" changed to ");
             sphere[i][0] = (int) Math.round(((smallestRes/xRes)*(sphere[i][0]-xCenter))+xCenter);
             sphere[i][1] = (int) Math.round(((smallestRes/yRes)*(sphere[i][1]-yCenter))+yCenter);
             sphere[i][2] = (int) Math.round(((smallestRes/zRes)*(sphere[i][2]-zCenter))+zCenter);
-            System.out.println(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]);
-            if(sphere[i][2] != oldZ) {
-                System.out.println("Stop");
-            }
+            //System.out.println(sphere[i][0]+", "+sphere[i][1]+", "+sphere[i][2]);
         }
         
         return sphere;
