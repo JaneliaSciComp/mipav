@@ -400,19 +400,14 @@ public class PlugInDialogCreateTumorMap541a extends JDialogScriptableBase implem
     private double perturbRadius(double initRadius, double xyRes, double zRes) {
         double minDiff = Double.MAX_VALUE, percentMin = 0.0;
         
-        for(double j=-.1; j<.1; j+=.001) {
+        for(double j=-.05; j<.05; j+=.0005) {
             double newRadius = initRadius*(1+j);
-            double xyDiff = Math.abs(1-((newRadius/xyRes) % 1));
-            double zDiff = Math.abs(1-((newRadius/zRes) % 1));
+            double xyDiff = getDiff(newRadius, xyRes);
+            double zDiff = getDiff(newRadius, zRes);           
             double newDiff =  xyDiff+zDiff;
             if(newDiff < minDiff) {
                 minDiff = newDiff;
                 percentMin = j;
-            }
-            if(j == 0.0) {
-                System.out.println("NewDiff: "+newDiff);
-            } else {
-                System.out.println(j+" "+newRadius+" "+newDiff+" "+minDiff);
             }
         }
         
@@ -430,5 +425,13 @@ public class PlugInDialogCreateTumorMap541a extends JDialogScriptableBase implem
         }
         
         return initRadius;
+    }
+
+    private double getDiff(double newRadius, double res) {
+        double diff = (newRadius/res) % 1;
+        if(diff > .5) {
+            diff = Math.abs(1-diff);
+        }
+        return diff;
     }
 }
