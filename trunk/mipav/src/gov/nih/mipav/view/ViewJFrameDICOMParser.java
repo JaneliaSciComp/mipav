@@ -565,6 +565,18 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         return columnNames;
     }
 
+    public ViewJComponentPreviewImage getComponentImageDicom() {
+        return componentImageDicom;
+    }
+
+    public Vector<FileInfoDicom> getFileInfoVector() {
+        return fileInfoVector;
+    }
+
+    public Vector<FileInfoDicom> getImageTableVector() {
+        return imageTableVector;
+    }
+
     /**
      * reloadRows.
      */
