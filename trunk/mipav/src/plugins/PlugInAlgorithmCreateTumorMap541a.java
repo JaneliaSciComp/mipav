@@ -173,6 +173,9 @@ public class PlugInAlgorithmCreateTumorMap541a extends AlgorithmBase {
             image2a.getFileInfo(i).setFileDirectory(Preferences.getPreferencesDir());
         }
         
+        image1a.calcMinMax();
+        image2a.calcMinMax();
+        
         if(subsampleAmount != 0) {
             xCenter = (int) Math.round(((double)xCenter)/subsampleAmount);
             yCenter = (int) Math.round(((double)yCenter)/subsampleAmount);
