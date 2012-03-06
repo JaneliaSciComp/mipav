@@ -136,9 +136,15 @@ public class JDialogLoadOtherOrientationVOIs extends JDialogBase {
             PlyInstance.selectFile();
         } else if (command.equals("Save")) {
         	setVisible(false);
-            AxialVOIs.readXML();
-            SagittalVOIs.readXML();
-            CoronalVOIs.readXML();
+            if (!AxialVOIs.readXML()) {
+            	MipavUtil.displayError("AxialVOIs.readXML() failed.");	
+            }
+            if (!SagittalVOIs.readXML()) {
+            	MipavUtil.displayError("SagittalVOIs.readXML() failed.");	
+            }
+            if (!CoronalVOIs.readXML()) {
+            	MipavUtil.displayError("CoronalVOIs.readXML() failed.");
+            }
             drawVOI();
            
             // writePlyFile();
@@ -154,19 +160,21 @@ public class JDialogLoadOtherOrientationVOIs extends JDialogBase {
     public void drawVOI() {
     	
     	float zDicom;
-    	int zDim;
+    	int zDim = imageAxial.getExtents()[2];
+    	Vector3f dicomArray[] = new Vector3f[zDim];
+    	float zDicomArray[] = new float[zDim];
     	// Draw Axial image VOI
     	System.err.println("Axial image processing ...");
-    	zDim = imageAxial.getExtents()[2];
     	VOI voiAxial = new VOI((short)0, "blank");
     	imageAxial.registerVOI(voiAxial);
-    	for ( int z = 0; z < zDim; z++ ) {    		
+    	for (int z = 0; z < zDim; z++) {
     		Vector3f ptImg = new Vector3f(0, 0, z);
-			Vector3f ptDicom = new Vector3f();
-	        MipavCoordinateSystems.fileToScanner(ptImg, ptDicom, imageAxial);
-	        zDicom = ptDicom.Z;
-    		System.err.println("zSlice = " + z + " zDicom = " + zDicom);
-    		findVOIsInDicomSpace(z, zDicom, imageAxial, SagittalVOIs, CoronalVOIs);
+    	    dicomArray[z] = new Vector3f();
+    	    MipavCoordinateSystems.fileToScanner(ptImg, dicomArray[z], imageAxial);
+    	    zDicomArray[z] = dicomArray[z].Z;
+    	}
+    	for ( int z = 0; z < zDim; z++ ) {    		
+    		findVOIsInDicomSpace(z, zDicomArray, imageAxial, SagittalVOIs, CoronalVOIs);
     	}
     	/*
     	// Draw Sagittal image VOI
@@ -202,19 +210,37 @@ public class JDialogLoadOtherOrientationVOIs extends JDialogBase {
     	
     }
     
-    public void findVOIsInDicomSpace(int zSlice, float zDicom, ModelImage image, InstanceVOI firstVOI, InstanceVOI secondVOI ) {
+    public void findVOIsInDicomSpace(int zSlice, float zDicomArray[], ModelImage image, InstanceVOI firstVOI, InstanceVOI secondVOI ) {
     	 
     	 Vector<Vector3f> pointsFind = new Vector<Vector3f>();
     	 Vector3f v;
+    	 float dist;
+    	 int zNear = 0;
          for (int i = 0; i < firstVOI.myContourVector.size(); i++) {
              v = (Vector3f) firstVOI.myContourVector.get(i);
-             if ( zDicom <= (v.Z + 0.5f) && zDicom >= (v.Z - 0.5f) ) {
+             float minDist = Float.MAX_VALUE;
+             for (int z = 0; z < zDicomArray.length; z++) {
+            	 dist = Math.abs(zDicomArray[z] - v.Z);
+	             if (dist < minDist) { 
+	            	 minDist = dist;
+	            	 zNear = z;
+	             }
+             }
+             if (zNear == zSlice) {
             	 pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
              }
          }
          for (int i = 0; i < secondVOI.myContourVector.size(); i++) {
              v = (Vector3f) secondVOI.myContourVector.get(i);
-             if ( zDicom <= (v.Z + 0.5f) && zDicom >= (v.Z - 0.5f) ) {
+             float minDist = Float.MAX_VALUE;
+             for (int z = 0; z < zDicomArray.length; z++) {
+            	 dist = Math.abs(zDicomArray[z] - v.Z);
+	             if (dist < minDist) { 
+	            	 minDist = dist;
+	            	 zNear = z;
+	             }
+             }
+             if (zNear == zSlice) {
             	 pointsFind.add(new Vector3f(v.X, v.Y, v.Z));
              }
          }
