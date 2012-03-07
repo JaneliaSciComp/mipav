@@ -20,6 +20,7 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -116,6 +117,8 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
     JCheckBox createVR = new JCheckBox( "Create VR Image" );
     JCheckBox displayVR = new JCheckBox( "Display VR Image" );
+
+    private Font serif12;
 
     /**
      * Constructs the Fiber Tracking input panel:
@@ -494,17 +497,17 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
 		final JPanel DTIloadPanel = new JPanel();
 		DTIloadPanel.setLayout(new GridBagLayout());
-		DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+		DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder("Upload Tensor Image"));
 
 		final GridBagConstraints gbc = new GridBagConstraints();
 
-		gbc.gridx = 0;
+		/*gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
 		gbc.gridheight = 1;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.CENTER;
-		gbc.anchor = GridBagConstraints.WEST;
+		gbc.anchor = GridBagConstraints.WEST;*/
 
 		JButton openDTIimageButton = new JButton("Browse");
 		openDTIimageButton.setToolTipText("Browse Diffusion Tensor image file");
@@ -519,29 +522,35 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 		textDTIimage.setFont(MipavUtil.font12);
 
 		JLabel dtiFileLabel = new JLabel("Tensor Image: ");
+		dtiFileLabel.setFont(serif12);
 
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.weightx = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
 		DTIloadPanel.add(dtiFileLabel, gbc);
 
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.weightx = 0.15;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 		DTIloadPanel.add(textDTIimage, gbc);
 
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.EAST;
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.weightx = 0.25;
+        gbc.fill = GridBagConstraints.NONE;
 		DTIloadPanel.add(openDTIimageButton, gbc);
 
 		mainPanel.add(DTIloadPanel);
 	}
 	
 	
-	private void buildDTIOutputPanel() {
+	/*private void buildDTIOutputPanel() {
 
 		final JPanel DTIloadPanel = new JPanel();
 		DTIloadPanel.setLayout(new GridBagLayout());
@@ -589,7 +598,7 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 		DTIloadPanel.add(openDTIOutputButton, gbc);
 
 		mainPanel.add(DTIloadPanel);
-	}
+	}*/
     
     private TitledBorder buildTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
@@ -773,9 +782,9 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 		mainPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
 		buildDTILoadPanel();
-		buildDTIOutputPanel();
+		//buildDTIOutputPanel();
 		GridBagConstraints gbc2 = new GridBagConstraints();
-		gbc2.fill = GridBagConstraints.NONE;
+		gbc2.fill = GridBagConstraints.HORIZONTAL;
 		gbc2.weightx = 1;
 		gbc2.weighty = 1;
 		gbc2.gridx = 0;
@@ -784,85 +793,167 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 		this.add(mainPanel, gbc2);
 		
 		JPanel imageOutputPanel = new JPanel(new GridBagLayout());
-		imageOutputPanel.setBorder(JInterfaceBase.buildTitledBorder("Select Output Images"));
+		imageOutputPanel.setBorder(JInterfaceBase.buildTitledBorder("Output Options"));
 		final GridBagConstraints gbc = new GridBagConstraints();
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.weightx = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createADC, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayADC, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createColor, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayColor, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createEValue, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayEValue, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createEVector, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayEVector, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createFA, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayFA, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createRA, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayRA, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createTrace, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayTrace, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
         imageOutputPanel.add(createVR, gbc);
         gbc.gridx = 1;
+        gbc.weightx = .15;
+        gbc.fill = GridBagConstraints.REMAINDER;
         imageOutputPanel.add(displayVR, gbc);
+        
+        JButton openDTIOutputButton = new JButton("Browse");
+        openDTIOutputButton.setToolTipText("Browse diffusion tensor output directory");
+        openDTIOutputButton.addActionListener(this);
+        openDTIOutputButton.setActionCommand("browseOutput");
+        openDTIOutputButton.setEnabled(true);
+
+        outputDirTextField = new JTextField();
+        outputDirTextField.setPreferredSize(new Dimension(275, 21));
+        outputDirTextField.setEditable(true);
+        outputDirTextField.setBackground(Color.white);
+        outputDirTextField.setFont(MipavUtil.font12);
+
+        JLabel dtiOutputLabel = new JLabel("Output Directory: ");
+        dtiOutputLabel.setFont(serif12);
+
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        imageOutputPanel.add(dtiOutputLabel, gbc);
+
+        gbc.gridx = 1;
+        gbc.weightx = 0.10;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        imageOutputPanel.add(outputDirTextField, gbc);
+
+        gbc.gridx = 2;
+        gbc.weightx = 0.25;
+        gbc.fill = GridBagConstraints.NONE;
+        imageOutputPanel.add(openDTIOutputButton, gbc);
         
 
 
 
+        createADC.setFont(serif12);
         createADC.setEnabled(false); createADC.addActionListener(this);
+        displayADC.setFont(serif12);
         displayADC.setEnabled(false);
 
+        createColor.setFont(serif12);
         createColor.setEnabled(false); createColor.addActionListener(this);
+        displayColor.setFont(serif12);
         displayColor.setEnabled(false);
 
+        createEValue.setFont(serif12);
         createEValue.setEnabled(false); createEValue.addActionListener(this);
+        displayEValue.setFont(serif12);
         displayEValue.setEnabled(false);
 
+        createEVector.setFont(serif12);
         createEVector.setEnabled(false); createEVector.addActionListener(this);
+        displayEVector.setFont(serif12);
         displayEVector.setEnabled(false);
 
+        createFA.setFont(serif12);
         createFA.setEnabled(false); createFA.addActionListener(this);
+        displayFA.setFont(serif12);
         displayFA.setEnabled(false);
 
+        createRA.setFont(serif12);
         createRA.setEnabled(false); createRA.addActionListener(this);
+        displayRA.setFont(serif12);
         displayRA.setEnabled(false);
 
+        createTrace.setFont(serif12);
         createTrace.setEnabled(false); createTrace.addActionListener(this);
+        displayTrace.setFont(serif12);
         displayTrace.setEnabled(false);
 
+        createVR.setFont(serif12);
         createVR.setEnabled(false); createVR.addActionListener(this);
+        displayVR.setFont(serif12);
         displayVR.setEnabled(false);
 
         mainPanel.add( imageOutputPanel );
