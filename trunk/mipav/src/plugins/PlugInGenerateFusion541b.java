@@ -49,6 +49,7 @@ public class PlugInGenerateFusion541b implements PlugInAlgorithm {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * 
      * Defines body of run method, which was declared in the interface. 
      *
      * @param  parentFrame  parent frame

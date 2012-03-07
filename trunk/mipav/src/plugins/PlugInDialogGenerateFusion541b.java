@@ -38,8 +38,10 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.Iterator;
 
 import javax.swing.*;
 
@@ -205,15 +207,15 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generateFusionAlgo.isCompleted() == true)) {
-                if(doInterImages) {
-                    
+                Collection<ModelImage> list = generateFusionAlgo.getResultImageList();
+                synchronized(list) {
+                    Iterator<ModelImage> itr = list.iterator();
+                    while(itr.hasNext()) {
+                        new ViewJFrameImage(itr.next());
+                    }
                 }
-                
-            } 
-
-            if (generateFusionAlgo.isCompleted()) {                
                 insertScriptLine();
-            }
+            } 
 
             if (generateFusionAlgo != null) {
                 generateFusionAlgo.finalize();
@@ -480,11 +482,11 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         outputPanel.add(doSubsampleBox.getParent(), gbc);
         gbc.gridy++;
       
-        arithmeticMeanBox = gui.buildCheckBox("Show arithmetic mean", false);
+        arithmeticMeanBox = gui.buildCheckBox("Show arithmetic mean", true);
         outputPanel.add(arithmeticMeanBox.getParent(), gbc);
         gbc.gridy++;
         
-        geometricMeanBox = gui.buildCheckBox("Show geometric mean", true);
+        geometricMeanBox = gui.buildCheckBox("Show geometric mean", false);
         outputPanel.add(geometricMeanBox.getParent(), gbc);
         gbc.gridy++;
         

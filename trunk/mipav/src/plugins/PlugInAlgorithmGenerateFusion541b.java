@@ -27,6 +27,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -40,6 +41,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
@@ -78,6 +80,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     private int xMovement;
     private int yMovement;
     private int zMovement;
+    private Collection<ModelImage> resultImageList;
+    
 
     /**
      * Constructor.
@@ -127,6 +131,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         this.transformImageAr = transformImageAr;
         
         this.concurrentNum = concurrentNum;
+        
+        this.resultImageList = Collections.synchronizedCollection(new ArrayList<ModelImage>());
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -175,9 +181,15 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
 
     } // end runAlgorithm()
     
+    public Collection<ModelImage> getResultImageList() {
+        return resultImageList;
+    }
+
     public class FusionAlg implements Callable, Runnable {
 
         private ModelImage baseImage, transformImage;
+        
+        private ModelImage subGeoImage = null, subAriImage = null;
         
         private Frame parentFrame;
         
@@ -217,6 +229,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             transform();
             
+            resizeXZDim();
+            
             if(doThreshold) {
                 threshold(transformImage);
             }
@@ -224,19 +238,18 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             //discardSlices(middleSlice);
             
             if(doAriMean) {
-                //calcAriMean();
+                calcAriMean();
+                
+                resultImageList.add(subAriImage);
             }
             
             if(doGeoMean) {
-                //calcGeoMean();
+                calcGeoMean();
+                
+                resultImageList.add(subGeoImage);
             } 
             
             return true;
-        }
-        
-        public ModelImage getResultImage() {
-            
-            return null;
         }
         
         private void transform() {
@@ -256,6 +269,30 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
                 new ViewJFrameImage(transformImage);
             }
         }
+        
+        private void resizeXZDim() {
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, transformImage);
+            transform.setPadFlag(true);
+            TransMatrix mat = new TransMatrix(4);
+            mat.MakeIdentity();
+            mat.set(0, 0, transformImage.getResolutions(0)[0] / baseImage.getResolutions(0)[0]);
+            mat.set(2, 2, transformImage.getResolutions(0)[2] / baseImage.getResolutions(0)[2]);
+            transform.setMatrix(mat);
+            transform.setImage25D(false);
+            transform.setSeparateThread(false);
+            transform.setClipFlag(true);
+            transform.setDimAndResXYZ();
+            transform.setUnits(transformImage.getUnitsOfMeasure());
+            transform.setOutDimensions(transformImage.getExtents());//transformImage.getExtents());
+            transform.setOutResolutions(transformImage.getResolutions(0));
+            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            transformImage = transform.getResultImage();
+            float zRes = transformImage.getResolutions(0)[2];
+            transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
+            if(doInterImages) {
+                new ViewJFrameImage(transformImage);
+            }
+        }
 
         private void rotate(int mode) {
             AlgorithmRotate rotate = new AlgorithmRotate(transformImage, mode);
@@ -268,64 +305,26 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         }
 
         private void calcGeoMean() {
-            ModelImage subGeoImage = (ModelImage) baseImage.clone("subGeoImage");
+            subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0));
             int transformX, transformY, transformZ;
+            //new ViewJFrameImage(transformImage);
             for(int i=0; i<baseImage.getExtents()[0]; i++) {
                 transformX = i+xMovement;
-                if(transformX >= 0 && transformX < transformImage.getExtents()[0]) {
-                    for(int j=0; j<baseImage.getExtents()[1]; j++) {
-                        if(j == 420) {
-                            System.out.println("Stop");
-                        }
-                        transformY = j+yMovement;
-                        if(transformY >= 0 && transformY < transformImage.getExtents()[1]) {
-                            for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                transformZ = k+zMovement;
-                                try {
-                                    if(transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                                        subGeoImage.set(i, j, k, Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
-                                    } else {
-                                        subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                                    }
-                                } catch(Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
+                for(int j=0; j<baseImage.getExtents()[1]; j++) {
+                    transformY = j+yMovement;
+                    for(int k=0; k<baseImage.getExtents()[2]; k++) {
+                        transformZ = k+zMovement;
+                        if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
+                                transformY >= 0 && transformY < transformImage.getExtents()[1] && 
+                                transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
+                            subGeoImage.set(i, j, k, Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
                         } else {
-                            System.out.println(baseImage.getExtents()[1] + " vs " +transformImage.getExtents()[1] + " vs "+j);
-                            for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                try {
-                                    subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                                } catch(Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    System.out.println(baseImage.getExtents()[0] + " vs " +transformImage.getExtents()[0] + " vs "+i);
-                    for(int j=0; i<baseImage.getExtents()[1]; j++) {
-                        for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                            try {
-                                subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                            } catch(Exception e) {
-                                e.printStackTrace();
-                            }
+                            subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
                         }
                     }
                 }
             }
-            
-            if(doInterImages) {
-                new ViewJFrameImage(subGeoImage);
-            }
-        }
-
-        private void calcAriMean() {
-            ModelImage subAriImage = (ModelImage) baseImage.clone("subAriImage");
-            int transformX, transformY, transformZ;
-            for(int i=0; i<baseImage.getExtents()[0]; i++) {
-                transformX = i+xMovement;
+                /*transformX = i+xMovement;
                 if(transformX >= 0 && transformX < transformImage.getExtents()[0]) {
                     for(int j=0; j<baseImage.getExtents()[1]; j++) {
                         transformY = j+yMovement;
@@ -333,35 +332,67 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
                             for(int k=0; k<baseImage.getExtents()[2]; k++) {
                                 transformZ = k+zMovement;
                                 if(transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                                    subAriImage.set(i, j, k, (baseImage.getDouble(i, j, k)+transformImage.getDouble(transformX, transformY, transformZ)) / 2.0);
+                                    //System.out.println("Setting "+i+", "+j+", "+k+" with "+Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
+                                    //if(transformImage.getDouble(transformX, transformY, transformZ) != 0 || Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)) != 0) {
+                                    //    System.out.println("Setting "+i+", "+j+", "+k);
+                                    //}
+                                    subGeoImage.set(i, j, k, Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
                                 } else {
-                                    subAriImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                                    subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
                                 }
                             }
                         } else {
-                            System.out.println(baseImage.getExtents()[1] + " vs " +transformImage.getExtents()[1] + " vs "+j);
+                            System.out.println("Filling values for k at "+i+", "+j);
+                            //System.out.println(baseImage.getExtents()[1] + " vs " +transformImage.getExtents()[1] + " vs "+j);
                             for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                try {
-                                    subAriImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                                } catch(Exception e) {
-                                    e.printStackTrace();
-                                }
+                                subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k)); 
                             }
                         }
                     }
                 } else {
-                    System.out.println(baseImage.getExtents()[0] + " vs " +transformImage.getExtents()[0] + " vs "+i);
-                    for(int j=0; i<baseImage.getExtents()[1]; j++) {
+                    System.out.println("Filling values for j,k at "+i);
+                    //System.out.println(baseImage.getExtents()[0] + " vs " +transformImage.getExtents()[0] + " vs "+i);
+                    for(int j=0; j<baseImage.getExtents()[1]; j++) {
                         for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                            try {
-                                subAriImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                            } catch(Exception e) {
-                                e.printStackTrace();
-                            }
+                            subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                        }
+                    }
+                }
+            }*/
+            
+            subGeoImage.calcMinMax();
+            
+            subGeoImage.setImageName(baseImage.getImageName()+"_GeoMeanFused");
+            
+            if(doInterImages) {
+                new ViewJFrameImage(subGeoImage);
+            }
+        }
+
+        private void calcAriMean() {
+            subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0));
+            int transformX, transformY, transformZ;
+            //new ViewJFrameImage(transformImage);
+            for(int i=0; i<baseImage.getExtents()[0]; i++) {
+                transformX = i+xMovement;
+                for(int j=0; j<baseImage.getExtents()[1]; j++) {
+                    transformY = j+yMovement;
+                    for(int k=0; k<baseImage.getExtents()[2]; k++) {
+                        transformZ = k+zMovement;
+                        if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
+                                transformY >= 0 && transformY < transformImage.getExtents()[1] && 
+                                transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
+                            subAriImage.set(i, j, k, (baseImage.getDouble(i, j, k) + transformImage.getDouble(transformX, transformY, transformZ))/2.0 );
+                        } else {
+                            subAriImage.set(i, j, k, baseImage.getDouble(i, j, k));
                         }
                     }
                 }
             }
+            
+            subAriImage.calcMinMax();
+            
+            subAriImage.setImageName(baseImage.getImageName()+"_AriMeanFused");
             
             if(doInterImages) {
                 new ViewJFrameImage(subAriImage);
@@ -383,6 +414,14 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
                 }
             }
             
+        }
+
+        public ModelImage getSubGeoImage() {
+            return subGeoImage;
+        }
+
+        public ModelImage getSubAriImage() {
+            return subAriImage;
         }
     }
 
