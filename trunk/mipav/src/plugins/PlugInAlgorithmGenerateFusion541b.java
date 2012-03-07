@@ -61,6 +61,10 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
 
+    public enum SampleMode {
+        DownsampleToBase,
+        UpsampleToTransform;
+    }
     
     private ModelImage image;
     private boolean doAriMean;
@@ -81,6 +85,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     private int yMovement;
     private int zMovement;
     private Collection<ModelImage> resultImageList;
+    private SampleMode mode;
     
 
     /**
@@ -131,6 +136,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         this.transformImageAr = transformImageAr;
         
         this.concurrentNum = concurrentNum;
+        
+        this.mode = mode;
         
         this.resultImageList = Collections.synchronizedCollection(new ArrayList<ModelImage>());
     }
@@ -229,7 +236,19 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             transform();
             
-            resizeXZDim();
+            
+            downsampleToBase();
+            
+            /*switch (mode) {
+            
+            case DownsampleToBase:
+                
+                break;
+            
+            case UpsampleToTransform:
+                upsampleToTransform();
+                break;
+            }*/
             
             if(doThreshold) {
                 threshold(transformImage);
@@ -270,28 +289,50 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             }
         }
         
-        private void resizeXZDim() {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, transformImage);
-            transform.setPadFlag(true);
+        private void downsampleToBase() {
             TransMatrix mat = new TransMatrix(4);
             mat.MakeIdentity();
             mat.set(0, 0, transformImage.getResolutions(0)[0] / baseImage.getResolutions(0)[0]);
             mat.set(2, 2, transformImage.getResolutions(0)[2] / baseImage.getResolutions(0)[2]);
-            transform.setMatrix(mat);
-            transform.setImage25D(false);
-            transform.setSeparateThread(false);
-            transform.setClipFlag(true);
-            transform.setDimAndResXYZ();
-            transform.setUnits(transformImage.getUnitsOfMeasure());
-            transform.setOutDimensions(transformImage.getExtents());//transformImage.getExtents());
-            transform.setOutResolutions(transformImage.getResolutions(0));
-            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
-            transformImage = transform.getResultImage();
+            
+            transformImage = subTransform(transformImage, mat);
+            
             float zRes = transformImage.getResolutions(0)[2];
             transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
             }
+        }
+        
+        private void upsampleToTransform() {
+            TransMatrix mat = new TransMatrix(4);
+            mat.MakeIdentity();
+            mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
+            mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
+            
+            baseImage = subTransform(baseImage, mat);
+            
+            float zRes = transformImage.getResolutions(0)[2];
+            baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
+            if(doInterImages) {
+                new ViewJFrameImage(baseImage);
+            }
+        }
+        
+        private ModelImage subTransform(ModelImage image, TransMatrix mat) {
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, image);
+            transform.setPadFlag(true);
+            transform.setMatrix(mat);
+            transform.setImage25D(false);
+            transform.setSeparateThread(false);
+            transform.setClipFlag(true);
+            transform.setDimAndResXYZ();
+            transform.setUnits(image.getUnitsOfMeasure());
+            transform.setOutDimensions(image.getExtents());//transformImage.getExtents());
+            transform.setOutResolutions(image.getResolutions(0));
+            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            
+            return transform.getResultImage();
         }
 
         private void rotate(int mode) {
