@@ -68,7 +68,6 @@ import gov.nih.mipav.view.dialogs.JDialogFlip;
 import gov.nih.mipav.view.dialogs.JDialogGVF;
 import gov.nih.mipav.view.dialogs.JDialogIntensityThreshold;
 import gov.nih.mipav.view.dialogs.JDialogLivewire;
-import gov.nih.mipav.view.dialogs.JDialogLoadOtherOrientationVOIs;
 import gov.nih.mipav.view.dialogs.JDialogMask;
 import gov.nih.mipav.view.dialogs.JDialogOpacityControls;
 import gov.nih.mipav.view.dialogs.JDialogPointArea;
@@ -1024,8 +1023,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         	
         } else if (command.equals("ProstateMergedVOIs")) {
             saveMergedVOIs();
-        } else if (command.equals("ProstateLoadVOIfromOtherOrientation")) {
-        	loadVOIFromOtherOrientation();
         } else if (command.equals("ProstateReconstruct")) {
             reconstructSurfaceFromVOIs();
         } else if (command.equals("ProstateExtract")) {
@@ -4616,14 +4613,6 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     private void saveMergedVOIs() {
         final JDialogBase mergeVOIsDialog = new JDialogSaveMergedVOIs(m_kParent.getFrame());
         mergeVOIsDialog.validate();
-    }
-
-    /**
-     * Load the VOI from other orientation.   For now, just for testing purpose. 
-     */
-    private void loadVOIFromOtherOrientation() {
-    	final JDialogBase loadOtherOrientationVOI = new JDialogLoadOtherOrientationVOIs(m_kParent.getFrame());
-        loadOtherOrientationVOI.validate();
     }
     
     /**

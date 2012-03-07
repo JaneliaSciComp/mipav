@@ -863,8 +863,6 @@ public class ViewMenuBar {
                                         new JMenuItem[] {
                                                 menuBuilder.buildMenuItem("Merge VOIs", "ProstateMergedVOIs", 0, null,
                                                         false),
-                                                menuBuilder.buildMenuItem("Load VOIs from Other Orientation", "ProstateLoadVOIfromOtherOrientation", 0, null,
-                                                         false),
                                                 menuBuilder.buildMenuItem("Surface Reconstruction",
                                                         "ProstateReconstruct", 0, null, false),
                                                 menuBuilder.buildMenuItem("Save Features", "ProstateFeaturesSave", 0,
