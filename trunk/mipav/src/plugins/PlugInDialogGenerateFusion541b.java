@@ -57,7 +57,6 @@ import javax.swing.*;
  */
 public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implements AlgorithmInterface {
     
-    
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /**declare UID */
@@ -150,6 +149,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
     private int yMovement;
 
     private int zMovement;
+
+    private JComboBox modeOption;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -391,21 +392,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         gbc.gridx = 0;
         gbc.gridy = 0;
         
-        mtxFileLocText.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    File f = new File(mtxFileLocText.getText());
-                    if(f.getParentFile().isDirectory() && !(spimAFileLocText.getText().length() > 0) && !(spimBFileLocText.getText().length() > 0)) {
-                        spimAFileLocText.setText(f.getParent());
-                        spimBFileLocText.setText(f.getParent());
-                    }
-                } catch(Exception e1) {
-                    e1.printStackTrace();
-                }
-                
-            }
-        });
-        
         mainPanel.add(mtxPanel, gbc);
         
         JPanel algOptionPanel = new JPanel(new GridBagLayout());
@@ -433,6 +419,11 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         algOptionPanel.add(resPanel, gbc);
         gbc.gridy++;
         gbc.gridx = 0;
+        
+        /*modeOption =  gui.buildComboBox("Sampling mode", SampleMode.values());
+        algOptionPanel.add(modeOption.getParent());
+        gbc.gridy++;*/
+        
         
         concurrentNumText = gui.buildIntegerField("Number of concurrent fusions: ", 
                                                     (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors()-2 : 1);
