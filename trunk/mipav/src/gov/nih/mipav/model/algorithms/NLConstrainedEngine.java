@@ -715,8 +715,6 @@ public abstract class NLConstrainedEngine {
         bu[2] = 1.0;
         driverCalls();
         
-        // Below is an example used to fit y = 100 * (a2 - a1)**2 + 
-        
         // Below is an example used to fit y = (a0 * log(0.01*i)**(a1) + a2
     	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
     	// Variant of test example 25 from Hock and Schittkowski
