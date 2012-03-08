@@ -1208,7 +1208,7 @@ import Jama.Matrix;
                         || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
     
     
-                    if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4") /*|| fileInfoPARREC.getVersion().equals("V4.2")*/ ) {
+                    if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4") || fileInfoPARREC.getVersion().equals("V4.2") ) {
                         //Determine if Philips PAR/REC is version 3 or 4 to determine which gradient table dialog to be displayed
                         final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
                         final GridBagConstraints gbc = new GridBagConstraints();
@@ -1293,7 +1293,7 @@ import Jama.Matrix;
                         gbc.gridx = 1;
                         GradCreatorPanel.add(philRelBox,gbc);
                         
-                        if (fileInfoPARREC.getVersion().equals("V4")/*|| fileInfoPARREC.getVersion().equals("V4.2")*/ ){
+                        if (fileInfoPARREC.getVersion().equals("V4") || fileInfoPARREC.getVersion().equals("V4.2") ){
                           //Add all parameters not aquired in PAR file for user to input
                             osLabel = new JLabel("OS");
                             osLabel.setForeground(Color.lightGray);
@@ -1602,7 +1602,6 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("YesMedium")){
-                System.out.println("numVolumes: " +numVolumes);
                 if(numVolumes==17){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMediumOP();
@@ -2137,7 +2136,6 @@ import Jama.Matrix;
             //patientOrientBox.getSelectedItem()!= null && patientOrientBox.getSelectedItem()=="SP" || ;
             
             if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE"))|| patientOrientBox.getSelectedItem()=="SP" ){
-                System.out.println("supine");
                 Tpo = new double[][]{{1, 0, 0},{0, 1, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{1,0,0},{0,1,0},{0,0,1}};
             }
@@ -2392,36 +2390,23 @@ import Jama.Matrix;
             }
             
             DecimalFormat twoDForm = new DecimalFormat("#.####");
-            System.out.println(+Double.valueOf(twoDForm.format(rev_angCorrGT[0][0])));
-            System.out.println(+Double.valueOf(twoDForm.format(rev_angCorrGT[0][1])));
-            System.out.println(+Double.valueOf(twoDForm.format(rev_angCorrGT[0][2])));
-            
-            System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][0])));
-            System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][1])));
-            System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][2])));
+
 
 //          % Normalize the non zero vectors
             angCorrGT = normalizeTable(angCorrGT);
             rev_angCorrGT = normalizeTable(rev_angCorrGT);
             
-            
-            System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][0])));
-            System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][1])));
-            System.out.println(+Double.valueOf(twoDForm.format(angCorrGT[0][2])));
-            
-            for (int i = 0; i<tablein.length; i++){
+
+            //Testing
+            /*for (int i = 0; i<tablein.length; i++){
             System.out.println("angCorrGT: " +(i+1) + "\t" +Double.valueOf(twoDForm.format(angCorrGT[i][0]))+ "\t" + Double.valueOf(twoDForm.format(angCorrGT[i][1]))+ "\t" + Double.valueOf(twoDForm.format(angCorrGT[i][2])));
             }
             
             for (int i = 0; i<tablein.length; i++){
                 System.out.println("rev_angCorrGT: " +(i+1) + "\t" +Double.valueOf(twoDForm.format(rev_angCorrGT[i][0]))+ "\t" + Double.valueOf(twoDForm.format(rev_angCorrGT[i][1]))+ "\t" + Double.valueOf(twoDForm.format(rev_angCorrGT[i][2])));
-                }
+                }*/
             
-            System.out.println(+Double.valueOf(twoDForm.format(rev_angCorrGT[0][0])));
-            System.out.println(+Double.valueOf(twoDForm.format(rev_angCorrGT[0][1])));
-            System.out.println(+Double.valueOf(twoDForm.format(rev_angCorrGT[0][2])));
-            
-            //System.out.println("gradCreateTable" +gradCreatetable);
+
             if (numVolumes==35){
                 for (int i = 0; i<tablein.length; i++){
                     srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][0]))), i, 2);
@@ -2457,7 +2442,7 @@ import Jama.Matrix;
                 float[] flBvalArr = dtiparams.getbValues();
                 int bval0Count = 0;
                 for (int i = 0; i<numVolumes; i++){
-                    System.out.println("i" +i);
+
                     if (flBvalArr[i]== 0){
                         srcTableModel.setValueAt(0, i, 2);
                         srcTableModel.setValueAt(0, i, 3);
