@@ -26,7 +26,7 @@ import gov.nih.mipav.view.*;
  *
  * In writing this software, I borrowed heavily from the public domain,
  * especially from work by Burton S. Garbow, Kenneth E. Hillstrom,
- * Jorge J. Moré, Steve Moshier, and the authors of lapack. To avoid
+ * Jorge J. More`, Steve Moshier, and the authors of lapack. To avoid
  * unneccessary complications, I put my additions and amendments also
  * into the public domain. Please retain this notice. Otherwise feel
  * free to do whatever you want with this stuff. If we meet some day,
@@ -60,7 +60,7 @@ public abstract class Lmmin {
     private final double DBL_MIN = Math.pow(2, -1022);
     
     // Double.MAX_VALUE
-    // A constant holding the largest positive finite value of type double, (2-2**-52)·2**1023. 
+    // A constant holding the largest positive finite value of type double, (2-2**-52)*2**1023. 
     // It is equal to the value returned by: Double.longBitsToDouble(0x7fefffffffffffffL). 
     // 1.7976931348623157E308d
     private final double DBL_MAX = Double.MAX_VALUE;
