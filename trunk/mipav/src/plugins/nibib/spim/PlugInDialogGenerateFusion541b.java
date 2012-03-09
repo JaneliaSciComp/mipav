@@ -82,19 +82,13 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private JTextField spimAFileLocText;
 
-    private JCheckBox geometricMeanBox;
-
-    private JCheckBox arithmeticMeanBox;
-
-    private JCheckBox interImagesBox;
+    private JCheckBox geometricMeanBox, arithmeticMeanBox, interImagesBox;
 
     private JTextField middleSliceText;
 
     private JPanel okCancelPanel;
 
-    private JTextField transformImageText;
-
-    private JTextField baseImageText;
+    private JTextField transformImageText, baseImageText;
 
     private JCheckBox doSubsampleBox;
 
@@ -104,13 +98,9 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private File[] transformImageAr;
 
-    private boolean doSubsample;
+    private boolean doSubsample, doInterImages;
 
-    private boolean doInterImages;
-
-    private boolean doGeoMean;
-
-    private boolean doAriMean;
+    private boolean doGeoMean, doAriMean;
 
     private int middleSlice;
 
@@ -130,11 +120,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private boolean doThreshold;
 
-    private double resX;
-
-    private double resY;
-
-    private double resZ;
+    private double resX, resY, resZ;
 
     private int concurrentNum;
 
@@ -142,21 +128,17 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private double thresholdIntensity;
 
-    private JTextField xMovementText;
+    private JTextField xMovementText, yMovementText, zMovementText;
 
-    private JTextField yMovementText;
-
-    private JTextField zMovementText;
-
-    private int xMovement;
-
-    private int yMovement;
-
-    private int zMovement;
+    private Integer xMovement, yMovement, zMovement;
 
     private SampleMode mode;
     
     private JComboBox modeOption;
+
+    private JCheckBox doSmartMovementBox;
+
+    private boolean doSmartMovement;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -324,6 +306,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
     } //end storeParamsFromGUI()
    
     private void init() {
+        setResizable(true);
         setForeground(Color.black);
         setTitle("Generate fusion 541b");
         try {
@@ -376,11 +359,15 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         mtxPanel.add(transformPanel, gbc);
         gbc.gridy++;
         
-        JLabel dirMove = new JLabel("Enter post-transformation translation (needed since padding occurs)");
+        JLabel dirMove = new JLabel("Enter translation to apply to transformed image (needed since padding occurs)");
         mtxPanel.add(dirMove, gbc);
         gbc.gridy++;
         
-        JPanel movementPanel = new JPanel();
+        doSmartMovementBox = gui.buildCheckBox("Attempt to generate optimized translation", false);
+        mtxPanel.add(doSmartMovementBox.getParent(), gbc);
+        gbc.gridy++;
+        
+        final JPanel movementPanel = new JPanel();
         FlowLayout movementFlow = new FlowLayout(FlowLayout.LEFT);
         movementPanel.setLayout(movementFlow);
         
@@ -394,6 +381,14 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         movementPanel.add(zMovementText.getParent());
         
         mtxPanel.add(movementPanel, gbc);
+        
+        doSmartMovementBox.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent arg0) {
+                xMovementText.setEnabled(!doSmartMovementBox.isSelected());
+                yMovementText.setEnabled(!doSmartMovementBox.isSelected());
+                zMovementText.setEnabled(!doSmartMovementBox.isSelected());
+            }
+        });
         
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -520,6 +515,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         doSubsample = doSubsampleBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
 	    
+        doSmartMovement = doSmartMovementBox.isSelected();
+        
 	    try {
 		    middleSlice = Integer.valueOf(middleSliceText.getText()).intValue();
 		    
@@ -531,9 +528,13 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
 		    resZ = Double.valueOf(resZText.getText()).doubleValue();
 		    
-		    xMovement = Integer.valueOf(xMovementText.getText()).intValue();
-		    yMovement = Integer.valueOf(yMovementText.getText()).intValue();
-		    zMovement = Integer.valueOf(zMovementText.getText()).intValue();
+		    if(!doSmartMovement) {
+    		    xMovement = Integer.valueOf(xMovementText.getText());
+    		    yMovement = Integer.valueOf(yMovementText.getText());
+    		    zMovement = Integer.valueOf(zMovementText.getText());
+		    } else {
+		        xMovement = yMovement = zMovement = null;
+		    }
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");
             return false;
@@ -556,6 +557,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 	    baseImage = baseImageText.getText();
 	    
 	    mode = (SampleMode) modeOption.getSelectedItem();
+	    
+	    
 	    
 	    if(!populateFileLists()) {
 	        return false;

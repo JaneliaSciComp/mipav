@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +40,9 @@ import javax.imageio.stream.FileImageOutputStream;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath.Operator;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
@@ -49,6 +52,7 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogImageMath;
 import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
@@ -98,6 +102,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     private Integer zMovement;
     private Collection<ModelImage> resultImageList;
     private SampleMode mode;
+    private ArrayBlockingQueue<MeasureAlg> movementQueue;
     
 
     /**
@@ -125,7 +130,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      */
     public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, int middleSlice, 
-                                                    File[] baseImageAr, File[] transformImageAr, int xMovement, int yMovement, int zMovement, SampleMode mode) {
+                                                    File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode) {
         super(null, image1);
         
         this.image = image1;
@@ -173,6 +178,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      */
     public void runAlgorithm() {
         
+        movementQueue = new ArrayBlockingQueue<MeasureAlg>(1);
+        
         ExecutorService exec = Executors.newFixedThreadPool(concurrentNum);
         
         ArrayList<FusionAlg> algList = new ArrayList<FusionAlg>();
@@ -203,6 +210,48 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     
     public Collection<ModelImage> getResultImageList() {
         return resultImageList;
+    }
+    
+    public class MeasureAlg implements Runnable {
+
+        private ModelImage baseImage, transformImage;
+        
+        private Frame parentFrame;
+
+        private int xMeasure = 0, yMeasure = 0, zMeasure = 0;
+        
+        public MeasureAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
+            this.parentFrame = parentFrame;
+            this.baseImage = baseImage;
+            this.transformImage = transformImage;
+        }
+        
+        public void run() {
+            long time = System.currentTimeMillis();
+            
+            AlgorithmImageCalculator imgCalc = new AlgorithmImageCalculator(baseImage, transformImage, AlgorithmImageCalculator.SUBTRACT, AlgorithmImageCalculator.CLIP, true, null);
+            imgCalc.run();
+            
+            JDialogImageMath sumImg = new JDialogImageMath();
+            sumImg.setOperator(Operator.SUM.getLegacyNum());
+            sumImg.setClipMode(AlgorithmImageMath.CLIP);
+            sumImg.setSeparateThread(false);
+            sumImg.setImage(baseImage);
+            sumImg.actionPerformed(new ActionEvent(parentFrame, 0, "Script"));
+            
+            ModelImage img = sumImg.getResultImage();
+            ViewJFrameImage frame = new ViewJFrameImage(img);
+            
+            System.out.println((System.currentTimeMillis() - time));
+            
+            setMeasures();
+        }
+        
+        private void setMeasures() {
+            xMovement = xMeasure;
+            yMovement = yMeasure;
+            zMovement = zMeasure;
+        }
     }
 
     public class FusionAlg implements Callable, Runnable {
@@ -249,9 +298,6 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             transform();
             
-            
-            downsampleToBase();
-            
             switch (mode) {
             
             case DownsampleToBase:
@@ -269,6 +315,20 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             if(doThreshold) {
                 threshold(transformImage);
+            }
+            
+            if(xMovement == null && yMovement == null && zMovement == null) {
+                if(movementQueue.size() > 0) {
+                    try {
+                        movementQueue.take();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                } else {
+                    MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
+                    movementQueue.add(alg);
+                    alg.run();
+                }
             }
             
             //discardSlices(middleSlice);
@@ -393,11 +453,11 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             int transformX, transformY, transformZ;
             //new ViewJFrameImage(transformImage);
             for(int i=0; i<baseImage.getExtents()[0]; i++) {
-                transformX = i+xMovement;
+                transformX = i-xMovement;
                 for(int j=0; j<baseImage.getExtents()[1]; j++) {
-                    transformY = j+yMovement;
+                    transformY = j-yMovement;
                     for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                        transformZ = k+zMovement;
+                        transformZ = k-zMovement;
                         if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
@@ -423,11 +483,11 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             int transformX, transformY, transformZ;
             //new ViewJFrameImage(transformImage);
             for(int i=0; i<baseImage.getExtents()[0]; i++) {
-                transformX = i+xMovement;
+                transformX = i-xMovement;
                 for(int j=0; j<baseImage.getExtents()[1]; j++) {
-                    transformY = j+yMovement;
+                    transformY = j-yMovement;
                     for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                        transformZ = k+zMovement;
+                        transformZ = k-zMovement;
                         if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
@@ -462,7 +522,6 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
                     baseImage.set(i, 0);
                 }
             }
-            
         }
 
         public ModelImage getSubGeoImage() {
