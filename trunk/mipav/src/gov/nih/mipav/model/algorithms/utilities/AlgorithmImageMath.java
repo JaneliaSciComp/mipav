@@ -22,6 +22,52 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+    public enum Operator {
+        ABSOLUTE_VALUE(0, "Absolute value", "abs"),
+        ADD(1, "Add", "add"),
+        AVERAGE(2, "Average", "avg"),
+        CONSTANT(3, "Constant", "const"),
+        DIVIDE(4, "Divide", "div"),
+        LOG(5, "Log", "log"),
+        MULTIPLY(6, "Multiply", "mult"),
+        SQUARE(7, "Square", "sq"),
+        SQUARE_ROOT(8, "Square root", "sqrt"),
+        SUBTRACT(9, "Subtract", "sub"),
+        SUM(10, "Sum", "sum"),
+        INVERSE(11, "Inverse", "inv");
+        
+        private int legacyNum;
+        private String name;
+        private String shortOp;
+
+        Operator(int legacyNum, String name, String shortOp) {
+            this.legacyNum = legacyNum;
+            this.name = name;
+            this.shortOp = shortOp;
+        }
+        
+        public String toString() {
+            return name;
+        }
+
+        public int getLegacyNum() {
+            return legacyNum;
+        }
+
+        public String getShortOp() {
+            return shortOp;
+        }
+        
+        public static Operator getOperatorFromLegacyNum(int legacyNum) {
+            for(Operator op : Operator.values()) {
+                if(op.getLegacyNum() == legacyNum) {
+                    return op;
+                }
+            }
+            return null;
+        }
+    }
+
     /** DOCUMENT ME! */
     public static final int ABSOLUTE_VALUE = 0;
 
@@ -57,7 +103,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
     
     /** DOCUMENT ME! */
     public static final int INVERSE = 11; 
-
+    
     /** DOCUMENT ME! */
     public static final int CLIP = 0; // clamp result data to the bounds of the input image type
 
@@ -108,7 +154,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
     private double maxB;
 
     /** Operation to be performed on the images (i.e. Add, ...) */
-    private int opType;
+    private Operator opType;
 
     /** DOCUMENT ME! */
     private boolean useComplex = false;
@@ -137,22 +183,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
      */
     public AlgorithmImageMath(ModelImage srcImg, int type, double val, double valI, 
                               double valB, int _clipMode, boolean maskFlag) {
-        super(null, srcImg);
-        entireImage = maskFlag;
-        opType = type;
-        value = val;
-        valueI = valI;
-        valueB = valB;
-        clipMode = _clipMode;
-        setClipValues();
-
-        if (entireImage == false) {
-            mask = srcImage.generateVOIMask();
-        }
-
-        if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
-            useComplex = true;
-        }
+        this(null, srcImg, type, val, valI, valB, _clipMode, maskFlag);
     }
 
     /**
@@ -172,7 +203,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                               double valB, int _clipMode, boolean maskFlag) {
         super(destImg, srcImg);
         entireImage = maskFlag;
-        opType = type;
+        opType = Operator.getOperatorFromLegacyNum(type);
         value = val;
         valueI = valI;
         valueB = valB;
@@ -265,7 +296,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         min = Math.min(minR, Math.min(minG, minB));
         max = Math.max(maxR, Math.max(maxG, maxB));
 
-        if (opType == LOG) {
+        if (opType == Operator.LOG) {
 
             if (min <= 0) {
                 displayError("Algorithm ImageMath: Cannot do log on image data <= 0");
@@ -285,7 +316,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     setThreadStopped(true);
                 }
             }
-        } else if (opType == SQUARE_ROOT) {
+        } else if (opType == Operator.SQUARE_ROOT) {
 
             if (min < 0) {
                 displayError("Algorithm ImageMath: Cannot do SQRT on image data < 0");
@@ -305,7 +336,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     setThreadStopped(true);
                 }
             }
-        } else if ((opType == DIVIDE) && ((value == 0.0) || (valueI == 0.0) || (valueB == 0.0))) {
+        } else if ((opType == Operator.DIVIDE) && ((value == 0.0) || (valueI == 0.0) || (valueB == 0.0))) {
             displayError("Algorithm ImageMath: Cannot divide image data by zero");
             setCompleted(false);
 
@@ -726,7 +757,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         min = srcImage.getMin();
         max = srcImage.getMax();
 
-        if (opType == LOG) {
+        if (opType == Operator.LOG) {
 
             if (min <= 0) {
                 displayError("Algorithm ImageMath: Cannot do log on image data <= 0");
@@ -747,7 +778,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     setThreadStopped(true);
                 }
             }
-        } else if (opType == SQUARE_ROOT) {
+        } else if (opType == Operator.SQUARE_ROOT) {
 
             if (min < 0) {
                 displayError("Algorithm ImageMath: Cannot do SQRT on image data < 0");
@@ -768,7 +799,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     setThreadStopped(true);
                 }
             }
-        } else if ((opType == DIVIDE) && (value == 0.0)) {
+        } else if ((opType == Operator.DIVIDE) && (value == 0.0)) {
             displayError("Algorithm ImageMath: Cannot divide image data by zero");
             setCompleted(false);
 
@@ -1131,7 +1162,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         int space4D = t * volume;
         int totalLength = f * t * z * length;
 
-        if ((opType == DIVIDE) && (value == 0.0) && (valueI == 0.0)) {
+        if ((opType == Operator.DIVIDE) && (value == 0.0) && (valueI == 0.0)) {
             displayError("Algorithm ImageMath: Cannot divide image data by zero");
             setCompleted(false);
 
@@ -1368,7 +1399,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new double[4*length];
 
-            if ((opType == AVERAGE) || (opType == SUM)) {
+            if ((opType == Operator.AVERAGE) || (opType == Operator.SUM)) {
                 sumAverageLength = 4*length;
                 if (srcImage.getNDims() >= 4) {
                     sumAverageLength *= srcImage.getExtents()[2];
@@ -1435,7 +1466,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         int space4D = t * volume;
         int totalLength = f * t * z * length;
 
-        if (opType == LOG) {
+        if (opType == Operator.LOG) {
 
             if (min <= 0) {
                 displayError("Cannot do LOG on image data <= 0");
@@ -1445,7 +1476,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if (destImage.getType() != ModelStorageBase.ARGB_FLOAT) {
                 destImage.reallocate(ModelStorageBase.ARGB_FLOAT);
             } 
-        } else if (opType == SQUARE_ROOT) {
+        } else if (opType == Operator.SQUARE_ROOT) {
 
             if (min < 0) {
                 displayError("Cannot do SQRT on image data < 0");
@@ -1455,7 +1486,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if (destImage.getType() != ModelStorageBase.ARGB_FLOAT) {
                 destImage.reallocate(ModelStorageBase.ARGB_FLOAT);
             } 
-        } else if ((opType == DIVIDE) && (value == 0.0)) {
+        } else if ((opType == Operator.DIVIDE) && (value == 0.0)) {
             displayError("cannot divide image data by zero");
             setCompleted(false);
 
@@ -1719,7 +1750,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     }
 
                     // do not do the following segment for opType AVERAGE:
-                    if ((opType != AVERAGE) && (opType != SUM)) {
+                    if ((opType != Operator.AVERAGE) && (opType != Operator.SUM)) {
 
                         // clip check
                         if (clipMode == CLIP) {
@@ -1756,16 +1787,16 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        if ((opType == AVERAGE) || (opType == SUM)) {
+        if ((opType == Operator.AVERAGE) || (opType == Operator.SUM)) {
 
-            if (opType == AVERAGE) {
+            if (opType == Operator.AVERAGE) {
 
                 for (i = 0; i < sumAverageBuffer.length; i++) {
                     sumAverageBuffer[i] /= sumFactor;
                 }
             }
             
-            if ((opType == SUM) && (clipMode == CLIP)) {
+            if ((opType == Operator.SUM) && (clipMode == CLIP)) {
                 for (i = 0; i < sumAverageBuffer.length; i++) {
 
                     if (sumAverageBuffer[i] > clipMax) {
@@ -1814,7 +1845,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new double[length];
 
-            if ((opType == AVERAGE) || (opType == SUM)) {
+            if ((opType == Operator.AVERAGE) || (opType == Operator.SUM)) {
                 sumAverageLength = length;
                 if (srcImage.getNDims() >= 4) {
                     sumAverageLength *= srcImage.getExtents()[2];
@@ -1874,7 +1905,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         int space4D = t * volume;
         int totalLength = f * t * z * length;
 
-        if (opType == LOG) {
+        if (opType == Operator.LOG) {
 
             if (min <= 0) {
                 displayError("Cannot do LOG on image data <= 0");
@@ -1887,7 +1918,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if ((destImage.getType() != ModelStorageBase.DOUBLE) && (max >= (double) Float.MAX_VALUE)) {
                 destImage.reallocate(ModelStorageBase.DOUBLE);
             }
-        } else if (opType == SQUARE_ROOT) {
+        } else if (opType == Operator.SQUARE_ROOT) {
 
             if (min < 0) {
                 displayError("Cannot do SQRT on image data < 0");
@@ -1900,7 +1931,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } else if ((destImage.getType() != ModelStorageBase.DOUBLE) && (max >= (double) Float.MAX_VALUE)) {
                 destImage.reallocate(ModelStorageBase.DOUBLE);
             }
-        } else if ((opType == DIVIDE) && (value == 0.0)) {
+        } else if ((opType == Operator.DIVIDE) && (value == 0.0)) {
             displayError("cannot divide image data by zero");
             setCompleted(false);
 
@@ -2100,7 +2131,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     }
 
                     // do not do the following segment for opType AVERAGE:
-                    if ((opType != AVERAGE) && (opType != SUM)) {
+                    if ((opType != Operator.AVERAGE) && (opType != Operator.SUM)) {
 
                         // clip check
                         if (clipMode == CLIP) {
@@ -2137,16 +2168,16 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        if ((opType == AVERAGE) || (opType == SUM)) {
+        if ((opType == Operator.AVERAGE) || (opType == Operator.SUM)) {
 
-            if (opType == AVERAGE) {
+            if (opType == Operator.AVERAGE) {
 
                 for (i = 0; i < sumAverageBuffer.length; i++) {
                     sumAverageBuffer[i] /= sumFactor;
                 }
             }
             
-            if ((opType == SUM) && (clipMode == CLIP)) {
+            if ((opType == Operator.SUM) && (clipMode == CLIP)) {
                 for (i = 0; i < sumAverageBuffer.length; i++) {
 
                     if (sumAverageBuffer[i] > clipMax) {
@@ -2233,7 +2264,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         int space4D = t * volume;
         int totalLength = f * t * z * length;
 
-        if ((opType == DIVIDE) && (value == 0.0) && (valueI == 0.0)) {
+        if ((opType == Operator.DIVIDE) && (value == 0.0) && (valueI == 0.0)) {
             displayError("Algorithm ImageMath: Cannot divide image data by zero");
             setCompleted(false);
 

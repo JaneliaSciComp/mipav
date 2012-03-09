@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath.Operator;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -71,7 +72,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     private AlgorithmImageMath mathAlgo;
 
     /** DOCUMENT ME! */
-    private int opType;
+    private Operator opType;
 
     /** DOCUMENT ME! */
     private JPanelAlgorithmOutputOptions outputPanel;
@@ -254,40 +255,12 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * @return  string - the proper extension to append to the image name. For instance, for operator =
      *          AlgorithmImageMath.ADD the extension returned would be "_add".
      */
-    public String getOpName(int op) {
-
-        String name = null;
-
-        if (op == AlgorithmImageMath.ADD) {
-            name = new String("_add");
-        } else if (op == AlgorithmImageMath.SUBTRACT) {
-            name = new String("_subtract");
-        } else if (op == AlgorithmImageMath.MULTIPLY) {
-            name = new String("_multiply");
-        } else if (op == AlgorithmImageMath.DIVIDE) {
-            name = new String("_divide");
-        } else if (op == AlgorithmImageMath.SQUARE) {
-            name = new String("_square");
-        } else if (op == AlgorithmImageMath.SQUARE_ROOT) {
-            name = new String("_sqrt");
-        } else if (op == AlgorithmImageMath.LOG) {
-            name = new String("_log");
-        } else if (op == AlgorithmImageMath.CONSTANT) {
-            name = new String("_constant");
-        } else if (op == AlgorithmImageMath.ABSOLUTE_VALUE) {
-            name = new String("_absolute_value");
-        } else if (op == AlgorithmImageMath.AVERAGE) {
-            name = new String("_average");
-        } else if (op == AlgorithmImageMath.SUM) {
-            name = new String("_sum");
-        } else if (op == AlgorithmImageMath.INVERSE) {
-            name = new String("_inverse");
-        } else {
-            name = new String("_math");
-        }
-
+    public String getOpName(int opType) {
+        Operator op = Operator.getOperatorFromLegacyNum(opType);
+        
+        String name = new String("_"+op.getShortOp().toLowerCase());
+        
         return name;
-
     } // end getOpName
 
     /**
@@ -360,13 +333,13 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             selectedText = (String)comboBoxOperator.getSelectedItem();
 
             if (selectedText.equals("Add")) {
-                opType = AlgorithmImageMath.ADD;
+                opType = Operator.ADD;
             } else if (selectedText.equals("Subtract")) {
-                opType = AlgorithmImageMath.SUBTRACT;
+                opType = Operator.SUBTRACT;
             } else if (selectedText.equals("Multiply")) {
-                opType = AlgorithmImageMath.MULTIPLY;
+                opType = Operator.MULTIPLY;
             } else if (selectedText.equals("Divide")) {
-                opType = AlgorithmImageMath.DIVIDE;
+                opType = Operator.DIVIDE;
             } else if (selectedText.equals("Square")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
@@ -375,7 +348,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 if (image.isColorImage()) {
                     textValueB.setEnabled(false);
                 }
-                opType = AlgorithmImageMath.SQUARE;
+                opType = Operator.SQUARE;
             } else if (selectedText.equals("Square Root")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
@@ -384,7 +357,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 if (image.isColorImage()) {
                     textValueB.setEnabled(false);
                 }
-                opType = AlgorithmImageMath.SQUARE_ROOT;
+                opType = Operator.SQUARE_ROOT;
                 radioClip.setEnabled(false);
                 radioPromote.setEnabled(false);
                 radioFloat.setEnabled(false);
@@ -397,13 +370,13 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 if (image.isColorImage()) {
                     textValueB.setEnabled(false);
                 }
-                opType = AlgorithmImageMath.LOG;
+                opType = Operator.LOG;
                 radioClip.setEnabled(false);
                 radioPromote.setEnabled(false);
                 radioFloat.setEnabled(false);
                 radioFloat.setSelected(true);
             } else if (selectedText.equals("Constant")) {
-                opType = AlgorithmImageMath.CONSTANT;
+                opType = Operator.CONSTANT;
             } else if (selectedText.equals("Absolute Value")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
@@ -412,7 +385,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 if (image.isColorImage()) {
                     textValueB.setEnabled(false);
                 }
-                opType = AlgorithmImageMath.ABSOLUTE_VALUE;
+                opType = Operator.ABSOLUTE_VALUE;
             } else if (selectedText.equals("Average")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
@@ -423,7 +396,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 }
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
-                opType = AlgorithmImageMath.AVERAGE;
+                opType = Operator.AVERAGE;
             } else if (selectedText.equals("Sum")) {
                 textValue.setEnabled(false);
                 if (useComplex || image.isColorImage()) {
@@ -434,9 +407,9 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 }
                 outputPanel.setOutputNewImage(true);
                 outputPanel.setOutputImageOptionsEnabled(false);
-                opType = AlgorithmImageMath.SUM;
+                opType = Operator.SUM;
             }else if (selectedText.equals("Inverse (1 / intensity)")) {
-                opType = AlgorithmImageMath.INVERSE;
+                opType = Operator.INVERSE;
                 radioClip.setEnabled(false);
                 radioPromote.setEnabled(false);
                 radioFloat.setEnabled(false);
@@ -537,7 +510,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * @param  n  operator type
      */
     public void setOperator(int n) {
-        opType = n;
+        opType = Operator.getOperatorFromLegacyNum(n);
     }
 
     /**
@@ -563,12 +536,12 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 try {
 
                     // make the new image name
-                    String math = getOpName(opType);
+                    String math = getOpName(opType.getLegacyNum());
                     String name = makeImageName(image.getImageName(), math);
 
                     // Make result image of source type
 
-                    if ((opType != AlgorithmImageMath.AVERAGE) && (opType != AlgorithmImageMath.SUM)) {
+                    if ((opType != Operator.AVERAGE) && (opType != Operator.SUM)) {
                         resultImage = new ModelImage(image.getType(), image.getExtents(), name);
                     } else {
                         int[] extents = new int[Math.max(2,image.getNDims()-1)];
@@ -581,7 +554,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    mathAlgo = new AlgorithmImageMath(resultImage, image, opType, realValue, imaginaryValue, 
+                    mathAlgo = new AlgorithmImageMath(resultImage, image, opType.getLegacyNum(), realValue, imaginaryValue, 
                                                       blueValue, clipMode,
                                                       outputPanel.isProcessWholeImageSet());
 
@@ -622,7 +595,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    mathAlgo = new AlgorithmImageMath(image, opType, realValue, imaginaryValue, 
+                    mathAlgo = new AlgorithmImageMath(image, opType.getLegacyNum(), realValue, imaginaryValue, 
                                                       blueValue, clipMode,
                                                       outputPanel.isProcessWholeImageSet());
 
