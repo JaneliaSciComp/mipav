@@ -153,6 +153,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
             if (setVariables()) {
                 callAlgorithm();
             }
+        } else if (command.equals("Script")) {
+            callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
         } if (command.equals("Help")) {
@@ -520,6 +522,10 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      */
     public void setRealValue(double v) {
         realValue = v;
+    }
+
+    public void setImage(ModelImage image) {
+        this.image = image;
     }
 
     /**
