@@ -137,7 +137,7 @@ public abstract class Lmmin {
     protected double factor = 100.0;
     
     /** maximum number of iterations */
-    protected int maxcall = 100;
+    protected int maxcall = 500;
     
     /** maxfev is a positive integer input variable. Termination
  *	  occurs when the number of calls to lm_fcn is at least
