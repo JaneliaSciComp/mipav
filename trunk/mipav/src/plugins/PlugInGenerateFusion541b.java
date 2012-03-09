@@ -29,6 +29,9 @@ import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView /
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
+import java.lang.reflect.Field;
+
+import nibib.spim.PlugInDialogGenerateFusion541b;
 
 /**
  * 
@@ -61,9 +64,14 @@ public class PlugInGenerateFusion541b implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogGenerateFusion541b(parentFrame, image);
+            PlugInDialogGenerateFusion541b test = new PlugInDialogGenerateFusion541b(parentFrame, image);
+            
         } else {
             MipavUtil.displayError("PlugInDialogGenerateFusion541b only runs on an image frame.");
         }
+    }
+    
+    public static void main(String[] args) {
+        
     }
 }
