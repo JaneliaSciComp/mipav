@@ -363,10 +363,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         mtxPanel.add(dirMove, gbc);
         gbc.gridy++;
         
-        doSmartMovementBox = gui.buildCheckBox("Attempt to generate optimized translation", false);
-        mtxPanel.add(doSmartMovementBox.getParent(), gbc);
-        gbc.gridy++;
-        
         final JPanel movementPanel = new JPanel();
         FlowLayout movementFlow = new FlowLayout(FlowLayout.LEFT);
         movementPanel.setLayout(movementFlow);
@@ -381,6 +377,11 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         movementPanel.add(zMovementText.getParent());
         
         mtxPanel.add(movementPanel, gbc);
+        gbc.gridy++;
+        
+        doSmartMovementBox = gui.buildCheckBox("Attempt to generate optimized translation", false);
+        mtxPanel.add(doSmartMovementBox.getParent(), gbc);
+        gbc.gridy++;
         
         doSmartMovementBox.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent arg0) {

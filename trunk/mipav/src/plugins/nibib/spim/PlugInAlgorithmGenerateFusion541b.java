@@ -218,7 +218,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         
         private Frame parentFrame;
 
-        private int xMeasure = 0, yMeasure = 0, zMeasure = 0;
+        private int xExtents, yExtents, zExtents;
         
         public MeasureAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
             this.parentFrame = parentFrame;
@@ -227,30 +227,80 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         }
         
         public void run() {
+            
+            
+            xExtents = baseImage.getExtents()[0] < transformImage.getExtents()[0] ? baseImage.getExtents()[0] : transformImage.getExtents()[0];
+            yExtents = baseImage.getExtents()[1] < transformImage.getExtents()[1] ? baseImage.getExtents()[1] : transformImage.getExtents()[1];
+            zExtents = baseImage.getExtents()[2] < transformImage.getExtents()[2] ? baseImage.getExtents()[2] : transformImage.getExtents()[2];
+            
+            int minX = -10, minY = -10, minZ = -3;
+            
+            double sumAmountOld = Double.MAX_VALUE, sumAmount = 0;
+            
             long time = System.currentTimeMillis();
             
-            AlgorithmImageCalculator imgCalc = new AlgorithmImageCalculator(baseImage, transformImage, AlgorithmImageCalculator.SUBTRACT, AlgorithmImageCalculator.CLIP, true, null);
-            imgCalc.run();
+            for(int i=minX; i<10; i++) {
+                for(int j=minY; j<10; j++) {
+                    for(int k=minZ; k<3; k++) {
+                        //long time = System.currentTimeMillis();
+                        sumAmount = generateSumAmount(i, j, k);
+                        //System.out.println("For "+i+", "+j+", "+k+": "+sumAmount);
+                        if(sumAmount < sumAmountOld) {
+                            minX = i;
+                            minY = j;
+                            minZ = k;
+                            sumAmountOld = sumAmount;
+                        }
+                        //System.out.println((System.currentTimeMillis() - time)+" "+sumAmount);
+                    }
+                }
+                System.out.println("For "+i+": "+sumAmountOld+" most recent sumAmount "+sumAmount);
+            }
             
-            JDialogImageMath sumImg = new JDialogImageMath();
-            sumImg.setOperator(Operator.SUM.getLegacyNum());
-            sumImg.setClipMode(AlgorithmImageMath.CLIP);
-            sumImg.setSeparateThread(false);
-            sumImg.setImage(baseImage);
-            sumImg.actionPerformed(new ActionEvent(parentFrame, 0, "Script"));
+            System.out.println((System.currentTimeMillis() - time)+" "+sumAmountOld);
             
-            ModelImage img = sumImg.getResultImage();
-            ViewJFrameImage frame = new ViewJFrameImage(img);
-            
-            System.out.println((System.currentTimeMillis() - time));
-            
-            setMeasures();
+            setMeasures(minX, minY, minZ);
         }
         
-        private void setMeasures() {
-            xMovement = xMeasure;
-            yMovement = yMeasure;
-            zMovement = zMeasure;
+        private double generateSumAmount(int xMeasure, int yMeasure, int zMeasure) {
+            double sumAmount = 0;
+            
+            double baseIntensity = 0, transformIntensity = 0;
+            
+            int transformX, transformY, transformZ;
+            //new ViewJFrameImage(transformImage);
+            for(int i=0; i<xExtents; i++) {
+                transformX = i-xMeasure;
+                for(int j=0; j<yExtents; j++) {
+                    transformY = j-yMeasure;
+                    for(int k=0; k<zExtents; k++) {
+                        transformZ = k-zMeasure;
+                        baseIntensity = baseImage.getDouble(i, j, k);
+                        if(baseIntensity < 20) { //TODO: assign reasonable values
+                            baseIntensity = 0;
+                        }
+                        if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
+                                transformY >= 0 && transformY < transformImage.getExtents()[1] && 
+                                transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
+                            transformIntensity = transformImage.getDouble(transformX, transformY, transformZ);
+                            if(transformIntensity < 20) {
+                                transformIntensity = 0;
+                            }
+                            sumAmount += Math.abs((baseIntensity - transformIntensity));
+                        } else {
+                            sumAmount += Math.abs(baseIntensity - 0);
+                        }
+                    }
+                }
+            }
+            
+            return sumAmount;
+        }
+
+        private void setMeasures(int minX, int minY, int minZ) {
+            xMovement = minX;
+            yMovement = minY;
+            zMovement = minZ;
         }
     }
 
@@ -287,7 +337,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             }
             
             if(doThreshold) {
-                threshold(baseImage);
+                threshold(baseImage, thresholdIntensity);
             }
             
             if(doInterImages) {
@@ -314,7 +364,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             }
             
             if(doThreshold) {
-                threshold(transformImage);
+                threshold(transformImage, thresholdIntensity);
             }
             
             if(xMovement == null && yMovement == null && zMovement == null) {
@@ -516,20 +566,21 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
         }
 
-        private void threshold(ModelImage baseImage) {
-            for(int i=0; i<baseImage.getDataSize(); i++) {
-                if(baseImage.getDouble(i) <= thresholdIntensity) {
-                    baseImage.set(i, 0);
-                }
-            }
-        }
-
         public ModelImage getSubGeoImage() {
             return subGeoImage;
         }
 
         public ModelImage getSubAriImage() {
             return subAriImage;
+        }
+    }
+    
+    
+    private void threshold(ModelImage baseImage, double threshold) {
+        for(int i=0; i<baseImage.getDataSize(); i++) {
+            if(baseImage.getDouble(i) <= thresholdIntensity) {
+                baseImage.set(i, 0);
+            }
         }
     }
 
