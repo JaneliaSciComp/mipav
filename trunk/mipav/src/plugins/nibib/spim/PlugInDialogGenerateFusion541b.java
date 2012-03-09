@@ -46,6 +46,8 @@ import java.util.Iterator;
 
 import javax.swing.*;
 
+import nibib.spim.PlugInAlgorithmGenerateFusion541b.SampleMode;
+
 
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
@@ -152,6 +154,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private int zMovement;
 
+    private SampleMode mode;
+    
     private JComboBox modeOption;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -241,7 +245,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
             generateFusionAlgo = new PlugInAlgorithmGenerateFusion541b(image, doSubsample, doInterImages, doGeoMean, doAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, middleSlice, baseImageAr, transformImageAr, 
-                                                                                xMovement, yMovement, zMovement);
+                                                                                xMovement, yMovement, zMovement, mode);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -422,10 +426,9 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         gbc.gridy++;
         gbc.gridx = 0;
         
-        /*modeOption =  gui.buildComboBox("Sampling mode", SampleMode.values());
-        algOptionPanel.add(modeOption.getParent());
-        gbc.gridy++;*/
-        
+        modeOption =  gui.buildComboBox("Sampling mode", SampleMode.values());
+        algOptionPanel.add(modeOption.getParent(), gbc);
+        gbc.gridy++;
         
         concurrentNumText = gui.buildIntegerField("Number of concurrent fusions: ", 
                                                     (Runtime.getRuntime().availableProcessors() - 2) > 1 ? Runtime.getRuntime().availableProcessors()-2 : 1);
@@ -551,6 +554,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 	    spimAFileDir = spimAFileLocText.getText();
 	    spimBFileDir = spimBFileLocText.getText();
 	    baseImage = baseImageText.getText();
+	    
+	    mode = (SampleMode) modeOption.getSelectedItem();
 	    
 	    if(!populateFileLists()) {
 	        return false;

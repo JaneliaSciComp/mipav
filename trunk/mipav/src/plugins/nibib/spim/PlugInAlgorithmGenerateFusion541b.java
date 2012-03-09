@@ -63,8 +63,19 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
 
     public enum SampleMode {
-        DownsampleToBase,
-        UpsampleToTransform;
+        DownsampleToBase("Downsample transformed image to base"),
+        UpsampleToTransform("Upsample base image to transformed"),
+        DownsampleUpsampleCombined("Do both sampling mechanisms");
+        
+        private String str;
+
+        SampleMode(String str) {
+            this.str = str;
+        }
+
+        public String toString() {
+            return str;
+        }
     }
     
     private ModelImage image;
@@ -82,9 +93,9 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     private double thresholdIntensity;
     private String mtxFileLoc;
     private int concurrentNum;
-    private int xMovement;
-    private int yMovement;
-    private int zMovement;
+    private Integer xMovement;
+    private Integer yMovement;
+    private Integer zMovement;
     private Collection<ModelImage> resultImageList;
     private SampleMode mode;
     
@@ -110,10 +121,11 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      * @param zMovement 
      * @param yMovement 
      * @param xMovement 
+     * @param mode 
      */
     public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, int middleSlice, 
-                                                    File[] baseImageAr, File[] transformImageAr, int xMovement, int yMovement, int zMovement) {
+                                                    File[] baseImageAr, File[] transformImageAr, int xMovement, int yMovement, int zMovement, SampleMode mode) {
         super(null, image1);
         
         this.image = image1;
@@ -240,16 +252,20 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             downsampleToBase();
             
-            /*switch (mode) {
+            switch (mode) {
             
             case DownsampleToBase:
-                
+                downsampleToBase();
                 break;
             
+            case DownsampleUpsampleCombined:
+                downsampleUpsampleCombined();
+                break;
+                
             case UpsampleToTransform:
                 upsampleToTransform();
                 break;
-            }*/
+            }
             
             if(doThreshold) {
                 threshold(transformImage);
@@ -272,6 +288,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             return true;
         }
         
+        
+
         private void transform() {
             JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, transformImage);
             transform.setPadFlag(true);
@@ -288,6 +306,30 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
             }
+        }
+        
+        private void downsampleUpsampleCombined() {
+            TransMatrix mat = new TransMatrix(4);
+            mat.MakeIdentity();
+            mat.set(0, 0, (2*transformImage.getResolutions(0)[0]) / baseImage.getResolutions(0)[0]);
+            mat.set(2, 2, (2*transformImage.getResolutions(0)[2]) / baseImage.getResolutions(0)[2]);
+            
+            transformImage = subTransform(transformImage, mat);
+            
+            float zRes = transformImage.getResolutions(0)[2]/2;
+            transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
+            
+            mat = new TransMatrix(4);
+            mat.MakeIdentity();
+            mat.set(0, 0, (2*baseImage.getResolutions(0)[0]) / transformImage.getResolutions(0)[0]);
+            mat.set(2, 2, (2*baseImage.getResolutions(0)[2]) / transformImage.getResolutions(0)[2]);
+            
+            baseImage = subTransform(baseImage, mat);
+            
+            zRes = transformImage.getResolutions(0)[2]/2;
+            baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
+            
+            
         }
         
         private void downsampleToBase() {
@@ -366,41 +408,6 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
                     }
                 }
             }
-                /*transformX = i+xMovement;
-                if(transformX >= 0 && transformX < transformImage.getExtents()[0]) {
-                    for(int j=0; j<baseImage.getExtents()[1]; j++) {
-                        transformY = j+yMovement;
-                        if(transformY >= 0 && transformY < transformImage.getExtents()[1]) {
-                            for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                transformZ = k+zMovement;
-                                if(transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                                    //System.out.println("Setting "+i+", "+j+", "+k+" with "+Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
-                                    //if(transformImage.getDouble(transformX, transformY, transformZ) != 0 || Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)) != 0) {
-                                    //    System.out.println("Setting "+i+", "+j+", "+k);
-                                    //}
-                                    subGeoImage.set(i, j, k, Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
-                                } else {
-                                    subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                                }
-                            }
-                        } else {
-                            System.out.println("Filling values for k at "+i+", "+j);
-                            //System.out.println(baseImage.getExtents()[1] + " vs " +transformImage.getExtents()[1] + " vs "+j);
-                            for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k)); 
-                            }
-                        }
-                    }
-                } else {
-                    System.out.println("Filling values for j,k at "+i);
-                    //System.out.println(baseImage.getExtents()[0] + " vs " +transformImage.getExtents()[0] + " vs "+i);
-                    for(int j=0; j<baseImage.getExtents()[1]; j++) {
-                        for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                            subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                        }
-                    }
-                }
-            }*/
             
             subGeoImage.calcMinMax();
             
