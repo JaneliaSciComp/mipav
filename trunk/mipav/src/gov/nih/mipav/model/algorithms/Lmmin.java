@@ -797,6 +797,7 @@ public abstract class Lmmin {
             else {
                 fitToFunction(x, wa4, info);
             }
+    		nfev++;
             lm_printout_std(x, wa4, printflags, 1, iter, nfev);
             if (info[0] < 0) {
             	return; /* user requested break */
