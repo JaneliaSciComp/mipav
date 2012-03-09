@@ -1,3 +1,4 @@
+package nibib.spim;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -44,6 +45,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 
 import javax.swing.*;
+
 
 /**
  * Class for performing image fusion based on reference image and transformation matrix.  Option to output geometric/arithmetic mean.
