@@ -362,7 +362,7 @@ public abstract class Lmmin {
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
     	//Run gives correct results:
     	//success (the relative error in the sum of squares is at most tol)
-    	//Number of iterations: 21
+    	//Number of iterations: 72
     	//Residue vector: 1.8891280522613172
     	//x[0 ]= 72.43262770735069
     	//x[1 ]= 28.251874403060796
@@ -399,11 +399,11 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer is a0 = -50, a1 = 2.0/3.0, a3 = 25.0\n", Preferences.DEBUG_ALGORITHM);
         // Run gives correct results:
         // success (the relative error between x and the solution is at most tol)
-        // Number of iterations: 18
-        // Residue vector: 3.5704330589399866E-14
-        // x[0 ]= -50.000000000000014
-        // x[1 ]= 0.6666666666666666
-        // x[2 ]= 25.0
+        // Number of iterations: 56
+        // Residue vector: 2.993569755878539E-14
+        //x[0 ]= -50.000000000000036
+        //x[1 ]= 0.6666666666666665
+        //x[2 ]= 25.0
         testMode = true;
         testCase = HOCK25;
         m = 99;
@@ -430,7 +430,7 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
         // Run gives correct results:
         // success (the relative error in the sum of squares is at most tol)
-        // Number of iterations: 8
+        // Number of iterations: 29
         // Residue vector: 0.0906359603390342
         // x[0 ]= 0.08241055953800391
         // x[1 ]= 1.1330360851163723
@@ -461,7 +461,7 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
         // Run gives incorrect results and does not spot that it has failed:
         //success (both errors are at most tol)
-        //Number of iterations: 52
+        //Number of iterations: 205
         //Residue vector: 4.174768658261074
         //x[0 ]= 0.8406666655903977
         //x[1 ]= -3.6341655556676335E9
@@ -498,7 +498,7 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer has Chi-squared = 8.21487E-3\n", Preferences.DEBUG_ALGORITHM);
         // Run gives incorrect results and does not spot that it has failed:
         //success (the relative error in the sum of squares is at most tol)
-        //Number of iterations: 23
+        //Number of iterations: 89
         //Residue vector: 4.17476866065162
         //x[0 ]= 0.8406666682140694
         //x[1 ]= -1.6587319041298513E9
@@ -536,7 +536,7 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n", Preferences.DEBUG_ALGORITHM);
         //Run gives correct results:
         //success (the relative error in the sum of squares is at most tol)
-        //Number of iterations: 34
+        //Number of iterations: 162
         //Residue vector: 0.017535837700242276
         //x[0 ]= 0.19280693466293072
         //x[1 ]= 0.19128232778972068
@@ -567,7 +567,7 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n", Preferences.DEBUG_ALGORITHM);
         // Run gives incorrect results and does not spot that it has failed:
         //success (the relative error in the sum of squares is at most tol)
-        //Number of iterations: 158
+        //Number of iterations: 758
         //Residue vector: 0.03205219300245665
         //x[0 ]= 585478.320868832
         //x[1 ]= -14.075878972638181
@@ -598,7 +598,7 @@ public abstract class Lmmin {
         Preferences.debug("Correct answer has Chi-squared = 3.07505E-4\n", Preferences.DEBUG_ALGORITHM);
         // Run gives correct results:
         //success (the relative error in the sum of squares is at most tol)
-        //Number of iterations: 389
+        //Number of iterations: 1749
         //Residue vector: 0.01753583770024227
         //x[0 ]= 0.19280693501318796
         //x[1 ]= 0.19128230851839392
@@ -617,6 +617,674 @@ public abstract class Lmmin {
         x[1] = 39.0;
         x[2] = 41.5;
         x[3] = 39.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+        //                            y(1) = 1.0 - a[0]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Rosenbrock function standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (sum of squares below underflow limit)
+        //Number of iterations: 46
+        //Residue vector: 0.0
+        //x[0 ]= 1.0
+        //x[1 ]= 1.0
+        testMode = true;
+        testCase = ROSENBROCK;
+        m = 2;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = -1.2;
+        x[1] = 1.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+        //                            y(1) = 1.0 - a[0]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Rosenbrock function at 10 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (sum of squares below underflow limit)
+        //Number of iterations: 26
+        //Residue vector: 0.0
+        //x[0 ]= 1.0
+        //x[1 ]= 1.0
+        testMode = true;
+        testCase = ROSENBROCK;
+        m = 2;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = -12.0;
+        x[1] = 10.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
+        //                            y(1) = 1.0 - a[0]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Rosenbrock function at 100 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*(a1 - a0**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 1.0 - a0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 1\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (sum of squares below underflow limit)
+        //Number of iterations: 17
+        //Residue vector: 0.0
+        //x[0 ]= 1.0
+        //x[1 ]= 1.0
+        testMode = true;
+        testCase = ROSENBROCK;
+        m = 2;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = -120.0;
+        x[1] = 100.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
+        // Lmmin obtains the same second solution as ELSUNC:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 52
+        //Residue vector: 6.998875172428784
+        //x[0 ]= 11.412778948266542
+        //x[1 ]= -0.8968052501629775
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        m = 2;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 0.5;
+        x[1] = -2.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at 10.0 * standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
+        // Lmmin obtains the same second solution as ELSUNC:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 59
+        //Residue vector: 6.9988751724287885
+        //x[0 ]= 11.412778644550018
+        //x[1 ]= -0.896805278822481
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        m = 2;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 5.0;
+        x[1] = -20.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
+        //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Freudenstein and Roth function at 100.0 * standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 5, a1 = 4\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also Chi-squared = 48.9842... at a0 = 11.41..., a1 = -0.8968...\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Second solution obtained by original ELSUNC\n", Preferences.DEBUG_ALGORITHM);
+        // Lmmin obtains the same second solution as ELSUNC:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 73
+        //Residue vector: 6.998875172428783
+        //x[0 ]= 11.41277887848053
+        //x[1 ]= -0.8968052613772295
+        testMode = true;
+        testCase = FREUDENSTEIN_AND_ROTH;
+        m = 2;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 50.0;
+        x[1] = -200.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 39
+        //Residue vector: 2.923214632968213E-39
+        //x[0 ]= 1.0
+        //x[1 ]= 1.8367099231598242E-40
+        //x[2 ]= 0.0
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        m = 3;
+        n = 3;
+        x = new double[n];
+        fitTestModel();
+        x[0] = -1.0;
+        x[1] = 0.0;
+        x[2] = 0.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at 10.0 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 59
+        //Residue vector: 9.578789709310241E-35
+        //x[0 ]= 1.0
+        //x[1 ]= 6.018531076210112E-36
+        //x[2 ]= 0.0
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        m = 3;
+        n = 3;
+        x = new double[n];
+        fitTestModel();
+        x[0] = -10.0;
+        x[1] = 0.0;
+        x[2] = 0.0;
+        driver();
+        dumpTestResults();
+        
+         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
+        //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
+        //                            y(2) = a2
+        // where theta(a0,a1) = (1/(2*PI))*arctan(a1/a0) if a0 > 0
+        //                    = (1/(2*PI))*arctan(a1/a0) if a0 < 0
+        //                    = 0.25 if a0 = 0 and a1 >= 0
+        //                    = -0.25 if a0 = 0 and a1 < 0
+        Preferences.debug("Helical valley function at 100.0 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = 10*[a2 - 10*theta(a0,a1)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = 10*{Math.sqrt(a0*a0 + a1*a1) - 1]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = a2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 > 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = (1/(2*PI))*arctan(a1/a0) if a0 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = 0.25 if a0 = 0 and a1 >= 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("theta = -0.25 if a0 = 0 and a1 < 0\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is chi-squared = 0 at a0 = 1, a1 = 0, a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 51
+        //Residue vector: 1.4616073164841065E-39
+        //x[0 ]= 1.0
+        //x[1 ]= 9.183549615799121E-41
+        //x[2 ]= 0.0
+        testMode = true;
+        testCase = HELICAL_VALLEY;
+        m = 3;
+        n = 3;
+        x = new double[n];
+        fitTestModel();
+        x[0] = -100.0;
+        x[1] = 0.0;
+        x[2] = 0.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
+        // for i = 1 to 10
+        Preferences.debug("Jennrich and Sampson function at standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i-1) = 2 + 2*i - (exp(i*a0) + exp(i*a1)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("for i = 1 to 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 124.362 at a0 = 0.257825, a1 = 0.257825\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 66
+        //Residue vector: 11.151779335855556
+        //x[0 ]= 0.25782520846544654
+        //x[1 ]= 0.25782521791034896
+        testMode = true;
+        testCase = JENNRICH_AND_SAMPSON;
+        m = 10;
+        n = 2;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 0.3;
+        x[1] = 0.4;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y = a0*exp[a1/(x + a2)]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Meyer function at standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*exp[a1/(x + a2)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 87.9458\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 530
+        //Residue vector: 9.377945146485377
+        //x[0 ]= 0.005609636368525485
+        //x[1 ]= 6181.346361513451
+        //x[2 ]= 345.22363513650026
+        testMode = true;
+        testCase = MEYER;
+        m = 16;
+        n = 3;
+        xSeries = new double[]{50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0,
+        		               100.0, 105.0, 110.0, 115.0, 120.0, 125.0};
+        ySeries = new double[]{34780.0, 28610.0, 23650.0, 19630.0, 16370.0, 13720.0, 11540.0,
+        		               9744.0, 8261.0, 7030.0, 6005.0, 5147.0, 4427.0, 3820.0,
+        		               3307.0, 2872.0};
+        x = new double[n];
+        fitTestModel();
+        x[0] = 0.02;
+        x[1] = 4000.0;
+        x[2] = 250.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y = a0*exp[a1/(x + a2)]
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Meyer function at 10.0 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*exp[a1/(x + a2)]\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answers are a0 = 0.0056096, a1 = 6181.3, a2 = 345.22\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 87.9458\n", Preferences.DEBUG_ALGORITHM);
+        // Run fails and failure is detected:
+        //trapped by degeneracy (fvec is orthogonal to the columns of the jacobian)
+        //Number of iterations: 13
+        //Residue vector: 62375.99179973012
+        //x[0 ]= 1.382369470132864
+        //x[1 ]= -3663.587560165932
+        //x[2 ]= -22.565561492913048
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 530
+        //Residue vector: 9.377945146485377
+        //x[0 ]= 0.005609636368525485
+        //x[1 ]= 6181.346361513451
+        //x[2 ]= 345.22363513650026
+        testMode = true;
+        testCase = MEYER;
+        m = 16;
+        n = 3;
+        xSeries = new double[]{50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0, 95.0,
+        		               100.0, 105.0, 110.0, 115.0, 120.0, 125.0};
+        ySeries = new double[]{34780.0, 28610.0, 23650.0, 19630.0, 16370.0, 13720.0, 11540.0,
+        		               9744.0, 8261.0, 7030.0, 6005.0, 5147.0, 4427.0, 3820.0,
+        		               3307.0, 2872.0};
+        x = new double[n];
+        fitTestModel();
+        x[0] = 0.2;
+        x[1] = 40000.0;
+        x[2] = 2500.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an expample to fit y(i) = exp(-ti*a0) - exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))
+        // For ti = 0.1*i for i = 1 to 10
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Box three-dimensional function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = exp(-ti*a0) = exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.1*i for i = 1 to 10\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 1, a1 = 10, a2 = 1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also chi-squared = 0 at a0 = 10, a1 = 1, a2 = -1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Also chi-squared = 0 wherever a0 = a1 and a2 = 0\n", Preferences.DEBUG_ALGORITHM);
+        //Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 29
+        //Residue vector: 1.5700924586837752E-16
+        //x[0 ]= 1.0
+        //x[1 ]= 9.999999999999996
+        //x[2 ]= 1.0
+        testMode = true;
+        testCase = BOX_3D;
+        m = 10;
+        n = 3;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 0.0;
+        x[1] = 10.0;
+        x[2] = 20.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 444
+        //Residue vector: 1.711645029811146E-30
+        //x[0 ]= 9.677960735589761E-16
+        //x[1 ]= -9.677960735589761E-17
+        //x[2 ]= 2.390396160449105E-16
+        //x[3 ]= 2.390396160449105E-16
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        m = 4;
+        n = 4;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 3.0;
+        x[1] = -1.0;
+        x[2] = 0.0;
+        x[3] = 1.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at 10.0 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 448
+        //Residue vector: 1.5559095785756324E-30
+        //x[0 ]= 9.18700383934818E-16
+        //x[1 ]= -9.187003839348179E-17
+        //x[2 ]= 2.2344174774309623E-16
+        //x[3 ]= 2.2344174774309623E-16
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        m = 4;
+        n = 4;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 30.0;
+        x[1] = -10.0;
+        x[2] = 0.0;
+        x[3] = 10.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(0) = a0 + 10*a1
+        //                            y(1) = sqrt(5)*(a2 - a3)
+        //                            y(2) = (a1 - 2*a2)**2
+        //                            y(3) = sqrt(10)*(a0 - a3)**2
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Powell singular function at 100.0 * standard starting point\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(0) = a0 + 10*a1\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(1) = sqrt(5)*(a2 - a3)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(2) = (a1 - 2*a2)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(3) = sqrt(10)*(a0 - a3)**2\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 0 at a0 = 0, a1= 0, a2 = 0, a3 = 0\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 500
+        //Residue vector: 1.5520219567420793E-30
+        //x[0 ]= 9.185874357383137E-16
+        //x[1 ]= -9.185874357383137E-17
+        //x[2 ]= 2.243103556799396E-16
+        //x[3 ]= 2.243103556799396E-16
+        testMode = true;
+        testCase = POWELL_SINGULAR;
+        m = 4;
+        n = 4;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 300.0;
+        x[1] = -100.0;
+        x[2] = 0.0;
+        x[3] = 100.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown and Dennis function at standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
+        // Run returns correct results:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 1754
+        //Residue vector: 292.9542654175986
+        //x[0 ]= -11.594437651853443
+        //x[1 ]= 13.203629099308115
+        //x[2 ]= -0.4034398400062575
+        //x[3 ]= 0.23677873953706308
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        m = 20;
+        n = 4;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 25.0;
+        x[1] = 5.0;
+        x[2] = -5.0;
+        x[3] = -1.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown and Dennis function at 10.0 * standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
+        // Run returns correct results:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 442
+        //Residue vector: 292.9542654175853
+        //x[0 ]= -11.594440297462182
+        //x[1 ]= 13.203630070504191
+        //x[2 ]= -0.40343949820426317
+        //x[3 ]= 0.23677877080031534
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        m = 20;
+        n = 4;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 250.0;
+        x[1] = 50.0;
+        x[2] = -50.0;
+        x[3] = -10.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
+        // ti = 0.2*i for i = 1 to 20
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Brown and Dennis function at 100.0 * standard starting point\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y(i) = (a0 + a1*ti - exp(ti))**2 + (a2 + a3*sin(ti) - cos(ti))**2\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("For ti = 0.2*i for i = 1 to 20\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = -11.59, a1 = 13.20, a2 = -0.4034, a3 = 0.2367\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has chi-squared = 85822.2\n", Preferences.DEBUG_ALGORITHM);
+        // Run returns correct results:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 2023
+        //Residue vector: 292.9542654176074
+        //x[0 ]= -11.594436999988318
+        //x[1 ]= 13.203628834201245
+        //x[2 ]= -0.4034394763970054
+        //x[3 ]= 0.23677873323320053
+        testMode = true;
+        testCase = BROWN_AND_DENNIS;
+        m = 20;
+        n = 4;
+        x = new double[n];
+        fitTestModel();
+        x[0] = 2500.0;
+        x[1] = 500.0;
+        x[2] = -500.0;
+        x[3] = -100.0;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Osborne 1 function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer is a0 = 0.37541, a1 = 1.9358, a2 = -1.4647, a3 = 0.012868, a4 = 0.022123\n", 
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 5.46489E-5\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error between x and the solution is at most tol)
+        //Number of iterations: 132
+        //Residue vector: 0.007392492609047577
+        //x[0 ]= 0.3754100524602596
+        //x[1 ]= 1.935846965074939
+        //x[2 ]= -1.4646871891700615
+        //x[3 ]= 0.012867534741660762
+        //x[4 ]= 0.022122699441020324
+        testMode = true;
+        testCase = OSBORNE1;
+        m = 33;
+        n = 5;
+        xSeries = new double[m];
+        for (i = 1; i <= m; i++) {
+        	xSeries[i-1] = 10.0*(i-1);
+        }
+        ySeries = new double[]{0.844, 0.908, 0.932, 0.936, 0.925, 0.908, 0.881, 0.850, 0.818,
+        		  0.784, 0.751, 0.718, 0.685, 0.658, 0.628, 0.603, 0.580, 0.558, 0.538, 0.522,
+        		  0.506, 0.490, 0.478, 0.467, 0.457, 0.448, 0.438, 0.431, 0.424, 0.420, 0.414,
+        		  0.411, 0.406};
+        x = new double[n];
+        fitTestModel();
+        x[0] = 0.5;
+        x[1] = 1.5;
+        x[2] = -1.0;
+        x[3] = 0.01;
+        x[4] = 0.02;
+        driver();
+        dumpTestResults();
+        
+        // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
+        // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Osborne 2 function\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) \n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("    + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has a0 = 1.3100 a1 = 0.43155 a2 = 0.63366 a3 = 0.59943 a4 = 0.75418 \n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("a5 = 0.90429 a6 = 1.3658 a7 = 4.8237 a8 = 2.3987 a9 = 4.5689 a10 = 5.6753\n",
+        		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct answer has Chi-squared = 4.01377E-2\n", Preferences.DEBUG_ALGORITHM);
+        // Run gives correct results:
+        //success (the relative error in the sum of squares is at most tol)
+        //Number of iterations: 208
+        //Residue vector: 0.2003440448167794
+        //x[0 ]= 1.309977153539024
+        //x[1 ]= 0.43155379226781587
+        //x[2 ]= 0.6336616979307422
+        //x[3 ]= 0.5994305331680976
+        //x[4 ]= 0.7541832198553656
+        //x[5 ]= 0.9042885993161984
+        //x[6 ]= 1.3658118264622041
+        //x[7 ]= 4.823698815788584
+        //x[8 ]= 2.3986848669498846
+        //x[9 ]= 4.568874596647682
+        //x[10 ]= 5.675341470569949
+        testMode = true;
+        testCase = OSBORNE2;
+        m = 65;
+        n = 11;
+        xSeries = new double[65];
+        for (i = 1; i <= 65; i++) {
+        	xSeries[i-1] = (i-1)/10.0;
+        }
+        ySeries = new double[]{1.366, 1.191, 1.112, 1.013, 0.991, 0.885, 0.831, 0.847, 0.786,
+        		  0.725, 0.746, 0.679, 0.608, 0.655, 0.616, 0.606, 0.602, 0.626, 0.651, 0.724,
+        		  0.649, 0.649, 0.694, 0.644, 0.624, 0.661, 0.612, 0.558, 0.533, 0.495, 0.500,
+        		  0.423, 0.395, 0.375, 0.372, 0.391, 0.396, 0.405, 0.428, 0.429, 0.523, 0.562,
+        		  0.607, 0.653, 0.672, 0.708, 0.633, 0.668, 0.645, 0.632, 0.591, 0.559, 0.597,
+        		  0.625, 0.739, 0.710, 0.729, 0.720, 0.636, 0.581, 0.428, 0.292, 0.162, 0.098,
+        		  0.054};
+        x = new double[n];
+        fitTestModel();
+        x[0] = 1.3;
+        x[1] = 0.65;
+        x[2] = 0.65;
+        x[3] = 0.7;
+        x[4] = 0.6;
+        x[5] = 3.0;
+        x[6] = 5.0;
+        x[7] = 7.0;
+        x[8] = 2.0;
+        x[9] = 4.5;
+        x[10] = 5.5;
         driver();
         dumpTestResults();
     }
@@ -1727,6 +2395,8 @@ public abstract class Lmmin {
     private void fitToTestFunction(final double par[], double fvec[]) {
     	int i;
     	double ymodel = 0.0;
+    	double theta;
+    	double t[];
         try {
             switch (testCase) {
             case DRAPER24D:
@@ -1757,6 +2427,85 @@ public abstract class Lmmin {
                 for (i = 0; i < m; i++) {
                     ymodel = par[0]*(xSeries[i]*xSeries[i] + par[1]*xSeries[i])/
                             (xSeries[i]*xSeries[i] + par[2]*xSeries[i] + par[3]);
+                    fvec[i] = ymodel - ySeries[i];
+                }
+                break;
+            case ROSENBROCK:
+            	fvec[0] = 10.0*(par[1] - par[0]*par[0]);
+        	    fvec[1] = 1.0 - par[0];
+        	    break;
+            case FREUDENSTEIN_AND_ROTH:
+            	fvec[0] = -13.0 + par[0] + ((5.0 - par[1])*par[1] - 2.0)*par[1];
+        		fvec[1] = -29.0 + par[0] + ((par[1] + 1)*par[1] - 14.0)*par[1];
+        		break;
+            case HELICAL_VALLEY:
+            	if (par[0] > 0) {
+        	        theta = Math.atan(par[1]/par[0])/(2.0*Math.PI);
+        		}
+        		else if (par[0] < 0) {
+        	    	theta = Math.atan(par[1]/par[0])/(2.0*Math.PI) + 0.5;
+        	    }
+        	    else if (par[1] >= 0) {
+        	    	theta = 0.25;
+        	    }
+        	    else {
+        	    	theta = -0.25;
+        	    }
+        	    fvec[0] = 10.0*(par[2] - 10.0*theta);
+        	    fvec[1] = 10.0*(Math.sqrt(par[0]*par[0] + par[1]*par[1]) - 1.0);
+        	    fvec[2] = par[2];
+        	    break;
+            case JENNRICH_AND_SAMPSON:
+            	for (i = 0; i < m; i++) {
+       	    	    fvec[i] = 2.0 + 2.0*(i+1.0) - (Math.exp((i+1.0)*par[0]) + Math.exp((i+1.0)*par[1]));
+       	        }
+            	break;
+            case MEYER:
+            	// evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = par[0]*Math.exp(par[1]/(xSeries[i] + par[2]));
+                    fvec[i] = ymodel - ySeries[i];
+                }
+                break;
+            case BOX_3D:
+            	t = new double[m];
+            	for (i = 0; i <m; i++) {
+        		    t[i] = 0.1*(i+1.0);	
+        		    fvec[i] = Math.exp(-par[0]*t[i]) - Math.exp(-par[1]*t[i])
+        		                   - par[2]*(Math.exp(-t[i]) - Math.exp(-10.0*t[i]));
+        		}	
+            	break;
+            case POWELL_SINGULAR:
+            	fvec[0] = par[0] + 10.0*par[1];
+        	    fvec[1] = Math.sqrt(5.0)*(par[2] - par[3]);
+        	    fvec[2] = (par[1] - 2.0*par[2])*(par[1] - 2.0*par[2]);
+        	    fvec[3] = Math.sqrt(10.0)*(par[0] - par[3])*(par[0] - par[3]);
+        	    break;
+            case BROWN_AND_DENNIS:
+            	t = new double[m];
+            	double part1;
+            	double part2;
+            	for (i = 0; i <m; i++) {
+        		    t[i] = 0.2*(i+1.0);
+        		    part1 = par[0] + par[1]*t[i] - Math.exp(t[i]);
+        		    part2 = par[2] + par[3]*Math.sin(t[i]) - Math.cos(t[i]);
+        		    fvec[i] = part1*part1 + part2*part2;
+        		}
+            	break;
+            case OSBORNE1:
+            	// evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = par[0] + par[1]*Math.exp(-par[3]*xSeries[i]) + par[2]*Math.exp(-par[4]*xSeries[i]);
+                    fvec[i] = ymodel - ySeries[i];
+                }
+                break;
+            case OSBORNE2:
+            	// evaluate the residuals[i] = ymodel[i] - ySeries[i]
+                for (i = 0; i < m; i++) {
+                    ymodel = par[0]*Math.exp(-par[4]*xSeries[i]) 
+                           + par[1]*Math.exp(-par[5]*(xSeries[i] - par[8])*(xSeries[i] - par[8]))
+                           + par[2]*Math.exp(-par[6]*(xSeries[i] - par[9])*(xSeries[i] - par[9]))
+                           + par[3]*Math.exp(-par[7]*(xSeries[i] - par[10])*(xSeries[i] - par[10]));
                     fvec[i] = ymodel - ySeries[i];
                 }
                 break;
