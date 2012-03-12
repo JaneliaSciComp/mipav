@@ -67,7 +67,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Result image. */
     private ModelImage resultImage = null;
 
     /** This source image is typically set by the constructor */
@@ -84,8 +83,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private JCheckBox geometricMeanBox, arithmeticMeanBox, interImagesBox;
 
-    private JTextField middleSliceText;
-
     private JPanel okCancelPanel;
 
     private JTextField transformImageText, baseImageText;
@@ -101,8 +98,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
     private boolean doSubsample, doInterImages;
 
     private boolean doGeoMean, doAriMean;
-
-    private int middleSlice;
 
     private String spimAFileDir;
 
@@ -226,7 +221,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
             
             generateFusionAlgo = new PlugInAlgorithmGenerateFusion541b(image, doSubsample, doInterImages, doGeoMean, doAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
-                                                                                mtxFileLoc, middleSlice, baseImageAr, transformImageAr, 
+                                                                                mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -272,8 +267,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
     	doSubsample = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
-    	middleSlice = scriptParameters.getParams().getInt("middleSlice");
-    	
     	mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
     	spimAFileDir = scriptParameters.getParams().getFile("spimAFileDir");
     	spimBFileDir = scriptParameters.getParams().getFile("spimBFileDir");
@@ -295,8 +288,6 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("middleSlice", middleSlice));
        
         scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
         scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", spimAFileDir));
@@ -464,10 +455,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         outputPanel.setForeground(Color.black);
         outputPanel.setBorder(MipavUtil.buildTitledBorder("Output options"));
         
-        gbc.gridy = 0;
-        middleSliceText = gui.buildIntegerField("Middle slice of transformation: ", 0);
-        outputPanel.add(middleSliceText.getParent(), gbc);
-        gbc.gridy++;  
+        gbc.gridy = 0; 
         
         gbc.gridy++;
         doSubsampleBox = gui.buildCheckBox("Do subsampling to match images", false);
@@ -515,11 +503,11 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         doInterImages = interImagesBox.isSelected();
         doSubsample = doSubsampleBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
+        doInterImages = interImagesBox.isSelected();
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
         
 	    try {
-		    middleSlice = Integer.valueOf(middleSliceText.getText()).intValue();
 		    
 		    concurrentNum = Integer.valueOf(concurrentNumText.getText()).intValue();
 		    
