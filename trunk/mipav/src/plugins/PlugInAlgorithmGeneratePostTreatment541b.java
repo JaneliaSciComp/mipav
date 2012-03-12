@@ -138,7 +138,7 @@ public class PlugInAlgorithmGeneratePostTreatment541b extends AlgorithmBase {
         int z = 0;
         for(int i=0; i<postTreatment.getDataSize(); i++) {
             if(i != 0 && i % postTreatment.getSliceSize() == 0) {
-                if(numPixelsTotal > 0) {
+                if(numPixelsSlice > 0) {
                     sumIntensitiesTotal += sumIntensitiesSlice;
                     sumPosIntensitiesTotal += sumPosIntensitiesSlice;
                     sumNegIntensitiesTotal += sumNegIntensitiesSlice;
@@ -173,7 +173,7 @@ public class PlugInAlgorithmGeneratePostTreatment541b extends AlgorithmBase {
             }
         }
         
-        if(numPixelsTotal > 0) {
+        if(numPixelsSlice > 0) {
             sumIntensitiesTotal += sumIntensitiesSlice;
             sumPosIntensitiesTotal += sumPosIntensitiesSlice;
             sumNegIntensitiesTotal += sumNegIntensitiesSlice;
@@ -191,9 +191,25 @@ public class PlugInAlgorithmGeneratePostTreatment541b extends AlgorithmBase {
     private void printData(String string, int numPixels, double sumIntensities, 
                                             int numNegPixels, double sumNegIntensities, 
                                             int numPosPixels, double sumPosIntensities) {
-        Preferences.data(string+"\t"+numPixels+"\t"+(sumIntensities/numPixels)+"\t"+
-                                            numNegPixels+"\t"+(sumNegIntensities/numNegPixels)+"\t"+
-                                            numPosPixels+"\t"+(sumPosIntensities/numPosPixels));
+        double totalAverage = (sumIntensities/numPixels);
+        double negAverage = (sumNegIntensities/numNegPixels);
+        double posAverage = (sumPosIntensities/numPosPixels);
+        
+        if(totalAverage == Double.NaN) {
+            totalAverage = 0;
+        }
+        
+        if(negAverage == Double.NaN) {
+            negAverage = 0;
+        }
+        
+        if(posAverage == Double.NaN) {
+            posAverage = 0;
+        }
+        
+        Preferences.data(string+"\t"+numPixels+"\t"+totalAverage+"\t"+
+                                            numNegPixels+"\t"+negAverage+"\t"+
+                                            numPosPixels+"\t"+posAverage+"\n");
     }
 
     private ModelImage subtractImages(ModelImage destImage, ModelImage imagea, ModelImage imageb) {
