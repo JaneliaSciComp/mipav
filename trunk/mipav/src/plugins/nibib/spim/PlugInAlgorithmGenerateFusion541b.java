@@ -83,17 +83,16 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     }
     
     private ModelImage image;
-    private boolean doAriMean;
-    private boolean doSubsample;
-    private boolean doInterImages;
-    private boolean doGeoMean;
-    private int middleSlice;
+    private boolean doAriMean = true; 
+    private boolean doSubsample = false;
+    private boolean doInterImages = false;
+    private boolean doGeoMean = false;
     private File[] baseImageAr;
     private File[] transformImageAr;
     private boolean doThreshold;
-    private double resX;
-    private double resY;
-    private double resZ;
+    private double resX = 1;
+    private double resY = 1;
+    private double resZ = 1;
     private double thresholdIntensity;
     private String mtxFileLoc;
     private int concurrentNum;
@@ -129,7 +128,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      * @param mode 
      */
     public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
-                                                    double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, int middleSlice, 
+                                                    double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode) {
         super(null, image1);
         
@@ -140,7 +139,6 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         this.doGeoMean = doGeoMean;
         this.doThreshold = doThreshold;
         
-        this.middleSlice = middleSlice;
         this.resX = resX;
         this.resY = resY;
         this.resZ = resZ;
@@ -410,8 +408,11 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             transform.setDimAndResXYZ();
             transform.setUnits(transformImage.getUnitsOfMeasure());
             transform.setOutDimensions(new int[]{118,430,312});//transformImage.getExtents());
+            transform.setQuietRunning(!doInterImages);
             transform.setOutResolutions(transformImage.getResolutions(0));
+            
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            
             transformImage = transform.getResultImage();
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
@@ -479,6 +480,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             transform.setImage25D(false);
             transform.setSeparateThread(false);
             transform.setClipFlag(true);
+            transform.setQuietRunning(!doInterImages);
             transform.setDimAndResXYZ();
             transform.setUnits(image.getUnitsOfMeasure());
             transform.setOutDimensions(image.getExtents());//transformImage.getExtents());
@@ -499,7 +501,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         }
 
         private void calcGeoMean() {
-            subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0));
+            subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
             int transformX, transformY, transformZ;
             //new ViewJFrameImage(transformImage);
             for(int i=0; i<baseImage.getExtents()[0]; i++) {
@@ -529,7 +531,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         }
 
         private void calcAriMean() {
-            subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0));
+            subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
             int transformX, transformY, transformZ;
             //new ViewJFrameImage(transformImage);
             for(int i=0; i<baseImage.getExtents()[0]; i++) {
