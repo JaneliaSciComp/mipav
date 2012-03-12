@@ -1437,12 +1437,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Creates a blank Image based on the information found in the fileInfo object.
+     * Creates a blank Image based on the information found in the fileInfo object and places it in a frame.
      * 
      * @param fileInfo This object contains the enough image information to build a ModelImage with nothing inside (eg.
      *            blank image).
      */
     public ModelImage createBlankImage(FileInfoBase fileInfo) {
+        return createBlankImage(fileInfo, true);
+    }
+    
+    /**
+     * Creates a blank Image based on the information found in the fileInfo object.
+     * 
+     * @param fileInfo This object contains the enough image information to build a ModelImage with nothing inside (eg.
+     *            blank image).
+     */
+    public ModelImage createBlankImage(FileInfoBase fileInfo, boolean doDisplay) {
         ModelImage image = null;
 
         if (fileInfo == null) {
@@ -1487,7 +1497,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         try {
-            new ViewJFrameImage(image, null, getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
+            if(doDisplay) {
+                new ViewJFrameImage(image, null, getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
+            }
         } catch (final OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory");
             
@@ -1499,6 +1511,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         
         return image;
     }
+    
+    
 
     /**
      * Toggles the display of the Output window and updates all JFrameImages so that the menu checkbox will reflect the
