@@ -60,9 +60,8 @@ public class PlugInAlgorithmCreateTumorMap541b extends AlgorithmBase {
     private double initRadius;
     private double tumorChange;
     private PlugInDialogCreateTumorMap541b.TumorSimMode simMode;
-    /** Center of created scphere */
+    /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
-    private int largerRadius;
     private double intensity;
     /** Result images */
     private ModelImage image1a, image2a;
@@ -70,6 +69,8 @@ public class PlugInAlgorithmCreateTumorMap541b extends AlgorithmBase {
     private int subsampleAmount;
     /** Whether boundary checking is necessary during sphere population */
     private boolean doBoundCheck;
+    /** Whether sphere should be populated entirely within field of view */
+    private boolean doCenter;
     
     
 
@@ -81,12 +82,14 @@ public class PlugInAlgorithmCreateTumorMap541b extends AlgorithmBase {
      */
 	public PlugInAlgorithmCreateTumorMap541b(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap541b.TumorSimMode simMode, double intensity, int subsampleAmount) {
+            PlugInDialogCreateTumorMap541b.TumorSimMode simMode, double intensity, int subsampleAmount, boolean doCenter) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
         this.xyRes = xyRes;
         this.zRes = zRes;
+        
+        this.doCenter = doCenter;
         
         this.initRadius = initRadius;
         if(tumorChange >= 2) {
@@ -131,23 +134,25 @@ public class PlugInAlgorithmCreateTumorMap541b extends AlgorithmBase {
         image2a.getParentFrame().setVisible(false);
         image2a.setImageName("image2a");
         
-        largerRadius = (int) Math.round(defineLargerRadius());
+        int xyLargerRadius = (int)Math.ceil(defineLargerRadius()/xyRes);
         
         doBoundCheck = false;
         Random r = new Random(); 
-        if(xyDim-2*largerRadius < 0) {
+        if(!doCenter) {
         	xCenter = r.nextInt(xyDim);
             yCenter = r.nextInt(xyDim);
             doBoundCheck = true;
         } else { //ensures entire tumor is inside image
-        	xCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
-            yCenter = r.nextInt(xyDim-2*largerRadius)+largerRadius;
+        	xCenter = r.nextInt(xyDim-2*xyLargerRadius)+xyLargerRadius;
+            yCenter = r.nextInt(xyDim-2*xyLargerRadius)+xyLargerRadius;
         }
         
-        if(zDim-2*largerRadius < 0) {
+        int zLargerRadius = (int)Math.ceil(defineLargerRadius()/zRes);
+        
+        if(!doCenter) {
         	zCenter = r.nextInt(zDim);
         } else {
-        	zCenter = r.nextInt(zDim-2*largerRadius)+largerRadius;
+        	zCenter = r.nextInt(zDim-2*zLargerRadius)+zLargerRadius;
         	doBoundCheck = true;
         }
         
@@ -156,8 +161,6 @@ public class PlugInAlgorithmCreateTumorMap541b extends AlgorithmBase {
         
         populateSphere(initRadius, intensity, image1a);
         populateSphere(getChangedRadius(), getChangedIntensity(), image2a);
-        
-        image1a.getParentFrame().setVisible(true);
         
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       

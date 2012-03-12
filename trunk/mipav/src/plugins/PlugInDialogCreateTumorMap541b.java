@@ -116,6 +116,10 @@ public class PlugInDialogCreateTumorMap541b extends JDialogScriptableBase implem
     /** Units of image */
 	private JComboBox unitsCombo;
 
+    private boolean doCenter;
+
+    private JCheckBox doCenterCheck;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -200,7 +204,7 @@ public class PlugInDialogCreateTumorMap541b extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap541b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity, subsample);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap541b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity, subsample, doCenter);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -315,6 +319,10 @@ public class PlugInDialogCreateTumorMap541b extends JDialogScriptableBase implem
         tumorSimPanel.setForeground(Color.black);
         tumorSimPanel.setBorder(buildTitledBorder("Tumor simulation parameters"));
         
+        doCenterCheck = gui.buildCheckBox("Enclose entire tumor within field of view", true);
+        tumorSimPanel.add(doCenterCheck.getParent(), gbc);
+        
+        gbc.gridy++;
         intensityText = gui.buildDecimalField("Intensity value: ", 1300);
         tumorSimPanel.add(intensityText.getParent(), gbc);
         
@@ -389,6 +397,8 @@ public class PlugInDialogCreateTumorMap541b extends JDialogScriptableBase implem
 	        MipavUtil.displayError("Input error, enter numerical values only.");
 	        return false;
 	    }
+	    
+	    doCenter = doCenterCheck.isSelected();
 
 	    simMode = (TumorSimMode)growthShrinkCombo.getSelectedItem();
 	    
