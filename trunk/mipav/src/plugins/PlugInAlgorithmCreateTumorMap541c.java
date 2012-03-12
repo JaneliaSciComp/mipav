@@ -232,7 +232,7 @@ public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
             break;
             
         case shrink:
-            newRadius = (int) (initRadius*(tumorChange));
+            newRadius = (int) (initRadius*(1-tumorChange));
             break;
             
         case none:
@@ -254,7 +254,7 @@ public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
             newIntensity = intensity*(1+tumorChange);
             break;
         case deintensify:
-            newIntensity = intensity*tumorChange;
+            newIntensity = intensity*(1-tumorChange);
             break;
         case none:
         case grow:
