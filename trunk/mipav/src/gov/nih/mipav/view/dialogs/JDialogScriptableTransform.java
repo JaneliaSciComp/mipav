@@ -371,7 +371,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    if(!isQuietRunning()) {
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    }
                 } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -389,7 +391,9 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    if(!isQuietRunning()) {
+                        new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    }
                 } catch (final OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }

@@ -82,6 +82,9 @@ public abstract class JDialogBase extends JDialog
 
     /** Whether we are using this dialog as part of a script. */
     protected boolean runningScriptFlag = false;
+    
+    /** Whether algorithm is running in quiet mode (such as part of a script, in headless environment, within other algorithm ) */
+    protected boolean runQuiet = false;
 
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
@@ -1308,6 +1311,14 @@ public abstract class JDialogBase extends JDialog
      */
     public void setScriptRunning(boolean flag) {
         runningScriptFlag = flag;
+    }
+
+    public boolean isQuietRunning() {
+        return runQuiet;
+    }
+
+    public void setQuietRunning(boolean runQuiet) {
+        this.runQuiet = runQuiet;
     }
 
     /**
