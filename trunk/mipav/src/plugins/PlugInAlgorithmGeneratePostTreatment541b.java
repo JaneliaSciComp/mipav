@@ -195,18 +195,6 @@ public class PlugInAlgorithmGeneratePostTreatment541b extends AlgorithmBase {
         double negAverage = (sumNegIntensities/numNegPixels);
         double posAverage = (sumPosIntensities/numPosPixels);
         
-        if(totalAverage == Double.NaN) {
-            totalAverage = 0;
-        }
-        
-        if(negAverage == Double.NaN) {
-            negAverage = 0;
-        }
-        
-        if(posAverage == Double.NaN) {
-            posAverage = 0;
-        }
-        
         Preferences.data(string+"\t"+numPixels+"\t"+totalAverage+"\t"+
                                             numNegPixels+"\t"+negAverage+"\t"+
                                             numPosPixels+"\t"+posAverage+"\n");
