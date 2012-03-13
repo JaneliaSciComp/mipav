@@ -1850,7 +1850,7 @@ public abstract class NLConstrainedEngine {
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 function with 5 parameters and 10 points\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n", 
+        Preferences.debug("At any point where sum from j = 1 to param of j*x[j] = 3/(2*nPts + 1)\n", 
         		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1;
@@ -1875,7 +1875,7 @@ public abstract class NLConstrainedEngine {
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
         Preferences.debug("Linear rank 1 function with 5 parameters and 50 points\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Chi-squared = nPts*(nPts-1)/(2*(2*nPts + 1))\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("At any point where sum from j = 1 to nPts of j*x[j] = 3/(2*nPts + 1)\n", 
+        Preferences.debug("At any point where sum from j = 1 to param of j*x[j] = 3/(2*nPts + 1)\n", 
         		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1;
@@ -1901,7 +1901,7 @@ public abstract class NLConstrainedEngine {
         Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 10 points\n", 
         		Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n", 
+        Preferences.debug("At any point where sum from j = 2 to param-1 of j*x[j] = 3/(2*nPts - 3)\n", 
         		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
@@ -1927,7 +1927,7 @@ public abstract class NLConstrainedEngine {
         Preferences.debug("Linear rank 1 with zero columns and rows function with 5 parameters and 50 points\n", 
         		Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Chi-squared = (nPts**2 + 3*nPts -6)/(2*(2*nPts - 3))\n", Preferences.DEBUG_ALGORITHM);
-        Preferences.debug("At any point where sum from j = 2 to nPts-1 of j*x[j] = 3/(2*nPts - 3)\n", 
+        Preferences.debug("At any point where sum from j = 2 to param-1 of j*x[j] = 3/(2*nPts - 3)\n", 
         		Preferences.DEBUG_ALGORITHM);
         testMode = true;
         testCase = LINEAR_RANK1_WITH_ZERO_COLUMNS_AND_ROWS;
@@ -1962,6 +1962,7 @@ public abstract class NLConstrainedEngine {
         param = 1;
         gues = new double[param];
         gues[0] = 1.0;
+        fitTestModel();
         bounds = 1; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
@@ -1982,6 +1983,7 @@ public abstract class NLConstrainedEngine {
         nPts = 8;
         param = 8;
         gues = new double[param];
+        fitTestModel();
         for (i = 1; i <= param; i++) {
             gues[i-1] = i/(param + 1.0);
         }
@@ -2008,6 +2010,7 @@ public abstract class NLConstrainedEngine {
         nPts = 9;
         param = 9;
         gues = new double[param];
+        fitTestModel();
         for (i = 1; i <= param; i++) {
             gues[i-1] = i/(param + 1.0);
         }
@@ -2033,6 +2036,7 @@ public abstract class NLConstrainedEngine {
         nPts = 10;
         param = 10;
         gues = new double[param];
+        fitTestModel();
         for (i = 1; i <= param; i++) {
             gues[i-1] = i/(param + 1.0);
         }
