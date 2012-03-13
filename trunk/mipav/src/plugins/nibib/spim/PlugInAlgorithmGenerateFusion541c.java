@@ -66,7 +66,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
 
     public enum SampleMode {
         DownsampleToBase("Downsample transformed image to base"),
@@ -132,7 +132,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      * @param xMovement 
      * @param mode 
      */
-    public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion541c(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize) {
@@ -522,22 +522,15 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             Object lock = new Object();
             
-            synchronized(lock) {
-                if(xMovement == null && yMovement == null && zMovement == null) {
-                    if(movementQueue.size() > 0) {
-                            try {
-                                lock.wait();
-                                System.out.println("Done waiting");
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }   
-                    } else {
-                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
-                        MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
-                        movementQueue.add(alg);
-                        alg.run();
-                        lock.notifyAll();
-                    }
+            
+            if(xMovement == null && yMovement == null && zMovement == null) {
+                if(movementQueue.size() > 0) {
+                     while(movementQueue.size() > 0) {}
+                } else {
+                    fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+                    MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
+                    movementQueue.add(alg);
+                    alg.run();
                 }
             }
             
