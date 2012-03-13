@@ -135,6 +135,18 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
 
     private boolean doSmartMovement;
 
+    private int stepSize;
+
+    private int maxX, maxY, maxZ;
+
+    private int minX, minY, minZ;
+
+    private JTextField minXText, minYText, minZText;
+
+    private JTextField maxXText, maxYText, maxZText;
+
+    private JTextField stepSizeText;
+
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
@@ -222,7 +234,8 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
             generateFusionAlgo = new PlugInAlgorithmGenerateFusion541b(image, doSubsample, doInterImages, doGeoMean, doAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
-                                                                                xMovement, yMovement, zMovement, mode);
+                                                                                xMovement, yMovement, zMovement, mode, 
+                                                                                minX, minY, minZ, maxX, maxY, maxZ, stepSize);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -297,7 +310,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
     } //end storeParamsFromGUI()
    
     private void init() {
-        setResizable(true);
+        
         setForeground(Color.black);
         setTitle("Generate fusion 541b");
         try {
@@ -374,11 +387,55 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         mtxPanel.add(doSmartMovementBox.getParent(), gbc);
         gbc.gridy++;
         
+        final JPanel smartPanel = new JPanel();
+        smartPanel.setLayout(new GridBagLayout());
+        GridBagConstraints smartGBC = new GridBagConstraints();
+        smartGBC.gridx = 0;
+        smartGBC.gridy = 0;
+        
+        minXText = gui.buildIntegerField("X range: ", -60);
+        smartPanel.add(minXText.getParent(), smartGBC); 
+        smartGBC.gridx++;
+        
+        maxXText = gui.buildIntegerField(" to ", 60);
+        smartPanel.add(maxXText.getParent(), smartGBC);
+        smartGBC.gridy++;
+        smartGBC.gridx = 0;
+        
+        minYText = gui.buildIntegerField("Y range: ", -60);
+        smartPanel.add(minYText.getParent(), smartGBC); 
+        smartGBC.gridx++;
+        
+        maxYText = gui.buildIntegerField(" to ", 60);
+        smartPanel.add(maxYText.getParent(), smartGBC);
+        smartGBC.gridy++;
+        smartGBC.gridx = 0;
+        
+        minZText = gui.buildIntegerField("Z range: ", -30);
+        smartPanel.add(minZText.getParent(), smartGBC); 
+        smartGBC.gridx++;
+        
+        maxZText = gui.buildIntegerField(" to ", 30);
+        smartPanel.add(maxZText.getParent(), smartGBC);
+        smartGBC.gridy++;
+        smartGBC.gridx = 0;
+        smartGBC.gridwidth = 2;
+        
+        stepSizeText = gui.buildIntegerField("Initial step size: ", 5);
+        smartPanel.add(stepSizeText.getParent(), smartGBC);
+        
+        mtxPanel.add(smartPanel, gbc);
+        gbc.gridy++;
+        
+        smartPanel.setVisible(false);
+        
         doSmartMovementBox.addActionListener(new ActionListener(){
             public void actionPerformed(ActionEvent arg0) {
                 xMovementText.setEnabled(!doSmartMovementBox.isSelected());
                 yMovementText.setEnabled(!doSmartMovementBox.isSelected());
                 zMovementText.setEnabled(!doSmartMovementBox.isSelected());
+                
+                smartPanel.setVisible(doSmartMovementBox.isSelected());
             }
         });
         
@@ -472,7 +529,7 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         
         
         
-        interImagesBox = gui.buildCheckBox("Show transformed images", true);
+        interImagesBox = gui.buildCheckBox("Show transformed images", false);
         outputPanel.add(interImagesBox.getParent(), gbc);
         
         gbc.gridy = 2;
@@ -481,8 +538,10 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
         gbc.gridy++;
         okCancelPanel = gui.buildOKCancelPanel();
         mainPanel.add(okCancelPanel, gbc);
+        
+        JScrollPane scroll = new JScrollPane(mainPanel);
 
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(scroll, BorderLayout.CENTER);
 
         pack();
         setVisible(true);
@@ -523,6 +582,31 @@ public class PlugInDialogGenerateFusion541b extends JDialogScriptableBase implem
     		    zMovement = Integer.valueOf(zMovementText.getText());
 		    } else {
 		        xMovement = yMovement = zMovement = null;
+		        
+		        minX = Integer.valueOf(minXText.getText());
+                minY = Integer.valueOf(minYText.getText());
+                minZ = Integer.valueOf(minZText.getText());
+                
+                maxX = Integer.valueOf(maxXText.getText());
+                maxY = Integer.valueOf(maxYText.getText());
+                maxZ = Integer.valueOf(maxZText.getText());
+                
+                if(minX >= maxX) {
+                    MipavUtil.displayError("Input error, maxX < minX.");
+                    return false;
+                }
+                
+                if(minY >= maxY) {
+                    MipavUtil.displayError("Input error, maxY < minY.");
+                    return false;    
+                }
+                
+                if(minZ >= maxZ) {
+                    MipavUtil.displayError("Input error, maxZ < minZ.");
+                    return false;
+                }
+                
+                stepSize = Integer.valueOf(stepSizeText.getText());
 		    }
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");
