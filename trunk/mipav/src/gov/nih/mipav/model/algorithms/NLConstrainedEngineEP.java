@@ -591,6 +591,8 @@ public abstract class NLConstrainedEngineEP {
     
     private final int OSBORNE2 = 19;
     
+    private final int WATSON = 20;
+    
     private final int HOCK25 = 25;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -602,6 +604,7 @@ public abstract class NLConstrainedEngineEP {
     	// Norman R. Draper and Harry Smith */
     	// The correct answer is a0 = 72.4326,  a1 = 28.2519, a2 = 0.5968
     	// Works for 4 possibilities of internalScaling = true, false; Jacobian calculation = numerical, analytical
+  
     	Preferences.debug("Draper problem 24D y = a0 - a1*(a2**x) constrained\n", Preferences.DEBUG_ALGORITHM);
     	Preferences.debug("Correct answer is a0 = 72.4326, a1 = 28.2519, a2 = 0.5968\n", Preferences.DEBUG_ALGORITHM);
     	testMode = true;
@@ -1208,6 +1211,29 @@ public abstract class NLConstrainedEngineEP {
         bl = new DoubleDouble[param];
         bu = new DoubleDouble[param];
         driverCalls();
+        
+        // Below is an example to fit the Watson function with 12 parameters
+        // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
+        Preferences.debug("Watson with 12 parameters at standard starting point unconstrained\n", Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("Correct chi-squared = 4.72238E-10\n", Preferences.DEBUG_ALGORITHM);
+        testMode = true;
+        testCase = WATSON;
+        nPts = 31;
+        param = 12;
+        // Guess all parameters are 0.0.
+        gues = new DoubleDouble[param];
+        for (i = 0; i < param; i++) {
+        	gues[i] = DoubleDouble.valueOf(0.0);
+        }
+        fitTestModel();
+        bounds = 0; // bounds = 0 means unconstrained
+        // bounds = 1 means same lower and upper bounds for
+        // all parameters
+        // bounds = 2 means different lower and upper bounds
+        // for all parameters
+        bl = new DoubleDouble[param];
+        bu = new DoubleDouble[param];
+        driverCalls();
     }
     
     
@@ -1369,6 +1395,7 @@ public abstract class NLConstrainedEngineEP {
         	DoubleDouble a0logx;
         	DoubleDouble a1m1;
         	DoubleDouble temp;
+        	DoubleDouble temp2;
         	DoubleDouble sixteenmx;
         	DoubleDouble d1;
         	DoubleDouble d2;
@@ -1799,6 +1826,103 @@ public abstract class NLConstrainedEngineEP {
 	                    }
 	                } // else if (ctrl == 2)
                 	break;
+                case WATSON:
+                	if ((ctrl == -1 ) || (ctrl == 1)) {
+                		DoubleDouble sum1;
+                		DoubleDouble sum2;
+                		DoubleDouble t[] = new DoubleDouble[29];
+                		int j;
+                	    for (i = 0; i < 31; i++) {
+                	    	if (i < 29) {
+                	            //t[i] = (i+1.0)/29.0;
+                	    		temp = (DoubleDouble.valueOf(i)).add(DoubleDouble.valueOf(1.0));
+                	    		t[i] = temp.divide(DoubleDouble.valueOf(29.0));
+	                	        sum1 = DoubleDouble.valueOf(0.0);
+	                	        for (j = 2; j <= param; j++) {
+	                	            //sum1 += (j - 1.0)*a[j-1]*Math.pow(t[i], j-2.0);
+	                	        	temp = (DoubleDouble.valueOf(j)).subtract(DoubleDouble.valueOf(1.0));
+	                	        	temp = temp.multiply(a[j-1]);
+	                	        	temp2 = (DoubleDouble.valueOf(j)).subtract(DoubleDouble.valueOf(2.0));
+	                	        	temp2 = t[i].pow(temp2);
+	                	        	temp = temp.multiply(temp2);
+	                	        	sum1 = sum1.add(temp);
+	                	        }
+	                	        sum2 = DoubleDouble.valueOf(0.0);
+	                	        for (j = 1; j <= param; j++) {
+	                	            //sum2 += a[j-1]*Math.pow(t[i], j-1.0);	
+	                	        	temp = DoubleDouble.valueOf(j).subtract(DoubleDouble.valueOf(1.0));
+	                	        	temp = t[i].pow(temp);
+	                	        	temp = a[j-1].multiply(temp);
+	                	        	sum2 = sum2.add(temp);
+	                	        }
+                	        	//residuals[i] = sum1 - sum2*sum2 - 1.0;
+	                	        temp = sum2.multiply(sum2);
+	                	        residuals[i] = sum1.subtract(temp);
+	                	        residuals[i] = residuals[i].subtract(DoubleDouble.valueOf(1.0));
+                	        }
+                	        else if (i == 29) {
+                	        	residuals[i] = a[0];
+                	        }
+                	        else if (i == 30) {
+                	        	//residuals[i] = a[1] - a[0]*a[0] - 1.0; 
+                	        	temp = a[0].multiply(a[0]);
+                	        	residuals[i] = a[1].subtract(temp);
+                	        	residuals[i] = residuals[i].subtract(DoubleDouble.valueOf(1.0));
+                	        }
+                	    }
+                	} // if ((ctrl == -1) || (ctrl == 1))
+                	else if (ctrl == 2) {
+                		if (analyticalJacobian) {
+                    		DoubleDouble sum2;
+                    		DoubleDouble t[] = new DoubleDouble[29];
+                    		int j;
+                    	    for (i = 0; i < 31; i++) {
+                    	    	if (i < 29) {
+                    	            //t[i] = (i+1.0)/29.0;
+                    	            temp = (DoubleDouble.valueOf(i)).add(DoubleDouble.valueOf(1.0));
+                    	    		t[i] = temp.divide(DoubleDouble.valueOf(29.0));
+                    	            sum2 = DoubleDouble.valueOf(0.0);
+    	                	        for (j = 1; j <= param; j++) {
+    	                	            //sum2 += a[j-1]*Math.pow(t[i], j-1.0);
+    	                	            temp = DoubleDouble.valueOf(j).subtract(DoubleDouble.valueOf(1.0));
+    	                	        	temp = t[i].pow(temp);
+    	                	        	temp = a[j-1].multiply(temp);
+    	                	        	sum2 = sum2.add(temp);
+    	                	        }
+                    	            covarMat[i][0] = DoubleDouble.valueOf(-2.0).multiply(sum2);
+                    	            for (j = 2; j <= param; j++) {
+                    	            	//covarMat[i][j-1] = (j-1.0)*Math.pow(t[i],j-2.0) - 2.0*sum2*Math.pow(t[i],j-1.0);
+                    	            	temp = DoubleDouble.valueOf(j).subtract(DoubleDouble.valueOf(2.0));
+                    	            	temp = t[i].pow(temp);
+                    	            	temp2 = (DoubleDouble.valueOf(j)).subtract(DoubleDouble.valueOf(1.0));
+                    	            	temp = temp2.multiply(temp);
+                    	            	temp2 = t[i].pow(temp2);
+                    	            	temp2 = sum2.multiply(temp2);
+                    	            	temp2 = (DoubleDouble.valueOf(2.0)).multiply(temp2);
+                    	            	covarMat[i][j-1] = temp.subtract(temp2);
+                    	            }
+                    	    	} // if (i < 29)
+                    	    	else if (i == 29) {
+                    	    		covarMat[i][0] = DoubleDouble.valueOf(1.0);
+                    	    		for (j = 1; j < param; j++) {
+                    	    			covarMat[i][j] = DoubleDouble.valueOf(0.0);
+                    	    		}
+                    	    	}
+                    	    	else if (i == 30) {
+                    	    		covarMat[i][0] = DoubleDouble.valueOf(-2.0).multiply(a[0]);
+                    	    		covarMat[i][1] = DoubleDouble.valueOf(1.0);
+                    	    		for (j = 2; j < param; j++) {
+                    	    			covarMat[i][j] = DoubleDouble.valueOf(0.0);
+                    	    		}
+                    	    	}
+                    	    } // for (i = 0; i < 31; i++)
+                		} // if (analyticalJacobian)
+                		else {
+                			// If the user wishes to calculate the Jacobian numerically
+                			ctrlMat[0] = 0;
+                		}
+                	} // else if (ctrl == 2)
+                    break;
                 } // switch (testCase)
             } catch (Exception e) {
                 Preferences.debug("function error: " + e.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
