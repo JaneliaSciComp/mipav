@@ -31,8 +31,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import javax.imageio.stream.FileImageOutputStream;
@@ -103,6 +105,9 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
     private SampleMode mode;
     private ArrayBlockingQueue<MeasureAlg> movementQueue;
     
+    private final int stepSize;
+    private final int minX, minY, minZ;
+    private final int maxX, maxY, maxZ;
 
     /**
      * Constructor.
@@ -129,7 +134,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
      */
     public PlugInAlgorithmGenerateFusion541b(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
-                                                    File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode) {
+                                                    File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
+                                                    int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize) {
         super(null, image1);
         
         this.image = image1;
@@ -146,6 +152,16 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         this.yMovement = yMovement;
         this.zMovement = zMovement;
         this.thresholdIntensity = thresholdIntensity;
+        
+        this.minX = minX;
+        this.minY = minY;
+        this.minZ = minZ;
+        
+        this.maxX = maxX;
+        this.maxY = maxY;
+        this.maxZ = maxZ;
+        
+        this.stepSize = stepSize;
         
         this.mtxFileLoc = mtxFileLoc;
         this.baseImageAr = baseImageAr;
@@ -210,6 +226,9 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         return resultImageList;
     }
     
+    
+    
+    
     public class MeasureAlg implements Runnable {
 
         private ModelImage baseImage, transformImage;
@@ -224,81 +243,214 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             this.transformImage = transformImage;
         }
         
-        public void run() {
-            
+        public void run() {       
+            test();   
+        }
+
+        private void test() {
+            fireProgressStateChanged(5, "Measure", "Measure init");
             
             xExtents = baseImage.getExtents()[0] < transformImage.getExtents()[0] ? baseImage.getExtents()[0] : transformImage.getExtents()[0];
             yExtents = baseImage.getExtents()[1] < transformImage.getExtents()[1] ? baseImage.getExtents()[1] : transformImage.getExtents()[1];
             zExtents = baseImage.getExtents()[2] < transformImage.getExtents()[2] ? baseImage.getExtents()[2] : transformImage.getExtents()[2];
             
-            int minX = -10, minY = -10, minZ = -3;
-            
             double sumAmountOld = Double.MAX_VALUE, sumAmount = 0;
             
-            long time = System.currentTimeMillis();
+            ArrayList<GenerateSum> sumList = new ArrayList<GenerateSum>();
+            ArrayList<Future<Double>> futureList = new ArrayList<Future<Double>>();
             
-            for(int i=minX; i<10; i++) {
-                for(int j=minY; j<10; j++) {
-                    for(int k=minZ; k<3; k++) {
-                        //long time = System.currentTimeMillis();
-                        sumAmount = generateSumAmount(i, j, k);
-                        //System.out.println("For "+i+", "+j+", "+k+": "+sumAmount);
-                        if(sumAmount < sumAmountOld) {
-                            minX = i;
-                            minY = j;
-                            minZ = k;
-                            sumAmountOld = sumAmount;
-                        }
-                        //System.out.println((System.currentTimeMillis() - time)+" "+sumAmount);
-                    }
-                }
-                System.out.println("For "+i+": "+sumAmountOld+" most recent sumAmount "+sumAmount);
+            ExecutorService exec = Executors.newFixedThreadPool(concurrentNum);
+            GenerateSum g = null;
+            
+            for(int i=minX; i<maxX; i+=stepSize) {
+                g = new GenerateSum(i, minY, minZ, maxY, maxZ, stepSize);
+                sumList.add(g);
+                futureList.add(exec.submit(g));
             }
             
-            System.out.println((System.currentTimeMillis() - time)+" "+sumAmountOld);
+            exec.shutdown();
+            
+            double firstMinValue = Double.MAX_VALUE, secondMinValue = Double.MAX_VALUE, thirdMinValue = Double.MAX_VALUE;
+            
+            int firstMinX = minX, firstMinY = minY, firstMinZ = minZ,
+                secondMinX = minX, secondMinY = minY, secondMinZ = minZ,
+                    thirdMinX = minX, thirdMinY = minY, thirdMinZ = minZ;
+            
+            try {
+                for(int i=0; i<futureList.size(); i++) {
+                    fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 1 fitting");
+                    System.out.println(i);
+                    if(futureList.get(i).get() < firstMinValue) {
+                        thirdMinValue = secondMinValue;
+                        thirdMinX = secondMinX;
+                        thirdMinY = secondMinY;
+                        thirdMinZ = secondMinZ;
+                        
+                        secondMinValue = firstMinValue;
+                        secondMinX = firstMinX;
+                        secondMinY = firstMinY;
+                        secondMinZ = firstMinZ;
+                        
+                        firstMinValue = futureList.get(i).get();
+                        firstMinX = sumList.get(i).getXMeasure();
+                        firstMinY = sumList.get(i).getYMeasure();
+                        firstMinZ = sumList.get(i).getZMeasure();
+                    }
+                }
+            } catch(Exception exe) {
+                exe.printStackTrace();
+            }
+            
+            fireProgressStateChanged(10, "Measure", "Measure init");
+            
+            int minX = Math.min(Math.min(firstMinX, secondMinX), thirdMinX);
+            int minY = Math.min(Math.min(firstMinY, secondMinY), thirdMinY);
+            int minZ = Math.min(Math.min(firstMinZ, secondMinZ), thirdMinZ);
+            
+            minX -= stepSize;
+            minY -= stepSize;
+            minZ -= stepSize;
+            
+            int maxX = Math.max(Math.max(firstMinX, secondMinX), thirdMinX);
+            int maxY = Math.max(Math.max(firstMinY, secondMinY), thirdMinY);
+            int maxZ = Math.max(Math.max(firstMinZ, secondMinZ), thirdMinZ);
+            
+            maxX += stepSize;
+            maxY += stepSize;
+            maxZ += stepSize;
+            
+            Preferences.data("Range after first fitting attempt: \n");
+            Preferences.data("("+minX+", "+minY+", "+minZ+") to ("+maxX+", "+maxY+", "+maxZ+")\n");
+            
+            sumList = new ArrayList<GenerateSum>();
+            futureList = new ArrayList<Future<Double>>();
+            
+            exec = Executors.newFixedThreadPool(concurrentNum);
+            g = null;
+            
+            for(int i=minX; i<maxX; i++) {
+                g = new GenerateSum(i, minY, minZ, maxY, maxZ, 1);
+                sumList.add(g);
+                futureList.add(exec.submit(g));
+            }
+            
+            exec.shutdown();
+            
+            double minValue = 0;
+            try {
+                for(int i=0; i<futureList.size(); i++) {
+                    fireProgressStateChanged((int) (100*(((double)i)/futureList.size())), "Measure", "Pass 2 fitting");
+                    System.out.println(i);
+                    if(futureList.get(i).get() < firstMinValue) {
+                        minValue = futureList.get(i).get();
+                        minX = sumList.get(i).getXMeasure();
+                        minY = sumList.get(i).getYMeasure();
+                        minZ = sumList.get(i).getZMeasure();
+                    }
+                }
+            } catch(Exception exe) {
+                exe.printStackTrace();
+            }
+            
+            Preferences.data("Mininimum match location found at: "+minX+", "+minY+", "+minZ+"\n");
             
             setMeasures(minX, minY, minZ);
-        }
-        
-        private double generateSumAmount(int xMeasure, int yMeasure, int zMeasure) {
-            double sumAmount = 0;
             
-            double baseIntensity = 0, transformIntensity = 0;
-            
-            int transformX, transformY, transformZ;
-            //new ViewJFrameImage(transformImage);
-            for(int i=0; i<xExtents; i++) {
-                transformX = i-xMeasure;
-                for(int j=0; j<yExtents; j++) {
-                    transformY = j-yMeasure;
-                    for(int k=0; k<zExtents; k++) {
-                        transformZ = k-zMeasure;
-                        baseIntensity = baseImage.getDouble(i, j, k);
-                        if(baseIntensity < 20) { //TODO: assign reasonable values
-                            baseIntensity = 0;
-                        }
-                        if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
-                                transformY >= 0 && transformY < transformImage.getExtents()[1] && 
-                                transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                            transformIntensity = transformImage.getDouble(transformX, transformY, transformZ);
-                            if(transformIntensity < 20) {
-                                transformIntensity = 0;
-                            }
-                            sumAmount += Math.abs((baseIntensity - transformIntensity));
-                        } else {
-                            sumAmount += Math.abs(baseIntensity - 0);
-                        }
-                    }
-                }
-            }
-            
-            return sumAmount;
         }
 
         private void setMeasures(int minX, int minY, int minZ) {
             xMovement = minX;
             yMovement = minY;
             zMovement = minZ;
+        }
+        
+        public class GenerateSum implements Callable<Double> {
+
+            private int xMeasure;
+            private int yMeasure;
+            private int zMeasure;
+            private int stepSize;
+            private int minY;
+            private int minZ;
+            private int maxY;
+            private int maxZ;
+
+            public GenerateSum(int xMeasure, int minY, int minZ, int maxY, int maxZ, int stepSize) {
+                this.xMeasure = xMeasure;
+                
+                this.minY = minY;
+                this.minZ = minZ;
+                
+                this.maxY = maxY;
+                this.maxZ = maxZ;
+                
+                this.stepSize = stepSize;
+            }
+            
+            public Double call() {
+                double minSum = Double.MAX_VALUE;
+                
+                for(int yMeasure=minY; yMeasure<maxY; yMeasure+=stepSize) {
+                    for(int zMeasure=minZ; zMeasure<maxZ; zMeasure+=stepSize) {
+                        double sum = performSum(xMeasure, yMeasure, zMeasure);
+                        if(sum < minSum) {
+                            this.yMeasure = yMeasure;
+                            this.zMeasure = zMeasure;
+                            minSum = sum;
+                        }
+                    }
+                }
+                
+                return minSum;
+            }
+
+            private double performSum(int xMeasure, int yMeasure, int zMeasure) {
+                double sumAmount = 0;
+                
+                double baseIntensity = 0, transformIntensity = 0;
+                
+                int transformX, transformY, transformZ;
+                //new ViewJFrameImage(transformImage);
+                for(int i=0; i<xExtents; i++) {
+                    transformX = i-xMeasure;
+                    for(int j=0; j<yExtents; j++) {
+                        transformY = j-yMeasure;
+                        for(int k=0; k<zExtents; k++) {
+                            transformZ = k-zMeasure;
+                            baseIntensity = baseImage.getDouble(i, j, k);
+                            if(baseIntensity < 20) { //TODO: assign reasonable values
+                                baseIntensity = 0;
+                            }
+                            if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
+                                    transformY >= 0 && transformY < transformImage.getExtents()[1] && 
+                                    transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
+                                transformIntensity = transformImage.getDouble(transformX, transformY, transformZ);
+                                if(transformIntensity < 20) {
+                                    transformIntensity = 0;
+                                }
+                                sumAmount += Math.abs((baseIntensity - transformIntensity));
+                            } else {
+                                sumAmount += Math.abs(baseIntensity - 0);
+                            }
+                        }
+                    }
+                }
+                
+                return sumAmount;
+            }
+
+            public int getXMeasure() {
+                return xMeasure;
+            }
+
+            public int getYMeasure() {
+                return yMeasure;
+            }
+
+            public int getZMeasure() {
+                return zMeasure;
+            }
+            
         }
     }
 
@@ -322,6 +474,7 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
         
         public Boolean call() {
             
+            fireProgressStateChanged(5, "Transform", "Rotating");
 
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
@@ -346,6 +499,8 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
             
             transform();
             
+            fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
+            
             switch (mode) {
             
             case DownsampleToBase:
@@ -365,21 +520,28 @@ public class PlugInAlgorithmGenerateFusion541b extends AlgorithmBase {
                 threshold(transformImage, thresholdIntensity);
             }
             
-            if(xMovement == null && yMovement == null && zMovement == null) {
-                if(movementQueue.size() > 0) {
-                    try {
-                        movementQueue.take();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
+            Object lock = new Object();
+            
+            synchronized(lock) {
+                if(xMovement == null && yMovement == null && zMovement == null) {
+                    if(movementQueue.size() > 0) {
+                            try {
+                                lock.wait();
+                                System.out.println("Done waiting");
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }   
+                    } else {
+                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+                        MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
+                        movementQueue.add(alg);
+                        alg.run();
+                        lock.notifyAll();
                     }
-                } else {
-                    MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
-                    movementQueue.add(alg);
-                    alg.run();
                 }
             }
             
-            //discardSlices(middleSlice);
+            fireProgressStateChanged(75, "Transform", "Calculating means");
             
             if(doAriMean) {
                 calcAriMean();
