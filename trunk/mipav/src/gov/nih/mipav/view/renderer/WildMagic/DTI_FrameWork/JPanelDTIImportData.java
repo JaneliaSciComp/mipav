@@ -338,8 +338,6 @@ import Jama.Matrix;
         public ViewJFrameImage frame;
         
         public ViewJFrameImage t2frame;
-        
-        private JCheckBox preProcessedBox;
 
         private JRadioButton browseDWIButton;
 
@@ -360,6 +358,16 @@ import Jama.Matrix;
         private JButton clearDWITableButton;
 
         private JButton saveBvalGradButton;
+
+        private JCheckBox useBMatCheckBox;
+
+        private double sliceAng0;
+
+        private double sliceAng1;
+
+        private double sliceAng2;
+
+        private String gradResWOP;
 
         
 
@@ -536,7 +544,7 @@ import Jama.Matrix;
                 try{
                     readBValGradientFile(currDir);
                     DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
-                    loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File"));
+                    loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File  or B-Matrix File"));
                     saveBvalGradButton.setEnabled(true);
                     isDWICellEditBox.setEnabled(true);
                     bvalGradAppButton.setEnabled(true);
@@ -546,7 +554,7 @@ import Jama.Matrix;
                     bvalGradAppButton.setEnabled(false);
                     saveBvalGradButton.setEnabled(false);
                     isDWICellEditBox.setEnabled(false);
-                    loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File"));
+                    loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File  or B-Matrix File"));
                     
                 }
             }
@@ -749,7 +757,7 @@ import Jama.Matrix;
                         isDWICellEditBox.setEnabled(true);
                     }
                     else{
-                        loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File"));  
+                        loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File  or B-Matrix File"));  
                     }
                 }
                 else{
@@ -760,7 +768,7 @@ import Jama.Matrix;
                     bvalGradFileLabel.setEnabled(false);
                     loadBValGradFileButton.setEnabled(false);
                     t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
-                    loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File"));
+                    loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File  or B-Matrix File"));
                 }
                 
             }else if (command.equals("browseT2File")) {
@@ -783,7 +791,7 @@ import Jama.Matrix;
                             bvalGradAppButton.setEnabled(true);
                         }
                         else{
-                            loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient File"));  
+                            loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient or B-Matrix File  or B-Matrix File"));  
                         }
                         
                         pipeline.repaint();
@@ -805,11 +813,12 @@ import Jama.Matrix;
                 catch (Exception e){
                     MipavUtil.displayError("Error loading Structural Image");
                 }
-        } else if (command.equals("preProcessed")){
-            if (preProcessedBox.isSelected()){
-                pipeline.tabbedPane.setSelectedIndex(4);
-                }
-        }
+        } else if (command.equals("UseBMat")){
+            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+            srcTableModel.setColumnIdentifiers(newColIdentifiers);
+            bvalGradFileLabel = new JLabel("B-matrix File: ");
+            
+            }
             
         }
               
@@ -940,19 +949,7 @@ import Jama.Matrix;
             gbc.insets = new Insets(0, 0, 10, 0);
             gbc.fill = GridBagConstraints.NORTHWEST;
             BvalGradApply.add(bvalGradAppButton);
-            
-            preProcessedBox = new JCheckBox("Skip Pre-processing");
-            preProcessedBox.setActionCommand("preProcessed");
-            preProcessedBox.setSelected(false);
-            preProcessedBox.setEnabled(true);
-            preProcessedBox.addActionListener(this);
-            gbc.gridx = 1;
-            gbc.gridy = 1;
-            //gbc.weightx = 1;
-            gbc.insets = new Insets(0, 0, 10, 0);
-            gbc.fill = GridBagConstraints.NORTHWEST;
-            //BvalGradApply.add(preProcessedBox);
-            
+                        
             gbc2.gridx = 0;
             gbc2.gridy = 5;
             gbc2.weightx = 1;
@@ -1091,9 +1088,21 @@ import Jama.Matrix;
             srcPanel.add(t2OpenPanel, gbc2);
             
             loadTable = new JPanel(new GridBagLayout());
-            loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File"));
+            loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File  or B-Matrix File"));
             
-            bvalGradFileLabel = new JLabel("Bvalue/Gradient File: ");
+            /*useBMatCheckBox = new JCheckBox("Use BMatrix File");
+            useBMatCheckBox.setActionCommand("UseBMat");
+            useBMatCheckBox.setSelected(false);
+            useBMatCheckBox.setEnabled(true);
+            useBMatCheckBox.setFont(serif12);
+            useBMatCheckBox.addActionListener(this);
+            gbc.gridx = 3;
+            gbc.gridy = 1;
+            gbc.weightx = 0.25;
+            gbc.fill = GridBagConstraints.NONE;
+            loadTable.add(useBMatCheckBox,gbc);*/
+            
+            bvalGradFileLabel = new JLabel("Bvalue/Gradient File or B-Matrix File: ");
             bvalGradFileLabel.setFont(serif12);
             bvalGradFileLabel.setEnabled(false);
             gbc.gridx = 0;
@@ -1128,6 +1137,8 @@ import Jama.Matrix;
             gbc.fill = GridBagConstraints.NONE;
             loadTable.add(loadBValGradFileButton,gbc);
             
+
+            
             
             gbc2.gridx = 0;
             gbc2.gridy = 2;
@@ -1136,6 +1147,8 @@ import Jama.Matrix;
             gbc2.gridwidth = 1;
             gbc2.fill = GridBagConstraints.BOTH;
             srcPanel.add(loadTable, gbc2);
+            
+
             
 
             scrollPane = new JScrollPane(srcPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -1548,7 +1561,7 @@ import Jama.Matrix;
             String os = (String) osBox.getSelectedItem(); 
             String inverted = (String) invertedBox.getSelectedItem(); 
             
-            String gradResWOP = ((String) gradOPBox.getSelectedItem()) + ((String) gradResBox.getSelectedItem());
+            gradResWOP = ((String) gradOPBox.getSelectedItem()) + ((String) gradResBox.getSelectedItem());
             
            
             /**
@@ -1586,7 +1599,7 @@ import Jama.Matrix;
             
             else {
             if(gradResWOP.equals("YesLow")){
-                if(numVolumes==8){
+                if(numVolumes==8 || numVolumes == 35){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_1.5") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getLowOP();
                         space = "LPH";
@@ -1602,7 +1615,7 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("YesMedium")){
-                if(numVolumes==17){
+                if(numVolumes==17 || numVolumes == 35){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMediumOP();
                         space = "LPH";
@@ -1618,7 +1631,7 @@ import Jama.Matrix;
             } 
             
             else if(gradResWOP.equals("YesHigh")){
-                if(numVolumes==34){
+                if(numVolumes==34 || numVolumes == 35){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0")){
                         gradCreatetable = getHighOP_24prev();
                         space = "LPH";
@@ -1637,7 +1650,7 @@ import Jama.Matrix;
                 } 
             }
             else if(gradResWOP.equals("NoLow")){
-                if(numVolumes==8){
+                if(numVolumes==8 || numVolumes == 35){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getLow();
                         space = "MPS";
@@ -1649,7 +1662,7 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("NoMedium")){
-                if(numVolumes==17){
+                if(numVolumes==17 || numVolumes == 35){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMedium();
                         space = "MPS";
@@ -1661,7 +1674,7 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("NoHigh")){
-                if(numVolumes==34){
+                if(numVolumes==34 || numVolumes == 35){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getHigh();
                         space = "MPS";
@@ -2115,9 +2128,9 @@ import Jama.Matrix;
             FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
             angCorrGT=new double[tablein.length][tablein[0].length];
                     
-            fileInfoPARREC.getSliceAngulation()[0]=Math.toRadians(fileInfoPARREC.getSliceAngulation()[0]);
-            fileInfoPARREC.getSliceAngulation()[1]=Math.toRadians(fileInfoPARREC.getSliceAngulation()[1]);
-            fileInfoPARREC.getSliceAngulation()[2]=Math.toRadians(fileInfoPARREC.getSliceAngulation()[2]);
+            sliceAng0=Math.toRadians(fileInfoPARREC.getSliceAngulation()[0]);
+            sliceAng1=Math.toRadians(fileInfoPARREC.getSliceAngulation()[1]);
+            sliceAng2=Math.toRadians(fileInfoPARREC.getSliceAngulation()[2]);
 
 //          ==========================================================
 //          TRANSFORMATION DEFINITIONS 
@@ -2170,9 +2183,9 @@ import Jama.Matrix;
                 rev_Tpp=null;
             }
 
-            double ap = fileInfoPARREC.getSliceAngulation()[0];
-            double fh = fileInfoPARREC.getSliceAngulation()[1];
-            double rl =fileInfoPARREC.getSliceAngulation()[2];
+            double ap = sliceAng0;
+            double fh = sliceAng1;
+            double rl = sliceAng2;
             
             double[][] Tpom = matrixMultiply(Tpo,Tpp);
             double[][] rev_Tpom = matrixMultiply(rev_Tpp,rev_Tpo);
@@ -2409,9 +2422,16 @@ import Jama.Matrix;
 
             if (numVolumes==35){
                 for (int i = 0; i<tablein.length; i++){
-                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][0]))), i, 2);
-                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][1]))), i, 3);
-                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i][2]))), i, 4);
+                    if (gradResWOP.contains("Yes")){
+                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][2]*-1))), i, 2);
+                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][1]*-1))), i, 3);
+                    srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][0]))), i, 4);
+                    }
+                    else{
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][1]*-1))), i, 2);
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][0]*-1))), i, 3);
+                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i][2]))), i, 4); 
+                    }
                 }
             }
             else if (numVolumes==8 || numVolumes==17 || numVolumes==34 || numVolumes==32){
@@ -2431,9 +2451,16 @@ import Jama.Matrix;
                         srcTableModel.setValueAt("100", i, 4); 
                     }
                     else{
-                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][0]))), i, 2);
-                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][1]))), i, 3);
-                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][2]))), i, 4);
+                        if (gradResWOP.contains("Yes")){
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][2]*-1))), i, 2);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][1]*-1))), i, 3);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][0]))), i, 4);
+                        }
+                        else{
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][1]*-1))), i, 2);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][0]*-1))), i, 3);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][2]))), i, 4);
+                        }
                         }
                     
                 }
@@ -2450,9 +2477,16 @@ import Jama.Matrix;
                         bval0Count = 1;
                     }
                     else{
-                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][0]))), i, 2);
-                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][1]))), i, 3);
-                        srcTableModel.setValueAt((String.valueOf(twoDForm.format(rev_angCorrGT[i-bval0Count][2]))), i, 4);
+                        if (gradResWOP.contains("Yes")){
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][2]*-1))), i, 2);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][1]*-1))), i, 3);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][0]))), i, 4);
+                        }
+                        else{
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][1]*-1))), i, 2);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][0]*-1))), i, 3);
+                            srcTableModel.setValueAt((String.valueOf(twoDForm.format(angCorrGT[i-bval0Count][2]))), i, 4); 
+                        }
                         }
                 }
                 
@@ -2716,47 +2750,6 @@ import Jama.Matrix;
                         MipavUtil.displayError("Invalid Bval/Gradient Text File");
                         
                     }
-
-                    /*else {
-                        System.out.println("line count = 0");
-                        String line;
-                        int lineCount = 0;
-                        // counts number of lines in file
-                        while ( (line = raFile.readLine()) != null) {
-                            lineCount++;
-                        }
-                        numVolumes = lineCount + 1;
-                        raFile.seek(0);
-                        // this is DTI Studio
-                        for (int j = 0; j < numVolumes; j++) {
-                            final Vector<String> rowData = new Vector<String>();
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            rowData.add("");
-                            srcTableModel.addRow(rowData);
-                        }
-                        final int numRows = srcTableModel.getRowCount();
-
-                        for (int i = 0; i < numRows; i++) {
-                            if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
-                                str = raFile.readLine();
-                                if (str != null) {
-                                    // Populate Volume column
-                                    srcTableModel.setValueAt(String.valueOf(i),i,0);
-                                    final String[] arr = str.split("\\s+");
-                                    srcTableModel.setValueAt(arr[1], i, 2);
-                                    srcTableModel.setValueAt(arr[2], i, 3);
-                                    srcTableModel.setValueAt(arr[3], i, 4);
-
-                                }
-
-                            }
-
-                        }
-
-                    }*/
 
                 }
                 raFile.close();
