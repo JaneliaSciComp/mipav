@@ -18,6 +18,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -103,6 +104,15 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     private JCheckBox doMoBox;
     private JCheckBox showB0Box;
     private JCheckBox showR2Box;
+    private JTextField ssfpRepTime;
+    private JComboBox preCalcT1Box;
+    private JComboBox[] phaseImageList;
+    private JTextField[] phaseFlipAngleList;
+    private JComboBox preCalcB1MapBox;
+    private JComboBox[] phase180ImageList;
+    private JTextField[] phase180FlipAngleList;
+    private JRadioButton isGEScannerButton;
+    private JRadioButton isSiemensButton;
 
     /**
      * Empty constructor needed for dynamic instantiation.
@@ -203,6 +213,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
                 performConventionalWith0Phase = false;
                 performConventionalWith180Phase = true;
             }
+        } else {
+            performConventionalWith180Phase = false;
+            performConventionalWith0Phase = false;
         }
         
         //specifics variables
@@ -214,6 +227,39 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
             calculateB0 = showB0Box.isSelected();
         }
         invertT2toR2 = showR2Box.isSelected();
+        
+        if (!performConventionalModelling || performConventionalWith0Phase) {
+            for (int i=0; i<Nfa_phase0; i++) {
+                ssfpImageIndex_phase0[i] = phaseImageList[i].getSelectedIndex();
+                treFA_phase0[i] = Float.valueOf(phaseFlipAngleList[i].getText()).floatValue();
+            }
+        }
+        
+        if(!performConventionalModelling || performConventionalWith0Phase){
+            for (int i=0; i<Nfa_phase180; i++) {
+                ssfpImageIndex_phase180[i] = phaseImageList[i].getSelectedIndex();
+                treFA_phase180[i] = Float.valueOf(phaseFlipAngleList[i].getText()).floatValue();
+            }
+        } 
+        
+        treTR = Double.valueOf(ssfpRepTime.getText()).doubleValue();
+        
+        t1ImageIndex = preCalcT1Box.getSelectedIndex();
+        if (includeB1Map) {
+            b1ImageIndex = preCalcB1MapBox.getSelectedIndex();
+        }
+        
+        geScanner = isGEScannerButton.isSelected();
+        siemensScanner = isSiemensButton.isSelected();
+        
+        if (geScanner == true) {
+            siemensScanner = false;
+        }
+        if (siemensScanner == true) {
+            geScanner = false;
+        }
+
+        
         
         return true;
     }
@@ -488,7 +534,9 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     }
 
     private void init() {
-        
+        JPanel mainPanel = new JPanel();
+        BoxLayout b = new BoxLayout(mainPanel, BoxLayout.Y_AXIS);
+        mainPanel.setLayout(b);
         Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
         ArrayList<String> imageList = new ArrayList<String>();
         while(imageEnum.hasMoreElements()) {
@@ -509,33 +557,38 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
                 titles[i] = "";
         }
         
-        JPanel mainPanel = showDialog();
+        JTabbedPane pane = new JTabbedPane();
+
+        guiHelp = new GuiBuilder(this);
         
+        JPanel initPanel = showDialog();
+        pane.add(initPanel, 0);
         
         JPanel specificsPanel = showSpecificsDialog();
-        
+        pane.add(specificsPanel, 1);
         
         treFA_phase0 = new double[Nfa_phase0];
         treFA_phase180 = new double[Nfa_phase180];
         ssfpImageIndex_phase0 = new int[Nfa_phase0];
         ssfpImageIndex_phase180 = new int[Nfa_phase180];
         
-        if (performConventionalModelling == false) {
-            if (!showLongDialog()) return; 
-        }
-        else {
-            if (!showConventionalLongDialog()) return;
-        }
-         
-        try {  
-            callAlgorithm();
-        } catch (OutOfMemoryError x) {
-    
-            System.gc();
-            MipavUtil.displayError("Dialog Circle Generation: unable to allocate enough memory");
-    
-            return;
-        }
+        
+        
+        JPanel convPanel = showConventionalLongDialog();
+        pane.add(convPanel, 2);
+        
+        JPanel longPanel = showLongDialog();
+        pane.add(longPanel, 3);
+        
+        mainPanel.add(pane, b);
+        
+        mainPanel.add(guiHelp.buildOKCancelPanel(), b);
+        
+        getContentPane().add(mainPanel);
+        
+        pack();
+        setModal(true);
+        setVisible(true);
         
     }
     
@@ -687,14 +740,17 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         doApproximateT2Button = guiHelp.buildRadioButton("Perform Approximate Modeling", performApproxModelling);
         doFullT2Button = guiHelp.buildRadioButton("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
         doFullT2Button.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent arg0) {
                 showB0Box.getParent().setVisible(doFullT2Button.isSelected());
             }
-            
         });
         
         doB1MapBox = guiHelp.buildCheckBox("<html>Use Calculated B<sub>1</sub> Map</html>", includeB1Map);
+        doB1MapBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                preCalcB1MapBox.getParent().setVisible(doB1MapBox.isSelected());
+            }
+        });
         
         processType = new ButtonGroup();
         processType.add(doConventionalT2Button);
@@ -712,179 +768,90 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         
     }
     
-    public boolean showLongDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(this);
-        dialog.setTitle("TRE-T2-AMFM: Image Information");
+    public JPanel showLongDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
-        JComboBox[] comboArr1 = new JComboBox[Nfa_phase0];
-        JTextField[] fieldArr1 = new JTextField[Nfa_phase0];
+        phaseImageList = new JComboBox[Nfa_phase0];
+        phaseFlipAngleList = new JTextField[Nfa_phase0];
 
         for (int i=0; i<Nfa_phase0; i++) {
-            comboArr1[i] = guiHelp.buildComboBox("Phase 0, SSFP Image #"+i, titles, i);
-            panel.add(comboArr1[i].getParent(), panelLayout);
+            phaseImageList[i] = guiHelp.buildComboBox("Phase 0, SSFP Image #"+i, titles, i);
+            panel.add(phaseImageList[i].getParent(), panelLayout);
             
-            fieldArr1[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, treFA_phase0[i]);
-            panel.add(comboArr1[i].getParent(), panelLayout);
+            phaseFlipAngleList[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, treFA_phase0[i]);
+            panel.add(phaseImageList[i].getParent(), panelLayout);
         }
         
-        JComboBox[] comboArr2 = new JComboBox[Nfa_phase180];
-        JTextField[] fieldArr2 = new JTextField[Nfa_phase180];
+        phase180ImageList = new JComboBox[Nfa_phase180];
+        phase180FlipAngleList = new JTextField[Nfa_phase180];
         for (int i=0; i<Nfa_phase180; i++) {
-            comboArr2[i] = guiHelp.buildComboBox("Phase 180, SSFP Image #"+i, titles, i);
-            panel.add(comboArr2[i].getParent(), panelLayout);
+            phase180ImageList[i] = guiHelp.buildComboBox("Phase 180, SSFP Image #"+i, titles, i);
+            panel.add(phase180ImageList[i].getParent(), panelLayout);
             
-            fieldArr2[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, treFA_phase180[i]);
-            panel.add(fieldArr2[i].getParent(), panelLayout);
+            phase180FlipAngleList[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, treFA_phase180[i]);
+            panel.add(phase180FlipAngleList[i].getParent(), panelLayout);
         }
         
-        JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
-        panel.add(field1.getParent(), panelLayout);
+        ssfpRepTime = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
+        panel.add(ssfpRepTime.getParent(), panelLayout);
         
-        JComboBox combo1 = guiHelp.buildComboBox("<html>Pre-Calculated T<sub>1</sub> Map</html>", titles, 0);
-        panel.add(combo1.getParent(), panelLayout);
+        //preCalcT1Box = guiHelp.buildComboBox("<html>Pre-Calculated T<sub>1</sub> Map</html>", titles, 0);
+        panel.add(preCalcT1Box.getParent(), panelLayout);
         
-        JComboBox comboOpt = null;
-        if (includeB1Map) {
-            comboOpt = guiHelp.buildComboBox("<html>Pre-Calculated B<sub>1</sub> Map</html>", titles, 0);
-            panel.add(comboOpt.getParent(), panelLayout);
-        }
+        panel.add(preCalcB1MapBox.getParent(), panelLayout);
         
-        JRadioButton button1 = guiHelp.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
-        JRadioButton button2 = guiHelp.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
+        isGEScannerButton = guiHelp.buildRadioButton("Scan Performed on a GE Scanner", geScanner);
+        isSiemensButton = guiHelp.buildRadioButton("Scan Performed on a Siemens Scanner", siemensScanner);
         
         ButtonGroup scannerType = new ButtonGroup();
-        scannerType.add(button1);
-        scannerType.add(button2);
+        scannerType.add(isGEScannerButton);
+        scannerType.add(isSiemensButton);
         
-        panel.add(button1.getParent(), panelLayout);
-        panel.add(button2.getParent(), panelLayout);
-        
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
-        
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
-        for (int i=0; i<Nfa_phase0; i++) {
-            ssfpImageIndex_phase0[i] = comboArr1[i].getSelectedIndex();
-            treFA_phase0[i] = Float.valueOf(fieldArr1[i].getText()).floatValue();
-        }
-        for (int i=0; i<Nfa_phase180; i++) {
-            ssfpImageIndex_phase180[i] = comboArr2[i].getSelectedIndex();
-            treFA_phase180[i] = Float.valueOf(fieldArr2[i].getText()).floatValue();
-        }
-        treTR = Double.valueOf(field1.getText()).doubleValue();
-        
-        t1ImageIndex = combo1.getSelectedIndex();
-        if (includeB1Map) {
-            b1ImageIndex = comboOpt.getSelectedIndex();
-        }
-        
-        geScanner = button1.isSelected();
-        siemensScanner = button2.isSelected();
-        
-        if(scannerType.getSelection() == null) {
-            MipavUtil.displayInfo("Please select a scanner type");
-            dialog.dispose();
-            return showLongDialog();
-        }
-        
-        if (geScanner == true) {
-            siemensScanner = false;
-        }
-        if (siemensScanner == true) {
-            geScanner = false;
-        }
-        
-        return true;
+        panel.add(isGEScannerButton.getParent(), panelLayout);
+        panel.add(isSiemensButton.getParent(), panelLayout);
+
+                
+        return panel;
    }
     
-    public boolean showConventionalLongDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(this);
-        dialog.setTitle("TRE-T2: Image Information");
+    public JPanel showConventionalLongDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
         int maxPhase = Nfa_phase0 > Nfa_phase180 ? Nfa_phase0 : Nfa_phase180;
-        JComboBox[] comboArr = new JComboBox[maxPhase];
-        JTextField[] fieldArr = new JTextField[maxPhase];
+        phaseImageList = new JComboBox[maxPhase];
+        phaseFlipAngleList = new JTextField[maxPhase];
         if (performConventionalWith0Phase == true) {
             for (int i=0; i<Nfa_phase0; i++) {
-                comboArr[i] = guiHelp.buildComboBox("Phase 0, SSFP Image #"+i, titles, i);
-                panel.add(comboArr[i].getParent(), panelLayout);
+                phaseImageList[i] = guiHelp.buildComboBox("Phase 0, SSFP Image #"+i, titles, i);
+                panel.add(phaseImageList[i].getParent(), panelLayout);
                 
-                fieldArr[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, treFA_phase0[i]);
-                panel.add(fieldArr[i].getParent(), panelLayout);
+                phaseFlipAngleList[i] = guiHelp.buildDecimalField("Phase 0, Flip Angle #"+i, treFA_phase0[i]);
+                panel.add(phaseFlipAngleList[i].getParent(), panelLayout);
             }
         }
         else {
             for (int i=0; i<Nfa_phase180; i++) {
-                comboArr[i] = guiHelp.buildComboBox("Phase 180, SSFP Image #"+i, titles, i);
-                panel.add(comboArr[i].getParent(), panelLayout);
+                phaseImageList[i] = guiHelp.buildComboBox("Phase 180, SSFP Image #"+i, titles, i);
+                panel.add(phaseImageList[i].getParent(), panelLayout);
                 
-                fieldArr[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, treFA_phase180[i]);
-                panel.add(fieldArr[i].getParent(), panelLayout);
+                phaseFlipAngleList[i] = guiHelp.buildDecimalField("Phase 180, Flip Angle #"+i, treFA_phase180[i]);
+                panel.add(phaseFlipAngleList[i].getParent(), panelLayout);
             }
         }
-        JTextField field1 = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
-        panel.add(field1.getParent(), panelLayout);
+        ssfpRepTime = guiHelp.buildDecimalField("SSFP Repetition Time (ms):", treTR);
+        panel.add(ssfpRepTime.getParent(), panelLayout);
         
-        JComboBox combo1 = guiHelp.buildComboBox("<html>Pre-Calculated T<sub>1</sub> Map</html>", titles, 0);
-        panel.add(combo1.getParent(), panelLayout);
+        preCalcT1Box = guiHelp.buildComboBox("<html>Pre-Calculated T<sub>1</sub> Map</html>", titles, 0);
+        panel.add(preCalcT1Box.getParent(), panelLayout);
         
-        JComboBox comboOpt = null;
-        if (includeB1Map) {
-            comboOpt = guiHelp.buildComboBox("<html>Pre-Calculated B<sub>1</sub> Map</html>", titles, 0);
-        }
+        preCalcB1MapBox = guiHelp.buildComboBox("<html>Pre-Calculated B<sub>1</sub> Map</html>", titles, 0);
+        panel.add(preCalcB1MapBox.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.setModal(true);
-        dialog.pack();
-        dialog.setVisible(true);
-        
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
-        if (performConventionalWith0Phase == true) {
-            for (int i=0; i<Nfa_phase0; i++) {
-                ssfpImageIndex_phase0[i] = comboArr[i].getSelectedIndex();
-                treFA_phase0[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
-            }
-        }
-        else {
-            for (int i=0; i<Nfa_phase180; i++) {
-                ssfpImageIndex_phase180[i] = comboArr[i].getSelectedIndex();
-                treFA_phase180[i] = Float.valueOf(fieldArr[i].getText()).floatValue();
-            }
-        }
-        treTR = Double.valueOf(field1.getText()).doubleValue();
-        
-        t1ImageIndex = combo1.getSelectedIndex();
-        if (includeB1Map) {
-            b1ImageIndex = comboOpt.getSelectedIndex();
-        }
-        
-        return true;
+        return panel;
     }
    
     public JPanel showSpecificsDialog() {
@@ -903,10 +870,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         
         showB0Box = guiHelp.buildCheckBox("<html>Show B<sub>0</sub> Map</html>", calculateB0);
         panel.add(showB0Box.getParent(), panelLayout);
-        if (performFullModelling == true) {
-            
-            
-        }
+        
         showR2Box = guiHelp.buildCheckBox("<html>Show R<sub>2</sub> Map</html>", invertT2toR2);
         panel.add(showR2Box.getParent(), panelLayout);
         
