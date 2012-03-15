@@ -2463,9 +2463,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new DTIPipeline();
         }else if (command.equals("dtiColor")) { 
             new DTIColorDisplay(true);
-        /*}else if (command.equals("estimateTensor")) {
+        }else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
-        } else if (command.equals("fiberTracking")) {
+        /*} else if (command.equals("fiberTracking")) {
             JPanelDTIFiberTracking.createFrame();
         } else if (command.equals("dtiVisualization")) {
         	JPanelDTIVisualization.createFrame();*/
