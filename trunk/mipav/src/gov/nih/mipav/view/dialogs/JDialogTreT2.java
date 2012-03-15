@@ -89,6 +89,20 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     private String[] titles;
     
     private AlgorithmTreT2 cAlgo;
+    private JTextField nfaPhase0Text;
+    private JTextField nfaPhase180Text;
+    private JRadioButton doConventionalT2Button;
+    private JRadioButton doApproximateT2Button;
+    private JRadioButton doFullT2Button;
+    private JCheckBox doB1MapBox;
+    private ButtonGroup processType;
+    private GuiBuilder guiHelp;
+    private JTextField maxT2Text;
+    private JTextField maxM0Text;
+    private JCheckBox doT2Box;
+    private JCheckBox doMoBox;
+    private JCheckBox showB0Box;
+    private JCheckBox showR2Box;
 
     /**
      * Empty constructor needed for dynamic instantiation.
@@ -103,7 +117,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
      */
     public JDialogTreT2(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
-        run();
+        init();
     }
     
     public void algorithmPerformed(AlgorithmBase algorithm) {
@@ -128,11 +142,82 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
+        if(command.equalsIgnoreCase("OK")) {
+            if(!setVariables()) {
+                callAlgorithm();
+            }
+        }
+        
         if (command.equals("Cancel")) {
             cAlgo.interrupt();
         } 
     }
     
+    private boolean setVariables() {
+        
+        //general variables
+        Nfa_phase0 = (int) Double.valueOf(nfaPhase0Text.getText()).doubleValue();
+        Nfa_phase180 = (int) Double.valueOf(nfaPhase180Text.getText()).doubleValue();
+        performConventionalModelling = doConventionalT2Button.isSelected();
+        performApproxModelling = doApproximateT2Button.isSelected();
+        performFullModelling = doFullT2Button.isSelected();
+        includeB1Map = doB1MapBox.isSelected();
+    
+        if(processType.getSelection() == null) {
+            MipavUtil.displayInfo("Please select a processing method");
+            return false;
+        }   
+        
+        if (performConventionalModelling == true) {
+            performApproxModelling = false;
+            performFullModelling = false;
+        }
+        if (performApproxModelling == true) {
+            performConventionalModelling = false;
+            performFullModelling = false;
+        }
+        if (performFullModelling == true) {
+            performConventionalModelling = false;
+            performApproxModelling = false;
+        }
+        
+        // do some checking
+        if (Nfa_phase0 + Nfa_phase180 + 1 > wList.length) {
+            MipavUtil.displayWarning("Please import all nessesary images first: At least 2 SSFP Images + 1 T1 Map");
+            return false;
+        }
+        
+        if (performApproxModelling == true || performFullModelling == true) {
+            if (Nfa_phase0 + Nfa_phase180 < 3) {
+                MipavUtil.displayWarning("T2 calculations require at least three SSFP images (2 at each RF phase increment).");
+                return false;
+            }
+        }
+        
+        if (performConventionalModelling) {
+            if (Nfa_phase0 >= 1) {
+                performConventionalWith180Phase = false;
+                performConventionalWith0Phase = true;
+            }
+            else {
+                performConventionalWith0Phase = false;
+                performConventionalWith180Phase = true;
+            }
+        }
+        
+        //specifics variables
+        maxT2 = Double.valueOf(maxT2Text.getText()).doubleValue();
+        maxM0 = Double.valueOf(maxM0Text.getText()).doubleValue();
+        calculateT2 = doT2Box.isSelected();
+        calculateM0 = doMoBox.isSelected();
+        if (performFullModelling == true) {
+            calculateB0 = showB0Box.isSelected();
+        }
+        invertT2toR2 = showR2Box.isSelected();
+        
+        return true;
+    }
+
     /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
@@ -402,7 +487,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         }
     }
 
-    private void run() {
+    private void init() {
         
         Enumeration<String> imageEnum = ViewUserInterface.getReference().getRegisteredImageNames();
         ArrayList<String> imageList = new ArrayList<String>();
@@ -424,8 +509,10 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
                 titles[i] = "";
         }
         
-        if (!showDialog()) 
-            return;
+        JPanel mainPanel = showDialog();
+        
+        
+        JPanel specificsPanel = showSpecificsDialog();
         
         
         treFA_phase0 = new double[Nfa_phase0];
@@ -439,9 +526,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         else {
             if (!showConventionalLongDialog()) return;
         }
-        
-        if (!showSpecificsDialog()) return;     
-        
+         
         try {  
             callAlgorithm();
         } catch (OutOfMemoryError x) {
@@ -591,97 +676,40 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         return hardNoiseThreshold;
     }
 
-    public boolean showDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(this);
-        dialog.setTitle("TRE-T2: General Information");
+    public JPanel showDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
-        JTextField field1 = guiHelp.buildDecimalField("Number of SSFP Flip Angles (0 Phase Increment):", Nfa_phase0);
-        JTextField field2 = guiHelp.buildDecimalField("Number of SSFP Flip Angles (180 Phase Increment):", Nfa_phase180);
-        JRadioButton button1 = guiHelp.buildRadioButton("Perform Conventional TRE-T2 Modeling", performConventionalModelling);
-        JRadioButton button2 = guiHelp.buildRadioButton("Perform Approximate Modeling", performApproxModelling);
-        JRadioButton button3 = guiHelp.buildRadioButton("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
-        JCheckBox box1 = guiHelp.buildCheckBox("<html>Use Calculated B<sub>1</sub> Map</html>", includeB1Map);
-        
-        ButtonGroup processType = new ButtonGroup();
-        processType.add(button1);
-        processType.add(button2);
-        processType.add(button3);
-        
-        panel.add(field1.getParent(), panelLayout);
-        panel.add(field2.getParent(), panelLayout);
-        panel.add(button1.getParent(), panelLayout);
-        panel.add(button2.getParent(), panelLayout);
-        panel.add(button3.getParent(), panelLayout);
-        panel.add(box1.getParent(), panelLayout);
-        
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.pack();
-        dialog.setModal(true);
-        dialog.setVisible(true);
-        
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
-        Nfa_phase0 = (int) Double.valueOf(field1.getText()).doubleValue();
-        Nfa_phase180 = (int) Double.valueOf(field2.getText()).doubleValue();
-        performConventionalModelling = button1.isSelected();
-        performApproxModelling = button2.isSelected();
-        performFullModelling = button3.isSelected();
-        includeB1Map = box1.isSelected();
-    
-        if(processType.getSelection() == null) {
-            MipavUtil.displayInfo("Please select a processing method");
-            dialog.dispose();
-            return showDialog();
-        }   
-        
-        if (performConventionalModelling == true) {
-            performApproxModelling = false;
-            performFullModelling = false;
-        }
-        if (performApproxModelling == true) {
-            performConventionalModelling = false;
-            performFullModelling = false;
-        }
-        if (performFullModelling == true) {
-            performConventionalModelling = false;
-            performApproxModelling = false;
-        }
-        
-        // do some checking
-        if (Nfa_phase0 + Nfa_phase180 + 1 > wList.length) {
-            MipavUtil.displayWarning("Please import all nessesary images first: At least 2 SSFP Images + 1 T1 Map");
-            return false;
-        }
-        
-        if (performApproxModelling == true || performFullModelling == true) {
-            if (Nfa_phase0 + Nfa_phase180 < 3) {
-                MipavUtil.displayWarning("T2 calculations require at least three SSFP images (2 at each RF phase increment).");
-                return false;
+        nfaPhase0Text = guiHelp.buildDecimalField("Number of SSFP Flip Angles (0 Phase Increment):", Nfa_phase0);
+        nfaPhase180Text = guiHelp.buildDecimalField("Number of SSFP Flip Angles (180 Phase Increment):", Nfa_phase180);
+        doConventionalT2Button = guiHelp.buildRadioButton("Perform Conventional TRE-T2 Modeling", performConventionalModelling);
+        doApproximateT2Button = guiHelp.buildRadioButton("Perform Approximate Modeling", performApproxModelling);
+        doFullT2Button = guiHelp.buildRadioButton("Perform Full Modelling of the Signal (slow but accurate)", performFullModelling);
+        doFullT2Button.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent arg0) {
+                showB0Box.getParent().setVisible(doFullT2Button.isSelected());
             }
-        }
+            
+        });
         
-        if (performConventionalModelling) {
-            if (Nfa_phase0 >= 1) {
-                performConventionalWith180Phase = false;
-                performConventionalWith0Phase = true;
-            }
-            else {
-                performConventionalWith0Phase = false;
-                performConventionalWith180Phase = true;
-            }
-        }
-        return true;
+        doB1MapBox = guiHelp.buildCheckBox("<html>Use Calculated B<sub>1</sub> Map</html>", includeB1Map);
+        
+        processType = new ButtonGroup();
+        processType.add(doConventionalT2Button);
+        processType.add(doApproximateT2Button);
+        processType.add(doFullT2Button);
+        
+        panel.add(nfaPhase0Text.getParent(), panelLayout);
+        panel.add(nfaPhase180Text.getParent(), panelLayout);
+        panel.add(doConventionalT2Button.getParent(), panelLayout);
+        panel.add(doApproximateT2Button.getParent(), panelLayout);
+        panel.add(doFullT2Button.getParent(), panelLayout);
+        panel.add(doB1MapBox.getParent(), panelLayout);
+        
+        return panel;
+        
     }
     
     public boolean showLongDialog() {
@@ -859,54 +887,30 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         return true;
     }
    
-    public boolean showSpecificsDialog() {
-        BorderLayout b = new BorderLayout();
-        JDialog dialog = new JDialog();
-        dialog.setLayout(b);
-        GuiBuilder guiHelp = new GuiBuilder(this);
-        dialog.setTitle("TRE-T2: Other Specifics");
+    public JPanel showSpecificsDialog() {
         JPanel panel = new JPanel();
         LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
         panel.setLayout(panelLayout);
         
-        JTextField field1 = guiHelp.buildDecimalField("Maximum Allowable T2:", maxT2);
-        JTextField field2 = guiHelp.buildDecimalField("Maximum Allowable M0:", maxM0);
-        JCheckBox box1 = guiHelp.buildCheckBox("Show T2 Map", calculateT2);
-        JCheckBox box2 = guiHelp.buildCheckBox("Show M0 Map", calculateM0);
-        panel.add(field1.getParent(), panelLayout);
-        panel.add(field2.getParent(), panelLayout);
-        panel.add(box1.getParent(), panelLayout);
-        panel.add(box2.getParent(), panelLayout);
+        maxT2Text = guiHelp.buildDecimalField("Maximum Allowable T2:", maxT2);
+        maxM0Text = guiHelp.buildDecimalField("Maximum Allowable M0:", maxM0);
+        doT2Box = guiHelp.buildCheckBox("Show T2 Map", calculateT2);
+        doMoBox = guiHelp.buildCheckBox("Show M0 Map", calculateM0);
+        panel.add(maxT2Text.getParent(), panelLayout);
+        panel.add(maxM0Text.getParent(), panelLayout);
+        panel.add(doT2Box.getParent(), panelLayout);
+        panel.add(doMoBox.getParent(), panelLayout);
         
-        JCheckBox boxOpt = null;
+        showB0Box = guiHelp.buildCheckBox("<html>Show B<sub>0</sub> Map</html>", calculateB0);
+        panel.add(showB0Box.getParent(), panelLayout);
         if (performFullModelling == true) {
-            boxOpt = guiHelp.buildCheckBox("<html>Show B<sub>0</sub> Map</html>", calculateB0);
-            panel.add(boxOpt.getParent(), panelLayout);
+            
+            
         }
-        JCheckBox box4 = guiHelp.buildCheckBox("<html>Show R<sub>2</sub> Map</html>", invertT2toR2);
-        panel.add(box4.getParent(), panelLayout);
+        showR2Box = guiHelp.buildCheckBox("<html>Show R<sub>2</sub> Map</html>", invertT2toR2);
+        panel.add(showR2Box.getParent(), panelLayout);
         
-        dialog.add(panel, BorderLayout.CENTER);
-        dialog.add(guiHelp.buildOKCancelPanel(), BorderLayout.SOUTH);
-        dialog.setLocationRelativeTo(null);
-        dialog.setModal(true);
-        dialog.pack();
-        dialog.setVisible(true);
         
-        if(guiHelp.getExitStatus().equals(ExitStatus.CANCEL) || 
-                guiHelp.getExitStatus().equals(ExitStatus.INCOMPLETE)) {
-            return false;
-        }
-        
-        maxT2 = Double.valueOf(field1.getText()).doubleValue();
-        maxM0 = Double.valueOf(field2.getText()).doubleValue();
-        calculateT2 = box1.isSelected();
-        calculateM0 = box2.isSelected();
-        if (performFullModelling == true) {
-            calculateB0 = boxOpt.isSelected();
-        }
-        invertT2toR2 = box4.isSelected();
-        
-        return true;
+        return panel;
     }
 }
