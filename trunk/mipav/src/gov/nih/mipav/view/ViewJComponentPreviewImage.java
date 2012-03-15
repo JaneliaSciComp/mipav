@@ -61,6 +61,9 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      * FileCoordinates. */
     private PatientSlice m_kPatientSlice;
 
+    /** The model image this preview image is derived from. */
+    private ModelImage image;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -76,6 +79,8 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     public ViewJComponentPreviewImage(ModelImage _image, int[] extents,
                                       PreviewImageContainer _parent) {
         super( extents[0], extents[1], _image);
+        image = _image;
+        
         imageSize = extents[0] * extents[1];
 
         paintBuffer = new int[imageSize];
@@ -197,6 +202,25 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
         g.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, img.getWidth(this), img.getHeight(this), null);
     }
 
+    /**
+     * Get source image
+     * 
+     * @return ModelImage
+     */
+    public ModelImage getImageA() {
+        return image;
+    }
+    
+    /**
+     * Sets component's image A. 
+     *
+     * @param  image  Image to set to.
+     */
+    public void setImageA(ModelImage image) {
+        this.image = image;
+        this.m_kPatientSlice.setImageA(image);
+    }
+    
     /**
      * Sets the size of the image to be painted.
      *
