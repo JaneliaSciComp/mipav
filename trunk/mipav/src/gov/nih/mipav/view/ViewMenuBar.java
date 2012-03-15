@@ -499,7 +499,7 @@ public class ViewMenuBar {
         return menuBuilder.makeMenu("Systems analysis", 'S', false, new JComponent[] {
                 menuBuilder.makeMenu("DTI", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("DTI Pipeline", "dtiPipeline", 0, null, false),
-                        //menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
+                        menuBuilder.buildMenuItem("Estimate tensor", "estimateTensor", 0, null, false),
                         //menuBuilder.buildMenuItem("Fiber tracking / Statistics", "fiberTracking", 0, null, false),
                         menuBuilder.buildMenuItem("DTI Color Display", "dtiColor", 0, null, false)}),
                         //menuBuilder.buildMenuItem("Visualization", "dtiVisualization", 0, null, false)}),
