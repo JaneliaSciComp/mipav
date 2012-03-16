@@ -105,7 +105,6 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
     private Integer zMovement;
     private Collection<ModelImage> resultImageList;
     private SampleMode mode;
-    private ArrayBlockingQueue<MeasureAlg> movementQueue;
     
     private final int stepSize;
     private final int minX, minY, minZ;
@@ -206,8 +205,6 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-        
-        movementQueue = new ArrayBlockingQueue<MeasureAlg>(1);
         
         ExecutorService exec = Executors.newFixedThreadPool(concurrentNum);
         
@@ -564,10 +561,14 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             FileIO io = new FileIO();
             FileWriteOptions options = new FileWriteOptions(null, null, true);
             options.setFileType(FileUtility.TIFF);
+            options.setIsScript(true);
+            options.setOptionsSet(true);         
                 
             if(saveAriMean) {
-                options.setFileDirectory(ariMeanDir.getAbsolutePath());
+                options.setFileDirectory(ariMeanDir.getAbsolutePath()+File.separator);
                 options.setFileName(subAriImage.getImageFileName());
+                options.setBeginSlice(0);
+                options.setEndSlice(subAriImage.getExtents()[2]-1);
                 io.writeImage(subAriImage, options, false);
             }
             
@@ -580,8 +581,10 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             }
             
             if(saveGeoMean) {
-                options.setFileDirectory(geoMeanDir.getAbsolutePath());
+                options.setFileDirectory(geoMeanDir.getAbsolutePath()+File.separator);
                 options.setFileName(subGeoImage.getImageFileName());
+                options.setBeginSlice(0);
+                options.setEndSlice(subGeoImage.getExtents()[2]-1);
                 io.writeImage(subGeoImage, options, false);
             }
             
