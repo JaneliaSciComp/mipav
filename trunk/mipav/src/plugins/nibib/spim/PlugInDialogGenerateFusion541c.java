@@ -75,11 +75,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
     /** This is your algorithm */
     private PlugInAlgorithmGenerateFusion541c generateFusionAlgo = null;
 
-    private JCheckBox doInterImagesCheckBox;
-
-    private JTextField mtxFileLocText;
-
-    private JTextField spimAFileLocText;
+    private JTextField mtxFileLocText, spimAFileLocText, spimBFileLocText;
 
     private JCheckBox geometricMeanBox, arithmeticMeanBox, interImagesBox;
 
@@ -91,19 +87,15 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 
     private String mtxFileLoc;
 
-    private File[] baseImageAr;
-
-    private File[] transformImageAr;
+    private File[] baseImageAr, transformImageAr;
 
     private boolean doSubsample, doInterImages;
 
     private boolean doGeoMean, doAriMean;
 
-    private String spimAFileDir;
+    private String spimAFileDir, spimBFileDir;
 
     private String baseImage;
-
-    private JTextField spimBFileLocText;
 
     private JTextField resXText, resYText, resZText;
 
@@ -118,8 +110,6 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
     private double resX, resY, resZ;
 
     private int concurrentNum;
-
-    private String spimBFileDir;
 
     private double thresholdIntensity;
 
