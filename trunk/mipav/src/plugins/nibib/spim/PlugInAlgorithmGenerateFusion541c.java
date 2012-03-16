@@ -108,6 +108,8 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
     private final int stepSize;
     private final int minX, minY, minZ;
     private final int maxX, maxY, maxZ;
+    
+    private volatile ExecutorService exec = null;
 
     /**
      * Constructor.
@@ -461,8 +463,6 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         private ModelImage subGeoImage = null, subAriImage = null;
         
         private Frame parentFrame;
-
-        private volatile ExecutorService exec = null;
         
         public FusionAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
             this.parentFrame = parentFrame;
@@ -524,18 +524,20 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             synchronized(this) {
                 if(xMovement == null && yMovement == null && zMovement == null) {
-                    if(exec != null) {
-                         try {
-                            exec.awaitTermination(1, TimeUnit.DAYS);
-                        } catch (InterruptedException e) {
-                            MipavUtil.displayError("Time point "+transformImage.getImageName()+" will be incomplete.");
-                            e.printStackTrace();
-                        }
-                    } else {
-                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+                    if(exec == null) {
                         exec = Executors.newFixedThreadPool(1);
+                        System.out.println("Print once");
+                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
                         MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
                         exec.submit(alg);
+                        exec.shutdown();
+                    }
+                    
+                    try {
+                        exec.awaitTermination(1, TimeUnit.DAYS);
+                    } catch (InterruptedException e) {
+                        MipavUtil.displayError("Time point "+transformImage.getImageName()+" will be incomplete.");
+                        e.printStackTrace();
                     }
                 }
             }
