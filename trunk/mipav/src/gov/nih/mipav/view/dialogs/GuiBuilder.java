@@ -8,6 +8,7 @@ import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.JButton;
@@ -15,6 +16,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
@@ -125,7 +127,7 @@ public class GuiBuilder implements ActionListener {
         return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode);
     }
     
-    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode) {
+    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
         FlowLayout f = new FlowLayout();
         f.setAlignment(FlowLayout.LEFT);
         JPanel panel = new JPanel(f);
@@ -164,9 +166,32 @@ public class GuiBuilder implements ActionListener {
         ActionListener textListener = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if(e.getSource().equals(parent.OKButton)) {
-                    File f = new File(text.getText());
-                    if(!f.exists() || !f.canRead()) {
-                        passedListeners = false;
+                    if(createNewFiles) {
+                        File f = new File(text.getText());
+                        if(!f.exists() || !f.canRead()) {
+                            
+                            if(fileSelectionMode == JFileChooser.DIRECTORIES_ONLY) {
+                                f.mkdirs();
+                            } else {
+                                f.getParentFile().mkdirs();
+                                try {
+                                    boolean created = f.createNewFile();
+                                    if(!created) {
+                                        passedListeners = false;
+                                    }
+                                } catch (IOException e1) {
+                                    passedListeners = false;
+                                }
+                            }
+                            
+                            if(!f.exists() || !f.canRead()) {
+                                passedListeners = false;
+                            } 
+                            
+                            if(!passedListeners) {
+                                MipavUtil.displayError("Unable to create file location "+f);
+                            }
+                        }
                     }
                 }
             }
@@ -178,7 +203,10 @@ public class GuiBuilder implements ActionListener {
         panel.add(button);
         
         return text;
-        
+    }
+    
+    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode) {
+        return buildFileField(labelText, initText, initDir, multiSelect, fileSelectionMode, false);
     }
     
     public JTextField buildIntegerField(final String labelText, int initNum) {
