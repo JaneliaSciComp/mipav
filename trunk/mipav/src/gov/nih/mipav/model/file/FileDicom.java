@@ -738,7 +738,7 @@ public class FileDicom extends FileDicomBase {
         VR vr; // value representation of data
         String name = key.toString(); // string representing the tag
         int tagVM;
-
+        
         Preferences.debug("name = " + name + " length = " +
          elementLength + "\n", Preferences.DEBUG_FILEIO);
         if ( (fileInfo.getVr_type() == VRtype.IMPLICIT) || (groupWord == 2)) {
@@ -773,6 +773,9 @@ public class FileDicom extends FileDicomBase {
 
             if ( !DicomDictionary.containsTag(key)) {
                 tagVM = 1;
+                if(vr.getType() instanceof FileDicomTagInfo.NumType) {
+                    tagVM = elementLength / ((NumType)vr.getType()).getNumBytes();
+                }
                 
                 if(isSiemensMRI && name.startsWith("0019")) {
                     processSiemensMRITag(name, key, vr, tagVM, tagTable);
