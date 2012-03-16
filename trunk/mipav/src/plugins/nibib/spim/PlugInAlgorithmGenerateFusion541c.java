@@ -46,6 +46,8 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath.Operator;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.VOI;
@@ -85,10 +87,10 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
     }
     
     private ModelImage image;
-    private boolean doAriMean = true; 
+    private boolean showAriMean = true; 
     private boolean doSubsample = false;
     private boolean doInterImages = false;
-    private boolean doGeoMean = false;
+    private boolean showGeoMean = false;
     private File[] baseImageAr;
     private File[] transformImageAr;
     private boolean doThreshold;
@@ -110,6 +112,8 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
     private final int maxX, maxY, maxZ;
     
     private volatile ExecutorService exec = null;
+    private boolean saveAriMean, saveGeoMean;
+    private File ariMeanDir, geoMeanDir;
 
     /**
      * Constructor.
@@ -133,18 +137,22 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
      * @param yMovement 
      * @param xMovement 
      * @param mode 
+     * @param ariMeanDir 
+     * @param saveAriMean 
+     * @param geoMeanDir 
+     * @param saveGeoMean 
      */
     public PlugInAlgorithmGenerateFusion541c(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
-                                                    int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize) {
+                                                    int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir) {
         super(null, image1);
         
         this.image = image1;
-        this.doAriMean = doAriMean;
+        this.showAriMean = doAriMean;
         this.doSubsample = doSubsample;
         this.doInterImages = doInterImages;
-        this.doGeoMean = doGeoMean;
+        this.showGeoMean = doGeoMean;
         this.doThreshold = doThreshold;
         
         this.resX = resX;
@@ -174,6 +182,11 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         this.mode = mode;
         
         this.resultImageList = Collections.synchronizedCollection(new ArrayList<ModelImage>());
+        
+        this.saveGeoMean = saveGeoMean;
+        this.geoMeanDir = geoMeanDir;
+        this.saveAriMean = saveAriMean;
+        this.ariMeanDir = ariMeanDir;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -544,15 +557,35 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             fireProgressStateChanged(75, "Transform", "Calculating means");
             
-            if(doAriMean) {
+            if(showAriMean || saveAriMean) {
                 calcAriMean();
+            }
+                 
+            FileIO io = new FileIO();
+            FileWriteOptions options = new FileWriteOptions(null, null, true);
+            options.setFileType(FileUtility.TIFF);
                 
+            if(saveAriMean) {
+                options.setFileDirectory(ariMeanDir.getAbsolutePath());
+                options.setFileName(subAriImage.getImageFileName());
+                io.writeImage(subAriImage, options, false);
+            }
+            
+            if(showAriMean) {
                 resultImageList.add(subAriImage);
             }
             
-            if(doGeoMean) {
+            if(showGeoMean || saveGeoMean) {
                 calcGeoMean();
-                
+            }
+            
+            if(saveGeoMean) {
+                options.setFileDirectory(geoMeanDir.getAbsolutePath());
+                options.setFileName(subGeoImage.getImageFileName());
+                io.writeImage(subGeoImage, options, false);
+            }
+            
+            if(showGeoMean) {
                 resultImageList.add(subGeoImage);
             } 
             
