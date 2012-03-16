@@ -77,7 +77,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 
     private JTextField mtxFileLocText, spimAFileLocText, spimBFileLocText;
 
-    private JCheckBox geometricMeanBox, arithmeticMeanBox, interImagesBox;
+    private JCheckBox geometricMeanShowBox, arithmeticMeanShowBox, interImagesBox;
 
     private JPanel okCancelPanel;
 
@@ -91,7 +91,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 
     private boolean doSubsample, doInterImages;
 
-    private boolean doGeoMean, doAriMean;
+    private boolean showGeoMean, showAriMean;
 
     private String spimAFileDir, spimBFileDir;
 
@@ -136,6 +136,20 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
     private JTextField maxXText, maxYText, maxZText;
 
     private JTextField stepSizeText;
+
+    private JCheckBox arithmeticMeanSaveBox;
+
+    private JCheckBox geometricMeanSaveBox;
+
+    private JTextField arithmeticMeanFolderText, geometricMeanFolderText;
+
+    private boolean saveGeoMean;
+
+    private boolean saveAriMean;
+
+    private File geoMeanDir;
+
+    private File ariMeanDir;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -221,11 +235,12 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541c(image, doSubsample, doInterImages, doGeoMean, doAriMean, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541c(image, doSubsample, doInterImages, showGeoMean, showAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
-                                                                                minX, minY, minZ, maxX, maxY, maxZ, stepSize);
+                                                                                minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
+                                                                                saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -264,8 +279,8 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
     protected void setGUIFromParams() {
     	image = scriptParameters.retrieveInputImage();
 
-    	doAriMean = scriptParameters.getParams().getBoolean("do_arithmetic");
-    	doGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
+    	showAriMean = scriptParameters.getParams().getBoolean("do_arithmetic");
+    	showGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
     	doSubsample = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
@@ -286,8 +301,8 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
     protected void storeParamsFromGUI() throws ParserException {
     	scriptParameters.storeInputImage(image);
    
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_arithmetic", doAriMean));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", doGeoMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_arithmetic", showAriMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
@@ -509,14 +524,59 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         outputPanel.add(doSubsampleBox.getParent(), gbc);
         gbc.gridy++;
       
-        arithmeticMeanBox = gui.buildCheckBox("Show arithmetic mean", true);
-        outputPanel.add(arithmeticMeanBox.getParent(), gbc);
+        arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
+        outputPanel.add(arithmeticMeanShowBox.getParent(), gbc);
+        gbc.gridx++;
+        
+        arithmeticMeanSaveBox = gui.buildCheckBox("Save arithmetic mean", false);
+        outputPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        final String initAriLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
+        final String initGeoLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
+        
+        arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        outputPanel.add(arithmeticMeanFolderText.getParent(), gbc);
         gbc.gridy++;
         
-        geometricMeanBox = gui.buildCheckBox("Show geometric mean", false);
-        outputPanel.add(geometricMeanBox.getParent(), gbc);
-        gbc.gridy++;
+        arithmeticMeanSaveBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                arithmeticMeanFolderText.getParent().setVisible(arithmeticMeanSaveBox.isSelected());
+                if(arithmeticMeanFolderText.getText().equals(initAriLoc) && 
+                        spimAFileLocText.getText() != null) {
+                    try {
+                        arithmeticMeanFolderText.setText(new File(spimAFileLocText.getText()).getParent() + File.separator + "AriMean" + File.separator);
+                    } catch(Exception ex) {}
+                    
+                }
+            }
+        });
         
+        geometricMeanShowBox = gui.buildCheckBox("Show geometric mean", false);
+        outputPanel.add(geometricMeanShowBox.getParent(), gbc);
+        gbc.gridx++;
+        
+        geometricMeanSaveBox = gui.buildCheckBox("Save geometric mean", false);
+        outputPanel.add(geometricMeanSaveBox.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridx =0;
+        
+        geometricMeanFolderText = gui.buildFileField("Geometric mean folder location", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        outputPanel.add(geometricMeanFolderText.getParent(), gbc);
+        
+        geometricMeanSaveBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                geometricMeanFolderText.getParent().setVisible(geometricMeanSaveBox.isSelected());
+                if(geometricMeanFolderText.getText().equals(initGeoLoc) && 
+                        spimAFileLocText.getText() != null) {
+                    try {
+                        geometricMeanFolderText.setText(new File(spimAFileLocText.getText()).getParent() + File.separator + "GeoMean" + File.separator);
+                    } catch(Exception ex) {}
+                    
+                }
+            }
+        });
         
         
         interImagesBox = gui.buildCheckBox("Show transformed images", false);
@@ -547,8 +607,10 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
      * @return
      */
 	private boolean setVariables() {
-	    doGeoMean = geometricMeanBox.isSelected();
-        doAriMean = arithmeticMeanBox.isSelected();
+	    showGeoMean = geometricMeanShowBox.isSelected();
+        showAriMean = arithmeticMeanShowBox.isSelected();
+        saveGeoMean = geometricMeanSaveBox.isSelected();
+        saveAriMean = arithmeticMeanSaveBox.isSelected();
         doInterImages = interImagesBox.isSelected();
         doSubsample = doSubsampleBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
@@ -556,6 +618,30 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
         
+        try {
+            if(saveGeoMean) {
+                geoMeanDir = new File(geometricMeanFolderText.getText());
+                if(!geoMeanDir.exists()) {
+                    geoMeanDir.mkdirs();
+                }
+            }
+        } catch(Exception e) {
+            MipavUtil.displayError("Error making geometric mean directory, please choose new location.");
+            return false;
+        }
+        
+        try {
+            if(saveAriMean) {
+                ariMeanDir = new File(arithmeticMeanFolderText.getText());
+                if(!ariMeanDir.exists()) {
+                    ariMeanDir.mkdirs();
+                }
+            }
+        } catch(Exception e) {
+            MipavUtil.displayError("Error making arithmetic mean directory, please choose new location.");
+            return false;
+        }
+                
 	    try {
 		    
 		    concurrentNum = Integer.valueOf(concurrentNumText.getText()).intValue();
