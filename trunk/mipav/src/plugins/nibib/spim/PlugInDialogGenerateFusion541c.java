@@ -532,6 +532,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         outputPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
         gbc.gridy++;
         gbc.gridx = 0;
+        gbc.gridwidth = 2;
         
         final String initAriLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
         final String initGeoLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
@@ -539,12 +540,15 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(arithmeticMeanFolderText.getParent(), gbc);
         gbc.gridy++;
+        gbc.gridwidth = 1;
+        arithmeticMeanFolderText.getParent().setVisible(false);
         
         arithmeticMeanSaveBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 arithmeticMeanFolderText.getParent().setVisible(arithmeticMeanSaveBox.isSelected());
                 if(arithmeticMeanFolderText.getText().equals(initAriLoc) && 
-                        spimAFileLocText.getText() != null) {
+                        spimAFileLocText.getText() != null && 
+                        spimAFileLocText.getText().length() > 0) {
                     try {
                         arithmeticMeanFolderText.setText(new File(spimAFileLocText.getText()).getParent() + File.separator + "AriMean" + File.separator);
                     } catch(Exception ex) {}
@@ -560,16 +564,21 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         geometricMeanSaveBox = gui.buildCheckBox("Save geometric mean", false);
         outputPanel.add(geometricMeanSaveBox.getParent(), gbc);
         gbc.gridy++;
-        gbc.gridx =0;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         
         geometricMeanFolderText = gui.buildFileField("Geometric mean folder location", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(geometricMeanFolderText.getParent(), gbc);
+        gbc.gridwidth = 1;
+        gbc.gridy++;
+        geometricMeanFolderText.getParent().setVisible(false);
         
         geometricMeanSaveBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 geometricMeanFolderText.getParent().setVisible(geometricMeanSaveBox.isSelected());
                 if(geometricMeanFolderText.getText().equals(initGeoLoc) && 
-                        spimAFileLocText.getText() != null) {
+                        spimAFileLocText.getText() != null && 
+                        spimAFileLocText.getText().length() > 0) {
                     try {
                         geometricMeanFolderText.setText(new File(spimAFileLocText.getText()).getParent() + File.separator + "GeoMean" + File.separator);
                     } catch(Exception ex) {}
@@ -579,7 +588,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         });
         
         
-        interImagesBox = gui.buildCheckBox("Show transformed images", false);
+        interImagesBox = gui.buildCheckBox("Show intermediate images", false);
         outputPanel.add(interImagesBox.getParent(), gbc);
         
         gbc.gridy = 2;
