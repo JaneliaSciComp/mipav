@@ -461,6 +461,8 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         private ModelImage subGeoImage = null, subAriImage = null;
         
         private Frame parentFrame;
+
+        private volatile ExecutorService exec = null;
         
         public FusionAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
             this.parentFrame = parentFrame;
@@ -520,17 +522,21 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 threshold(transformImage, thresholdIntensity);
             }
             
-            Object lock = new Object();
-            
-            
-            if(xMovement == null && yMovement == null && zMovement == null) {
-                if(movementQueue.size() > 0) {
-                     while(movementQueue.size() > 0) {}
-                } else {
-                    fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
-                    MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
-                    movementQueue.add(alg);
-                    alg.run();
+            synchronized(this) {
+                if(xMovement == null && yMovement == null && zMovement == null) {
+                    if(exec != null) {
+                         try {
+                            exec.awaitTermination(1, TimeUnit.DAYS);
+                        } catch (InterruptedException e) {
+                            MipavUtil.displayError("Time point "+transformImage.getImageName()+" will be incomplete.");
+                            e.printStackTrace();
+                        }
+                    } else {
+                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+                        exec = Executors.newFixedThreadPool(1);
+                        MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
+                        exec.submit(alg);
+                    }
                 }
             }
             
