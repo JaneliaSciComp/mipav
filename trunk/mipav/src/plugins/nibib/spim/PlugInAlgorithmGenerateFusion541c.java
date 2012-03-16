@@ -46,6 +46,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath.Operator;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -517,20 +518,40 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             case DownsampleToBase:
                 downsampleToBase();
+                
+                if(doThreshold) {
+                    threshold(transformImage, thresholdIntensity);
+                }
+                subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+                subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
                 break;
             
             case DownsampleUpsampleCombined:
                 downsampleUpsampleCombined();
+                
+                if(doThreshold) {
+                    threshold(baseImage, thresholdIntensity);
+                }
+                
+                if(doThreshold) {
+                    threshold(transformImage, thresholdIntensity);
+                }
                 break;
                 
             case UpsampleToTransform:
                 upsampleToTransform();
+                
+                if(doThreshold) {
+                    threshold(baseImage, thresholdIntensity);
+                }
+                FileInfoBase f = baseImage.getFileInfo(0);
+                f.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
+                subGeoImage = ViewUserInterface.getReference().createBlankImage(f, false);
+                subAriImage = ViewUserInterface.getReference().createBlankImage(f, false);
                 break;
             }
             
-            if(doThreshold) {
-                threshold(transformImage, thresholdIntensity);
-            }
+            
             
             synchronized(this) {
                 if(xMovement == null && yMovement == null && zMovement == null) {
@@ -638,8 +659,12 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             zRes = transformImage.getResolutions(0)[2]/2;
             baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
-            
-            
+            for(int i=0; i<baseImage.getFileInfo().length; i++) {
+                baseImage.getFileInfo(i).setSliceThickness(zRes);
+            }
+            if(doInterImages) {
+                new ViewJFrameImage(baseImage);
+            }
         }
         
         private void downsampleToBase() {
@@ -652,9 +677,13 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             float zRes = transformImage.getResolutions(0)[2];
             transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
+            for(int i=0; i<baseImage.getFileInfo().length; i++) {
+                transformImage.getFileInfo(i).setSliceThickness(zRes);
+            }
             if(doInterImages) {
                 new ViewJFrameImage(transformImage);
             }
+            
         }
         
         private void upsampleToTransform() {
@@ -667,6 +696,9 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             float zRes = transformImage.getResolutions(0)[2];
             baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
+            for(int i=0; i<baseImage.getFileInfo().length; i++) {
+                baseImage.getFileInfo(i).setSliceThickness(zRes);
+            }
             if(doInterImages) {
                 new ViewJFrameImage(baseImage);
             }
@@ -700,14 +732,14 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         }
 
         private void calcGeoMean() {
-            subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+            
             int transformX, transformY, transformZ;
             //new ViewJFrameImage(transformImage);
-            for(int i=0; i<baseImage.getExtents()[0]; i++) {
+            for(int i=0; i<subGeoImage.getExtents()[0]; i++) {
                 transformX = i-xMovement;
-                for(int j=0; j<baseImage.getExtents()[1]; j++) {
+                for(int j=0; j<subGeoImage.getExtents()[1]; j++) {
                     transformY = j-yMovement;
-                    for(int k=0; k<baseImage.getExtents()[2]; k++) {
+                    for(int k=0; k<subGeoImage.getExtents()[2]; k++) {
                         transformZ = k-zMovement;
                         if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
@@ -730,14 +762,14 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         }
 
         private void calcAriMean() {
-            subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+            
             int transformX, transformY, transformZ;
             //new ViewJFrameImage(transformImage);
-            for(int i=0; i<baseImage.getExtents()[0]; i++) {
+            for(int i=0; i<subAriImage.getExtents()[0]; i++) {
                 transformX = i-xMovement;
-                for(int j=0; j<baseImage.getExtents()[1]; j++) {
+                for(int j=0; j<subAriImage.getExtents()[1]; j++) {
                     transformY = j-yMovement;
-                    for(int k=0; k<baseImage.getExtents()[2]; k++) {
+                    for(int k=0; k<subAriImage.getExtents()[2]; k++) {
                         transformZ = k-zMovement;
                         if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
