@@ -1,21 +1,31 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 
+import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Line3f;
+import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.System.UnorderedSetInt;
 import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.Collision.Picker;
 import WildMagic.LibGraphics.Detail.Edge;
 import WildMagic.LibGraphics.Effects.Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
@@ -25,6 +35,7 @@ import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Renderer;
 import WildMagic.LibGraphics.Rendering.WireframeState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
+import WildMagic.LibGraphics.SceneGraph.BoxBV;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -53,6 +64,7 @@ public class VolumeSurface extends VolumeObject
     private float m_fSurfaceArea = 0;
     /** Center of surface. */
     private Vector3f m_kCenter = null;
+    private Vector3f m_kCenterScanner = null;
     /** Backup of the per-vertex colors. */
     private ColorRGBA[] m_akBackupColor = null;
     
@@ -137,7 +149,37 @@ public class VolumeSurface extends VolumeObject
 //         kDate = new Date();
 //         long lEnd = kDate.getTime();
 //         System.err.println("End build tree " + (float)(lEnd - lStart)/1000.0f);
+        
+        
+
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
+        System.err.println( m_kResolutions );
+
+		float xBox = (iDimX - 1) * afResolutions[0];
+		float yBox = (iDimY - 1) * afResolutions[1];
+		float zBox = (iDimZ - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+
+		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
+		m_kMeshScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
+    	m_kVolumeTrans = new Vector3f(xBox, yBox, zBox);
+    	m_fVolumeDiv = 1f/(2.0f*maxBox);
+    	m_fVolumeMult = (2.0f*maxBox);
+    	
+    	m_akUnitsLabel = new String[3];
+    	for ( int i = 0; i < 3; i++ )
+    	{
+    		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
+    	}
     }
+    
+    private String[] m_akUnitsLabel;
+    private Vector3f m_kVolumeScale, m_kVolumeTrans, m_kMeshScale, m_kResolutions;
+    private float m_fVolumeDiv, m_fVolumeMult;
 
     /**
      * Add a new geodesic component to the surface.
@@ -186,7 +228,6 @@ public class VolumeSurface extends VolumeObject
     public float ComputeSurfaceArea() {
 
         float fSum = 0.0f;
-        Vector3f kScale = new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ );
         
         int iIndexQuantity = m_kMesh.IBuffer.GetIndexQuantity();
         int[] aiConnect = m_kMesh.IBuffer.GetData();
@@ -205,9 +246,9 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetPosition3(iV1, kPos1);
             m_kMesh.VBuffer.GetPosition3(iV2, kPos2);
 
-            kPos0.Mult( kScale );
-            kPos1.Mult( kScale );
-            kPos2.Mult( kScale );
+            meshToScannerCoords( kPos0 );
+            meshToScannerCoords( kPos1 );
+            meshToScannerCoords( kPos2 );
             
             // Area of a triangle = || P0 X P1 + P1 X P2 + P2 X P0 ||/2
             // Area = 0.5* (det1 + det2 + det3), where
@@ -325,33 +366,28 @@ public class VolumeSurface extends VolumeObject
      */
     public float ComputeVolume()
     {
-
-        float fSum = 0.0f;
-        Vector3f kScale = new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ );
-        
-        int iIndexQuantity = m_kMesh.IBuffer.GetIndexQuantity();
+    	//ComputeCenter();
+        float fSum = 0.0f;        
+        int iTriangleQuantity = m_kMesh.GetTriangleQuantity();
         int[] aiConnect = m_kMesh.IBuffer.GetData();
         Vector3f kPos0 = new Vector3f();
         Vector3f kPos1 = new Vector3f();
         Vector3f kPos2 = new Vector3f();
-        for (int iT = 0; iT < iIndexQuantity; /**/) {
+        for (int iT = 0; iT < iTriangleQuantity; iT++) {
 
             // get indices to triangle vertices
-            int iV0 = aiConnect[iT++];
-            int iV1 = aiConnect[iT++];
-            int iV2 = aiConnect[iT++];
+            int iV0 = aiConnect[iT * 3 + 0];
+            int iV1 = aiConnect[iT * 3 + 1];
+            int iV2 = aiConnect[iT * 3 + 2];
 
             // get vertices
             m_kMesh.VBuffer.GetPosition3(iV0, kPos0);
             m_kMesh.VBuffer.GetPosition3(iV1, kPos1);
             m_kMesh.VBuffer.GetPosition3(iV2, kPos2);
-
-            kPos0.Mult( kScale );
-            kPos1.Mult( kScale );
-            kPos2.Mult( kScale );
-
-            // Since the differences between the points is in pixels*resolutions,
-            // there is no need to map into physical space.
+            
+            meshToScannerCoords( kPos0 );
+            meshToScannerCoords( kPos1 );
+            meshToScannerCoords( kPos2 );
 
             // compute triple scalar product
             // The scalar triple product of three vectors A, B, and C is denoted
@@ -374,7 +410,6 @@ public class VolumeSurface extends VolumeObject
 
             fSum += fProd;
         }
-
         return Math.abs(fSum / 6.0f);
     }
 
@@ -629,6 +664,19 @@ public class VolumeSurface extends VolumeObject
     }  
     
     /**
+     * Return the surface area.
+     * @return surface area.
+     */
+    public String GetSurfaceAreaString()
+    {
+        if ( m_fSurfaceArea == 0 )
+        {
+            m_fSurfaceArea = ComputeSurfaceArea();
+        }
+        return new String ( m_fSurfaceArea + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] );
+    }  
+    
+    /**
      * Return the volume of this surface.
      * @return volume of this surface.
      */
@@ -638,7 +686,28 @@ public class VolumeSurface extends VolumeObject
         {
             m_fVolume = ComputeVolume();
         }
-        return m_fVolume;
+        if ( m_fSurfaceArea == 0 )
+        {
+            m_fSurfaceArea = ComputeSurfaceArea();
+        }
+        return (m_fVolume + m_fSurfaceArea);
+    } 
+    
+    /**
+     * Return the volume of this surface.
+     * @return volume of this surface.
+     */
+    public String GetVolumeString()
+    {
+        if ( m_fVolume == 0 )
+        {
+            m_fVolume = ComputeVolume();
+        }
+        if ( m_fSurfaceArea == 0 )
+        {
+            m_fSurfaceArea = ComputeSurfaceArea();
+        }
+        return new String ( (m_fVolume + m_fSurfaceArea) + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] + " x " + m_akUnitsLabel[2] );
     } 
 
     /* (non-Javadoc)
@@ -1225,6 +1294,135 @@ public class VolumeSurface extends VolumeObject
         m_iCurrentGeodesic = iWhich;
         m_kScene.AttachChild( m_akGeodesicNodes[m_iCurrentGeodesic] );
     }
+    
+    
+    public BitSet createMask( )
+    {
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+    	
+    	ModelImage kOutputImage = new ModelImage( ModelStorageBase.INTEGER, m_kVolumeImageA.GetImage().getExtents(), "SurfaceMask" );
+        
+    	BoxBV  kBox = new BoxBV();
+    	kBox.ComputeFromData( m_kMesh.VBuffer );
+    	
+    	Vector3f[] kBoxCorners = new Vector3f[8];
+    	kBox.GetBox().ComputeVertices( kBoxCorners );
+    	Vector3f kMax = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+    	Vector3f kMin = new Vector3f( Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE );
+    	for ( int i = 0; i < kBoxCorners.length; i++ )
+    	{
+    		kMax.Max( kBoxCorners[i] );
+    		kMin.Min( kBoxCorners[i] );
+    	}
+    	meshToVolumeCoords(kMin);
+    	meshToVolumeCoords(kMax);
+    	
+    	BitSet mask = new BitSet();
+        
+        Picker kPick = new Picker();
+    	Vector3f kTest = new Vector3f();
+    	int intersections;
+    	int oddCount;
+
+    	
+    	int insideBB = 0;
+    	
+    	Vector3f[] directions = new Vector3f[5];
+    	directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
+    	directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
+    	directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
+    	directions[3] = new Vector3f( (float)Math.random(), (float)Math.random(), -(float)Math.random() );
+    	directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
+    	for ( int i = 0; i < directions.length; i++ )
+    	{
+    		directions[i].Normalize();
+    	}
+    	
+
+        long startTime = System.currentTimeMillis();
+		for ( int z = (int)Math.floor(kMin.Z); z <= kMax.Z; z++ )
+		{
+			for ( int y = (int)Math.floor(kMin.Y); y <= kMax.Y; y++ )
+			{
+				for ( int x = (int)Math.floor(kMin.X); x <= kMax.X; x++ )
+				{
+					kTest.Set(x,y,z);
+					// convert to 'mesh' coords...
+					volumeToMeshCoords(kTest);
+					
+					if ( kBox.Contains( kTest ) )
+					{
+						insideBB++;
+						if ( testIntersections( kTest, directions ) )
+						{
+							mask.set( z * iDimX * iDimY + y * iDimX + x );
+							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
+						}
+						/*
+						insideBB++;
+						oddCount = 0;
+
+				    	for ( int i = 0; i < directions.length; i++ )
+				    	{
+				    		kPick.Execute(m_kMesh, kTest, directions[i],0.0f, Float.MAX_VALUE);
+							intersections = kPick.Records.size();
+							if ( (intersections%2) == 1 )
+							{
+								oddCount++;
+							}
+						}
+						
+						if ( oddCount >= (1 + directions.length/2) )
+						{
+							mask.set( z * iDimX * iDimY + y * iDimX + x );
+							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
+						}
+						*/
+					}
+				}
+			}
+		}
+        long now = System.currentTimeMillis();
+        double elapsedTime = (double) (now - startTime);
+
+        // if elasedTime is invalid, then set it to 0
+        if (elapsedTime <= 0) {
+            elapsedTime = (double) 0.0;
+        }
+
+        double timeinSec =  (double) (elapsedTime / 1000.0); // return in seconds!!
+        
+        System.err.println( "Elapsed time: " + timeinSec );
+		System.err.println( "Num voxels inside : " + mask.cardinality() + " " + insideBB );
+		kOutputImage.calcMinMax();
+		new ViewJFrameImage( kOutputImage );
+		return mask;
+    }
+    
+    public void volumeToMeshCoords(Vector3f kVolume)
+    {
+    	kVolume.Mult( m_kVolumeScale );
+    	kVolume.Sub( m_kVolumeTrans );	
+    	kVolume.Scale( m_fVolumeDiv );			
+    }
+    
+    public void meshToVolumeCoords(Vector3f kMesh)
+    {
+    	kMesh.Scale( m_fVolumeMult );	
+    	kMesh.Add( m_kVolumeTrans );			
+    	kMesh.Mult( m_kMeshScale );
+    }
+    
+    public void meshToScannerCoords(Vector3f kMesh)
+    {
+    	meshToVolumeCoords(kMesh);    	
+    	Vector3f kScanner = new Vector3f();
+    	MipavCoordinateSystems.fileToScanner( kMesh, kScanner, m_kVolumeImageA.GetImage() );
+    	kMesh.Copy(kScanner);
+    }
+    
     /**
      * Builds a list of cross-references, so that connections[i] contains all the vertices that are connected to vertex
      * at i.
@@ -1335,13 +1533,17 @@ public class VolumeSurface extends VolumeObject
     private void ComputeCenter()
     {
         m_kCenter = new Vector3f();
+        m_kCenterScanner = new Vector3f();
         Vector3f kPos = new Vector3f();
         for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
         {
             m_kMesh.VBuffer.GetPosition3( i, kPos );
             m_kCenter.Add( kPos );
+            meshToScannerCoords(kPos);
+            m_kCenterScanner.Add( kPos );
         }
         m_kCenter.Scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
+        m_kCenterScanner.Scale( 1.0f / m_kMesh.VBuffer.GetVertexQuantity() );
     }
     /**
      * Compute the average length of all the edges in the triangle mesh.
@@ -1593,4 +1795,48 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.SetPosition3(i, kV);
         }
     }   
+    
+    private boolean testIntersections( Vector3f origin, Vector3f[] directions )
+    {
+    	//Vector<PickRecord> Records = new Vector<PickRecord>();
+    	int[] lineIntersectionCount = new int[directions.length]; 
+        // Compute intersections with the model-space triangles.
+        int iTQuantity = m_kMesh.GetTriangleQuantity();
+        for (int i = 0; i < iTQuantity; i++)
+        {
+            int iV0, iV1, iV2;
+            int[] aiTris = new int[3];
+            if (!m_kMesh.GetTriangle(i,aiTris) )
+            {
+                continue;
+            }
+
+            iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
+            Triangle3f kTriangle = new Triangle3f(
+            		m_kMesh.VBuffer.GetPosition3(iV0),
+            		m_kMesh.VBuffer.GetPosition3(iV1),
+            		m_kMesh.VBuffer.GetPosition3(iV2));
+            
+            for ( int j = 0; j < directions.length; j++ )
+            {
+            	Line3f kLine = new Line3f(origin,directions[j]);
+            	IntrLine3Triangle3f kIntr = new IntrLine3Triangle3f(kLine,kTriangle);
+            	if (kIntr.Find() && 0 <= kIntr.GetLineT() &&  kIntr.GetLineT() <= Float.MAX_VALUE )
+            	{
+            		lineIntersectionCount[j]++;
+            	}
+            }  	
+        }
+        int oddCount = 0;
+        for ( int j = 0; j < directions.length; j++ )
+        {
+        	if ( (lineIntersectionCount[j]%2) == 1 )
+        	{
+        		oddCount++;
+        	}
+        }
+    	return ( oddCount >= (1 + directions.length/2) );
+    }
+    
+    
 }
