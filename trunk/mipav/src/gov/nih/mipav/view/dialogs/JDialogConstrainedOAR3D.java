@@ -175,6 +175,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     private ModelImage refImage;
 
     /** DOCUMENT ME! */
+    private AlgorithmConstrainedELSUNCOAR3D reg3E = null;
+    
     private AlgorithmConstrainedOAR3D reg3 = null;
 
     /** DOCUMENT ME! */
@@ -295,6 +297,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     private JLabel userDirectoryLabel;
     
     private JTextField userDirectoryText;
+    
+    private boolean useELSUNC = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -391,7 +395,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                     textRef.setText(fileNameWRef);
                 }
             } catch (OutOfMemoryError e) {
-                MipavUtil.displayError("Out of memory in AlgorithmConstrainedOAR3D.");
+                MipavUtil.displayError("Out of memory in AlgorithmConstrainedESLUNCOAR3D.");
 
                 return;
             }
@@ -632,6 +636,118 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             if (reg3 != null) {
                 reg3.disposeLocal();
                 reg3 = null;
+            }
+
+            matchImage = null; // register match image to reference Image
+            refImage = null;
+
+            if (inputWeightImage != null) {
+                inputWeightImage.disposeLocal();
+                inputWeightImage = null;
+            }
+
+            if (refWeightImage != null) {
+                refWeightImage.disposeLocal();
+                refWeightImage = null;
+            }
+
+            dispose();
+            System.gc();
+        }
+        
+        if (algorithm instanceof AlgorithmConstrainedELSUNCOAR3D) {
+
+            if (reg3E.isCompleted()) {
+
+                if (displayTransform) {
+                    int xdimA = refImage.getExtents()[0];
+                    int ydimA = refImage.getExtents()[1];
+                    int zdimA = refImage.getExtents()[2];
+                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
+                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
+                    float zresA = refImage.getFileInfo(0).getResolutions()[2];
+
+                    String name = makeImageName(matchImage.getImageName(), "_register");
+                    transform = new AlgorithmTransform(matchImage, reg3E.getTransform(), interp2, xresA, yresA, zresA,
+                                                       xdimA, ydimA, zdimA, true, false, pad);
+
+                    transform.setUpdateOriginFlag(true);
+                    transform.setFillValue(fillValue);
+
+                    transform.run();
+                    resultImage = transform.getTransformedImage();
+                    transform.finalize();
+
+                    resultImage.calcMinMax();
+                    resultImage.setImageName(name);
+
+                    if (resultImage != null) {
+
+                        try {
+                            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        } catch (OutOfMemoryError error) {
+                            MipavUtil.displayError("Out of memory: unable to open new frame");
+                        }
+                    } else {
+                        MipavUtil.displayError("Result Image is null");
+                    }
+
+                    if (transform != null) {
+                        transform.disposeLocal();
+                        transform = null;
+                    }
+                    
+                    resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+                    
+                    float scale = (refImage.getExtents()[2] - 1)/(resultImage.getExtents()[2] - 1);
+                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                        float interp = i * scale;
+                        int lowerLimit = (int)interp;
+                        int upperLimit;
+                        float origin[] = new float[3];;
+                        if (lowerLimit < refImage.getExtents()[2] - 1) {
+                             upperLimit = lowerLimit + 1; 
+                             for (int j = 0; j < 3; j++) {
+                             origin[j] = (upperLimit - interp) * refImage.getFileInfo(lowerLimit).getOrigin()[j] +
+                                      (interp - lowerLimit) * refImage.getFileInfo(upperLimit).getOrigin()[j];
+                             }
+                        }
+                        else {
+                            for (int j = 0; j < 3; j++) {
+                                origin[j] = refImage.getFileInfo(lowerLimit).getOrigin()[j];
+                                }    
+                        }
+                        
+                        resultImage.getFileInfo(i).setOrigin(origin);
+                    }
+                }
+
+                //BEN: Changed... add the matrix to the holder (and set as another dataset type)
+                TransMatrix resultMatrix = reg3E.getTransform();
+                resultMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                matchImage.getMatrixHolder().addMatrix(resultMatrix);
+
+
+                String message = "Using cost function, " + costName;
+                message += ", the cost is " + Double.toString(reg3E.getAnswer()) + ".\n";
+                message += "Some registration settings: \n";
+                message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                message += "with number or X angles in coarse sampling " + numCoarseX + ".\n";
+                message += "Y Rotations from " + rotateBeginY + " to " + rotateEndY + ", ";
+                message += "with number or Y angles in coarse sampling " + numCoarseY + ".\n";
+                message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
+                message += "with number or Z angles in coarse sampling " + numCoarseZ + ".\n";
+                reg3E.getTransform().saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
+                                               refImage.getImageName() + ".mtx", message);
+                Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_" +
+                                               refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
+
+                insertScriptLine();
+            }
+
+            if (reg3E != null) {
+                reg3E.disposeLocal();
+                reg3E = null;
             }
 
             matchImage = null; // register match image to reference Image
@@ -1294,39 +1410,74 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             weighted = true;
         } // if (voisOnly)
 
-        if (weighted) {
-            reg3 = new AlgorithmConstrainedOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF,
-                                                 interp, rotateBeginX, rotateRangeX, rotateBeginY, rotateRangeY,
-                                                 rotateBeginZ, rotateRangeZ, numCoarseX, numCoarseY, numCoarseZ,
-                                                 transLimits, maxOfMinResol, doSubsample, fastMode, calcCOG,
-                                                 bracketBound, maxIterations, numMinima);
-        } else {
-           // System.out.println("Reference image name is " + refImage.getImageName());
-            //System.out.println("Moving image name is " + matchImage.getImageName());
+        if (useELSUNC) {
+	        if (weighted) {
+	            reg3E = new AlgorithmConstrainedELSUNCOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF,
+	                                                 interp, rotateBeginX, rotateRangeX, rotateBeginY, rotateRangeY,
+	                                                 rotateBeginZ, rotateRangeZ, numCoarseX, numCoarseY, numCoarseZ,
+	                                                 transLimits, maxOfMinResol, doSubsample, fastMode, calcCOG,
+	                                                 bracketBound, maxIterations, numMinima);
+	        } else {
+	           // System.out.println("Reference image name is " + refImage.getImageName());
+	            //System.out.println("Moving image name is " + matchImage.getImageName());
+	
+	            reg3E = new AlgorithmConstrainedELSUNCOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateRangeX,
+	                                                 rotateBeginY, rotateRangeY, rotateBeginZ, rotateRangeZ, numCoarseX,
+	                                                 numCoarseY, numCoarseZ, transLimits, maxOfMinResol, doSubsample,
+	                                                 fastMode, calcCOG, bracketBound, maxIterations, numMinima);
+	        }
+	        reg3E.addListener(this);
 
-            reg3 = new AlgorithmConstrainedOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateRangeX,
-                                                 rotateBeginY, rotateRangeY, rotateBeginZ, rotateRangeZ, numCoarseX,
-                                                 numCoarseY, numCoarseZ, transLimits, maxOfMinResol, doSubsample,
-                                                 fastMode, calcCOG, bracketBound, maxIterations, numMinima);
+	        createProgressBar(matchImage.getImageName(), reg3E);
+
+	        // Hide dialog
+	        setVisible(false);
+
+	        if (isRunInSeparateThread()) {
+
+	            // Start the thread as a low priority because we wish to still have user interface work fast.
+	            if (reg3E.startMethod(Thread.MIN_PRIORITY) == false) {
+	                MipavUtil.displayError("A thread is already running on this object");
+	            }
+	        } else {
+
+	            reg3E.run();
+	        }
         }
-        reg3.addListener(this);
+        else {
+        	if (weighted) {
+	            reg3 = new AlgorithmConstrainedOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF,
+	                                                 interp, rotateBeginX, rotateRangeX, rotateBeginY, rotateRangeY,
+	                                                 rotateBeginZ, rotateRangeZ, numCoarseX, numCoarseY, numCoarseZ,
+	                                                 transLimits, maxOfMinResol, doSubsample, fastMode, calcCOG,
+	                                                 bracketBound, maxIterations, numMinima);
+	        } else {
+	           // System.out.println("Reference image name is " + refImage.getImageName());
+	            //System.out.println("Moving image name is " + matchImage.getImageName());
+	
+	            reg3 = new AlgorithmConstrainedOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateRangeX,
+	                                                 rotateBeginY, rotateRangeY, rotateBeginZ, rotateRangeZ, numCoarseX,
+	                                                 numCoarseY, numCoarseZ, transLimits, maxOfMinResol, doSubsample,
+	                                                 fastMode, calcCOG, bracketBound, maxIterations, numMinima);
+	        }	
+        	reg3.addListener(this);
 
-        createProgressBar(matchImage.getImageName(), reg3);
+            createProgressBar(matchImage.getImageName(), reg3);
 
-        // Hide dialog
-        setVisible(false);
+            // Hide dialog
+            setVisible(false);
 
-        if (isRunInSeparateThread()) {
+            if (isRunInSeparateThread()) {
 
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+
+                reg3.run();
             }
-        } else {
-
-            reg3.run();
         }
-
     }
 
     /**
