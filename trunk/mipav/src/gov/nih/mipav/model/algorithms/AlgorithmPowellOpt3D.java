@@ -26,12 +26,10 @@ public class AlgorithmPowellOpt3D extends AlgorithmPowellOptBase {
      * @param  costFunc         Cost function to use.
      * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
      * @param  maxIter          Maximum number of iterations.
-     * @param  bracketBound     DOCUMENT ME!
      */
     public AlgorithmPowellOpt3D(AlgorithmBase parent, Vector3f com, int degreeOfFreedom,
-                                AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
-                                int bracketBound) {
-        super(parent, degreeOfFreedom, costFunc, tols, maxIter, 3, bracketBound);
+                                AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter) {
+        super(parent, degreeOfFreedom, costFunc, tols, maxIter);
 
         if (degreeOfFreedom <= 12) {
             toOrigin = new TransMatrix(4);
