@@ -844,9 +844,6 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
 
         fileInfo = (FileInfoBase) image.getFileInfo(0).clone();
 
-        image.disposeLocal();
-        image = null;
-
         return fileInfo;
     }
 
