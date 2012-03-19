@@ -48,7 +48,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     private JDialog advancedDialog;
 
     /** DOCUMENT ME! */
-    private JTextField bracketBoundText, maxIterationsText, numMinText;
+    private JTextField maxIterationsText, numMinText;
 
     /** DOCUMENT ME! */
     private JButton buttonWeightInput;
@@ -147,10 +147,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     private ModelImage matchImage; // register match image to reference Image
 
     /** DOCUMENT ME! */
-    private int maxIterations_def = 2, bracketBound_def = 10, numMinima_def = 3;
+    private int maxIterations_def = 2, numMinima_def = 3;
 
     /** DOCUMENT ME! */
-    private int maxIterations = maxIterations_def, bracketBound = bracketBound_def;
+    private int maxIterations = maxIterations_def;
 
     /** DOCUMENT ME! */
     private boolean maxOfMinResol;
@@ -325,10 +325,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("OAR19076");
         } else if (command.equals("AdvancedSettings")) {
-            bracketBound_def = bracketBound;
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
-            advancedDialog = buildAdvancedDialog(bracketBound, maxIterations, numMinima);
+            advancedDialog = buildAdvancedDialog(maxIterations, numMinima);
         } else if (command.equals("Ref")) {
 
             try {
@@ -421,13 +420,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 return;
             }
         } else if (command.equals("AdvancedOkay")) {
-            tmpStr = bracketBoundText.getText();
-
-            if (JDialogBase.testParameter(tmpStr, 1, 60)) {
-                bracketBound = Integer.valueOf(tmpStr).intValue();
-            } else {
-                bracketBound = bracketBound_def;
-            }
 
             tmpStr = maxIterationsText.getText();
 
@@ -449,7 +441,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             advancedDialog.dispose();
         } else if (command.equals("AdvancedCancel")) {
             maxIterations = maxIterations_def;
-            bracketBound = bracketBound_def;
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
@@ -880,12 +871,10 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     /**
      * Accessor to set the advanced settings.
      * 
-     * @param bracketBound DOCUMENT ME!
      * @param maxIterations DOCUMENT ME!
      * @param numMinima DOCUMENT ME!
      */
-    public void setAdvancedSettings(final int bracketBound, final int maxIterations, final int numMinima) {
-        this.bracketBound = bracketBound;
+    public void setAdvancedSettings(final int maxIterations, final int numMinima) {
         this.maxIterations = maxIterations;
         this.numMinima = numMinima;
     }
@@ -1227,12 +1216,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                         rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                         fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
+                        doMultiThread, fastMode, maxIterations, numMinima);
             } else {
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                         rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                         fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
+                        doMultiThread, fastMode, maxIterations, numMinima);
             }
         } else {
             // System.out.println("Reference image name is " +refImage.getImageName());
@@ -1242,13 +1231,13 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
                         rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
-                        fastMode, bracketBound, maxIterations, numMinima);
+                        fastMode, maxIterations, numMinima);
                 reg3.setJTEM(doJTEM);
             } else {
                 System.err.println("Sending LS Image to OAR3D algorithm");
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
                         maxIterations, numMinima);
 
             }
@@ -1363,8 +1352,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         }
         setMatrixDirectory(scriptParameters.getParams().getString("matrix_directory"));
 
-        setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"), scriptParameters.getParams().getInt(
-                "max_iterations"), scriptParameters.getParams().getInt("num_minima"));
+        setAdvancedSettings(scriptParameters.getParams().getInt( "max_iterations"), 
+        		scriptParameters.getParams().getInt("num_minima"));
     }
 
     /**
@@ -1406,7 +1395,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("out_of_bounds_index", outOfBoundsIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("matrix_directory", matrixDirectory));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
     }
@@ -1420,7 +1408,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
      * 
      * @return DOCUMENT ME!
      */
-    private JDialog buildAdvancedDialog(final int bracketBound, final int maxIter, final int numMinima) {
+    private JDialog buildAdvancedDialog(final int maxIter, final int numMinima) {
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
 
@@ -1432,21 +1420,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         final JPanel settingsPanel = new JPanel();
         settingsPanel.setBorder(BorderFactory.createTitledBorder("Optimization settings"));
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
-
-        final JPanel bracketPanel = new JPanel();
-        bracketPanel.setLayout(new BorderLayout(1, 3)); // BorderLayout(int hgap, int vgap)
-        bracketPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-
-        final JLabel bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum: ",
-                SwingConstants.LEFT);
-        bracketPanel.add(bracketBoundLabel, BorderLayout.WEST);
-        bracketPanel.setToolTipText("Used for translation, scale and skew.");
-        bracketBoundText = new JTextField(String.valueOf(bracketBound), 5);
-        bracketBoundText.addFocusListener(this);
-        bracketPanel.add(bracketBoundText, BorderLayout.CENTER);
-
-        final JLabel bracketInstruct = new JLabel("Recommended values 10-60.", SwingConstants.RIGHT);
-        bracketPanel.add(bracketInstruct, BorderLayout.SOUTH);
 
         final JPanel maxIterPanel = new JPanel();
         maxIterPanel.setLayout(new BorderLayout(1, 3));
@@ -1474,8 +1447,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         numMinText.addFocusListener(this);
         numMinPanel.add(numMinText, BorderLayout.CENTER);
 
-        settingsPanel.add(bracketPanel);
-        settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(maxIterPanel);
         settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(numMinPanel);
@@ -3177,7 +3148,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             table.put(p);
             table.put(new ParameterString("matrix_directory"));
 
-            table.put(new ParameterInt("bracket_bound", 10));
             table.put(new ParameterInt("max_iterations", 2));
             table.put(new ParameterInt("num_minima", 3));
         } catch (final ParserException e) {
