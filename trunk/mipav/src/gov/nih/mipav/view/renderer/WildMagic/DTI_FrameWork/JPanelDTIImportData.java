@@ -531,7 +531,7 @@ import Jama.Matrix;
             
        else if (command.equals("bvalGradBrowse")) {
             dwiBrowse = 1;
-            final JFileChooser chooser = new JFileChooser();
+            final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 
             if (currDir != null) {
                 chooser.setCurrentDirectory(new File(currDir));
@@ -2092,8 +2092,7 @@ import Jama.Matrix;
             double[][] rotTable = new double[table.length][table[0].length];
             for(int i=0; i<rotTable.length; i++){
                     double[][] row = {{table[i][0]},{table[i][1]},{table[i][2]}};
-                    double[][] newrow = matrixMultiply(A,row);
-                         
+                    double[][] newrow = matrixMultiply(A,row);                         
                     rotTable[i][0]=newrow[0][0];
                     rotTable[i][1]=newrow[1][0];
                     rotTable[i][2]=newrow[2][0];
