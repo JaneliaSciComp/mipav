@@ -54,7 +54,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     private JDialog advancedDialog;
 
     /** DOCUMENT ME! */
-    private JTextField bracketBoundText, maxIterationsText, numMinText;
+    private JTextField maxIterationsText, numMinText;
 
     /** DOCUMENT ME! */
     private JButton buttonWeightInput;
@@ -126,10 +126,10 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     private ModelImage matchImage; // register slices within matchImage
 
     /** DOCUMENT ME! */
-    private int maxIterations_def = 2, bracketBound_def = 3, numMinima_def = 6;
+    private int maxIterations_def = 2, numMinima_def = 6;
 
     /** DOCUMENT ME! */
-    private int maxIterations = maxIterations_def, bracketBound = bracketBound_def;
+    private int maxIterations = maxIterations_def;
 
     /** DOCUMENT ME! */
     private JRadioButton noneRadio;
@@ -241,10 +241,9 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         } else if (command.equals("Help")) {
         	MipavUtil.showHelp("OAR19076");
         } else if (command.equals("AdvancedSettings")) {
-            bracketBound_def = bracketBound;
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
-            advancedDialog = buildAdvancedDialog(bracketBound, maxIterations, numMinima);
+            advancedDialog = buildAdvancedDialog(maxIterations, numMinima);
         } else if (command.equals("Input")) {
 
             try {
@@ -291,13 +290,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
                 return;
             }
         } else if (command.equals("AdvancedOkay")) {
-            tmpStr = bracketBoundText.getText();
-
-            if (testParameter(tmpStr, 1, 50)) {
-                bracketBound = Integer.valueOf(tmpStr).intValue();
-            } else {
-                bracketBound = bracketBound_def;
-            }
 
             tmpStr = maxIterationsText.getText();
 
@@ -319,7 +311,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             advancedDialog.dispose();
         } else if (command.equals("AdvancedCancel")) {
             maxIterations = maxIterations_def;
-            bracketBound = bracketBound_def;
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
@@ -468,7 +459,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         str += doGraph + delim;
         str += doSubsample + delim;
         str += transformVOIs + delim;
-        str += bracketBound + delim;
         str += maxIterations + delim;
         str += numMinima;
 
@@ -702,7 +692,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
                     transformVOIsBox.setSelected(doTV);
                 }
 
-                setBracketBound(MipavUtil.getInt(st));
                 setMaxIterations(MipavUtil.getInt(st));
                 setNumMinima(MipavUtil.getInt(st));
             } catch (Exception ex) {
@@ -724,15 +713,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             String defaultsString = new String(weighted + "," + getParameterString(","));
             Preferences.saveDialogDefaults(getDialogName(), defaultsString);
         }
-    }
-
-    /**
-     * Accessor to set bracketBound.
-     *
-     * @param  bracketBound  DOCUMENT ME!
-     */
-    public void setBracketBound(int bracketBound) {
-        this.bracketBound = bracketBound;
     }
 
     /**
@@ -960,12 +940,12 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         if (weighted) {
             reg25 = new AlgorithmRegOAR25D2(matchImage, inputWeightImage, cost, DOF, interp, interp2, doAdjacent,
                                             refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
-                                            doSubsample, transformVOIs, bracketBound, maxIterations, numMinima);
+                                            doSubsample, transformVOIs, maxIterations, numMinima);
         } else {
 
             reg25 = new AlgorithmRegOAR25D2(matchImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
                                             rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
-                                            transformVOIs, bracketBound, maxIterations, numMinima);
+                                            transformVOIs, maxIterations, numMinima);
 
             if (useOutsideReferenceSlice) {
 
@@ -1027,7 +1007,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
         setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
 
-        setBracketBound(scriptParameters.getParams().getInt("bracket_bound"));
         setMaxIterations(scriptParameters.getParams().getInt("max_iterations"));
         setNumMinima(scriptParameters.getParams().getInt("num_minima"));
 
@@ -1062,7 +1041,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
         scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
 
@@ -1075,13 +1053,12 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     /**
      * Build advanced settings dialog. Returns JDialog.
      *
-     * @param   bracketBound  DOCUMENT ME!
      * @param   maxIter       DOCUMENT ME!
      * @param   numMinima     DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    private JDialog buildAdvancedDialog(int bracketBound, int maxIter, int numMinima) {
+    private JDialog buildAdvancedDialog(int maxIter, int numMinima) {
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
 
@@ -1093,22 +1070,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         JPanel settingsPanel = new JPanel();
         settingsPanel.setBorder(buildTitledBorder("Optimization settings"));
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
-
-        JPanel bracketPanel = new JPanel();
-        bracketPanel.setLayout(new BorderLayout(1, 3)); // BorderLayout(int hgap, int vgap)
-        bracketPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-
-        JLabel bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum: ", JLabel.LEFT);
-        bracketBoundLabel.setFont(serif12);
-        bracketPanel.add(bracketBoundLabel, BorderLayout.WEST);
-        bracketPanel.setToolTipText("Used for translation, scale and skew.");
-        bracketBoundText = new JTextField(String.valueOf(bracketBound), 5);
-        bracketBoundText.addFocusListener(this);
-        bracketPanel.add(bracketBoundText, BorderLayout.CENTER);
-
-        JLabel bracketInstruct = new JLabel("Recommended values 1-20.", JLabel.RIGHT);
-        bracketInstruct.setFont(serif12);
-        bracketPanel.add(bracketInstruct, BorderLayout.SOUTH);
 
         JPanel maxIterPanel = new JPanel();
         maxIterPanel.setLayout(new BorderLayout(1, 3));
@@ -1138,8 +1099,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         numMinText.addFocusListener(this);
         numMinPanel.add(numMinText, BorderLayout.CENTER);
 
-        settingsPanel.add(bracketPanel);
-        settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(maxIterPanel);
         settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(numMinPanel);
