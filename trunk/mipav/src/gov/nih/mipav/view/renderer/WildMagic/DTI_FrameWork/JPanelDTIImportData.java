@@ -401,6 +401,7 @@ import Jama.Matrix;
             
 
             if (command.equals("applyTable")) {
+                // When applyTable button is activated, the bvalues and gradients are saved to the DTI parameters object
                 if (m_kDWIImage != null){ 
 
                   if (dtiparams != null){                   
@@ -560,6 +561,7 @@ import Jama.Matrix;
             }
             
         }else if (command.equals("DWICellEditSwitch")){
+            //Makes bval/grad table editable to the user. The user can manually correct values in each box of the table
                 final boolean en = isDWICellEditBox.isSelected();
                     if (en == true){
                     srcBvalGradTable.setBackground(Color.white);    
@@ -585,6 +587,7 @@ import Jama.Matrix;
 
             
             } else if (command.equals("DWITableDeleteButton")){
+                //Entire table can be cleared with this command
                        srcBvalGradTable.setBackground(Color.white);
                        srcBvalGradTable.setEnabled(true);
                         for (int i = 0; i < numVolumes; i++) {
@@ -599,6 +602,7 @@ import Jama.Matrix;
                         
 
             } else if (command.equals("saveBvalGrad")) {
+                //User can save bval/grad table to FSL, dtiStudio, or MIPAV Standard Format
                 saveGradchooser = new JFileChooser(ViewUserInterface.getReference().getDefaultDirectory());
                 saveGradchooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 saveGradchooser.setDialogTitle("Save B-Value/ Gradient Table to TXT File");
@@ -633,6 +637,7 @@ import Jama.Matrix;
             }
             
             else if (command.equals("NegX")){
+                //Switches signs in the Gradient X direction
                 srcBvalGradTable.setBackground(Color.white);
                 srcBvalGradTable.setEnabled(true);          
                  for (int i = 0; i < numVolumes; i++) {
@@ -645,6 +650,7 @@ import Jama.Matrix;
                 
             }
             else if (command.equals("NegY")){
+                //Switches signs in the Gradient Y direction
                 srcBvalGradTable.setBackground(Color.white);
                 srcBvalGradTable.setEnabled(true);
                  for (int i = 0; i < numVolumes; i++) {
@@ -657,6 +663,7 @@ import Jama.Matrix;
                 
             }
             else if (command.equals("NegZ")){
+                //Switches signs in the Gradient Z direction
                 srcBvalGradTable.setBackground(Color.white);
                 srcBvalGradTable.setEnabled(true);
                  for (int i = 0; i < numVolumes; i++) {
@@ -668,6 +675,7 @@ import Jama.Matrix;
                  }
             
             } else if (command.equals("openedImage")) {
+                //Sets the DWI image to the current image opened by the user
                 if (activeDWIButton.isSelected()){
                 openDWIButton.setEnabled(false);
                 textDWIDataimage.setEnabled(false);
@@ -742,6 +750,7 @@ import Jama.Matrix;
                 }
                 
             }else if (command.equals("SkipT2")) {
+                //User has no structual image to upload
                 if (useT2CheckBox.isSelected()){
                     t2FileLabel.setEnabled(false);
                     textT2image.setEnabled(false);
@@ -1177,6 +1186,7 @@ import Jama.Matrix;
             }
             
             if (dtiparams != null){
+                //Checks DTI Parameters object to determine if opened image has bvals and grads stored in it
                 m_kDWIImage.setDTIParameters(dtiparams);
                 
                 if (dtiparams.getNumVolumes() != 0){
@@ -1216,7 +1226,8 @@ import Jama.Matrix;
             }
    
             if (isPARREC) {
-    
+                //Checks if image is Philips PAR/REC image and the version to determine which GTC parameters to include
+                //Parameters based on: http://jist.projects.nitrc.org/docs/IACL/DTI/MedicAlgorithmMultiGradientTableCreator.html 
                 if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
                         || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
     
@@ -1234,12 +1245,12 @@ import Jama.Matrix;
                         fatshiftTextField = new JTextField(5);
                         fatshiftBox = new JComboBox();
                         fatshiftBox.setBackground(Color.white);
-                        fatshiftBox.addItem("R");
-                        fatshiftBox.addItem("L");
-                        fatshiftBox.addItem("A");
-                        fatshiftBox.addItem("P");
-                        fatshiftBox.addItem("H");
-                        fatshiftBox.addItem("F");
+                        fatshiftBox.addItem("R"); //Right
+                        fatshiftBox.addItem("L"); //Left
+                        fatshiftBox.addItem("A"); //Anterior
+                        fatshiftBox.addItem("P"); //Posterior
+                        fatshiftBox.addItem("H"); //Head/Superior
+                        fatshiftBox.addItem("F"); //Feet/Inferior
                         gbc.gridy = 0;
                         gbc.gridx = 0;
                         GradCreatorPanel.add(fatShiftLabel,gbc);
@@ -1266,9 +1277,9 @@ import Jama.Matrix;
                         gradResTextField = new JTextField(5);
                         gradResBox = new JComboBox();
                         gradResBox.setBackground(Color.white);
-                        gradResBox.addItem("Low");
-                        gradResBox.addItem("Medium");
-                        gradResBox.addItem("High");
+                        gradResBox.addItem("Low");//Volumes = 8
+                        gradResBox.addItem("Medium");//Volumes = 17
+                        gradResBox.addItem("High"); //Volumes = 34
                         gbc.gridy = 2;
                         gbc.gridx = 0;
                         GradCreatorPanel.add(gradResLabel,gbc);
@@ -1308,7 +1319,7 @@ import Jama.Matrix;
                         
                         if (fileInfoPARREC.getVersion().equals("V4") || fileInfoPARREC.getVersion().equals("V4.2") ){
                           //Add all parameters not aquired in PAR file for user to input
-                            osLabel = new JLabel("OS");
+                            osLabel = new JLabel("OS"); //Operating System
                             osLabel.setForeground(Color.lightGray);
                             osTextField = new JTextField(5);
                             osBox = new JComboBox();
@@ -1370,10 +1381,10 @@ import Jama.Matrix;
                             patientOrientTextField = new JTextField(5);
                             patientOrientBox = new JComboBox();
                             patientOrientBox.setBackground(Color.white);
-                            patientOrientBox.addItem("SP");
-                            patientOrientBox.addItem("PR");
-                            patientOrientBox.addItem("RD");
-                            patientOrientBox.addItem("LD");
+                            patientOrientBox.addItem("SP"); //Supine
+                            patientOrientBox.addItem("PR"); //Prone
+                            patientOrientBox.addItem("RD"); //Right Decubitus
+                            patientOrientBox.addItem("LD"); //Left Decubitus
                             gbc.gridy = 6;
                             gbc.gridx = 0;
                             GradCreatorPanel.add(patientOrientLabel,gbc);
@@ -1385,9 +1396,9 @@ import Jama.Matrix;
                             foldOverTextField = new JTextField(5);
                             foldOverBox = new JComboBox();
                             foldOverBox.setBackground(Color.white);
-                            foldOverBox.addItem("AP");
-                            foldOverBox.addItem("RL");
-                            foldOverBox.addItem("FH");
+                            foldOverBox.addItem("AP"); //Anterior-Posterior
+                            foldOverBox.addItem("RL"); //Right-Left
+                            foldOverBox.addItem("FH"); //Head-Feet/Superior-Inferior
                             gbc.gridy = 7;
                             gbc.gridx = 0;
                             GradCreatorPanel.add(foldOverLabel,gbc);
@@ -1395,7 +1406,7 @@ import Jama.Matrix;
                             gbc.gridx = 1;
                             GradCreatorPanel.add(foldOverBox,gbc);
                                                     
-                            osLabel = new JLabel("OS");
+                            osLabel = new JLabel("OS"); //Operating System
                             osLabel.setForeground(Color.lightGray);
                             osTextField = new JTextField(5);
                             osBox = new JComboBox();
@@ -1599,7 +1610,7 @@ import Jama.Matrix;
             
             else {
             if(gradResWOP.equals("YesLow")){
-                if(numVolumes==8 || numVolumes == 35){
+                if(numVolumes==8){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_1.5") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getLowOP();
                         space = "LPH";
@@ -1615,7 +1626,7 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("YesMedium")){
-                if(numVolumes==17 || numVolumes == 35){
+                if(numVolumes==17){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMediumOP();
                         space = "LPH";
@@ -1631,7 +1642,7 @@ import Jama.Matrix;
             } 
             
             else if(gradResWOP.equals("YesHigh")){
-                if(numVolumes==34 || numVolumes == 35){
+                if(numVolumes==34){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0")){
                         gradCreatetable = getHighOP_24prev();
                         space = "LPH";
@@ -1650,7 +1661,7 @@ import Jama.Matrix;
                 } 
             }
             else if(gradResWOP.equals("NoLow")){
-                if(numVolumes==8 || numVolumes == 35){
+                if(numVolumes==8){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getLow();
                         space = "MPS";
@@ -1662,7 +1673,7 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("NoMedium")){
-                if(numVolumes==17 || numVolumes == 35){
+                if(numVolumes==17){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMedium();
                         space = "MPS";
@@ -1674,7 +1685,7 @@ import Jama.Matrix;
             }
             
             else if(gradResWOP.equals("NoHigh")){
-                if(numVolumes==34 || numVolumes == 35){
+                if(numVolumes==34){
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getHigh();
                         space = "MPS";
@@ -2667,7 +2678,7 @@ import Jama.Matrix;
 
                     //if (decimalCount > 4) {
                         raFile.seek(0);
-                        numVolumes = decimalCount;
+                        numVolumes = m_kDWIImage.getExtents()[3];
 
                         for (int j = 0; j < numVolumes; j++) {
                             final Vector<String> rowData = new Vector<String>();
