@@ -29,12 +29,6 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
      */
     private int baseNumIter = 2;
 
-    /**
-     * The bracket size around the minimum in multiples of unit_tolerance for the first iteration of Powell's algorithm
-     * when registering the original image against the flipped image.
-     */
-    private int bracketBound = 10;
-
     /** The coarse angle step to use in each dimension when registering the original image against the flipped image. */
     private int coarseAngle = 15;
 
@@ -151,7 +145,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, maxOfMin, doSubsample,
-                                                          doMultiThread, fastMode, bracketBound, baseNumIter, numMinima);
+                                                          doMultiThread, fastMode, baseNumIter, numMinima);
 
         linkProgressToAlgorithm(regAlgo);
         regAlgo.setProgressValues(generateProgressValues(10, 90));
