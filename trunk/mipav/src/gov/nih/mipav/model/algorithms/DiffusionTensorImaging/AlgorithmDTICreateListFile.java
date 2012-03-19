@@ -230,7 +230,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
     private AlgorithmRegOAR3D reg3;
     
     /** registration option parameters **/
-    private int cost, DOF, interp, interp2, registerTo, bracketBound, maxIterations, numMinima;
+    private int cost, DOF, interp, interp2, registerTo, maxIterations, numMinima;
     
     /** registration option parameters **/
     private float rotateBegin, rotateEnd, coarseRate, fineRate, rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ;
@@ -351,7 +351,6 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		this.doSubsample = doSubsample;
 		this.doMultiThread = doMultiThread;
 		this.fastMode = fastMode;
-		this.bracketBound = bracketBound;
 		this.maxIterations = maxIterations;
 		this.numMinima = numMinima;
 		this.dwiPathTextField = dwiPathTextField;
@@ -411,7 +410,6 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		this.doSubsample = doSubsample;
 		this.doMultiThread = doMultiThread;
 		this.fastMode = fastMode;
-		this.bracketBound = bracketBound;
 		this.maxIterations = maxIterations;
 		this.numMinima = numMinima;
 		this.dwiPathTextField = dwiPathTextField;
@@ -537,7 +535,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 		
 		reg35 = new AlgorithmRegOAR35D(image4D, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
                 rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
-                bracketBound, maxIterations, numMinima);
+                maxIterations, numMinima);
 		
 		
 		reg35.setRunningInSeparateThread(isRunningInSeparateThread());
@@ -727,7 +725,7 @@ public class AlgorithmDTICreateListFile extends AlgorithmBase implements Algorit
 					reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
 							coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
 							rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread,
-							fastMode, bracketBound, maxIterations, numMinima);
+							fastMode, maxIterations, numMinima);
 					reg3.setRunningInSeparateThread(isRunningInSeparateThread());
 					reg3.addListener(this);
 					ViewJProgressBar progressBar = new ViewJProgressBar("", " ...", 0, 100, true);
