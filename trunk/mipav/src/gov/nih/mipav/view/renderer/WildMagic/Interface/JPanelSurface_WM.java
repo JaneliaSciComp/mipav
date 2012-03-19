@@ -380,7 +380,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     /**
      * Dispose the local memory.
      */
-    public void dispose() {
+    public void disposeLocal() {
     	int i;
     	
     	if ( tmesh != null ) {
@@ -737,8 +737,8 @@ public class JPanelSurface_WM extends JInterfaceBase
         surfaceList.setSelectedIndex(i);
         SurfaceState kState = m_akSurfaceStates.get(i);
         triangleText.setText(String.valueOf( kState.Surface.GetTriangleQuantity() ) );
-        volumeText.setText(String.valueOf( m_kVolumeViewer.getVolume( kState.Name ) ) );
-        areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceArea( kState.Name ) ) );  
+        volumeText.setText(String.valueOf( m_kVolumeViewer.getVolumeString( kState.Name ) ) );
+        areaText.setText(String.valueOf( m_kVolumeViewer.getSurfaceAreaString( kState.Name ) ) );  
 
         colorButton.setBackground( kState.SurfaceColor );
         
@@ -792,7 +792,7 @@ public class JPanelSurface_WM extends JInterfaceBase
     /** 
      * Add polyline to the render.
      */
-    private void addPolyline() {
+    public void addPolyline() {
     	Polyline[] akPolylines = FilePolyline_WM.openPolylines(m_kVolumeViewer.getImageA());
     	Vector3f m_kTranslate = m_kVolumeViewer.getVolumeGPU().getTranslate();
     	
@@ -988,7 +988,7 @@ public class JPanelSurface_WM extends JInterfaceBase
                 
                 if ( kComponents.size() > 1 )
                 {
-                	System.err.println( kComponents.size() );
+                	//System.err.println( kComponents.size() );
                 	int largest = 0;
                 	int max = 0;
                 	for ( int j = 0; j < kComponents.size(); j++ )
@@ -1006,10 +1006,9 @@ public class JPanelSurface_WM extends JInterfaceBase
 
                 	SurfaceState kSurface = new SurfaceState( mesh, mesh.GetName() );
 
-                	System.err.println( mesh.GetName() );
-                	m_kVolumeViewer.addSurface(kSurface);
+                	//System.err.println( mesh.GetName() );
 
-                	kList.add( iSize, mesh.GetName() );
+                	kList.add( iSize++, mesh.GetName() );
 
                 	m_akSurfaceStates.add( kSurface );        
                 	m_kVolumeViewer.addSurface( kSurface );
@@ -1229,7 +1228,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         volumeLabel.setForeground(Color.black);
         volumeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        volumeText = new JTextField(10);
+        volumeText = new JTextField(20);
         volumeText.setEditable(false);
         volumeText.setBorder(new EmptyBorder(volumeText.getInsets()));
         volumeText.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1246,7 +1245,7 @@ public class JPanelSurface_WM extends JInterfaceBase
         areaLabel.setForeground(Color.black);
         areaLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        areaText = new JTextField(10);
+        areaText = new JTextField(20);
         areaText.setEditable(false);
         areaText.setBorder(new EmptyBorder(areaText.getInsets()));
         areaText.setAlignmentX(Component.LEFT_ALIGNMENT);
