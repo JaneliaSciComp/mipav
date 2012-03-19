@@ -140,10 +140,10 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
     private ModelImage resultImage;
 
     /** DOCUMENT ME! */
-    private int maxIterations_def = 2, bracketBound_def = 10, numMinima_def = 3;
+    private int maxIterations_def = 2, numMinima_def = 3;
 
     /** DOCUMENT ME! */
-    private int maxIterations = maxIterations_def, bracketBound = bracketBound_def;
+    private int maxIterations = maxIterations_def;
 
     /** DOCUMENT ME! */
     private JRadioButton noneRadio;
@@ -293,7 +293,6 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
                 numMinText.setEnabled(true);
                 fastModeCheckbox.setEnabled(true);
 
-                bracketBound_def = bracketBound;
                 maxIterations_def = maxIterations;
                 numMinima_def = numMinima;
             } else {
@@ -353,13 +352,6 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
                 return;
             }
         } else if (command.equals("AdvancedOkay")) {
-            tmpStr = bracketBoundText.getText();
-
-            if (MipavUtil.testParameter(tmpStr, 1, 60)) {
-                bracketBound = Integer.valueOf(tmpStr).intValue();
-            } else {
-                bracketBound = bracketBound_def;
-            }
 
             tmpStr = maxIterationsText.getText();
 
@@ -381,7 +373,6 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
             advancedDialog.dispose();
         } else if (command.equals("AdvancedCancel")) {
             maxIterations = maxIterations_def;
-            bracketBound = bracketBound_def;
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
@@ -580,15 +571,6 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
             fineRateText.setEnabled( !fastModeCheckbox.isSelected());
             ;
         }
-    }
-
-    /**
-     * Accessor to set bracketBound.
-     * 
-     * @param bracketBound DOCUMENT ME!
-     */
-    public void setBracketBound(int bracketBound) {
-        this.bracketBound = bracketBound;
     }
 
     /**
@@ -803,11 +785,11 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
         if (weighted) {
             reg35 = new AlgorithmRegOAR35D(matchImage, inputWeightImage, cost, DOF, interp, interp2, registerTo,
                     refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
-                    bracketBound, maxIterations, numMinima);
+                    maxIterations, numMinima);
         } else {
 
             reg35 = new AlgorithmRegOAR35D(matchImage, cost, DOF, interp, interp2, registerTo, refImageNum,
-                    rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode, bracketBound,
+                    rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
                     maxIterations, numMinima);
 
             if (useOutsideReferenceVolume) {
@@ -1263,20 +1245,6 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
         advancedBox.addActionListener(this);
         advancedBox.setFont(serif12B);
 
-        JPanel bracketPanel = new JPanel(new GridBagLayout());
-        bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum (10-60): ");
-        bracketBoundLabel.setForeground(Color.lightGray);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        bracketPanel.add(bracketBoundLabel, gbc);
-        bracketPanel.setToolTipText("Used for translation, scale and skew.");
-        bracketBoundText = new JTextField(String.valueOf(bracketBound), 3);
-        bracketBoundText.addActionListener(this);
-        bracketBoundText.setEnabled(false);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        bracketPanel.add(bracketBoundText, gbc);
-
         JPanel maxIterPanel = new JPanel(new GridBagLayout());
         maxIterationsLabel = new JLabel("Number of iterations (1-5): ");
         maxIterationsLabel.setForeground(Color.lightGray);
@@ -1317,15 +1285,12 @@ public class JPanelDTIRegistrationEddyCurrent35D extends JPanel implements Algor
         settingsPanel.add(advancedBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        settingsPanel.add(bracketPanel, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
         settingsPanel.add(maxIterPanel, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         settingsPanel.add(numMinPanel, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 3;
         settingsPanel.add(fastModeCheckbox, gbc);
 
         JPanel buttonPanel = new JPanel();
