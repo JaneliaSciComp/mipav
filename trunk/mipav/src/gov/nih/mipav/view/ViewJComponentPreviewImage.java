@@ -121,6 +121,9 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     public void dispose(boolean gc) {
         this.disposeLocal();
 
+        image.disposeLocal();
+        image = null;
+        
         paintBuffer = null;
         memImage = null;
 
@@ -197,7 +200,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      * @param  g  Graphics to draw image in.
      */
     public void paintComponent(Graphics g) {
-
+        
         g.setClip(getVisibleRect());
         g.drawImage(img, 0, 0, imgWidth, imgHeight, 0, 0, img.getWidth(this), img.getHeight(this), null);
     }
