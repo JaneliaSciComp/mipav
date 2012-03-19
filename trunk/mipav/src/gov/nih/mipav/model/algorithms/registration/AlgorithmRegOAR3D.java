@@ -135,11 +135,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
     private ModelImage blurredRef = null;
 
     /**
-     * The bracket size around the minimum in multiples of unit_tolerance in the first iteration of Powell's algorithm.
-     */
-    private final int bracketBound;
-
-    /**
      * If true calculate the center of gravity (mass) and use the difference to intialize the translation. If false,
      * images are pretty much aligned then don't calculated COG.
      */
@@ -377,8 +372,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _doSubsample If true then subsample
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
@@ -388,14 +381,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final float _fineRateX, final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY,
             final float _fineRateY, final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ,
             final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, 
-            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
 
         this(_imageA, _imageB, _costChoice, _DOF, _interp,
             _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
             _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
             _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
             _maxResol, _doSubsample, false,
-            _fastMode, _bracketBound, _baseNumIter, _numMinima);  
+            _fastMode, _baseNumIter, _numMinima);  
     }
     
     /**
@@ -423,8 +416,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _doMultiThread
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
@@ -434,14 +425,14 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final float _fineRateX, final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY,
             final float _fineRateY, final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ,
             final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
-            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
 
         this(_imageA, _imageB, null, null, _costChoice, _DOF, _interp,
             _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
             _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
             _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
             _maxResol, _doSubsample, _doMultiThread,
-            _fastMode, _bracketBound, _baseNumIter, _numMinima);  
+            _fastMode, _baseNumIter, _numMinima);  
         weighted = false;
     }
 
@@ -473,8 +464,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _doSubsample If true then subsample
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
@@ -485,13 +474,13 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY, final float _fineRateY,
             final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ, final float _fineRateZ,
             final boolean _maxResol, final boolean _doSubsample, 
-            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
     	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp,
                 _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
                 _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
                 _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
                 _maxResol, _doSubsample, false,
-                _fastMode, _bracketBound, _baseNumIter, _numMinima);  
+                _fastMode, _baseNumIter, _numMinima);  
     }
     
     /**
@@ -523,8 +512,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
      * @param _doMultiThread
      * @param _fastMode If true then searching the parameter space is not conducted and the algorithm proceeds to level
      *            one immediately
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
@@ -535,7 +522,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY, final float _fineRateY,
             final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ, final float _fineRateZ,
             final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
-            final boolean _fastMode, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -583,7 +570,6 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         
         weighted = true;
 
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
     }
@@ -2169,7 +2155,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         for (int i = 0; (i < coarseNumX); i++) {
             for (int j = 0; (j < coarseNumY); j++) {
                 
-                powellMT[index] = new AlgorithmPowellOpt3D(null, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
+                powellMT[index] = new AlgorithmPowellOpt3D(null, cog, dofs, cost, getTolerance(dofs), maxIter);
                 powellMT[index].setUseJTEM(doJTEM);
                 powellMT[index].setParallelPowell(false);
                 if ( doJTEM )
@@ -2226,7 +2212,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             return null;
         }
         
-        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter, bracketBound);
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2423,7 +2409,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
 
         final int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, bracketBound);
+        powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2527,7 +2513,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         maxIter = baseNumIter * 2;
 
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, bracketBound);
+                maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2792,7 +2778,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         fireProgressStateChanged("Starting last optimization");
 
         final AlgorithmPowellOpt3D powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, bracketBound);
+                maxIter);
         powell.setUseJTEM(doJTEM);
 
         final Vectornd[] initialPoints = new Vectornd[1];
@@ -2885,7 +2871,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         maxIter = baseNumIter * 2;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, bracketBound);
+                maxIter);
         powell.setUseJTEM(doJTEM);
 
     	powell.setParallelPowell(doMultiThread);
@@ -2938,7 +2924,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
         if (DOF > 7) {
             degree = 9;
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
-            powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, bracketBound);
+            powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter);
             powell.setUseJTEM(doJTEM);
             initialPoints[0] = new Vectornd(item.initial);
             powell.setPoints(initialPoints);
@@ -2970,7 +2956,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase implements AlgorithmInterfa
             if (DOF > 9) {
                 degree = 12;
                 fireProgressStateChanged("Optimizing with " + degree + " DOF");
-                powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, getTolerance(12), maxIter, bracketBound);
+                powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, getTolerance(12), maxIter);
                 powell.setUseJTEM(doJTEM);
                 initialPoints[0] = new Vectornd(item.initial);
                 powell.setPoints(initialPoints);
