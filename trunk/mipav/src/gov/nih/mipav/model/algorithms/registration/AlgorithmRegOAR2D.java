@@ -99,11 +99,6 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
     /** Blurred reference image. */
     private ModelImage blurredRef;
 
-    /**
-     * The bracket size around the minimum in multiples of unit_tolerance in the first iteration of Powell's algorithm.
-     */
-    private int bracketBound = 20;
-
     /** Number of passes that will be made in the coarse sampling and fine sampling. */
     private final int coarseNum, fineNum;
 
@@ -359,7 +354,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param doMultiThread
      * 
      * <p>
-     * Constructor without weighting and without advanced settings (bracket, num iter).
+     * Constructor without weighting and without advanced settings (num iter).
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
@@ -415,7 +410,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param doSubsample If true subsample
      * 
      * <p>
-     * Constructor without weighting and without advanced settings (bracket, num iter).
+     * Constructor without weighting and without advanced settings (num iter).
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
@@ -444,7 +439,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param doMultiThread
      * 
      * <p>
-     * Constructor with weighting and without advanced settings (bracket, num iter).
+     * Constructor with weighting and without advanced settings (num iter).
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
@@ -478,7 +473,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param doSubsample If true subsample
      * 
      * <p>
-     * Constructor with weighting and without advanced settings (bracket, num iter).
+     * Constructor with weighting and without advanced settings (num iter).
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
@@ -502,24 +497,21 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
      * @param doMultiThread
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
      * 
      * <p>
-     * Constructor without weighting and with advanced settings (bracket, num iter) set.
+     * Constructor without weighting and with advanced settings (num iter) set.
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
             final float _fineRate, final boolean doSubsample, final boolean doMultiThread,
-            final int _bracketBound, final int _baseNumIter,
+            final int _baseNumIter,
             final int _numMinima) {
     	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
@@ -539,20 +531,18 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
      * @param doMultiThread
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
      * 
      * <p>
-     * Constructor without weighting and with advanced settings (bracket, num iter) set.
+     * Constructor without weighting and with advanced settings (num iter) set.
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
-            final float _fineRate, final boolean doSubsample, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
-    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _bracketBound, _baseNumIter, _numMinima);
+            final float _fineRate, final boolean doSubsample, final int _baseNumIter, final int _numMinima) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _baseNumIter, _numMinima);
     }
 
     /**
@@ -573,25 +563,22 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
      * @param doMultiThread
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
      * 
      * <p>
-     * Constructor with weighting and with advanced settings (bracket, num iter) set.
+     * Constructor with weighting and with advanced settings (num iter) set.
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
             final boolean doSubsample, final boolean doMultiThread, 
-            final int _bracketBound, final int _baseNumIter, final int _numMinima) {
+            final int _baseNumIter, final int _numMinima) {
     	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
 
     	weighted = true;
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
         refWeight = _refWeight;
@@ -617,21 +604,19 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
      * @param doMultiThread
-     * @param _bracketBound The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *            of Powell's algorithm.
      * @param _baseNumIter Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
      * 
      * <p>
-     * Constructor with weighting and with advanced settings (bracket, num iter) set.
+     * Constructor with weighting and with advanced settings (num iter) set.
      * </p>
      */
     public AlgorithmRegOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
-            final boolean doSubsample, final int _bracketBound, final int _baseNumIter, final int _numMinima) {
-    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _bracketBound, _baseNumIter, _numMinima);
+            final boolean doSubsample, final int _baseNumIter, final int _numMinima) {
+    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _baseNumIter, _numMinima);
     }
 
     // ~ Methods
@@ -1756,7 +1741,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         final Vector<Point3D> origImagePath = findPointsOfLine(origRealPath);
         print(origImagePath, "Original Final Path:");
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, DOF, cost, getTolerance(DOF),
-                maxIter, rigidFlag, bracketBound);
+                maxIter, rigidFlag);
         final float[] terrain = powell.createTerrain(xFrom, xTo, xStep, yFrom, yTo, yStep, zFrom, zTo, zStep);
         final int xdim = (int) ( (xTo - xFrom) / xStep);
         final int ydim = (int) ( (yTo - yFrom) / yStep);
@@ -1945,7 +1930,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         AlgorithmPowellOptBase powell;
         maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, 7, cost, getTolerance(7), maxIter, false, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, 7, cost, getTolerance(7), maxIter, false);
 
         final Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
 
@@ -2415,7 +2400,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         if (DOF > 3) {
             dofs = 3;
         }
-        powell = new AlgorithmPowellOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2547,8 +2532,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         final int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
-                bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2639,7 +2623,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
 
         final AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, rigidFlag, bracketBound);
+                maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2841,7 +2825,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
 
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2930,7 +2914,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
 
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -2997,7 +2981,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         degree = DOF;
 
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM); 
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3086,7 +3070,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         maxIter = baseNumIter;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, rigidFlag, bracketBound);
+                maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3105,8 +3089,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
 
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
-                bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
         powell.setUseJTEM(doJTEM);
         powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3145,8 +3128,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
             fireProgressStateChanged(43);
 
-            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
-                    bracketBound);
+            powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
             powell.setUseJTEM(doJTEM);
             powell.setParallelPowell(doMultiThread);
             if ( doJTEM )
@@ -3169,8 +3151,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
             if (DOF > 5) {
                 degree = (DOF < 7) ? DOF : 7;
-                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
-                        bracketBound);
+                powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
                 powell.setUseJTEM(doJTEM);
                 powell.setParallelPowell(doMultiThread);
                 if ( doJTEM )
