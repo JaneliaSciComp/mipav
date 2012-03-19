@@ -123,8 +123,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     
     private boolean doMultiThread = true;
     
-    private int bracketSize = 10;
-    
     private int iterations = 2;
     
     private int minima = 3;
@@ -145,7 +143,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     public PlugInAlgorithmNEIRetinalRegistration(String imageDir1, String imageDir2, JTextArea outputbox, String refPath, boolean toConcat, float epsY,
             float epsB, float ymin, float ymax,float bmin, float bmax, boolean registered, boolean percentile,
             int cost,int dof,int interp, float begin,float end,float coarse,float fine,
-            boolean subsample,int bracket,int iterations,int minima) {
+            boolean subsample,int iterations,int minima) {
         
         //Set all variables
         sigma[0] = 4;
@@ -173,7 +171,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         this.coarse = coarse;
         this.fine = fine;
         this.subsamp = subsample;
-        this.bracketSize = bracket;
         this.iterations = iterations;
         this.minima = minima;
         
@@ -738,7 +735,7 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
         outputbox.append("        ** Registering to Reference Image **\n");
         outputbox.setCaretPosition( outputbox.getText().length() );
         AlgorithmRegOAR2D reg2 = new AlgorithmRegOAR2D(ref, temp, refWeightImage, inputWeightImage, costChoice, DoF, interp,startRot, endRot,coarse, 
-        		fine, subsamp, doMultiThread, bracketSize,iterations, minima);
+        		fine, subsamp, doMultiThread, iterations, minima);
         reg2.run();
         
         refWeightImage.disposeLocal();
@@ -982,12 +979,6 @@ public class PlugInAlgorithmNEIRetinalRegistration extends AlgorithmBase {
     public boolean getSubSample(){
 
     	return subsamp;
-        
-    }
-    
-    public int getBracket(){
-
-    	return bracketSize;
         
     }
     
