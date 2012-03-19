@@ -38,6 +38,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     /** DOCUMENT ME! */
     private JPopupMenu ptPopup;
     
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

@@ -16,6 +16,9 @@ import inverters.ThreeTensorInversion;
 import inverters.TwoTensorInversion;
 import inverters.WeightedLinearDT_Inversion;
 import Jama.Matrix;
+import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import apps.EstimateSNR;
 
 public class EstimateTensorLLMSE {
@@ -273,6 +276,132 @@ public class EstimateTensorLLMSE {
 		return tensors;
 	}
 	
+
+	public static ModelImage estimate(ModelImage dwiImage, ModelImage mask, GMatrixf matrix, boolean usePartialEstimates) {
+
+
+        int iDimX =   dwiImage.getExtents().length > 0 ? dwiImage.getExtents()[0] : 1;
+        int iDimY =   dwiImage.getExtents().length > 1 ? dwiImage.getExtents()[1] : 1;
+        int iSlices = dwiImage.getExtents().length > 2 ? dwiImage.getExtents()[2] : 1; 
+        int volumes = dwiImage.getExtents().length > 3 ? dwiImage.getExtents()[3] : 1;   
+        
+		/****************************************************
+		 * Step 3: Build the imaging and inversion matrix 
+		 ****************************************************/
+		Matrix reconMatrix=null;
+		Matrix imagMatrix = new Matrix(volumes-1,6);
+		for(int ii=1;ii<matrix.GetRows();ii++) {
+			for(int j=0;j<6;j++) {
+				imagMatrix.set(ii-1,j,matrix.Get(ii, j));
+			}
+		}
+		reconMatrix = imagMatrix.inverse(); // (actually, pseudoinverse)
+
+		if(imagMatrix.rank()<6) {
+			System.out.println("jist.plugins"+"\t"+"EstimateTensorLLMSE : **********WARNING**********");
+			System.out.println("jist.plugins"+"\t"+"EstimateTensorLLMSE : Gradient table of rank < 6");
+			System.out.println("jist.plugins"+"\t"+"EstimateTensorLLMSE : ***************************");
+		}
+
+
+		/*****)***********************************************
+		 * Step 4: Allocate output matrix 
+		 ****************************************************/ 
+        
+		float tensors[][][][] = new float[iDimX][iDimY][iSlices][6];
+
+		/****************************************************
+		 * Step 5: Loop over all voxels and estimate tensors 
+		 ****************************************************/
+		float mb0=0;
+		Matrix DW = new Matrix(volumes-1,1);
+		int ignoreDW;
+		Matrix tensorMatrix; 
+		Matrix DWsubset=null;
+		for(int i=0;i<iDimX;i++) {
+			for(int j=0;j<iDimY;j++) {
+				for(int k=0;k<iSlices;k++) {
+					if( (mask == null) || ((mask != null) && mask.getBoolean(i,j,k)) ) {
+						mb0=0;
+						// B0 is in index 0:
+						if(!Float.isNaN(dwiImage.getFloat(i, j, k, 0) )) {
+							mb0+=dwiImage.getFloat(i, j, k, 0);
+						}
+						if(mb0<=0) {//can't do anything here - report NaN tnso
+							for(int ii=0;ii<6;ii++) {
+								tensors[i][j][k][ii] = Float.NaN;
+							}
+						} else {
+
+							ignoreDW=0;
+							// All others are 1-volume index:
+							for(int ii=1;ii<volumes;ii++) {
+								double val=-Math.log(dwiImage.getFloat(i, j, k, ii)/mb0);
+								if(Double.isNaN(val)  || Double.isInfinite(val))
+									ignoreDW++;
+								DW.set(ii-1, 0, val);
+							}
+							if(ignoreDW!=0) {
+								// BEGIN BUILD A NEW RECON MATRIX													
+								if(((!usePartialEstimates)) || ((volumes-1)-ignoreDW<6)) {
+									// no full-rank solutions available
+									for(int ii=0;ii<6;ii++) {
+										tensors[i][j][k][ii] = Float.NaN;
+									}
+								} else {
+									imagMatrix = new Matrix((volumes-1)-ignoreDW,6);
+									DWsubset = new Matrix((volumes-1)-ignoreDW,1);
+									int jj=0;
+									for(int ii=0;ii<(volumes-1);ii++) {
+										if(!(Double.isNaN(DW.get(ii,0)) || Double.isInfinite(DW.get(ii,0)))) {
+											DWsubset.set(jj,0,DW.get(ii,0));
+											try {
+												for ( int kk = 0; kk < 6; kk++ )
+												{
+													imagMatrix.set(jj,kk,matrix.Get(jj, kk));													
+												}
+												jj++;
+											} catch(Exception e){
+												System.out.println("jist.plugins"+"\t"+e);
+											}
+										}
+									}
+
+
+									// END BUILD A NEW RECON MATRIX
+									try {
+										tensorMatrix = imagMatrix.inverse().times(DWsubset);
+										for(int ii=0;ii<6;ii++) {
+											tensors[i][j][k][ii] = (float)tensorMatrix.get(ii, 0);
+										}
+									} catch(Exception e) {
+										// no full-rank solutions available
+										for(int ii=0;ii<6;ii++) {
+											tensors[i][j][k][ii] = Float.NaN;
+										}
+									}
+								}
+							} else {
+								tensorMatrix = reconMatrix.times(DW);
+								for(int ii=0;ii<6;ii++) {
+									tensors[i][j][k][ii] = (float)tensorMatrix.get(ii, 0);
+								}
+							}
+
+
+						}
+					}
+				}
+			}
+		}
+
+
+		String name = JDialogBase.makeImageName(dwiImage.getImageName(), "_tensor");	
+		ModelImage tensorImage = makeTensorImage( tensors, null, name );
+		JDialogBase.updateFileInfo( dwiImage, tensorImage );
+		return tensorImage;
+	}
+	
 	
 	/**
 	 * Uses LLMSE to estimate tensors from DW imaging data on a voxel-wise basis. 
@@ -324,9 +453,11 @@ public class EstimateTensorLLMSE {
 				continue;
 			}
 			bvalues[index] = dtiparams.getbValues()[index];
+							
 			grads[index][0] = dtiparams.getGradients()[index][0];
 			grads[index][1] = dtiparams.getGradients()[index][1];
 			grads[index][2] = dtiparams.getGradients()[index][2];
+			
 			
 			for ( int z = 0; z < dimZ; z++ )
 			{
@@ -1012,7 +1143,7 @@ public class EstimateTensorLLMSE {
 			{
 				for ( int x = 0; x < dimX; x++ )
 				{
-					if ( (exitCode != null) && (exitCode[x][y][z][0] == 0) )
+					if ( (exitCode == null) || ((exitCode != null) && (exitCode[x][y][z][0] == 0)) )
 					{
 						for (int i = 0; i < 6; i++) {
 							tensors[x][y][z][i] = ( tensors[x][y][z][i] * 1000000); // um^2/sec
@@ -1025,13 +1156,8 @@ public class EstimateTensorLLMSE {
 							if (i == 5 && tensors[x][y][z][5] < 0) {
 								tensors[x][y][z][5] = (float) 0.01;
 							}
+							tensorImage.set( x, y, z, i, tensors[x][y][z][i] );
 						}
-						tensorImage.set( x, y, z, 0, tensors[x][y][z][0] );
-						tensorImage.set( x, y, z, 1, tensors[x][y][z][3] );
-						tensorImage.set( x, y, z, 2, tensors[x][y][z][5] );
-						tensorImage.set( x, y, z, 3, tensors[x][y][z][1] );
-						tensorImage.set( x, y, z, 4, tensors[x][y][z][2] );
-						tensorImage.set( x, y, z, 5, tensors[x][y][z][4] );
 					}
 					else
 					{

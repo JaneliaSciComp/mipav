@@ -374,7 +374,6 @@ public class JPanelLights_WM extends JInterfaceBase implements ChangeListener, L
      * Clear memory and garbage collection.
      */
     public void disposeLocal() {
-
         controlPanelBox = null;
         scrollPanel = null;
         colorChooser = null;

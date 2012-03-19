@@ -214,7 +214,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		final String command = event.getActionCommand();
 		
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
-		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) && (currentImage != null) )
+		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) /*&& (currentImage != null)*/ )
 		{
 			estTensorPanel.calcTensor(currentImage);
 		}
@@ -435,6 +435,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 				else {
 					nextButton.setEnabled(false);
 				}
+				nextButton.setEnabled(true);
 			}
 			if ( tabbedPane.getSelectedIndex() == FIBER_TRACKING ) {
 				if ( (fiberTrack.getTensorImage() != null) && (fiberTrack.getOutputDirectory() != null) ) {

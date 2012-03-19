@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTI2EGFA;
+import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTIColorDisplay;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTITract;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
@@ -8,11 +9,13 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.DialogDTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
 import java.awt.BorderLayout;
@@ -251,12 +254,7 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         		createEVector.isSelected() || createFA.isSelected() || createRA.isSelected() ||
         		createTrace.isSelected() || createVR.isSelected() )
         {
-        	calcEigenVectorImage();
-
-            if ( createColor.isSelected() )
-            {
-            	createRGBImage();
-            }
+        	calcEigenVectorImage();      
         }
 
         //trackFibers();
@@ -265,172 +263,12 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         return true;
     }
     
-    /**
-     * Creates a color map image by combing the three eigen values into an RGB image and multiplying by the functional anisotropy. 
-     */
-    public void createRGBImage() {
-        // gamma factor
-        final float gamma = 1.8f;
 
-        // create the dest extents of the dec image...the 4th dim will only have 3 as the value
-        int[] destExtents = new int[4];
-        destExtents[0] = eigenVectorImage.getExtents()[0];
-        destExtents[1] = eigenVectorImage.getExtents()[1];
-        destExtents[2] = eigenVectorImage.getExtents()[2];
-        destExtents[3] = 3;
-
-        ModelImage decImage = new ModelImage(ModelStorageBase.FLOAT, destExtents, ModelImage.makeImageName(
-                eigenVectorImage.getImageName(), "_DEC"));
-
-        // buffer
-        float[] buffer;
-
-        // determine length of dec image
-        final int length = eigenVectorImage.getExtents()[0] * eigenVectorImage.getExtents()[1]
-                * eigenVectorImage.getExtents()[2] * 3;
-        buffer = new float[length];
-
-        // export eigvecSrcImage into buffer based on length
-        try {
-            eigenVectorImage.exportData(0, length, buffer);
-        } catch (final IOException error) {
-            System.out.println("IO exception");
-            // return null;
-        }
-
-        // lets first do absolute value for each value in the buffer
-        for (int i = 0; i < buffer.length; i++) {
-            buffer[i] = Math.abs(buffer[i]);
-        }
-
-        // import resultBuffer into decImage
-        try {
-            decImage.importData(0, buffer, true);
-        } catch (final IOException error) {
-            System.out.println("IO exception");
-
-            // return null;
-        }
-
-        // extract dec image into channel images
-        destExtents = new int[3];
-        destExtents[0] = decImage.getExtents()[0];
-        destExtents[1] = decImage.getExtents()[1];
-        destExtents[2] = decImage.getExtents()[2];
-        final ModelImage[] channelImages = new ModelImage[decImage.getExtents()[3]];
-        for (int i = 0; i < decImage.getExtents()[3]; i++) {
-            final int num = i + 1;
-            final String resultString = ModelImage.makeImageName(decImage.getImageName(), "_Vol=" + num);
-            channelImages[i] = new ModelImage(decImage.getType(), destExtents, resultString);
-            final AlgorithmSubset subsetAlgo = new AlgorithmSubset(decImage, channelImages[i],
-                    AlgorithmSubset.REMOVE_T, i);
-            subsetAlgo.setRunningInSeparateThread(false);
-            subsetAlgo.run();
-        }
-
-        decImage.disposeLocal();
-        decImage = null;
-
-        // set up result image
-        rgbImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, channelImages[0].getExtents(), ModelImage.makeImageName(
-                eigenVectorImage.getImageName(), "_ColorDisplay"));
-
-        // cocatenate channel images into an RGB image
-        final AlgorithmRGBConcat mathAlgo = new AlgorithmRGBConcat(channelImages[0], channelImages[1],
-                channelImages[2], rgbImage, false, true, 255.0f, false);
-        mathAlgo.setRunningInSeparateThread(false);
-        mathAlgo.run();
-
-        channelImages[0].disposeLocal();
-        channelImages[0] = null;
-        channelImages[1].disposeLocal();
-        channelImages[1] = null;
-        channelImages[2].disposeLocal();
-        channelImages[2] = null;
-
-        // copy core file info over
-        final FileInfoImageXML[] fileInfoBases = new FileInfoImageXML[rgbImage.getExtents()[2]];
-        for (int i = 0; i < fileInfoBases.length; i++) {
-            fileInfoBases[i] = new FileInfoImageXML(rgbImage.getImageName(), null, FileUtility.XML);
-            fileInfoBases[i].setEndianess(eigenVectorImage.getFileInfo()[0].getEndianess());
-            fileInfoBases[i].setUnitsOfMeasure(eigenVectorImage.getFileInfo()[0].getUnitsOfMeasure());
-            // fileInfoBases[i].setResolutions(eigenVectorImage.getFileInfo()[0].getResolutions());
-            fileInfoBases[i].setResolutions(tensorImage.getFileInfo()[0].getResolutions());
-            fileInfoBases[i].setExtents(rgbImage.getExtents());
-            fileInfoBases[i].setImageOrientation(tensorImage.getFileInfo()[0].getImageOrientation());
-            fileInfoBases[i].setAxisOrientation(tensorImage.getFileInfo()[0].getAxisOrientation());
-            fileInfoBases[i].setOrigin(eigenVectorImage.getFileInfo()[0].getOrigin());
-            fileInfoBases[i].setPixelPadValue(eigenVectorImage.getFileInfo()[0].getPixelPadValue());
-            fileInfoBases[i].setPhotometric(eigenVectorImage.getFileInfo()[0].getPhotometric());
-            fileInfoBases[i].setDataType(ModelStorageBase.ARGB);
-            fileInfoBases[i].setFileDirectory(eigenVectorImage.getFileInfo()[0].getFileDirectory());
-        }
-
-        rgbImage.setFileInfo(fileInfoBases);
-
-        // now we need to weight the result image by anisotopy
-
-        float[] rgbBuffer;
-        // determine length of dec image
-        final int rgbBuffLength = rgbImage.getExtents()[0] * rgbImage.getExtents()[1] * rgbImage.getExtents()[2] * 4;
-        rgbBuffer = new float[rgbBuffLength];
-
-        // export eigvecSrcImage into buffer based on length
-        try {
-            rgbImage.exportData(0, rgbBuffLength, rgbBuffer);
-        } catch (final IOException error) {
-            System.out.println("IO exception");
-            // return null;
-        }
-
-        float[] anisotropyBuffer;
-        final int anisLength = FAImage.getExtents()[0] * FAImage.getExtents()[1]
-                * FAImage.getExtents()[2];
-        anisotropyBuffer = new float[anisLength];
-        try {
-            FAImage.exportData(0, anisLength, anisotropyBuffer);
-        } catch (final IOException error) {
-            System.out.println("IO exception");
-            // return null;
-        }
-
-        // take r,g,and b and weight by anisotropy and gamma...and rescale to 0-255
-        for (int i = 0, j = 0; i < rgbBuffer.length; i = i + 4, j++) {
-            rgbBuffer[i + 1] = rgbBuffer[i + 1] * anisotropyBuffer[j];
-            rgbBuffer[i + 1] = (float) Math.pow(rgbBuffer[i + 1], (1 / gamma));
-            rgbBuffer[i + 1] = rgbBuffer[i + 1] * 255;
-
-            rgbBuffer[i + 2] = rgbBuffer[i + 2] * anisotropyBuffer[j];
-            rgbBuffer[i + 2] = (float) Math.pow(rgbBuffer[i + 2], (1 / gamma));
-            rgbBuffer[i + 2] = rgbBuffer[i + 2] * 255;
-
-            rgbBuffer[i + 3] = rgbBuffer[i + 3] * anisotropyBuffer[j];
-            rgbBuffer[i + 3] = (float) Math.pow(rgbBuffer[i + 3], (1 / gamma));
-            rgbBuffer[i + 3] = rgbBuffer[i + 3] * 255;
-
-        }
-
-        try {
-            rgbImage.importData(0, rgbBuffer, true);
-        } catch (final IOException error) {
-            System.out.println("IO exception");
-
-            // return null;
-        }
-
-        rgbImage.calcMinMax();
-        rgbImage.setImageName( ColorMapImageName );
-		ModelImage.saveImage( rgbImage, rgbImage.getImageName() + ".xml", outputDirTextField.getText() );
-
-		if ( displayColor.isSelected() )
-		{
-			new ViewJFrameImage( rgbImage );
-		}
-    }
     public ModelImage getColorMapImage()
     {
     	return rgbImage;
     }
+    
     public ModelImage getEigenValueImage()
     {
     	return eigenValueImage;
@@ -716,7 +554,32 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         		new ViewJFrameImage( FAImage );
         	}
         }
-        
+
+        if ( createColor.isSelected() )
+        {
+        	rgbImage = kAlgorithm.getColorImage();
+        	rgbImage.setImageName( ColorMapImageName );
+        	ModelImage.saveImage( rgbImage, rgbImage.getImageName() + ".xml", outputDirTextField.getText() );
+        	if ( displayColor.isSelected() )
+        	{
+        		rgbImage.calcMinMax();
+        		new ViewJFrameImage( rgbImage );
+        	}
+        }
+/*
+        if ( (eigenVectorImage != null) && (FAImage != null) )
+        {
+        	int[] dimExtentsLUT;
+        	dimExtentsLUT = new int[2];
+        	dimExtentsLUT[0] = 4;
+        	dimExtentsLUT[1] = 256;
+        	ModelLUT m_kLUTa = new ModelLUT(ModelLUT.GRAY, 256, dimExtentsLUT);
+        	m_kLUTa.resetTransferLine(0.0f, (int) Math.round(eigenVectorImage.getMin()), 255.0f, (int) Math
+        			.round(eigenVectorImage.getMax()));
+
+        	new DialogDTIColorDisplay((ModelImage)eigenVectorImage.clone(), (ModelImage)FAImage.clone(), m_kLUTa, false);
+        }
+        */
         kAlgorithm.disposeLocal();
         kAlgorithm = null;
     }

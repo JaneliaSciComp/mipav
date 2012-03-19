@@ -3220,6 +3220,60 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return (float) this.min;
         }
     }
+    
+
+
+    /**
+     * Get a value using tri-linear interpoloation. Note - DOES perform bounds checking (both that x,y,z are valid and
+     * that the interp indicies don't cause exceptions).
+     * 
+     * @param x x coordinate
+     * @param y y coordinate
+     * @param z z coordinate
+     * @param t t coordinate
+     * 
+     * @return interpolated value if in bounds, 0 if not.
+     */
+    public final float getFloatTriLinearBoundsTime(final float x, final float y, final float z, final int t) {
+
+        final int xDim = dimExtents[0];
+        final int yDim = dimExtents[1];
+        final int zDim = dimExtents[2];
+        final int sliceSize = xDim * yDim;
+        final int imageSize = zDim * xDim * yDim;
+        int position1, position2;
+        int intX, intY, intZ;
+        float dx, dy, dz;
+        float a1, a2;
+        float b1, b2;
+
+        intX = (int) x;
+        intY = (int) y;
+        intZ = (int) z;
+
+        dx = x - intX;
+        dy = y - intY;
+        dz = z - intZ;
+
+        position1 = (t * imageSize) + (intZ * sliceSize) + (intY * xDim) + intX;
+        position2 = (t * imageSize) + position1 + sliceSize;
+
+        if ( (x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0)
+                && (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0)
+                && (position2 < (dataSize - (xDim * yDim) - 1))) {
+            a1 = ( (1 - dx) * data.getFloat(position1)) + (dx * data.getFloat(position1 + 1));
+            a2 = ( (1 - dx) * data.getFloat(position1 + xDim)) + (dx * data.getFloat(position1 + xDim + 1));
+            b1 = ( (1 - dy) * a1) + (dy * a2);
+
+            a1 = ( (1 - dx) * data.getFloat(position2)) + (dx * data.getFloat(position2 + 1));
+            a2 = ( (1 - dx) * data.getFloat(position2 + xDim)) + (dx * data.getFloat(position2 + xDim + 1));
+            b2 = ( (1 - dy) * a1) + (dy * a2);
+
+            return ( ( (1 - dz) * b1) + (dz * b2));
+        } else {
+            return (float) this.min;
+        }
+    }
 
     /**
      * Get a value using tri-linear interpoloation. Note - DOES perform bounds checking (both that x,y,z are valid and
@@ -3254,9 +3308,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
         position1 = (intZ * imageSize) + (intY * xDim) + intX;
         position2 = position1 + imageSize;
 
-        if ( (x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0)
-                && (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0)
-                && (position2 < (dataSize - (xDim * yDim) - 1))) {
+        if ( (x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2])
+        		&& (position1 >= 0) && (position2 >= 0)
+                && (((c + (4 * (position1))) < dataSize)
+                && ((c + (4 * (position1 + 1))) < dataSize)
+                && ((c + (4 * (position1 + xDim))) < dataSize)
+                && (c + (4 * (position1 + xDim + 1))) < dataSize)
+                && ((c + (4 * (position2 + 1))) < dataSize) 
+                && ((c + (4 * (position2))) < dataSize) 
+        	    && ((c + (4 * (position2 + xDim))) < dataSize)
+        	    && ((c + (4 * (position2 + xDim + 1))) < dataSize) )
+        {
             a1 = ( (1 - dx) * data.getFloat(c + (4 * (position1)))) + (dx * data.getFloat(c + (4 * (position1 + 1))));
             a2 = ( (1 - dx) * data.getFloat(c + (4 * (position1 + xDim))))
                     + (dx * data.getFloat(c + (4 * (position1 + xDim + 1))));

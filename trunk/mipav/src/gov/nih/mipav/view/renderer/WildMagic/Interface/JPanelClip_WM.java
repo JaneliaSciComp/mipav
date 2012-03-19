@@ -468,8 +468,7 @@ public class JPanelClip_WM extends JInterfaceBase
     /**
      * Dispose memory.
      */
-    public void dispose() {
-
+    public void disposeLocal() {
         for ( int i = 0; i < MAX_CLIP_PLANES; i++ )
         {
             clipSlider[i] = null;

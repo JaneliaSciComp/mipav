@@ -534,7 +534,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			 }
 			 UpdateSceneRotation();
 			 updateLighting( m_akLights );
-			 //VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, false);
+			 //VolumeImageSurfaceMask.main(m_kParent.newSharedCanvas(), m_kParent, m_kVolumeImageA, m_kDisplayList, true);
 		 }
 		 if ( m_bCrop )
 		 {
@@ -1081,6 +1081,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  return null;
 	  }
 
+	  /**
+	   * Return the TriMesh surface with the given name.
+	   * @param kSurfaceName the name of the surface.
+	   * @return TriMesh.
+	   */
+	  public VolumeSurface getVolumeSurface( String kSurfaceName )
+	  {
+		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
+		  {
+			  if ( m_kDisplayList.get(i).GetName() != null )
+			  {
+				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+				  {
+					  return (VolumeSurface)m_kDisplayList.get(i);
+				  }
+			  }
+		  }
+		  return null;
+	  }
+
+
 
 	  /**
 	   * Return the surface area for the given TriMesh surface.
@@ -1101,6 +1122,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  }
 		  return 0;
 	  }
+
+	  /**
+	   * Return the surface area for the given TriMesh surface.
+	   * @param kSurfaceName the surface name.
+	   * @return the surface-area of the mesh.
+	   */
+	  public String getSurfaceAreaString( String kSurfaceName )
+	  {
+		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
+		  {
+			  if ( m_kDisplayList.get(i).GetName() != null )
+			  {
+				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+				  {
+					  return ((VolumeSurface)(m_kDisplayList.get(i))).GetSurfaceAreaString();
+				  }
+			  }
+		  }
+		  return "";
+	  }
+
 
 	  /**
 	   * Return the center of the TriMesh surface.
@@ -1141,6 +1183,27 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  }
 		  return 0;
 	  }
+
+	  /**
+	   * Return the volume of the TriMesh surface.
+	   * @param kSurfaceName the surface name.
+	   * @return the calculated volume.
+	   */
+	  public String getSurfaceVolumeString( String kSurfaceName )
+	  {
+		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
+		  {
+			  if ( m_kDisplayList.get(i).GetName() != null )
+			  {
+				  if ( m_kDisplayList.get(i).GetName().equals(kSurfaceName))
+				  {
+					  return ((VolumeSurface)(m_kDisplayList.get(i))).GetVolumeString();
+				  }
+			  }
+		  }
+		  return "";
+	  }
+
 
 	  /**
 	   * Return the translation vector for the surface with the given name.

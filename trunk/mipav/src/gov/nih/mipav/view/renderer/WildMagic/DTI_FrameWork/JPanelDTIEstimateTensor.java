@@ -22,7 +22,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -32,6 +35,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+
+import WildMagic.LibFoundation.Mathematics.GMatrixf;
 
 public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterface, ActionListener, ItemListener {
 
@@ -60,6 +65,8 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 	private ModelImage tensorImage = null;
 	/** mask image location: */
 	private JTextField textMaskimage;
+	/** DWI .list location: */
+	private JTextField textListFile;
 	
 	/** Check boxes enable the user to save and display output images: */
 	private JCheckBox displayExit = new JCheckBox( "Display Exit Code Image" );
@@ -81,8 +88,7 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 		final String command = event.getActionCommand();
 		if ( command.equals("browseMaskFile")){
 			loadMaskImage();
-		}
-		else if (command.equals("browseOutput")) {
+		} else if (command.equals("browseOutput")) {
             final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 
             chooser.setDialogTitle("Choose dir");
@@ -92,7 +98,9 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
                 outputDirTextField.setText(chooser.getSelectedFile().getAbsolutePath() + File.separator);
                 System.err.println( outputDirTextField.getText() );
             }
-        }
+        } else if (command.equalsIgnoreCase("DWIListBrowse")) {
+            loadDWIListFile();
+        } 
 
 		displayExit.setEnabled( saveExit.isSelected() );
 		displayIntensity.setEnabled( saveIntensity.isSelected() );
@@ -114,12 +122,29 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 	{
 		switch ( comboBoxDTI_Algorithm.getSelectedIndex() ) {
 		case DEFAULT: 
-			AlgorithmDWI2DTI calcDTI = new AlgorithmDWI2DTI( dwiImage, maskImage );
+			AlgorithmDWI2DTI calcDTI;
+			if ( (m_aakDWIList != null) && (m_kBMatrix != null) )
+			{
+				calcDTI = new AlgorithmDWI2DTI(maskImage, false, m_iSlices,
+                        m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix,
+                        m_kRawFormat);
+			}
+			else
+			{
+				calcDTI = new AlgorithmDWI2DTI( dwiImage, maskImage );
+			}
 			calcDTI.addListener(this);
 			calcDTI.run();
 			break;
 		case LLMSE:
-			tensorImage = EstimateTensorLLMSE.estimate( dwiImage, maskImage, true );
+			if ( (m_kBMatrix != null) && (m_kDWIImage != null) )
+			{
+				tensorImage = EstimateTensorLLMSE.estimate( m_kDWIImage, maskImage, m_kBMatrix, true );
+			}
+			else
+			{
+				tensorImage = EstimateTensorLLMSE.estimate( dwiImage, maskImage, true );
+			}
 			finishTensorPanel();
 			break;
 		case LINEAR:
@@ -171,19 +196,17 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 			}
 		}
 	}
-    
-	
-	
-	
-	
 
+	/**
+	 * Set the input diffusion-weighted image (4D image series).
+	 * @param image
+	 */
 	public void setImage( ModelImage image )
 	{
 		tensorImage = image;
 		outputDirTextField.setText( tensorImage.getImageDirectory() );
         System.err.println( outputDirTextField.getText() );
 	}
-
 
 
 	private void buildTensorEstPanel() {
@@ -230,6 +253,58 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 
 		mainPanel.add(tensorEstPanel);
 	}
+
+	/*
+	private void buildListLoadPanel() {
+
+		final JPanel ListloadPanel = new JPanel();
+		ListloadPanel.setLayout(new GridBagLayout());
+		ListloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+
+		final GridBagConstraints gbc = new GridBagConstraints();
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.gridwidth = 1;
+		gbc.gridheight = 1;
+		gbc.weightx = 1;
+		gbc.fill = GridBagConstraints.CENTER;
+		gbc.anchor = GridBagConstraints.WEST;
+
+		JButton openListFileButton = new JButton("Browse");
+		openListFileButton.setToolTipText("Browse .list file");
+		openListFileButton.addActionListener(this);
+		openListFileButton.setActionCommand("DWIListBrowse");
+		openListFileButton.setEnabled(true);
+
+		textListFile = new JTextField();
+		textListFile.setPreferredSize(new Dimension(275, 21));
+		textListFile.setEditable(true);
+		textListFile.setBackground(Color.white);
+		textListFile.setFont(MipavUtil.font12);
+
+		JLabel listLabel = new JLabel("DWI .list file: ");
+
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.anchor = GridBagConstraints.WEST;
+		ListloadPanel.add(listLabel, gbc);
+
+		gbc.gridx = 1;
+		gbc.gridy = 0;
+		gbc.weightx = 0;
+		gbc.anchor = GridBagConstraints.EAST;
+		ListloadPanel.add(textListFile, gbc);
+
+		gbc.gridx = 2;
+		gbc.gridy = 0;
+		gbc.weightx = 0;
+		gbc.anchor = GridBagConstraints.EAST;
+		ListloadPanel.add(openListFileButton, gbc);
+
+		mainPanel.add(ListloadPanel);
+	}
+	*/
 
 	private void buildMaskLoadPanel() {
 
@@ -426,5 +501,212 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 		}
 	}
+	
+
+    private int m_iDimX, m_iDimY, m_iSlices, m_iWeights;
+    private String m_kRawFormat;
+    private float m_fResX, m_fResY, m_fResZ, m_fMeanNoise;
+    private boolean m_bUseXRes, m_bUseYRes, m_bUseZRes;
+    ModelImage m_kDWIImage;
+	
+    /**
+     * Launches the JFileChooser for the user to select the Diffusion Weighted Images .path file. Loads the .path file.
+     */
+    public void loadDWIListFile() {
+
+        final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.ALL));
+        chooser.setDialogTitle("Choose Diffusion Weighted Images  .list file");
+        final int returnValue = chooser.showOpenDialog(this);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            final File kFile = new File(chooser.getSelectedFile().getAbsolutePath());
+            if ( !kFile.exists() || !kFile.canRead()) {
+                return;
+            }
+            final int iLength = (int) kFile.length();
+            if (iLength <= 0) {
+                return;
+            }
+            textListFile.setText(chooser.getSelectedFile().getAbsolutePath());
+            Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+
+            String kParentDir = chooser.getCurrentDirectory().toString();
+            final File kListFile = new File(chooser.getSelectedFile().getAbsolutePath());
+            String pathFilename = null;
+            String pathFileAbsPath = null;
+
+            String bMatrixFilename = null;
+            String bMatrixFileAbsPath = null;
+            
+            try {
+                BufferedReader kReader = new BufferedReader(new FileReader(kListFile));
+                String lineString = null;
+                while ( (lineString = kReader.readLine()) != null) {
+                    if (lineString.startsWith("<original_columns>")) {
+                        final String columnsStr = lineString.substring(lineString.indexOf("<original_columns>") + 18,
+                                lineString.indexOf("</original_columns>")).trim();
+                        m_iDimX = Integer.parseInt(columnsStr);
+                    } else if (lineString.startsWith("<original_rows>")) {
+                        final String rowsStr = lineString.substring(lineString.indexOf("<original_rows>") + 15,
+                                lineString.indexOf("</original_rows>")).trim();
+                        m_iDimY = Integer.parseInt(rowsStr);
+                    } else if (lineString.startsWith("<slice>")) {
+                        final String sliceStr = lineString.substring(lineString.indexOf("<slice>") + 7,
+                                lineString.indexOf("</slice>")).trim();
+                        m_iSlices = Integer.parseInt(sliceStr);
+                    } else if (lineString.startsWith("<nim>")) {
+                        final String nimStr = lineString.substring(lineString.indexOf("<nim>") + 5,
+                                lineString.indexOf("</nim>")).trim();
+                        m_iWeights = Integer.parseInt(nimStr);
+                    } else if (lineString.startsWith("<rawimageformat>")) {
+                        m_kRawFormat = lineString.substring(lineString.indexOf("<rawimageformat>") + 16,
+                                lineString.indexOf("</rawimageformat>")).trim();
+                    } else if (lineString.startsWith("<raw_image_path_filename>")) {
+                        pathFilename = lineString.substring(lineString.indexOf("<raw_image_path_filename>") + 25,
+                                lineString.indexOf("</raw_image_path_filename>")).trim();
+                        pathFileAbsPath = kParentDir + File.separator + pathFilename;
+                        // studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                    } else if (lineString.startsWith("<bmatrixfile>")) {
+                        bMatrixFilename = lineString.substring(lineString.indexOf("<bmatrixfile>") + 13,
+                                lineString.indexOf("</bmatrixfile>")).trim();
+                        bMatrixFileAbsPath = kParentDir + File.separator + bMatrixFilename;
+                        // studyName = pathFilename.substring(0, pathFilename.indexOf(".path"));
+                    } else if (lineString.startsWith("<x_field_of_view>")) {
+                        final String xFOVStr = lineString.substring(lineString.indexOf("<x_field_of_view>") + 17,
+                                lineString.indexOf("</x_field_of_view>")).trim();
+                        final float xFOV = Float.parseFloat(xFOVStr);
+                        m_fResX = xFOV;
+                        m_bUseXRes = true;
+                    } else if (lineString.startsWith("<y_field_of_view>")) {
+                        final String yFOVStr = lineString.substring(lineString.indexOf("<y_field_of_view>") + 17,
+                                lineString.indexOf("</y_field_of_view>")).trim();
+                        final float yFOV = Float.parseFloat(yFOVStr);
+                        m_fResY = yFOV;
+                        m_bUseYRes = true;
+                    } else if (lineString.startsWith("<slice_thickness>")) {
+                        final String zResStr = lineString.substring(lineString.indexOf("<slice_thickness>") + 17,
+                                lineString.indexOf("</slice_thickness>")).trim();
+                        m_fResZ = Float.parseFloat(zResStr);
+                        m_bUseZRes = true;
+                    } else if (lineString.startsWith("<noise_mean_ori>")) {
+                        final String noiseStr = lineString.substring(lineString.indexOf("<noise_mean_ori>") + 16,
+                                lineString.indexOf("</noise_mean_ori>")).trim();
+                        m_fMeanNoise = Float.parseFloat(noiseStr);
+                    }
+                }
+                kReader.close();
+                kReader = null;
+            } catch (final Exception e) {
+                e.printStackTrace();
+            }
+
+            if ( (pathFilename != null) && (bMatrixFileAbsPath != null) ) {
+                loadPathFile(pathFileAbsPath, kParentDir);
+                loadBMatrixFile(bMatrixFileAbsPath);
+                
+
+                AlgorithmDWI2DTI calcDTI = new AlgorithmDWI2DTI(maskImage, false, m_iSlices,
+                        m_iDimX, m_iDimY, m_iBOrig, m_iWeights, m_fMeanNoise, m_aakDWIList, m_aiMatrixEntries, m_kBMatrix,
+                        m_kRawFormat);
+                m_kDWIImage = calcDTI.getDWI();
+				new ViewJFrameImage( m_kDWIImage );
+            }
+            m_fResX /= m_iDimX;
+            m_fResY /= m_iDimY;
+        }
+    }
+
+    private String[][] m_aakDWIList;
+    
+    /**
+     * Loads the .path file.
+     * 
+     * @param kFileName path file name.
+     * @param kPathName, parent directory.
+     */
+    public void loadPathFile(final String kFileName, final String kPathName) {
+        final File kFile = new File(kFileName);
+        if ( !kFile.exists() || !kFile.canRead()) {
+            return;
+        }
+        final int iLength = (int) kFile.length();
+        if (iLength <= 0) {
+            return;
+        }
+        m_aakDWIList = new String[m_iSlices][m_iWeights];
+        try {
+            final BufferedReader in = new BufferedReader(new FileReader(kFile));
+            String str;
+            for (int i = 0; i < m_iSlices; i++) {
+                for (int j = 0; j < m_iWeights; j++) {
+                    str = in.readLine();
+                    // m_aakDWIList[i][j] = new String(kPathName + File.separator + str);
+                    m_aakDWIList[i][j] = new String(str);
+                }
+            }
+            in.close();
+        } catch (final IOException e) {}
+    }
+    
+    private GMatrixf m_kBMatrix;
+    private int[] m_aiMatrixEntries;
+    private int m_iBOrig;
+    
+    /**
+     * Loads the BMatrix file.
+     * 
+     * @param kFileName, name of BMatrix file.
+     */
+    private void loadBMatrixFile(final String kFileName) {
+        final File kFile = new File(kFileName);
+        if ( !kFile.exists() || !kFile.canRead()) {
+            return;
+        }
+        final int iLength = (int) kFile.length();
+        if (iLength <= 0) {
+            return;
+        }
+
+        try {
+            final BufferedReader in = new BufferedReader(new FileReader(kFile));
+            String str;
+
+            m_kBMatrix = new GMatrixf(m_iWeights, 6 + 1);
+
+            final String[] kBMatrixString = new String[m_iWeights];
+            int nb = 0;
+
+            m_aiMatrixEntries = new int[m_iWeights];
+            for (int iRow = 0; iRow < m_iWeights; iRow++) {
+                str = in.readLine();
+
+                boolean gotit = false;
+                for (int j = 0; j < nb; j++) {
+                    if (str.equals(kBMatrixString[j])) {
+                        gotit = true;
+                        m_aiMatrixEntries[iRow] = j;
+                        break;
+                    }
+                }
+                if ( !gotit) {
+                    kBMatrixString[nb] = str;
+                    m_aiMatrixEntries[iRow] = nb;
+                    nb = nb + 1;
+                }
+
+                final java.util.StringTokenizer st = new java.util.StringTokenizer(str);
+                for (int iCol = 0; iCol < 6; iCol++) {
+                    final float fValue = Float.valueOf(st.nextToken()).floatValue();
+                    m_kBMatrix.Set(iRow, iCol, fValue);
+                }
+                m_kBMatrix.Set(iRow, 6, 1f);
+            }
+            in.close();
+
+            m_iBOrig = nb;
+
+        } catch (final IOException e) {}
+    }
+
 
 }

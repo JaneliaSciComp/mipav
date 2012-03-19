@@ -206,8 +206,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
     /**
      * Removes this object from the ModelImage imageDisplayListener list.
      */
-    public void dispose() {
-        
+    public void disposeLocal() {
         if (mLUTImageA != null) {
             mLUTImageA.disposeLocal();
             mLUTImageA = null;

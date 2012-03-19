@@ -175,7 +175,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     protected static GLCapabilities caps;
 
-    protected static int width, height;
+    protected static int gl_width, gl_height;
     /**
      * Retrieve the progress bar used in the volume renderer (the one in the upper right hand corner).
      * 
@@ -332,13 +332,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     protected int m_iVOICount = 0;
 
-    protected int m_iVOITotal = 0;
-
-    protected String m_kVOIName = "";
-
-    protected Vector<String> m_kVOINameList = new Vector<String>();
-
-    private IntVector[] m_kVOIImage = null;
 
     private JPanelVolume4D m_kVolume4DGUI;
 
@@ -352,7 +345,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     private JButton m_kLoadButton;
 
     /** The main tabbed pane in the volume view frame. */
-    protected JTabbedPane tabbedPane;
+    private JTabbedPane tabbedPane;
     
     /** Reference to the user interface. */
     protected ViewUserInterface userInterface;
@@ -369,8 +362,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         GLProfile.initSingleton(true);
         glp = GLProfile.getDefault();
         caps = new GLCapabilities(glp);
-        width  = 512;
-        height = 512;
+        gl_width  = 512;
+        gl_height = 512;
         return true;
     }
 
@@ -924,27 +917,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
         int[] buffer = new int[length];
 
-        if ( m_kVOIImage == null )
-        {
-            m_kVOIImage = new IntVector[length];
-        }
-
         for (int i = 0; i < length; i++) {
             buffer[i] = kImage.getInt(i);
             if ( bIntersection && (buffer[i] < 250) )
             {
                 buffer[i] = 0;
-            }
-            if ( buffer[i] != 0 )
-            {
-                if ( m_kVOIImage[i] == null )
-                {
-                    m_kVOIImage[i] = new IntVector();
-                }
-                if ( !m_kVOIImage[i].contains( m_iVOICount ) )
-                {
-                    m_kVOIImage[i].add( m_iVOICount );
-                }
             }
         }
 
@@ -972,21 +949,12 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 kMeshes[0] = kMesh;
                 if (kMeshes[0] != null) {
                     getVolumeGPU().displayVolumeRaycast(false);
-                    m_kVOIName = new String("VOI_" + m_iVOICount++);
-                    m_kVOINameList.add(m_kVOIName);
-                    kMeshes[0].SetName(m_kVOIName);
+                    kMeshes[0].SetName(new String("VOI_" + m_iVOICount++));
                     getSurfacePanel().addSurfaces(kMeshes);
                     getRendererGUI().setDisplaySurfaceCheck(true);
                     getRendererGUI().setDisplayVolumeCheck(false);
-                    m_iVOITotal++;
-                } else {
-                    m_kVOIName = "";
                 }
                 kVETMesh = null;
-        }
-        else
-        {
-            m_kVOIName = "";
         }
         kExtractor = null;
         kImage.disposeLocal();
@@ -1064,10 +1032,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void eraseAllPaint() {
         raycastRenderWM.eraseAllPaint();
-    }
-
-    public int get3DVOIQuantity() {
-        return m_iVOITotal;
     }
 
     public ModelImage getActiveImage()
@@ -1299,6 +1263,16 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
     /**
+     * Return the size of the surface-area of the given surface.
+     * 
+     * @param kSurfaceName the surface to calculate the surface-area for.
+     * @return the surface-area of the surface.
+     */
+    public String getSurfaceAreaString(final String kSurfaceName) {
+        return raycastRenderWM.getSurfaceAreaString(kSurfaceName);
+    }
+
+    /**
      * Return the surface panel.
      * 
      * @returnthe surface panel.
@@ -1316,11 +1290,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     public Vector3f getTranslateSurface(final String kSurfaceName) {
         return raycastRenderWM.getTranslateSurface(kSurfaceName);
     }
-
-    public IntVector[] getVOIImage() {
-        return m_kVOIImage;
-    }
-
+    
     public VOIManagerInterface getVOIManager()
     {
         return m_kVOIInterface;
@@ -1334,6 +1304,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public float getVolume(final String kSurfaceName) {
         return raycastRenderWM.getSurfaceVolume(kSurfaceName);
+    }
+    
+    public String getVolumeString(final String kSurfaceName)
+    {
+        return raycastRenderWM.getSurfaceVolumeString(kSurfaceName);    	
     }
 
     /**
@@ -1518,7 +1493,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      */
     public void removeSurface(final String kSurfaceName) {
         raycastRenderWM.removeSurface(kSurfaceName);
-        deleteVOISurface(kSurfaceName);
     }
 
     /**
@@ -2384,28 +2358,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     }
 
 
-    private void deleteVOISurface(final String kVOIName) {
-        if (m_kVOIImage == null) {
-            return;
-        }
-        if ( !m_kVOINameList.contains(kVOIName)) {
-            return;
-        }
-        m_kVOINameList.remove(m_kVOIName);
-        final int iVOICount = Integer.valueOf(kVOIName.substring(4)).intValue();
-        m_iVOITotal--;
-        final int[] aiExtents = m_kVolumeImageA.GetImage().getExtents();
-        final int length = aiExtents[0] * aiExtents[1] * aiExtents[2];
-
-        for (int i = 0; i < length; i++) {
-            if (m_kVOIImage[i] != null) {
-                if (m_kVOIImage[i].contains(iVOICount)) {
-                    final int iIndex = m_kVOIImage[i].indexOf(iVOICount);
-                    m_kVOIImage[i].remove(iIndex);
-                }
-            }
-        }
-    }  
     private void disposeImageDependentComponents() {
         if ( !m_bDependentInterfaceInit) {
             return;
@@ -2413,27 +2365,27 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         m_bDependentInterfaceInit = false;
 
         if (surfaceGUI != null) {
-            surfaceGUI.dispose();
+            surfaceGUI.disposeLocal();
             surfaceGUI = null;
         }
         if (m_kVolume4DGUI != null) {
-            m_kVolume4DGUI.dispose();
+            m_kVolume4DGUI.disposeLocal();
             m_kVolume4DGUI = null;
         }
         if (m_kLightsPanel != null) {
-            m_kLightsPanel.dispose();
+            m_kLightsPanel.disposeLocal();
             m_kLightsPanel = null;
         }
         if (sculptGUI != null) {
-            sculptGUI.dispose();
+            sculptGUI.disposeLocal();
             sculptGUI = null;
         }
         if (multiHistogramGUI != null) {
-            multiHistogramGUI.dispose();
+            multiHistogramGUI.disposeLocal();
             multiHistogramGUI = null;
         }
         if (surfaceTextureGUI != null) {
-            surfaceTextureGUI.dispose();
+            surfaceTextureGUI.disposeLocal();
             surfaceTextureGUI = null;
         }
         if (positionsPanel != null) {
@@ -2441,11 +2393,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             positionsPanel = null;
         }
         if (clipGUI != null) {
-            clipGUI.dispose();
+            clipGUI.disposeLocal();
             clipGUI = null;
         }
         if (sliceGUI != null) {
-            sliceGUI.dispose();
+            sliceGUI.disposeLocal();
             sliceGUI = null;
         }
         if (panelHistoLUT != null) {
@@ -2461,7 +2413,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             m_kVolOpacityPanel = null;
         }
         if (rendererGUI != null) {
-            rendererGUI.dispose();
+            rendererGUI.disposeLocal();
             rendererGUI = null;
         }
         if ( m_kVOIInterface != null )
@@ -2473,19 +2425,19 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
     private void disposeImageIndependentComponents() {
         if (displayGUI != null) {
-            displayGUI.dispose();
+            displayGUI.disposeLocal();
             displayGUI = null;
         }
         if (surfaceGUI != null) {
-            surfaceGUI.dispose();
+            surfaceGUI.disposeLocal();
             surfaceGUI = null;
         }
         if (geodesicGUI != null) {
-            geodesicGUI.dispose();
+            geodesicGUI.disposeLocal();
             geodesicGUI = null;
         }
         if (custumBlendGUI != null) {
-            custumBlendGUI.dispose();
+            custumBlendGUI.disposeLocal();
             custumBlendGUI = null;
         }
     }
@@ -3377,6 +3329,11 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         
 
         getContentPane().add(mainPane, BorderLayout.CENTER);
+        
+
+        prevHeight = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height
+                - panelToolbar.getHeight();
+        //System.err.println( prevHeight );
     }
 
     /**
@@ -3435,10 +3392,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
     	{
             caps.setStereo(true);
             try {
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
             } catch ( GLException e ) {
             	caps.setStereo( !caps.getStereo() );
-            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, width, height, null);
+            	sharedDrawable = GLDrawableFactory.getFactory(glp).createGLPbuffer(null, caps, null, gl_width, gl_height, null);
             }
     		sharedRenderer = new VolumeTriPlanarRender(this, null, m_kVolumeImageA, m_kVolumeImageB);
     		sharedDrawable.addGLEventListener(sharedRenderer);
@@ -3456,13 +3413,21 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         sharedDrawable.destroy();
     }
         
+    int prevHeight;
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */
     protected void resizePanel() {
 
+    	
         final int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height
                 - panelToolbar.getHeight();
+    	if ( prevHeight == height )
+    	{
+    		return;
+    	}
+    	prevHeight = height;
+    	//System.err.println( getWidth() + " " + getHeight() + " " + prevHeight );
 
         if (m_bDependentInterfaceInit) {
             if (panelHistoLUT != null) {
@@ -3498,4 +3463,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         // rightPane.setDividerLocation( 0.618f );
         // updatePlanes();
     }    
+    
+    public void setSurfaceImage( String kName, ModelImage kImage )
+    {}
 }

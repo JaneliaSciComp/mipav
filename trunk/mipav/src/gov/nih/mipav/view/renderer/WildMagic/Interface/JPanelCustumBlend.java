@@ -76,8 +76,7 @@ public class JPanelCustumBlend extends JInterfaceBase implements ChangeListener 
     /**
      * Dispose the local memory.
      */
-    public void dispose() {
-
+    public void disposeLocal() {
         colorButton = null;
         alphaSlider = null;
         scroller = null;

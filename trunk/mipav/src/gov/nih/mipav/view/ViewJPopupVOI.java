@@ -77,7 +77,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private VOIHandlerInterface voiHandler;
     
     private VOIBase selectedVOI = null;
-
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -161,7 +161,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
      *
      * @param  handler  DOCUMENT ME!
      */
-    public ViewJPopupVOI(VOIHandlerInterface handler, VOIBase kVOI) {
+    public ViewJPopupVOI(VOIHandlerInterface handler, JFrame parentFrame, VOIBase kVOI) {
         this(handler);
         selectedVOI = kVOI;
     }
@@ -335,7 +335,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                     yAmount = voiHandler.getActiveImage().getParentFrame().getScrollPane().getVerticalScrollBar().getModel().getValue()-voiHandler.getActiveImage().getParentFrame().getScrollPane().getLocation().y;
                 }
             }
-            popup.show(voiHandler.getActiveImage().getParentFrame(), event.getX()-xAmount, event.getY()-yAmount);
+            popup.show(voiHandler.getComponentImage(), event.getX()-xAmount, event.getY()-yAmount);
         }
     }
 

@@ -10,10 +10,12 @@ import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.util.BitSet;
 
 import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
@@ -95,13 +97,13 @@ implements ChangeListener {
     	
     	maxPanelWidth = Math.max(DTIParametersPanel.getPreferredSize().width, maxPanelWidth);
     	
-    	tabbedPane.addTab("Fibers", null, DTIParametersPanel);
+    	insertTab("Fibers", DTIParametersPanel);
     }
     
-    public void create3DVOI( boolean bIntersection )
-    {
-        super.create3DVOI(bIntersection);
-        DTIparamsPanel.add3DVOI( m_kVOIName );
+    public void addSurface(final SurfaceState kSurface) {
+    	super.addSurface(kSurface);
+        System.err.println( "addSurface " + kSurface.Name );
+    	DTIparamsPanel.add3DVOI(kSurface.Name, raycastRenderWM.getVolumeSurface(kSurface.Name) );
     }
     
     /**
@@ -213,22 +215,6 @@ implements ChangeListener {
     public void setParentDir(String _path) {
        m_kParentDir = _path;
     }
-
-    /* (non-Javadoc)
-     * @see gov.nih.mipav.view.ViewJFrameBase#windowClosing(java.awt.event.WindowEvent)
-     */
-    public void windowClosing(WindowEvent event) {
-        close();
-        disposeLocal(true);
-		// Run this on another thread than the AWT event queue to
-		// avoid deadlocks on shutdown on some platforms
-		new Thread(new Runnable() {
-			public void run() {
-				m_kAnimator.stop();
-		        dispose();
-			}
-		}).start();
-    }
     
     /**
      * Construct the volume rendering methods based on the choices made from
@@ -281,5 +267,13 @@ implements ChangeListener {
         }
         super.resizePanel();        
         panelToolbar.getHeight();
+    }
+    
+    public void setSurfaceImage( String kName, ModelImage kImage )
+    {
+    	if ( DTIparamsPanel != null )
+    	{
+    		DTIparamsPanel.setSurfaceImage(kName, kImage);
+    	}
     }
 }
