@@ -43,7 +43,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private JDialog advancedDialog;
 
     /** DOCUMENT ME! */
-    private JTextField bracketBoundText, maxIterationsText, numMinText;
+    private JTextField maxIterationsText, numMinText;
 
     /** CheckBox to turn brute-force registration on or off:. */
     private JCheckBox bruteForceCheckBox = null;
@@ -132,10 +132,10 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private ModelImage matchImage; // register match image to reference Image
 
     /** DOCUMENT ME! */
-    private int maxIterations_def = 2, bracketBound_def = 10, numMinima_def = 3;
+    private int maxIterations_def = 2, numMinima_def = 3;
 
     /** DOCUMENT ME! */
-    private int maxIterations = maxIterations_def, bracketBound = bracketBound_def;
+    private int maxIterations = maxIterations_def;
 
     /** DOCUMENT ME! */
     private JRadioButton noneRadio;
@@ -280,7 +280,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      * @param  fCoarseRate        default rotation coarse rate choice.
      * @param  fFineRate          default rotation fine rate choice.
      * @param  bDoSubsample       default subsampling choice.
-     * @param  iBracketBound      default bracked bound choice.
      * @param  iMaxIterations     default max iterations choice.
      * @param  iNumMin            default number of minima choice.
      * @param  iInterp2           default display interpolation choice.
@@ -293,7 +292,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      */
     public JDialogRegistrationOAR2D(Frame theParentFrame, ModelImage ref, ModelImage match, int iCost, int iDOF,
                                     int iInterp, float fRotateBegin, float fRotateEnd, float fCoarseRate,
-                                    float fFineRate, boolean bDoSubsample, int iBracketBound, int iMaxIterations,
+                                    float fFineRate, boolean bDoSubsample, int iMaxIterations,
                                     int iNumMin, int iInterp2, boolean bDisplayTransform, float fRotateBF,
                                     float fXScaleBF, float fYScaleBF, int iScaleStepsBF, int iTranslationBF) {
         super(theParentFrame, false);
@@ -313,7 +312,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         coarseRate = fCoarseRate;
         fineRate = fFineRate;
         doSubsample = bDoSubsample;
-        bracketBound = iBracketBound;
         maxIterations = iMaxIterations;
         numMinima = iNumMin;
 
@@ -358,10 +356,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         } else if (command.equals("Help")) {
         	MipavUtil.showHelp("OAR19076");
         } else if (command.equals("AdvancedSettings")) {
-            bracketBound_def = bracketBound;
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
-            advancedDialog = buildAdvancedDialog(bracketBound, maxIterations, numMinima);
+            advancedDialog = buildAdvancedDialog(maxIterations, numMinima);
         } else if (command.equals("Ref")) {
 
             try {
@@ -453,13 +450,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 return;
             }
         } else if (command.equals("AdvancedOkay")) {
-            tmpStr = bracketBoundText.getText();
-
-            if (testParameter(tmpStr, 1, 60)) {
-                bracketBound = Integer.valueOf(tmpStr).intValue();
-            } else {
-                bracketBound = bracketBound_def;
-            }
 
             tmpStr = maxIterationsText.getText();
 
@@ -481,7 +471,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             advancedDialog.dispose();
         } else if (command.equals("AdvancedCancel")) {
             maxIterations = maxIterations_def;
-            bracketBound = bracketBound_def;
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
@@ -732,15 +721,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             dispose();
             System.gc();
         }
-    }
-
-    /**
-     * Accessor to get bracketBound.
-     *
-     * @return  bracketBound
-     */
-    public int getBracketBound() {
-        return bracketBound;
     }
 
     /**
@@ -1259,11 +1239,11 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         if (weighted) {
             reg2 = new AlgorithmRegOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                                          rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread,
-                                         bracketBound, maxIterations, numMinima);
+                                         maxIterations, numMinima);
         } else {
             reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
                                          fineRate, doSubsample, doMultiThread,
-                                         bracketBound, maxIterations, numMinima);
+                                         maxIterations, numMinima);
             reg2.setJTEM(doJTEM);
         }
 
@@ -1397,13 +1377,12 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     /**
      * Build advanced settings dialog. Returns JDialog.
      *
-     * @param   bracketBound  DOCUMENT ME!
      * @param   maxIter       DOCUMENT ME!
      * @param   numMinima     DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    private JDialog buildAdvancedDialog(int bracketBound, int maxIter, int numMinima) {
+    private JDialog buildAdvancedDialog(int maxIter, int numMinima) {
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
 
@@ -1415,20 +1394,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         JPanel settingsPanel = new JPanel();
         settingsPanel.setBorder(BorderFactory.createTitledBorder("Optimization settings"));
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
-
-        JPanel bracketPanel = new JPanel();
-        bracketPanel.setLayout(new BorderLayout(1, 3)); // BorderLayout(int hgap, int vgap)
-        bracketPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
-
-        JLabel bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum: ", JLabel.LEFT);
-        bracketPanel.add(bracketBoundLabel, BorderLayout.WEST);
-        bracketPanel.setToolTipText("Used for translation, scale and skew.");
-        bracketBoundText = new JTextField(String.valueOf(bracketBound), 5);
-        bracketBoundText.addFocusListener(this);
-        bracketPanel.add(bracketBoundText, BorderLayout.CENTER);
-
-        JLabel bracketInstruct = new JLabel("Recommended values 10-60.", JLabel.RIGHT);
-        bracketPanel.add(bracketInstruct, BorderLayout.SOUTH);
 
         JPanel maxIterPanel = new JPanel();
         maxIterPanel.setLayout(new BorderLayout(1, 3));
@@ -1455,8 +1420,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         numMinText.addFocusListener(this);
         numMinPanel.add(numMinText, BorderLayout.CENTER);
 
-        settingsPanel.add(bracketPanel);
-        settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(maxIterPanel);
         settingsPanel.add(Box.createVerticalStrut(20));
         settingsPanel.add(numMinPanel);
