@@ -651,12 +651,11 @@ public class AlgorithmFRAP extends AlgorithmBase {
             boolean doGraph = false;
             boolean doSubsample = false;
             boolean transformVOIs = true;
-            int bracketBound = 10;
             int maxIterations = 2;
             int numMinima = 3;
             regAlgo = new AlgorithmRegOAR25D2(bwImage, cost, DOF, interp, interp2, doAdjacent, firstSliceNum,
                                               rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
-                                              transformVOIs, bracketBound, maxIterations, numMinima);
+                                              transformVOIs, maxIterations, numMinima);
 
             if (bwImage2 != null) {
                 regAlgo.setInputImage2(bwImage2);
