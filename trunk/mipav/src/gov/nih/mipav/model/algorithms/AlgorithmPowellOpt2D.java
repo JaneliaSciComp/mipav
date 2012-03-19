@@ -34,12 +34,11 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
      * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
      * @param  maxIter          Maximum number of iterations.
      * @param  _rigid           <code>true</code> means this was a rigid transformation
-     * @param  bracketBound     DOCUMENT ME!
      */
     public AlgorithmPowellOpt2D(AlgorithmBase parent, Vector2f com, int degreeOfFreedom,
                                 AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
-                                boolean _rigid, int bracketBound) {
-        super(parent, degreeOfFreedom, costFunc, tols, maxIter, 2, bracketBound);
+                                boolean _rigid) {
+        super(parent, degreeOfFreedom, costFunc, tols, maxIter);
 
         this.rigid = _rigid;
         toOrigin = new TransMatrix(3);
