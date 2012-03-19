@@ -118,9 +118,6 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
     /** default y scale range (0). */
     private float m_fYScaleRange = 0f;
 
-    /** Default bound for bracketing during optimization set to 10 units:. */
-    private int m_iBracketBound = 10;
-
     /** Registration parameters, with defaults set:. */
     /** Default cost function, set to correlation ratio (smoothed, weighted):. */
     private int m_iCost = AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT;
@@ -337,7 +334,7 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
         } else if (command.equals("AdvancedOptions")) {
             new JDialogRegistrationOAR2D(this, m_akImages[m_iReference], m_akImages[m_iTile], m_iCost, m_iDOF,
                     m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate, m_bDoSubsample,
-                    m_iBracketBound, m_iMaxIterations, m_iNumMinima, m_iInterp2, m_bDisplayTransform, m_fRotationRange,
+                    m_iMaxIterations, m_iNumMinima, m_iInterp2, m_bDisplayTransform, m_fRotationRange,
                     m_fXScaleRange, m_fYScaleRange, m_iScaleSteps, m_iTranslationRange);
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("");
@@ -609,7 +606,6 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
         m_fCoarseRate = kOptionsDialog.getCoarseRate();
         m_fFineRate = kOptionsDialog.getFineRate();
         m_bDoSubsample = kOptionsDialog.getSubsample();
-        m_iBracketBound = kOptionsDialog.getBracketBound();
         m_iMaxIterations = kOptionsDialog.getMaxIterations();
         m_iNumMinima = kOptionsDialog.getNumMinima();
 
@@ -1609,7 +1605,7 @@ public class JFrameRegistrationMosaic extends JFrame implements ActionListener, 
 
         AlgorithmRegOAR2D kAlgorithmReg = new AlgorithmRegOAR2D(kReferenceReg, kTileReg, kReferenceMask, kTileMask,
                 m_iCost, m_iDOF, m_iInterp, m_fRotateBegin, m_fRotateEnd, m_fCoarseRate, m_fFineRate, m_bDoSubsample,
-                m_bDoMultiThread, m_iBracketBound, m_iMaxIterations, m_iNumMinima);
+                m_bDoMultiThread, m_iMaxIterations, m_iNumMinima);
         kAlgorithmReg.addListener(this);
         kAlgorithmReg.setRunningInSeparateThread(false);
 
