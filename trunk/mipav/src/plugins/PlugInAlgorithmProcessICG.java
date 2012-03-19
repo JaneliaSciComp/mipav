@@ -129,7 +129,7 @@ System.err.println("starting process icg");
         System.err.println("running registration");
         //run registration.....oar2.5d
         AlgorithmRegOAR25D2 reg25 = new AlgorithmRegOAR25D2( srcImage, 2, 3, 1, 1, false, refImageNum,
-                -3, 3, 3, 2, false, true, false, 3, 2, 6 );
+                -3, 3, 3, 2, false, true, false, 2, 6 );
         linkProgressToAlgorithm(reg25);
         reg25.setProgressValues(10, 90);
         reg25.runAlgorithm();
