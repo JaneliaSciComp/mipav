@@ -52,7 +52,6 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
     private float[] resolution = {0.9375f, 0.9375f, 0.9375f};
     private int dof;
     private int maxIter = 4;
-    private int bracketBound = 10;
     //private int interpolation = 0;
     private Vector3f cog;
     
@@ -90,7 +89,7 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
         cog = AlgorithmRegOAR3D.calculateCenterOfMass3D(matchSimpleImage8, (ModelSimpleImage)null, false);
         costFunc = new AlgorithmCostFunctions(refSimpleImage8, matchSimpleImage8, 1, 32, 1);
         dof = 4;
-        powell = new AlgorithmPowellOpt3D(null, cog, dof, costFunc, getTolerance(dof, 256), maxIter, bracketBound);
+        powell = new AlgorithmPowellOpt3D(null, cog, dof, costFunc, getTolerance(dof, 256), maxIter);
 
     }
 
@@ -111,7 +110,7 @@ public class AlgorithmPowellOpt3DTest extends TestCase {
          * Test 4 degree of freedom and single threading powell's method
          */
         dof = 4;
-        powell = new AlgorithmPowellOpt3D(null, cog, dof, costFunc, getTolerance(dof, 256), maxIter, bracketBound);
+        powell = new AlgorithmPowellOpt3D(null, cog, dof, costFunc, getTolerance(dof, 256), maxIter);
         for(int i = 0; i < initial4.length; i++){
             Vectornd v = new Vectornd(initial4[i], true);
             powell.optimize(v);
