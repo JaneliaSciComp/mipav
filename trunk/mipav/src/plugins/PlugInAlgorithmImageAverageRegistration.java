@@ -70,7 +70,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
     private boolean isTargetDICOM;
 
     /** default ints. */
-    private int maxIterations = 2, bracketBound = 10, numMinima = 3;
+    private int maxIterations = 2, numMinima = 3;
 
     /** boolean of maxOfMin Resol. */
     private boolean maxOfMinResol;
@@ -313,7 +313,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase {
                                                  coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                                                  fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
                                                  maxOfMinResol, doSubsample, doMultiThread,
-                                                 fastMode, bracketBound, maxIterations, numMinima);
+                                                 fastMode, maxIterations, numMinima);
 
                 progressBar = new ViewJProgressBar(sourceImage.getImageName(), "", 0, 100, true);
                 progressBar.setSeparateThread(true);
