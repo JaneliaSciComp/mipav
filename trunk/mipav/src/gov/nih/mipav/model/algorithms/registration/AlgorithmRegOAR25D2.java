@@ -109,11 +109,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     /** Final answer after registration. */
     private MatrixListItem answer;
 
-    /**
-     * The bracket size around the minimum in multiples of unit_tolerance in the first iteration of Powell's algorithm.
-     */
-    private int bracketBound;
-
     /** DOCUMENT ME! */
     private float[] buffer;
 
@@ -358,8 +353,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      * @param  doGraph        If true produce 2 output graphs - one for rotation and one for 2 translations
      * @param  doSubsample    If true subsample
      * @param  transformVOIs  If true, transform VOIs
-     * @param  _bracketBound  The bracket size around the minimum in multiples of unit_tolerance in the first iteration
-     *                        of Powell's algorithm.
      * @param  _baseNumIter   Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's
      *                        will be an integer multiple of baseNumIter
      * @param  _numMinima     Number of minima from level 8 to test at level 4
@@ -367,7 +360,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     public AlgorithmRegOAR25D2(ModelImage _image, int _costChoice, int _DOF, int _interp, int _interp2, boolean mode,
                                int refImageNum, float _rotateBegin, float _rotateEnd, float _coarseRate,
                                float _fineRate, boolean doGraph, boolean doSubsample, boolean transformVOIs,
-                               int _bracketBound, int _baseNumIter, int _numMinima) {
+                               int _baseNumIter, int _numMinima) {
         super(null, _image);
         inputImage = _image;
 
@@ -407,7 +400,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         this.doGraph = doGraph;
         this.doSubsample = doSubsample;
         this.transformVOIs = transformVOIs;
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
@@ -440,8 +432,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
      * @param  doGraph        If true produce 2 output graphs - 1 for rotation and one for 2 translations
      * @param  doSubsample    If true subsample
      * @param  transformVOIs  If true, transform VOIs
-     * @param  _bracketBound  The bracket size around the minimum in multiples of unit_tolerance in the first iteration
-     *                        of Powell's algorithm.
      * @param  _baseNumIter   Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's
      *                        will be an integer multiple of baseNumIter
      * @param  _numMinima     Number of minima from level 8 to test at level 4
@@ -449,7 +439,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
     public AlgorithmRegOAR25D2(ModelImage _image, ModelImage _inputWeight, int _costChoice, int _DOF, int _interp,
                                int _interp2, boolean mode, int refImageNum, float _rotateBegin, float _rotateEnd,
                                float _coarseRate, float _fineRate, boolean doGraph, boolean doSubsample,
-                               boolean transformVOIs, int _bracketBound, int _baseNumIter, int _numMinima) {
+                               boolean transformVOIs, int _baseNumIter, int _numMinima) {
 
         super(null, _image);
 
@@ -492,7 +482,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         this.doGraph = doGraph;
         this.doSubsample = doSubsample;
         this.transformVOIs = transformVOIs;
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
@@ -2679,8 +2668,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         if (DOF > 3) {
             nDims = 3;
         }
-        powell = new AlgorithmPowellOpt2D(this, cog, nDims, cost, getTolerance(nDims), maxIter, false,
-                                              bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, nDims, cost, getTolerance(nDims), maxIter, false);
 
         Vectornd[] initials = new Vectornd[coarseNum];
         
@@ -2808,7 +2796,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
 
         MatrixListItem item;
         initials = new Vectornd[minima.size()];
@@ -2882,7 +2870,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         maxIter = baseNumIter;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
-                                                               maxIter, rigidFlag, bracketBound);
+                                                               maxIter, rigidFlag);
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item.cost = powell.measureCost(en.nextElement().initial);
@@ -3052,7 +3040,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         maxIter = 4 * baseNumIter;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost,
-                getTolerance(degree), maxIter, rigidFlag, bracketBound);
+                getTolerance(degree), maxIter, rigidFlag);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(item.initial);
         powell.setPoints(initials);
@@ -3113,7 +3101,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         maxIter = 4 * baseNumIter;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree),
-                                                               maxIter, rigidFlag, bracketBound);
+                                                               maxIter, rigidFlag);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(initial);
 
@@ -3165,7 +3153,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter;
 
-        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        AlgorithmPowellOptBase powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements();) {
             item.cost = powell.measureCost(en.nextElement().initial);
@@ -3178,7 +3166,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         }
 
         maxIter = baseNumIter;
-        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, bracketBound);
+        powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
         Vectornd[] initials = new Vectornd[1];
         initials[0] = new Vectornd(minima.elementAt(0).initial);
         powell.setPoints(initials);
@@ -3201,7 +3189,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
             maxIter = baseNumIter;
             powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
-                                              rigidFlag, bracketBound);
+                                              rigidFlag);
             powell.setPoints(initials);
             powell.run();
 
@@ -3221,7 +3209,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                 maxIter = baseNumIter;
                 powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
-                                                  rigidFlag, bracketBound);
+                                                  rigidFlag);
 
                 powell.setPoints(initials);
                 powell.run();
