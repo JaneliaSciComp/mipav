@@ -71,7 +71,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
     private JTextField endBox;
     private JTextField coarseBox;
     private JTextField fineBox;
-    private JTextField bracketBox;
     private JTextField iterationsBox;
     private JTextField minimaBox;
     private JCheckBox subsampleBox;
@@ -478,7 +477,7 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         fineBox = new JTextField("2");
         thirdPanel.add(fineBox,gbc);
         
-        gbc.gridy = 10;
+        gbc.gridy = 9;
         gbc.gridx = 1;
         
 
@@ -486,16 +485,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         thirdPanel.add(subsampleBox,gbc);
         
         gbc.gridy = 8;
-        gbc.gridx = 0;
-        
-        JLabel bracketLabel = new JLabel(" Minima Bracket Size : ");
-        thirdPanel.add(bracketLabel, gbc);
-        
-        gbc.gridx = 1;
-        bracketBox = new JTextField("10");
-        thirdPanel.add(bracketBox,gbc);
-        
-        gbc.gridy = 9;
         gbc.gridx = 0;
         
         JLabel iterLabel = new JLabel(" Number of Iterations : ");
@@ -557,14 +546,13 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
             float fine = Float.parseFloat(fineBox.getText().trim());
             float coarse = Float.parseFloat(coarseBox.getText().trim()); 
             boolean subsample = subsampleBox.isSelected();
-            int bracket = Integer.parseInt(bracketBox.getText().trim());
             int iterations = Integer.parseInt(iterationsBox.getText().trim());
             int minima = Integer.parseInt(minimaBox.getText().trim());
             
             
             alg = new PlugInAlgorithmNEIRetinalRegistration(imagePath1, imagePath2, outputTextArea, refPath, toConcat.isSelected(), Float.parseFloat(epsYText.getText().trim()), 
                     Float.parseFloat(epsBText.getText().trim()),ymin,ymax, bmin, bmax, preReg.isSelected(), autoMinMax,
-                    cost,dof,interp,start,end,fine,coarse,subsample,bracket,iterations,minima);
+                    cost,dof,interp,start,end,fine,coarse,subsample,iterations,minima);
             alg.addListener(this);
             
             if (isRunInSeparateThread()) {
@@ -799,11 +787,6 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
                 
                 if(fineBox.getText().trim().equals("") || Float.parseFloat(fineBox.getText().trim()) <=0){
                     MipavUtil.displayError("Fine rate must be a positive number!");
-                    return;
-                }
-                
-                if(bracketBox.getText().trim().equals("") || Integer.parseInt(bracketBox.getText().trim()) <=0){
-                    MipavUtil.displayError("Bracket size must be a positive number!");
                     return;
                 }
                 
