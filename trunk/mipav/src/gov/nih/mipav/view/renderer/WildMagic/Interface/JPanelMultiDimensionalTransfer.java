@@ -127,7 +127,7 @@ public class JPanelMultiDimensionalTransfer extends JInterfaceBase implements Ch
 	/**
 	 * Dispose memory.
 	 */
-	public void dispose()
+	public void disposeLocal()
 	{
 		colorButton = null;
 		colorChooser = null;

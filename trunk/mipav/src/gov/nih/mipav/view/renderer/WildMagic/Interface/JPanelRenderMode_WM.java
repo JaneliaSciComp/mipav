@@ -151,6 +151,8 @@ public class JPanelRenderMode_WM extends JInterfaceBase
         }
     }
     
+	public void disposeLocal(){}
+	
     /**
      * Get the blender slider value
      * @return   slider value.

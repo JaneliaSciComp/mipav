@@ -6,10 +6,14 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import gov.nih.mipav.view.ViewJProgressBar;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 
 
 import java.io.IOException;
 
+import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
+
+import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
@@ -43,6 +47,8 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
     private ModelImage m_kRAImage = null;
     /** Output VR (Volume Radio) Image: */
     private ModelImage m_kVRImage = null;
+    /** Output Color mapped Image: */
+    private ModelImage m_kColorImage = null;
 
     /** Initialize the Algorithm with the input DTI Image:
      * @param kDTI input DTI Image.
@@ -64,6 +70,14 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         m_kTraceImage = null;
         m_kRAImage = null;
         System.gc();
+    }
+
+    /** Returns the Color Map Image. 
+     * @return the Color Map Image. 
+     */
+    public ModelImage getColorImage()
+    {
+        return m_kColorImage;
     }
 
     /** Returns the Apparent Diffusion Coefficient Image. 
@@ -146,14 +160,16 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         int iLen = m_kDTI.getExtents()[0] * m_kDTI.getExtents()[1] * m_kDTI.getExtents()[2];
         //int iZDim = m_kDTI.getExtents()[2];
         int iSliceSize = m_kDTI.getExtents()[0] * m_kDTI.getExtents()[1];
-        float[] afData = new float[iLen];
-        float[] afTraceData = new float[iLen];
-        float[] afADCData = new float[iLen];
-        float[] afRAData = new float[iLen];
-        float[] afVRData = new float[iLen];
-        float[] afEigenValues = new float[iLen*4];
-        float[] afDataCM = new float[iLen*9];
-        float[] afTensorData = new float[6];
+        float[] afData = new float[iLen];       // functional anisotropy
+        float[] afTraceData = new float[iLen];  // trace data
+        float[] afADCData = new float[iLen];    // ADC data
+        float[] afRAData = new float[iLen];     // RA
+        float[] afVRData = new float[iLen];     // VR
+        float[] afEigenValues = new float[iLen*4]; // eigen values
+        float[] afDataCM = new float[iLen*9];      // engen vectors
+        float[] afTensorData = new float[6];       // tensor (single voxel)
+        float[] afColorImageData = new float[iLen*4];  // color image
+        float gamma = 1.8f;
 
         ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating Eigen Vectors ",
                                                              "Calculating Eigen Vectors...", 0, 100, true);
@@ -162,6 +178,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         Vector3f kV2 = new Vector3f();
         Vector3f kV3 = new Vector3f();
         Matrix3f kEigenValues = new Matrix3f();
+        
+        float minL = Float.MAX_VALUE;
+        float maxL = -Float.MAX_VALUE;
         for ( int i = 0; i < iLen; i++ )
         {
             boolean bAllZero = true;
@@ -179,10 +198,10 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 }
             }
             if ( !bAllZero )
-            {
-                kMatrix.Set( afTensorData[0], afTensorData[3], afTensorData[4],
-                             afTensorData[3], afTensorData[1], afTensorData[5], 
-                             afTensorData[4], afTensorData[5], afTensorData[2] );
+            {                
+                kMatrix.Set( afTensorData[0], afTensorData[1], afTensorData[2],
+                        afTensorData[1], afTensorData[3], afTensorData[4], 
+                        afTensorData[2], afTensorData[4], afTensorData[5] );
 
 
                 afTraceData[i] = kMatrix.M00 + kMatrix.M11 + kMatrix.M22;
@@ -193,38 +212,92 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                     float fLambda1 = kEigenValues.M22;
                     float fLambda2 = kEigenValues.M11;
                     float fLambda3 = kEigenValues.M00;
-                    afEigenValues[i*4 + 0] = 0;
-                    afEigenValues[i*4 + 1] = fLambda1;
-                    afEigenValues[i*4 + 2] = fLambda2;
-                    afEigenValues[i*4 + 3] = fLambda3;
-                    kMatrix.GetColumn(2,kV1);
-                    kMatrix.GetColumn(1,kV2);
-                    kMatrix.GetColumn(0,kV3);
+                    if ( (fLambda1 <= 0) || (fLambda2 <= 0) || (fLambda3 <= 0) )
+                    {
+                        bAllZero = true;
+                    }
+                    else
+                    {
+                    	if ( fLambda1 < minL )
+                    	{
+                    		minL = fLambda1;
+                    	}
+                    	if ( fLambda2 < minL )
+                    	{
+                    		minL = fLambda2;
+                    	}
+                    	if ( fLambda3 < minL )
+                    	{
+                    		minL = fLambda3;
+                    	}
 
-                    afData[i] = (float)(Math.sqrt(1.0/2.0) *
-                            ( ( Math.sqrt( (fLambda1 - fLambda2)*(fLambda1 - fLambda2) +
-                                    (fLambda2 - fLambda3)*(fLambda2 - fLambda3) +
-                                    (fLambda3 - fLambda1)*(fLambda3 - fLambda1)   ) ) /
-                                    ( Math.sqrt( fLambda1*fLambda1 + fLambda2*fLambda2 + fLambda3*fLambda3 ) ) ) );
+                    	if ( fLambda1 > maxL )
+                    	{
+                    		maxL = fLambda1;
+                    	}
+                    	if ( fLambda2 > maxL )
+                    	{
+                    		maxL = fLambda2;
+                    	}
+                    	if ( fLambda3 > maxL )
+                    	{
+                    		maxL = fLambda3;
+                    	}
 
-                    float fLambda = (fLambda1 + fLambda2 + fLambda3)/3.0f;
-                    afRAData[i] = (float)(Math.sqrt((fLambda1 - fLambda)*(fLambda1 - fLambda) + 
-                            (fLambda2 - fLambda)*(fLambda2 - fLambda) +
-                            (fLambda3 - fLambda)*(fLambda3 - fLambda)   ) / 
-                            Math.sqrt( 3.0f * fLambda ));
-                    afVRData[i] = (fLambda1*fLambda2*fLambda3)/(fLambda*fLambda*fLambda);                
 
-                    afDataCM[i + 0*iLen] = kV1.X;
-                    afDataCM[i + 1*iLen] = kV1.Y;
-                    afDataCM[i + 2*iLen] = kV1.Z;
 
-                    afDataCM[i + 3*iLen] = -kV2.X;
-                    afDataCM[i + 4*iLen] = -kV2.Y;
-                    afDataCM[i + 5*iLen] = -kV2.Z;
+                    	afEigenValues[i*4 + 0] = 0;
+                    	afEigenValues[i*4 + 1] = fLambda1;
+                    	afEigenValues[i*4 + 2] = fLambda2;
+                    	afEigenValues[i*4 + 3] = fLambda3;
+                    	kMatrix.GetColumn(2,kV1);
+                    	kMatrix.GetColumn(1,kV2);
+                    	kMatrix.GetColumn(0,kV3);
 
-                    afDataCM[i + 6*iLen] = kV3.X;
-                    afDataCM[i + 7*iLen] = kV3.Y;
-                    afDataCM[i + 8*iLen] = kV3.Z;
+
+                    	afData[i] = (float)(Math.sqrt(1.0/2.0) *
+                    			( ( Math.sqrt( (fLambda1 - fLambda2)*(fLambda1 - fLambda2) +
+                    					(fLambda2 - fLambda3)*(fLambda2 - fLambda3) +
+                    					(fLambda3 - fLambda1)*(fLambda3 - fLambda1)   ) ) /
+                    					( Math.sqrt( fLambda1*fLambda1 + fLambda2*fLambda2 + fLambda3*fLambda3 ) ) ) );
+
+                    	float fLambda = (fLambda1 + fLambda2 + fLambda3)/3.0f;
+                    	afRAData[i] = (float)(Math.sqrt((fLambda1 - fLambda)*(fLambda1 - fLambda) + 
+                    			(fLambda2 - fLambda)*(fLambda2 - fLambda) +
+                    			(fLambda3 - fLambda)*(fLambda3 - fLambda)   ) / 
+                    			Math.sqrt( 3.0f * fLambda ));
+                    	afVRData[i] = (fLambda1*fLambda2*fLambda3)/(fLambda*fLambda*fLambda);                
+
+                    	afDataCM[i + 0*iLen] = kV1.X;
+                    	afDataCM[i + 1*iLen] = kV1.Y;
+                    	afDataCM[i + 2*iLen] = kV1.Z;
+
+                    	afDataCM[i + 3*iLen] = -kV2.X;
+                    	afDataCM[i + 4*iLen] = -kV2.Y;
+                    	afDataCM[i + 5*iLen] = -kV2.Z;
+
+                    	afDataCM[i + 6*iLen] = kV3.X;
+                    	afDataCM[i + 7*iLen] = kV3.Y;
+                    	afDataCM[i + 8*iLen] = kV3.Z;
+
+                    	
+                    	kV1.Normalize();
+                    	afColorImageData[i* 4 + 0] = 255;
+                    	
+                    	afColorImageData[i* 4 + 1] = Math.abs(kV1.X) * afData[i];
+                    	afColorImageData[i* 4 + 1] = (float) Math.pow(afColorImageData[i* 4 + 1], (1 / gamma));
+                    	afColorImageData[i* 4 + 1] = afColorImageData[i* 4 + 1] * 255;
+                    	
+
+                    	afColorImageData[i* 4 + 2] = Math.abs(kV1.Y) * afData[i];
+                    	afColorImageData[i* 4 + 2] = (float) Math.pow(afColorImageData[i* 4 + 2], (1 / gamma));
+                    	afColorImageData[i* 4 + 2] = afColorImageData[i* 4 + 2] * 255;
+                    	
+
+                    	afColorImageData[i* 4 + 3] = Math.abs(kV1.Z) * afData[i];
+                    	afColorImageData[i* 4 + 3] = (float) Math.pow(afColorImageData[i* 4 + 3], (1 / gamma));
+                    	afColorImageData[i* 4 + 3] = afColorImageData[i* 4 + 3] * 255;
+                    }
                 }
                 else
                 {
@@ -253,6 +326,12 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 afDataCM[i + 6*iLen] = 0;
                 afDataCM[i + 7*iLen] = 0;
                 afDataCM[i + 8*iLen] = 0;
+                
+
+                afColorImageData[i*4 + 0] = 0;
+                afColorImageData[i*4 + 1] = 0;
+                afColorImageData[i*4 + 2] = 0;
+                afColorImageData[i*4 + 3] = 0;
             }
 
             if ( (i%iSliceSize) == 0 )
@@ -261,6 +340,9 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
                 kProgressBar.updateValueImmed( iValue );
             }
         }
+        
+        System.err.println( minL + " " + maxL );
+        
         kMatrix = null;
         kV1 = null;
         kV2 = null;
@@ -474,6 +556,25 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         {
             System.err.println( "null" );
         }
+        
+
+
+        /** Fractional Anisotropy Image */
+        m_kColorImage = new ModelImage( ModelStorageBase.ARGB_FLOAT,
+                                     extentsA,
+                                     ModelImage.makeImageName( m_kDTI.getFileInfo(0).getFileName(), "ColorMap") );
+        try {
+        	m_kColorImage.importData(0, afColorImageData, true);
+        } catch (IOException e) {
+        	m_kColorImage.disposeLocal();
+        	m_kColorImage = null;
+        }
+        if ( m_kColorImage != null )
+        {           
+    		JDialogBase.updateFileInfo( m_kDTI, m_kColorImage );
+        }
+        
+        
         extentsEV = null;
         extentsA = null;
 
@@ -484,7 +585,7 @@ public class AlgorithmDTI2EGFA extends AlgorithmBase
         afRAData = null;
         afDataCM = null;
         afTensorData = null;
-
+        afColorImageData = null;
     }
 
 

@@ -552,7 +552,7 @@ public class JPanelSlices_WM extends JInterfaceBase
     /**
      * Dispose memory.
      */
-    public void dispose() {
+    public void disposeLocal() {
         boundingBoxPanel = null;
         opacityLabelX = null;
         opacityLabelY = null;
@@ -959,7 +959,7 @@ public class JPanelSlices_WM extends JInterfaceBase
     public void resizePanel(int panelWidth, int frameHeight) {
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
         scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
-        scroller.revalidate();
+        //scroller.revalidate();
     }
 
     /* (non-Javadoc)

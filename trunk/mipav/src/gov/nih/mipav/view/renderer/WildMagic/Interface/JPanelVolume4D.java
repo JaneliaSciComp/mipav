@@ -57,8 +57,7 @@ public class JPanelVolume4D extends JInterfaceBase
     /**
      * Dispose the local memory.
      */
-    public void dispose() {
-    }
+    public void disposeLocal() {}
 
 
 

@@ -11,6 +11,7 @@ import java.awt.Frame;
 import java.awt.event.KeyListener;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.BitSet;
 import java.util.Vector;
 
 import javax.media.opengl.GLAutoDrawable;
@@ -55,6 +56,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
     private SurfaceClipEffect m_kSurfaceClip = null;
     private boolean m_bCreateMaskImage = false;
     private ModelImage m_kOutputImage = null;
+    private BitSet m_kOutputMask = null;
     
     public VolumeImageSurfaceMask( GLCanvas canvas, VolumeTriPlanarInterface kParentFrame, VolumeImage kVolumeImage, Vector<VolumeObject> kDisplayList, boolean bCreateMask )
     {
@@ -127,13 +129,12 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
             {            	
                 if ( bDrawSurface && m_bCreateMaskImage )
                 {
-                    //ModelImage kMask = VolumeImage.CreateImageFromTexture( m_kVolumeImage.GetSurfaceTarget().GetImage(), true );
-                    // The algorithm has completed and produced a new image to be displayed.
-                    try {
-                        new ViewJFrameImage(m_kOutputImage, null, new Dimension(610, 200));
-                    } catch (OutOfMemoryError error) {
-                        MipavUtil.displayError("Out of memory: unable to open new frame");
-                    }
+                	m_kParent.setSurfaceImage( null, m_kOutputImage );
+                }
+                else if ( m_kOutputImage != null )
+                {
+                	m_kOutputImage.disposeLocal(false);
+                	m_kOutputImage = null;
                 }
                 bSurfaceAdded = false;
                 m_iSlice = 0;
@@ -164,6 +165,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
         }
         m_kSurfaceClip.dispose();
         m_kSurfaceClip = null;
+        m_kOutputImage = null;
         super.dispose(arg0);
     }
 

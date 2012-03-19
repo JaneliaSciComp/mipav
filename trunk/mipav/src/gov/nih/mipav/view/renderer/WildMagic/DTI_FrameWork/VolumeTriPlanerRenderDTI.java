@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.event.MouseEvent;
 
@@ -168,12 +169,17 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
                             pickPoint.Add( kP0, kP1 );
                             pickPoint.Add( kP2 );
 
+                            if ( m_kDisplayList.get(i) instanceof VolumeSurface )
+                            {
+                            	pickPoint.Sub(m_kDisplayList.get(i).GetTranslate());
+                            }
+                            
                             pickPoint.Mult( new Vector3f( 1.0f/m_fX, 1.0f/m_fY, 1.0f/m_fZ ));
                             
                             int[] iExtents = m_kVolumeImageA.GetImage().getExtents();
                             pickPoint.Mult( new Vector3f( iExtents[0]-1, iExtents[1]-1, iExtents[2]-1 ));
 
-                            //System.err.println( "Picked " + pickPoint.ToString() );
+                            //System.err.println( "Picked " + pickPoint );
                             ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().diplayTract( (int)pickPoint.X, (int)pickPoint.Y, (int)pickPoint.Z);
 
                         }

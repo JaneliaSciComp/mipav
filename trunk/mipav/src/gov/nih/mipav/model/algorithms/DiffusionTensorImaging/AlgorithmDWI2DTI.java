@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 import gov.nih.mipav.util.ThreadUtil;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto4D;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -22,6 +23,7 @@ import apps.EstimateSNR;
 
 import Jama.*;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 
 
@@ -147,6 +149,17 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
 		float[] bvalues = dtiparams.getbValues();
 		float[][] grads = dtiparams.getGradients();
 		m_kBMatrix = new GMatrixf( dimDW, 7 );
+		
+		Vector3f kNormalG = new Vector3f();
+		for ( int i = 0; i < grads.length; i++ )
+		{
+			kNormalG.Set( grads[i][0], grads[i][1], grads[i][2] );
+			kNormalG.Normalize();
+			grads[i][0] = kNormalG.X;
+			grads[i][1] = kNormalG.Y;
+			grads[i][2] = kNormalG.Z;
+		}
+		
 		for ( int i = 0; i < dimDW; i++ )
 		{
 			m_kBMatrix.Set(i, 0, bvalues[i] * grads[i][0] * grads[i][0]);
@@ -269,6 +282,40 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         return m_kDTI;
     }
 
+    public ModelImage getDWI() {
+    	if ( m_kDWIImage == null )
+    	{
+    		createDWI();
+    	}
+        return m_kDWIImage;
+    }
+
+
+    private void createDWI()
+    {
+    	if ( m_aakDWIList == null )
+    	{
+    		return;
+    	}
+
+    	int[] extents = new int[] {m_iDimX, m_iDimY, m_iSlices, m_iWeights};
+    	m_kDWIImage = new ModelImage( ModelStorageBase.FLOAT, extents, "DWI" );
+    	ModelImage[] vol = new ModelImage[m_iWeights];
+
+    	FileIO fileIO = new FileIO();
+    	fileIO.setQuiet(true);
+    	for (int i = 0; i < m_iWeights; i++) {
+            final String kPath = m_aakDWIList[0][i];
+            final String kDir = kPath.substring(0, kPath.lastIndexOf(File.separator)) + File.separator;
+            final String kFileName = kPath.substring(kPath.lastIndexOf(File.separator) + 1, kPath.length());
+            
+			vol[i] = fileIO.readImage(kFileName, kDir, true, null);
+    	}
+    	AlgorithmConcatMult3Dto4D concat = new AlgorithmConcatMult3Dto4D(vol, m_kDWIImage );
+    	concat.run();
+    }
+    
+    
     /**
      * Get the slice data for the image with the given slice and weight.
      * 
@@ -943,16 +990,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
                     tensor[5] = (float) 0.01;
                 }
             }
-
-            final float[] newTensor = new float[6];
-            newTensor[0] = tensor[0];
-            newTensor[1] = tensor[3];
-            newTensor[2] = tensor[5];
-            newTensor[3] = tensor[1];
-            newTensor[4] = tensor[2];
-            newTensor[5] = tensor[4];
             for (int iT = 0; iT < 6; iT++) {
-                dtiData[indexInVolume + iT * volumeSize] = newTensor[iT];
+                dtiData[indexInVolume + iT * volumeSize] = tensor[iT];
             }
         } else {
             for (int iT = 0; iT < 6; iT++) {
@@ -972,15 +1011,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
                 Y.set(iWeight, 0, dwiData[iWeight][indexInSlice]);
             }
             final float[] tensor = solve(Y, H);
-            final float[] newTensor = new float[6];
-            newTensor[0] = tensor[0];
-            newTensor[1] = tensor[3];
-            newTensor[2] = tensor[5];
-            newTensor[3] = tensor[1];
-            newTensor[4] = tensor[2];
-            newTensor[5] = tensor[4];
             for (int iT = 0; iT < 6; iT++) {
-                dtiData[indexInVolume + iT * volumeSize] = newTensor[iT] * 1000000;
+                dtiData[indexInVolume + iT * volumeSize] = tensor[iT] * 1000000;
             }
         } else {
             for (int iT = 0; iT < 6; iT++) {

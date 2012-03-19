@@ -185,7 +185,7 @@ public class JPanelDisplay_WM extends JInterfaceBase {
     /**
      * Dispose memory.
      */
-    public void dispose() {
+    public void disposeLocal() {
         boundingCheck = null;
         cubicCheck = null;
         colorButton = null;

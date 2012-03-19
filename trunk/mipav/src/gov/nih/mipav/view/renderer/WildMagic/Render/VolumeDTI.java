@@ -1,6 +1,7 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.Vector;
 import WildMagic.LibFoundation.Curves.BSplineCurve3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
+import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -19,6 +21,7 @@ import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.MaterialState;
 import WildMagic.LibGraphics.Rendering.Renderer;
+import WildMagic.LibGraphics.Rendering.ZBufferState;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
@@ -47,7 +50,7 @@ public class VolumeDTI extends VolumeObject
 
 
 	/** Hashmap for multiple fiber bundles: */
-	private HashMap<Integer,Vector<int[]>> m_kGlyphs = null;
+	private HashMap<Integer,Vector<VOIContour>> m_kGlyphs = null;
 
 	/** When true display the fiber tracts with ellipsoids instead of lines: */
 	private boolean m_bDisplayEllipsoids = false;
@@ -85,7 +88,9 @@ public class VolumeDTI extends VolumeObject
 	private MaterialState m_kLinesMaterial;
 
 	/** EigenVector values for displaying ellipsoids. */
-	private HashMap<Integer,Transformation>  m_kEigenVectors = null;
+	ModelImage m_kEigenVector;
+	ModelImage m_kEigenValue;
+	//private HashMap<Integer,Transformation>  m_kEigenVectors = null;
 
 	/** Ellipsoids is a sphere with a non-uniform scale based on the eigen
 	 * vectors and values. */
@@ -162,6 +167,9 @@ public class VolumeDTI extends VolumeObject
 		m_kAlpha.BlendEnabled = true;
 		//m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
 		//m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
+		
+        m_kZBuffer = new ZBufferState();
+        m_kZBuffer.Enabled = true;
 
 		constantColor = new HashMap<Integer, ColorRGB>();
 		for ( int i = 0; i < 100; i++ ) {
@@ -190,7 +198,7 @@ public class VolumeDTI extends VolumeObject
 		if ( m_kTracts == null )
 		{
 			m_kTracts = new HashMap<Integer,Node>();
-			m_kGlyphs = new HashMap<Integer,Vector<int[]>>();
+			m_kGlyphs = new HashMap<Integer,Vector<VOIContour>>();
 			m_kShaders = new HashMap<Integer,ShaderEffect>();
 			m_kEllipseConstantColor = new HashMap<Integer,ColorRGB>();
 		}
@@ -203,9 +211,13 @@ public class VolumeDTI extends VolumeObject
 			m_iMaxGroups = iGroup;
 		}
 
-		int[] aiEllipsoids = new int[kLine.VBuffer.GetVertexQuantity()];
-		int[] aiCylinders = new int[kLine.VBuffer.GetVertexQuantity()];
+		VOIContour kContour = new VOIContour(false);
+		for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
+		{
+			kContour.add( new Vector3f( kLine.VBuffer.GetPosition3(i)));
+		}
 
+		/*
 		if ( m_kEigenVectors != null )
 		{
 			for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
@@ -219,15 +231,14 @@ public class VolumeDTI extends VolumeObject
 				if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )
 				{
 					aiEllipsoids[i] = iIndex;
-					aiCylinders[i] = iIndex;
 				}
 				else
 				{
 					aiEllipsoids[i] = -1;
-					aiCylinders[i] = -1;
 				}
 			}
 		}
+		*/
 
 		scale( kLine.VBuffer );
 		kLine.Local.SetTranslate(m_kTranslate);
@@ -240,8 +251,8 @@ public class VolumeDTI extends VolumeObject
 		{
 			kTractNode = m_kTracts.get(iIGroup);
 			kTractNode.AttachChild(kLine);
-			Vector<int[]> kGlyphVector = m_kGlyphs.get(iIGroup);
-			kGlyphVector.add(aiEllipsoids);
+			Vector<VOIContour> kGlyphVector = m_kGlyphs.get(iIGroup);
+			kGlyphVector.add(kContour);
 			return;
 		}
 
@@ -251,8 +262,8 @@ public class VolumeDTI extends VolumeObject
 			kTubeNode.AttachChild(createTube(kLine));
 			kTubeNode.UpdateGS();
 			kTubeNode.UpdateRS();
-			Vector<int[]> kGlyphVector = m_kGlyphs.get(iIGroup);
-			kGlyphVector.add(aiEllipsoids);
+			Vector<VOIContour> kGlyphVector = m_kGlyphs.get(iIGroup);
+			kGlyphVector.add(kContour);
 			return;                       
 		}
 
@@ -265,8 +276,8 @@ public class VolumeDTI extends VolumeObject
 			kTractNode.UpdateRS();
 			m_kTracts.put( new Integer(iIGroup), kTractNode );
 
-			Vector<int[]> kGlyphVector = new Vector<int[]>();
-			kGlyphVector.add(aiEllipsoids);
+			Vector<VOIContour> kGlyphVector = new Vector<VOIContour>();
+			kGlyphVector.add(kContour);
 			m_kGlyphs.put( new Integer(iIGroup), kGlyphVector );
 			String kShaderName = new String( "ConstantColor" );
 			VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
@@ -332,8 +343,7 @@ public class VolumeDTI extends VolumeObject
 
 	/** Display the DTI volume with glyphs at each voxel. The m_iEllipsMod
 	 * value is used to limit the number of ellipsoids displayed.
-	 */    
-	public void DisplayAllGlyphs( ModelImage kImage, Renderer kRenderer/*, AlphaState kAlpha */)
+	public void DisplayAllGlyphs( ModelImage kImage, Renderer kRenderer)
 	{
 		if ( m_kEigenVectors == null )
 		{
@@ -411,6 +421,8 @@ public class VolumeDTI extends VolumeObject
 			iCount++;
 		}
 	}
+	 */    
+	
 	/**
 	 * memory cleanup.
 	 */
@@ -427,7 +439,8 @@ public class VolumeDTI extends VolumeObject
 		m_kTracts = null;
 		m_kShaders = null;
 		m_kGlyphs = null;
-		m_kEigenVectors = null;
+		m_kEigenVector = null;
+		m_kEigenValue = null;
 		m_kEllipseConstantColor = null;
 
 		if ( m_kEllipseMaterial != null )
@@ -565,7 +578,7 @@ public class VolumeDTI extends VolumeObject
 			m_kTubes = null;
 		}
 
-		Vector<int[]> kGlyphVector = m_kGlyphs.remove(kGroup);
+		Vector<VOIContour> kGlyphVector = m_kGlyphs.remove(kGroup);
 		if ( kGlyphVector != null )
 		{
 			kGlyphVector.clear();
@@ -614,11 +627,7 @@ public class VolumeDTI extends VolumeObject
 		AlphaState aTemp = kRenderer.GetAlphaState();
 		kRenderer.SetAlphaState(m_kAlpha);
 
-		if ( m_bDisplayAllGlyphs )
-		{
-			DisplayAllGlyphs( m_kVolumeImageA.GetImage(), kRenderer);
-		}
-		else if ( m_bDisplayEllipsoids || m_bDisplayCylinders ||  m_bDisplayArrows )
+		if ( m_bDisplayEllipsoids || m_bDisplayCylinders ||  m_bDisplayArrows )
 		{
 			DisplayGlyphs( m_kVolumeImageA.GetImage(), kRenderer );
 		}
@@ -682,6 +691,11 @@ public class VolumeDTI extends VolumeObject
 	 */
 	public void setDTIImage( ModelImage kDTIImage, ModelImage kEigenVectorImage, ModelImage kEigenValueImage, Renderer kRenderer )
 	{
+
+		m_kEigenVector = kEigenVectorImage;
+		m_kEigenValue = kEigenValueImage;
+		
+		/*
 		ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, 100, true);
 
 		m_kEigenVectors =
@@ -700,8 +714,12 @@ public class VolumeDTI extends VolumeObject
 		float fXDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
 		float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
 		float fZDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
-
 		
+		kEigenValueImage.calcMinMax();
+		float fEigenValMax = (float) kEigenValueImage.getMax();
+		float fEigenValMin = (float) kEigenValueImage.getMin();
+		float fScale = 1 / (fEigenValMax - fEigenValMin);
+		System.err.println( fScale + " Max = " + fEigenValMax + " Min = " + fEigenValMin );
 		for ( int i = 0; i < m_iLen; i++ )
 		{
 			kV1.X = kEigenVectorImage.getFloat( i +   m_iLen);
@@ -717,19 +735,77 @@ public class VolumeDTI extends VolumeObject
 			kV3.Z = kEigenVectorImage.getFloat( i + 8*m_iLen);
 			
 
-			fLambda1 = kEigenValueImage.getFloat( i +   m_iLen);
-			fLambda2 = kEigenValueImage.getFloat( i + 1*m_iLen);
-			fLambda3 = kEigenValueImage.getFloat( i + 2*m_iLen);
+			fLambda1 = kEigenValueImage.getFloat( i * 4 + 1 );
+			fLambda2 = kEigenValueImage.getFloat( i * 4 + 2 );
+			fLambda3 = kEigenValueImage.getFloat( i * 4 + 3 );
+			
+			
+			boolean bAllZero = true;
+            for ( int j = 0; j < 6; j++ )
+            {
+                afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
+                if ( afTensorData[j] == Float.NaN )
+                {
+                	System.err.println( "nan" );
+                	afTensorData[j] = 0;
+                }
+                if ( afTensorData[j] != 0 )
+                {
+                    bAllZero = false;
+                }
+            }
+            
+            
+            
+			//Vector3f kScale = new Vector3f( fLambda1, fLambda2, fLambda3 );
+			//kScale.Normalize();
+			
+			//kV1.Normalize();
+			//kV1.Scale( kScale.X );
+			
+			//kV2.Normalize();
+			//kV2.Scale( kScale.Y );
+			
+			//kV3.Normalize();
+			//kV3.Scale( kScale.Z );
 
-			if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
-			{}
-			else if ( (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
+			//if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
+			//{}
+			if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
 			{
+	            
+	            kV1.Normalize();
+	            kV2.Normalize();
+	            kV3.Normalize();
+	            
+	            Vector3f kAxis = new Vector3f();
+	            kAxis.Cross( Vector3f.UNIT_Z, kV1 );
+	            kAxis.Normalize();
+	            
+	            float fAngle = kV1.Angle(Vector3f.UNIT_Z);
+	            Matrix3f kRotate = new Matrix3f();
+	            kRotate.FromAxisAngle( kAxis, fAngle);
+	            
+	            Vector3f kTest = new Vector3f();
+	            kRotate.Mult( Vector3f.UNIT_Z, kTest );
+	            if ( !kTest.IsEqual( kV1 ) )
+	            {
+	            	System.err.println( kTest + "   ==?  " + kV1 );
+	            }
+	            
 				Transformation kTransform = new Transformation();
-				kTransform.SetMatrix(new Matrix3f(kV1,kV2,kV3,false));
-				Vector3f kScale = new Vector3f( fLambda1, fLambda2, fLambda3 );
+				
+				kTransform.SetRotate( kRotate );
+				
+				//kTransform.SetMatrix(new Matrix3f(kV1,kV2,kV3,false));
+				Vector3f kScale = new Vector3f( fLambda3, fLambda2, fLambda1 );
 				kScale.Normalize();
+				kScale.Set( (float)Math.max(.1, kScale.X), (float)Math.max(.1, kScale.Y), (float)Math.max(.1, kScale.Z) );
 				kTransform.SetScale( kScale );
+				
+				//kTransform.SetScale( new Vector3f(kV1) );
+				//System.err.println( kTransform.GetScale() );
+				
 				m_kEigenVectors.put( new Integer(i), kTransform );
 			}
 			if ( (i%(m_iDimX*m_iDimY)) == 0 )
@@ -766,12 +842,6 @@ public class VolumeDTI extends VolumeObject
 
 			// reset iIndex:
 				iIndex = kKey.intValue();
-			/*
-            fX = (float)(iX)/(float)(m_iDimX);
-            fY = (float)(iY)/(float)(m_iDimY);
-            fZ = (float)(iZ)/(float)(m_iDimZ);
-
-			 */
 
 
 				float xBox = (m_iDimX - 1) * fXDelta;
@@ -805,6 +875,7 @@ public class VolumeDTI extends VolumeObject
 		
 
 		System.out.println( "VolumeDTI " + m_iLen );
+		*/
 
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
@@ -813,27 +884,12 @@ public class VolumeDTI extends VolumeObject
 
 		CullState kCull = new CullState();
 		kCull.Enabled = true;
-		kCull.FrontFace = CullState.FrontMode.FT_CW;
 		StandardMesh kSM = new StandardMesh(kAttr);
-		m_kSphere = kSM.Sphere(64,64,1f);
+		m_kSphere = kSM.Sphere(8,8,1f);
 		m_kSphere.AttachGlobalState(kCull);
 
-		m_kCylinder = kSM.Cylinder(64,64,1.0f,2f,false);
+		m_kCylinder = kSM.Cylinder(8,8,1.0f,2f,false);
 		m_kCylinder.AttachGlobalState(kCull);
-		Vector3f kPos = new Vector3f();
-		Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
-				0.0f,1.0f,0.0f,
-				-1f,0.0f,0f);
-		for ( int i = 0; i < m_kCylinder.VBuffer.GetVertexQuantity(); i++ )
-		{
-			kPos = m_kCylinder.VBuffer.GetPosition3(i);
-			matrix.Mult(kPos, kPos);
-			m_kCylinder.VBuffer.SetPosition3(i, kPos);
-			kPos = m_kCylinder.VBuffer.GetNormal3(i);
-			matrix.Mult(kPos, kPos);
-			m_kCylinder.VBuffer.SetNormal3(i, kPos);            
-		}
-
 
 		m_kLightShader = new SurfaceLightingEffect( m_kVolumeImageA, false ); 
 
@@ -873,7 +929,6 @@ public class VolumeDTI extends VolumeObject
 
 		MakeArrow();
 
-		afTensorData = null;
 	}
 
 
@@ -975,18 +1030,32 @@ public class VolumeDTI extends VolumeObject
 		}
 		Integer kKey;
 		Integer cKey;
-		Vector<int[]> kGlyphVector;
-		int[] aiEllipsoids;
-		int iIndex;
-		ColorRGB kColor;
+		Vector<VOIContour> kGlyphVector;
+		VOIContour kContour;
+		Vector3f kPos;
 		float fR,fG,fB;
 		TriMesh kGlyph = null;        
 		Iterator<Integer> kIterator = m_kGlyphs.keySet().iterator();
 		Iterator<Integer> cIterator = groupConstantColor.keySet().iterator();
 		int iCount = 0;
-		m_kLightShader.SetReverseFace(1);
+		m_kLightShader.SetReverseFace(0);
 		m_kLightShader.SetSurfaceTexture(false, false, false);
-			
+        float[] afVectorData = new float[3];
+        Vector3f kAxis = new Vector3f();
+        Vector3f kV1 = new Vector3f();
+        float fAngle, fLambda1, fLambda2, fLambda3;
+        Transformation kTransform;
+
+		float fXDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
+		float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
+		float fZDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
+
+		float xBox = (m_iDimX - 1) * fXDelta;
+		float yBox = (m_iDimY - 1) * fYDelta;
+		float zBox = (m_iDimZ - 1) * fZDelta;
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));    
+		float fX, fY, fZ;
+		
 		while ( kIterator.hasNext() )
 		{
 			kKey = (Integer)kIterator.next();
@@ -994,100 +1063,101 @@ public class VolumeDTI extends VolumeObject
 			kGlyphVector = m_kGlyphs.get(kKey);     
 			for ( int i = 0; i < kGlyphVector.size(); i++ )
 			{
-				aiEllipsoids = kGlyphVector.get(i);
-				for ( int j = 0; j < aiEllipsoids.length; j++ )
+				kContour = kGlyphVector.get(i);
+				for ( int j = 0; j < kContour.size(); j++ )
 				{
 					if ( (iCount%m_iEllipsoidMod) == 0 )
 					{                           
-						if ( aiEllipsoids[j] != -1 )
+						kPos = kContour.elementAt(j);
+						if ( kImage.isColorImage() )
 						{
-							iIndex = aiEllipsoids[j];
-							Integer kIndex = new Integer(iIndex);
-							kColor = m_kEllipseConstantColor.get(kIndex);
-
-							if ( kColor != null )
-							{
-
-								if ( !isUsingVolumeColor ) {
-									if ( cKey == null ) continue;
-									m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
-								} else {
-									fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-									fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-									fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-									m_kColorEllipse = new ColorRGB(fR, fG, fB);
-								}
-
-								m_kColorEllipse = kColor;
-
+							if ( !isUsingVolumeColor ) {
+								if ( cKey == null ) continue;
+								m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
+							} else {
+								fR = kImage.getFloatTriLinearBounds( kPos.X, kPos.Y, kPos.Z, 1 )/255.0f;
+								fG = kImage.getFloatTriLinearBounds( kPos.X, kPos.Y, kPos.Z, 2 )/255.0f;
+								fB = kImage.getFloatTriLinearBounds( kPos.X, kPos.Y, kPos.Z, 3 )/255.0f;
+								m_kColorEllipse = new ColorRGB(fR, fG, fB);
 							}
-							else
-							{
-								if ( kImage.isColorImage() )
-								{
-									if ( !isUsingVolumeColor ) {
-										if ( cKey == null ) continue;
-										m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
-									} else {
-										fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-										fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-										fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-										m_kColorEllipse = new ColorRGB(fR, fG, fB);
-									}
-								}
-								else
-								{
-									fR = kImage.getFloat( iIndex );
-									m_kColorEllipse = new ColorRGB(fR, fR, fR);
-								}
-							}
+						}
+						else
+						{
+							fR = kImage.getFloatTriLinearBounds( kPos.X, kPos.Y, kPos.Z );
+							m_kColorEllipse = new ColorRGB(fR, fR, fR);
+						}
 
-							//m_kColorEllipse.Set( m_kEigenVectors.get(kIndex).GetScale().X, 
-									//        m_kEigenVectors.get(kIndex).GetScale().Y,
-									//        m_kEigenVectors.get(kIndex).GetScale().Z );
-							if ( m_bDisplayEllipsoids )
-							{
+						// Get the transform:
+			            for ( int k = 0; k < 3; k++ )
+			            {
+			                afVectorData[k] = m_kEigenVector.getFloatTriLinearBoundsTime(kPos.X, kPos.Y, kPos.Z, k);
+			            }
+			            kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+			            kAxis.Cross( Vector3f.UNIT_Z, kV1 );
+			            kAxis.Normalize();
+			            
+			            fAngle = kV1.Angle(Vector3f.UNIT_Z);
+			            Matrix3f kRotate = new Matrix3f();
+			            kRotate.FromAxisAngle( kAxis, fAngle);
+			            
 
-								if ( !isUsingVolumeColor ) {
-									if ( cKey == null ) continue;
-									m_kColorEllipse = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
-								} else {
-									fR = kImage.getFloat( iIndex*4 + 1 )/255.0f;
-									fG = kImage.getFloat( iIndex*4 + 2 )/255.0f;
-									fB = kImage.getFloat( iIndex*4 + 3 )/255.0f;
-									m_kColorEllipse = new ColorRGB(fR, fG, fB);
-								}
+			            fLambda1 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 1);
+			            fLambda2 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 2);
+			            fLambda3 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 3);
+			            
+			            kTransform = new Transformation();
+						kTransform.SetRotate( kRotate );
+						
+						Vector3f kScale = new Vector3f( fLambda3, fLambda2, fLambda1 );
+						kScale.Normalize();
+						kScale.Set( (float)Math.max(.1, kScale.X), (float)Math.max(.1, kScale.Y), (float)Math.max(.1, kScale.Z) );
+						kScale.Scale(m_fScale);
+						kTransform.SetScale( kScale );
+						
 
-								kGlyph = m_kSphere;
 
-							}
-							else if ( m_bDisplayCylinders )
-							{
-								kGlyph = m_kCylinder;
-							}
-							else if ( m_bDisplayArrows )
-							{
-								m_kArrow.Local.Copy(m_kEigenVectors.get(kIndex));
+						fX = ((2.0f * (kPos.X * fXDelta)) - xBox)/(2.0f*maxBox);
+						fY = ((2.0f * (kPos.Y * fYDelta)) - yBox)/(2.0f*maxBox);
+						fZ = ((2.0f * (kPos.Z * fZDelta)) - zBox)/(2.0f*maxBox);             
 
-								m_kEllipseMaterial.Ambient = m_kColorEllipse;
-								m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-								m_kScene.SetChild(0,m_kArrow);
-								m_kScene.UpdateGS();
-								m_kScene.DetachChild(m_kArrow);
-								kRenderer.Draw((TriMesh)m_kArrow.GetChild(0));
-								kRenderer.Draw((TriMesh)m_kArrow.GetChild(1));
-							}
-							if ( kGlyph != null )
-							{
-								kGlyph.Local.Copy(m_kEigenVectors.get(kIndex));
+						kTransform.SetTranslate( fX, fY, fZ );
+						
+						
+						
 
-								m_kEllipseMaterial.Ambient = m_kColorEllipse;
-								m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-								m_kScene.SetChild(0,kGlyph);
-								m_kScene.UpdateGS();
-								m_kScene.DetachChild(kGlyph);
-								kRenderer.Draw(kGlyph);
-							}
+						if ( m_bDisplayEllipsoids )
+						{
+							kGlyph = m_kSphere;
+
+						}
+						else if ( m_bDisplayCylinders )
+						{
+							kGlyph = m_kCylinder;
+						}
+						else if ( m_bDisplayArrows )
+						{
+							m_kArrow.Local.Copy(kTransform);
+
+							m_kEllipseMaterial.Ambient = m_kColorEllipse;
+							m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+							m_kScene.SetChild(0,m_kArrow);
+							m_kScene.UpdateGS();
+							m_kScene.DetachChild(m_kArrow);
+							kRenderer.Draw((TriMesh)m_kArrow.GetChild(0));
+							//kRenderer.Draw((TriMesh)m_kArrow.GetChild(1));
+						}
+						if ( kGlyph != null )
+						{
+							kGlyph.Local.Copy(kTransform);
+							kGlyph.AttachGlobalState(m_kZBuffer);
+							kGlyph.UpdateGS();
+
+							m_kEllipseMaterial.Ambient = m_kColorEllipse;
+							m_kEllipseMaterial.Diffuse = m_kColorEllipse;
+							m_kScene.SetChild(0,kGlyph);
+							m_kScene.UpdateGS();
+							m_kScene.DetachChild(kGlyph);
+							kRenderer.Draw(kGlyph);
 						}
 					}
 					iCount++;
@@ -1224,10 +1294,6 @@ public class VolumeDTI extends VolumeObject
 	private void MakeArrow()
 	{
 		m_kArrow = new Node();
-		Vector3f kPos = new Vector3f();
-		Matrix3f matrix = new Matrix3f(0f,0.0f,1f,
-				0.0f,1.0f,0.0f,
-				-1f,0.0f,0f);
 
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
@@ -1236,38 +1302,14 @@ public class VolumeDTI extends VolumeObject
 
 		CullState kCull = new CullState();
 		kCull.Enabled = true;
-		kCull.FrontFace = CullState.FrontMode.FT_CW;
 		StandardMesh kSM = new StandardMesh(kAttr);
 
-		TriMesh pkMesh = kSM.Cone(64,64,1.0f,1.0f, false);
+		TriMesh pkMesh = kSM.Cone(8,8,1.0f,1.0f, false);
 		m_kArrow.AttachChild(pkMesh);
 
-		for ( int i = 0; i < pkMesh.VBuffer.GetVertexQuantity(); i++ )
-		{
-			kPos = pkMesh.VBuffer.GetPosition3(i);
-			matrix.Mult(kPos, kPos);
-			kPos.X -=.5;
-			pkMesh.VBuffer.SetPosition3(i, kPos);
-			kPos = pkMesh.VBuffer.GetNormal3(i);
-			matrix.Mult(kPos, kPos);
-			pkMesh.VBuffer.SetNormal3(i, kPos);        
-			pkMesh.VBuffer.SetTCoord3(0, i, kPos);       
-		}
+		TriMesh pkMesh2 = kSM.Cylinder(8,8,0.5f,1.0f,false);
 
-		TriMesh pkMesh2 = kSM.Cylinder(64,64,0.5f,1.0f,false);
-		for ( int i = 0; i < pkMesh2.VBuffer.GetVertexQuantity(); i++ )
-		{
-			kPos = pkMesh2.VBuffer.GetPosition3(i);
-			matrix.Mult(kPos, kPos);
-			kPos.X +=.5;
-			pkMesh2.VBuffer.SetPosition3(i, kPos);
-			kPos = pkMesh2.VBuffer.GetNormal3(i);
-			matrix.Mult(kPos, kPos);
-			pkMesh2.VBuffer.SetNormal3(i, kPos);              
-			pkMesh2.VBuffer.SetTCoord3(0, i, kPos);       
-		}
-
-		m_kArrow.AttachChild(pkMesh2);
+		//m_kArrow.AttachChild(pkMesh2);
 
 		pkMesh.AttachEffect(m_kLightShader);
 		pkMesh2.AttachEffect(m_kLightShader);        
