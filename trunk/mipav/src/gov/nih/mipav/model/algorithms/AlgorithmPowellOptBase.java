@@ -113,11 +113,9 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase implements Re
      * @param  costFunc         Cost function to use.
      * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
      * @param  maxIter          The maximum iterations.
-     * @param  coords           2 or 3 for 2D or 3D
-     * @param  bracket          DOCUMENT ME!
      */
     public AlgorithmPowellOptBase(AlgorithmBase parentAlgo, int degreeOfFreedom, AlgorithmOptimizeFunctionBase costFunc,
-                                  double[] tols, int maxIter, int coords, int bracket) {
+                                  double[] tols, int maxIter) {
         dof = degreeOfFreedom;
         costFunction = costFunc;
         tolerance = tols;
