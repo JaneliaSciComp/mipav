@@ -172,7 +172,6 @@ public class AlgorithmAnyTwoImagesSNR extends AlgorithmBase {
             boolean doSubsample;
             boolean doMultiThread;
             boolean fastMode = false;
-            int bracketBound = 10;
             int maxIterations = 2;
             int numMinima = 3;
             boolean transformVOI = false;
@@ -184,7 +183,7 @@ public class AlgorithmAnyTwoImagesSNR extends AlgorithmBase {
                 interp = AlgorithmTransform.BILINEAR;
                 interp2 = AlgorithmTransform.BILINEAR;
                 regAlgo = new AlgorithmRegOAR2D(srcImage, image2, cost, DOF, interp, rotateBegin, rotateEnd,
-                        coarseRate, fineRate, doSubsample, doMultiThread, bracketBound, maxIterations, numMinima);
+                        coarseRate, fineRate, doSubsample, doMultiThread, maxIterations, numMinima);
                 regAlgo.run();
                 transform = new AlgorithmTransform(image2, regAlgo.getTransform(), interp2, srcImage.getFileInfo()[0]
                         .getResolutions()[0], srcImage.getFileInfo()[0].getResolutions()[1], srcImage.getExtents()[0],
@@ -201,7 +200,7 @@ public class AlgorithmAnyTwoImagesSNR extends AlgorithmBase {
                 interp2 = AlgorithmTransform.TRILINEAR;
                 regAlgo3D = new AlgorithmRegOAR3D(srcImage, image2, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxResol, doSubsample, doMultiThread, fastMode, bracketBound,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxResol, doSubsample, doMultiThread, fastMode,
                         maxIterations, numMinima);
                 regAlgo3D.run();
                 transform = new AlgorithmTransform(image2, regAlgo3D.getTransform(), interp2, srcImage.getFileInfo()[0]
