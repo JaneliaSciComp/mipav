@@ -98,7 +98,7 @@ ItemListener  {
     private JDialog advancedDialog;
 
     /** DOCUMENT ME! */
-    private JTextField bracketBoundText, maxIterationsText, numMinText;
+    private JTextField maxIterationsText, numMinText;
 
     /** DOCUMENT ME! */
     private JButton buttonWeightInput;
@@ -197,10 +197,10 @@ ItemListener  {
     private ModelImage matchImage; // register match image to reference Image
 
     /** DOCUMENT ME! */
-    private int maxIterations_def = 2, bracketBound_def = 10, numMinima_def = 3;
+    private int maxIterations_def = 2, numMinima_def = 3;
 
     /** DOCUMENT ME! */
-    private int maxIterations = maxIterations_def, bracketBound = bracketBound_def;
+    private int maxIterations = maxIterations_def;
 
     /** DOCUMENT ME! */
     private boolean maxOfMinResol;
@@ -430,24 +430,21 @@ ItemListener  {
                     maxIterationsLabel.setForeground(Color.BLACK);
                     numMinLabel.setForeground(Color.BLACK);
 
-                    bracketBoundText.setEnabled(true);
                     maxIterationsText.setEnabled(true);
                     numMinText.setEnabled(true);
                     sampleCheckbox.setEnabled(true);
                     jtemCheckbox.setEnabled(true);
                     fastModeCheckbox.setEnabled(true);
 
-                    bracketBound_def = bracketBound;
                     maxIterations_def = maxIterations;
                     numMinima_def = numMinima;
-;
+
 
                 } else {
                     bracketBoundLabel.setForeground(Color.lightGray);
                     maxIterationsLabel.setForeground(Color.lightGray);
                     numMinLabel.setForeground(Color.lightGray);
 
-                    bracketBoundText.setEnabled(false);
                     maxIterationsText.setEnabled(false);
                     numMinText.setEnabled(false);
                     sampleCheckbox.setEnabled(false);
@@ -548,13 +545,6 @@ ItemListener  {
                 return;
             }
         } else if (command.equals("AdvancedOkay")) {
-            tmpStr = bracketBoundText.getText();
-
-            if (JDialogBase.testParameter(tmpStr, 1, 60)) {
-                bracketBound = Integer.valueOf(tmpStr).intValue();
-            } else {
-                bracketBound = bracketBound_def;
-            }
 
             tmpStr = maxIterationsText.getText();
 
@@ -576,7 +566,6 @@ ItemListener  {
             advancedDialog.dispose();
         } else if (command.equals("AdvancedCancel")) {
             maxIterations = maxIterations_def;
-            bracketBound = bracketBound_def;
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
@@ -697,7 +686,6 @@ ItemListener  {
         float resZ;
         String comStr;
         DecimalFormat nf;
-        final ViewUserInterface UI = ViewUserInterface.getReference();
 
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
@@ -1092,12 +1080,10 @@ ItemListener  {
     /**
      * Accessor to set the advanced settings.
      * 
-     * @param bracketBound DOCUMENT ME!
      * @param maxIterations DOCUMENT ME!
      * @param numMinima DOCUMENT ME!
      */
-    public void setAdvancedSettings(final int bracketBound, final int maxIterations, final int numMinima) {
-        this.bracketBound = bracketBound;
+    public void setAdvancedSettings(final int maxIterations, final int numMinima) {
         this.maxIterations = maxIterations;
         this.numMinima = numMinima;
     }
@@ -1439,12 +1425,12 @@ ItemListener  {
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                         rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                         fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
+                        doMultiThread, fastMode, maxIterations, numMinima);
             } else {
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
                         rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
                         fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        doMultiThread, fastMode, bracketBound, maxIterations, numMinima);
+                        doMultiThread, fastMode, maxIterations, numMinima);
             }
         } else {
             // System.out.println("Reference image name is " +refImage.getImageName());
@@ -1454,13 +1440,13 @@ ItemListener  {
                 reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
                         rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
-                        fastMode, bracketBound, maxIterations, numMinima);
+                        fastMode, maxIterations, numMinima);
                 reg3.setJTEM(doJTEM);
             } else {
                 System.err.println("Sending LS Image to OAR3D algorithm");
                 reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
                         coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
+                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
                         maxIterations, numMinima);
 
             }
@@ -2336,20 +2322,6 @@ ItemListener  {
         advancedBox.addActionListener(this);
         advancedBox.setFont(serif12B);
 
-        JPanel bracketPanel = new JPanel(new GridBagLayout());
-        bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum (10-60): ");
-        bracketBoundLabel.setForeground(Color.lightGray);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        bracketPanel.add(bracketBoundLabel, gbc);
-        bracketPanel.setToolTipText("Used for translation, scale and skew.");
-        bracketBoundText = new JTextField(String.valueOf(bracketBound), 3);
-        bracketBoundText.addActionListener(this);
-        bracketBoundText.setEnabled(false);
-        gbc.gridx = 1;
-        gbc.gridy = 0;
-        bracketPanel.add(bracketBoundText, gbc);
-
         JPanel maxIterPanel = new JPanel(new GridBagLayout());
         maxIterationsLabel = new JLabel("Number of iterations (1-5): ");
         maxIterationsLabel.setForeground(Color.lightGray);
@@ -2410,21 +2382,18 @@ ItemListener  {
         settingsPanel.add(advancedBox, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        settingsPanel.add(bracketPanel, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
         settingsPanel.add(maxIterPanel, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         settingsPanel.add(numMinPanel, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 3;
         settingsPanel.add(sampleCheckbox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 4;
         settingsPanel.add(jtemCheckbox, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 5;
         settingsPanel.add(fastModeCheckbox, gbc);
 
         final JPanel buttonPanel = new JPanel();
@@ -2506,9 +2475,9 @@ ItemListener  {
     public void loadB0File() {
 
         ViewOpenFileUI openFile = new ViewOpenFileUI(true);          
-        final boolean stackFlag = getLastStackFlag();
-        ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag);
-        final FileIO fileIO = new FileIO();
+        //final boolean stackFlag = getLastStackFlag();
+        //ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag);
+        //final FileIO fileIO = new FileIO();
         //m_kDWIImage = fileIO.readImage(openFile.getImagePath());
         textB0image.setText(openFile.getImagePath());
         m_kB0Image = openFile.getImage();
