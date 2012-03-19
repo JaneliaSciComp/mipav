@@ -84,9 +84,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     public ModelImage result35RegImage;
 
-    /** grid bag constraints * */
-    private GridBagConstraints gbc;
-
     private Font serif12;
 
     private Font serif12B;
@@ -133,20 +130,16 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     /** DOCUMENT ME! */
     private int costT2, interpT2, DOFT2;
 
-    private int DOFReg35;
-
     private String matrixDirectory;
 
     private float rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ;
 
-    private float rotateBegin, rotateEnd, coarseRate, fineRate;
-
     private boolean maxOfMinResol = true, doSubsample = true, doMultiThread = true, fastMode = false;
 
     private boolean doGraph = false;
 
-    private int bracketBound = 10, maxIterations = 2, numMinima = 3;
+    private int maxIterations = 2, numMinima = 3;
 
     int registerTo = 3;
 
@@ -186,15 +179,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     private int[] newB0DWIRegExtents;
 
-    private int[] epiExtents;
-
     public TransMatrix[] arrayTransMatrix;
 
     public TransMatrix b0toStructMatrix;
-
-    private ModelImage[] EPI4dto3dArray;
-
-    private ModelImage EPI4dto3dVolume;
 
     private DTIParameters dtiRegParams;
 
@@ -221,8 +208,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     private JLabel labelInternal;
     
     private DTIParameters dtiparams;
-    
-    private JPanelDTIImportData importData;
 
     private JLabel labelInterp;
 
@@ -257,7 +242,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        String tmpStr;
 
         if (command.equals("RUN OAR 3.5D")) {
             if (pipeline.T2Image != null) {
@@ -410,7 +394,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         float resZ;
         String comStr;
         DecimalFormat nf;
-        final ViewUserInterface UI = ViewUserInterface.getReference();
 
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
@@ -568,14 +551,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         }
         if (algorithm instanceof AlgorithmRegOAR35D) {
             matrixDirectory = pipeline.DWIImage.getImageDirectory();
-            final TransMatrix finalMatrix = reg35.getTransform();
             arrayTransMatrix = reg35.getArrayTransMatrix();
 
             //Testing
             /*for (int i = 0; i < arrayTransMatrix.length; i++) {
                 System.out.println("TestarrayTransMatrix: " + arrayTransMatrix[i]);
             }*/
-            JTextField[][] textMatrix = new JTextField[4][4];
 
             result35RegImage = reg35.getTransformedImage();
             if (result35RegImage != null) {
@@ -617,7 +598,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         dwi35RegImage = (ModelImage) matchDWIImage.clone(matchDWIImage.getImageName() + "3.5RegB0&DWIDataset");
 
         reg35 = new AlgorithmRegOAR35D(dwi35RegImage, cost, DOF, interp, interp, registerTo, refVolNum, rotateBegin,
-                rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+                rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode, maxIterations, numMinima);
 
         reg35.addListener(this);
 
@@ -671,7 +652,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         reg3 = new AlgorithmRegOAR3D(refT2image, matchB0image, costT2, DOFT2, interpT2, rotateBeginX, rotateEndX,
                 coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ,
-                coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode, bracketBound,
+                coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
                 maxIterations, numMinima);
 
         reg3.addListener(this);
@@ -1095,13 +1076,10 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     public void createArrayTransMatrixTXT() {
 
         try {
-            StringBuffer sb;
-            int padLength;
             File arrayMatFile = new File(matrixDirectory + pipeline.DWIImage.getImageName() + "TransMats" + ".mtx");
             FileOutputStream outputStream = new FileOutputStream(arrayMatFile);
             PrintStream printStream = new PrintStream(outputStream);
             String matrixString = "";
-            String[] matrixArr = new String[pipeline.DWIImage.getExtents()[3]];
 
             for (int i = 0; i < pipeline.DWIImage.getExtents()[3] - 1; i++) {
                 printStream.print("TransMatrix" + " " + i + ":");
