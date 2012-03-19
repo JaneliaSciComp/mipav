@@ -122,11 +122,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     /** Final answer after registration. */
     private MatrixListItem answer;
 
-    /**
-     * The bracket size around the minimum in multiples of unit_tolerance in the first iteration of Powell's algorithm.
-     */
-    private int bracketBound;
-
     /** DOCUMENT ME! */
     private float[] buffer;
 
@@ -371,15 +366,13 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      * @param  doGraph        If true produce 2 output graphs - one for 3 rotations and one for 3 translations
      * @param  doSubsample    If true subsample
      * @param  fastMode       If true skip subsample and go directly to level 1 optimization
-     * @param  _bracketBound  The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *                        of Powell's algorithm.
      * @param  _baseNumIter   Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's
      *                        will be an integer multiple of baseNumIter
      * @param  _numMinima     Number of minima from level 8 to test at level 4
      */
     public AlgorithmRegOAR35D(ModelImage _image, int _costChoice, int _DOF, int _interp, int _interp2, int mode,
                               int refImageNum, float _rotateBegin, float _rotateEnd, float _coarseRate, float _fineRate,
-                              boolean doGraph, boolean doSubsample, boolean fastMode, int _bracketBound,
+                              boolean doGraph, boolean doSubsample, boolean fastMode,
                               int _baseNumIter, int _numMinima) {
         super(null, _image);
         
@@ -418,7 +411,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         this.doGraph = doGraph;
         this.doSubsample = doSubsample;
         this.fastMode = fastMode;
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
@@ -453,8 +445,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
      * @param  doGraph        If true produce 2 output graphs - 1 for 3 rotations and one for 3 translations
      * @param  doSubsample    If true subsample
      * @param  fastMode       If true skip subsample and go directly to level 1 optimization
-     * @param  _bracketBound  The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *                        of Powell's algorithm.
      * @param  _baseNumIter   Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's
      *                        will be an integer multiple of baseNumIter
      * @param  _numMinima     Number of minima from level 8 to test at level 4
@@ -462,7 +452,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     public AlgorithmRegOAR35D(ModelImage _image, ModelImage _inputWeight, int _costChoice, int _DOF, int _interp,
                               int _interp2, int mode, int refImageNum, float _rotateBegin, float _rotateEnd,
                               float _coarseRate, float _fineRate, boolean doGraph, boolean doSubsample,
-                              boolean fastMode, int _bracketBound, int _baseNumIter, int _numMinima) {
+                              boolean fastMode, int _baseNumIter, int _numMinima) {
 
         super(null, _image);
 
@@ -502,7 +492,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         this.doGraph = doGraph;
         this.doSubsample = doSubsample;
         this.fastMode = fastMode;
-        bracketBound = _bracketBound;
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
 
@@ -3013,7 +3002,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         if (DOF > 6) {
             nDims = 4;
         }
-        powell = new AlgorithmPowellOpt3D(this, cog, nDims, cost, getTolerance(nDims), maxIter, bracketBound);
+        powell = new AlgorithmPowellOpt3D(this, cog, nDims, cost, getTolerance(nDims), maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3245,8 +3234,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 7;
-        powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter,
-                                          bracketBound);
+        powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3347,7 +3335,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree),
-                                                               maxIter, bracketBound);
+                                                               maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3544,7 +3532,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         int degree = (DOF < 12) ? DOF : 12;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost,
-                getTolerance(degree), maxIter, bracketBound);
+                getTolerance(degree), maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3627,7 +3615,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         maxIter = baseNumIter * 4;
 
         AlgorithmPowellOptBase powell = new AlgorithmPowellOpt3D(this, cog, degree, cost,
-                getTolerance(degree), maxIter, bracketBound);
+                getTolerance(degree), maxIter);
         powell.setUseJTEM(doJTEM);
     	powell.setParallelPowell(doMultiThread);
         if ( doJTEM )
@@ -3660,7 +3648,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         if (DOF > 7) {
             degree = 9;
-            powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, bracketBound);
+            powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter);
             powell.setUseJTEM(doJTEM);
         	powell.setParallelPowell(doMultiThread);
             if ( doJTEM )
@@ -3678,7 +3666,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
             if (DOF > 9) {
                 degree = 12;
-                powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, getTolerance(12), maxIter, bracketBound);
+                powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, getTolerance(12), maxIter);
                 powell.setUseJTEM(doJTEM);
             	powell.setParallelPowell(doMultiThread);
                 if ( doJTEM )
