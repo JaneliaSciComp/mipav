@@ -121,7 +121,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     public void dispose(boolean gc) {
         this.disposeLocal();
 
-        image.disposeLocal();
+        image.disposeLocal(gc);
         image = null;
         
         paintBuffer = null;
