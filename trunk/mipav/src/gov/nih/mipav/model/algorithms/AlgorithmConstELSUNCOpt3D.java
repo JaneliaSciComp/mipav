@@ -33,6 +33,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
     /** The cost of the function at the best minimum. */
     private double functionAtBest;
+    
+    private double lastFunctionAtBest;
 
     /** The maximum number of iterations the optimization allows. */
     private int maxIterations;
@@ -651,26 +653,40 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     }
 
     /**
-     * Runs Powell's method. Powell's method is a way to find minimums without finding derivatives. Basically, it starts
-     * at some point P in N-dimensional space, proceeds in a direction, and minimizes along that line using golden
-     * search. It then resets the point and minimizes again, until the point moves by less than the tolerance. This
-     * method starts with the initial point defined in the constructor and initial directions of (1 0 ... 0) (0 1 0 ...
-     * ) ..., the basis vectors. At the end, "point" is the best point found and functionAtBest is the value at "point".
+     * Runs ELSUNC along one dimension at a time as long as the costFunction improves during one cycle
+     * of runs along every dimension.
      */
     public void runAlgorithm() {
+    	int i;
+    	boolean anotherCycle = true;
+    	double originalI;
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
+        lastFunctionAtBest = Double.MAX_VALUE;
 
-        
-        dModel = new FitOAR3DConstrainedModel(1);
-        dModel.driver();
-        double params[] = dModel.getParameters();
-        for (int i = 0; i < nDims; i++) {
-            point[i] = params[i];	
-        }
-        double[]fullPoint = getFinal(point);
-        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
-        status = dModel.getExitStatus();
+        while (anotherCycle) {
+        	anotherCycle = false;
+	        for (i = 0; i < nDims; i++) {
+		        dModel = new FitOAR3DConstrainedModel(i);
+		        dModel.driver();
+		        status = dModel.getExitStatus();
+		        //dModel.statusMessage(status);
+		        if (status > 0) {
+		        	originalI = point[i];
+			        double params[] = dModel.getParameters();
+			        point[i] = params[0];
+			        double[]fullPoint = getFinal(point);
+			        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
+			        if (functionAtBest < lastFunctionAtBest) {
+			        	lastFunctionAtBest = functionAtBest;
+			        	anotherCycle = true;;
+			        }
+			        else {
+			        	point[i] = originalI;
+			        }
+		        } // if (status > 0)
+	        } // for (i = 0; i < nDims; i++)
+        } // while (anotherCycle)
     }
 
     /**
@@ -839,18 +855,17 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     }
     
     class FitOAR3DConstrainedModel extends NLConstrainedEngine {
-
+        private int currentDim;
         /**
          * Creates a new FitOAR3DConstrainedModel object.
          * 
-         * @param nPoints DOCUMENT ME!
-         * @param yData DOCUMENT ME!
-         * @param initial DOCUMENT ME!
+         * @param currentDim
+         * Only optimize along 1 dimension at a time
          */
-        public FitOAR3DConstrainedModel(final int nPoints) {
+        public FitOAR3DConstrainedModel(int currentDim) {
 
-            // nPoints data points, 3 coefficients, and exponential fitting
-            super(nPoints, nDims);
+            super(1, 1);
+            this.currentDim = currentDim;
 
             bounds = 2; // bounds = 0 means unconstrained
 
@@ -858,11 +873,9 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             // all parameters
             // bounds = 2 means different lower and upper bounds
             // for all parameters
-            for (int i = 0; i < nDims; i++) {
-                bl[i] = trLimits[0][i];	
-                bu[i] = trLimits[1][i];
-                gues[i] = point[i];
-            }
+            bl[0] = trLimits[0][currentDim];	
+            bu[0] = trLimits[1][currentDim];
+            gues[0] = point[currentDim];
             
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
@@ -880,15 +893,13 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         }
 
         /**
-         * Display results of displaying SM2 fitting parameters.
+         * Display results of displaying OAR3DConstrained fitting parameters.
          */
         public void dumpResults() {
             Preferences.debug(" ******* FitOAR3DConstrainedModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Number of iterations: " + String.valueOf(iters) + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("Chi-squared: " + String.valueOf(getChiSquared()) + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("a0 " + String.valueOf(a[0]) + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("a1 " + String.valueOf(a[1]) + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("a2 " + String.valueOf(a[2]) + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
         /**
@@ -900,13 +911,15 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
          */
         public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
             int ctrl;
-
+            double tempI;
             try {
                 ctrl = ctrlMat[0];
                 if ( (ctrl == -1) || (ctrl == 1)) {
-                	double[]fullPoint = getFinal(a);
+                	tempI = point[currentDim];
+                	point[currentDim] = a[0];
+                	double[]fullPoint = getFinal(point);
+                	point[currentDim] = tempI;
                     residuals[0] = costFunction.cost(convertToMatrix(fullPoint));
-                    
                 } // if ((ctrl == -1) || (ctrl == 1))
                 
                 // Calculate the Jacobian numerically
