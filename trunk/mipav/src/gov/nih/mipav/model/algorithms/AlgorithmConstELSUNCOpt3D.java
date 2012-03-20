@@ -760,10 +760,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             }
         } else if (nDims == 4) {
             trLimits = new float[2][4];
-            //trLimits[0][0] = -(float) Math.pow(10, 10); // global scale is unbound
-            //trLimits[1][0] = (float) Math.pow(10, 10); // global scale is unbound
-            trLimits[0][0] = (float)(point[0] - bracketBound * unit_tolerance[0]);
-            trLimits[1][0] = (float)(point[0] + bracketBound * unit_tolerance[0]);
+            trLimits[0][0] = -(float) Math.pow(10, 10); // global scale is unbound
+            trLimits[1][0] = (float) Math.pow(10, 10); // global scale is unbound
+            //trLimits[0][0] = (float)(point[0] - bracketBound * unit_tolerance[0]);
+            //trLimits[1][0] = (float)(point[0] + bracketBound * unit_tolerance[0]);
 
             for (int i = 0; i < 3; i++) { // translation x, y, z; i=0, 1, 2
 
@@ -785,10 +785,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             }
 
             for (int i = limits[0].length; i < nDims; i++) {
-                //trLimits[0][i] = -Float.MAX_VALUE;
-                //trLimits[1][i] = Float.MAX_VALUE;
-            	trLimits[0][i] = (float)(point[i] - bracketBound * unit_tolerance[i]);
-                trLimits[1][i] = (float)(point[i] + bracketBound * unit_tolerance[i]);
+                trLimits[0][i] = -Float.MAX_VALUE;
+                trLimits[1][i] = Float.MAX_VALUE;
+            	//trLimits[0][i] = (float)(point[i] - bracketBound * unit_tolerance[i]);
+                //trLimits[1][i] = (float)(point[i] + bracketBound * unit_tolerance[i]);
             }
         }
     }
