@@ -395,6 +395,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 this.minZ = minZ;
                 
                 this.maxY = maxY;
+                
                 this.maxZ = maxZ;
                 
                 this.stepSize = stepSize;
@@ -422,6 +423,8 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 
                 double baseIntensity = 0, transformIntensity = 0;
                 
+                double sumCutoff = (thresholdIntensity == 0) ? 20 : thresholdIntensity;
+                
                 int transformX, transformY, transformZ;
                 //new ViewJFrameImage(transformImage);
                 for(int i=0; i<xExtents; i++) {
@@ -431,7 +434,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                         for(int k=0; k<zExtents; k++) {
                             transformZ = k-zMeasure;
                             baseIntensity = baseImage.getDouble(i, j, k);
-                            if(baseIntensity < 20) { //TODO: assign reasonable values
+                            if(baseIntensity < sumCutoff) { 
                                 baseIntensity = 0;
                             }
                             if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
@@ -551,10 +554,10 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 FileInfoBase f = baseImage.getFileInfo(0);
                 f.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
                 if(showGeoMean || saveGeoMean) {
-                    subGeoImage = ViewUserInterface.getReference().createBlankImage(f, false);
+                    subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) f.clone(), false);
                 }
                 if(showAriMean || saveAriMean) {
-                    subAriImage = ViewUserInterface.getReference().createBlankImage(f, false);
+                    subAriImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) f.clone(), false);
                 }
                 break;
             }
@@ -762,20 +765,29 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         private void calcGeoMean() {
             
             int transformX, transformY, transformZ;
+            double baseVal = 0, transVal = 0;
+            double mult = 0;
             //new ViewJFrameImage(transformImage);
             for(int i=0; i<subGeoImage.getExtents()[0]; i++) {
                 transformX = i-xMovement;
                 for(int j=0; j<subGeoImage.getExtents()[1]; j++) {
                     transformY = j-yMovement;
                     for(int k=0; k<subGeoImage.getExtents()[2]; k++) {
+                        baseVal = 0;
+                        transVal = 0;
                         transformZ = k-zMovement;
                         if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                            subGeoImage.set(i, j, k, Math.sqrt(baseImage.getDouble(i, j, k)*transformImage.getDouble(transformX, transformY, transformZ)));
-                        } else {
-                            subGeoImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                            transVal = transformImage.getDouble(transformX, transformY, transformZ);
                         }
+                        if(i < baseImage.getExtents()[0] && 
+                                j < baseImage.getExtents()[1] && 
+                                k < baseImage.getExtents()[2]) {
+                            baseVal = baseImage.getDouble(i, j, k);
+                        }
+                        
+                        subGeoImage.set(i,  j, k, Math.sqrt(baseVal*transVal));
                     }
                 }
             }
@@ -792,19 +804,34 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         private void calcAriMean() {
             
             int transformX, transformY, transformZ;
+            double baseVal = 0, transVal = 0;
+            double mult = 0;
             //new ViewJFrameImage(transformImage);
             for(int i=0; i<subAriImage.getExtents()[0]; i++) {
                 transformX = i-xMovement;
                 for(int j=0; j<subAriImage.getExtents()[1]; j++) {
                     transformY = j-yMovement;
                     for(int k=0; k<subAriImage.getExtents()[2]; k++) {
+                        mult = 0;
+                        baseVal = 0;
+                        transVal = 0;
                         transformZ = k-zMovement;
                         if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                            subAriImage.set(i, j, k, (baseImage.getDouble(i, j, k) + transformImage.getDouble(transformX, transformY, transformZ))/2.0 );
+                            transVal = transformImage.getDouble(transformX, transformY, transformZ);
+                            mult++;
+                        }
+                        if(i < baseImage.getExtents()[0] && 
+                                j < baseImage.getExtents()[1] && 
+                                k < baseImage.getExtents()[2]) {
+                            baseVal = baseImage.getDouble(i, j, k);
+                            mult++;
+                        }
+                        if(mult == 0) {
+                            subAriImage.set(i, j, k, 0);
                         } else {
-                            subAriImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                            subAriImage.set(i, j, k, (transVal+baseVal)/mult);
                         }
                     }
                 }
