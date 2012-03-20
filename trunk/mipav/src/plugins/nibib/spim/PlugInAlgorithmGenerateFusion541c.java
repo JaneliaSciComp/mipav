@@ -508,7 +508,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 new ViewJFrameImage(baseImage);
             }
             
-            rotate(AlgorithmRotate.Y_AXIS_MINUS);
+            transformImage = rotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
             
             transform();
             
@@ -523,10 +523,10 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                     threshold(transformImage, thresholdIntensity);
                 }
                 if(showGeoMean || saveGeoMean) {
-                    subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+                    subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
                 }
                 if(showAriMean || saveAriMean) {
-                    subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+                    subAriImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
                 }
                 break;
             
@@ -745,13 +745,17 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             return transform.getResultImage();
         }
 
-        private void rotate(int mode) {
-            AlgorithmRotate rotate = new AlgorithmRotate(transformImage, mode);
+        private ModelImage rotate(ModelImage image, int mode) {
+            AlgorithmRotate rotate = new AlgorithmRotate(image, mode);
             rotate.run(); //transform image replaced
-            transformImage = rotate.getDestImage();
+            ViewUserInterface.getReference().unRegisterImage(image);
+            image.disposeLocal();
+            image = rotate.getDestImage();
             if(doInterImages) {
-                ViewJFrameImage test = new ViewJFrameImage(transformImage);
+                ViewJFrameImage test = new ViewJFrameImage(image);
             }
+            
+            return image;
             
         }
 
