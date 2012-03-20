@@ -123,7 +123,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
     private ModelImage blurredRef = null;
 
     /**
-     * The bracket size around the minimum in multiples of unit_tolerance in the first iteration of Powell's algorithm.
+     * Sets minimum and maximum limits as initial guess -+ unit_tolerance[i]*bracketBound.
      */
     private int bracketBound;
 
@@ -154,7 +154,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
     /** If true subsample for levelEight, levelFour and levelTwo analyses. */
     private boolean doSubsample = true;
     
-    /** Dummy initial values used to create a Powell's algorithm instance before setting initial. */
+    /** Dummy initial values used to create a ELSUNC algorithm instance before setting initial. */
     private double[] dummy = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
     /**
@@ -216,7 +216,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int maxDim = 256;
 
-    /** Advanced optimization settings maxIter in the call to Powell's will be an integer multiple of baseNumIter. */
+    /** Advanced optimization settings maxIter in the call to ELSUNC will be an integer multiple of baseNumIter. */
     private int maxIter, baseNumIter;
 
     /**
@@ -366,8 +366,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
      * @param  _fastMode      If true then searching the parameter space is not conducted and the algorithm proceeds to
      *                        level one immediately
      * @param  _calcCOG       If true calculate the center of gravity (mass) to initialize registration.
-     * @param  _bracketBound  The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *                        of Powell's algorithm.
+     * @param  _bracketBound  Sets minimum and maximum limits as initial guess -+ unit_tolerance[i]*bracketBound.
      * @param  _baseNumIter   Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's
      *                        will be an integer multiple of baseNumIter
      * @param  _numMinima     Number of minima from level 8 to test at level 4
@@ -476,8 +475,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
      * @param  _fastMode      If true then searching the parameter space is not conducted and the algorithm proceeds to
      *                        level one immediately
      * @param  _calcCOG       If true calculate the center of gravity (mass) to initialize registration.
-     * @param  _bracketBound  The bracket size around the minimum in multiples of unit_tolerance for the first iteration
-     *                        of Powell's algorithm.
+     * @param  _bracketBound  Sets minimum and maximum limits as initial guess -+ unit_tolerance[i]*bracketBound.
      * @param  _baseNumIter   Limits the number of iterations of Powell's algorithm. maxIter in the call to Powell's
      *                        will be an integer multiple of baseNumIter
      * @param  _numMinima     Number of minima from level 8 to test at level 4
@@ -2347,16 +2345,16 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         fireProgressStateChanged("\nOptimizing at coarse samples");
         Preferences.debug("Level Eight. Optimizing at coarse samples.\n",Preferences.DEBUG_ALGORITHM);
 
-        AlgorithmConstELSUNCOpt3D powell = null;
+        AlgorithmConstELSUNCOpt3D elsunc = null;
         maxIter = baseNumIter * 2;
 
         if (DOF > 6) {
-            powell = new AlgorithmConstELSUNCOpt3D(this, cog, 4, cost, initial, getTolerance(4), maxIter, bracketBound);
+            elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, 4, cost, initial, getTolerance(4), maxIter, bracketBound);
         } else {
-            powell = new AlgorithmConstELSUNCOpt3D(this, cog, 3, cost, initial, getTolerance(3), maxIter, bracketBound);
+            elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, 3, cost, initial, getTolerance(3), maxIter, bracketBound);
         }
-        powell.setRunningInSeparateThread(runningInSeparateThread);
-        powell.setLimits(limits);
+        elsunc.setRunningInSeparateThread(runningInSeparateThread);
+        elsunc.setLimits(limits);
 
         int iG = 0;
         Preferences.debug("Coarse increment " + iG + ".\n",Preferences.DEBUG_ALGORITHM);
@@ -2379,18 +2377,18 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
                     if (testBounds3D(initial, initialMessage)) {
                         Preferences.debug("Initial point no good.\n",Preferences.DEBUG_ALGORITHM);
                     } else {
-                        powell.setInitialPoint(initial);
-                        powell.run();
-                        foundMin[iG] = powell.didSucceed();
+                        elsunc.setInitialPoint(initial);
+                        elsunc.run();
+                        foundMin[iG] = elsunc.didSucceed();
 
                         if (foundMin[iG]) {
-                            transforms[i][j][k] = powell.getPoint();
-                            initial[3] = powell.getPoint()[0];
-                            initial[4] = powell.getPoint()[1];
-                            initial[5] = powell.getPoint()[2];
+                            transforms[i][j][k] = elsunc.getPoint();
+                            initial[3] = elsunc.getPoint()[0];
+                            initial[4] = elsunc.getPoint()[1];
+                            initial[5] = elsunc.getPoint()[2];
                         } else {
                             Preferences.debug("For coarse increment " + iG +
-                                              ", minimum was not found (Powell failed).\n",Preferences.DEBUG_ALGORITHM);
+                                              ", minimum was not found (ELSUNC failed).\n",Preferences.DEBUG_ALGORITHM);
                         }
                     }
 
@@ -2435,10 +2433,10 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
                         Preferences.debug("Setting the cost to the maximum possible for fine increment, " + iG + ".\n",
                         		Preferences.DEBUG_ALGORITHM);
                     } else {
-                        powell.setInitialPoint(initial);
-                        powell.measureCost();
-                        matrixList[i][j][k] = new MatrixListItem(powell.getCost(), powell.getMatrix(),
-                                                                 powell.getFinal());
+                        elsunc.setInitialPoint(initial);
+                        elsunc.measureCost();
+                        matrixList[i][j][k] = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(),
+                                                                 elsunc.getFinal());
                     }
 
                     costs[index++] = matrixList[i][j][k].cost;
@@ -2476,7 +2474,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
 
         fireProgressStateChanged("Optimizing top samples");
         Preferences.debug("Level Eight. Optimizing top samples. \n",Preferences.DEBUG_ALGORITHM);
-        powell.setRunningInSeparateThread(runningInSeparateThread);
+        elsunc.setRunningInSeparateThread(runningInSeparateThread);
 
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
             fireProgressStateChanged(15 + ((i + 1) * 5 / fineNumX));
@@ -2492,15 +2490,15 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
                             matrixList[i][j][k] = new MatrixListItem(maxPossibleCost);
                         }
 
-                        powell.setInitialPoint(tempInitial);
-                        powell.run();
-                        matrixList[i][j][k] = new MatrixListItem(powell.getCost(), powell.getMatrix(),
-                                                                 powell.getFinal());
+                        elsunc.setInitialPoint(tempInitial);
+                        elsunc.run();
+                        matrixList[i][j][k] = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(),
+                                                                 elsunc.getFinal());
                     }
                 }
             }
         }
-        powell.disposeLocal();
+        elsunc.disposeLocal();
 
         if (threadStopped) {
             return null;
@@ -2604,10 +2602,10 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         int count = 0;
         int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 2;
-        powell = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, initial, getTolerance(degree), maxIter,
+        elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, initial, getTolerance(degree), maxIter,
                                                bracketBound);
-        powell.setRunningInSeparateThread(runningInSeparateThread);
-        powell.setLimits(limits);
+        elsunc.setRunningInSeparateThread(runningInSeparateThread);
+        elsunc.setLimits(limits);
 
         MatrixListItem item;
 
@@ -2618,9 +2616,9 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
             if (testBounds3D(tempInitial, initialMessage)) {
                 item = new MatrixListItem(maxPossibleCost);
             } else {
-                powell.setInitialPoint(tempInitial);
-                powell.run();
-                item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+                elsunc.setInitialPoint(tempInitial);
+                elsunc.run();
+                item = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(), elsunc.getFinal());
             }
 
             optMinima.add(item);
@@ -2633,7 +2631,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
 
         Preferences.debug("Number of optimized minima: " + count + "\n",Preferences.DEBUG_ALGORITHM);
         cost.disposeLocal();
-        powell.disposeLocal();
+        elsunc.disposeLocal();
 
         return new Vector [] { minima, optMinima };
     }
@@ -2703,15 +2701,15 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 2;
 
-        AlgorithmConstELSUNCOpt3D powell = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, dummy,
+        AlgorithmConstELSUNCOpt3D elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, dummy,
                                                                          getTolerance(degree), maxIter, bracketBound);
-        powell.setLimits(limits);
+        elsunc.setLimits(limits);
 
         for (Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = (en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+            elsunc.setInitialPoint(item.initial);
+            elsunc.measureCost();
+            item.cost = elsunc.getCost(); // pointer, so this changes the element in the minima Vector
         }
 
         if (threadStopped) {
@@ -2720,9 +2718,9 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
 
         for (Enumeration<MatrixListItem> en = optMinima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = (en.nextElement());
-            powell.setInitialPoint(item.initial);
-            powell.measureCost();
-            item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+            elsunc.setInitialPoint(item.initial);
+            elsunc.measureCost();
+            item.cost = elsunc.getCost(); // pointer, so this changes the element in the minima Vector
         }
 
         if (threadStopped) {
@@ -2737,12 +2735,12 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         // minima.size()) ? numMinima : minima.size(); Changed so that the number of minima to test at Level Four is a
         // variable, passed in from JDialog.  It used to be set to "3".
 
-        powell.setMaxIterations(3);
+        elsunc.setMaxIterations(3);
 
         Vector<MatrixListItem> newMinima = new Vector<MatrixListItem>();
         fireProgressStateChanged("Optimizing new minima");
 
-        double currentMinimum = 2, powellCost;
+        double currentMinimum = 2, elsuncCost;
         int minimumIndex = 0;
         MatrixListItem best4Now;
 
@@ -2751,38 +2749,38 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
             fireProgressStateChanged(25 + ((i + 1) * 4 / total));
 
             // add i-th mimium to newMinima Vector
-            powell.setInitialPoint((minima.elementAt(i)).initial);
-            powell.setRunningInSeparateThread(runningInSeparateThread);
-            powell.run();
+            elsunc.setInitialPoint((minima.elementAt(i)).initial);
+            elsunc.setRunningInSeparateThread(runningInSeparateThread);
+            elsunc.run();
 
             if (threadStopped) {
                 return null;
             }
 
-            powellCost = powell.getCost();
-            item = new MatrixListItem(powellCost, powell.getMatrix(), powell.getFinal());
+            elsuncCost = elsunc.getCost();
+            item = new MatrixListItem(elsuncCost, elsunc.getMatrix(), elsunc.getFinal());
             newMinima.add(item);
 
-            if (powellCost < currentMinimum) {
-                currentMinimum = powellCost;
+            if (elsuncCost < currentMinimum) {
+                currentMinimum = elsuncCost;
                 minimumIndex = i;
             }
 
             // add i-th optimized minimum to newMinima vector
-            powell.setInitialPoint((optMinima.elementAt(i)).initial);
-            powell.setRunningInSeparateThread(runningInSeparateThread);
-            powell.run();
+            elsunc.setInitialPoint((optMinima.elementAt(i)).initial);
+            elsunc.setRunningInSeparateThread(runningInSeparateThread);
+            elsunc.run();
 
             if (threadStopped) {
                 return null;
             }
 
-            powellCost = powell.getCost();
-            item = new MatrixListItem(powellCost, powell.getMatrix(), powell.getFinal());
+            elsuncCost = elsunc.getCost();
+            item = new MatrixListItem(elsuncCost, elsunc.getMatrix(), elsunc.getFinal());
             newMinima.add(item);
 
-            if (powellCost < currentMinimum) {
-                currentMinimum = powellCost;
+            if (elsuncCost < currentMinimum) {
+                currentMinimum = elsuncCost;
                 minimumIndex = i + total;
             }
         }
@@ -2893,20 +2891,20 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
                     }
                 }
 
-                // Set powell fields.
-                powell.setInitialPoint(initial);
-                powell.setRunningInSeparateThread(runningInSeparateThread);
-                powell.run();
+                // Set elsunc fields.
+                elsunc.setInitialPoint(initial);
+                elsunc.setRunningInSeparateThread(runningInSeparateThread);
+                elsunc.run();
 
                 // Add results (in form of a MatrixListItem) to perturbList.
-                powellCost = powell.getCost();
-                item = new MatrixListItem(powellCost, powell.getMatrix(), powell.getFinal());
+                elsuncCost = elsunc.getCost();
+                item = new MatrixListItem(elsuncCost, elsunc.getMatrix(), elsunc.getFinal());
                 perturbList.add(item);
 
                 // Update currentMinimum and minimumIndex so that we can know if level8 minima tend to be the same as
                 // level4
-                if (powellCost < currentMinimum) {
-                    currentMinimum = powellCost;
+                if (elsuncCost < currentMinimum) {
+                    currentMinimum = elsuncCost;
                     minimumIndex = (int) i / 2;
                 }
 
@@ -2946,10 +2944,10 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
                     Preferences.debug("Multiplying by " + scaleDelta + "\n",Preferences.DEBUG_ALGORITHM);
 
                     // make initial variable old initial * scaleDelta in each dimension
-                    powell.setInitialPoint(initial);
-                    powell.setRunningInSeparateThread(runningInSeparateThread);
-                    powell.run();
-                    item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+                    elsunc.setInitialPoint(initial);
+                    elsunc.setRunningInSeparateThread(runningInSeparateThread);
+                    elsunc.run();
+                    item = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(), elsunc.getFinal());
                     perturbList.add(item);
                 }
             }
@@ -2968,7 +2966,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
 
         fireProgressStateChanged(35);
         cost.disposeLocal();
-        powell.disposeLocal();
+        elsunc.disposeLocal();
 
         return perturbList;
     }
@@ -3115,24 +3113,24 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         Preferences.debug("input.xRes = " + input.xRes + " input.yRes = " + input.yRes +  
                           " input.zRes = " + input.zRes + "\n",Preferences.DEBUG_ALGORITHM);
 
-        AlgorithmConstELSUNCOpt3D powell = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, item.initial,
+        AlgorithmConstELSUNCOpt3D elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
 
-        linkProgressToAlgorithm(powell);
-        powell.setProgressValues(generateProgressValues(60, 100));
+        linkProgressToAlgorithm(elsunc);
+        elsunc.setProgressValues(generateProgressValues(60, 100));
 
-        powell.setRunningInSeparateThread(runningInSeparateThread);
-        powell.setLimits(limits);
-        powell.run();
+        elsunc.setRunningInSeparateThread(runningInSeparateThread);
+        elsunc.setLimits(limits);
+        elsunc.run();
 
         if (threadStopped) {
             return null;
         }
 
         // System.out.println("Input x =  " + input.xRes  + " y =  " + input.yRes  + " z =  " + input.zRes );
-        item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal(input.xRes));
-        item2.halfMatrix = powell.getMatrixHalf(input.xRes);
-        item2.midsagMatrix = powell.getMatrixMidsagittal(input.xRes);
+        item2 = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(input.xRes), elsunc.getFinal(input.xRes));
+        item2.halfMatrix = elsunc.getMatrixHalf(input.xRes);
+        item2.midsagMatrix = elsunc.getMatrixMidsagittal(input.xRes);
         fireProgressStateChanged(100);
         Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
         Preferences.debug("item2.initial[3] = " + item2.initial[3] + "\n",Preferences.DEBUG_ALGORITHM);
@@ -3143,7 +3141,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         Preferences.debug("resRef[2] = " + resRef[2] + "\n",Preferences.DEBUG_ALGORITHM);
 
         cost.disposeLocal();
-        powell.disposeLocal();
+        elsunc.disposeLocal();
 
         return item2;
     }
@@ -3201,9 +3199,9 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 2;
 
-        AlgorithmConstELSUNCOpt3D powell = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, item.initial,
+        AlgorithmConstELSUNCOpt3D elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
-        powell.setLimits(limits);
+        elsunc.setLimits(limits);
 
         fireProgressStateChanged("Measuring costs of minima");
 
@@ -3214,9 +3212,9 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
                 item.cost = maxPossibleCost;
                 Preferences.debug("Setting the cost to the maximum possible.\n",Preferences.DEBUG_ALGORITHM);
             } else {
-                powell.setInitialPoint(item.initial);
-                powell.measureCost();
-                item.cost = powell.getCost(); // pointer, so this changes the element in the minima Vector
+                elsunc.setInitialPoint(item.initial);
+                elsunc.measureCost();
+                item.cost = elsunc.getCost(); // pointer, so this changes the element in the minima Vector
             }
         }
 
@@ -3228,21 +3226,21 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
 
-        linkProgressToAlgorithm(powell);
-        powell.setProgressValues(generateProgressValues(35, 43));
+        linkProgressToAlgorithm(elsunc);
+        elsunc.setProgressValues(generateProgressValues(35, 43));
 
-        powell.setInitialPoint((minima.elementAt(0)).initial);
-        powell.setRunningInSeparateThread(runningInSeparateThread);
-        powell.run();
+        elsunc.setInitialPoint((minima.elementAt(0)).initial);
+        elsunc.setRunningInSeparateThread(runningInSeparateThread);
+        elsunc.run();
 
         if (threadStopped) {
             return null;
         }
 
-        item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
+        item = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(), elsunc.getFinal());
 
-        MatrixListItem itemPtr = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes),
-                                                    powell.getFinal(input.xRes));
+        MatrixListItem itemPtr = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(input.xRes),
+                                                    elsunc.getFinal(input.xRes));
         Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
 
         maxIter = baseNumIter * 2;
@@ -3251,50 +3249,50 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
             degree = 9;
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
             fireProgressStateChanged(43);
-            powell.disposeLocal();
-            powell = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
+            elsunc.disposeLocal();
+            elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                    bracketBound);
-            linkProgressToAlgorithm(powell);
-            powell.setProgressValues(generateProgressValues(43, 51));
-            powell.setRunningInSeparateThread(runningInSeparateThread);
-            powell.setLimits(limits);
-            powell.run();
+            linkProgressToAlgorithm(elsunc);
+            elsunc.setProgressValues(generateProgressValues(43, 51));
+            elsunc.setRunningInSeparateThread(runningInSeparateThread);
+            elsunc.setLimits(limits);
+            elsunc.run();
 
             if (threadStopped) {
                 return null;
             }
 
-            item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-            itemPtr = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal(input.xRes));
+            item = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(), elsunc.getFinal());
+            itemPtr = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(input.xRes), elsunc.getFinal(input.xRes));
             Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
 
             if (DOF > 9) {
                 degree = 12;
                 fireProgressStateChanged("Optimizing with " + degree + " DOF");
                 fireProgressStateChanged(51);
-                powell.disposeLocal();
-                powell = new AlgorithmConstELSUNCOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
+                elsunc.disposeLocal();
+                elsunc = new AlgorithmConstELSUNCOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                        bracketBound);
-                linkProgressToAlgorithm(powell);
-                powell.setProgressValues(generateProgressValues(51, 60));
-                powell.setRunningInSeparateThread(runningInSeparateThread);
-                powell.setLimits(limits);
-                powell.run();
+                linkProgressToAlgorithm(elsunc);
+                elsunc.setProgressValues(generateProgressValues(51, 60));
+                elsunc.setRunningInSeparateThread(runningInSeparateThread);
+                elsunc.setLimits(limits);
+                elsunc.run();
 
                 if (threadStopped) {
                     return null;
                 }
 
-                item = new MatrixListItem(powell.getCost(), powell.getMatrix(), powell.getFinal());
-                itemPtr = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes),
-                                             powell.getFinal(input.xRes));
+                item = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(), elsunc.getFinal());
+                itemPtr = new MatrixListItem(elsunc.getCost(), elsunc.getMatrix(input.xRes),
+                                             elsunc.getFinal(input.xRes));
                 Preferences.debug("Level 2, after " + degree + " DOF: " + itemPtr + "\n",Preferences.DEBUG_ALGORITHM);
             }
         }
 
         fireProgressStateChanged(60);
         cost.disposeLocal();
-        powell.disposeLocal();
+        elsunc.disposeLocal();
 
         return item;
     }
