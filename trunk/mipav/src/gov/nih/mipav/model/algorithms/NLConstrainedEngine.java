@@ -4190,6 +4190,577 @@ public abstract class NLConstrainedEngine {
     public int getExitStatus() {
     	return exitStatus;
     }
+    
+    public void statusMessage(final int status) {
+        if (status == 12340) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12341) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12342) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12343) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12344) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12300) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12301) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12302) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12303) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12304) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12040) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12041) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12042) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12043) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12044) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2 and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12000) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12001) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12002) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12003) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 12004) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the sum of squares is less than epsabs**2\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10340) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10341) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10342) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10343) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10344) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10300) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10301) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10302) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10303) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10304) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10040) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10041) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10042) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10043) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10044) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2 and\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10000) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10001) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10002) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10003) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10004) {
+            Preferences
+                    .debug("Normal termination because the relative predicted reduction in the objective function is less than epsrel**2\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2340) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2341) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2  and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2342) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2343) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2344) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx and\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2300) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2301) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2302) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2303) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2304) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because the relative change in x is less than epsx\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2040) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2041) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2  and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2042) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2043) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2044) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2000) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2001) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2002) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2003) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 2004) {
+            Preferences.debug("Normal termination because the sum of squares is less than epsabs**2\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 340) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 341) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx  and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 342) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 343) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 344) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 300) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 301) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 302) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 303) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 304) {
+            Preferences.debug("Normal termination because the relative change in x is less than epsx\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 40) {
+            Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with no trouble (Gauss-Newton the last 3 steps)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 41) {
+            Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The last steps were computed with prank <> n at the termination point\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 42) {
+            Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The method of Newton was used (at least) in the last step\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 43) {
+            Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The 2nd but last step was subspace minimization but\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("the last two were Gauss-Newton steps \n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 44) {
+            Preferences.debug("Normal termination because we are computing at noise level\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("The steplength was not unit in both the last two steps\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == -1) {
+            Preferences
+                    .debug("Abnormal termination because m < n or n <= 0 or m <= 0 or mdc < m or mdw < n*n + 5*n + 3*m + 6 or\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences
+                    .debug("maxit <= 0 or epsrel < 0 or epsabs < 0 or epsx < 0 or invalid starting point on entry\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+        } else if (status == -2) {
+            Preferences
+                    .debug("Abnormal termination because the number of iterations has exceeded the maximum allowed iterations\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+        } else if (status == -3) {
+            Preferences
+                    .debug("Abnormal termination because the Hessian emanating from the 2nd order method is not positive definite\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+        } else if (status == -4) {
+            Preferences
+                    .debug("Abnormal termination because the algorithm would like to use 2nd derivatives but is not allowed to do that\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+        } else if (status == -5) {
+            Preferences.debug("Abnormal termination because an undamped step with Newtons method is a failure\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == -6) {
+            Preferences
+                    .debug("Abnormal termination because the latest search direction computed using subspace minimization\n", 
+                    		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("was not a descent direction (probably caused by a wrongly computed Jacobian)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == -7) {
+            Preferences.debug("Abnormal termination because there is only one feasible point,\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("namely X(I) = BL(I) = BU(I), I = 1,2,...,N\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == -8) {
+            Preferences.debug("Abnormal termination due to NLConstrainedEngine driver error\n", Preferences.DEBUG_ALGORITHM);
+        } else {
+            Preferences.debug("Exit status = " + status + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    }
+
+    private void statusMessageNL2sol(final int status, final int numParam) {
+        if (status == 3) {
+            Preferences.debug("X-convergence.  The scaled relative difference between the current parameter\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("vector x and a locally optimal parameter vector is very likely at most v[xctol].\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 4) {
+            Preferences.debug("Relative function convergence.  The relative difference between the current\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("function value and its locally optimal value is very likely at most v(rfctol).\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 5) {
+            Preferences.debug("Both x- and relative function convergence (i.e., the conditions for iv(1) = 3 and\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("iv(1) = 4 both hold).\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 6) {
+            Preferences.debug("Absolute function convergence.  the current function value is at most v(afctol)\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("in absolute value.\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 7) {
+            Preferences.debug("Singular convergence.  The hessian near the current iterate appears to be singular\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("or nearly so, and a step of length at most v(lmax0) is unlikely to yield a relative\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("function decrease of more than v(rfctol).\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 8) {
+            Preferences.debug("False convergence.  The iterates appear to be converging to a noncritical point.\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("This may mean that the convergence tolerances (v(afctol), v(rfctol), v(xctol)) are\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("too small for the accuracy to which the function and gradient are being computed,\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("that there is an error in computing the gradient, or that the function or gradient\n", 
+            		Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("is discontinuous near x.\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 9) {
+            Preferences.debug("Function evaluation limit reached without other convergence (see iv(mxfcal)).\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 10) {
+            Preferences.debug("Iteration limit reached without other convergence (see iv(mxiter)).\n", 
+            		Preferences.DEBUG_ALGORITHM);
+        } else if (status == 11) {
+            Preferences.debug("stopx returned .true. (external interrupt).\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 13) {
+            Preferences.debug("f(x) cannot be computed at the initial x.\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 14) {
+            Preferences.debug("Bad parameters passed to assess (which should not occur).\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 15) {
+            Preferences.debug("The jacobian could not be computed at x\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 16) {
+            Preferences.debug("n or p (or parameter nn to nl2itr) out of range --\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("p <= 0 or n < p or nn < n.\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 17) {
+            Preferences.debug("Restart attempted with n or p (or par. nn to nl2itr) changed.\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 18) {
+            Preferences.debug("iv(inits) is out of range.\n", Preferences.DEBUG_ALGORITHM);
+        } else if ( (status >= 19) && (status <= 45)) {
+            Preferences.debug("v(iv(1)) is out of range.\n", Preferences.DEBUG_ALGORITHM);
+        } else if (status == 50) {
+            Preferences.debug("iv(1) was out of range.\n", Preferences.DEBUG_ALGORITHM);
+        } else if ( (status >= 87) && (status <= 86 + numParam)) {
+            Preferences.debug("jtol(iv(1)-86) (i.e., v(iv(1)) is not positive\n", Preferences.DEBUG_ALGORITHM);
+        }
+        Preferences.debug("\n", Preferences.DEBUG_ALGORITHM);
+    }
 
     /**
      * DOCUMENT ME!
