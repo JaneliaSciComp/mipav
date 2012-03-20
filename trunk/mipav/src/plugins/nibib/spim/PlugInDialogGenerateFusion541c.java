@@ -41,6 +41,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.Iterator;
 
@@ -726,7 +727,12 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 	    for(int i=0; i<baseImageAr.length; i++) {
 	        transformMessage.append("Image ").append(transformImageAr[i].getName()).append(" transformed to ").append(baseImageAr[i].getName()).append("\n");
 	    }
-	    int returnOption = JOptionPane.showConfirmDialog(this, "Proceed with the following operations?\n"+transformMessage, "Algorithm run confirm", JOptionPane.YES_NO_OPTION);
+	    JTextArea area = new JTextArea("Proceed with the following operations?\n"+transformMessage);
+	    area.setEditable(false);
+	    JScrollPane scroll = new JScrollPane(area);
+	    scroll.setPreferredSize(new Dimension(400, 300));
+	    
+	    int returnOption = JOptionPane.showConfirmDialog(this, scroll, "Algorithm run confirm", JOptionPane.YES_NO_OPTION);
 	    if(returnOption == JOptionPane.NO_OPTION) {
 	        return false;
 	    }
@@ -783,9 +789,23 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
             return false;
         }
         
+        FileCompare f = new FileCompare();
+        Collections.sort(baseImageList, f);
+        Collections.sort(transformImageList, f);
+        
         baseImageAr = baseImageList.toArray(new File[baseImageList.size()]);
         transformImageAr = transformImageList.toArray(new File[transformImageList.size()]);
         
         return true;
+    }
+    
+    private class FileCompare implements Comparator<File> {
+        public int compare(File arg0, File arg1) {
+            if(arg0.getName().length() != arg1.getName().length()) {
+                return arg0.getName().length() - arg1.getName().length();
+            }
+            
+            return arg0.getName().compareTo(arg1.getName());
+        }
     }
 }
