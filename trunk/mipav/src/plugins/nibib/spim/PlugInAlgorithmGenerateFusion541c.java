@@ -604,7 +604,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             if(showAriMean) {
                 resultImageList.add(subAriImage);
-            } else if(showAriMean) {
+            } else if(saveAriMean && !doInterImages) {
                 ViewUserInterface.getReference().unRegisterImage(subAriImage);
                 subAriImage.disposeLocal();
             }
@@ -623,16 +623,18 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             if(showGeoMean) {
                 resultImageList.add(subGeoImage);
-            } else if(showGeoMean) {
+            } else if(saveGeoMean && !doInterImages) {
                 ViewUserInterface.getReference().unRegisterImage(subGeoImage);
                 subGeoImage.disposeLocal();
             }
             
-            ViewUserInterface.getReference().unRegisterImage(baseImage);
-            baseImage.disposeLocal();
-            
-            ViewUserInterface.getReference().unRegisterImage(transformImage);
-            transformImage.disposeLocal();
+            if(!doInterImages) {
+                ViewUserInterface.getReference().unRegisterImage(baseImage);
+                baseImage.disposeLocal();
+                
+                ViewUserInterface.getReference().unRegisterImage(transformImage);
+                transformImage.disposeLocal();
+            }
             
             return true;
         }
@@ -648,14 +650,16 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             transform.setClipFlag(true);
             transform.setDimAndResXYZ();
             transform.setUnits(transformImage.getUnitsOfMeasure());
-            transform.setOutDimensions(new int[]{118,430,312});//transformImage.getExtents());
+            transform.setOutDimensions(transformImage.getExtents());
             transform.setQuietRunning(!doInterImages);
             transform.setOutResolutions(transformImage.getResolutions(0));
             
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             
-            ViewUserInterface.getReference().unRegisterImage(transformImage);
-            transformImage.disposeLocal();
+            if(!doInterImages) {
+                ViewUserInterface.getReference().unRegisterImage(transformImage);
+                transformImage.disposeLocal();
+            }
             
             transformImage = transform.getResultImage();
             if(doInterImages) {
@@ -742,8 +746,10 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             transform.setOutResolutions(image.getResolutions(0));
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             
-            ViewUserInterface.getReference().unRegisterImage(image);
-            image.disposeLocal();
+            if(!doInterImages) {
+                ViewUserInterface.getReference().unRegisterImage(image);
+                image.disposeLocal();
+            }
             
             return transform.getResultImage();
         }
@@ -794,7 +800,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             subGeoImage.calcMinMax();
             
-            subGeoImage.setImageName(baseImage.getImageName()+"_GeoMeanFused");
+            subGeoImage.setImageName("GeoMeanFused_"+baseImage.getImageName());
             
             if(doInterImages) {
                 new ViewJFrameImage(subGeoImage);
@@ -806,7 +812,6 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             int transformX, transformY, transformZ;
             double baseVal = 0, transVal = 0;
             double mult = 0;
-            //new ViewJFrameImage(transformImage);
             for(int i=0; i<subAriImage.getExtents()[0]; i++) {
                 transformX = i-xMovement;
                 for(int j=0; j<subAriImage.getExtents()[1]; j++) {
@@ -839,7 +844,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             subAriImage.calcMinMax();
             
-            subAriImage.setImageName(baseImage.getImageName()+"_AriMeanFused");
+            subAriImage.setImageName("AriMeanFused_"+baseImage.getImageName());
             
             if(doInterImages) {
                 new ViewJFrameImage(subAriImage);
