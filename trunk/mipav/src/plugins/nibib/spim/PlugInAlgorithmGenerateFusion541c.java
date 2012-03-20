@@ -522,8 +522,12 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 if(doThreshold) {
                     threshold(transformImage, thresholdIntensity);
                 }
-                subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
-                subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+                if(showGeoMean || saveGeoMean) {
+                    subGeoImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+                }
+                if(showAriMean || saveAriMean) {
+                    subAriImage = ViewUserInterface.getReference().createBlankImage(baseImage.getFileInfo(0), false);
+                }
                 break;
             
             case DownsampleUpsampleCombined:
@@ -546,12 +550,14 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 }
                 FileInfoBase f = baseImage.getFileInfo(0);
                 f.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
-                subGeoImage = ViewUserInterface.getReference().createBlankImage(f, false);
-                subAriImage = ViewUserInterface.getReference().createBlankImage(f, false);
+                if(showGeoMean || saveGeoMean) {
+                    subGeoImage = ViewUserInterface.getReference().createBlankImage(f, false);
+                }
+                if(showAriMean || saveAriMean) {
+                    subAriImage = ViewUserInterface.getReference().createBlankImage(f, false);
+                }
                 break;
             }
-            
-            
             
             synchronized(this) {
                 if(xMovement == null && yMovement == null && zMovement == null) {
@@ -595,6 +601,9 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             if(showAriMean) {
                 resultImageList.add(subAriImage);
+            } else if(showAriMean) {
+                ViewUserInterface.getReference().unRegisterImage(subAriImage);
+                subAriImage.disposeLocal();
             }
             
             if(showGeoMean || saveGeoMean) {
@@ -611,7 +620,16 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             if(showGeoMean) {
                 resultImageList.add(subGeoImage);
-            } 
+            } else if(showGeoMean) {
+                ViewUserInterface.getReference().unRegisterImage(subGeoImage);
+                subGeoImage.disposeLocal();
+            }
+            
+            ViewUserInterface.getReference().unRegisterImage(baseImage);
+            baseImage.disposeLocal();
+            
+            ViewUserInterface.getReference().unRegisterImage(transformImage);
+            transformImage.disposeLocal();
             
             return true;
         }
@@ -632,6 +650,9 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             transform.setOutResolutions(transformImage.getResolutions(0));
             
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            
+            ViewUserInterface.getReference().unRegisterImage(transformImage);
+            transformImage.disposeLocal();
             
             transformImage = transform.getResultImage();
             if(doInterImages) {
@@ -717,6 +738,9 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             transform.setOutDimensions(image.getExtents());//transformImage.getExtents());
             transform.setOutResolutions(image.getResolutions(0));
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            
+            ViewUserInterface.getReference().unRegisterImage(image);
+            image.disposeLocal();
             
             return transform.getResultImage();
         }
