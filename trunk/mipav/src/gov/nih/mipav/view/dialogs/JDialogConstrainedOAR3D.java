@@ -65,6 +65,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxCostFunct;
+    
+    private JComboBox comboBoxSearchAlgo;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxDOF;
@@ -1309,6 +1311,14 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
     public void setSubsample(boolean doSubsample) {
         this.doSubsample = doSubsample;
     }
+    
+    /**
+     * Accessor to set whether to use Powell's algorithm calling Brent's method or ELSUNC for search algorithm
+     * @param useELSUNC
+     */
+    public void setUseELSUNC(boolean useELSUNC) {
+    	this.useELSUNC = useELSUNC;
+    }
 
     /**
      * Accessor to set the VOIs only flag.
@@ -1517,6 +1527,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        setUseELSUNC(scriptParameters.getParams().getBoolean("use_elsunc"));
 
         float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
         float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
@@ -1591,6 +1602,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_elsunc", useELSUNC));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin",
                                                                        new float[] {
                                                                            rotateBeginX, rotateBeginY, rotateBeginZ
@@ -1958,6 +1970,20 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");
         comboBoxCostFunct.setSelectedIndex(0);
+        
+        JLabel labelSearch = new JLabel("Search algorithm:");
+        labelSearch.setForeground(Color.black);
+        labelSearch.setFont(serif12);
+        labelSearch.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        comboBoxSearchAlgo = new JComboBox();
+        comboBoxSearchAlgo.setFont(MipavUtil.font12);
+        comboBoxSearchAlgo.setBackground(Color.white);
+        comboBoxSearchAlgo.setToolTipText("Search algorithm");
+        comboBoxSearchAlgo.addItem("Powell's calling Brent's");
+        comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.setSelectedIndex(0);
+        
 
         JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
@@ -2058,9 +2084,20 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxCostFunct, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        optPanel.add(labelSearch, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optPanel.add(comboBoxSearchAlgo, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 7;
@@ -2682,6 +2719,17 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 }
             }
         } // else black and white
+        
+        switch(comboBoxSearchAlgo.getSelectedIndex()) {
+        case 0:
+        	useELSUNC = false;
+        	break;
+        case 1:
+        	useELSUNC = true;
+        	break;
+        default:
+        	useELSUNC = false;
+        }
 
         switch (comboBoxDOF.getSelectedIndex()) {
 
