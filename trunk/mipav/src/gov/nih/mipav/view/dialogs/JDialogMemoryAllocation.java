@@ -612,8 +612,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
             try {
 
                 // initial heap size
-                memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
+                if (line.endsWith("M") || line.endsWith("m")) {
+                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length());
+                } else {
+                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
                         .substring(JDialogMemoryAllocation.initHeapLAX.length()));
+                }
                 // initOffset = lineNumber; // hang on to this offset
                 // initHeapText.setText(convertBytesToMBytes(line.substring(initHeapLAX.length())));
             } catch (final NumberFormatException nfe) {
@@ -622,8 +626,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  "
                         + "Substituting for a known acceptable value.\n", 3);
 
-                // initHeapText.setText("1"); // the known acceptable value (1 megabyte)
-                memorySpec = "1";
+                // initHeapText.setText("10"); // the known acceptable value (1 megabyte)
+                memorySpec = "10";
             }
 
             // return new String(initHeapLAX + convertMBytesToBytes(initHeapText.getText()));
@@ -634,8 +638,12 @@ public class JDialogMemoryAllocation extends JDialogBase {
             try {
 
                 // max heap size
-                memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
-                        .substring(JDialogMemoryAllocation.maxHeapLAX.length()));
+                if (line.endsWith("M") || line.endsWith("m")) {
+                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length());
+                } else {
+                    memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
+                            .substring(JDialogMemoryAllocation.maxHeapLAX.length()));
+                }
                 // maxOffset = lineNumber;
                 // maxHeapText.setText(convertBytesToMBytes(line.substring(maxHeapLAX.length())));
             } catch (final NumberFormatException nfe) {
@@ -644,8 +652,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " maximum memory value.  "
                         + "Substituting for a known acceptable value.\n", 3);
 
-                // maxHeapText.setText("1"); // the known acceptable value (1 megabyte)
-                memorySpec = "1";
+                // maxHeapText.setText("10"); // the known acceptable value (1 megabyte)
+                memorySpec = "10";
             }
 
             // return new String(maxHeapLAX + convertMBytesToBytes(maxHeapText.getText()));
@@ -723,7 +731,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                         + "Substituting for a known acceptable value.");
                 Preferences.debug("JDialogMemoryAllocation: Cannot convert " + " initial memory value.  "
                         + "Substituting for a known acceptable value.\n", 3);
-                memorySpec = "1"; // the known acceptable value (1 megabyte)
+                memorySpec = "10"; // the known acceptable value (1 megabyte)
             }
 
             // initOffset = lineNumber;
@@ -777,7 +785,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                         + "Substituting for a known acceptable value.\n", 3);
 
                 // initHeapText.setText("1"); // the known acceptable value (1 megabyte)
-                memorySpec = "1";
+                memorySpec = "10";
             }
 
             // initOffset = lineNumber;
@@ -1035,7 +1043,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                     } catch (final NumberFormatException nfe) {
                         MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n"
                                 + "Substituting for a known acceptable value.");
-                        line = JDialogMemoryAllocation.initHeapLAX + "1"; // the known acceptable value (1 megabyte)
+                        line = JDialogMemoryAllocation.initHeapLAX + "10"; // the known acceptable value (1 megabyte)
                     }
                 } else if (line.indexOf(JDialogMemoryAllocation.maxHeapLAX) != -1) {
 
@@ -1045,7 +1053,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
                     } catch (final NumberFormatException nfe) {
                         MipavUtil.displayError("JDialogMemoryAllocation: Cannot convert the value.\n"
                                 + "Substituting for a known acceptable value.");
-                        line = JDialogMemoryAllocation.maxHeapLAX + "1"; // the known acceptable value (1 megabyte)
+                        line = JDialogMemoryAllocation.maxHeapLAX + "10"; // the known acceptable value (1 megabyte)
                     }
                 }
             } else if (fileType == JDialogMemoryAllocation.xmlType) {
