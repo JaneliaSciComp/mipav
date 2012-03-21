@@ -724,7 +724,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * @param  limits  limits
      */
     public void setLimits(float[][] limits) {
-    	double[][] xi = new double[nDims][nDims];
+    	/*double[][] xi = new double[nDims][nDims];
     	double[] unit_tolerance = new double[nDims];
         for (int i = 0; i < nDims; i++) {
             xi[i][i] = 1.0;
@@ -741,7 +741,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
                 }
             }
             unit_tolerance[i] = Math.abs(1.0 / tol);
-        }
+        }*/
         
 
         
