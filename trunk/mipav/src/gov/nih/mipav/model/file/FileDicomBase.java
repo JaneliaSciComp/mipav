@@ -34,16 +34,16 @@ public class FileDicomBase {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** One byte array used to read/write in data so that one doesn't't need to be allocated with each read/write. */
-    protected byte[] byteBuffer = new byte[1];
+    protected final byte[] byteBuffer = new byte[1];
     
     /** Two byte array used to read/write in data so that one doesn't't need to be allocated with each read/write. */
-    protected byte[] byteBuffer2 = new byte[2];
+    protected final byte[] byteBuffer2 = new byte[2];
 
     /** Four byte array used to read/write in data so that one doesn't need to be allocated with each read/write. */
-    protected byte[] byteBuffer4 = new byte[4];
+    protected final byte[] byteBuffer4 = new byte[4];
 
     /** Eight byte array used to read/write in data so that they don't need to be allocated with each read/write. */
-    protected byte[] byteBuffer8 = new byte[8];
+    protected final byte[] byteBuffer8 = new byte[8];
 
     /** Total length of the image file. */
     protected long fLength = 0;
@@ -85,9 +85,6 @@ public class FileDicomBase {
      * Prepares this class for cleanup.
      */
     public void finalize() {
-        byteBuffer2 = null;
-        byteBuffer4 = null;
-        byteBuffer8 = null;
         progressBar = null;
         tagBuffer = null;
 
