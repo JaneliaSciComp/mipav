@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR35D;
+import gov.nih.mipav.model.algorithms.registration.vabra.VabraAlgorithm;
 import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -33,6 +34,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.io.File;
+import java.util.List;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -262,6 +264,21 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 				nextButton.setEnabled(false);
 				goBackButton.setEnabled(true);
 				goBackButton.setActionCommand("back1");
+				
+				/*
+				VabraAlgorithm vabra = new VabraAlgorithm();
+				// if you pass in null as the second argument it will extract the B0 image to use as the subject:
+				vabra.solve( DWIImage, null );
+				// Opens the Deformation Field in a window:
+				new ViewJFrameImage( vabra.getDeformationField() );
+				
+				List<ModelImage> results = vabra.getRegisteredResults();
+				for ( int i = 0; i < results.size(); i++ )
+				{
+				    // Open the registered result in a window...
+					new ViewJFrameImage( results.get(i) );
+				}
+				*/
 			}
 
 			else{
