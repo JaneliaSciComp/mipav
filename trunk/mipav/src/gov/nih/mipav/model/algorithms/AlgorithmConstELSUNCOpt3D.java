@@ -19,7 +19,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 	
 	FitOAR3DConstrainedModel dModel;
 	
-	/** The initial bracket size for first iteration of Powell. */
+	/** The initial bracket size for first iteration of ELSUNC. */
     private int bracketBound;
 
     /** Cost function called to measure cost - 1D. */
