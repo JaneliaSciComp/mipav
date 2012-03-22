@@ -2,7 +2,7 @@ package gov.nih.mipav.model.file;
 
 import java.io.Serializable;
 
-
+    
 /**
  * Object to store parameters in the ModelImage acquired from DWI image file or ImageInfo DTI tab
  * 
@@ -19,7 +19,9 @@ public class DTIParameters implements Serializable {
     private float[] bValues;
 
     private float[][] gradients;
-
+    
+    private float[][] bMatrixVals;
+    
     private int numVolumes;
 
     // ~ Constructors
@@ -44,6 +46,14 @@ public class DTIParameters implements Serializable {
 
     public void setGradients(float[][] gradients) {
         this.gradients = gradients;
+    }
+    
+    public float[][] getbMatrixVals() {
+        return bMatrixVals;
+    }
+
+    public void setbMatrixVals (float[][] bMatrixVals) {
+        this.bMatrixVals = bMatrixVals;
     }
 
     public int getNumVolumes() {
