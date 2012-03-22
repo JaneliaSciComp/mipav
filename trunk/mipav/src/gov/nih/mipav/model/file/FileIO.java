@@ -398,6 +398,13 @@ public class FileIO {
         int length = 0;
         int nImages = 0;
         int nListImages;
+        
+        int dtiSliceCounter = 0;
+        boolean dtiSub = false;
+        String studyDescription = null;
+        String seriesDescription = null;
+        String scannerType = null;
+        
         final float[] tPt = new float[3];
         TransMatrix matrix = null;
         String studyID = new String();
@@ -728,7 +735,9 @@ public class FileIO {
 
                     return null;
                 }
+
             }
+            
 
             // need to let the reference tag table know about the tag tables which refer to it
             childrenTagTables = new FileDicomTagTable[savedFileInfos.length - 1];
@@ -769,8 +778,71 @@ public class FileIO {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
                 } else {
-                	indices = rint;
+                    refFileInfo = (FileInfoDicom) imageFile.getFileInfo();
+                    FileDicomTagTable tagTable =  refFileInfo.getTagTable();
+                    studyDescription = (String) tagTable.getValue("0008,1030");
+                    seriesDescription = (String) tagTable.getValue("0008,103E");
+                    scannerType = (String) tagTable.getValue("0008,0070");
+
+                    if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
+                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+
+                      if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+                          if ((String) tagTable.getValue("0018,9089") != null){
+                              dtiSliceCounter = 0;
+                              int dtiSliceCounter2 = 0;// Helps check for incomplete DWI series
+                              ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
+                              
+                              for (int i = 0; i < instanceNums.length; i++) {
+                                  String savedFileGradFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9089");
+                                  String savedFileGradSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9089");
+                                  String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0018,9089");
+                                  String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9087");
+                                  String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9087");
+                                  String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0018,9087");
+                                  if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                                      IndexVolArrayList.add(dtiSliceCounter,i);
+                                      dtiSliceCounter++;
+                                  }
+                                  else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
+                                      dtiSliceCounter2++;
+                                  }
+                              }
+
+                              //Checks for incomplete DWI series                                  
+                              if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
+                                  dtiSub = true; //Not complete DWI series
+                                  indices = rint; 
+                                  }
+                                  
+                              else{
+                                  int rintCounter = 0;
+                                  int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
+                                  float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
+                                     for (int i = 0; i <tVolumeNum; i++) {
+                                         for (int j=0; j< IndexVolArrayList.size(); j++){
+                                             //rint populated by ordering of instance nums based on volume order
+                                             rint[rintCounter] = IndexVolArrayList.get(j) + i;
+                                             rintCounter++;                                            
+                                         }
+                                     }
+                                     indices = rint;                                  
+                              }
+                           }
+                         }// If PHILIPS
+                      
+                      //For DTI dicom data not aquired from Philips scanners
+                      else{
+                          indices = rint;
+                        }
+                      }// If DTI
+              
+                else{
+                  indices = rint;
                 }
+		      }
+		        
+
                 
                 // If valid is false then one or more of the images has the
                 // same position. Most likely it is a 4D dataset.
@@ -1012,25 +1084,32 @@ public class FileIO {
         }
 
         if (nImages > 1) {
+            int sliceDim = 0, timeDim = 0;
+            extents = new int[4];
             if (isEnhanced4D) {
-                extents = new int[4];
                 extents[2] = enhancedNumSlices;
                 enhancedNumVolumes = nImages / enhancedNumSlices;
                 extents[3] = enhancedNumVolumes;
-            } else {
-            	int sliceDim = 0, timeDim = 0;
-                if(validInstanceSort && refFileInfo.getTagTable().getValue("0020,0105") != null && refFileInfo.getTagTable().getValue("0020,1002") != null &&
+            } else if(validInstanceSort && refFileInfo.getTagTable().getValue("0020,0105") != null && refFileInfo.getTagTable().getValue("0020,1002") != null &&
             	        (timeDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,0105").toString()).intValue()) > 1 && 
             	        (sliceDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue()) > 1 &&
             	        sliceDim*timeDim == nImages) {
-            		extents = new int[4];
-
-            		extents[3] = timeDim;
-            		extents[2] = sliceDim;
-            	} else {
-            		extents = new int[3];
-            		extents[2] = nImages;
-            	}
+        		extents[3] = timeDim;
+        		extents[2] = sliceDim;
+            } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSub ==false || 
+                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSub ==false) {
+                if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+                    extents[2] = dtiSliceCounter;
+                    extents[3] = nImages / dtiSliceCounter;
+                }
+                else{
+                    extents = new int[3];
+                    extents[2] = nImages;  
+                }
+            } 
+            else{
+                extents = new int[3];
+                extents[2] = nImages;  
             }
         } else {
             extents = new int[2];
@@ -1479,13 +1558,13 @@ public class FileIO {
         //Determines if image is DWI then saves parameters to DTIParameters object
         FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(0);
         FileDicomTagTable tagTable = dicomInfo.getTagTable();
-        String studyDescription = (String) tagTable.getValue("0008,1030");
-        String seriesDescription = (String) tagTable.getValue("0008,103E");
-        String scannerType = (String) tagTable.getValue("0008,0070");
+        studyDescription = (String) tagTable.getValue("0008,1030");
+        seriesDescription = (String) tagTable.getValue("0008,103E");
+        scannerType = (String) tagTable.getValue("0008,0070");
 
         if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
                 (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
-            if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
+           if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
                 //For Siemen's DWI 3D Mosaic Images
                 if (image.is3DImage()) {
                     int numVolumes = image.getExtents()[2];
@@ -1495,6 +1574,7 @@ public class FileIO {
                     if ((String) tagTable.getValue("0019,100C") != null){
                         float [] flBvalueArray = new float[numVolumes];
                         float[][] flGradientArray = new float[numVolumes][3];
+                        float[][] flBmatrixArray = new float[numVolumes][6];
                         
                         for (int i = 0; i < numVolumes; i++) {                   
                             // Get Bvalues from Siemens Tags
@@ -1502,9 +1582,22 @@ public class FileIO {
                             FileDicomTagTable tag3dTable = dicom3dInfo.getTagTable();
                             String siemenBvalue = (String) tag3dTable.getValue("0019,100C");
                             flBvalueArray[i] = Float.parseFloat(siemenBvalue);
+                            
+                            if ((String) tagTable.getValue("0019,1027") != null){
+                                String siemenBmatrix = (String) dicom3dInfo.getTagTable().getValue("0019,1027");
+                                siemenBmatrix = siemenBmatrix.trim();
+                                String bMatrix = siemenBmatrix.replace('\\', '\t');
+                                final String[] arr2 = bMatrix.split("\t");
+                                flBmatrixArray[i][0] = Float.valueOf(arr2[0]);
+                                flBmatrixArray[i][1] = Float.valueOf(arr2[1]);
+                                flBmatrixArray[i][2] = Float.valueOf(arr2[2]);
+                                flBmatrixArray[i][3] = Float.valueOf(arr2[3]);
+                                flBmatrixArray[i][4] = Float.valueOf(arr2[4]);
+                                flBmatrixArray[i][5] = Float.valueOf(arr2[5]);
+                            }
     
                             // Get Gradients from Siemens Tags
-                            if ((String) tagTable.getValue("0019,100E") != null){
+                            /*if ((String) tagTable.getValue("0019,100E") != null){
                                 String siemenGrads = (String) tag3dTable.getValue("0019,100E");
                                 siemenGrads = siemenGrads.trim();
                                 String grads = siemenGrads.replace('\\', '\t');
@@ -1512,10 +1605,11 @@ public class FileIO {
                                 flGradientArray[i][0] = Float.valueOf(arr2[0]);
                                 flGradientArray[i][1] = Float.valueOf(arr2[1]);
                                 flGradientArray[i][2] = Float.valueOf(arr2[2]);
-                            }
+                            }*/
                         }
                         dtiparams.setbValues(flBvalueArray);
-                        dtiparams.setGradients(flGradientArray);
+                        dtiparams.setbMatrixVals(flBmatrixArray);
+                        //dtiparams.setGradients(flGradientArray);
                     }
 
                 } else if (image.is4DImage()) {
@@ -1527,6 +1621,7 @@ public class FileIO {
                      if ((String) tagTable.getValue("0019,100C") != null){
                          float [] flBvalueArray = new float[numVolumes];
                          float[][] flGradientArray = new float[numVolumes][3];
+                         float[][] flBmatrixArray = new float[numVolumes][6];
     
                          for (int i = 0; i < numVolumes; i++) {
                             FileInfoDicom dicom4dInfo = (FileInfoDicom) image.getFileInfo(i * image.getExtents()[2]);
@@ -1535,9 +1630,23 @@ public class FileIO {
                             FileDicomTagTable tag4dTable = dicom4dInfo.getTagTable();
                             String siemenBvalue = (String) tag4dTable.getValue("0019,100C");
                             flBvalueArray[i] = Float.parseFloat(siemenBvalue);
+                            
+                            //Get B-matrix from Siemen's Tags
+                            if ((String) tagTable.getValue("0019,1027") != null){
+                            String siemenBmatrix = (String) tag4dTable.getValue("0019,1027");
+                                siemenBmatrix = siemenBmatrix.trim();
+                                String bMatrix = siemenBmatrix.replace('\\', '\t');
+                                final String[] arr2 = bMatrix.split("\t");
+                                flBmatrixArray[i][0] = Float.valueOf(arr2[0]);
+                                flBmatrixArray[i][1] = Float.valueOf(arr2[1]);
+                                flBmatrixArray[i][2] = Float.valueOf(arr2[2]);
+                                flBmatrixArray[i][3] = Float.valueOf(arr2[3]);
+                                flBmatrixArray[i][4] = Float.valueOf(arr2[4]);
+                                flBmatrixArray[i][5] = Float.valueOf(arr2[5]);
+                        }
     
                             // Get Gradients from Siemens Tags
-                            if ((String) tagTable.getValue("0019,100E") != null){
+                            /*if ((String) tagTable.getValue("0019,100E") != null){
                                 String siemenGrads = (String) tag4dTable.getValue("0019,100E");
                                 siemenGrads = siemenGrads.trim();
                                 String grads = siemenGrads.replace('\\', '\t');
@@ -1545,19 +1654,22 @@ public class FileIO {
                                 flGradientArray[i][0] = Float.valueOf(arr2[0]);
                                 flGradientArray[i][1] = Float.valueOf(arr2[1]);
                                 flGradientArray[i][2] = Float.valueOf(arr2[2]);
-                            }
+                            }*/
                         }
                         
                     dtiparams.setbValues(flBvalueArray);
-                    dtiparams.setGradients(flGradientArray);
+                    dtiparams.setbMatrixVals(flBmatrixArray);
+                    //dtiparams.setGradients(flGradientArray);
 
                 }
               }
             }
-            else if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+          if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+              /*System.out.println("philips");
                 if (image.is3DImage()) {
                     if ((String) tagTable.getValue("2001,1018") != null){
                     String zSlices = (String) tagTable.getValue("2001,1018");
+                    System.out.println("zSlices" +zSlices);
                     int numZSlices = Integer.parseInt(zSlices);
                     if (zSlices != null){
                         //Calculating paramters for conversion of 3d to 4d Philips Dicom
@@ -1617,7 +1729,7 @@ public class FileIO {
                            }
                     }
                 }                
-            }
+            }*/
         }
       }
         
