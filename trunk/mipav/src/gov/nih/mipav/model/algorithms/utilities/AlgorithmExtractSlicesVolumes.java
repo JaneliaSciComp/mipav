@@ -39,7 +39,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
     /** Y dimension of the image. */
     private int Ydim;
-
+    
+    FileInfoDicom[] fileInfoDicom;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -111,45 +112,72 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
         FileInfoBase[] fileInfo;
 
         if (resultImage.getNDims() == 2) {
-            fileInfo = resultImage.getFileInfo();
-
-            fileInfo[0].setModality(image.getFileInfo()[slice].getModality());
-            fileInfo[0].setFileDirectory(image.getFileInfo()[slice].getFileDirectory());
-
-            // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
-            fileInfo[0].setEndianess(image.getFileInfo()[slice].getEndianess());
-            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[slice].getUnitsOfMeasure());
-            fileInfo[0].setResolutions(image.getFileInfo()[slice].getResolutions());
-            fileInfo[0].setExtents(resultImage.getExtents());
-            fileInfo[0].setMax(resultImage.getMax());
-            fileInfo[0].setMin(resultImage.getMin());
-            fileInfo[0].setImageOrientation(image.getImageOrientation());
-            fileInfo[0].setAxisOrientation(image.getFileInfo()[slice].getAxisOrientation());
-            fileInfo[0].setOrigin(image.getFileInfo()[slice].getOrigin());
-            fileInfo[0].setPixelPadValue(image.getFileInfo()[slice].getPixelPadValue());
-            fileInfo[0].setPhotometric(image.getFileInfo()[slice].getPhotometric());
+            if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
+                FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(slice);
+                FileDicomTagTable tagTable = dicomInfo.getTagTable();
+                fileInfoDicom = new FileInfoDicom[1];
+                float[] resolutions = new float[2];
+                
+                resolutions[0] = image.getFileInfo(0).getResolutions()[0];
+                resolutions[1] = image.getFileInfo(0).getResolutions()[1];
+              
+                fileInfoDicom[0] = new FileInfoDicom(dicomInfo.getFileName(), dicomInfo.getFileDirectory(),
+                        dicomInfo.getFileFormat());
+                ((FileInfoDicom)fileInfoDicom[0]).setVr_type(dicomInfo.getVr_type());
+                ((FileInfoDicom) fileInfoDicom[0]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(slice));
+                fileInfoDicom[0].setExtents(resultImage.getExtents());
+                fileInfoDicom[0].setResolutions(resolutions);
+                fileInfoDicom[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation()[0], 0);
+                fileInfoDicom[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation()[1], 1);
+                fileInfoDicom[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation()[2], 2);
+                fileInfoDicom[0].setImageOrientation(image.getFileInfo()[0].getImageOrientation()); 
+                
+                resultImage.setFileInfo(fileInfoDicom);
+            }
+            
+            else{
+                fileInfo = resultImage.getFileInfo();
+    
+                fileInfo[0].setModality(image.getFileInfo()[slice].getModality());
+                fileInfo[0].setFileDirectory(image.getFileInfo()[slice].getFileDirectory());
+    
+                // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
+                fileInfo[0].setEndianess(image.getFileInfo()[slice].getEndianess());
+                fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[slice].getUnitsOfMeasure());
+                fileInfo[0].setResolutions(image.getFileInfo()[slice].getResolutions());
+                fileInfo[0].setExtents(resultImage.getExtents());
+                fileInfo[0].setMax(resultImage.getMax());
+                fileInfo[0].setMin(resultImage.getMin());
+                fileInfo[0].setImageOrientation(image.getImageOrientation());
+                fileInfo[0].setAxisOrientation(image.getFileInfo()[slice].getAxisOrientation());
+                fileInfo[0].setOrigin(image.getFileInfo()[slice].getOrigin());
+                fileInfo[0].setPixelPadValue(image.getFileInfo()[slice].getPixelPadValue());
+                fileInfo[0].setPhotometric(image.getFileInfo()[slice].getPhotometric());
+            }
         }
 
         if (resultImage.getNDims() == 3) {
-            fileInfo = resultImage.getFileInfo();
 
-            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                int j = Math.min(i, image.getExtents()[2] - 1);
-                fileInfo[i].setModality(image.getFileInfo()[j].getModality());
-                fileInfo[i].setFileDirectory(image.getFileInfo()[j].getFileDirectory());
-
-                // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
-                fileInfo[i].setEndianess(image.getFileInfo()[j].getEndianess());
-                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[j].getUnitsOfMeasure());
-                fileInfo[i].setResolutions(image.getFileInfo()[j].getResolutions());
-                fileInfo[i].setExtents(resultImage.getExtents());
-                fileInfo[i].setMax(resultImage.getMax());
-                fileInfo[i].setMin(resultImage.getMin());
-                fileInfo[i].setImageOrientation(image.getImageOrientation());
-                fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
-                fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
-                fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
-                fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
+                fileInfo = resultImage.getFileInfo();
+    
+                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                    int j = Math.min(i, image.getExtents()[2] - 1);
+                    fileInfo[i].setModality(image.getFileInfo()[j].getModality());
+                    fileInfo[i].setFileDirectory(image.getFileInfo()[j].getFileDirectory());
+    
+                    // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
+                    fileInfo[i].setEndianess(image.getFileInfo()[j].getEndianess());
+                    fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[j].getUnitsOfMeasure());
+                    fileInfo[i].setResolutions(image.getFileInfo()[j].getResolutions());
+                    fileInfo[i].setExtents(resultImage.getExtents());
+                    fileInfo[i].setMax(resultImage.getMax());
+                    fileInfo[i].setMin(resultImage.getMin());
+                    fileInfo[i].setImageOrientation(image.getImageOrientation());
+                    fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
+                    fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
+                    fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
+                    fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
+                
             }
         }
 

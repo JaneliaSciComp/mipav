@@ -32,6 +32,8 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
     
     private DTIParameters orgImDTIparams, newImDTIparams;
 
+    private FileInfoDicom srcDicomInfo;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -162,6 +164,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                 newImDTIparams = new DTIParameters(1); 
                 newImDTIparams.setbValues(orgImDTIparams.getbValues());
                 newImDTIparams.setGradients(orgImDTIparams.getGradients());
+                newImDTIparams.setbMatrixVals(orgImDTIparams.getbMatrixVals());
                 
             } 
             subLength = cFactor * subXDim * subYDim;
@@ -199,7 +202,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
     
     }
             else { 
-                resolutions= new float[5];
+                resolutions= new float[4];
                     xDim = srcImage.getExtents()[0];
                     yDim = srcImage.getExtents()[1];
                     zDim= srcImage.getExtents()[2];
@@ -228,6 +231,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                         newImDTIparams = new DTIParameters(subTDim); 
                         newImDTIparams.setbValues(orgImDTIparams.getbValues());
                         newImDTIparams.setGradients(orgImDTIparams.getGradients());
+                        newImDTIparams.setbMatrixVals(orgImDTIparams.getbMatrixVals());
                         
                     }                    
                     subLength = cFactor * subXDim * subYDim * compSubZDim;
@@ -277,6 +281,7 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                            
                   destImage.calcMinMax();
                   fileInfo = srcImage.getFileInfo();
+                  
                   if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
                       //4-D Destination dicom images
                       if (srcImage.is3DImage()) {
@@ -284,15 +289,16 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                           int numInfos = destImage.getExtents()[3]*destImage.getExtents()[2];
                           FileInfoDicom oldDicomInfo = null;
                           int j;
+                          destFileInfo = new FileInfoBase[numInfos];
+                          int sliceCounter = 0; //Keeps track of every slice to populate tag
 
-                      destFileInfo = new FileInfoBase[numInfos];
-                      int sliceCounter = 0; //Keeps track of every slice to populate tag
 
                      // Most efficient way of creating DICOM tags for 4-D. Uses pointers based on srcimage dicom tags    
                      for (t = 0; t < destImage.getExtents()[3]; t++) {
                          for (z = 0; z <destImage.getExtents()[2] ; z++) {
                              j = (t*destImage.getExtents()[2]) + z;
                              oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(t);
+
                              if (z == 0) {
                                  destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
                                                                  oldDicomInfo.getFileFormat());
@@ -315,16 +321,20 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                                   fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                                   resolutions[0] = srcImage.getFileInfo(0).getResolutions()[0];
                                   resolutions[1] = srcImage.getFileInfo(0).getResolutions()[1];
-                                  resolutions[2] = 1.0f;
-                                  resolutions[3] = 1.0f;
-                                  resolutions[4] = 1;
+                                  resolutions[2] = srcImage.getFileInfo(0).getResolutions()[2];
+                                  resolutions[3] = (float)sliceResolution;
+                                  //resolutions[4] = (float)sliceResolution;
                                   destFileInfo[sliceCounter].setResolutions(resolutions);
                                   destFileInfo[sliceCounter].setExtents(destImage.getExtents());
+                                  destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
+                                  destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
+                                  destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
+                                  destFileInfo[sliceCounter].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());                              
+                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t));
                                   ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
                                   ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows                 
                                   ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
                                                                            Short.toString((short) (t + 1)).length()); // instance number
-                                  ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t));
                                   ((FileInfoDicom) destFileInfo[j]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
                                   sliceCounter++;  
                                                            
@@ -351,9 +361,10 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                       final float[] imageOrg = srcImage.getFileInfo(0).getOrigin();
                       final double dicomOrigin[] = new double[imageOrg.length];
                       
-                      
+                      System.out.println("3D");
                       if (tagTable.getValue("0020,0037") != null) {
                           String orientation = (String) tagTable.getValue("0020,0037");
+                          System.out.println("orientation: " +orientation);
                           if (orientation != null) {
 
                               int index1, index2, index3, index4, index5;
@@ -384,6 +395,12 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                               yOrient[0] = Double.valueOf(orientation.substring(index3 + 1, index4)).doubleValue();
                               yOrient[1] = Double.valueOf(orientation.substring(index4 + 1, index5)).doubleValue();
                               yOrient[2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
+                              System.out.println("xOrient[0]" +xOrient[0]);
+                              System.out.println("xOrient[1]" +xOrient[1]);
+                              System.out.println("xOrient[2]" +xOrient[2]);
+                              System.out.println("yOrient[0]" +yOrient[0]);
+                              System.out.println("yOrient[1]" +yOrient[1]);
+                              System.out.println("yOrient[2]" +yOrient[2]);
                               Q[0][0] = yOrient[0] * srcImage.getFileInfo(0).getResolution(0);
                               Q[1][0] = yOrient[1] * srcImage.getFileInfo(0).getResolution(0);
                               Q[2][0] = yOrient[2] * srcImage.getFileInfo(0).getResolution(0);
@@ -396,8 +413,11 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
                               matRC = new Matrix(rc);
                               matDicom = matQ.times(matRC);
                               dicomOrigin[0] = imageOrg[0] + matDicom.get(0, 0);
+                              System.out.println("dicomOrgin[0]" +dicomOrigin[0]);
                               dicomOrigin[1] = imageOrg[1] + matDicom.get(1, 0);
+                              System.out.println("dicomOrgin[1]" +dicomOrigin[1]);
                               dicomOrigin[2] = imageOrg[2] + matDicom.get(2, 0);
+                              System.out.println("dicomOrgin[2]" +dicomOrigin[2]);
                           } // if (orientation != null) 
                       } // if (tagTable.getValue("0020,0037") != null)
                       else {
@@ -455,11 +475,18 @@ public class AlgorithmMosaicToSlices extends AlgorithmBase {
 
                       for (i = 0; (i < destImage.getExtents()[2]) && !threadStopped; i++) {
                           fireProgressStateChanged((100 * i)/destImage.getExtents()[2]);
-                          fileInfoDicom[i] = (FileInfoDicom) (dicomInfo.clone());
+                          fileInfoDicom[i] = new FileInfoDicom(dicomInfo.getFileName(), dicomInfo.getFileDirectory(),
+                                  dicomInfo.getFileFormat());
+                          ((FileInfoDicom)fileInfoDicom[i]).setVr_type(dicomInfo.getVr_type());
+                          ((FileInfoDicom) fileInfoDicom[i]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(0));
                           fileInfoDicom[i].getTagTable().setValue("0028,0011", new Short((short) subXDim), 2); // columns
                           fileInfoDicom[i].getTagTable().setValue("0028,0010", new Short((short) subYDim), 2); // rows
                           fileInfoDicom[i].setExtents(destImage.getExtents());
                           fileInfoDicom[i].setResolutions(resolutions);
+                          fileInfoDicom[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
+                          fileInfoDicom[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
+                          fileInfoDicom[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
+                          fileInfoDicom[i].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation()); 
                           fileInfoDicom[i].getTagTable().setValue("0020,0013", Short.toString((short) (i + 1)),
                                                                    Short.toString((short) (i + 1)).length()); // instance number
                           

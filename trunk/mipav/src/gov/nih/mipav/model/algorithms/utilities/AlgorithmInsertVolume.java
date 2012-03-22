@@ -352,11 +352,15 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                             //fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                             destFileInfo[j].setResolutions(srcImage.getFileInfo(0).getResolutions());
                             destFileInfo[j].setExtents(destImageExtents);
+                            destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
+                            destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
+                            destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
+                            destFileInfo[j].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());    
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t));
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) Xdim), 2); // columns
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) Ydim), 2); // rows                 
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
                                                                      Short.toString((short) (t + 1)).length()); // instance number
-                            ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t));
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
                             sliceCounter++;  
                                                      
