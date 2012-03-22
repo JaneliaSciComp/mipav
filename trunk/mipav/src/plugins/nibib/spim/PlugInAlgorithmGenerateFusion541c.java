@@ -89,7 +89,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
     
     private ModelImage image;
     private boolean showAriMean = true; 
-    private boolean doSubsample = false;
+    private boolean doShowPrefusion = false;
     private boolean doInterImages = false;
     private boolean showGeoMean = false;
     private File[] baseImageAr;
@@ -119,13 +119,13 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
      * Constructor.
      * @param doGeoMean 
      * @param doInterImages 
-     * @param doSubsample 
+     * @param doShowPrefusion 
      *
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      * @param scale 
      * @param image2Intensity 
-     * @param doSubsample 
+     * @param doShowPrefusion 
      * @param middleSlice2 
      * @param thresholdIntensity 
      * @param resZ 
@@ -142,7 +142,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
      * @param geoMeanDir 
      * @param saveGeoMean 
      */
-    public PlugInAlgorithmGenerateFusion541c(ModelImage image1, boolean doSubsample, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion541c(ModelImage image1, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir) {
@@ -150,7 +150,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         
         this.image = image1;
         this.showAriMean = doAriMean;
-        this.doSubsample = doSubsample;
+        this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
         this.showGeoMean = doGeoMean;
         this.doThreshold = doThreshold;
@@ -434,6 +434,19 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                         for(int k=0; k<zExtents; k++) {
                             transformZ = k-zMeasure;
                             baseIntensity = baseImage.getDouble(i, j, k);
+                            
+                            if(i < baseImage.getExtents()[0] && 
+                                    j < baseImage.getExtents()[1] && 
+                                    k < baseImage.getExtents()[2]) {
+                                baseIntensity = baseImage.getDouble(i, j, k);
+                            }
+                            
+                            if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
+                                    transformY >= 0 && transformY < transformImage.getExtents()[1] && 
+                                    transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
+                                transformIntensity = transformImage.getDouble(transformX, transformY, transformZ);
+                            }
+                            
                             if(baseIntensity < sumCutoff) { 
                                 baseIntensity = 0;
                             }
