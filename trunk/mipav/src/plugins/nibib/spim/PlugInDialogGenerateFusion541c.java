@@ -84,13 +84,13 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 
     private JTextField transformImageText, baseImageText;
 
-    private JCheckBox doSubsampleBox;
+    private JCheckBox doShowPrefusionBox;
 
     private String mtxFileLoc;
 
     private File[] baseImageAr, transformImageAr;
 
-    private boolean doSubsample, doInterImages;
+    private boolean doShowPreFusion, doInterImages;
 
     private boolean showGeoMean, showAriMean;
 
@@ -236,7 +236,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541c(image, doSubsample, doInterImages, showGeoMean, showAriMean, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541c(image, doShowPreFusion, doInterImages, showGeoMean, showAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
@@ -283,7 +283,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
     	showAriMean = scriptParameters.getParams().getBoolean("do_arithmetic");
     	showGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
-    	doSubsample = scriptParameters.getParams().getBoolean("do_subsample");
+    	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
     	mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
@@ -305,7 +305,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_arithmetic", showAriMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
        
         scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
@@ -521,8 +521,8 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         gbc.gridy = 0; 
         
         gbc.gridy++;
-        doSubsampleBox = gui.buildCheckBox("Do subsampling to match images", false);
-        outputPanel.add(doSubsampleBox.getParent(), gbc);
+        doShowPrefusionBox = gui.buildCheckBox("Show pre-fusion images", false);
+        outputPanel.add(doShowPrefusionBox.getParent(), gbc);
         gbc.gridy++;
       
         arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
@@ -622,7 +622,7 @@ public class PlugInDialogGenerateFusion541c extends JDialogScriptableBase implem
         saveGeoMean = geometricMeanSaveBox.isSelected();
         saveAriMean = arithmeticMeanSaveBox.isSelected();
         doInterImages = interImagesBox.isSelected();
-        doSubsample = doSubsampleBox.isSelected();
+        doShowPreFusion = doShowPrefusionBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
         doInterImages = interImagesBox.isSelected();
 	    
