@@ -135,15 +135,19 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmBase {
                         fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
                         resols[0] = images[t].getFileInfo(z).getResolutions()[0];
                         resols[1] = images[t].getFileInfo(z).getResolutions()[1];
-                        resols[2] = 1.0f;
-                        resols[3] = 1.0f;
+                        resols[2] = images[t].getFileInfo(z).getResolutions()[2];
+                        resols[3] = (float)sliceResolution;
                         destFileInfo[sliceCounter].setResolutions(resols);
                         destFileInfo[sliceCounter].setExtents(destImage.getExtents());
+                        destFileInfo[sliceCounter].setAxisOrientation(images[t].getFileInfo(z).getAxisOrientation()[0], 0);
+                        destFileInfo[sliceCounter].setAxisOrientation(images[t].getFileInfo(z).getAxisOrientation()[1], 1);
+                        destFileInfo[sliceCounter].setAxisOrientation(images[t].getFileInfo(z).getAxisOrientation()[2], 2);
+                        destFileInfo[sliceCounter].setImageOrientation(images[t].getFileInfo(z).getImageOrientation());  
+                        ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) images[t].getFileInfo(z));
                         ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
                         ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows                 
                         ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
                                                                  Short.toString((short) (t + 1)).length()); // instance number
-                        ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) images[t].getFileInfo(z));
                         ((FileInfoDicom) destFileInfo[j]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
                         sliceCounter++;  
                                                  

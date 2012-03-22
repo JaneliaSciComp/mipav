@@ -183,17 +183,20 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                     fireProgressStateChanged( ( ( (100 * (t * 2))) / (destImage.getExtents()[2] + 1)));
                     resols[0] = srcImage.getFileInfo(0).getResolutions()[0];
                     resols[1] = srcImage.getFileInfo(0).getResolutions()[1];
-                    resols[2] = 1.0f;
-                    resols[3] = 1.0f;
-                    // resols[4] = 1;
+                    resols[2] = srcImage.getFileInfo(0).getResolutions()[2];
+                    resols[3] = (float)sliceResolution;
                     destFileInfo[sliceCounter].setResolutions(resols);
                     destFileInfo[sliceCounter].setExtents(destImage.getExtents());
+                    destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
+                    destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
+                    destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
+                    destFileInfo[sliceCounter].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation()); 
+                    ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(j));
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) xDim), 2); // columns
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) yDim), 2); // rows
                     ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013",
                             Short.toString((short) (t + 1)), Short.toString((short) (t + 1)).length()); // instance
                                                                                                         // number
-                    ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(j));
                     if (newTagTable.getValue("2001,1018") != null){
                         ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("2001,1018", null);        
                     }
