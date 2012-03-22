@@ -613,7 +613,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 // initial heap size
                 if (line.endsWith("M") || line.endsWith("m")) {
-                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length());
+                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length(), line.length() - 2);
                 } else {
                     memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
                         .substring(JDialogMemoryAllocation.initHeapLAX.length()));
@@ -639,7 +639,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 // max heap size
                 if (line.endsWith("M") || line.endsWith("m")) {
-                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length());
+                    memorySpec = line.substring(JDialogMemoryAllocation.initHeapLAX.length(), line.length() - 2);
                 } else {
                     memorySpec = JDialogMemoryAllocation.convertBytesToMBytes(line
                             .substring(JDialogMemoryAllocation.maxHeapLAX.length()));
