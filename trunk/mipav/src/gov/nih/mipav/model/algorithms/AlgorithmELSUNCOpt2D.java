@@ -65,9 +65,6 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     /** Point that was initially passed into function. */
     private double[] start;
     
-    /** Final point when optimization is complete. */
-    private double[] finalPoint;
-    
     /**
      * The flag to indicate whether the searching path need to be recorded.
      */
@@ -226,7 +223,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      */
     public double[] getFinal(double[] point) {
 
-        finalPoint = new double[start.length];
+        double []finalPoint = new double[start.length];
     	for (int i = 0; i < start.length; i++) {
             finalPoint[i] = start[i];
         }
