@@ -98,7 +98,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         costFunction = costFunc;
         tolerance = tols;
         maxIterations = maxIter;
-        parent = this.parent;
+        this.parent = parent;
 
         this.rigid = _rigid;
         toOrigin = new TransMatrix(3);
