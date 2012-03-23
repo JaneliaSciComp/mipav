@@ -42,9 +42,9 @@ import java.awt.*;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGeneratePostTreatment541c implements PlugInAlgorithm {
+public class PlugInCreateTumorMap541d implements PlugInGeneric {
 
-    public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "541c"};
+	public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "541d"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -57,12 +57,8 @@ public class PlugInGeneratePostTreatment541c implements PlugInAlgorithm {
      * @see    ModelImage
      * @see    ViewJFrameImage
      */
-    public void run(Frame parentFrame, ModelImage image) {
-
-        if (parentFrame instanceof ViewJFrameImage) {
-            new PlugInDialogGeneratePostTreatment541c(parentFrame, image);
-        } else {
-            MipavUtil.displayError("PlugInDialogGeneratePostTreatment only runs on an image frame.");
-        }
+    public void run() {
+        new PlugInDialogCreateTumorMap541d(false);
+        
     }
 }

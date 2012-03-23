@@ -50,7 +50,7 @@ import gov.nih.mipav.view.dialogs.JDialogSubsample;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
+public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
 
     /** Image dimensions */
     private int xyDim, zDim;
@@ -59,7 +59,7 @@ public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
     /** Tumor radius in units of image */
     private double initRadius;
     private double tumorChange;
-    private PlugInDialogCreateTumorMap541c.TumorSimMode simMode;
+    private PlugInDialogCreateTumorMap541d.TumorSimMode simMode;
     /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
     private double intensity;
@@ -80,9 +80,9 @@ public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
      * @param subsample 
      *
      */
-	public PlugInAlgorithmCreateTumorMap541c(int xyDim, int zDim, double xyRes,
+	public PlugInAlgorithmCreateTumorMap541d(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap541c.TumorSimMode simMode, double intensity, int subsampleAmount, boolean doCenter) {
+            PlugInDialogCreateTumorMap541d.TumorSimMode simMode, double intensity, int subsampleAmount, boolean doCenter) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
