@@ -228,11 +228,11 @@ public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
         double newRadius = 0;
         switch(simMode) {
         case grow:
-            newRadius = (int) (initRadius*(1+tumorChange));
+            newRadius = (initRadius*(1+tumorChange));
             break;
             
         case shrink:
-            newRadius = (int) (initRadius*(1-tumorChange));
+            newRadius = (initRadius*(1-tumorChange));
             break;
             
         case none:
@@ -272,7 +272,7 @@ public class PlugInAlgorithmCreateTumorMap541c extends AlgorithmBase {
         double largerRadius = 0;
         switch(simMode) {
         case grow:
-            largerRadius = (int) (initRadius*(1+tumorChange));
+            largerRadius = (initRadius*(1+tumorChange));
             break;
             
         case shrink:
