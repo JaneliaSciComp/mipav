@@ -9,6 +9,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+import java.lang.management.ManagementFactory;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -170,8 +171,8 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
         dataPanel.setBorder(border);
 
 
-        long inUse = ((Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
-        long tot = (Runtime.getRuntime().totalMemory() / 1024);
+        long inUse = MipavUtil.getUsedHeapMemory() / 1024;
+        long tot = MipavUtil.getMaxHeapMemory() / 1024;
 
         JLabel k = new JLabel("K"); // units for memory usage
         JLabel K = new JLabel("K");
@@ -421,9 +422,6 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
         private int percentage;
 
         /** DOCUMENT ME! */
-        private Runtime r = Runtime.getRuntime();
-
-        /** DOCUMENT ME! */
         private long sleepAmount = 1000;
 
         /** DOCUMENT ME! */
@@ -530,8 +528,8 @@ public class ViewJFrameMemory extends JFrame implements ActionListener, ChangeLi
             Thread me = Thread.currentThread();
 
             while (thread == me) {
-                totalMemory = (float) r.totalMemory();
-                freeMemory = (float) r.freeMemory();
+                totalMemory = (float) MipavUtil.getMaxHeapMemory();
+                freeMemory = (float) MipavUtil.getFreeHeapMemory();
                 usedMemory = (float) totalMemory - freeMemory; // % used, that is
                 percentage = (int) ((usedMemory / totalMemory * 100) + 0.5f);
                 fireMemoryChanged(); // too many and this thread is selfish

@@ -29,6 +29,7 @@ import ij.process.ImageProcessor;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
@@ -3361,9 +3362,10 @@ parse:  while (i < args.length) {
     public void updateMemoryUsage() {
         // System.out.println(Runtime.getRuntime().totalMemory());
         // System.out.println(Runtime.getRuntime().freeMemory());
-
-        final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
-        final long totalMemory = (Runtime.getRuntime().totalMemory() / 1048576);
+        
+        //final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
+        final long memoryInUse = MipavUtil.getUsedHeapMemory() / 1048576;
+        final long totalMemory = MipavUtil.getMaxHeapMemory() / 1048576;
 
         if ( ((double) memoryInUse / (double) totalMemory) > 0.8) {
             System.gc();

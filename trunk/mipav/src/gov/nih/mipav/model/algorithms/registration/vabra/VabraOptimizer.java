@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
+import gov.nih.mipav.view.MipavUtil;
+
 public class VabraOptimizer{
 
 	VabraOptimizer globalPtr;
@@ -171,7 +173,7 @@ public class VabraOptimizer{
 		stop = System.currentTimeMillis();
 		if ((float) (stop - start) > 1000) {
 			System.out.format("Coarse Gradient time:%f, %d\n", (float) (stop - start), TimeCounter);
-			System.out.format("%f/%f\n", (float) Runtime.getRuntime().freeMemory(), (float) Runtime.getRuntime().totalMemory());
+			System.out.format("%f/%f\n", (float) MipavUtil.getFreeHeapMemory(), (float) MipavUtil.getMaxHeapMemory());
 			TimeCounter = 0;
 		} else TimeCounter++;
 

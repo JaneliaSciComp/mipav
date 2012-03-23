@@ -1232,7 +1232,7 @@ public class ViewJComponentRegistration
 
         memCount++;
 
-        if ((Runtime.getRuntime().freeMemory() < 20000000) || (memCount >= 15)) {
+        if ((MipavUtil.getFreeHeapMemory() < 20000000) || (memCount >= 15)) {
             System.gc();
         }
     }

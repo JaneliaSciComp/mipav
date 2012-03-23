@@ -31,24 +31,21 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
      */
     public void runAlgorithm() {
     	srcImage.getParentFrame().dispose();
-    	Runtime inst = Runtime.getRuntime();
-    	System.out.println("Total Memory = " + inst.totalMemory()
-    						+ " Free Memory = " + inst.freeMemory());
+    	System.out.println("Total Memory = " + MipavUtil.getMaxHeapMemory()
+    						+ " Free Memory = " + MipavUtil.getFreeHeapMemory());
     	
     	ViewUserInterface.getReference().openImageFrame();
-    	inst = Runtime.getRuntime();
-    	System.out.println("Total Memory = " + inst.totalMemory()
-				+ " Free Memory = " + inst.freeMemory());
+    	System.out.println("Total Memory = " + MipavUtil.getMaxHeapMemory()
+                + " Free Memory = " + MipavUtil.getFreeHeapMemory());
     	ModelImage image = ViewUserInterface.getReference().getActiveImageFrame().getImageA();
     	
-    	inst = Runtime.getRuntime();
-    	System.out.println("Total Memory = " + inst.totalMemory()
-				+ " Free Memory = " + inst.freeMemory());
+    	System.out.println("Total Memory = " + MipavUtil.getMaxHeapMemory()
+                + " Free Memory = " + MipavUtil.getFreeHeapMemory());
     	
     	image.getParentFrame().dispose();
     	
-    	System.out.println("Total Memory = " + inst.totalMemory()
-				+ " Free Memory = " + inst.freeMemory());
+    	System.out.println("Total Memory = " + MipavUtil.getMaxHeapMemory()
+                + " Free Memory = " + MipavUtil.getFreeHeapMemory());
 
     	
     	

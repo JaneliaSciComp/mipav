@@ -1,7 +1,8 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.ViewJProgressBar;
+
+import gov.nih.mipav.view.*;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -96,7 +97,7 @@ public class VabraSolver {
 					//System.out.format("Changing image resolution %d\n",downSampleFactor.get(currentResolutionIdx));
 					imgSubTarPairs.setResolution(downSampleFactor.get(currentResolutionIdx));
 
-					//System.out.format("After Set Resolution%f/%f\n", (float)Runtime.getRuntime().freeMemory(), (float)Runtime.getRuntime().totalMemory());
+					//System.out.format("After Set Resolution%f/%f\n", (float)MipavUtil.getFreeHeapMemory(), (float)MipavUtil.getMaxHeapMemory());
 					currentResolutionIdx++;
 				}
 			}
