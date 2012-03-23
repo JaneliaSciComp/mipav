@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegELSUNCOAR2D;
+import gov.nih.mipav.model.algorithms.registration.AlgorithmRegELSUNCOAR3D;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.ParserException;
@@ -75,6 +77,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxCostFunct;
+    
+    private JComboBox comboBoxSearchAlgo;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxDOF;
@@ -169,6 +173,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private AlgorithmRegOAR3D reg3 = null;
+    
+    private AlgorithmRegELSUNCOAR3D reg3E = null;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage;
@@ -272,6 +278,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     private JLabel userDirectoryLabel;
     
     private JTextField userDirectoryText;
+    
+    private boolean useELSUNC = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -476,7 +484,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         float resZ;
         String comStr;
         DecimalFormat nf;
-        final ViewUserInterface UI = ViewUserInterface.getReference();
 
         nf = new DecimalFormat();
         nf.setMaximumFractionDigits(4);
@@ -601,6 +608,136 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             if (reg3 != null) {
                 reg3.disposeLocal();
                 reg3 = null;
+            }
+
+            matchImage = null; // register match image to reference Image
+            refImage = null;
+
+            if (inputWeightImage != null) {
+                inputWeightImage.disposeLocal();
+                inputWeightImage = null;
+            }
+
+            if (refWeightImage != null) {
+                refWeightImage.disposeLocal();
+                refWeightImage = null;
+            }
+
+            dispose();
+            System.gc();
+        }
+        
+        if (algorithm instanceof AlgorithmRegELSUNCOAR3D) {
+
+            if (reg3E.isCompleted()) {
+                final TransMatrix finalMatrix = reg3E.getTransform();
+                System.err.println(finalMatrix);
+
+                if (doLS) {
+                    // System.err.println("OAR3D Matrix: " + finalMatrix);
+                    // System.err.println("LS Matrix: " + lsMatrix);
+
+                    finalMatrix.Mult(lsMatrix);
+                    // System.err.println("OAR3D x LS: " + finalMatrix);
+                }
+
+                if (displayTransform) {
+                    final int xdimA = refImage.getExtents()[0];
+                    final int ydimA = refImage.getExtents()[1];
+                    final int zdimA = refImage.getExtents()[2];
+                    final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+                    final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+                    final float zresA = refImage.getFileInfo(0).getResolutions()[2];
+
+                    final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
+
+                    transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
+                            ydimA, zdimA, true, false, pad);
+
+                    transform.setUpdateOriginFlag(true);
+                    transform.setFillValue(fillValue);
+                    transform.run();
+                    resultImage = transform.getTransformedImage();
+                    transform.finalize();
+
+                    resultImage.calcMinMax();
+                    resultImage.setImageName(name);
+
+                    if (resultImage != null) {
+
+                        try {
+                            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        } catch (final OutOfMemoryError error) {
+                            MipavUtil.displayError("Out of memory: unable to open new frame");
+                        }
+                    } else {
+                        MipavUtil.displayError("Result Image is null");
+                    }
+
+                    if (transform != null) {
+                        transform.disposeLocal();
+                        transform = null;
+                    }
+                }
+
+                xOrig = (matchImage.getExtents()[0] - 1.0) / 2.0;
+                yOrig = (matchImage.getExtents()[1] - 1.0) / 2.0;
+                zOrig = (matchImage.getExtents()[2] - 1.0) / 2.0;
+                resX = matchImage.getFileInfo()[0].getResolutions()[0];
+                resY = matchImage.getFileInfo()[0].getResolutions()[1];
+                resZ = matchImage.getFileInfo()[0].getResolutions()[2];
+                xCen = xOrig * resX;
+                yCen = yOrig * resY;
+                zCen = zOrig * resZ;
+                finalMatrix.Inverse();
+                xCenNew = xCen * finalMatrix.Get(0, 0) + yCen * finalMatrix.Get(0, 1) + zCen * finalMatrix.Get(0, 2)
+                        + finalMatrix.Get(0, 3);
+                yCenNew = xCen * finalMatrix.Get(1, 0) + yCen * finalMatrix.Get(1, 1) + zCen * finalMatrix.Get(1, 2)
+                        + finalMatrix.Get(1, 3);
+                zCenNew = xCen * finalMatrix.Get(2, 0) + yCen * finalMatrix.Get(2, 1) + zCen * finalMatrix.Get(2, 2)
+                        + finalMatrix.Get(2, 3);
+                Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" + xCen + ", " + yCen
+                        + ", " + zCen + ")\n",Preferences.DEBUG_ALGORITHM);
+                if (resultImage != null) {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
+                            + ") in " + resultImage.getImageName() + ".\n";
+                } else {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
+                            + ").\n";
+                }
+                Preferences.debug(comStr,Preferences.DEBUG_ALGORITHM);
+
+                if (resultImage != null) {
+                    resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+
+                    for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                        resultImage.getFileInfo(i).setOrigin(refImage.getFileInfo(i).getOrigin());
+                    }
+                }
+
+                finalMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                matchImage.getMatrixHolder().addMatrix(finalMatrix);
+
+                String message = "Using cost function, " + costName;
+                message += ", the cost is " + Double.toString(reg3E.getAnswer()) + ".\n";
+                message += "Some registration settings: \n";
+                message += "X Rotations from " + rotateBeginX + " to " + rotateEndX + ", ";
+                message += "with a X coarse rate of " + coarseRateX + " and X fine rate of " + fineRateX + ".\n";
+                message += "Y Rotations from " + rotateBeginY + " to " + rotateEndY + ", ";
+                message += "with a Y coarse rate of " + coarseRateY + " and Y fine rate of " + fineRateY + ".\n";
+                message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
+                message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
+                finalMatrix.saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
+                        + refImage.getImageName() + ".mtx", message);
+                Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
+                        + refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
+
+                insertScriptLine();
+            }
+
+            if (reg3E != null) {
+                reg3E.disposeLocal();
+                reg3E = null;
             }
 
             matchImage = null; // register match image to reference Image
@@ -820,6 +957,15 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             rotatePanel.validate();
             repaint();
+        } else if (event.getSource() == comboBoxSearchAlgo) {
+        	switch(comboBoxSearchAlgo.getSelectedIndex()) {
+        	case 0: // Powell's calling Brent's
+        		jtemCheckbox.setEnabled(true);
+        		break;
+        	case 1: // ELSUNC
+        		jtemCheckbox.setEnabled(false);
+        		break;
+        	}
         } else if (event.getSource() == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
                 case 0: // image minimum
@@ -1096,6 +1242,14 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     }
     
     /**
+     * Accessor to set whether to use Powell's algorithm calling Brent's method or ELSUNC for search algorithm
+     * @param useELSUNC
+     */
+    public void setUseELSUNC(boolean useELSUNC) {
+    	this.useELSUNC = useELSUNC;
+    }
+    
+    /**
      * Accessor to set whether or not powell's algorithm uses multithreading
      * @param doMultiThread
      */
@@ -1209,55 +1363,107 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
             weighted = true;
         } // if (voisOnly)
-
-        if (weighted) {
-
-            if ( !doLS) {
-                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
-                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        doMultiThread, fastMode, maxIterations, numMinima);
-            } else {
-                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
-                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-                        doMultiThread, fastMode, maxIterations, numMinima);
-            }
-        } else {
-            // System.out.println("Reference image name is " +refImage.getImageName());
-            // System.out.println("Moving image name is " +matchImage.getImageName());
-
-            if ( !doLS) {
-                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
-                        fastMode, maxIterations, numMinima);
-                reg3.setJTEM(doJTEM);
-            } else {
-                System.err.println("Sending LS Image to OAR3D algorithm");
-                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
-                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
-                        maxIterations, numMinima);
-
-            }
+        
+        if (useELSUNC) {
+        	if (weighted) {
+        		
+	            if ( !doLS) {
+	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+	                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+	                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+	                        doMultiThread, fastMode, maxIterations, numMinima);
+	            } else {
+	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+	                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+	                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+	                        doMultiThread, fastMode, maxIterations, numMinima);
+	            }
+	        } else {
+	            // System.out.println("Reference image name is " +refImage.getImageName());
+	            // System.out.println("Moving image name is " +matchImage.getImageName());
+	
+	            if ( !doLS) {
+	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+	                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+	                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
+	                        fastMode, maxIterations, numMinima);
+	            } else {
+	                System.err.println("Sending LS Image to OAR3D algorithm");
+	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+	                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+	                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
+	                        maxIterations, numMinima);
+	
+	            }
+	        }
+	
+	        reg3E.addListener(this);
+	
+	        createProgressBar(matchImage.getImageName(), reg3E);
+	
+	        // Hide dialog
+	        setVisible(false);
+	
+	        if (isRunInSeparateThread()) {
+	
+	            // Start the thread as a low priority because we wish to still have user interface work fast.
+	            if (reg3E.startMethod(Thread.MIN_PRIORITY) == false) {
+	                MipavUtil.displayError("A thread is already running on this object");
+	            }
+	        } else {
+	            reg3E.run();
+	        }	
         }
-
-        reg3.addListener(this);
-
-        createProgressBar(matchImage.getImageName(), reg3);
-
-        // Hide dialog
-        setVisible(false);
-
-        if (isRunInSeparateThread()) {
-
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            reg3.run();
+        else {
+	        if (weighted) {
+	
+	            if ( !doLS) {
+	                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+	                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+	                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+	                        doMultiThread, fastMode, maxIterations, numMinima);
+	            } else {
+	                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+	                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
+	                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
+	                        doMultiThread, fastMode, maxIterations, numMinima);
+	            }
+	        } else {
+	            // System.out.println("Reference image name is " +refImage.getImageName());
+	            // System.out.println("Moving image name is " +matchImage.getImageName());
+	
+	            if ( !doLS) {
+	                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+	                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+	                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
+	                        fastMode, maxIterations, numMinima);
+	                reg3.setJTEM(doJTEM);
+	            } else {
+	                System.err.println("Sending LS Image to OAR3D algorithm");
+	                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+	                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
+	                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
+	                        maxIterations, numMinima);
+	
+	            }
+	        }
+	
+	        reg3.addListener(this);
+	
+	        createProgressBar(matchImage.getImageName(), reg3);
+	
+	        // Hide dialog
+	        setVisible(false);
+	
+	        if (isRunInSeparateThread()) {
+	
+	            // Start the thread as a low priority because we wish to still have user interface work fast.
+	            if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
+	                MipavUtil.displayError("A thread is already running on this object");
+	            }
+	        } else {
+	            reg3.run();
+	        }
         }
 
     }
@@ -1301,6 +1507,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        setUseELSUNC(scriptParameters.getParams().getBoolean("use_elsunc"));
 
         final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
         final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
@@ -1378,6 +1585,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_elsunc", useELSUNC));
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
         scriptParameters.getParams().put(
@@ -1602,6 +1810,20 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         // comboBoxCostFunct.addItem("Normalized mutual information smoothed");
         //This is least squares if doColor, else correlation ratio
         comboBoxCostFunct.setSelectedIndex(0);
+        
+        JLabel labelSearch = new JLabel("Search algorithm:");
+        labelSearch.setForeground(Color.black);
+        labelSearch.setFont(serif12);
+        labelSearch.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        comboBoxSearchAlgo = new JComboBox();
+        comboBoxSearchAlgo.setFont(MipavUtil.font12);
+        comboBoxSearchAlgo.setBackground(Color.white);
+        comboBoxSearchAlgo.setToolTipText("Search algorithm");
+        comboBoxSearchAlgo.addItem("Powell's calling Brent's");
+        comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.addItemListener(this);
+        comboBoxSearchAlgo.setSelectedIndex(0);
 
         final JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
@@ -1714,22 +1936,33 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxCostFunct, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 5;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        optPanel.add(labelSearch, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optPanel.add(comboBoxSearchAlgo, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 6;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 7;
         optPanel.add(minMaxCheckbox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.REMAINDER;
         optPanel.add(calcLSBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.REMAINDER;
         optPanel.add(multiThreadCheckBox, gbc);
@@ -2427,6 +2660,17 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 }
             }
         } // else black and white
+        
+        switch(comboBoxSearchAlgo.getSelectedIndex()) {
+        case 0:
+        	useELSUNC = false;
+        	break;
+        case 1:
+        	useELSUNC = true;
+        	break;
+        default:
+        	useELSUNC = false;
+        }
 
         switch (comboBoxDOF.getSelectedIndex()) {
 
