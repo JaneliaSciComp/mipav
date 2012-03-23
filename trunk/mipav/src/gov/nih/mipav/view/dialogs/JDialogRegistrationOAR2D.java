@@ -62,6 +62,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxCostFunct;
+    
+    private JComboBox comboBoxSearchAlgo;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxDOF;
@@ -148,6 +150,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private AlgorithmRegOAR2D reg2 = null;
+    
+    private AlgorithmRegELSUNCOAR2D reg2E = null;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
@@ -238,6 +242,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private JLabel userDirectoryLabel;
     
     private JTextField userDirectoryText;
+    
+    private boolean useELSUNC = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -721,6 +727,116 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             dispose();
             System.gc();
         }
+        
+        if (algorithm instanceof AlgorithmRegELSUNCOAR2D) {
+
+            if (reg2E.isCompleted()) {
+
+                if (displayTransform) {
+                    int xdimA = refImage.getExtents()[0];
+                    int ydimA = refImage.getExtents()[1];
+                    float xresA = refImage.getFileInfo(0).getResolutions()[0];
+                    float yresA = refImage.getFileInfo(0).getResolutions()[1];
+
+                    String name = makeImageName(matchImage.getImageName(), "_register");
+                    xfrm  = reg2E.getTransform();
+
+                    //System.err.println( xfrm );
+                    transform = new AlgorithmTransform(matchImage, xfrm, interp2, xresA, yresA, xdimA,
+                                                       ydimA, true, false, pad);
+
+                    transform.setUpdateOriginFlag(true);
+                    transform.setFillValue(fillValue);
+                    transform.run();
+                    resultImage = transform.getTransformedImage();
+                    transform.finalize();
+
+                    resultImage.calcMinMax();
+                    resultImage.setImageName(name);
+
+                    if (resultImage != null) {
+
+                        try {
+                            new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                        } catch (OutOfMemoryError error) {
+                            MipavUtil.displayError("Out of memory: unable to open new frame");
+                        }
+                    } else {
+                        MipavUtil.displayError("Result Image is null");
+                    }
+
+                    if (transform != null) {
+                        transform.disposeLocal();
+                    }
+
+                    transform = null;
+                }
+                else {
+                    xfrm = reg2E.getTransform();
+                }
+                
+                xOrig = (matchImage.getExtents()[0] - 1.0)/2.0;
+                yOrig = (matchImage.getExtents()[1] - 1.0)/2.0;
+                resX = matchImage.getFileInfo()[0].getResolutions()[0];
+                resY = matchImage.getFileInfo()[0].getResolutions()[1];
+                xCen = xOrig * resX;
+                yCen = yOrig * resY;
+                xfrm.Inverse();
+                xCenNew = xCen*xfrm.Get(0, 0) + yCen*xfrm.Get(0, 1) + xfrm.Get(0, 2);
+                yCenNew = xCen*xfrm.Get(1, 0) + yCen*xfrm.Get(1, 1) + xfrm.Get(1, 2);
+                Preferences.debug("The geometric center of " + matchImage.getImageName() + " at (" 
+                                   + xCen + ", " + yCen + ")\n",Preferences.DEBUG_ALGORITHM);
+                if (resultImage != null) {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ") in " +
+                                     resultImage.getImageName() + ".\n";
+                }
+                else {
+                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ").\n";    
+                }
+                Preferences.debug(comStr,Preferences.DEBUG_ALGORITHM);
+                
+                if (resultImage != null) {
+                    resultImage.getMatrixHolder().replaceMatrices(refImage.getMatrixHolder().getMatrices());
+    
+                    resultImage.getFileInfo(0).setOrigin(refImage.getFileInfo(0).getOrigin());
+                }
+
+                TransMatrix resultMatrix = reg2E.getTransform();
+                resultMatrix.setTransformID(TransMatrix.TRANSFORM_ANOTHER_DATASET);
+                
+                matchImage.getMatrixHolder().addMatrix(resultMatrix);
+
+                reg2E.getTransform().saveMatrix(matrixDirectory + matchImage.getImageName() + "_To_" +
+                                               refImage.getImageName() + ".mat");
+                Preferences.debug("Saved " + matrixDirectory + matchImage.getImageName() + "_To_" +
+                                               refImage.getImageName() + ".mat\n",Preferences.DEBUG_FILEIO);
+
+                insertScriptLine();
+            }
+         // save the completion status for later
+            setComplete(algorithm.isCompleted());
+
+            if (reg2E != null) {
+                reg2E.disposeLocal();
+                reg2E = null;
+            }
+
+            matchImage = null; // register match image to reference Image
+            refImage = null;
+
+            if (inputWeightImage != null) {
+                inputWeightImage.disposeLocal();
+                inputWeightImage = null;
+            }
+
+            if (refWeightImage != null) {
+                refWeightImage.disposeLocal();
+                refWeightImage = null;
+            }
+
+            dispose();
+            System.gc();
+        }
     }
 
     /**
@@ -963,6 +1079,15 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 labelFineDegrees.setEnabled(true);
                 sampleCheckBox.setEnabled(true);
             }
+        } else if (event.getSource() == comboBoxSearchAlgo) {
+        	switch(comboBoxSearchAlgo.getSelectedIndex()) {
+        	case 0: // Powell's calling Brent's
+        		jtemCheckBox.setEnabled(true);
+        		break;
+        	case 1: // ELSUNC
+        		jtemCheckBox.setEnabled(false);
+        		break;
+        	}
         } else if (event.getSource() == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
                 case 0: // image minimum
@@ -1131,6 +1256,14 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     }
     
     /**
+     * Accessor to set whether to use Powell's algorithm calling Brent's method or ELSUNC for search algorithm
+     * @param useELSUNC
+     */
+    public void setUseELSUNC(boolean useELSUNC) {
+    	this.useELSUNC = useELSUNC;
+    }
+    
+    /**
      * Accessor to set whether or not powell's algorithm uses multithreading
      * @param doMultiThread
      */
@@ -1236,33 +1369,64 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             weighted = true;
         } // if (voisOnly)
 
-        if (weighted) {
-            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread,
-                                         maxIterations, numMinima);
-        } else {
-            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
-                                         fineRate, doSubsample, doMultiThread,
-                                         maxIterations, numMinima);
-            reg2.setJTEM(doJTEM);
+        if (useELSUNC) {
+        	if (weighted) {
+	            reg2E = new AlgorithmRegELSUNCOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+	                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread,
+	                                         maxIterations, numMinima);
+	        } else {
+	            reg2E = new AlgorithmRegELSUNCOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
+	                                         fineRate, doSubsample, doMultiThread,
+	                                         maxIterations, numMinima);
+	        }
+	
+	        // Hide dialog
+	        setVisible(false);
+	
+	        // Start the thread as a low priority because we wish to still have user interface work fast.
+	        reg2E.addListener(this);
+	
+	        createProgressBar(matchImage.getImageName(), reg2E);
+	
+	        if (isRunInSeparateThread()) {
+	
+	            // Start the thread as a low priority because we wish to still have user interface work fast.
+	            if (reg2E.startMethod(Thread.MIN_PRIORITY) == false) {
+	                MipavUtil.displayError("A thread is already running on this object");
+	            }
+	        } else {
+	            reg2E.run();
+	        }	
         }
-
-        // Hide dialog
-        setVisible(false);
-
-        // Start the thread as a low priority because we wish to still have user interface work fast.
-        reg2.addListener(this);
-
-        createProgressBar(matchImage.getImageName(), reg2);
-
-        if (isRunInSeparateThread()) {
-
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (reg2.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            reg2.run();
+        else {
+	        if (weighted) {
+	            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+	                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread,
+	                                         maxIterations, numMinima);
+	        } else {
+	            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
+	                                         fineRate, doSubsample, doMultiThread,
+	                                         maxIterations, numMinima);
+	            reg2.setJTEM(doJTEM);
+	        }
+	
+	        // Hide dialog
+	        setVisible(false);
+	
+	        // Start the thread as a low priority because we wish to still have user interface work fast.
+	        reg2.addListener(this);
+	
+	        createProgressBar(matchImage.getImageName(), reg2);
+	
+	        if (isRunInSeparateThread()) {
+	
+	            // Start the thread as a low priority because we wish to still have user interface work fast.
+	            if (reg2.startMethod(Thread.MIN_PRIORITY) == false) {
+	                MipavUtil.displayError("A thread is already running on this object");
+	            }
+	        } else {
+	            reg2.run();
+	        }
         }
     }
 
@@ -1305,6 +1469,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        setUseELSUNC(scriptParameters.getParams().getBoolean("use_elsunc"));
 
         setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
         setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
@@ -1362,6 +1527,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_elsunc", useELSUNC));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
         scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
@@ -1692,6 +1858,20 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         }
 
         comboBoxCostFunct.setSelectedIndex(0);
+        
+        JLabel labelSearch = new JLabel("Search algorithm:");
+        labelSearch.setForeground(Color.black);
+        labelSearch.setFont(serif12);
+        labelSearch.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        comboBoxSearchAlgo = new JComboBox();
+        comboBoxSearchAlgo.setFont(MipavUtil.font12);
+        comboBoxSearchAlgo.setBackground(Color.white);
+        comboBoxSearchAlgo.setToolTipText("Search algorithm");
+        comboBoxSearchAlgo.addItem("Powell's calling Brent's");
+        comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.addItemListener(this);
+        comboBoxSearchAlgo.setSelectedIndex(0);
 
         JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
@@ -1831,36 +2011,47 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxCostFunct, gbc);
-
+        
         gbc.gridx = 0;
         gbc.gridy = 5;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        optPanel.add(rotateRangePanel, gbc);
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        optPanel.add(labelSearch, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 5;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optPanel.add(comboBoxSearchAlgo, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        optPanel.add(coarsePanel, gbc);
+        optPanel.add(rotateRangePanel, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 7;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
-        optPanel.add(finePanel, gbc);
+        optPanel.add(coarsePanel, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 8;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        optPanel.add(finePanel, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 9;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(sampleCheckBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 9;
+        gbc.gridy = 10;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(jtemCheckBox, gbc);
         
         gbc.gridx = 0;
-        gbc.gridy = 10;
+        gbc.gridy = 11;
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(multiThreadCheckBox, gbc);
@@ -2197,6 +2388,19 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         }
 
         comboBoxCostFunct.setSelectedIndex(0);
+        
+        JLabel labelSearch = new JLabel("Search algorithm:");
+        labelSearch.setForeground(Color.black);
+        labelSearch.setFont(serif12);
+        labelSearch.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        comboBoxSearchAlgo = new JComboBox();
+        comboBoxSearchAlgo.setFont(MipavUtil.font12);
+        comboBoxSearchAlgo.setBackground(Color.white);
+        comboBoxSearchAlgo.setToolTipText("Search algorithm");
+        comboBoxSearchAlgo.addItem("Powell's calling Brent's");
+        comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.setSelectedIndex(0);
 
         JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
@@ -2332,6 +2536,16 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         optPanel.add(comboBoxCostFunct, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        optPanel.add(labelSearch, gbc);
+        gbc.gridx = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        optPanel.add(comboBoxSearchAlgo, gbc);
 
         gbc.gridx = 0;
         gbc.gridy++;
@@ -2595,6 +2809,17 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                 }
             }
         } // else black and white
+        
+        switch(comboBoxSearchAlgo.getSelectedIndex()) {
+        case 0:
+        	useELSUNC = false;
+        	break;
+        case 1:
+        	useELSUNC = true;
+        	break;
+        default:
+        	useELSUNC = false;
+        }
 
         switch (comboBoxDOF.getSelectedIndex()) {
 
@@ -2997,6 +3222,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             table.put(new ParameterInt("degrees_of_freedom", 6));
             table.put(new ParameterInt("initial_interpolation_type", 1));
             table.put(new ParameterInt("cost_function_type", 1));
+            table.put(new ParameterBoolean("use_elsunc", false));
 
             table.put(new ParameterFloat("rotate_begin", -30));
             table.put(new ParameterFloat("rotate_end", 30));
