@@ -10,6 +10,7 @@ import gov.nih.mipav.view.icons.PlaceHolder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.lang.management.*;
 import java.net.*;
 import java.util.StringTokenizer;
 
@@ -1263,6 +1264,38 @@ public class MipavUtil extends JComponent {
 
             return false;
         }
+    }
+    
+    /**
+     * Get an object containing information on the current memory usage.
+     * @return Heap memory usage object.
+     */
+    public static MemoryUsage getHeapMemoryUsage() {
+        return ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+    }
+    
+    /**
+     * Return the amount of heap memory still available.
+     * @return The amount of heap memory still available.
+     */
+    public static long getFreeHeapMemory() {
+        return getMaxHeapMemory() - getUsedHeapMemory();
+    }
+    
+    /**
+     * Return the maximum amount of heap memory that MIPAV can use.
+     * @return The maximum amount of heap memory available.
+     */
+    public static long getMaxHeapMemory() {
+        return getHeapMemoryUsage().getMax();
+    }
+    
+    /**
+     * Return the amount of heap memory that MIPAV is currently using.
+     * @return The amount of heap memory currently being used.
+     */
+    public static long getUsedHeapMemory() {
+        return getHeapMemoryUsage().getUsed();
     }
 
     // ~ Inner Classes

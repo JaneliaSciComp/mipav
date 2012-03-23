@@ -2,6 +2,8 @@ package gov.nih.mipav.model.algorithms.t2mapping.cj.roi;
 
 import gov.nih.mipav.model.algorithms.t2mapping.cj.roi.*;
 
+import gov.nih.mipav.view.MipavUtil;
+
 class speed {
 public static void main(String argv[])
 {
@@ -11,13 +13,13 @@ public static void main(String argv[])
 	for(i=0;i<4000000;i++)
 		r.add((short)(i%2000),(short)(i/2000),(short)1,(float)1);
 	Runtime rt = Runtime.getRuntime();
-    System.out.println("Total Mem = "+rt.totalMemory());
-    System.out.println("Free Mem =  "+rt.freeMemory());
-    System.out.println("Used Mem =  "+(rt.totalMemory()-rt.freeMemory()));
+	System.err.println("Total Mem = "+MipavUtil.getMaxHeapMemory());
+    System.err.println("Free Mem =  "+MipavUtil.getFreeHeapMemory());
+    System.err.println("Used Mem =  "+MipavUtil.getUsedHeapMemory());
 	rt.gc();
-    System.out.println("Total Mem = "+rt.totalMemory());
-    System.out.println("Free Mem =  "+rt.freeMemory());
-    System.out.println("Used Mem =  "+(rt.totalMemory()-rt.freeMemory()));
+	System.err.println("Total Mem = "+MipavUtil.getMaxHeapMemory());
+    System.err.println("Free Mem =  "+MipavUtil.getFreeHeapMemory());
+    System.err.println("Used Mem =  "+MipavUtil.getUsedHeapMemory());
 /*
 	for(i=0;i<r.size();i++) {POI p = r.getPOI(i);
 	System.out.println("("+p.x+","+p.y+","+p.z+"): "+p.f);}

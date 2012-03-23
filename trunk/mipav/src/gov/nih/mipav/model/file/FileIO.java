@@ -17,6 +17,7 @@ import gov.nih.mipav.view.dialogs.*;
 import java.awt.*;
 import java.awt.image.*;
 import java.io.*;
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.zip.*;
 
@@ -2869,7 +2870,7 @@ public class FileIO {
             // an iteration
             modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
             
-            System.out.println("Free: "+Runtime.getRuntime().freeMemory());
+            System.out.println("Free: "+MipavUtil.getFreeHeapMemory());
             
             // the result image's dimensions (possibly subsampled dimensions)
 
@@ -2940,7 +2941,7 @@ public class FileIO {
                         {
                             modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
                         }
-                        System.out.println("Free: "+Runtime.getRuntime().freeMemory());
+                        System.out.println("Free: "+MipavUtil.getFreeHeapMemory());
                         //System.gc();
                         modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
                         FileIO.copyResolutions(modelImageTemp, modelImageResult, i);
@@ -3537,8 +3538,8 @@ public class FileIO {
                 // For 3D images, will call writeDicomSlice or writeDicom depending on how much memory is in use along
                 // with how
                 // big the image is and a factor since image cloning can occur
-                final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()));
-                final long totalMemory = (Runtime.getRuntime().totalMemory());
+                final long memoryInUse = MipavUtil.getUsedHeapMemory();
+                final long totalMemory = MipavUtil.getMaxHeapMemory();
                 final int imageSize = image.getSize();
                 int numBytes = 1;
                 final int type = image.getType();

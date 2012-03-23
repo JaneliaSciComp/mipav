@@ -11,6 +11,8 @@ import java.io.*;
 import java.util.zip.*;
 import gov.nih.mipav.model.algorithms.t2mapping.cmp.LEDataStream.*;
 
+import gov.nih.mipav.view.MipavUtil;
+
 public class ROIList001 extends RegionList 
 {
 
@@ -277,14 +279,14 @@ public static void main(String[] argv) throws IOException
 	for(int ii=0;ii<argv.length;ii++) {
 	System.err.println(argv[ii]);
 	rl.read(argv[ii]);
-//    System.err.println("Total Mem = "+rt.totalMemory());
-//    System.err.println("Free Mem =  "+rt.freeMemory());
-//    System.err.println("Used Mem =  "+(rt.totalMemory()-rt.freeMemory()));
+//    System.err.println("Total Mem = "+MipavUtil.getMaxHeapMemory());
+//    System.err.println("Free Mem =  "+MipavUtil.getFreeHeapMemory());
+//    System.err.println("Used Mem =  "+MipavUtil.getUsedHeapMemory());
 //    rt.gc();
     System.err.println("----");
-    System.err.println("Total Mem = "+rt.totalMemory());
-    System.err.println("Free Mem =  "+rt.freeMemory());
-    System.err.println("Used Mem =  "+(rt.totalMemory()-rt.freeMemory()));
+    System.err.println("Total Mem = "+MipavUtil.getMaxHeapMemory());
+    System.err.println("Free Mem =  "+MipavUtil.getFreeHeapMemory());
+    System.err.println("Used Mem =  "+MipavUtil.getUsedHeapMemory());
 	//for(int i=0;i<rl.size();i++) rl.get(i).write(System.out);
 	ROI001 r = rl.findClosest(100,100,10,"les");
 	if (r!=null) r.write(System.out);

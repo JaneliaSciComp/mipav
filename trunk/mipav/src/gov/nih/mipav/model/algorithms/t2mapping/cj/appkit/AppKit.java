@@ -12,6 +12,8 @@ import java.nio.*;
 import gov.nih.mipav.model.algorithms.t2mapping.gnu.getopt.*;
 import gov.nih.mipav.model.algorithms.t2mapping.cmp.LEDataStream.*;
 
+import gov.nih.mipav.view.MipavUtil;
+
 /**
  * AppKit is an abstract class providing base functionality that is useful
  * for most applications.  It can be subclassed to quickly create command
@@ -623,17 +625,16 @@ abstract public class AppKit {
  */
 	static public void memStatus(PrintStream ps, boolean gc)
 	{
-		Runtime rt = Runtime.getRuntime();
         ps.println("====");
-        ps.println("Total Mem = "+rt.totalMemory());
-        ps.println("Free Mem =  "+rt.freeMemory());
-        ps.println("Used Mem =  "+(rt.totalMemory()-rt.freeMemory()));
+        ps.println("Total Mem = "+MipavUtil.getMaxHeapMemory());
+        ps.println("Free Mem =  "+MipavUtil.getFreeHeapMemory());
+        ps.println("Used Mem =  "+MipavUtil.getUsedHeapMemory());
 		if (!gc) return;
-		rt.gc();
+		Runtime.getRuntime().gc();
         ps.println("----");
-        ps.println("Total Mem = "+rt.totalMemory());
-        ps.println("Free Mem =  "+rt.freeMemory());
-        ps.println("Used Mem =  "+(rt.totalMemory()-rt.freeMemory()));
+        ps.println("Total Mem = "+MipavUtil.getMaxHeapMemory());
+        ps.println("Free Mem =  "+MipavUtil.getFreeHeapMemory());
+        ps.println("Used Mem =  "+MipavUtil.getUsedHeapMemory());
 	}
 
 /**

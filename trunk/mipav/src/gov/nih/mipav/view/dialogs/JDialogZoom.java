@@ -199,8 +199,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      */
     @SuppressWarnings("unused")
     private int findMax() {
-        Runtime rt = Runtime.getRuntime();
-        long freeMemory = rt.freeMemory();
+        long freeMemory = MipavUtil.getFreeHeapMemory();
         int xDim = componentImage.getImageA().getExtents()[0];
         int yDim = componentImage.getImageA().getExtents()[1];
         float zoom = componentImage.getZoomX();
