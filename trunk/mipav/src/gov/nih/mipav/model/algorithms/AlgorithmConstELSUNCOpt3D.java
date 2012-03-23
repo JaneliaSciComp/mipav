@@ -34,7 +34,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     /** The cost of the function at the best minimum. */
     private double functionAtBest;
     
-    private double lastFunctionAtBest;
+    private double minFunctionAtBest;
 
     /** The maximum number of iterations the optimization allows. */
     private int maxIterations;
@@ -662,7 +662,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     	double originalI;
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
-        lastFunctionAtBest = Double.MAX_VALUE;
+        minFunctionAtBest = Double.MAX_VALUE;
 
         while (anotherCycle) {
         	anotherCycle = false;
@@ -677,8 +677,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 			        point[i] = params[0];
 			        double[]fullPoint = getFinal(point);
 			        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
-			        if (functionAtBest < lastFunctionAtBest) {
-			        	lastFunctionAtBest = functionAtBest;
+			        if (functionAtBest < minFunctionAtBest) {
+			        	minFunctionAtBest = functionAtBest;
 			        	anotherCycle = true;;
 			        }
 			        else {
