@@ -702,7 +702,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     	UNKNOWN(3, AxisOrientation.ORI_UNKNOWN_TYPE, AxisOrientation.ORI_UNKNOWN_TYPE, AxisOrientation.ORI_UNKNOWN_TYPE),
     	DICOM_AXIAL(4, AxisOrientation.ORI_R2L_TYPE, AxisOrientation.ORI_A2P_TYPE, AxisOrientation.ORI_I2S_TYPE),
     	DICOM_CORONAL(5, AxisOrientation.ORI_R2L_TYPE, AxisOrientation.ORI_S2I_TYPE, AxisOrientation.ORI_A2P_TYPE),
-    	DICOM_SAGITTAL(6, AxisOrientation.ORI_A2P_TYPE, AxisOrientation.ORI_S2I_TYPE, AxisOrientation.ORI_L2R_TYPE);
+    	DICOM_SAGITTAL(6, AxisOrientation.ORI_A2P_TYPE, AxisOrientation.ORI_S2I_TYPE, AxisOrientation.ORI_R2L_TYPE);
     	
     	private int legacyNum;
     	private AxisOrientation xAxis;
