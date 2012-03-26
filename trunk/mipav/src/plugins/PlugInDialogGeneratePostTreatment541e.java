@@ -52,7 +52,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -68,7 +68,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGeneratePostTreatment541d generatePostAlgo = null;
+    private PlugInAlgorithmGeneratePostTreatment541e generatePostAlgo = null;
 
     /** The check box for whether a blur should be performed. */
 	private JCheckBox check;
@@ -105,7 +105,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGeneratePostTreatment541d() { }
+    public PlugInDialogGeneratePostTreatment541e() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -113,7 +113,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGeneratePostTreatment541d(Frame theParentFrame, ModelImage im) {
+    public PlugInDialogGeneratePostTreatment541e(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -152,7 +152,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment541d) {
+        if (algorithm instanceof PlugInAlgorithmGeneratePostTreatment541e) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generatePostAlgo.isCompleted() == true)) {
@@ -188,7 +188,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment541d(image1, image1Intensity, image1Scale, image1Noise,
+            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment541e(image1, image1Intensity, image1Scale, image1Noise,
                                                                             image2, image2Intensity, image2Scale, image2Noise);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -238,7 +238,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Generate post treatment map 541d");
+        setTitle("Generate post treatment map 541e");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -281,7 +281,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
         image1Panel.add(image1Combo.getParent(), gbc);
         
         gbc.gridx++;
-        image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", 1300);
+        image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", .00109);
         image1Panel.add(image1IntensityText.getParent(), gbc);
         
         gbc.gridy++;
@@ -290,7 +290,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
         image1Panel.add(image1ScaleText.getParent(), gbc);
         
         gbc.gridx++;
-        image1NoiseText = gui.buildDecimalField("Image 1 noise: ", 10);
+        image1NoiseText = gui.buildDecimalField("Image 1 noise: ", .0005);
         image1Panel.add(image1NoiseText.getParent(), gbc);
          
         gbc.gridx = 0;
@@ -307,7 +307,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
         image2Panel.add(image2Combo.getParent(), gbc);
         
         gbc.gridx++;
-        image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", 1729);
+        image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", .00201);
         image2Panel.add(image2IntensityText.getParent(), gbc);
         
         gbc.gridy++;
@@ -316,7 +316,7 @@ public class PlugInDialogGeneratePostTreatment541d extends JDialogScriptableBase
         image2Panel.add(image2ScaleText.getParent(), gbc);
         
         gbc.gridx++;
-        image2NoiseText = gui.buildDecimalField("Image 2 noise: ", 10);
+        image2NoiseText = gui.buildDecimalField("Image 2 noise: ", .0005);
         image2Panel.add(image2NoiseText.getParent(), gbc);  
         
         gbc.gridy = 1;

@@ -42,9 +42,9 @@ import java.awt.*;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInCreateTumorMap541d implements PlugInGeneric {
+public class PlugInCreateTumorMap541e implements PlugInGeneric {
 
-	public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "541d"};
+	public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "541e"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -58,7 +58,7 @@ public class PlugInCreateTumorMap541d implements PlugInGeneric {
      * @see    ViewJFrameImage
      */
     public void run() {
-        new PlugInDialogCreateTumorMap541d(false);
+        new PlugInDialogCreateTumorMap541e(false);
         
     }
 }
