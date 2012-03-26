@@ -142,8 +142,8 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      */
     public void runAlgorithm() {
     	int i, j;
-    	boolean anotherCycle = true;
-    	double originalI;
+    	boolean anotherCycle;
+    	double originalJ;
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
@@ -152,6 +152,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         	if (points[i] == null) {
         		continue;
         	}
+        	anotherCycle = true;
         	start = points[i].getPoint();
         	double[] point = extractPoint(points[i].getPoint());
         	
@@ -166,12 +167,13 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 	        while (anotherCycle) {
 	        	anotherCycle = false;
 		        for (j = 0; j < nDims; j++) {
+		        	originalJ = point[j];
 			        dModel = new FitOAR2DModel(j,point);
 			        dModel.driver();
 			        status = dModel.getExitStatus();
 			        //dModel.statusMessage(status);
+			        //dModel.dumpResults();
 			        if (status > 0) {
-			        	originalI = point[j];
 				        double params[] = dModel.getParameters();
 				        point[j] = params[0];
 				        double[]fullPoint = getFinal(point);
@@ -184,9 +186,12 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 		                    }
 				        }
 				        else {
-				        	point[j] = originalI;
+				        	point[j] = originalJ;
 				        }
 			        } // if (status > 0)
+			        else {
+			        	point[j] = originalJ;
+			        }
 		        } // for (j = 0; j < nDims; j++)
 	        } // while (anotherCycle)
 	        /**
@@ -668,9 +673,10 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
             // Jacobian scaled to have unit length include the following line.
-            // internalScaling = true;
+            //internalScaling = true;
             // Suppress diagnostic messages
-            outputMes = false;
+            //outputMes = true;
+            //secondAllowed = false;
         }
 
         /**
@@ -699,14 +705,11 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
          */
         public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
             int ctrl;
-            double tempI;
             try {
                 ctrl = ctrlMat[0];
                 if ( (ctrl == -1) || (ctrl == 1)) {
-                	tempI = point[currentDim];
                 	point[currentDim] = a[0];
                 	double[]fullPoint = getFinal(point);
-                	point[currentDim] = tempI;
                     residuals[0] = costFunction.cost(convertToMatrix(fullPoint));
                 } // if ((ctrl == -1) || (ctrl == 1))
                 
