@@ -667,12 +667,12 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         while (anotherCycle) {
         	anotherCycle = false;
 	        for (i = 0; i < nDims; i++) {
+	        	originalI = point[i];
 		        dModel = new FitOAR3DConstrainedModel(i);
 		        dModel.driver();
 		        status = dModel.getExitStatus();
 		        //dModel.statusMessage(status);
 		        if (status > 0) {
-		        	originalI = point[i];
 			        double params[] = dModel.getParameters();
 			        point[i] = params[0];
 			        double[]fullPoint = getFinal(point);
@@ -685,6 +685,9 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 			        	point[i] = originalI;
 			        }
 		        } // if (status > 0)
+		        else {
+		        	point[i] = originalI;
+		        }
 	        } // for (i = 0; i < nDims; i++)
         } // while (anotherCycle)
     }
@@ -911,14 +914,11 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
          */
         public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
             int ctrl;
-            double tempI;
             try {
                 ctrl = ctrlMat[0];
                 if ( (ctrl == -1) || (ctrl == 1)) {
-                	tempI = point[currentDim];
                 	point[currentDim] = a[0];
                 	double[]fullPoint = getFinal(point);
-                	point[currentDim] = tempI;
                     residuals[0] = costFunction.cost(convertToMatrix(fullPoint));
                 } // if ((ctrl == -1) || (ctrl == 1))
                 
