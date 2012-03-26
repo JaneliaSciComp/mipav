@@ -62,7 +62,7 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
     private PlugInDialogCreateTumorMap541d.TumorSimMode simMode;
     /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
-    private double intensity;
+    private double intensity1, intensity2;
     /** Result images */
     private ModelImage image1a, image2a;
     private int[][] sphere;
@@ -76,13 +76,14 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
 
     /**
      * Constructor.
-     * @param intensity 
+     * @param intensity1 
+     * @param intensity2 
      * @param subsample 
      *
      */
 	public PlugInAlgorithmCreateTumorMap541d(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap541d.TumorSimMode simMode, double intensity, int subsampleAmount, boolean doCenter) {
+            PlugInDialogCreateTumorMap541d.TumorSimMode simMode, double intensity1, double intensity2, int subsampleAmount, boolean doCenter) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
@@ -99,7 +100,9 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
         }
         this.tumorChange = tumorChange;
         this.simMode = simMode;
-        this.intensity = intensity;
+        this.intensity1 = intensity1;
+        this.intensity2 = intensity2;
+        
         this.subsampleAmount = subsampleAmount;
     }
     
@@ -159,8 +162,11 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
         Preferences.debug("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         Preferences.data("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         
-        populateSphere(initRadius, intensity, image1a);
-        populateSphere(getChangedRadius(), getChangedIntensity(), image2a);
+        Preferences.data("Intensity1: "+intensity1+"\n");
+        Preferences.data("Intensity2: "+intensity2+"\n");
+        
+        populateSphere(initRadius, intensity1, image1a);      
+        populateSphere(getChangedRadius(), intensity2, image2a);
         
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       
@@ -236,8 +242,8 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
             break;
             
         case none:
-        case intensify:
-        case deintensify:
+        //case intensify:
+        //case deintensify:
         default:
             newRadius = initRadius;
             
@@ -246,26 +252,26 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
         return newRadius;
     }
     
-    private double getChangedIntensity() {
-        double newIntensity = intensity;
+    /*private double getChangedIntensity() {
+        double newIntensity = intensity1;
         
         switch(simMode) {     
         case intensify:
-            newIntensity = intensity*(1+tumorChange);
+            newIntensity = intensity1*(1+tumorChange);
             break;
         case deintensify:
-            newIntensity = intensity*(1-tumorChange);
+            newIntensity = intensity1*(1-tumorChange);
             break;
         case none:
         case grow:
         case shrink:
         default:
-            newIntensity = intensity;
+            newIntensity = intensity1;
             
         }
         
         return newIntensity;
-    }
+    }*/
 
     private double defineLargerRadius() {
         
@@ -280,8 +286,8 @@ public class PlugInAlgorithmCreateTumorMap541d extends AlgorithmBase {
             break;
             
         case none:
-        case intensify:
-        case deintensify:
+        //case intensify:
+        //case deintensify:
         default:
             largerRadius = initRadius;
             

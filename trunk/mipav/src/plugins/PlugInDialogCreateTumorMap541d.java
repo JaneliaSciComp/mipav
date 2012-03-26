@@ -63,8 +63,8 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
     
     /** Type of tumor simulation */
     public enum TumorSimMode {
-        intensify,
-        deintensify,
+        //intensify,
+        //deintensify,
         shrink,
         grow,
         none;
@@ -95,7 +95,7 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
 
     private JTextField zResText;
     
-    private JTextField intensityText;
+    private JTextField intensity1Text;
 
     private int xyDim, zDim;
 
@@ -107,7 +107,7 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
 
     private TumorSimMode simMode;
 
-    private double intensity;
+    private double intensity1;
 
     private JComboBox subSampleCombo;
 
@@ -119,6 +119,10 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
     private boolean doCenter;
 
     private JCheckBox doCenterCheck;
+
+    private JTextField intensity2Text;
+
+    private Double intensity2;
 
     
 
@@ -204,7 +208,7 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap541d(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity, subsample, doCenter);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap541d(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -323,9 +327,14 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
         tumorSimPanel.add(doCenterCheck.getParent(), gbc);
         
         gbc.gridy++;
-        intensityText = gui.buildDecimalField("Intensity value: ", 1300);
-        tumorSimPanel.add(intensityText.getParent(), gbc);
+        intensity1Text = gui.buildDecimalField("Image 1 intensity: ", .00109);
+        tumorSimPanel.add(intensity1Text.getParent(), gbc);
         
+        gbc.gridx++;
+        intensity2Text = gui.buildDecimalField("Image 2 intensity: ", .00201);
+        tumorSimPanel.add(intensity2Text.getParent(), gbc);
+        
+        gbc.gridx = 0;
         gbc.gridy++;
         JPanel panel = new JPanel();
         FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
@@ -392,7 +401,8 @@ public class PlugInDialogCreateTumorMap541d extends JDialogScriptableBase implem
     	    
     	    tumorChange = Double.valueOf(percentChangeText.getText());
     	    
-    	    intensity = Double.valueOf(intensityText.getText());
+    	    intensity1 = Double.valueOf(intensity1Text.getText());
+    	    intensity2 = Double.valueOf(intensity2Text.getText());
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
 	        return false;
