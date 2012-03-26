@@ -18,6 +18,7 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -93,6 +94,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxDOF;
+    
+    /** Progress bar that will listen to a dialog's algorithm (and reflect current progress)*/
+    protected ViewJProgressBar progressBar;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxInterp;
@@ -601,6 +605,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                 rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode, maxIterations, numMinima);
 
         reg35.addListener(this);
+        
+        createProgressBar(dwi35RegImage.getImageName(), reg35);
 
         setVisible(true);
 
@@ -1200,6 +1206,28 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         }
 
         return true;
+    }
+    
+    /**
+     * Creates the progress bar that will listen to an algorithm's progress changes
+     * @param title progress bar's title
+     * @param pListener algorithmbase that will notify progress updates to the pBar
+     */
+    protected void createProgressBar(String title, AlgorithmBase pListener) {
+        createProgressBar(title, " ...", pListener);
+    }
+    
+    /**
+     * Creates the progress bar (should be created within JDialog's callAlgorithm method
+     * @param title progress bar's title
+     * @param msg the message to display on the progress bar (initial setting)
+     * @param pListener the algorithm that will register the progress bar as a listener
+     */
+    protected void createProgressBar(String title, String msg, AlgorithmBase pListener) {
+        progressBar = new ViewJProgressBar(title, msg, 0, 100, true);
+        progressBar.setSeparateThread(false);
+        pListener.addProgressChangeListener(progressBar);
+        pListener.setProgressValues(0, 100);
     }
 
     @Override
