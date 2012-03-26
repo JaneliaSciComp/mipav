@@ -1,10 +1,18 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-    import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+    import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMosaicToSlices;
     import gov.nih.mipav.model.file.DTIParameters;
+import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomTag;
+import gov.nih.mipav.model.file.FileDicomTagTable;
     import gov.nih.mipav.model.file.FileIO;
     import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileInfoNIFTI;
     import gov.nih.mipav.model.file.FileInfoPARREC;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.CustomHashtable;
     import gov.nih.mipav.model.structures.ModelImage;
 
@@ -29,12 +37,15 @@ import java.awt.Frame;
     import java.awt.event.ActionListener;
     import java.awt.event.MouseEvent;
     import java.io.File;
+import java.io.FileNotFoundException;
     import java.io.FileOutputStream;
+import java.io.IOException;
     import java.io.PrintStream;
     import java.io.RandomAccessFile;
     import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
     import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -92,7 +103,7 @@ import Jama.Matrix;
 * </pre>
 * */
 
-    public class JPanelDTIImportData extends JPanel implements ActionListener{
+    public class JPanelDTIImportData extends JPanel implements AlgorithmInterface, ActionListener{
         
         // ~ Instance fields
         // ------------------------------------------------------------------------------------------------    
@@ -112,7 +123,7 @@ import Jama.Matrix;
         
         public JScrollPane scrollPane;
         
-        private DTIParameters dtiparams, newDTIparams;
+        private DTIParameters dtiparams, newDTIparams, parDTIParams;
         
         /** main panel * */
         private JPanel mainPanel;
@@ -368,6 +379,26 @@ import Jama.Matrix;
         private double sliceAng2;
 
         private String gradResWOP;
+
+        private AlgorithmMosaicToSlices mosaicToSliceAlgo;
+
+        private String parNversion;
+
+        private String parNExamName;
+
+        private String parNProtocolName;
+
+        private String parNPatientPosition;
+
+        private String parNfoldover;
+
+        private double[] parNsliceAng;
+
+        private double[] parNoffCentre;
+
+        private int parNorient;
+        
+        private FileInfoPARREC fileInfoPARREC = null;
 
         
 
@@ -682,7 +713,7 @@ import Jama.Matrix;
                 
                     if (ui.getActiveImageFrame() != null){
                         frame = ui.getActiveImageFrame();
-                        m_kDWIImage = frame.getImageA();
+                        m_kDWIImage = frame.getImageA();                           
                             if (m_kDWIImage != null && m_kDWIImage.is4DImage()==true){
                                 getImageDTIParams(); 
                                 DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
@@ -697,6 +728,22 @@ import Jama.Matrix;
                                 useT2CheckBox.setEnabled(true);
                                 pipeline.repaint();
                         }
+                            else if (m_kDWIImage != null && m_kDWIImage.isDicomImage() ==true &&
+                                    m_kDWIImage.is3DImage()==true){
+                                checkSiemens3d();
+                                getImageDTIParams(); 
+                                DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
+                                browseDWIButton.setEnabled(false);
+                                activeDWIButton.setEnabled(false);
+                                textDWIDataimage.setEnabled(false);
+                                openDWIButton.setEnabled(false);
+                                t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
+                                t2FileLabel.setEnabled(true);
+                                textT2image.setEnabled(true);
+                                openT2Button.setEnabled(true);
+                                useT2CheckBox.setEnabled(true);
+                                pipeline.repaint();
+                            }
                             else{
                                 m_kDWIImage = null;
                                 MipavUtil.displayError("Please select a 4D DWI Image"); 
@@ -759,7 +806,7 @@ import Jama.Matrix;
                     bvalGradFileLabel.setEnabled(true);
                     loadBValGradFileButton.setEnabled(true);
                     t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));
-                    if (dtiparams != null){ 
+                    if (dtiparams != null || parDTIParams != null){ 
                         DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
                         bvalGradAppButton.setEnabled(true);
                         saveBvalGradButton.setEnabled(true);
@@ -1170,19 +1217,42 @@ import Jama.Matrix;
         private void getImageDTIParams() { 
             
 
-                dtiparams = m_kDWIImage.getDTIParameters();
+           dtiparams = m_kDWIImage.getDTIParameters();
             
         
         //Set DTI Param object to get bvalues and gradients for display in srcTableModel
             
             boolean isPARREC = false;
             FileInfoBase fileInfo = m_kDWIImage.getFileInfo(0);
-            FileInfoPARREC fileInfoPARREC = null;
             try {
                 fileInfoPARREC = (FileInfoPARREC) fileInfo;
                 isPARREC = true;
             } catch (ClassCastException e) {
                 isPARREC = false;
+            }
+            
+            boolean isNIFTI = false;
+            FileInfoNIFTI fileInfoNIFTI = null;
+            try {
+                fileInfoNIFTI = (FileInfoNIFTI) fileInfo;
+                isNIFTI = true;
+            } catch (ClassCastException e) {
+                isNIFTI = false;
+            }
+            
+            if (isNIFTI){
+                String fileDir = m_kDWIImage.getImageDirectory();
+                String fileName = m_kDWIImage.getImageFileName();
+                File filePar = new File(fileDir + (fileName.substring(0, fileName.indexOf(".")) + "." + "par"));
+                boolean exists = filePar.exists();
+
+                try {
+                    niftiParExtraction(filePar);
+                    
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
             }
             
             if (dtiparams != null){
@@ -1221,18 +1291,74 @@ import Jama.Matrix;
                              srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
                             }
                          }
+                    
+                    if (dtiparams.getbMatrixVals() != null){ 
+                        java.lang.Object[] newColIdentifiers = {"Volume","B-value","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                        srcTableModel.setColumnIdentifiers(newColIdentifiers);
+                        for (int i = 0; i < numVolumes; i++) {
+                            // Populate Gradient column
+                            float[][] flGradArr = dtiparams.getbMatrixVals();
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][3]), i, 5);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][4]), i, 6);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][5]), i, 7);
+                           }
+                        }
+
                 
                 }
             }
-   
-            if (isPARREC) {
+            
+            else if (parDTIParams !=null){
+                if (parDTIParams.getNumVolumes() != 0){
+                    numVolumes = parDTIParams.getNumVolumes();
+                    
+                        for (int i = 0; i < numVolumes; i++) {
+                            // Add empty rows based on number of volumes
+                            final Vector<Object> rowData = new Vector<Object>();
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            srcTableModel.addRow(rowData);
+                        }
+                    
+                        if (parDTIParams.getbValues() != null){
+                            for (int i = 0; i < numVolumes; i++) { 
+                                // Populate Volume column
+                                srcTableModel.setValueAt(String.valueOf(i),i,0);
+                                // Populate Bvalue column
+                                float[] flBvalArr = parDTIParams.getbValues();
+                                srcTableModel.setValueAt(String.valueOf(flBvalArr[i]),i,1);
+                         }
+                        }
+                        if (parDTIParams.getGradients() != null){ 
+                            for (int i = 0; i < numVolumes; i++) {
+                                 // Populate Gradient column
+                                 float[][] flGradArr = parDTIParams.getGradients();
+                                 srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
+                                 srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
+                                 srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
+                                }
+                             }
+                
+            }
+            }
+            
+            
+
+            if (isPARREC || isNIFTI) {
                 //Checks if image is Philips PAR/REC image and the version to determine which GTC parameters to include
                 //Parameters based on: http://jist.projects.nitrc.org/docs/IACL/DTI/MedicAlgorithmMultiGradientTableCreator.html 
-                if ( (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
-                        || (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI")) {
+                if ( fileInfoPARREC != null && (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
+                        || fileInfoPARREC != null && (fileInfoPARREC.getProtocolName().toUpperCase()).contains("DTI") || parNversion != null && 
+                        parNProtocolName.toUpperCase().contains("DTI")) {
+
     
-    
-                    if (fileInfoPARREC.getVersion().equals("V3") || fileInfoPARREC.getVersion().equals("V4") || fileInfoPARREC.getVersion().equals("V4.2") ) {
+                    if (fileInfoPARREC != null  ||  parNversion != null ) {
                         //Determine if Philips PAR/REC is version 3 or 4 to determine which gradient table dialog to be displayed
                         final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
                         final GridBagConstraints gbc = new GridBagConstraints();
@@ -1317,7 +1443,9 @@ import Jama.Matrix;
                         gbc.gridx = 1;
                         GradCreatorPanel.add(philRelBox,gbc);
                         
-                        if (fileInfoPARREC.getVersion().equals("V4") || fileInfoPARREC.getVersion().equals("V4.2") ){
+                        if (fileInfoPARREC != null  && fileInfoPARREC.getVersion().equals("V4") ||
+                                fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V4.2") 
+                                || parNversion.equals("V4") || parNversion.equals("V4.2") ){
                           //Add all parameters not aquired in PAR file for user to input
                             osLabel = new JLabel("OS"); //Operating System
                             osLabel.setForeground(Color.lightGray);
@@ -1362,7 +1490,7 @@ import Jama.Matrix;
                             srcPanel.add(GradCreatorPanel, gbc2);
                         }
                         
-                        else if (fileInfoPARREC.getVersion().equals("V3")){
+                        else if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V3") ||  parNversion.equals("V3")){
                             //Add all parameters not aquired in PAR file for user to input
                             patientPosLabel = new JLabel("Patient Position");
                             patientPosTextField = new JTextField(5);
@@ -1507,7 +1635,7 @@ import Jama.Matrix;
                 invertedLabel.setForeground(Color.BLACK);
                 invertedBox.setForeground(Color.BLACK);
 
-                if (fileInfoPARREC.getVersion().equals("V3")) {
+                if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V3") ||  parNversion.equals("V3")) {
                     gradResLabel.setForeground(Color.lightGray);
                     gradResBox.setForeground(Color.lightGray);
                     gradOPLabel.setForeground(Color.lightGray);
@@ -1520,7 +1648,7 @@ import Jama.Matrix;
                     patientOrientBox.setForeground(Color.lightGray);                     
                 }
                 
-                else if (fileInfoPARREC.getVersion().equals("V4")){
+                else if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V4") ||  parNversion.equals("V4")){
                     gradResLabel.setForeground(Color.lightGray);
                     gradResBox.setForeground(Color.lightGray);
                     gradOPLabel.setForeground(Color.lightGray);
@@ -1536,7 +1664,7 @@ import Jama.Matrix;
                 osBox.setForeground(Color.lightGray);
                 invertedLabel.setForeground(Color.lightGray);
                 invertedBox.setForeground(Color.lightGray);
-                if (fileInfoPARREC.getVersion().equals("V3")) {
+                if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V3") ||  parNversion.equals("V3")) {
                     gradResLabel.setForeground(Color.BLACK);
                     gradResBox.setForeground(Color.BLACK);
                     gradOPLabel.setForeground(Color.BLACK);
@@ -1549,7 +1677,7 @@ import Jama.Matrix;
                     patientOrientBox.setForeground(Color.BLACK);                
                 }
                 
-                else if (fileInfoPARREC.getVersion().equals("V4")){
+                else if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V4") ||  parNversion.equals("V4")){
                     gradResLabel.setForeground(Color.BLACK);
                     gradResBox.setForeground(Color.BLACK);
                     gradOPLabel.setForeground(Color.BLACK);
@@ -1563,7 +1691,8 @@ import Jama.Matrix;
         private void gradientTableCreator() {
             //Get info from PAR file and user inputs from Gradient Table Creator Dialog
             FileInfoBase fileInfo = m_kDWIImage.getFileInfo(0);
-            FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
+            
+            //FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
 
             fatshiftBox.getSelectedItem();
             gradResBox.getSelectedItem();
@@ -1590,12 +1719,15 @@ import Jama.Matrix;
                     if(numVolumes==32 && os.equals("Windows")){
                         gradCreatetable = getJones30();
                         space = "MPS";
+                        angulationCorrection(gradCreatetable);   
                     }else if(numVolumes==35 && os.equals("VMS")){
                         gradCreatetable = getJones30VMS();
                         space = "MPS";
+                        angulationCorrection(gradCreatetable);   
                     }else if(numVolumes==31 && os.equals("Windows")){
                         gradCreatetable  = getJones30();
                         space = "LPH";
+                        angulationCorrection(gradCreatetable);   
                     }
                     else{
                         osLabel.setForeground(Color.red);
@@ -1614,10 +1746,12 @@ import Jama.Matrix;
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_1.5") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getLowOP();
                         space = "LPH";
+                        angulationCorrection(gradCreatetable);   
                      }
                     else{
                         gradCreatetable = getLowOP2();
                         space = "XYZ";
+                        angulationCorrection(gradCreatetable);   
                     }       
                 }           
                 else{
@@ -1630,10 +1764,12 @@ import Jama.Matrix;
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMediumOP();
                         space = "LPH";
+                        angulationCorrection(gradCreatetable);   
                      }
                     else{
                         gradCreatetable = getMediumOP2();
                         space = "XYZ";
+                        angulationCorrection(gradCreatetable);   
                     }            
                 }           
                 else{
@@ -1646,14 +1782,17 @@ import Jama.Matrix;
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0")){
                         gradCreatetable = getHighOP_24prev();
                         space = "LPH";
+                        angulationCorrection(gradCreatetable);   
                      }
                     else if(philRel.equals("Rel_2.5")){
                         gradCreatetable = getHighOP_rel25();
-                        space = "LPH";                   
+                        space = "LPH";
+                        angulationCorrection(gradCreatetable);   
                     }                
                     else{
                         gradCreatetable = getHighOP_25post();
                         space = "XYZ";
+                        angulationCorrection(gradCreatetable);   
                     }           
                 }
                 else{
@@ -1665,6 +1804,7 @@ import Jama.Matrix;
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getLow();
                         space = "MPS";
+                        angulationCorrection(gradCreatetable);   
                      }           
                 }
                 else{
@@ -1677,6 +1817,7 @@ import Jama.Matrix;
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getMedium();
                         space = "MPS";
+                        angulationCorrection(gradCreatetable);   
                      }           
             }
                 else{
@@ -1689,6 +1830,7 @@ import Jama.Matrix;
                     if(philRel.equals("Rel_1.5") || philRel.equals("Rel_1.7") || philRel.equals("Rel_2.0") || philRel.equals("Rel_2.1") || philRel.equals("Rel_2.5")){
                         gradCreatetable = getHigh();
                         space = "MPS";
+                        angulationCorrection(gradCreatetable);   
                      }          
                 }
                 else{
@@ -1700,7 +1842,7 @@ import Jama.Matrix;
                 MipavUtil.displayError("Gradient Table Creator "+"Could not determine a table!");
             }              
         }
-            angulationCorrection(gradCreatetable);   
+      
       }
         
         public static final double[][] getLowOP(){
@@ -2135,12 +2277,19 @@ import Jama.Matrix;
              */
             
             FileInfoBase fileInfo = m_kDWIImage.getFileInfo(0);
-            FileInfoPARREC fileInfoPARREC = (FileInfoPARREC) fileInfo;
+
             angCorrGT=new double[tablein.length][tablein[0].length];
                     
+            if (fileInfoPARREC != null){
             sliceAng0=Math.toRadians(fileInfoPARREC.getSliceAngulation()[0]);
             sliceAng1=Math.toRadians(fileInfoPARREC.getSliceAngulation()[1]);
             sliceAng2=Math.toRadians(fileInfoPARREC.getSliceAngulation()[2]);
+            }
+            else if(parNsliceAng != null ){
+                sliceAng0=Math.toRadians(parNsliceAng[0]);
+                sliceAng1=Math.toRadians(parNsliceAng[1]);
+                sliceAng2=Math.toRadians(parNsliceAng[2]);
+            }
 
 //          ==========================================================
 //          TRANSFORMATION DEFINITIONS 
@@ -2150,27 +2299,28 @@ import Jama.Matrix;
             // Definitions for these matrices were taken from Philips documentation
             double[][] Tpo;
             double[][] rev_Tpo;
-           // System.out.println(fileInfoPARREC.getPatientPosition().toUpperCase());
-           // if (fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE")){
-           //     System.out.println("supineworking");
-                
-            //}
-            //System.out.println(patientOrientBox.getSelectedItem());
-            //patientOrientBox.getSelectedItem()!= null && patientOrientBox.getSelectedItem()=="SP" || ;
             
-            if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE"))|| patientOrientBox.getSelectedItem()=="SP" ){
+            if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE"))
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("SUPINE")
+                    ||patientOrientBox.getSelectedItem()=="SP" ){
                 Tpo = new double[][]{{1, 0, 0},{0, 1, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{1,0,0},{0,1,0},{0,0,1}};
             }
-            else if ((fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("PRONE")) || patientOrientBox.getSelectedItem()=="PR" ){
+            else if (( fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("PRONE")) 
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("PRONE")
+                    || patientOrientBox.getSelectedItem()=="PR" ){
                 Tpo = new double[][]{{-1, 0, 0},{0, -1, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{-1,0,0},{0,-1,0},{0,0,1}};
             }  
-            else if ( (fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("RIGHT")) || patientOrientBox.getSelectedItem()=="RD"){
+            else if ( (fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("RIGHT")) 
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("RIGHT")
+                    || patientOrientBox.getSelectedItem()=="RD"){
                 Tpo = new double[][]{{0,-1, 0},{1, 0, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{0,1,0},{-1,0,0},{0,0,1}};
             }  
-            else if ((fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("LEFT")) || patientOrientBox.getSelectedItem()=="LD" ){
+            else if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("LEFT")) 
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("LEFT")
+                    || patientOrientBox.getSelectedItem()=="LD" ){
                 Tpo = new double[][]{{0,1, 0},{-1, 0, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{0,-1,0},{1,0,0},{0,0,1}};
             }else{
@@ -2181,11 +2331,15 @@ import Jama.Matrix;
             double[][] Tpp;
             double[][] rev_Tpp;
           
-            if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("HEADFIRST")) || patientPosBox.getSelectedItem()=="Head First"){
+            if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("HEADFIRST")) 
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("HEADFIRST")
+                    || patientPosBox.getSelectedItem()=="Head First"){
                 Tpp = new double[][]{{0, -1, 0},{-1, 0, 0}, {0, 0, 1}};
                 rev_Tpp = new double[][]{{0,-1,0},{-1,0,0},{0,0,-1}};
             }
-            else if ((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("FEETFIRST")) || patientPosBox.getSelectedItem()=="Feet First"){
+            else if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("FEETFIRST")) 
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("FEETFIRST")
+                    || patientPosBox.getSelectedItem()=="Feet First"){
                 Tpp = new double[][]{{0, 1, 0},{-1, 0, 0}, {0, 0, -1}};
                 rev_Tpp = new double[][]{{0,-1,0},{1,0,0},{0,0,-1}};
             }else{
@@ -2210,26 +2364,46 @@ import Jama.Matrix;
             double[][] rev_Tfh = {{cos(fh),sin(fh),0}, {-sin(fh),cos(fh),0}, {0,0,1}};
             double[][] rev_Tang = matrixMultiply(matrixMultiply(rev_Tfh,rev_Tap),rev_Trl);
 
-            double[][] Tsom;
-            double[][] rev_Tsom;
+            double[][] Tsom = null;
+            double[][] rev_Tsom = null;
             
 
             
 //          % Definitions for Tsom
-            if (fileInfoPARREC.getSliceOrient()== 1 ){
-                Tsom = new double[][]{{0,0,-1},{0,-1,0},{1,0,0}};
-                rev_Tsom = new double[][]{{0,0,1},{0,-1,0},{-1,0,0}};
+            if (fileInfoPARREC != null){
+                if (fileInfoPARREC.getSliceOrient()== 1 ){
+                    Tsom = new double[][]{{0,0,-1},{0,-1,0},{1,0,0}};
+                    rev_Tsom = new double[][]{{0,0,1},{0,-1,0},{-1,0,0}};
+                }
+                else if (fileInfoPARREC.getSliceOrient()== 2){
+                    Tsom = new double[][]{{0,-1,0},{0,0,1},{1,0,0}};
+                    rev_Tsom = new double[][]{{0,0,1},{-1,0,0},{0,1,0}};
+                }
+                else if (fileInfoPARREC.getSliceOrient()== 3){
+                    Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
+                    rev_Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
+                }else{
+                    Tsom=null;
+                    rev_Tsom=null;
+                }
             }
-            else if (fileInfoPARREC.getSliceOrient()== 2){
-                Tsom = new double[][]{{0,-1,0},{0,0,1},{1,0,0}};
-                rev_Tsom = new double[][]{{0,0,1},{-1,0,0},{0,1,0}};
-            }
-            else if (fileInfoPARREC.getSliceOrient()== 3){
-                Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
-                rev_Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
-            }else{
-                Tsom=null;
-                rev_Tsom=null;
+            else if (parNversion != null){
+                if (parNorient == 1 ){
+                    Tsom = new double[][]{{0,0,-1},{0,-1,0},{1,0,0}};
+                    rev_Tsom = new double[][]{{0,0,1},{0,-1,0},{-1,0,0}};
+                }
+                else if (parNorient == 2){
+                    Tsom = new double[][]{{0,-1,0},{0,0,1},{1,0,0}};
+                    rev_Tsom = new double[][]{{0,0,1},{-1,0,0},{0,1,0}};
+                }
+                else if (parNorient == 3){
+                    Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
+                    rev_Tsom = new double[][]{{0,-1,0},{-1,0,0},{0,0,1}};
+                }else{
+                    Tsom=null;
+                    rev_Tsom=null;
+                }
+                
             }
             
             //Definitions for Tprep_par Tprep_per & Tfsd_m, Tfsd_p, Tfsd_s
@@ -2251,9 +2425,11 @@ import Jama.Matrix;
             double[][] rev_Tprep;
             double[][] Tfsd;
             double[][] rev_Tfsd;
-            if(fileInfoPARREC.getSliceOrient()== 1){
+            if(fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 1 || parNorient == 1){
                 
-                if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR")) || foldOverBox.getSelectedItem()=="AP"){
+                if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR")) 
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("ANTERIOR")
+                        || foldOverBox.getSelectedItem()=="AP"){
                     Tprep =Tprep_per;
                     rev_Tprep = rev_Tprep_per;
                     if(fatshiftBox.getSelectedItem()=="A"){
@@ -2271,7 +2447,9 @@ import Jama.Matrix;
 
                 }
           
-                else if( (fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) || foldOverBox.getSelectedItem()=="RL" ){
+                else if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) 
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("RIGHT")
+                        || foldOverBox.getSelectedItem()=="RL" ){
                     Tprep =Tprep_par;
                     rev_Tprep = rev_Tprep_par;
                     if(fatshiftBox.getSelectedItem()=="R"){
@@ -2298,8 +2476,10 @@ import Jama.Matrix;
                     rev_Tfsd = null;
                 }
             }
-            else if(fileInfoPARREC.getSliceOrient()== 3){
-                if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) || foldOverBox.getSelectedItem()=="FH"){
+            else if(fileInfoPARREC != null && fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 3 || parNorient == 3){
+                if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) 
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("SUPERIOR")
+                        || foldOverBox.getSelectedItem()=="FH"){
                     Tprep =Tprep_per;
                     rev_Tprep = rev_Tprep_per;
                     if(fatshiftBox.getSelectedItem()=="F"){
@@ -2315,7 +2495,9 @@ import Jama.Matrix;
                         rev_Tfsd = null;
                     }
                 }
-                else if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) || foldOverBox.getSelectedItem()=="RL"){
+                else if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) 
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("RIGHT")
+                        || foldOverBox.getSelectedItem()=="RL"){
                     Tprep =Tprep_par;
                     rev_Tprep = rev_Tprep_par;
                     if(fatshiftBox.getSelectedItem()=="R"){
@@ -2339,8 +2521,10 @@ import Jama.Matrix;
                     rev_Tfsd = null;
                 }
             }
-            else if(fileInfoPARREC.getSliceOrient()== 2){
-                if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) || foldOverBox.getSelectedItem()=="FH" ){
+            else if(fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 2 || parNorient == 2){
+                if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) 
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("SUPERIOR")
+                        || foldOverBox.getSelectedItem()=="FH" ){
                     Tprep =Tprep_per;
                     rev_Tprep = rev_Tprep_per;
                     if(fatshiftBox.getSelectedItem()=="F"){
@@ -2357,7 +2541,9 @@ import Jama.Matrix;
                     }
 
                 }
-                else if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR"))||foldOverBox.getSelectedItem()=="AP"){
+                else if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR"))
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("ANTERIOR")
+                        ||foldOverBox.getSelectedItem()=="AP"){
                     Tprep =Tprep_par;
                     rev_Tprep = rev_Tprep_par;
                     if(fatshiftBox.getSelectedItem()=="A"){
@@ -2446,7 +2632,13 @@ import Jama.Matrix;
             }
             else if (numVolumes==8 || numVolumes==17 || numVolumes==34 || numVolumes==32){
 
-                float[] flBvalArr = dtiparams.getbValues();
+                float[] flBvalArr = null;
+                if (dtiparams != null){
+                    flBvalArr = dtiparams.getbValues();
+                }
+                else if( parDTIParams != null){
+                    flBvalArr = parDTIParams.getbValues();
+                }
                 int bval0Count = 0;
                 for (int i = 0; i<numVolumes; i++){
                     if (flBvalArr[i]== 0){
@@ -2505,7 +2697,7 @@ import Jama.Matrix;
         }
         
         public void loadDWIFile() {
-
+           
             ViewOpenFileUI openFile = new ViewOpenFileUI(true);          
             final boolean stackFlag = getLastStackFlag();
             ArrayList<Vector<String>> openImagesArrayList = openFile.open(stackFlag);
@@ -2513,23 +2705,485 @@ import Jama.Matrix;
             //m_kDWIImage = fileIO.readImage(openFile.getImagePath());
             textDWIDataimage.setText(openFile.getImagePath());
             m_kDWIImage = openFile.getImage();
-            if (m_kDWIImage != null){
-                getImageDTIParams();                       
+            if (m_kDWIImage != null && m_kDWIImage.is4DImage()){
+                getImageDTIParams(); 
+                Vector<Frame> imageFrameVector = ui.getImageFrameVector();
+                for (int i = 0; i<imageFrameVector.size(); i++){
+                    String imageFrameName = imageFrameVector.get(i).getName();
+                    String openedFileName = openFile.getFileName();
+                    if (openedFileName.equals(imageFrameName)){
+                        frame = (ViewJFrameImage) imageFrameVector.get(i);
+                        break;
+                    }
+                }
             }
-            Vector<Frame> imageFrameVector = ui.getImageFrameVector();
-            for (int i = 0; i<imageFrameVector.size(); i++){
-                String imageFrameName = imageFrameVector.get(i).getName();
-                String openedFileName = openFile.getFileName();
-                if (openedFileName.equals(imageFrameName)){
-                    frame = (ViewJFrameImage) imageFrameVector.get(i);
-                    break;
+            else if (m_kDWIImage != null && m_kDWIImage.isDicomImage() ==true &&
+                    m_kDWIImage.is3DImage()==true){
+                checkSiemens3d();
+                getImageDTIParams(); 
+                Vector<Frame> imageFrameVector = ui.getImageFrameVector();
+                for (int i = 0; i<imageFrameVector.size(); i++){
+                    String imageFrameName = imageFrameVector.get(i).getName();
+                    String openedFileName = openFile.getFileName();
+                    if (openedFileName.equals(imageFrameName)){
+                        frame = (ViewJFrameImage) imageFrameVector.get(i);
+                        break;
+                    }
                 }
             }
             
+            else{
+                MipavUtil.displayError("Please select a 4D DWI Image"); 
+            }
+            
 
 
             
 
+            
+        }
+        
+        public void niftiParExtraction(File parFileName) throws IOException{
+            RandomAccessFile raFile = null;
+            float vox_offset = 0.0f;
+            HashMap<String,String> VolMap;
+            HashMap<String,Integer> SliceMap;
+            HashMap<String,String> VolParameters;
+            Vector<String> SliceParameters;
+            Vector<String> Slices;           
+            parNversion = "";            
+            parNExamName = "";
+            parNProtocolName = "";            
+            parNPatientPosition = "";         
+            parNfoldover = "";
+            int sliceOrientPos = 0;
+            int bValuePos = 0;
+            int gradPos = 0;           
+            int sliceOrientIndex;           
+            int bValueIndex;           
+            int gradIndex;
+            int counter = 0;
+            try {
+                raFile = new RandomAccessFile(parFileName, "r");
+            } catch (FileNotFoundException e) {
+                Preferences.debug("raFile = new RandomAccessFile(fileHeader, r) gave " + "FileNotFoundException " + e,
+                        Preferences.DEBUG_FILEIO);
+            }
+            
+            String nextLine = raFile.readLine();
+            
+            VolMap = buildParVolMap();
+            SliceMap = buildParSliceMap();
+
+            VolParameters = new HashMap<String,String>();
+            SliceParameters = new Vector<String>();
+            Slices = new Vector<String>();
+            
+            
+            //String version;
+            //String[] versionNumber;
+
+            while(null!=nextLine) {
+                nextLine = nextLine.trim();
+                if(nextLine.length()<1) { // Blank line = comment
+                    nextLine = raFile.readLine().trim();
+                    continue;
+                }
+                switch(nextLine.charAt(0)) {
+                    case '#' : //# = comment
+                        if(nextLine.contains("Research image export tool")) {
+                            //need to get version
+                            parNversion = nextLine.substring(nextLine.lastIndexOf("V"), nextLine.length());
+                        }
+                                
+                        String imageInfo  = "";                
+                        int sliceOrientIndexCounter = -1;
+                        int bValIndexCounter = -1;
+                        int gradIndexCounter = -1;
+                        
+                        if(nextLine.compareToIgnoreCase("# === IMAGE INFORMATION DEFINITION =============================================")==0) {
+                            String line = raFile.readLine().trim();
+                            String ignore = "The rest of this file contains ONE line per image";
+
+                            while(line.compareToIgnoreCase("# === IMAGE INFORMATION ==========================================================")!=0) {
+                                if(line.length()>1) {
+                                   
+                                    if(!line.contains(ignore)) {
+                                        
+                                        SliceParameters.add(line.trim());
+                                                                                       
+                                        counter ++;
+                                        
+                                        imageInfo = new String(imageInfo + line.trim());
+                                           
+                                           if (imageInfo.contains("slice orientation ( TRA/SAG/COR ) ")){    
+                                               sliceOrientIndexCounter++;
+                                           }
+                                            if (imageInfo.contains("diffusion_b_factor")){                                         
+                                               bValIndexCounter++;
+                                           }
+                                           
+                                           if (imageInfo.contains("diffusion (ap, fh, rl)")){                                      
+                                               gradIndexCounter++;
+                                           }                                       
+                                      }                  
+                                }
+                         
+                                line = raFile.readLine().trim();                           
+                            }
+                            sliceOrientPos = counter - sliceOrientIndexCounter;
+                            bValuePos = counter - bValIndexCounter;
+                            gradPos = counter - gradIndexCounter;                       
+                        }
+                 
+                        break;
+                    case '.' : // scan file variable
+
+                            if(nextLine.contains("Examination name")){
+                                String examNameLine = nextLine.trim();
+                                int examNameInd = examNameLine.indexOf(":");
+                                int examNameLineLength = examNameLine.length();
+                                
+                                for (int i = 0 ; i < examNameLineLength-(examNameInd+1); i++) {
+                                    int examIndex = (examNameInd+1)+i;
+                                    char examLetter= examNameLine.charAt(examIndex);
+                                    parNExamName =parNExamName + examLetter;
+                                    parNExamName = parNExamName.trim();
+                                    
+                                  
+                                }
+                            }
+                       
+                           if(nextLine.contains("Protocol name")){
+                               String protocolNameLine = nextLine.trim();
+                               int protocolNameInd = protocolNameLine.indexOf(":");
+                               int protocolNameLineLength = protocolNameLine.length();
+                               for (int i = 0 ; i < protocolNameLineLength-(protocolNameInd+1); i++) {
+                                   int protocolIndex = (protocolNameInd+1)+i;
+                                   char protocolLetter= protocolNameLine.charAt(protocolIndex);
+                                   parNProtocolName =parNProtocolName + protocolLetter;
+                                   parNProtocolName = parNProtocolName.trim();   
+                              }
+                               
+                           }
+                                                      
+                            //Determine date of exam
+                            if(nextLine.contains("Examination date/time")){
+                            int ind = nextLine.indexOf(":");
+                            String date = nextLine.substring(ind+1,nextLine.indexOf("/",ind));
+                            date = date.trim();
+                        }
+                            if(nextLine.contains("Patient position")){
+                                String patientPositionLine = nextLine.trim();
+                                int patientPositionInd = patientPositionLine.indexOf(":");
+                                int patientPositionLineLength = patientPositionLine.length();
+                                for (int i = 0 ; i < patientPositionLineLength-(patientPositionInd+1); i++) {
+                                    int positionIndex = (patientPositionInd+1)+i;
+                                    char positionLetter= patientPositionLine.charAt(positionIndex);
+                                    parNPatientPosition =parNPatientPosition + positionLetter;
+                                    parNPatientPosition = parNPatientPosition.trim();   
+                               }
+                            }
+                            
+                            if(nextLine.contains("Preparation direction")){
+                                String foldoverLine = nextLine.trim();
+                                int foldoverInd = foldoverLine.indexOf(":");
+                                int foldoverLineLength = foldoverLine.length();
+                                for (int i = 0 ; i < foldoverLineLength-(foldoverInd+1); i++) {
+                                    int foldoverIndex = (foldoverInd+1)+i;
+                                    char foldoverLetter= foldoverLine.charAt(foldoverIndex);
+                                    parNfoldover = parNfoldover + foldoverLetter;
+                                    parNfoldover = parNfoldover.trim();  
+                               }
+                            }
+                            
+                            
+                            //Checks to see if examination is DTI to extract angulation and off centre to determine gradients
+                                if(nextLine.contains("Angulation midslice")){
+                                String info = nextLine.substring(nextLine.indexOf(":")+1);
+                                info=info.trim();
+                                parNsliceAng = new double[3];
+                                parNsliceAng[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                                info = info.substring(info.indexOf(' ')+1, info.length()).trim();
+                                parNsliceAng[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                                parNsliceAng[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+
+                            }
+                            
+                            if(nextLine.contains("Off Centre midslice")){
+                                String info = nextLine.substring(nextLine.indexOf(":")+1);
+                                info=info.trim();
+                                parNoffCentre = new double[3];
+                                parNoffCentre[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                                info = info.substring(info.indexOf(' ')+1, info.length()).trim();                          
+                                parNoffCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                                parNoffCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                            }
+                    
+
+                        String []tags = nextLine.split(":");
+                        String tag = tags[0].trim();
+                        String key;
+                        if(tags.length < 2) {
+                            key = "";
+                        }else {
+                            key = tags[1].trim();
+                        }
+                        String stgTag = (String)VolMap.get(tag);
+                        if(null!=stgTag) {
+                            VolParameters.put(stgTag,key);
+                        } else {
+                            Preferences.debug("FilePARREC:readHeader. Unknown Volume Tag: " + tag + "=" + key + "\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    default: // parse as image slice information
+                      
+                        Slices.add(nextLine);               
+                        break;
+
+                }
+               
+                nextLine = raFile.readLine();
+
+            }
+
+            //All done, close the header file//
+            try {
+                raFile.close();
+            } catch (IOException e) {
+                Preferences.debug("raFile.close() gave IOException " + e + "\n", Preferences.DEBUG_FILEIO);
+                throw new IOException(" Error on raFile.close()");
+            }
+
+
+            String s;
+            String[] ss;
+            //Get the volume variables:
+            s = (String)VolParameters.get("max_num_slices");
+            int numSlices = Integer.valueOf(s);
+            //get numVolumes
+            numVolumes = Slices.size()/numSlices;
+
+
+            // Let's parse the first slice:    
+            String sl = (String)Slices.get(0);      
+            String[] values = sl.split("\\s+");
+            
+     
+            //Create bvalue String array from V3 par/rec file (for DTI par/rec files)
+            float [] flBvalueArray = new float[numVolumes];
+            float[][] flGradientArray = new float[numVolumes][3];
+                
+            parDTIParams = new DTIParameters(numVolumes);
+ 
+            parDTIParams.setNumVolumes(numVolumes);
+                
+                
+                //Determine arrangement of slices stored with data
+                String firstSliceIndex = Slices.get(0);
+                firstSliceIndex = firstSliceIndex.trim();
+                final String[] firstSliceArr = firstSliceIndex.split("\\s+");
+                int firstSliceValue= Integer.parseInt(firstSliceArr[0]);
+                
+                String secondSliceIndex = Slices.get(1);
+                secondSliceIndex = secondSliceIndex.trim();
+                final String[] secondSliceArray = secondSliceIndex.split("\\s+");
+                int secondSliceValue = Integer.parseInt(secondSliceArray[0]);
+                          
+                // Find slice index of bvalues
+                int counter2o = 0;
+                int counter3o = 0;
+                for (int i = 0; i < (sliceOrientPos-2); i++){
+                    if (SliceParameters.get(i).contains("2")){
+                        counter2o++;
+                    }
+                    if (SliceParameters.get(i).contains("3")){ 
+                        counter3o++;
+                    }
+                }           
+                sliceOrientIndex = ((counter2o*1)+(counter3o*2) + (sliceOrientPos-1));
+                
+                String firstSlice = Slices.get(0);
+                firstSlice = firstSlice.trim();
+                final String[] firstOrientSlice = firstSlice.split("\\s+");
+                parNorient = Integer.parseInt(firstOrientSlice[sliceOrientIndex]);
+
+                
+                // Find slice index of bvalues
+                int counter2 = 0;
+                int counter3 = 0;
+                for (int i = 0; i < (bValuePos-2); i++){
+                    if (SliceParameters.get(i).contains("2")){
+                        counter2++;
+                    }
+                    if (SliceParameters.get(i).contains("3")){ 
+                        counter3++;
+                    }
+                }
+                
+                bValueIndex = ((counter2*1)+(counter3*2) + (bValuePos-1));
+
+                
+                if (parNversion.equals("V3")||parNversion.equals("V4")){                
+                    if (firstSliceValue!=secondSliceValue){
+                        for (int i = 0; i < numVolumes; i++){
+                            String sliceIndex = Slices.get(i*numSlices);
+                            sliceIndex = sliceIndex.trim();
+                            final String[] sliceArr = sliceIndex.split("\\s+");                      
+                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+
+
+                            }
+                        parDTIParams.setbValues(flBvalueArray);                   
+                        }
+                    
+                    else{
+                        for (int i = 0; i < numVolumes; i++){
+                            String sliceIndex = Slices.get(i);
+                            sliceIndex = sliceIndex.trim();
+                            final String[] sliceArr = sliceIndex.split("\\s+");
+                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            
+
+                        }
+                        parDTIParams.setbValues(flBvalueArray);
+                    }       
+            }
+                else if(parNversion.equals("V4.1")||parNversion.equals("V4.2") ){
+                 // Find slice index automatically of gradient values
+                    int counter2s = 0;
+                    int counter3s = 0;
+                        for (int i = 0; i < (gradPos-2); i++){
+                            if (SliceParameters.get(i).contains("2")){
+                                counter2s++;
+                                }
+                            if (SliceParameters.get(i).contains("3")){ 
+                                counter3s++;
+                                }
+                            }
+                        gradIndex = ((counter2*1)+(counter3*2) + (gradPos-1));
+                      
+                    if (firstSliceValue!=secondSliceValue){
+                        for (int i = 0; i < numVolumes; i++){
+                            String sliceIndex = Slices.get(i*numSlices);
+                            sliceIndex = sliceIndex.trim();
+                            final String[] sliceArr = sliceIndex.split("\\s+");
+                            flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
+                            flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
+                            flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
+                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            }
+                        
+                        parDTIParams.setbValues(flBvalueArray);
+                        parDTIParams.setGradients(flGradientArray);
+
+                        }
+                    
+                    else{
+                        for (int i = 0; i < numVolumes; i++){
+                            String sliceIndex = Slices.get(i);
+                            sliceIndex = sliceIndex.trim();
+                            final String[] sliceArr = sliceIndex.split("\\s+");
+                            flGradientArray[i][0] = Float.valueOf(sliceArr[gradIndex]);
+                            flGradientArray[i][1] = Float.valueOf(sliceArr[gradIndex+1]);
+                            flGradientArray[i][2] = Float.valueOf(sliceArr[gradIndex+2]);
+                            flBvalueArray[i] = Float.parseFloat(sliceArr[bValueIndex]);
+                            }
+                        
+                        parDTIParams.setbValues(flBvalueArray);
+                        parDTIParams.setGradients(flGradientArray);
+                    }
+
+                }
+                   
+
+            
+        }
+        
+        public void checkSiemens3d(){
+            FileInfoDicom dicomInfo = (FileInfoDicom) m_kDWIImage.getFileInfo(0);
+            FileDicomTagTable tagTable = dicomInfo.getTagTable();
+            String studyDescription = (String) tagTable.getValue("0008,1030");
+            String seriesDescription = (String) tagTable.getValue("0008,103E");
+            String scannerType = (String) tagTable.getValue("0008,0070");
+
+            if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
+                    (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+               if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
+                   if (tagTable.getValue("0018,1310") != null) {
+                       // Acquisition matrix
+                       FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1310"));
+                       Object[] values = tag.getValueList();
+                       int valNumber = values.length;  
+                       int subXDim = 0;
+                       int subYDim = 0;
+                       int subZDim = 0;
+                       int subTDim;
+                       if ((valNumber == 4) && (values instanceof Short[])) {
+                           int frequencyRows = ((Short) values[0]).intValue();
+                           int frequencyColumns = ((Short) values[1]).intValue();
+                           int phaseRows = ((Short) values[2]).intValue();
+                           int phaseColumns = ((Short) values[3]).intValue();
+                        if ((frequencyRows > 0) && (phaseRows == 0)) {
+                               subYDim = frequencyRows;
+                           }
+                           else if ((frequencyRows == 0) && (phaseRows > 0)) {
+                               subYDim = phaseRows;
+                           }
+                        if ((frequencyColumns > 0) && (phaseColumns == 0)) {
+                               subXDim = frequencyColumns;
+                           }
+                           else if ((frequencyColumns == 0) && (phaseColumns > 0)) {
+                               subXDim = phaseColumns;
+                           }
+                       }
+                    // if (tagTable.getValue("0018,1310") != null)
+                       if (tagTable.getValue("0019,100A") != null) {
+                           tag = tagTable.get(new FileDicomKey("0019,100A"));
+                           Object value = tag.getValue(false);
+                           if (value instanceof Short) {
+                               subZDim = ((Short) value).intValue();
+                               Preferences.debug("subZDim = " + subZDim + "\n");
+                           }   
+                       } // if (tagTable.getValue("0019,100A") != null)
+                       
+                       subTDim = m_kDWIImage.getExtents()[2];
+                       Preferences.debug("subTDim = " + subTDim + "\n");
+                       
+                       int destExtents[] = new int[4];
+                       ModelImage destImage = null;
+                       
+                       destExtents[0] = subXDim;
+                       destExtents[1] = subYDim;
+                       destExtents[2] = subZDim;
+                       destExtents[3] = subTDim;
+
+                       destImage = new ModelImage(m_kDWIImage.getType(), destExtents, m_kDWIImage.getImageName()+ "_mosaic_to_slices");
+                       mosaicToSliceAlgo = new AlgorithmMosaicToSlices(m_kDWIImage, destImage);
+
+                       // This is very important. Adding this object as a listener allows the algorithm to
+                       // notify this object when it has completed of failed. See algorithm performed event.
+                       // This is made possible by implementing AlgorithmedPerformed interface
+                       mosaicToSliceAlgo.addListener(this);
+                       
+                       mosaicToSliceAlgo.run();
+
+                       
+                       try {
+                           
+                           m_kDWIImage = mosaicToSliceAlgo.getResultImage();
+
+                           new ViewJFrameImage(m_kDWIImage, null, new Dimension(610, 200));
+                       } catch (OutOfMemoryError error) {
+                           System.gc();
+                           MipavUtil.displayError("Out of memory: unable to open new frame");
+                       }
+
+
+                   }
+               }
+            }
             
         }
         
@@ -2560,6 +3214,8 @@ import Jama.Matrix;
         public boolean getLastStackFlag() {
             return this.lastStackFlag;
         }
+        
+        
         /**
          * reads the bval/gradient file...both dti studio format and fsl format are accepted
          * 
@@ -2571,6 +3227,12 @@ import Jama.Matrix;
             /*
              * if ((getExamName().toUpperCase()).contains("DTI")){ }
              */
+            
+            if (dtiparams.getbMatrixVals() != null){
+                java.lang.Object[] newColIdentifiers = {"Volume","B-value","X Gradient","Y Gradient", "Z Gradient"};
+                srcTableModel.setColumnIdentifiers(newColIdentifiers);
+                
+            }
                    
             if (srcTableModel.getRowCount()>0){
                 int rowCount = srcTableModel.getRowCount();
@@ -2836,6 +3498,117 @@ import Jama.Matrix;
             return true;
                 
             }
+        
+        private HashMap<String,String> buildParVolMap() {
+            HashMap<String,String> map = new HashMap<String,String>();
+            map.put(".    Patient name","info_patient_name");
+            map.put(".    Examination name","scn_exam_name");
+            map.put(".    Protocol name","scn_protocol_name");
+            map.put(".    Examination date/time","info_exam_datetime");
+            map.put(".    Acquisition nr","scn_acquisitin_num");
+            map.put(".    Reconstruction nr","scn_recon_num");
+            map.put(".    Scan Duration [sec]","scn_scan_dur");
+            map.put(".    Max. number of cardiac phases","max_card_phs");
+            map.put(".    Max. number of echoes","max_num_echo");
+            map.put(".    Max. number of slices/locations","max_num_slices");
+            map.put(".    Max. number of dynamics","max_num_dynamics");
+            map.put(".    Max. number of mixes","max_num_mixes");
+            map.put(".    Image pixel size [8 or 16 bits]","scn_pix_bits");
+            map.put(".    Technique","scn_technique");
+            map.put(".    Scan mode","scn_scan_mode");
+            map.put(".    Scan resolution  (x, y)","scn_scan_res");
+            map.put(".    Scan percentage","scn_scan_pct");
+            map.put(".    Recon resolution (x, y)","scn_recon_res");
+            map.put(".    Number of averages","scn_NEX");
+            map.put(".    Repetition time [msec]","scn_rep_time");
+            map.put(".    FOV (ap,fh,rl) [mm]","scn_fov");
+            map.put(".    Slice thickness [mm]","scn_slicethk");
+            map.put(".    Slice gap [mm]","scn_slicegap");
+            map.put(".    Water Fat shift [pixels]","scn_water_fat_shift");
+            map.put(".    Angulation midslice(ap,fh,rl)[degr]","orient_ang_midslice");
+            map.put(".    Off Centre midslice(ap,fh,rl) [mm]","orient_off_ctr_midslice");
+            map.put(".    Flow compensation <0=no 1=yes> ?","special_flow_comp");
+            map.put(".    Presaturation     <0=no 1=yes> ?","special_presatuaration");
+            map.put(".    Cardiac frequency","cardiac_cardiac_freq");
+            map.put(".    Min. RR interval","cardiac_min_rr_int");
+            map.put(".    Max. RR interval","cardiac_max_rr_int");
+            map.put(".    Phase encoding velocity [cm/sec]","cardiac_phase_enc_vel");
+            map.put(".    MTC               <0=no 1=yes> ?","special_mtc");
+            map.put(".    SPIR              <0=no 1=yes> ?","special_spir");
+            map.put(".    EPI factor        <0,1=no EPI>","special_epi_factor");
+            map.put(".    TURBO factor      <0=no turbo>","special_turbo_factor");
+            map.put(".    Dynamic scan      <0=no 1=yes> ?","special_dynamic_scan");
+            map.put(".    Diffusion         <0=no 1=yes> ?","diffusion_diffusion");
+            map.put(".    Diffusion echo time [msec]","diffusion_diffusion_echo");
+            map.put(".    Inversion delay [msec]","special_inversion_delay");
+    //... % Variables for May 31, 2005
+            map.put(".    Series Type","scn_series_type");
+            map.put(".    Patient position","orient_patient_pos");
+            map.put(".    Preparation direction","orient_prep_dir");
+            map.put(".    Repetition time [ms]","scn_rep_time");
+            map.put(".    Diffusion echo time [ms]","special_diffusion_echo_time");
+    //... % Variables for December 29, 2006 (release 2.1)
+            map.put(".    Max. number of diffusion values","special_max_num_diffusion_values");
+            map.put(".    Max. number of gradient orients","special_max_num_gradient_orients");
+    //...%Variables for Feb 12, 2008
+            map.put(".    Number of label types   <0=no ASL>", "special_num_of_label_types");
+            return map;
+        }
+        
+        private HashMap<String,Integer> buildParSliceMap() {
+            HashMap<String,Integer> map = new HashMap<String,Integer>();
+            map.put("#  slice number                             (integer)",new Integer(1));
+            map.put("#  echo number                              (integer)",new Integer(1));
+            map.put("#  dynamic scan number                      (integer)",new Integer(1));
+            map.put("#  cardiac phase number                     (integer)",new Integer(1));
+            map.put("#  image_type_mr                            (integer)",new Integer(1));
+            map.put("#  scanning sequence                        (integer)",new Integer(1));
+            map.put("#  index in REC file (in images)            (integer)",new Integer(1));
+            map.put("#  image pixel size (in bits)               (integer)",new Integer(1));
+            map.put("#  scan percentage                          (integer)",new Integer(1));
+            map.put("#  recon resolution (x y)                   (2*integer)",new Integer(2));
+            map.put("#  rescale intercept                        (float)",new Integer(1));
+            map.put("#  rescale slope                            (float)",new Integer(1));
+            map.put("#  scale slope                              (float)",new Integer(1));
+            map.put("#  window center                            (integer)",new Integer(1));
+            map.put("#  window width                             (integer)",new Integer(1));
+            map.put("#  image angulation (ap,fh,rl in degrees )  (3*float)",new Integer(3));
+            map.put("#  image offcentre (ap,fh,rl in mm )        (3*float)",new Integer(3));
+            map.put("#  slice thickness (in mm )                 (float)",new Integer(1));
+            map.put("#  slice gap (in mm )                       (float)",new Integer(1));
+            map.put("#  image_display_orientation                (integer)",new Integer(1));
+            map.put("#  slice orientation ( TRA/SAG/COR )        (integer)",new Integer(1));
+            map.put("#  fmri_status_indication                   (integer)",new Integer(1));
+            map.put("#  image_type_ed_es  (end diast/end syst)   (integer)",new Integer(1));
+            map.put("#  pixel spacing (x,y) (in mm)              (2*float)",new Integer(2));
+            map.put("#  echo_time                                (float)",new Integer(1));
+            map.put("#  dyn_scan_begin_time                      (float)",new Integer(1));
+            map.put("#  trigger_time                             (float)",new Integer(1));
+            map.put("#  diffusion_b_factor                       (float)",new Integer(1));
+            map.put("#  number of averages                       (integer)",new Integer(1));
+            map.put("#  image_flip_angle (in degrees)            (float)",new Integer(1));
+            map.put("#  cardiac frequency   (bpm)                (integer)",new Integer(1));
+            map.put("#  minimum RR-interval (in ms)              (integer)",new Integer(1));
+            map.put("#  maximum RR-interval (in ms)              (integer)",new Integer(1));
+            map.put("#  TURBO factor  <0=no turbo>               (integer)",new Integer(1));
+            map.put("#  Inversion delay (in ms)                  (float)",new Integer(1));
+    //... % new columns for December 29, 2006 (release 2.1)
+            map.put("#  diffusion b value number    (imagekey!)  (integer)",new Integer(1));
+            map.put("#  gradient orientation number (imagekey!)  (integer)",new Integer(1));
+            map.put("#  contrast type                            (string)",new Integer(1));
+            map.put("#  diffusion anisotropy type                (string)",new Integer(1));
+            map.put("#  diffusion (ap, fh, rl)                   (3*float)",new Integer(3));
+    //...%new columns for Feb 12, 2008
+            map.put("#  label type (ASL)            (imagekey!)  (integer)", new Integer(1));
+            return map;
+        };
+
+
+        @Override
+        public void algorithmPerformed(AlgorithmBase algorithm) {
+            // TODO Auto-generated method stub
+            
+        }
 
             
         }
