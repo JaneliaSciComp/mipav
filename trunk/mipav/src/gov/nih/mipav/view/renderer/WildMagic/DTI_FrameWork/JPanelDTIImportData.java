@@ -830,7 +830,7 @@ import Jama.Matrix;
             }else if (command.equals("browseT2File")) {
                 try{
                     loadT2File();
-                    if (m_kT2Image.getExtents()[0] == m_kDWIImage.getExtents()[0] && m_kT2Image.getExtents()[1] == m_kDWIImage.getExtents()[1]){
+                    //if (m_kT2Image.getExtents()[0] == m_kDWIImage.getExtents()[0] && m_kT2Image.getExtents()[1] == m_kDWIImage.getExtents()[1]){
                         textT2image.setText(openFile.getImagePath());
                         t2FileLabel.setEnabled(false);
                         textT2image.setEnabled(false);
@@ -840,7 +840,7 @@ import Jama.Matrix;
                         textBvalGradFile.setEnabled(true);
                         loadBValGradFileButton.setEnabled(true);
                         t2OpenPanel.setBorder(buildTitledBorder("Use Structural Image as Reference Space (optional)"));
-                        if (dtiparams != null){ 
+                        if (dtiparams != null || parDTIParams != null){ 
                             DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
                             saveBvalGradButton.setEnabled(true);
                             isDWICellEditBox.setEnabled(true);
@@ -851,8 +851,8 @@ import Jama.Matrix;
                         }
                         
                         pipeline.repaint();
-                    }
-                    else{
+                    //}
+                    /*else{
                         MipavUtil.displayError("Structural Image and DWI Image X,Y, and Z extents must be the same");
                         t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
                         t2FileLabel.setEnabled(true);
@@ -864,7 +864,7 @@ import Jama.Matrix;
                         loadBValGradFileButton.setEnabled(false);
                         DWIButtonPanel.setBorder(buildTitledBorder("Table Options"));
                         
-                    }
+                    }*/
                 }
                 catch (Exception e){
                     MipavUtil.displayError("Error loading Structural Image");
@@ -3223,12 +3223,13 @@ import Jama.Matrix;
          * @return
          */
         public boolean readBValGradientFile(final String gradientFilePath) {
+           System.out.println("readbvalgrad");
 
             /*
              * if ((getExamName().toUpperCase()).contains("DTI")){ }
              */
             
-            if (dtiparams.getbMatrixVals() != null){
+            if ( dtiparams != null && dtiparams.getbMatrixVals() != null){
                 java.lang.Object[] newColIdentifiers = {"Volume","B-value","X Gradient","Y Gradient", "Z Gradient"};
                 srcTableModel.setColumnIdentifiers(newColIdentifiers);
                 
