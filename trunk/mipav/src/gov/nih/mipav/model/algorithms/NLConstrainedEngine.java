@@ -596,7 +596,7 @@ public abstract class NLConstrainedEngine {
     /** DOCUMENT ME! */
     private double x1Minrm, x2Minrm, x3Minrm;
     
-    protected boolean outputMes = true;
+    protected boolean outputMes = false;
     
     private boolean testMode = false; 
     
@@ -4074,7 +4074,7 @@ public abstract class NLConstrainedEngine {
     	int j;
     	int k;
         try {
-            outputMes = false;
+           
             for (i = 0; i < param; i++) {
                 a[i] = gues[i];
             }
