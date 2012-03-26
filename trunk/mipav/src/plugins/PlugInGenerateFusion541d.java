@@ -31,7 +31,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 
-import nibib.spim.PlugInDialogGenerateFusion541c;
+import nibib.spim.PlugInDialogGenerateFusion541d;
 
 /**
  * 
@@ -45,7 +45,7 @@ import nibib.spim.PlugInDialogGenerateFusion541c;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGenerateFusion541c implements PlugInAlgorithm {
+public class PlugInGenerateFusion541d implements PlugInAlgorithm {
 
     public static final String[] CATEGORY = {"SPIM"};
 
@@ -64,10 +64,10 @@ public class PlugInGenerateFusion541c implements PlugInAlgorithm {
     public void run(Frame parentFrame, ModelImage image) {
 
         if (parentFrame instanceof ViewJFrameImage) {
-            PlugInDialogGenerateFusion541c test = new PlugInDialogGenerateFusion541c(parentFrame, image);
+            PlugInDialogGenerateFusion541d test = new PlugInDialogGenerateFusion541d(parentFrame, image);
             
         } else {
-            MipavUtil.displayError("PlugInDialogGenerateFusion541c only runs on an image frame.");
+            MipavUtil.displayError("PlugInDialogGenerateFusion541d only runs on an image frame.");
         }
     }
 }

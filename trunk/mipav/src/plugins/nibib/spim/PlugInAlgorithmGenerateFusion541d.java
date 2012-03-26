@@ -69,7 +69,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
 
     public enum SampleMode {
         DownsampleToBase("Downsample transformed image to base"),
@@ -142,7 +142,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
      * @param geoMeanDir 
      * @param saveGeoMean 
      */
-    public PlugInAlgorithmGenerateFusion541c(ModelImage image1, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion541d(ModelImage image1, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir) {
@@ -487,6 +487,8 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
 
         private ModelImage baseImage, transformImage;
         
+        private String baseImageName, transformImageName;
+        
         private ModelImage subGeoImage = null, subAriImage = null;
         
         private Frame parentFrame;
@@ -494,7 +496,9 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
         public FusionAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
             this.parentFrame = parentFrame;
             this.baseImage = baseImage;
+            this.baseImageName = baseImage.getImageName();
             this.transformImage = transformImage;
+            this.transformImageName = transformImage.getImageName();
         }
         
         public void run() {
@@ -520,8 +524,9 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 threshold(baseImage, thresholdIntensity);
             }
             
-            if(doInterImages) {
-                new ViewJFrameImage(baseImage);
+            if(doShowPrefusion || doInterImages) {
+                baseImage.setImageName("Prefusion_"+baseImageName);
+                resultImageList.add(baseImage);
             }
             
             transformImage = rotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
@@ -534,10 +539,35 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             case DownsampleToBase:
                 downsampleToBase();
-                
+
                 if(doThreshold) {
                     threshold(transformImage, thresholdIntensity);
                 }
+                
+                if(doShowPrefusion) {
+                    fireProgressStateChanged(15, "Transform", "Creating prefusion images");
+                    
+                    ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
+                    //new ViewJFrameImage(transformImage);
+                    for(int i=0; i<baseImage.getExtents()[0]; i++) {
+                        for(int j=0; j<baseImage.getExtents()[1]; j++) {
+                            for(int k=0; k<baseImage.getExtents()[2]; k++) {
+                                if(i < transformImage.getExtents()[0] && 
+                                        j < transformImage.getExtents()[1] && 
+                                        k < transformImage.getExtents()[2]) {
+                                    prefusionTransformImage.set(i,  j, k, transformImage.getDouble(i, j, k));
+                                }
+                            }
+                        }
+                    }
+                    
+                    prefusionTransformImage.calcMinMax();
+                    
+                    
+                    prefusionTransformImage.setImageName("Prefusion_"+transformImageName);
+                    resultImageList.add(prefusionTransformImage);
+                }
+                
                 if(showGeoMean || saveGeoMean) {
                     subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
                 }
@@ -641,7 +671,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
                 subGeoImage.disposeLocal();
             }
             
-            if(!doInterImages) {
+            if(!doInterImages && !doShowPrefusion) {
                 ViewUserInterface.getReference().unRegisterImage(baseImage);
                 baseImage.disposeLocal();
                 
@@ -813,7 +843,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             subGeoImage.calcMinMax();
             
-            subGeoImage.setImageName("GeoMeanFused_"+baseImage.getImageName());
+            subGeoImage.setImageName("GeoMeanFused_"+baseImageName);
             
             if(doInterImages) {
                 new ViewJFrameImage(subGeoImage);
@@ -857,7 +887,7 @@ public class PlugInAlgorithmGenerateFusion541c extends AlgorithmBase {
             
             subAriImage.calcMinMax();
             
-            subAriImage.setImageName("AriMeanFused_"+baseImage.getImageName());
+            subAriImage.setImageName("AriMeanFused_"+baseImageName);
             
             if(doInterImages) {
                 new ViewJFrameImage(subAriImage);
