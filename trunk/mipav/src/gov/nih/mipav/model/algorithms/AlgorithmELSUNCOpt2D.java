@@ -9,7 +9,7 @@ import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.AlgorithmConstELSUNCOpt3D.FitOAR3DConstrainedModel;
-import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
 import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.Preferences;
 
@@ -43,10 +43,10 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     private AlgorithmBase parent;
     
     /** The transformation matrix to the origin of the input image. */
-    private TransMatrix toOrigin;
+    private TransMatrixd toOrigin;
     
     /** The transformation matrix from the origin of the input image. */
-    private TransMatrix fromOrigin;
+    private TransMatrixd fromOrigin;
     
     /**
      * Array used to hold the initial points, final points and costs
@@ -98,10 +98,10 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         this.parent = parent;
 
         this.rigid = _rigid;
-        toOrigin = new TransMatrix(3);
+        toOrigin = new TransMatrixd(3);
         toOrigin.setTranslate(com.X, com.Y);
 
-        fromOrigin = new TransMatrix(3);
+        fromOrigin = new TransMatrixd(3);
         fromOrigin.setTranslate(-com.X, -com.Y);
     }
 
@@ -344,12 +344,12 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      * @param vector	a 7-dimension transformation vector including 1 rotation, 2 translations, 2 scalings and 2 skews.
      * @return			a 3x3 transformation matrix
      */
-    public TransMatrix convertToMatrix(TransMatrix toOrigin, TransMatrix fromOrigin, double[] vector) {
+    public TransMatrixd convertToMatrix(TransMatrixd toOrigin, TransMatrixd fromOrigin, double[] vector) {
 
 		if (vector == null || vector.length != 7) {
 			return null;
 		}
-		TransMatrix matrix = new TransMatrix(3);
+		TransMatrixd matrix = new TransMatrixd(3);
 
 		//System.err.println( vector[0] + " " + vector[1] + " " + vector[2] + " " + 0.0 + " " +
 		//        vector[3] + " " + vector[4] + " " + vector[5] + " " + vector[6] );
@@ -437,9 +437,9 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     /**
      * @see AlgorithmELSUNCOptBase#adjustTranslation(TransMatrix, float)
      */
-    public void adjustTranslation(TransMatrix mat, float sample){
-        float transX = mat.get(0, 2) * sample;
-        float transY = mat.get(1, 2) * sample;
+    public void adjustTranslation(TransMatrixd mat, float sample){
+        double transX = mat.get(0, 2) * sample;
+        double transY = mat.get(1, 2) * sample;
 
         mat.set(0, 2, transX);
         mat.set(1, 2, transY);
@@ -448,8 +448,8 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     /**
      * @see AlgorithmELSUNCOptBase#getMatrix(int, float)
      */
-    public TransMatrix getMatrix(int index,float sample) {
-        TransMatrix mat = getMatrix(index);
+    public TransMatrixd getMatrix(int index,float sample) {
+        TransMatrixd mat = getMatrix(index);
         adjustTranslation(mat, sample);
         return mat;
     }
@@ -459,7 +459,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      * @param index     the index of transformation vector.
      * @return          the transformation matrix
      */
-    public final TransMatrix getMatrix(int index){
+    public final TransMatrixd getMatrix(int index){
         double[] point = getPoint(index);
         return convertToMatrix(point);
     }
@@ -495,7 +495,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      * @param vector    a transformation vector.
      * @return          a transformation matrix
      */
-    public TransMatrix convertToMatrix(double[] vector){
+    public TransMatrixd convertToMatrix(double[] vector){
         return convertToMatrix(toOrigin, fromOrigin, vector);
     }
 
@@ -638,7 +638,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      * @param m     a transformation matrix.
      * @return      the cost value.
      */
-    public final double measureCost(TransMatrix m){
+    public final double measureCost(TransMatrixd m){
         if(costFunction == null){
             gov.nih.mipav.view.MipavUtil.displayError("The cost function is null.");
             return Double.MAX_VALUE;
