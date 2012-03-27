@@ -1111,7 +1111,7 @@ public class FilePARREC extends FileBase {
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
-                fileInfo.setAxisOrientation(FileInfoBase.ORI_L2R_TYPE, 2);
+                fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 2);
                 fileInfo.setResolutions(fovAP/dim1,0);
                 fileInfo.setResolutions(fovIS/dim2,1);
                 fileInfo.setResolutions(fovRL/numSlices,2);
