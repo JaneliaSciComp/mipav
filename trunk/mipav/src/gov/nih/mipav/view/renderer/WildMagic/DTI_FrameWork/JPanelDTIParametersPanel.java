@@ -2,14 +2,14 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJColorChooser;
-import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurfaceVTKXML_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
@@ -23,6 +23,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 import java.util.BitSet;
 import java.util.HashMap;
 import java.util.Vector;
@@ -49,13 +51,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
-import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import WildMagic.LibGraphics.Collision.Picker;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
-import WildMagic.LibGraphics.SceneGraph.BoxBV;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
-import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 public class JPanelDTIParametersPanel extends JInterfaceBase 
@@ -125,9 +123,6 @@ implements ListSelectionListener, ChangeListener {
     /** Checkbox for switching between polylines and ellipsoids. */
     private JCheckBox m_kUseEllipsoids;
 
-    /** Checkbox for displaying all tensors as ellipsoids. */
-    private JCheckBox m_kAllEllipsoids;
-
     /** User-control over the number of glyphs displayed in GPUVolumeRender */
     private JSlider m_kDisplaySlider;
 
@@ -143,10 +138,12 @@ implements ListSelectionListener, ChangeListener {
     private JCheckBox m_kUseVOICheck = null;
 
     /** Keeps track of the groups of polylines loaded. */
-    private Vector<Integer> m_kBundleList = new Vector<Integer>();
+    private Vector<Integer> m_kGroupList = new Vector<Integer>();
 
     /** Number of currently loaded fiber bundle groups. */
-    private int m_iBundleCount = 0;
+    private int m_iCurrentGroup = 0;
+    
+    private int m_iCurrentTrackCount = 0;
 
     private ModelImage m_kImage;
 
@@ -168,8 +165,6 @@ implements ListSelectionListener, ChangeListener {
     private static int Arrows = 4;
 
     private boolean displayAll;
-    private int centerIndex;
-    private boolean loadingTrack = false;
     private ColorRGB m_kCInclude = new ColorRGB(0,1,0);
     private ColorRGB m_kCExclude = new ColorRGB(.5f,0,0);
     private ColorRGB m_kCIgnore = new ColorRGB(.2f,.2f,.2f);
@@ -199,6 +194,7 @@ implements ListSelectionListener, ChangeListener {
     private float m_fFraction = .1f;
 
     private HashMap<String,BitSet> m_kSurfaceImages = new HashMap<String,BitSet>();
+    private Vector<Vector3f> m_kCurrentStartList = new Vector<Vector3f>();
 
     public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay,
     		String tractFileName ) {
@@ -220,19 +216,14 @@ implements ListSelectionListener, ChangeListener {
 			command = (String) cb.getSelectedItem();
 			if (command.equals("Lines")) {
 				displayMode = Polylines;
-				//displayAllCheckBox.setEnabled(false);
 			} else if (command.equals("Ellipsoids")) {
 				displayMode = Ellipsoids;
-				//displayAllCheckBox.setEnabled(true);
 			} else if (command.equals("Cylinders")) {
 				displayMode = Cylinders;
-				//displayAllCheckBox.setEnabled(false);
 			} else if (command.equals("Tubes")) {
 				displayMode = Tubes;
-				//displayAllCheckBox.setEnabled(true);
 			} else if (command.equals("Arrows")) {
 				displayMode = Arrows;
-				//displayAllCheckBox.setEnabled(true);
 			}
 			invokeDisplayFunction();
 		} else {
@@ -243,22 +234,16 @@ implements ListSelectionListener, ChangeListener {
 						new CancelListener());
 			} else if (command.equals("VolumeColor")) {
 				m_kVolumeDisplay.setVolumeColor(m_kUseVolumeColor.isSelected());
-				if (m_kUseVolumeColor.isSelected()) {
-					setColor(m_kColorButton.getBackground());
-				} else {
-					setColor(m_kColorButton.getBackground());
-				}
 			} else if (command.equals("DisplayAll")) {
-				//displayAll = displayAllCheckBox.isSelected();
 				invokeDisplayFunction();
-			} else if (command.equals("Add")) {		    
+			} else if (command.equals("Create")) {		    
 				createNewTracts();
 			} else if (command.equals("Remove")) {
 				removePolyline();
 			}  else if (command.equals("Load")) {
-				parentFrame.getSurfacePanel().addPolyline();
+				loadPolyline();
 			}  else if (command.equals("Save")) {
-				//parentFrame.getSurfacePanel().savePolyline();
+				savePolyline();
 			} else if (command.equals("Include")) {
 				int iVOI = m_kVOIList.getSelectedIndex();
 				if (m_kVOIParamsList != null) {
@@ -386,22 +371,42 @@ implements ListSelectionListener, ChangeListener {
         parentFrame.setColor( kVOIName, m_kCInclude, true );
     	//BitSet mask = kSurface.createMask();
     }
-    
-    public void addFiberTract() {
-            addTract();
+
+    /**
+     * Called after a mouse drag on mouse release, when the user has drawn tracks interactively and then finishes.
+     */
+    public void closeFiberTractGroup() {
+    	m_kCurrentStartList.clear();
+    	addTract();
     }
     
     /** Updates the tract list user-interface. */
     public void addTract() {
-    	// m_iBundleCount--;
-    	if ( m_iBundleCount != 0 )
+    	if ( m_iCurrentTrackCount != 0 )
     	{
-    		m_kVolumeDisplay.addGroupColor();
     		DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
     		int iSize = kList.getSize();
-    		kList.add(iSize, new String("FiberBundle" + m_iBundleCount));
-    		m_kTractList.setSelectedIndex(iSize);
+    		String kName = new String("FiberBundle" + m_iCurrentGroup + "_size_" + m_iCurrentTrackCount);    		
+    		kList.add( iSize, kName );
+    		m_kTractList.setSelectedIndex(iSize);    		
+    		m_kGroupList.add( m_iCurrentGroup );
     	}
+    	
+    	m_iCurrentTrackCount = 0;
+    	updateCurrentGroup();
+    }
+    
+    private void extractGroupAndSize( String kName, int[] values )
+    {
+		//("FiberBundle" + m_iCurrentGroup + "_size_" + m_iCurrentTrackCount));
+        int headerLength = (new String("FiberBundle")).length();
+        int splitLength = (new String("_size_")).length();
+    	int split = kName.indexOf( "_size_" );
+    	String group = kName.substring( headerLength, split );
+    	values[0] = Integer.valueOf( group );
+    	
+    	String size = kName.substring( split + splitLength );
+    	values[1] = Integer.valueOf( size );
     }
     
     /** Constructs the Fiber Bundle Tracts from the dtiImage and the
@@ -412,6 +417,12 @@ implements ListSelectionListener, ChangeListener {
      */
     public void diplayTract(int iX, int iY, int iZ)
     {
+    	Vector3f kStart = new Vector3f( iX, iY, iZ );
+    	if ( m_kCurrentStartList.contains( kStart ) )
+    	{
+    		return;
+    	}
+    	m_kCurrentStartList.add( kStart );
 
     	m_fFraction = Float.valueOf(m_kVoxelStepsize.getText()).floatValue();
         m_iMinTractLength = Integer.valueOf(m_kMinLength.getText()).intValue();
@@ -524,11 +535,6 @@ implements ListSelectionListener, ChangeListener {
         }
     }
 
-
-    public void updateCounter() {
-            updateTractCount();
-    }
-
     public void valueChanged(ListSelectionEvent kEvent) {
         
     	if ( kEvent.getSource() == m_kTractList ) {
@@ -536,11 +542,9 @@ implements ListSelectionListener, ChangeListener {
         	if ( index != -1 ) {
 	        	DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
 	            String bundleName = (String)kList.get(index);
-	    		int endIndex = bundleName.length();
-	    		int startIndex = new String("FiberBundle").length();
-	    		String temp = bundleName.substring(startIndex, endIndex);
-	    		int gid = Integer.valueOf(temp);
-                ColorRGB color = m_kVolumeDisplay.getGroupColor(gid);
+	            int[] group_size = new int[2];
+	            extractGroupAndSize( bundleName, group_size );
+                ColorRGB color = m_kVolumeDisplay.getGroupColor( group_size[0] );
                 if ( color != null )
                 {
                 	m_kColorButton.setBackground(new Color(color.R, color.G, color.B));
@@ -564,16 +568,6 @@ implements ListSelectionListener, ChangeListener {
             }
         }
     }	
-
-    /**
-     * Add a polyline to the GPUVolumeRender.
-     * 
-     * @param kLine
-     *            the Polyline to add.
-     */
-    private void addPolyline(Polyline kLine) {
-        m_kVolumeDisplay.addTract(kLine, m_iBundleCount, centerIndex);
-    }
 
 
     /** Adds a fiber bundle tract to the GPUVolumeRender and JPanelSurface.
@@ -607,21 +601,13 @@ implements ListSelectionListener, ChangeListener {
         kAttr.SetCChannels(1,3);
         VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
 
-        int iTractCount = 0;
         try {
             float fR = 0, fG = 0, fB = 0;
 
             for (int i = 0; i < iVQuantity; i++)
             {
             	Vector3f kPos = kTract.elementAt(i);
-                int iX = Math.round(kPos.X);
-                int iY = Math.round(kPos.Y);
-                int iZ = Math.round(kPos.Z);
-                int iIndex = iZ * (iDimY*iDimX) + iY * iDimX + iX;
 
-                if ( loadingTrack == true && i == (iVQuantity/2) ) {
-                    centerIndex = iIndex;
-                }
                 ColorRGB kColor1;
                 if ( m_kImage.isColorImage() )
                 {
@@ -638,26 +624,15 @@ implements ListSelectionListener, ChangeListener {
 
                                 
                 pkVBuffer.SetPosition3(i, kPos);
-                pkVBuffer.SetColor3(0,i, new ColorRGB(kPos.X, kPos.Y, kPos.Z));
-                pkVBuffer.SetColor3(1,i, kColor1 );
-                iTractCount++;
-
+                pkVBuffer.SetColor3(0,i, kColor1 );
+                pkVBuffer.SetColor3(1,i, new ColorRGB(kPos.X, kPos.Y, kPos.Z));
             }
         } catch ( Exception e ) {
             return;
         }
-        boolean bClosed = false;
-        boolean bContiguous = true;
-        // addPolyline( new Polyline(pkVBuffer,bClosed,bContiguous) );
-        // apply B-spline filter to smooth the track
         
-
-        if ( iVQuantity >= 7 ) {
-            addPolyline(new Polyline(pkVBuffer, bClosed, bContiguous ));
-            //addPolyline(new Polyline(smoothTrack(pkVBuffer, kTract,iVQuantity, iDimX, iDimY, iDimZ), bClosed, bContiguous ));
-            m_kBundleList.add(new Integer(m_iBundleCount));
-            m_iBundleCount++;
-        }
+        m_kVolumeDisplay.addTract(kTract, new Polyline(pkVBuffer, false, true), m_iCurrentGroup);
+        m_iCurrentTrackCount++;
     }
 
     private void createNewTracts()
@@ -680,7 +655,7 @@ implements ListSelectionListener, ChangeListener {
     	int iDimY = fAImage.getExtents()[1];
     	int iDimZ = fAImage.getExtents()[2];
     	
-    	float faVal, fR, fG, fB;
+    	float faVal;
     	int count = 0;
     	
     	if ( m_kUseVOICheck.isSelected() )
@@ -965,9 +940,9 @@ implements ListSelectionListener, ChangeListener {
         JPanel buttonPanel = new JPanel();
 
         // buttons for add/remove of surfaces from list
-        JButton addButton = new JButton("Add");
+        JButton addButton = new JButton("Create");
         addButton.addActionListener(this);
-        addButton.setActionCommand("Add");
+        addButton.setActionCommand("Create");
         addButton.setFont(MipavUtil.font12B);
         addButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
@@ -991,8 +966,8 @@ implements ListSelectionListener, ChangeListener {
 
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
-        //buttonPanel.add(loadButton);
-        //buttonPanel.add(saveButton);
+        buttonPanel.add(loadButton);
+        buttonPanel.add(saveButton);
 
         // list panel for fiber tract names
         m_kTractList = new JList( new DefaultListModel() );
@@ -1035,12 +1010,6 @@ implements ListSelectionListener, ChangeListener {
         m_kUseEllipsoids.addActionListener(this);
         m_kUseEllipsoids.setActionCommand("UseEllipsoids");
         m_kUseEllipsoids.setSelected(false);
-
-        m_kAllEllipsoids = new JCheckBox("Display All Ellipsoids" );
-        m_kAllEllipsoids.addActionListener(this);
-        m_kAllEllipsoids.setActionCommand("AllEllipsoids");
-        m_kAllEllipsoids.setSelected(false);
-        m_kAllEllipsoids.setEnabled(false);
 
         m_kDisplaySlider = new JSlider(0, 100, 1);
         m_kDisplaySlider.setEnabled(true);
@@ -1124,6 +1093,7 @@ implements ListSelectionListener, ChangeListener {
 
         return kTractPanel;
     }
+    
     private int diplayTract(int iX, int iY, int iZ, int iDimX, int iDimY, int iDimZ, boolean bUseSizeLimit)
     {
         //System.err.println( "Picked " + iX + " " + iY + " " + iZ );
@@ -1142,7 +1112,6 @@ implements ListSelectionListener, ChangeListener {
         Vector3f kV2 = new Vector3f();
 
         int i = iZ * (iDimY*iDimX) + iY * iDimX + iX;
-        centerIndex = i;
 
         boolean bAllZero = true;
         for ( int j = 0; j < 3; j++ )
@@ -1244,37 +1213,35 @@ implements ListSelectionListener, ChangeListener {
     
     /** Removes the fiber bundle from the GPUVolumeRender and JPanelSurface. */
     private void removePolyline() {
-        int start = 0;
         int[] aiSelected = m_kTractList.getSelectedIndices();
 
-        DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
-        int iHeaderLength = (new String("FiberBundle")).length();
+        if (aiSelected == null) {
+            MipavUtil.displayError("Select a fiber track to save.");
+            return;
+        }  
+        if (aiSelected.length == 0) {
+            MipavUtil.displayError("Select a fiber track to save.");
+            return;
+        }
 
-        for (int i = aiSelected.length-1; i >= 0; i--) {
-            if (m_kVolumeDisplay != null) {
+        DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
+
+        for ( int i = 0; i < aiSelected.length; i++ )
+        {
+            if ( m_kVolumeDisplay != null )
+            {
             	String kName = ((String) (kList.elementAt(aiSelected[i])));
-                int iLength = kName.length();
-                int iGroup = (new Integer(kName.substring(iHeaderLength,
-                        iLength))).intValue();
-                start = 0;
-                if ( (aiSelected[i] - 1) != -1 ) {
-                    kName = ((String) (kList.elementAt((aiSelected[i] - 1))));
-                    iLength = kName.length();
-                    start = (new Integer(kName.substring(iHeaderLength,
-                            iLength))).intValue();
-                }
-                //System.err.println("start = " + start + " iGroup = " + iGroup);
-                for ( int j = start; j < iGroup; j++ ) {
-                    m_kVolumeDisplay.removePolyline(j);	
-                    m_kVolumeDisplay.removeTractColor(j);
-                }
+	            int[] group_size = new int[2];
+	            extractGroupAndSize( kName, group_size );
+	            int iGroup = group_size[0];
+            	
+	            m_kVolumeDisplay.removePolyline(iGroup);	
                
-                m_kBundleList.remove(new Integer(iGroup));
+                m_kGroupList.remove(new Integer(iGroup));
                 //System.err.println("iGroup = " + iGroup);
                
             }
             kList.remove(aiSelected[i]);
-            m_kVolumeDisplay.removeGroupColor();
         }
 
         if (kList.size() == 0) {
@@ -1284,9 +1251,83 @@ implements ListSelectionListener, ChangeListener {
         	int index = kList.size()-1;
         	m_kTractList.setSelectedIndex(index);
         }
-        updateTractCount();
+        updateCurrentGroup();
+    }
+    
+
+
+    private void loadPolyline() {
+
+    	File[] akFiles = FileSurface_WM.openFiles(true);
+
+    	if (akFiles == null) {
+    		return;
+    	}
+		FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(null, null);
+		
+    	ModelImage fAImage = parentFrame.getFAimage();
+    	int iDimX = fAImage.getExtents()[0];
+    	int iDimY = fAImage.getExtents()[1];
+    	int iDimZ = fAImage.getExtents()[2];
+
+    	updateCurrentGroup();
+    	for ( int i = 0; i < akFiles.length; i++ )
+    	{
+    		String kName = akFiles[i].getAbsolutePath();
+    		Vector<VOIContour> akSelected = surfaceVTKXML.readXMLPolylines_WM( kName );
+    		if ( akSelected != null )
+    		{
+    			for ( int j = 0; j < akSelected.size(); j++ )
+    			{
+    				VOIContour kTract = akSelected.elementAt(j);
+                	addTract( kTract, kTract.size(), iDimX, iDimY, iDimZ );
+    			}
+    	    	addTract();
+    		}
+    	}
     }
 
+    private void savePolyline() {
+        
+        int[] aiSelected = m_kTractList.getSelectedIndices();
+        if (aiSelected == null) {
+            MipavUtil.displayError("Select a fiber bundle to save.");
+            return;
+        }  
+        if (aiSelected.length != 1) {
+            MipavUtil.displayError("Select one fiber bundle to save.");
+            return;
+        }
+        
+        DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
+
+        Vector<VOIContour> akSelected = null;
+        for ( int i = 0; i < aiSelected.length; i++ )
+        {
+            if ( m_kVolumeDisplay != null )
+            {
+            	String kName = ((String) (kList.elementAt(aiSelected[i])));
+	            int[] group_size = new int[2];
+	            extractGroupAndSize( kName, group_size );
+	            int iGroup = group_size[0];
+	            akSelected = m_kVolumeDisplay.getPolylines( iGroup );
+            }
+        }
+        if ( akSelected != null )
+        {
+        	File[] akFiles = FileSurface_WM.openFiles(false);
+
+        	if (akFiles == null) {
+        		return;
+        	}
+        	String kName = akFiles[0].getAbsolutePath();
+        	try {
+        		FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(null, null);
+        		surfaceVTKXML.writeXMLpolylines( kName, akSelected );
+        	} catch (IOException kError) { }
+        }
+    }
+      
       
     
     /**
@@ -1299,26 +1340,18 @@ implements ListSelectionListener, ChangeListener {
     private void setColor(Color color) {
         int[] aiSelected = m_kTractList.getSelectedIndices();
         DefaultListModel kList = (DefaultListModel) m_kTractList.getModel();
-        int iHeaderLength = (new String("FiberBundle")).length();
 
         for (int i = 0; i < aiSelected.length; i++) {
             if (m_kVolumeDisplay != null) {
                 String kName = ((String) (kList.elementAt(aiSelected[i])));
-                int iLength = kName.length();
-                int iGroup = (new Integer(kName.substring(iHeaderLength,
-                        iLength))).intValue();
-                if (color == null) {
-                    m_kVolumeDisplay.setPolylineColor(iGroup, null);
-                }
 
-                else if (!m_kUseVolumeColor.isSelected()) {
-                    m_kVolumeDisplay.setPolylineColor(iGroup, new ColorRGB(
+	            int[] group_size = new int[2];
+	            extractGroupAndSize( kName, group_size );
+	            int iGroup = group_size[0];
+	            
+                 m_kVolumeDisplay.setPolylineColor(iGroup, new ColorRGB(
                             color.getRed() / 255.0f, color.getGreen() / 255.0f,
                             color.getBlue() / 255.0f));
-                    m_kVolumeDisplay.setTubesGroupColor(iGroup, new ColorRGB(
-                            color.getRed() / 255.0f, color.getGreen() / 255.0f,
-                            color.getBlue() / 255.0f));
-                }
             }
         }
     }
@@ -1493,9 +1526,11 @@ implements ListSelectionListener, ChangeListener {
         }
         kNext = null;
     }
+    
+    
     /** Updates the number of fiber bundle tract groups. */
-    private void updateTractCount() {
-        m_iBundleCount = getMinUnused(m_kBundleList);
+    private void updateCurrentGroup() {
+    	m_iCurrentGroup = getMinUnused(m_kGroupList);
     }
     
     

@@ -48,7 +48,6 @@ public class VolumeDTI extends VolumeObject
 	/** Hashmap for multiple fiber bundles: */
 	private HashMap<Integer,ShaderEffect>  m_kShaders = null;
 
-
 	/** Hashmap for multiple fiber bundles: */
 	private HashMap<Integer,Vector<VOIContour>> m_kGlyphs = null;
 
@@ -73,9 +72,6 @@ public class VolumeDTI extends VolumeObject
 	private boolean m_bDisplayArrows = false;
 
 	private SurfaceLightingEffect m_kLightShader;
-
-	/** Keeps track of the color assigned the polylines. */
-	private HashMap<Integer,ColorRGB> m_kEllipseConstantColor;
 
 
 	/** Material properties of the ellipsoids. */
@@ -108,29 +104,15 @@ public class VolumeDTI extends VolumeObject
 	/** Ellipsoids scale factor, based on the DTI volume: */
 	private float m_fScale;
 
-	/** DTI volume data size: */
-	private int m_iLen;
-
 	/** Volume-based color for the ellipsoids: */
 	private ColorRGB m_kColorEllipse;
 
 	/** maximum number of fiber tracts currently displayed. */
 	private int m_iMaxGroups = 0;
 
-	/** Color Shader for rendering the tracts. */
-	//private ShaderEffect m_kVertexColor3Shader;
-
-	/** Seeding point index */
-	private int centerIndex;
 
 	/** flag to indicate to use volume color or not */
 	private boolean isUsingVolumeColor = true;
-
-	/** Group constant color */
-	private HashMap<Integer,Integer>  groupConstantColor = null;
-
-	/** current group index */
-	private int currentGroupIndex = 0;
 
 	/** arrow glyphs */
 	private Node m_kArrow;
@@ -159,140 +141,85 @@ public class VolumeDTI extends VolumeObject
 		m_iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
 		m_iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
 		m_fScale = 1.0f/(Math.max(m_iDimX,Math.max(m_iDimY,m_iDimZ)));
-		m_iLen = m_iDimX*m_iDimY*m_iDimZ;
 
 		m_kScene = new Node();
-		//m_kVertexColor3Shader = new VertexColor3Effect();
 		m_kAlpha = new AlphaState();
 		m_kAlpha.BlendEnabled = true;
-		//m_kAlpha.SrcBlend = AlphaState.SrcBlendMode.SBF_ONE_MINUS_DST_COLOR;
-		//m_kAlpha.DstBlend = AlphaState.DstBlendMode.DBF_ONE;
-		
-        m_kZBuffer = new ZBufferState();
-        m_kZBuffer.Enabled = true;
 
-		constantColor = new HashMap<Integer, ColorRGB>();
-		for ( int i = 0; i < 100; i++ ) {
-			constantColor.put(new Integer(i), new ColorRGB((float)Math.random(), (float)Math.random(), (float)Math.random()));
-		}
+		m_kZBuffer = new ZBufferState();
+		m_kZBuffer.Enabled = true;
 
-	}
-
-	/**
-	 * advance the group color index.
-	 */
-	public void addGroupColor() {
-		currentGroupIndex++;
+		createScene();
 	}
 
 	/** Add a polyline to the display. Used to display fiber tract bundles.
 	 * @param kLine new polyline to display.
 	 * @param iGroup the group the polyline belongs to.
 	 */
-	public void addPolyline( Polyline kLine, int iGroup )
+	public void addPolyline( VOIContour kContour, Polyline kLine, int iGroup )
 	{               
 		if ( kLine == null )
 		{
 			return;
 		}
-		if ( m_kTracts == null )
+		if ( m_kGlyphs == null )
 		{
 			m_kTracts = new HashMap<Integer,Node>();
 			m_kGlyphs = new HashMap<Integer,Vector<VOIContour>>();
 			m_kShaders = new HashMap<Integer,ShaderEffect>();
-			m_kEllipseConstantColor = new HashMap<Integer,ColorRGB>();
-		}
-		if ( m_kTubes == null ) {
 			m_kTubes = new HashMap<Integer,Node>();
-			groupConstantColor = new HashMap<Integer,Integer>();
+			constantColor = new HashMap<Integer, ColorRGB>();
 		}        
 		if ( m_iMaxGroups < iGroup )
 		{
 			m_iMaxGroups = iGroup;
 		}
 
-		VOIContour kContour = new VOIContour(false);
-		for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
-		{
-			kContour.add( new Vector3f( kLine.VBuffer.GetPosition3(i)));
-		}
-
-		/*
-		if ( m_kEigenVectors != null )
-		{
-			for ( int i = 0; i < kLine.VBuffer.GetVertexQuantity(); i++ )
-			{
-				int iX = (int)kLine.VBuffer.GetPosition3fX(i);
-				int iY = (int)kLine.VBuffer.GetPosition3fY(i);
-				int iZ = (int)kLine.VBuffer.GetPosition3fZ(i);
-
-				int iIndex = iZ * m_iDimY * m_iDimX + iY * m_iDimX + iX;
-
-				if (  m_kEigenVectors.get( new Integer(iIndex) ) != null )
-				{
-					aiEllipsoids[i] = iIndex;
-				}
-				else
-				{
-					aiEllipsoids[i] = -1;
-				}
-			}
-		}
-		*/
 
 		scale( kLine.VBuffer );
 		kLine.Local.SetTranslate(m_kTranslate);
 
-		Node kTractNode = null;
-		Node kTubeNode = null;
-
 		Integer iIGroup = new Integer(iGroup);
-		if ( m_kTracts.containsKey( iIGroup ) )
+		if ( m_kGlyphs.containsKey( iIGroup ) )
 		{
-			kTractNode = m_kTracts.get(iIGroup);
-			kTractNode.AttachChild(kLine);
 			Vector<VOIContour> kGlyphVector = m_kGlyphs.get(iIGroup);
 			kGlyphVector.add(kContour);
-			return;
-		}
 
-		if ( m_kTubes.containsKey( iIGroup ) )
-		{   
-			kTubeNode = m_kTubes.get(iIGroup);
-			kTubeNode.AttachChild(createTube(kLine));
-			kTubeNode.UpdateGS();
-			kTubeNode.UpdateRS();
-			Vector<VOIContour> kGlyphVector = m_kGlyphs.get(iIGroup);
-			kGlyphVector.add(kContour);
-			return;                       
-		}
 
-		if ( kTractNode == null )
+			if ( m_kTracts.containsKey( iIGroup ) )
+			{
+				Node kTractNode = m_kTracts.get(iIGroup);
+				kTractNode.AttachChild(kLine);
+			}
+
+
+			if ( m_kTubes.containsKey( iIGroup ) )
+			{   
+				Node kTubeNode = m_kTubes.get(iIGroup);
+				kTubeNode.AttachChild(createTube(kLine));
+			}
+		}
+		else
 		{
-			//System.err.println( "kTractNode null " + iIGroup );
-			kTractNode = new Node();
-			kTractNode.AttachChild(kLine);
-			kTractNode.UpdateGS();
-			kTractNode.UpdateRS();
-			m_kTracts.put( new Integer(iIGroup), kTractNode );
-
 			Vector<VOIContour> kGlyphVector = new Vector<VOIContour>();
 			kGlyphVector.add(kContour);
-			m_kGlyphs.put( new Integer(iIGroup), kGlyphVector );
+			m_kGlyphs.put( iIGroup, kGlyphVector );
+
+			Node kTractNode = new Node();
+			kTractNode.AttachChild(kLine);
+			m_kTracts.put( iIGroup, kTractNode );
+
 			String kShaderName = new String( "ConstantColor" );
 			VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
-			m_kShaders.put( new Integer(iIGroup), kPolylineShader );
+			m_kShaders.put( iIGroup, kPolylineShader );
 
-		}
 
-		if ( kTubeNode == null ) {
-			kTubeNode = new Node();
+			Node kTubeNode = new Node();
 			kTubeNode.AttachChild(createTube(kLine));
-			kTubeNode.UpdateGS();
-			kTubeNode.UpdateRS();
-			m_kTubes.put( new Integer(iIGroup), kTubeNode );
-			groupConstantColor.put(new Integer(iIGroup), new Integer(currentGroupIndex));
-		}
+			m_kTubes.put( iIGroup, kTubeNode );
+
+			constantColor.put( iIGroup, new ColorRGB((float)Math.random(), (float)Math.random(), (float)Math.random()));
+		}		
 	}
 
 	/**
@@ -422,7 +349,7 @@ public class VolumeDTI extends VolumeObject
 		}
 	}
 	 */    
-	
+
 	/**
 	 * memory cleanup.
 	 */
@@ -441,7 +368,6 @@ public class VolumeDTI extends VolumeObject
 		m_kGlyphs = null;
 		m_kEigenVector = null;
 		m_kEigenValue = null;
-		m_kEllipseConstantColor = null;
 
 		if ( m_kEllipseMaterial != null )
 		{
@@ -455,6 +381,7 @@ public class VolumeDTI extends VolumeObject
 		}
 		m_kColorEllipse = null;
 	}
+	
 	/** Returns if there are tracts to display.
 	 * @return true if there are tracts currently loaded, false otherwise.
 	 */
@@ -472,42 +399,13 @@ public class VolumeDTI extends VolumeObject
 	 * @return  ColorRGB group color
 	 */
 	public ColorRGB getGroupColor(int iGroup) {
-		if ( groupConstantColor.get(iGroup-1) != null )
-		{
-			return new ColorRGB(constantColor.get(groupConstantColor.get(iGroup-1).intValue()));
-		}
-		return null;
+		return new ColorRGB(constantColor.get(iGroup));
 	}
 
-	/** Returns the polyline color for the specified fiber bundle tract group. 
-	 * @param iGroup the fiber bundle group to query.
-	 * @return the polyline color for the specified fiber bundle tract group. 
-	 */
-	public ColorRGB getPolylineColor( int iGroup )
+
+	public Vector<VOIContour> getPolylines( int iGroup )
 	{
-		if ( m_kEllipseConstantColor != null )
-		{
-			return m_kEllipseConstantColor.get( new Integer(iGroup) );
-		}
-		return null;
-	}
-
-	/**
-	 * Find the min available group index;
-	 */
-	public void removeGroupColor() {
-		Iterator<Integer> cIterator = groupConstantColor.keySet().iterator();
-		Integer cKey;
-
-		currentGroupIndex--;
-		while ( cIterator.hasNext() )
-		{
-			cKey = (Integer)cIterator.next();
-			if ( groupConstantColor.get(cKey).intValue() ==  currentGroupIndex ) {
-				currentGroupIndex++;
-			}
-		}
-
+		return m_kGlyphs.get( new Integer(iGroup) );
 	}
 
 	/** 
@@ -516,89 +414,24 @@ public class VolumeDTI extends VolumeObject
 	 */
 	public void removePolyline( int iGroup )
 	{
-		Integer kGroup = new Integer(iGroup);
-		if ( m_kTracts == null || !m_kTracts.containsKey(iGroup) )
+		Integer iIGroup = new Integer(iGroup);
+		if ( m_kGlyphs.containsKey(iGroup) )
 		{
-			return;
-		}
-		Node kTractNode = m_kTracts.remove(kGroup);
-		if ( kTractNode == null )
-		{
-			return;
-		}
-		/*
-        kTractNode.DetachAllChildren();
-        for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
-        {
-            Polyline kTract = (Polyline)kTractNode.DetachChildAt(i);
-            if ( kTract != null )
-            { 
-                kTract.DetachAllEffects();
-                kTract.dispose();
-            }
-        }
-        kTractNode.UpdateGS();
-        kTractNode.UpdateRS();
-		 */
-		kTractNode.dispose();
-		kTractNode = null;
-		if ( m_kTracts.size() == 0 )
-		{
-			m_kTracts = null;
-		}
+			Vector<VOIContour> kGlyphVector = m_kGlyphs.remove( iIGroup );
+			for ( int i = kGlyphVector.size() -1; i >= 0; i-- )
+			{
+				VOIContour kContour = kGlyphVector.remove(0);
+				kContour.dispose();
+			}
 
-		if ( m_kTubes == null ||  !m_kTubes.containsKey(iGroup) )
-		{
-			return;
-		}
-		Node kTubeNode = m_kTubes.remove(kGroup);
-		groupConstantColor.remove(kGroup);
+			m_kDeleteList.add( m_kTracts.remove( iIGroup ) );
+			m_kShaders.remove( iIGroup );
 
-		if ( kTubeNode == null )
-		{
-			return;
-		}
-		/*
-        for ( int i = 0; i < kTubeNode.GetQuantity(); i++ )
-        {
-        	TubeSurface kTube = (TubeSurface)kTubeNode.DetachChildAt(i);
-            if ( kTube != null )
-            { 
-            	kTube.DetachAllEffects();
-            	kTube.dispose();
-            }
-        }
-        kTubeNode.UpdateGS();
-        kTubeNode.UpdateRS();
-		 */
-		kTubeNode.dispose();
-		kTubeNode = null;
-		if ( m_kTubes.size() == 0 )
-		{
-			m_kTubes = null;
-		}
-
-		Vector<VOIContour> kGlyphVector = m_kGlyphs.remove(kGroup);
-		if ( kGlyphVector != null )
-		{
-			kGlyphVector.clear();
-		}
-
-		ShaderEffect kShader = m_kShaders.remove(kGroup);
-		if ( kShader != null )
-		{
-			kShader.dispose();
+			m_kDeleteList.add( m_kTubes.remove( iIGroup ) );
+			constantColor.remove( iIGroup);
 		}
 	}
 
-	/**
-	 * remove the group color index.
-	 */
-	public void removeTractColor(Integer iGroup) {
-
-		groupConstantColor.remove(iGroup);
-
-	}
 	/**
 	 * Render the object.
 	 * @param kRenderer the OpenGLRenderer object.
@@ -614,16 +447,16 @@ public class VolumeDTI extends VolumeObject
 		{
 			return;
 		}
-		   
-		
+
+
 		int iPassQuantity = m_kLightShader.GetPassQuantity();
 		for (int iPass = 0; iPass < iPassQuantity; iPass++) {
 			m_kLightShader.LoadPrograms(kRenderer, iPass, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
 					kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
 		}
 		m_kLightShader.SetPerPixelLighting( kRenderer, true );
-		
-		
+
+
 		AlphaState aTemp = kRenderer.GetAlphaState();
 		kRenderer.SetAlphaState(m_kAlpha);
 
@@ -636,13 +469,11 @@ public class VolumeDTI extends VolumeObject
 		}
 		else 
 		{
-			DisplayTract(null, kRenderer );
+			DisplayTract( kRenderer );
 		}
 		kRenderer.SetAlphaState(aTemp);
 	}
-	public void setCenterIndex(int index) {
-		centerIndex = index;
-	}
+
 	/** Turns on/off displaying all the glyphs.
 	 * @param bDisplay when true display all the glyphs in the volume.
 	 */
@@ -684,8 +515,8 @@ public class VolumeDTI extends VolumeObject
 	{
 		m_bDisplayTubes = bDisplay;
 	}
-	
-	
+
+
 	/** Sets the DTI Image for displaying the tensors as ellipsoids.
 	 * @param kDTIImage.
 	 */
@@ -694,189 +525,10 @@ public class VolumeDTI extends VolumeObject
 
 		m_kEigenVector = kEigenVectorImage;
 		m_kEigenValue = kEigenValueImage;
-		
-		/*
-		ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating ellipse transforms", "", 0, 100, true);
-
-		m_kEigenVectors =
-			new HashMap<Integer,Transformation>();
-		Matrix3f kMatrix = new Matrix3f();;
-		float[] afTensorData = new float[6];
-		Matrix3f kEigenValues = new Matrix3f();
-		float fLambda1;
-		float fLambda2;
-		float fLambda3;
-		Vector3f kV1 = new Vector3f();
-		Vector3f kV2 = new Vector3f();
-		Vector3f kV3 = new Vector3f();
-
-
-		float fXDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
-		float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
-		float fZDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[2];
-		
-		kEigenValueImage.calcMinMax();
-		float fEigenValMax = (float) kEigenValueImage.getMax();
-		float fEigenValMin = (float) kEigenValueImage.getMin();
-		float fScale = 1 / (fEigenValMax - fEigenValMin);
-		System.err.println( fScale + " Max = " + fEigenValMax + " Min = " + fEigenValMin );
-		for ( int i = 0; i < m_iLen; i++ )
-		{
-			kV1.X = kEigenVectorImage.getFloat( i +   m_iLen);
-			kV1.Y = kEigenVectorImage.getFloat( i + 1*m_iLen);
-			kV1.Z = kEigenVectorImage.getFloat( i + 2*m_iLen);
-			
-			kV2.X = kEigenVectorImage.getFloat( i + 3*m_iLen);
-			kV2.Y = kEigenVectorImage.getFloat( i + 4*m_iLen);
-			kV2.Z = kEigenVectorImage.getFloat( i + 5*m_iLen);
-			
-			kV3.X = kEigenVectorImage.getFloat( i + 6*m_iLen);
-			kV3.Y = kEigenVectorImage.getFloat( i + 7*m_iLen);
-			kV3.Z = kEigenVectorImage.getFloat( i + 8*m_iLen);
-			
-
-			fLambda1 = kEigenValueImage.getFloat( i * 4 + 1 );
-			fLambda2 = kEigenValueImage.getFloat( i * 4 + 2 );
-			fLambda3 = kEigenValueImage.getFloat( i * 4 + 3 );
-			
-			
-			boolean bAllZero = true;
-            for ( int j = 0; j < 6; j++ )
-            {
-                afTensorData[j] = kDTIImage.getFloat(i + j*m_iLen);
-                if ( afTensorData[j] == Float.NaN )
-                {
-                	System.err.println( "nan" );
-                	afTensorData[j] = 0;
-                }
-                if ( afTensorData[j] != 0 )
-                {
-                    bAllZero = false;
-                }
-            }
-            
-            
-            
-			//Vector3f kScale = new Vector3f( fLambda1, fLambda2, fLambda3 );
-			//kScale.Normalize();
-			
-			//kV1.Normalize();
-			//kV1.Scale( kScale.X );
-			
-			//kV2.Normalize();
-			//kV2.Scale( kScale.Y );
-			
-			//kV3.Normalize();
-			//kV3.Scale( kScale.Z );
-
-			//if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
-			//{}
-			if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0) )
-			{
-	            
-	            kV1.Normalize();
-	            kV2.Normalize();
-	            kV3.Normalize();
-	            
-	            Vector3f kAxis = new Vector3f();
-	            kAxis.Cross( Vector3f.UNIT_Z, kV1 );
-	            kAxis.Normalize();
-	            
-	            float fAngle = kV1.Angle(Vector3f.UNIT_Z);
-	            Matrix3f kRotate = new Matrix3f();
-	            kRotate.FromAxisAngle( kAxis, fAngle);
-	            
-	            Vector3f kTest = new Vector3f();
-	            kRotate.Mult( Vector3f.UNIT_Z, kTest );
-	            if ( !kTest.IsEqual( kV1 ) )
-	            {
-	            	System.err.println( kTest + "   ==?  " + kV1 );
-	            }
-	            
-				Transformation kTransform = new Transformation();
-				
-				kTransform.SetRotate( kRotate );
-				
-				//kTransform.SetMatrix(new Matrix3f(kV1,kV2,kV3,false));
-				Vector3f kScale = new Vector3f( fLambda3, fLambda2, fLambda1 );
-				kScale.Normalize();
-				kScale.Set( (float)Math.max(.1, kScale.X), (float)Math.max(.1, kScale.Y), (float)Math.max(.1, kScale.Z) );
-				kTransform.SetScale( kScale );
-				
-				//kTransform.SetScale( new Vector3f(kV1) );
-				//System.err.println( kTransform.GetScale() );
-				
-				m_kEigenVectors.put( new Integer(i), kTransform );
-			}
-			if ( (i%(m_iDimX*m_iDimY)) == 0 )
-			{
-				int iValue = (int)(100 * (float)(i+1)/m_iLen);
-				kProgressBar.updateValueImmed( iValue );
-			}
-		}
-		kProgressBar.dispose();
-
-		Integer kKey;
-		int iIndex, iX, iY, iZ;
-		float fX, fY, fZ;
-		Vector3f kScale;
-		Transformation kTransform;
-		Transformation kTScale = new Transformation();
-		Transformation kTEllipse = new Transformation();
-		
-
-		Iterator<Integer> kIterator = m_kEigenVectors.keySet().iterator();
-		while ( kIterator.hasNext() )
-		{
-			kKey = (Integer)kIterator.next();
-			iIndex = kKey.intValue();
-			iX = iIndex % m_iDimX;
-			iIndex -= iX;
-			iIndex /= m_iDimX;
-
-			iY = iIndex % m_iDimY;
-			iIndex -= iY;
-			iIndex /= m_iDimY;
-
-			iZ = iIndex;
-
-			// reset iIndex:
-				iIndex = kKey.intValue();
-
-
-				float xBox = (m_iDimX - 1) * fXDelta;
-				float yBox = (m_iDimY - 1) * fYDelta;
-				float zBox = (m_iDimZ - 1) * fZDelta;
-				float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-				fX = ((2.0f * (iX * fXDelta)) - xBox)/(2.0f*maxBox);
-				fY = ((2.0f * (iY * fYDelta)) - yBox)/(2.0f*maxBox);
-				fZ = ((2.0f * (iZ * fZDelta)) - zBox)/(2.0f*maxBox);           
-
-				kTScale.MakeIdentity();
-				kTEllipse.MakeIdentity();
-
-				kTransform = m_kEigenVectors.get(kKey);
-
-				kScale = kTScale.GetScale();
-				kScale.Scale( m_fScale );
-				kScale.Mult( kTransform.GetScale() );
-				kTScale.SetScale(kScale);
-
-				//kTEllipse.SetTranslate( fX - .5f, fY - .5f, fZ - .5f );
-				kTEllipse.SetTranslate( fX, fY, fZ );
-				kTEllipse.SetMatrixCopy( kTransform.GetMatrix() );
-
-
-				kTransform.Product( kTEllipse, kTScale );
-		}
-		kTEllipse = null;
-		kTScale = null;
-		
-
-		System.out.println( "VolumeDTI " + m_iLen );
-		*/
-
+	}
+	
+	private void createScene()
+	{
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
 		kAttr.SetNChannels(3);
@@ -961,53 +613,8 @@ public class VolumeDTI extends VolumeObject
 	public void setPolylineColor( int iGroup, ColorRGB kColor )
 	{
 		Integer kKey = new Integer(iGroup);
-		ShaderEffect kShader = m_kShaders.get(kKey);
-		if ( kShader == null )
-		{
-			return;
-		}
-		Program pkCProgram = kShader.GetCProgram(0);
-		if ( pkCProgram == null )
-		{
-			return;
-		}
-		if ( kColor == null )
-		{
-			if ( pkCProgram.GetUC("UseConstantColor") != null )
-			{
-				pkCProgram.GetUC("UseConstantColor").GetData()[0] = 0;
-			}
-
-			m_kEllipseConstantColor.remove( kKey );
-			m_kEllipseConstantColor.put( kKey, null );
-		}
-		else
-		{
-			if ( pkCProgram.GetUC("ConstantColor") != null )
-			{
-				pkCProgram.GetUC("ConstantColor").GetData()[0] = kColor.R;
-				pkCProgram.GetUC("ConstantColor").GetData()[1] = kColor.G;
-				pkCProgram.GetUC("ConstantColor").GetData()[2] = kColor.B;
-				pkCProgram.GetUC("ConstantColor").GetData()[3] = 1;
-			}
-			if ( pkCProgram.GetUC("UseConstantColor") != null )
-			{
-				pkCProgram.GetUC("UseConstantColor").GetData()[0] = 1;
-			}
-
-			m_kEllipseConstantColor.remove( kKey );
-			m_kEllipseConstantColor.put( kKey, kColor );
-
-		}
-	}
-
-	/** Sets the polyline color for the specified fiber bundle tract group. 
-	 * @param iGroup the fiber bundle group to set.
-	 * @param kColor the new polyline color for the specified fiber bundle tract group. 
-	 */
-	public void setTubesGroupColor( int iGroup, ColorRGB kColor ) {
-		if ( groupConstantColor.get(iGroup-1) != null )
-			constantColor.put(groupConstantColor.get(iGroup-1).intValue(), kColor);
+		constantColor.remove( kKey );
+		constantColor.put( kKey, kColor );
 	}
 
 	/**
@@ -1029,22 +636,20 @@ public class VolumeDTI extends VolumeObject
 			return;
 		}
 		Integer kKey;
-		Integer cKey;
 		Vector<VOIContour> kGlyphVector;
 		VOIContour kContour;
 		Vector3f kPos;
 		float fR,fG,fB;
 		TriMesh kGlyph = null;        
 		Iterator<Integer> kIterator = m_kGlyphs.keySet().iterator();
-		Iterator<Integer> cIterator = groupConstantColor.keySet().iterator();
 		int iCount = 0;
 		m_kLightShader.SetReverseFace(0);
 		m_kLightShader.SetSurfaceTexture(false, false, false);
-        float[] afVectorData = new float[3];
-        Vector3f kAxis = new Vector3f();
-        Vector3f kV1 = new Vector3f();
-        float fAngle, fLambda1, fLambda2, fLambda3;
-        Transformation kTransform;
+		float[] afVectorData = new float[3];
+		Vector3f kAxis = new Vector3f();
+		Vector3f kV1 = new Vector3f();
+		float fAngle, fLambda1, fLambda2, fLambda3;
+		Transformation kTransform;
 
 		float fXDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[0];
 		float fYDelta = m_kVolumeImageA.GetImage().getFileInfo(0).getResolutions()[1];
@@ -1055,11 +660,10 @@ public class VolumeDTI extends VolumeObject
 		float zBox = (m_iDimZ - 1) * fZDelta;
 		float maxBox = Math.max(xBox, Math.max(yBox, zBox));    
 		float fX, fY, fZ;
-		
+
 		while ( kIterator.hasNext() )
 		{
 			kKey = (Integer)kIterator.next();
-			cKey = (Integer)cIterator.next();
 			kGlyphVector = m_kGlyphs.get(kKey);     
 			for ( int i = 0; i < kGlyphVector.size(); i++ )
 			{
@@ -1072,8 +676,7 @@ public class VolumeDTI extends VolumeObject
 						if ( kImage.isColorImage() )
 						{
 							if ( !isUsingVolumeColor ) {
-								if ( cKey == null ) continue;
-								m_kColorEllipse = constantColor.get(groupConstantColor.get(cKey).intValue());
+								m_kColorEllipse = constantColor.get(kKey);
 							} else {
 								fR = kImage.getFloatTriLinearBounds( kPos.X, kPos.Y, kPos.Z, 1 )/255.0f;
 								fG = kImage.getFloatTriLinearBounds( kPos.X, kPos.Y, kPos.Z, 2 )/255.0f;
@@ -1088,32 +691,32 @@ public class VolumeDTI extends VolumeObject
 						}
 
 						// Get the transform:
-			            for ( int k = 0; k < 3; k++ )
-			            {
-			                afVectorData[k] = m_kEigenVector.getFloatTriLinearBoundsTime(kPos.X, kPos.Y, kPos.Z, k);
-			            }
-			            kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
-			            kAxis.Cross( Vector3f.UNIT_Z, kV1 );
-			            kAxis.Normalize();
-			            
-			            fAngle = kV1.Angle(Vector3f.UNIT_Z);
-			            Matrix3f kRotate = new Matrix3f();
-			            kRotate.FromAxisAngle( kAxis, fAngle);
-			            
+						for ( int k = 0; k < 3; k++ )
+						{
+							afVectorData[k] = m_kEigenVector.getFloatTriLinearBoundsTime(kPos.X, kPos.Y, kPos.Z, k);
+						}
+						kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+						kAxis.Cross( Vector3f.UNIT_Z, kV1 );
+						kAxis.Normalize();
 
-			            fLambda1 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 1);
-			            fLambda2 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 2);
-			            fLambda3 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 3);
-			            
-			            kTransform = new Transformation();
+						fAngle = kV1.Angle(Vector3f.UNIT_Z);
+						Matrix3f kRotate = new Matrix3f();
+						kRotate.FromAxisAngle( kAxis, fAngle);
+
+
+						fLambda1 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 1);
+						fLambda2 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 2);
+						fLambda3 = m_kEigenValue.getFloatTriLinearBounds(kPos.X, kPos.Y, kPos.Z, 3);
+
+						kTransform = new Transformation();
 						kTransform.SetRotate( kRotate );
-						
+
 						Vector3f kScale = new Vector3f( fLambda3, fLambda2, fLambda1 );
 						kScale.Normalize();
 						kScale.Set( (float)Math.max(.1, kScale.X), (float)Math.max(.1, kScale.Y), (float)Math.max(.1, kScale.Z) );
 						kScale.Scale(m_fScale);
 						kTransform.SetScale( kScale );
-						
+
 
 
 						fX = ((2.0f * (kPos.X * fXDelta)) - xBox)/(2.0f*maxBox);
@@ -1121,9 +724,9 @@ public class VolumeDTI extends VolumeObject
 						fZ = ((2.0f * (kPos.Z * fZDelta)) - zBox)/(2.0f*maxBox);             
 
 						kTransform.SetTranslate( fX, fY, fZ );
-						
-						
-						
+
+
+
 
 						if ( m_bDisplayEllipsoids )
 						{
@@ -1170,36 +773,32 @@ public class VolumeDTI extends VolumeObject
 	/** Displays a polyline fiber bundle tract with the given shader attached.
 	 * @param kInputStader shader to apply to the polyline.
 	 */    
-	private void DisplayTract( ShaderEffect kInputShader, Renderer kRenderer )
+	private void DisplayTract( Renderer kRenderer )
 	{
 		Iterator<Integer> kIterator = m_kTracts.keySet().iterator();
 		Integer iKey;
-		Integer cKey;
 		Node kTractNode;
 		Polyline kTract;
-		ShaderEffect kShader;
-		Iterator<Integer> cIterator = groupConstantColor.keySet().iterator();
 
 		//kAlpha.BlendEnabled = true;
 		while ( kIterator.hasNext() )
 		{
 			iKey = (Integer)kIterator.next();
-			cKey = (Integer)cIterator.next();
 
 			kTractNode = m_kTracts.get(iKey);
-			kShader = kInputShader;
 
 			ColorRGB kColor1 = null;
-
-			if ( kShader == null )
+			ShaderEffect kShader = m_kShaders.get(iKey);
+			Program pkCProgram = kShader.GetCProgram(0);
+			if ( (pkCProgram != null) && (pkCProgram.GetUC("UseConstantColor") != null) )
 			{
-				kShader = m_kShaders.get(iKey);
+				pkCProgram.GetUC("UseConstantColor").GetData()[0] = 2;
 			}
+			
 			for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
 			{
 				if (!isUsingVolumeColor) {
-					if ( cKey == null ) continue;
-					kColor1 = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
+					kColor1 = new ColorRGB(constantColor.get(iKey));
 
 					kTract = (Polyline) kTractNode.GetChild(i);
 					kTract.AttachGlobalState(m_kLinesMaterial);
@@ -1243,10 +842,8 @@ public class VolumeDTI extends VolumeObject
 	{
 		Node kTubeNode;
 		Integer iKey;
-		Integer cKey;
 
 		Iterator<Integer> iIterator = m_kTubes.keySet().iterator();
-		Iterator<Integer> cIterator = groupConstantColor.keySet().iterator();
 
 		m_kTubes.keySet();
 
@@ -1255,39 +852,38 @@ public class VolumeDTI extends VolumeObject
 		while ( iIterator.hasNext() )
 		{
 			iKey = (Integer)iIterator.next();
-			cKey = (Integer)cIterator.next();
 
-			kTubeNode = m_kTubes.get(iKey);                           
-			kTube = (TubeSurface)kTubeNode.GetChild(0);                           
+			kTubeNode = m_kTubes.get(iKey);   
+			for ( int i = 0; i < kTubeNode.GetQuantity(); i++ )
+			{
+				kTube = (TubeSurface)kTubeNode.GetChild(i);                           
 
-			ColorRGB kColor1 = ColorRGB.WHITE;
-			if ( cKey != null ) {
-				kColor1 = new ColorRGB(constantColor.get(groupConstantColor.get(cKey).intValue()));
-			}    
+				ColorRGB kColor1 = ColorRGB.WHITE;
+				kColor1 = new ColorRGB(constantColor.get(iKey));
 
-			m_kLightShader.SetSurfaceTexture(isUsingVolumeColor, false, false);
+				m_kLightShader.SetSurfaceTexture(isUsingVolumeColor, false, false);
 
-			kTube.AttachGlobalState(m_kTubesMaterial);
+				kTube.AttachGlobalState(m_kTubesMaterial);
 
-			kTube.DetachAllEffects();
-			kTube.AttachEffect(m_kLightShader);
+				kTube.AttachEffect(m_kLightShader);
+				kTube.UpdateRS();
 
-			kTube.UpdateRS();
-
-			m_kTubesMaterial.Ambient = new ColorRGB(kColor1);
-			m_kTubesMaterial.Diffuse = new ColorRGB(kColor1);
-			m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
-			m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
-			m_kTubesMaterial.Alpha = 1.0f;
-			m_kTubesMaterial.Shininess = 100f;
+				m_kTubesMaterial.Ambient = new ColorRGB(kColor1);
+				m_kTubesMaterial.Diffuse = new ColorRGB(kColor1);
+				m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+				m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
+				m_kTubesMaterial.Alpha = 1.0f;
+				m_kTubesMaterial.Shininess = 100f;
 
 
-			m_kScene.SetChild(0,kTube);
-			m_kScene.UpdateGS();
-			m_kScene.UpdateRS();
-			m_kScene.DetachChild(kTube);
-			kRenderer.Draw(kTube);
+				m_kScene.SetChild(0,kTube);
+				m_kScene.UpdateGS();
+				m_kScene.UpdateRS();
+				m_kScene.DetachChild(kTube);
+				kRenderer.Draw(kTube);
 
+				kTube.DetachAllEffects();
+			}
 		}
 	}
 

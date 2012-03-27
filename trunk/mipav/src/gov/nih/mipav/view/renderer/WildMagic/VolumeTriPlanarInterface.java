@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransferFunction;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.view.MipavUtil;
@@ -564,10 +565,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
                 surfaceTextureGUI.setEnabled(true);
             }
         } else if (command.equals("DTI")) {
-            final JDialogDTIInput kDTIIn = new JDialogDTIInput(JDialogDTIInput.TRACTS_PANEL, this, m_kVolumeImageA
-                    .GetImage());
-            insertTab("DTI", kDTIIn.getMainPanel());
-            kDTIIn.getMainPanel().setVisible(true);
+        	MipavUtil.displayError("Update DTI Interface");
         } else if (command.equals("BrainSurface")) {
             if (brainsurfaceFlattenerRender == null) {
                 brainsurfaceFlattenerRender = new gov.nih.mipav.view.renderer.WildMagic.brainflattenerview_WM.CorticalAnalysisRender(
@@ -679,8 +677,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
      * @param akPolyline new polyline.
      * @param groupIndex Node index.
      */
-    public void addPolyline(final Polyline akPolyline, final int groupIndex) {
-        raycastRenderWM.addPolyline(akPolyline, groupIndex);
+    public void addPolyline(VOIContour kContour, final Polyline akPolyline, final int groupIndex) {
+        raycastRenderWM.addTract(kContour, akPolyline, groupIndex);
     }
 
     /**

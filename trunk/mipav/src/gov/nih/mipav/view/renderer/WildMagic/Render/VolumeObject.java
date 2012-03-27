@@ -1,11 +1,14 @@
 package gov.nih.mipav.view.renderer.WildMagic.Render;
 
+import java.util.Vector;
+
 import gov.nih.mipav.model.structures.ModelImage;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Collision.PickRecord;
+import WildMagic.LibGraphics.ObjectSystem.GraphicsObject;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.PolygonOffsetState;
@@ -15,6 +18,7 @@ import WildMagic.LibGraphics.Rendering.ZBufferState;
 
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Node;
+import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -76,6 +80,9 @@ public abstract class VolumeObject
 
     /** Surface light shader for rendering objects without volume-texture mapping. */
     protected MipavLightingEffect m_kLightShader = null;
+    
+
+    protected Vector<Spatial> m_kDeleteList = new Vector<Spatial>();
     
     /** Create a new VolumeObject with the VolumeImage parameter.
      * @param kImageA the VolumeImage containing shared data and textures for

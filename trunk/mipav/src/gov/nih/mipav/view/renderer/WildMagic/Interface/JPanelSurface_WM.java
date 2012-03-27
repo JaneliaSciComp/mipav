@@ -834,7 +834,7 @@ public class JPanelSurface_WM extends JInterfaceBase
                  } 
                 
                 akPolylines[i].Local.SetTranslate(new Vector3f(m_kTranslate.X, m_kTranslate.Y, m_kTranslate.Z));
-            	m_kVolumeViewer.addPolyline(akPolylines[i], polylineCounter);
+            	m_kVolumeViewer.addPolyline(null, akPolylines[i], polylineCounter);
             	
             	polylineCounter++;
             }
