@@ -2,6 +2,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 
 import gov.nih.mipav.view.renderer.J3D.PlaneRender;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Matrix4d;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.Rendering.Texture;
@@ -32,6 +33,7 @@ implements StreamInterface
     int m_iHeight;
     int[] m_aiExtents = new int[3];
     Matrix4f m_kImageTransform;
+    Matrix4d m_kImageTransformd;
     float m_fZSlice = 0.0f;
     float m_fUseZSlice = 0.0f;
 
@@ -251,6 +253,29 @@ implements StreamInterface
         if ( pkCProgram != null && pkCProgram.GetUC("InverseTransformMatrix") != null ) 
         {
             m_kImageTransform.GetData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
+            /*
+            for ( int i = 0; i < 4; i++ )
+            {
+                for ( int j = 0; j < 4; j++ )
+                {
+                    pkCProgram.GetUC("InverseTransformMatrix").GetData()[i*4+j] = m_kImageTransform.Get(i,j);
+                }
+            }
+            */
+        }
+    }
+    
+    public void SetTransform( Matrix4d kMat)
+    {
+        m_kImageTransformd = kMat;
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram != null && pkCProgram.GetUC("InverseTransform") != null ) 
+        {
+            m_kImageTransformd.GetData(pkCProgram.GetUC("InverseTransform").GetData());
+        }
+        if ( pkCProgram != null && pkCProgram.GetUC("InverseTransformMatrix") != null ) 
+        {
+            m_kImageTransformd.GetData(pkCProgram.GetUC("InverseTransformMatrix").GetData());
             /*
             for ( int i = 0; i < 4; i++ )
             {
