@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.registration;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.TestingFileUtil;
 
 import java.util.Vector;
@@ -124,22 +125,23 @@ public class AlgorithmRegOAR2DTest extends TestCase {
         matchImageLevelEight = matchImageLevelFour.subSample2dBy2(false);
         inputLevelFour = new Vector[2];
         inputLevelFour[0] = new Vector<MatrixListItem>();
+        TransMatrix tMatrix = null;
         for(int i = 0; i < levelEightMinimas.length; i++){
-            MatrixListItem m = new MatrixListItem(Double.MAX_VALUE, null, levelEightMinimas[i]);
+            MatrixListItem m = new MatrixListItem(Double.MAX_VALUE, tMatrix, levelEightMinimas[i]);
             inputLevelFour[0].add(m);
         }
         inputLevelFour[1] = new Vector<MatrixListItem>();
         for(int i = 0; i < levelEightOptMinimas.length; i++){
-            MatrixListItem m = new MatrixListItem(Double.MAX_VALUE, null, levelEightOptMinimas[i]);
+            MatrixListItem m = new MatrixListItem(Double.MAX_VALUE, tMatrix, levelEightOptMinimas[i]);
             inputLevelFour[1].add(m);
         }
 
         inputLevelTwo = new Vector<MatrixListItem>();
         for(int i = 0; i < levelFourMinimas.length; i++){
-            MatrixListItem m = new MatrixListItem(Double.MAX_VALUE, null, levelFourMinimas[i]);
+            MatrixListItem m = new MatrixListItem(Double.MAX_VALUE, tMatrix, levelFourMinimas[i]);
             inputLevelTwo.add(m);
         }
-        inputLevelOne = new MatrixListItem(Double.MAX_VALUE, null, levelTwoMinima);
+        inputLevelOne = new MatrixListItem(Double.MAX_VALUE, tMatrix, levelTwoMinima);
  
     }
 
