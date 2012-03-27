@@ -608,6 +608,7 @@ public class FileIO {
 
             int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
             final int[] rint = new int[nListImages]; // sorted image instance values.
+            final int[] zInst = new int[nListImages]; //sorted image instance values
             final float[] zOrients = new float[nListImages]; // image orientation values as read in.
             final float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
 
@@ -769,16 +770,19 @@ public class FileIO {
              */
             
 
-			if (performSort) {
-
-              
-                // sort so that instance numbers are in ascending order.
+            if (performSort) {
+                
+             // sort so that instance numbers are in ascending order.
                 // rint is the index to associate input file-list with the
                 // instance number  
-				if (!(validInstanceSort = FileIO.sort(instanceNums, rint, nImages))) {
+                if (!(validInstanceSort = FileIO.sort(instanceNums, rint, nImages))) {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
                 } else {
+                    for(int i=0; i<zInst.length; i++) {
+                        zInst[i] = rint[i];
+                    }
+                    
                     refFileInfo = (FileInfoDicom) imageFile.getFileInfo();
                     FileDicomTagTable tagTable =  refFileInfo.getTagTable();
                     studyDescription = (String) tagTable.getValue("0008,1030");
@@ -813,7 +817,7 @@ public class FileIO {
                               //Checks for incomplete DWI series                                  
                               if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
                                   dtiSub = true; //Not complete DWI series
-                                  indices = rint; 
+                                  indices = zInst; 
                                   }
                                   
                               else{
@@ -823,48 +827,38 @@ public class FileIO {
                                      for (int i = 0; i <tVolumeNum; i++) {
                                          for (int j=0; j< IndexVolArrayList.size(); j++){
                                              //rint populated by ordering of instance nums based on volume order
-                                             rint[rintCounter] = IndexVolArrayList.get(j) + i;
+                                             zInst[rintCounter] = IndexVolArrayList.get(j) + i;
                                              rintCounter++;                                            
                                          }
                                      }
-                                     indices = rint;                                  
+                                     indices = zInst;                                  
                               }
                            }
                          }// If PHILIPS
                       
                       //For DTI dicom data not aquired from Philips scanners
                       else{
-                          indices = rint;
+                          indices = zInst;
                         }
                       }// If DTI
               
                 else{
-                  indices = rint;
+                  indices = zInst;
                 }
-		      }
-		        
-
+              }
                 
-                // If valid is false then one or more of the images has the
-                // same position. Most likely it is a 4D dataset.
-                // one possible way to deal with it:
-                
-                //if ( (nImages > 1) && !valid) {
-                //    indicies = tryPartitionByMediaUID(savedFileInfos);
-                //    if(indicies  != null) {
-                //        valid = true;
-                //    }
-                //}
-                
-                if ( (nImages > 1) && !validInstanceSort) {
-                	// sort so that zOrients is now in ascending order.
+                //always try to generate validOriSort, if a validOriSort that trumps a validInstanceSort
+                if ( (nImages > 1)) {// && !validInstanceSort) {
+                    // sort so that zOrients is now in ascending order.
                     // zOri[i] represents where in the image buffer image
                     // number i should be stored; so that if the images were
                     // read in 1, 10, 11... (which happens often),
                     // zOri[1] = 1 but zOri[2] = 2, rather than 10.
-                	validOriSort = FileIO.sort(zOrients, zOri, nImages);
-                	
-                	//for(int i=0; i<savedFileInfos.length; i++) {
+                    if (!(validOriSort = FileIO.sort(zOrients, zOri, nImages))) {
+                        Preferences.debug("FileIO: orientation number sort failed\n", Preferences.DEBUG_FILEIO);
+                        System.err.println("FileIO: instance number sort failed on " + fileList[0]);
+                    }
+                    //for(int i=0; i<savedFileInfos.length; i++) {
                     //    fileList[i] = savedFileInfos[i].getFileName();
                     //}
                     
@@ -887,8 +881,10 @@ public class FileIO {
                         zOrients[zOri[z]] = lima[rint[z]]; // copy z-location
                     }
 
-                    zOri = rint; // copy the indexing
-
+                    for(int i=0; i<rint.length; i++) {
+                        zOri[i] = rint[i]; // copy the indexing
+                    }
+                        
                     FileIO.sort(zOrients, zOri, nImages); // now sort by orientation
 
                     // Rely on image instance number and position information.
@@ -1022,7 +1018,12 @@ public class FileIO {
                     final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
 
                     if (index == 0) {
-                        orient[j] = FileInfoBase.ORI_R2L_TYPE;
+
+                        if (matrix.get(j, 0) > 0) {
+                            orient[j] = FileInfoBase.ORI_R2L_TYPE;
+                        } else {
+                            orient[j] = FileInfoBase.ORI_L2R_TYPE;
+                        }
                     } else if (index == 1) {
 
                         if (matrix.get(j, 1) > 0) {
@@ -1063,8 +1064,10 @@ public class FileIO {
             }
             
             if(validOriSort) {
-            	indices = zOri;
-            } 
+                indices = zOri;
+            } else if(validInstanceSort) {
+                indices = zInst;
+            }
 
             // problems if we reach this point!
             
@@ -1087,11 +1090,11 @@ public class FileIO {
                 enhancedNumVolumes = nImages / enhancedNumSlices;
                 extents[3] = enhancedNumVolumes;
             } else if(validInstanceSort && refFileInfo.getTagTable().getValue("0020,0105") != null && refFileInfo.getTagTable().getValue("0020,1002") != null &&
-            	        (timeDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,0105").toString()).intValue()) > 1 && 
-            	        (sliceDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue()) > 1 &&
-            	        sliceDim*timeDim == nImages) {
-        		extents[3] = timeDim;
-        		extents[2] = sliceDim;
+                        (timeDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,0105").toString()).intValue()) > 1 && 
+                        (sliceDim = Integer.valueOf(refFileInfo.getTagTable().getValue("0020,1002").toString()).intValue()) > 1 &&
+                        sliceDim*timeDim == nImages) {
+                extents[3] = timeDim;
+                extents[2] = sliceDim;
             } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSub ==false || 
                             (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSub ==false) {
                 if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
@@ -1173,7 +1176,12 @@ public class FileIO {
                     final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
 
                     if (index == 0) {
-                        orient[j] = FileInfoBase.ORI_R2L_TYPE;
+
+                        if (matrix.get(j, 0) > 0) {
+                            orient[j] = FileInfoBase.ORI_R2L_TYPE;
+                        } else {
+                            orient[j] = FileInfoBase.ORI_L2R_TYPE;
+                        }
                     } else if (index == 1) {
 
                         if (matrix.get(j, 1) > 0) {
@@ -1204,7 +1212,7 @@ public class FileIO {
         int enhancedCounter2 = 0;
 
         for (int i = 0; i < nImages; i++) {
-        	if (multiframe) {
+            if (multiframe) {
                 filename = fileList[0];
                 start = i;
                 location = i;
@@ -1238,11 +1246,11 @@ public class FileIO {
                 if ( !multiframe) {
                     curFileInfo = savedFileInfos[i];
                 } else {
-                	FileDicomTagTable table = refFileInfo.getTagTable();
-                	refFileInfo.setTagTable(null);
-                	curFileInfo = (FileInfoDicom) refFileInfo.clone();
-                	refFileInfo.setTagTable(table);
-                	curFileInfo.setTagTable(table);
+                    FileDicomTagTable table = refFileInfo.getTagTable();
+                    refFileInfo.setTagTable(null);
+                    curFileInfo = (FileInfoDicom) refFileInfo.clone();
+                    refFileInfo.setTagTable(table);
+                    curFileInfo.setTagTable(table);
                 }
                 
                 if (location != 0 && isEnhanced && imageFile.getEnhancedTagTables() != null) {  //attach enhanced tag tables to image
@@ -1268,7 +1276,7 @@ public class FileIO {
                 } else {
                     imageFile.readImage(bufferShort, curFileInfo.getDataType(), start);
                     if ((!haveChangedType) && (refFileInfo.getDataType() != originalDataType)) {
-                    	haveChangedType = true;
+                        haveChangedType = true;
                         image.setType(refFileInfo.displayType);
                         image.reallocate(refFileInfo.displayType);
                     }
@@ -2181,7 +2189,7 @@ public class FileIO {
         if (niftiCompressed) {
             fileType = FileUtility.NIFTI;
         } else {
-        	boolean zerofunused[] = new boolean[1];
+            boolean zerofunused[] = new boolean[1];
             fileType = FileUtility.getFileType(fileName, fileDir, false, quiet, zerofunused); // set the fileType
 
             if (fileType == FileUtility.ERROR) {
@@ -2209,9 +2217,9 @@ public class FileIO {
             switch (fileType) {
 
                 case FileUtility.BMP:
-                	image = readBMP(fileName, fileDir, one);
-                	break;
-                	
+                    image = readBMP(fileName, fileDir, one);
+                    break;
+                    
                 case FileUtility.BMP_MULTIFILE:
                     image = readBMPMulti(fileName, fileDir, one);
                     break;
@@ -3352,10 +3360,10 @@ public class FileIO {
         }
         
         if (fileType == FileUtility.NIFTI) {
-        	if (options.getNIFTIExtension() != null) {
-        	    String niftiExtension = options.getNIFTIExtension();
-        	    options.setFileName(options.getFileName().substring(0, index) + niftiExtension);
-        	}
+            if (options.getNIFTIExtension() != null) {
+                String niftiExtension = options.getNIFTIExtension();
+                options.setFileName(options.getFileName().substring(0, index) + niftiExtension);
+            }
         }
 
         if (fileType == FileUtility.UNDEFINED) { // if type is still undef, look for user input (when not quiet)
