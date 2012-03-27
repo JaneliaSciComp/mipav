@@ -896,7 +896,14 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @return Matrix found at the end of algorithm.
      */
     public TransMatrix getTransform() {
-        return answer.matrix;
+        TransMatrixd tMatd = answer.matrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     public void drawLine(final int xdim, final int ydim, final int zdim, final float[] image, final float value,
@@ -1678,7 +1685,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
             return;
         }
 
-        answer.matrix.Inverse();
+        answer.matrixd.Inverse();
 
         disposeLocal();
         finalize();
@@ -2104,7 +2111,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         /* Sort the list of costs, take the minimum and return: */
         Collections.sort(minima);
         answer = minima.firstElement();
-        answer.matrix.Inverse();
+        answer.matrixd.Inverse();
         Preferences.debug("Min transform:\n" + answer.matrix + " cost = " + answer.cost + " min cost = " + dMinCost
                 + "\n", Preferences.DEBUG_ALGORITHM);
 
