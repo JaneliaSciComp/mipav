@@ -17,6 +17,9 @@ public class MatrixListItem implements Comparable<MatrixListItem> {
 
     /** Matrix with the best transformation divided by half. Might be null. */
     protected TransMatrix halfMatrix;
+    
+    /** Matrix with the best transformation divided by half. Might be null. */
+    protected TransMatrixd halfMatrixd;
 
     /** Rotations, translations, scales, and skews that make up transformation. */
     protected double[] initial;
@@ -32,6 +35,14 @@ public class MatrixListItem implements Comparable<MatrixListItem> {
      * null.
      */
     protected TransMatrix midsagMatrix;
+    
+    /**
+     * Matrix with the best transformation's z rot and xy translations. Might be
+     * null.
+     */
+    protected TransMatrixd midsagMatrixd;
+    
+    
 
     /**
      * Creates new minimum object, setting the data and copying the point array
