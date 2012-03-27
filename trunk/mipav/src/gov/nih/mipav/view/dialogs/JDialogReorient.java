@@ -254,7 +254,7 @@ public class JDialogReorient extends JDialogScriptableBase
             newOrientBox.setSelectedIndex(1);
         }
         else if ((newOr[0] == FileInfoBase.ORI_A2P_TYPE) && (newOr[1] == FileInfoBase.ORI_S2I_TYPE) &&
-                 (newOr[2] == FileInfoBase.ORI_L2R_TYPE)) {
+                 (newOr[2] == FileInfoBase.ORI_R2L_TYPE)) {
             isDicom = true;
             newOrientBox.setSelectedIndex(2);
         }
@@ -1306,7 +1306,7 @@ public class JDialogReorient extends JDialogScriptableBase
                 newOrientBoxX.setEnabled(false);
                 newOrientBoxY.setSelectedIndex(FileInfoBase.ORI_S2I_TYPE);
                 newOrientBoxY.setEnabled(false);
-                newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_L2R_TYPE);
+                newOrientBoxZ.setSelectedIndex(FileInfoBase.ORI_R2L_TYPE);
                 newOrientBoxZ.setEnabled(false);
             }
             else {
