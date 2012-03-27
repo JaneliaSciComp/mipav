@@ -214,7 +214,7 @@ public class TransMatrixd extends Matrix4d
     }
     
     public int getID() {
-    	return m_transformID;
+    	return m_TransformID;
     }
 
     /** method alias, @see Get */
