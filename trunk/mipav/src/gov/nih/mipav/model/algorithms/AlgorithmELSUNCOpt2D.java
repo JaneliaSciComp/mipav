@@ -173,7 +173,8 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 			        status = dModel.getExitStatus();
 			        //dModel.statusMessage(status);
 			        //dModel.dumpResults();
-			        if (status > 0) {
+			        // Status == -2 if maxIterations reached
+			        if ((status > 0) || (status == -2)) {
 				        double params[] = dModel.getParameters();
 				        point[j] = params[0];
 				        double[]fullPoint = getFinal(point);
@@ -676,7 +677,6 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
             //internalScaling = true;
             // Suppress diagnostic messages
             //outputMes = true;
-            //secondAllowed = false;
         }
 
         /**
@@ -711,6 +711,9 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
                 	point[currentDim] = a[0];
                 	double[]fullPoint = getFinal(point);
                     residuals[0] = costFunction.cost(convertToMatrix(fullPoint));
+                    //Preferences.debug("currentDim = " + currentDim + "\n");
+                    //Preferences.debug("a[0] = " + a[0] + "\n");
+                    //Preferences.debug("residuals[0] = " + residuals[0] + "\n");
                 } // if ((ctrl == -1) || (ctrl == 1))
                 
                 // Calculate the Jacobian numerically
