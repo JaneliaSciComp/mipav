@@ -29,5 +29,7 @@ public interface AlgorithmOptimizeFunctionBase {
      */
     double cost(TransMatrix tMatrix);
     
+    double cost(TransMatrixd tMatrix);
+    
     int getCostFunction();
 }
