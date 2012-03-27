@@ -1022,12 +1022,7 @@ public class FileIO {
                     final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
 
                     if (index == 0) {
-
-                        if (matrix.get(j, 0) > 0) {
-                            orient[j] = FileInfoBase.ORI_R2L_TYPE;
-                        } else {
-                            orient[j] = FileInfoBase.ORI_L2R_TYPE;
-                        }
+                        orient[j] = FileInfoBase.ORI_R2L_TYPE;
                     } else if (index == 1) {
 
                         if (matrix.get(j, 1) > 0) {
@@ -1178,12 +1173,7 @@ public class FileIO {
                     final int index = absBiggest(matrix.get(j, 0), matrix.get(j, 1), matrix.get(j, 2));
 
                     if (index == 0) {
-
-                        if (matrix.get(j, 0) > 0) {
-                            orient[j] = FileInfoBase.ORI_R2L_TYPE;
-                        } else {
-                            orient[j] = FileInfoBase.ORI_L2R_TYPE;
-                        }
+                        orient[j] = FileInfoBase.ORI_R2L_TYPE;
                     } else if (index == 1) {
 
                         if (matrix.get(j, 1) > 0) {
