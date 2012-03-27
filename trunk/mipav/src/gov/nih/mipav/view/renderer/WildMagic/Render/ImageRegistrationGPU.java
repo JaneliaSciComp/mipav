@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.Render;
 import gov.nih.mipav.util.MipavInitGPU;
 import gov.nih.mipav.model.structures.ModelSimpleImage;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -14,6 +15,7 @@ import javax.swing.JFrame;
 import WildMagic.LibApplications.OpenGLApplication.JavaApplication3D;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix4f;
+import WildMagic.LibFoundation.Mathematics.Matrix4d;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.GraphicsImage;
 import WildMagic.LibGraphics.Rendering.ResourceIdentifier;
@@ -39,8 +41,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
@@ -90,6 +90,7 @@ public class ImageRegistrationGPU extends JavaApplication3D
     private double m_dHx, m_dHy, m_dHxy;
     private double m_dOverlap;
     private Matrix4f m_kImageTransform = new Matrix4f(false);
+    private Matrix4d m_kImageTransformd = new Matrix4d(false);
 
     protected JFrame m_kFrame;
     
@@ -172,6 +173,20 @@ public class ImageRegistrationGPU extends JavaApplication3D
     
 
     public void calcError(TransMatrix kTransform) {
+        //if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
+        {
+            if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
+            {
+                System.err.println( "Context not made current" );
+            }
+        }
+        setTransform(kTransform);
+        m_bDisplay = true;
+        display(GetCanvas());  
+        GetCanvas().getContext().release();
+    }
+    
+    public void calcError(TransMatrixd kTransform) {
         //if ( ((OpenGLRenderer)m_pkRenderer).GetContext() !=  GetCanvas().getContext().getCurrent() )
         {
             if ( GetCanvas().getContext().makeCurrent() == GLContext.CONTEXT_NOT_CURRENT )
@@ -579,6 +594,82 @@ public class ImageRegistrationGPU extends JavaApplication3D
             //m_kImageTransform.MultLeft(fromOrigin);
             //m_kImageTransform.Mult(toOrigin);
             m_kImageEffectDual.SetTransform(m_kImageTransform);
+            //System.err.println( m_kImageTransform.ToString() );
+        }
+    }
+    
+    public void setTransform( TransMatrixd kTransform )
+    {
+        if ( kTransform.getDim() == 3 )
+        {
+            m_kImageTransformd.MakeIdentity();
+            m_kImageTransformd.M00 = kTransform.M00;
+            m_kImageTransformd.M01 = kTransform.M01;
+            m_kImageTransformd.M02 = 0;
+            m_kImageTransformd.M03 = kTransform.M02;
+            
+
+            m_kImageTransformd.M10 = kTransform.M10;
+            m_kImageTransformd.M11 = kTransform.M11;
+            m_kImageTransformd.M12 = 0;
+            m_kImageTransformd.M13 = kTransform.M12;
+        }
+        else
+        {
+            m_kImageTransformd.Copy(kTransform);
+        }
+        if ( m_kImageEffectDual != null )
+        {
+            /*
+            Matrix4f toOrigin = new Matrix4f(false);
+            Matrix4f fromOrigin = new Matrix4f(false);
+            toOrigin.M03 = -m_kImageA.extents[0]/2.0f;
+            toOrigin.M13 = -m_kImageA.extents[1]/2.0f;
+            fromOrigin.M03 = m_kImageA.extents[0]/2.0f;
+            fromOrigin.M13 = m_kImageA.extents[1]/2.0f;
+            TransMatrix kMat = new TransMatrix(4,4);
+            kMat.setTransform(0,0,0,0,0,15,1,1,1,0,0,0);
+            m_kImageTransform.Copy(kMat);
+            System.err.println( "captureImage" + m_iScreenCaptureCounter + " " + m_kImageTransform.ToString() );
+
+            m_kImageTransform.MakeIdentity();
+            m_kImageTransform.M00 = 0.9666009f;
+            m_kImageTransform.M01 = -0.25924882f;
+            m_kImageTransform.M02 = 0f;
+            m_kImageTransform.M03 = 74.82431f;
+            m_kImageTransform.M10 = 0.25845572f;
+            m_kImageTransform.M11 = 0.9654881f;
+            m_kImageTransform.M12 = 0f;
+            m_kImageTransform.M13 = -57.23043f;
+            System.err.println( m_kImageTransform.ToString() );
+            m_kImageTransform.Inverse();
+            System.err.println( m_kImageTransform.ToString() );
+            
+            m_kImageTransform.MakeIdentity();
+            m_kImageTransform.M00 = 0.9652507f;
+            m_kImageTransform.M01 = 0.25918508f;
+            m_kImageTransform.M02 = 0f;
+            m_kImageTransform.M03 = -56.043213f;
+            m_kImageTransform.M10 = -0.25839218f;
+            m_kImageTransform.M11 = 0.96636325f;
+            m_kImageTransform.M12 = 0f;
+            m_kImageTransform.M13 = 72.88661f;
+            */
+            //m_kImageTransform.MultLeft( m_kToOriginInv );
+            //m_kImageTransform.Mult( m_kFromOriginInv );
+            
+
+            //System.err.println( "setTransform " + m_kImageTransform.ToString() );
+            
+            //m_kImageTransform.Inverse();
+
+            //m_kImageTransform.MultLeft( m_kToOrigin );
+            //m_kImageTransform.Mult( m_kFromOrigin );
+            
+            
+            //m_kImageTransform.MultLeft(fromOrigin);
+            //m_kImageTransform.Mult(toOrigin);
+            m_kImageEffectDual.SetTransform(m_kImageTransformd);
             //System.err.println( m_kImageTransform.ToString() );
         }
     }
