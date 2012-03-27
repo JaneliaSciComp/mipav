@@ -256,6 +256,19 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase implements RealFunctio
         public double cost(TransMatrix tMatrix) {
             return -1;
         }
+        
+        /**
+         * Filler to implement cost functions from AlgorithmOptimizeFunctionBase.
+         *
+         * @param       tMatrix  the translation matrix
+         *
+         * @return      the value of the cost function
+         *
+         * @deprecated  DOCUMENT ME!
+         */
+        public double cost(TransMatrixd tMatrix) {
+            return -1;
+        }
 
         /**
          * Calcuated the cost function for a given simplex vertex. cost = intensity sum of errors = sum_i(I[i] - I'[i])
