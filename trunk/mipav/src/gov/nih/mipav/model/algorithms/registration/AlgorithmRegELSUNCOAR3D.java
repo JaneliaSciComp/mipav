@@ -885,7 +885,14 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @return Matrix found at the end of algorithm.
      */
     public TransMatrix getTransform() {
-        return answer.matrix;
+        TransMatrixd tMatd = answer.matrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     /**
@@ -894,7 +901,14 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @return Matrix found at the end of algorithm with the compoents halved.
      */
     public TransMatrix getTransformHalf() {
-        return answer.halfMatrix;
+        TransMatrixd tMatd = answer.halfMatrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     /**
@@ -903,7 +917,14 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @return z rotation and x and y translations from the matrix found at the end of algorithm.
      */
     public TransMatrix getTransformMigsagittal() {
-        return answer.midsagMatrix;
+        TransMatrixd tMatd = answer.midsagMatrixd;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     /**
@@ -1738,7 +1759,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
             return;
         }
 
-        answer.matrix.Inverse();
+        answer.matrixd.Inverse();
         fireProgressStateChanged(100);
         disposeLocal();
         finalize();
@@ -2764,8 +2785,8 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
 
         // System.out.println("Input x = " + input.xRes + " y = " + input.yRes + " z = " + input.zRes );
         item2 = new MatrixListItem(elsunc.getCost(0), elsunc.getMatrix(0, input.xRes), elsunc.getPoint(0, input.xRes));
-        item2.halfMatrix = elsunc.getMatrixHalf(0, input.xRes);
-        item2.midsagMatrix = elsunc.getMatrixMidsagittal(0, input.xRes);
+        item2.halfMatrixd = elsunc.getMatrixHalf(0, input.xRes);
+        item2.midsagMatrixd = elsunc.getMatrixMidsagittal(0, input.xRes);
 
         fireProgressStateChanged((int) progressTo);
         Preferences.debug("Best answer: \n" + item2 + "\n",Preferences.DEBUG_ALGORITHM);
