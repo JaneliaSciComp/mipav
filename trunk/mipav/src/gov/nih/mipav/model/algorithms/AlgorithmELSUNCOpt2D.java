@@ -677,6 +677,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
             //internalScaling = true;
             // Suppress diagnostic messages
             //outputMes = true;
+            maxIterations = 20;
         }
 
         /**
