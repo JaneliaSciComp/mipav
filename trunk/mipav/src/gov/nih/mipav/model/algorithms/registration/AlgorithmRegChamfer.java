@@ -784,6 +784,17 @@ public class AlgorithmRegChamfer extends AlgorithmBase implements RealFunctionOf
         public double cost(TransMatrix tMatrix) {
             return -1;
         }
+        
+        /**
+         * Filler to implement cost functions from AlgorithmOptimizeFunctionBase.
+         *
+         * @param   tMatrix  Transformation matrix.
+         *
+         * @return  -1
+         */
+        public double cost(TransMatrixd tMatrix) {
+            return -1;
+        }
 
         /**
          * Calculated cost.
