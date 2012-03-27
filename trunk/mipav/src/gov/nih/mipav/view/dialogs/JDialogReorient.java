@@ -66,9 +66,9 @@ public class JDialogReorient extends JDialogScriptableBase
 													 "Coronal",
 													 "Sagittal",
                                                      "Unknown"};
-    private     String[]    newOrientTypes =        {"Dicom axial",
-                                                     "Dicom coronal",
-                                                     "Dicom sagittal",
+    private     String[]    newOrientTypes =        {"Axial",
+                                                     "Coronal",
+                                                     "Sagittal",
                                                      "User defined"};
     
 		
