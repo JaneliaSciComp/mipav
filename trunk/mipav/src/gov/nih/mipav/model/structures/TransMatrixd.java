@@ -212,6 +212,10 @@ public class TransMatrixd extends Matrix4d
         if (m_Is2D) return 3;
         return 4;
     }
+    
+    public int getID() {
+    	return m_transformID;
+    }
 
     /** method alias, @see Get */
     public final double get(int i, int j) {
