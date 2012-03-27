@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration;
 
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.model.structures.TransMatrixd;
 
 /**
  * Helper class to make it easy to store the necessary information about a minimum. Stores the "point", or vector at
@@ -21,7 +22,10 @@ public class MatrixListItem implements Comparable<MatrixListItem> {
     protected double[] initial;
 
     /** Matrix that gives best transformation. */
-    protected TransMatrix matrix;
+    protected TransMatrix matrix = null;
+    
+    /** Matrix that gives best transformation. */
+    protected TransMatrixd matrixd = null;
 
     /**
      * Matrix with the best transformation's z rot and xy translations. Might be
@@ -44,6 +48,28 @@ public class MatrixListItem implements Comparable<MatrixListItem> {
     public MatrixListItem(double _cost, TransMatrix _matrix, double[] _initial) {
         this.cost = _cost;
         this.matrix = _matrix;
+        initial = new double[_initial.length];
+
+        for (int i = 0; i < initial.length; i++) {
+            initial[i] = _initial[i];
+        }
+    }
+    
+    /**
+     * Creates new minimum object, setting the data and copying the point array
+     * explicitly.
+     * 
+     * @param _cost
+     *            Cost of this minimum.
+     * @param _matrix
+     *            Matrix that gives best transformation.
+     * @param _initial
+     *            Rotations, translations, scales, and skews that make up
+     *            transformation.
+     */
+    public MatrixListItem(double _cost, TransMatrixd _matrix, double[] _initial) {
+        this.cost = _cost;
+        this.matrixd = _matrix;
         initial = new double[_initial.length];
 
         for (int i = 0; i < initial.length; i++) {
@@ -105,7 +131,12 @@ public class MatrixListItem implements Comparable<MatrixListItem> {
     public String toString() {
         StringBuffer sb = new StringBuffer("");
         sb.append("Cost of " + cost + " at:\n");
-        sb.append(matrix.toString());
+        if (matrix != null) {
+            sb.append(matrix.toString());
+        }
+        if (matrixd != null) {
+        	sb.append(matrixd.toString());
+        }
         sb.append("\n");
         sb.append("Point:\n");
         if (initial.length == 7) {
