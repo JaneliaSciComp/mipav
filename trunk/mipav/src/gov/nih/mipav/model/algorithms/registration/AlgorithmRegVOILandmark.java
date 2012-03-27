@@ -357,6 +357,19 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase implements RealFuncti
             // Filler to implement cost functions from AlgorithmOptimizeFunctionBase
             return -1;
         }
+        
+        /**
+         * DOCUMENT ME!
+         *
+         * @param   tMatrix  DOCUMENT ME!
+         *
+         * @return  DOCUMENT ME!
+         */
+        public double cost(TransMatrixd tMatrix) {
+
+            // Filler to implement cost functions from AlgorithmOptimizeFunctionBase
+            return -1;
+        }
 
         /**
          * Cost cost = intensity sum of errors = sum_i(I[i] - I'[i]) x[] = row of p[][].
