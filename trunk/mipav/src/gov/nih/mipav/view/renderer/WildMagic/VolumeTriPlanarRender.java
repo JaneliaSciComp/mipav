@@ -7,9 +7,9 @@ import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -31,7 +31,6 @@ import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSlices;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeVOI;
 import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidget;
-import gov.nih.mipav.view.renderer.WildMagic.Render.MultiDimensionalTransfer.ClassificationWidgetState;
 
 import java.awt.Cursor;
 import java.awt.event.KeyEvent;
@@ -39,17 +38,14 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
-import java.io.IOException;
 import java.util.Vector;
 
-import javax.media.opengl.GL3bc;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 
 import org.jocl.CL;
 
-import WildMagic.LibApplications.OpenGLApplication.ApplicationGUI;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -76,7 +72,6 @@ import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLFrameBuffer;
 import WildMagic.LibRenderers.OpenGLRenderer.OpenGLRenderer;
-import WildMagic.LibRenderers.OpenGLRenderer.TextureID;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -269,33 +264,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	 }
 
 	 /**
-	  * Add tubes group color. 
-	  * @param groupID   group ID
-	  */
-	 public void addGroupColor() {
-		 if ( m_kDTIDisplay != null )
-		 {
-			 m_kDTIDisplay.addGroupColor();
-		 }
-	 }
-
-	 /** Add a polyline to the display. Used to display fiber tract bundles.
-	  * @param kLine new polyline to display.
-	  * @param iGroup the group the polyline belongs to.
-	  */
-	 public void addPolyline( Polyline kLine, int iGroup )
-	 {
-		 if ( m_kDTIDisplay == null )
-		 {
-			 m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
-			 m_kDisplayList.add(1, m_kDTIDisplay);
-		 }
-		 m_kDTIDisplay.addPolyline( kLine, iGroup );
-		 m_kDTIDisplay.SetDisplay( true );
-	 }
-
-
-	 /**
 	  * Add surfaces to the display list.
 	  * @param akSurfaces
 	  */
@@ -316,15 +284,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	  * @param iGroup  counter number
 	  * @param centerIndex  center index color
 	  */
-	 public void addTract( Polyline kLine, int iGroup, int centerIndex )
+	 public void addTract( VOIContour kContour, Polyline kLine, int iGroup )
 	 {
 		 if ( m_kDTIDisplay == null )
 		 {
 			 m_kDTIDisplay = new VolumeDTI( m_kVolumeImageA, m_kTranslate, m_fX, m_fY, m_fZ );
 			 m_kDisplayList.add(1, m_kDTIDisplay);
 		 }
-		 m_kDTIDisplay.setCenterIndex(centerIndex);
-		 m_kDTIDisplay.addPolyline( kLine, iGroup );
+		 m_kDTIDisplay.addPolyline( kContour, kLine, iGroup );
 		 m_kDTIDisplay.SetDisplay( true );
 	 }
 
@@ -1028,19 +995,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  return 0;
 	  }
 
-	  /** Returns the polyline color for the specified fiber bundle tract group. 
-	   * @param iGroup the fiber bundle group to query.
-	   * @return the polyline color for the specified fiber bundle tract group. 
-	   */
-	  public ColorRGB getPolylineColor( int iGroup )
-	  {
-		  if ( m_kDTIDisplay != null )
-		  {
-			  return m_kDTIDisplay.getPolylineColor(iGroup);
-		  }
-		  return null;
-	  }
-
 
 	  public Sculptor_WM getSculpt()
 	  {
@@ -1546,16 +1500,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 			  }
 		  }
 	  }
+	  
 
-	  /**
-	   * reduce the group color index
-	   */
-	  public void removeGroupColor() {
+	  public Vector<VOIContour> getPolylines( int iGroup )
+	  {
 		  if ( m_kDTIDisplay != null )
 		  {
-			  m_kDTIDisplay.removeGroupColor();
+			  return m_kDTIDisplay.getPolylines(iGroup);
 		  }
-	  }    
+		  return null;
+	  }
 
 	  /** 
 	   * Removes the specified polyline tract group.
@@ -1593,16 +1547,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  }
 	  }
 
-	  /**
-	   * reduce the fiber tract color index
-	   * @param groupID   group ID
-	   */
-	  public void removeTractColor(Integer index) {
-		  if ( m_kDTIDisplay != null )
-		  {
-			  m_kDTIDisplay.removeTractColor(index);
-		  }
-	  }
 	  /**
 	   * When the Geodesic object cuts the mesh along an open curve, the old mesh changes, but does not need to be deleted
 	   * and no new mesh needs to be added. This function allows the Geodesic object to replace the original mesh with the
@@ -2313,18 +2257,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  }
 	  }
 
-
-	  /** Sets the polyline color for the specified fiber bundle tract group. 
-	   * @param iGroup the fiber bundle group to set.
-	   * @param kColor the new polyline color for the specified fiber bundle tract group. 
-	   */
-	  public void setTubesGroupColor( int iGroup, ColorRGB kColor )
-	  {
-		  if ( m_kDTIDisplay != null )
-		  {
-			  m_kDTIDisplay.setTubesGroupColor(iGroup, kColor);
-		  }
-	  }
 
 	  /** Sets the blend factor for displaying the ray-cast volume with other objects in the scene.
 	   * @param fBlend the blend factor for the ray-cast volume.

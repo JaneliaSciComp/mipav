@@ -107,7 +107,6 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
             m_iYPick = e.getY();
             m_bSlicePickPending = true;
             updatingFiberTrack = true;
-            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().updateCounter();
         }
     }
     /** Rotates the object with a virtual trackball:
@@ -122,7 +121,7 @@ public class VolumeTriPlanerRenderDTI extends VolumeTriPlanarRender
             return;
         }
         if ( updatingFiberTrack && m_bSlicePickEnabled ) {
-            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().addFiberTract();
+            ((VolumeTriPlanarInterfaceDTI) m_kParent).getParamPanel().closeFiberTractGroup();
             UpdateSceneRotation();
             updatingFiberTrack = false;
         }
