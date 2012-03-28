@@ -1,9 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
-import de.jtem.numericalMethods.calculus.minimizing.Powell;
 
-import gov.nih.mipav.model.algorithms.AlgorithmSM2.FitSM2ConstrainedModel;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -29,7 +27,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     private double[] finalPoint;
 
     /** The transformation matrix from the origin of the input image. */
-    private TransMatrix fromOrigin;
+    private TransMatrixd fromOrigin;
 
     /** The cost of the function at the best minimum. */
     private double functionAtBest;
@@ -67,7 +65,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     private double[] tolerance;
 
     /** The transformation matrix to the origin of the input image. */
-    protected TransMatrix toOrigin;
+    protected TransMatrixd toOrigin;
 
     /** Array of translation and rotation limits for each dimension. */
     private float[][] trLimits;
@@ -103,10 +101,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         start = initial;
 
         if (degreeOfFreedom <= 12) {
-            toOrigin = new TransMatrix(4);
+            toOrigin = new TransMatrixd(4);
             toOrigin.setTranslate(com.X, com.Y, com.Z);
 
-            fromOrigin = new TransMatrix(4);
+            fromOrigin = new TransMatrixd(4);
             fromOrigin.setTranslate(-com.X, -com.Y, -com.Z);
         }
 
@@ -175,7 +173,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  The transformation matrix created from the vector.
      */
-    public TransMatrix convertToMatrix(double[] vector) {
+    public TransMatrixd convertToMatrix(double[] vector) {
 
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
         // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
@@ -225,7 +223,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             }
         }
 
-        TransMatrix matrix = new TransMatrix(4);
+        TransMatrixd matrix = new TransMatrixd(4);
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
@@ -248,7 +246,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  The transformation matrix created from the vector.
      */
-    public TransMatrix convertToMatrixHalf(double[] vector) {
+    public TransMatrixd convertToMatrixHalf(double[] vector) {
 
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
         // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
@@ -311,7 +309,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         skewY /= 2;
         skewZ /= 2;
 
-        TransMatrix matrix = new TransMatrix(4);
+        TransMatrixd matrix = new TransMatrixd(4);
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
@@ -336,7 +334,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  The transformation matrix created from the vector.
      */
-    public TransMatrix convertToMatrixMidsagittal(double[] vector) {
+    public TransMatrixd convertToMatrixMidsagittal(double[] vector) {
 
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
         // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
@@ -400,7 +398,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         skewY = 0;
         skewZ = 0;
 
-        TransMatrix matrix = new TransMatrix(4);
+        TransMatrixd matrix = new TransMatrixd(4);
 
         matrix.setTransform(transX, transY, transZ, rotX, rotY, rotZ, scaleX, scaleY, scaleZ, skewX, skewY, skewZ);
 
@@ -501,7 +499,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         }
 
         if (nDims <= 12) {
-            TransMatrix mat = convertToMatrix(point);
+            TransMatrixd mat = convertToMatrix(point);
 
             transX = mat.Get(0, 3) * sample;
             transY = mat.Get(1, 3) * sample;
@@ -545,7 +543,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  matrix representing the best transformation.
      */
-    public TransMatrix getMatrix() {
+    public TransMatrixd getMatrix() {
         return convertToMatrix(point);
     }
 
@@ -559,13 +557,13 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  matrix representing the best transformation.
      */
-    public TransMatrix getMatrix(float sample) {
+    public TransMatrixd getMatrix(float sample) {
 
         // will resolution affect scale??
-        TransMatrix mat = convertToMatrix(point);
-        float transX = mat.get(0, 3) * sample;
-        float transY = mat.get(1, 3) * sample;
-        float transZ = mat.get(2, 3) * sample;
+        TransMatrixd mat = convertToMatrix(point);
+        double transX = mat.get(0, 3) * sample;
+        double transY = mat.get(1, 3) * sample;
+        double transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
@@ -580,7 +578,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  matrix representing the best transformation with its components halved.
      */
-    public TransMatrix getMatrixHalf() {
+    public TransMatrixd getMatrixHalf() {
         return convertToMatrixHalf(point);
     }
 
@@ -594,13 +592,13 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  matrix representing the best transformation with its components halved.
      */
-    public TransMatrix getMatrixHalf(float sample) {
+    public TransMatrixd getMatrixHalf(float sample) {
 
         // will resolution affect scale??
-        TransMatrix mat = convertToMatrixHalf(point);
-        float transX = mat.get(0, 3) * sample;
-        float transY = mat.get(1, 3) * sample;
-        float transZ = mat.get(2, 3) * sample;
+        TransMatrixd mat = convertToMatrixHalf(point);
+        double transX = mat.get(0, 3) * sample;
+        double transY = mat.get(1, 3) * sample;
+        double transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
@@ -615,7 +613,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  matrix representing the best transformation's z rot and x and y trans.
      */
-    public TransMatrix getMatrixMidsagittal() {
+    public TransMatrixd getMatrixMidsagittal() {
         return convertToMatrixMidsagittal(point);
     }
 
@@ -630,13 +628,13 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      *
      * @return  matrix representing the best transformation's z rot and x and y trans.
      */
-    public TransMatrix getMatrixMidsagittal(float sample) {
+    public TransMatrixd getMatrixMidsagittal(float sample) {
 
         // will resolution affect scale??
-        TransMatrix mat = convertToMatrixMidsagittal(point);
-        float transX = mat.get(0, 3) * sample;
-        float transY = mat.get(1, 3) * sample;
-        float transZ = mat.get(2, 3) * sample;
+        TransMatrixd mat = convertToMatrixMidsagittal(point);
+        double transX = mat.get(0, 3) * sample;
+        double transY = mat.get(1, 3) * sample;
+        double transZ = mat.get(2, 3) * sample;
 
         mat.set(0, 3, transX);
         mat.set(1, 3, transY);
@@ -663,8 +661,14 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
+        int cycles = 0;
+        int maxCycles = 6;
 
         while (anotherCycle) {
+        	cycles++;
+    		if (cycles > maxCycles) {
+    			break;
+    		}
         	anotherCycle = false;
 	        for (i = 0; i < nDims; i++) {
 	        	originalI = point[i];
@@ -672,7 +676,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 		        dModel.driver();
 		        status = dModel.getExitStatus();
 		        //dModel.statusMessage(status);
-		        if (status > 0) {
+		        // status == -2 if maxIterations reached
+		        if ((status > 0) || (status == -2)) {
 			        double params[] = dModel.getParameters();
 			        point[i] = params[0];
 			        double[]fullPoint = getFinal(point);
@@ -835,11 +840,12 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * @return  whether or not a minimum was found.
      */
     public boolean didSucceed() {
-    	if (status < 0) {
-    		success = false;
+    	// status == -2 for maxIterations reached
+    	if ((status > 0) || (status == -2)) {
+    		success = true;
     	}
     	else {
-    		success = true;
+    		success = false;
     	}
         return success;
     }
@@ -886,6 +892,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             // internalScaling = true;
             // Suppress diagnostic messages
             outputMes = false;
+            maxIterations = 20;
         }
 
         /**
