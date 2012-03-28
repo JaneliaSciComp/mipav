@@ -122,7 +122,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
     public void runAlgorithm() {
     	int i, j;
     	boolean anotherCycle = true;
-    	double originalJ;
+    	double[] lastPoint = new double[nDims];
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
@@ -145,7 +145,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
         		}
 	        	anotherCycle = false;
 		        for (j = 0; j < nDims; j++) {
-		        	originalJ = point[j];
+		        	lastPoint[j] = point[j];
 			        dModel = new FitOAR3DModel(j,point);
 			        dModel.driver();
 			        status = dModel.getExitStatus();
@@ -158,14 +158,16 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
 				        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
 				        if (functionAtBest < minFunctionAtBest) {
 				        	minFunctionAtBest = functionAtBest;
-				        	anotherCycle = true;
+				        	if (Math.abs(point[j] - lastPoint[j]) > OARTolerance[j]) {
+				        	    anotherCycle = true;
+				        	}
 				        }
 				        else {
-				        	point[j] = originalJ;
+				        	point[j] = lastPoint[j];
 				        }
 			        } // if (status > 0)
 			        else {
-			        	point[j] = originalJ;
+			        	point[j] = lastPoint[j];
 			        }
 		        } // for (j = 0; j < nDims; j++)
 	        } // while (anotherCycle)
