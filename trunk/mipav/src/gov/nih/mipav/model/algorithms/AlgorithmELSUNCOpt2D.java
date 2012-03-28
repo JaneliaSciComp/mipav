@@ -143,7 +143,6 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     public void runAlgorithm() {
     	int i, j;
     	boolean anotherCycle;
-    	double originalJ;
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
@@ -155,6 +154,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         	anotherCycle = true;
         	start = points[i].getPoint();
         	double[] point = extractPoint(points[i].getPoint());
+        	double[] lastPoint = new double[nDims];
         	
         	/**
              * Prepare for recording the search path.
@@ -167,7 +167,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 	        while (anotherCycle) {
 	        	anotherCycle = false;
 		        for (j = 0; j < nDims; j++) {
-		        	originalJ = point[j];
+		        	lastPoint[j] = point[j];
 			        dModel = new FitOAR2DModel(j,point);
 			        dModel.driver();
 			        status = dModel.getExitStatus();
@@ -181,17 +181,19 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 				        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
 				        if (functionAtBest < minFunctionAtBest) {
 				        	minFunctionAtBest = functionAtBest;
-				        	anotherCycle = true;
+				        	if (Math.abs(point[j] - lastPoint[j]) > OARTolerance[j]) {
+				        	    anotherCycle = true;
+				        	}
 				        	if (pathRecorded && nDims == 3) {
 		                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
 		                    }
 				        }
 				        else {
-				        	point[j] = originalJ;
+				        	point[j] = lastPoint[j];
 				        }
 			        } // if (status > 0)
 			        else {
-			        	point[j] = originalJ;
+			        	point[j] = lastPoint[j];
 			        }
 		        } // for (j = 0; j < nDims; j++)
 	        } // while (anotherCycle)
