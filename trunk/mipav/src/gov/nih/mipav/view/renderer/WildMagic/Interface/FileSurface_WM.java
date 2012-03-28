@@ -945,12 +945,12 @@ public class FileSurface_WM {
         String kExt = kName.substring(i);
         if ( kExt.equals(".ply" ) )
         {
-        	// saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
+        	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
             saveProstatePlyMesh(kName, keyImage, kMesh);
         }
         else if ( kExt.equals(".stl" ) )
         {
-        	// saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
+        	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
         	saveProstateSTLMesh(kName, keyImage, kMesh);
         }
       }
@@ -1784,6 +1784,7 @@ public class FileSurface_WM {
         // file dialog to select surface mesh files (*.sur)
         JFileChooser chooser = new JFileChooser();
         chooser.setMultiSelectionEnabled(bLoad);
+        chooser.resetChoosableFileFilters();
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SURFACE));
 
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -1828,6 +1829,7 @@ public class FileSurface_WM {
         // file dialog to select the dicom matrix info file
         JFileChooser chooser = new JFileChooser();
         chooser.setMultiSelectionEnabled(bLoad);
+        chooser.resetChoosableFileFilters();
         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.DICOMMATRIX));
 
         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
@@ -2653,19 +2655,10 @@ public class FileSurface_WM {
             } catch (IOException e) {
                 return null;
             }
-        } else if ( file.getName().endsWith("stla") ) {
+        } else if ( file.getName().endsWith("stl") ) {
             iType = 0;
             iQuantity = 1;
             isSur = false;
-        } else if ( file.getName().endsWith("stlb") ) {
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = 0;
-                iQuantity = 1;
-                isSur = false;
-            } catch (IOException e) {
-                return null;
-            }
         } else if ( file.getName().endsWith("ply") ) {
             iType = 0;
             iQuantity = 1;
@@ -2735,12 +2728,10 @@ public class FileSurface_WM {
                     	else if(file.getName().endsWith("gii")) {
                             akComponent[i] = loadGiftiXMLMesh( file.getAbsolutePath(), file.getName(), file.getParent());
                     	}
-                    	else if (file.getName().endsWith("stla")) {
+                    	else if (file.getName().endsWith("stl")) {
                             akComponent[i] = loadSTLAsciiMesh( file );
                     	}
-                    	else if (file.getName().endsWith("stlb")) {
-                            akComponent[i] = loadSTLBinaryMesh( in );
-                    	}
+                    	
                     	else if (file.getName().endsWith("ply")) {
                             akComponent[i] = loadPlyAsciiMesh( file );
                     	}
@@ -3162,7 +3153,6 @@ public class FileSurface_WM {
             Vector3f kVertex = new Vector3f();
             Vector3f output = new Vector3f();
             float res[] = kImage.getFileInfo(0).getResolutions();
-            System.err.println("res[0] = " + res[0] + "  res[1] = " + res[1] + " res[2] = " + res[2]);
             for (int i = 0; i < iVertexCount; i++) {
                 kVBuffer.GetPosition3(i, kVertex);
                 
