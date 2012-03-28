@@ -114,6 +114,9 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
     private volatile ExecutorService exec = null;
     private boolean saveAriMean, saveGeoMean;
     private File ariMeanDir, geoMeanDir;
+    private boolean savePrefusion;
+    private File prefusionBaseDir;
+    private File prefusionTransformDir;
 
     /**
      * Constructor.
@@ -141,11 +144,16 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
      * @param saveAriMean 
      * @param geoMeanDir 
      * @param saveGeoMean 
+     * @param prefusionTranformDir 
+     * @param prefusionBaseDir 
+     * @param savePrefusion 
      */
     public PlugInAlgorithmGenerateFusion541d(ModelImage image1, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
-                                                    int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir) {
+                                                    int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
+                                                    boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
+                                                    boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir) {
         super(null, image1);
         
         this.image = image1;
@@ -187,6 +195,10 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
         this.geoMeanDir = geoMeanDir;
         this.saveAriMean = saveAriMean;
         this.ariMeanDir = ariMeanDir;
+        
+        this.savePrefusion = savePrefusion;
+        this.prefusionBaseDir = prefusionBaseDir;
+        this.prefusionTransformDir = prefusionTransformDir;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -531,9 +543,39 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
             
             transformImage = rotate(transformImage, AlgorithmRotate.Y_AXIS_MINUS);
             
+            fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
+            
             transform();
             
-            fireProgressStateChanged(10, "Transform", "Performing "+mode.toString());
+            fireProgressStateChanged(15, "Generating movements", "Performing "+mode.toString());
+            
+            synchronized(this) {
+                if(xMovement == null && yMovement == null && zMovement == null) {
+                    if(exec == null) {
+                        exec = Executors.newFixedThreadPool(1);
+                        System.out.println("Print once");
+                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
+                        MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
+                        exec.submit(alg);
+                        exec.shutdown();
+                    }
+                    
+                    try {
+                        exec.awaitTermination(1, TimeUnit.DAYS);
+                    } catch (InterruptedException e) {
+                        MipavUtil.displayError("Time point "+transformImage.getImageName()+" will be incomplete.");
+                        e.printStackTrace();
+                    }
+                }
+            }
+         
+            fireProgressStateChanged(20, "Transform", "Performing "+mode.toString());
+            
+            FileIO io = new FileIO();
+            FileWriteOptions options = new FileWriteOptions(null, null, true);
+            options.setFileType(FileUtility.TIFF);
+            options.setIsScript(true);
+            options.setOptionsSet(true);
             
             switch (mode) {
             
@@ -548,24 +590,54 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                     fireProgressStateChanged(15, "Transform", "Creating prefusion images");
                     
                     ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
+                    ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
                     //new ViewJFrameImage(transformImage);
+                    int transformX, transformY, transformZ;        
+                    
                     for(int i=0; i<baseImage.getExtents()[0]; i++) {
+                        transformX = i-xMovement;
                         for(int j=0; j<baseImage.getExtents()[1]; j++) {
+                            transformY = j-yMovement;
                             for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                if(i < transformImage.getExtents()[0] && 
-                                        j < transformImage.getExtents()[1] && 
-                                        k < transformImage.getExtents()[2]) {
-                                    prefusionTransformImage.set(i,  j, k, transformImage.getDouble(i, j, k));
+                                transformZ = k-zMovement;
+                                if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
+                                        transformY >= 0 && transformY < transformImage.getExtents()[1] && 
+                                        transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
+                                    prefusionTransformImage.set(transformX, transformY, transformZ, transformImage.getDouble(transformX, transformY, transformZ));
                                 }
+                                prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
                             }
                         }
                     }
                     
                     prefusionTransformImage.calcMinMax();
-                    
+                    prefusionBaseImage.calcMinMax();
                     
                     prefusionTransformImage.setImageName("Prefusion_"+transformImageName);
-                    resultImageList.add(prefusionTransformImage);
+                    if(savePrefusion) {
+                        options.setFileDirectory(prefusionBaseDir.getAbsolutePath()+File.separator);
+                        options.setFileName(prefusionBaseImage.getImageFileName());
+                        options.setBeginSlice(0);
+                        options.setEndSlice(prefusionBaseImage.getExtents()[2]-1);
+                        io.writeImage(prefusionBaseImage, options, false);
+                        
+                        options.setFileDirectory(prefusionTransformDir.getAbsolutePath()+File.separator);
+                        options.setFileName(prefusionBaseImage.getImageFileName());
+                        options.setBeginSlice(0);
+                        options.setEndSlice(prefusionBaseImage.getExtents()[2]-1);
+                        io.writeImage(prefusionBaseImage, options, false);
+                    }
+                    
+                    if(doShowPrefusion) {
+                        resultImageList.add(prefusionTransformImage);
+                        resultImageList.add(prefusionBaseImage);
+                    } else {
+                        ViewUserInterface.getReference().unRegisterImage(prefusionBaseImage);
+                        prefusionBaseImage.disposeLocal();
+                        
+                        ViewUserInterface.getReference().unRegisterImage(prefusionTransformImage);
+                        prefusionTransformImage.disposeLocal();
+                    }
                 }
                 
                 if(showGeoMean || saveGeoMean) {
@@ -605,37 +677,13 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                 break;
             }
             
-            synchronized(this) {
-                if(xMovement == null && yMovement == null && zMovement == null) {
-                    if(exec == null) {
-                        exec = Executors.newFixedThreadPool(1);
-                        System.out.println("Print once");
-                        fireProgressStateChanged(15, "Transform", "Launching measure algorithm");
-                        MeasureAlg alg = new MeasureAlg(parentFrame, baseImage, transformImage);
-                        exec.submit(alg);
-                        exec.shutdown();
-                    }
-                    
-                    try {
-                        exec.awaitTermination(1, TimeUnit.DAYS);
-                    } catch (InterruptedException e) {
-                        MipavUtil.displayError("Time point "+transformImage.getImageName()+" will be incomplete.");
-                        e.printStackTrace();
-                    }
-                }
-            }
-            
             fireProgressStateChanged(75, "Transform", "Calculating means");
             
             if(showAriMean || saveAriMean) {
                 calcAriMean();
             }
                  
-            FileIO io = new FileIO();
-            FileWriteOptions options = new FileWriteOptions(null, null, true);
-            options.setFileType(FileUtility.TIFF);
-            options.setIsScript(true);
-            options.setOptionsSet(true);         
+                     
                 
             if(saveAriMean) {
                 options.setFileDirectory(ariMeanDir.getAbsolutePath()+File.separator);

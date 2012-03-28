@@ -65,7 +65,12 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /**declare UID */
-
+    
+    final String initAriLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
+    final String initGeoLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "GeoMean" + File.separator;
+    final String initTransformPrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionTransform" + File.separator;
+    final String initBasePrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionBase" + File.separator;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     private ModelImage resultImage = null;
@@ -76,7 +81,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     /** This is your algorithm */
     private PlugInAlgorithmGenerateFusion541d generateFusionAlgo = null;
 
-    private JTextField mtxFileLocText, spimAFileLocText, spimBFileLocText;
+    private JTextField mtxFileLocText, transformFileLocText, baseFileLocText;
 
     private JCheckBox geometricMeanShowBox, arithmeticMeanShowBox, interImagesBox;
 
@@ -94,7 +99,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
 
     private boolean showGeoMean, showAriMean;
 
-    private String spimAFileDir, spimBFileDir;
+    private String transformFileDir, baseFileDir;
 
     private String baseImage;
 
@@ -151,6 +156,12 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     private File geoMeanDir;
 
     private File ariMeanDir;
+    private JTextField savePrefusionTransformFolderText;
+    private JTextField savePrefusionBaseFolderText;
+    private JCheckBox doSavePrefusionBox;
+    private boolean savePrefusion;
+    private File prefusionBaseDir;
+    private File prefusionTransformDir;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -241,7 +252,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
-                                                                                saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir);
+                                                                                saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
+                                                                                savePrefusion, prefusionBaseDir, prefusionTransformDir);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -287,8 +299,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
     	
     	mtxFileLoc = scriptParameters.getParams().getFile("mtxFileLoc");
-    	spimAFileDir = scriptParameters.getParams().getFile("spimAFileDir");
-    	spimBFileDir = scriptParameters.getParams().getFile("spimBFileDir");
+    	transformFileDir = scriptParameters.getParams().getFile("spimAFileDir");
+    	baseFileDir = scriptParameters.getParams().getFile("spimBFileDir");
     	
     	baseImage = scriptParameters.getParams().getString("baseImage");
     	
@@ -309,8 +321,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
        
         scriptParameters.getParams().put(ParameterFactory.newParameter("mtxFileLoc", mtxFileLoc));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", spimAFileDir));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", spimBFileDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("spimAFileDir", transformFileDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("spimBFileDir", baseFileDir));
         
         scriptParameters.getParams().put(ParameterFactory.newParameter("baseImageText", baseImageText));
     } //end storeParamsFromGUI()
@@ -348,12 +360,12 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         mtxPanel.add(mtxFileLocText.getParent(), gbc);
         gbc.gridy++;
         
-        spimAFileLocText = gui.buildFileField("Directory containing SPIMA: ", "", false, JFileChooser.DIRECTORIES_ONLY);
-        mtxPanel.add(spimAFileLocText.getParent(), gbc);
+        transformFileLocText = gui.buildFileField("Directory containing SPIMA: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        mtxPanel.add(transformFileLocText.getParent(), gbc);
         gbc.gridy++;
         
-        spimBFileLocText = gui.buildFileField("Directory containing SPIMB: ", "", false, JFileChooser.DIRECTORIES_ONLY);
-        mtxPanel.add(spimBFileLocText.getParent(), gbc);
+        baseFileLocText = gui.buildFileField("Directory containing SPIMB: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        mtxPanel.add(baseFileLocText.getParent(), gbc);
         gbc.gridy++;
         
         JPanel transformPanel = new JPanel();
@@ -514,17 +526,35 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         gbc.gridx = 0;
         mainPanel.add(algOptionPanel, gbc);
         
+        
+        FolderSaveActionListener folderSave = new FolderSaveActionListener();
         JPanel outputPanel = new JPanel(new GridBagLayout());
         outputPanel.setForeground(Color.black);
         outputPanel.setBorder(MipavUtil.buildTitledBorder("Output options"));
         
         gbc.gridy = 0; 
-        
-        gbc.gridy++;
         doShowPrefusionBox = gui.buildCheckBox("Show pre-fusion images", false);
         outputPanel.add(doShowPrefusionBox.getParent(), gbc);
+        gbc.gridx++;
+        
+        doSavePrefusionBox = gui.buildCheckBox("Save pre-fusion images", false);
+        doSavePrefusionBox.addActionListener(folderSave);
+        outputPanel.add(doSavePrefusionBox.getParent(), gbc);
+        gbc.gridwidth = 2;
         gbc.gridy++;
-      
+        gbc.gridx = 0;
+        
+        savePrefusionBaseFolderText = gui.buildFileField("Prefusion location for base images:", initBasePrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        outputPanel.add(savePrefusionBaseFolderText.getParent(), gbc);
+        gbc.gridy++;  
+        savePrefusionBaseFolderText.setVisible(false);
+        
+        savePrefusionTransformFolderText = gui.buildFileField("Prefusion location for transformed images:", initTransformPrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        outputPanel.add(savePrefusionTransformFolderText.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        savePrefusionTransformFolderText.setVisible(false);
+        
         arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
         outputPanel.add(arithmeticMeanShowBox.getParent(), gbc);
         gbc.gridx++;
@@ -535,28 +565,13 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         
-        final String initAriLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
-        final String initGeoLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
-        
         arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(arithmeticMeanFolderText.getParent(), gbc);
         gbc.gridy++;
         gbc.gridwidth = 1;
         arithmeticMeanFolderText.getParent().setVisible(false);
         
-        arithmeticMeanSaveBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                arithmeticMeanFolderText.getParent().setVisible(arithmeticMeanSaveBox.isSelected());
-                if(arithmeticMeanFolderText.getText().equals(initAriLoc) && 
-                        spimAFileLocText.getText() != null && 
-                        spimAFileLocText.getText().length() > 0) {
-                    try {
-                        arithmeticMeanFolderText.setText(new File(spimAFileLocText.getText()).getParent() + File.separator + "AriMean" + File.separator);
-                    } catch(Exception ex) {}
-                    
-                }
-            }
-        });
+        arithmeticMeanSaveBox.addActionListener(folderSave);
         
         geometricMeanShowBox = gui.buildCheckBox("Show geometric mean", false);
         outputPanel.add(geometricMeanShowBox.getParent(), gbc);
@@ -574,19 +589,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         gbc.gridy++;
         geometricMeanFolderText.getParent().setVisible(false);
         
-        geometricMeanSaveBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                geometricMeanFolderText.getParent().setVisible(geometricMeanSaveBox.isSelected());
-                if(geometricMeanFolderText.getText().equals(initGeoLoc) && 
-                        spimAFileLocText.getText() != null && 
-                        spimAFileLocText.getText().length() > 0) {
-                    try {
-                        geometricMeanFolderText.setText(new File(spimAFileLocText.getText()).getParent() + File.separator + "GeoMean" + File.separator);
-                    } catch(Exception ex) {}
-                    
-                }
-            }
-        });
+        geometricMeanSaveBox.addActionListener(folderSave);
         
         
         interImagesBox = gui.buildCheckBox("Show intermediate images", false);
@@ -610,6 +613,73 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         
     } // end init()
     
+    
+    private class FolderSaveActionListener implements ActionListener {
+        
+        public void actionPerformed(ActionEvent e) {
+            geometricMeanFolderText.getParent().setVisible(geometricMeanSaveBox.isSelected());
+            arithmeticMeanFolderText.getParent().setVisible(arithmeticMeanSaveBox.isSelected());
+            
+            savePrefusionTransformFolderText.getParent().setVisible(doSavePrefusionBox.isSelected());
+            savePrefusionBaseFolderText.getParent().setVisible(doSavePrefusionBox.isSelected());
+            
+            if(transformFileLocText.getText() != null && 
+                    transformFileLocText.getText().length() > 0) {
+                try {
+                    if(geometricMeanFolderText.isVisible()) {
+                        if(geometricMeanFolderText.getText().equals(initGeoLoc)) {
+                            geometricMeanFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "GeoMean" + File.separator);
+                        }
+                    }
+                    
+                    if(arithmeticMeanFolderText.isVisible()) {
+                        if(arithmeticMeanFolderText.getText().equals(initAriLoc)) {
+                            arithmeticMeanFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "AriMean" + File.separator);
+                        }
+                    }
+                    
+                    if(savePrefusionBaseFolderText.isVisible()) {
+                        if(baseImageText.getText() != null && baseImageText.getText().length() > 0) {
+                            if(savePrefusionBaseFolderText.getText().equals(initBasePrefusionLoc) || 
+                                    !savePrefusionBaseFolderText.getText().contains(baseImageText.getText())) {
+                                savePrefusionBaseFolderText.setText(new File(baseFileLocText.getText()).getParent() + File.separator + "Prefusion" +baseImageText.getText()+ File.separator);
+                            }
+                        }
+                    }
+                    
+                    if(savePrefusionTransformFolderText.isVisible()) {
+                        if(transformImageText.getText() != null && transformImageText.getText().length() > 0) {
+                            if(savePrefusionTransformFolderText.getText().equals(initTransformPrefusionLoc) || 
+                                    !savePrefusionTransformFolderText.getText().contains(transformImageText.getText())) {
+                                savePrefusionTransformFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "Prefusion" +transformImageText.getText()+ File.separator);
+                            }
+                        }
+                    }
+                    
+                } catch(Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+            
+            
+            
+        }
+        
+    }
+    
+    private File createDirectory(JTextField location) {
+        File f = null;
+        try {
+            f = new File(location.getText());
+            if(!f.exists()) {
+                f.mkdirs();
+            }
+        } catch(Exception e) {
+            MipavUtil.displayError("Error making directory "+location.getText());
+        }
+        
+        return f;
+    }
 
     /**
      * This method could ensure everything in your dialog box has been set correctly
@@ -621,6 +691,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         showAriMean = arithmeticMeanShowBox.isSelected();
         saveGeoMean = geometricMeanSaveBox.isSelected();
         saveAriMean = arithmeticMeanSaveBox.isSelected();
+        savePrefusion = doSavePrefusionBox.isSelected();
         doInterImages = interImagesBox.isSelected();
         doShowPreFusion = doShowPrefusionBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
@@ -628,28 +699,21 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
         
-        try {
-            if(saveGeoMean) {
-                geoMeanDir = new File(geometricMeanFolderText.getText());
-                if(!geoMeanDir.exists()) {
-                    geoMeanDir.mkdirs();
-                }
+        if(saveGeoMean) {
+            if((geoMeanDir = createDirectory(geometricMeanFolderText)) == null) {
+                return false;
             }
-        } catch(Exception e) {
-            MipavUtil.displayError("Error making geometric mean directory, please choose new location.");
-            return false;
         }
         
-        try {
-            if(saveAriMean) {
-                ariMeanDir = new File(arithmeticMeanFolderText.getText());
-                if(!ariMeanDir.exists()) {
-                    ariMeanDir.mkdirs();
-                }
+        if(saveAriMean) {
+            if((ariMeanDir = createDirectory(arithmeticMeanFolderText)) == null) {
+                return false;
             }
-        } catch(Exception e) {
-            MipavUtil.displayError("Error making arithmetic mean directory, please choose new location.");
-            return false;
+        }
+        
+        if(savePrefusion) {
+            prefusionBaseDir = createDirectory(savePrefusionBaseFolderText);
+            prefusionTransformDir = createDirectory(savePrefusionTransformFolderText);
         }
                 
 	    try {
@@ -711,8 +775,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
 	        return false;
 	    }
 	    
-	    spimAFileDir = spimAFileLocText.getText();
-	    spimBFileDir = spimBFileLocText.getText();
+	    transformFileDir = transformFileLocText.getText();
+	    baseFileDir = baseFileLocText.getText();
 	    baseImage = baseImageText.getText();
 	    
 	    mode = (SampleMode) modeOption.getSelectedItem();
@@ -744,8 +808,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         ArrayList<File> baseImageList = new ArrayList<File>();
         ArrayList<File> transformImageList = new ArrayList<File>();
         try {
-            File fA = new File(spimAFileDir);
-            File fB = new File(spimBFileDir);
+            File fA = new File(transformFileDir);
+            File fB = new File(baseFileDir);
             boolean containsFiles = false;
             for(File fTry : fA.listFiles()) {
                 if(fTry.getName().contains(baseImage)) {
@@ -754,8 +818,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
                 }
             }
             if(!containsFiles) {
-                fB = new File(spimAFileDir);
-                fA = new File(spimBFileDir);
+                fB = new File(transformFileDir);
+                fA = new File(baseFileDir);
             }
             
             if(!fA.exists() || !fA.isDirectory()) {
