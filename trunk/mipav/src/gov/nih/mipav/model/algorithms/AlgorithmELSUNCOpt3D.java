@@ -24,7 +24,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
     private AlgorithmOptimizeFunctionBase costFunction;
     
     /** Array of tolerances for each dimension. */
-    private double[] tolerance;
+    private double[] OARTolerance;
     
     /** The maximum number of iterations the optimization allows. */
     private int maxIterations;
@@ -71,7 +71,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
                                 AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter) {
     	nDims = degreeOfFreedom;
         costFunction = costFunc;
-        tolerance = tols;
+        OARTolerance = tols;
         maxIterations = maxIter;
         this.parent = parent;
 
@@ -91,7 +91,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
      */
     public void disposeLocal() {
         costFunction = null;
-        tolerance = null;
+        OARTolerance = null;
         toOrigin = null;
         fromOrigin = null;
     }
@@ -150,7 +150,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
 			        dModel.driver();
 			        status = dModel.getExitStatus();
 			        //dModel.statusMessage(status);
-			        // status == -2 if maxAIterations reached
+			        // status == -2 if maxIterations reached
 			        if ((status > 0) || (status == -2)){
 				        double params[] = dModel.getParameters();
 				        point[j] = params[0];
@@ -722,6 +722,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
             // internalScaling = true;
             // Suppress diagnostic messages
             outputMes = false;
+            parameterConvergence = OARTolerance[currentDim];
             maxIterations = 20;
         }
 
