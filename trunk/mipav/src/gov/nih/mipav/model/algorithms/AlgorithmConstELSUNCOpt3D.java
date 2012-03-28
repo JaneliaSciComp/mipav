@@ -62,7 +62,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     private boolean success = true;
 
     /** Array of tolerances for each dimension. */
-    private double[] tolerance;
+    private double[] OARTolerance;
 
     /** The transformation matrix to the origin of the input image. */
     protected TransMatrixd toOrigin;
@@ -93,7 +93,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             int maxIter, int bracketBound) {
     	nDims = degreeOfFreedom;
         costFunction = costFunc;
-        tolerance = tols;
+        OARTolerance = tols;
         maxIterations = maxIter;
         this.bracketBound = bracketBound;
         this.parent = parent;
@@ -155,7 +155,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         costFunction = null;
         start = null;
         point = null;
-        tolerance = null;
+        OARTolerance = null;
         finalPoint = null;
         toOrigin = null;
         fromOrigin = null;
@@ -657,7 +657,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     public void runAlgorithm() {
     	int i;
     	boolean anotherCycle = true;
-    	double originalI;
+    	double[] lastPoint = new double[nDims];
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
@@ -671,7 +671,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     		}
         	anotherCycle = false;
 	        for (i = 0; i < nDims; i++) {
-	        	originalI = point[i];
+	        	lastPoint[i] = point[i];
 		        dModel = new FitOAR3DConstrainedModel(i);
 		        dModel.driver();
 		        status = dModel.getExitStatus();
@@ -684,14 +684,16 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 			        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
 			        if (functionAtBest < minFunctionAtBest) {
 			        	minFunctionAtBest = functionAtBest;
-			        	anotherCycle = true;;
+			        	if (Math.abs(point[i] - lastPoint[i]) > OARTolerance[i]) {
+			        	    anotherCycle = true;
+			        	}
 			        }
 			        else {
-			        	point[i] = originalI;
+			        	point[i] = lastPoint[i];
 			        }
 		        } // if (status > 0)
 		        else {
-		        	point[i] = originalI;
+		        	point[i] = lastPoint[i];
 		        }
 	        } // for (i = 0; i < nDims; i++)
         } // while (anotherCycle)
@@ -892,6 +894,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             // internalScaling = true;
             // Suppress diagnostic messages
             outputMes = false;
+            parameterConvergence = OARTolerance[currentDim];
             maxIterations = 20;
         }
 
