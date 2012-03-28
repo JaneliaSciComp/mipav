@@ -795,7 +795,7 @@ public class FileSurface_WM {
             String kName = akFiles[i].getName();
             if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1) || 
             	(kName.indexOf(".vtk") != -1) || (kName.indexOf(".vtp") != -1) || 
-            	(kName.indexOf(".stla")!= -1) || (kName.indexOf(".stlb")!= -1) || 
+            	(kName.indexOf(".stl")!= -1) || 
             	(kName.indexOf(".ply") != -1) || (kName.indexOf(".txt") != -1) || 
             	(kName.indexOf(".gii") != -1)) {
                 kSurface[i] = readSurface(kImage, akFiles[i], null);
@@ -869,12 +869,7 @@ public class FileSurface_WM {
         	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
             saveSinglePlyMesh(kName, null, kMesh);
         }
-        else if ( kExt.equals(".stla" ) )
-        {
-        	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
-        	saveSingleSTLMesh(kName, null, kMesh);
-        }
-        else if ( kExt.equals(".stlb" ) )
+        else if ( kExt.equals(".stl" ) )
         {
         	saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
         	saveSingleSTLMesh(kName, null, kMesh);
@@ -920,6 +915,46 @@ public class FileSurface_WM {
             saveAsVRML( kName, kMesh, kVBuffer, flip, direction, startLocation,  box );
         }
     }
+    
+    
+    /**
+     * Save a TriMesh to disk
+     * @param kName file name
+     * @param kMesh TriMesh
+     * @param iType type of mesh TriMesh or ClodMesh
+     * @param kVBuffer VertexBuffer
+     * @param flip invert y,z values
+     * @param direction 3D orientation of mesh
+     * @param startLocation 3D location of mesh
+     * @param box 3D bounding box
+     * @param inverseDicomMatrix dicom matrix
+     * @throws IOException file I/O exception
+     */
+    public static void saveProstateSurface(String kName, TriMesh kMesh,
+                            int iType, VertexBuffer kVBuffer,
+                            boolean flip, int[] direction, float[] startLocation, float[] box,
+                            TransMatrix inverseDicomMatrix, ModelImage keyImage)
+    throws IOException
+    {
+        if (kName == null)
+        {
+            return;
+        }
+        
+        int i = kName.lastIndexOf('.');
+        String kExt = kName.substring(i);
+        if ( kExt.equals(".ply" ) )
+        {
+        	// saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
+            saveProstatePlyMesh(kName, keyImage, kMesh);
+        }
+        else if ( kExt.equals(".stl" ) )
+        {
+        	// saveDicomMatrixInfo(flip,direction,startLocation,box,inverseDicomMatrix);
+        	saveProstateSTLMesh(kName, keyImage, kMesh);
+        }
+      }
+    
     
     
     /**
@@ -2077,6 +2112,95 @@ public class FileSurface_WM {
         }
         kOut.println("endsolid");
     }
+    
+    /**
+     * Print the contents of the TriMesh in STL ascii format.
+     * @param kOut output
+     * @param kMesh TriMesh
+     */
+    private static void printProstateSTLAscii(PrintWriter kOut, ModelImage kImage, TriMesh kMesh)
+    {
+        int i;
+        int index1, index2, index3;
+        VertexBuffer kVBuffer;
+        float res[] = kImage.getFileInfo(0).getResolutions();
+        int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
+        int[] aiIndex = kMesh.IBuffer.GetData();
+        
+        Vector3f kNormal = new Vector3f();
+        Vector3f kNormal1 = new Vector3f();
+        Vector3f kNormal2 = new Vector3f();
+        Vector3f kNormal3 = new Vector3f();
+        
+        Vector3f kVertex1 = new Vector3f();
+        Vector3f kVertex2 = new Vector3f();
+        Vector3f kVertex3 = new Vector3f();
+        
+        kVBuffer = kMesh.VBuffer;
+       
+        kOut.println("solid");
+        
+        for (i = 0; i < iTriangleCount; i++) {
+            index1 = aiIndex[(3 * i)];    
+            index2 = aiIndex[((3 * i) + 1)];
+            index3 = aiIndex[((3 * i) + 2)];
+        
+            kVBuffer.GetPosition3(index1, kNormal1);
+            kVBuffer.GetPosition3(index2, kNormal2);
+            kVBuffer.GetPosition3(index3, kNormal3);
+            
+            MipavCoordinateSystems.scannerToFile(kNormal1, kVertex1, kImage);
+            MipavCoordinateSystems.scannerToFile(kNormal2, kVertex2, kImage);
+            MipavCoordinateSystems.scannerToFile(kNormal3, kVertex3, kImage);
+            
+            kVertex1.X *= res[0]; kVertex1.Y *= res[1]; kVertex1.Z *= res[2];
+            kVertex2.X *= res[0]; kVertex2.Y *= res[1]; kVertex2.Z *= res[2];
+            kVertex3.X *= res[0]; kVertex3.Y *= res[1]; kVertex3.Z *= res[2];
+            
+            // Compute facet normal
+            kNormal.Set(0f, 0f, 0f);
+            kNormal.Add(kVertex1);
+            kNormal.Add(kVertex2);
+            kNormal.Add(kVertex3);
+            kNormal.Scale(1f/3f);
+            
+            kOut.print(" facet normal  ");
+            kOut.print(kNormal.X);
+            kOut.print(' ');
+            kOut.print(kNormal.Y);
+            kOut.print(' ');
+            kOut.println(kNormal.Z);
+            
+            kOut.println("   outer loop");
+    		
+            // index 1
+            kOut.print("     vertex ");
+            kOut.print(kVertex1.X);
+            kOut.print(' ');
+            kOut.print(kVertex1.Y);
+            kOut.print(' ');
+            kOut.println(kVertex1.Z);
+            // index 2
+            kOut.print("     vertex ");
+            kOut.print(kVertex2.X);
+            kOut.print(' ');
+            kOut.print(kVertex2.Y);
+            kOut.print(' ');
+            kOut.println(kVertex2.Z);
+            // index 3
+            kOut.print("     vertex ");
+            kOut.print(kVertex3.X);
+            kOut.print(' ');
+            kOut.print(kVertex3.Y);
+            kOut.print(' ');
+            kOut.println(kVertex3.Z);
+            
+            kOut.println("   endloop");
+            kOut.println(" endfacet");
+        }
+        kOut.println("endsolid");
+    }
+    
     /**
      * Print the contents of the TriMesh in STL binary format.
      * @param kOut output
@@ -3003,6 +3127,78 @@ public class FileSurface_WM {
      * @param  kName file name.
      * @param  kMesh   Triangle mesh
      */
+    private static void saveProstatePlyMesh(String kName, ModelImage kImage, TriMesh kMesh)
+    {
+    	String name = kName;
+    	VertexBuffer kVBuffer;
+
+    	if ( kName == null )
+    	{
+    		name = getFileName(false);
+    	}
+        if (name == null) 
+        {
+            return;
+        }         
+        try {
+            PrintWriter kOut = new PrintWriter(new FileWriter(name));
+            int iTriangleCount = kMesh.IBuffer.GetIndexQuantity() / 3;
+            int iVertexCount = kMesh.VBuffer.GetVertexQuantity();
+            int[] aiIndex = kMesh.IBuffer.GetData();
+	        
+            // write header
+            kOut.println("ply"); // object is TriMesh
+            kOut.println("format ascii 1.0");
+            kOut.println("element vertex " + iVertexCount);
+            kOut.println("property float32 x");
+            kOut.println("property float32 y");
+            kOut.println("property float32 z");
+            kOut.println("element face " + iTriangleCount);
+            kOut.println("property list uint8 int32 vertex_indices");
+            kOut.println("end_header");
+	       
+    	    kVBuffer = kMesh.VBuffer;
+    		
+            Vector3f kVertex = new Vector3f();
+            Vector3f output = new Vector3f();
+            float res[] = kImage.getFileInfo(0).getResolutions();
+            System.err.println("res[0] = " + res[0] + "  res[1] = " + res[1] + " res[2] = " + res[2]);
+            for (int i = 0; i < iVertexCount; i++) {
+                kVBuffer.GetPosition3(i, kVertex);
+                
+                MipavCoordinateSystems.scannerToFile(kVertex, output, kImage);
+                
+                kOut.print(output.X * res[0]);
+                kOut.print(' ');
+                kOut.print(output.Y * res[1]);
+                kOut.print(' ');
+                kOut.println(output.Z * res[2]);
+            }
+	        	        
+            for (int i = 0; i < iTriangleCount; i++) {
+                kOut.print('3');
+                kOut.print(' ');
+                kOut.print(aiIndex[3 * i]);
+                kOut.print(' ');
+                kOut.print(aiIndex[(3 * i) + 1]);
+                kOut.print(' ');
+                kOut.println(aiIndex[(3 * i) + 2]);
+            }
+	        
+            kOut.close();
+	   	    
+        } catch (IOException error) {
+            MipavUtil.displayError("Error while trying to save single mesh");
+        }
+	        
+    }
+
+    
+    /**
+     * Saves a single level of detail to a STL mesh file.
+     * @param  kName file name.
+     * @param  kMesh   Triangle mesh
+     */
     private static void saveSingleSTLMesh(String kName, ModelImage kImage, TriMesh kMesh ) {
     	String name = kName;
     	if ( kName == null )
@@ -3013,26 +3209,42 @@ public class FileSurface_WM {
         {
             return;
         } 
-        boolean bAscii = false;
         int i = name.lastIndexOf('.');
-        if ( name.substring(i).equals( ".stla") )
-        {
-        	bAscii = true;
-        }
+      
         try {
-            if ( bAscii )
-            {
                 PrintWriter kOut = new PrintWriter(new FileWriter(name));
                 printSTLAscii(kOut, kImage, kMesh);
                 kOut.close();
-            }
-            else
-            {
-                RandomAccessFile kOut = new RandomAccessFile(new File(name), "rw");  	    
-                printSTLBinary(kOut, kImage, kMesh);
+      	   	    
+        } catch (IOException error) {
+            MipavUtil.displayError("Error while trying to save single mesh");
+        }
+	        
+    }
+    
+    /**
+     * Saves a single level of detail to a STL ascii mesh file.
+     * @param  kName file name.
+     * @param  kMesh   Triangle mesh
+     */
+    private static void saveProstateSTLMesh(String kName, ModelImage kImage, TriMesh kMesh ) {
+    	String name = kName;
+    	if ( kName == null )
+    	{
+            name = getFileName(false);
+    	}
+        if (name == null) 
+        {
+            return;
+        } 
+        int i = name.lastIndexOf('.');
+      
+         try {
+                PrintWriter kOut = new PrintWriter(new FileWriter(name));
+                printProstateSTLAscii(kOut, kImage, kMesh);
                 kOut.close();
-            }
-	   	    
+        
+            
         } catch (IOException error) {
             MipavUtil.displayError("Error while trying to save single mesh");
         }
