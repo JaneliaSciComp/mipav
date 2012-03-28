@@ -176,10 +176,9 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGenerateFusion541d(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, false);
-
-        image = im;
+    public PlugInDialogGenerateFusion541d(boolean modal) {
+        super(modal);
+        
         init();
     }
     
@@ -247,7 +246,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541d(image, doShowPreFusion, doInterImages, showGeoMean, showAriMean, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541d(doShowPreFusion, doInterImages, showGeoMean, showAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
@@ -259,7 +258,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             generateFusionAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", generateFusionAlgo);
+            createProgressBar("Creating plugin", " ...", generateFusionAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -290,7 +289,6 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
      * Used in turning your plugin into a script
      */
     protected void setGUIFromParams() {
-    	image = scriptParameters.retrieveInputImage();
 
     	showAriMean = scriptParameters.getParams().getBoolean("do_arithmetic");
     	showGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
@@ -312,7 +310,6 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
      * Used in turning your plugin into a script
      */
     protected void storeParamsFromGUI() throws ParserException {
-    	scriptParameters.storeInputImage(image);
    
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_arithmetic", showAriMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", showGeoMean));
@@ -544,16 +541,16 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         gbc.gridy++;
         gbc.gridx = 0;
         
-        savePrefusionBaseFolderText = gui.buildFileField("Prefusion location for base images:", initBasePrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        savePrefusionBaseFolderText = gui.buildFileField("Base image location:", initBasePrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(savePrefusionBaseFolderText.getParent(), gbc);
         gbc.gridy++;  
-        savePrefusionBaseFolderText.setVisible(false);
+        savePrefusionBaseFolderText.getParent().setVisible(false);
         
-        savePrefusionTransformFolderText = gui.buildFileField("Prefusion location for transformed images:", initTransformPrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        savePrefusionTransformFolderText = gui.buildFileField("Transformed image location:", initTransformPrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(savePrefusionTransformFolderText.getParent(), gbc);
         gbc.gridy++;
         gbc.gridwidth = 1;
-        savePrefusionTransformFolderText.setVisible(false);
+        savePrefusionTransformFolderText.getParent().setVisible(false);
         
         arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
         outputPanel.add(arithmeticMeanShowBox.getParent(), gbc);

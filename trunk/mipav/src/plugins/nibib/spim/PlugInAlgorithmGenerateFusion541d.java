@@ -87,7 +87,6 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
         }
     }
     
-    private ModelImage image;
     private boolean showAriMean = true; 
     private boolean doShowPrefusion = false;
     private boolean doInterImages = false;
@@ -148,15 +147,12 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
      * @param prefusionBaseDir 
      * @param savePrefusion 
      */
-    public PlugInAlgorithmGenerateFusion541d(ModelImage image1, boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion541d(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir) {
-        super(null, image1);
-        
-        this.image = image1;
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -536,8 +532,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                 threshold(baseImage, thresholdIntensity);
             }
             
-            if(doShowPrefusion || doInterImages) {
-                baseImage.setImageName("Prefusion_"+baseImageName);
+            if(doInterImages) {
                 resultImageList.add(baseImage);
             }
             
@@ -600,10 +595,10 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                             transformY = j-yMovement;
                             for(int k=0; k<baseImage.getExtents()[2]; k++) {
                                 transformZ = k-zMovement;
-                                if(transformX >= 0 && transformX < transformImage.getExtents()[0] && 
-                                        transformY >= 0 && transformY < transformImage.getExtents()[1] && 
-                                        transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
-                                    prefusionTransformImage.set(transformX, transformY, transformZ, transformImage.getDouble(transformX, transformY, transformZ));
+                                if(transformX >= 0 && transformX < transformImage.getExtents()[0] && transformX < baseImage.getExtents()[0] && 
+                                        transformY >= 0 && transformY < transformImage.getExtents()[1] && transformY < baseImage.getExtents()[1] && 
+                                        transformZ >= 0 && transformZ < transformImage.getExtents()[2] && transformZ < baseImage.getExtents()[2]) {
+                                    prefusionTransformImage.set(i, j, k, transformImage.getDouble(transformX, transformY, transformZ));
                                 }
                                 prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
                             }
@@ -611,9 +606,10 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                     }
                     
                     prefusionTransformImage.calcMinMax();
-                    prefusionBaseImage.calcMinMax();
-                    
                     prefusionTransformImage.setImageName("Prefusion_"+transformImageName);
+                    prefusionBaseImage.calcMinMax();
+                    prefusionBaseImage.setImageName("Prefusion_"+baseImageName);
+                    
                     if(savePrefusion) {
                         options.setFileDirectory(prefusionBaseDir.getAbsolutePath()+File.separator);
                         options.setFileName(prefusionBaseImage.getImageFileName());
@@ -622,10 +618,10 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                         io.writeImage(prefusionBaseImage, options, false);
                         
                         options.setFileDirectory(prefusionTransformDir.getAbsolutePath()+File.separator);
-                        options.setFileName(prefusionBaseImage.getImageFileName());
+                        options.setFileName(prefusionTransformImage.getImageFileName());
                         options.setBeginSlice(0);
-                        options.setEndSlice(prefusionBaseImage.getExtents()[2]-1);
-                        io.writeImage(prefusionBaseImage, options, false);
+                        options.setEndSlice(prefusionTransformImage.getExtents()[2]-1);
+                        io.writeImage(prefusionTransformImage, options, false);
                     }
                     
                     if(doShowPrefusion) {
@@ -681,9 +677,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
             
             if(showAriMean || saveAriMean) {
                 calcAriMean();
-            }
-                 
-                     
+            }       
                 
             if(saveAriMean) {
                 options.setFileDirectory(ariMeanDir.getAbsolutePath()+File.separator);
@@ -719,7 +713,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                 subGeoImage.disposeLocal();
             }
             
-            if(!doInterImages && !doShowPrefusion) {
+            if(!doInterImages) {
                 ViewUserInterface.getReference().unRegisterImage(baseImage);
                 baseImage.disposeLocal();
                 
