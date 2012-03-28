@@ -330,7 +330,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         }
         if ( !m_bSnapshot )
         {
-            saveAVIMovie();
+           // instead of saving AVI movie, we save the QuickTime Movie. 
+            saveQuickTimeMovie();
         }
     }
     
@@ -468,6 +469,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public void saveQuickTimeMovie() {
         MediaLocator oml;
         Vector<String> inputFiles = new Vector<String>();
+        File[] inputFile = new File[getCounter()];
         String file;
 
         String directory = m_kVolumeImageA.GetImage().getFileInfo(0).getFileDirectory() + File.separatorChar;
@@ -477,11 +479,16 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 
         for (int i = 0; i < getCounter(); i++) {
             inputFiles.addElement(directory + "captureImage" + i + "." + "jpg");
+            inputFile[i] = new File(directory + "captureImage" + i + "." + "jpg");
         }
 
         JpegImagesToMovie imageToMovie = new JpegImagesToMovie();
         imageToMovie.doIt(GetWidth(), GetHeight(), 30, inputFiles, oml);
 
+        for (int i = 0; i < getCounter(); i++) {
+            inputFile[i].delete();
+        }
+        m_iScreenCaptureCounter = 0;
         inputFiles = null;
         oml = null;
 
