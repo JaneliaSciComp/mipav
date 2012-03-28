@@ -85,8 +85,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
     /** surface file formats. */
     private String[] fileTypes = { "Text files (*.txt)", "Surface files (*.sur)", "VRML files (*.wrl)", 
     		                       "XML files (*.xml)",  "VTK Legacy files (*.vtk)",  "VTK XML files (*.vtp)", 
-    		                       "STereoLithography(STL) ASCII files (*.stla)",
-    		                       "STereoLithography(STL) Binary files (*.stlb)",
+    		                       "STereoLithography(STL) ASCII files (*.stl)",
     		                       "Polygon File Format (*.ply)", 
     		                       "Gifti Surface Format (*.gii)"};
 
@@ -244,18 +243,14 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
             } else if (pos == 6) {
-                fileName = makeImageName(fileTF.getText(), ".stla");
+                fileName = makeImageName(fileTF.getText(), ".stl");
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
             } else if (pos == 7) {
-                fileName = makeImageName(fileTF.getText(), ".stlb");
-                decimateSurfaceCB.setSelected(false);
-                decimateSurfaceCB.setEnabled(false);  
-            } else if (pos == 8) {
                 fileName = makeImageName(fileTF.getText(), ".ply");
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
-            } else if (pos == 9) {
+            } else if (pos == 8) {
                 fileName = makeImageName(fileTF.getText(), ".gii");
                 decimateSurfaceCB.setSelected(false);
                 decimateSurfaceCB.setEnabled(false);  
@@ -891,12 +886,10 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
             } else if (pos == 5) {
                 fileName = makeImageName(fileTF.getText(), ".vtp");
             } else if (pos == 6) {
-                fileName = makeImageName(fileTF.getText(), ".stla");
+                fileName = makeImageName(fileTF.getText(), ".stl");
             } else if (pos == 7) {
-                fileName = makeImageName(fileTF.getText(), ".stlb");
-            } else if (pos == 8) {
             	fileName = makeImageName(fileTF.getText(), ".ply");
-            } else if (pos == 9) {
+            } else if (pos == 8) {
             	fileName = makeImageName(fileTF.getText(), ".gii");
             } 
         }

@@ -103,7 +103,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "Misc.(*.avi; *.bmp; *.pcx; *.png; *.tga; *.xbm; *.xpm)", // MISC
             "Optical (*.avi; *.bmp; *.img; *.jpg; *.pict; *.psd; *.tif; *.tiff; *.xml)", // OPTICAL
             "Script Files (*.sct)", // SCRIPT
-            "Surface Files (*.sur; *.wrl; *.xml; *.vtk; *.vtp; *.stla; *.stlb; *.ply; *.gii)", // SURFACE
+            "Surface Files (*.sur; *.wrl; *.xml; *.vtk; *.vtp; *.stl; *.ply; *.gii)", // SURFACE
             "Transfer Function Files (*.fun)", // FUNCT
             "VOI Files (*.voi)", // VOI
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files", "User Defined", "R-table (*.rtb)",
@@ -331,8 +331,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             return true;
         } else if ( (filterType == ViewImageFileFilter.SURFACE)
                 && (extension.equals(".sur") || extension.equals(".wrl") || extension.equals(".xml")
-                        || extension.equals(".vtk") || extension.equals(".vtp") || extension.equals(".stla")
-                        || extension.equals(".stlb") || extension.equals(".ply") || extension.equals(".gii"))) {
+                        || extension.equals(".vtk") || extension.equals(".vtp") || extension.equals(".stl")
+                        || extension.equals(".ply") || extension.equals(".gii"))) {
             return true;
         } else if ( (filterType == ViewImageFileFilter.OPTICAL)
                 && ( (extension.equals(".avi")) || (extension.equals(".xml")) || (extension.equals(".bmp"))
