@@ -45,29 +45,14 @@ import nibib.spim.PlugInDialogGenerateFusion541d;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInGenerateFusion541d implements PlugInAlgorithm {
+public class PlugInGenerateFusion541d implements PlugInGeneric {
 
     public static final String[] CATEGORY = {"SPIM"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * 
-     * Defines body of run method, which was declared in the interface. 
-     *
-     * @param  parentFrame  parent frame
-     * @param  image        current ModelImage - this is an image already loaded into MIPAV. Can be null.
-     *
-     * @see    ModelImage
-     * @see    ViewJFrameImage
-     */
-    public void run(Frame parentFrame, ModelImage image) {
-
-        if (parentFrame instanceof ViewJFrameImage) {
-            PlugInDialogGenerateFusion541d test = new PlugInDialogGenerateFusion541d(parentFrame, image);
-            
-        } else {
-            MipavUtil.displayError("PlugInDialogGenerateFusion541d only runs on an image frame.");
-        }
+    public void run() {
+        PlugInDialogGenerateFusion541d test = new PlugInDialogGenerateFusion541d(false);
+        
     }
 }
