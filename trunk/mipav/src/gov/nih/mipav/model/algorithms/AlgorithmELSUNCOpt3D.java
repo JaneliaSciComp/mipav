@@ -127,7 +127,7 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
         int cycles;
-        int maxCycles = 200;
+        int maxCycles = 6;
         
         for(i = 0; i < points.length; i++){
         	if (points[i] == null) {
