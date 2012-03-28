@@ -143,6 +143,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     public void runAlgorithm() {
     	int i, j;
     	boolean anotherCycle;
+    	double[] lastPoint = new double[nDims];
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
@@ -154,7 +155,6 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         	anotherCycle = true;
         	start = points[i].getPoint();
         	double[] point = extractPoint(points[i].getPoint());
-        	double[] lastPoint = new double[nDims];
         	
         	/**
              * Prepare for recording the search path.
