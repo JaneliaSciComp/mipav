@@ -868,7 +868,14 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
      * @return  Matrix found at the end of algorithm.
      */
     public TransMatrix getTransform() {
-        return answer.matrix;
+        TransMatrixd tMatd = answer.matrix;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     /**
@@ -877,7 +884,14 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
      * @return  Matrix found at the end of algorithm with the compoents halved.
      */
     public TransMatrix getTransformHalf() {
-        return answer.halfMatrix;
+        TransMatrixd tMatd = answer.halfMatrix;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     /**
@@ -886,7 +900,14 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
      * @return  z rotation and x and y translations from the matrix found at the end of algorithm.
      */
     public TransMatrix getTransformMigsagittal() {
-        return answer.midsagMatrix;
+        TransMatrixd tMatd = answer.midsagMatrix;
+        TransMatrix tMat = new TransMatrix(tMatd.getDim(), tMatd.getID(), tMatd.isNIFTI(), tMatd.isQform());
+        for (int i = 0; i < tMatd.getDim(); i++) {
+        	for (int j = 0; j < tMatd.getDim(); j++) {
+        		tMat.set(i, j, tMatd.get(i, j));
+        	}
+        }
+        return tMat;
     }
 
     /**
@@ -1790,7 +1811,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         else { // if (fastMode) setup item to be to "first best guess"  = identity
 
             double[] initial = new double[12];
-            bestGuessLevel2 = new MatrixListItem(0, new TransMatrix(4), initial);
+            bestGuessLevel2 = new MatrixListItem(0, new TransMatrixd(4), initial);
 
             double diffX = 0;
             double diffY = 0;
@@ -3312,16 +3333,16 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
         protected double cost;
 
         /** Matrix with the best transformation divided by half. Might be null. */
-        protected TransMatrix halfMatrix;
+        protected TransMatrixd halfMatrix;
 
         /** Rotations, translations, scales, and skews that make up transformation. */
         protected double[] initial;
 
         /** Matrix that gives best transformation. */
-        protected TransMatrix matrix;
+        protected TransMatrixd matrix;
 
         /** Matrix with the best transformation's z rot and xy translations. Might be null. */
-        protected TransMatrix midsagMatrix;
+        protected TransMatrixd midsagMatrix;
 
         /**
          * Creates new minimum object, with identity transMatrix and a given cost.
@@ -3330,7 +3351,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
          */
         protected MatrixListItem(double _cost) {
             this.cost = _cost;
-            this.matrix = new TransMatrix(4);
+            this.matrix = new TransMatrixd(4);
             initial = new double[12];
 
             for (int i = 0; i < 12; i++) {
@@ -3345,7 +3366,7 @@ public class AlgorithmConstrainedELSUNCOAR3D extends AlgorithmBase {
          * @param  _matrix   Matrix that gives best transformation.
          * @param  _initial  Rotations, translations, scales, and skews that make up transformation.
          */
-        protected MatrixListItem(double _cost, TransMatrix _matrix, double[] _initial) {
+        protected MatrixListItem(double _cost, TransMatrixd _matrix, double[] _initial) {
             this.cost = _cost;
             this.matrix = _matrix;
             initial = new double[_initial.length];
