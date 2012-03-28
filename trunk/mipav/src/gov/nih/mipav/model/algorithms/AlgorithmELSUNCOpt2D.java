@@ -34,7 +34,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     private AlgorithmOptimizeFunctionBase costFunction;
     
     /** Array of tolerances for each dimension. */
-    private double[] tolerance;
+    private double[] OARTolerance;
     
     /** The maximum number of iterations the optimization allows. */
     private int maxIterations;
@@ -93,7 +93,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
                                 boolean _rigid) {
     	nDims = degreeOfFreedom;
         costFunction = costFunc;
-        tolerance = tols;
+        OARTolerance = tols;
         maxIterations = maxIter;
         this.parent = parent;
 
@@ -112,7 +112,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      */
     public void disposeLocal() {
         costFunction = null;
-        tolerance = null;
+        OARTolerance = null;
         toOrigin = null;
         fromOrigin = null;
     }
@@ -677,7 +677,8 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
             //internalScaling = true;
             // Suppress diagnostic messages
             //outputMes = true;
-            maxIterations = 20;
+            parameterConvergence = OARTolerance[currentDim];
+            maxIterations = 200;
         }
 
         /**
