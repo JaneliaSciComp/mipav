@@ -1561,7 +1561,7 @@ private boolean testMode = false;
 
     
 	
-	private void nl2sol() {
+	public void nl2sol() {
 		/***********************************************************************
 		!
 		!! NL2SOL minimizes a nonlinear sum of squares using an analytic jacobian.
@@ -2156,7 +2156,7 @@ private boolean testMode = false;
 	    } // while (true)
 	} // nl2sol
 	
-	private void nl2sno() {
+	public void nl2sno() {
 		/***********************************************************************
 		!
 		!! NL2SNO is like NL2SOL, but uses a finite difference jacobian.
