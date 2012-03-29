@@ -940,6 +940,15 @@ public class Preferences {
             }
         }
     }
+    
+    /**
+     * Gets all the text printed to the debug panel.
+     * 
+     * @return String representation of debug panel (new lines are removed)
+     */
+    public static final String getDebug() {
+        return Preferences.messageFrame.getDebug().getText();
+    }
 
     /**
      * Prints to data tab
@@ -953,6 +962,15 @@ public class Preferences {
         } else {
             Preferences.messageFrame.append(string, ViewJFrameMessage.DATA);
         }
+    }
+    
+    /**
+     * Gets all the text printed to the data panel.
+     * 
+     * @return String representation of data panel (new lines are removed)
+     */
+    public static final String getData() {
+        return Preferences.messageFrame.getData().getText();
     }
 
     /**

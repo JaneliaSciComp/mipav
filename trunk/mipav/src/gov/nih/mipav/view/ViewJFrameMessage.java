@@ -403,12 +403,21 @@ public class ViewJFrameMessage extends JFrame implements ActionListener, ChangeL
     }
 
     /**
-     * Used by the script parser.
+     * Gets text area which data tab prints to.
      *
      * @return  JTextArea
      */
     public JTextArea getData() {
         return ((ScrollTextArea) tabbedPane.getComponentAt(DATA)).getTextArea();
+    }
+    
+    /**
+     * Gets text area which debug tab prints to.
+     *
+     * @return  JTextArea
+     */
+    public JTextArea getDebug() {
+        return ((ScrollTextArea) tabbedPane.getComponentAt(DEBUG)).getTextArea();
     }
 
     /**
