@@ -15,7 +15,7 @@ import gov.nih.mipav.view.Preferences;
 
 
 /**
- * Runs ELSUNC for a 2D image. Check the parent class comment for more detailed information.
+ * Runs ELSUNC, LEVENBERG_MARQUARDT, or NL2SOL for a 2D image.
  *
  * @version  0.1 March 22, 2012
  * @author William Gandler
@@ -23,6 +23,15 @@ import gov.nih.mipav.view.Preferences;
 public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+	
+	// Different search algorithms
+	private final int ELSUNC = 1;
+	
+	private final int LEVENBERG_MARQUARDT = 2;
+	
+	private final int NL2SOL = 3;
+	
+	private int searchAlgorithm;
 
     /** Flag indicating this is a rigid transformation. */
     private boolean rigid = false;
@@ -58,7 +67,9 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     
     private double minFunctionAtBest;
     
-    FitOAR2DModel dModel;
+    FitOAR2DELSUNCModel eModel;
+    
+    FitOAR2DNL2solModel nModel;
     
     private int status;
     
@@ -74,6 +85,15 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      * Store the paths for every thread.
      */
     protected Hashtable<Long, Vector<Vector<Vector3f>>> paths = new Hashtable<Long, Vector<Vector<Vector3f>>>();
+    
+ // epsilon = D1MACH(4)
+    // Machine epsilon is the smallest positive epsilon such that
+    // (1.0 + epsilon) != 1.0.
+    // epsilon = 2**(1 - doubleDigits) = 2**(1 - 53) = 2**(-52)
+    // epsilon = 2.2204460e-16
+    // epsilon is called the largest relative spacing
+    private double epsilon = Math.pow(2, -52);
+    private double huge = Double.MAX_VALUE; 
 
     /**
      * Constructs a new algorithm with the given centers of mass (needed for setting the transformations), the given
@@ -87,10 +107,11 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
      * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
      * @param  maxIter          Maximum number of iterations.
      * @param  _rigid           <code>true</code> means this was a rigid transformation
+     * @param searchAlgorithm   ELSUNC, LEVENBERG_MARQUARDT, or NL2SOL;
      */
     public AlgorithmELSUNCOpt2D(AlgorithmBase parent, Vector2f com, int degreeOfFreedom,
                                 AlgorithmOptimizeFunctionBase costFunc, double[] tols, int maxIter,
-                                boolean _rigid) {
+                                boolean _rigid, int searchAlgorithm) {
     	nDims = degreeOfFreedom;
         costFunction = costFunc;
         OARTolerance = tols;
@@ -98,6 +119,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         this.parent = parent;
 
         this.rigid = _rigid;
+        this.searchAlgorithm = searchAlgorithm;
         toOrigin = new TransMatrixd(3);
         toOrigin.setTranslate(com.X, com.Y);
 
@@ -136,11 +158,22 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         this.points = points;
     }
     
+    public void runAlgorithm() {
+    	switch(searchAlgorithm) {
+    	case ELSUNC:
+    		runELSUNC();
+    		break;
+    	case NL2SOL:
+    		runNL2sol();
+    		break;
+    	}
+    }
+    
     /**
      * Runs ELSUNC along one dimension at a time as long as the costFunction improves during one cycle
      * of runs along every dimension.
      */
-    public void runAlgorithm() {
+    private void runELSUNC() {
     	int i, j;
     	boolean anotherCycle;
     	double[] lastPoint = new double[nDims];
@@ -168,14 +201,14 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 	        	anotherCycle = false;
 		        for (j = 0; j < nDims; j++) {
 		        	lastPoint[j] = point[j];
-			        dModel = new FitOAR2DModel(j,point);
-			        dModel.driver();
-			        status = dModel.getExitStatus();
-			        //dModel.statusMessage(status);
-			        //dModel.dumpResults();
+			        eModel = new FitOAR2DELSUNCModel(j,point);
+			        eModel.driver();
+			        status = eModel.getExitStatus();
+			        //eModel.statusMessage(status);
+			        //eModel.dumpResults();
 			        // Status == -2 if maxIterations reached
 			        if ((status > 0) || (status == -2)) {
-				        double params[] = dModel.getParameters();
+				        double params[] = eModel.getParameters();
 				        point[j] = params[0];
 				        double[]fullPoint = getFinal(point);
 				        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
@@ -213,7 +246,298 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 	        }
         } // for i = 0; i < points.length; i++)
         
+    }  // private void runELSUNC()
+    
+    private void runNL2sol() {
+    	int i, j;
+    	boolean anotherCycle;
+    	double[] lastPoint = new double[nDims];
+        // Initialize data.
+        functionAtBest = Double.MAX_VALUE;
+        minFunctionAtBest = Double.MAX_VALUE;
+        // Number of parameters plus 1
+        // x[1] receives the initial guess and returns the final output
+        double x[] = new double[2];
+        // 61 + number of parameters
+        int iv[] = new int[62];
+        // n = number of equations or functions = 1
+        // p = number of parameters = 1
+        // v........ (input/output) a floating-point value array of length at
+		//                  least 93 + n*p + 3*n + p*(3*p+33)/2 that helps con-
+		//                 trol the nl2sol algorithm and that is used to store
+	    //                  various intermediate quantities.
+        // Add 1 more to vLength to go from index base 0 to index base 1.
+        int vLength = 93 + 1*1 + 3*1 + 1*(3*1+33)/2 + 1;
+        double v[] = new double[vLength];
+        final int mxfcal = 17;
+        int maxFunctionEvaluations = 270;
+        final int mxiter = 18;
+        int maxIterations = 200;
+        final int prunit = 21;
+        final int xctol = 33;
+        
+        for(i = 0; i < points.length; i++){
+        	if (points[i] == null) {
+        		continue;
+        	}
+        	anotherCycle = true;
+        	start = points[i].getPoint();
+        	double[] point = extractPoint(points[i].getPoint());
+        	
+        	/**
+             * Prepare for recording the search path.
+             */
+            Vector<Vector3f> path = null;
+            if (pathRecorded && (nDims == 3)) {
+                path = new Vector<Vector3f>();
+            }
+
+	        while (anotherCycle) {
+	        	anotherCycle = false;
+		        for (j = 0; j < nDims; j++) {
+		        	lastPoint[j] = point[j];
+		        	x[1] = point[j];
+		        	dfault(iv,v);
+		        	// iv(mxfcal)... iv(17) gives the maximum number of function evaluations
+		    		//             (calls on calcr, excluding those used to compute the co-
+		    		//             variance matrix) allowed.  if this number does not suf-
+		    		//             fice, then nl2sol returns with iv(1) = 9.  default = 200.
+		        	iv[mxfcal] = maxFunctionEvaluations;
+		        	//iv(mxiter)... iv(18) gives the maximum number of iterations allowed.
+		    		//             it also indirectly limits the number of gradient evalua-
+		    		//             tions (calls on calcj, excluding those used to compute
+		    		//             the covariance matrix) to iv(mxiter) + 1.  if iv(mxiter)
+		    		//             iterations do not suffice, then nl2sol returns with
+		    		//             iv(1) = 10.  default = 150.
+		        	iv[mxiter] = maxIterations;
+		        	//iv(prunit)... iv(21) is the output unit number on which all printing
+		    		//             is done.  iv(prunit) = 0 means suppress all printing.
+		    		//             (setting iv(prunit) to 0 is the only way to suppress the
+		    		//             one-line termination reason message printed by itsmry.)
+		    		//             default = standard output unit (unit 6 on most systems).
+		        	iv[prunit] = 0;
+		        	//v(xctol).... v(33) is the x-convergence tolerance.  if a Newton step
+		    		//             (see v(nreduc)) is tried that has v(reldx) <= v(xctol)
+		    		//             and if this step yields at most twice the predicted func-
+		    		//             tion decrease, then nl2sol returns with iv(1) = 3 (or 5).
+		    		//             (see the description of v(reldx) below.)
+		    		//             default = machep**0.5, where machep is the unit roundoff.
+		        	v[xctol] = OARTolerance[j];
+		        	//iv(1)...  on input, iv(1) should have a value between 0 and 12......
+		    		//             0 and 12 mean this is a fresh start.  0 means that
+		    		//             dfault(iv, v) is to be called to provide all default
+		    		//             values to iv and v.  12 (the value that dfault assigns to
+		    		//             iv(1)) means the caller has already called dfault(iv, v)
+		    		//             and has possibly changed some iv and/or v entries to non-
+		    		//             default values.  default = 12.
+		        	iv[1] = 12;
+			        nModel = new FitOAR2DNL2solModel(x,iv,v,j,point);
+			        nModel.nl2sno();
+			        status = iv[1];
+			        //nModel.statusMessageNL2sol(status, 1);
+			        //nModel.dumpResults();
+			        /* iv(1)........ on output, iv(1) is a return code....
+					!             3 = x-convergence.  the scaled relative difference be-
+					!                  tween the current parameter vector x and a locally
+					!                  optimal parameter vector is very likely at most
+					!                  v(xctol).
+					!             4 = relative function convergence.  the relative differ-
+					!                  ence between the current function value and its lo-
+					!                  cally optimal value is very likely at most v(rfctol).
+					!             5 = both x- and relative function convergence (i.e., the
+					!                  conditions for iv(1) = 3 and iv(1) = 4 both hold).
+					!             6 = absolute function convergence.  the current function
+					!                  value is at most v(afctol) in absolute value.
+					!             7 = singular convergence.  the hessian near the current
+					!                  iterate appears to be singular or nearly so, and a
+					!                  step of length at most v(lmax0) is unlikely to yield
+					!                  a relative function decrease of more than v(rfctol).
+					!             8 = false convergence.  the iterates appear to be converg-
+					!                  ing to a noncritical point.  this may mean that the
+					!                  convergence tolerances (v(afctol), v(rfctol),
+					!                  v(xctol)) are too small for the accuracy to which
+					!                  the function and gradient are being computed, that
+					!                  there is an error in computing the gradient, or that
+					!                  the function or gradient is discontinuous near x.
+					!             9 = function evaluation limit reached without other con-
+					!                  vergence (see iv(mxfcal)).
+					!            10 = iteration limit reached without other convergence
+					!                  (see iv(mxiter)).
+					!            11 = stopx returned .true. (external interrupt).  see the
+					!                  usage notes below.
+					!            13 = f(x) cannot be computed at the initial x.
+					!            14 = bad parameters passed to assess (which should not
+					!                  occur).
+					!            15 = the jacobian could not be computed at x (see calcj
+					!                  above).
+					!            16 = n or p (or parameter nn to nl2itr) out of range --
+					!                  p <= 0 or n < p or nn < n.
+					!            17 = restart attempted with n or p (or par. nn to nl2itr)
+					!                  changed.
+					!            18 = iv(inits) is out of range.
+					!            19...45 = v(iv(1)) is out of range.
+					!            50 = iv(1) was out of range.
+					!            87...(86+p) = jtol(iv(1)-86) (i.e., v(iv(1)) is not
+					!                  positive (see v(dfac) below).*/
+			        if (((status >= 3) && (status <= 6)) || (status == 9) || (status == 10)) {
+				        point[j] = x[1];
+				        double[]fullPoint = getFinal(point);
+				        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
+				        if (functionAtBest < minFunctionAtBest) {
+				        	minFunctionAtBest = functionAtBest;
+				        	if (Math.abs(point[j] - lastPoint[j]) > OARTolerance[j]) {
+				        	    anotherCycle = true;
+				        	}
+				        	if (pathRecorded && nDims == 3) {
+		                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
+		                    }
+				        }
+				        else {
+				        	point[j] = lastPoint[j];
+				        }
+			        } // if (status > 0)
+			        else {
+			        	point[j] = lastPoint[j];
+			        }
+		        } // for (j = 0; j < nDims; j++)
+	        } // while (anotherCycle)
+	        /**
+	         * Store the minimum cost and corresponding vector to v.
+	         */
+	        updatePoint(point, minFunctionAtBest, points[i]);
+
+	        if (pathRecorded && nDims == 3) {
+	            long threadId = Thread.currentThread().getId();
+	            Vector<Vector<Vector3f>> pathList = paths.get(threadId);
+	            if (pathList == null) {
+	                pathList = new Vector<Vector<Vector3f>>();
+	                paths.put(threadId, pathList);
+	            }
+	            pathList.add(path);
+	        }
+        } // for i = 0; i < points.length; i++)
+        	
     }
+    
+    private void dfault ( int iv[], double v[] ) {
+
+    	/***********************************************************************
+    	!
+    	!! DFAULT supplies default values to IV and V.
+    	!
+    	!  Discussion:
+    	!
+    	!    Only entries in the first 25 positions of IV and the first 45
+    	!    positions of V are reset.
+    	! 
+    	!  Modified:
+    	!
+    	!    05 April 2006
+    	!
+    	!  Author:
+    	!
+    	!    David Gay
+    	!
+    	!  Parameters:
+    	!
+    	!    Output, integer IV(25), contains default values for specific entries.
+    	!
+    	!    Output, real V(45), contains default values for specific values.
+    	*/
+
+    	  int afctol = 31;
+    	  int cosmin = 43;
+    	  int covprt = 14;
+    	  int covreq = 15;
+    	  int d0init = 37;
+    	  int decfac = 22;
+    	  int delta0 = 44;
+    	  int dfac = 41;
+    	  int dinit = 38;
+    	  int dltfdc = 40;
+    	  int dltfdj = 36;
+    	  int dtype = 16;
+    	  int inits = 25;
+    	  int epslon = 19;
+    	  int fuzz = 45;
+    	  int incfac = 23;
+    	  int jtinit = 39;
+    	  int lmax0 = 35;
+    	  double machep;
+    	  double mepcrt;
+    	  int mxfcal = 17;
+    	  int mxiter = 18;
+    	  int outlev = 19;
+    	  int parprt = 20;
+    	  int phmnfc = 20;
+    	  int phmxfc = 21;
+    	  int prunit = 21;
+    	  int rdfcmn = 24;
+    	  int rdfcmx = 25;
+    	  int rfctol = 32;
+    	  int rlimit = 42;
+    	  int solprt = 22;
+    	  double sqteps;
+    	  int statpr = 23;
+    	  int tuner1 = 26;
+    	  int tuner2 = 27;
+    	  int tuner3 = 28;
+    	  int tuner4 = 29;
+    	  int tuner5 = 30;
+    	  int x0prt = 24;
+    	  int xctol = 33;
+    	  int xftol = 34;
+
+    	  iv[1] = 12;
+    	  iv[covprt] = 1;
+    	  iv[covreq] = 1;
+    	  iv[dtype] = 1;
+    	  iv[inits] = 0;
+    	  iv[mxfcal] = 200;
+    	  iv[mxiter] = 150;
+    	  iv[outlev] = -1;
+    	  iv[parprt] = 1;
+    	  iv[prunit] = 6;
+    	  iv[solprt] = 1;
+    	  iv[statpr] = 1;
+    	  iv[x0prt] = 1;
+
+    	  machep = epsilon;
+    	  v[afctol] = 1.0e-20;
+    	  if ( 1.0e-10 < machep ) { 
+    	    v[afctol] = machep*machep;
+    	  }
+    	  v[cosmin] = Math.max ( 1.0e-06, 1.0e+02 * machep );
+    	  v[decfac] = 0.5;
+    	  sqteps = Math.sqrt (epsilon);
+    	  v[delta0] = sqteps;
+    	  v[dfac] = 0.6;
+    	  v[dinit] = 0.0;
+    	  mepcrt = Math.pow(machep ,( 1.0 / 3.0) );
+    	  v[dltfdc] = mepcrt;
+    	  v[dltfdj] = sqteps;
+    	  v[d0init] = 1.0;
+    	  v[epslon] = 0.1;
+    	  v[fuzz] = 1.5;
+    	  v[incfac] = 2.0;
+    	  v[jtinit] = 1.0e-6;
+    	  v[lmax0] = 100.0;
+    	  v[phmnfc] = -0.1;
+    	  v[phmxfc] = 0.1;
+    	  v[rdfcmn] = 0.1;
+    	  v[rdfcmx] = 4.0;
+    	  v[rfctol] = Math.max ( 1.0E-10, mepcrt*mepcrt );
+    	  v[rlimit] = Math.sqrt ( 0.999 * huge);
+    	  v[tuner1] = 0.1;
+    	  v[tuner2] = 1.0e-4;
+    	  v[tuner3] = 0.75;
+    	  v[tuner4] = 0.5;
+    	  v[tuner5] = 0.75;
+    	  v[xctol] = sqteps;
+    	  v[xftol] = 1.0e+2 * machep;
+
+    	  return;
+    	} // private void dfault
     
     public boolean isPathRecorded() {
     	return pathRecorded;
@@ -650,7 +974,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         return costFunction.cost(m);
     }
     
-    class FitOAR2DModel extends NLConstrainedEngine {
+    class FitOAR2DELSUNCModel extends NLConstrainedEngine {
         private int currentDim;
         private double point[];
         /**
@@ -659,7 +983,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
          * @param currentDim
          * Only optimize along 1 dimension at a time
          */
-        public FitOAR2DModel(int currentDim, double point[]) {
+        public FitOAR2DELSUNCModel(int currentDim, double point[]) {
 
             super(1, 1);
             this.currentDim = currentDim;
@@ -687,7 +1011,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
          * Starts the analysis.
          */
         public void driver() {
-            super.driver();
+            nModel.nl2sno();
         }
 
         /**
@@ -730,5 +1054,82 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 
             return;
         }
+    }
+    
+    class FitOAR2DNL2solModel extends NL2sol {
+    	int iv[];
+
+        double v[];
+
+        double x[];
+        
+        private int currentDim;
+        private double point[];
+        
+        static final int numEquations = 1;
+        
+        static final int numParameters = 1;
+        
+        static final boolean useAnalyticJacobian = false;
+        
+        /**
+         * Creates a new FitSM2nl2solModel object.
+         * 
+         * @param nPoints DOCUMENT ME!
+         * @param yData DOCUMENT ME!
+         * @param x DOCUMENT ME!
+         * @param iv
+         * @param v
+         * @param useAnalyticJacobian
+         */
+        public FitOAR2DNL2solModel(final double[] x, final int iv[], final double v[], int currentDim, double point[]) {
+
+            // nPoints data points
+            // 3 coefficients
+            // x[] is a length 4 initial guess at input and best estimate at output
+            // data starts at x[1]
+            // iv[] has length 61 + number of coefficients = 64
+            // v[] has length at least 94 + n*p + 3*n + p*(3*p+33)/2
+            // uiparm, integer parameter array = null
+            // urparm, double parameter array = null
+            super(numEquations, numParameters, x, iv, v, useAnalyticJacobian, null, null);
+            this.x = x;
+            this.iv = iv;
+            this.v = v;
+            this.currentDim = currentDim;
+            this.point = point;
+        }
+        
+        /**
+         * Display results of displaying OAR2D fitting parameter.
+         */
+        public void dumpResults() {
+            Preferences.debug(" ******* FitOAR2DNL2solModel ********* \n\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Number of iterations: " + String.valueOf(iv[31]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("Chi-squared: " + String.valueOf(2.0 * v[10]) + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("x[1] " + String.valueOf(x[1]) + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        // meqn, input, the number of functions
+    	// nvar, input, the number of variables
+    	// x, input of dimension nvar, the current value of the variables
+    	// nf, input, the number of times the residual routine has been called so far.
+    	// r, output of dimension meqn, the residual vector, that is, the value of the
+    	//    functions for the given input value of the variables.
+    	// uiparm, input, an integer user array
+    	// urparm, input, a double user array
+        public void calcr(final int meqn, final int nvar, final double x[], final int nf, final double r[],
+                final int uiparm[], final double urparm[]) {
+        	point[currentDim] = x[1];
+        	double[]fullPoint = getFinal(point);
+            r[1] = costFunction.cost(convertToMatrix(fullPoint));
+        	
+        }
+        
+        public void calcj(final int meqn, final int nvar, final double x[], final int nf, final double jac[][],
+                final int uiparm[], final double urparm[]) {
+        	
+        }
+    	
     }
 }
