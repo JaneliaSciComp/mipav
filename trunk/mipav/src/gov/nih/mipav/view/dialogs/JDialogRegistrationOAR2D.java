@@ -1957,7 +1957,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         jtemCheckBox.setSelected(false);
         jtemCheckBox.setEnabled(true);
         
-        multiThreadCheckBox = new JCheckBox("Multi-threading enabled (not deterministic)");
+        multiThreadCheckBox = new JCheckBox("Multi-threading enabled");
         multiThreadCheckBox.setFont(serif12);
         multiThreadCheckBox.setForeground(Color.black);
         multiThreadCheckBox.setSelected(Preferences.isMultiThreadingEnabled()  &&
