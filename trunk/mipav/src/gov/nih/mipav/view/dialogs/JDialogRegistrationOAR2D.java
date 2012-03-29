@@ -38,6 +38,17 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private static final long serialVersionUID = -688716905705879638L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    
+    // Different search algorithms
+    private final int POWELL = 0;
+    
+	private final int ELSUNC = 1;
+	
+	private final int LEVENBERG_MARQUARDT = 2;
+	
+	private final int NL2SOL = 3;
+	
+	private int searchAlgorithm = POWELL;
 
     /** Variables for Advanced Settings dialog. */
     private JDialog advancedDialog;
@@ -242,8 +253,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     private JLabel userDirectoryLabel;
     
     private JTextField userDirectoryText;
-    
-    private boolean useELSUNC = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1087,6 +1096,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         	case 1: // ELSUNC
         		jtemCheckBox.setEnabled(false);
         		break;
+        	case 2: // NL2SOL
+        		jtemCheckBox.setEnabled(false);
+        		break;
         	}
         } else if (event.getSource() == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
@@ -1256,11 +1268,11 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     }
     
     /**
-     * Accessor to set whether to use Powell's algorithm calling Brent's method or ELSUNC for search algorithm
-     * @param useELSUNC
+     * 
+     * @param searchAlgorithm
      */
-    public void setUseELSUNC(boolean useELSUNC) {
-    	this.useELSUNC = useELSUNC;
+    public void setSearchAlgorithm(int searchAlgorithm) {
+    	this.searchAlgorithm = searchAlgorithm;
     }
     
     /**
@@ -1369,15 +1381,15 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
             weighted = true;
         } // if (voisOnly)
 
-        if (useELSUNC) {
+        if (searchAlgorithm != POWELL) {
         	if (weighted) {
 	            reg2E = new AlgorithmRegELSUNCOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
 	                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, doMultiThread,
-	                                         maxIterations, numMinima);
+	                                         maxIterations, numMinima, searchAlgorithm);
 	        } else {
 	            reg2E = new AlgorithmRegELSUNCOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
 	                                         fineRate, doSubsample, doMultiThread,
-	                                         maxIterations, numMinima);
+	                                         maxIterations, numMinima, searchAlgorithm);
 	        }
 	
 	        // Hide dialog
@@ -1469,7 +1481,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
-        setUseELSUNC(scriptParameters.getParams().getBoolean("use_elsunc"));
+        setSearchAlgorithm(scriptParameters.getParams().getInt("search_algorithm"));
 
         setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
         setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
@@ -1527,7 +1539,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_elsunc", useELSUNC));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("search_algorithm", searchAlgorithm));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
         scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
@@ -1870,6 +1882,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         comboBoxSearchAlgo.setToolTipText("Search algorithm");
         comboBoxSearchAlgo.addItem("Powell's calling Brent's");
         comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.addItem("NL2SOL");
         comboBoxSearchAlgo.addItemListener(this);
         comboBoxSearchAlgo.setSelectedIndex(0);
 
@@ -2400,6 +2413,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         comboBoxSearchAlgo.setToolTipText("Search algorithm");
         comboBoxSearchAlgo.addItem("Powell's calling Brent's");
         comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.addItem("NL2SOL");
         comboBoxSearchAlgo.setSelectedIndex(0);
 
         JLabel labelInterp = new JLabel("Interpolation:");
@@ -2812,13 +2826,16 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         
         switch(comboBoxSearchAlgo.getSelectedIndex()) {
         case 0:
-        	useELSUNC = false;
+        	searchAlgorithm = POWELL;
         	break;
         case 1:
-        	useELSUNC = true;
+        	searchAlgorithm = ELSUNC;
+        	break;
+        case 2:
+        	searchAlgorithm = NL2SOL;
         	break;
         default:
-        	useELSUNC = false;
+        	searchAlgorithm = POWELL;
         }
 
         switch (comboBoxDOF.getSelectedIndex()) {
