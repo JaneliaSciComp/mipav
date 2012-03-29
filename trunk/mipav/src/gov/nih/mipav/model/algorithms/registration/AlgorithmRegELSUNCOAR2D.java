@@ -116,6 +116,8 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
     private boolean doJTEM;
     
     private boolean doMultiThread;
+    
+    private int searchAlgorithm;
 
     /** Isotropic input image. */
     private ModelImage imageInputIso;
@@ -352,6 +354,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
      * @param doMultiThread
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor without weighting and without advanced settings (num iter).
@@ -359,7 +362,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      */
     public AlgorithmRegELSUNCOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
-            final float _fineRate, final boolean doSubsample, final boolean doMultiThread) {
+            final float _fineRate, final boolean doSubsample, final boolean doMultiThread, final int searchAlgorithm) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -393,6 +396,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         weighted = false;
         this.doSubsample = doSubsample;
         this.doMultiThread = doMultiThread;
+        this.searchAlgorithm = searchAlgorithm;
     }
     
     /**
@@ -408,6 +412,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor without weighting and without advanced settings (num iter).
@@ -415,8 +420,9 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      */
     public AlgorithmRegELSUNCOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
-            final float _fineRate, final boolean doSubsample) {
-    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false);
+            final float _fineRate, final boolean doSubsample, final int searchAlgorithm) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate,
+    			doSubsample, false, searchAlgorithm);
     }
 
     /**
@@ -437,6 +443,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
      * @param doMultiThread
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor with weighting and without advanced settings (num iter).
@@ -445,8 +452,9 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
     public AlgorithmRegELSUNCOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
-            final boolean doSubsample, final boolean doMultiThread) {
-    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
+            final boolean doSubsample, final boolean doMultiThread, final int searchAlgorithm) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate,
+    			doSubsample, doMultiThread, searchAlgorithm);
 
     	weighted = true;
         refWeight = _refWeight;
@@ -471,6 +479,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _coarseRate Point at which coarse samples should be taken (i.e., every 45 degrees).
      * @param _fineRate Point at which fine samples should be taken (i.e., every 15 degrees).
      * @param doSubsample If true subsample
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor with weighting and without advanced settings (num iter).
@@ -479,8 +488,9 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
     public AlgorithmRegELSUNCOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
-            final boolean doSubsample) {
-    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false);
+            final boolean doSubsample, final int searchAlgorithm) {
+    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin,
+    			_rotateEnd, _coarseRate, _fineRate, doSubsample, false, searchAlgorithm);
     }
 
     /**
@@ -500,6 +510,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor without weighting and with advanced settings (num iter) set.
@@ -509,8 +520,9 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
             final float _fineRate, final boolean doSubsample, final boolean doMultiThread,
             final int _baseNumIter,
-            final int _numMinima) {
-    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
+            final int _numMinima, final int searchAlgorithm) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate,
+    			doSubsample, doMultiThread, searchAlgorithm);
 
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
@@ -534,6 +546,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor without weighting and with advanced settings (num iter) set.
@@ -541,8 +554,10 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      */
     public AlgorithmRegELSUNCOAR2D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBegin, final float _rotateEnd, final float _coarseRate,
-            final float _fineRate, final boolean doSubsample, final int _baseNumIter, final int _numMinima) {
-    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _baseNumIter, _numMinima);
+            final float _fineRate, final boolean doSubsample, final int _baseNumIter, final int _numMinima,
+            final int searchAlgorithm) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate,
+    			doSubsample, false, _baseNumIter, _numMinima, searchAlgorithm);
     }
 
     /**
@@ -566,6 +581,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor with weighting and with advanced settings (num iter) set.
@@ -575,8 +591,9 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
             final boolean doSubsample, final boolean doMultiThread, 
-            final int _baseNumIter, final int _numMinima) {
-    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, doMultiThread);
+            final int _baseNumIter, final int _numMinima, final int searchAlgorithm) {
+    	this(_imageA, _imageB, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate,
+    			doSubsample, doMultiThread, searchAlgorithm);
 
     	weighted = true;
         baseNumIter = _baseNumIter;
@@ -607,6 +624,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      * 
      * <p>
      * Constructor with weighting and with advanced settings (num iter) set.
@@ -615,8 +633,9 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
     public AlgorithmRegELSUNCOAR2D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
             final float _rotateBegin, final float _rotateEnd, final float _coarseRate, final float _fineRate,
-            final boolean doSubsample, final int _baseNumIter, final int _numMinima) {
-    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd, _coarseRate, _fineRate, doSubsample, false, _baseNumIter, _numMinima);
+            final boolean doSubsample, final int _baseNumIter, final int _numMinima, final int searchAlgorithm) {
+    	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp, _rotateBegin, _rotateEnd,
+    			_coarseRate, _fineRate, doSubsample, false, _baseNumIter, _numMinima, searchAlgorithm);
     }
 
     // ~ Methods
@@ -1748,7 +1767,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         final Vector<Point3D> origImagePath = findPointsOfLine(origRealPath);
         print(origImagePath, "Original Final Path:");
         final AlgorithmELSUNCOpt2D elsunc = new AlgorithmELSUNCOpt2D(this, cog, DOF, cost, getTolerance(DOF),
-                maxIter, rigidFlag);
+                maxIter, rigidFlag, searchAlgorithm);
         final float[] terrain = elsunc.createTerrain(xFrom, xTo, xStep, yFrom, yTo, yStep, zFrom, zTo, zStep);
         final int xdim = (int) ( (xTo - xFrom) / xStep);
         final int ydim = (int) ( (yTo - yFrom) / yStep);
@@ -1937,7 +1956,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
 
         AlgorithmELSUNCOpt2D elsunc;
         maxIter = baseNumIter;
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, 7, cost, getTolerance(7), maxIter, false);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, 7, cost, getTolerance(7), maxIter, false, searchAlgorithm);
 
         final Vector<MatrixListItem> minima = new Vector<MatrixListItem>();
 
@@ -2407,7 +2426,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         if (DOF > 3) {
             dofs = 3;
         }
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, dofs, cost, getTolerance(dofs), maxIter, false, searchAlgorithm);
 
         // Should we even try to coarse since 2D images at level 8 are pretty small and not computionally taxing ?
         fireProgressStateChanged("Optimizing at coarse samples");
@@ -2531,7 +2550,8 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
 
         final int degree = (DOF < 4) ? DOF : 4;
         maxIter = baseNumIter * 2;
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag,
+        		searchAlgorithm);
 
         paths[1] = new Vector<Vector<Vector3f>>(10);
         elsunc.setPathRecorded(true);
@@ -2611,7 +2631,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
 
         final AlgorithmELSUNCOpt2D elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, rigidFlag);
+                maxIter, rigidFlag, searchAlgorithm);
 
         for (final Enumeration<MatrixListItem> en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = en.nextElement();
@@ -2800,7 +2820,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
 
         maxIter = baseNumIter * 2;
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, searchAlgorithm);
 
         elsunc.setPathRecorded(true);
         paths[5] = new Vector<Vector<Vector3f>>(1);
@@ -2879,7 +2899,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         fireProgressStateChanged("Starting last optimization");
 
         maxIter = baseNumIter * 2;
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, searchAlgorithm);
         
         linkProgressToAlgorithm(elsunc);
         elsunc.setProgressValues(generateProgressValues(60, 100));
@@ -2940,7 +2960,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         degree = DOF;
 
         maxIter = baseNumIter * 2;
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(DOF), maxIter, rigidFlag, searchAlgorithm);
         
         //fireProgressStateChanged("Optimizing at coarse samples");
         Vectornd[] initials = new Vectornd[coarseNum + 1];
@@ -3023,7 +3043,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
         maxIter = baseNumIter;
 
         AlgorithmELSUNCOpt2D elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree),
-                maxIter, rigidFlag);
+                maxIter, rigidFlag, searchAlgorithm);
 
         fireProgressStateChanged("Measuring costs of minima");
 
@@ -3036,7 +3056,7 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
 
-        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+        elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag, searchAlgorithm);
 
         elsunc.setPathRecorded(true);
         paths[4] = new Vector<Vector<Vector3f>>(1);
@@ -3065,7 +3085,8 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
             fireProgressStateChanged(43);
 
-            elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+            elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
+            		rigidFlag, searchAlgorithm);
 
             linkProgressToAlgorithm(elsunc);
             elsunc.setProgressValues(generateProgressValues(43, 51));
@@ -3082,7 +3103,8 @@ public class AlgorithmRegELSUNCOAR2D extends AlgorithmBase {
 
             if (DOF > 5) {
                 degree = (DOF < 7) ? DOF : 7;
-                elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter, rigidFlag);
+                elsunc = new AlgorithmELSUNCOpt2D(this, cog, degree, cost, getTolerance(degree), maxIter,
+                		rigidFlag, searchAlgorithm);
 
                 fireProgressStateChanged("Optimizing with 7 DOF");
 
