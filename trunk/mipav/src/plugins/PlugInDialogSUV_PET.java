@@ -413,7 +413,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
                 if (firstSliceTagTable.get("0054,0016") != null) {
 
                     if (firstSliceTagTable.getValue("0054,0016") != null) {
-                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016");
+                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016", false);
                         display = sq.getSequenceDisplay();
                         doseStr = "";
                         found = false;
@@ -492,7 +492,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
                 if (firstSliceTagTable.get("0054,0016") != null) {
 
                     if (firstSliceTagTable.getValue("0054,0016") != null) {
-                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016");
+                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016", false);
                         display = sq.getSequenceDisplay();
                         radStartStr = "";
                         found = false;
@@ -702,7 +702,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
                 if (firstSliceTagTable.get("0054,0016") != null) {
 
                     if (firstSliceTagTable.getValue("0054,0016") != null) {
-                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016");
+                        sq = (FileDicomSQ) firstSliceTagTable.getValue("0054,0016", false);
                         display = sq.getSequenceDisplay();
                         halfLifeStr = "";
                         found = false;
