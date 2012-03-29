@@ -1881,7 +1881,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         calcLSBox.setFont(serif12);
         calcLSBox.setForeground(Color.black);
         
-        multiThreadCheckBox = new JCheckBox("Multi-threading enabled (not deterministic)");
+        multiThreadCheckBox = new JCheckBox("Multi-threading enabled");
         multiThreadCheckBox.setFont(serif12);
         multiThreadCheckBox.setForeground(Color.black);
         multiThreadCheckBox.setSelected(Preferences.isMultiThreadingEnabled()  &&
