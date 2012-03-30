@@ -2889,7 +2889,7 @@ public abstract class Lmmin {
         if (par[0] == 0.)
     	par[0] = gnorm / dxnorm;
     if (debugMessages) {
-        Preferences.debug("lmpar/ parl = " + parl + " par = " + par + " paru = " + paru + "\n",
+        Preferences.debug("lmpar/ parl = " + parl + " par[0] = " + par[0] + " paru = " + paru + "\n",
         		Preferences.DEBUG_ALGORITHM);
     }
 
