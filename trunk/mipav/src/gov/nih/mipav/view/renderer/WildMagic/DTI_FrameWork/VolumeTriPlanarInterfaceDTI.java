@@ -3,13 +3,17 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.MipavCoordinateSystems;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.PlaneRender_WM;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JPanelLights_WM;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceExtractorCubes;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 
@@ -21,6 +25,10 @@ import javax.media.opengl.awt.GLCanvas;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeListener;
+
+import WildMagic.LibFoundation.Meshes.VETMesh;
+import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
+import WildMagic.LibGraphics.SceneGraph.TriMesh;
 
 import com.jogamp.opengl.util.Animator;
 
@@ -102,8 +110,7 @@ implements ChangeListener {
     
     public void addSurface(final SurfaceState kSurface) {
     	super.addSurface(kSurface);
-        System.err.println( "addSurface " + kSurface.Name );
-    	DTIparamsPanel.add3DVOI(kSurface.Name, raycastRenderWM.getVolumeSurface(kSurface.Name) );
+    	DTIparamsPanel.add3DVOI(kSurface.Name, kSurface, raycastRenderWM.getVolumeSurface(kSurface.Name) );
     }
     
     /**
@@ -254,7 +261,7 @@ implements ChangeListener {
         pack();
         setVisible(true);
     }
-
+    
     /**
      * Method that resizes the frame and adjusts the rows, columns as needed.
      */
@@ -267,13 +274,5 @@ implements ChangeListener {
         }
         super.resizePanel();        
         panelToolbar.getHeight();
-    }
-    
-    public void setSurfaceImage( String kName, ModelImage kImage )
-    {
-    	if ( DTIparamsPanel != null )
-    	{
-    		DTIparamsPanel.setSurfaceImage(kName, kImage);
-    	}
     }
 }

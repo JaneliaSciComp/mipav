@@ -25,6 +25,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Random;
 import java.util.Vector;
@@ -360,11 +362,10 @@ public class JPanelSurface_WM extends JInterfaceBase
         int iSize = kList.getSize();
         for ( int i = 0; i < akSurfaces.length; i++ )
         {
-            kList.add( iSize + i, akSurfaces[i].GetName() );
-            
-            SurfaceState kSurface = new SurfaceState( akSurfaces[i], akSurfaces[i].GetName() );
-            m_akSurfaceStates.add( kSurface );        
-            m_kVolumeViewer.addSurface( kSurface );
+        	kList.add( iSize + i, akSurfaces[i].GetName() );
+        	SurfaceState kSurface = new SurfaceState( akSurfaces[i], akSurfaces[i].GetName() );
+        	m_akSurfaceStates.add( kSurface );        
+        	m_kVolumeViewer.addSurface( kSurface );
         }
         surfaceList.setSelectedIndex(iSize);
         setElementsEnabled(true);
@@ -1019,6 +1020,7 @@ public class JPanelSurface_WM extends JInterfaceBase
                 	VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
                 	IndexBuffer kIBuffer = new IndexBuffer( kComponents.elementAt(largest).GetTriangles() );
                 	TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
+                	mesh = removeUnusedVertices( mesh );
                 	mesh.SetName(kMesh.GetName() + "_" + largest );
 
                 	SurfaceState kSurface = new SurfaceState( mesh, mesh.GetName() );
@@ -1480,6 +1482,41 @@ public class JPanelSurface_WM extends JInterfaceBase
             kList.remove(aiSelected[i]);
             m_akSurfaceStates.remove(aiSelected[i]);
         }
+    }
+    
+    
+    private TriMesh removeUnusedVertices( TriMesh kMesh )
+    {
+    	int[] aiIndex = kMesh.IBuffer.GetData();
+    	Vector<Vector3f> vertexList = new Vector<Vector3f>();
+    	Vector<Integer> triList = new Vector<Integer>();
+    	int indexCount = 0;
+    	for ( int i = 0; i < aiIndex.length; i++ )
+    	{
+    		Vector3f kPos = kMesh.VBuffer.GetPosition3(aiIndex[i]);
+    		if ( !vertexList.contains( kPos ) )
+    		{
+    			vertexList.add( kPos );
+    			triList.add( indexCount++ );
+    		}
+    		else
+    		{
+    			triList.add( vertexList.indexOf( kPos ) );
+    		}
+    	}
+    	if ( vertexList.size() == kMesh.VBuffer.GetVertexQuantity() )
+    	{
+    		System.err.println( "All vertices used" );
+    		return kMesh;
+    	}
+    	int[] aiNewIndex  = new int[ triList.size() ];
+    	for ( int i = 0; i < triList.size(); i++ )
+    	{
+    		aiNewIndex[i] = triList.elementAt(i);
+    	}
+    	IndexBuffer kIBuffer = new IndexBuffer( aiNewIndex );
+    	VertexBuffer kVBuffer = new VertexBuffer( vertexList );
+    	return new TriMesh( kVBuffer, kIBuffer );
     }
     
     /**
