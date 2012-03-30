@@ -211,7 +211,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 			        status = eModel.getExitStatus();
 			        //eModel.statusMessage(status);
 			        //eModel.dumpResults();
-			        // Status == -2 if maxIterations reached
+			        //status == -2 if maxIterations reached
 			        if ((status > 0) || (status == -2)) {
 				        double params[] = eModel.getParameters();
 				        point[j] = params[0];
@@ -635,7 +635,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 	        }
         } // for i = 0; i < points.length; i++)
         
-    }  // private void runELSUNC()
+    }  // private void runLM()
     
     public boolean isPathRecorded() {
     	return pathRecorded;
