@@ -940,7 +940,6 @@ public class FileImageXML extends FileXML {
         }
         
         if (dtiparams != null){
-            System.out.println("dtiparamsworking");
             if (gradients!=null){
                 dtiparams.setGradients(gradients);
             }
@@ -1652,9 +1651,9 @@ public class FileImageXML extends FileXML {
 
         origin = myFileInfo.getOrigin();
 
-        for (i = 0; (i < nDims) && (i < 4); i++) {
+        for (i = 0; (i < nDims) && (i < origin.length); i++) {
             temp = new Float(origin[i]).toString();
-
+                
             if ( (temp != null) && !temp.equalsIgnoreCase("")) {
                 closedTag(datasetAttributesStr[12], temp);
             }
