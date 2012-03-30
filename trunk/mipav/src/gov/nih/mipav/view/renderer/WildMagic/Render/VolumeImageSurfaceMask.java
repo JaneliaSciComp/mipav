@@ -127,11 +127,7 @@ public class VolumeImageSurfaceMask extends VolumeImageViewer
             m_iSlice++; 
             if ( m_iSlice >= m_kVolumeImage.GetImage().getExtents()[2])
             {            	
-                if ( bDrawSurface && m_bCreateMaskImage )
-                {
-                	m_kParent.setSurfaceImage( null, m_kOutputImage );
-                }
-                else if ( m_kOutputImage != null )
+                if ( m_kOutputImage != null )
                 {
                 	m_kOutputImage.disposeLocal(false);
                 	m_kOutputImage = null;

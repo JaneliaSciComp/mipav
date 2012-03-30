@@ -18,9 +18,11 @@ import java.util.Map;
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
+import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Line3f;
+import WildMagic.LibFoundation.Mathematics.Segment3f;
 import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.System.UnorderedSetInt;
@@ -157,7 +159,7 @@ public class VolumeSurface extends VolumeObject
     	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
         float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
         m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
-        System.err.println( m_kResolutions );
+        //System.err.println( m_kResolutions );
 
 		float xBox = (iDimX - 1) * afResolutions[0];
 		float yBox = (iDimY - 1) * afResolutions[1];
@@ -180,6 +182,8 @@ public class VolumeSurface extends VolumeObject
     private String[] m_akUnitsLabel;
     private Vector3f m_kVolumeScale, m_kVolumeTrans, m_kMeshScale, m_kResolutions;
     private float m_fVolumeDiv, m_fVolumeMult;
+    private BoxBV  m_kBoundingBox = null;
+    private Vector3f m_kMinBB, m_kMaxBB;
 
     /**
      * Add a new geodesic component to the surface.
@@ -1300,32 +1304,15 @@ public class VolumeSurface extends VolumeObject
     {
     	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
     	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
-    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
     	
     	ModelImage kOutputImage = new ModelImage( ModelStorageBase.INTEGER, m_kVolumeImageA.GetImage().getExtents(), "SurfaceMask" );
-        
-    	BoxBV  kBox = new BoxBV();
-    	kBox.ComputeFromData( m_kMesh.VBuffer );
-    	
-    	Vector3f[] kBoxCorners = new Vector3f[8];
-    	kBox.GetBox().ComputeVertices( kBoxCorners );
-    	Vector3f kMax = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
-    	Vector3f kMin = new Vector3f( Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE );
-    	for ( int i = 0; i < kBoxCorners.length; i++ )
+    	if ( m_kBoundingBox == null )
     	{
-    		kMax.Max( kBoxCorners[i] );
-    		kMin.Min( kBoxCorners[i] );
+    		initBoundingBox();
     	}
-    	meshToVolumeCoords(kMin);
-    	meshToVolumeCoords(kMax);
-    	
+            	
     	BitSet mask = new BitSet();
-        
-        Picker kPick = new Picker();
     	Vector3f kTest = new Vector3f();
-    	int intersections;
-    	int oddCount;
-
     	
     	int insideBB = 0;
     	
@@ -1342,17 +1329,17 @@ public class VolumeSurface extends VolumeObject
     	
 
         long startTime = System.currentTimeMillis();
-		for ( int z = (int)Math.floor(kMin.Z); z <= kMax.Z; z++ )
+		for ( int z = (int)Math.floor(m_kMinBB.Z); z <= m_kMaxBB.Z; z++ )
 		{
-			for ( int y = (int)Math.floor(kMin.Y); y <= kMax.Y; y++ )
+			for ( int y = (int)Math.floor(m_kMinBB.Y); y <= m_kMaxBB.Y; y++ )
 			{
-				for ( int x = (int)Math.floor(kMin.X); x <= kMax.X; x++ )
+				for ( int x = (int)Math.floor(m_kMinBB.X); x <= m_kMaxBB.X; x++ )
 				{
 					kTest.Set(x,y,z);
 					// convert to 'mesh' coords...
 					volumeToMeshCoords(kTest);
 					
-					if ( kBox.Contains( kTest ) )
+					if ( m_kBoundingBox.Contains( kTest ) )
 					{
 						insideBB++;
 						if ( testIntersections( kTest, directions ) )
@@ -1360,26 +1347,6 @@ public class VolumeSurface extends VolumeObject
 							mask.set( z * iDimX * iDimY + y * iDimX + x );
 							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
 						}
-						/*
-						insideBB++;
-						oddCount = 0;
-
-				    	for ( int i = 0; i < directions.length; i++ )
-				    	{
-				    		kPick.Execute(m_kMesh, kTest, directions[i],0.0f, Float.MAX_VALUE);
-							intersections = kPick.Records.size();
-							if ( (intersections%2) == 1 )
-							{
-								oddCount++;
-							}
-						}
-						
-						if ( oddCount >= (1 + directions.length/2) )
-						{
-							mask.set( z * iDimX * iDimY + y * iDimX + x );
-							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
-						}
-						*/
 					}
 				}
 			}
@@ -1400,6 +1367,100 @@ public class VolumeSurface extends VolumeObject
 		new ViewJFrameImage( kOutputImage );
 		return mask;
     }
+    
+
+	private void initBoundingBox()
+	{
+		m_kBoundingBox = new BoxBV();
+		m_kBoundingBox.ComputeFromData( m_kMesh.VBuffer );
+    	
+    	Vector3f[] kBoxCorners = new Vector3f[8];
+    	m_kBoundingBox.GetBox().ComputeVertices( kBoxCorners );
+    	m_kMaxBB = new Vector3f( -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE );
+    	m_kMinBB = new Vector3f(  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE );
+    	for ( int i = 0; i < kBoxCorners.length; i++ )
+    	{
+        	meshToVolumeCoords(kBoxCorners[i]);
+    		m_kMaxBB.Max( kBoxCorners[i] );
+    		m_kMinBB.Min( kBoxCorners[i] );
+    	}
+	}
+	
+    
+    
+    public boolean testIntersection( Vector3f kP0 )
+    {
+    	if ( m_kBoundingBox == null )
+    	{
+    		initBoundingBox();
+    	}    	
+    	
+    	Vector3f[] directions = new Vector3f[5];
+    	directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
+    	directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
+    	directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
+    	directions[3] = new Vector3f( (float)Math.random(), (float)Math.random(), -(float)Math.random() );
+    	directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
+    	for ( int i = 0; i < directions.length; i++ )
+    	{
+    		directions[i].Normalize();
+    	}
+
+    	// convert to 'mesh' coords...
+    	Vector3f kP0Mesh = new Vector3f(kP0);    	
+    	volumeToMeshCoords(kP0Mesh);
+
+    	if ( m_kBoundingBox.Contains( kP0Mesh ) )
+    	{
+    		if ( testIntersections( kP0Mesh, directions ) )
+    		{
+    			return true;
+    		}
+    	}
+		return false;
+    }
+    
+    public boolean testIntersection( Vector3f kP0, Vector3f kP1 )
+    {        
+    	if ( m_kBoundingBox == null )
+    	{
+    		initBoundingBox();
+    	}
+    	        
+
+    	// convert to 'mesh' coords...
+    	Vector3f kP0Mesh = new Vector3f(kP0);
+    	Vector3f kP1Mesh = new Vector3f(kP1);
+    	
+    	volumeToMeshCoords(kP0Mesh);
+    	volumeToMeshCoords(kP1Mesh);
+    	
+    	if  ( !( (kP0.X >= m_kMinBB.X) && (kP0.X <= m_kMaxBB.X) &&
+    			(kP0.Y >= m_kMinBB.Y) && (kP0.Y <= m_kMaxBB.Y) &&
+    			(kP0.Z >= m_kMinBB.Z) && (kP0.Z <= m_kMaxBB.Z) ) 
+    			&&
+    			!( (kP1.X >= m_kMinBB.X) && (kP1.X <= m_kMaxBB.X) &&
+    	    			(kP1.Y >= m_kMinBB.Y) && (kP1.Y <= m_kMaxBB.Y) &&
+    	    			(kP1.Z >= m_kMinBB.Z) && (kP1.Z <= m_kMaxBB.Z) )  )
+    	{
+    		return false;
+    	}
+
+    	if ( m_kBoundingBox.Contains( kP0Mesh ) || m_kBoundingBox.Contains( kP1Mesh ) )
+    	{
+    		if ( testIntersections( kP0Mesh, kP1Mesh ) )
+    		{
+    			return true;
+    		}
+    		if ( testIntersection( kP0 ) && testIntersection( kP1 ) )
+    		{
+    			return true;
+    		}
+    	}
+    	return false;
+    }
+    
+    
     
     public void volumeToMeshCoords(Vector3f kVolume)
     {
@@ -1798,7 +1859,6 @@ public class VolumeSurface extends VolumeObject
     
     private boolean testIntersections( Vector3f origin, Vector3f[] directions )
     {
-    	//Vector<PickRecord> Records = new Vector<PickRecord>();
     	int[] lineIntersectionCount = new int[directions.length]; 
         // Compute intersections with the model-space triangles.
         int iTQuantity = m_kMesh.GetTriangleQuantity();
@@ -1836,6 +1896,38 @@ public class VolumeSurface extends VolumeObject
         	}
         }
     	return ( oddCount >= (1 + directions.length/2) );
+    }
+
+    
+    private boolean testIntersections( Vector3f kP0, Vector3f kP1 )
+    {
+    	// Compute intersections with the model-space triangles.
+    	int iTQuantity = m_kMesh.GetTriangleQuantity();
+    	for (int i = 0; i < iTQuantity; i++)
+    	{
+    		int iV0, iV1, iV2;
+    		int[] aiTris = new int[3];
+    		if (!m_kMesh.GetTriangle(i,aiTris) )
+    		{
+    			continue;
+    		}
+
+    		iV0 = aiTris[0]; 
+    		iV1 = aiTris[1];
+    		iV2 = aiTris[2];
+    		Triangle3f kTriangle = new Triangle3f(
+    				m_kMesh.VBuffer.GetPosition3(iV0),
+    				m_kMesh.VBuffer.GetPosition3(iV1),
+    				m_kMesh.VBuffer.GetPosition3(iV2));
+
+    		Segment3f kSegment = new Segment3f(kP0, kP1);
+    		IntrSegment3Triangle3f kIntr = new IntrSegment3Triangle3f(kSegment,kTriangle);
+    		if ( kIntr.Test() )
+    		{
+    			return true;
+    		}
+    	}
+    	return false;
     }
     
     

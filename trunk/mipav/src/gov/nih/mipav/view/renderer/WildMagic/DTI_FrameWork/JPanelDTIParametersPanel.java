@@ -11,6 +11,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurfaceVTKXML_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
 
 import java.awt.BorderLayout;
@@ -25,8 +26,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.util.BitSet;
-import java.util.HashMap;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -63,6 +62,7 @@ implements ListSelectionListener, ChangeListener {
         boolean Include;
         boolean Exclude;
         boolean Ignore;
+        VolumeSurface Surface;
         public VOIParams() {}
         public String toString()
         {
@@ -193,8 +193,10 @@ implements ListSelectionListener, ChangeListener {
 
     private float m_fFraction = .1f;
 
-    private HashMap<String,BitSet> m_kSurfaceImages = new HashMap<String,BitSet>();
     private Vector<Vector3f> m_kCurrentStartList = new Vector<Vector3f>();
+    private int m_iDimX;
+    private int m_iDimY;
+    private int m_iDimZ;
 
     public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay,
     		String tractFileName ) {
@@ -347,7 +349,7 @@ implements ListSelectionListener, ChangeListener {
       
     }
     
-    public void add3DVOI( String kVOIName, VolumeSurface kSurface )
+    public void add3DVOI( String kVOIName, SurfaceState kSurfaceState, VolumeSurface kSurface )
     {
         if ( m_kVOIList == null )
         {
@@ -367,9 +369,10 @@ implements ListSelectionListener, ChangeListener {
         kParams.Include = m_kInclude.isSelected();
         kParams.Exclude = m_kExclude.isSelected();
         kParams.Ignore = m_kIgnore.isSelected();
+        kParams.Surface = kSurface;
         m_kVOIParamsList.add( kParams );
         parentFrame.setColor( kVOIName, m_kCInclude, true );
-    	//BitSet mask = kSurface.createMask();
+        m_kUseVOICheck.setEnabled(true);
     }
 
     /**
@@ -446,24 +449,11 @@ implements ListSelectionListener, ChangeListener {
      *
      */
     public void disposeLocal() {
-       
-    	/*
-       if ( m_kDTIImage != null ) {
-    	   m_kDTIImage.disposeLocal();
-    	   m_kDTIImage = null;
-       }
-    	*/
-    	if ( m_kSurfaceImages != null )
-    	{
-    		m_kSurfaceImages.clear();
-    		m_kSurfaceImages = null;
-    	}
-       
-       
+    	
        if ( m_kVOIParamsList != null )
+       {
     	   m_kVOIParamsList = null;
-
-       
+       }
     }
 
 
@@ -493,6 +483,7 @@ implements ListSelectionListener, ChangeListener {
         {
             m_kVOIList.setSelectedIndex( kList.size()-1);
         }
+        m_kUseVOICheck.setEnabled( kList.size() > 0 );
     }
     
     /**
@@ -505,11 +496,6 @@ implements ListSelectionListener, ChangeListener {
         mainPanel.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
         mainPanel.setSize(new Dimension(panelWidth, frameHeight - 40));
         mainPanel.revalidate();
-    }
-
-    public void setSurfaceImage( String kName, ModelImage kImage )
-    {
-    	//m_kSurfaceImages.put( kName, kImage );
     }
 
     /**
@@ -651,44 +637,25 @@ implements ListSelectionListener, ChangeListener {
                                  "Calculating tracts...", 0, 100, true);
         
     	ModelImage fAImage = parentFrame.getFAimage();
-    	int iDimX = fAImage.getExtents()[0];
-    	int iDimY = fAImage.getExtents()[1];
-    	int iDimZ = fAImage.getExtents()[2];
     	
     	float faVal;
     	int count = 0;
     	
-    	if ( m_kUseVOICheck.isSelected() )
+    	for ( int z = 0; z < m_iDimZ; z++ )
     	{
-    		// Get the list of VOIs:
-            for ( int i = 0; i < m_kVOIParamsList.size(); i++ )
-            {
-            	// Add tracts from the include VOIs, check for exclusion while adding tracts...
-            	if ( m_kVOIParamsList.get(i).Include )
-            	{
-            		BitSet kVOI = m_kSurfaceImages.get(m_kVOIParamsList.get(i).Name);
-            		addTracts(kVOI);
-            	}
-            }
-    	}
-    	else
-    	{
-    		for ( int z = 0; z < iDimZ; z++ )
+    		for ( int y = 0; y < m_iDimY; y++ )
     		{
-    			for ( int y = 0; y < iDimY; y++ )
+    			for ( int x = 0; x < m_iDimX; x++ )
     			{
-    				for ( int x = 0; x < iDimX; x++ )
+    				faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
+    				if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
     				{
-    					faVal = fAImage.getFloat(z*iDimX*iDimY + y*iDimX + x);
-    					if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
-    					{
-    						count += diplayTract(x,y,z, iDimX, iDimY, iDimZ, true);
-    					}
+    					count += diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
     				}
     			}
-    			int iValue = (int)(100 * (float)(z+1)/iDimZ);
-    			kProgressBar.updateValueImmed( iValue );
     		}
+    		int iValue = (int)(100 * (float)(z+1)/m_iDimZ);
+    		kProgressBar.updateValueImmed( iValue );
     	}
         kProgressBar.dispose();
         if ( count > 0 )
@@ -719,7 +686,9 @@ implements ListSelectionListener, ChangeListener {
         gbc.gridy = 0;
                
         m_kUseVOICheck = new JCheckBox("Use VOI");
-        //kParamsPanel.add(m_kUseVOICheck, gbc);
+        m_kUseVOICheck.setEnabled(false);
+        m_kUseVOICheck.setSelected(false);
+        kParamsPanel.add(m_kUseVOICheck, gbc);
 
         JLabel slicePicckableLabel = new JLabel("Ctrl and left mouse press to select the individual tract.");
 
@@ -756,6 +725,9 @@ implements ListSelectionListener, ChangeListener {
         //kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
         
 */
+        m_iDimX = parentFrame.getFAimage().getExtents()[0];
+    	m_iDimY = parentFrame.getFAimage().getExtents()[1];
+    	m_iDimZ = parentFrame.getFAimage().getExtents()[2];
 
         m_kFAMinThreshold = new JTextField( Double.toString(parentFrame.getFAimage().getMin()), 4);
         m_kFAMinThreshold.setActionCommand("FAMINChanged");
@@ -763,7 +735,7 @@ implements ListSelectionListener, ChangeListener {
         m_kFAMaxThreshold = new JTextField( Double.toString(parentFrame.getFAimage().getMax()), 4);
         m_kFAMaxThreshold.setActionCommand("FAMAXChanged");
         m_kFAMaxThreshold.addActionListener(this);
-        m_kMaxAngle = new JTextField("45", 4);
+        m_kMaxAngle = new JTextField("60", 4);
         m_kMaxAngle.setActionCommand("MaxAngleChanged");
         m_kMaxAngle.addActionListener(this);
         m_kMinLength = new JTextField("20", 4);
@@ -1096,13 +1068,6 @@ implements ListSelectionListener, ChangeListener {
     
     private int diplayTract(int iX, int iY, int iZ, int iDimX, int iDimY, int iDimZ, boolean bUseSizeLimit)
     {
-        //System.err.println( "Picked " + iX + " " + iY + " " + iZ );
-/*
-        iX = iDimX/3;
-        iY = iDimY/3;
-        iZ = iDimZ/3;
-  */      
-
     	int count = 0;
         int iLen = iDimX * iDimY * iDimZ;
         float[] afVectorData = new float[3];
@@ -1140,6 +1105,11 @@ implements ListSelectionListener, ChangeListener {
         if ( !bAllZero )
         {        
             kPos.Set( iX, iY, iZ );
+            if ( !testTrack( kPos ) )
+            {
+            	return 0;
+            }
+            
             kTract.add( new Vector3f( kPos ) );
 
             kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
@@ -1158,17 +1128,12 @@ implements ListSelectionListener, ChangeListener {
             if ( (iVQuantity*m_fFraction >= m_iMinTractLength) )
             {
             	//System.err.println( "Adding " + kTract.size() + " " + m_fFraction + " " + (iVQuantity*m_fFraction) );
-            	addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
-            	count++;
+            	if ( testTrack( kTract ) )
+            	{
+            		addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
+            		count++;
+            	}
             }
-            else
-            {
-            	//System.err.println( "NOT Adding " + kTract.size() + " " + m_fFraction + " " + (iVQuantity*m_fFraction) );
-            }
-        }
-        else
-        {
-        	//System.err.println( "Tensor at " + iX + " " + iY + " " + iZ + " is all 0" );
         }
         return count;
     }
@@ -1265,11 +1230,6 @@ implements ListSelectionListener, ChangeListener {
     	}
 		FileSurfaceVTKXML_WM surfaceVTKXML = new FileSurfaceVTKXML_WM(null, null);
 		
-    	ModelImage fAImage = parentFrame.getFAimage();
-    	int iDimX = fAImage.getExtents()[0];
-    	int iDimY = fAImage.getExtents()[1];
-    	int iDimZ = fAImage.getExtents()[2];
-
     	updateCurrentGroup();
     	for ( int i = 0; i < akFiles.length; i++ )
     	{
@@ -1280,7 +1240,7 @@ implements ListSelectionListener, ChangeListener {
     			for ( int j = 0; j < akSelected.size(); j++ )
     			{
     				VOIContour kTract = akSelected.elementAt(j);
-                	addTract( kTract, kTract.size(), iDimX, iDimY, iDimZ );
+                	addTract( kTract, kTract.size(), m_iDimX, m_iDimY, m_iDimZ );
     			}
     	    	addTract();
     		}
@@ -1363,7 +1323,7 @@ implements ListSelectionListener, ChangeListener {
         int iDimY = eigenImage.getExtents()[1];
         int iDimZ = eigenImage.getExtents()[2];
 
-        float[] afVectorData = new float[6];
+        float[] afVectorData = new float[9];
 
         boolean bDone = false;
         Vector3f kOut = new Vector3f();
@@ -1424,7 +1384,7 @@ implements ListSelectionListener, ChangeListener {
             }
             
             bAllZero = true;
-            for ( int j = 0; j < 3; j++ )
+            for ( int j = 0; j < 9; j++ )
             {
                 afVectorData[j] = eigenImage.getFloatTriLinearBoundsTime(kNext.X, kNext.Y, kNext.Z, j);
                 //afVectorData[j] = parentFrame.getEVimage().getFloat(i + j*iLen);
@@ -1481,22 +1441,39 @@ implements ListSelectionListener, ChangeListener {
                 fAngle = Vector3f.Angle(kDir,kOut);
                 if ( fAngle > m_fMaxAngle )
                 {
-                    bDone = true;
-                    //System.err.println( "Track MAX ANGLE: " + (fAngle * 360f) / (2f * Math.PI) + " " + (m_fMaxAngle * 360f) / (2f * Math.PI) );
-                    //System.err.println( kDir + "         " + kOut );
-                    break;
+                	/*
+                	if ( fLambda2 != 0 )
+                	{
+                        kOut.Set( afVectorData[3], afVectorData[4], afVectorData[5] );
+                        kOut.Normalize();
+
+                        if ( !bDir )
+                        {
+                            kOut.Neg();
+                        }
+                        fDot = kDir.Dot( kOut );
+                        if ( fDot < 0 )
+                        {
+                            kOut.Neg();
+                        } 
+                        fAngle = Vector3f.Angle(kDir,kOut);
+                        if ( fAngle > m_fMaxAngle )
+                        {
+                            bDone = true;
+                            System.err.println( "Track max angle " + fLambda1 + " " + fLambda2 + " " + fLambda3 );
+                            //System.err.println( "Track MAX ANGLE: " + (fAngle * 360f) / (2f * Math.PI) + " " + (m_fMaxAngle * 360f) / (2f * Math.PI) );
+                            //System.err.println( kDir + "         " + kOut );
+                            break;                        	
+                        }                       
+                	}
+                        */ 
+                	//else
+                	{
+                		bDone = true;
+                		break;
+                	}
                 }
 
-                //if ( m_abVisited[i] == null )
-                //{
-                //	m_abVisited[i] = new VOIContour(false);
-                //}
-                //if ( m_abVisited[i].contains( kStart ) )
-                //{
-                //    bDone = true;
-                //    break;
-                //}
-                //m_abVisited[i].add( kStart );
 
                 if ( kTract.contains( kNext ) )
                 {
@@ -1505,13 +1482,21 @@ implements ListSelectionListener, ChangeListener {
                 	break;
                 }
             	//System.err.println( kNext );
-                if ( bDir )
+                if ( testTrack( kStart, kNext ) )
                 {
-                    kTract.add( new Vector3f( kNext ) );
+                	if ( bDir )
+                	{
+                		kTract.add( new Vector3f( kNext ) );
+                	}
+                	else
+                	{
+                		kTract.add( 0,  new Vector3f( kNext ) );
+                	}
                 }
                 else
                 {
-                    kTract.add( 0,  new Vector3f( kNext ) );
+                	bDone = true;
+                	break;
                 }
                 
                 kStart.Copy(kNext);
@@ -1533,17 +1518,95 @@ implements ListSelectionListener, ChangeListener {
     	m_iCurrentGroup = getMinUnused(m_kGroupList);
     }
     
-    
-    private void addTracts( BitSet voiMask )
+    private boolean testTrack( VOIContour kTrack )
     {
-    	if ( voiMask.isEmpty() )
-    	{
-    		return;
-    	}
-    	for ( int i = 0; i < voiMask.length(); i++ )
-    	{
-    		if ( voiMask.get(i) )
-    		{}
-    	}
+		if ( !m_kUseVOICheck.isSelected() )
+		{
+			return true;
+		}
+		int iInclude = 0;
+		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
+		{
+			if ( m_kVOIParamsList.get(j).Include )
+			{
+				iInclude++;
+			}
+		}
+		if ( iInclude == 0 )
+		{
+			return true;
+		}
+
+		boolean[] bIncludeAll = new boolean[iInclude];
+		for ( int i = 0; i < bIncludeAll.length; i++ )
+		{
+			bIncludeAll[i] = false;
+		}
+		
+		iInclude = 0;
+		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
+		{
+			if ( m_kVOIParamsList.get(j).Include  )
+			{
+				for ( int i = 0; i < kTrack.size() - 1; i++ )
+				{
+					Vector3f kP0 = kTrack.elementAt(i);
+					Vector3f kP1 = kTrack.elementAt(i+1);
+					if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1 ) )
+					{
+						bIncludeAll[iInclude++] = true;
+						break;
+					}
+				}
+			}
+		}
+		boolean bAll = true;
+		for ( int i = 0; i < bIncludeAll.length; i++ )
+		{
+			bAll &= bIncludeAll[i];
+		}
+		return bAll;
+    }
+    
+    private boolean testTrack( Vector3f kPoint )
+    {
+		if ( !m_kUseVOICheck.isSelected() )
+		{
+			return true;
+		}
+		
+		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
+		{
+			// Add tracts from the include VOIs, check for exclusion while adding tracts...
+			if ( m_kVOIParamsList.get(j).Exclude )
+			{
+				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kPoint ) )
+				{
+					return false;
+				}
+			}
+		}
+		return true;
+    }
+    
+    private boolean testTrack( Vector3f kP0, Vector3f kP1 )
+    {
+		if ( !m_kUseVOICheck.isSelected() )
+		{
+			return true;
+		}
+		
+		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
+		{
+			// Add tracts from the include VOIs, check for exclusion while adding tracts...
+			if ( m_kVOIParamsList.get(j).Exclude )
+			{
+				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1 ) )
+				{
+					return false;
+				}
+			}
+		}
+		return true;
     }
 }

@@ -414,11 +414,11 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
             if ( m_spkCamera != null ) {
 	            if ( m_spkCamera.Perspective )
 	            {
-	                m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
+	                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,0.01f,10.0f);
 	            }
 	            else
 	            {
-	                m_spkCamera.SetFrustum(60.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
+	                m_spkCamera.SetFrustum(30.0f,m_iWidth/(float)m_iHeight,1f,10.0f);
 	            }
             }
 

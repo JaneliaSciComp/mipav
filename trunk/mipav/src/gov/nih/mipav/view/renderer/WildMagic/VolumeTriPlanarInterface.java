@@ -14,10 +14,12 @@ import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewControlsImage;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.JPanelHistoLUT;
 import gov.nih.mipav.view.renderer.JPanelHistoRGB;
 import gov.nih.mipav.view.renderer.JPanelVolOpacityRGB;
@@ -3460,8 +3462,5 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         geodesicGUI.resizePanel(maxPanelWidth, height);
         // rightPane.setDividerLocation( 0.618f );
         // updatePlanes();
-    }    
-    
-    public void setSurfaceImage( String kName, ModelImage kImage )
-    {}
+    }        
 }
