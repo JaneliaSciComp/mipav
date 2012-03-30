@@ -217,6 +217,8 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
     private int maxIter;
 
     final int baseNumIter;
+    
+    private int searchAlgorithm;
 
     /**
      * Flag to determine if the maximum of the minimum resolutions of the two datasets should be used. If true use the
@@ -342,7 +344,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
 
     private ImageRegistrationGPU m_kGPUCost = null;
     
-    private CountDownLatch doneSignal;  
+    private CountDownLatch doneSignal;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -374,20 +376,21 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      */
     public AlgorithmRegELSUNCOAR3D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBeginX, final float _rotateEndX, final float _coarseRateX,
             final float _fineRateX, final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY,
             final float _fineRateY, final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ,
             final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, 
-            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima, final int searchAlgorithm) {
 
         this(_imageA, _imageB, _costChoice, _DOF, _interp,
             _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
             _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
             _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
             _maxResol, _doSubsample, false,
-            _fastMode, _baseNumIter, _numMinima);  
+            _fastMode, _baseNumIter, _numMinima, searchAlgorithm);  
     }
     
     /**
@@ -418,20 +421,21 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      */
     public AlgorithmRegELSUNCOAR3D(final ModelImage _imageA, final ModelImage _imageB, final int _costChoice, final int _DOF,
             final int _interp, final float _rotateBeginX, final float _rotateEndX, final float _coarseRateX,
             final float _fineRateX, final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY,
             final float _fineRateY, final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ,
             final float _fineRateZ, final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
-            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima, final int searchAlgorithm) {
 
         this(_imageA, _imageB, null, null, _costChoice, _DOF, _interp,
             _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
             _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
             _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
             _maxResol, _doSubsample, _doMultiThread,
-            _fastMode, _baseNumIter, _numMinima);  
+            _fastMode, _baseNumIter, _numMinima, searchAlgorithm);  
         weighted = false;
     }
 
@@ -466,6 +470,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      */
     public AlgorithmRegELSUNCOAR3D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
@@ -473,13 +478,13 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
             final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY, final float _fineRateY,
             final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ, final float _fineRateZ,
             final boolean _maxResol, final boolean _doSubsample, 
-            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima, final int searchAlgorithm) {
     	this(_imageA, _imageB, _refWeight, _inputWeight, _costChoice, _DOF, _interp,
                 _rotateBeginX, _rotateEndX, _coarseRateX, _fineRateX,
                 _rotateBeginY, _rotateEndY, _coarseRateY, _fineRateY,
                 _rotateBeginZ, _rotateEndZ, _coarseRateZ, _fineRateZ,
                 _maxResol, _doSubsample, false,
-                _fastMode, _baseNumIter, _numMinima);  
+                _fastMode, _baseNumIter, _numMinima, searchAlgorithm);  
     }
     
     /**
@@ -514,6 +519,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
      * @param _baseNumIter Limits the number of iterations of ELSUNC algorithm. maxIter in the call to ELSUNC will
      *            be an integer multiple of baseNumIter
      * @param _numMinima Number of minima from level 8 to test at level 4
+     * @param searchAlgorithm ESLUNC, LEVENBERG_MARQUARDT, or NL2SOL.
      */
     public AlgorithmRegELSUNCOAR3D(final ModelImage _imageA, final ModelImage _imageB, final ModelImage _refWeight,
             final ModelImage _inputWeight, final int _costChoice, final int _DOF, final int _interp,
@@ -521,7 +527,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
             final float _rotateBeginY, final float _rotateEndY, final float _coarseRateY, final float _fineRateY,
             final float _rotateBeginZ, final float _rotateEndZ, final float _coarseRateZ, final float _fineRateZ,
             final boolean _maxResol, final boolean _doSubsample, final boolean _doMultiThread,
-            final boolean _fastMode, final int _baseNumIter, final int _numMinima) {
+            final boolean _fastMode, final int _baseNumIter, final int _numMinima, final int searchAlgorithm) {
         super(null, _imageB);
         refImage = _imageA;
         inputImage = _imageB;
@@ -571,6 +577,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
 
         baseNumIter = _baseNumIter;
         numMinima = _numMinima;
+        this.searchAlgorithm = searchAlgorithm;
     }
 
     // ~ Methods
@@ -2168,7 +2175,8 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
         for (int i = 0; (i < coarseNumX); i++) {
             for (int j = 0; (j < coarseNumY); j++) {
                 
-                elsuncMT[index] = new AlgorithmELSUNCOpt3D(null, cog, dofs, cost, getTolerance(dofs), maxIter);
+                elsuncMT[index] = new AlgorithmELSUNCOpt3D(null, cog, dofs, cost, getTolerance(dofs), maxIter,
+                		searchAlgorithm);
                 
                 Vectornd[] initials = new Vectornd[coarseNumZ];
                 for (int k = 0; (k < coarseNumZ); k++) {
@@ -2219,7 +2227,8 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
             return null;
         }
         
-        AlgorithmELSUNCOpt3D elsunc = new AlgorithmELSUNCOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter);
+        AlgorithmELSUNCOpt3D elsunc = new AlgorithmELSUNCOpt3D(this, cog, dofs, cost, getTolerance(dofs), maxIter,
+        		searchAlgorithm);
         
         elsunc.setMinProgressValue((int) progressFrom);
         elsunc.setMaxProgressValue((int) (progressFrom + 2 * (progressTo - progressFrom) / 3));
@@ -2411,7 +2420,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
 
         final int degree = (DOF < 7) ? DOF : 7;
         maxIter = baseNumIter * 2;
-        elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter);
+        elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, searchAlgorithm);
         
         elsunc.setMinProgressValue((int) (progressFrom + 5 * (progressTo - progressFrom) / 6));
         elsunc.setMaxProgressValue((int) progressTo);
@@ -2510,7 +2519,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
         maxIter = baseNumIter * 2;
 
         final AlgorithmELSUNCOpt3D elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree),
-                maxIter);
+                maxIter, searchAlgorithm);
         
         elsunc.setMinProgressValue((int) progressFrom);
         elsunc.setMaxProgressValue((int) (progressFrom + (progressTo - progressFrom) / 5));
@@ -2770,7 +2779,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
         fireProgressStateChanged("Starting last optimization");
 
         final AlgorithmELSUNCOpt3D elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree),
-                maxIter);
+                maxIter, searchAlgorithm);
 
         final Vectornd[] initialPoints = new Vectornd[1];
         initialPoints[0] = new Vectornd(item.initial);
@@ -2855,7 +2864,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
         maxIter = baseNumIter * 2;
 
         AlgorithmELSUNCOpt3D elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree),
-                maxIter);
+                maxIter, searchAlgorithm);
         
         fireProgressStateChanged("Measuring costs of minima");
 
@@ -2901,7 +2910,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
         if (DOF > 7) {
             degree = 9;
             fireProgressStateChanged("Optimizing with " + degree + " DOF");
-            elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter);
+            elsunc = new AlgorithmELSUNCOpt3D(this, cog, degree, cost, getTolerance(degree), maxIter, searchAlgorithm);
             initialPoints[0] = new Vectornd(item.initial);
             elsunc.setPoints(initialPoints);
             
@@ -2925,7 +2934,7 @@ public class AlgorithmRegELSUNCOAR3D extends AlgorithmBase implements AlgorithmI
             if (DOF > 9) {
                 degree = 12;
                 fireProgressStateChanged("Optimizing with " + degree + " DOF");
-                elsunc = new AlgorithmELSUNCOpt3D(this, cog, 12, cost, getTolerance(12), maxIter);
+                elsunc = new AlgorithmELSUNCOpt3D(this, cog, 12, cost, getTolerance(12), maxIter, searchAlgorithm);
                 initialPoints[0] = new Vectornd(item.initial);
                 elsunc.setPoints(initialPoints);
                 elsunc.run();
