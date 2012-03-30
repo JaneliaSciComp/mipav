@@ -9,14 +9,12 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 
 import gov.nih.tbi.dictionary.ws.*;
-import gov.nih.tbi.dictionary.model.*;
 import gov.nih.tbi.dictionary.model.hibernate.*;
 
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.MemoryImageSource;
 import java.io.*;
-import java.net.MalformedURLException;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
@@ -26,10 +24,8 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.xml.namespace.QName;
 
 import org.apache.axiom.om.*;
-import org.apache.axis2.AxisFault;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
@@ -1766,8 +1762,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          */
         private void init() {
             setTitle("Choose Data Structure");
-            final int numColumns = 5;
-            final String[] columnNames = {"Short Name", "Description", "Status"};
+            final int numColumns = 4;
+            final String[] columnNames = {"Name", "Description", "Version", "Status"};
             structsModel = new ViewTableModel();
             structsTable = new JTable(structsModel) {
                 public String getToolTipText(final MouseEvent e) {
@@ -1789,7 +1785,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 structsModel.addColumn(element);
             }
 
-            structsTable.getColumn("Short Name").setMinWidth(150);
+            structsTable.getColumn("Name").setMinWidth(150);
             structsTable.getColumn("Description").setMinWidth(300);
 
             // new way of doing web service
@@ -1862,7 +1858,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     if (name.equals(shortNameAL.get(i))) {
                         rowData[0] = shortNameAL.get(i);
                         rowData[1] = descAL.get(i);
-                        rowData[2] = statusAL.get(i);
+                        rowData[2] = versionAL.get(i);
+                        rowData[3] = statusAL.get(i);
                         structsModel.addRow(rowData);
 
                         break;
@@ -2071,7 +2068,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 // TODO structure data type not present yet?
                 // String t = dataStructure.getDispDataType();
 
-                final DataStruct dataStruct = new DataStruct(n, s, d, v, "Imaging");
+                final DataStruct dataStruct = new DataStruct(n, s, d, v, "-");
                 boolean found = false;
                 for (int i = 0; i < dataStructures.size(); i++) {
                     final String sn = dataStructures.get(i).getShortname();
@@ -2138,7 +2135,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             OKPanel.add(OKButton);
             OKPanel.add(cancelButton);
 
-            requiredLabel = new JLabel("<html>* Required data elements are in <font color=\"red\">red</font></html>");
+            requiredLabel = new JLabel("<html>Mouse over data element name for a description.  * Required data elements are in <font color=\"red\">red</font></html>");
             // conditionalLabel = new JLabel("<html>* Conditional data elements are in <font
             // color=\"blue\">blue</font></html>");
 
@@ -2596,14 +2593,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 /*
                  * if (sh == null || sh.equalsIgnoreCase("")) { l = new JLabel(n); } else { l = new JLabel(sh); }
                  */
-                if (sh != null && !sh.equals("")) {
-                    l = new JLabel(sh);
-                } else {
-                    l = new JLabel(n);
-                }
+                // switched to always use the name for now with description as tooltip (sh was badly truncated for many demo elements)
+                //if (sh != null && !sh.equals("")) {
+                //    l = new JLabel(sh);
+                //} else {
+                //    l = new JLabel(n);
+                //}
 
+                l = new JLabel(n);
                 l.setName(n);
-                l.setToolTipText(n);
+                l.setToolTipText(d);
                 /*
                  * System.out.println("^^^ " + n); System.out.println("^^^-- " + sh); System.out.println("^^^--" + t);
                  * System.out.println("^^^--" + s); System.out.println("^^^--" + v); System.out.println();
