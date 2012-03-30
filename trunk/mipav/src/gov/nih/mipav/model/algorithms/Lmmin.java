@@ -2157,7 +2157,9 @@ public abstract class Lmmin {
         fnorm = lm_enorm(m, fvec, 0);
         if (info[0] < 0 )
     	info[0] = 11;
-        Preferences.debug("\n" + lm_infmsg[info[0]] + "\n", Preferences.DEBUG_ALGORITHM);
+        if (debugMessages) {
+            Preferences.debug("\n" + lm_infmsg[info[0]] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
 
     /*** clean up. ***/
 
