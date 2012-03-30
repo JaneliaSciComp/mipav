@@ -295,6 +295,11 @@ public class CustomUIBuilder {
     /** Data provenance buttons */
     public static final UIParams PARAM_DATA_PROVENANCE_OPEN = new UIParams("Open", "Open mipav data-provenance file", "open");
     public static final UIParams PARAM_DATA_PROVENANCE_SAVE = new UIParams("Save", "Save mipav data-provenance file", "save");
+    
+    /** image J icons **/
+    public static final UIParams PARAM_LAUNCH_IMAGEJ = new UIParams("launchImageJ", "Launch Image J", "microscope");
+    public static final UIParams PARAM_MIPAV_TO_IMAGEJ = new UIParams("MIPAV -> ImageJ", "Convert MIPAV image to ImageJ image", "mipavToImageJ");
+    public static final UIParams PARAM_IMAGEJ_TO_MIPAV = new UIParams("ImageJ -> MIPAV", "Convert ImageJ image to MIPAV image", "imageJToMipav");
 		
 	
     /**
