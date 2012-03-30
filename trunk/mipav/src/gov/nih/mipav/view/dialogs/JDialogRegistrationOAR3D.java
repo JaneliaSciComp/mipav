@@ -977,6 +977,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         	case 2: // NL2SOL
         		jtemCheckbox.setEnabled(false);
         		break;
+        	case 3: // LEVENBERG_MARQUARDT
+        		jtemCheckbox.setEnabled(false);
+        		break;
         	}
         } else if (event.getSource() == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
@@ -1835,6 +1838,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxSearchAlgo.addItem("Powell's calling Brent's");
         comboBoxSearchAlgo.addItem("ELSUNC");
         comboBoxSearchAlgo.addItem("NL2SOL");
+        comboBoxSearchAlgo.addItem("Levenberg-Marquardt");
         comboBoxSearchAlgo.addItemListener(this);
         comboBoxSearchAlgo.setSelectedIndex(0);
 
@@ -2683,6 +2687,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         	break;
         case 2:
         	searchAlgorithm = NL2SOL;
+        	break;
+        case 3:
+        	searchAlgorithm = LEVENBERG_MARQUARDT;
         	break;
         default:
         	searchAlgorithm = POWELL;
