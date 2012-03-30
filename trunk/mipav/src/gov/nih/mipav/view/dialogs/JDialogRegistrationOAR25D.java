@@ -43,6 +43,17 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
     private static final long serialVersionUID = -8324270868997072706L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    
+ // Different search algorithms
+    private final int POWELL = 0;
+    
+	private final int ELSUNC = 1;
+	
+	private final int LEVENBERG_MARQUARDT = 2;
+	
+	private final int NL2SOL = 3;
+	
+	private int searchAlgorithm = POWELL;
 
     /** DOCUMENT ME! */
     boolean doGraph;
@@ -64,6 +75,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxCostFunct;
+    
+    private JComboBox comboBoxSearchAlgo;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxDOF;
@@ -151,6 +164,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private AlgorithmRegOAR25D2 reg25 = null;
+    
+    private AlgorithmRegELSUNCOAR25D reg25E = null;
 
     /** DOCUMENT ME! */
     private float rotateBegin, rotateEnd, coarseRate, fineRate;
@@ -425,6 +440,96 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             dispose();
             System.gc();
         }
+        
+        if (algorithm instanceof AlgorithmRegELSUNCOAR25D) {
+
+            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && !isScriptRunning()) {
+                saveDefaults();
+            }
+
+            if (algorithm.isCompleted()) {
+                matchImage.clearMask();
+
+
+                if (doGraph) {
+
+                    if (DOF == 3) {
+                        rot = reg25E.getRot();
+                    }
+
+                    posR = new float[matchImage.getExtents()[2]];
+
+                    for (i = 0; i < matchImage.getExtents()[2]; i++) {
+                        posR[i] = i + 1.0f;
+                    }
+
+                    if (DOF == 3) {
+                        ViewJFrameGraph rotGraph = new ViewJFrameGraph(posR, rot, "Rotations", "Slice number",
+                                                                       "Degrees");
+                        rotGraph.makeRangeSymmetric();
+                        rotGraph.setDefaultDirectory(UI.getDefaultDirectory());
+                        rotGraph.setVisible(true);
+                    }
+
+                    trans = reg25E.getTrans();
+                    posT = new float[2][matchImage.getExtents()[2]];
+
+                    for (i = 0; i < matchImage.getExtents()[2]; i++) {
+                        posT[0][i] = i + 1.0f;
+                        posT[1][i] = i + 1.0f;
+                    }
+
+                    ViewJFrameGraph transGraph = new ViewJFrameGraph(posT, trans, "Translations", "Slice number",
+                                                                     "Translations in " +
+                                                                     (Unit.getUnitFromLegacyNum(matchImage.getFileInfo(0).getUnitsOfMeasure(0))).getAbbrev());
+                    transGraph.makeRangeSymmetric();
+                    transGraph.showXYZLegends();
+                    transGraph.setDefaultDirectory(UI.getDefaultDirectory());
+                    transGraph.setVisible(true);
+                } // if (doGraph)
+
+                insertScriptLine();
+            } // isCompleted
+
+            if (reg25E != null) {
+                reg25E.disposeLocal();
+                reg25E.finalize();
+            }
+
+            reg25E = null;
+
+            matchImage = null;
+
+            if (inputWeightImage != null) {
+                inputWeightImage.disposeLocal();
+            }
+
+            inputWeightImage = null;
+
+            rot = null;
+            posR = null;
+
+            if (trans != null) {
+
+                for (i = 0; i < trans.length; i++) {
+                    trans[i] = null;
+                }
+
+                trans = null;
+            }
+
+            if (posT != null) {
+
+                for (i = 0; i < posT.length; i++) {
+                    posT[i] = null;
+                }
+
+                posT = null;
+            }
+
+            dispose();
+            System.gc();
+        }
     }
 
     /**
@@ -460,7 +565,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         str += doSubsample + delim;
         str += transformVOIs + delim;
         str += maxIterations + delim;
-        str += numMinima;
+        str += numMinima + delim;
+        str += searchAlgorithm;
 
         return str;
     }
@@ -866,6 +972,14 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             refImageNum = refImageNumber;
         }
     }
+    
+    /**
+     * 
+     * @param searchAlgorithm
+     */
+    public void setSearchAlgorithm(int searchAlgorithm) {
+    	this.searchAlgorithm = searchAlgorithm;
+    }
 
     /**
      * Accessor to set whether or not subsampling occurs.
@@ -936,41 +1050,80 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
             weighted = true;
         } // if (voisOnly)
-
-        if (weighted) {
-            reg25 = new AlgorithmRegOAR25D2(matchImage, inputWeightImage, cost, DOF, interp, interp2, doAdjacent,
-                                            refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
-                                            doSubsample, transformVOIs, maxIterations, numMinima);
-        } else {
-
-            reg25 = new AlgorithmRegOAR25D2(matchImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
-                                            rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
-                                            transformVOIs, maxIterations, numMinima);
-
-            if (useOutsideReferenceSlice) {
-
-                if (!reg25.setReferenceSlice(refSlice)) {
-                    MipavUtil.displayError("Reference slice does not have same extents as input image");
-                }
-            }
-
-        }
-
-        // Start the thread as a low priority because we wish to still have user interface work fast.
-        reg25.addListener(this);
-
-        createProgressBar(matchImage.getImageName(), reg25);
-
-        // Hide dialog
-        setVisible(false);
-
-        if(isRunInSeparateThread()) {
-	        // Start the thread as a low priority because we wish to still have user interface work fast
-	        if (reg25.startMethod(Thread.MIN_PRIORITY) == false) {
-	            MipavUtil.displayError("A thread is already running on this object");
+        
+        if (searchAlgorithm != POWELL) {
+        	if (weighted) {
+	            reg25E = new AlgorithmRegELSUNCOAR25D(matchImage, inputWeightImage, cost, DOF, interp, interp2, doAdjacent,
+	                                            refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
+	                                            doSubsample, transformVOIs, maxIterations, numMinima, searchAlgorithm);
+	        } else {
+	
+	            reg25E = new AlgorithmRegELSUNCOAR25D(matchImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
+	                                            rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
+	                                            transformVOIs, maxIterations, numMinima, searchAlgorithm);
+	
+	            if (useOutsideReferenceSlice) {
+	
+	                if (!reg25E.setReferenceSlice(refSlice)) {
+	                    MipavUtil.displayError("Reference slice does not have same extents as input image");
+	                }
+	            }
+	
 	        }
-        } else {
-        	reg25.run();
+	
+	        // Start the thread as a low priority because we wish to still have user interface work fast.
+	        reg25E.addListener(this);
+	
+	        createProgressBar(matchImage.getImageName(), reg25E);
+	
+	        // Hide dialog
+	        setVisible(false);
+	
+	        if(isRunInSeparateThread()) {
+		        // Start the thread as a low priority because we wish to still have user interface work fast
+		        if (reg25E.startMethod(Thread.MIN_PRIORITY) == false) {
+		            MipavUtil.displayError("A thread is already running on this object");
+		        }
+	        } else {
+	        	reg25E.run();
+	        }	
+        }
+        else {
+	        if (weighted) {
+	            reg25 = new AlgorithmRegOAR25D2(matchImage, inputWeightImage, cost, DOF, interp, interp2, doAdjacent,
+	                                            refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
+	                                            doSubsample, transformVOIs, maxIterations, numMinima);
+	        } else {
+	
+	            reg25 = new AlgorithmRegOAR25D2(matchImage, cost, DOF, interp, interp2, doAdjacent, refImageNum,
+	                                            rotateBegin, rotateEnd, coarseRate, fineRate, doGraph, doSubsample,
+	                                            transformVOIs, maxIterations, numMinima);
+	
+	            if (useOutsideReferenceSlice) {
+	
+	                if (!reg25.setReferenceSlice(refSlice)) {
+	                    MipavUtil.displayError("Reference slice does not have same extents as input image");
+	                }
+	            }
+	
+	        }
+	
+	        // Start the thread as a low priority because we wish to still have user interface work fast.
+	        reg25.addListener(this);
+	
+	        createProgressBar(matchImage.getImageName(), reg25);
+	
+	        // Hide dialog
+	        setVisible(false);
+	
+	        if(isRunInSeparateThread()) {
+		        // Start the thread as a low priority because we wish to still have user interface work fast
+		        if (reg25.startMethod(Thread.MIN_PRIORITY) == false) {
+		            MipavUtil.displayError("A thread is already running on this object");
+		        }
+	        } else {
+	        	reg25.run();
+	        }
         }
     }
 
@@ -997,6 +1150,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+        setSearchAlgorithm(scriptParameters.getParams().getInt("search_algorithm"));
 
         setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
         setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
@@ -1036,6 +1190,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("search_algorithm", searchAlgorithm));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
         scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
@@ -1203,6 +1358,22 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
         //This is least squares if doColor, else correlation ratio
         comboBoxCostFunct.setSelectedIndex(0);
+        
+        JLabel labelSearch = new JLabel("Search algorithm:");
+        labelSearch.setForeground(Color.black);
+        labelSearch.setFont(serif12);
+        labelSearch.setAlignmentX(Component.LEFT_ALIGNMENT);
+        
+        comboBoxSearchAlgo = new JComboBox();
+        comboBoxSearchAlgo.setFont(MipavUtil.font12);
+        comboBoxSearchAlgo.setBackground(Color.white);
+        comboBoxSearchAlgo.setToolTipText("Search algorithm");
+        comboBoxSearchAlgo.addItem("Powell's calling Brent's");
+        comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.addItem("NL2SOL");
+        comboBoxSearchAlgo.addItem("Levenberg-Marquardt");
+        comboBoxSearchAlgo.addItemListener(this);
+        comboBoxSearchAlgo.setSelectedIndex(0);
 
         JLabel labelInterp = new JLabel("Interpolation:");
         labelInterp.setForeground(Color.black);
@@ -1343,35 +1514,46 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         gbc.weightx = 1;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         optPanel.add(comboBoxCostFunct, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        gbc.weightx = 0;
+        gbc.gridwidth = 1;
+        optPanel.add(labelSearch, gbc);
+        gbc.gridx = 1;
+        gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        optPanel.add(comboBoxSearchAlgo, gbc);
 
         gbc.weightx = 0;
         gbc.gridwidth = 3;
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         optPanel.add(rotateRangePanel, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 5;
+        gbc.gridy = 6;
         optPanel.add(coarsePanel, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 6;
+        gbc.gridy = 7;
         optPanel.add(finePanel, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 7;
+        gbc.gridy = 8;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         optPanel.add(sampleCheckBox, gbc);
 
         // gbc.gridx = 0;
-        // gbc.gridy = 8;
+        // gbc.gridy = 9;
         // gbc.weightx = 1;
         // gbc.gridwidth = 1;
         // optPanel.add(ignoreCOGBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 8;
+        gbc.gridy = 9;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         optPanel.add(transformVOIsBox, gbc);
@@ -1682,6 +1864,23 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
                 }
             }
         } // else black and white
+        
+        switch(comboBoxSearchAlgo.getSelectedIndex()) {
+        case 0:
+        	searchAlgorithm = POWELL;
+        	break;
+        case 1:
+        	searchAlgorithm = ELSUNC;
+        	break;
+        case 2:
+        	searchAlgorithm = NL2SOL;
+        	break;
+        case 3: 
+        	searchAlgorithm = LEVENBERG_MARQUARDT;
+        	break;
+        default:
+        	searchAlgorithm = POWELL;
+        }
 
         switch (comboBoxDOF.getSelectedIndex()) {
 
