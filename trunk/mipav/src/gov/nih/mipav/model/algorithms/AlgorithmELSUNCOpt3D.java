@@ -1128,13 +1128,6 @@ public class AlgorithmELSUNCOpt3D extends AlgorithmBase {
         }
 
         /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            super.driver();
-        }
-
-        /**
          * Display results of displaying OAR3D fitting parameters.
          */
         public void dumpResults() {
