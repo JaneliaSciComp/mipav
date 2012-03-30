@@ -45,6 +45,17 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
+    
+    // Different search algorithms
+    private final int POWELL = 0;
+    
+	private final int ELSUNC = 1;
+	
+	private final int LEVENBERG_MARQUARDT = 2;
+	
+	private final int NL2SOL = 3;
+	
+	private int searchAlgorithm = POWELL;
 
     /** Variables for Advanced Settings dialog. */
     private JDialog advancedDialog;
@@ -278,8 +289,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     private JLabel userDirectoryLabel;
     
     private JTextField userDirectoryText;
-    
-    private boolean useELSUNC = false;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -965,6 +974,9 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         	case 1: // ELSUNC
         		jtemCheckbox.setEnabled(false);
         		break;
+        	case 2: // NL2SOL
+        		jtemCheckbox.setEnabled(false);
+        		break;
         	}
         } else if (event.getSource() == outOfBoundsComboBox) {
             switch (outOfBoundsComboBox.getSelectedIndex()) {
@@ -1242,11 +1254,11 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     }
     
     /**
-     * Accessor to set whether to use Powell's algorithm calling Brent's method or ELSUNC for search algorithm
-     * @param useELSUNC
+     * 
+     * @param searchAlgorithm
      */
-    public void setUseELSUNC(boolean useELSUNC) {
-    	this.useELSUNC = useELSUNC;
+    public void setSearchAlgorithm(int searchAlgorithm) {
+    	this.searchAlgorithm = searchAlgorithm;
     }
     
     /**
@@ -1364,19 +1376,19 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             weighted = true;
         } // if (voisOnly)
         
-        if (useELSUNC) {
+        if (searchAlgorithm != POWELL) {
         	if (weighted) {
         		
 	            if ( !doLS) {
 	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
 	                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
 	                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-	                        doMultiThread, fastMode, maxIterations, numMinima);
+	                        doMultiThread, fastMode, maxIterations, numMinima, searchAlgorithm);
 	            } else {
 	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
 	                        rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY,
 	                        fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample,
-	                        doMultiThread, fastMode, maxIterations, numMinima);
+	                        doMultiThread, fastMode, maxIterations, numMinima, searchAlgorithm);
 	            }
 	        } else {
 	            // System.out.println("Reference image name is " +refImage.getImageName());
@@ -1386,13 +1398,13 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
 	                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
 	                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, 
-	                        fastMode, maxIterations, numMinima);
+	                        fastMode, maxIterations, numMinima, searchAlgorithm);
 	            } else {
 	                System.err.println("Sending LS Image to OAR3D algorithm");
 	                reg3E = new AlgorithmRegELSUNCOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
 	                        coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ,
 	                        rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
-	                        maxIterations, numMinima);
+	                        maxIterations, numMinima, searchAlgorithm);
 	
 	            }
 	        }
@@ -1507,7 +1519,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
         setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
         setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
-        setUseELSUNC(scriptParameters.getParams().getBoolean("use_elsunc"));
+        setSearchAlgorithm(scriptParameters.getParams().getInt("search_algorithm"));
 
         final float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
         final float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
@@ -1585,7 +1597,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
         scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_elsunc", useELSUNC));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("search_algorithm", searchAlgorithm));
         scriptParameters.getParams().put(
                 ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
         scriptParameters.getParams().put(
@@ -1822,6 +1834,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         comboBoxSearchAlgo.setToolTipText("Search algorithm");
         comboBoxSearchAlgo.addItem("Powell's calling Brent's");
         comboBoxSearchAlgo.addItem("ELSUNC");
+        comboBoxSearchAlgo.addItem("NL2SOL");
         comboBoxSearchAlgo.addItemListener(this);
         comboBoxSearchAlgo.setSelectedIndex(0);
 
@@ -2663,13 +2676,16 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         
         switch(comboBoxSearchAlgo.getSelectedIndex()) {
         case 0:
-        	useELSUNC = false;
+        	searchAlgorithm = POWELL;
         	break;
         case 1:
-        	useELSUNC = true;
+        	searchAlgorithm = ELSUNC;
+        	break;
+        case 2:
+        	searchAlgorithm = NL2SOL;
         	break;
         default:
-        	useELSUNC = false;
+        	searchAlgorithm = POWELL;
         }
 
         switch (comboBoxDOF.getSelectedIndex()) {
