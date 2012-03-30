@@ -704,10 +704,7 @@ public class ViewMenuBar {
                 menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image calculator - Bulk Images", "BulkCalculator", 0, null, false),
                 menuBuilder.buildMenuItem("Image math", null, 0, null, false),
-                menuBuilder.makeMenu("ImageJ", false, new JMenuItem[] {
-                        menuBuilder.buildMenuItem("MIPAV -> ImageJ", null, 0, null, false),
-                        menuBuilder.buildMenuItem("ImageJ -> MIPAV", null, 0, null, false),
-                        menuBuilder.buildMenuItem("Launch ImageJ", "launchImageJ", 0, null, false)}),
+
 
                 menuBuilder.buildMenuItem("Intensity Projection", "maximumIntensityProjection", 0, null, false),
                 menuBuilder.buildMenuItem("Invert", null, 0, null, false),

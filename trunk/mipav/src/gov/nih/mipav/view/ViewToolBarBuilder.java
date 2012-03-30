@@ -276,7 +276,7 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
 
         tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_OPEN));
         tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_SAVE));
-        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_PRINT));
+        //tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_PRINT));
         tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_CAPTURE));
 
         tBar.add(makeSeparator());
@@ -394,8 +394,12 @@ public class ViewToolBarBuilder implements ItemListener, ActionListener, Seriali
 
         tBar.add(makeSeparator());
 
-        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_FLIP_HORIZONTAL));
-        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_FLIP_VERTICAL));
+        //tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_FLIP_HORIZONTAL));
+        //tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGE_FLIP_VERTICAL));
+        
+        tBar.add(buildButton(CustomUIBuilder.PARAM_LAUNCH_IMAGEJ));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_MIPAV_TO_IMAGEJ));
+        tBar.add(buildButton(CustomUIBuilder.PARAM_IMAGEJ_TO_MIPAV));
 
         return tBar;
     }
