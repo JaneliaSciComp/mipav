@@ -194,12 +194,12 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
                 insertScriptLine();
             }
 
-            if (tumorSimAlgo != null) {
+            /*if (tumorSimAlgo != null) {
                 tumorSimAlgo.finalize();
                 tumorSimAlgo = null;
             }
 
-            dispose();
+            dispose();*/
         }
 
     } // end algorithmPerformed()
@@ -271,8 +271,32 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
 		} catch (FileNotFoundException e) {
 			Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
 		}
-        
         GuiBuilder gui = new GuiBuilder(this);
+        
+        JPanel mainPanel = buildMainPanel(true, gui);
+
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+        pack();
+        setVisible(true);
+        setResizable(false);
+        System.gc();
+        
+    } // end init()
+    
+    public void setRadiusField(double radius) {
+        initRadiusText.setText(String.valueOf(radius));
+    }
+    
+    public double getRadiusField() {
+        return Double.valueOf(initRadiusText.getText()).doubleValue();
+    }
+
+    public PlugInAlgorithmCreateTumorMap541e getTumorSimAlgo() {
+        return tumorSimAlgo;
+    }
+
+    public JPanel buildMainPanel(boolean doOKCancel, GuiBuilder gui) {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -283,7 +307,7 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
-
+        
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
 
@@ -312,9 +336,9 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
         Unit[] units = UnitType.getUnitsOfType(UnitType.LENGTH);
         int selected = 0;
         for(int i=0; i<units.length; i++) {
-        	if(units[i] == Unit.MILLIMETERS) {
-        		selected = i;
-        	}
+            if(units[i] == Unit.MILLIMETERS) {
+                selected = i;
+            }
         }
         unitsCombo = gui.buildComboBox("Units of image: ", UnitType.getUnitsOfType(UnitType.LENGTH), selected);
         imageSizePanel.add(unitsCombo.getParent(), gbc);
@@ -352,9 +376,9 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
         tumorSimPanel.add(panel, gbc);
         
         unitsCombo.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e) {
-				measureLabel.setText("Radius of initial tumor (in "+((Unit)unitsCombo.getSelectedItem()).getAbbrev()+"): ");
-			}
+            public void actionPerformed(ActionEvent e) {
+                measureLabel.setText("Radius of initial tumor (in "+((Unit)unitsCombo.getSelectedItem()).getAbbrev()+"): ");
+            }
         });
         
         gbc.gridy++;
@@ -376,18 +400,14 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
         gbc.gridy = 1;
         mainPanel.add(tumorSimPanel, gbc);
         
-        gbc.gridy++;
-        okCancelPanel = gui.buildOKCancelPanel();
-        mainPanel.add(okCancelPanel, gbc);
-
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-
-        pack();
-        setVisible(true);
-        setResizable(false);
-        System.gc();
+        if(doOKCancel) {
+            gbc.gridy++;
+            okCancelPanel = gui.buildOKCancelPanel();
+            mainPanel.add(okCancelPanel, gbc);
+        }
         
-    } // end init()
+        return mainPanel;
+    }
 
     /**
      * This method could ensure everything in your dialog box has been set correctly
@@ -418,7 +438,7 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
     	        noisePercent /= 100;
     	    }
     	    
-    	    Preferences.data("Create tumor map algorithm information====\n");
+    	    Preferences.data("====Create tumor map algorithm information====\n");
             Preferences.data("Dimensions:\tXY: "+xyDim+"\tZ: "+zDim+"\n");
             Preferences.data("Resolution:\tXY: "+xyRes+"\nZ: "+zRes+"\n");
             Preferences.data("Initial Radius: "+initRadius+"\n");

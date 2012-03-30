@@ -104,6 +104,8 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
 
     private double stdDevNum;
 
+    private GuiBuilder gui = new GuiBuilder(this);
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -199,7 +201,7 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             generatePostAlgo.addListener(this);
-            createProgressBar(image.getImageName(), " ...", generatePostAlgo);
+            createProgressBar(image1.getImageName(), " ...", generatePostAlgo);
 
             setVisible(false); // Hide dialog
 
@@ -248,9 +250,21 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         } catch (FileNotFoundException e) {
             Preferences.debug("Failed to load default icon", Preferences.DEBUG_MINOR);
         }
-        
-        GuiBuilder gui = new GuiBuilder(this);
 
+        JPanel mainPanel = buildMainPanel(true, gui);
+
+        getContentPane().add(mainPanel, BorderLayout.CENTER);
+
+        pack();
+        setVisible(true);
+        setResizable(false);
+        System.gc();
+        
+    } // end init()
+
+    public JPanel buildMainPanel(boolean doOKCancel, GuiBuilder gui) {
+        JPanel mainPanel = new JPanel(new GridBagLayout());
+        
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
@@ -260,8 +274,7 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
+        
         mainPanel.setForeground(Color.black);
 
         JPanel image1Panel = new JPanel(new GridBagLayout());
@@ -284,7 +297,7 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
         image1Panel.add(image1Combo.getParent(), gbc);
         
-        double intensity1 = .00109, intensity2 = .00201;
+        double intensity1 = 109, intensity2 = 201;
         String intenSearch = Preferences.getData();
         try {
             int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap541e.INTENSITY1);
@@ -292,8 +305,8 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
             loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap541e.INTENSITY2);
             intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap541e.INTENSITY2.length(), intenSearch.indexOf(';', loc)).trim());
         } catch(Exception e) {
-            intensity1 = .00109;
-            intensity2 = .00201;
+            intensity1 = 109;
+            intensity2 = 201;
         }
         
         gbc.gridx++;
@@ -357,18 +370,30 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
         mainPanel.add(doInterImagesCheckBox.getParent(), gbc);
         
-        gbc.gridy++;
-        okCancelPanel = gui.buildOKCancelPanel();
-        mainPanel.add(okCancelPanel, gbc);
-
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-
-        pack();
-        setVisible(true);
-        setResizable(false);
-        System.gc();
+        if(doOKCancel) {
+            gbc.gridy++;
+            okCancelPanel = gui.buildOKCancelPanel();
+            mainPanel.add(okCancelPanel, gbc);
+        }
         
-    } // end init()
+        return mainPanel;
+    }
+
+    public void setImage1ComboItem(String imageName) {
+        Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
+        
+        image1Combo = gui.buildComboBox("Image 1: ", imageAr, 0);
+        
+        this.image1Combo.setSelectedItem(imageName);
+    }
+
+    public void setImage2ComboItem(String imageName) { 
+        Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
+
+        image2Combo = gui.buildComboBox("Image 2: ", imageAr, 0);
+        
+        this.image2Combo.setSelectedItem(imageName);
+    }
 
     /**
      * This method could ensure everything in your dialog box has been set correctly
