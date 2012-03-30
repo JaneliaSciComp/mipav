@@ -71,6 +71,8 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     
     FitOAR2DNL2solModel nModel;
     
+    FitOAR2DLMModel lmModel;
+    
     private int status;
     
     /** Point that was initially passed into function. */
@@ -165,6 +167,9 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
     		break;
     	case NL2SOL:
     		runNL2sol();
+    		break;
+    	case LEVENBERG_MARQUARDT:
+    		runLM();
     		break;
     	}
     }
@@ -395,7 +400,7 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 				        else {
 				        	point[j] = lastPoint[j];
 				        }
-			        } // if (status > 0)
+			        } // if (((status >= 3) && (status <= 6)) || (status == 9) || (status == 10))
 			        else {
 			        	point[j] = lastPoint[j];
 			        }
@@ -538,6 +543,99 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
 
     	  return;
     	} // private void dfault
+    
+    /**
+     * Runs Levneberg-Marqaurdt along one dimension at a time as long as the costFunction improves during one cycle
+     * of runs along every dimension.
+     */
+    private void runLM() {
+    	int i, j;
+    	boolean anotherCycle;
+    	double[] lastPoint = new double[nDims];
+        // Initialize data.
+        functionAtBest = Double.MAX_VALUE;
+        minFunctionAtBest = Double.MAX_VALUE;
+        int maxIterations = 200;
+        double x[] = new double[1];
+        
+        for(i = 0; i < points.length; i++){
+        	if (points[i] == null) {
+        		continue;
+        	}
+        	anotherCycle = true;
+        	start = points[i].getPoint();
+        	double[] point = extractPoint(points[i].getPoint());
+        	
+        	/**
+             * Prepare for recording the search path.
+             */
+            Vector<Vector3f> path = null;
+            if (pathRecorded && (nDims == 3)) {
+                path = new Vector<Vector3f>();
+            }
+
+	        while (anotherCycle) {
+	        	anotherCycle = false;
+		        for (j = 0; j < nDims; j++) {
+		        	lastPoint[j] = point[j];
+		        	x[0] = point[j];
+			        lmModel = new FitOAR2DLMModel(x,j,point, maxIterations);
+			        lmModel.driver();
+			        status = lmModel.getStatus();
+			        //lmModel.statusMessage(status);
+			        //lmModel.dumpResults();
+			        // status = 0 success (sum of squares below underflow limit)
+		    	    // status = 1 success (the relative error in the sum of squares is at most tol)
+		    	    // status = 2 success (the relative error between x and the solution is at most tol)
+		    	    // status = 3 success (both errors are at most tol)",
+		    	    // status = 4 trapped by degeneracy (fvec is orthogonal to the columns of the jacobian)
+		    	    // status = 5 timeout (number of calls to fcn has reached maxcall*(n+1))
+		    	    // status = 6 failure (ftol<tol: cannot reduce sum of squares any further)
+		    	    // status = 7 failure (xtol<tol: cannot improve approximate solution any further)
+		    	    // status = 8 failure (gtol<tol: cannot improve approximate solution any further)
+		    	    // status = 9 exception (not enough memory)
+		    	    // status = 10 fatal coding error (improper input parameters)
+		    	    // status = 11 exception (break requested within function evaluation)"
+			        if (((status >= 0) && (status <= 3)) || (status == 5)) {
+				        double params[] = lmModel.getParameters();
+				        point[j] = params[0];
+				        double[]fullPoint = getFinal(point);
+				        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
+				        if (functionAtBest < minFunctionAtBest) {
+				        	minFunctionAtBest = functionAtBest;
+				        	if (Math.abs(point[j] - lastPoint[j]) > OARTolerance[j]) {
+				        	    anotherCycle = true;
+				        	}
+				        	if (pathRecorded && nDims == 3) {
+		                        path.add(new Vector3f((float)point[0], (float)point[1], (float)point[2]));
+		                    }
+				        }
+				        else {
+				        	point[j] = lastPoint[j];
+				        }
+			        } // if (((status >= 0) && (status <= 3)) || (status == 5))
+			        else {
+			        	point[j] = lastPoint[j];
+			        }
+		        } // for (j = 0; j < nDims; j++)
+	        } // while (anotherCycle)
+	        /**
+	         * Store the minimum cost and corresponding vector to v.
+	         */
+	        updatePoint(point, minFunctionAtBest, points[i]);
+
+	        if (pathRecorded && nDims == 3) {
+	            long threadId = Thread.currentThread().getId();
+	            Vector<Vector<Vector3f>> pathList = paths.get(threadId);
+	            if (pathList == null) {
+	                pathList = new Vector<Vector<Vector3f>>();
+	                paths.put(threadId, pathList);
+	            }
+	            pathList.add(path);
+	        }
+        } // for i = 0; i < points.length; i++)
+        
+    }  // private void runELSUNC()
     
     public boolean isPathRecorded() {
     	return pathRecorded;
@@ -1131,5 +1229,30 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         	
         }
     	
+    }
+    
+    class FitOAR2DLMModel extends Lmmin {
+        
+        private int currentDim;
+        private double point[];
+        
+        static final int numEquations = 1;
+        
+        static final int numParameters = 1;
+        
+        public FitOAR2DLMModel(double x[], int currentDim, double point[], int maxIterations) {
+            super(numEquations, numParameters, x);
+            this.currentDim = currentDim;
+            this.point = point; 
+            xtol = OARTolerance[currentDim];
+            maxcall = maxIterations;
+            printflags = 0;
+        }
+        
+        public void fitToFunction(double var[], double fvec[], int info[]) {
+        	point[currentDim] = var[0];
+        	double[]fullPoint = getFinal(point);
+            fvec[0] = costFunction.cost(convertToMatrix(fullPoint));	
+        }
     }
 }
