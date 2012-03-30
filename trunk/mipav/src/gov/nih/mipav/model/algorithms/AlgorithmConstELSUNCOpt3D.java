@@ -662,7 +662,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
         int cycles = 0;
-        int maxCycles = 6;
+        int maxCycles = 10;
 
         while (anotherCycle) {
         	cycles++;
