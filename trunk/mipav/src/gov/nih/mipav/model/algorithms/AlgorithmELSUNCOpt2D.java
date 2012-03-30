@@ -1106,13 +1106,6 @@ public class AlgorithmELSUNCOpt2D extends AlgorithmBase {
         }
 
         /**
-         * Starts the analysis.
-         */
-        public void driver() {
-            nModel.nl2sno();
-        }
-
-        /**
          * Display results of displaying OAR2D fitting parameters.
          */
         public void dumpResults() {
