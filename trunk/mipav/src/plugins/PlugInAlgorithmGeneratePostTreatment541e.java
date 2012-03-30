@@ -22,6 +22,8 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
+import java.util.Random;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
@@ -54,6 +56,8 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
     private double image1Noise, image2Noise;
 
     private ModelImage postTreatment;
+
+    private double stdDevNum;
     
     /**
      * Constructor.
@@ -66,9 +70,10 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
      * @param scale 
      * @param image2Intensity 
      * @param image1Intensity 
+     * @param stdDevNum 
      */
     public PlugInAlgorithmGeneratePostTreatment541e(ModelImage image1, double image1Intensity, double image1Scale, double image1Noise, 
-                                                    ModelImage image2, double image2Intensity, double image2Scale, double image2Noise) {
+                                                    ModelImage image2, double image2Intensity, double image2Scale, double image2Noise, double stdDevNum) {
         super(null, image1);
         
         this.image1a = image1;
@@ -87,6 +92,8 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
         this.image2Intensity = image2Intensity;
         this.image2Scale = image2Scale;
         this.image2Noise = image2Noise;
+        
+        this.stdDevNum = stdDevNum;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -122,13 +129,14 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
         postTreatment.setImageName("postTreatment");
         postTreatment = subtractImages(postTreatment, image2c, image1c);
         
-        reportStatistics(postTreatment);
+        reportStatistics(postTreatment, image1Intensity > image2Intensity ? image1Intensity : image2Intensity, 
+                                            image1Noise > image2Noise ? image1Noise : image2Noise);
 
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
 
-    private void reportStatistics(ModelImage postTreatment2) {
+    private void reportStatistics(ModelImage postTreatment2, double maxIntensity, double imageMaxNoise) {
         double sumIntensitiesSlice = 0, sumPosIntensitiesSlice = 0, sumNegIntensitiesSlice = 0;
         double sumIntensitiesTotal = 0, sumPosIntensitiesTotal = 0, sumNegIntensitiesTotal = 0;
         double intensity = 0;
@@ -160,7 +168,7 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
                 z++;
             }
             intensity = postTreatment.get(i).doubleValue();
-            if(intensity != 0) {
+            if(intensity < -maxIntensity*stdDevNum*imageMaxNoise || intensity > maxIntensity*stdDevNum*imageMaxNoise) {
                 if(intensity > 0) {
                     sumPosIntensitiesSlice += intensity;
                     numPosPixelsSlice++;
@@ -211,8 +219,8 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
 
     private void scaleAndRemoveTumor(ModelImage image,
             double imageIntensity, Double imageScale, Double imageNoise) {
-        double lowerBound = imageIntensity - imageNoise;
-        double upperBound = imageIntensity + imageNoise;
+        double lowerBound = imageIntensity - 2*imageNoise;
+        double upperBound = imageIntensity + 2*imageNoise;
         double intensity = 0;
         for(int i=0; i<image.getDataSize(); i++) {
             intensity = image.getDouble(i);
@@ -245,4 +253,6 @@ public class PlugInAlgorithmGeneratePostTreatment541e extends AlgorithmBase {
     public ModelImage getPostTreatment() {
         return postTreatment;
     }
+    
+    
 }

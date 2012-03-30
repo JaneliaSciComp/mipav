@@ -100,6 +100,10 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
 
     private boolean doInterImages;
 
+    private JTextField stdDevNumText;
+
+    private double stdDevNum;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -189,7 +193,7 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         try {
             
             generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment541e(image1, image1Intensity, image1Scale, image1Noise,
-                                                                            image2, image2Intensity, image2Scale, image2Noise);
+                                                                            image2, image2Intensity, image2Scale, image2Noise, stdDevNum);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -280,8 +284,20 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
         image1Panel.add(image1Combo.getParent(), gbc);
         
+        double intensity1 = .00109, intensity2 = .00201;
+        String intenSearch = Preferences.getData();
+        try {
+            int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap541e.INTENSITY1);
+            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap541e.INTENSITY1.length(), intenSearch.indexOf(';', loc)).trim());
+            loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap541e.INTENSITY2);
+            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap541e.INTENSITY2.length(), intenSearch.indexOf(';', loc)).trim());
+        } catch(Exception e) {
+            intensity1 = .00109;
+            intensity2 = .00201;
+        }
+        
         gbc.gridx++;
-        image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", .00109);
+        image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", intensity1);            
         image1Panel.add(image1IntensityText.getParent(), gbc);
         
         gbc.gridy++;
@@ -289,8 +305,18 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         image1ScaleText = gui.buildDecimalField("Partial volume scaling: ", .67);
         image1Panel.add(image1ScaleText.getParent(), gbc);
         
+        double noise1 = .05, noise2 = .05;
+        String noiseSearch = Preferences.getData();
+        try {
+            int loc = noiseSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap541e.NOISE_LEVEL);
+            double noise = Double.valueOf(noiseSearch.substring(loc+PlugInAlgorithmCreateTumorMap541e.NOISE_LEVEL.length(), noiseSearch.indexOf(';', loc)).trim());
+            noise1 = noise2 = noise;
+        } catch(Exception e) {
+            noise1 = noise2 = .05;
+        }
+        
         gbc.gridx++;
-        image1NoiseText = gui.buildDecimalField("Image 1 noise: ", .0005);
+        image1NoiseText = gui.buildDecimalField("Image 1 noise std dev percentage: ", noise1);
         image1Panel.add(image1NoiseText.getParent(), gbc);
          
         gbc.gridx = 0;
@@ -307,7 +333,7 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         image2Panel.add(image2Combo.getParent(), gbc);
         
         gbc.gridx++;
-        image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", .00201);
+        image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", intensity2);
         image2Panel.add(image2IntensityText.getParent(), gbc);
         
         gbc.gridy++;
@@ -316,12 +342,16 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
         image2Panel.add(image2ScaleText.getParent(), gbc);
         
         gbc.gridx++;
-        image2NoiseText = gui.buildDecimalField("Image 2 noise: ", .0005);
+        image2NoiseText = gui.buildDecimalField("Image 2 noise std dev percentage: ", noise2);
         image2Panel.add(image2NoiseText.getParent(), gbc);  
         
         gbc.gridy = 1;
         gbc.gridx = 0;
         mainPanel.add(image2Panel, gbc);
+        
+        gbc.gridy++;
+        stdDevNumText = gui.buildDecimalField("True intensity values are within this number of standard deviations: ", 2.0);
+        mainPanel.add(stdDevNumText.getParent(), gbc);
         
         gbc.gridy++;
         doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
@@ -354,6 +384,14 @@ public class PlugInDialogGeneratePostTreatment541e extends JDialogScriptableBase
 		    image2Intensity = Double.valueOf(image2IntensityText.getText());
 		    image2Scale = Double.valueOf(image2ScaleText.getText());
             image2Noise = Double.valueOf(image2NoiseText.getText());
+            
+            stdDevNum = Double.valueOf(stdDevNumText.getText());
+            
+            Preferences.data("====Generate Post-treatment algorithm information====\n");
+            Preferences.data("Image 1 information:\n\tIntensity: "+image1Intensity+"\n\tScale: "+image1Scale+"\n\tNoise: "+image1Noise+"\n");
+            Preferences.data("Image 2 information:\n\tIntensity: "+image2Intensity+"\n\tScale: "+image2Scale+"\n\tNoise: "+image2Noise+"\n");
+            Preferences.data("Standard deviation number: "+stdDevNum+"\n");
+            Preferences.data("====End generate Post-treatment algorithm information====\n");
 		    
 		} catch(NumberFormatException nfe) {
             MipavUtil.displayError("Input error, enter numerical values only.");

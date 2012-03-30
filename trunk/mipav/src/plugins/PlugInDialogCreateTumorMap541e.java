@@ -124,6 +124,10 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
 
     private Double intensity2;
 
+    private JTextField noisePercentText;
+
+    private Double noisePercent;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -208,7 +212,7 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap541e(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap541e(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noisePercent);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -327,11 +331,11 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
         tumorSimPanel.add(doCenterCheck.getParent(), gbc);
         
         gbc.gridy++;
-        intensity1Text = gui.buildDecimalField("Image 1 intensity: ", .00109);
+        intensity1Text = gui.buildDecimalField("Image 1 intensity: ", 109);
         tumorSimPanel.add(intensity1Text.getParent(), gbc);
         
         gbc.gridx++;
-        intensity2Text = gui.buildDecimalField("Image 2 intensity: ", .00201);
+        intensity2Text = gui.buildDecimalField("Image 2 intensity: ", 201);
         tumorSimPanel.add(intensity2Text.getParent(), gbc);
         
         gbc.gridx = 0;
@@ -364,6 +368,10 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
         gbc.gridy++;      
         percentChangeText = gui.buildDecimalField("Percentage change: ", .33);
         tumorSimPanel.add(percentChangeText.getParent(), gbc);
+        
+        gbc.gridy++;
+        noisePercentText = gui.buildDecimalField("Noise std dev percentage: ", .025);
+        tumorSimPanel.add(noisePercentText.getParent(), gbc);
         
         gbc.gridy = 1;
         mainPanel.add(tumorSimPanel, gbc);
@@ -403,6 +411,22 @@ public class PlugInDialogCreateTumorMap541e extends JDialogScriptableBase implem
     	    
     	    intensity1 = Double.valueOf(intensity1Text.getText());
     	    intensity2 = Double.valueOf(intensity2Text.getText());
+    	    
+    	    noisePercent = Double.valueOf(noisePercentText.getText());
+    	    
+    	    if(noisePercent > 1) {
+    	        noisePercent /= 100;
+    	    }
+    	    
+    	    Preferences.data("Create tumor map algorithm information====\n");
+            Preferences.data("Dimensions:\tXY: "+xyDim+"\tZ: "+zDim+"\n");
+            Preferences.data("Resolution:\tXY: "+xyRes+"\nZ: "+zRes+"\n");
+            Preferences.data("Initial Radius: "+initRadius+"\n");
+            Preferences.data("Subsample: "+subsample+"\n");
+            Preferences.data("Percent change: "+tumorChange+"\n");
+            Preferences.data("Intensity1: "+intensity1+"\tIntensity2: "+intensity2+"\n");
+            Preferences.data("Noise percentage: "+noisePercent+"\n");
+            Preferences.data("====End create tumor map algorithm information====\n");
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
 	        return false;
