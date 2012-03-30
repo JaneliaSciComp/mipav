@@ -2388,7 +2388,7 @@ public abstract class Lmmin {
 	            	fitToTestFunction(wa2, wa4);
 	            }
 	            else {
-	                fitToFunction(wa4, wa4, info);
+	                fitToFunction(wa2, wa4, info);
 	            }
 		            ++nfev;
 		            lm_printout_std(wa2, wa4, printflags, 2, iter, nfev);
