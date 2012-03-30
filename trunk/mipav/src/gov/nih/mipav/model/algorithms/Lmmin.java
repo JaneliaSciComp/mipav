@@ -168,6 +168,14 @@ public abstract class Lmmin {
     	    "exception (break requested within function evaluation)"
     	};
     
+    public void statusMessage(int status) {
+    	Preferences.debug(lm_infmsg[status] + "\n");
+    }
+    
+    public double[] getParameters() {
+    	return x;
+    }
+    
     private final String[] lm_shortmsg = new String[] {
     		"success (0)",
     	    "success (f)",
@@ -390,7 +398,7 @@ public abstract class Lmmin {
         x[1] = 10.0;
         x[2] = 0.2;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example used to fit y = (a0 * log(0.01*i)**(a1) + a2
     	// where a0 = -50, a1 = 2.0/3.0, a2 = 25.0
@@ -422,7 +430,7 @@ public abstract class Lmmin {
     	x[1] = 1.0/3.0;
     	x[2] = 12.5;
     	driver();
-    	dumpTestResults();
+    	dumpResults();
     	
     	// Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -454,7 +462,7 @@ public abstract class Lmmin {
         x[1] = 1.0;
         x[2] = 1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -492,7 +500,7 @@ public abstract class Lmmin {
         x[1] = 10.0;
         x[2] = 10.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0 + x/(a1*(16 - x) + a2*min(x,16-x))
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -530,7 +538,7 @@ public abstract class Lmmin {
         x[1] = 100.0;
         x[2] = 100.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -562,7 +570,7 @@ public abstract class Lmmin {
         x[2] = 0.415;
         x[3] = 0.39;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -594,7 +602,7 @@ public abstract class Lmmin {
         x[2] = 4.15;
         x[3] = 3.9;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0*(x**2 + a1*x)/(x**2 + a2*x + a3)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -626,7 +634,7 @@ public abstract class Lmmin {
         x[2] = 41.5;
         x[3] = 39.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
         //                            y(1) = 1.0 - a[0]
@@ -651,7 +659,7 @@ public abstract class Lmmin {
         x[0] = -1.2;
         x[1] = 1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
         //                            y(1) = 1.0 - a[0]
@@ -676,7 +684,7 @@ public abstract class Lmmin {
         x[0] = -12.0;
         x[1] = 10.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = 10.0*(a1 - a0**2)
         //                            y(1) = 1.0 - a[0]
@@ -701,7 +709,7 @@ public abstract class Lmmin {
         x[0] = -120.0;
         x[1] = 100.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
         //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
@@ -729,7 +737,7 @@ public abstract class Lmmin {
         x[0] = 0.5;
         x[1] = -2.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
         //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
@@ -757,7 +765,7 @@ public abstract class Lmmin {
         x[0] = 5.0;
         x[1] = -20.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = -13 + a0 + ((5 - a1)*a1 - 2)*a1
         //                            y(1) = -29 + a0 + ((a1 + 1)*a1 - 14)*a1
@@ -785,7 +793,7 @@ public abstract class Lmmin {
         x[0] = 50.0;
         x[1] = -200.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
@@ -821,7 +829,7 @@ public abstract class Lmmin {
         x[1] = 0.0;
         x[2] = 0.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
@@ -857,7 +865,7 @@ public abstract class Lmmin {
         x[1] = 0.0;
         x[2] = 0.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
          // Below is an example to fit y(0) = 10*[a2 - 10*theta(a0,a1)]
         //                            y(1) = 10*[sqrt(a0**2 + a1**2) - 1]
@@ -893,7 +901,7 @@ public abstract class Lmmin {
         x[1] = 0.0;
         x[2] = 0.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(i-1) = 2 + 2*i -(exp(i*a0) + exp(i*a1))
         // for i = 1 to 10
@@ -919,7 +927,7 @@ public abstract class Lmmin {
         x[0] = 0.3;
         x[1] = 0.4;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -950,7 +958,7 @@ public abstract class Lmmin {
         x[1] = 4000.0;
         x[2] = 250.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0*exp[a1/(x + a2)]
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -981,7 +989,7 @@ public abstract class Lmmin {
         x[1] = 40000.0;
         x[2] = 2500.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an expample to fit y(i) = exp(-ti*a0) - exp(-ti*a1) - a2*(exp(-ti) - exp(-10*ti))
         // For ti = 0.1*i for i = 1 to 10
@@ -1010,7 +1018,7 @@ public abstract class Lmmin {
         x[1] = 10.0;
         x[2] = 20.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = a0 + 10*a1
         //                            y(1) = sqrt(5)*(a2 - a3)
@@ -1044,7 +1052,7 @@ public abstract class Lmmin {
         x[2] = 0.0;
         x[3] = 1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = a0 + 10*a1
         //                            y(1) = sqrt(5)*(a2 - a3)
@@ -1078,7 +1086,7 @@ public abstract class Lmmin {
         x[2] = 0.0;
         x[3] = 10.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(0) = a0 + 10*a1
         //                            y(1) = sqrt(5)*(a2 - a3)
@@ -1112,7 +1120,7 @@ public abstract class Lmmin {
         x[2] = 0.0;
         x[3] = 100.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
@@ -1145,7 +1153,7 @@ public abstract class Lmmin {
         x[2] = -5.0;
         x[3] = -1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
@@ -1178,7 +1186,7 @@ public abstract class Lmmin {
         x[2] = -50.0;
         x[3] = -10.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y(i) = (a0 + ti*a1 - exp(ti))**2 + (a2 +a3*sin(ti) - cos(ti))**2
         // ti = 0.2*i for i = 1 to 20
@@ -1211,7 +1219,7 @@ public abstract class Lmmin {
         x[2] = -500.0;
         x[3] = -100.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0 + a1*exp(-a3*x) + a2*exp(-a4*x)
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1250,7 +1258,7 @@ public abstract class Lmmin {
         x[3] = 0.01;
         x[4] = 0.02;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit y = a0*exp(-a4*x) + a1*exp(-a5*(x-a8)**2) 
         // + a2*exp(-a6*(x-a9)**2) + a3*exp(-a7*(x-a10)**2)
@@ -1308,7 +1316,7 @@ public abstract class Lmmin {
         x[9] = 4.5;
         x[10] = 5.5;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Watson function with 6 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1336,7 +1344,7 @@ public abstract class Lmmin {
         x = new double[n];
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Watson function with 9 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1368,7 +1376,7 @@ public abstract class Lmmin {
         x = new double[n];
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Watson function with 12 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1406,7 +1414,7 @@ public abstract class Lmmin {
         x = new double[n];
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1442,7 +1450,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1478,7 +1486,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Brown almost linear function with 10 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1514,7 +1522,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Brown almost linear function with 30 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1570,7 +1578,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Brown almost linear function with 40 parameters
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1636,7 +1644,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Linear full rank with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1663,7 +1671,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Linear full rank with 5 parameters and 50 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1690,7 +1698,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is the test to fit the Linear rank 1 function with 5 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1721,7 +1729,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         double sumTerm = 0.0;
         for (i = 0; i < n; i++) {
             sumTerm += (i+1)*x[i];	
@@ -1761,7 +1769,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         sumTerm = 0.0;
         for (i = 0; i < n; i++) {
             sumTerm += (i+1)*x[i];	
@@ -1802,7 +1810,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         sumTerm = 0.0;
         for (i = 1; i < n-1; i++) {
             sumTerm += (i+1)*x[i];	
@@ -1843,7 +1851,7 @@ public abstract class Lmmin {
         }
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         sumTerm = 0.0;
         for (i = 1; i < n-1; i++) {
             sumTerm += (i+1)*x[i];	
@@ -1872,7 +1880,7 @@ public abstract class Lmmin {
         x[0] = 0.5;
         fitTestModel();
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Chebyquad function with 8 parameters and 8 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1901,7 +1909,7 @@ public abstract class Lmmin {
             x[i-1] = i/(n + 1.0);
         }
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Chebyquad function with 9 parameters and 9 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1931,7 +1939,7 @@ public abstract class Lmmin {
             x[i-1] = i/(n + 1.0);
         }
         driver();
-        dumpTestResults();
+        dumpResults();
         
         // Below is an example to fit the Chebyquad function with 10 parameters and 10 points
         // From Testing Unconstrained Optimization Software by More, Garbow, and Hillstrom
@@ -1962,7 +1970,7 @@ public abstract class Lmmin {
             x[i-1] = i/(n + 1.0);
         }
         driver();
-        dumpTestResults();
+        dumpResults();
         
         Preferences.debug("Rosenbrock function used as LEVMAR example standard starting point unconstrained\n", 
         		Preferences.DEBUG_ALGORITHM);
@@ -1985,7 +1993,7 @@ public abstract class Lmmin {
         x[0] = -1.2;
         x[1] = 1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         Preferences.debug("Powell's 2 parameter function\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("y(0) = a0\n", Preferences.DEBUG_ALGORITHM);
@@ -2007,7 +2015,7 @@ public abstract class Lmmin {
         x[0] = 3.0;
         x[1] = 1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         Preferences.debug("Modified Rosenbrock function unconstrained\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Correct answer has param[0] = 1.0 param[1] = 1.0\n", Preferences.DEBUG_ALGORITHM);
@@ -2027,7 +2035,7 @@ public abstract class Lmmin {
         x[0] = -1.2;
         x[1] = 1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
         
         Preferences.debug("Wood's function\n", Preferences.DEBUG_ALGORITHM);
     	Preferences.debug("Correct answer has a0 = a1 = a2 = a3 = 1\n", Preferences.DEBUG_ALGORITHM);
@@ -2051,7 +2059,7 @@ public abstract class Lmmin {
         x[2] = -3.0;
         x[3] = -1.0;
         driver();
-        dumpTestResults();
+        dumpResults();
     }
     
     private void fitTestModel() {
@@ -2071,7 +2079,7 @@ public abstract class Lmmin {
     	}	
     }
     
-    private void dumpTestResults() {
+    public void dumpResults() {
     	int i;
     	Preferences.debug("Number of iterations: " + String.valueOf(nfev) + "\n", Preferences.DEBUG_ALGORITHM);
         Preferences.debug("Residue vector: " + String.valueOf(fnorm) + "\n", Preferences.DEBUG_ALGORITHM);
@@ -2106,6 +2114,38 @@ public abstract class Lmmin {
     	    info[0] = 9;	
     	}
     }
+    
+    /**
+     * 
+     * @param m the number of functions
+     * @param n the number of variables; n must not exceed m.
+     * @param x
+     */
+    public Lmmin(int m, int n, double x[]) {
+    	this.m = m;
+    	this.n = n;
+    	this.x = x;
+    	
+    	try {
+    	    fvec = new double[m];
+    	    diag = new double[n];
+    	    qtf = new double[n];
+    	    fjac = new double[m*n];
+    	    wa1 = new double[n];
+    	    wa2 = new double[n];
+    	    wa3 = new double[n];
+    	    wa4 = new double[m];
+    	    ipvt = new int[n];
+    	}
+    	catch (OutOfMemoryError e) {
+    	    info[0] = 9;	
+    	}
+    }
+    
+    public int getStatus() {
+    	return info[0];
+    }
+    
     
     /**
      * driver.
