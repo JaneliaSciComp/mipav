@@ -239,6 +239,11 @@
             <fileset dir="${dir.source}/WildMagic"/>
         </copy>
 
+        <!-- gpu computation kernels -->
+        <copy todir="${dir.dest}/kernels">
+            <fileset dir="${dir.source}/kernels"/>
+        </copy>
+
         <!-- /// TODO: placeholder installshield config file would be nice.. -->
 
         <!-- misc resource files -->
