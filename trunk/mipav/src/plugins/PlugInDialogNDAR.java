@@ -8,13 +8,10 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.components.WidgetFactory;
 
-import gov.nih.ndar.model.abstraction.dictionary.IConditional;
 import gov.nih.ndar.model.abstraction.dictionary.IDataElement;
 import gov.nih.ndar.model.abstraction.dictionary.IDataStructure;
-import gov.nih.ndar.model.transfer.dictionary.XmlDataDictionary;
 import gov.nih.ndar.model.transfer.dictionary.XmlDataType;
 import gov.nih.ndar.ws.accession.VToolSimpleAccessionClient;
-import gov.nih.ndar.ws.client.Startup;
 import gov.nih.ndar.ws.datadictionary.client.DataDictionaryProvider;
 
 import java.awt.*;
@@ -33,7 +30,6 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.xml.namespace.QName;
 
 import org.apache.axiom.om.*;
-import org.apache.axis2.AxisFault;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
