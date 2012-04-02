@@ -2990,6 +2990,9 @@ public class FileIO {
                 progressBar.updateValue((int) ( ((float) (i + 1) / (float) fileList.length) * 100), false);
 
             }
+            if (modelImageSubsample != null) {
+            	modelImageSubsample.disposeLocal(false);
+            }
             if (is3DDicom) {
 
                 ((FileInfoDicom) modelImageResult.getFileInfo(0)).getTagTable().attachChildTagTables(childTagTables);
