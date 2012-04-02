@@ -2842,6 +2842,9 @@ public class FileIO {
             final Dimension subsampleDimension, final boolean forceUBYTE, final int numSlices, final int numTimePoints) {
         ModelImage modelImageTemp = null;
         ModelImage modelImageResult = null;
+        int [] subsampledExtents = null;
+        int [] padExtents = null;
+        ModelImage modelImageSubsample = null;
         float[] oneSliceBuffer;
         FileDicomTagTable[] childTagTables = null;
         boolean is3DDicom = false;
@@ -2937,16 +2940,31 @@ public class FileIO {
 
                         if (subsampleDimension != null) // subsample if we have subsampling dimensions
                         {
-                            modelImageTemp = FileIO.subsample(modelImageTemp, subsampleDimension);
+                        	if (i == 1) {
+                        		subsampledExtents = new int[] {subsampleDimension.getSize().width,
+                                        subsampleDimension.getSize().height};
+                        		padExtents = modelImageTemp.getExtents();
+                                modelImageSubsample = new ModelImage(modelImageTemp.getType(), new int[] {
+                                        subsampleDimension.getSize().width, subsampleDimension.getSize().height},
+                                        modelImageTemp.getImageName() + "_subsampled");	
+                        	} // if (i == 1)
+                        	AlgorithmSubsample algorithmSubsample = new AlgorithmSubsample(modelImageTemp, modelImageSubsample,
+                                    subsampledExtents, padExtents, new float[] {1.0f, 1.0f, 1.0f}, false, false, null, false);
+                            algorithmSubsample.run();
+                            algorithmSubsample.finalize();
+                            algorithmSubsample = null;
+                        } // if (subsampleDimension != null)
+                        else {
+                        	modelImageSubsample = modelImageTemp;
                         }
                         System.out.println("Free: "+MipavUtil.getFreeHeapMemory());
                         //System.gc();
-                        modelImageTemp.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
-                        FileIO.copyResolutions(modelImageTemp, modelImageResult, i);
+                        modelImageSubsample.exportData(0, oneSliceBuffer.length, oneSliceBuffer);
+                        FileIO.copyResolutions(modelImageSubsample, modelImageResult, i);
                         modelImageResult.importData(i * oneSliceBuffer.length, oneSliceBuffer, false);
                         
                         if (is3DDicom) {
-                            final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageTemp.getFileInfo(0);
+                            final FileInfoDicom oldDicomInfo = (FileInfoDicom) modelImageSubsample.getFileInfo(0);
                             final FileInfoDicom destFileInfo = new FileInfoDicom(oldDicomInfo.getFileName(),
                                     oldDicomInfo.getFileDirectory(), oldDicomInfo.getFileFormat(),
                                     (FileInfoDicom) modelImageResult.getFileInfo(0));
