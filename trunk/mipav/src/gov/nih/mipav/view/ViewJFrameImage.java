@@ -1237,6 +1237,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     new ViewJFrameImage(mi);
                 }
 
+            }else {
+            	MipavUtil.displayError("There are no active ImageJ images open");
             }
 
         } else if (command.equals("HistoSummary")) {
