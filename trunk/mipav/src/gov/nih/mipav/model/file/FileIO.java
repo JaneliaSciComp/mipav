@@ -1316,7 +1316,21 @@ public class FileIO {
                 }
 
                 if ( !isEnhanced4D) {
-                    curFileInfo.setOrigin(newOriginPt);
+                    if(extents.length > newOriginPt.length) {
+                        float[] newOriginPt4D = new float[extents.length];
+                        int j=0;
+                        for(j=0; j<newOriginPt.length; j++) {
+                            newOriginPt4D[j] = newOriginPt[j];
+                        }
+                        
+                        for(j=j; j<newOriginPt4D.length; j++) {
+                            newOriginPt4D[j] = 0;
+                        }
+                        
+                        curFileInfo.setOrigin(newOriginPt4D);
+                    } else {    
+                        curFileInfo.setOrigin(newOriginPt);
+                    }
                 } else {
                     final float[] newOriginPt4D = new float[4];
                     newOriginPt4D[0] = newOriginPt[0];
@@ -1664,33 +1678,7 @@ public class FileIO {
               }
             }
           if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
-              /*System.out.println("philips");
-                if (image.is3DImage()) {
-                    if ((String) tagTable.getValue("2001,1018") != null){
-                    String zSlices = (String) tagTable.getValue("2001,1018");
-                    System.out.println("zSlices" +zSlices);
-                    int numZSlices = Integer.parseInt(zSlices);
-                    if (zSlices != null){
-                        //Calculating paramters for conversion of 3d to 4d Philips Dicom
-                        float[] resols = new float[4];
-                        int[] units = new int[4];
-                        for (int i = 0; i < 3; i++) {
-                            resols[i] = image.getFileInfo(0).getResolutions()[i];
-                            units[i] = image.getFileInfo(0).getUnitsOfMeasure()[i];
-                        }
-                        float resols3 = resols[2];
-                        float resols4 = 1.0f;
-                        int units3 = units[2];
-                        int units4 = units[2];
-                        
-                        //Convert 3D Philips Dicom to 4D Dicom based on the number of volumes listed in a private tag
-                        String imageName = image.getImageName();
-                        AlgorithmConvert3Dto4D convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, numZSlices, resols3, resols4, units3, units4);
-                        convert3Dto4DAlgo.run();
-                        image = convert3Dto4DAlgo.getResultImage();
-                        image.setImageName(imageName + "_4D");
-                    }
-                        
+                      
                     if (image.is4DImage()){
                         //For Philip's DWI 4D DICOM
                         int numVolumes = image.getExtents()[3];
@@ -1716,9 +1704,9 @@ public class FileIO {
                                philipsGrads = philipsGrads.trim();
                                String grads = philipsGrads.replace('\\', '\t');
                                final String[] arr2 = grads.split("\t");
-                               flGradientArray[i][0] = Float.valueOf(arr2[0]);
-                               flGradientArray[i][1] = Float.valueOf(arr2[1]);
-                               flGradientArray[i][2] = Float.valueOf(arr2[2]);
+                               flGradientArray[i][0] = Float.valueOf(arr2[1]);
+                               flGradientArray[i][1] = Float.valueOf(arr2[2]);
+                               flGradientArray[i][2] = Float.valueOf(arr2[0]);
                                }
                            }
                            
@@ -1727,8 +1715,8 @@ public class FileIO {
     
                            }
                     }
-                }                
-            }*/
+                                
+            
         }
       }
         
@@ -12026,6 +12014,7 @@ public class FileIO {
                 } else {
                     matrix = image.getMatrix();
                 }
+
 
                 final float[] imageOrg = image.getFileInfo(0).getOrigin();
                 final double dicomOrigin[] = new double[imageOrg.length];

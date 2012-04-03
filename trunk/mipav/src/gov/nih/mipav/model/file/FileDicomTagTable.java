@@ -409,7 +409,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
             // the reference table needs _all_ of the tags from the src dicom info, not just the ones unique to that
             // slice (in case the src dicom info is non-reference).  this direct assignment works since getTagList()
             // returns a deep copy of the tag Hashtable
-            tagTable = srcDicomInfo.getTagTable().getTagList();
+            tagTable = (Hashtable<FileDicomKey, FileDicomTag>) srcDicomInfo.getTagTable().getTagList();
         } else {
             Hashtable<FileDicomKey,FileDicomTag> srcTagList = srcDicomInfo.getTagTable().getTagList();
             Enumeration<FileDicomKey> srcTagKeys = srcTagList.keys();
