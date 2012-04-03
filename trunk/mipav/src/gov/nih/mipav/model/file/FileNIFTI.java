@@ -2499,7 +2499,11 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setAsciiText(asciiTextArray);
                 fileInfo.setCaret(caretArray);
             } // if (ecodeNumber >= 1)
-        } // else   
+        } // else 
+        
+
+        
+        
         if(raFile != null) {
         	raFile.close();
         }
@@ -2534,6 +2538,8 @@ public class FileNIFTI extends FileBase {
         if(niftiCompressed) {
         	file = new File(fileDir + File.separator + fileName); 
         	String ext = fileName.substring(fileName.lastIndexOf(".")+1, fileName.length());
+
+
         	if (ext.equalsIgnoreCase("zip")) {
 
                 try {

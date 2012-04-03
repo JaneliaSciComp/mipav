@@ -15,6 +15,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 /**
  * Created by IntelliJ IDEA. User: bennett Date: Mar 16, 2007 Time: 9:18:41 AM To change this template use File |
  * Settings | File Templates.
+ * Updated September 16, 2011 by Beth Tyrie
  */
 public class FileInfoPARREC extends FileInfoBase {
 

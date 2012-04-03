@@ -19,6 +19,8 @@ import java.lang.*;
  *
  * A right handed coordinate system is used with the positive axis pointing (Anterior/Posterior)A->P, (Foot/Head)F->H,
  * and (Right/Left)R->L.
+ * 
+ * * Updated September 16, 2011 by Beth Tyrie
  */
 
 public class FilePARREC extends FileBase {
@@ -616,7 +618,6 @@ public class FilePARREC extends FileBase {
              
                     break;
                 case '.' : // scan file variable
-                    
                         if(nextLine.contains("Examination name")){
                             String examNameLine = nextLine.trim();
                             int examNameInd = examNameLine.indexOf(":");
