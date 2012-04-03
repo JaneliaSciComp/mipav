@@ -328,16 +328,16 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                    for (z = 0; z < Zdim ; z++) {
                        j = (t*Zdim) + z;
                        if (volumeType == INSERTED_IMAGE && t != insertVolumePos ){                      
-                           oldDicomInfo = (FileInfoDicom) insertedImage.getFileInfo(z);   
+                           oldDicomInfo = (FileInfoDicom) insertedImage.getFileInfo(z);  
                        }
                        else if (volumeType != INSERTED_IMAGE && t< insertVolumePos){
-                               oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(t);  
+                               oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo((t*srcImage.getExtents()[2])+z);  
                            }
                        else if (volumeType != INSERTED_IMAGE && t == insertVolumePos){
-                               oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(t);  
+                               oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo((t*srcImage.getExtents()[2])+z); 
                            }
                        else if (volumeType != INSERTED_IMAGE && t> insertVolumePos){
-                            oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(t-1);  
+                            oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo(((t-1)*srcImage.getExtents()[2])+z);  
                            }
 
                            destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
@@ -355,8 +355,8 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                             destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
                             destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
                             destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
-                            destFileInfo[j].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());    
-                            ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) srcImage.getFileInfo(t));
+                            destFileInfo[j].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());               
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) oldDicomInfo);
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) Xdim), 2); // columns
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) Ydim), 2); // rows                 
                             ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
