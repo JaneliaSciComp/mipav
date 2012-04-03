@@ -109,12 +109,12 @@ public class AlgorithmSubset extends AlgorithmBase {
                                (nextPositionCoords[2] != imagePositionCoords[2])) { // change ONLY in Z-axis
                         //axisOfChange = 2;
                     } else { // change ONLY in ANY OTHER axis
-                        MipavUtil.displayWarning("Remove Slices does not support changes in\n" +
+                        /*MipavUtil.displayWarning("Remove Slices does not support changes in\n" +
                                                  "image position (DICOM tag 0020,0032)\n" +
                                                  "in more than one dimension.");
-                        setCompleted(false);
+                        setCompleted(false);*/
                         
-                        return;
+                        //return;
                     }
                 }
             }
@@ -140,6 +140,7 @@ public class AlgorithmSubset extends AlgorithmBase {
         /* The third axis, is 2 for REMOVE_T condition, 3 otherwise: */
         int axis3 = ( removeDim == REMOVE_T ) ? 2 : 3;
 
+
         /* calculate slice size: */
         int slice = ( srcImage.getExtents()[ axisOrder[0] ] * 
                       srcImage.getExtents()[ axisOrder[1] ]   );
@@ -157,6 +158,7 @@ public class AlgorithmSubset extends AlgorithmBase {
 
         /* If this is a color image: */
         int buffFactor = (srcImage.isColorImage()) ? 4 : 1;
+        
         try {
             imageBuffer = new float[ buffFactor * slice ];
             fireProgressStateChanged(srcImage.getImageName(), "Creating 3D subset...");
@@ -174,6 +176,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             try {
                 srcImage.exportData(sliceNum * buffFactor * slice, buffFactor * slice, imageBuffer);
                 destImage.importData(0, imageBuffer, true);
+                
             } catch (IOException error) {
                 displayError("AlgorithmSubset reports: Destination image already locked.");
                 setCompleted(false);
@@ -203,16 +206,54 @@ public class AlgorithmSubset extends AlgorithmBase {
             finalize();
             return;
         }
-            
-        /* copy srcImage FileInfoBase information into destImage : */
-        FileInfoBase fileInfoBuffer; // buffer of any old type
-        int dim3 = srcImage.getExtents()[axis3];
-        for (int d = 0; (d < dim3) && !threadStopped; d++) {
-            fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo(0).clone();
-            fileInfoBuffer.setExtents(destImage.getExtents());
-            fileInfoBuffer.setResolutions(destResolutions);
-            fileInfoBuffer.setUnitsOfMeasure(destUnitsOfMeasure);
-            destImage.setFileInfo(fileInfoBuffer, d);
+        destImage.calcMinMax();
+        
+        if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
+            //4-D Destination dicom images
+                FileInfoBase destFileInfo[] = null;
+                FileInfoDicom oldDicomInfo = null;   
+                int j;
+                destFileInfo = new FileInfoBase[srcImage.getExtents()[0] * srcImage.getExtents()[1] ];
+                double sliceResolution = 0.0;
+                int dim3 = srcImage.getExtents()[axis3];
+                int sliceCounter = 0; //Keeps track of every slice to populate tag
+        
+            for (int z = 0; z < dim3 ; z++) {
+                    oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo((sliceNum*dim3) + z);
+                        destFileInfo[z] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                        oldDicomInfo.getFileFormat());
+                        ((FileInfoDicom)destFileInfo[z]).setVr_type(oldDicomInfo.getVr_type());     
+        
+                     FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[z]).getTagTable();
+                     if (newTagTable.getValue("0018,0088") != null) {
+                         String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[z]).getTagTable().getValue("0018,0088")).trim();
+                         sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                     }                    
+                         //fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
+                         destFileInfo[z].setResolutions(srcImage.getFileInfo(0).getResolutions());
+                         destFileInfo[z].setExtents(destImage.getExtents());
+                         destFileInfo[z].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
+                         destFileInfo[z].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
+                         destFileInfo[z].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
+                         destFileInfo[z].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());    
+                         ((FileInfoDicom) destFileInfo[z]).getTagTable().importTags((FileInfoDicom) oldDicomInfo);
+                         ((FileInfoDicom) destFileInfo[z]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                         sliceCounter++;  
+                                                  
+            }
+            destImage.setFileInfo(destFileInfo);
+        }
+        else{    
+            /* copy srcImage FileInfoBase information into destImage : */
+            FileInfoBase fileInfoBuffer; // buffer of any old type
+            int dim3 = srcImage.getExtents()[axis3];
+            for (int d = 0; (d < dim3) && !threadStopped; d++) {
+                fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo((sliceNum*dim3) + d).clone();
+                fileInfoBuffer.setExtents(destImage.getExtents());
+                fileInfoBuffer.setResolutions(destResolutions);
+                fileInfoBuffer.setUnitsOfMeasure(destUnitsOfMeasure);
+                destImage.setFileInfo(fileInfoBuffer, d);
+            }
         }
 
         if (threadStopped) {
@@ -220,7 +261,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             finalize();
             return;
         }
-        destImage.calcMinMax();
+
         
         // Clean up and let the calling dialog know that algorithm did its job
         setCompleted(true);
