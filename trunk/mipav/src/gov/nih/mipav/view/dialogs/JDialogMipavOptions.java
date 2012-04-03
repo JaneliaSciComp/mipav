@@ -195,8 +195,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private JCheckBox showLineVOIAngleBox;
 
     private JCheckBox continuousVOIBox;
+    
+    private ButtonGroup VOIGroup;
 
-    private JCheckBox saveVOILPSBox;
+    private JRadioButton saveVOILPSButton;
+    
+    private JRadioButton saveVOIVoxelButton;
 
     /** DOCUMENT ME! */
     private JCheckBox showOutputWindow;
@@ -548,7 +552,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                     .getSelectedIndex()));
             Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox
                     .isSelected()));
-            Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSBox.isSelected()));
+            Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSButton.isSelected()));
             Preferences.setProperty(Preferences.PREF_MENU_FONT, fontNames[fontChooser.getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_MENU_FONT_SIZE, fontSizeField.getText());
 
@@ -2229,19 +2233,30 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     }
 
     protected void makeVOISaveLPSOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        saveVOILPSBox = new JCheckBox("Save VOIs in LPS coordinates");
-        saveVOILPSBox.setFont(MipavUtil.font12);
-        saveVOILPSBox.setForeground(Color.black);
-        saveVOILPSBox.addActionListener(this);
-        saveVOILPSBox.setToolTipText("If selected, VOIs will be saved in LPS coordinates.");
+    	VOIGroup = new ButtonGroup();
+        saveVOILPSButton = new JRadioButton("Save VOIs in LPS mm. coordinates", 
+        		Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+        saveVOILPSButton.setFont(MipavUtil.font12);
+        saveVOILPSButton.setForeground(Color.black);
+        saveVOILPSButton.addActionListener(this);
+        saveVOILPSButton.setToolTipText("If selected, VOIs will be saved in LPS mm. coordinates.");
+        VOIGroup.add(saveVOILPSButton);
+        
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
-        gbl.setConstraints(saveVOILPSBox, gbc);
-        displayColorPanel.add(saveVOILPSBox);
-
-        // preset the choices:
-        saveVOILPSBox.setSelected(Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+        gbl.setConstraints(saveVOILPSButton, gbc);
+        displayColorPanel.add(saveVOILPSButton);
+        
+        saveVOIVoxelButton = new JRadioButton("Save VOIs in voxel coordinates", 
+        		!Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+        saveVOIVoxelButton.setFont(MipavUtil.font12);
+        saveVOIVoxelButton.setForeground(Color.black);
+        saveVOIVoxelButton.addActionListener(this);
+        saveVOIVoxelButton.setToolTipText("If selected, VOIs will be saved in voxel coordinates.");
+        VOIGroup.add(saveVOIVoxelButton);
+        gbl.setConstraints(saveVOIVoxelButton, gbc);
+        displayColorPanel.add(saveVOIVoxelButton);
     }
 
     /**
