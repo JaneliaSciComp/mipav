@@ -5,6 +5,10 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.ViewJFrameImage;
+
+import java.awt.Dimension;
 import java.io.*;
 
 
@@ -128,16 +132,77 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
 
                 FileInfoBase fileInfoBuffer; // buffer of any old type
 
-                for (z = 0; (z < Zdim) && !threadStopped; z++) {
-                    fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo((t * Zdim) + z).clone();
-                    fileInfoBuffer.setExtents(destImage.getExtents());
-                    destImage.setFileInfo(fileInfoBuffer, (T * Zdim) + z);
-                }
+
 
                 T++; // next time slice position in the new image.
             } // if (!remove[t])
             // else {do nothing; goto next t-slice;}
         } // for (t = 0; t < oldTdim; t++)
+        destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
+        
+        if (srcImage.getFileInfo()[0] instanceof FileInfoDicom) {
+            //4-D Destination dicom images
+                T = 0;
+                FileInfoBase destFileInfo[] = null;
+                FileInfoDicom oldDicomInfo = null;   
+                int j;
+                destFileInfo = new FileInfoBase[srcImage.getExtents()[0] * srcImage.getExtents()[1] ];
+                double sliceResolution = 0.0;
+                int sliceCounter = 0; //Keeps track of every slice to populate tag
+
+           for (t = 0; t < oldTdim; t++) {
+               if (!remove[t]) {
+                   for (z = 0; z < Zdim ; z++) {
+                       j = (T * Zdim) + z;
+                       oldDicomInfo = (FileInfoDicom) srcImage.getFileInfo((t * Zdim) + z);
+                           destFileInfo[j] = new FileInfoDicom(oldDicomInfo.getFileName(), oldDicomInfo.getFileDirectory(),
+                                                           oldDicomInfo.getFileFormat());
+                           ((FileInfoDicom)destFileInfo[j]).setVr_type(oldDicomInfo.getVr_type());     
+    
+                        FileDicomTagTable newTagTable = ((FileInfoDicom) destFileInfo[j]).getTagTable();
+                        if (newTagTable.getValue("0018,0088") != null) {
+                            String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[j]).getTagTable().getValue("0018,0088")).trim();
+                            sliceResolution = new Double(sliceGapString.trim()).doubleValue();
+                        }                    
+                            //fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
+                            destFileInfo[j].setResolutions(srcImage.getFileInfo(0).getResolutions());
+                            destFileInfo[j].setExtents(destImage.getExtents());
+                            destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
+                            destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
+                            destFileInfo[j].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
+                            destFileInfo[j].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());    
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().importTags((FileInfoDicom) oldDicomInfo);
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0011", new Short((short) Xdim), 2); // columns
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0028,0010", new Short((short) Ydim), 2); // rows                 
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().setValue("0020,0013", Short.toString((short) (t + 1)),
+                                                                     Short.toString((short) (t + 1)).length()); // instance number
+                            ((FileInfoDicom) destFileInfo[j]).getTagTable().removeTag("0019,100A");// Removes NumberofImages in Mosaic Tag
+                            sliceCounter++;  
+                                                     
+                   }
+                   T++;
+               }
+           }
+           destImage.setFileInfo(destFileInfo);
+        }
+        
+        else {
+            FileInfoBase fileInfoBuffer;
+            T = 0;
+            for (t = 0; (t < oldTdim) && !threadStopped; t++) { 
+                if (!remove[t]) {
+                    for (z = 0; (z < Zdim) && !threadStopped; z++) {
+                        fileInfoBuffer = (FileInfoBase) srcImage.getFileInfo((t * Zdim) + z).clone();
+                        fileInfoBuffer.setExtents(destImage.getExtents());
+                        destImage.setFileInfo(fileInfoBuffer, (T * Zdim) + z);
+                    }
+                    T++;
+                }
+               
+            }
+
+            
+        }
 
         if (threadStopped) {
             imageBuffer = null;
@@ -146,7 +211,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
             return;
         }
 
-        destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
+
 
         // Clean up and let the calling dialog know that algorithm did its job
         
