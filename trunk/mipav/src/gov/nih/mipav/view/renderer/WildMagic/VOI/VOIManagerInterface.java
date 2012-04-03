@@ -56,6 +56,7 @@ import gov.nih.mipav.view.ViewOpenPaintUI;
 import gov.nih.mipav.view.ViewToolBarBuilder;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.ViewVOIVector;
+import gov.nih.mipav.view.components.PanelManager;
 import gov.nih.mipav.view.dialogs.JDialogAGVF;
 import gov.nih.mipav.view.dialogs.JDialogBSmooth;
 import gov.nih.mipav.view.dialogs.JDialogBSnake;
@@ -84,10 +85,13 @@ import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFe
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesTrain;
 import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeatures;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -101,11 +105,14 @@ import java.util.BitSet;
 import java.util.Vector;
 
 import javax.swing.AbstractButton;
+import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JToggleButton;
 import javax.swing.JToolBar;
 import javax.swing.event.EventListenerList;
@@ -4671,6 +4678,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         String fileName;
         String directory;
         JFileChooser chooser;
+        JPanel accessoryPanel = new JPanel();
+        ButtonGroup VOIGroup;
+        JRadioButton saveVOILPSButton;
+        JRadioButton saveVOIVoxelButton;
 
         int nVOI;
         int i;
@@ -4702,6 +4713,30 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
         chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] {".xml",".lbl"}));
+        chooser.setAccessory(accessoryPanel);
+        accessoryPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+        accessoryPanel.setLayout(new BorderLayout());
+        
+        PanelManager optionsPanelManager = new PanelManager("Options");
+        VOIGroup = new ButtonGroup();
+        saveVOILPSButton = new JRadioButton("Save VOIs in LPS mm. coordinates", 
+        		Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+        saveVOILPSButton.setFont(MipavUtil.font12);
+        saveVOILPSButton.setForeground(Color.black);
+        saveVOILPSButton.addActionListener(this);
+        saveVOILPSButton.setToolTipText("If selected, VOIs will be saved in LPS mm. coordinates.");
+        VOIGroup.add(saveVOILPSButton);
+        optionsPanelManager.add(saveVOILPSButton);
+        
+        saveVOIVoxelButton = new JRadioButton("Save VOIs in voxel coordinates", 
+        		!Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+        saveVOIVoxelButton.setFont(MipavUtil.font12);
+        saveVOIVoxelButton.setForeground(Color.black);
+        saveVOIVoxelButton.addActionListener(this);
+        saveVOIVoxelButton.setToolTipText("If selected, VOIs will be saved in voxel coordinates.");
+        VOIGroup.add(saveVOIVoxelButton);
+        optionsPanelManager.addOnNextLine(saveVOIVoxelButton);
+        accessoryPanel.add(optionsPanelManager.getPanel(), BorderLayout.CENTER);
 
         final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
 
@@ -4710,6 +4745,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             
             directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
             ViewUserInterface.getReference().setDefaultDirectory(directory);
+            Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSButton.isSelected()));
         } else {
             return;
         }
