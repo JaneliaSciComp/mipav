@@ -500,6 +500,10 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             String fileName = null;
             String directory = null;
             String voiDir = null;
+            JPanel accessoryPanel = new JPanel();
+            ButtonGroup VOIGroup;
+            JRadioButton saveVOILPSButton;
+            JRadioButton saveVOIVoxelButton;
 
             final JFileChooser chooser = new JFileChooser();
 
@@ -510,12 +514,37 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
 
             chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+            chooser.setAccessory(accessoryPanel);
+            accessoryPanel.setBorder(BorderFactory.createLineBorder(Color.black));
+            accessoryPanel.setLayout(new BorderLayout());
+            
+            PanelManager optionsPanelManager = new PanelManager("Options");
+            VOIGroup = new ButtonGroup();
+            saveVOILPSButton = new JRadioButton("Save VOIs in LPS mm. coordinates", 
+            		Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+            saveVOILPSButton.setFont(MipavUtil.font12);
+            saveVOILPSButton.setForeground(Color.black);
+            saveVOILPSButton.addActionListener(this);
+            saveVOILPSButton.setToolTipText("If selected, VOIs will be saved in LPS mm. coordinates.");
+            VOIGroup.add(saveVOILPSButton);
+            optionsPanelManager.add(saveVOILPSButton);
+            
+            saveVOIVoxelButton = new JRadioButton("Save VOIs in voxel coordinates", 
+            		!Preferences.is(Preferences.PREF_VOI_LPS_SAVE));
+            saveVOIVoxelButton.setFont(MipavUtil.font12);
+            saveVOIVoxelButton.setForeground(Color.black);
+            saveVOIVoxelButton.addActionListener(this);
+            saveVOIVoxelButton.setToolTipText("If selected, VOIs will be saved in voxel coordinates.");
+            VOIGroup.add(saveVOIVoxelButton);
+            optionsPanelManager.addOnNextLine(saveVOIVoxelButton);
+            accessoryPanel.add(optionsPanelManager.getPanel(), BorderLayout.CENTER);
 
             final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                Preferences.setProperty(Preferences.PREF_VOI_LPS_SAVE, String.valueOf(saveVOILPSButton.isSelected()));
             }
 
             if (fileName != null) {
