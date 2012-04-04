@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmMosaicToSlices;
     import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileDicomKey;
+import gov.nih.mipav.model.file.FileDicomSQ;
 import gov.nih.mipav.model.file.FileDicomTag;
 import gov.nih.mipav.model.file.FileDicomTagTable;
     import gov.nih.mipav.model.file.FileIO;
@@ -1245,14 +1246,20 @@ import Jama.Matrix;
                 String fileName = m_kDWIImage.getImageFileName();
                 File filePar = new File(fileDir + (fileName.substring(0, fileName.indexOf(".")) + "." + "par"));
                 boolean exists = filePar.exists();
-
-                try {
-                    niftiParExtraction(filePar);
-                    
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
+                
+                if (exists){
+                    try {
+                        niftiParExtraction(filePar);
+                        
+                    } catch (IOException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
                 }
+            }
+            
+            if (m_kDWIImage.isDicomImage()){
+                philipsDicomGradExtract();                
             }
             
             if (dtiparams != null){
@@ -1350,7 +1357,7 @@ import Jama.Matrix;
             
             
 
-            if (isPARREC || isNIFTI) {
+            if (isPARREC || isNIFTI || m_kDWIImage.isDicomImage()) {
                 //Checks if image is Philips PAR/REC image and the version to determine which GTC parameters to include
                 //Parameters based on: http://jist.projects.nitrc.org/docs/IACL/DTI/MedicAlgorithmMultiGradientTableCreator.html 
                 if ( fileInfoPARREC != null && (fileInfoPARREC.getExamName().toUpperCase()).contains("DTI")
@@ -2302,24 +2309,28 @@ import Jama.Matrix;
             
             if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("SUPINE"))
                     ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("SUPINE")
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("S")
                     ||patientOrientBox.getSelectedItem()=="SP" ){
                 Tpo = new double[][]{{1, 0, 0},{0, 1, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{1,0,0},{0,1,0},{0,0,1}};
             }
             else if (( fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("PRONE")) 
                     ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("PRONE")
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("P")
                     || patientOrientBox.getSelectedItem()=="PR" ){
                 Tpo = new double[][]{{-1, 0, 0},{0, -1, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{-1,0,0},{0,-1,0},{0,0,1}};
             }  
             else if ( (fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("RIGHT")) 
                     ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("RIGHT")
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("R")
                     || patientOrientBox.getSelectedItem()=="RD"){
                 Tpo = new double[][]{{0,-1, 0},{1, 0, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{0,1,0},{-1,0,0},{0,0,1}};
             }  
             else if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null &&  fileInfoPARREC.getPatientPosition().toUpperCase().contains("LEFT")) 
                     ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("LEFT")
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("L")
                     || patientOrientBox.getSelectedItem()=="LD" ){
                 Tpo = new double[][]{{0,1, 0},{-1, 0, 0}, {0, 0, 1}};
                 rev_Tpo = new double[][]{{0,-1,0},{1,0,0},{0,0,1}};
@@ -2333,12 +2344,14 @@ import Jama.Matrix;
           
             if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("HEADFIRST")) 
                     ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("HEADFIRST")
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("HF")
                     || patientPosBox.getSelectedItem()=="Head First"){
                 Tpp = new double[][]{{0, -1, 0},{-1, 0, 0}, {0, 0, 1}};
                 rev_Tpp = new double[][]{{0,-1,0},{-1,0,0},{0,0,-1}};
             }
             else if ((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPatientPosition().toUpperCase().contains("FEETFIRST")) 
                     ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("FEETFIRST")
+                    ||parNPatientPosition != null && parNPatientPosition.toUpperCase().contains("FF")
                     || patientPosBox.getSelectedItem()=="Feet First"){
                 Tpp = new double[][]{{0, 1, 0},{-1, 0, 0}, {0, 0, -1}};
                 rev_Tpp = new double[][]{{0,-1,0},{1,0,0},{0,0,-1}};
@@ -2428,7 +2441,8 @@ import Jama.Matrix;
             if(fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 1 || parNorient == 1){
                 
                 if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR")) 
-                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("ANTERIOR")
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("ANTERIOR") 
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("AP") 
                         || foldOverBox.getSelectedItem()=="AP"){
                     Tprep =Tprep_per;
                     rev_Tprep = rev_Tprep_per;
@@ -2449,6 +2463,7 @@ import Jama.Matrix;
           
                 else if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) 
                         || parNPatientPosition != null && parNfoldover.toUpperCase().contains("RIGHT")
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("RL") 
                         || foldOverBox.getSelectedItem()=="RL" ){
                     Tprep =Tprep_par;
                     rev_Tprep = rev_Tprep_par;
@@ -2479,6 +2494,7 @@ import Jama.Matrix;
             else if(fileInfoPARREC != null && fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 3 || parNorient == 3){
                 if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) 
                         || parNPatientPosition != null && parNfoldover.toUpperCase().contains("SUPERIOR")
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("FH") 
                         || foldOverBox.getSelectedItem()=="FH"){
                     Tprep =Tprep_per;
                     rev_Tprep = rev_Tprep_per;
@@ -2497,6 +2513,7 @@ import Jama.Matrix;
                 }
                 else if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("RIGHT")) 
                         || parNPatientPosition != null && parNfoldover.toUpperCase().contains("RIGHT")
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("RL") 
                         || foldOverBox.getSelectedItem()=="RL"){
                     Tprep =Tprep_par;
                     rev_Tprep = rev_Tprep_par;
@@ -2524,6 +2541,7 @@ import Jama.Matrix;
             else if(fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 2 || parNorient == 2){
                 if((fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("SUPERIOR")) 
                         || parNPatientPosition != null && parNfoldover.toUpperCase().contains("SUPERIOR")
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("FH")
                         || foldOverBox.getSelectedItem()=="FH" ){
                     Tprep =Tprep_per;
                     rev_Tprep = rev_Tprep_per;
@@ -2543,6 +2561,7 @@ import Jama.Matrix;
                 }
                 else if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR"))
                         || parNPatientPosition != null && parNfoldover.toUpperCase().contains("ANTERIOR")
+                        || parNPatientPosition != null && parNfoldover.toUpperCase().contains("AP")
                         ||foldOverBox.getSelectedItem()=="AP"){
                     Tprep =Tprep_par;
                     rev_Tprep = rev_Tprep_par;
@@ -2731,7 +2750,7 @@ import Jama.Matrix;
                     }
                 }
             }
-            
+
             else{
                 MipavUtil.displayError("Please select a 4D DWI Image"); 
             }
@@ -3101,6 +3120,55 @@ import Jama.Matrix;
             
         }
         
+        public void philipsDicomGradExtract(){
+            FileInfoDicom dicomInfo = (FileInfoDicom) m_kDWIImage.getFileInfo(0);
+            FileDicomSQ sq;
+            FileDicomTagTable tagTable = dicomInfo.getTagTable();
+            String seriesDescription = (String) tagTable.getValue("0008,103E");
+            String scannerType = (String) tagTable.getValue("0008,0070");
+            parNversion = "";            
+            parNExamName = "";
+            parNProtocolName = "";            
+            parNPatientPosition = "";         
+            parNfoldover = "";
+            parNProtocolName = (String) tagTable.getValue("0008,103E");
+            
+            if ((seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+                if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+                    //System.out.println("image.getExents" +image.getExtents()[3]);                       
+                          if (m_kDWIImage.is4DImage()){
+                              parNversion = "V4.2";
+                              if(tagTable.getValue("0018,5100")!= null){
+                                  parNPatientPosition =  (String) tagTable.getValue("0018,5100");
+                              }
+                              if(tagTable.getValue("2001,105F")!= null){
+                              sq = (FileDicomSQ) tagTable.getValue("2001,105F", false);
+                              FileDicomTagTable item = sq.getItem(0);
+                                  if(item.getValue("2001,1035")!= null){
+                                      String sOrient = (String) item.getValue("2001,1035");
+                                      parNorient = Integer.valueOf(sOrient);
+                                  }
+                                  if(item.getValue("2005,1071")!= null){
+                                      parNsliceAng = new double[3];
+                                      String sAng1 = (String) item.getValue("2005,1071");;
+                                      String sAng2 = (String) item.getValue("2005,1072");
+                                      String sAng3 = (String) item.getValue("2005,1073");;
+                                      parNsliceAng[0] = Double.valueOf(sAng1);
+                                      parNsliceAng[1] = Double.valueOf(sAng2);
+                                      parNsliceAng[2] = Double.valueOf(sAng3);
+                                  }
+                                  if(item.getValue("2005,107B")!= null){
+                                      parNfoldover = (String) item.getValue("2005,107B");
+                                  }
+                                           
+                              }
+                              
+                          }
+                          }
+            }
+            
+        }
+        
         public void checkSiemens3d(){
             FileInfoDicom dicomInfo = (FileInfoDicom) m_kDWIImage.getFileInfo(0);
             FileDicomTagTable tagTable = dicomInfo.getTagTable();
@@ -3223,7 +3291,6 @@ import Jama.Matrix;
          * @return
          */
         public boolean readBValGradientFile(final String gradientFilePath) {
-           System.out.println("readbvalgrad");
 
             /*
              * if ((getExamName().toUpperCase()).contains("DTI")){ }
@@ -3398,6 +3465,9 @@ import Jama.Matrix;
                         arr = thirdlLine.split("\\s+");
                         for (final String element : arr) {
                             if (k < numRows) {
+                                
+                                
+                                
                                 srcTableModel.setValueAt(element, k, 4);
                                 k = k + 1;
                             } else {
