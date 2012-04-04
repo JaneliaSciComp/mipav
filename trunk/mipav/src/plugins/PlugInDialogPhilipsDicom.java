@@ -120,8 +120,9 @@ public class PlugInDialogPhilipsDicom extends JDialogScriptableBase implements A
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof PlugInAlgorithmPhilipsDicom) {
-            Preferences.debug("DICOM Process Time Elapsed: " + algorithm.getElapsedTime());
-            image.clearMask();
+            ViewJFrameImage resultFrame = new ViewJFrameImage(philipsAlgo.getDestImage());
+            resultFrame.setTitle(philipsAlgo.getDestImage().getImageName());
+            resultFrame.setVisible(true);
 
             if (algorithm.isCompleted()) {
                 insertScriptLine();

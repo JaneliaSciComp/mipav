@@ -6,9 +6,14 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoDicom;
+import gov.nih.mipav.model.file.FileInfoImageXML;
+import gov.nih.mipav.model.file.FileUtility;
+import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJFrameMessage;
 
@@ -24,18 +29,6 @@ import gov.nih.mipav.view.ViewUserInterface;
  */
 
 public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
-
-	/** X dimension of the MRI image */
-    private int xDim;
-
-    /** Y dimension of the MRI image */
-    private int yDim;
-    
-    /** Optional Z dimension of the MRI image */
-    private int zDim;
-
-    /** Optional T dimension of the MRI image */
-    private int tDim;
 
     /** Slice size for xDim*yDim */
     //private int sliceSize;
@@ -77,125 +70,65 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
     }
     
     private void calcRescale() {
-    	xDim = srcImage.getExtents()[0];
-        yDim = srcImage.getExtents()[1];
-        //sliceSize = xDim * yDim;
         
-        if(srcImage.getNDims() > 2) {
-            zDim = srcImage.getExtents()[2];
-        } else {
-            zDim = 1;
+        FileInfoImageXML fileInfoImage = new FileInfoImageXML(srcImage.getImageName()+"_rescale", null, FileUtility.RAW);
+        fileInfoImage.setDataType(DataType.DOUBLE.getLegacyNum());
+        fileInfoImage.setExtents(srcImage.getFileInfo()[0].getExtents());
+        fileInfoImage.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
+        fileInfoImage.setResolutions(srcImage.getFileInfo()[0].getResolutions());
+        fileInfoImage.setEndianess(srcImage.getFileInfo()[0].getEndianess());
+        fileInfoImage.setOffset(srcImage.getFileInfo()[0].getOffset());
+        fileInfoImage.setFileDirectory(srcImage.getFileInfo()[0].getFileDirectory());
+        destImage = ViewUserInterface.getReference().createBlankImage(fileInfoImage);
+        destImage.getParentFrame().setVisible(false);
+        
+        double scaleSlopeTag = ((Number) ((FileInfoDicom)srcImage.getFileInfo()[0]).getTagTable().getValue("2005,100E", false)).doubleValue();
+        double rescaleInterceptTag = Double.valueOf(((FileInfoDicom)srcImage.getFileInfo()[0]).getTagTable().getValue("0028,1052").toString());
+        double rescaleSlopeTag =  Double.valueOf(((FileInfoDicom)srcImage.getFileInfo()[0]).getTagTable().getValue("0028,1053").toString());
+        
+        Preferences.data("Tag values\n2005,100E:\t"+scaleSlopeTag+"\n"+
+                            "0028,1052:\t"+rescaleInterceptTag+"\n"+
+                            "0028,1053:\t"+rescaleSlopeTag+"\n");
+        
+        fireProgressStateChanged(70);
+        
+        for(int i=0; i<srcImage.getFileInfo().length; i++) {
+            FileInfoDicom fileInfo = ((FileInfoDicom)srcImage.getFileInfo(i));
+            
+            fileInfo.setDataType(DataType.DOUBLE.getLegacyNum());
+            fileInfo.getTagTable().setValue("0028,1053", rescaleSlopeTag / scaleSlopeTag);
+            fileInfo.getTagTable().setValue("2005,100E", 1);
+            
+            destImage.setFileInfo(fileInfo, i);
+            srcImage.getFileInfo()[i] = null;
         }
         
-        if(srcImage.getNDims() > 3) {
-            tDim = srcImage.getExtents()[3];
-        } else {
-            tDim = 1;
+        Preferences.data("Philips scale slope tag (2005,100E) set to 1\nNew rescale slope tag value: "+(rescaleSlopeTag / scaleSlopeTag));
+        
+        double x = 0;
+        for(int i=0; i<srcImage.getDataSize(); i++) {
+            if(i%1000 == 0) {
+                fireProgressStateChanged((int)(i/1200.0));
+            }
+            
+            x = srcImage.getDouble(i);
+            x = x - rescaleInterceptTag;
+            x = x*(1/scaleSlopeTag);
+            x = x + rescaleInterceptTag;
+            
+            destImage.set(i, x);
         }
         
-        destImage = new ModelImage(ModelStorageBase.DOUBLE, srcImage.getExtents(), srcImage.getImageName()+"_rescale");
-        nearCloneImage(srcImage, destImage);
-        
-        //Already tested to cast correctly in setVariables
-        FileInfoDicom fileInfo = (FileInfoDicom)srcImage.getFileInfo()[0];
-    	
-        Float scaleSlopeTag = (Float)fileInfo.getTagTable().getValue("2005,100E");
-    	String rescaleInterceptTag = (String)fileInfo.getTagTable().getValue("0028,1052");
-    	String rescaleSlopeTag = (String)fileInfo.getTagTable().getValue("0028,1053");
-    	
-    	ViewUserInterface.getReference().getMessageFrame().append("Tag values\n2005,100E:\t"+scaleSlopeTag+"\n"+
-    	                                                            "0028,1052:\t"+rescaleInterceptTag+"\n"+
-    	                                                            "0028,1053:\t"+rescaleSlopeTag+"\n", ViewJFrameMessage.DATA);
-        
-    	double scaleSlope = Double.valueOf(scaleSlopeTag);
-    	double rescaleIntercept = Double.valueOf(rescaleInterceptTag);
-    	double rescaleSlope = Double.valueOf(rescaleSlopeTag);
-    	
-    	DecimalFormat dec = new DecimalFormat("0.######");
-		String appMessage = "Numerator:\timageData*"+dec.format(rescaleSlope)+"+"+rescaleIntercept+
-							"\nDenominator:\t"+dec.format(rescaleSlope)+"*"+dec.format(scaleSlope)+"\n";
-	
-		ViewUserInterface.getReference().getMessageFrame().append(appMessage, ViewJFrameMessage.DATA);
-		
-		
-		double pix = 0.0, srcpix = 0.0;
-		final int srcDim = srcImage.getNDims();
-		final int destDim  = srcImage.getNDims();
-		
-		for(int t=0; t<tDim; t++) {
-		    if(tDim > 1) {
-		        fireProgressStateChanged((int)(((double)t/tDim)*80), "Processing volume: "+t, "Processing volume: "+t);
-		    }
-    		for(int k=0; k<zDim; k++) {
-        		for(int j=0; j<yDim; j++) {
-        		    for(int i=0; i<xDim; i++) {
-        		        switch(srcDim) {
-                        case 2:
-                            srcpix = srcImage.get(i, j).doubleValue();
-                            break;
-                        
-                        case 3:
-                            srcpix = srcImage.get(i, j, k).doubleValue();
-                            break;
-           
-                        case 4:
-                            srcpix = srcImage.get(i, j, k, t).doubleValue();
-                            break;
-                        }
-        		        
-        			    pix = ((srcpix*rescaleSlope) + rescaleIntercept) / 
-        			                    (rescaleSlope*scaleSlope);
-        			    switch(destDim) {
-        			    case 2:
-        			        destImage.set(i, j, pix);
-        			        break;
-        			    
-            		    case 3:
-                            destImage.set(i, j, k, pix);
-                            break;
-           
-                		case 4:
-                            destImage.set(i, j, k, t, pix);
-                            break;
-        			    }
-        			}
-        		}
-    		}
-		}
-		
-		fireProgressStateChanged(70);
-		
-		FileDicomTagTable destTable = ((FileInfoDicom)destImage.getFileInfo()[0]).getTagTable();
-		destTable.setValue("2005,100E", new Float(1));
-		
-		ViewUserInterface.getReference().getMessageFrame().append("Rescale slope tag (2005,100E) set to 1\n", ViewJFrameMessage.DATA);
-		
-		destImage.calcMinMax();
-		fireProgressStateChanged(85);
-		
+        destImage.calcMinMax();
+        destImage.setImageName(srcImage.getImageName()+"_rescaled", true);
 
-        ViewJFrameImage resultFrame = new ViewJFrameImage(destImage);
-        resultFrame.setTitle(destImage.getImageName());
-        resultFrame.setVisible(true);
+        srcImage.getParentFrame().setVisible(false);
+        srcImage.getParentFrame().close();
+        //ViewUserInterface.getReference().unRegisterImage(srcImage);
+        srcImage.disposeLocal();
+        
+        fireProgressStateChanged(70);     
 		
 		setCompleted(true);
-    }
-    
-    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
-        FileInfoBase[] oArr = orig.getFileInfo();
-        FileInfoBase[] cArr = clo.getFileInfo();
-        if(cArr.length != oArr.length) {
-            MipavUtil.displayError("Images are not same length");
-            return clo;
-        }
-        for(int i=0; i<cArr.length; i++) {
-            fireProgressStateChanged("Creating slice information for "+i);
-            if(cArr == null) {
-                return clo;
-            }
-            cArr[i] = (FileInfoBase)oArr[i].clone();
-        }
-        
-        return clo;
     }
 }
