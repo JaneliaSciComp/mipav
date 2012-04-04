@@ -735,7 +735,7 @@ public class FileDicom extends FileDicomBase {
     private boolean processNextTag(FileDicomTagTable tagTable, FileDicomKey key, boolean endianess, boolean inSequence) throws IOException {
         String strValue = null;
         Object data = null;
-        VR vr; // value representation of data
+        VR vr = null; // value representation of data
         String name = key.toString(); // string representing the tag
         int tagVM;
         
@@ -756,18 +756,19 @@ public class FileDicom extends FileDicomBase {
                     tagVM = 1;
                 }
             }
-        } else { // Explicit VR
+        } else { // Explicit VR  
             try {
                 vr = VR.valueOf(new String(vrBytes));
             } catch(Exception e) {
+                Preferences.debug("Unrecognized vr: "+new String(vrBytes)+" for tag "+key, Preferences.DEBUG_FILEIO);
+            } finally {
                 if(key.toString().matches(FileDicom.IMAGE_TAG)) {
                     vr = VR.OB;
-                } else {
+                } else if((vr == VR.UN || vr == VR.XX || vr == null) && DicomDictionary.containsTag(key)) {
                     vr = DicomDictionary.getType(key);
-                    if(vr == null) {
-                        vr = VR.UN;
-                        Preferences.debug("Unknown vr for tag "+key, Preferences.DEBUG_FILEIO);
-                    }
+                } else if(vr == null) {
+                    vr = VR.UN;
+                    Preferences.debug("Unknown vr for tag "+key, Preferences.DEBUG_FILEIO);
                 }
             }
 
