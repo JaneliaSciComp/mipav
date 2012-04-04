@@ -2969,7 +2969,12 @@ public class FileIO {
 
                         break;
                     } finally {
-                        modelImageTemp.disposeLocal(false);
+                    	if ((i % 50) == 0) {
+                    		modelImageTemp.disposeLocal(true);
+                    	}
+                    	else {
+                            modelImageTemp.disposeLocal(false);
+                    	}
                     }
                 } else {
                     Preferences.debug("File does not exist: " + fileList[i].getName() + "\n", Preferences.DEBUG_FILEIO);
