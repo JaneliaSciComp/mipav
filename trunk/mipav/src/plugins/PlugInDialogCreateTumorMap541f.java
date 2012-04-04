@@ -226,6 +226,7 @@ public class PlugInDialogCreateTumorMap541f extends JDialogScriptableBase implem
 
                 // Start the thread as a low priority because we wish to still
                 // have user interface work fast.
+         
                 if (tumorSimAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
