@@ -49,7 +49,8 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
  * 
  * @version 1.0 June 1, 2005
  */
-public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener, CommandLineParser {
+public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener,
+        CommandLineParser {
 
     // ~ Static fields/initializers ------------------------------------------------------------------
 
@@ -60,7 +61,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @see #getReference()
      */
     protected static ViewUserInterface userInterfaceReference;
-    
+
     /** String to use as the progress bar opening prefix. */
     private static final String OPENING_STR = "Opening ";
 
@@ -69,19 +70,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Key shortcut editor dialog. */
     private static JDialogShortcutEditor shortcutEd = null;
-    
-    /** This boolean tells if the user has provided an inputDir parameter as a command line argument when running a script */
+
+    /**
+     * This boolean tells if the user has provided an inputDir parameter as a command line argument when running a
+     * script
+     */
     private static boolean providedUserDefaultDir = false;
 
     /** This is the inputDir path that the user entered as a command line argument when running a script * */
     private static String userDefaultDir = "";
 
-    /** This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a script */
+    /**
+     * This boolean tells if the user has provided an ouputDir parameter as a command line argument when running a
+     * script
+     */
     private static boolean providedOutputDir = false;
 
     /** This is the outputDir path that the user entered as a command line argument when running a script * */
     private static String outputDir = "";
-    
+
     /** Mipav's optional secondary directory for plugins */
     private static File secondaryPluginsDir;
 
@@ -116,8 +123,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Vector to hold clipped VOIs (multiple). */
     private final ViewVOIVector clippedVOIs = new ViewVOIVector();
-    
-    
+
     /** Vector to hold clipped VOIs (multiple). */
     private Vector<VOIBase> copyVOIList = new Vector<VOIBase>();
 
@@ -175,10 +181,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** The button indicating that MIPAV is set to run in a threaded environment */
     private JButton btnMultiCore;
-    
+
     /** The button indicating that MIPAV is set to run OpenCL -- GPU based algorithms */
     private JButton btnGpuComp;
-    
+
     /**
      * The periodic thread which updates the memory usage display once every second.
      * 
@@ -209,8 +215,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** error handling for cmd line, if set to false will not exit on MipavUtil.displayError() */
     private boolean exitCmdLineOnError = true;
-    
-    /** if user selects to open images as tiles, then this counter tells us how many tile sheets there are**/
+
+    /** if user selects to open images as tiles, then this counter tells us how many tile sheets there are* */
     private int numTileSheets = 0;
 
     // ~ Constructors
@@ -226,14 +232,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
         initPrefsFile();
-        
+
         // Read preference file
         initUsingPreferences();
-        if(!GraphicsEnvironment.isHeadless()) {
+        if ( !GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initializeGui();
         }
-        
+
         // listen to the script recorder so that we can pass along changes in the script recorder status to the script
         // toolbars of individual images
         ScriptRecorder.getReference().addScriptRecordingListener(this);
@@ -251,14 +257,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected ViewUserInterface(final boolean forceQuiet) {
         System.out.println("MIPAV STARTED with forceQuite set as " + forceQuiet);
         MipavUtil.setForceQuiet(forceQuiet);
-        
+
         imageFrameVector = new Vector<Frame>();
         imageHashtable = new CustomHashtable<ModelImage>();
         initPrefsFile();
-        
+
         // Read preference file
         initUsingPreferences();
-        if(!GraphicsEnvironment.isHeadless()) {
+        if ( !GraphicsEnvironment.isHeadless()) {
             mainFrame = new JFrame();
             initializeGui();
         }
@@ -485,8 +491,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             windowClosing(null);
         } else if (command.equals("OpenNewImage")) {
             openImageFrame();
-        } else if(command.equals("closeAllImages")) {
-        	closeAllImages();
+        } else if (command.equals("closeAllImages")) {
+            closeAllImages();
         } else if (command.equals("BrowseImages")) {
             buildTreeDialog();
         } else if (command.equals("BrowseDICOM")) {
@@ -700,8 +706,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 if (thePlugIn instanceof PlugInGeneric) {
                     ((PlugInGeneric) thePlugIn).run();
                 } else {
-                	MipavUtil.displayError("Plugin " + plugInName
-                            + " is not a generic plugin.");
+                    MipavUtil.displayError("Plugin " + plugInName + " is not a generic plugin.");
                 }
             } catch (final UnsupportedClassVersionError ucve) {
                 Preferences
@@ -719,53 +724,54 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
         } else if (command.startsWith("PlugInImageJ")) {
-        	//System.out.println(command);
-        	 Class<?> thePlugInClass = null;
-        	 Object thePlugInInstance = null; 
+            // System.out.println(command);
+            Class<?> thePlugInClass = null;
+            Object thePlugInInstance = null;
 
-             final String plugInName = command.substring(12);
+            final String plugInName = command.substring(12);
 
-             try {
-                 thePlugInClass = Class.forName(plugInName);
-                 
-                 for(Class c : thePlugInClass.getInterfaces()) {
-             		if((c.equals(ij.plugin.PlugIn.class)) || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
-             			thePlugInInstance = Class.forName(plugInName).newInstance();
-             			String args = "";
-             			((ij.plugin.PlugIn)thePlugInInstance).run(args);
-                 		break;
-                 	}else  if(c.equals(ij.plugin.filter.PlugInFilter.class)) {
-    
-                 		//first see if there is an active image
-                 		if (getActiveImageFrame() != null) {
-                 			ModelImage img = getActiveImageFrame().getImageA();
-                 			if(img.is2DImage()) {
-                 				
-                 				ImageProcessor ip = ModelImageToImageJConversion.convert2D(img);
-                 				thePlugInInstance = Class.forName(plugInName).newInstance();
-                 				((ij.plugin.filter.PlugInFilter)thePlugInInstance).run(ip);
-                 				
-                 			}else {
-                 				MipavUtil.displayError("This plugin only works on a 2D image");
-                 			}
-                 		}else {
-                 			MipavUtil.displayError("There must be an active image open to run this plugin");
-                 			return;
-                 		}
-                 		
-                 		/*ModelImage img = getActiveImageFrame().getImageA();
-                 		ImageStack is = ModelImageToImageJConversion.convert3D(img);
-                 		new ImagePlus("blah",is).show();*/
-                 	
-                 		break;
-                 	}
-             	}
-               
-                 
-             }catch(Exception e) {
-            	 e.printStackTrace();
-             }
-             
+            try {
+                thePlugInClass = Class.forName(plugInName);
+
+                for (Class c : thePlugInClass.getInterfaces()) {
+                    if ( (c.equals(ij.plugin.PlugIn.class))
+                            || (thePlugInClass.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
+                        thePlugInInstance = Class.forName(plugInName).newInstance();
+                        String args = "";
+                        ((ij.plugin.PlugIn) thePlugInInstance).run(args);
+                        break;
+                    } else if (c.equals(ij.plugin.filter.PlugInFilter.class)) {
+
+                        // first see if there is an active image
+                        if (getActiveImageFrame() != null) {
+                            ModelImage img = getActiveImageFrame().getImageA();
+                            if (img.is2DImage()) {
+
+                                ImageProcessor ip = ModelImageToImageJConversion.convert2D(img);
+                                thePlugInInstance = Class.forName(plugInName).newInstance();
+                                ((ij.plugin.filter.PlugInFilter) thePlugInInstance).run(ip);
+
+                            } else {
+                                MipavUtil.displayError("This plugin only works on a 2D image");
+                            }
+                        } else {
+                            MipavUtil.displayError("There must be an active image open to run this plugin");
+                            return;
+                        }
+
+                        /*
+                         * ModelImage img = getActiveImageFrame().getImageA(); ImageStack is =
+                         * ModelImageToImageJConversion.convert3D(img); new ImagePlus("blah",is).show();
+                         */
+
+                        break;
+                    }
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         } else if (command.equals("InstallPlugin")) {
             final JDialogInstallPlugin instPlugin = new JDialogInstallPlugin(mainFrame);
             instPlugin.setVisible(true);
@@ -785,127 +791,105 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             openingMenuBar.add(pluginsMenu, index);
             getMainFrame().pack();
 
-        } else if(command.equals("CompileAndRun")) {
-        	 JFileChooser chooser = new JFileChooser();
-        	 
-        	 chooser.setDialogTitle("Select all files that are associated with this plugin");
-		     chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-		     chooser.setMultiSelectionEnabled(true);
-		     int returnValue = chooser.showOpenDialog(this.getMainFrame());
-		     if (returnValue == JFileChooser.APPROVE_OPTION) {
-		    	 
-		    	 File[] files = chooser.getSelectedFiles();
-		    	 String[] filePaths = new String[files.length];
-		    	 for(int i=0;i<files.length;i++) {
-		    		 if(files[i].getName().endsWith(".java")) {
-		    			 filePaths[i] = files[i].getAbsolutePath();
-		    		 }
-		    	 }
-		    	 
-		    	 
-		    	 
-		    	
-		    	 		
-		    	 		String userPluginsDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-		                + "plugins" + File.separator;
-			        	com.sun.tools.javac.Main javac = new com.sun.tools.javac.Main();
+        } else if (command.equals("CompileAndRun")) {
+            JFileChooser chooser = new JFileChooser();
 
-			        	
-			        	Vector<String> v = new Vector<String>();
-			        	v.add("-d");
-			        	v.add(userPluginsDir);
-			        
-			        	for(int i=0;i<filePaths.length;i++) {
-			        		v.add(filePaths[i]);
-			        	}
-			        	
-			        	
-			        	String[] args = new String[v.size()];
-			        	v.copyInto((String[])args);
-			        	ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
+            chooser.setDialogTitle("Select all files that are associated with this plugin");
+            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+            chooser.setMultiSelectionEnabled(true);
+            int returnValue = chooser.showOpenDialog(this.getMainFrame());
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
 
-			     
-			        	boolean compiled = javac.compile(args, new PrintWriter(output)) == 0;
-			        	
-			        	if(compiled) {
-			        	    int index = openingMenuBar.getComponentIndex(pluginsMenu);
-			        		pluginsMenu = buildPlugInsMenu(this);
-			        		openingMenuBar.remove(index);
-			                openingMenuBar.add(pluginsMenu, index);
-			                getMainFrame().pack();
-			                getMainFrame().repaint();
-			                
-			                
-			                for(int i=0;i<filePaths.length;i++) {
-			                	String name = filePaths[i];
-			                	name = name.substring(name.lastIndexOf(File.separator)+1, name.lastIndexOf("."));
-			                	
-			                	Class<?>  plugin = null;
-				                try {
-				                	plugin = Class.forName(name);
-				                	
-				                	for(Class c : plugin.getInterfaces()) {
-			                    		if((c.equals(ij.plugin.PlugIn.class) || c.equals(ij.plugin.filter.PlugInFilter.class)) || (plugin.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class)) || c.equals(gov.nih.mipav.plugins.PlugInGeneric.class) || c.equals(gov.nih.mipav.plugins.PlugInAlgorithm.class)) {
+                File[] files = chooser.getSelectedFiles();
+                String[] filePaths = new String[files.length];
+                for (int i = 0; i < files.length; i++) {
+                    if (files[i].getName().endsWith(".java")) {
+                        filePaths[i] = files[i].getAbsolutePath();
+                    }
+                }
 
-			                    			
-			                    			Component[] comps = pluginsMenu.getMenuComponents();
-			                    			for(int m=0;m<comps.length;m++) {
-			                    				Component comp = comps[m];
-			                    				if(comp instanceof JMenu) {
-			                    						Component[] subComps = ((JMenu)comp).getMenuComponents();
-			                    						for(int k=0;k<subComps.length;k++) {
-			                    							Component subComp = subComps[k];
-			                    							if(comp instanceof JMenuItem) {
-			                    								String menuItemName = ((JMenuItem)subComp).getName();
-			                    								if(menuItemName.equals(name)) {
-			                    									ActionEvent e = new ActionEvent(((JMenuItem)subComp), 0, ((JMenuItem)subComp).getActionCommand());
-			                    			                        this.actionPerformed(e);
-			                    									return;
-			                    								}else {
-			                    									//try extracting Plugin from the name
-			                    									if(name.startsWith("PlugIn")) {
-			                    										name = name.substring(6, name.length());
-				                    									if(menuItemName.equals(name)) {
-					                    									ActionEvent e = new ActionEvent(((JMenuItem)subComp), 0, ((JMenuItem)subComp).getActionCommand());
-					                    			                        this.actionPerformed(e);
-					                    									return;
-				                    									}
-			                    									}
-			                    									
-			                    								}
-			                    							}
-			                    							
-			                    						}
-			                    					
-			                    				}
-			                    				
-			                    			}
-			                    			
-			                    			
-			                        		
-			                        	}
-			                    	}
-				                }catch(Exception e) {
-				                	
-				                	e.printStackTrace();
-				                	
-				                }
-			                }  
-			        	}else {
-			        		MipavUtil.displayError("Plugin Files did not compile :  " +  output.toString());
-			        		
-			        		
-			        	}
-			        	
-			        	
-		    	 	
-		    	 	
-		        	
-		     }
-        	 
-        	 
-        
-        }else if (command.equals("About")) {
+                String userPluginsDir = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+                        + "plugins" + File.separator;
+                com.sun.tools.javac.Main javac = new com.sun.tools.javac.Main();
+
+                Vector<String> v = new Vector<String>();
+                v.add("-d");
+                v.add(userPluginsDir);
+
+                for (int i = 0; i < filePaths.length; i++) {
+                    v.add(filePaths[i]);
+                }
+
+                String[] args = new String[v.size()];
+                v.copyInto((String[]) args);
+                ByteArrayOutputStream output = new ByteArrayOutputStream(4096);
+
+                boolean compiled = javac.compile(args, new PrintWriter(output)) == 0;
+
+                if (compiled) {
+                    int index = openingMenuBar.getComponentIndex(pluginsMenu);
+                    pluginsMenu = buildPlugInsMenu(this);
+                    openingMenuBar.remove(index);
+                    openingMenuBar.add(pluginsMenu, index);
+                    getMainFrame().pack();
+                    getMainFrame().repaint();
+
+                    for (int i = 0; i < filePaths.length; i++) {
+                        String name = filePaths[i];
+                        name = name.substring(name.lastIndexOf(File.separator) + 1, name.lastIndexOf("."));
+
+                        Class<?> plugin = null;
+                        try {
+                            plugin = Class.forName(name);
+
+                            if (JDialogInstallPlugin.isImageJPluginClass(plugin)) {
+                                Component[] comps = pluginsMenu.getMenuComponents();
+                                for (int m = 0; m < comps.length; m++) {
+                                    Component comp = comps[m];
+                                    if (comp instanceof JMenu) {
+                                        Component[] subComps = ((JMenu) comp).getMenuComponents();
+                                        for (int k = 0; k < subComps.length; k++) {
+                                            Component subComp = subComps[k];
+                                            if (comp instanceof JMenuItem) {
+                                                String menuItemName = ((JMenuItem) subComp).getName();
+                                                if (menuItemName.equals(name)) {
+                                                    ActionEvent e = new ActionEvent( ((JMenuItem) subComp), 0,
+                                                            ((JMenuItem) subComp).getActionCommand());
+                                                    this.actionPerformed(e);
+                                                    return;
+                                                } else {
+                                                    // try extracting Plugin from the name
+                                                    if (name.startsWith("PlugIn")) {
+                                                        name = name.substring(6, name.length());
+                                                        if (menuItemName.equals(name)) {
+                                                            ActionEvent e = new ActionEvent( ((JMenuItem) subComp), 0,
+                                                                    ((JMenuItem) subComp).getActionCommand());
+                                                            this.actionPerformed(e);
+                                                            return;
+                                                        }
+                                                    }
+
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
+
+                        }
+                    }
+                } else {
+                    MipavUtil.displayError("Plugin Files did not compile :  " + output.toString());
+
+                }
+
+            }
+
+        } else if (command.equals("About")) {
             about();
         } else if (command.equals("License")) {
             showLicense();
@@ -923,7 +907,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             imageRegistryMonitoring();
         } else if (command.equals("Options")) {
             options();
-            if ( event.getSource().equals(btnGpuComp) || event.getSource().equals(btnMultiCore)) {
+            if (event.getSource().equals(btnGpuComp) || event.getSource().equals(btnMultiCore)) {
                 optionsDialog.showPane("Other");
             }
         } else if (command.equals("Shortcuts")) {
@@ -955,21 +939,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("loadEG_FA")) {
             new JDialogDTIInput(JDialogDTIInput.EG_FA);
         } else if (command.equals("loadDTIFrame")) {
-        	JPanelDTIVisualization.createFrame();
+            JPanelDTIVisualization.createFrame();
         } else if (command.equals("createListFile")) {
             new JDialogDTICreateListFile();
-        }else if (command.equals("dtiPipeline")) { 
+        } else if (command.equals("dtiPipeline")) {
             new DTIPipeline();
-        }else if (command.equals("dtiColor")) { 
-            new DTIColorDisplay(true);    
+        } else if (command.equals("dtiColor")) {
+            new DTIColorDisplay(true);
         } else if (command.equals("estimateTensor")) {
             new JDialogDTIEstimateTensor();
-        /*} else if (command.equals("fiberTracking")) {
-            JPanelDTIFiberTracking.createFrame();
-        } else if (command.equals("dtiVisualization")) {
-        	JPanelDTIVisualization.createFrame();*/
+            /*
+             * } else if (command.equals("fiberTracking")) { JPanelDTIFiberTracking.createFrame(); } else if
+             * (command.equals("dtiVisualization")) { JPanelDTIVisualization.createFrame();
+             */
         } else if (command.equals("HyperGraph")) {
-        	new JDialogHyperGraph(null, null);
+            new JDialogHyperGraph(null, null);
         } else if (command.equals("treT1")) {
             if (getActiveImageFrame() != null) {
                 new JDialogTreT1(getActiveImageFrame(), getActiveImageFrame().getActiveImage());
@@ -985,7 +969,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("LogSlope")) {
             new JDialogLogSlopeMapping();
         } else if (command.equals("KMeans")) {
-        	new JDialogKMeans();
+            new JDialogKMeans();
         }
 
     }
@@ -1011,7 +995,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             fileInfo.setEndianess(false);
             fileInfo.setOffset(0);
         }
-        
+
         return createBlankImage(fileInfo);
     }
 
@@ -1021,16 +1005,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param voi VOI
      * @deprecated
      */
-    public void copyClippedVOIs( ViewVOIVector copyList) {
+    public void copyClippedVOIs(ViewVOIVector copyList) {
         clearClippedVOIs();
-        for ( int i = 0; i < copyList.size(); i++ )
-        {
-            clippedVOIs.add( copyList.get(i) );
+        for (int i = 0; i < copyList.size(); i++) {
+            clippedVOIs.add(copyList.get(i));
         }
     }
-    
-    public void copyVOIs( Vector<VOIBase> copyList )
-    {
+
+    public void copyVOIs(Vector<VOIBase> copyList) {
         copyVOIList = copyList;
     }
 
@@ -1039,17 +1021,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param voi the voi
      * @param slice slice number
-     * @param scannerPts a vector of all the VOI's points pre-converted to scanner coordinates
-    public void addClippedScannerVOI(final VOI voi, final int slice, final Vector<Vector3f> scannerPts) {
-
-        if (isClippedVOI2D == true) {
-            clearClippedVOIs();
-            isClippedVOI2D = false;
-        }
-
-        this.clippedVOIs.add(voi);
-        this.clippedScannerVectors.add(scannerPts);
-    }
+     * @param scannerPts a vector of all the VOI's points pre-converted to scanner coordinates public void
+     *            addClippedScannerVOI(final VOI voi, final int slice, final Vector<Vector3f> scannerPts) {
+     * 
+     * if (isClippedVOI2D == true) { clearClippedVOIs(); isClippedVOI2D = false; }
+     * 
+     * this.clippedVOIs.add(voi); this.clippedScannerVectors.add(scannerPts); }
      */
 
     /**
@@ -1087,9 +1064,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         new JDialogDicomDir(this.getMainFrame());
     }
-    
-
-
 
     /**
      * Builds menus for the User Interface.
@@ -1150,22 +1124,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final JMenu menu = menuBuilder.makeMenu("Plugins", 'P', false, new JComponent[] {});
 
         final File pluginsDir = new File(userPlugins);
-        File[] allFiles  = new File[0];
-        if (pluginsDir.isDirectory()||(secondaryPluginsDir != null && secondaryPluginsDir.isDirectory())) {
-        		if(pluginsDir.isDirectory()) {
-		        		allFiles = pluginsDir.listFiles(new FileFilter() {
-		                public boolean accept(final File f) {
-		
-		                    if (f.getPath().endsWith(".class")) {
-		                        return true;
-		                    }
-		                    return false;
-		                }
-		            });
-        		}
-            
-            if(secondaryPluginsDir != null) {
-            	File[] secondaryFiles = secondaryPluginsDir.listFiles(new FileFilter() {
+        File[] allFiles = new File[0];
+        if (pluginsDir.isDirectory() || (secondaryPluginsDir != null && secondaryPluginsDir.isDirectory())) {
+            if (pluginsDir.isDirectory()) {
+                allFiles = pluginsDir.listFiles(new FileFilter() {
                     public boolean accept(final File f) {
 
                         if (f.getPath().endsWith(".class")) {
@@ -1174,16 +1136,28 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         return false;
                     }
                 });
-            	
-            	File[] allFilesInterm = new File[allFiles.length + secondaryFiles.length];
-            	int counter = 0;
-            	for(int i=0;i<allFiles.length;i++,counter++) {
-            		allFilesInterm[counter] = allFiles[i];
-            	}
-            	for(int i=0;i<secondaryFiles.length;i++,counter++) {
-            		allFilesInterm[counter] = secondaryFiles[i];
-            	}
-            	allFiles = allFilesInterm;
+            }
+
+            if (secondaryPluginsDir != null) {
+                File[] secondaryFiles = secondaryPluginsDir.listFiles(new FileFilter() {
+                    public boolean accept(final File f) {
+
+                        if (f.getPath().endsWith(".class")) {
+                            return true;
+                        }
+                        return false;
+                    }
+                });
+
+                File[] allFilesInterm = new File[allFiles.length + secondaryFiles.length];
+                int counter = 0;
+                for (int i = 0; i < allFiles.length; i++, counter++) {
+                    allFilesInterm[counter] = allFiles[i];
+                }
+                for (int i = 0; i < secondaryFiles.length; i++, counter++) {
+                    allFilesInterm[counter] = secondaryFiles[i];
+                }
+                allFiles = allFilesInterm;
             }
 
             String name, pluginName;
@@ -1195,21 +1169,19 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             for (final File allFile : allFiles) {
                 JMenu currentMenu = menu;
                 name = allFile.getName();
-           
 
                 try {
                     name = name.substring(0, name.indexOf(".class"));
-                    if(name.startsWith("PlugIn")) {
-                    	pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
-                    }else {
-                    	pluginName = name;
+                    if (name.startsWith("PlugIn")) {
+                        pluginName = name.substring(name.indexOf("PlugIn") + 6, name.length());
+                    } else {
+                        pluginName = name;
                     }
 
                 } catch (final Exception e) {
                     pluginName = name;
                 }
                 try {
-
 
                     plugin = Class.forName(name);
 
@@ -1232,27 +1204,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     String[] hier = null;
                     boolean isImageJPlugin = false;
                     try {
-                    	catField = plugin.getField(catName);
-                    	 hier = (String[]) catField.get(plugin);
-                    }catch(NoSuchFieldException e1) {
-                    	for(Class c : plugin.getInterfaces()) {
-                    		if((c.equals(ij.plugin.PlugIn.class) || c.equals(ij.plugin.filter.PlugInFilter.class)) || (plugin.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class))) {
-                        		isImageJPlugin = true;
-                        		hier = new String[]{"ImageJ"};
-                        		break;
-                        	}
-                    	}
-               
-                    
-                    	/*if( plugin.getSuperclass().equals(ij.plugin.frame.PlugInFrame.class)) {
-                    		isImageJPlugin = true;
-                    		hier = new String[]{"ImageJ"};
-                    		break;
-                    	}*/
-                    	
+                        catField = plugin.getField(catName);
+                        hier = (String[]) catField.get(plugin);
+                    } catch (NoSuchFieldException e1) {
+                        if (JDialogInstallPlugin.isImageJPluginClass(plugin)) {
+                            isImageJPlugin = true;
+                            hier = new String[] {"ImageJ"};
+                        }
                     }
-                   
-                    
+
                     for (final String element : hier) {
                         final Component[] subComp = currentMenu.getMenuComponents();
                         boolean subExists = false;
@@ -1269,36 +1229,33 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             currentMenu = newMenu;
                         }
                     }
-                    String interName  = "";
-                    if(!isImageJPlugin) {
-	                    final Class<?>[] interList = plugin.getInterfaces();
-	                
-	
-	                    // find the interface name that determines the type of plugin
-	                    for (final Class<?> element : interList) {
-	                        if (element.getName().contains("PlugIn") && !element.getName().contains("BundledPlugInInfo")) {
-	                            interName = element.getName().substring(element.getName().indexOf("PlugIn"));
-	                        }
-	                    }
-	
-	                    if (interName.length() == 0 && plugin.getSuperclass() != null) {
-	                        interName = getSuperInterfaces(plugin.getSuperclass());
-	                    }
-	           
-                    }else {
-                    	interName = "PlugInImageJ";
+                    String interName = "";
+                    if ( !isImageJPlugin) {
+                        final Class<?>[] interList = plugin.getInterfaces();
+
+                        // find the interface name that determines the type of plugin
+                        for (final Class<?> element : interList) {
+                            if (element.getName().contains("PlugIn")
+                                    && !element.getName().contains("BundledPlugInInfo")) {
+                                interName = element.getName().substring(element.getName().indexOf("PlugIn"));
+                            }
+                        }
+
+                        if (interName.length() == 0 && plugin.getSuperclass() != null) {
+                            interName = getSuperInterfaces(plugin.getSuperclass());
+                        }
+
+                    } else {
+                        interName = "PlugInImageJ";
                     }
-                    
-                    
-	                    if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
-	                        final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
-	                                + pluginName, 0, al, null, false);
-	                        pluginMenuItem.setName(pluginName);
-	                        pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
-	                        currentMenu.add(pluginMenuItem);
-	                    }
-	                   
-                    
+
+                    if ( ! (al instanceof ViewUserInterface && interName.equals("PlugInAlgorithm"))) {
+                        final JMenuItem pluginMenuItem = ViewMenuBuilder.buildMenuItem(pluginName, interName
+                                + pluginName, 0, al, null, false);
+                        pluginMenuItem.setName(pluginName);
+                        pluginMenuItem.addMouseListener(ViewJPopupPlugin.getReference());
+                        currentMenu.add(pluginMenuItem);
+                    }
 
                 } catch (final ClassNotFoundException e) {
 
@@ -1309,7 +1266,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     // e.printStackTrace();
                 } catch (final NoClassDefFoundError e) {
                     // components of some classes may no longer exist in the classpath.
-                 
+
                 }
             }
         }
@@ -1325,9 +1282,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         menu.add(menuBuilder.buildMenuItem("Uninstall plugin", "UninstallPlugin", 0, null, false));
 
         menu.add(menuBuilder.buildMenuItem("Compile and run...", "CompileAndRun", 0, null, false));
-        
-        
-        
+
         return menu;
     }
 
@@ -1430,6 +1385,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /**
      * DOCUMENT ME!
+     * 
      * @deprecated
      */
     public void clearClippedVOIs() {
@@ -1446,7 +1402,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public ModelImage createBlankImage(FileInfoBase fileInfo) {
         return createBlankImage(fileInfo, true);
     }
-    
+
     /**
      * Creates a blank Image based on the information found in the fileInfo object.
      * 
@@ -1498,22 +1454,20 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
 
         try {
-            if(doDisplay) {
+            if (doDisplay) {
                 new ViewJFrameImage(image, null, getNewFrameLocation(image.getExtents()[0], image.getExtents()[1]));
             }
         } catch (final OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory");
-            
+
             return null;
         }
 
         ProvenanceRecorder.getReference().addLine(new ActionCreateBlankImage(image));
         ScriptRecorder.getReference().addLine(new ActionCreateBlankImage(image));
-        
+
         return image;
     }
-    
-    
 
     /**
      * Toggles the display of the Output window and updates all JFrameImages so that the menu checkbox will reflect the
@@ -1592,13 +1546,14 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /**
      * Returns the VOIs copied into the clip board. For copying and pasting VOIs between images.
+     * 
      * @return Vector<VOIBase>
      * @deprecated
      */
     public ViewVOIVector getClippedVOIs() {
         return this.clippedVOIs;
     }
-    
+
     public Vector<VOIBase> getCopyVOIs() {
         return this.copyVOIList;
     }
@@ -1623,10 +1578,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         final String str = Preferences.getProperty(Preferences.PREF_IMAGE_DIR);
 
         if (str != null) {
-        	if (str.charAt(str.length()-1) != File.separatorChar) {
-        		final String str2 = str +  File.separatorChar;
-        		return str2;
-        	}
+            if (str.charAt(str.length() - 1) != File.separatorChar) {
+                final String str2 = str + File.separatorChar;
+                return str2;
+            }
             return str;
         } else {
             return (System.getProperties().getProperty("user.dir"));
@@ -1766,65 +1721,56 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public Dimension getNewFrameLocation(int newImageXDim, int newImageYDim) {
 
-    	if(Preferences.is(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT)) {
-    		Vector<Frame> imageFrames = getImageFrameVector();
+        if (Preferences.is(Preferences.PREF_OPEN_IMAGES_IN_TILED_FORMAT)) {
+            Vector<Frame> imageFrames = getImageFrameVector();
 
             if (imageFrames.size() < 1) {
-            	frameLocation.width = 50;
+                frameLocation.width = 50;
                 frameLocation.height = 300;
                 numTileSheets = 0;
             } else {
-            	Frame lastFrame = imageFrames.get(0);
-            	int lastFrameWidth = lastFrame.getWidth();
-            	frameLocation.width = frameLocation.width + lastFrameWidth + 10;
-            	int maxHeight = 0;
-            	 if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
-            		 frameLocation.width = 50 + (numTileSheets * 20);
-            		 //for height, we need to get the biggest frame height and add 10 to it
-            		 int size = imageFrames.size();
-            		 for(int i=0;i<size;i++) {
-                 		Frame frame = imageFrames.get(i);
-                 		if(frame.getHeight() > maxHeight) {
-                 			maxHeight = frame.getHeight();
-                 		}
-                 	  }
-              		frameLocation.height = frameLocation.height + maxHeight + 10;
-              		if(frameLocation.height + newImageYDim + 50 > Toolkit.getDefaultToolkit().getScreenSize().height) {
-              			numTileSheets = numTileSheets + 1;
-              			frameLocation.width = 50 + (numTileSheets * 20);
-              			frameLocation.height = 300 + (numTileSheets * 20);
-              		} 
-            	 }
-               
-            }
-    	}else {
-    		Vector<Frame> imageFrames = getImageFrameVector();
-    		 if (imageFrames.size() < 1) {
-             	 frameLocation.width = 50;
-                 frameLocation.height = 300;
-             } else {
-            	 frameLocation.width += 100;
-                 frameLocation.height += 20;
+                Frame lastFrame = imageFrames.get(0);
+                int lastFrameWidth = lastFrame.getWidth();
+                frameLocation.width = frameLocation.width + lastFrameWidth + 10;
+                int maxHeight = 0;
+                if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
+                    frameLocation.width = 50 + (numTileSheets * 20);
+                    // for height, we need to get the biggest frame height and add 10 to it
+                    int size = imageFrames.size();
+                    for (int i = 0; i < size; i++) {
+                        Frame frame = imageFrames.get(i);
+                        if (frame.getHeight() > maxHeight) {
+                            maxHeight = frame.getHeight();
+                        }
+                    }
+                    frameLocation.height = frameLocation.height + maxHeight + 10;
+                    if (frameLocation.height + newImageYDim + 50 > Toolkit.getDefaultToolkit().getScreenSize().height) {
+                        numTileSheets = numTileSheets + 1;
+                        frameLocation.width = 50 + (numTileSheets * 20);
+                        frameLocation.height = 300 + (numTileSheets * 20);
+                    }
+                }
 
-                 if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
-                     frameLocation.width = 50;
-                     frameLocation.height = 280;
-                 } else if ( (frameLocation.height + newImageYDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().height) {
-                     frameLocation.width = 50;
-                     frameLocation.height = 280;
-                 }
-             }
-    		
-    		
-    	}
-    	 
-    	
-    	
-    	
-    	
-    	
-    	
-        
+            }
+        } else {
+            Vector<Frame> imageFrames = getImageFrameVector();
+            if (imageFrames.size() < 1) {
+                frameLocation.width = 50;
+                frameLocation.height = 300;
+            } else {
+                frameLocation.width += 100;
+                frameLocation.height += 20;
+
+                if ( (frameLocation.width + newImageXDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().width) {
+                    frameLocation.width = 50;
+                    frameLocation.height = 280;
+                } else if ( (frameLocation.height + newImageYDim + 50) > Toolkit.getDefaultToolkit().getScreenSize().height) {
+                    frameLocation.width = 50;
+                    frameLocation.height = 280;
+                }
+            }
+
+        }
 
         return frameLocation;
     }
@@ -1905,7 +1851,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (imageHashtable.containsKey(name)) {
             return imageHashtable.get(name);
         } else {
-            throw new IllegalArgumentException("Image name "+name+"is not valid.");
+            throw new IllegalArgumentException("Image name " + name + "is not valid.");
             // return null;
         }
     } // end getRegisteredImageByName()
@@ -2020,7 +1966,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         // initMacintoshJDKversionCheck();
 
         initCreateMessageBar();
-        initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV) - v" + MipavUtil.getVersion(), "MIPAV: ");
+        initSetTitles("Medical Image Processing, Analysis & Visualization (MIPAV) - v" + MipavUtil.getVersion(),
+                "MIPAV: ");
         initDicomReceiver();
 
         mainFrame.pack();
@@ -2042,12 +1989,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Whether or not the VOI is a 2D (true = 2d, false = 3d+).
      * 
-     * @return DOCUMENT ME!
-    public boolean isClippedVOI2D() {
-        return this.isClippedVOI2D;
-    }
+     * @return DOCUMENT ME! public boolean isClippedVOI2D() { return this.isClippedVOI2D; }
      */
-    
+
     /**
      * Indicates if the image hashtable is empty.
      * 
@@ -2057,7 +2001,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public boolean isImageHashtableEmpty() {
         return imageHashtable.isEmpty();
-    
+
     } // end isImageHashtableEmpty()
 
     /**
@@ -2071,7 +2015,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     public boolean isImageRegistered(final String imageName) {
         return imageHashtable.containsKey(imageName);
-    
+
     } // end isImageRegistered()
 
     /**
@@ -2113,10 +2057,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /**
      * Whether or not the VOI is a 2D (true = 2d, false = 3d+).
      * 
-     * @return DOCUMENT ME!
-    public boolean isClippedVOI2D() {
-        return this.isClippedVOI2D;
-    }
+     * @return DOCUMENT ME! public boolean isClippedVOI2D() { return this.isClippedVOI2D; }
      */
 
     /**
@@ -2187,32 +2128,28 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         memoryFrame = new ViewJFrameMemory();
     }
-    
-    
+
     /**
      * this method closes all registered images
      */
     public void closeAllImages() {
 
-    	Enumeration<String> e = ViewUserInterface.getReference().getRegisteredImageNames();
+        Enumeration<String> e = ViewUserInterface.getReference().getRegisteredImageNames();
 
-         while (e.hasMoreElements()) {
-             deleteItem((String)e.nextElement(),true);
-         }
-         
-         
-    	
+        while (e.hasMoreElements()) {
+            deleteItem((String) e.nextElement(), true);
+        }
+
     }
-    
-    
-    
+
     /**
-     * Deletes the item specified by name.  If false, only the model image is deleted
+     * Deletes the item specified by name. If false, only the model image is deleted
+     * 
      * @param name the object to delete
      * @param deleteFrame whether the frame should be deleted along with the image
      */
     private void deleteItem(String name, boolean deleteFrame) {
-    	// System.out.println("selected name = " + selectedName);
+        // System.out.println("selected name = " + selectedName);
         if (name == null) {
             return; // log nothing.
         }
@@ -2222,29 +2159,26 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             ViewJFrameImage frame = ViewUserInterface.getReference().getFrameContainingImage(image);
 
             // An image that has a frame is only deleted when deleteFrame == true
-            if (image != null && 
-            		((deleteFrame && frame != null) || (!deleteFrame && frame == null))) {
+            if (image != null && ( (deleteFrame && frame != null) || ( !deleteFrame && frame == null))) {
                 image.disposeLocal();
-                
-                if(deleteFrame && frame != null) {
-                	frame.close();
+
+                if (deleteFrame && frame != null) {
+                    frame.close();
                 }
             }
-            
+
             Runtime.getRuntime().gc();
             Runtime.getRuntime().runFinalization();
         } catch (IllegalArgumentException iae) {
 
             // MipavUtil.displayError("There was a problem with the " +
             // "supplied name.\n" );
-            Preferences.debug("Illegal Argument Exception in " +
-                              "ViewJFrameRegisteredImages when clicking on Delete. " +
-                              "Somehow the Image list sent an incorrect name to " +
-                              "the image image hashtable.  \n" + iae.getMessage() + "\n", 1);
+            Preferences.debug("Illegal Argument Exception in " + "ViewJFrameRegisteredImages when clicking on Delete. "
+                    + "Somehow the Image list sent an incorrect name to " + "the image image hashtable.  \n"
+                    + iae.getMessage() + "\n", 1);
             // System.out.println("Bad argument.");
         }
     }
-    
 
     /**
      * This method opens an image and puts it into a frame.
@@ -2470,8 +2404,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * Required by the CommandLineParser interface. Processes MIPAV command line arguments that require
-     * MIPAV to have already been initialized. Returns the next argument to be processed (finished if returns args.length)
+     * Required by the CommandLineParser interface. Processes MIPAV command line arguments that require MIPAV to have
+     * already been initialized. Returns the next argument to be processed (finished if returns args.length)
      */
     public int parseArguments(final String[] args, final int initArg) {
         int i = 0, j, idx, index;
@@ -2488,7 +2422,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         if (args.length == 0) {
             return args.length;
         }
-        
 
         // show the arguments
         System.err.println("Command line argument list:");
@@ -2500,7 +2433,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             Preferences.debug("argument[" + i + "]= " + args[i] + "\n");
 
         }
-        
+
         // special case: if there is only one argument, treat it as an image file name (unless it starts with a -)
         if (args.length == 1) {
 
@@ -2562,48 +2495,56 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         }
 
-        
-
         i = 0;
 
         int voiIdx = 0, imgIdx = 0;
         boolean isMulti;
         File checkFile;
 
-parse:  while (i < args.length) {
+        parse: while (i < args.length) {
             arg = args[i];
 
             if (arg.startsWith("-")) {
 
-                //parse commands which require an initialized mipav
+                // parse commands which require an initialized mipav
                 InstanceArgument c = InstanceArgument.getCommand(arg);
-                if(c == null) {
+                if (c == null) {
                     i++;
                     continue parse;
                 }
-                
-                switch(c) {
-                
-                case Image:
-                case MultiImage:
-                    isMulti = arg.equalsIgnoreCase("-m");
 
-                    // System.out.println("imageName = " + args[i+1]);
-                    voiFollowImage = true;
-                    voiIdx = 0;
+                switch (c) {
 
-                    final String imgName = args[ ++i];
-                    index = imgName.lastIndexOf(File.separatorChar);
+                    case Image:
+                    case MultiImage:
+                        isMulti = arg.equalsIgnoreCase("-m");
 
-                    if (index < 0) {
-                        // only the image name was provided
-                        // if the user provided defaultDir, first check to see if the file is there
-                        // otherwise try to find the image under user.dir property
-                        // if still not there, print usage and exit...since file was not found
-                        if (isProvidedUserDefaultDir()) {
-                            checkFile = new File(userDefaultDir + File.separator + imgName);
-                            if (checkFile.exists()) {
-                                setDefaultDirectory(userDefaultDir);
+                        // System.out.println("imageName = " + args[i+1]);
+                        voiFollowImage = true;
+                        voiIdx = 0;
+
+                        final String imgName = args[ ++i];
+                        index = imgName.lastIndexOf(File.separatorChar);
+
+                        if (index < 0) {
+                            // only the image name was provided
+                            // if the user provided defaultDir, first check to see if the file is there
+                            // otherwise try to find the image under user.dir property
+                            // if still not there, print usage and exit...since file was not found
+                            if (isProvidedUserDefaultDir()) {
+                                checkFile = new File(userDefaultDir + File.separator + imgName);
+                                if (checkFile.exists()) {
+                                    setDefaultDirectory(userDefaultDir);
+                                } else {
+                                    checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
+                                    if (checkFile.exists()) {
+                                        setDefaultDirectory(System.getProperty("user.dir"));
+                                    } else {
+                                        Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                        System.out.println("Can not find " + imgName);
+                                        printUsageAndExit(c);
+                                    }
+                                }
                             } else {
                                 checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
                                 if (checkFile.exists()) {
@@ -2614,37 +2555,37 @@ parse:  while (i < args.length) {
                                     printUsageAndExit(c);
                                 }
                             }
+                            imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
                         } else {
-                            checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
-                            if (checkFile.exists()) {
-                                setDefaultDirectory(System.getProperty("user.dir"));
-                            } else {
-                                Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                System.out.println("Can not find " + imgName);
-                                printUsageAndExit(c);
-                            }
-                        }
-                        imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
-                    } else {
-                        // either relative path or absolute path was provided
-                        final String dir = imgName.substring(0, index + 1);
-                        final String name = imgName.substring(index + 1);
-                        checkFile = new File(imgName);
-                        if (checkFile.isAbsolute()) {
-                            if (checkFile.exists()) {
-                                imageList.add(new OpenFileInfo(dir, name, isMulti));
-                            } else {
-                                Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                System.out.println("Can not find " + imgName);
-                                printUsageAndExit(c);
-                            }
-                        } else {
-                            if (isProvidedUserDefaultDir()) {
-                                checkFile = new File(userDefaultDir + File.separator + imgName);
+                            // either relative path or absolute path was provided
+                            final String dir = imgName.substring(0, index + 1);
+                            final String name = imgName.substring(index + 1);
+                            checkFile = new File(imgName);
+                            if (checkFile.isAbsolute()) {
                                 if (checkFile.exists()) {
-                                    setDefaultDirectory(userDefaultDir);
-                                    imageList
-                                            .add(new OpenFileInfo(userDefaultDir + File.separator + dir, name, isMulti));
+                                    imageList.add(new OpenFileInfo(dir, name, isMulti));
+                                } else {
+                                    Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                    System.out.println("Can not find " + imgName);
+                                    printUsageAndExit(c);
+                                }
+                            } else {
+                                if (isProvidedUserDefaultDir()) {
+                                    checkFile = new File(userDefaultDir + File.separator + imgName);
+                                    if (checkFile.exists()) {
+                                        setDefaultDirectory(userDefaultDir);
+                                        imageList.add(new OpenFileInfo(userDefaultDir + File.separator + dir, name,
+                                                isMulti));
+                                    } else {
+                                        checkFile = new File(imgName);
+                                        if (checkFile.exists()) {
+                                            imageList.add(new OpenFileInfo(dir, name, isMulti));
+                                        } else {
+                                            Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                            System.out.println("Can not find " + imgName);
+                                            printUsageAndExit(c);
+                                        }
+                                    }
                                 } else {
                                     checkFile = new File(imgName);
                                     if (checkFile.exists()) {
@@ -2655,124 +2596,119 @@ parse:  while (i < args.length) {
                                         printUsageAndExit(c);
                                     }
                                 }
-                            } else {
-                                checkFile = new File(imgName);
-                                if (checkFile.exists()) {
-                                    imageList.add(new OpenFileInfo(dir, name, isMulti));
-                                } else {
-                                    Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                    System.out.println("Can not find " + imgName);
-                                    printUsageAndExit(c);
-                                }
+
                             }
 
                         }
+                        // imageFileNames.add(args[++i]);
+                        break;
 
-                    }
-                    // imageFileNames.add(args[++i]);
-                    break;
-                    
-                case RawImage:
-                    // this is for specifying raw image parameters
-                    final String rawString = args[ ++i];
+                    case RawImage:
+                        // this is for specifying raw image parameters
+                        final String rawString = args[ ++i];
 
-                    // set the openfileinfo's rawInfo variable (for raw instructions)
-                    imageList.lastElement().setRawImageInfo(new RawImageInfo(rawString));
-                    break;
-                    
-                case Hide:
-                    isAppFrameVisible = false;
-                    break;
-                    
-                case Script:
-                    // System.out.println("script name = " + args[i+1]);
-                    scriptFile = args[ ++i];
-                    break;
-                    
-                case Voi:
-                    String voiName = args[ ++i];
-                    index = voiName.lastIndexOf(File.separatorChar);
+                        // set the openfileinfo's rawInfo variable (for raw instructions)
+                        imageList.lastElement().setRawImageInfo(new RawImageInfo(rawString));
+                        break;
 
-                    if (index < 0) {
-                        voiName = this.getDefaultScriptDirectory() + File.separatorChar + voiName;
-                    }
+                    case Hide:
+                        isAppFrameVisible = false;
+                        break;
 
-                    voiPerImages.add(voiName);
+                    case Script:
+                        // System.out.println("script name = " + args[i+1]);
+                        scriptFile = args[ ++i];
+                        break;
 
-                    if (voiFollowImage) {
-                        voiIdx++;
+                    case Voi:
+                        String voiName = args[ ++i];
+                        index = voiName.lastIndexOf(File.separatorChar);
 
-                        if (voiIdx == voiCount[imgIdx]) {
-                            voiList.add(voiPerImages);
-                            imgIdx++;
-                            voiFollowImage = false;
-                            voiPerImages = new Vector<String>();
+                        if (index < 0) {
+                            voiName = this.getDefaultScriptDirectory() + File.separatorChar + voiName;
                         }
-                    }
-                    break;
-                    
-                case SavedImageName:
-                    String varValue = args[ ++i];
-                    Preferences.debug("cmd var:\tDefining parameter variable value from -o arg "
-                            + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n", Preferences.DEBUG_SCRIPTING);
-                    VariableTable.getReference().storeVariable(ActionSaveBase.SAVE_FILE_NAME, varValue);
-                    break;
-                    
-                case ScriptVariable:
-                    final String varName = args[ ++i];
-                    varValue = args[ ++i];
-                    Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue
-                            + "\n", Preferences.DEBUG_SCRIPTING);
-                    VariableTable.getReference().storeVariable(varName, varValue);
-                    break;
-                    
-                case Plugin:
-                    Object thePlugIn = null;
 
-                    // grab the plugin name
-                    final String plugInName = args[ ++i];
-                    // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+                        voiPerImages.add(voiName);
 
-                    try {
-                        thePlugIn = Class.forName(plugInName).newInstance();
+                        if (voiFollowImage) {
+                            voiIdx++;
 
-                        //some plugins can now process command line arguments, can also control next command to be read
-                        //once processing is complete
-                        if(thePlugIn instanceof CommandLineParser) {
-                            //plugin is given cursor position immediately after plugin name, but this can change
-                            i = ((CommandLineParser) thePlugIn).parseArguments(args, ++i);
+                            if (voiIdx == voiCount[imgIdx]) {
+                                voiList.add(voiPerImages);
+                                imgIdx++;
+                                voiFollowImage = false;
+                                voiPerImages = new Vector<String>();
+                            }
                         }
-                        
-                        if (thePlugIn instanceof PlugInGeneric) {
-                            // don't exit on an error (instead show the error dialog)
-                            setPlugInFrameVisible(true);
-                            setExitCmdLineOnError(false);
+                        break;
 
-                            ((PlugInGeneric) thePlugIn).run();
-                        } else {
-                            MipavUtil.displayError("Plugin " + plugInName
-                                    + " must implement the PlugInGeneric interface in order to be run from the command line.");
+                    case SavedImageName:
+                        String varValue = args[ ++i];
+                        Preferences
+                                .debug("cmd var:\tDefining parameter variable value from -o arg "
+                                        + ActionSaveBase.SAVE_FILE_NAME + " -> " + varValue + "\n",
+                                        Preferences.DEBUG_SCRIPTING);
+                        VariableTable.getReference().storeVariable(ActionSaveBase.SAVE_FILE_NAME, varValue);
+                        break;
+
+                    case ScriptVariable:
+                        final String varName = args[ ++i];
+                        varValue = args[ ++i];
+                        Preferences.debug("cmd var:\tDefining parameter variable value " + varName + " -> " + varValue
+                                + "\n", Preferences.DEBUG_SCRIPTING);
+                        VariableTable.getReference().storeVariable(varName, varValue);
+                        break;
+
+                    case Plugin:
+                        Object thePlugIn = null;
+
+                        // grab the plugin name
+                        final String plugInName = args[ ++i];
+                        // String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+
+                        try {
+                            thePlugIn = Class.forName(plugInName).newInstance();
+
+                            // some plugins can now process command line arguments, can also control next command to be
+                            // read
+                            // once processing is complete
+                            if (thePlugIn instanceof CommandLineParser) {
+                                // plugin is given cursor position immediately after plugin name, but this can change
+                                i = ((CommandLineParser) thePlugIn).parseArguments(args, ++i);
+                            }
+
+                            if (thePlugIn instanceof PlugInGeneric) {
+                                // don't exit on an error (instead show the error dialog)
+                                setPlugInFrameVisible(true);
+                                setExitCmdLineOnError(false);
+
+                                ((PlugInGeneric) thePlugIn).run();
+                            } else {
+                                MipavUtil
+                                        .displayError("Plugin "
+                                                + plugInName
+                                                + " must implement the PlugInGeneric interface in order to be run from the command line.");
+                            }
+                        } catch (final ClassNotFoundException e) {
+                            MipavUtil.displayError("PlugIn not found: " + plugInName);
+                            printUsageAndExit(c);
+                        } catch (final InstantiationException e) {
+                            MipavUtil.displayError("Unable to load plugin (ins)");
+                            printUsageAndExit(c);
+                        } catch (final IllegalAccessException e) {
+                            MipavUtil.displayError("Unable to load plugin (acc)");
+                            printUsageAndExit(c);
                         }
-                    } catch (final ClassNotFoundException e) {
-                        MipavUtil.displayError("PlugIn not found: " + plugInName);
-                        printUsageAndExit(c);
-                    } catch (final InstantiationException e) {
-                        MipavUtil.displayError("Unable to load plugin (ins)");
-                        printUsageAndExit(c);
-                    } catch (final IllegalAccessException e) {
-                        MipavUtil.displayError("Unable to load plugin (acc)");
-                        printUsageAndExit(c);
-                    }
-                    break;
+                        break;
                 }
-            } 
+            }
             i++;
         }
 
         // scriptFile may be null if we don't have a script to run (e.g., if we just want to open images/vois specified
         // on cmd line)
         runCmdLine(scriptFile, imageList, voiList);
-        
+
         return args.length;
     }
 
@@ -2918,7 +2854,7 @@ parse:  while (i < args.length) {
      * Sets the menu for the main frame.
      */
     public void setControls() {
-        if(mainFrame != null) {
+        if (mainFrame != null) {
             mainFrame.setJMenuBar(openingMenuBar);
             mainFrame.pack();
         }
@@ -3084,7 +3020,7 @@ parse:  while (i < args.length) {
      */
     public void setTitle(final String str) {
         if (getAppTitle() != null) {
-            mainFrame.setTitle(getAppTitle()  + "     " + str);
+            mainFrame.setTitle(getAppTitle() + "     " + str);
         } else {
             mainFrame.setTitle(str);
         }
@@ -3117,20 +3053,17 @@ parse:  while (i < args.length) {
      * 
      * @param doXOR boolean use XOR for VOIs
      */
-   /* public void setUseVOIXOR(final boolean doXOR) {
-        Preferences.setProperty(false, Boolean.toString(doXOR));
-
-        final Enumeration<ModelImage> e = this.getRegisteredImages();
-
-        while (e.hasMoreElements()) {
-
-            try {
-                this.getFrameContainingImage(e.nextElement()).setUseVOIXOR(doXOR);
-            } catch (final NullPointerException ex) { // do nothing
-            }
-        }
-
-    }*/
+    /*
+     * public void setUseVOIXOR(final boolean doXOR) { Preferences.setProperty(false, Boolean.toString(doXOR));
+     * 
+     * final Enumeration<ModelImage> e = this.getRegisteredImages();
+     * 
+     * while (e.hasMoreElements()) {
+     * 
+     * try { this.getFrameContainingImage(e.nextElement()).setUseVOIXOR(doXOR); } catch (final NullPointerException ex) { //
+     * do nothing } }
+     *  }
+     */
 
     /**
      * Change whether the GUI should be visible. The order is strage because we want the main frame to be first on the
@@ -3139,7 +3072,7 @@ parse:  while (i < args.length) {
      * @param visible whether the message and main frames should be shown on the screen
      */
     public void setVisible(final boolean visible) {
-        if(mainFrame != null && messageFrame != null) {
+        if (mainFrame != null && messageFrame != null) {
             mainFrame.setVisible(visible);
             messageFrame.setVisible(visible && Preferences.is(Preferences.PREF_SHOW_OUTPUT));
             mainFrame.setVisible(visible);
@@ -3362,8 +3295,9 @@ parse:  while (i < args.length) {
     public void updateMemoryUsage() {
         // System.out.println(Runtime.getRuntime().totalMemory());
         // System.out.println(Runtime.getRuntime().freeMemory());
-        
-        //final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1048576);
+
+        // final long memoryInUse = ( (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) /
+        // 1048576);
         final long memoryInUse = MipavUtil.getUsedHeapMemory() / 1048576;
         final long totalMemory = MipavUtil.getMaxHeapMemory() / 1048576;
 
@@ -3394,13 +3328,13 @@ parse:  while (i < args.length) {
      * the preferences pane.
      */
     public void updateGpuUsage() {
-    	if(Preferences.isGpuCompEnabled()) {
-    		btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
-    	} else {
-    		btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
-    	}
+        if (Preferences.isGpuCompEnabled()) {
+            btnGpuComp.setIcon(MipavUtil.getIcon("greenbox.gif"));
+        } else {
+            btnGpuComp.setIcon(MipavUtil.getIcon("redbox.gif"));
+        }
     }
-    
+
     /**
      * Do nothing - required by ScriptRecordingListener interface.
      * 
@@ -3643,10 +3577,10 @@ parse:  while (i < args.length) {
         gpuCompEnabledLabel.setFont(MipavUtil.font12);
 
         ImageIcon backgroundGpu;
-        if(Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable()) {
-        	backgroundGpu = MipavUtil.getIcon("greenbox.gif");
+        if (Preferences.isGpuCompEnabled() && OpenCLAlgorithmBase.isOCLAvailable()) {
+            backgroundGpu = MipavUtil.getIcon("greenbox.gif");
         } else {
-        	backgroundGpu = MipavUtil.getIcon("redbox.gif");
+            backgroundGpu = MipavUtil.getIcon("redbox.gif");
         }
         btnGpuComp = new JButton(backgroundGpu);
         btnGpuComp.setBounds(new Rectangle(17, 17));
@@ -4118,7 +4052,7 @@ parse:  while (i < args.length) {
             }
             // else sizes match; there are no problems
         } catch (final NullPointerException npe) { // prefs not found/invalid strings
-            if (!GraphicsEnvironment.isHeadless() &&  !MipavUtil.getForceQuiet()) {
+            if ( !GraphicsEnvironment.isHeadless() && !MipavUtil.getForceQuiet()) {
                 MipavUtil.displayWarning("Heap size settings in the "
                         + "environment startup file either do not match \n"
                         + "those in the Preferences file, or are non-existant.\n"
@@ -4190,56 +4124,58 @@ parse:  while (i < args.length) {
     /**
      * Displays command line help information on usage of all commands and then exits.
      */
-     public static void printUsageAndExit() {
-         printUsageAndExit(null);
-     }
-     
-     /**
-      * Displays command line help information on usage to standard out and then into an informational dialog box then
-      * exits the MIPAV application. Help display just shows the different options, display help, load image, load
-      * script, load VOI, and hide menu bar, as well as examples of use.
-      */
-     public static void printUsageAndExit(Argument c) {
-         final String helpInfo;
-         if(c != null) {
-             helpInfo = c.generateCmdUsageInfo();
-         } else {
-             helpInfo = generateCmdUsageInfo();
-         }
-         
-         // print this usage help to the console
-         System.out.println(helpInfo);
-         
-         // print the usage help to a dialog.
-         // maybe later we can make this an option...
-         if (!GraphicsEnvironment.isHeadless()) {
-             final JTextArea helpArea = new JTextArea(helpInfo);
-             helpArea.setFont(MipavUtil.courier12);
-             helpArea.setEditable(false);
-             JOptionPane.showMessageDialog(null, helpArea, "Command line help", JOptionPane.INFORMATION_MESSAGE);
-         }
-         
-         System.exit(0);
-     }
+    public static void printUsageAndExit() {
+        printUsageAndExit(null);
+    }
 
     /**
-      * Generates automatic list of available commands.
-      */
-     public static String generateCmdUsageInfo() {
-         StringBuilder b = new StringBuilder();
-         b.append("Here are MIPAV command line arguments that you can use:\n");
-         for(StaticArgument c : StaticArgument.values()) {
-             b.append("-"+c.getArgument()).append("\t").append(c.getHelp()).append("\n");
-         }
-         for(InstanceArgument c : InstanceArgument.values()) {
-             b.append("-"+c.getArgument()).append("\t").append(c.getHelp()).append("\n");
-         }
-         b.append("Examples:").append("\n");
-         b.append("> mipav imageFileName").append("\n").append("> mipav -i imageFileName -s scriptFileName -hide").append("\n");
-         b.append("> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -inputDir defaultImageDirectoryPath -outputDir outputImageDirectoryPath");
-         b.append("\n");
-         return b.toString();
-     }
+     * Displays command line help information on usage to standard out and then into an informational dialog box then
+     * exits the MIPAV application. Help display just shows the different options, display help, load image, load
+     * script, load VOI, and hide menu bar, as well as examples of use.
+     */
+    public static void printUsageAndExit(Argument c) {
+        final String helpInfo;
+        if (c != null) {
+            helpInfo = c.generateCmdUsageInfo();
+        } else {
+            helpInfo = generateCmdUsageInfo();
+        }
+
+        // print this usage help to the console
+        System.out.println(helpInfo);
+
+        // print the usage help to a dialog.
+        // maybe later we can make this an option...
+        if ( !GraphicsEnvironment.isHeadless()) {
+            final JTextArea helpArea = new JTextArea(helpInfo);
+            helpArea.setFont(MipavUtil.courier12);
+            helpArea.setEditable(false);
+            JOptionPane.showMessageDialog(null, helpArea, "Command line help", JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        System.exit(0);
+    }
+
+    /**
+     * Generates automatic list of available commands.
+     */
+    public static String generateCmdUsageInfo() {
+        StringBuilder b = new StringBuilder();
+        b.append("Here are MIPAV command line arguments that you can use:\n");
+        for (StaticArgument c : StaticArgument.values()) {
+            b.append("-" + c.getArgument()).append("\t").append(c.getHelp()).append("\n");
+        }
+        for (InstanceArgument c : InstanceArgument.values()) {
+            b.append("-" + c.getArgument()).append("\t").append(c.getHelp()).append("\n");
+        }
+        b.append("Examples:").append("\n");
+        b.append("> mipav imageFileName").append("\n").append("> mipav -i imageFileName -s scriptFileName -hide")
+                .append("\n");
+        b
+                .append("> mipav -s scriptFileName -i imageFileName1 -v voiName1 -v voiName2 -i imageFileName2 -v voiName3 -inputDir defaultImageDirectoryPath -outputDir outputImageDirectoryPath");
+        b.append("\n");
+        return b.toString();
+    }
 
     /**
      * This is the getter for providedOutputDir providedOutputDir: This boolean tells if the user has provided an
@@ -4258,7 +4194,7 @@ parse:  while (i < args.length) {
     @SuppressWarnings("unchecked")
     public static Vector<Class<ActionDiscovery>> getDiscoverableActionList() {
         final Vector<Class<ActionDiscovery>> actionList = new Vector<Class<ActionDiscovery>>();
-    
+
         final Vector<String> actionLocations = ScriptableActionLoader.getScriptActionLocations();
         final Vector<String> actionPackages = new Vector<String>();
         final Vector<String> actionDirs = new Vector<String>();
@@ -4268,16 +4204,16 @@ parse:  while (i < args.length) {
             actionPackages.add(p);
             actionDirs.add(p.replaceAll("\\.", Matcher.quoteReplacement(File.separator)));
         }
-    
+
         String classFileName;
         Class action;
         for (int i = 0; i < actionDirs.size(); i++) {
             final String curDir = actionDirs.elementAt(i);
             final String curPackage = actionPackages.elementAt(i);
-    
+
             final File locationDir = new File(curDir);
             if (locationDir.isDirectory()) {
-    
+
                 final File[] allFiles = locationDir.listFiles(new FileFilter() {
                     public boolean accept(final File f) {
                         if (f.getPath().endsWith(".class")) {
@@ -4286,19 +4222,19 @@ parse:  while (i < args.length) {
                         return false;
                     }
                 });
-    
+
                 for (final File file : allFiles) {
                     classFileName = file.getName();
-    
+
                     classFileName = classFileName.substring(0, classFileName.indexOf(".class"));
-    
+
                     action = null;
                     try {
                         action = Class.forName(curPackage + classFileName);
                     } catch (final ClassNotFoundException e) {
                         Preferences.debug("Class not found: " + e.getMessage() + "\n", Preferences.DEBUG_SCRIPTING);
                     }
-    
+
                     if (action != null) {
                         final Class<?>[] interfaces = action.getInterfaces();
                         for (final Class<?> interf : interfaces) {
@@ -4311,7 +4247,7 @@ parse:  while (i < args.length) {
                 }
             }
         }
-    
+
         return actionList;
     }
 

@@ -303,7 +303,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             // MipavUtil.showHelp("ISPImages01");
 
         } else if (command.equalsIgnoreCase("Finish")) {
-            final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
+            final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
                 public Object doInBackground() {
                     createSubmissionFiles();
 

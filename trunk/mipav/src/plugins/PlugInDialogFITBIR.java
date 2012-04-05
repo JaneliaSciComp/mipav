@@ -25,8 +25,6 @@ import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.DefaultTableCellRenderer;
 
-import org.apache.axiom.om.*;
-
 import WildMagic.LibFoundation.Mathematics.*;
 
 import com.sun.jimi.core.*;
@@ -77,13 +75,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private static final String CSV_OUTPUT_DELIM = ",";
 
-    private OMElement dataStructElement, documentElement;
-
-    /** hash table of OMElements * */
-    // private final Hashtable<String, OMElement> documentElements = new Hashtable<String, OMElement>();
-    // private ArrayList<IDataStructure> dataStructuresList = new ArrayList<IDataStructure>();
-    private String namespace;
-
     private final ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
 
     private final ArrayList<File> imageFiles = new ArrayList<File>();
@@ -117,16 +108,22 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     /** DOCUMENT ME! */
     private int brightness = 0;
 
-    // private OMElement publishedDataStructs = null;
+    /** Dev data dictionary server. */
+    private static final String devServerHostname = "tbi-dev-apps.cit.nih.gov";
+    
+    /** Staging data dictionary server. */
+    private static final String stageServerHostname = "tbi-stage-apps.cit.nih.gov";
+    
+    /** Demo data dictionary server. */
+    private static final String demoServerHostname = "tbi-demo-apps.cit.nih.gov";
+    
+    /** Prod data dictionary server. */
+    private static final String prodServerHostname = "tbi-apps.cit.nih.gov";
+    
+    /** Full data dictionary server url */
+    private static final String dataDictionaryServerUrl = "http://" + stageServerHostname;
 
-    // TODO: include demo and prod urls when available
-
-    /** dev server url */
-    private String dataDictionaryServerUrl = "http://tbi-dev-apps.cit.nih.gov/tbi-portal/ws/dictionaryWebService?wsdl";
-
-    private String dataDictionaryUsername = "administrator";
-
-    private DictionaryWebService dictionaryWebService;
+    private DictionaryProvider dictionaryProvider;
 
     private List<BasicDataStructure> dataStructureList;
 
@@ -288,7 +285,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             // MipavUtil.showHelp("ISPImages01");
 
         } else if (command.equalsIgnoreCase("Finish")) {
-            final SwingWorker<Object, Object> worker = new SwingWorker<Object, Object>() {
+            final javax.swing.SwingWorker<Object, Object> worker = new javax.swing.SwingWorker<Object, Object>() {
                 public Object doInBackground() {
                     createSubmissionFiles();
 
@@ -2537,11 +2534,10 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
             // final Iterator iter = omElement.getChildElements();
 
-            // TODO:
             List<BasicDataStructure> bdsToGet = new Vector<BasicDataStructure>();
             bdsToGet.add(dataStructure);
 
-            List<DataStructure> dsList = dictionaryWebService.getDataDictionary(dataDictionaryUsername, bdsToGet);
+            List<DataStructure> dsList = dictionaryProvider.getDataDictionary(bdsToGet);
             Set<MapElement> dataElements = null;
             for (DataStructure ds : dsList) {
                 dataElements = ds.getDataElements();
@@ -4014,33 +4010,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         public void run() {
 
             try {
-
-                // get OMElement from web service
                 progressBar = new ViewJProgressBar("FITBIR", "Connecting to FITBIR data dictionary web service...", 0,
                         100, true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
-                /*
-                 * client = Startup.getClient(fitbirServer);
-                 * 
-                 * try { publishedDataStructs = client.getPublishedStructures(); } catch (final AxisFault e) {
-                 * e.printStackTrace(); } Iterator<OMElement> iter2 = publishedDataStructs.getChildElements(); QName
-                 * qDataType = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "type"); QName qName =
-                 * new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "short_name"); QName
-                 * qParentDataStructure = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "parent");
-                 * progressBar.updateValue(60); while (iter2.hasNext()) { final OMElement e = iter2.next(); if
-                 * (e.getLocalName().equalsIgnoreCase("data_structure")) { final String dataType =
-                 * e.getAttributeValue(qDataType); final String parent = e.getAttributeValue(qParentDataStructure);
-                 * final String shortname = e.getAttributeValue(qName); if (dataType.equalsIgnoreCase("Imaging")) { if
-                 * (parent.trim().equalsIgnoreCase("")) { // set up all the OMElements final OMElement ome =
-                 * client.getDataDictionary(shortname); System.out.println(shortname); documentElements.put(shortname,
-                 * ome); } } // TODO: Store or throw away the information about this data structure } }
-                 */
 
-                // TODO
-                dictionaryWebService = (new DictionaryProvider(dataDictionaryServerUrl)).getDataDictionaryService();
+                dictionaryProvider = new DictionaryProvider(dataDictionaryServerUrl);
 
-                dataStructureList = dictionaryWebService.getDataStructures(dataDictionaryUsername);
+                dataStructureList = dictionaryProvider.getDataStructures();
 
                 progressBar.updateValue(80);
 
@@ -4048,24 +4025,6 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 progressBar.setVisible(false);
                 progressBar.dispose();
                 printlnToLog("Successful connection to FITBIR data dictionary web service");
-
-                /*
-                 * for (IDataStructure ds : iDataStructures) { //System.out.println();
-                 * System.out.println(ds.getShortName()); System.out.println(ds.getDescription());
-                 * System.out.println(ds.getDispVersion()); System.out.println(ds.getStatus()); System.out.println();
-                 * if(ds.getShortName().equals("image01")) { Collection dataElements = ds.getDataElements(); Iterator
-                 * iter = dataElements.iterator(); System.out.println(); while(iter.hasNext()) { System.out.println();
-                 * IDataElement dataElement = (IDataElement)iter.next(); System.out.println(dataElement.getName());
-                 * 
-                 * System.out.println(dataElement.getShortDescription());
-                 * 
-                 * System.out.println(dataElement.getRequired()); } }
-                 * 
-                 * System.out.println(); }
-                 * 
-                 * 
-                 * System.out.println();
-                 */
 
                 addSourceButton.setEnabled(true);
                 loadCSVButton.setEnabled(true);
