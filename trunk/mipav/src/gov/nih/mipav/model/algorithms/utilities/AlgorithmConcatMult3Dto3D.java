@@ -43,6 +43,9 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmBase {
 	        if (images[0].isColorImage()) {
 	            cFactor = 4;
 	        }
+	        else if (images[0].isComplexImage()) {
+	        	cFactor = 2;
+	        }
 	
 	        int length = cFactor * xDim * yDim;
 	        
