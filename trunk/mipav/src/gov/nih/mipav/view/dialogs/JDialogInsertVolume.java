@@ -128,17 +128,10 @@ public class JDialogInsertVolume extends JDialogScriptableBase implements Algori
         String command = event.getActionCommand();
         Object source = event.getSource();
 
-        if (command.equals("OK")) {
-            if (image.isColorImage()==false){
-           
+        if (command.equals("OK")) {    
           if (setVariables()) {
               callAlgorithm();
-                }
-            }
-            else{
-                MipavUtil.displayError("Must Use Black and White Image");
-            }
-      
+          }    
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
@@ -406,6 +399,7 @@ public class JDialogInsertVolume extends JDialogScriptableBase implements Algori
 
                 if ( (insertedImage.getNDims()== 3) && (image.getExtents()[0]==insertedImage.getExtents()[0]) 
                         && (image.getExtents()[1]==insertedImage.getExtents()[1]) &&(image.isColorImage() == insertedImage.isColorImage())
+                        && (image.isComplexImage() == insertedImage.isComplexImage())
                         && (userInterface.getFrameContainingImage(insertedImage) != null)) {
                     comboBox.addItem(name);
                 }
