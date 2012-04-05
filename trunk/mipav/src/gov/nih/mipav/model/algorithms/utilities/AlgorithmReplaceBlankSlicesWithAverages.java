@@ -48,6 +48,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
         int zDim = srcImage.getExtents()[2];
         int z;
         float red, green, blue, gray;
+        float real, imaginary;
         boolean blank;
         int i;
         int consecutiveBlank = 0;
@@ -60,6 +61,9 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
 
         if (srcImage.isColorImage()) {
             sliceSize *= 4;
+        }
+        else if (srcImage.isComplexImage()) {
+        	sliceSize *= 2;
         }
 
         float[] sliceData = new float[sliceSize];
@@ -89,6 +93,16 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                     }
                 }
             } // if (srcImage.isColorImage())
+            else if (srcImage.isComplexImage()) {
+                real = sliceData[0];
+                imaginary = sliceData[1];
+                blank = true;
+                for (i = 2; i < sliceSize && blank; i += 2) {
+                	if ((sliceData[i] != real) || (sliceData[i+1] != imaginary)) {
+                		blank = false;
+                	}
+                }
+            } // else if (srcImage.isComplexImage())
             else { // black and white
                 gray = sliceData[0];
                 blank = true;
