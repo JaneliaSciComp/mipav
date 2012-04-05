@@ -110,6 +110,8 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
 
             if (srcImage.isColorImage()) {
                 length = 4 * srcImage.getSliceSize();
+            } else if (srcImage.isComplexImage()) {
+            	length = 2 * srcImage.getSliceSize();
             } else {
                 length = srcImage.getSliceSize();
             }
