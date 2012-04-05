@@ -4867,15 +4867,15 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
             for (int i = 0; i < nVOI; i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                	VOI kVOI = VOIs.VOIAt(i);
-                	for ( int j = 0; j < kVOI.getCurves().size(); j++ )
+                	Vector<Polygon> polys = VOIs.VOIAt(i).exportPolygon();
+                	if ( polys != null )
                 	{
-                		if ( kVOI.getCurves().elementAt(j).isActive() && (kVOI.getCurveType() == VOI.CONTOUR) )
+                		for ( int j = 0; j < polys.size(); j++ )
                 		{
-                			Polygon poly = ((VOIContour)kVOI.getCurves().elementAt(j)).exportPolygon();
-                            objstream = new ObjectOutputStream(new FileOutputStream(directory + fileName + i + "_" + j));
-                            objstream.writeObject(poly);
-                            objstream.close();
+                			Polygon poly = polys.elementAt(j);
+                			objstream = new ObjectOutputStream(new FileOutputStream(directory + fileName + i + "_" + j));
+                			objstream.writeObject(poly);
+                			objstream.close();
                 		}
                 	}
                 }

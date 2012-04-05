@@ -9,6 +9,8 @@ import gov.nih.mipav.view.ViewJFrameGraph;
 
 import java.awt.Color;
 import java.awt.Polygon;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Random;
@@ -2095,6 +2097,25 @@ public class VOI extends ModelSerialCloneable {
 		contour.importPolygon(gon, slice);
 		curves.addElement(contour);
 	}
+
+
+	public Vector<Polygon> exportPolygon() {
+
+		if (curveType != CONTOUR) {
+			return null;
+		} 
+
+		Vector<Polygon> polygons = new Vector<Polygon>();
+    	for ( int i = 0; i < curves.size(); i++ )
+    	{
+    		if ( curves.elementAt(i).isActive() )
+    		{
+    			polygons.add( ((VOIContour)curves.elementAt(i)).exportPolygon() );
+    		}
+    	}
+    	return polygons;
+	}
+
 
 
 	/**
