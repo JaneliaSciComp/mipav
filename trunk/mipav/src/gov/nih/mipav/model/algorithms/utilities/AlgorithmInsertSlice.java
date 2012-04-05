@@ -138,6 +138,9 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
             if (srcImage.isColorImage()) {
                 imageBuffer = new float[4 * sliceArea];
                 colorFactor = 4;
+            } else if (srcImage.isComplexImage()) {
+            	imageBuffer = new float[2 * sliceArea];
+            	colorFactor = 2;
             } else {
                 imageBuffer = new float[sliceArea];
                 colorFactor = 1;
@@ -183,14 +186,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         if (z == 0) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    srcImage.exportData(tOldOffset, 4 * sliceArea, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                } else {
-                                    srcImage.exportSliceXY(oldZdim * t, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                }
+                            	srcImage.exportData(tOldOffset, colorFactor * sliceArea, imageBuffer);
+                                destImage.importData(tNewOffset, imageBuffer, false);
                             } catch (IOException error) {
                                 errorCleanUp("Algorithm InsertSlice reports: Destination image already locked.", false);
 
@@ -201,11 +198,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                             try {
 
-                                if (srcImage.isColorImage()) {
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
-                                }
+                                destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 displayError("Algorithm InsertSlice reports: Destination image already locked.");
 
@@ -215,30 +208,17 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else {
 
                             try {
+                            	imageBuffer2 = new float[colorFactor * sliceArea];
+                                srcImage.exportData(tOldOffset + (z * colorFactor * sliceArea), 
+                                		colorFactor * sliceArea, imageBuffer2);
 
-                                if (srcImage.isColorImage()) {
-                                    imageBuffer2 = new float[4 * sliceArea];
-                                    srcImage.exportData(tOldOffset + (z * 4 * sliceArea), 4 * sliceArea, imageBuffer2);
-
-                                    for (i = 0; i < (4 * sliceArea); i++) {
-                                        imageBuffer[i] = (imageBuffer[i] * weightPrevious) +
-                                                         (imageBuffer2[i] * (1.0f - weightPrevious));
-                                    }
-                                    imageBuffer2 = null;
-
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-                                    imageBuffer2 = new float[sliceArea];
-                                    srcImage.exportSliceXY((t * oldZdim) + z, imageBuffer2);
-
-                                    for (i = 0; i < sliceArea; i++) {
-                                        imageBuffer[i] = (imageBuffer[i] * weightPrevious) +
-                                                         (imageBuffer2[i] * (1.0f - weightPrevious));
-                                    }
-                                    imageBuffer2 = null;
-
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
+                                for (i = 0; i < (colorFactor * sliceArea); i++) {
+                                    imageBuffer[i] = (imageBuffer[i] * weightPrevious) +
+                                                     (imageBuffer2[i] * (1.0f - weightPrevious));
                                 }
+                                imageBuffer2 = null;
+
+                                destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 imageBuffer = null;
                                 imageBuffer2 = null;
@@ -259,14 +239,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         if (z == 0) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    srcImage.exportData(tOldOffset, 4 * sliceArea, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                } else {
-                                    srcImage.exportSliceXY(oldZdim * t, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                }
+                            	srcImage.exportData(tOldOffset, colorFactor * sliceArea, imageBuffer);
+                                destImage.importData(tNewOffset, imageBuffer, false);
                             } catch (IOException error) {
                                 errorCleanUp("Algorithm InsertSlice reports: Destination image already locked.", false);
 
@@ -276,12 +250,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else if (z == oldZdim) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
-                                }
+                            	destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 displayError("Algorithm InsertSlice reports: Destination image already locked.");
 
@@ -291,28 +260,16 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else {
 
                             try {
+                            	imageBuffer2 = new float[colorFactor * sliceArea];
+                                srcImage.exportData(tOldOffset + (z * colorFactor * sliceArea), 
+                                		colorFactor * sliceArea, imageBuffer2);
 
-                                if (srcImage.isColorImage()) {
-                                    imageBuffer2 = new float[4 * sliceArea];
-                                    srcImage.exportData(tOldOffset + (z * 4 * sliceArea), 4 * sliceArea, imageBuffer2);
-
-                                    for (i = 0; i < (4 * sliceArea); i++) {
-                                        imageBuffer[i] = (imageBuffer[i] + imageBuffer2[i]) / 2.0f;
-                                    }
-                                    imageBuffer2 = null;
-
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-                                    imageBuffer2 = new float[sliceArea];
-                                    srcImage.exportSliceXY((t * oldZdim) + z, imageBuffer2);
-
-                                    for (i = 0; i < sliceArea; i++) {
-                                        imageBuffer[i] = (imageBuffer[i] + imageBuffer2[i]) / 2.0f;
-                                    }
-                                    imageBuffer2 = null;
-
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
+                                for (i = 0; i < (colorFactor * sliceArea); i++) {
+                                    imageBuffer[i] = (imageBuffer[i] + imageBuffer2[i]) / 2.0f;
                                 }
+                                imageBuffer2 = null;
+
+                                destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 imageBuffer = null;
                                 imageBuffer2 = null;
@@ -333,14 +290,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         if (z == 0) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    srcImage.exportData(tOldOffset, 4 * sliceArea, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                } else {
-                                    srcImage.exportSliceXY(oldZdim * t, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                }
+                            	srcImage.exportData(tOldOffset, colorFactor * sliceArea, imageBuffer);
+                                destImage.importData(tNewOffset, imageBuffer, false);
                             } catch (IOException error) {
                                 errorCleanUp("Algorithm InsertSlice reports: Destination image already locked.", false);
 
@@ -350,12 +301,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else if (z == oldZdim) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
-                                }
+                            	destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 displayError("Algorithm InsertSlice reports: Destination image already locked.");
 
@@ -365,24 +311,12 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-
-                                    // imageBuffer2 = new float[4*sliceArea];
-                                    // srcImage.exportData(tOldOffset + z*4*sliceArea,4*sliceArea,imageBuffer2);
-                                    // for (i = 0; i < 4*sliceArea; i++) {
-                                    // imageBuffer[i] = imageBuffer[i];
-                                    // }
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-
-                                    // imageBuffer2 = new float[sliceArea];
-                                    // srcImage.exportSliceXY(t*oldZdim + z, imageBuffer2);
-                                    // for (i = 0; i < sliceArea; i++) {
-                                    // imageBuffer[i] = imageBuffer[i];
-                                    // }
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
-                                }
+                            	// imageBuffer2 = new float[colorFactor*sliceArea];
+                                // srcImage.exportData(tOldOffset + z*colorFactor*sliceArea,colorFactor*sliceArea,imageBuffer2);
+                                // for (i = 0; i < colorFactor*sliceArea; i++) {
+                                // imageBuffer[i] = imageBuffer[i];
+                                // }
+                                destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 imageBuffer = null;
                                 imageBuffer2 = null;
@@ -403,14 +337,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         if (z == 0) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    srcImage.exportData(tOldOffset, 4 * sliceArea, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                } else {
-                                    srcImage.exportSliceXY(oldZdim * t, imageBuffer);
-                                    destImage.importData(tNewOffset, imageBuffer, false);
-                                }
+                            	srcImage.exportData(tOldOffset, colorFactor * sliceArea, imageBuffer);
+                                destImage.importData(tNewOffset, imageBuffer, false);
                             } catch (IOException error) {
                                 errorCleanUp("Algorithm InsertSlice reports: Destination image already locked.", false);
 
@@ -420,12 +348,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else if (z == oldZdim) {
 
                             try {
-
-                                if (srcImage.isColorImage()) {
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                                } else {
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
-                                }
+                            	destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                             } catch (IOException error) {
                                 displayError("Algorithm InsertSlice reports: Destination image already locked.");
 
@@ -435,26 +358,15 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         else {
 
                             try {
+                            	imageBuffer2 = new float[colorFactor * sliceArea];
+                                srcImage.exportData(tOldOffset + (z * colorFactor * sliceArea), 
+                                		colorFactor * sliceArea, imageBuffer2);
 
-                                if (srcImage.isColorImage()) {
-                                    imageBuffer2 = new float[4 * sliceArea];
-                                    srcImage.exportData(tOldOffset + (z * 4 * sliceArea), 4 * sliceArea, imageBuffer2);
-
-                                    // for (i = 0; i < 4*sliceArea; i++) {
-                                    // imageBuffer[i] = imageBuffer2[i];
-                                    // }
-                                    destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer2, false);
-                                    imageBuffer2 = null;
-                                } else {
-                                    imageBuffer2 = new float[sliceArea];
-                                    srcImage.exportSliceXY((t * oldZdim) + z, imageBuffer2);
-
-                                    // for (i = 0; i < sliceArea; i++) {
-                                    // imageBuffer[i] = imageBuffer2[i];
-                                    // }
-                                    destImage.importData(tNewOffset + (z * sliceArea), imageBuffer2, false);
-                                    imageBuffer2 = null;
-                                }
+                                // for (i = 0; i < colorFactor*sliceArea; i++) {
+                                // imageBuffer[i] = imageBuffer2[i];
+                                // }
+                                destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer2, false);
+                                imageBuffer2 = null;
                             } catch (IOException error) {
                                 imageBuffer = null;
                                 imageBuffer2 = null;
@@ -473,22 +385,11 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                     else if (sliceType == BLANK) {
 
                         try {
-
-                            if (srcImage.isColorImage()) {
-
-                                for (i = 0; i < (4 * sliceArea); i++) {
-                                    imageBuffer[i] = 0.0f;
-                                }
-
-                                destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                            } else {
-
-                                for (i = 0; i < sliceArea; i++) {
-                                    imageBuffer[i] = 0.0f;
-                                }
-
-                                destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
+                        	for (i = 0; i < (colorFactor * sliceArea); i++) {
+                                imageBuffer[i] = 0.0f;
                             }
+
+                            destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                         } catch (IOException error) {
                             displayError("Algorithm InsertSlice reports: Destination image already locked.");
                             setCompleted(false);
@@ -508,12 +409,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         }
 
                         try {
-
-                            if (srcImage.isColorImage()) {
-                                destImage.importData(tNewOffset + (z * 4 * sliceArea), imageBuffer, false);
-                            } else {
-                                destImage.importData(tNewOffset + (z * sliceArea), imageBuffer, false);
-                            }
+                        	destImage.importData(tNewOffset + (z * colorFactor * sliceArea), imageBuffer, false);
                         } catch (IOException error) {
                             displayError("Algorithm InsertSlice reports: Destination image already locked.");
                             setCompleted(false);
@@ -763,14 +659,8 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                 if (z != oldZdim) {
 
                     try {
-
-                        if (srcImage.isColorImage()) {
-                            srcImage.exportData(tOldOffset + (z * 4 * sliceArea), 4 * sliceArea, imageBuffer);
-                            destImage.importData(tNewOffset + (Z * 4 * sliceArea), imageBuffer, false);
-                        } else {
-                            srcImage.exportSliceXY((t * oldZdim) + z, imageBuffer);
-                            destImage.importData(tNewOffset + (Z * sliceArea), imageBuffer, false);
-                        }
+                    	srcImage.exportData(tOldOffset + (z * colorFactor * sliceArea), colorFactor * sliceArea, imageBuffer);
+                        destImage.importData(tNewOffset + (Z * colorFactor * sliceArea), imageBuffer, false);
                     } catch (IOException error) {
                         errorCleanUp("Algorithm InsertSlice reports: Destination image already locked.", false);
 
