@@ -31,6 +31,7 @@ import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.UpdateVOISelectionListener;
 import gov.nih.mipav.model.structures.VOI;
 import gov.nih.mipav.model.structures.VOIBase;
+import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIPoint;
 import gov.nih.mipav.model.structures.VOIPolyLineSlice;
 import gov.nih.mipav.model.structures.VOIVector;
@@ -92,13 +93,17 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.Insets;
+import java.awt.Polygon;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.RandomAccessFile;
 import java.text.DecimalFormat;
 import java.util.BitSet;
@@ -410,6 +415,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             showVOIProperties();
             setDefaultCursor();
         } 
+        else if (command.equals(CustomUIBuilder.PARAM_IMPORT_VOI_POLYGON.getActionCommand())) {
+        	importVOI();
+        }
         else if (command.equals(CustomUIBuilder.PARAM_OPEN_VOI.getActionCommand())) {
 
             boolean success = openVOI(false, false);
@@ -478,6 +486,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS.getActionCommand())) {
             saveVOI(false);
+        } 
+        else if (command.equals(CustomUIBuilder.PARAM_EXPORT_SELECTED_CONTOURS_AS_POLYGON.getActionCommand())) {
+            exportSelectedVOIs();
         } 
         else if (command.equals(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS.getActionCommand())) {
             saveVOIAs(false);
@@ -4807,6 +4818,118 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             MipavUtil.displayError("Error writing VOI");
         }
 
+    }
+    
+    
+    
+
+    private void exportSelectedVOIs() {
+        String fileName;
+        String directory;
+
+
+        ModelImage kImage = m_kParent.getActiveImage();
+        ViewVOIVector VOIs = kImage.getVOIs();
+        int nVOI = VOIs.size();
+        boolean bSelected = false;
+        for (int i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).isActive()) {
+            	bSelected = true;
+                break;
+            }
+        }
+
+        if (!bSelected) {
+            MipavUtil.displayError("Please select a VOI.");
+            return;
+        }
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Export VOI Polygon as");
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }        
+
+        final int returnVal = chooser.showSaveDialog(m_kParent.getFrame());
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            fileName = chooser.getSelectedFile().getName();            
+            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+            ViewUserInterface.getReference().setDefaultDirectory(directory);
+        } else {
+            return;
+        }
+
+        try {
+            ObjectOutputStream objstream;
+
+            for (int i = 0; i < nVOI; i++) {
+                if (VOIs.VOIAt(i).isActive()) {
+                	VOI kVOI = VOIs.VOIAt(i);
+                	for ( int j = 0; j < kVOI.getCurves().size(); j++ )
+                	{
+                		if ( kVOI.getCurves().elementAt(j).isActive() && (kVOI.getCurveType() == VOI.CONTOUR) )
+                		{
+                			Polygon poly = ((VOIContour)kVOI.getCurves().elementAt(j)).exportPolygon();
+                            objstream = new ObjectOutputStream(new FileOutputStream(directory + fileName + i + "_" + j));
+                            objstream.writeObject(poly);
+                            objstream.close();
+                		}
+                	}
+                }
+            }
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing VOI");
+        }
+    }
+    
+
+    
+    
+
+    private void importVOI() {
+        String fileName;
+        String directory;
+
+
+        ModelImage kImage = m_kParent.getActiveImage();
+
+        JFileChooser chooser = new JFileChooser();
+        chooser.setDialogTitle("Import VOI Polygon");
+        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+        }        
+
+        final int returnVal = chooser.showOpenDialog(m_kParent.getFrame());
+
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            fileName = chooser.getSelectedFile().getName();            
+            directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+            ViewUserInterface.getReference().setDefaultDirectory(directory);
+        } else {
+            return;
+        }
+
+        try {
+            ObjectInputStream objstream;
+            objstream = new ObjectInputStream(new FileInputStream(directory + fileName));
+            Polygon poly = (Polygon)objstream.readObject();
+            objstream.close();
+            short sID = (short)(kImage.getVOIs().getUniqueID());
+            VOI kVOI = new VOI(sID, fileName);
+            kVOI.importPolygon( poly, getSlice() );
+            kImage.registerVOI(kVOI);
+            kImage.notifyImageDisplayListeners();
+        } catch (final IOException error) {
+            MipavUtil.displayError("Error writing VOI");
+        } catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     
     private void savePaint() {
