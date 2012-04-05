@@ -441,7 +441,8 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             if ((!image.getImageName().equals(name)) && (userInterface.getFrameContainingImage(namedImage) != null) &&
                     (namedImage.getNDims() == 2) && (namedImage.getExtents()[0] == image.getExtents()[0]) &&
                     (namedImage.getExtents()[1] == image.getExtents()[1]) &&
-                    (namedImage.isColorImage() == image.isColorImage())) {
+                    (namedImage.isColorImage() == image.isColorImage()) &&
+                    (namedImage.isComplexImage() == image.isComplexImage())) {
                 comboBoxImage.addItem(name);
             }
         }
