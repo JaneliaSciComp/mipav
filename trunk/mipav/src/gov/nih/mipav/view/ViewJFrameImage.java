@@ -1206,7 +1206,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             final ModelImage mi = getActiveImage();
             final int type = mi.getType();
             if ( ! (type == ModelStorageBase.UBYTE || type == ModelStorageBase.FLOAT || type == ModelStorageBase.USHORT || type == ModelStorageBase.ARGB)) {
-                MipavUtil.displayError("Image type must either be UBYTE, USHORT, FLOAT, or ARGB");
+                MipavUtil.displayError("<html>Image type must either be UBYTE, USHORT, FLOAT, or ARGB.<br>See Utilities -&gt; Conversion tools -&gt; Convert type.</html>");
                 return;
             }
             if (mi.is2DImage()) {
