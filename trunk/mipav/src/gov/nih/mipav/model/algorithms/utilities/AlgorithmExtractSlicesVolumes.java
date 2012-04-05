@@ -195,6 +195,9 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
         if (srcImage.isColorImage()) {
             colorFactor = 4;
         }
+        else if (srcImage.isComplexImage()) {
+        	colorFactor = 2;
+        }
 
         return colorFactor;
 
@@ -281,6 +284,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                         // try copying the zSrc-th slice out of srcImage, making it the zDest-th in destImage
                         if (srcImage.isColorImage()) {
                             srcImage.exportData(zSrc * 4 * sliceArea, 4 * sliceArea, imageBuffer);
+                        } else if (srcImage.isComplexImage()) {
+                        	srcImage.exportData(zSrc * 2 * sliceArea, 2 * sliceArea, imageBuffer);	
                         } else {
                             srcImage.exportSliceXY(zSrc, imageBuffer);
                         }
@@ -327,6 +332,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                             if (srcImage.isColorImage()) {
                                 srcImage.exportData(tSrcOffset + (zSrc * 4 * sliceArea), 4 * sliceArea, imageBuffer);
+                            } else if (srcImage.isComplexImage()) {
+                            	srcImage.exportData(tSrcOffset + (zSrc * 2 * sliceArea), 2 * sliceArea, imageBuffer);	
                             } else {
 
                                 // System.err.println("exporting slice: " + (t * oldZdim + zSrc));
