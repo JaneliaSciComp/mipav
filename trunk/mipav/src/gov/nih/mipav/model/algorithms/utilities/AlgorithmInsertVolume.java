@@ -158,6 +158,9 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
             if (srcImage.isColorImage()) {
                 imageBuffer = new float[4 * sliceArea];
                 colorFactor = 4;
+            } else if (srcImage.isComplexImage()) {
+            	imageBuffer = new float[2 * sliceArea];
+            	colorFactor = 2;
             } else {
                 imageBuffer = new float[sliceArea];
                 imageBuffer2 = new float[sliceArea];
@@ -181,8 +184,8 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                         try {
 
                         tNewOffset =((Zdim *t) +z);
-                        srcImage.exportSliceXY(sliceCounter, imageBuffer);
-                        destImage.importData((tNewOffset* sliceArea), imageBuffer, false);
+                        srcImage.exportData(sliceCounter*colorFactor*sliceArea, colorFactor*sliceArea, imageBuffer);
+                        destImage.importData((tNewOffset* colorFactor * sliceArea), imageBuffer, false);
                         sliceCounter++;
                         
                         } catch (IOException error) {
@@ -200,7 +203,7 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
     
                             try {
                                 tNewOffset =((Zdim *t) +z);
-                                destImage.importData((tNewOffset* sliceArea), imageBuffer, false);
+                                destImage.importData((tNewOffset* colorFactor * sliceArea), imageBuffer, false);
                             }catch (IOException error) {
                                 errorCleanUp("Algorithm InsertVolume4 reports: Destination image already locked.", false);
                                 return;
@@ -237,17 +240,9 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                         tNewOffset =((Zdim *t) +z);
     
                        try {
-                           
-                            if (srcImage.isColorImage()) {
-                                //srcImage.exportData(tOldOffset + (z * 4 * sliceArea), 4 * sliceArea, imageBuffer);
-                                //destImage.importData(tNewOffset + (Z * 4 * sliceArea), imageBuffer, false);
-                            }
-                            else{
-                                srcImage.exportSliceXY(sliceCounter, imageBuffer);
-                                destImage.importData(tNewOffset * sliceArea, imageBuffer, false);
-                                sliceCounter++;
-                            }
-    
+                    	   srcImage.exportData(sliceCounter*colorFactor*sliceArea, colorFactor*sliceArea, imageBuffer);
+                           destImage.importData((tNewOffset* colorFactor * sliceArea), imageBuffer, false);
+                           sliceCounter++;
                         } catch (IOException error) {
                             errorCleanUp("Algorithm InsertVolume2 reports: Destination image already locked.", false);
     
@@ -271,16 +266,10 @@ public class AlgorithmInsertVolume extends AlgorithmBase {
                 
                     for (z = 0; (z < (insertedImage.getExtents()[2])); z++) {
                         tNewOffset =((Zdim *t) +z);
-    
+                        
                         try {
-                            if (srcImage.isColorImage()) {
-                                //srcImage.exportData(tOldOffset + (z * 4 * sliceArea), 4 * sliceArea, imageBuffer);
-                                //destImage.importData(tNewOffset + (Z * 4 * sliceArea), imageBuffer, false);
-                            }
-                            else{
-                                insertedImage.exportSliceXY(z, imageBuffer);
-                                destImage.importData(tNewOffset * sliceArea, imageBuffer, false);
-                            }
+                        	insertedImage.exportData(z*colorFactor*sliceArea, colorFactor*sliceArea, imageBuffer);
+                            destImage.importData((tNewOffset* colorFactor * sliceArea), imageBuffer, false);
                         } catch (IOException error) {
                             errorCleanUp("Algorithm InsertVolume1 reports: Destination image already locked.", false);
                             return;
