@@ -298,6 +298,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Optimized automatic registration 2.5D", "OAR25D", 0, null, false),
                         menuBuilder.buildMenuItem("Optimized automatic registration 3.5D", "OAR35D", 0, null, false),
                         menuBuilder.buildMenuItem("Registration validation", "RegValidation", 0, null, false),
+                        menuBuilder.buildMenuItem("VABRA", "VABRA", 0, null, false),
                         menuBuilder.buildMenuItem("VOI landmark", "VOILandmark", 0, null, false),
                 // menuBuilder.buildMenuItem("REGTEST", "REGTEST", 0, null, false),
                         }),
@@ -757,6 +758,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_3D_RECTANGLE, true)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Open VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_IMPORT_VOI_POLYGON, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_VOI_ALL_FROM, true),
@@ -765,9 +767,9 @@ public class ViewMenuBar {
                                 menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_OPEN_PAINT, true),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Save VOI", true, new JMenuItem[] {
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_EXPORT_SELECTED_CONTOURS_AS_POLYGON, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS, true),
-                                        menuBuilder
-                                                .buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS, true),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_SELECTED_CONTOURS_AS, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_VOI_AS, true),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_SAVE_ALL_VOI, true),

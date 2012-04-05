@@ -73,6 +73,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_FLIPY = new UIParams("VOIFlipY", "Horizontal", "fliphoriz");
     public static final UIParams PARAM_VOI_FLIPZ = new UIParams("VOIFlipZ", "Depth", "flipvert");
 
+    public static final UIParams PARAM_IMPORT_VOI_POLYGON = new UIParams("Import VOI Polygon", "Import VOI Polygon", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_OPEN_VOI = new UIParams("Open VOI", "Open VOI", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_OPEN_VOI_ALL = new UIParams("Open all VOIs", "Open all VOIs", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_OPEN_VOI_ALL_FROM = new UIParams("Open all VOIs from...", "Open all VOIs from...", UIParams.INVALID_MNEMONIC, null, "open" );
@@ -82,6 +83,7 @@ public class CustomUIBuilder {
 
     public static final UIParams PARAM_SAVE_SELECTED_CONTOURS = new UIParams("Save selected contours", "SaveSelectedContours", UIParams.INVALID_MNEMONIC, null,  "save");
     public static final UIParams PARAM_SAVE_SELECTED_CONTOURS_AS = new UIParams("Save selected contours as","SaveSelectedContoursAs", UIParams.INVALID_MNEMONIC, null, "save");
+    public static final UIParams PARAM_EXPORT_SELECTED_CONTOURS_AS_POLYGON = new UIParams("Export selected contours as","ExportSelectedContoursAs", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_VOI = new UIParams("Save VOI", "Save VOI", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_VOI_AS = new UIParams("Save VOI as", "Save VOI as", UIParams.INVALID_MNEMONIC, null, "save");
     public static final UIParams PARAM_SAVE_ALL_VOI = new UIParams("Save all VOIs", "Save all VOIs", UIParams.INVALID_MNEMONIC, null, "save");
