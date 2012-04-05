@@ -156,8 +156,13 @@ public class AlgorithmSubset extends AlgorithmBase {
         destUnitsOfMeasure[1] = srcImage.getFileInfo(0).getUnitsOfMeasure()[ axisOrder[1] ];
         destUnitsOfMeasure[2] = srcImage.getFileInfo(0).getUnitsOfMeasure()[ axis3 ];
 
-        /* If this is a color image: */
-        int buffFactor = (srcImage.isColorImage()) ? 4 : 1;
+        int buffFactor = 1;
+        if (srcImage.isColorImage()) {
+        	buffFactor = 4;
+        }
+        else if (srcImage.isComplexImage()) {
+        	buffFactor = 2;
+        }
         
         try {
             imageBuffer = new float[ buffFactor * slice ];
