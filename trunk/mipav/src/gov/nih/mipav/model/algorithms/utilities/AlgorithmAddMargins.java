@@ -47,15 +47,16 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         marginY = y.clone();
         marginZ = z.clone();
         
-        if ( !srcImage.isColorImage() )
-        {
-            marginColor[0] = srcImage.getMin();
-        }
-        else
-        {
+        if (srcImage.isColorImage()){
             marginColor[0] = srcImage.getMinR();
             marginColor[1] = srcImage.getMinG();
             marginColor[2] = srcImage.getMinB();
+        }
+        else if (srcImage.isComplexImage()) {
+        	marginColor[0] = 0.0;
+        }
+        else {
+            marginColor[0] = srcImage.getMin();
         }
     }
 
