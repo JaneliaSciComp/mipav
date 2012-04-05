@@ -54,6 +54,9 @@ public class AlgorithmReplaceSlice extends AlgorithmBase {
         if (sliceImage.isColorImage()) {
             sliceSize *= 4;
         }
+        else if (sliceImage.isComplexImage()) {
+        	sliceSize *= 2;
+        }
 
         float[] sliceData = new float[sliceSize];
 
