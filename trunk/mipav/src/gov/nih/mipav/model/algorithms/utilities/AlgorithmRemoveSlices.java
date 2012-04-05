@@ -201,11 +201,8 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                     try {
 
                         // try copying the zSrc-th slice out of srcImage, making it the zDest-th in destImage
-                        if (srcImage.isColorImage()) {
-                            srcImage.exportData(tSrcOffset + (zSrc * 4 * sliceArea), 4 * sliceArea, imageBuffer);
-                        } else {
-                            srcImage.exportSliceXY((t * oldZdim) + zSrc, imageBuffer);
-                        }
+                    	srcImage.exportData(tSrcOffset + (zSrc * colorFactor * sliceArea),
+                    			colorFactor * sliceArea, imageBuffer);
 
                         resultImage.importData(tDestOffset + (zDest * colorFactor * sliceArea), imageBuffer, false);
                     } catch (IOException error) {
@@ -398,11 +395,8 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                     try {
 
                         // try copying the zSrc-th slice out of srcImage, making it the zDest-th in destImage
-                        if (srcImage.isColorImage()) {
-                            srcImage.exportData(tSrcOffset + (zSrc * 4 * sliceArea), 4 * sliceArea, imageBuffer);
-                        } else {
-                            srcImage.exportSliceXY((t * oldZdim) + zSrc, imageBuffer);
-                        }
+                    	srcImage.exportData(tSrcOffset + (zSrc * colorFactor * sliceArea), 
+                    			colorFactor * sliceArea, imageBuffer);
 
                         destImage.importData(tDestOffset + (zDest * colorFactor * sliceArea), imageBuffer, false);
                     } catch (IOException error) {
@@ -513,6 +507,9 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
         if (srcImage.isColorImage()) {
             colorFactor = 4;
+        }
+        else if (srcImage.isComplexImage()) {
+        	colorFactor = 2;
         }
 
         return colorFactor;
