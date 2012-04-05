@@ -282,13 +282,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     try {
 
                         // try copying the zSrc-th slice out of srcImage, making it the zDest-th in destImage
-                        if (srcImage.isColorImage()) {
-                            srcImage.exportData(zSrc * 4 * sliceArea, 4 * sliceArea, imageBuffer);
-                        } else if (srcImage.isComplexImage()) {
-                        	srcImage.exportData(zSrc * 2 * sliceArea, 2 * sliceArea, imageBuffer);	
-                        } else {
-                            srcImage.exportSliceXY(zSrc, imageBuffer);
-                        }
+                    	srcImage.exportData(zSrc * colorFactor * sliceArea, colorFactor * sliceArea, imageBuffer);
 
                         resultImage = new ModelImage(srcImage.getType(), newExtents,
                                                      srcImage.getImageName() + "_slice" + (zSrc));
@@ -329,16 +323,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                         // System.err.println("zSrc is: " + zSrc + " tSrcOffset is: " + tSrcOffset);
                         try {
-
-                            if (srcImage.isColorImage()) {
-                                srcImage.exportData(tSrcOffset + (zSrc * 4 * sliceArea), 4 * sliceArea, imageBuffer);
-                            } else if (srcImage.isComplexImage()) {
-                            	srcImage.exportData(tSrcOffset + (zSrc * 2 * sliceArea), 2 * sliceArea, imageBuffer);	
-                            } else {
-
-                                // System.err.println("exporting slice: " + (t * oldZdim + zSrc));
-                                srcImage.exportSliceXY((t * oldZdim) + zSrc, imageBuffer);
-                            }
+                        	srcImage.exportData(tSrcOffset + (zSrc * colorFactor * sliceArea), 
+                        			colorFactor * sliceArea, imageBuffer);
 
                             // System.err.println("Importing data at: " + (imageBuffer.length * t));
                             resultImage.importData(imageBuffer.length * t, imageBuffer, false);
