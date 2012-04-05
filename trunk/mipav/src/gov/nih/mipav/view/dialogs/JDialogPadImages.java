@@ -280,11 +280,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 resultImage.getMatrixHolder().replaceMatrices(image.getMatrixHolder().getMatrices());
                 // preload this image with the minimum of the source image
                 // resultImage.
-                if ( !image.isColorImage()) {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, marginX, marginY, marginZ);
-                } else {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, marginX, marginY, marginZ);
-                }
+                padSlicesAlgo = new AlgorithmAddMargins(image, resultImage, marginX, marginY, marginZ);
 
                 // Listen to the algorithm so we get notified when it is succeeded or failed.
                 // See algorithm performed event. caused by implementing AlgorithmedPerformed interface
@@ -319,11 +315,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         } else if (displayLoc == JDialogBase.REPLACE) {
 
             try {
-                if ( !image.isColorImage()) {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, marginX, marginY, marginZ);
-                } else {
-                    padSlicesAlgo = new AlgorithmAddMargins(image, marginX, marginY, marginZ);
-                }
+            	padSlicesAlgo = new AlgorithmAddMargins(image, marginX, marginY, marginZ);
 
                 padSlicesAlgo.addListener(this);
                 createProgressBar(image.getImageName(), padSlicesAlgo);
