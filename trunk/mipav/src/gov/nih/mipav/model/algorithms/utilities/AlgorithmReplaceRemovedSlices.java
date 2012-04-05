@@ -272,6 +272,9 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             if (srcImage.isColorImage()) {
                 colorFactor = 4;
             }
+            else if (srcImage.isComplexImage()) {
+            	colorFactor = 2;
+            }
 
             // create two image buffers to hold a slice each
             imageBuffer = new float[colorFactor * sliceArea];
@@ -526,6 +529,9 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             if (srcImage.isColorImage()) {
                 colorFactor = 4;
             }
+            else if (srcImage.isComplexImage()) {
+            	colorFactor = 2;
+            }
 
             // create two image buffers to hold a slice each
             imageBuffer = new float[colorFactor * sliceArea];
@@ -664,6 +670,9 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             int colorFactor = 1;
             if (srcImage.isColorImage()) {
                 colorFactor = 4;
+            }
+            else if (srcImage.isComplexImage()) {
+            	colorFactor = 2;
             }
             int resultSize = resultImage.getSliceSize() * colorFactor;
             int numSlices = 1;
