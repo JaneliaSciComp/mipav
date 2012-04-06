@@ -105,6 +105,8 @@ public class AlgorithmSwapDims extends AlgorithmBase {
 
             if (srcImage.isColorImage()) {
                 colorFactor = 4;
+            } else if (srcImage.isComplexImage()) {
+            	colorFactor = 2;
             } else {
                 colorFactor = 1;
             }
@@ -284,6 +286,8 @@ public class AlgorithmSwapDims extends AlgorithmBase {
 
             if (srcImage.isColorImage()) {
                 colorFactor = 4;
+            } else if (srcImage.isComplexImage()) {
+            	colorFactor = 2;
             } else {
                 colorFactor = 1;
             }
