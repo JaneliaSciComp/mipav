@@ -720,6 +720,7 @@ import Jama.Matrix;
                                 DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
                                 browseDWIButton.setEnabled(false);
                                 activeDWIButton.setEnabled(false);
+                                textDWIDataimage.setText(m_kDWIImage.getImageDirectory()+m_kDWIImage.getImageFileName());
                                 textDWIDataimage.setEnabled(false);
                                 openDWIButton.setEnabled(false);
                                 t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
@@ -736,6 +737,7 @@ import Jama.Matrix;
                                 DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
                                 browseDWIButton.setEnabled(false);
                                 activeDWIButton.setEnabled(false);
+                                textDWIDataimage.setText(m_kDWIImage.getImageDirectory()+m_kDWIImage.getImageFileName());
                                 textDWIDataimage.setEnabled(false);
                                 openDWIButton.setEnabled(false);
                                 t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
@@ -1373,7 +1375,7 @@ import Jama.Matrix;
                         gbc.fill = GridBagConstraints.BOTH;
                         
                         //Add all parameters not aquired in PAR file for user to input
-                        GradCreatorPanel.setBorder(buildTitledBorder("Gradient Creator Input Parameters"));
+                        GradCreatorPanel.setBorder(buildTitledBorder("Philips Gradient Creator Input Parameters"));
                         fatShiftLabel = new JLabel("Fatshift");
                         fatshiftTextField = new JTextField(5);
                         fatshiftBox = new JComboBox();
