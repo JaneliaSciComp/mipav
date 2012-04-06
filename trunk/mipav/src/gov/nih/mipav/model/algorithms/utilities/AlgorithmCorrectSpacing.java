@@ -54,6 +54,8 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
 
     /** Y dimension of the image. */
     private int Ydim;
+    
+    private int colorFactor;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -70,11 +72,19 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         this.resultImage = resultImage;
         this.numRepIm = numRepIm;
         this.numBlanks = numBlanks;
+        
+        colorFactor = 1;
+        if (srcImage.isColorImage()) {
+            colorFactor = 4;	
+        }
+        else if (srcImage.isComplexImage()) {
+        	colorFactor = 2;
+        }
 
         // set global variables for this class
         Xdim = resultImage.getExtents()[0];
         Ydim = resultImage.getExtents()[1];
-        sliceArea = Xdim * Ydim;
+        sliceArea = colorFactor * Xdim * Ydim;
         oldZdim = srcImage.getExtents()[2];
         newZdim = oldZdim * (numRepIm + numBlanks);
         DIM = srcImage.getNDims();
@@ -124,7 +134,6 @@ public class AlgorithmCorrectSpacing extends AlgorithmBase {
         int j, k;
         int t, z, Z; // z is slice-depth of srcImage; Z is slice-depth of destination
         float[] imageBuffer;
-
         
 
         try {
