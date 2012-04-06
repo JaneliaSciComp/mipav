@@ -239,7 +239,7 @@ public class DTIColorDisplay extends ViewJFrameBase implements AlgorithmInterfac
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.insets = new Insets(0, 0, 5, 5);
-        eigenvectorLabel = new JLabel(" eigenvector file: ");
+        eigenvectorLabel = new JLabel("EVector Image: ");
         filesPanel.add(eigenvectorLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -255,7 +255,7 @@ public class DTIColorDisplay extends ViewJFrameBase implements AlgorithmInterfac
         filesPanel.add(eigenvectorBrowseButton, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        anisotropyLabel = new JLabel(" anisotropy file: ");
+        anisotropyLabel = new JLabel("FA Image: ");
         filesPanel.add(anisotropyLabel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
@@ -1740,7 +1740,9 @@ public class DTIColorDisplay extends ViewJFrameBase implements AlgorithmInterfac
 
         if (source == refLabel3) {
             if (event.getButton() == MouseEvent.BUTTON1) {
-                openURL("http://eclipse.nichd.nih.gov/nichd/stbb/MRM42.pdf");
+                //openURL("http://eclipse.nichd.nih.gov/nichd/stbb/MRM42.pdf");
+                //Link updated 4/5/2012
+                openURL("http://mscl.cit.nih.gov/mscl_publications/pierpaoli_99.pdf");
             }
         }
 
