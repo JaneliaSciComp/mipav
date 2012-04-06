@@ -2536,7 +2536,7 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         buildComboBox();
 
-        resampletoUser = new JRadioButton("User defined size.", false);
+        resampletoUser = new JRadioButton("User defined size:", false);
         resampletoUser.setFont(serif12);
         resampletoUser.setEnabled(true);
         resampleGroup.add(resampletoUser);
