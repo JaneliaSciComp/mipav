@@ -14,6 +14,9 @@ import java.io.*;
  * an Unsigned Byte image type can represent data from 0 - 255 and therefore if converting from a Short type (-32768 to
  * 32767) the range parameters should fall between 0 and 255. This class can also be used to remap data to a different
  * range without changing the data type!
+ * 
+ * In going between COMPLEX and DCOMPLEX the real and imaginary signs should not be changed so just multiply both the
+ * real and imaginary parts by endRange2/endRange1.
  *
  * @version  0.1 June 15, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -183,18 +186,24 @@ public class AlgorithmChangeType extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
+            
+            if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                buffer[i] = buffer[i] * endRange2/endRange1;	
+            }
+            else {
 
-            if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                if (imDiff != 0.0) {
-                    buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
-                }
-                else {
-                    buffer[i] = (stRange2 + endRange2)/2.0;
-                }
-            } else if (buffer[i] < imMin) {
-                buffer[i] = stRange2;
-            } else if (buffer[i] > imMax) {
-                buffer[i] = endRange2;
+	            if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
+	                if (imDiff != 0.0) {
+	                    buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+	                }
+	                else {
+	                    buffer[i] = (stRange2 + endRange2)/2.0;
+	                }
+	            } else if (buffer[i] < imMin) {
+	                buffer[i] = stRange2;
+	            } else if (buffer[i] > imMax) {
+	                buffer[i] = endRange2;
+	            }
             }
         }
 
@@ -283,18 +292,24 @@ public class AlgorithmChangeType extends AlgorithmBase {
                 if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
+                
+                if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                    buffer[i] = buffer[i] * endRange2/endRange1;	
+                }
+                else {
 
-                if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                    if (imDiff != 0.0) {
-                        buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
-                    }
-                    else {
-                        buffer[i] = (stRange2 + endRange2)/2.0;
-                    }
-                } else if (buffer[i] < imMin) {
-                    buffer[i] = stRange2;
-                } else if (buffer[i] > imMax) {
-                    buffer[i] = endRange2;
+	                if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
+	                    if (imDiff != 0.0) {
+	                        buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+	                    }
+	                    else {
+	                        buffer[i] = (stRange2 + endRange2)/2.0;
+	                    }
+	                } else if (buffer[i] < imMin) {
+	                    buffer[i] = stRange2;
+	                } else if (buffer[i] > imMax) {
+	                    buffer[i] = endRange2;
+	                }
                 }
             }
         } // image will be processed slice independently
@@ -333,18 +348,24 @@ public class AlgorithmChangeType extends AlgorithmBase {
                     if ((i % mod) == 0) {
                         fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                     }
+                    
+                    if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                        buffer[i] = buffer[i] * endRange2/endRange1;	
+                    }
+                    else {
 
-                    if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                        if (imDiff != 0.0) {
-                            buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
-                        }
-                        else {
-                            buffer[i] = (stRange2 + endRange2)/2.0;
-                        }
-                    } else if (buffer[i] < imMin) {
-                        buffer[i] = stRange2;
-                    } else if (buffer[i] > imMax) {
-                        buffer[i] = endRange2;
+	                    if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
+	                        if (imDiff != 0.0) {
+	                            buffer[i] = (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2;
+	                        }
+	                        else {
+	                            buffer[i] = (stRange2 + endRange2)/2.0;
+	                        }
+	                    } else if (buffer[i] < imMin) {
+	                        buffer[i] = stRange2;
+	                    } else if (buffer[i] > imMax) {
+	                        buffer[i] = endRange2;
+	                    }
                     }
                 }
             }
@@ -434,18 +455,24 @@ public class AlgorithmChangeType extends AlgorithmBase {
             if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
+            
+            if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                destImage.set(i, buffer[i] * endRange2/endRange1);	
+            }
+            else {
 
-            if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
-                if (imDiff != 0.0) {
-                    destImage.set(i, (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2);
-                }
-                else {
-                    destImage.set(i,(stRange2 + endRange2)/2.0);
-                }
-            } else if (buffer[i] < imMin) {
-                destImage.set(i, stRange2);
-            } else if (buffer[i] > imMax) {
-                destImage.set(i, endRange2);
+	            if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
+	                if (imDiff != 0.0) {
+	                    destImage.set(i, (((buffer[i] - imMin) / imDiff) * newDiff) + stRange2);
+	                }
+	                else {
+	                    destImage.set(i,(stRange2 + endRange2)/2.0);
+	                }
+	            } else if (buffer[i] < imMin) {
+	                destImage.set(i, stRange2);
+	            } else if (buffer[i] > imMax) {
+	                destImage.set(i, endRange2);
+	            }
             }
         }
 
@@ -525,21 +552,27 @@ public class AlgorithmChangeType extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
                                                                 100));
                     }
+                    
+                    if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                        destImage.set((i * length) + j, buffer[j] * endRange2/endRange1);	
+                    }
+                    else {
 
-                    if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
-                        if (imDiff != 0.0) {
-                            destImage.set((i * length) + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
-                        }
-                        else if(imDiff == 0 && imMin == 0){
-                            //destImage.set(index + j,(stRange2 + endRange2)/2.0);
-                        	destImage.set(i + j,0);
-                        }else if(imDiff == 0 && imMin != 0) {
-                        	destImage.set(i + j,(stRange2 + endRange2)/2.0);
-                        }
-                    } else if (buffer[j] < imMin) {
-                        destImage.set((i * length) + j, stRange2);
-                    } else if (buffer[j] > imMax) {
-                        destImage.set((i * length) + j, endRange2);
+	                    if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
+	                        if (imDiff != 0.0) {
+	                            destImage.set((i * length) + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
+	                        }
+	                        else if(imDiff == 0 && imMin == 0){
+	                            //destImage.set(index + j,(stRange2 + endRange2)/2.0);
+	                        	destImage.set((i * length) + j,0);
+	                        }else if(imDiff == 0 && imMin != 0) {
+	                        	destImage.set((i * length) + j,(stRange2 + endRange2)/2.0);
+	                        }
+	                    } else if (buffer[j] < imMin) {
+	                        destImage.set((i * length) + j, stRange2);
+	                    } else if (buffer[j] > imMax) {
+	                        destImage.set((i * length) + j, endRange2);
+	                    }
                     }
                 }
             } // image will be processed slice independently
@@ -565,22 +598,28 @@ public class AlgorithmChangeType extends AlgorithmBase {
                         fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
                                                                 100));
                     }
+                    
+                    if ((srcImage.getType() == ModelStorageBase.COMPLEX) || (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                        destImage.set(index + j, buffer[j] * endRange2/endRange1);	
+                    }
+                    else {
 
-                    if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
-                        if (imDiff != 0.0) {
-                            destImage.set(index + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
-                        }
-                        else if(imDiff == 0 && imMin == 0){
-                            //destImage.set(index + j,(stRange2 + endRange2)/2.0);
-                        	destImage.set(index + j,0);
-                        }else if(imDiff == 0 && imMin != 0) {
-                        	destImage.set(index + j,(stRange2 + endRange2)/2.0);
-                        }
-                    } else if (buffer[j] < imMin) {
-                        destImage.set(index + j, stRange2);
-                    } else if (buffer[j] > imMax) {
-                        destImage.set(index + j, endRange2);
-                    } 
+	                    if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
+	                        if (imDiff != 0.0) {
+	                            destImage.set(index + j, (((buffer[j] - imMin) / imDiff) * newDiff) + stRange2);
+	                        }
+	                        else if(imDiff == 0 && imMin == 0){
+	                            //destImage.set(index + j,(stRange2 + endRange2)/2.0);
+	                        	destImage.set(index + j,0);
+	                        }else if(imDiff == 0 && imMin != 0) {
+	                        	destImage.set(index + j,(stRange2 + endRange2)/2.0);
+	                        }
+	                    } else if (buffer[j] < imMin) {
+	                        destImage.set(index + j, stRange2);
+	                    } else if (buffer[j] > imMax) {
+	                        destImage.set(index + j, endRange2);
+	                    } 
+                    }
                 }
             }
 
