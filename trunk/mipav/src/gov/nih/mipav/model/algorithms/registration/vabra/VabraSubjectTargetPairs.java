@@ -2,7 +2,6 @@ package gov.nih.mipav.model.algorithms.registration.vabra;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
-import gov.nih.mipav.view.ViewUserInterface;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -264,21 +264,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 				nextButton.setEnabled(false);
 				goBackButton.setEnabled(true);
 				goBackButton.setActionCommand("back1");
-				
-				/*
-				VabraAlgorithm vabra = new VabraAlgorithm();
-				// if you pass in null as the second argument it will extract the B0 image to use as the subject:
-				vabra.solve( DWIImage, null );
-				// Opens the Deformation Field in a window:
-				new ViewJFrameImage( vabra.getDeformationField() );
-				
-				List<ModelImage> results = vabra.getRegisteredResults();
-				for ( int i = 0; i < results.size(); i++ )
-				{
-				    // Open the registered result in a window...
-					new ViewJFrameImage( results.get(i) );
-				}
-				*/
 			}
 
 			else{
