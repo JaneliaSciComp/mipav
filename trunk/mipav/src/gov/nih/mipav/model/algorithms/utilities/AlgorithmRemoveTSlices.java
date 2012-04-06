@@ -78,16 +78,19 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         int z;
         float[] imageBuffer;
         int t, T; // t is time-depth of srcImage; T is time-depth of destination
-
+        int colorFactor;
         
 
         try {
 
             if (srcImage.isColorImage()) {
-                imageBuffer = new float[4 * volume];
+                colorFactor = 4;
+            } else if (srcImage.isComplexImage()) {
+                colorFactor = 2;	
             } else {
-                imageBuffer = new float[volume];
+                colorFactor = 1;
             }
+            imageBuffer = new float[colorFactor * volume];
 
             fireProgressStateChanged(srcImage.getImageName(), "Removing Selected Time Slices...");
         } catch (OutOfMemoryError e) {
@@ -116,13 +119,8 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
                 try {
 
                     // try copying the zth slice out of srcImage, making it the Zth in destImage
-                    if (srcImage.isColorImage()) {
-                        srcImage.exportData(t * 4 * volume, 4 * volume, imageBuffer);
-                        destImage.importData(T * 4 * volume, imageBuffer, false);
-                    } else {
-                        srcImage.exportData(t * volume, volume, imageBuffer);
-                        destImage.importData(T * volume, imageBuffer, false);
-                    }
+                	srcImage.exportData(t * colorFactor * volume, colorFactor * volume, imageBuffer);
+                    destImage.importData(T * colorFactor * volume, imageBuffer, false);
                 } catch (IOException error) {
                     displayError("Algorithm RemoveTSlices reports: Destination image already locked.");
                     setCompleted(false);
