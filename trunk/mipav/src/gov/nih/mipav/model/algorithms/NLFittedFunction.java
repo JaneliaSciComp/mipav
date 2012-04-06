@@ -52,7 +52,11 @@ public abstract class NLFittedFunction extends NLConstrainedEngine {
      */
     public abstract void displayResults();
 
-	/**
+	public double getChisq() {
+        return chisq;
+    }
+
+    /**
 	 * get median of given array
 	 */
 	protected double getMedian(double[] toSort) {
