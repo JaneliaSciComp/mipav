@@ -102,6 +102,10 @@ public class JDialogConvertType extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JRadioButton radioARGB_USHORT;
+    
+    private JRadioButton radioComplex;
+    
+    private JRadioButton radioDComplex;
 
     /** DOCUMENT ME! */
     private JRadioButton radioBool;
@@ -454,13 +458,57 @@ public class JDialogConvertType extends JDialogScriptableBase
                 	textOutEnd.setText(f2.toString());
                 }
                 
-                textOutEnd.setText(String.valueOf(image.getMax()));
                 inMin = -Float.MAX_VALUE;
                 inMax = Float.MAX_VALUE;
                 outMin = -Float.MAX_VALUE;
                 outMax = Float.MAX_VALUE;
             }
         } // if (image.isColorImage())
+        else if (image.isComplexImage()) {
+            if (radioComplex.isSelected()) {
+            	//outStart.setText("Starting range (0.0 to 3.40 E+38).");
+                outEnd.setText("Ending maximum magnitude (0.0 to 3.40 E+38).");
+                //textOutStart.setText("0");
+                //textOutEnd.setText("1023");
+
+                //Float f1 = new Float((int)image.getMin());
+                //textOutStart.setText(f1.toString());
+                
+                
+                if(image.getMax() > Float.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Float.MAX_VALUE));
+                }else {
+                	Float f2 = new Float((float)image.getMax());
+                	textOutEnd.setText(f2.toString());
+                }
+                
+                inMin = 0.0;
+                inMax = Float.MAX_VALUE;
+                outMin = 0.0;
+                outMax = Float.MAX_VALUE;	
+            }
+            else if (radioDComplex.isSelected()) {
+            	//outStart.setText("Starting range (0.0 to 1.8 E+308).");
+                outEnd.setText("Ending maximum magnitude (0.0 to 1.8 E+308).");
+                //textOutStart.setText("0");
+                //textOutEnd.setText("1023");
+                
+                //Double d1 = new Double((double)image.getMin());
+                //textOutStart.setText(d1.toString());
+
+                     
+                if(image.getMax() > Double.MAX_VALUE) {
+                	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
+                }else {
+                	Double d2 = new Double((double)image.getMax());
+                	textOutEnd.setText(d2.toString());
+                }
+                inMin = 0.0;
+                inMax = Double.MAX_VALUE;
+                outMin = 0.0;
+                outMax = Double.MAX_VALUE;	
+            }
+        } // else if (image.isComplexImage())
         else { // black and white image
 
             if (radioBool.isSelected()) {
@@ -727,6 +775,12 @@ public class JDialogConvertType extends JDialogScriptableBase
                     } else if (dataType == ModelStorageBase.ARGB_USHORT) {
                         radioARGB_USHORT.setSelected(true);
                     }
+                } else if (image.isComplexImage()) {
+                	if (dataType == ModelStorageBase.COMPLEX) {
+                		radioComplex.setSelected(true);
+                	} else if (dataType == ModelStorageBase.DCOMPLEX) {
+                		radioDComplex.setSelected(true);
+                	}
                 } else {
 
                     if (dataType == ModelStorageBase.BOOLEAN) {
@@ -1180,26 +1234,28 @@ public class JDialogConvertType extends JDialogScriptableBase
         outTempMin = outRange[0];
         outTempMax = outRange[1];
 
-        if (inTempMin >= inTempMax) {
-            MipavUtil.displayError("Input minimum must be less than the input maximum (" + inTempMin + " >= " +
-                                   inTempMax + ").");
-
-            return;
-        }
-
-        if (outTempMin >= outTempMax) {
-            MipavUtil.displayError("Output minimum must be less than the output maximum (" + outTempMin + " >= " +
-                                   outTempMax + ").");
-
-            return;
-        }
-
-        if (inTempMin < image.getMin()) {
-            MipavUtil.displayError("Input minimum must be within the range of the input image (" + inTempMin + " < " +
-                                   image.getMin() + ").");
-
-            return;
-        }
+        if (!image.isComplexImage()) {
+	        if (inTempMin >= inTempMax) {
+	            MipavUtil.displayError("Input minimum must be less than the input maximum (" + inTempMin + " >= " +
+	                                   inTempMax + ").");
+	
+	            return;
+	        }
+	
+	        if (outTempMin >= outTempMax) {
+	            MipavUtil.displayError("Output minimum must be less than the output maximum (" + outTempMin + " >= " +
+	                                   outTempMax + ").");
+	
+	            return;
+	        }
+	
+	        if (inTempMin < image.getMin()) {
+	            MipavUtil.displayError("Input minimum must be within the range of the input image (" + inTempMin + " < " +
+	                                   image.getMin() + ").");
+	
+	            return;
+	        }
+        } // if (!image.isComplexImage())
 
         if (inTempMax > image.getMax()) {
             MipavUtil.displayError("Input maximum must be within the range of the input image (" + inTempMax + " > " +
@@ -1264,6 +1320,18 @@ public class JDialogConvertType extends JDialogScriptableBase
             radioARGB_FLOAT.addItemListener(this);
             group1.add(radioARGB_FLOAT);
         } // if (image.isColorImage())
+        else if (image.isComplexImage()) {
+        	image.calcMinMaxMag(false);
+            radioComplex = new JRadioButton("Float complex", false);
+            radioComplex.setFont(serif12);
+            radioComplex.addItemListener(this);
+            group1.add(radioComplex);
+            
+            radioDComplex = new JRadioButton("Double complex", false);
+            radioDComplex.setFont(serif12);
+            radioDComplex.addItemListener(this);
+            group1.add(radioDComplex);
+        } // else if (image.isComplexImage())
         else { // black and white image
             radioBool = new JRadioButton("Boolean", false);
             radioBool.setFont(serif12);
@@ -1333,6 +1401,11 @@ public class JDialogConvertType extends JDialogScriptableBase
             gbc.gridy = 2;
             panelImageType.add(radioARGB_FLOAT, gbc);
         } // if (image.isColorImage())
+        else if (image.isComplexImage()) {
+        	panelImageType.add(radioComplex, gbc);
+        	gbc.gridy = 1;
+        	panelImageType.add(radioDComplex, gbc);
+        } // else if (image.isComplexImage())
         else { // black and white image
             panelImageType.add(radioBool, gbc);
             gbc.gridy = 1;
@@ -1373,6 +1446,7 @@ public class JDialogConvertType extends JDialogScriptableBase
         userRangeRadio.addActionListener(this);
         inputRangeGroup.add(userRangeRadio);
 
+        
         inMin = (float) image.getMin();
         inMax = (float) image.getMax();
 
@@ -1390,8 +1464,13 @@ public class JDialogConvertType extends JDialogScriptableBase
         textInStart.addFocusListener(this);
         textInStart.setEnabled(false);
 
-        tempStr = new String("  End input range ( " + makeString((float) inMin, 12) + " - " +
+        if (image.isComplexImage()) {
+        	tempStr = new String(" Maximum input magnitude ("+ makeString((float) inMax, 12) + " ).");
+        }
+        else {
+            tempStr = new String("  End input range ( " + makeString((float) inMin, 12) + " - " +
                              makeString((float) inMax, 12) + " ).");
+        }
 
         inEnd = new JLabel(tempStr);
         inEnd.setFont(serif12);
@@ -1433,16 +1512,20 @@ public class JDialogConvertType extends JDialogScriptableBase
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.insets = indented;
-        panelInRange.add(inStart, gbc);
-        gbc.gridy = 2;
+        if (!image.isComplexImage()) {
+            panelInRange.add(inStart, gbc);
+            gbc.gridy++;
+        }
         panelInRange.add(inEnd, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = normal;
-        panelInRange.add(textInStart, gbc);
-        gbc.gridy = 2;
+        if (!image.isComplexImage()) {
+        	panelInRange.add(textInStart, gbc);
+            gbc.gridy++;
+        }
         panelInRange.add(textInEnd, gbc);
 
         JPanel panelOutRange = new JPanel(gblay);
@@ -1472,19 +1555,23 @@ public class JDialogConvertType extends JDialogScriptableBase
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        panelOutRange.add(outStart, gbc);
-        gbc.gridy = 1;
+        if (!image.isComplexImage()) {
+            panelOutRange.add(outStart, gbc);
+            gbc.gridy++;
+        }
         panelOutRange.add(outEnd, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        panelOutRange.add(textOutStart, gbc);
-        gbc.gridy = 1;
+        if (!image.isComplexImage()) {
+        	panelOutRange.add(textOutStart, gbc);
+            gbc.gridy++;
+        }
         panelOutRange.add(textOutEnd, gbc);
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy++;
         gbc.insets = new Insets(0, 0, 0, 0);
         panelOutRange.add(processIndepBox, gbc);
 
@@ -1841,12 +1928,51 @@ public class JDialogConvertType extends JDialogScriptableBase
             	Float f2 = new Float((float)image.getMax());
             	textOutEnd.setText(f2.toString());
             }
-            textOutEnd.setText(String.valueOf(image.getMax()));
             inMin = -Float.MAX_VALUE;
             inMax = Float.MAX_VALUE;
             outMin = -Float.MAX_VALUE;
             outMax = Float.MAX_VALUE;
             radioARGB_FLOAT.setSelected(true);
+        } else if (image.getType() == ModelStorageBase.COMPLEX) {
+        	// outStart.setText("Starting maximum magnitude ( 0.0 to 3.40 E+38).");
+            outEnd.setText("Ending maximum magnitude (0.0 to 3.40 E+38).");
+            //textOutStart.setText("0");
+            //textOutEnd.setText("1023");
+            //Float f1 = new Float((int)image.getMin());
+            //textOutStart.setText(f1.toString());
+            
+            
+            if(image.getMax() > Float.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Float.MAX_VALUE));
+            }else {
+            	Float f2 = new Float((float)image.getMax());
+            	textOutEnd.setText(f2.toString());
+            }
+            inMin = 0.0;
+            inMax = Float.MAX_VALUE;
+            outMin = 0.0;
+            outMax = Float.MAX_VALUE;
+            radioComplex.setSelected(true);	
+        } else if (image.getType() == ModelStorageBase.DCOMPLEX) {
+        	//outStart.setText("Starting maximum magnitude (0 to 1.8 E+308).");
+            outEnd.setText("Ending maximum magnitude (0.0 to 1.8 E+308).");
+            //textOutStart.setText("0");
+            //textOutEnd.setText("1023");
+            //Double d1 = new Double((double)image.getMin());
+            //textOutStart.setText(d1.toString());
+
+                 
+            if(image.getMax() > Double.MAX_VALUE) {
+            	textOutEnd.setText(String.valueOf(Double.MAX_VALUE));
+            }else {
+            	Double d2 = new Double((double)image.getMax());
+            	textOutEnd.setText(d2.toString());
+            }
+            inMin = 0.0;
+            inMax = Double.MAX_VALUE;
+            outMin = 0.0;
+            outMax = Double.MAX_VALUE;
+            radioDComplex.setSelected(true);
         }
 
         setVisible(true);
@@ -1874,6 +2000,13 @@ public class JDialogConvertType extends JDialogScriptableBase
                 dataType = ModelStorageBase.ARGB;
             }
         } // if (image.isColorImage())
+        else if (image.isComplexImage()) {
+        	if (radioComplex.isSelected()) {
+        		dataType = ModelStorageBase.COMPLEX;
+        	} else if (radioDComplex.isSelected()) {
+        		dataType = ModelStorageBase.DCOMPLEX;
+        	}
+        } // else if (image.isComplexImage())
         else { // black and white image
 
             if (radioBool.isSelected()) {
@@ -1918,16 +2051,18 @@ public class JDialogConvertType extends JDialogScriptableBase
             this.setDefaultRanges();
         } // otherwise, get the values from the user defined input ranges
         else {
-            tmpStr = textInStart.getText();
-
-            if (testParameter(tmpStr, image.getMin(), image.getMax())) {
-                inTempMin = Double.valueOf(tmpStr).doubleValue();
-            } else {
-                textInStart.requestFocus();
-                textInStart.selectAll();
-
-                return false;
-            }
+        	if (!image.isComplexImage()) {
+	            tmpStr = textInStart.getText();
+	
+	            if (testParameter(tmpStr, image.getMin(), image.getMax())) {
+	                inTempMin = Double.valueOf(tmpStr).doubleValue();
+	            } else {
+	                textInStart.requestFocus();
+	                textInStart.selectAll();
+	
+	                return false;
+	            }
+        	}
 
             tmpStr = textInEnd.getText();
 
@@ -1941,15 +2076,17 @@ public class JDialogConvertType extends JDialogScriptableBase
             }
         }
 
-        tmpStr = textOutStart.getText();
-
-        if (testParameter(tmpStr, outMin, outMax)) {
-            outTempMin = Double.valueOf(tmpStr).doubleValue();
-        } else {
-            textOutStart.requestFocus();
-            textOutStart.selectAll();
-
-            return false;
+        if (!image.isComplexImage()) {
+	        tmpStr = textOutStart.getText();
+	
+	        if (testParameter(tmpStr, outMin, outMax)) {
+	            outTempMin = Double.valueOf(tmpStr).doubleValue();
+	        } else {
+	            textOutStart.requestFocus();
+	            textOutStart.selectAll();
+	
+	            return false;
+	        }
         }
 
         tmpStr = textOutEnd.getText();
