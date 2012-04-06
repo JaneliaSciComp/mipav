@@ -15,8 +15,8 @@ import java.io.*;
  * 32767) the range parameters should fall between 0 and 255. This class can also be used to remap data to a different
  * range without changing the data type!
  * 
- * In going between COMPLEX and DCOMPLEX the real and imaginary signs should not be changed so just multiply both the
- * real and imaginary parts by endRange2/endRange1.
+ * In going between COMPLEX and DCOMPLEX the real and imaginary signs should not be changed and the imaginary/real ratios 
+ * should not be changed so just multiply both the real and imaginary parts by endRange2/endRange1.
  *
  * @version  0.1 June 15, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
