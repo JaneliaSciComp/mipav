@@ -20,40 +20,17 @@ public class VabraAlgorithm  {
 	public VabraAlgorithm() {}
 
 	/**
-	 * @param target4D  The 4D Diffusion-Weighted image series.
-	 * @param subjects3D The 3D structural image (when null the B0 image is extracted and used as the subject)
+	 * @param subject The 3D B0 Image that will be registered to the target.
+	 * @param target  The 3D Structural image.
 	 * @return the list of ModelImages that are the registered subjects.
 	 */
-	public List<ModelImage> solve(ModelImage target4D, ModelImage subjects3D) {
-		boolean bExtractB0 = true;
+	public List<ModelImage> solve(ModelImage subject, ModelImage target) {
 		List<ModelImage> subjectVols = new ArrayList<ModelImage>();
-		if ( subjects3D != null )
-		{
-			subjectVols.add(subjects3D);
-			bExtractB0 = false;
-		}
+		subjectVols.add(subject);
 
 		List<ModelImage> targetVols = new ArrayList<ModelImage>();
-		int tDim = target4D.getExtents().length > 3 ? target4D.getExtents()[3] : 1;
-		targetVols.add(target4D);
+		targetVols.add(target);
 		
-		if ( bExtractB0 )
-		{
-            float[] bvalues = target4D.getDTIParameters().getbValues();
-			int[] extents = new int[]{ target4D.getExtents()[0], target4D.getExtents()[1], target4D.getExtents()[2] };
-			for ( int i = 0; i < tDim; i++ )
-			{
-                if ( bvalues[i] == 0 )
-                {
-                	ModelImage resultImage = new ModelImage(target4D.getType(), extents, target4D.getImageName() + i);
-                	AlgorithmSubset subsetAlgo = new AlgorithmSubset(target4D, resultImage, AlgorithmSubset.REMOVE_T, i );
-                	subsetAlgo.run();
-                	JDialogBase.updateFileInfo( target4D, resultImage );
-                	subjectVols.add(resultImage);
-                	resultImage.setImageName( target4D.getImageName() + "B0" );
-                }
-			}
-		}
 		
 		int[] InterpType = new int[subjectVols.size()]; 
 		for ( int i = 0; i < InterpType.length; i++ )
@@ -103,17 +80,6 @@ public class VabraAlgorithm  {
 		
 		//System.out.println(getClass().getCanonicalName()+"\t"+"VABRA-ALG: Before Cleanup");
 		
-
-		if ( bExtractB0 )
-		{
-			for ( int i = subjectVols.size() -1; i >= 0; i-- )
-			{
-				ModelImage temp = subjectVols.remove(i);
-				temp.disposeLocal();
-				temp = null;
-			}
-		}
-
 		imgSubTarPairs.dispose();
 		solver.dispose();
 		System.gc();
