@@ -229,7 +229,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
             exec.execute(algInstance);
         }
         
-        exec.shutdown();
+        exec.shutdown();  
         
         try {
             exec.awaitTermination(1, TimeUnit.DAYS);
@@ -575,7 +575,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
             switch (mode) {
             
             case DownsampleToBase:
-                downsampleToBase();
+                //downsampleToBase(); transform image has already been downsampled
 
                 if(doThreshold) {
                     threshold(transformImage, thresholdIntensity);
@@ -662,6 +662,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                 if(doThreshold) {
                     threshold(baseImage, thresholdIntensity);
                 }
+                
                 FileInfoBase f = baseImage.getFileInfo(0);
                 f.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
                 if(showGeoMean || saveGeoMean) {
@@ -728,17 +729,60 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
 
         private void transform() {
             JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, transformImage);
-            transform.setPadFlag(true);
+            transform.setPadFlag(false);
             transform.setMatrix(transform.readTransformMatrixFile(mtxFileLoc));
             transform.setImage25D(false);
             transform.setSeparateThread(false);
             transform.setClipFlag(true);
             transform.setDimAndResXYZ();
-            transform.setUnits(transformImage.getUnitsOfMeasure());
-            transform.setOutDimensions(transformImage.getExtents());
+            transform.setUnits(baseImage.getUnitsOfMeasure());
             transform.setQuietRunning(!doInterImages);
-            transform.setOutResolutions(transformImage.getResolutions(0));
             
+            int[] dim = new int[transformImage.getExtents().length];
+            float[] res = new float[transformImage.getResolutions(0).length];
+            
+            switch (mode) {
+            
+            case DownsampleToBase:
+                transform.setOutDimensions(baseImage.getExtents());
+                transform.setOutResolutions(baseImage.getResolutions(0));
+                break;
+            
+            case UpsampleToTransform:
+                for(int i=0; i<dim.length; i++) {
+                    if(transformImage.getExtents()[i] > baseImage.getExtents()[i]) {
+                        dim[i] = transformImage.getExtents()[i];
+                    } else {
+                        dim[i] = baseImage.getExtents()[i];
+                    }
+                }
+                
+                transform.setOutDimensions(dim);
+                transform.setOutResolutions(transformImage.getResolutions(0));
+                break;
+            
+            case DownsampleUpsampleCombined:
+                
+                for(int i=0; i<res.length; i++) {
+                    if(transformImage.getResolutions(0)[i] == baseImage.getResolutions(0)[i]) {
+                        res[i] = transformImage.getResolutions(0)[i];
+                    } else if(transformImage.getResolutions(0)[i] > baseImage.getResolutions(0)[i]) {
+                        res[i] = baseImage.getResolutions(0)[i] / transformImage.getResolutions(0)[i]; 
+                    } else { //transform res < base res
+                        res[i] = transformImage.getResolutions(0)[i] / baseImage.getResolutions(0)[i];
+                    }
+                }
+                
+                for(int i=0; i<dim.length; i++) {
+                    dim[i] = (int) ((baseImage.getExtents()[i] + transformImage.getExtents()[i]) / 2.0); 
+                }
+                
+                transform.setOutDimensions(dim);
+                transform.setOutResolutions(res);
+                break;
+                
+            }
+
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             
             if(!doInterImages) {
@@ -753,50 +797,41 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
         }
         
         private void downsampleUpsampleCombined() {
-            TransMatrix mat = new TransMatrix(4);
-            mat.MakeIdentity();
-            mat.set(0, 0, (2*transformImage.getResolutions(0)[0]) / baseImage.getResolutions(0)[0]);
-            mat.set(2, 2, (2*transformImage.getResolutions(0)[2]) / baseImage.getResolutions(0)[2]);
-            
-            transformImage = subTransform(transformImage, mat);
             
             float zRes = transformImage.getResolutions(0)[2]/2;
             transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
             
-            mat = new TransMatrix(4);
+            TransMatrix mat = new TransMatrix(4);
             mat.MakeIdentity();
             mat.set(0, 0, (2*baseImage.getResolutions(0)[0]) / transformImage.getResolutions(0)[0]);
             mat.set(2, 2, (2*baseImage.getResolutions(0)[2]) / transformImage.getResolutions(0)[2]);
+
+            float[] res = new float[transformImage.getResolutions(0).length];
+            for(int i=0; i<res.length; i++) {
+                if(transformImage.getResolutions(0)[i] == baseImage.getResolutions(0)[i]) {
+                    res[i] = transformImage.getResolutions(0)[i];
+                } else if(transformImage.getResolutions(0)[i] > baseImage.getResolutions(0)[i]) {
+                    res[i] = baseImage.getResolutions(0)[i] / transformImage.getResolutions(0)[i]; 
+                } else { //transform res < base res
+                    res[i] = transformImage.getResolutions(0)[i] / baseImage.getResolutions(0)[i];
+                }
+            }
             
-            baseImage = subTransform(baseImage, mat);
+            int[] dim = new int[transformImage.getExtents().length];
+            for(int i=0; i<dim.length; i++) {
+                dim[i] = (int) ((baseImage.getExtents()[i] + transformImage.getExtents()[i]) / 2.0); 
+            }
+            
+            baseImage = subTransform(baseImage, mat, dim, res);
             
             zRes = transformImage.getResolutions(0)[2]/2;
             baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(zRes);
+                baseImage.getFileInfo(i).setSliceThickness(0);
             }
             if(doInterImages) {
                 new ViewJFrameImage(baseImage);
             }
-        }
-        
-        private void downsampleToBase() {
-            TransMatrix mat = new TransMatrix(4);
-            mat.MakeIdentity();
-            mat.set(0, 0, transformImage.getResolutions(0)[0] / baseImage.getResolutions(0)[0]);
-            mat.set(2, 2, transformImage.getResolutions(0)[2] / baseImage.getResolutions(0)[2]);
-            
-            transformImage = subTransform(transformImage, mat);
-            
-            float zRes = transformImage.getResolutions(0)[2];
-            transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
-            for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                transformImage.getFileInfo(i).setSliceThickness(zRes);
-            }
-            if(doInterImages) {
-                new ViewJFrameImage(transformImage);
-            }
-            
         }
         
         private void upsampleToTransform() {
@@ -805,21 +840,30 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
             mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
             mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
             
-            baseImage = subTransform(baseImage, mat);
+            int[] dim = new int[transformImage.getExtents().length];
+            for(int i=0; i<dim.length; i++) {
+                if(transformImage.getExtents()[i] > baseImage.getExtents()[i]) {
+                    dim[i] = transformImage.getExtents()[i];
+                } else {
+                    dim[i] = baseImage.getExtents()[i];
+                }
+            } 
+            
+            baseImage = subTransform(baseImage, mat, dim, transformImage.getResolutions(0));
             
             float zRes = transformImage.getResolutions(0)[2];
             baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(zRes);
+                baseImage.getFileInfo(i).setSliceThickness(0);
             }
             if(doInterImages) {
                 new ViewJFrameImage(baseImage);
             }
         }
         
-        private ModelImage subTransform(ModelImage image, TransMatrix mat) {
+        private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
             JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, image);
-            transform.setPadFlag(true);
+            transform.setPadFlag(false);
             transform.setMatrix(mat);
             transform.setImage25D(false);
             transform.setSeparateThread(false);
@@ -827,8 +871,8 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
             transform.setQuietRunning(!doInterImages);
             transform.setDimAndResXYZ();
             transform.setUnits(image.getUnitsOfMeasure());
-            transform.setOutDimensions(image.getExtents());//transformImage.getExtents());
-            transform.setOutResolutions(image.getResolutions(0));
+            transform.setOutDimensions(outDim);//transformImage.getExtents());
+            transform.setOutResolutions(outRes);
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             
             if(!doInterImages) {
