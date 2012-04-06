@@ -325,6 +325,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // Make algorithm
                 if (image.isColorImage()) {
                     maskAlgo = new AlgorithmMask(resultImage, image, value, valueG, valueB, polarity, useVOI);
+                } else if (image.isComplexImage()) {
+                	maskAlgo = new AlgorithmMask(resultImage, image, value, valueG, polarity, useVOI);	
                 } else {
                     maskAlgo = new AlgorithmMask(resultImage, image, value, polarity, useVOI);
                 }
@@ -370,6 +372,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // Make the algorithm class
                 if (image.isColorImage()) {
                     maskAlgo = new AlgorithmMask(image, value, valueG, valueB, polarity, useVOI);
+                } else if (image.isComplexImage()) {
+                	maskAlgo = new AlgorithmMask(image, value, valueG, polarity, useVOI);	
                 } else {
                     maskAlgo = new AlgorithmMask(image, value, polarity, useVOI);
                 }
@@ -495,6 +499,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
 
         if (image.isColorImage()) {
             labelValue = new JLabel("Red value used to fill VOI(s)");
+        } else if (image.isComplexImage()) {
+        	labelValue = new JLabel("Real value used to fill VOI(s)");
         } else {
             labelValue = new JLabel("Value used to fill VOI(s)");
         }
@@ -502,7 +508,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
         labelValue.setForeground(Color.black);
         labelValue.setFont(serif12);
 
-        textValue = new JTextField(5);
+        textValue = new JTextField(10);
         textValue.setText("0");
         textValue.setFont(serif12);
 
@@ -511,7 +517,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
             labelValueG.setForeground(Color.black);
             labelValueG.setFont(serif12);
 
-            textValueG = new JTextField(5);
+            textValueG = new JTextField(10);
             textValueG.setText("0");
             textValueG.setFont(serif12);
 
@@ -519,10 +525,19 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
             labelValueB.setForeground(Color.black);
             labelValueB.setFont(serif12);
 
-            textValueB = new JTextField(5);
+            textValueB = new JTextField(10);
             textValueB.setText("0");
             textValueB.setFont(serif12);
         } // if (image.isColorImage())
+        else if (image.isComplexImage()) {
+        	labelValueG = new JLabel("Imaginary value used to fill VOI(s)");
+            labelValueG.setForeground(Color.black);
+            labelValueG.setFont(serif12);
+
+            textValueG = new JTextField(10);
+            textValueG.setText("0");
+            textValueG.setFont(serif12);	
+        }
 
         ButtonGroup fillGroup = new ButtonGroup();
         interiorFill = new JRadioButton("Interior fill", false);
@@ -570,7 +585,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
         gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelValue, gbc);
 
-        if (image.isColorImage()) {
+        if ((image.isColorImage()) || (image.isComplexImage())) {
             gbc.gridy = yPos++;
             gbc.gridx = 0;
             gbc.gridwidth = 1;
@@ -582,6 +597,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
             gbc.weightx = 0;
             gbc.fill = GridBagConstraints.NONE;
             maskPanel.add(labelValueG, gbc);
+        }
+        if (image.isColorImage()) {
             gbc.gridy = yPos++;
             gbc.gridx = 0;
             gbc.gridwidth = 1;
@@ -663,10 +680,11 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
             min = Long.MIN_VALUE;
             max = Long.MAX_VALUE;
 
-        } else if ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.ARGB_FLOAT)) {
+        } else if ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.ARGB_FLOAT) ||
+        		   (image.getType() == ModelStorageBase.COMPLEX)) {
             min = -Float.MAX_VALUE;
             max = Float.MAX_VALUE;
-        } else if (image.getType() == ModelStorageBase.DOUBLE) {
+        } else if ((image.getType() == ModelStorageBase.DOUBLE) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
             min = -Double.MAX_VALUE;
             max = Double.MAX_VALUE;
         }
@@ -698,7 +716,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
             return false;
         }
 
-        if (image.isColorImage()) {
+        if ((image.isColorImage()) || (image.isComplexImage())) {
             tmpStr = textValueG.getText();
 
             if (testParameter(tmpStr, min, max)) {
@@ -709,6 +727,9 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
 
                 return false;
             }
+        }
+        
+        if (image.isColorImage()) {
 
             tmpStr = textValueB.getText();
 
