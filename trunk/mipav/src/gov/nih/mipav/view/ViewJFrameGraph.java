@@ -53,7 +53,10 @@ public class ViewJFrameGraph extends JFrame
     	fitLaplace("Fit Laplace (A*exp(-|x-mu|/beta))", FitLaplace.class),
     	
     	/** Mode indicates Lorentz fitting in progress */
-    	fitLorentz("Fit Lorentz Distribution", FitLorentz.class);
+    	fitLorentz("Fit Lorentz Distribution", FitLorentz.class),
+    	
+    	/** Mode indicates constant plus sum of decaying exponentials */
+    	fitMultiExponential("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)", FitMultiExponential.class);
     	
     	private String listEntry;
     	private Constructor cl;
@@ -62,7 +65,12 @@ public class ViewJFrameGraph extends JFrame
     		this.listEntry = listEntry;
     		if(cl != null) {
 	    		try {
-					this.cl = cl.getConstructor(int.class, float[].class, float[].class);
+	    			if (cl == FitMultiExponential.class) {
+					    this.cl = cl.getConstructor(int.class, int.class, float[].class, float[].class);
+	    			}
+	    			else {
+	    				this.cl = cl.getConstructor(int.class, float[].class, float[].class);	
+	    			}
 				} catch (SecurityException e) {
 					e.printStackTrace();
 				} catch (NoSuchMethodException e) {
@@ -320,6 +328,12 @@ public class ViewJFrameGraph extends JFrame
      * this is a list of the x,y coords of the voi's boundary
      */
     private int[][] xyCoords;
+    
+    private JLabel numVariablesLabel;
+    
+    private JTextField numVariablesField;
+    
+    private int numVariables = 5;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1637,8 +1651,17 @@ public class ViewJFrameGraph extends JFrame
 
             for (int i = 0; i < functions.length; i++) {
                 nPoints = graph.getFuncts()[i].getOriginalXs().length;
+                if (mode.toString().equals("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)")) {
+                	String tmpStr = numVariablesField.getText();
+                	numVariables = Integer.valueOf(tmpStr).intValue();
+                	fe = (NLFittedFunction)mode.getImpl().newInstance(nPoints, numVariables,
+                			graph.getFuncts()[i].getOriginalXs(),
+                            graph.getFuncts()[i].getOriginalYs());	
+                }
+                else {
                 fe = (NLFittedFunction)mode.getImpl().newInstance(nPoints, graph.getFuncts()[i].getOriginalXs(),
                                         graph.getFuncts()[i].getOriginalYs());
+                }
                 fe.driver();
                 fe.displayResults();
 
@@ -3035,16 +3058,16 @@ public class ViewJFrameGraph extends JFrame
             return;
         }
 
-        fitFunctPanel.setBounds(10, 10, 480, 290);
+        fitFunctPanel.setBounds(10, 10, 480, 325);
         fitFunctPanel.setLayout(null);
         fitFunctPanel.setBorder(new EtchedBorder());
 
-        fitFunctTypePanel.setBounds(10, 10, 465, 50);
+        fitFunctTypePanel.setBounds(10, 10, 465, 85);
         fitFunctTypePanel.setLayout(null);
         fitFunctTypePanel.setBorder(new EtchedBorder());
         fitFunctPanel.add(fitFunctTypePanel);
 
-        fitFunctVisiblePanel.setBounds(10, 70, 465, 245);
+        fitFunctVisiblePanel.setBounds(10, 105, 465, 245);
         fitFunctVisiblePanel.setBorder(MipavUtil.buildTitledBorder("Fitted Functions"));
         fitFunctPanel.add(fitFunctVisiblePanel);
 
@@ -3059,7 +3082,17 @@ public class ViewJFrameGraph extends JFrame
         fitType.setFont(MipavUtil.font12);
         fitFunctTypePanel.add(fitType);
         
+        numVariablesLabel = new JLabel("Number of variables (Only for Multiexponential)");
+        numVariablesLabel.setBounds(10, 45, 310, 30);
+        numVariablesLabel.setFont(MipavUtil.font12);
+        fitFunctTypePanel.add(numVariablesLabel);
         
+        numVariablesField = new JTextField(5);
+        numVariablesField.setBounds(335, 45, 120, 30);
+        numVariablesField.setText("5");
+        numVariablesField.setFont(MipavUtil.font12);
+        numVariablesField.setForeground(Color.black);
+        fitFunctTypePanel.add(numVariablesField);
 
         for (int index = 0; index < 5; index++) {
 
