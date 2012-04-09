@@ -1269,7 +1269,7 @@ import Jama.Matrix;
                 m_kDWIImage.setDTIParameters(dtiparams);
                 
                 if (dtiparams.getNumVolumes() != 0){
-                numVolumes = dtiparams.getNumVolumes();
+                numVolumes = m_kDWIImage.getExtents()[3];
                 
                     for (int i = 0; i < numVolumes; i++) {
                         // Add empty rows based on number of volumes
@@ -1322,7 +1322,7 @@ import Jama.Matrix;
             
             else if (parDTIParams !=null){
                 if (parDTIParams.getNumVolumes() != 0){
-                    numVolumes = parDTIParams.getNumVolumes();
+                    numVolumes = m_kDWIImage.getExtents()[3];
                     
                         for (int i = 0; i < numVolumes; i++) {
                             // Add empty rows based on number of volumes
@@ -3294,10 +3294,7 @@ import Jama.Matrix;
          */
         public boolean readBValGradientFile(final String gradientFilePath) {
 
-            /*
-             * if ((getExamName().toUpperCase()).contains("DTI")){ }
-             */
-            
+          
             if ( dtiparams != null && dtiparams.getbMatrixVals() != null){
                 java.lang.Object[] newColIdentifiers = {"Volume","B-value","X Gradient","Y Gradient", "Z Gradient"};
                 srcTableModel.setColumnIdentifiers(newColIdentifiers);
@@ -3332,7 +3329,7 @@ import Jama.Matrix;
 
 
                     raFile.seek(0);
-                    // this is DTI Studio
+                    // this is DTI Studio and MIPAV standard file format
                     
                     for (int j = 0; j < numVolumes; j++) {
                         final Vector<String> rowData = new Vector<String>();
@@ -3360,22 +3357,27 @@ import Jama.Matrix;
                                     final String[] arr2 = grads.split("\\s+");
 
                                     if (arr2.length == 4){
-
+                                        // MIPAV Standard text file format
                                         srcTableModel.setValueAt(arr2[0], i, 1);
                                         srcTableModel.setValueAt(arr2[1], i, 2);
                                         srcTableModel.setValueAt(arr2[2], i, 3);
                                         srcTableModel.setValueAt(arr2[3], i, 4);
                                     }
                                     else if (arr2.length == 3) {
-
+                                     // DTI Studio text file format
                                         srcTableModel.setValueAt(arr2[0], i, 2);
                                         srcTableModel.setValueAt(arr2[1], i, 3);
                                         srcTableModel.setValueAt(arr2[2], i, 4); 
                                         
-                                        if (dtiparams.getbValues() != null){
+                                        if (dtiparams != null && dtiparams.getbValues() != null ){
                                             float [] flBvalueArr= new float[numVolumes]; 
                                             srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
-                                           
+
+                                        }
+                                        else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+                                             float [] flBvalueArr= new float[numVolumes]; 
+                                             srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+
                                         }
                                     
                                     }
@@ -3388,12 +3390,10 @@ import Jama.Matrix;
                     }
 
                 } else {
-                    // this is FSL
+                 // this is FSL, dcm2nii, and Miscellaneous  text file format 
 
                     // String line;
                     try{
-                    //System.out.println("fsl");
-
                     int decimalCount = 0;
                     StringBuffer buffFirstLine = new StringBuffer(firstLine);
                     int length = buffFirstLine.length();
@@ -3402,14 +3402,20 @@ import Jama.Matrix;
                         char index = buffFirstLine.charAt(i);
                         if (index == '.') {
                             decimalCount++;
+                            
                         }
-
                     }
                     //System.out.println("decimal count: " +decimalCount);
 
-                    //if (decimalCount > 4) {
+                    if (decimalCount > 4) {
+                        // this is FSL
                         raFile.seek(0);
-                        numVolumes = m_kDWIImage.getExtents()[3];
+                        int lineCount = 0;
+                        while (raFile.readLine() != null){
+                            lineCount++;
+                        }
+                        raFile.seek(0);
+                        numVolumes = m_kDWIImage.getExtents()[3];                       
 
                         for (int j = 0; j < numVolumes; j++) {
                             final Vector<String> rowData = new Vector<String>();
@@ -3436,7 +3442,6 @@ import Jama.Matrix;
                         int k = start;
                         String firstline = raFile.readLine();
                         firstline = firstline.trim();
-
                         String[] arr = firstline.split("\\s+");
 
                         for (final String element : arr) {
@@ -3477,19 +3482,83 @@ import Jama.Matrix;
                             }
                         }
 
-                        k = start;
-                        String fourthLine = raFile.readLine();
-                        fourthLine = fourthLine.trim();
-                        arr = fourthLine.split("\\s+");
-                        for (final String element : arr) {
-                            if (k < numRows) {
-                                srcTableModel.setValueAt(element, k, 1);
-                                k = k + 1;
-                            } else {
-                                break;
+
+                        if (lineCount == 4){
+                            k = start;
+                            String fourthLine = raFile.readLine();
+                            fourthLine = fourthLine.trim();
+                            arr = fourthLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {
+                                    srcTableModel.setValueAt(element, k, 1);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
                             }
                         }
+                        else if (lineCount == 3){
+                           //dcm2nii file text file format 
+                            if (dtiparams != null && dtiparams.getbValues() != null ){
+                                for (int i = 0; i < numVolumes; i++){
+                                    float [] flBvalueArr= new float[numVolumes]; 
+                                    srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
+                                }
 
+                            }
+                            else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+                                for (int i = 0; i < numVolumes; i++){
+                                     float [] flBvalueArr= new float[numVolumes]; 
+                                     srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+                                }
+
+                            }
+                                                  
+                        }
+                    }
+                    else if(decimalCount == 3){
+                        //Miscellaneous text file format
+                        raFile.seek(0);
+                        numVolumes = m_kDWIImage.getExtents()[3];
+
+                        for (int j = 0; j < numVolumes; j++) {
+                            final Vector<String> rowData = new Vector<String>();
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            srcTableModel.addRow(rowData);
+                            // Populate Volume column
+                            srcTableModel.setValueAt(String.valueOf(j),j,0);
+                        }
+
+                        for (int i = 0; i < numVolumes; i++){
+                            String grads = raFile.readLine();
+                            grads = grads.trim();
+                            String [] arrGrads = grads.split("\\s+");
+                            srcTableModel.setValueAt(arrGrads[0], i, 2);
+                            srcTableModel.setValueAt(arrGrads[1], i, 3);
+                            srcTableModel.setValueAt(arrGrads[2], i, 4);
+                            
+                            
+                            if (dtiparams != null && dtiparams.getbValues() != null ){
+                                float [] flBvalueArr= new float[numVolumes]; 
+                                srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
+
+                            }
+                            else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+                                 float [] flBvalueArr= new float[numVolumes]; 
+                                 srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+
+                            }
+                            
+                        }
+                                                
+                    }
+                    else if(decimalCount == 4){
+                        
+                    }
                     }
                     catch (Exception e){
                         MipavUtil.displayError("Invalid Bval/Gradient Text File");
