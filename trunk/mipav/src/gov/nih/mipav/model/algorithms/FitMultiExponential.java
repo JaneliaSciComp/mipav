@@ -53,6 +53,7 @@ public class FitMultiExponential extends NLFittedFunction {
         // internalScaling = true;
         // Suppress diagnostic messages
         outputMes = false;
+        maxIterations = 5000;
         testData();
     }
 
@@ -92,6 +93,7 @@ public class FitMultiExponential extends NLFittedFunction {
         // Jacobian scaled to have unit length include the following line.
         // internalScaling = true;
         // Suppress diagnostic messages
+        maxIterations = 5000;
         outputMes = false;
     }
 
@@ -139,6 +141,7 @@ public class FitMultiExponential extends NLFittedFunction {
         // Jacobian scaled to have unit length include the following line.
         // internalScaling = true;
         // Suppress diagnostic messages
+        maxIterations = 5000;
         outputMes = false;
     }
 
