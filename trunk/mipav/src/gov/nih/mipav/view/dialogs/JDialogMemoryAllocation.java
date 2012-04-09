@@ -418,8 +418,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
                 }
 
                 // we are now setting the init to be the same as the Max
-                Preferences.setProperty("StartingHeapSize", initHeapText.getText());
-                Preferences.setProperty("MaximumHeapSize", maxHeapText.getText());
+                Preferences.setProperty(Preferences.PREF_STARTING_HEAP_SIZE, initHeapText.getText());
+                Preferences.setProperty(Preferences.PREF_MAX_HEAP_SIZE, maxHeapText.getText());
 
                 final OperatingSystem os = OperatingSystem.getOS();
                 final SystemArchitecture arch = SystemArchitecture.getArch();
@@ -467,8 +467,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         } else if (source == usePreferencesButton) {
 
             // we are now setting the init to be the same as the Max
-            initHeapText.setText(Preferences.getProperty("MaximumHeapSize"));
-            maxHeapText.setText(Preferences.getProperty("MaximumHeapSize"));
+            initHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
+            maxHeapText.setText(Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE));
             OKButton.doClick();
         } else if (ae.getActionCommand().equals("Help")) {
             MipavUtil.showHelp("10091");
@@ -499,8 +499,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
             // usePreferencesButton.setPreferredSize(MipavUtil.defaultButtonSize);
             usePreferencesButton.setFont(serif12B);
 
-            if ( (Preferences.getProperty("StartingHeapSize") == null)
-                    || (Preferences.getProperty("MaximumHeapSize") == null)) {
+            if ( (Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE) == null)
+                    || (Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE) == null)) {
                 usePreferencesButton.setEnabled(false);
             }
 
@@ -835,7 +835,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             JLabel initPref;
 
             try {
-                initPref = new JLabel("(" + Preferences.getProperty("StartingHeapSize") + ")");
+                initPref = new JLabel("(" + Preferences.getProperty(Preferences.PREF_STARTING_HEAP_SIZE) + ")");
                 initPref.setFont(serif12);
                 initPref.setRequestFocusEnabled(false);
                 // gbl.setConstraints(initPref, gbc);
@@ -879,7 +879,7 @@ public class JDialogMemoryAllocation extends JDialogBase {
             JLabel maxPref;
 
             try {
-                maxPref = new JLabel("(" + Preferences.getProperty("MaximumHeapSize") + ")");
+                maxPref = new JLabel("(" + Preferences.getProperty(Preferences.PREF_MAX_HEAP_SIZE) + ")");
                 maxPref.setFont(serif12);
 
                 // maxPref.setForeground(Color.DARK_GRAY);
