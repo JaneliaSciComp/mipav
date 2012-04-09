@@ -3475,7 +3475,7 @@ public abstract class NLConstrainedEngine {
         	return sc;
         } // private double shiftedChebyshevDerivative
         
-        private void dumpTestResults() {
+        public void dumpTestResults() {
         	int i;
         	if (analyticalJacobian) {
         	    Preferences.debug("Internal scaling = " + internalScaling + " Analytical Jacobian used\n", 
