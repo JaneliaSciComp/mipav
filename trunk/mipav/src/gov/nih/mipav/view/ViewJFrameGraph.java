@@ -1654,6 +1654,10 @@ public class ViewJFrameGraph extends JFrame
                 if (mode.toString().equals("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)")) {
                 	String tmpStr = numVariablesField.getText();
                 	numVariables = Integer.valueOf(tmpStr).intValue();
+                	if ((numVariables % 2) == 0) {
+                		MipavUtil.displayError("Number of variables must be odd");
+                		return;
+                	}
                 	fe = (NLFittedFunction)mode.getImpl().newInstance(nPoints, numVariables,
                 			graph.getFuncts()[i].getOriginalXs(),
                             graph.getFuncts()[i].getOriginalYs());	
