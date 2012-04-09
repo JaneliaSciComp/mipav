@@ -1667,7 +1667,7 @@ public class ViewJFrameGraph extends JFrame
                                         graph.getFuncts()[i].getOriginalYs());
                 }
                 fe.driver();
-                fe.displayResults();
+                fe.dumpTestResults();
 
                 x = new float[functions[i].getXs().length];
                 y = new float[x.length];
