@@ -44,7 +44,7 @@ public class FitMultiExponential extends NLFittedFunction {
         	bl[2*k+1] = -Double.MAX_VALUE;
         	bu[2*k+1] = Double.MAX_VALUE;
         	bl[2*k+2] = -Double.MAX_VALUE;
-        	bu[2*k+2] = Double.MAX_VALUE;
+        	bu[2*k+2] = 0.0;
         }
 
         // The default is internalScaling = false
@@ -84,7 +84,7 @@ public class FitMultiExponential extends NLFittedFunction {
         	bl[2*k+1] = -Double.MAX_VALUE;
         	bu[2*k+1] = Double.MAX_VALUE;
         	bl[2*k+2] = -Double.MAX_VALUE;
-        	bu[2*k+2] = Double.MAX_VALUE;
+        	bu[2*k+2] = 0.0;
         }
 
         // The default is internalScaling = false
@@ -131,7 +131,7 @@ public class FitMultiExponential extends NLFittedFunction {
         	bl[2*k+1] = -Double.MAX_VALUE;
         	bu[2*k+1] = Double.MAX_VALUE;
         	bl[2*k+2] = -Double.MAX_VALUE;
-        	bu[2*k+2] = Double.MAX_VALUE;
+        	bu[2*k+2] = 0.0;
         }
 
         // The default is internalScaling = false
