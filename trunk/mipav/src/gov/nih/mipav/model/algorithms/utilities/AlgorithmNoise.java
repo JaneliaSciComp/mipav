@@ -11,6 +11,11 @@ import java.io.*;
  * Algorithm used to add Gaussian, Poisson, or Uniform noise to an image. The additive noise is clamped to the lowest or highest
  * value is the source image type. For example a byte image where the source pixel = 120 + noise = 15 would be clamped
  * to 127 the maximum pixel value for a byte image.
+ * 
+ * For Rayleigh noise the formula is simply sigma * sqrt(-2.0 * ln(U)), where U is a uniform 0 to 1 distribution 
+ * not including 0.  The Rayleigh cumulative distribution function F(x) =  1 - exp(-(x**2)/(2*sigma**2)) is simply 
+ * set equal to U and then the inverse function is obtained by solving for x in terms of U, 
+ * giving x = sigma * sqrt(-2.0 * ln(1 - U)) and finally noting that 1 - U has the same distribution as U.
  *
  * @version  2.0 July 25, 2008
  * @author   Matthew J. McAuliffe, Ph.D.
