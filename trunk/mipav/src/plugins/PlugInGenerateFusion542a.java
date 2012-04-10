@@ -29,6 +29,9 @@ import gov.nih.mipav.plugins.*; // needed to load PlugInAlgorithm / PlugInView /
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
+import java.lang.reflect.Field;
+
+import nibib.spim.PlugInDialogGenerateFusion542a;
 
 /**
  * 
@@ -42,23 +45,14 @@ import java.awt.*;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInCreateTumorMap541f implements PlugInGeneric {
+public class PlugInGenerateFusion542a implements PlugInGeneric {
 
-	public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "541f"};
+    public static final String[] CATEGORY = {"SPIM"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Defines body of run method, which was declared in the interface. 
-     *
-     * @param  parentFrame  parent frame
-     * @param  image        current ModelImage - this is an image already loaded into MIPAV. Can be null.
-     *
-     * @see    ModelImage
-     * @see    ViewJFrameImage
-     */
     public void run() {
-        new PlugInDialogCreateTumorMap541f(false);
+        PlugInDialogGenerateFusion542a test = new PlugInDialogGenerateFusion542a(false);
         
     }
 }

@@ -24,7 +24,7 @@ This software may NOT be used for diagnostic purposes.
 
 import gov.nih.mipav.view.JPanelStatisticsList;
 
-public class PlugInStatisticsList540a extends JPanelStatisticsList implements ExtraPluginStatistics540a {
+public class PlugInStatisticsList542a extends JPanelStatisticsList implements ExtraPluginStatistics542a {
 
     static String[] extendedStatisticsDescription;
 

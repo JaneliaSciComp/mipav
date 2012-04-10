@@ -47,7 +47,7 @@ import java.util.Iterator;
 
 import javax.swing.*;
 
-import nibib.spim.PlugInAlgorithmGenerateFusion541d.SampleMode;
+import nibib.spim.PlugInAlgorithmGenerateFusion542a.SampleMode;
 
 
 /**
@@ -60,7 +60,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion541d.SampleMode;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implements AlgorithmInterface {
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGenerateFusion541d generateFusionAlgo = null;
+    private PlugInAlgorithmGenerateFusion542a generateFusionAlgo = null;
 
     private JTextField mtxFileLocText, transformFileLocText, baseFileLocText;
 
@@ -172,7 +172,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGenerateFusion541d() { }
+    public PlugInDialogGenerateFusion542a() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -180,7 +180,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGenerateFusion541d(boolean modal) {
+    public PlugInDialogGenerateFusion542a(boolean modal) {
         super(modal);
         
         init();
@@ -218,7 +218,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGenerateFusion541d) {
+        if (algorithm instanceof PlugInAlgorithmGenerateFusion542a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generateFusionAlgo.isCompleted() == true)) {
@@ -250,7 +250,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion541d(doShowPreFusion, doInterImages, showGeoMean, showAriMean, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion542a(doShowPreFusion, doInterImages, showGeoMean, showAriMean, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
@@ -332,7 +332,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     private void init() {
         
         setForeground(Color.black);
-        setTitle("Generate fusion 541d");
+        setTitle("Generate fusion 542a");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
@@ -514,6 +514,7 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         thresholdPanel.add(thresholdIntensityText.getParent(), gbcThreshold);
         
         algOptionPanel.add(thresholdPanel, gbc);
+        gbc.gridy++;
         
         doThresholdBox.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -523,12 +524,18 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         
         thresholdPanel.setVisible(doThresholdBox.isSelected());
         
+        JPanel weightPanel = new JPanel(new GridBagLayout());
+        weightPanel.setForeground(Color.black);
+        flow = new FlowLayout(FlowLayout.LEFT);
+        weightPanel.setLayout(flow);
+        
         transformWeightText = gui.buildDecimalField("Transformed image weight", 1.0);
-        algOptionPanel.add(transformWeightText.getParent(), gbc);
-        gbc.gridx++;
+        weightPanel.add(transformWeightText.getParent(), gbc);
         
         baseWeightText = gui.buildDecimalField("Base image weight", 1.0);
-        algOptionPanel.add(baseWeightText.getParent(), gbc);
+        weightPanel.add(baseWeightText.getParent(), gbc);
+        
+        algOptionPanel.add(weightPanel, gbc);
         gbc.gridy++;
         gbc.gridx = 0;
         

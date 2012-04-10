@@ -84,7 +84,7 @@ public class PlugInAlgorithmNewGeneric extends AlgorithmBase implements Algorith
     
     @SuppressWarnings("unused")
     private void calc3D() {
-    	String voiDir = "C:\\Hello\\"+PlugInMuscleImageDisplay540a.VOI_DIR+"\\";
+    	String voiDir = "C:\\Hello\\"+PlugInMuscleImageDisplay542a.VOI_DIR+"\\";
     	
         System.out.println("Attempting to save VOIs: "+srcImage.getVOIs().size()+"\tTo: "+voiDir);
         //VOI created

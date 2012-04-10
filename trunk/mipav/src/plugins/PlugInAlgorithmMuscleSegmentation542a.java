@@ -64,7 +64,7 @@ import javax.swing.ScrollPaneConstants;
  * @author senseneyj
  *
  */
-public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase implements ActionListener, ComponentListener {
+public class PlugInAlgorithmMuscleSegmentation542a extends AlgorithmBase implements ActionListener, ComponentListener {
     
     //~ Static fields --------------------------------------------------------------------------------------------------
 
@@ -89,16 +89,16 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
     private int activeTab = 0;
     
     /** denotes the type of srcImg (see enum ImageType) */
-    private PlugInMuscleImageDisplay540a.ImageType imageType; 
+    private PlugInMuscleImageDisplay542a.ImageType imageType; 
     
     /** denotes the symmetry of srcImage */
-    private PlugInMuscleImageDisplay540a.Symmetry symmetry;
+    private PlugInMuscleImageDisplay542a.Symmetry symmetry;
     
     /**Whether multiple slices are contained in srcImg */
     private boolean multipleSlices;
        
     /**voiList created by various set up methods*/
-    private PlugInSelectableVOI540a[][] voiList;
+    private PlugInSelectableVOI542a[][] voiList;
     
     /**Each muscle pane is one VOI in custom mode.*/
     private ArrayList<ArrayList<MusclePane>> customVOI;
@@ -145,7 +145,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmMuscleSegmentation540a(ModelImage srcImg, PlugInMuscleImageDisplay540a.ImageType imageType, 
+    public PlugInAlgorithmMuscleSegmentation542a(ModelImage srcImg, PlugInMuscleImageDisplay542a.ImageType imageType, 
     										 boolean multipleSlices, String fileName) {
         super(null, srcImg);
         this.imageType = imageType;
@@ -199,7 +199,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
             	
         		customVOI = new ArrayList<ArrayList<MusclePane>>();
         		FileManager manager = new FileManager(this);
-		    	manager.fileRead(srcImage.getImageDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator+fileName);	
+		    	manager.fileRead(srcImage.getImageDirectory()+PlugInMuscleImageDisplay542a.VOI_DIR+File.separator+fileName);	
         		
             	buildCustomDialog();
 				srcImage = (ModelImage)customPane.getImageA().clone();
@@ -250,7 +250,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 		} else if(e.getActionCommand().equals(OPEN_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
 			chooser.setDialogTitle("Open a VOI template");
-			chooser.setCurrentDirectory(new File(imageDir+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator));
+			chooser.setCurrentDirectory(new File(imageDir+PlugInMuscleImageDisplay542a.VOI_DIR+File.separator));
 			chooser.setMultiSelectionEnabled(false);
 		    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { ".nia" }));
 		    
@@ -263,7 +263,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 		    }
 		} else if(e.getActionCommand().equals(SAVE_TEMPLATE)) {
 			JFileChooser chooser = new JFileChooser();
-			chooser.setCurrentDirectory(new File(imageDir+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator));
+			chooser.setCurrentDirectory(new File(imageDir+PlugInMuscleImageDisplay542a.VOI_DIR+File.separator));
 			chooser.setDialogTitle("Save the current VOI template");
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[]{".nia"}));
 
@@ -339,33 +339,33 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 
 	private void buildAbdomenDialog() {
         
-    	voiList = new PlugInSelectableVOI540a[3][];
+    	voiList = new PlugInSelectableVOI542a[3][];
     	int imageSize = 1;
     	if(srcImage.getNDims() > 2)
     		imageSize = srcImage.getExtents()[2];
     	//String name, boolean closed, int numCurves, int location, boolean fillable, doCalc
-    	voiList[0] = new PlugInSelectableVOI540a[3];
-    	voiList[0][0] = new PlugInSelectableVOI540a("Abdomen", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
-    	voiList[0][1] = new PlugInSelectableVOI540a("Subcutaneous area", true, 1, 0, false, true, imageSize, 1, Color.RED);
-    	voiList[0][2] = new PlugInSelectableVOI540a("Phantom", true, 1, 0, false, false, imageSize, Color.GREEN);
+    	voiList[0] = new PlugInSelectableVOI542a[3];
+    	voiList[0][0] = new PlugInSelectableVOI542a("Abdomen", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI542a("Subcutaneous area", true, 1, 0, false, true, imageSize, 1, Color.RED);
+    	voiList[0][2] = new PlugInSelectableVOI542a("Phantom", true, 1, 0, false, false, imageSize, Color.GREEN);
     	
-    	voiList[1] = new PlugInSelectableVOI540a[5];
-    	voiList[1][0] = new PlugInSelectableVOI540a("Visceral cavity", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
-    	voiList[1][1] = new PlugInSelectableVOI540a("Liver", true, 1, 1, false, true, imageSize, 3, Color.RED);
-    	voiList[1][2] = new PlugInSelectableVOI540a("Liver cysts", true, 10, 1, true, true, imageSize, 4, Color.GREEN);
-    	voiList[1][3] = new PlugInSelectableVOI540a("Bone sample", true, 1, 1, false, false, imageSize, Color.CYAN);
-    	voiList[1][4] = new PlugInSelectableVOI540a("Water sample", true, 1, 1, false, false, imageSize, Color.MAGENTA);
+    	voiList[1] = new PlugInSelectableVOI542a[5];
+    	voiList[1][0] = new PlugInSelectableVOI542a("Visceral cavity", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
+    	voiList[1][1] = new PlugInSelectableVOI542a("Liver", true, 1, 1, false, true, imageSize, 3, Color.RED);
+    	voiList[1][2] = new PlugInSelectableVOI542a("Liver cysts", true, 10, 1, true, true, imageSize, 4, Color.GREEN);
+    	voiList[1][3] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.CYAN);
+    	voiList[1][4] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.MAGENTA);
     	
-    	voiList[2] = new PlugInSelectableVOI540a[9];
-    	voiList[2][0] = new PlugInSelectableVOI540a("Left Psoas", true, 1, 2, true, true, imageSize, 5, Color.ORANGE);
-    	voiList[2][1] = new PlugInSelectableVOI540a("Right Psoas", true, 1, 2, true, true, imageSize, 6, Color.ORANGE);
-    	voiList[2][2] = new PlugInSelectableVOI540a("Left Lat. obliques", true, 1, 2, true, true, imageSize, 7, Color.RED);
-    	voiList[2][3] = new PlugInSelectableVOI540a("Right Lat. obliques", true, 1, 2, true, true, imageSize, 8, Color.RED);
-    	voiList[2][4] = new PlugInSelectableVOI540a("Left Paraspinous", true, 1, 2, true, true, imageSize, 9, Color.GREEN);
-    	voiList[2][5] = new PlugInSelectableVOI540a("Right Paraspinous", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
-    	voiList[2][6] = new PlugInSelectableVOI540a("Left Rectus", true, 1, 2, true, true, imageSize, 11, Color.CYAN);
-    	voiList[2][7] = new PlugInSelectableVOI540a("Right Rectus", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
-    	voiList[2][8] = new PlugInSelectableVOI540a("Aortic Calcium", true, 5, 2, true, true, imageSize, 13, Color.MAGENTA);
+    	voiList[2] = new PlugInSelectableVOI542a[9];
+    	voiList[2][0] = new PlugInSelectableVOI542a("Left Psoas", true, 1, 2, true, true, imageSize, 5, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI542a("Right Psoas", true, 1, 2, true, true, imageSize, 6, Color.ORANGE);
+    	voiList[2][2] = new PlugInSelectableVOI542a("Left Lat. obliques", true, 1, 2, true, true, imageSize, 7, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI542a("Right Lat. obliques", true, 1, 2, true, true, imageSize, 8, Color.RED);
+    	voiList[2][4] = new PlugInSelectableVOI542a("Left Paraspinous", true, 1, 2, true, true, imageSize, 9, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI542a("Right Paraspinous", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
+    	voiList[2][6] = new PlugInSelectableVOI542a("Left Rectus", true, 1, 2, true, true, imageSize, 11, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI542a("Right Rectus", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
+    	voiList[2][8] = new PlugInSelectableVOI542a("Aortic Calcium", true, 5, 2, true, true, imageSize, 13, Color.MAGENTA);
         
     	//Subcutaneous area has abdomen as child
     	voiList[0][1].addChild(voiList[0][0]);
@@ -377,8 +377,8 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
         titles[1] = "Tissue";
         titles[2] = "Muscles"; 
         
-        symmetry = PlugInMuscleImageDisplay540a.Symmetry.LEFT_RIGHT;
-	    imageType = PlugInMuscleImageDisplay540a.ImageType.Abdomen;
+        symmetry = PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Abdomen;
 	    
 	    String extendable = "Start Pane: Abdomen"+
 	    	System.getProperty("line.separator")+"Start Voi: Abdomen"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"End Voi"+
@@ -414,35 +414,35 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
     	if(srcImage.getNDims() > 2)
     		imageSize = srcImage.getExtents()[2];
 	    
-	    voiList = new PlugInSelectableVOI540a[3][];
+	    voiList = new PlugInSelectableVOI542a[3][];
 	    
-	    voiList[0] = new PlugInSelectableVOI540a[3];
-	    voiList[0][0] = new PlugInSelectableVOI540a("Left Thigh", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
-    	voiList[0][1] = new PlugInSelectableVOI540a("Right Thigh", true, 1, 0, false, true, imageSize, 1, Color.ORANGE);
+	    voiList[0] = new PlugInSelectableVOI542a[3];
+	    voiList[0][0] = new PlugInSelectableVOI542a("Left Thigh", true, 1, 0, false, true, imageSize, 0, Color.ORANGE);
+    	voiList[0][1] = new PlugInSelectableVOI542a("Right Thigh", true, 1, 0, false, true, imageSize, 1, Color.ORANGE);
     	
-    	voiList[0][2] = new PlugInSelectableVOI540a("Phantom", true, 1, 0, false, false, imageSize, Color.RED);
+    	voiList[0][2] = new PlugInSelectableVOI542a("Phantom", true, 1, 0, false, false, imageSize, Color.RED);
 	    
-    	voiList[1] = new PlugInSelectableVOI540a[5];
-	    voiList[1][0] = new PlugInSelectableVOI540a("Left Bone", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
-    	voiList[1][1] = new PlugInSelectableVOI540a("Right Bone", true, 1, 1, false, true, imageSize, 3, Color.ORANGE);
-	    voiList[1][2] = new PlugInSelectableVOI540a("Left Marrow", true, 1, 1, true, true, imageSize, 4, Color.RED);
-    	voiList[1][3] = new PlugInSelectableVOI540a("Right Marrow", true, 1, 1, true, true, imageSize, 5, Color.RED);
+    	voiList[1] = new PlugInSelectableVOI542a[5];
+	    voiList[1][0] = new PlugInSelectableVOI542a("Left Bone", true, 1, 1, false, true, imageSize, 2, Color.ORANGE);
+    	voiList[1][1] = new PlugInSelectableVOI542a("Right Bone", true, 1, 1, false, true, imageSize, 3, Color.ORANGE);
+	    voiList[1][2] = new PlugInSelectableVOI542a("Left Marrow", true, 1, 1, true, true, imageSize, 4, Color.RED);
+    	voiList[1][3] = new PlugInSelectableVOI542a("Right Marrow", true, 1, 1, true, true, imageSize, 5, Color.RED);
     	
-    	voiList[1][4] = new PlugInSelectableVOI540a("Bone sample", true, 1, 1, false, false, imageSize, Color.GREEN);
+    	voiList[1][4] = new PlugInSelectableVOI542a("Bone sample", true, 1, 1, false, false, imageSize, Color.GREEN);
 	    
-    	voiList[2] = new PlugInSelectableVOI540a[11];
-	    voiList[2][0] = new PlugInSelectableVOI540a("Left Fascia", true, 1, 2, false, true, imageSize, 6, Color.ORANGE);
-    	voiList[2][1] = new PlugInSelectableVOI540a("Right Fascia", true, 1, 2, false, true, imageSize, 7, Color.ORANGE);
-	    voiList[2][2] = new PlugInSelectableVOI540a("Left Quads", true, 1, 2, true, true, imageSize, 8, Color.RED);
-    	voiList[2][3] = new PlugInSelectableVOI540a("Right Quads", true, 1, 2, true, true, imageSize, 9, Color.RED);
-	    voiList[2][4] = new PlugInSelectableVOI540a("Left Hamstrings", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
-    	voiList[2][5] = new PlugInSelectableVOI540a("Right Hamstrings", true, 1, 2, true, true, imageSize, 11, Color.GREEN);
-	    voiList[2][6] = new PlugInSelectableVOI540a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
-    	voiList[2][7] = new PlugInSelectableVOI540a("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.CYAN);
-	    voiList[2][8] = new PlugInSelectableVOI540a("Left Adductors", true, 1, 2, true, true, imageSize, 14, Color.MAGENTA);
-    	voiList[2][9] = new PlugInSelectableVOI540a("Right Adductors", true, 1, 2, true, true, imageSize, 15, Color.MAGENTA);
+    	voiList[2] = new PlugInSelectableVOI542a[11];
+	    voiList[2][0] = new PlugInSelectableVOI542a("Left Fascia", true, 1, 2, false, true, imageSize, 6, Color.ORANGE);
+    	voiList[2][1] = new PlugInSelectableVOI542a("Right Fascia", true, 1, 2, false, true, imageSize, 7, Color.ORANGE);
+	    voiList[2][2] = new PlugInSelectableVOI542a("Left Quads", true, 1, 2, true, true, imageSize, 8, Color.RED);
+    	voiList[2][3] = new PlugInSelectableVOI542a("Right Quads", true, 1, 2, true, true, imageSize, 9, Color.RED);
+	    voiList[2][4] = new PlugInSelectableVOI542a("Left Hamstrings", true, 1, 2, true, true, imageSize, 10, Color.GREEN);
+    	voiList[2][5] = new PlugInSelectableVOI542a("Right Hamstrings", true, 1, 2, true, true, imageSize, 11, Color.GREEN);
+	    voiList[2][6] = new PlugInSelectableVOI542a("Left Sartorius", true, 1, 2, true, true, imageSize, 12, Color.CYAN);
+    	voiList[2][7] = new PlugInSelectableVOI542a("Right Sartorius", true, 1, 2, true, true, imageSize, 13, Color.CYAN);
+	    voiList[2][8] = new PlugInSelectableVOI542a("Left Adductors", true, 1, 2, true, true, imageSize, 14, Color.MAGENTA);
+    	voiList[2][9] = new PlugInSelectableVOI542a("Right Adductors", true, 1, 2, true, true, imageSize, 15, Color.MAGENTA);
 
-    	voiList[2][10] = new PlugInSelectableVOI540a("Water sample", true, 1, 1, false, false, imageSize, Color.CYAN);
+    	voiList[2][10] = new PlugInSelectableVOI542a("Water sample", true, 1, 1, false, false, imageSize, Color.CYAN);
 	    
     	//Left thigh has left bone and left marrow as children
     	voiList[0][0].addChild(voiList[1][0]);
@@ -463,8 +463,8 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 	    titles[1] = "Bone";
 	    titles[2] = "Muscles";
 	     
-	    symmetry = PlugInMuscleImageDisplay540a.Symmetry.LEFT_RIGHT;
-	    imageType = PlugInMuscleImageDisplay540a.ImageType.Thigh;
+	    symmetry = PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Thigh;
 	    
 	    String extendable = "Start Pane: Thigh"+
 	    	System.getProperty("line.separator")+"Start Voi: Thigh"+System.getProperty("line.separator")+"Color: 255,200,0"+System.getProperty("line.separator")+"Do_Calc: true"+System.getProperty("line.separator")+"Symmetry: Left/Right"+System.getProperty("line.separator")+"End Voi"+
@@ -488,12 +488,12 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 	}
 	
 	private void performFileSave(String extendable, String name) {
-		File niaFolder = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator); 
+		File niaFolder = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay542a.VOI_DIR+File.separator); 
 	    BufferedWriter output = null;
 	    try {
 	    	if(!niaFolder.exists())
 	    		niaFolder.mkdir();
-	    	File configFile = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator+name+".nia");
+	    	File configFile = new File(srcImage.getFileInfo(0).getFileDirectory()+PlugInMuscleImageDisplay542a.VOI_DIR+File.separator+name+".nia");
 			output = new BufferedWriter(new FileWriter(configFile));
 			output.write(extendable);
 	    } catch(IOException e) {
@@ -536,7 +536,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 			for(int j=0; j<customVOI.get(i).size(); j++) {
 				MusclePane temp = customVOI.get(i).get(j);
 				if((!temp.getName().equals(DEFAULT_VOI)) && temp.getName().trim().length() > 0) {
-					if(temp.getSymmetry().equals(PlugInMuscleImageDisplay540a.Symmetry.NO_SYMMETRY))
+					if(temp.getSymmetry().equals(PlugInMuscleImageDisplay542a.Symmetry.NO_SYMMETRY))
 						validVOI[i]++;
 					else {
 						validVOI[i] = validVOI[i]+2;
@@ -550,23 +550,23 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 			}
 		}
 		
-		voiList = new PlugInSelectableVOI540a[validPanes][];
+		voiList = new PlugInSelectableVOI542a[validPanes][];
 		int outputLoc = 0;
 		
 		for(int i=0; i<validPanes; i++) {
-			voiList[i] = new PlugInSelectableVOI540a[validVOI[i]];
+			voiList[i] = new PlugInSelectableVOI542a[validVOI[i]];
 			int numVoiFilled = 0;
 			for(int j=0; j<customVOI.get(i).size(); j++) {
 				MusclePane temp = customVOI.get(i).get(j);
 				if((!temp.getName().equals(DEFAULT_VOI)) && temp.getName().trim().length() > 0) {
 					Color tempColor = temp.getColorButton();
 					if(tempColor.equals(Color.BLACK))
-						tempColor = PlugInSelectableVOI540a.INVALID_COLOR;
+						tempColor = PlugInSelectableVOI542a.INVALID_COLOR;
 					if(temp.getDoCalc()) {
-						voiList[i][numVoiFilled] = new PlugInSelectableVOI540a(temp.getName(), temp.getIsClosed(), 
+						voiList[i][numVoiFilled] = new PlugInSelectableVOI542a(temp.getName(), temp.getIsClosed(), 
 								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, outputLoc++, tempColor);
 					} else {
-						voiList[i][numVoiFilled] = new PlugInSelectableVOI540a(temp.getName(), temp.getIsClosed(), 
+						voiList[i][numVoiFilled] = new PlugInSelectableVOI542a(temp.getName(), temp.getIsClosed(), 
 								temp.getNumCurves(), i, temp.getDoFill(), temp.getDoCalc(), imageSize, tempColor);
 					}
 					numVoiFilled++;
@@ -579,8 +579,8 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 			titles[i] = titlesArr.get(i).getText();
 		}
 		
-		symmetry = PlugInMuscleImageDisplay540a.Symmetry.LEFT_RIGHT;
-	    imageType = PlugInMuscleImageDisplay540a.ImageType.Custom;
+		symmetry = PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT;
+	    imageType = PlugInMuscleImageDisplay542a.ImageType.Custom;
 	}
 	
 	/**
@@ -839,10 +839,10 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 		ViewJFrameImage i = null;
 		    
 		if (ViewUserInterface.getReference().isAppFrameVisible()) {
-        	i = new PlugInMuscleImageDisplay540a(srcImage, titles, voiList,  
+        	i = new PlugInMuscleImageDisplay542a(srcImage, titles, voiList,  
         			imageType, symmetry, multipleSlices);
         } else {
-        	i = new PlugInMuscleImageDisplay540a(srcImage, titles, voiList, 
+        	i = new PlugInMuscleImageDisplay542a(srcImage, titles, voiList, 
         			imageType, symmetry, true, multipleSlices);
         }
         
@@ -855,7 +855,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 	public enum Option {
 		Color("Color", java.awt.Color.BLACK),
 		
-		Symmetry("Symmetry", PlugInMuscleImageDisplay540a.Symmetry.NO_SYMMETRY),
+		Symmetry("Symmetry", PlugInMuscleImageDisplay542a.Symmetry.NO_SYMMETRY),
 		
 		Num_Curves("Num_Curves", 1),
 		
@@ -886,9 +886,9 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 		public static final String END_PANE = "End Pane";
 		
 
-		private PlugInAlgorithmMuscleSegmentation540a parent;
+		private PlugInAlgorithmMuscleSegmentation542a parent;
 		
-		public FileManager(PlugInAlgorithmMuscleSegmentation540a parent) {
+		public FileManager(PlugInAlgorithmMuscleSegmentation542a parent) {
 			this.parent = parent;
 		}
 		
@@ -935,12 +935,12 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 										break;
 										
 									case Symmetry:
-										if(value.equals(PlugInMuscleImageDisplay540a.Symmetry.LEFT_RIGHT.toString()))
-											currentPane.setSymmetry(PlugInMuscleImageDisplay540a.Symmetry.LEFT_RIGHT);
-										else if(value.equals(PlugInMuscleImageDisplay540a.Symmetry.TOP_BOTTOM.toString()))
-											currentPane.setSymmetry(PlugInMuscleImageDisplay540a.Symmetry.TOP_BOTTOM);
-										else if(value.equals(PlugInMuscleImageDisplay540a.Symmetry.NO_SYMMETRY.toString()))
-											currentPane.setSymmetry(PlugInMuscleImageDisplay540a.Symmetry.NO_SYMMETRY);
+										if(value.equals(PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT.toString()))
+											currentPane.setSymmetry(PlugInMuscleImageDisplay542a.Symmetry.LEFT_RIGHT);
+										else if(value.equals(PlugInMuscleImageDisplay542a.Symmetry.TOP_BOTTOM.toString()))
+											currentPane.setSymmetry(PlugInMuscleImageDisplay542a.Symmetry.TOP_BOTTOM);
+										else if(value.equals(PlugInMuscleImageDisplay542a.Symmetry.NO_SYMMETRY.toString()))
+											currentPane.setSymmetry(PlugInMuscleImageDisplay542a.Symmetry.NO_SYMMETRY);
 										break;
 										
 									case Num_Curves:
@@ -972,7 +972,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 												length++;
 										}
 										
-										if(imageType.equals(PlugInMuscleImageDisplay540a.ImageType.Custom))
+										if(imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Custom))
 											verticalPane.get(activeTab).setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 										int lastHeight = (int)tabs.get(activeTab).getPreferredSize().getHeight();
 										tabs.get(activeTab).setPreferredSize(new Dimension(370, lastHeight+106));
@@ -1008,7 +1008,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 								newPanel.setPreferredSize(new Dimension(370, 585));
 								newPanel.setMaximumSize(new Dimension (370, 8000));
 								
-								if(imageType.equals(PlugInMuscleImageDisplay540a.ImageType.Custom)) {				
+								if(imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Custom)) {				
 									JScrollPane verticalPaneSingle = new JScrollPane(newPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, 
 											ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 	    	
@@ -1081,7 +1081,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 						output.write(START_VOI+": "+voi.getName()+"\n");
 						Color col = null;
 						if(!(col = voi.getColorButton()).equals(Option.Color.setting) && 
-								!(col = voi.getColorButton()).equals(PlugInSelectableVOI540a.INVALID_COLOR)) {						
+								!(col = voi.getColorButton()).equals(PlugInSelectableVOI542a.INVALID_COLOR)) {						
 							output.write(Option.Color.text+": "+
 											col.getRed()+","+col.getGreen()+","+col.getBlue()+"\n");
 						}
@@ -1134,7 +1134,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 	private class MusclePane extends JPanel implements Serializable, ActionListener, MouseListener {
 		
 		/**The color identifier*/
-		private PlugInMuscleColorButtonPanel540a colorButton;
+		private PlugInMuscleColorButtonPanel542a colorButton;
 		
 		/**The symmetry identifier*/
 		private JComboBox symmetry;
@@ -1166,14 +1166,14 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 		
 		public MusclePane(ActionListener caller) {
 			super(new GridBagLayout());
-			this.colorButton = new PlugInMuscleColorButtonPanel540a(Color.black, "VOI", this);
+			this.colorButton = new PlugInMuscleColorButtonPanel542a(Color.black, "VOI", this);
 			int i = 0;
-			String[] text = new String[PlugInMuscleImageDisplay540a.Symmetry.values().length];
+			String[] text = new String[PlugInMuscleImageDisplay542a.Symmetry.values().length];
 			
-			for(PlugInMuscleImageDisplay540a.Symmetry symmetry : PlugInMuscleImageDisplay540a.Symmetry.values())
+			for(PlugInMuscleImageDisplay542a.Symmetry symmetry : PlugInMuscleImageDisplay542a.Symmetry.values())
 				text[i++] = symmetry.toString();
 			
-			this.symmetry = new JComboBox(PlugInMuscleImageDisplay540a.Symmetry.values());
+			this.symmetry = new JComboBox(PlugInMuscleImageDisplay542a.Symmetry.values());
 			this.name = new JTextField(DEFAULT_VOI);
 			
 			Integer[] numValues = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -1261,7 +1261,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 			if(e.getSource() instanceof JButton && ((JButton)e.getSource()).getText().equals("OK")) {
 				colorButton.setColor(colorChooser.getColor());
 				getGraphics().setColor(colorChooser.getColor());
-			} else if(e.getSource() instanceof PlugInMuscleColorButton540a) {
+			} else if(e.getSource() instanceof PlugInMuscleColorButton542a) {
 				colorChooser = new ViewJColorChooser(new Frame(), "Pick VOI color", 
 						this, this);
 			} 
@@ -1329,8 +1329,8 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 			return colorButton.getColorButton().getColorIcon().getColor();
 		}
 
-		public PlugInMuscleImageDisplay540a.Symmetry getSymmetry() {
-			return ((PlugInMuscleImageDisplay540a.Symmetry)symmetry.getSelectedItem());
+		public PlugInMuscleImageDisplay542a.Symmetry getSymmetry() {
+			return ((PlugInMuscleImageDisplay542a.Symmetry)symmetry.getSelectedItem());
 		}
 
 		public String getName() {
@@ -1361,7 +1361,7 @@ public class PlugInAlgorithmMuscleSegmentation540a extends AlgorithmBase impleme
 			this.colorButton.getColorButton().getColorIcon().setColor(c);
 		}
 
-		public void setSymmetry(PlugInMuscleImageDisplay540a.Symmetry symmetry) {
+		public void setSymmetry(PlugInMuscleImageDisplay542a.Symmetry symmetry) {
 			this.symmetry.setSelectedItem(symmetry);
 		}
 

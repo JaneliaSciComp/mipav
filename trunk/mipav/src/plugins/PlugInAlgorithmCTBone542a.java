@@ -47,7 +47,7 @@ import java.util.Vector;
 
 
 
-public class PlugInAlgorithmCTBone540a extends AlgorithmBase {
+public class PlugInAlgorithmCTBone542a extends AlgorithmBase {
     
     /** X dimension of the CT image */
     private int xDim;
@@ -97,7 +97,7 @@ public class PlugInAlgorithmCTBone540a extends AlgorithmBase {
      * @param  resultImage  Result image model
      * @param  srcImg       Source image model.
      */
-    public PlugInAlgorithmCTBone540a(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
+    public PlugInAlgorithmCTBone542a(ModelImage resultImage, ModelImage srcImg, String imageDir, Color color) {
         super(resultImage, srcImg);
         
         this.imageDir = imageDir+File.separator;

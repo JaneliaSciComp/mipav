@@ -34,7 +34,7 @@ import javax.swing.JButton;
 /**
  * The ColorButton inside of a ColorButtonPanel
  */
-public class PlugInMuscleColorButton540a extends JButton implements VOIListener {
+public class PlugInMuscleColorButton542a extends JButton implements VOIListener {
 
 	/**The icon displaying the current color.*/
 	private ColorIcon cIcon;
@@ -43,13 +43,13 @@ public class PlugInMuscleColorButton540a extends JButton implements VOIListener 
 	private String voiName;
 	
 	/**Maintains reference to containing panel for easy action processing*/
-	private PlugInMuscleColorButtonPanel540a container;
+	private PlugInMuscleColorButtonPanel542a container;
 	
 	/**
 	 * Constructs a colorButton with the given color and name 
 	 * with standard dimension of 20px by 20px.
 	 */
-	public PlugInMuscleColorButton540a(Color c, String voiName, PlugInMuscleColorButtonPanel540a container) {
+	public PlugInMuscleColorButton542a(Color c, String voiName, PlugInMuscleColorButtonPanel542a container) {
 		super();
 		cIcon = new ColorIcon(c, 13, 13);
 		this.voiName = voiName;
@@ -63,7 +63,7 @@ public class PlugInMuscleColorButton540a extends JButton implements VOIListener 
 		setPreferredSize(new Dimension(20,20));
 	}
 	
-	public PlugInMuscleColorButtonPanel540a getContainer() {
+	public PlugInMuscleColorButtonPanel542a getContainer() {
 		return container;
 	}
 	
