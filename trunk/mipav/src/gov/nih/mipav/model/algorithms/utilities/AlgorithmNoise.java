@@ -8,8 +8,9 @@ import java.io.*;
 
 
 /**
- * Algorithm used to add Gaussian, Poisson, or Uniform noise to an image. The additive noise is clamped to the lowest or highest
- * value is the source image type. For example a byte image where the source pixel = 120 + noise = 15 would be clamped
+ * Algorithm used to add Gaussian, Poisson, Uniform, or Rayleigh noise to an image. 
+ * The additive noise is clamped to the lowest or highest value is the source image type. 
+ * For example a byte image where the source pixel = 120 + noise = 15 would be clamped
  * to 127 the maximum pixel value for a byte image.
  * 
  * For Rayleigh noise the formula is simply sigma * sqrt(-2.0 * ln(U)), where U is a uniform 0 to 1 distribution 
