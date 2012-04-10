@@ -162,6 +162,10 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
     private boolean savePrefusion;
     private File prefusionBaseDir;
     private File prefusionTransformDir;
+    private JTextField transformWeightText;
+    private JTextField baseWeightText;
+    private double baseWeight;
+    private double transformWeight;
 
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -252,7 +256,8 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
                                                                                 xMovement, yMovement, zMovement, mode, 
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
                                                                                 saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
-                                                                                savePrefusion, prefusionBaseDir, prefusionTransformDir);
+                                                                                savePrefusion, prefusionBaseDir, prefusionTransformDir, 
+                                                                                baseWeight, transformWeight);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -518,6 +523,15 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
         
         thresholdPanel.setVisible(doThresholdBox.isSelected());
         
+        transformWeightText = gui.buildDecimalField("Transformed image weight", 1.0);
+        algOptionPanel.add(transformWeightText.getParent(), gbc);
+        gbc.gridx++;
+        
+        baseWeightText = gui.buildDecimalField("Base image weight", 1.0);
+        algOptionPanel.add(baseWeightText.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
         
         gbc.gridy = 1;
         gbc.gridx = 0;
@@ -722,6 +736,9 @@ public class PlugInDialogGenerateFusion541d extends JDialogScriptableBase implem
 		    resX = Double.valueOf(resXText.getText()).doubleValue();
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
 		    resZ = Double.valueOf(resZText.getText()).doubleValue();
+		    
+		    baseWeight = Double.valueOf(baseWeightText.getText()).doubleValue();
+		    transformWeight = Double.valueOf(transformWeightText.getText()).doubleValue();
 		    
 		    if(!doSmartMovement) {
     		    xMovement = Integer.valueOf(xMovementText.getText());

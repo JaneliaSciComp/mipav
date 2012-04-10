@@ -116,6 +116,8 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
     private boolean savePrefusion;
     private File prefusionBaseDir;
     private File prefusionTransformDir;
+    /**Weights to use for calculating image means */
+    private double baseWeight, transformWeight;
 
     /**
      * Constructor.
@@ -146,13 +148,15 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
      * @param prefusionTranformDir 
      * @param prefusionBaseDir 
      * @param savePrefusion 
+     * @param transformWeight 
+     * @param baseWeight 
      */
     public PlugInAlgorithmGenerateFusion541d(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
-                                                    boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir) {
+                                                    boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir, double baseWeight, double transformWeight) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -195,6 +199,9 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
         this.savePrefusion = savePrefusion;
         this.prefusionBaseDir = prefusionBaseDir;
         this.prefusionTransformDir = prefusionTransformDir;
+        
+        this.baseWeight = baseWeight;
+        this.transformWeight = transformWeight;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -908,6 +915,7 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                 for(int j=0; j<subGeoImage.getExtents()[1]; j++) {
                     transformY = j-yMovement;
                     for(int k=0; k<subGeoImage.getExtents()[2]; k++) {
+                        mult = 0;
                         baseVal = 0;
                         transVal = 0;
                         transformZ = k-zMovement;
@@ -915,14 +923,16 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
                             transVal = transformImage.getDouble(transformX, transformY, transformZ);
+                            mult+=transformWeight;
                         }
                         if(i < baseImage.getExtents()[0] && 
                                 j < baseImage.getExtents()[1] && 
                                 k < baseImage.getExtents()[2]) {
                             baseVal = baseImage.getDouble(i, j, k);
+                            mult+=baseWeight;
                         }
                         
-                        subGeoImage.set(i,  j, k, Math.sqrt(baseVal*transVal));
+                        subGeoImage.set(i, j, k, Math.exp((transformWeight*Math.log(transVal) + baseWeight*Math.log(baseVal)) / mult));
                     }
                 }
             }
@@ -954,18 +964,18 @@ public class PlugInAlgorithmGenerateFusion541d extends AlgorithmBase {
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
                             transVal = transformImage.getDouble(transformX, transformY, transformZ);
-                            mult++;
+                            mult+=transformWeight;
                         }
                         if(i < baseImage.getExtents()[0] && 
                                 j < baseImage.getExtents()[1] && 
                                 k < baseImage.getExtents()[2]) {
                             baseVal = baseImage.getDouble(i, j, k);
-                            mult++;
+                            mult+=baseWeight;
                         }
                         if(mult == 0) {
                             subAriImage.set(i, j, k, 0);
                         } else {
-                            subAriImage.set(i, j, k, (transVal+baseVal)/mult);
+                            subAriImage.set(i, j, k, (transVal*transformWeight+baseVal*baseWeight)/mult);
                         }
                     }
                 }
