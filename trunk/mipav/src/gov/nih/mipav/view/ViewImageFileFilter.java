@@ -87,6 +87,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** Dicom Matrix info Files (*.dicomMatrix). */
     public static final int DICOMMATRIX = 23;
 
+    /** Fiber track files */
+    public static final int FIBER = 24;
+
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -108,7 +111,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             "VOI Files (*.voi)", // VOI
             "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files", "User Defined", "R-table (*.rtb)",
             "Data provenance (*.xmp)", // NLT
-            "TIFF files (*.tif; *.tiff)", "DicomMatrix file (*.dicomMatrix)"};
+            "TIFF files (*.tif; *.tiff)", "DicomMatrix file (*.dicomMatrix)",
+            "Fiber Files (*.dat; *.vtk; *.vtp)"}; // FIBER
 
     /** short description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
@@ -333,6 +337,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
                 && (extension.equals(".sur") || extension.equals(".wrl") || extension.equals(".xml")
                         || extension.equals(".vtk") || extension.equals(".vtp") || extension.equals(".stl")
                         || extension.equals(".ply") || extension.equals(".gii"))) {
+            return true;
+        } else if ( (filterType == ViewImageFileFilter.FIBER)
+                && (extension.equals(".dat") || extension.equals(".vtk") || extension.equals(".vtp"))) {
             return true;
         } else if ( (filterType == ViewImageFileFilter.OPTICAL)
                 && ( (extension.equals(".avi")) || (extension.equals(".xml")) || (extension.equals(".bmp"))
