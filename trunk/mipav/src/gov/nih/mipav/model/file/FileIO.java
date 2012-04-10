@@ -1219,7 +1219,11 @@ public class FileIO {
             } else {
                 filename = fileList[i];
                 start = 0;
-                location = indices[i];
+                if(performSort) {
+                    location = indices[i];
+                } else {
+                    location = i;
+                }
 
 
                 if (nImages == 1) {
@@ -2932,6 +2936,7 @@ public class FileIO {
                         		subsampledExtents = new int[] {subsampleDimension.getSize().width,
                                         subsampleDimension.getSize().height};
                         		padExtents = modelImageTemp.getExtents();
+                        		
                                 modelImageSubsample = new ModelImage(modelImageTemp.getType(), new int[] {
                                         subsampleDimension.getSize().width, subsampleDimension.getSize().height},
                                         modelImageTemp.getImageName() + "_subsampled");	
@@ -2969,10 +2974,10 @@ public class FileIO {
 
                         break;
                     } finally {
-                    	if ((i % 50) == 0) {
+                    	/*if ((i % 50) == 0) {
                     		modelImageTemp.disposeLocal(true);
-                    	}
-                    	else {
+                    	}*/
+                    	{
                             modelImageTemp.disposeLocal(false);
                     	}
                     }
