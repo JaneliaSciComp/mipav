@@ -51,7 +51,7 @@ import gov.nih.mipav.view.dialogs.JDialogSubsample;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmCreateTumorMap541f extends AlgorithmBase {
+public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
 
     public static final String INTENSITY1 = "Intensity1: ";
     public static final String INTENSITY2 = "Intensity2: ";
@@ -64,7 +64,7 @@ public class PlugInAlgorithmCreateTumorMap541f extends AlgorithmBase {
     /** Tumor radius in units of image */
     private double initRadius;
     private double tumorChange;
-    private PlugInDialogCreateTumorMap541f.TumorSimMode simMode;
+    private PlugInDialogCreateTumorMap542a.TumorSimMode simMode;
     /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
     private double intensity1, intensity2;
@@ -80,7 +80,7 @@ public class PlugInAlgorithmCreateTumorMap541f extends AlgorithmBase {
     private double noisePercent;
     
     
-    public PlugInAlgorithmCreateTumorMap541f() {
+    public PlugInAlgorithmCreateTumorMap542a() {
         
     }
     
@@ -93,9 +93,9 @@ public class PlugInAlgorithmCreateTumorMap541f extends AlgorithmBase {
      * @param subsample 
      *
      */
-	public PlugInAlgorithmCreateTumorMap541f(int xyDim, int zDim, double xyRes,
+	public PlugInAlgorithmCreateTumorMap542a(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap541f.TumorSimMode simMode, double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noisePercent) {
+            PlugInDialogCreateTumorMap542a.TumorSimMode simMode, double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noisePercent) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
@@ -384,7 +384,7 @@ private class RayleighRandom extends Random {
     }
     
     public static void main(String[] args) {
-        PlugInAlgorithmCreateTumorMap541f p = new PlugInAlgorithmCreateTumorMap541f();
+        PlugInAlgorithmCreateTumorMap542a p = new PlugInAlgorithmCreateTumorMap542a();
         
         long time = System.currentTimeMillis();
         System.out.println("Start");

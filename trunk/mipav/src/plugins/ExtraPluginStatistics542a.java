@@ -22,7 +22,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************
 ******************************************************************/
 
-public interface ExtraPluginStatistics540a {
+public interface ExtraPluginStatistics542a {
     String totalArea = "MuscleSeg Total Area";
     String totalFatArea = "MuscleSeg Fat Area";
     String totalLeanArea = "MuscleSeg Lean Area";

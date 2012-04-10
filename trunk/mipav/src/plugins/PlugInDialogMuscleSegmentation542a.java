@@ -47,7 +47,7 @@ import javax.swing.*;
  * @see      AlgorithmInterface
  *
  */
-public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
     
@@ -63,7 +63,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
     /**Radio button to denote user would like to build custom plugin.*/
     private JRadioButton customRadio;
     
-    private PlugInMuscleImageDisplay540a.ImageType imageType;
+    private PlugInMuscleImageDisplay542a.ImageType imageType;
     
     private boolean multipleSlices = false;
     
@@ -77,14 +77,14 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
     private String fileName = new String();
     
     /** Segmentation algorithm */
-    private PlugInAlgorithmMuscleSegmentation540a muscleSegAlgo = null;
+    private PlugInAlgorithmMuscleSegmentation542a muscleSegAlgo = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogMuscleSegmentation540a() { }
+    public PlugInDialogMuscleSegmentation542a() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -92,7 +92,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogMuscleSegmentation540a(Frame theParentFrame, ModelImage im) {
+    public PlugInDialogMuscleSegmentation542a(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
 
         image = im;
@@ -147,7 +147,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
         
         
 
-        if (algorithm instanceof PlugInAlgorithmMuscleSegmentation540a) {
+        if (algorithm instanceof PlugInAlgorithmMuscleSegmentation542a) {
             Preferences.debug("Muscle segmentation, Elapsed time: " + algorithm.getElapsedTime());
             image.clearMask();
            
@@ -172,7 +172,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
         try {
             //FileInfoBase[] info = image.getFileInfo();
             //info[0].displayAboutInfo(this); //expecting a 2D image
-            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation540a(image, imageType, multipleSlices, fileName);
+            muscleSegAlgo = new PlugInAlgorithmMuscleSegmentation542a(image, imageType, multipleSlices, fileName);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -225,7 +225,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
     
     private void init() {
         
-        String fileName = image.getFileInfo()[0].getFileDirectory()+PlugInMuscleImageDisplay540a.VOI_DIR+File.separator;
+        String fileName = image.getFileInfo()[0].getFileDirectory()+PlugInMuscleImageDisplay542a.VOI_DIR+File.separator;
         ArrayList<String> validConfig = new ArrayList<String>();
     	if(new File(fileName).exists()) {
         	String[] allFiles = new File(fileName).list(new NiaAcceptable());
@@ -256,9 +256,9 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
         customRadio = new JRadioButton("Custom");
         customRadio.setFont(MipavUtil.font12);
 
-        if (imageType.equals(PlugInMuscleImageDisplay540a.ImageType.Thigh)) {
+        if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Thigh)) {
             twoThighRadio.setSelected(true);
-        } else if (imageType.equals(PlugInMuscleImageDisplay540a.ImageType.Abdomen)) {
+        } else if (imageType.equals(PlugInMuscleImageDisplay542a.ImageType.Abdomen)) {
             abdomenRadio.setSelected(true);
         } else {
         	customRadio.setSelected(true);
@@ -330,14 +330,14 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
     private boolean setVariables() {
 
         if (twoThighRadio.isSelected()) {
-            imageType = PlugInMuscleImageDisplay540a.ImageType.Thigh;
+            imageType = PlugInMuscleImageDisplay542a.ImageType.Thigh;
         } else if (abdomenRadio.isSelected()) {
-            imageType = PlugInMuscleImageDisplay540a.ImageType.Abdomen;
+            imageType = PlugInMuscleImageDisplay542a.ImageType.Abdomen;
         } else if (customRadio.isSelected()) {
-        	imageType = PlugInMuscleImageDisplay540a.ImageType.Custom;
+        	imageType = PlugInMuscleImageDisplay542a.ImageType.Custom;
         } else {
         	//load custom
-            imageType = PlugInMuscleImageDisplay540a.ImageType.RunTimeDefined;
+            imageType = PlugInMuscleImageDisplay542a.ImageType.RunTimeDefined;
             for(int i=0; i<extraRadio.length; i++) {
             	if(extraRadio[i].isSelected())
             		fileName = extraRadio[i].getText();
@@ -378,7 +378,7 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
      * @return
      */
     
-    private PlugInMuscleImageDisplay540a.ImageType detectImageType(ModelImage im) {
+    private PlugInMuscleImageDisplay542a.ImageType detectImageType(ModelImage im) {
     	int xBound = im.getFileInfo()[0].getExtents()[0];
     	int yBound = im.getFileInfo()[0].getExtents()[1];
     	
@@ -471,10 +471,10 @@ public class PlugInDialogMuscleSegmentation540a extends JDialogScriptableBase im
 		
 		//compares rows where bone was found to rows which matched two thigh description
 		if(((double)qualifiedRows)/((double)boneRowHigh.size()) > .75) {
-			return PlugInMuscleImageDisplay540a.ImageType.Thigh;
+			return PlugInMuscleImageDisplay542a.ImageType.Thigh;
 		} 
 		
-		return PlugInMuscleImageDisplay540a.ImageType.Abdomen;
+		return PlugInMuscleImageDisplay542a.ImageType.Abdomen;
     }
     
     @SuppressWarnings("unused")

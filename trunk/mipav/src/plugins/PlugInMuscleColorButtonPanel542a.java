@@ -36,16 +36,16 @@ import javax.swing.JPanel;
  * @author linkb
  *
  */
-public class PlugInMuscleColorButtonPanel540a extends JPanel {
+public class PlugInMuscleColorButtonPanel542a extends JPanel {
 
-	private PlugInMuscleColorButton540a colorButton;
+	private PlugInMuscleColorButton542a colorButton;
 	private ActionListener container;
 	
-	public PlugInMuscleColorButtonPanel540a(Color c, String voiName, ActionListener container) {
+	public PlugInMuscleColorButtonPanel542a(Color c, String voiName, ActionListener container) {
 		super();
 		this.setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
 		this.container = container;
-		colorButton = new PlugInMuscleColorButton540a(c, voiName, this);
+		colorButton = new PlugInMuscleColorButton542a(c, voiName, this);
 		colorButton.addActionListener(container);
 		add(colorButton);
 	}
@@ -53,7 +53,7 @@ public class PlugInMuscleColorButtonPanel540a extends JPanel {
 	/**
 	 * Returns the actual colorButton inside of the panel.
 	 */
-	public PlugInMuscleColorButton540a getColorButton() {
+	public PlugInMuscleColorButton542a getColorButton() {
 		return colorButton;
 	}
 	

@@ -27,7 +27,7 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.Color;
 import java.util.Date;
 
-public class PlugInSelectableVOI540a extends VOI {
+public class PlugInSelectableVOI542a extends VOI {
 	
 	
 	/**Whether the VOI most be closed.*/
@@ -42,10 +42,10 @@ public class PlugInSelectableVOI540a extends VOI {
 	private int outputLoc = INVALID_LOC_NUMBER;
 	
 	/** VOIs that this VOI uses in its calculations. */
-	private PlugInSelectableVOI540a[] children;
+	private PlugInSelectableVOI542a[] children;
 	
 	/** VOIs that use this VOI in their calculations. */
-	private PlugInSelectableVOI540a[] dependents;
+	private PlugInSelectableVOI542a[] dependents;
 	
 	/**Pane location of this VOI on the MuscleDialogPrompt*/
 	private int paneNum = INVALID_LOC_NUMBER;
@@ -108,22 +108,22 @@ public class PlugInSelectableVOI540a extends VOI {
 
 	public static final Color INVALID_COLOR = new Color(234, 123, 123);
 	
-	public PlugInSelectableVOI540a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+	public PlugInSelectableVOI542a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 			boolean fillEligible, boolean calcEligible, int imageSize) {
 		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, INVALID_LOC_NUMBER, INVALID_COLOR);
 	}
 	
-	public PlugInSelectableVOI540a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+	public PlugInSelectableVOI542a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 			boolean fillEligible, boolean calcEligible, int imageSize, Color color) {
 		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, INVALID_LOC_NUMBER, color);
 	}
 	
-	public PlugInSelectableVOI540a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+	public PlugInSelectableVOI542a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 								boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc) {
 		this(name, closed, maxCurvesPerSlice, paneNum, fillEligible, calcEligible, imageSize, outputLoc, INVALID_COLOR);
 	}
 	
-	public PlugInSelectableVOI540a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
+	public PlugInSelectableVOI542a(String name, boolean closed, int maxCurvesPerSlice, int paneNum, 
 			boolean fillEligible, boolean calcEligible, int imageSize, int outputLoc, Color color) {
 		super((short)0, name);
 		this.closed = closed;
@@ -158,8 +158,8 @@ public class PlugInSelectableVOI540a extends VOI {
 			meanTotalH[i] = Double.MIN_VALUE;
 		}
 		
-		dependents = new PlugInSelectableVOI540a[0];
-		children = new PlugInSelectableVOI540a[0];
+		dependents = new PlugInSelectableVOI542a[0];
+		children = new PlugInSelectableVOI542a[0];
 		
 		setColor(color);
 	}
@@ -170,7 +170,7 @@ public class PlugInSelectableVOI540a extends VOI {
 	 * @param newChild
 	 * @return
 	 */
-	public boolean addChild(PlugInSelectableVOI540a newChild) {
+	public boolean addChild(PlugInSelectableVOI542a newChild) {
     	if(!newChild.getCalcEligible() || newChild.equals(this))
     		return false;
     	for(int i=0; i<children.length; i++) 
@@ -178,8 +178,8 @@ public class PlugInSelectableVOI540a extends VOI {
     			return false;
     		
 		//able to be added
-		PlugInSelectableVOI540a[] oldChildren = children;
-    	children = new PlugInSelectableVOI540a[oldChildren.length+1];
+		PlugInSelectableVOI542a[] oldChildren = children;
+    	children = new PlugInSelectableVOI542a[oldChildren.length+1];
     	for(int i=0; i<oldChildren.length; i++) {
     		children[i] = oldChildren[i];
     	}
@@ -192,7 +192,7 @@ public class PlugInSelectableVOI540a extends VOI {
      * 
      * @return all VOIs that require this VOI to have been calculated.
      */
-    public PlugInSelectableVOI540a[] getChildren() {
+    public PlugInSelectableVOI542a[] getChildren() {
     	return children;
     }
     
@@ -211,7 +211,7 @@ public class PlugInSelectableVOI540a extends VOI {
 	 * Can only add a calcEligible dependent, can not add itself or a dependent twice.
 	 * @param newDependent
 	 */
-	public boolean addDependent(PlugInSelectableVOI540a newDependent) {
+	public boolean addDependent(PlugInSelectableVOI542a newDependent) {
 		if(!newDependent.getCalcEligible() || newDependent.equals(this))
 			return false;
 		for(int i=0; i<dependents.length; i++) 
@@ -219,8 +219,8 @@ public class PlugInSelectableVOI540a extends VOI {
     			return false;
     		
 		//able to be added
-    	PlugInSelectableVOI540a[] oldDependents = dependents;
-    	dependents = new PlugInSelectableVOI540a[oldDependents.length+1];
+    	PlugInSelectableVOI542a[] oldDependents = dependents;
+    	dependents = new PlugInSelectableVOI542a[oldDependents.length+1];
     	for(int i=0; i<oldDependents.length; i++) {
     		dependents[i] = oldDependents[i];
     	}
@@ -233,7 +233,7 @@ public class PlugInSelectableVOI540a extends VOI {
      * 
      * @return all VOIs that require this VOI to have been calculated.
      */
-    public PlugInSelectableVOI540a[] getDependents() {
+    public PlugInSelectableVOI542a[] getDependents() {
     	return dependents;
     }
 

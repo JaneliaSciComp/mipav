@@ -43,7 +43,7 @@ import javax.help.HelpSet;
  * 
  * @author senseneyj
  */
-public class PlugInMuscleSegmentation540a implements PlugInAlgorithm {
+public class PlugInMuscleSegmentation542a implements PlugInAlgorithm {
 	
 	/**
      * Displays the Java Help dialog indexed directly to the 
@@ -69,7 +69,7 @@ public class PlugInMuscleSegmentation540a implements PlugInAlgorithm {
         if (parentFrame instanceof ViewJFrameImage) {
         	//clones the ModelImage before passing into the plugin dialog
         	System.out.println("Directory: "+((ViewJFrameImage)parentFrame).getImageA().getImageDirectory());
-            new PlugInDialogMuscleSegmentation540a(ViewUserInterface.getReference().getMainFrame(), 
+            new PlugInDialogMuscleSegmentation542a(ViewUserInterface.getReference().getMainFrame(), 
             		(ModelImage)image.clone(JDialogBase.makeImageName(image.getImageName(), "_muscle_seg")));
         } 
     }
@@ -96,6 +96,6 @@ public class PlugInMuscleSegmentation540a implements PlugInAlgorithm {
             }
     	}
     	
-        new PlugInDialogMuscleSegmentation540a(ViewUserInterface.getReference().getMainFrame(), ui.getImage());
+        new PlugInDialogMuscleSegmentation542a(ViewUserInterface.getReference().getMainFrame(), ui.getImage());
     }
 }
