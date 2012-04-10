@@ -29,6 +29,8 @@ public class AlgorithmNoise extends AlgorithmBase {
 
     /** Used to indicate Uniform distribution of noise. */
     public static final int UNIFORM = 2;
+    
+    public static final int RAYLEIGH = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -44,6 +46,8 @@ public class AlgorithmNoise extends AlgorithmBase {
     private double gain;
     
     private double offset;
+    
+    private double sigma;
 
     /** Noise type. Defaults to uniform. */
     private int noiseType = UNIFORM;
@@ -62,8 +66,10 @@ public class AlgorithmNoise extends AlgorithmBase {
      * @param  mean  For poisson: out = gain * Poisson(mean) + offset
      * @param  gain
      * @param offset
+     * @param sigma for Rayleigh
      */
-    public AlgorithmNoise(ModelImage srcImg, int _noiseType, double _level, double mean, double gain, double offset) {
+    public AlgorithmNoise(ModelImage srcImg, int _noiseType, double _level, double mean, double gain, double offset,
+    		double sigma) {
 
         super(null, srcImg);
         noiseType = _noiseType;
@@ -71,6 +77,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         this.mean = mean;
         this.gain = gain;
         this.offset = offset;
+        this.sigma = sigma;
         randomGen = new RandomNumberGen();
         setRange();
     }
@@ -85,9 +92,10 @@ public class AlgorithmNoise extends AlgorithmBase {
      * @param  mean  For poisson: out = gain * Poisson(mean) + offset
      * @param  gain
      * @param  offset
+     * @param  sigma for Rayleigh
      */
     public AlgorithmNoise(ModelImage destImg, ModelImage srcImg, int _noiseType, double _level, double mean, double gain,
-                          double offset) {
+                          double offset, double sigma) {
 
         super(destImg, srcImg);
         noiseType = _noiseType;
@@ -95,6 +103,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         this.mean = mean;
         this.gain = gain;
         this.offset = offset;
+        this.sigma = sigma;
         randomGen = new RandomNumberGen();
         setRange();
     }
@@ -193,6 +202,10 @@ public class AlgorithmNoise extends AlgorithmBase {
                 noise = randomGen.genGaussianRandomNum(-level, level);
                 pixel = buffer[i] + noise;
             }
+            else if (noiseType == RAYLEIGH) {
+            	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
+            	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
+            }
             else {
                 pixel = buffer[i] + poissEvents[i];
             }
@@ -275,6 +288,10 @@ public class AlgorithmNoise extends AlgorithmBase {
             } else if (noiseType == GAUSSIAN){
                 noise = randomGen.genGaussianRandomNum(-level, level);
                 pixel = buffer[i] + noise;
+            }
+            else if (noiseType == RAYLEIGH) {
+            	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
+            	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
             else {
                 pixel = buffer[i] + poissEvents[i];
@@ -365,6 +382,10 @@ public class AlgorithmNoise extends AlgorithmBase {
                 noise = randomGen.genGaussianRandomNum(-level, level);
                 pixel = buffer[i] + noise;
             }
+            else if (noiseType == RAYLEIGH) {
+            	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
+            	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
+            }
             else {
                 pixel = buffer[i] + poissEvents[i];
             }
@@ -449,6 +470,10 @@ public class AlgorithmNoise extends AlgorithmBase {
             } else if (noiseType == GAUSSIAN){
                 noise = randomGen.genGaussianRandomNum(-level, level);
                 pixel = buffer[i] + noise;
+            }
+            else if (noiseType == RAYLEIGH) {
+            	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
+            	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
             else {
                 pixel = buffer[i] + poissEvents[i];
