@@ -4864,21 +4864,24 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         try {
             ObjectOutputStream objstream;
-
-            for (int i = 0; i < nVOI; i++) {
-                if (VOIs.VOIAt(i).isActive()) {
-                	Vector<Polygon> polys = VOIs.VOIAt(i).exportPolygon();
-                	if ( polys != null )
-                	{
-                		for ( int j = 0; j < polys.size(); j++ )
-                		{
-                			Polygon poly = polys.elementAt(j);
-                			objstream = new ObjectOutputStream(new FileOutputStream(directory + fileName + i + "_" + j));
-                			objstream.writeObject(poly);
-                			objstream.close();
-                		}
-                	}
-                }
+            int numSlices = m_kParent.getActiveImage().getExtents().length > 2 ? m_kParent.getActiveImage().getExtents()[2] : 1;
+            for ( int z = 0; z < numSlices; z++ )
+            {
+            	for (int i = 0; i < nVOI; i++) {
+            		if (VOIs.VOIAt(i).isActive()) {
+            			Vector<Polygon> polys = VOIs.VOIAt(i).exportPolygon(z);
+            			if ( polys != null )
+            			{
+            				for ( int j = 0; j < polys.size(); j++ )
+            				{
+            					Polygon poly = polys.elementAt(j);
+            					objstream = new ObjectOutputStream(new FileOutputStream(directory + fileName + z + "_" + i + "_" + j));
+            					objstream.writeObject(poly);
+            					objstream.close();
+            				}
+            			}
+            		}
+            	}
             }
         } catch (final IOException error) {
             MipavUtil.displayError("Error writing VOI");

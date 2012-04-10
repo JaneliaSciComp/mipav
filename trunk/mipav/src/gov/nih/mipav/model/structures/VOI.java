@@ -2099,21 +2099,26 @@ public class VOI extends ModelSerialCloneable {
 	}
 
 
-	public Vector<Polygon> exportPolygon() {
+	public Vector<Polygon> exportPolygon( int iSlice ) {
 
 		if (curveType != CONTOUR) {
 			return null;
 		} 
 
 		Vector<Polygon> polygons = new Vector<Polygon>();
-    	for ( int i = 0; i < curves.size(); i++ )
-    	{
-    		if ( curves.elementAt(i).isActive() )
-    		{
-    			polygons.add( ((VOIContour)curves.elementAt(i)).exportPolygon() );
-    		}
-    	}
-    	return polygons;
+		for ( int i = 0; i < curves.size(); i++ )
+		{
+			if ( curves.elementAt(i).isActive() )
+			{
+				if ( (curves.elementAt(i).getPlane() & VOIBase.ZPLANE) == VOIBase.ZPLANE && 
+					  curves.elementAt(i).slice() == iSlice )
+				{
+
+					polygons.add( ((VOIContour)curves.elementAt(i)).exportPolygon() );
+				}
+			}
+		}
+		return polygons;
 	}
 
 
