@@ -40,7 +40,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     /** DOCUMENT ME! */
     public static final int UNIFORM = 2;
     
-    
+    public static final int RAYLEIGH = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -81,6 +81,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private JPanel panelGU;
     
     private JPanel panelPO;
+    
+    private JPanel panelR;
 
     /** DOCUMENT ME! */
     private JRadioButton radioGaussian;
@@ -89,6 +91,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private JRadioButton radioUniform;
     
     private JRadioButton radioPoisson;
+    
+    private JRadioButton radioRayleigh;
 
     /** DOCUMENT ME! */
     private AlgorithmNoise randomAlgo;
@@ -122,6 +126,10 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private JTextField sigmaText;
+    
+    private double sigma = 1.0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -301,6 +309,10 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     public void setOffset(double offset) {
         this.offset = offset;
     }
+    
+    public void setSigma(double sigma) {
+    	this.sigma = sigma;
+    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -333,7 +345,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 }
 
                 // Make algorithm
-                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise, mean, gain, offset);
+                randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise, mean, gain, offset, sigma);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -370,7 +382,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             try {
 
                 // Make algorithm
-                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise, mean, gain, offset);
+                randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise, mean, gain, offset, sigma);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -442,6 +454,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         setMean(scriptParameters.getParams().getDouble("poisson_mean"));
         setGain(scriptParameters.getParams().getDouble("poisson_gain"));
         setOffset(scriptParameters.getParams().getDouble("poisson_offset"));
+        setSigma(scriptParameters.getParams().getDouble("rayleigh_sigma"));
     }
 
     /**
@@ -456,6 +469,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_mean", mean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_gain", gain));
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_offset", offset));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rayleigh_sigma", sigma));
     }
 
 
@@ -589,31 +603,85 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridx = 1;
         gbc2.gridy = yPos2++;
         panelPO.add(offsetText, gbc2);
+        
+        panelR = new JPanel(new GridBagLayout());
+        panelR.setForeground(Color.black);
+        panelR.setBorder(buildTitledBorder("Rayleigh"));
+        gbc.gridy = yPos++;
+        getContentPane().add(panelR, gbc);
+        
+        JLabel rayleighLabel = new JLabel("Image(i) = Image(i) + sigma*sqrt(-2*ln(U))");
+        rayleighLabel.setFont(serif12);
+        rayleighLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        panelR.add(rayleighLabel, gbc2);
+        
+        JLabel rayleighLabel2 = new JLabel("where U is uniformly distributed from Double.MIN_VALUE to 1");
+        rayleighLabel2.setFont(serif12);
+        rayleighLabel2.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        panelR.add(rayleighLabel2, gbc2);
+        
+        JLabel sigmaLabel = new JLabel("Sigma");
+        sigmaLabel.setFont(serif12);
+        sigmaLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 2;
+        panelR.add(sigmaLabel, gbc2);
+        
+        sigmaText = new JTextField(10);
+        sigmaText.setText("1.0");
+        sigmaText.setFont(serif12);
+        sigmaText.setForeground(Color.black);
+        gbc2.gridx = 1;
+        gbc2.gridy = 2;
+        panelR.add(sigmaText, gbc2);
 
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-        panelImageType = new JPanel(new BorderLayout());
+        panelImageType = new JPanel(new GridBagLayout());
         panelImageType.setForeground(Color.black);
         panelImageType.setBorder(buildTitledBorder("Noise Type"));
         outputOptPanel.add(panelImageType);
+        
+        GridBagConstraints gbc3 = new GridBagConstraints();
+        gbc3.gridwidth = 1;
+        gbc3.gridheight = 1;
+        gbc3.anchor = GridBagConstraints.WEST;
+        gbc3.weightx = 1;
+        gbc3.insets = new Insets(3, 3, 3, 3);
+        gbc3.fill = GridBagConstraints.HORIZONTAL;
 
         group1 = new ButtonGroup();
         radioGaussian = new JRadioButton("Gaussian", true);
         radioGaussian.setFont(serif12);
         radioGaussian.addItemListener(this);
         group1.add(radioGaussian);
-        panelImageType.add(radioGaussian, BorderLayout.NORTH);
+        gbc3.gridx = 0;
+        gbc3.gridy = 0;
+        panelImageType.add(radioGaussian, gbc3);
         
         radioPoisson = new JRadioButton("Poisson", false);
         radioPoisson.setFont(serif12);
         radioPoisson.addItemListener(this);
         group1.add(radioPoisson);
-        panelImageType.add(radioPoisson, BorderLayout.CENTER);
+        gbc3.gridy = 1;
+        panelImageType.add(radioPoisson, gbc3);
 
         radioUniform = new JRadioButton("Uniform", false);
         radioUniform.setFont(serif12);
         radioUniform.addItemListener(this);
         group1.add(radioUniform);
-        panelImageType.add(radioUniform, BorderLayout.SOUTH);
+        gbc3.gridy = 2;
+        panelImageType.add(radioUniform, gbc3);
+        
+        radioRayleigh = new JRadioButton("Rayleigh", false);
+        radioRayleigh.setFont(serif12);
+        radioRayleigh.addItemListener(this);
+        group1.add(radioRayleigh);
+        gbc3.gridy = 3;
+        panelImageType.add(radioRayleigh, gbc3);
 
         destinationPanel = new JPanel(new BorderLayout());
         destinationPanel.setForeground(Color.black);
@@ -696,6 +764,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             noiseType = POISSON;
         } else if (radioUniform.isSelected()) {
             noiseType = UNIFORM;
+        } else if (radioRayleigh.isSelected()) {
+        	noiseType = RAYLEIGH;
         }
 
         if (replaceImage.isSelected()) {
@@ -730,6 +800,17 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             tmpStr = offsetText.getText();
             offset = Double.valueOf(tmpStr).doubleValue();
         } // if (noiseType == POISSON)
+        
+        if (noiseType == RAYLEIGH) {
+        	tmpStr = sigmaText.getText();
+        	sigma = Double.valueOf(tmpStr).doubleValue();
+        	if (sigma <= 0.0) {
+                MipavUtil.displayError("Sigma must be greater than zero");
+                sigmaText.requestFocus();
+                sigmaText.selectAll();
+                return false;
+            }
+        }
 
         return true;
     }
@@ -784,6 +865,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterDouble("poisson_mean", 5));
             table.put(new ParameterDouble("poisson_gain", 1));
             table.put(new ParameterDouble("poisson_offset", 0));
+            table.put(new ParameterDouble("rayleigh_sigma", 1.0));
         } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
