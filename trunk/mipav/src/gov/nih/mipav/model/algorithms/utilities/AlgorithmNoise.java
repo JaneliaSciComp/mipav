@@ -8,7 +8,7 @@ import java.io.*;
 
 
 /**
- * Algorithm used to add Gaussian, Poisson, Uniform, or Rayleigh noise to an image. 
+ * Algorithm used to add Gaussian, Poisson, Uniform, Rayleigh, or Rician noise to an image. 
  * The additive noise is clamped to the lowest or highest value is the source image type. 
  * For example a byte image where the source pixel = 120 + noise = 15 would be clamped
  * to 127 the maximum pixel value for a byte image.
@@ -17,6 +17,14 @@ import java.io.*;
  * not including 0.  The Rayleigh cumulative distribution function F(x) =  1 - exp(-(x**2)/(2*sigma**2)) is simply 
  * set equal to U and then the inverse function is obtained by solving for x in terms of U, 
  * giving x = sigma * sqrt(-2.0 * ln(1 - U)) and finally noting that 1 - U has the same distribution as U.
+ * 
+ * Rician noise is not additive, but is instead data dependent.  Let a be the original noiseless data value,
+ * and x and y be gaussian random variables with zero mean and identical standard deviations sigma.  Then the
+ * resulting value m = sqrt((a + x)**2 + y**2) is Rician distributed.  MR images have Rician noise.
+ * 
+ * Reference for Rician noise generation: "A Nonlocal Maximum Likelihood Estimation Method for Rician Noise
+ * Reduction in MR Images" by Lili He and Ian R. Greenshields, IEEE Transactions on Medical Imaging, Vol. 28,
+ * No. 2, February, 2009, pp. 165-172.
  *
  * @version  2.0 July 25, 2008
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -37,6 +45,8 @@ public class AlgorithmNoise extends AlgorithmBase {
     public static final int UNIFORM = 2;
     
     public static final int RAYLEIGH = 3;
+    
+    public static final int RICIAN = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -171,6 +181,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double noise;
         double pixel;
         double poissEvents[] = null;
+        double sum;
 
         try {
             length = srcImage.getSliceSize();
@@ -211,6 +222,12 @@ public class AlgorithmNoise extends AlgorithmBase {
             else if (noiseType == RAYLEIGH) {
             	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
+            }
+            else if (noiseType == RICIAN) {
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum = noise + buffer[i];
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = Math.sqrt(sum*sum + noise*noise);
             }
             else {
                 pixel = buffer[i] + poissEvents[i];
@@ -255,6 +272,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double noise;
         double pixel;
         double poissEvents[] = null;
+        double sum;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -299,6 +317,12 @@ public class AlgorithmNoise extends AlgorithmBase {
             	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
+            else if (noiseType == RICIAN) {
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum = noise + buffer[i];
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = Math.sqrt(sum*sum + noise*noise);
+            }
             else {
                 pixel = buffer[i] + poissEvents[i];
             }
@@ -342,6 +366,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double noise;
         double pixel;
         double poissEvents[] = null;
+        double sum;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -392,6 +417,12 @@ public class AlgorithmNoise extends AlgorithmBase {
             	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
+            else if (noiseType == RICIAN) {
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum = noise + buffer[i];
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = Math.sqrt(sum*sum + noise*noise);
+            }
             else {
                 pixel = buffer[i] + poissEvents[i];
             }
@@ -429,6 +460,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double noise;
         double pixel;
         double poissEvents[] = null;
+        double sum;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -480,6 +512,12 @@ public class AlgorithmNoise extends AlgorithmBase {
             else if (noiseType == RAYLEIGH) {
             	noise = randomGen.genUniformRandomNum(Double.MIN_VALUE, 1.0);
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
+            }
+            else if (noiseType == RICIAN) {
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum = noise + buffer[i];
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                pixel = Math.sqrt(sum*sum + noise*noise);
             }
             else {
                 pixel = buffer[i] + poissEvents[i];
