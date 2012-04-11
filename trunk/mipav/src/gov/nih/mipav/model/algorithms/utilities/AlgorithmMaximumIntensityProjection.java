@@ -209,7 +209,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		double[] minIntensityValue = new double[colorFactor];
 		for ( int c = 0; c < colorFactor; c++ )
 		{
-			maxIntensityValue[c] = Double.MIN_VALUE;
+			maxIntensityValue[c] = -Double.MAX_VALUE;
 			minIntensityValue[c] = Double.MAX_VALUE;
 		}
 		
@@ -273,7 +273,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 					{
 						ZProjectionImageMax.set( index, maxIntensityValue[c] );
 					}
-					maxIntensityValue[c] = Double.MIN_VALUE;
+					maxIntensityValue[c] = -Double.MAX_VALUE;
 					if ( computeMinimum && ZProjectionImageMin != null )
 					{
 						ZProjectionImageMin.set( index, minIntensityValue[c] );
@@ -339,7 +339,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		double[] minIntensityValue = new double[colorFactor];
 		for ( int c = 0; c < colorFactor; c++ )
 		{
-			maxIntensityValue[c] = Double.MIN_VALUE;
+			maxIntensityValue[c] = -Double.MAX_VALUE;
 			minIntensityValue[c] = Double.MAX_VALUE;
 		}
 		
@@ -398,7 +398,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 							YProjectionImageMax.set( iSlice * lengthY * colorFactor + colorFactor * (j + i*dimX) + c, 
 									maxIntensityValue[c] );
 						}
-						maxIntensityValue[c] = Double.MIN_VALUE;			
+						maxIntensityValue[c] = -Double.MAX_VALUE;			
 						if ( computeMinimum && YProjectionImageMin != null )
 						{
 							YProjectionImageMin.set( iSlice * lengthY * colorFactor + colorFactor * (j + i*dimX) + c, 
@@ -466,7 +466,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		double[] minIntensityValue = new double[colorFactor];
 		for ( int c = 0; c < colorFactor; c++ )
 		{
-			maxIntensityValue[c] = Double.MIN_VALUE;
+			maxIntensityValue[c] = -Double.MAX_VALUE;
 			minIntensityValue[c] = Double.MAX_VALUE;
 		}
 
@@ -525,7 +525,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 						{
 							XProjectionImageMax.set( iSlice*lengthX*colorFactor + colorFactor * (i + (j*dimZ)) + c, maxIntensityValue[c] );
 						}
-						maxIntensityValue[c] = Double.MIN_VALUE;
+						maxIntensityValue[c] = -Double.MAX_VALUE;
 						if ( computeMinimum && XProjectionImageMin != null )
 						{
 							XProjectionImageMin.set( iSlice*lengthX*colorFactor + colorFactor * (i + (j*dimZ)) + c, minIntensityValue[c] );
