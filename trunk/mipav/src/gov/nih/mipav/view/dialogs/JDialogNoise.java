@@ -41,6 +41,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     public static final int UNIFORM = 2;
     
     public static final int RAYLEIGH = 3;
+    
+    public static final int RICIAN = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -82,7 +84,9 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     
     private JPanel panelPO;
     
-    private JPanel panelR;
+    private JPanel panelRayleigh;
+    
+    private JPanel panelRician;
 
     /** DOCUMENT ME! */
     private JRadioButton radioGaussian;
@@ -93,6 +97,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private JRadioButton radioPoisson;
     
     private JRadioButton radioRayleigh;
+    
+    private JRadioButton radioRician;
 
     /** DOCUMENT ME! */
     private AlgorithmNoise randomAlgo;
@@ -104,7 +110,9 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private JLabel start;
+    private JLabel maxNoiseLabel;
+    
+    private JLabel maxNoiseLabel2;
     
     private JTextField meanText;
     
@@ -119,7 +127,9 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     private double offset = 0.0;
 
     /** DOCUMENT ME! */
-    private JTextField textStart;
+    private JTextField textMaxNoise;
+    
+    private JTextField textMaxNoise2;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -450,7 +460,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         }
 
         setNoiseType(scriptParameters.getParams().getInt("noise_type"));
-        setNoiseLevel(scriptParameters.getParams().getDouble("starting_range"));
+        setNoiseLevel(scriptParameters.getParams().getDouble("maximum_noise"));
         setMean(scriptParameters.getParams().getDouble("poisson_mean"));
         setGain(scriptParameters.getParams().getDouble("poisson_gain"));
         setOffset(scriptParameters.getParams().getDouble("poisson_offset"));
@@ -465,7 +475,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("starting_range", min));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_noise", maximumNoise));
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_mean", mean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_gain", gain));
         scriptParameters.getParams().put(ParameterFactory.newParameter("poisson_offset", offset));
@@ -518,19 +528,19 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = yPos2++;
         panelGU.add(plusMinusLabel, gbc2);
 
-        start = new JLabel("Starting range (0 to end):  ");
-        start.setFont(serif12);
-        start.setForeground(Color.black);
+        maxNoiseLabel = new JLabel("Starting range (0 to end):  ");
+        maxNoiseLabel.setFont(serif12);
+        maxNoiseLabel.setForeground(Color.black);
         gbc2.gridy = yPos2;
-        panelGU.add(start, gbc2);
+        panelGU.add(maxNoiseLabel, gbc2);
 
-        textStart = new JTextField(10);
-        textStart.setText("0");
-        textStart.setFont(serif12);
-        textStart.addFocusListener(this);
+        textMaxNoise = new JTextField(10);
+        textMaxNoise.setText("0");
+        textMaxNoise.setFont(serif12);
+        textMaxNoise.addFocusListener(this);
         gbc2.gridx = 1;
         gbc2.gridy = yPos2++;
-        panelGU.add(textStart, gbc2);
+        panelGU.add(textMaxNoise, gbc2);
 
         JLabel gaussLabel = new JLabel("Maximum noise for Gaussian is at 4 standard deviations");
         gaussLabel.setFont(serif12);
@@ -604,32 +614,32 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         gbc2.gridy = yPos2++;
         panelPO.add(offsetText, gbc2);
         
-        panelR = new JPanel(new GridBagLayout());
-        panelR.setForeground(Color.black);
-        panelR.setBorder(buildTitledBorder("Rayleigh"));
+        panelRayleigh = new JPanel(new GridBagLayout());
+        panelRayleigh.setForeground(Color.black);
+        panelRayleigh.setBorder(buildTitledBorder("Rayleigh"));
         gbc.gridy = yPos++;
-        getContentPane().add(panelR, gbc);
+        getContentPane().add(panelRayleigh, gbc);
         
         JLabel rayleighLabel = new JLabel("Image(i) = Image(i) + sigma*sqrt(-2*ln(U))");
         rayleighLabel.setFont(serif12);
         rayleighLabel.setForeground(Color.black);
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        panelR.add(rayleighLabel, gbc2);
+        panelRayleigh.add(rayleighLabel, gbc2);
         
         JLabel rayleighLabel2 = new JLabel("where U is uniformly distributed from Double.MIN_VALUE to 1");
         rayleighLabel2.setFont(serif12);
         rayleighLabel2.setForeground(Color.black);
         gbc2.gridx = 0;
         gbc2.gridy = 1;
-        panelR.add(rayleighLabel2, gbc2);
+        panelRayleigh.add(rayleighLabel2, gbc2);
         
         JLabel sigmaLabel = new JLabel("Sigma");
         sigmaLabel.setFont(serif12);
         sigmaLabel.setForeground(Color.black);
         gbc2.gridx = 0;
         gbc2.gridy = 2;
-        panelR.add(sigmaLabel, gbc2);
+        panelRayleigh.add(sigmaLabel, gbc2);
         
         sigmaText = new JTextField(10);
         sigmaText.setText("1.0");
@@ -637,7 +647,48 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         sigmaText.setForeground(Color.black);
         gbc2.gridx = 1;
         gbc2.gridy = 2;
-        panelR.add(sigmaText, gbc2);
+        panelRayleigh.add(sigmaText, gbc2);
+        
+        panelRician = new JPanel(new GridBagLayout());
+        panelRician.setForeground(Color.black);
+        panelRician.setBorder(buildTitledBorder("Rician"));
+        gbc.gridy = yPos++;
+        getContentPane().add(panelRician, gbc);
+        
+        JLabel plusMinusLabel2 = new JLabel("Image(i) = sqrt((Image(i) +/- noise)**2 + noise**2");
+        plusMinusLabel2.setFont(serif12);
+        plusMinusLabel2.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        panelRician.add(plusMinusLabel2, gbc2);
+        
+        JLabel gLabel = new JLabel("with 2 zero mean equal standard deviation gaussian distributions");
+        gLabel.setFont(serif12);
+        gLabel.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 1;
+        panelRician.add(gLabel, gbc2);
+        
+        maxNoiseLabel2 = new JLabel("Starting range (0 to end):  ");
+        maxNoiseLabel2.setFont(serif12);
+        maxNoiseLabel2.setForeground(Color.black);
+        gbc2.gridy = 2;
+        panelRician.add(maxNoiseLabel2, gbc2);
+
+        textMaxNoise2 = new JTextField(10);
+        textMaxNoise2.setText("0");
+        textMaxNoise2.setFont(serif12);
+        textMaxNoise2.addFocusListener(this);
+        gbc2.gridx = 1;
+        gbc2.gridy = 2;
+        panelRician.add(textMaxNoise2, gbc2);
+
+        JLabel gaussLabel2 = new JLabel("Maximum noise for Gaussian is at 4 standard deviations");
+        gaussLabel2.setFont(serif12);
+        gaussLabel2.setForeground(Color.black);
+        gbc2.gridx = 0;
+        gbc2.gridy = 3;
+        panelRician.add(gaussLabel2, gbc2);
 
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
         panelImageType = new JPanel(new GridBagLayout());
@@ -682,6 +733,13 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         group1.add(radioRayleigh);
         gbc3.gridy = 3;
         panelImageType.add(radioRayleigh, gbc3);
+        
+        radioRician = new JRadioButton("Rician", false);
+        radioRician.setFont(serif12);
+        radioRician.addItemListener(this);
+        group1.add(radioRician);
+        gbc3.gridy = 4;
+        panelImageType.add(radioRician, gbc3);
 
         destinationPanel = new JPanel(new BorderLayout());
         destinationPanel.setForeground(Color.black);
@@ -730,21 +788,27 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
      */
     private void setRange() {
 
-        start.setEnabled(true);
-        textStart.setEnabled(true);
+        maxNoiseLabel.setEnabled(true);
+        textMaxNoise.setEnabled(true);
+        maxNoiseLabel2.setEnabled(true);
+        textMaxNoise2.setEnabled(true);
 
         double imageRange = image.getMax() - image.getMin();
         double noiseMax = imageRange;
         double noiseStart = imageRange / 20.0;
 
         if ((image.getType() != ModelStorageBase.FLOAT) && (image.getType() != ModelStorageBase.DOUBLE)) {
-            start.setText("Maximum noise (0 - " + Math.round(noiseMax) + "):  ");
-            textStart.setText(String.valueOf(Math.round(noiseStart)));
+            maxNoiseLabel.setText("Maximum noise (0 - " + Math.round(noiseMax) + "):  ");
+            textMaxNoise.setText(String.valueOf(Math.round(noiseStart)));
+            maxNoiseLabel2.setText("Maximum noise (0 - " + Math.round(noiseMax) + "):  ");
+            textMaxNoise2.setText(String.valueOf(Math.round(noiseStart)));
             min = 0;
             max = Math.round(noiseMax);
         } else {
-            start.setText("Maximum noise (0 - " + noiseMax + "):  ");
-            textStart.setText(String.valueOf(noiseStart));
+            maxNoiseLabel.setText("Maximum noise (0 - " + noiseMax + "):  ");
+            textMaxNoise.setText(String.valueOf(noiseStart));
+            maxNoiseLabel2.setText("Maximum noise (0 - " + noiseMax + "):  ");
+            textMaxNoise2.setText(String.valueOf(noiseStart));
             min = 0;
             max = noiseMax;
         }
@@ -766,6 +830,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             noiseType = UNIFORM;
         } else if (radioRayleigh.isSelected()) {
         	noiseType = RAYLEIGH;
+        } else if (radioRician.isSelected()) {
+        	noiseType = RICIAN;
         }
 
         if (replaceImage.isSelected()) {
@@ -775,12 +841,12 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         }
 
         if ((noiseType == GAUSSIAN) || (noiseType == UNIFORM)) {
-            tmpStr = textStart.getText();
+            tmpStr = textMaxNoise.getText();
             if (testParameter(tmpStr, min, max)) {
                 maximumNoise = Double.valueOf(tmpStr).doubleValue();
             } else {
-                textStart.requestFocus();
-                textStart.selectAll();
+                textMaxNoise.requestFocus();
+                textMaxNoise.selectAll();
     
                 return false;
             }
@@ -810,7 +876,19 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 sigmaText.selectAll();
                 return false;
             }
-        }
+        } // if (noiseType == RAYLEIGH)
+        
+        if (noiseType == RICIAN) {
+        	tmpStr = textMaxNoise2.getText();
+            if (testParameter(tmpStr, min, max)) {
+                maximumNoise = Double.valueOf(tmpStr).doubleValue();
+            } else {
+                textMaxNoise2.requestFocus();
+                textMaxNoise2.selectAll();
+    
+                return false;
+            }    	
+        } // if (noiseType == RICIAN)
 
         return true;
     }
@@ -861,7 +939,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterInt("noise_type", 0));
-            table.put(new ParameterDouble("starting_range", 148));
+            table.put(new ParameterDouble("maximum_noise", 148));
             table.put(new ParameterDouble("poisson_mean", 5));
             table.put(new ParameterDouble("poisson_gain", 1));
             table.put(new ParameterDouble("poisson_offset", 0));
