@@ -6646,6 +6646,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public final void setC(final int x, final int y, final int z, final int c, final float value) {
         data.setFloat( (4 * ( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + c, value);
     }
+    
+    /**
+     * 
+     * @param x
+     * @param y
+     * @param z
+     * @param part 0 for real 1 for imaginary
+     * @param value
+     */
+    public final void setComplex(final int x, final int y, final int z, final int part, final float value) {
+    	data.setFloat( (2 * ( (z * (dimExtents[0] * dimExtents[1])) + (y * dimExtents[0]) + x)) + part, value);	
+    }
 
     /**
      * Accessor method for the m_bConvolve data memeber.
