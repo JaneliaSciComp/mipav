@@ -301,6 +301,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        					image.setC(x, y, z, 1, intensityR);
 	        					image.setC(x, y, z, 2, intensityG);
 	        					image.setC(x, y, z, 3, intensityB);
+	        				} else if (image.isComplexImage()) {
+	        					image.setComplex(x, y, z, 0, intensity);
+	        					image.setComplex(x, y, z, 1, intensity);
 	        				}else {
 	        					image.set(x,y,z, intensity);
 	        				}
@@ -312,6 +315,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        					image.setC(x, y, z, 1, intensityR);
 	        					image.setC(x, y, z, 2, intensityG);
 	        					image.setC(x, y, z, 3, intensityB);
+	        				} else if (image.isComplexImage()) {
+	        					image.setComplex(x, y, z, 0, intensity);
+	        					image.setComplex(x, y, z, 1, intensity);
 	        				}else {
 	        					image.set(x,y,z, intensity);
 	        				}
@@ -378,6 +384,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        					newImage.setC(x, y, z, 1, intensityR);
 	        					newImage.setC(x, y, z, 2, intensityG);
 	        					newImage.setC(x, y, z, 3, intensityB);
+	        				} else if (newImage.isComplexImage()) {
+	        					newImage.setComplex(x, y, z, 0, intensity);
+	        					newImage.setComplex(x, y, z, 1, intensity);
 	        				}else {
 	        					newImage.set(x,y,z, intensity);
 	        				}
@@ -389,6 +398,9 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
 	        					newImage.setC(x, y, z, 1, intensityR);
 	        					newImage.setC(x, y, z, 2, intensityG);
 	        					newImage.setC(x, y, z, 3, intensityB);
+	        				} else if (newImage.isComplexImage()) {
+	        					newImage.setComplex(x, y, z, 0, intensity);
+	        					newImage.setComplex(x, y, z, 1, intensity);
 	        				}else {
 	        					newImage.set(x,y,z, intensity);
 	        				}
