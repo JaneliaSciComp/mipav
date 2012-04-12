@@ -53,7 +53,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             marginColor[2] = srcImage.getMinB();
         }
         else if (srcImage.isComplexImage()) {
-        	marginColor[0] = 0.0;
+        	marginColor[0] = srcImage.getMin();
+        	marginColor[1] = 0.0;
         }
         else {
             marginColor[0] = srcImage.getMin();
@@ -224,7 +225,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             }
                             else if (iFactor == 2) {
                             	destImage.set(destIndex * 2, marginColor[0]);
-                            	destImage.set(destIndex * 2 + 1, marginColor[0]);
+                            	destImage.set(destIndex * 2 + 1, marginColor[1]);
                             }
                             else
                             {
