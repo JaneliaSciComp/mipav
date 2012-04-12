@@ -133,6 +133,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 	private JComboBox comboBoxDTI_Algorithm;
     public float[][] gradients;
+    public float[][] bmatValues;
     public float[] bvalues;
     public int refImageNum;
     public DefaultTableModel srcBvalGradTable;
@@ -243,23 +244,33 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			DWIImage = importData.m_kDWIImage;
 			currentImage = DWIImage;
 			DWIframe = importData.frame;
-			dtiparams = DWIImage.getDTIParameters();
-            gradients = dtiparams.getGradients();
-            bvalues =dtiparams.getbValues();
+			dtiparams = DWIImage.getDTIParameters();			
+			if (dtiparams.getGradients()!= null && dtiparams.getbValues()!=null){
+                gradients = dtiparams.getGradients();
+                bvalues =dtiparams.getbValues();
+			}
+			else if(dtiparams.getbMatrixVals()!= null){
+			    bmatValues = dtiparams.getbMatrixVals();
+			    DTIPreprocessing.correctGradTransCheckbox.setSelected(false);
+                DTIPreprocessing.correctGradTransCheckbox.setEnabled(false);
+			    
+			}
             srcBvalGradTable = importData.srcTableModel;
 			DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
 			DTIPreprocessing.highlightBorderPanel.setBorder(highlightTitledBorder(""));
-			for (int i = 0; i <dtiparams.getbValues().length-1; i++){
-			    if (dtiparams.getbValues()[i] == 0 && dtiparams.getGradients()[i][0] ==0 ){
-			    DTIPreprocessing.refImageNumText.setText(String.valueOf(i));
-			    }
-			    
+			if(dtiparams.getGradients() != null){
+    			for (int i = 0; i <dtiparams.getbValues().length-1; i++){
+    			    if (dtiparams.getbValues()[i] == 0 && dtiparams.getGradients()[i][0] ==0 ){
+    			    DTIPreprocessing.refImageNumText.setText(String.valueOf(i));
+    			    }
+    			    
+    			}
 			}
 			repaint();
 
 
 
-			if (dtiparams.getbValues() != null && dtiparams.getGradients() != null){
+			if (dtiparams.getbValues() != null && dtiparams.getGradients() != null || dtiparams.getbMatrixVals() != null ){
 				tabbedPane.setSelectedIndex(1);
 				nextButton.setEnabled(false);
 				goBackButton.setEnabled(true);
@@ -268,7 +279,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 			else{
 			    DTIPreprocessing.highlightBorderPanel.setBorder(buildTitleBorder(""));
-				MipavUtil.displayError("Please load B-values and Gradients");
+				MipavUtil.displayError("Please load B-values and Gradients or Bmatrix file");
 			}
 
 			if (importData.useT2CheckBox.isSelected() == false){
@@ -276,7 +287,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 					T2Image = importData.m_kT2Image;
 					T2frame = importData.t2frame;
 			        DTIPreprocessing.transformMatDWICheckbox.setEnabled(true);
-			        DTIPreprocessing.correctGradTransCheckbox.setEnabled(true);
 			        DTIPreprocessing.transformB0label.setEnabled(true);
 			        DTIPreprocessing.transformB0MatCheckbox.setEnabled(true);
 			        DTIPreprocessing.blanklabel.setEnabled(true);
@@ -326,7 +336,13 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			      }
 
 	              tabbedPane.setSelectedIndex(3);
-	              nextButton.setEnabled(false);
+	              /*
+	              estTensorPanel.maskOpenPanel.setBorder(highlightTitledBorder("Upload Mask Image"));
+	              estTensorPanel.maskLabel.setEnabled(true);
+	              estTensorPanel.openMaskImageButton.setEnabled(true);
+	              estTensorPanel.textMaskimage.setEnabled(true);
+	              */
+	              nextButton.setEnabled(true);
 	              goBackButton.setEnabled(true);
 	              goBackButton.setActionCommand("back3");
 			      }
