@@ -55,6 +55,10 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
     /** DOCUMENT ME! */
     private JTextField defaultRedInput;
+    
+    private JTextField defaultRealInput;
+    
+    private JTextField defaultImaginaryInput;
 
     /** DOCUMENT ME! */
     private double defaultValue = 0.0;
@@ -109,6 +113,10 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
     /** DOCUMENT ME! */
     private JTextField topInput;
+    
+    private double realValue = 0.0;
+    
+    private double imaginaryValue = 0.0;
 
 
     /** DOCUMENT ME! */
@@ -135,10 +143,12 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         super(theParentFrame, false);
         image = im;
 
-        if (image.isColorImage() == false) {
-            colorFactor = 1;
-        } else {
-            colorFactor = 4;
+        colorFactor = 1;
+        if (image.isComplexImage()) {
+            colorFactor = 2;
+        }
+        else if (image.isColorImage()) {
+        	colorFactor = 4;
         }
 
         init();
@@ -306,10 +316,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // resultImage.
                     if (colorFactor == 1) {
                         padValue[0] = (float)defaultValue;
+                    } else if (colorFactor == 2) {
+                    	padValue[0] = (float)realValue;
+                    	padValue[1] = (float)imaginaryValue;
                     } else {
                         padValue[0] = (float)redValue;
-                        padValue[0] = (float)greenValue;
-                        padValue[0] = (float)blueValue;
+                        padValue[1] = (float)greenValue;
+                        padValue[2] = (float)blueValue;
                     }
                     imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, 
                             marginX, marginY, marginZ );
@@ -369,10 +382,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // resultImage.
                     if (colorFactor == 1) {
                         padValue[0] = (float)defaultValue;
+                    } else if (colorFactor == 2) {
+                    	padValue[0] = (float)realValue;
+                    	padValue[1] = (float)imaginaryValue;
                     } else {
                         padValue[0] = (float)redValue;
-                        padValue[0] = (float)greenValue;
-                        padValue[0] = (float)blueValue;
+                        padValue[1] = (float)greenValue;
+                        padValue[2] = (float)blueValue;
                     }
                     imageMarginsAlgo = new AlgorithmAddMargins(image, resultImage, 
                             marginX, marginY, marginZ );
@@ -419,10 +435,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // resultImage.
                     if (colorFactor == 1) {
                         padValue[0] = (float)defaultValue;
+                    } else if (colorFactor == 2) {
+                    	padValue[0] = (float)realValue;
+                    	padValue[1] = (float)imaginaryValue;
                     } else {
                         padValue[0] = (float)redValue;
-                        padValue[0] = (float)greenValue;
-                        padValue[0] = (float)blueValue;
+                        padValue[1] = (float)greenValue;
+                        padValue[2] = (float)blueValue;
                     }
                     imageMarginsAlgo = new AlgorithmAddMargins(image, 
                             marginX, marginY, marginZ );
@@ -470,10 +489,13 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // resultImage.
                     if (colorFactor == 1) {
                         padValue[0] = (float)defaultValue;
+                    } else if (colorFactor == 2) {
+                    	padValue[0] = (float)realValue;
+                    	padValue[1] = (float)imaginaryValue;
                     } else {
                         padValue[0] = (float)redValue;
-                        padValue[0] = (float)greenValue;
-                        padValue[0] = (float)blueValue;
+                        padValue[1] = (float)greenValue;
+                        padValue[2] = (float)blueValue;
                     }
                     imageMarginsAlgo = new AlgorithmAddMargins(image, 
                             marginX, marginY, marginZ );
@@ -594,9 +616,10 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             setDisplayLocReplace();
         }
 
-        if (image.isColorImage() == false) {
-            colorFactor = 1;
-        } else {
+        colorFactor = 1;
+        if (image.isComplexImage()) {
+        	colorFactor = 2;
+        } else if (image.isColorImage()) {
             colorFactor = 4;
         }
         marginX[0] = scriptParameters.getParams().getInt("left_side");
@@ -607,6 +630,10 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         marginZ[1] = scriptParameters.getParams().getInt("back");
 
         defaultValue = scriptParameters.getParams().getDouble("margin_value");
+        
+        double[] complexNumber = scriptParameters.getParams().getList("margin_value_complex").getAsDoubleArray();
+        realValue = complexNumber[0];
+        imaginaryValue = complexNumber[1];
 
         double[] rgb = scriptParameters.getParams().getList("margin_value_rgb").getAsDoubleArray();
         redValue = rgb[0];
@@ -630,6 +657,8 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         scriptParameters.getParams().put(ParameterFactory.newParameter("back", marginZ[1]));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value", defaultValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_complex",
+                new double[] { realValue, imaginaryValue}));
         scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_rgb",
                                                                        new double[] { redValue, greenValue, blueValue }));
     }
@@ -773,7 +802,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         JPanel defaultValuePanel = new JPanel();
         defaultValuePanel.setBorder(buildTitledBorder("Select pad Value"));
 
-        if (image.isColorImage() == false) {
+        if ((!image.isColorImage()) && (!image.isComplexImage())) {
 
             // set layout
             gbl = new GridBagLayout();
@@ -796,6 +825,43 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
             gbc.gridwidth = GridBagConstraints.REMAINDER;
             gbl.setConstraints(defaultValueInput, gbc);
             defaultValuePanel.add(defaultValueInput);
+            contentBox.add(defaultValuePanel);
+        } else if (image.isComplexImage()) {
+        	gbl = new GridBagLayout();
+            gbc = new GridBagConstraints();
+            defaultValuePanel.setLayout(gbl);
+            gbc.anchor = GridBagConstraints.NORTHWEST;
+
+            // make content, place into layout
+            JLabel realLabel = new JLabel("Real pad value (image minimum is default)");
+            realLabel.setFont(serif12);
+            realLabel.setForeground(Color.black);
+            realLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(realLabel, gbc);
+            defaultValuePanel.add(realLabel);
+            defaultValuePanel.add(Box.createHorizontalStrut(10));
+            defaultRealInput = new JTextField(Double.toString(image.getMin()), 8);
+            defaultRealInput.addActionListener(this);
+            MipavUtil.makeNumericsOnly(defaultRealInput, true);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(defaultRealInput, gbc);
+            defaultValuePanel.add(defaultRealInput);
+
+            JLabel imaginaryLabel = new JLabel("Imaginary pad value (0.0 is default)");
+            imaginaryLabel.setFont(serif12);
+            imaginaryLabel.setForeground(Color.black);
+            imaginaryLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(imaginaryLabel, gbc);
+            defaultValuePanel.add(imaginaryLabel);
+            defaultValuePanel.add(Box.createHorizontalStrut(10));
+            defaultImaginaryInput = new JTextField("0.0", 8);
+            defaultImaginaryInput.addActionListener(this);
+            MipavUtil.makeNumericsOnly(defaultImaginaryInput, true);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(defaultImaginaryInput, gbc);
+            defaultValuePanel.add(defaultImaginaryInput);
             contentBox.add(defaultValuePanel);
         } else { // color image
             gbl = new GridBagLayout();
@@ -926,6 +992,9 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
 
             if (colorFactor == 1) {
                 defaultValue = Double.parseDouble(defaultValueInput.getText());
+            } else if (colorFactor == 2) {
+            	realValue = Double.parseDouble(defaultRealInput.getText());
+            	imaginaryValue = Double.parseDouble(defaultImaginaryInput.getText());
             } else {
                 redValue = Double.parseDouble(defaultRedInput.getText());
                 greenValue = Double.parseDouble(defaultGreenInput.getText());
