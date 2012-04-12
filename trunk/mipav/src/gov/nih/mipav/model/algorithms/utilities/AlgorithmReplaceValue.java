@@ -53,9 +53,12 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
         inputRanges = input;
 
-        if (srcImage.isColorImage()) {
-            colorFactor = 4;
+        if (srcImage.isComplexImage()) {
+        	colorFactor = 2;
         }
+        else if (srcImage.isColorImage()) {
+            colorFactor = 4;
+        } 
 
     }
 
