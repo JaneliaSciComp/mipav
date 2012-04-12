@@ -38,6 +38,8 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private AlgorithmChangeType changeTypeAlgo;
+    
+    private AlgorithmImageMath imageMathAlgo;
 
     /** DOCUMENT ME! */
     private int dataType;
@@ -169,6 +171,46 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                 resultImage = null;
             }
         }
+        
+        if (algorithm instanceof AlgorithmImageMath) {
+
+            if ((imageMathAlgo.isCompleted() == true) && (resultImage != null)) {
+                updateFileInfo(image, resultImage);
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (resultImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // clean up memory
+                resultImage = null;
+            }
+        }
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
@@ -179,8 +221,14 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
      // save the completion status for later
         setComplete(algorithm.isCompleted());
 
-        changeTypeAlgo.finalize();
-        changeTypeAlgo = null;
+        if (changeTypeAlgo != null) {
+            changeTypeAlgo.finalize();
+            changeTypeAlgo = null;
+        }
+        if (imageMathAlgo != null) {
+        	imageMathAlgo.finalize();
+        	imageMathAlgo = null;
+        }
         dispose();
         System.gc();
     }
@@ -308,30 +356,55 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make result image of the new data type
                     resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"));
-
-                    // Make algorithm
-                    changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    changeTypeAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), changeTypeAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        changeTypeAlgo.run();
+                    
+                    if (resultImage.isComplexImage()) {
+                        imageMathAlgo = new AlgorithmImageMath(resultImage, image, AlgorithmImageMath.INVERSE, 0.0,
+                        		0.0, 0.0, AlgorithmImageMath.CLIP, true);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+	                    // notify this object when it has completed of failed. See algorithm performed event.
+	                    // This is made possible by implementing AlgorithmedPerformed interface
+	                    imageMathAlgo.addListener(this);
+	
+	                    createProgressBar(image.getImageName(), imageMathAlgo);
+	
+	                    // Hide dialog
+	                    setVisible(false);
+	
+	                    if (isRunInSeparateThread()) {
+	
+	                        // Start the thread as a low priority because we wish to still have user interface work fast.
+	                        if (imageMathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        imageMathAlgo.run();
+	                    }
                     }
+                    else { // not complexImage
+	                    // Make algorithm
+	                    changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
+	                                                             outTempMax, false);
+	
+	                    // This is very important. Adding this object as a listener allows the algorithm to
+	                    // notify this object when it has completed of failed. See algorithm performed event.
+	                    // This is made possible by implementing AlgorithmedPerformed interface
+	                    changeTypeAlgo.addListener(this);
+	
+	                    createProgressBar(image.getImageName(), changeTypeAlgo);
+	
+	                    // Hide dialog
+	                    setVisible(false);
+	
+	                    if (isRunInSeparateThread()) {
+	
+	                        // Start the thread as a low priority because we wish to still have user interface work fast.
+	                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        changeTypeAlgo.run();
+	                    }
+                    } // else not complexImage
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog invert: unable to allocate enough memory");
 
@@ -346,15 +419,23 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
                 try {
 
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    changeTypeAlgo.addListener(this);
+                    if (image.isComplexImage()) {
+                    	imageMathAlgo = new AlgorithmImageMath(image, AlgorithmImageMath.INVERSE, 0.0,
+                        		0.0, 0.0, AlgorithmImageMath.CLIP, true);
+                    	
+                    	imageMathAlgo.addListener(this);
+                    }
+                    else {
+	                	// No need to make new image space because the user has choosen to replace the source image
+	                    // Make the algorithm class
+	                    changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
+	                                                             outTempMax, false);
+	
+	                    // This is very important. Adding this object as a listener allows the algorithm to
+	                    // notify this object when it has completed of failed. See algorithm performed event.
+	                    // This is made possible by implementing AlgorithmedPerformed interface
+	                    changeTypeAlgo.addListener(this);
+                    }
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -374,14 +455,27 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
 
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        changeTypeAlgo.run();
+                    if (image.isComplexImage()) {
+                    	if (isRunInSeparateThread()) {
+                    		
+	                        // Start the thread as a low priority because we wish to still have user interface.
+	                        if (imageMathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        imageMathAlgo.run();
+	                    }	
+                    }
+                    else {
+	                    if (isRunInSeparateThread()) {
+	
+	                        // Start the thread as a low priority because we wish to still have user interface.
+	                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        changeTypeAlgo.run();
+	                    }
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog invert: unable to allocate enough memory");
@@ -419,28 +513,53 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make result image of the new data type
                     resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_invert"));
-
-                    // Make algorithm
-                    //System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
-                    changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    changeTypeAlgo.addListener(this);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        changeTypeAlgo.run();
+                    
+                    if (resultImage.isComplexImage()) {
+                    	imageMathAlgo = new AlgorithmImageMath(resultImage, image, AlgorithmImageMath.INVERSE, 0.0,
+                        		0.0, 0.0, AlgorithmImageMath.CLIP, true);
+                        // This is very important. Adding this object as a listener allows the algorithm to
+	                    // notify this object when it has completed of failed. See algorithm performed event.
+	                    // This is made possible by implementing AlgorithmedPerformed interface
+	                    imageMathAlgo.addListener(this);
+	
+	                    createProgressBar(image.getImageName(), imageMathAlgo);
+	
+	                    // Hide dialog
+	                    setVisible(false);
+	
+	                    if (isRunInSeparateThread()) {
+	
+	                        // Start the thread as a low priority because we wish to still have user interface work fast.
+	                        if (imageMathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        imageMathAlgo.run();
+	                    }	
+                    }
+                    else {
+	                    // Make algorithm
+	                    //System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
+	                    changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
+	                                                             outTempMax, false);
+	
+	                    // This is very important. Adding this object as a listener allows the algorithm to
+	                    // notify this object when it has completed or failed. See algorithm performed event.
+	                    // This is made possible by implementing AlgorithmedPerformed interface
+	                    changeTypeAlgo.addListener(this);
+	
+	                    // Hide dialog
+	                    setVisible(false);
+	
+	                    if (isRunInSeparateThread()) {
+	
+	                        // Start the thread as a low priority because we wish to still have user interface work fast
+	                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        changeTypeAlgo.run();
+	                    }
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog invert: unable to allocate enough memory");
@@ -455,16 +574,24 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
             } else {
 
                 try {
-
-                    // Make algorithm
-                    //System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
-                    changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
-                                                             outTempMax, false);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed or failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    changeTypeAlgo.addListener(this);
+                	
+                	if (image.isComplexImage()) {
+                		imageMathAlgo = new AlgorithmImageMath(image, AlgorithmImageMath.INVERSE, 0.0,
+                        		0.0, 0.0, AlgorithmImageMath.CLIP, true);
+                    	
+                    	imageMathAlgo.addListener(this);	
+                	}
+                	else {
+	                    // Make algorithm
+	                    //System.out.println(inTempMin + " " + inTempMax + " " + outTempMin + " " + outTempMax);
+	                    changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
+	                                                             outTempMax, false);
+	
+	                    // This is very important. Adding this object as a listener allows the algorithm to
+	                    // notify this object when it has completed or failed. See algorithm performed event.
+	                    // This is made possible by implementing AlgorithmedPerformed interface
+	                    changeTypeAlgo.addListener(this);
+                	}
 
                     // Hide dialog
                     setVisible(false);
@@ -483,15 +610,28 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                         ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
                         userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                     }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        changeTypeAlgo.run();
+                    
+                    if (image.isComplexImage()) {
+                    	if (isRunInSeparateThread()) {
+                    		
+	                        // Start the thread as a low priority because we wish to still have user interface work fast
+	                        if (imageMathAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        imageMathAlgo.run();
+	                    }	
+                    }
+                    else {
+	                    if (isRunInSeparateThread()) {
+	
+	                        // Start the thread as a low priority because we wish to still have user interface work fast
+	                        if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+	                            MipavUtil.displayError("A thread is already running on this object");
+	                        }
+	                    } else {
+	                        changeTypeAlgo.run();
+	                    }
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog invert: unable to allocate enough memory");
