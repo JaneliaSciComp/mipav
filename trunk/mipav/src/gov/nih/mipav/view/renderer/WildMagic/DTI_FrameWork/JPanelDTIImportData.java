@@ -37,9 +37,11 @@ import java.awt.Frame;
     import java.awt.event.ActionEvent;
     import java.awt.event.ActionListener;
     import java.awt.event.MouseEvent;
+import java.io.BufferedReader;
     import java.io.File;
 import java.io.FileNotFoundException;
     import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
     import java.io.PrintStream;
     import java.io.RandomAccessFile;
@@ -69,6 +71,8 @@ import javax.swing.JComponent;
 import javax.swing.border.LineBorder;
     import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
+
+import WildMagic.LibFoundation.Mathematics.GMatrixf;
 
 import Jama.Matrix;
 
@@ -399,6 +403,8 @@ import Jama.Matrix;
 
         private int parNorient;
         
+        private boolean isBmatFile = false;
+        
         private FileInfoPARREC fileInfoPARREC = null;
 
         
@@ -438,59 +444,78 @@ import Jama.Matrix;
 
                   if (dtiparams != null){                   
                                // Populate Gradient column
-                      if (srcTableModel.getRowCount() != 0){
-                          if (!srcTableModel.getValueAt(0, 1).equals("")){
-                              float [] flBvalueArr= new float[numVolumes]; 
-                              for (int i = 0; i < numVolumes; i++) { 
-                                  flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                      if(isBmatFile==true){
+                          if (srcTableModel.getRowCount() != 0){
+                              if (!srcTableModel.getValueAt(0, 5).equals("")){
+                                  float[][] flBmatrixArray = new float[numVolumes][6];
+                                  for (int i = 0; i < numVolumes; i++) {  
+                                      flBmatrixArray[i][0] = Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                      flBmatrixArray[i][1] = Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                      flBmatrixArray[i][2] = Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                      flBmatrixArray[i][3] = Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                      flBmatrixArray[i][4] = Float.valueOf((String)srcTableModel.getValueAt(i, 5));
+                                      flBmatrixArray[i][5] = Float.valueOf((String)srcTableModel.getValueAt(i, 6));
                                   }
-                             dtiparams.setbValues(flBvalueArr);
-                          }
-                          
-                          if (!srcTableModel.getValueAt(0, 3).equals("")){
-                              float[][] flGradArr = new float[numVolumes][3];
-                              for (int i = 0; i < numVolumes; i++) {
-                                  if (!srcTableModel.getValueAt(i, 2).equals("")){
-                                      flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
-                                      }
-                                      else{
-                                          flGradArr[i][0]= (float) 0.0;
-                                          }
-                                  if (!srcTableModel.getValueAt(i, 3).equals("")){
-                                      flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
-                                      }
-                                      else{
-                                          flGradArr[i][1]= (float) 0.0;
-                                          }
-                                  if (!srcTableModel.getValueAt(i, 4).equals("")){
-                                      flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
-                                      }
-                                      else{
-                                          flGradArr[i][2]= (float) 0.0;
-                                      }
-                                  }
-
-
-                              dtiparams.setGradients(flGradArr);
-                          }
-                          dtiparams.setNumVolumes(numVolumes);
-                          m_kDWIImage.setDTIParameters(dtiparams);
-                          
-                          if (useT2CheckBox.isSelected()==false){
-                              if (m_kT2Image != null){
-                                  pipeline.nextButton.setEnabled(true);
-                                  pipeline.nextButton.setActionCommand("next1");
-                              }
-                              else {
-                                  MipavUtil.displayError("Please upload T2 Image");
-                                  useT2CheckBox.setSelected(false);
+                                  dtiparams.setbMatrixVals(flBmatrixArray);
                               }
                           }
-                          else {
+                          
+                      }
+                      else {
+                          if (srcTableModel.getRowCount() != 0){
+                              if (!srcTableModel.getValueAt(0, 1).equals("")){
+                                  float [] flBvalueArr= new float[numVolumes]; 
+                                  for (int i = 0; i < numVolumes; i++) { 
+                                      flBvalueArr[i]= Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                      }
+                                 dtiparams.setbValues(flBvalueArr);
+                              }
+                              
+                              if (!srcTableModel.getValueAt(0, 3).equals("")){
+                                  float[][] flGradArr = new float[numVolumes][3];
+                                  for (int i = 0; i < numVolumes; i++) {
+                                      if (!srcTableModel.getValueAt(i, 2).equals("")){
+                                          flGradArr[i][0]= Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                          }
+                                          else{
+                                              flGradArr[i][0]= (float) 0.0;
+                                              }
+                                      if (!srcTableModel.getValueAt(i, 3).equals("")){
+                                          flGradArr[i][1]= Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                          }
+                                          else{
+                                              flGradArr[i][1]= (float) 0.0;
+                                              }
+                                      if (!srcTableModel.getValueAt(i, 4).equals("")){
+                                          flGradArr[i][2]= Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                          }
+                                          else{
+                                              flGradArr[i][2]= (float) 0.0;
+                                          }
+                                      }
+    
+    
+                                  dtiparams.setGradients(flGradArr);
+                              }
+                              dtiparams.setNumVolumes(numVolumes);
+                              m_kDWIImage.setDTIParameters(dtiparams);
+                          }
+                          
+
+                      }
+                      if (useT2CheckBox.isSelected()==false){
+                          if (m_kT2Image != null){
                               pipeline.nextButton.setEnabled(true);
                               pipeline.nextButton.setActionCommand("next1");
                           }
-
+                          else {
+                              MipavUtil.displayError("Please upload T2 Image");
+                              useT2CheckBox.setSelected(false);
+                          }
+                      }
+                      else {
+                          pipeline.nextButton.setEnabled(true);
+                          pipeline.nextButton.setActionCommand("next1");
                       }
                       
                       
@@ -499,6 +524,24 @@ import Jama.Matrix;
                   else if (dtiparams == null){
                       if (m_kDWIImage.getExtents()[3] == numVolumes ||srcTableModel.getValueAt(m_kDWIImage.getExtents()[3], 0).equals("")){
                           numVolumes = m_kDWIImage.getExtents()[3];
+                          if(isBmatFile==true){
+                              if (srcTableModel.getRowCount() != 0){
+                                  if (!srcTableModel.getValueAt(0, 5).equals("")){
+                                      float[][] flBmatrixArray = new float[numVolumes][6];
+                                      for (int i = 0; i < numVolumes; i++) {  
+                                          flBmatrixArray[i][0] = Float.valueOf((String)srcTableModel.getValueAt(i, 1));
+                                          flBmatrixArray[i][1] = Float.valueOf((String)srcTableModel.getValueAt(i, 2));
+                                          flBmatrixArray[i][2] = Float.valueOf((String)srcTableModel.getValueAt(i, 3));
+                                          flBmatrixArray[i][3] = Float.valueOf((String)srcTableModel.getValueAt(i, 4));
+                                          flBmatrixArray[i][4] = Float.valueOf((String)srcTableModel.getValueAt(i, 5));
+                                          flBmatrixArray[i][5] = Float.valueOf((String)srcTableModel.getValueAt(i, 6));
+                                      }
+                                      newDTIparams.setbMatrixVals(flBmatrixArray);
+                                  }
+                              }
+                              
+                          }
+                          else{
                           if (srcTableModel.getRowCount() != 0 ){
                               newDTIparams = new DTIParameters(m_kDWIImage.getExtents()[3]);
                               if (!srcTableModel.getValueAt(0, 1).equals("")){
@@ -538,6 +581,7 @@ import Jama.Matrix;
 
                               newDTIparams.setNumVolumes(m_kDWIImage.getExtents()[3]);
                               m_kDWIImage.setDTIParameters(newDTIparams);
+                          }
                               pipeline.nextButton.setEnabled(true);
                               pipeline.nextButton.setActionCommand("next1");
                           }
@@ -639,6 +683,9 @@ import Jama.Matrix;
                 saveGradchooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
                 saveGradchooser.setDialogTitle("Save B-Value/ Gradient Table to TXT File");
                 saveGradchooser.setAccessory(buildSaveGradBvalPanel());
+                if (isBmatFile ==true){
+                    dtiStudioButton.setEnabled(false);
+                }
                 
                 int returnValue = saveGradchooser.showSaveDialog(this);
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -1302,17 +1349,18 @@ import Jama.Matrix;
                          }
                     
                     if (dtiparams.getbMatrixVals() != null){ 
-                        java.lang.Object[] newColIdentifiers = {"Volume","B-value","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                        isBmatFile = true;
+                        java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
                         srcTableModel.setColumnIdentifiers(newColIdentifiers);
                         for (int i = 0; i < numVolumes; i++) {
                             // Populate Gradient column
                             float[][] flGradArr = dtiparams.getbMatrixVals();
-                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 2);
-                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 3);
-                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 4);
-                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][3]), i, 5);
-                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][4]), i, 6);
-                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][5]), i, 7);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][0]), i, 1);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][1]), i, 2);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][2]), i, 3);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][3]), i, 4);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][4]), i, 5);
+                            srcTableModel.setValueAt(String.valueOf(flGradArr[i][5]), i, 6);
                            }
                         }
 
@@ -3293,21 +3341,13 @@ import Jama.Matrix;
          * @return
          */
         public boolean readBValGradientFile(final String gradientFilePath) {
-
-          
-            if ( dtiparams != null && dtiparams.getbMatrixVals() != null){
-                java.lang.Object[] newColIdentifiers = {"Volume","B-value","X Gradient","Y Gradient", "Z Gradient"};
-                srcTableModel.setColumnIdentifiers(newColIdentifiers);
-                
-            }
                    
             if (srcTableModel.getRowCount()>0){
                 int rowCount = srcTableModel.getRowCount();
                 for (int i = 0; i < rowCount; i++) {
                     int delRow = (rowCount-i)-1;
                     srcTableModel.removeRow(delRow);                             
-                }
-                
+                }               
             }
 
             try {
@@ -3326,11 +3366,9 @@ import Jama.Matrix;
                     }
                     numVolumes = m_kDWIImage.getExtents()[3];
 
-
-
                     raFile.seek(0);
-                    // this is DTI Studio and MIPAV standard file format
                     
+                    // this is DTI Studio and MIPAV standard file format                   
                     for (int j = 0; j < numVolumes; j++) {
                         final Vector<String> rowData = new Vector<String>();
                         rowData.add("");
@@ -3340,9 +3378,20 @@ import Jama.Matrix;
                         rowData.add("");
                         srcTableModel.addRow(rowData);
                     }
-                    final int numRows = srcTableModel.getRowCount();;
+                    str = raFile.readLine();
+                    final String[] arrCheck = str.split(":");
+                    if(arrCheck.length ==2){
+                        final String gradCheck = arrCheck[1].trim();
+                        final String[]arr2check = gradCheck.split("\\s+");
+                        if(arr2check.length==6){
+                            //Change table indentifiers for bmatrix file
+                            isBmatFile = true;
+                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
+                        }
+                    }
 
-
+                    raFile.seek(0);
                     for (int i = 0; i < numVolumes; i++) {
                         if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
                             
@@ -3354,17 +3403,17 @@ import Jama.Matrix;
                                     // Populate Volume column
                                     srcTableModel.setValueAt(String.valueOf(i),i,0);
                                     final String grads = arr[1].trim();
-                                    final String[] arr2 = grads.split("\\s+");
+                                    final String []arr2 = grads.split("\\s+");
 
                                     if (arr2.length == 4){
-                                        // MIPAV Standard text file format
+                                        // MIPAV Standard bval/grad text file format
                                         srcTableModel.setValueAt(arr2[0], i, 1);
                                         srcTableModel.setValueAt(arr2[1], i, 2);
                                         srcTableModel.setValueAt(arr2[2], i, 3);
                                         srcTableModel.setValueAt(arr2[3], i, 4);
                                     }
                                     else if (arr2.length == 3) {
-                                     // DTI Studio text file format
+                                     // DTI Studio grad text file format
                                         srcTableModel.setValueAt(arr2[0], i, 2);
                                         srcTableModel.setValueAt(arr2[1], i, 3);
                                         srcTableModel.setValueAt(arr2[2], i, 4); 
@@ -3377,17 +3426,23 @@ import Jama.Matrix;
                                         else if (parDTIParams != null && parDTIParams.getbValues() != null ){
                                              float [] flBvalueArr= new float[numVolumes]; 
                                              srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
-
-                                        }
-                                    
+                                        }                                   
                                     }
-                                }
-                                
+                                    else if(arr2.length == 6){
+                                        //MIPAV Standard bmatrix text file format
+                                        srcTableModel.setValueAt(arr2[0], i, 1);
+                                        srcTableModel.setValueAt(arr2[1], i, 2);
+                                        srcTableModel.setValueAt(arr2[2], i, 3);
+                                        srcTableModel.setValueAt(arr2[3], i, 4);
+                                        srcTableModel.setValueAt(arr2[4], i, 5);
+                                        srcTableModel.setValueAt(arr2[5], i, 6);                                        
+                                    }
+                                }                               
                             }
-
                         }
-
                     }
+
+                    
 
                 } else {
                  // this is FSL, dcm2nii, and Miscellaneous  text file format 
@@ -3405,10 +3460,15 @@ import Jama.Matrix;
                             
                         }
                     }
+                    int blineCount = 0;
+                    while (raFile.readLine() != null){
+                        blineCount++;
+                    }
+
+                    raFile.seek(0);
                     //System.out.println("decimal count: " +decimalCount);
 
-                    if (decimalCount > 4) {
-                        // this is FSL
+                    if (decimalCount > 4 && decimalCount != 6 ) {
                         raFile.seek(0);
                         int lineCount = 0;
                         while (raFile.readLine() != null){
@@ -3417,6 +3477,7 @@ import Jama.Matrix;
                         raFile.seek(0);
                         numVolumes = m_kDWIImage.getExtents()[3];                       
 
+                        
                         for (int j = 0; j < numVolumes; j++) {
                             final Vector<String> rowData = new Vector<String>();
                             rowData.add("");
@@ -3431,63 +3492,97 @@ import Jama.Matrix;
 
                         final int numRows = srcTableModel.getRowCount();
                         int start = 0;
-
-                        for (int i = 0; i < numRows; i++) {
-                            if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
-                                start = i;
-                                break;
+                        if(lineCount <5){
+                            for (int i = 0; i < numRows; i++) {
+                                if ( ((String) srcTableModel.getValueAt(i, 3)).trim().equals("")) {
+                                    start = i;
+                                    break;
+                                }
                             }
-                        }
-
-                        int k = start;
-                        String firstline = raFile.readLine();
-                        firstline = firstline.trim();
-                        String[] arr = firstline.split("\\s+");
-
-                        for (final String element : arr) {
-                            if (k < numRows) {
-                                srcTableModel.setValueAt(element, k, 2);
-                                k = k + 1;
-                            } else {
-                                break;
+    
+                            int k = start;
+                            String firstline = raFile.readLine();
+                            firstline = firstline.trim();
+                            String[] arr = firstline.split("\\s+");
+    
+                            for (final String element : arr) {
+                                if (k < numRows) {
+                                    srcTableModel.setValueAt(element, k, 2);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
                             }
-                        }
-
-                        k = start;
-                        String secondLine = raFile.readLine();
-                        secondLine = secondLine.trim();
-                        arr = secondLine.split("\\s+");
-                        for (final String element : arr) {
-                            if (k < numRows) {
-                                srcTableModel.setValueAt(element, k, 3);
-                                k = k + 1;
-                            } else {
-                                break;
-                            }
-                        }
-
-                        k = start;
-                        String thirdlLine = raFile.readLine();
-                        thirdlLine = thirdlLine.trim();
-                        arr = thirdlLine.split("\\s+");
-                        for (final String element : arr) {
-                            if (k < numRows) {
-                                
-                                
-                                
-                                srcTableModel.setValueAt(element, k, 4);
-                                k = k + 1;
-                            } else {
-                                break;
-                            }
-                        }
-
-
-                        if (lineCount == 4){
+    
                             k = start;
-                            String fourthLine = raFile.readLine();
-                            fourthLine = fourthLine.trim();
-                            arr = fourthLine.split("\\s+");
+                            String secondLine = raFile.readLine();
+                            secondLine = secondLine.trim();
+                            arr = secondLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {
+                                    srcTableModel.setValueAt(element, k, 3);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
+                            }
+    
+                            k = start;
+                            String thirdlLine = raFile.readLine();
+                            thirdlLine = thirdlLine.trim();
+                            arr = thirdlLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {                                   
+                                    srcTableModel.setValueAt(element, k, 4);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
+                            }     
+                            if (lineCount == 4){
+                                // this is FSL (4 lines the length of numVolumes with gradients and bvalues)
+                                k = start;
+                                String fourthLine = raFile.readLine();
+                                fourthLine = fourthLine.trim();
+                                arr = fourthLine.split("\\s+");
+                                for (final String element : arr) {
+                                    if (k < numRows) {
+                                        srcTableModel.setValueAt(element, k, 1);
+                                        k = k + 1;
+                                    } else {
+                                        break;
+                                    }
+                                }
+                            }
+                            else if (lineCount == 3){
+                               //dcm2nii file text file format (3 lines the length of numVolumes with gradient values) 
+                                if (dtiparams != null && dtiparams.getbValues() != null ){
+                                    for (int i = 0; i < numVolumes; i++){
+                                        float [] flBvalueArr= new float[numVolumes]; 
+                                        srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
+                                    }
+    
+                                }
+                                else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+                                    for (int i = 0; i < numVolumes; i++){
+                                         float [] flBvalueArr= new float[numVolumes]; 
+                                         srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+                                    }
+    
+                                }
+                                                      
+                            }
+                        }
+                        else if (lineCount == 6){
+                            isBmatFile = true;
+                            //6 lines the length of numVolumes with bmatrix values
+                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                            srcTableModel.setColumnIdentifiers(newColIdentifiers);
+                            int k = start;
+                            String firstline = raFile.readLine();
+                            firstline = firstline.trim();
+                            String[] arr = firstline.split("\\s+");
+    
                             for (final String element : arr) {
                                 if (k < numRows) {
                                     srcTableModel.setValueAt(element, k, 1);
@@ -3495,31 +3590,76 @@ import Jama.Matrix;
                                 } else {
                                     break;
                                 }
-                            }
-                        }
-                        else if (lineCount == 3){
-                           //dcm2nii file text file format 
-                            if (dtiparams != null && dtiparams.getbValues() != null ){
-                                for (int i = 0; i < numVolumes; i++){
-                                    float [] flBvalueArr= new float[numVolumes]; 
-                                    srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
+                            }    
+                            k = start;
+                            String secondLine = raFile.readLine();
+                            secondLine = secondLine.trim();
+                            arr = secondLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {
+                                    srcTableModel.setValueAt(element, k, 2);
+                                    k = k + 1;
+                                } else {
+                                    break;
                                 }
-
-                            }
-                            else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                for (int i = 0; i < numVolumes; i++){
-                                     float [] flBvalueArr= new float[numVolumes]; 
-                                     srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
+                            }    
+                            k = start;
+                            String thirdlLine = raFile.readLine();
+                            thirdlLine = thirdlLine.trim();
+                            arr = thirdlLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {                                   
+                                    srcTableModel.setValueAt(element, k, 3);
+                                    k = k + 1;
+                                } else {
+                                    break;
                                 }
-
                             }
-                                                  
+                            k = start;
+                            String fourthLine = raFile.readLine();
+                            fourthLine = fourthLine.trim();
+                            arr = fourthLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {                                   
+                                    srcTableModel.setValueAt(element, k, 4);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                            k = start;
+                            String fifthLine = raFile.readLine();
+                            fifthLine = fifthLine.trim();
+                            arr = fifthLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {                                   
+                                    srcTableModel.setValueAt(element, k, 5);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
+                            }
+                            k = start;
+                            String sixthLine = raFile.readLine();
+                            sixthLine = sixthLine.trim();
+                            arr = sixthLine.split("\\s+");
+                            for (final String element : arr) {
+                                if (k < numRows) {                                   
+                                    srcTableModel.setValueAt(element, k, 6);
+                                    k = k + 1;
+                                } else {
+                                    break;
+                                }
+                            }                                                      
                         }
                     }
-                    else if(decimalCount == 3){
-                        //Miscellaneous text file format
+                    else if(decimalCount == 3 || decimalCount == 6 ){
+                        //Miscellaneous text file format- 3 gradients or 6 bmatrix values corresponding 
+                        //to one volume per line (without volume number)
                         raFile.seek(0);
                         numVolumes = m_kDWIImage.getExtents()[3];
+                        String firstLineFile = raFile.readLine();
+                        String [] arrfirstLine = firstLineFile.split("\\s+");
 
                         for (int j = 0; j < numVolumes; j++) {
                             final Vector<String> rowData = new Vector<String>();
@@ -3532,31 +3672,83 @@ import Jama.Matrix;
                             // Populate Volume column
                             srcTableModel.setValueAt(String.valueOf(j),j,0);
                         }
-
+                        
+                        if (arrfirstLine.length == 6){
+                            isBmatFile = true;
+                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
+                        }
+                        
+                        raFile.seek(0);
                         for (int i = 0; i < numVolumes; i++){
                             String grads = raFile.readLine();
                             grads = grads.trim();
                             String [] arrGrads = grads.split("\\s+");
-                            srcTableModel.setValueAt(arrGrads[0], i, 2);
-                            srcTableModel.setValueAt(arrGrads[1], i, 3);
-                            srcTableModel.setValueAt(arrGrads[2], i, 4);
-                            
-                            
-                            if (dtiparams != null && dtiparams.getbValues() != null ){
-                                float [] flBvalueArr= new float[numVolumes]; 
-                                srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);
-
+                            if(arrGrads.length == 3){
+                                //gradients
+                                srcTableModel.setValueAt(arrGrads[0], i, 2);
+                                srcTableModel.setValueAt(arrGrads[1], i, 3);
+                                srcTableModel.setValueAt(arrGrads[2], i, 4);
+                                
+                                if (dtiparams != null && dtiparams.getbValues() != null ){
+                                    float [] flBvalueArr= new float[numVolumes]; 
+                                    srcTableModel.setValueAt(String.valueOf(dtiparams.getbValues()[i]), i, 1);   
+                                }
+                                else if (parDTIParams != null && parDTIParams.getbValues() != null ){
+                                     float [] flBvalueArr= new float[numVolumes]; 
+                                     srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);   
+                                }                           
                             }
-                            else if (parDTIParams != null && parDTIParams.getbValues() != null ){
-                                 float [] flBvalueArr= new float[numVolumes]; 
-                                 srcTableModel.setValueAt(String.valueOf(parDTIParams.getbValues()[i]), i, 1);
-
+                            else if(arrGrads.length == 6){
+                                //bmatrix values
+                                srcTableModel.setValueAt(arrGrads[0], i, 1);
+                                srcTableModel.setValueAt(arrGrads[1], i, 2);
+                                srcTableModel.setValueAt(arrGrads[2], i, 3);
+                                srcTableModel.setValueAt(arrGrads[3], i, 4);
+                                srcTableModel.setValueAt(arrGrads[4], i, 5);
+                                srcTableModel.setValueAt(arrGrads[5], i, 6);                                     
                             }
-                            
                         }
                                                 
                     }
-                    else if(decimalCount == 4){
+                    else if(decimalCount == 0){
+                        raFile.seek(0);
+                        numVolumes = m_kDWIImage.getExtents()[3];
+                        String firstLineFile = raFile.readLine();
+                        String [] arrfirstLine = firstLineFile.split("\\s+");
+
+                        for (int j = 0; j < numVolumes; j++) {
+                            final Vector<String> rowData = new Vector<String>();
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            rowData.add("");
+                            srcTableModel.addRow(rowData);
+                            // Populate Volume column
+                            srcTableModel.setValueAt(String.valueOf(j),j,0);
+                        }
+                        if (arrfirstLine.length == 6){
+                            isBmatFile = true;
+                            java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
+                            srcTableModel.setColumnIdentifiers(newColIdentifiers);  
+                        }
+                        
+                        raFile.seek(0);
+                        for (int i = 0; i < numVolumes; i++){
+                            String grads = raFile.readLine();
+                            grads = grads.trim();
+                            String [] arrGrads = grads.split("\\s+");
+                                if(arrGrads.length == 6){
+                                 //FSL bmatrix values
+                                srcTableModel.setValueAt(arrGrads[0], i, 1);
+                                srcTableModel.setValueAt(arrGrads[1], i, 2);
+                                srcTableModel.setValueAt(arrGrads[2], i, 3);
+                                srcTableModel.setValueAt(arrGrads[0], i, 4);
+                                srcTableModel.setValueAt(arrGrads[1], i, 5);
+                                srcTableModel.setValueAt(arrGrads[2], i, 6);                                                       
+                                }                           
+                        }
                         
                     }
                     }
@@ -3593,31 +3785,53 @@ import Jama.Matrix;
                 String secondGrad = "";
                 String thirdGrad = "";
                 String bvalString = "";
+
                 
                 for (int i = 0; i < numVolumes; i++) {
                   if (gradBvalText == 1){
-                        firstGrad = firstGrad + srcTableModel.getValueAt(i,2)+ "    ";
-                        secondGrad = secondGrad + srcTableModel.getValueAt(i,3)+ "    ";
-                        thirdGrad = thirdGrad + srcTableModel.getValueAt(i,4)+ "    ";
-                        bvalString = bvalString + srcTableModel.getValueAt(i,1) + "    " ;
+                      //FSL format
+                      if(srcTableModel.getValueAt(i,5) != null){
+                          printStream.print(srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4)
+                          + "    " +srcTableModel.getValueAt(i,5) + "    " +srcTableModel.getValueAt(i,6)); 
+                          printStream.println(); 
+                      }
+                      else{
+                          firstGrad = firstGrad + srcTableModel.getValueAt(i,2)+ "    ";
+                          secondGrad = secondGrad + srcTableModel.getValueAt(i,3)+ "    ";
+                          thirdGrad = thirdGrad + srcTableModel.getValueAt(i,4)+ "    ";
+                          bvalString = bvalString + srcTableModel.getValueAt(i,1) + "    " ;  
+                      }
                         
                   }
-                    else if (gradBvalText == 2){                                 
+                    else if (gradBvalText == 2){
+                        // dtiStudio format grad file
                         printStream.print((i+1) +":" + "\t" +srcTableModel.getValueAt(i,2) + "    "+srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4));              
                         printStream.println();
                     }
                     else if (gradBvalText == 3){
-                        printStream.print((i) +":" + "\t" +srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4));                  
-                        printStream.println();
+                        //Standard MIPAV format
+                        if(srcTableModel.getValueAt(i,5) != null){
+                            //Bmatrix file
+                            printStream.print((i) +":" + "\t" +srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4)
+                                    + "    " +srcTableModel.getValueAt(i,5) + "    " +srcTableModel.getValueAt(i,6));                  
+                            printStream.println();  
+                        }
+                        else{
+                            //Bval/grad file
+                            printStream.print((i) +":" + "\t" +srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4));                  
+                            printStream.println();
+                        }
                         
                     }
-
                    
                 }
+                if(!firstGrad.equals("")){
                 printStream.println(firstGrad);
                 printStream.println(secondGrad);
                 printStream.println(thirdGrad);
                 printStream.println(bvalString);
+                }
+
                 outputStream.close();
         
             } catch(Exception e) {
@@ -3640,6 +3854,8 @@ import Jama.Matrix;
             return true;
                 
             }
+        
+ 
         
         private HashMap<String,String> buildParVolMap() {
             HashMap<String,String> map = new HashMap<String,String>();
