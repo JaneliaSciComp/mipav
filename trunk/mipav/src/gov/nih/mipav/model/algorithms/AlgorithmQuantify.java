@@ -111,6 +111,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
                 }
             }
             showRegionInfo(count);
+            setCompleted(true);
             return;
         }
         
@@ -342,7 +343,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
                     }
                 } // for (i = 0; i < numObjects; i++)
 
-                ViewUserInterface.getReference().setDataText("\nObject\tpixels\t\tarea");
+                ViewUserInterface.getReference().setDataText("\nObject\tpixels\t\tarea\n");
                     for (i = 0; i < numObjects; i++) {
                         ViewUserInterface.getReference().setDataText(String.valueOf(i+1) + "\t" + count[i] + "\t\t" + areaString[i]);
                     }
@@ -362,7 +363,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
                     }
                 }
 
-                ViewUserInterface.getReference().setDataText("\nObject\tpixels\t\tvolume");
+                ViewUserInterface.getReference().setDataText("\nObject\tpixels\t\tvolume\n");
                 for (i = 0; i < numObjects; i++) {
                     ViewUserInterface.getReference().setDataText(String.valueOf(i+1) + "\t" + count[i] + "\t\t" + volumeString[i]);
                 }
