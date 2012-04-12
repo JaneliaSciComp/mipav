@@ -207,6 +207,10 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 				
 		double[] maxIntensityValue = new double[colorFactor];
 		double[] minIntensityValue = new double[colorFactor];
+		double maxIntensityRealValue = -Double.MAX_VALUE;
+		double minIntensityRealValue = Double.MAX_VALUE;
+		double maxIntensityImaginaryValue = -Double.MAX_VALUE;
+		double minIntensityImaginaryValue = Double.MAX_VALUE;
 		for ( int c = 0; c < colorFactor; c++ )
 		{
 			maxIntensityValue[c] = -Double.MAX_VALUE;
@@ -240,53 +244,100 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		int mod = 0;
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 		int index;
-		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
-		{
-			for (int i = 0; i < lengthZ; i++ )
+		double mag;
+		if (srcImage.isComplexImage()) {
+			for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 			{
-				int start = startZ + iSlice;
-				int end = startZ + iSlice + windowSize;
-				// Compute the max intensity value along Z-axis
-				for (int j = start; j < end; j++)
+				for (int i = 0; i < lengthZ; i++ )
 				{
-					for ( int c = 0; c < colorFactor; c++ )
+					int start = startZ + iSlice;
+					int end = startZ + iSlice + windowSize;
+					// Compute the max intensity value along Z-axis
+					for (int j = start; j < end; j++)
 					{
-						index = colorFactor * (i + (j * lengthZ)) + c;
-						if ((buffer[index] >= minIntensity[c]) &&
-								(buffer[index] <= maxIntensity[c]))
-						{
-							if (buffer[index] > maxIntensityValue[c])
-							{
-								maxIntensityValue[c] = buffer[index];
+						index = 2*(i + (j * lengthZ));
+						mag = Math.sqrt(buffer[index]*buffer[index] + buffer[index+1]*buffer[index+1]);
+						if ((mag >= minIntensity[0]) && (mag <= maxIntensity[0])) {
+							if (mag > maxIntensityValue[0]) {
+								maxIntensityValue[0] = mag;
+								maxIntensityRealValue = buffer[index];
+								maxIntensityImaginaryValue = buffer[index+1];
 							}
-							if ( buffer[index] < minIntensityValue[c] )
-							{
-								minIntensityValue[c] = buffer[index];
+							if (mag < minIntensityValue[0]) {
+								minIntensityValue[0] = mag;
+								minIntensityRealValue = buffer[index];
+								minIntensityImaginaryValue = buffer[index+1];
 							}
 						}
 					}
-				}
-				for ( int c = 0; c < colorFactor; c++ )
-				{
-					index = colorFactor * iSlice * lengthZ + i*colorFactor + c;
-					if ( computeMaximum && ZProjectionImageMax != null )
-					{
-						ZProjectionImageMax.set( index, maxIntensityValue[c] );
+					index = 2 * iSlice * lengthZ + 2 * i;
+					if (computeMaximum && ZProjectionImageMax != null) {
+						ZProjectionImageMax.set(index, maxIntensityRealValue);
+						ZProjectionImageMax.set(index+1, maxIntensityImaginaryValue);
 					}
-					maxIntensityValue[c] = -Double.MAX_VALUE;
-					if ( computeMinimum && ZProjectionImageMin != null )
-					{
-						ZProjectionImageMin.set( index, minIntensityValue[c] );
+					maxIntensityValue[0] = -Double.MAX_VALUE;
+					if (computeMinimum && ZProjectionImageMin != null) {
+						ZProjectionImageMin.set(index, minIntensityRealValue);
+						ZProjectionImageMin.set(index+1,minIntensityImaginaryValue);
 					}
-					minIntensityValue[c] = Double.MAX_VALUE;
+					minIntensityValue[0] = Double.MAX_VALUE;
+					mod++;
+					if ( (mod%updates) == 0 )
+					{
+						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					}
 				}
-				mod++;
-				if ( (mod%updates) == 0 )
+			}	
+		} // if (srcImage.isComplexImage())
+		else { // not srcImage.isComplexImage()
+			for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
+			{
+				for (int i = 0; i < lengthZ; i++ )
 				{
-					fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					int start = startZ + iSlice;
+					int end = startZ + iSlice + windowSize;
+					// Compute the max intensity value along Z-axis
+					for (int j = start; j < end; j++)
+					{
+						for ( int c = 0; c < colorFactor; c++ )
+						{
+							index = colorFactor * (i + (j * lengthZ)) + c;
+							if ((buffer[index] >= minIntensity[c]) &&
+									(buffer[index] <= maxIntensity[c]))
+							{
+								if (buffer[index] > maxIntensityValue[c])
+								{
+									maxIntensityValue[c] = buffer[index];
+								}
+								if ( buffer[index] < minIntensityValue[c] )
+								{
+									minIntensityValue[c] = buffer[index];
+								}
+							}
+						}
+					}
+					for ( int c = 0; c < colorFactor; c++ )
+					{
+						index = colorFactor * iSlice * lengthZ + i*colorFactor + c;
+						if ( computeMaximum && ZProjectionImageMax != null )
+						{
+							ZProjectionImageMax.set( index, maxIntensityValue[c] );
+						}
+						maxIntensityValue[c] = -Double.MAX_VALUE;
+						if ( computeMinimum && ZProjectionImageMin != null )
+						{
+							ZProjectionImageMin.set( index, minIntensityValue[c] );
+						}
+						minIntensityValue[c] = Double.MAX_VALUE;
+					}
+					mod++;
+					if ( (mod%updates) == 0 )
+					{
+						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+					}
 				}
 			}
-		}
+		} // else not srcImage.isComplexImage()
 
 		if ( ZProjectionImageMax != null )
 		{
@@ -365,55 +416,110 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		int mod = 0;
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 		int index;
-		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
-		{
-			for (int i = 0; i < dimZ; i++)
+		double mag;
+		double maxIntensityRealValue = -Double.MAX_VALUE;
+		double maxIntensityImaginaryValue = -Double.MAX_VALUE;
+		double minIntensityRealValue = Double.MAX_VALUE;
+		double minIntensityImaginaryValue = Double.MAX_VALUE;
+		if (srcImage.isComplexImage()) {
+			for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 			{
-				for (int j = 0; j < dimX; j++)
+				for (int i = 0; i < dimZ; i++)
 				{
-					for (int k = startY + iSlice; k < startY + iSlice + windowSize; k++)
+					for (int j = 0; j < dimX; j++)
 					{
-						index = (dimX*dimY*i) + j + (dimX*k);
-						index *= colorFactor;
-						for ( int c = 0; c < colorFactor; c++ )
+						for (int k = startY + iSlice; k < startY + iSlice + windowSize; k++)
 						{
-							if ((buffer[index + c] >= minIntensity[c]) &&
-									(buffer[index + c] <= maxIntensity[c]))
-							{
-								if (buffer[index + c] > maxIntensityValue[c])
-								{
-									maxIntensityValue[c] = buffer[index + c];
+							index = 2*((dimX*dimY*i) + j + (dimX*k));
+							mag = Math.sqrt(buffer[index]*buffer[index] + buffer[index+1]*buffer[index+1]);
+							if ((mag >= minIntensity[0]) && (mag <= maxIntensity[0])) {
+								if (mag > maxIntensityValue[0]) {
+									maxIntensityValue[0] = mag;
+									maxIntensityRealValue = buffer[index];
+									maxIntensityImaginaryValue = buffer[index+1];
 								}
-								if (buffer[index + c] < minIntensityValue[c]) 
-								{
-									minIntensityValue[c] = buffer[index + c];
+								if (mag < minIntensityValue[0]) {
+									minIntensityValue[0] = mag;
+									minIntensityRealValue = buffer[index];
+									minIntensityImaginaryValue = buffer[index+1];
 								}
 							}
 						}
-					}
-					for ( int c = 0; c < colorFactor; c++ )
-					{						
-						if ( computeMaximum && YProjectionImageMax != null )
-						{
-							YProjectionImageMax.set( iSlice * lengthY * colorFactor + colorFactor * (j + i*dimX) + c, 
-									maxIntensityValue[c] );
+						if (computeMaximum && YProjectionImageMax != null) {
+							YProjectionImageMax.set( 2 * iSlice * lengthY + 2 * (j + i*dimX), 
+									maxIntensityRealValue);
+							YProjectionImageMax.set( 2 * iSlice * lengthY + 2 * (j + i*dimX) + 1, 
+									maxIntensityImaginaryValue);	
 						}
-						maxIntensityValue[c] = -Double.MAX_VALUE;			
+						maxIntensityValue[0] = -Double.MAX_VALUE;
 						if ( computeMinimum && YProjectionImageMin != null )
 						{
-							YProjectionImageMin.set( iSlice * lengthY * colorFactor + colorFactor * (j + i*dimX) + c, 
-									minIntensityValue[c] );
+							YProjectionImageMin.set( 2 * iSlice * lengthY + 2 * (j + i*dimX), 
+									minIntensityRealValue );
+							YProjectionImageMin.set( 2 * iSlice * lengthY + 2 * (j + i*dimX) + 1, 
+									minIntensityImaginaryValue );
 						}
-						minIntensityValue[c] = Double.MAX_VALUE;
-					}
-					mod++;
-					if ( (mod%update) == 0 )
+						minIntensityValue[0] = Double.MAX_VALUE;
+						mod++;
+						if ( (mod%update) == 0 )
+						{
+							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+						}
+					} 			
+				}
+			}    	
+		} // if (srcImage.isComplexImage())
+		else { // not srcImage.isComplex()
+			for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
+			{
+				for (int i = 0; i < dimZ; i++)
+				{
+					for (int j = 0; j < dimX; j++)
 					{
-						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
-					}
-				} 			
+						for (int k = startY + iSlice; k < startY + iSlice + windowSize; k++)
+						{
+							index = (dimX*dimY*i) + j + (dimX*k);
+							index *= colorFactor;
+							for ( int c = 0; c < colorFactor; c++ )
+							{
+								if ((buffer[index + c] >= minIntensity[c]) &&
+										(buffer[index + c] <= maxIntensity[c]))
+								{
+									if (buffer[index + c] > maxIntensityValue[c])
+									{
+										maxIntensityValue[c] = buffer[index + c];
+									}
+									if (buffer[index + c] < minIntensityValue[c]) 
+									{
+										minIntensityValue[c] = buffer[index + c];
+									}
+								}
+							}
+						}
+						for ( int c = 0; c < colorFactor; c++ )
+						{						
+							if ( computeMaximum && YProjectionImageMax != null )
+							{
+								YProjectionImageMax.set( iSlice * lengthY * colorFactor + colorFactor * (j + i*dimX) + c, 
+										maxIntensityValue[c] );
+							}
+							maxIntensityValue[c] = -Double.MAX_VALUE;			
+							if ( computeMinimum && YProjectionImageMin != null )
+							{
+								YProjectionImageMin.set( iSlice * lengthY * colorFactor + colorFactor * (j + i*dimX) + c, 
+										minIntensityValue[c] );
+							}
+							minIntensityValue[c] = Double.MAX_VALUE;
+						}
+						mod++;
+						if ( (mod%update) == 0 )
+						{
+							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+						}
+					} 			
+				}
 			}
-		}
+		} // else not srcImage.isComplexImage()
 
 		if ( YProjectionImageMax != null )
 		{
@@ -492,54 +598,106 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		int mod = 0;
 		fireProgressStateChanged(mod, srcImage.getImageName(), "Computing Maximum Intensity Projection ...");
 		int index;
-		for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
-		{
-			for (int i = 0; i < dimZ; i++)
+		double mag;
+		double maxIntensityRealValue = -Double.MAX_VALUE;
+		double maxIntensityImaginaryValue = -Double.MAX_VALUE;
+		double minIntensityRealValue = Double.MAX_VALUE;
+		double minIntensityImaginaryValue = Double.MAX_VALUE;
+		if (srcImage.isComplexImage()) {
+			for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
 			{
-				for (int j = 0; j < dimY; j++)
+				for (int i = 0; i < dimZ; i++)
 				{
-					for (int k = startX + iSlice; k < startX + iSlice + windowSize; k++)
+					for (int j = 0; j < dimY; j++)
 					{
-						index = (i*dimY*dimX) + (dimX*j) + k;
-						index *= colorFactor;
-						for ( int c = 0; c < colorFactor; c++ )
+						for (int k = startX + iSlice; k < startX + iSlice + windowSize; k++)
 						{
-							if ((buffer[index+c] >= minIntensity[c]) &&
-									(buffer[index+c] <= maxIntensity[c]))
-							{
-								if (buffer[index+c] > maxIntensityValue[c])
-								{
-									maxIntensityValue[c] = buffer[index+c];
+							index = 2*((i*dimY*dimX) + (dimX*j) + k);
+							mag = Math.sqrt(buffer[index]*buffer[index] + buffer[index+1]*buffer[index+1]);
+							if ((mag >= minIntensity[0]) && (mag <= maxIntensity[0])) {
+								if (mag > maxIntensityValue[0]) {
+									maxIntensityValue[0] = mag;
+									maxIntensityRealValue = buffer[index];
+									maxIntensityImaginaryValue = buffer[index+1];
 								}
-
-								if (buffer[index+c] < minIntensityValue[c])
-								{
-									minIntensityValue[c] = buffer[index+c];
+								if (mag < minIntensityValue[0]) {
+									minIntensityValue[0] = mag;
+									minIntensityRealValue = buffer[index];
+									minIntensityImaginaryValue = buffer[index+1];
 								}
 							}
 						}
-					}
-					for ( int c = 0; c < colorFactor; c++ )
-					{
 						if ( computeMaximum && XProjectionImageMax != null )
 						{
-							XProjectionImageMax.set( iSlice*lengthX*colorFactor + colorFactor * (i + (j*dimZ)) + c, maxIntensityValue[c] );
+							XProjectionImageMax.set( 2*iSlice*lengthX + 2 * (i + (j*dimZ)), maxIntensityRealValue);
+							XProjectionImageMax.set( 2*iSlice*lengthX + 2 * (i + (j*dimZ)) + 1, maxIntensityImaginaryValue);
 						}
-						maxIntensityValue[c] = -Double.MAX_VALUE;
+						maxIntensityValue[0] = -Double.MAX_VALUE;
 						if ( computeMinimum && XProjectionImageMin != null )
 						{
-							XProjectionImageMin.set( iSlice*lengthX*colorFactor + colorFactor * (i + (j*dimZ)) + c, minIntensityValue[c] );
+							XProjectionImageMin.set( 2*iSlice*lengthX + 2 * (i + (j*dimZ)), minIntensityRealValue );
+							XProjectionImageMin.set( 2*iSlice*lengthX + 2 * (i + (j*dimZ)) + 1, minIntensityImaginaryValue );
 						}
-						minIntensityValue[c] = Double.MAX_VALUE;
-					}
-					mod++;
-					if ( (mod%update) == 0 )
-					{
-						fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+						minIntensityValue[0] = Double.MAX_VALUE;
+						mod++;
+						if ( (mod%update) == 0 )
+						{
+							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+						}
 					}
 				}
 			}
-		}
+		} // if (srcImage.isComplexImage())
+		else { // not srcImage.isComplexImage()
+			for ( int iSlice = 0; iSlice < newSlices; iSlice++ )
+			{
+				for (int i = 0; i < dimZ; i++)
+				{
+					for (int j = 0; j < dimY; j++)
+					{
+						for (int k = startX + iSlice; k < startX + iSlice + windowSize; k++)
+						{
+							index = (i*dimY*dimX) + (dimX*j) + k;
+							index *= colorFactor;
+							for ( int c = 0; c < colorFactor; c++ )
+							{
+								if ((buffer[index+c] >= minIntensity[c]) &&
+										(buffer[index+c] <= maxIntensity[c]))
+								{
+									if (buffer[index+c] > maxIntensityValue[c])
+									{
+										maxIntensityValue[c] = buffer[index+c];
+									}
+	
+									if (buffer[index+c] < minIntensityValue[c])
+									{
+										minIntensityValue[c] = buffer[index+c];
+									}
+								}
+							}
+						}
+						for ( int c = 0; c < colorFactor; c++ )
+						{
+							if ( computeMaximum && XProjectionImageMax != null )
+							{
+								XProjectionImageMax.set( iSlice*lengthX*colorFactor + colorFactor * (i + (j*dimZ)) + c, maxIntensityValue[c] );
+							}
+							maxIntensityValue[c] = -Double.MAX_VALUE;
+							if ( computeMinimum && XProjectionImageMin != null )
+							{
+								XProjectionImageMin.set( iSlice*lengthX*colorFactor + colorFactor * (i + (j*dimZ)) + c, minIntensityValue[c] );
+							}
+							minIntensityValue[c] = Double.MAX_VALUE;
+						}
+						mod++;
+						if ( (mod%update) == 0 )
+						{
+							fireProgressStateChanged(Math.round((mod / totalLength) * 100));
+						}
+					}
+				}
+			}	
+		} // else not srcImage.isComplexImage()
 
 		if ( XProjectionImageMax != null )
 		{
