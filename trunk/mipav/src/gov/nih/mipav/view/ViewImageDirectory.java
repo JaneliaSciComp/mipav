@@ -1218,6 +1218,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
         scrollingBox.add(headerLabel);
         scrollingBox.add(primaryTable);
 
+        secondaryModel.addColumn("Selected");
         secondaryModel.addColumn("Tag");
         secondaryModel.addColumn("Name");
         secondaryModel.addColumn("Value");
@@ -1225,6 +1226,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
         secondaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         secondaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
+        secondaryTable.getColumn("Selected").setMinWidth(90);
+        secondaryTable.getColumn("Selected").setMaxWidth(90);
         secondaryTable.getColumn("Tag").setMinWidth(90);
         secondaryTable.getColumn("Tag").setMaxWidth(90);
         secondaryTable.getColumn("Name").setMinWidth(160);
