@@ -117,7 +117,9 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
     private File prefusionBaseDir;
     private File prefusionTransformDir;
     /**Weights to use for calculating image means */
-    private double baseWeight, transformWeight;
+    private double baseAriWeight, transformAriWeight;
+    private double baseGeoWeight;
+    private double transformGeoWeight;
 
     /**
      * Constructor.
@@ -148,15 +150,18 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
      * @param prefusionTranformDir 
      * @param prefusionBaseDir 
      * @param savePrefusion 
-     * @param transformWeight 
-     * @param baseWeight 
+     * @param transformAriWeight 
+     * @param baseAriWeight 
+     * @param transformGeoWeight 
+     * @param baseGeoWeight 
      */
     public PlugInAlgorithmGenerateFusion542a(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
-                                                    boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir, double baseWeight, double transformWeight) {
+                                                    boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
+                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
@@ -200,8 +205,11 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
         this.prefusionBaseDir = prefusionBaseDir;
         this.prefusionTransformDir = prefusionTransformDir;
         
-        this.baseWeight = baseWeight;
-        this.transformWeight = transformWeight;
+        this.baseAriWeight = baseAriWeight;
+        this.transformAriWeight = transformAriWeight;
+        
+        this.baseGeoWeight = baseGeoWeight;
+        this.transformGeoWeight = transformGeoWeight;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -923,19 +931,21 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
                             transVal = transformImage.getDouble(transformX, transformY, transformZ);
-                            mult+=transformWeight;
+                            mult+=transformGeoWeight;
                         }
                         if(i < baseImage.getExtents()[0] && 
                                 j < baseImage.getExtents()[1] && 
                                 k < baseImage.getExtents()[2]) {
                             baseVal = baseImage.getDouble(i, j, k);
-                            mult+=baseWeight;
+                            mult+=baseGeoWeight;
                         }
                         
-                        subGeoImage.set(i, j, k, Math.exp((transformWeight*Math.log(transVal) + baseWeight*Math.log(baseVal)) / mult));
+                        subGeoImage.set(i, j, k, Math.exp((transformGeoWeight*Math.log(transVal) + baseGeoWeight*Math.log(baseVal)) / mult));
                     }
                 }
             }
+            
+            Preferences.data("Produced weighted geometric mean: Transformed weight: "+transformGeoWeight+"\tBase weight: "+baseGeoWeight+"\n");
             
             subGeoImage.calcMinMax();
             
@@ -964,22 +974,24 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
                                 transformY >= 0 && transformY < transformImage.getExtents()[1] && 
                                 transformZ >= 0 && transformZ < transformImage.getExtents()[2]) {
                             transVal = transformImage.getDouble(transformX, transformY, transformZ);
-                            mult+=transformWeight;
+                            mult+=transformAriWeight;
                         }
                         if(i < baseImage.getExtents()[0] && 
                                 j < baseImage.getExtents()[1] && 
                                 k < baseImage.getExtents()[2]) {
                             baseVal = baseImage.getDouble(i, j, k);
-                            mult+=baseWeight;
+                            mult+=baseAriWeight;
                         }
                         if(mult == 0) {
                             subAriImage.set(i, j, k, 0);
                         } else {
-                            subAriImage.set(i, j, k, (transVal*transformWeight+baseVal*baseWeight)/mult);
+                            subAriImage.set(i, j, k, (transVal*transformAriWeight+baseVal*baseAriWeight)/mult);
                         }
                     }
                 }
             }
+            
+            Preferences.data("Produced weighted arithmetic mean: Transformed weight: "+transformAriWeight+"\tBase weight: "+baseAriWeight+"\n");
             
             subAriImage.calcMinMax();
             

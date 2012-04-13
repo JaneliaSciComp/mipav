@@ -162,11 +162,10 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
     private boolean savePrefusion;
     private File prefusionBaseDir;
     private File prefusionTransformDir;
-    private JTextField transformWeightText;
-    private JTextField baseWeightText;
-    private double baseWeight;
-    private double transformWeight;
-
+    private JTextField transformAriWeightText, baseAriWeightText, transformGeoWeightText, baseGeoWeightText;
+    /** Weighting scheme for arithmetic and geometric weighting, unweighted by default. */
+    private double baseAriWeight = 1, transformAriWeight = 1, baseGeoWeight = 1, transformGeoWeight = 1;
+    
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
     /**
@@ -257,7 +256,7 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
                                                                                 saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
-                                                                                baseWeight, transformWeight);
+                                                                                baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -524,22 +523,6 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
         
         thresholdPanel.setVisible(doThresholdBox.isSelected());
         
-        JPanel weightPanel = new JPanel(new GridBagLayout());
-        weightPanel.setForeground(Color.black);
-        flow = new FlowLayout(FlowLayout.LEFT);
-        weightPanel.setLayout(flow);
-        
-        transformWeightText = gui.buildDecimalField("Transformed image weight", 1.0);
-        weightPanel.add(transformWeightText.getParent(), gbc);
-        
-        baseWeightText = gui.buildDecimalField("Base image weight", 1.0);
-        weightPanel.add(baseWeightText.getParent(), gbc);
-        
-        algOptionPanel.add(weightPanel, gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        
-        
         gbc.gridy = 1;
         gbc.gridx = 0;
         mainPanel.add(algOptionPanel, gbc);
@@ -580,10 +563,31 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
         arithmeticMeanSaveBox = gui.buildCheckBox("Save arithmetic mean", false);
         outputPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
         gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        final JPanel ariWeightPanel = new JPanel(new GridBagLayout());
+        ariWeightPanel.setForeground(Color.black);
+        flow = new FlowLayout(FlowLayout.LEFT);
+        ariWeightPanel.setLayout(flow);
+        
+        transformAriWeightText = gui.buildDecimalField("Transformed image arithmetic weight: ", 1.0);
+        ariWeightPanel.add(transformAriWeightText.getParent(), gbc);
+        
+        baseAriWeightText = gui.buildDecimalField("Base image arithmetic weight: ", 1.0);
+        ariWeightPanel.add(baseAriWeightText.getParent(), gbc);
+        
+        arithmeticMeanShowBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                ariWeightPanel.setVisible(arithmeticMeanSaveBox.isSelected() || arithmeticMeanShowBox.isSelected());
+            }
+        });
+        
+        outputPanel.add(ariWeightPanel, gbc);
+        gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         
-        arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location: ", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(arithmeticMeanFolderText.getParent(), gbc);
         gbc.gridy++;
         gbc.gridwidth = 1;
@@ -598,10 +602,32 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
         geometricMeanSaveBox = gui.buildCheckBox("Save geometric mean", false);
         outputPanel.add(geometricMeanSaveBox.getParent(), gbc);
         gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        final JPanel geoWeightPanel = new JPanel(new GridBagLayout());
+        geoWeightPanel.setForeground(Color.black);
+        flow = new FlowLayout(FlowLayout.LEFT);
+        geoWeightPanel.setLayout(flow);
+        
+        transformGeoWeightText = gui.buildDecimalField("Transformed image geometric weight: ", 1.0);
+        geoWeightPanel.add(transformGeoWeightText.getParent(), gbc);
+        
+        baseGeoWeightText = gui.buildDecimalField("Base image geometric weight: ", 1.0);
+        geoWeightPanel.add(baseGeoWeightText.getParent(), gbc);
+        
+        geometricMeanShowBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                geoWeightPanel.setVisible(geometricMeanSaveBox.isSelected() || geometricMeanShowBox.isSelected());
+            }
+        });
+        geoWeightPanel.setVisible(false);
+        
+        outputPanel.add(geoWeightPanel, gbc);
+        gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         
-        geometricMeanFolderText = gui.buildFileField("Geometric mean folder location", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        geometricMeanFolderText = gui.buildFileField("Geometric mean folder location: ", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
         outputPanel.add(geometricMeanFolderText.getParent(), gbc);
         gbc.gridwidth = 1;
         gbc.gridy++;
@@ -635,6 +661,10 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
     private class FolderSaveActionListener implements ActionListener {
         
         public void actionPerformed(ActionEvent e) {
+            
+            transformAriWeightText.getParent().getParent().setVisible(arithmeticMeanSaveBox.isSelected() || arithmeticMeanShowBox.isSelected());
+            transformGeoWeightText.getParent().getParent().setVisible(geometricMeanSaveBox.isSelected() || geometricMeanShowBox.isSelected());
+            
             geometricMeanFolderText.getParent().setVisible(geometricMeanSaveBox.isSelected());
             arithmeticMeanFolderText.getParent().setVisible(arithmeticMeanSaveBox.isSelected());
             
@@ -744,8 +774,15 @@ public class PlugInDialogGenerateFusion542a extends JDialogScriptableBase implem
 		    resY = Double.valueOf(resYText.getText()).doubleValue();
 		    resZ = Double.valueOf(resZText.getText()).doubleValue();
 		    
-		    baseWeight = Double.valueOf(baseWeightText.getText()).doubleValue();
-		    transformWeight = Double.valueOf(transformWeightText.getText()).doubleValue();
+		    if(showAriMean || saveAriMean) {
+    		    baseAriWeight = Double.valueOf(baseAriWeightText.getText()).doubleValue();
+    		    transformAriWeight = Double.valueOf(transformAriWeightText.getText()).doubleValue();
+		    }
+		    
+		    if(showGeoMean || saveGeoMean) {
+    		    baseGeoWeight = Double.valueOf(baseGeoWeightText.getText()).doubleValue();
+                transformGeoWeight = Double.valueOf(transformGeoWeightText.getText()).doubleValue();
+		    }
 		    
 		    if(!doSmartMovement) {
     		    xMovement = Integer.valueOf(xMovementText.getText());
