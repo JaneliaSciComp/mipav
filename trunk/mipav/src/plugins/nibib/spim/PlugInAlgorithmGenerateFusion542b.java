@@ -69,7 +69,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
 
     public enum SampleMode {
         DownsampleToBase("Downsample transformed image to base"),
@@ -155,7 +155,7 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
      * @param transformGeoWeight 
      * @param baseGeoWeight 
      */
-    public PlugInAlgorithmGenerateFusion542a(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion542b(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
@@ -773,7 +773,16 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
                 }
                 
                 transform.setOutDimensions(dim);
-                transform.setOutResolutions(transformImage.getResolutions(0));
+                
+                for(int i=0; i<res.length; i++) {
+                    if(transformImage.getResolutions(0)[i] < baseImage.getResolutions(0)[i]) {
+                        res[i] = transformImage.getResolutions(0)[i];
+                    } else {
+                        res[i] = baseImage.getResolutions(0)[i];
+                    }
+                }
+                
+                transform.setOutResolutions(res);
                 break;
             
             case DownsampleUpsampleCombined:
@@ -811,6 +820,28 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
             }
         }
         
+        private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, image);
+            transform.setPadFlag(false);
+            transform.setMatrix(mat);
+            transform.setImage25D(false);
+            transform.setSeparateThread(false);
+            transform.setClipFlag(true);
+            transform.setQuietRunning(!doInterImages);
+            transform.setDimAndResXYZ();
+            transform.setUnits(image.getUnitsOfMeasure());
+            transform.setOutDimensions(outDim);//transformImage.getExtents());
+            transform.setOutResolutions(outRes);
+            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            
+            if(!doInterImages) {
+                ViewUserInterface.getReference().unRegisterImage(image);
+                image.disposeLocal();
+            }
+            
+            return transform.getResultImage();
+        }
+
         private void downsampleUpsampleCombined() {
             
             float zRes = transformImage.getResolutions(0)[2]/2;
@@ -863,11 +894,20 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
                     dim[i] = baseImage.getExtents()[i];
                 }
             } 
+            dim[2] = 183;
             
-            baseImage = subTransform(baseImage, mat, dim, transformImage.getResolutions(0));
+            float[] res = new float[transformImage.getResolutions(0).length];
             
-            float zRes = transformImage.getResolutions(0)[2];
-            baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
+            for(int i=0; i<res.length; i++) {
+                if(transformImage.getResolutions(0)[i] < baseImage.getResolutions(0)[i]) {
+                    res[i] = transformImage.getResolutions(0)[i];
+                } else {
+                    res[i] = baseImage.getResolutions(0)[i];
+                }
+            }
+            
+            baseImage = subTransform(baseImage, mat, dim, res);
+            
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
                 baseImage.getFileInfo(i).setSliceThickness(0);
             }
@@ -876,28 +916,6 @@ public class PlugInAlgorithmGenerateFusion542a extends AlgorithmBase {
             }
         }
         
-        private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
-            JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, image);
-            transform.setPadFlag(false);
-            transform.setMatrix(mat);
-            transform.setImage25D(false);
-            transform.setSeparateThread(false);
-            transform.setClipFlag(true);
-            transform.setQuietRunning(!doInterImages);
-            transform.setDimAndResXYZ();
-            transform.setUnits(image.getUnitsOfMeasure());
-            transform.setOutDimensions(outDim);//transformImage.getExtents());
-            transform.setOutResolutions(outRes);
-            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
-            
-            if(!doInterImages) {
-                ViewUserInterface.getReference().unRegisterImage(image);
-                image.disposeLocal();
-            }
-            
-            return transform.getResultImage();
-        }
-
         private ModelImage rotate(ModelImage image, int mode) {
             AlgorithmRotate rotate = new AlgorithmRotate(image, mode);
             rotate.run(); //transform image replaced
