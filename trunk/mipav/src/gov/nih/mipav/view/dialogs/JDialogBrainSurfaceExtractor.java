@@ -775,6 +775,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
             table.put(new ParameterInt("filter_iterations", 3));
             table.put(new ParameterFloat("filter_gaussian_std_dev", 0.5f));
             table.put(new ParameterFloat("edge_kernel_size", 0.62f));
+            table.put(new ParameterFloat("close_kernel_size", 1.1f));
             table.put(new ParameterBoolean("edge_do_separable_convolution", true));
             table.put(new ParameterInt("erosion_iterations", 1));
             table.put(new ParameterBoolean("do_erosion_2.5d", false));
