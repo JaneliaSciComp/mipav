@@ -3,6 +3,7 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI;
+import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -205,7 +206,30 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 	{
 		tensorImage = image;
 		outputDirTextField.setText( tensorImage.getImageDirectory() );
-        System.err.println( outputDirTextField.getText() );
+		DTIParameters dtiparams = image.getDTIParameters();
+		if ( dtiparams == null )
+		{
+			return;
+		}
+		if ( (dtiparams.getGradients() == null) || (dtiparams.getbValues() == null) )
+		{
+			if ( comboBoxDTI_Algorithm.getItemAt(5) != null )
+			{
+				comboBoxDTI_Algorithm.removeItemAt(5);
+			}
+			if ( comboBoxDTI_Algorithm.getItemAt(4) != null )
+			{
+				comboBoxDTI_Algorithm.removeItemAt(4);
+			}
+			if ( comboBoxDTI_Algorithm.getItemAt(3) != null )
+			{
+				comboBoxDTI_Algorithm.removeItemAt(3);
+			}
+			if ( comboBoxDTI_Algorithm.getItemAt(2) != null )
+			{
+				comboBoxDTI_Algorithm.removeItemAt(2);
+			}
+		}
 	}
 
 

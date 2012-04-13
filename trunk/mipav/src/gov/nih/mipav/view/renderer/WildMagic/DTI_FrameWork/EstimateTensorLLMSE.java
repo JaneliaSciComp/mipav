@@ -414,12 +414,17 @@ public class EstimateTensorLLMSE {
 	 */
 	public static ModelImage estimate( ModelImage image, ModelImage maskImage, boolean usePartialEstimates )
 	{
+		DTIParameters dtiparams = image.getDTIParameters();
+		if ( dtiparams.getGradients() == null || dtiparams.getbValues() == null )
+		{
+			return estimate( image, maskImage, getMatrix(dtiparams), usePartialEstimates );
+		}
+		
 		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
 		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
 		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
 		int dimDW = image.getExtents().length > 3 ? image.getExtents()[3] : 1;
 		
-		DTIParameters dtiparams = image.getDTIParameters();
 		dimDW = Math.min( dimDW, dtiparams.getNumVolumes() );
 		
 		int tempDimDW = dimDW;
@@ -723,12 +728,15 @@ public class EstimateTensorLLMSE {
 		switch ( dtiType )
 		{
 		case DTIPipeline.LINEAR:
+			// can work w/BMatrix or b-vals/grads:
 			dtiFit = new LinearDT_Inversion(scheme);
 			break;
 		case DTIPipeline.NON_LINEAR:
+			// needs b-vals/grads:
 			dtiFit = new NonLinearDT_Inversion(scheme);
 			break;
 		case DTIPipeline.RESTORE:
+			// needs b-vals/grads:
 			double[] noise_sd = new double[]{0,0};
 			if ( nB0 == 2 )
 			{
@@ -743,6 +751,7 @@ public class EstimateTensorLLMSE {
 			b0_data = null;
 			break;
 		case DTIPipeline.WEIGHTED_LINEAR:
+			// can work w/BMatrix or b-vals/grads:
 			dtiFit = new WeightedLinearDT_Inversion(scheme);
 			break;
 		}
@@ -1199,5 +1208,25 @@ public class EstimateTensorLLMSE {
 		}
 		image.calcMinMax();
 		return image;
+	}
+	
+	private static GMatrixf getMatrix( DTIParameters dtiparams )
+	{
+		if ( dtiparams.getbMatrixVals() == null )
+		{
+			return null;
+		}
+
+		float[][] bMatrix = dtiparams.getbMatrixVals();
+		GMatrixf gMatrix = new GMatrixf( bMatrix.length, 7 );
+		for ( int i = 0; i < bMatrix.length; i++ )
+		{
+			for ( int j = 0; j < 6; j++ )
+			{
+				gMatrix.Set(i, j, bMatrix[i][j]);
+			}
+			gMatrix.Set(i, 6, 1);	
+		}
+		return gMatrix;
 	}
 }

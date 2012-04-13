@@ -1,8 +1,10 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -107,9 +109,11 @@ public class VabraSolver {
 			
 			
 			//3.) Register at level
+			saveIntermediateResults();
 			registerAtCurrentLevel();
 			progressBar.updateValueImmed( (int)(100 * currentLevelIdx / (float)gridSpacingX.size()) );
 		}
+		saveIntermediateResults();
 		//4.)Return to original resolution
 		if(downSampleFactor.get(currentResolutionIdx-1)!=1) 
 			imgSubTarPairs.setResolution(1.0f);
@@ -396,6 +400,28 @@ public class VabraSolver {
 		gridVisited[x][y][z]=1;
 		
 	}
+	
+	void saveIntermediateResults(){
+		if((outputDir != null) && saveIntermResults){
+			File intermOutputDir = new File(outputDir.toString()+File.separator+"VABRAIntermResults");
+			intermOutputDir.mkdir();
+			
+			int oldXN = imgSubTarPairs.subject.getXN(); 
+			int oldYN = imgSubTarPairs.subject.getYN(); 
+			int oldZN = imgSubTarPairs.subject.getZN(); 
+			int newXN = imgSubTarPairs.origSubjectList.get(0).getExtents()[0]; 
+			int newYN = imgSubTarPairs.origSubjectList.get(0).getExtents()[1]; 
+			int newZN = imgSubTarPairs.origSubjectList.get(0).getExtents()[2]; 
+			ModelImage defField = new ModelImage( ModelStorageBase.FLOAT, new int[]{newXN, newYN, newZN, 3}, imgSubTarPairs.origSubjectList.get(0).getImageName()+"_def_field_lvl"+currentLevelIdx);
+
+			
+			//Resample Deformation Field back to original resolution and save
+			RegistrationUtilities.DeformationFieldResample3DM(imgSubTarPairs.getDeformationField(), defField, oldXN, oldYN, oldZN, newXN, newYN, newZN);
+			JDialogBase.updateFileInfo( imgSubTarPairs.origSubjectList.get(0), defField );
+			ModelImage.saveImage( defField, defField.getImageName()+".xml", intermOutputDir.toString()+File.separator );
+		}
+	}
+
 	
 	public List<ModelImage> getDeformedSubject(){
 		return imgSubTarPairs.getDeformedSubject();

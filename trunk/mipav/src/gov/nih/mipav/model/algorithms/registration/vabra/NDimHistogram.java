@@ -125,9 +125,8 @@ public class NDimHistogram extends IntensityHistogram{
 
 					//get bin index for all subjects
 					for(int ch = 0; ch < subjects.length; ch++ ){
-						short val = subjects[ch].getShort(i, j, k);
-						bin = (val<0?0:val>255?255:val);
-						//bin = subjects[ch].getUByte(i, j, k);
+						bin = subjects[ch].getUByte(i, j, k);
+						//bin = (bin<0?0:bin>255?255:bin);
 						
 						//Make sure is in bounds
 						if (bin >= numOfBins){
@@ -143,9 +142,8 @@ public class NDimHistogram extends IntensityHistogram{
 					
 					//get bin index for all targets
 					for(int ch = 0; ch < targets.length; ch++ ){
-						short val = targets[ch].getShort(i, j, k);
-						bin = (val<0?0:val>255?255:val);
-						//bin = targets[ch].getUByte(i, j, k);
+						bin = targets[ch].getUByte(i, j, k);
+						//bin = (bin<0?0:bin>255?255:bin);
 						
 						//Make sure is in bounds
 						if (bin >= numOfBins){

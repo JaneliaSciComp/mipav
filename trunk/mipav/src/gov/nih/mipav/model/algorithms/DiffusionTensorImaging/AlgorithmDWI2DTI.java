@@ -148,27 +148,47 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
 
 		float[] bvalues = dtiparams.getbValues();
 		float[][] grads = dtiparams.getGradients();
+		float[][] bMatrix = dtiparams.getbMatrixVals();
 		m_kBMatrix = new GMatrixf( dimDW, 7 );
-		
-		Vector3f kNormalG = new Vector3f();
-		for ( int i = 0; i < grads.length; i++ )
+
+		if ( grads != null )
 		{
-			kNormalG.Set( grads[i][0], grads[i][1], grads[i][2] );
-			kNormalG.Normalize();
-			grads[i][0] = kNormalG.X;
-			grads[i][1] = kNormalG.Y;
-			grads[i][2] = kNormalG.Z;
+			Vector3f kNormalG = new Vector3f();
+			for ( int i = 0; i < grads.length; i++ )
+			{
+				kNormalG.Set( grads[i][0], grads[i][1], grads[i][2] );
+				kNormalG.Normalize();
+				grads[i][0] = kNormalG.X;
+				grads[i][1] = kNormalG.Y;
+				grads[i][2] = kNormalG.Z;
+			}
 		}
 		
 		for ( int i = 0; i < dimDW; i++ )
 		{
-			m_kBMatrix.Set(i, 0, bvalues[i] * grads[i][0] * grads[i][0]);
-			m_kBMatrix.Set(i, 1, bvalues[i] * grads[i][0] * grads[i][1] * 2);
-			m_kBMatrix.Set(i, 2, bvalues[i] * grads[i][0] * grads[i][2] * 2);
-			m_kBMatrix.Set(i, 3, bvalues[i] * grads[i][1] * grads[i][1]);
-			m_kBMatrix.Set(i, 4, bvalues[i] * grads[i][1] * grads[i][2] * 2);
-			m_kBMatrix.Set(i, 5, bvalues[i] * grads[i][2] * grads[i][2]);
-			m_kBMatrix.Set(i, 6, 1);
+			if ( (bvalues != null) && (grads != null) )
+			{
+				m_kBMatrix.Set(i, 0, bvalues[i] * grads[i][0] * grads[i][0]);
+				m_kBMatrix.Set(i, 1, bvalues[i] * grads[i][0] * grads[i][1] * 2);
+				m_kBMatrix.Set(i, 2, bvalues[i] * grads[i][0] * grads[i][2] * 2);
+				m_kBMatrix.Set(i, 3, bvalues[i] * grads[i][1] * grads[i][1]);
+				m_kBMatrix.Set(i, 4, bvalues[i] * grads[i][1] * grads[i][2] * 2);
+				m_kBMatrix.Set(i, 5, bvalues[i] * grads[i][2] * grads[i][2]);
+				m_kBMatrix.Set(i, 6, 1);
+			}
+			else if ( bMatrix != null )
+			{
+				for ( int j = 0; j < 6; j++ )
+				{
+					m_kBMatrix.Set(i, j, bMatrix[i][j]);
+				}
+				m_kBMatrix.Set(i, 6, 1);				
+			}
+			else
+			{
+				MipavUtil.displayError( "DWI Image must have b-balues or b-Matrix" );
+				m_kBMatrix = null;
+			}
 		}
 
         m_iWeights = dimDW;
@@ -194,15 +214,18 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
 
 
         m_fMeanNoise = 0f;
-		int tempDimDW = dimDW;
-		for ( int dw = 1; dw < dimDW; dw++ )
-		{
-			if ( (dtiparams.getGradients()[dw][0] == 0) &&
-					(dtiparams.getGradients()[dw][1] == 0) &&
-					(dtiparams.getGradients()[dw][2] == 0) )
-			{
-				tempDimDW--;	
-			}
+        int tempDimDW = dimDW;
+        if ( grads != null )
+        {
+        	for ( int dw = 1; dw < dimDW; dw++ )
+        	{
+        		if ( (dtiparams.getGradients()[dw][0] == 0) &&
+        				(dtiparams.getGradients()[dw][1] == 0) &&
+        				(dtiparams.getGradients()[dw][2] == 0) )
+        		{
+        			tempDimDW--;	
+        		}
+        	}
 		}
 		int nB0 = 1 + (dimDW - tempDimDW);
 		double[][] b0_data = null;
@@ -838,6 +861,12 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
      * @param kMaskImage mask image representing the brain.
      */
     public float[] createDWIImage() {
+    	if ( m_kBMatrix == null )
+		{
+			MipavUtil.displayError( "DWI Image must have b-balues or b-Matrix" );
+			return null;
+		}
+    	
         final long startTime = System.currentTimeMillis();
         final float[][][] aaafWeights = createTensorWeights();
 

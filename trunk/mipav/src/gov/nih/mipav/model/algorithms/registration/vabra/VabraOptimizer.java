@@ -133,15 +133,13 @@ public class VabraOptimizer{
 
 						//Find values(normalized) of subject and target at the point 
 						for (int ch = 0; ch < imgSubTarPairs.numOfSub; ch++) {		
-							short val = imgSubTarPairs.deformedSubjectBinned.data[ch].getShort(i, j, k);
-							subjectBins[ch] = (val<0?0:val>255?255:val);
-							//subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data[ch].getUByte(i,j, k);
+							subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data[ch].getUByte(i,j, k);
+							//subjectBins[ch] = (subjectBins[ch]<0?0:subjectBins[ch]>255?255:subjectBins[ch]);					
 							//System.out.format(subjectBins[ch]+"\n");
 						}
 						for (int ch = 0; ch < imgSubTarPairs.numOfTar; ch++) {	
-							short val = imgSubTarPairs.targetBinned.data[ch].getShort(i, j, k);
-							targetBins[ch] = (val<0?0:val>255?255:val);
-							//targetBins[ch] = imgSubTarPairs.targetBinned.data[ch].getUByte(i, j, k);
+							targetBins[ch] = imgSubTarPairs.targetBinned.data[ch].getUByte(i, j, k);
+							//targetBins[ch] = (targetBins[ch]<0?0:targetBins[ch]>255?255:targetBins[ch]);
 							//System.out.format(targetBins[ch]+"\n");
 						}
 
@@ -326,19 +324,15 @@ public class VabraOptimizer{
 
 
 						for (int ch = 0; ch < imgSubTarPairs.numOfSub; ch++) {			
-							short val = imgSubTarPairs.deformedSubjectBinned.data[ch].getShort(i, j, k);
-							subjectBins[ch] = (val<0?0:val>255?255:val);
-							//subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data[ch].getUByte(i,j, k);
-							
-							
+							subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data[ch].getUByte(i,j, k);
+							//subjectBins[ch] = (subjectBins[ch]<0?0:subjectBins[ch]>255?255:subjectBins[ch]);		
 							interpValsD[ch] = RegistrationUtilities.Interpolation(referenceSubject.data[ch], XN, YN, ZN, x + defX, y + defY,z + defZ, imgSubTarPairs.chInterpType[ch]);
 							testBin[ch] = referenceSubject.calculateBin(interpValsD[ch], ch);
 							//if(coeff == 0 && subjectBins[ch] != testBin[ch]) System.out.format(subjectBins[ch]+" "+interpValsD[ch]+" "+ testBin[ch]+"\n");
 						}
 						for (int ch = 0; ch < imgSubTarPairs.numOfTar; ch++) {		
-							short val = imgSubTarPairs.targetBinned.data[ch].getShort(i, j, k);
-							targetBins[ch] = (val<0?0:val>255?255:val);
-							//targetBins[ch] = imgSubTarPairs.targetBinned.data[ch].getUByte(i, j, k);
+							targetBins[ch] = imgSubTarPairs.targetBinned.data[ch].getUByte(i, j, k);
+							//targetBins[ch] = (targetBins[ch]<0?0:targetBins[ch]>255?255:targetBins[ch]);
 						}
 						//System.out.format("interp"+interpValsD[0]+"submax"+referenceSubject.maxValsD[0]+"\n");
 						//System.out.format("sub"+subjectBins[0]+"test"+testBin[0]+"tar"+targetBins[0]+"\n");

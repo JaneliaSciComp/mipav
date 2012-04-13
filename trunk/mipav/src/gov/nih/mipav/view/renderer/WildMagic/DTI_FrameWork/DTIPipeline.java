@@ -438,7 +438,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		tabbedPane.setSelectedIndex(FIBER_TRACKING);
 		fiberTrack.setInputImage( tensorImage );
 		nextButton.setEnabled(true);
-		currentImage = tensorImage;
 	}
 
 	public void stateChanged(ChangeEvent e) {
