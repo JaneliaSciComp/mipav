@@ -34,18 +34,17 @@ public class RegistrationUtilities {
 		for (k = roi[4]; k <= roi[5]; k++) {
 			for (j = roi[2]; j <= roi[3]; j++) {
 				for (i = roi[0]; i <= roi[1]; i++) {
-					val = imA.getShort(i, j, k);
-					binA = (val<0?0:val>255?255:val);
-					//binA = imA.getUByte(i, j, k);
+					binA = imA.getUByte(i, j, k);
+					//binA = (binA<0?0:binA>255?255:binA);
 					
 					if (binA >= numBin)
 						binA = numBin - 1;
 					if (binA < 0)
 						binA = 0;
 					
-					val = imB.getShort(i, j, k);
-					binB = (val<0?0:val>255?255:val);
-					//binB = imB.getUByte(i, j, k);
+					
+					binB = imB.getUByte(i, j, k);
+					//binB = (binB<0?0:binB>255?255:binB);
 					
 					if (binB >= numBin)
 						binB = numBin - 1;
@@ -73,9 +72,8 @@ public class RegistrationUtilities {
 		for (k = roi[4]; k <= roi[5]; k++) {
 			for (j = roi[2]; j <= roi[3]; j++) {
 				for (i = roi[0]; i <= roi[1]; i++) {
-					short val = im.getShort(i, j, k);
-					bin = (val<0?0:val>255?255:val);
-					//bin = im.getUByte(i, j, k);
+					bin = im.getUByte(i, j, k);
+					//bin = (bin<0?0:bin>255?255:bin);
 					
 					if (bin >= numBin)
 						bin = numBin - 1;

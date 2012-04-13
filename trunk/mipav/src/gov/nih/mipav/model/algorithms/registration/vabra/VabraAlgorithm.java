@@ -67,7 +67,7 @@ public class VabraAlgorithm  {
 				robustMaxT, robustMinT, numBins, InterpType, useMNMI);
 		
 		//2.)Construct Vabra Solver
-		VabraSolver solver = new VabraSolver(imgSubTarPairs, config, null, false, directionsOptmizationWeight, defFieldUpdateMode);
+		VabraSolver solver = new VabraSolver(imgSubTarPairs, config, new File(subject.getImageDirectory()), true, directionsOptmizationWeight, defFieldUpdateMode);
 
 		//System.out.println(getClass().getCanonicalName()+"\t"+"VABRA-ALG: Before Register");
 
