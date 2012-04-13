@@ -171,7 +171,7 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public Short pixelPaddingValue = null;
 
-    /** DICOM tag (0028,103) 
+    /** DICOM tag (0028, 0103) 
      * 	-1 = undefined
      * 	 0 = unsigned 
      *   1 = signed */
