@@ -603,6 +603,15 @@ public class ViewImageDirectory extends JFrame implements ActionListener, Compon
     }
 
     /**
+     * Gets the ViewJComponentPreviewImage that contains the currently selected model image.
+     * 
+     * @return Gets the contained preview image component.
+     */
+    public ViewJComponentPreviewImage getComponentPreviewImage() {
+        return img;
+    }
+
+    /**
      * Sets border painted or not painted depending on if the button was selected or deselected.
      * 
      * @param event Event that triggered this function.
