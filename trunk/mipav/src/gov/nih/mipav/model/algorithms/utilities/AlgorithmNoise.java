@@ -25,6 +25,9 @@ import java.io.*;
  * Reference for Rician noise generation: "A Nonlocal Maximum Likelihood Estimation Method for Rician Noise
  * Reduction in MR Images" by Lili He and Ian R. Greenshields, IEEE Transactions on Medical Imaging, Vol. 28,
  * No. 2, February, 2009, pp. 165-172.
+ * Confirmation that the noise generator leads to a Rician noise distribution is found in "Analytically exact
+ * correct scheme for signal extraction from noisy magnitude MR signals" by Cheng Guan Koay and Peter J. Basser,
+ * Journal of Magnetic Resonance, 179, 2006, pp. 317-322, Equations 2 - 4.
  *
  * @version  2.0 July 25, 2008
  * @author   Matthew J. McAuliffe, Ph.D.
