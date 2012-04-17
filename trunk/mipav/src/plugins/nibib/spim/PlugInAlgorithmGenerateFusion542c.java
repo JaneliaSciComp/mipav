@@ -69,7 +69,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
 
     public enum SampleMode {
         DownsampleToBase("Downsample transformed image to base"),
@@ -155,7 +155,7 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
      * @param transformGeoWeight 
      * @param baseGeoWeight 
      */
-    public PlugInAlgorithmGenerateFusion542b(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
+    public PlugInAlgorithmGenerateFusion542c(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
                                                     double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
