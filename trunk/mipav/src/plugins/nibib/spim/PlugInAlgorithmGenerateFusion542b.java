@@ -594,6 +594,14 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
             
             case DownsampleUpsampleCombined:
                 downsampleUpsampleCombined();
+                
+                resultImageInfoBase = baseImage.getFileInfo(0);
+                int[] dim = new int[baseImage.getExtents().length];
+                for(int i=0; i<baseImage.getExtents().length; i++) {
+                    dim[i] = (int) ((((double)baseImage.getExtents()[i]) + transformImage.getExtents()[i]) / 2.0);
+                }
+                resultImageInfoBase.setExtents(dim);
+                
                 break;
                 
             case UpsampleToTransform:
@@ -635,7 +643,11 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
                                     transformZ >= 0 && transformZ < transformImage.getExtents()[2] && transformZ < baseImage.getExtents()[2]) {
                                 prefusionTransformImage.set(i, j, k, transformImage.getDouble(transformX, transformY, transformZ));
                             }
-                            prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                            if(i < baseImage.getExtents()[0] && 
+                                j < baseImage.getExtents()[1] &&
+                                k < baseImage.getExtents()[2]) {
+                                prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                            }
                         }
                     }
                 }
@@ -833,36 +845,16 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
 
         private void downsampleUpsampleCombined() {
             
-            float zRes = transformImage.getResolutions(0)[2]/2;
-            transformImage.setResolutions(new float[]{baseImage.getResolutions(0)[0], baseImage.getResolutions(0)[1], zRes});
-            
             TransMatrix mat = new TransMatrix(4);
             mat.MakeIdentity();
-            mat.set(0, 0, (2*baseImage.getResolutions(0)[0]) / transformImage.getResolutions(0)[0]);
-            mat.set(2, 2, (2*baseImage.getResolutions(0)[2]) / transformImage.getResolutions(0)[2]);
-
-            float[] res = new float[transformImage.getResolutions(0).length];
-            for(int i=0; i<res.length; i++) {
-                if(transformImage.getResolutions(0)[i] == baseImage.getResolutions(0)[i]) {
-                    res[i] = transformImage.getResolutions(0)[i];
-                } else if(transformImage.getResolutions(0)[i] > baseImage.getResolutions(0)[i]) {
-                    res[i] = baseImage.getResolutions(0)[i] / transformImage.getResolutions(0)[i]; 
-                } else { //transform res < base res
-                    res[i] = transformImage.getResolutions(0)[i] / baseImage.getResolutions(0)[i];
-                }
-            }
+            mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
+            mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
             
-            int[] dim = new int[transformImage.getExtents().length];
-            for(int i=0; i<dim.length; i++) {
-                dim[i] = (int) ((baseImage.getExtents()[i] + transformImage.getExtents()[i]) / 2.0); 
-            }
+            baseImage = subTransform(baseImage, mat, baseImage.getExtents(), baseImage.getResolutions(0));
             
-            baseImage = subTransform(baseImage, mat, dim, res);
-            
-            zRes = transformImage.getResolutions(0)[2]/2;
-            baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], zRes});
+            baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], transformImage.getResolutions(0)[2]});
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(0);
+                baseImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
             if(doInterImages) {
                 new ViewJFrameImage(baseImage);
@@ -875,30 +867,10 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
             mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
             mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
             
-            /*int[] dim = new int[transformImage.getExtents().length];
-            for(int i=0; i<dim.length; i++) {
-                if(transformImage.getExtents()[i] > baseImage.getExtents()[i]) {
-                    dim[i] = transformImage.getExtents()[i];
-                } else {
-                    dim[i] = baseImage.getExtents()[i];
-                }
-            } 
-            dim[2] = 183;
-            
-            float[] res = new float[transformImage.getResolutions(0).length];
-            
-            for(int i=0; i<res.length; i++) {
-                if(transformImage.getResolutions(0)[i] < baseImage.getResolutions(0)[i]) {
-                    res[i] = transformImage.getResolutions(0)[i];
-                } else {
-                    res[i] = baseImage.getResolutions(0)[i];
-                }
-            }*/
-            
             baseImage = subTransform(baseImage, mat, baseImage.getExtents(), baseImage.getResolutions(0));
             
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
+                baseImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
             if(doInterImages) {
                 new ViewJFrameImage(baseImage);
