@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
-
-public class VabraRBF{
+public class VabraRBF {
 
 	private double maxValuesChange; //max change between adjacent values
 	private int scale;//scale of the RBF
@@ -20,30 +19,25 @@ public class VabraRBF{
 
 		int mult = 1;
 		scale = (int) Math.ceil(1.7 * Math.max(dx, Math.max(dy, dz)));
-		//scale = (int) Math.ceil(Math.min(dx, Math.min(dy, dz)));
 		int i, j, k;
 		float temp;
 		offset = (int)Math.floor(mult * scale);
 		
-		values = new float[2 * offset + 1][2 * offset + 1][2 * offset + 1];
+		values = new float[2 * offset + 1][ 2 * offset + 1][ 2 * offset + 1];
 		
-		//System.out.println(getClass().getCanonicalName()+"\t"+"SCALE X");
 		for (i = -scale * mult; i <= scale * mult; i++)
 			for (j = -scale * mult; j <= scale * mult; j++)
 				for (k = -scale * mult; k <= scale * mult; k++) {
 					values[i + offset][j + offset][k + offset] = 0;
 				}
 
-		//System.out.println(getClass().getCanonicalName()+"\t"+"SCALE Y");
 		for (i = -scale; i <= scale; i++)
 			for (j = -scale; j <= scale; j++)
 				for (k = -scale; k <= scale; k++) {
 					values[i + offset][j + offset][k + offset] = RegistrationUtilities.RBF3D(0, 0, 0, i, j, k, scale);
 				}
-		//System.out.format(valRBFM[-3+ valRBFoff][12+ valRBFoff][12+ valRBFoff] + "\n");
 
 		maxValuesChange = 0.0;
-		//System.out.println(getClass().getCanonicalName()+"\t"+"SCALE Z");
 		for (i = 0; i <= scale; i++)
 			for (j = 0; j <= scale; j++)
 				for (k = 0; k <= scale; k++) {
@@ -51,8 +45,6 @@ public class VabraRBF{
 					                       - values[i - 1 + scale * mult][j + scale* mult][k + scale * mult]);
 					if (temp > maxValuesChange) maxValuesChange = temp;
 				}
-
-		//System.out.format("Scale=%d\n", rbfScale);
 	}
 	
 

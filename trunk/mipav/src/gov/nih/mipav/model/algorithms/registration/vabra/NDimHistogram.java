@@ -25,7 +25,6 @@ public class NDimHistogram extends IntensityHistogram{
 		int initSize = (numOfSub + numOfTar -1)*numOfBins*numOfBins;
 		bins = new HashMap<Integer,HistBin>(initSize);
 		totalVol=0;
-		//System.out.format("Currently Using Sparse Harsh Histograms\n");
 	}
 		
 	//Encodes Indexes into a unique 1D hash key
@@ -69,7 +68,6 @@ public class NDimHistogram extends IntensityHistogram{
 				stored.value = val;
 				totalVol += val;
 			} else{
-				//System.out.print("Value being set is zero or less "+ val +" \n");
 				bins.remove(index1D);
 			}
 
@@ -126,7 +124,6 @@ public class NDimHistogram extends IntensityHistogram{
 					//get bin index for all subjects
 					for(int ch = 0; ch < subjects.length; ch++ ){
 						bin = subjects[ch].getUByte(i, j, k);
-						//bin = (bin<0?0:bin>255?255:bin);
 						
 						//Make sure is in bounds
 						if (bin >= numOfBins){
@@ -143,7 +140,6 @@ public class NDimHistogram extends IntensityHistogram{
 					//get bin index for all targets
 					for(int ch = 0; ch < targets.length; ch++ ){
 						bin = targets[ch].getUByte(i, j, k);
-						//bin = (bin<0?0:bin>255?255:bin);
 						
 						//Make sure is in bounds
 						if (bin >= numOfBins){
@@ -195,7 +191,6 @@ public class NDimHistogram extends IntensityHistogram{
 		}
 		totalVol = copyFrom.totalVol;
 		recentlyChanged = true;
-		//System.out.format("HIIIIIII!"+this.data.values().size() +"\n");
 	}
 	
 	public int getNumOfSub() {return numOfSub;}

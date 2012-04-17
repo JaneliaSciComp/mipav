@@ -5,7 +5,6 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 
 import java.util.List;
 
-
 public class VabraVolumeCollection implements Cloneable {
 
 	public ModelImage data[];
@@ -16,24 +15,26 @@ public class VabraVolumeCollection implements Cloneable {
 	protected double[] minValsD;
 	protected double[] intervalsD;
 
-	
+
 
 	public VabraVolumeCollection(List<ModelImage> vols, int[] interpType, int numOfBins) {
 		this.numOfCh = vols.size();
 		this.numOfBins = numOfBins;
 		data = new ModelImage[numOfCh];
 		for (int i = 0; i < vols.size(); i++) {
-			data[i] = (ModelImage)vols.get(i).clone();
+			data[i] = (ModelImage)(vols.get(i).clone());
 		}
-		this.XN = data[0].getExtents()[0];
-		this.YN = data[0].getExtents()[1];
-		this.ZN = data[0].getExtents()[2];
+		XN = data[0].getExtents().length > 0 ? data[0].getExtents()[0] : 1;
+		YN = data[0].getExtents().length > 1 ? data[0].getExtents()[1] : 1;
+		ZN = data[0].getExtents().length > 2 ? data[0].getExtents()[2] : 1;
 		this.chInterpType = interpType;
-		
+
 		minValsD = new double[numOfCh];
 		maxValsD = new double[numOfCh];
 		intervalsD = new double[numOfCh];
 		calculateMaxAndMinVals();
+
+
 	}
 
 	// this constructor only allocates memory -- no read from disk
@@ -71,6 +72,7 @@ public class VabraVolumeCollection implements Cloneable {
 
 	public void downSample(int newSizeX, int newSizeY, int newSizeZ, double sigma) {
 
+		int i, j, k;
 		int ax, ay, az, x, y, z;
 		int cx, cy, cz;
 		double tempVal;
@@ -83,13 +85,16 @@ public class VabraVolumeCollection implements Cloneable {
 		// current image data will be replace by new data
 		ModelImage[] newData = new ModelImage[numOfCh];
 
-		if (data.length > 0 && newSizeX == data[0].getExtents()[0]
-				&& newSizeY == data[0].getExtents()[1]
-				&& newSizeZ == data[0].getExtents()[2]) {
+		int rows = data[0].getExtents().length > 0 ? data[0].getExtents()[0] : 1;
+		int cols = data[0].getExtents().length > 1 ? data[0].getExtents()[1] : 1;
+		int slices = data[0].getExtents().length > 2 ? data[0].getExtents()[1] : 1;
+		if (data.length > 0 && newSizeX == rows
+				&& newSizeY == cols
+				&& newSizeZ == slices) {
 			return;
 		}
 		for (int n = 0; n < numOfCh; n++) {
-			newData[n] = new ModelImage( ModelStorageBase.FLOAT, new int[]{newSizeX, newSizeY, newSizeZ}, "temp"+n);
+			newData[n] = new ModelImage( ModelStorageBase.FLOAT, new int[]{newSizeX, newSizeY, newSizeZ}, "downSample");
 		}
 		ModelImage oldData[] = data;
 
@@ -110,37 +115,37 @@ public class VabraVolumeCollection implements Cloneable {
 
 		gaussKernel1D = new double[2 * filterSize + 1];
 		gaussKernel = new double[2 * filterSize + 1][2 * filterSize + 1][2 * filterSize + 1];
-		for (int i = -filterSize; i <= filterSize; i++) {
+		for (i = -filterSize; i <= filterSize; i++) {
 			gaussKernel1D[i + filterSize] = (1.0 / (Math.sqrt(2 * Math.PI) * sigma))
-			* Math.exp(-i * i / (2 * sigma * sigma));
+					* Math.exp(-i * i / (2 * sigma * sigma));
 		}
 
 		tempVal = 0.0;
-		for (int k = -filterSize; k <= filterSize; k++) {
-			for (int j = -filterSize; j <= filterSize; j++) {
-				for (int i = -filterSize; i <= filterSize; i++) {
+		for (k = -filterSize; k <= filterSize; k++) {
+			for (j = -filterSize; j <= filterSize; j++) {
+				for (i = -filterSize; i <= filterSize; i++) {
 					gaussKernel[k + filterSize][j + filterSize][i + filterSize] = gaussKernel1D[k+ filterSize]
-					                                                                            * gaussKernel1D[j + filterSize] * gaussKernel1D[i + filterSize];
+							* gaussKernel1D[j + filterSize] * gaussKernel1D[i + filterSize];
 					tempVal += gaussKernel[k + filterSize][j + filterSize][i+ filterSize];
 				}
 			}
 		}
-		for (int k = -filterSize; k <= filterSize; k++) {
-			for (int j = -filterSize; j <= filterSize; j++) {
-				for (int i = -filterSize; i <= filterSize; i++) {
+		for (k = -filterSize; k <= filterSize; k++) {
+			for (j = -filterSize; j <= filterSize; j++) {
+				for (i = -filterSize; i <= filterSize; i++) {
 					gaussKernel[k + filterSize][j + filterSize][i + filterSize] /= tempVal;
 				}
 			}
 		}
-		
+
 		ModelImage tmpOld;
 		ModelImage tmpNew;
 
-		for (int i = 0; i < newSizeX; i++) {
+		for (i = 0; i < newSizeX; i++) {
 			cx = i * ax;
-			for (int j = 0; j < newSizeY; j++) {
+			for (j = 0; j < newSizeY; j++) {
 				cy = j * ay;
-				for (int k = 0; k < newSizeZ; k++) {
+				for (k = 0; k < newSizeZ; k++) {
 					cz = k * az;
 					for (int ch = 0; ch < numOfCh; ch++) {
 						tmpOld = oldData[ch];
@@ -156,7 +161,7 @@ public class VabraVolumeCollection implements Cloneable {
 									if (x + cx < 0 || x + cx > oldSizeX - 1)
 										continue;
 									tempVal += gaussKernel[filterSize + z][filterSize + y][filterSize + x]
-									                                            * tmpOld.getDouble(cx + x, cy + y, cz + z);
+											* tmpOld.getDouble(cx + x, cy + y, cz + z);
 								}
 							}
 						}
@@ -165,10 +170,7 @@ public class VabraVolumeCollection implements Cloneable {
 				}
 			}
 		}
-		// System.out.format("DOWN SAMPLE %d %d %d %d %d
-		// %n",newSizeX,newSizeY,newSizeZ, data[0].talley(),
-		// newData[0].talley());
-		for ( int i = 0; i < data.length; i++ )
+		for ( i = 0; i < data.length; i++ )
 		{
 			data[i].disposeLocal();
 		}
@@ -178,14 +180,14 @@ public class VabraVolumeCollection implements Cloneable {
 		ZN = newSizeZ;
 
 	}
-	
+
 	public void interpolate(double x, double y, double z, double[] results) {
-		
+
 		for(int ch = 0; ch < numOfCh; ch++){
 			results[ch] = RegistrationUtilities.Interpolation(data[ch], XN, YN, ZN, x, y,z, chInterpType[ch]);
 		}
 	}
-	
+
 	public int calculateBin(double val, int ch) {
 		return (int) Math.floor((val - minValsD[ch]) / intervalsD[ch]);
 	}
@@ -206,7 +208,7 @@ public class VabraVolumeCollection implements Cloneable {
 	// for convenience -- make a copy
 	public VabraVolumeCollection clone() {
 		VabraVolumeCollection copy = new VabraVolumeCollection(XN, YN, ZN, numOfCh, chInterpType, numOfBins);
-		
+
 		// a.printInfo();
 		for (int ch = 0; ch < numOfCh; ch++) {
 			copy.data[ch] = (ModelImage)data[ch].clone();
@@ -214,54 +216,43 @@ public class VabraVolumeCollection implements Cloneable {
 			copy.minValsD[ch] = minValsD[ch];
 			copy.intervalsD[ch] = intervalsD[ch];
 		}
-		
+
 		return copy;
 	}
 
 	public VabraVolumeCollection returnDeformedCopy(ModelImage defField) {
 		VabraVolumeCollection a = new VabraVolumeCollection(XN, YN, ZN, numOfCh, chInterpType, numOfBins);
-		// a.printInfo();
-		int k, j, i, ch;
-		for (ch = 0; ch < numOfCh; ch++) {
-			ModelImage newVol = new ModelImage( ModelStorageBase.FLOAT, new int[]{XN, YN, ZN}, "tempAA" );
-			RegistrationUtilities.DeformImage3D(data[ch], newVol, defField, XN, YN, ZN, chInterpType[ch]);
+		for (int ch = 0; ch < numOfCh; ch++) {
+			ModelImage newVol = new ModelImage( ModelStorageBase.FLOAT, new int[]{XN, YN, ZN}, "returnDeformedCopy");
+			RegistrationUtilities.DeformImage3D(this.data[ch], newVol, defField, XN, YN, ZN, chInterpType[ch]);
 			a.data[ch] = newVol;
 		}
 		a.calculateMaxAndMinVals();
 		return a;
 	}
-	
-	
+
+
 	public void calculateMaxAndMinVals() {
 
 		int ch;
 		int i, j, k;
 
-			
-			for (ch = 0; ch < numOfCh; ch++) {
-				double max = Double.NEGATIVE_INFINITY;
-				double min = Double.POSITIVE_INFINITY;
+		for (ch = 0; ch < numOfCh; ch++) {
+			double max = Double.NEGATIVE_INFINITY;
+			double min = Double.POSITIVE_INFINITY;
 
-				for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
-					if (data[ch].getDouble(i, j, k) > max) max = data[ch].getDouble(i, j, k);
-					if (data[ch].getDouble(i, j, k) < min) min = data[ch].getDouble(i, j, k);
-				}
-				minValsD[ch] = min;
-				maxValsD[ch] = max;
-				intervalsD[ch] = (maxValsD[ch] - minValsD[ch]+1) / ((double)numOfBins);
-			}				
-			
-		
-
+			for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
+				if (data[ch].getDouble(i, j, k) > max) max = data[ch].getDouble(i, j, k);
+				if (data[ch].getDouble(i, j, k) < min) min = data[ch].getDouble(i, j, k);
+			}
+			minValsD[ch] = min;
+			maxValsD[ch] = max;
+			intervalsD[ch] = (maxValsD[ch] - minValsD[ch]+1) / ((double)numOfBins);
+		}						
 	}
-	
+
 	public int getXN() {return XN;}
 	public int getYN() {return YN;}
 	public int getZN() {return ZN;}
 	public int getNumOfCh() {return numOfCh;}
-
-	public void printInfo() {
-		System.out.format("%d %d %d %d\n", XN, YN, ZN, numOfCh);
-	}
-
 }

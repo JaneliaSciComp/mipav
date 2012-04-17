@@ -1,9 +1,7 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.dialogs.JDialogBase;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -25,6 +23,13 @@ public class VabraAlgorithm  {
 	 * @return the list of ModelImages that are the registered subjects.
 	 */
 	public List<ModelImage> solve(ModelImage subject, ModelImage target) {
+		/*
+		registeredResults = new ArrayList<ModelImage>();
+		registeredResults.add( VabraSubjectTargetPairs.convertToModelImage( (ImageDataFloat)VabraSubjectTargetPairs.convertToImage( subject ) ) );
+		deformationField = VabraSubjectTargetPairs.convertToModelImage( (ImageDataFloat)VabraSubjectTargetPairs.convertToImage( target ) );
+		*/
+		
+		
 		List<ModelImage> subjectVols = new ArrayList<ModelImage>();
 		subjectVols.add(subject);
 
@@ -67,7 +72,8 @@ public class VabraAlgorithm  {
 				robustMaxT, robustMinT, numBins, InterpType, useMNMI);
 		
 		//2.)Construct Vabra Solver
-		VabraSolver solver = new VabraSolver(imgSubTarPairs, config, new File(subject.getImageDirectory()), true, directionsOptmizationWeight, defFieldUpdateMode);
+		//VabraSolver solver = new VabraSolver(imgSubTarPairs, config, new File(subject.getImageDirectory()), true, directionsOptmizationWeight, defFieldUpdateMode);
+		VabraSolver solver = new VabraSolver(imgSubTarPairs, config, null, false, directionsOptmizationWeight, defFieldUpdateMode);
 
 		//System.out.println(getClass().getCanonicalName()+"\t"+"VABRA-ALG: Before Register");
 
