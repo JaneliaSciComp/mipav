@@ -361,11 +361,11 @@ public class PlugInDialogGenerateFusion542b extends JDialogScriptableBase implem
         mtxPanel.add(mtxFileLocText.getParent(), gbc);
         gbc.gridy++;
         
-        transformFileLocText = gui.buildFileField("Directory containing SPIMA: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        transformFileLocText = gui.buildFileField("Directory containing transform image: ", "", false, JFileChooser.DIRECTORIES_ONLY);
         mtxPanel.add(transformFileLocText.getParent(), gbc);
         gbc.gridy++;
         
-        baseFileLocText = gui.buildFileField("Directory containing SPIMB: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        baseFileLocText = gui.buildFileField("Directory containing base image: ", "", false, JFileChooser.DIRECTORIES_ONLY);
         mtxPanel.add(baseFileLocText.getParent(), gbc);
         gbc.gridy++;
         
@@ -533,35 +533,42 @@ public class PlugInDialogGenerateFusion542b extends JDialogScriptableBase implem
         outputPanel.setForeground(Color.black);
         outputPanel.setBorder(MipavUtil.buildTitledBorder("Output options"));
         
+        
+        JPanel prefusionPanel = new JPanel(new GridBagLayout());
+        prefusionPanel.setForeground(Color.black);
+        prefusionPanel.setBorder(MipavUtil.buildTitledBorder("Prefusion options"));
         gbc.gridy = 0; 
         doShowPrefusionBox = gui.buildCheckBox("Show pre-fusion images", false);
-        outputPanel.add(doShowPrefusionBox.getParent(), gbc);
+        prefusionPanel.add(doShowPrefusionBox.getParent(), gbc);
         gbc.gridx++;
         
         doSavePrefusionBox = gui.buildCheckBox("Save pre-fusion images", false);
         doSavePrefusionBox.addActionListener(folderSave);
-        outputPanel.add(doSavePrefusionBox.getParent(), gbc);
+        prefusionPanel.add(doSavePrefusionBox.getParent(), gbc);
         gbc.gridwidth = 2;
         gbc.gridy++;
         gbc.gridx = 0;
         
         savePrefusionBaseFolderText = gui.buildFileField("Base image location:", initBasePrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        outputPanel.add(savePrefusionBaseFolderText.getParent(), gbc);
+        prefusionPanel.add(savePrefusionBaseFolderText.getParent(), gbc);
         gbc.gridy++;  
         savePrefusionBaseFolderText.getParent().setVisible(false);
         
         savePrefusionTransformFolderText = gui.buildFileField("Transformed image location:", initTransformPrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        outputPanel.add(savePrefusionTransformFolderText.getParent(), gbc);
-        gbc.gridy++;
+        prefusionPanel.add(savePrefusionTransformFolderText.getParent(), gbc);
+        gbc.gridy = 0;
         gbc.gridwidth = 1;
         savePrefusionTransformFolderText.getParent().setVisible(false);
         
+        JPanel arithmeticPanel = new JPanel(new GridBagLayout());
+        arithmeticPanel.setForeground(Color.black);
+        arithmeticPanel.setBorder(MipavUtil.buildTitledBorder("Arithmetic options"));
         arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
-        outputPanel.add(arithmeticMeanShowBox.getParent(), gbc);
+        arithmeticPanel.add(arithmeticMeanShowBox.getParent(), gbc);
         gbc.gridx++;
         
         arithmeticMeanSaveBox = gui.buildCheckBox("Save arithmetic mean", false);
-        outputPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
+        arithmeticPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
         gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.gridx = 0;
@@ -582,25 +589,28 @@ public class PlugInDialogGenerateFusion542b extends JDialogScriptableBase implem
             }
         });
         
-        outputPanel.add(ariWeightPanel, gbc);
+        arithmeticPanel.add(ariWeightPanel, gbc);
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         
         arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location: ", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        outputPanel.add(arithmeticMeanFolderText.getParent(), gbc);
-        gbc.gridy++;
+        arithmeticPanel.add(arithmeticMeanFolderText.getParent(), gbc);
+        gbc.gridy = 0;
         gbc.gridwidth = 1;
         arithmeticMeanFolderText.getParent().setVisible(false);
         
         arithmeticMeanSaveBox.addActionListener(folderSave);
         
+        JPanel geometricPanel = new JPanel(new GridBagLayout());
+        geometricPanel.setForeground(Color.black);
+        geometricPanel.setBorder(MipavUtil.buildTitledBorder("Geometric options"));
         geometricMeanShowBox = gui.buildCheckBox("Show geometric mean", false);
-        outputPanel.add(geometricMeanShowBox.getParent(), gbc);
+        geometricPanel.add(geometricMeanShowBox.getParent(), gbc);
         gbc.gridx++;
         
         geometricMeanSaveBox = gui.buildCheckBox("Save geometric mean", false);
-        outputPanel.add(geometricMeanSaveBox.getParent(), gbc);
+        geometricPanel.add(geometricMeanSaveBox.getParent(), gbc);
         gbc.gridy++;
         gbc.gridwidth = 2;
         gbc.gridx = 0;
@@ -622,19 +632,27 @@ public class PlugInDialogGenerateFusion542b extends JDialogScriptableBase implem
         });
         geoWeightPanel.setVisible(false);
         
-        outputPanel.add(geoWeightPanel, gbc);
+        geometricPanel.add(geoWeightPanel, gbc);
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
         
         geometricMeanFolderText = gui.buildFileField("Geometric mean folder location: ", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        outputPanel.add(geometricMeanFolderText.getParent(), gbc);
+        geometricPanel.add(geometricMeanFolderText.getParent(), gbc);
         gbc.gridwidth = 1;
         gbc.gridy++;
         geometricMeanFolderText.getParent().setVisible(false);
         
         geometricMeanSaveBox.addActionListener(folderSave);
         
+        
+        gbc.gridy = 0;
+        outputPanel.add(prefusionPanel, gbc);
+        gbc.gridy++;
+        outputPanel.add(arithmeticPanel, gbc);
+        gbc.gridy++;
+        outputPanel.add(geometricPanel, gbc);
+        gbc.gridy++;
         
         interImagesBox = gui.buildCheckBox("Show intermediate images", false);
         outputPanel.add(interImagesBox.getParent(), gbc);
