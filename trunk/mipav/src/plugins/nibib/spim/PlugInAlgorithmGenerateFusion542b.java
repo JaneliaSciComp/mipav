@@ -536,15 +536,11 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(0);
+                baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
             }
             
             for(int i=0; i<transformImage.getFileInfo().length; i++) {
-                transformImage.getFileInfo(i).setSliceThickness(0);
-            }
-            
-            if(doThreshold) {
-                threshold(baseImage, thresholdIntensity);
+                transformImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
             
             if(doInterImages) {
@@ -587,106 +583,99 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
             options.setIsScript(true);
             options.setOptionsSet(true);
             
+            FileInfoBase resultImageInfoBase = null;
+            
             switch (mode) {
             
             case DownsampleToBase:
                 //downsampleToBase(); transform image has already been downsampled
-
-                if(doThreshold) {
-                    threshold(transformImage, thresholdIntensity);
-                }
-                
-                if(doShowPrefusion) {
-                    fireProgressStateChanged(15, "Transform", "Creating prefusion images");
-                    
-                    ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
-                    ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
-                    //new ViewJFrameImage(transformImage);
-                    int transformX, transformY, transformZ;        
-                    
-                    for(int i=0; i<baseImage.getExtents()[0]; i++) {
-                        transformX = i-xMovement;
-                        for(int j=0; j<baseImage.getExtents()[1]; j++) {
-                            transformY = j-yMovement;
-                            for(int k=0; k<baseImage.getExtents()[2]; k++) {
-                                transformZ = k-zMovement;
-                                if(transformX >= 0 && transformX < transformImage.getExtents()[0] && transformX < baseImage.getExtents()[0] && 
-                                        transformY >= 0 && transformY < transformImage.getExtents()[1] && transformY < baseImage.getExtents()[1] && 
-                                        transformZ >= 0 && transformZ < transformImage.getExtents()[2] && transformZ < baseImage.getExtents()[2]) {
-                                    prefusionTransformImage.set(i, j, k, transformImage.getDouble(transformX, transformY, transformZ));
-                                }
-                                prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
-                            }
-                        }
-                    }
-                    
-                    prefusionTransformImage.calcMinMax();
-                    prefusionTransformImage.setImageName("Prefusion_"+transformImageName);
-                    prefusionBaseImage.calcMinMax();
-                    prefusionBaseImage.setImageName("Prefusion_"+baseImageName);
-                    
-                    if(savePrefusion) {
-                        options.setFileDirectory(prefusionBaseDir.getAbsolutePath()+File.separator);
-                        options.setFileName(prefusionBaseImage.getImageFileName());
-                        options.setBeginSlice(0);
-                        options.setEndSlice(prefusionBaseImage.getExtents()[2]-1);
-                        io.writeImage(prefusionBaseImage, options, false);
-                        
-                        options.setFileDirectory(prefusionTransformDir.getAbsolutePath()+File.separator);
-                        options.setFileName(prefusionTransformImage.getImageFileName());
-                        options.setBeginSlice(0);
-                        options.setEndSlice(prefusionTransformImage.getExtents()[2]-1);
-                        io.writeImage(prefusionTransformImage, options, false);
-                    }
-                    
-                    if(doShowPrefusion) {
-                        resultImageList.add(prefusionTransformImage);
-                        resultImageList.add(prefusionBaseImage);
-                    } else {
-                        ViewUserInterface.getReference().unRegisterImage(prefusionBaseImage);
-                        prefusionBaseImage.disposeLocal();
-                        
-                        ViewUserInterface.getReference().unRegisterImage(prefusionTransformImage);
-                        prefusionTransformImage.disposeLocal();
-                    }
-                }
-                
-                if(showGeoMean || saveGeoMean) {
-                    subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
-                }
-                if(showAriMean || saveAriMean) {
-                    subAriImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) baseImage.getFileInfo(0).clone(), false);
-                }
+                resultImageInfoBase = baseImage.getFileInfo(0);
                 break;
             
             case DownsampleUpsampleCombined:
                 downsampleUpsampleCombined();
-                
-                if(doThreshold) {
-                    threshold(baseImage, thresholdIntensity);
-                }
-                
-                if(doThreshold) {
-                    threshold(transformImage, thresholdIntensity);
-                }
                 break;
                 
             case UpsampleToTransform:
                 upsampleToTransform();
                 
-                if(doThreshold) {
-                    threshold(baseImage, thresholdIntensity);
+                resultImageInfoBase = baseImage.getFileInfo(0);
+                resultImageInfoBase.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
+                break;
+            }
+            
+            if(showGeoMean || saveGeoMean) {
+                subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
+            }
+            if(showAriMean || saveAriMean) {
+                subAriImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
+            }
+            
+            if(doThreshold) {
+                threshold(baseImage, thresholdIntensity);
+                threshold(transformImage, thresholdIntensity); //all transformations are complete
+            }
+            
+            if(doShowPrefusion) {
+                fireProgressStateChanged(15, "Transform", "Creating prefusion images");
+                
+                ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
+                ModelImage prefusionBaseImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
+                //new ViewJFrameImage(transformImage);
+                int transformX, transformY, transformZ;        
+                
+                for(int i=0; i<resultImageInfoBase.getExtents()[0]; i++) {
+                    transformX = i-xMovement;
+                    for(int j=0; j<resultImageInfoBase.getExtents()[1]; j++) {
+                        transformY = j-yMovement;
+                        for(int k=0; k<resultImageInfoBase.getExtents()[2]; k++) {
+                            transformZ = k-zMovement;
+                            if(transformX >= 0 && transformX < transformImage.getExtents()[0] && transformX < baseImage.getExtents()[0] && 
+                                    transformY >= 0 && transformY < transformImage.getExtents()[1] && transformY < baseImage.getExtents()[1] && 
+                                    transformZ >= 0 && transformZ < transformImage.getExtents()[2] && transformZ < baseImage.getExtents()[2]) {
+                                prefusionTransformImage.set(i, j, k, transformImage.getDouble(transformX, transformY, transformZ));
+                            }
+                            prefusionBaseImage.set(i, j, k, baseImage.getDouble(i, j, k));
+                        }
+                    }
                 }
                 
-                FileInfoBase f = baseImage.getFileInfo(0);
-                f.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
-                if(showGeoMean || saveGeoMean) {
-                    subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) f.clone(), false);
+                prefusionTransformImage.calcMinMax();
+                prefusionTransformImage.setImageName("Prefusion_"+transformImageName);
+                prefusionBaseImage.calcMinMax();
+                prefusionBaseImage.setImageName("Prefusion_"+baseImageName);
+                
+                if(savePrefusion) {
+                    options.setFileDirectory(prefusionBaseDir.getAbsolutePath()+File.separator);
+                    options.setFileName(prefusionBaseImage.getImageFileName());
+                    options.setBeginSlice(0);
+                    options.setEndSlice(prefusionBaseImage.getExtents()[2]-1);
+                    io.writeImage(prefusionBaseImage, options, false);
+                    
+                    options.setFileDirectory(prefusionTransformDir.getAbsolutePath()+File.separator);
+                    options.setFileName(prefusionTransformImage.getImageFileName());
+                    options.setBeginSlice(0);
+                    options.setEndSlice(prefusionTransformImage.getExtents()[2]-1);
+                    io.writeImage(prefusionTransformImage, options, false);
                 }
-                if(showAriMean || saveAriMean) {
-                    subAriImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) f.clone(), false);
+                
+                if(doShowPrefusion) {
+                    resultImageList.add(prefusionTransformImage);
+                    resultImageList.add(prefusionBaseImage);
                 }
-                break;
+                
+                if(doInterImages) {
+                    new ViewJFrameImage(prefusionTransformImage);
+                    new ViewJFrameImage(prefusionBaseImage);
+                } 
+                
+                if(!doShowPrefusion && !doInterImages) {
+                    ViewUserInterface.getReference().unRegisterImage(prefusionBaseImage);
+                    prefusionBaseImage.disposeLocal();
+                    
+                    ViewUserInterface.getReference().unRegisterImage(prefusionTransformImage);
+                    prefusionTransformImage.disposeLocal();
+                }
             }
             
             fireProgressStateChanged(75, "Transform", "Calculating means");
@@ -822,7 +811,7 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
         
         private ModelImage subTransform(ModelImage image, TransMatrix mat, int[] outDim, float[] outRes) {
             JDialogScriptableTransform transform = new JDialogScriptableTransform(parentFrame, image);
-            transform.setPadFlag(false);
+            transform.setPadFlag(true);
             transform.setMatrix(mat);
             transform.setImage25D(false);
             transform.setSeparateThread(false);
@@ -886,7 +875,7 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
             mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
             mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
             
-            int[] dim = new int[transformImage.getExtents().length];
+            /*int[] dim = new int[transformImage.getExtents().length];
             for(int i=0; i<dim.length; i++) {
                 if(transformImage.getExtents()[i] > baseImage.getExtents()[i]) {
                     dim[i] = transformImage.getExtents()[i];
@@ -904,12 +893,12 @@ public class PlugInAlgorithmGenerateFusion542b extends AlgorithmBase {
                 } else {
                     res[i] = baseImage.getResolutions(0)[i];
                 }
-            }
+            }*/
             
-            baseImage = subTransform(baseImage, mat, dim, res);
+            baseImage = subTransform(baseImage, mat, baseImage.getExtents(), baseImage.getResolutions(0));
             
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
-                baseImage.getFileInfo(i).setSliceThickness(0);
+                baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
             }
             if(doInterImages) {
                 new ViewJFrameImage(baseImage);
