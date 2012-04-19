@@ -95,19 +95,28 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
         comboBoxOperator.addItem("Average");
         comboBoxOperator.addItem("Minimum");
         comboBoxOperator.addItem("Maximum");
-        comboBoxOperator.addItem("L2 Norm");
-        comboBoxOperator.addItem("Standard Deviation");
+        if ((image.getType() != ModelStorageBase.COMPLEX) && (image.getType() != ModelStorageBase.DCOMPLEX)) {
+            comboBoxOperator.addItem("L2 Norm");
+            comboBoxOperator.addItem("Standard Deviation");
+        }
 
         comboBoxOperator.addItemListener(this);
         comboBoxOperator.addActionListener(this);
         ButtonGroup group = new ButtonGroup();
         radioClip = new JRadioButton("Clip", true);
         radioClip.setFont(serif12);
+        
         group.add(radioClip);
         
         radioPromote = new JRadioButton("Promote destination image type", false);
         radioPromote.setFont(serif12);
         group.add(radioPromote);
+        
+        if (image.getType() == ModelStorageBase.DOUBLE || image.getType() == ModelStorageBase.ARGB_FLOAT ||
+    			image.getType() == ModelStorageBase.DCOMPLEX) { 
+    	    radioClip.setEnabled(false);
+    	    radioPromote.setEnabled(false);
+        }
         
         JPanel OKCancelPanel = new JPanel();
         buildOKButton();
@@ -213,12 +222,16 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 				type = ModelStorageBase.INTEGER;
 			}else if(type == ModelStorageBase.INTEGER || type == ModelStorageBase.UINTEGER) {
 				type = ModelStorageBase.LONG;
+			}else if (type == ModelStorageBase.LONG) {
+				type = ModelStorageBase.DOUBLE;
 			}else if(type == ModelStorageBase.FLOAT) {
 				type = ModelStorageBase.DOUBLE;
 			}else if (type == ModelStorageBase.COMPLEX) {
 				type = ModelStorageBase.DCOMPLEX;
 			}else if (type == ModelStorageBase.ARGB) {
 				type = ModelStorageBase.ARGB_USHORT;
+			}else if (type == ModelStorageBase.ARGB_USHORT) {
+				type = ModelStorageBase.ARGB_FLOAT;
 			}
 		}
 		
@@ -281,7 +294,9 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 	        Object source = event.getSource();
 	        if (source == comboBoxOperator) {
 	            int index = comboBoxOperator.getSelectedIndex();
-	            if(index == 0 || index == 4) {
+	            if((index == 0 || index == 4) && 
+	            	(image.getType() != ModelStorageBase.DOUBLE && image.getType() != ModelStorageBase.ARGB_FLOAT &&
+	            			image.getType() != ModelStorageBase.DCOMPLEX)) { 
 	            	radioClip.setEnabled(true);
 	            	radioPromote.setEnabled(true);
 	            }else {
