@@ -57,6 +57,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
+import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
 import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
@@ -650,12 +651,29 @@ implements ListSelectionListener, ChangeListener {
 
 		float faVal;
 		int count = 0;
-
-		for ( int z = 0; z < m_iDimZ; z++ )
+		
+		int xMin = 0, xMax = m_iDimX, yMin = 0, yMax = m_iDimY, zMin = 0, zMax = m_iDimZ;
+		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
 		{
-			for ( int y = 0; y < m_iDimY; y++ )
+			if ( m_kVOIParamsList.get(j).Include  )
 			{
-				for ( int x = 0; x < m_iDimX; x++ )
+				Vector3f[] akMinMax = m_kVOIParamsList.get(j).Surface.getMinMax();
+				xMin = (int)Math.floor(akMinMax[0].X);
+				yMin = (int)Math.floor(akMinMax[0].Y);
+				zMin = (int)Math.floor(akMinMax[0].Z);
+				xMax = (int)Math.ceil(akMinMax[1].X);
+				yMax = (int)Math.ceil(akMinMax[1].Y);
+				zMax = (int)Math.ceil(akMinMax[1].Z);
+			}
+		}
+		
+		
+
+		for ( int z = zMin; z < zMax; z++ )
+		{
+			for ( int y = yMin; y < yMax; y++ )
+			{
+				for ( int x = xMin; x < xMax; x++ )
 				{
 					faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
 					if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
@@ -664,7 +682,7 @@ implements ListSelectionListener, ChangeListener {
 					}
 				}
 			}
-			int iValue = (int)(100 * (float)(z+1)/m_iDimZ);
+			int iValue = (int)(100 * (float)(z+1)/(zMax - zMin));
 			kProgressBar.updateValueImmed( iValue );
 		}
 		kProgressBar.dispose();
@@ -1143,10 +1161,10 @@ implements ListSelectionListener, ChangeListener {
 			kV2.Normalize();
 
 			traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV1 ), 
-					parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), true );
+					parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), true );
 
 			traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV2 ), 
-					parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), false );
+					parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), false );
 			int iVQuantity = kTract.size();
 			if ( (iVQuantity*m_fFraction >= m_iMinTractLength) )
 			{
@@ -1363,7 +1381,7 @@ implements ListSelectionListener, ChangeListener {
 	}
 
 	private void traceTract2( VOIContour kTract, Vector3f kStart, Vector3f kDir,
-			ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, boolean bDir )
+			ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, ModelImage kDTIImage, boolean bDir )
 	{
 		int iDimX = eigenImage.getExtents()[0];
 		int iDimY = eigenImage.getExtents()[1];
@@ -1382,6 +1400,9 @@ implements ListSelectionListener, ChangeListener {
 		VOIContour currentPoints = new VOIContour(false);
 		int maxInVoxel = 2*(int)Math.ceil(1f/m_fFraction);
 		int count = 0;
+		
+
+        Matrix3f kMatrix = new Matrix3f();
 
 		while ( !bDone )
 		{
@@ -1430,6 +1451,7 @@ implements ListSelectionListener, ChangeListener {
 			}
 
 			bAllZero = true;
+			/*
 			for ( int j = 0; j < 9; j++ )
 			{
 				afVectorData[j] = eigenImage.getFloatTriLinearBoundsTime(kNext.X, kNext.Y, kNext.Z, j);
@@ -1440,6 +1462,18 @@ implements ListSelectionListener, ChangeListener {
 					bAllZero = false;
 				}
 			}
+			*/
+			for ( int j = 0; j < 6; j++ )
+			{
+				afVectorData[j] = kDTIImage.getFloat((int)kNext.X, (int)kNext.Y, (int)kNext.Z, j);
+				if ( afVectorData[j] != 0 )
+				{
+					bAllZero = false;
+				}
+			}
+            kMatrix.Set( afVectorData[0], afVectorData[1], afVectorData[2],
+            		afVectorData[1], afVectorData[3], afVectorData[4], 
+            		afVectorData[2], afVectorData[4], afVectorData[5] );
 			/*
             if ( m_kNegX.isSelected() )
             {
@@ -1470,17 +1504,20 @@ implements ListSelectionListener, ChangeListener {
 			}
 			else if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0)  )
 			{
-				kOut.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+				kMatrix.Mult( kDir, kOut );
+				
+				//kOut.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
 				kOut.Normalize();
+				System.err.println( kOut );
 
 				if ( !bDir )
 				{
-					kOut.Neg();
+					//kOut.Neg();
 				}
 				fDot = kDir.Dot( kOut );
 				if ( fDot < 0 )
 				{
-					kOut.Neg();
+					//kOut.Neg();
 				} 
 
 

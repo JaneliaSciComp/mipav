@@ -1386,6 +1386,14 @@ public class VolumeSurface extends VolumeObject
     	}
 	}
 	
+	public Vector3f[] getMinMax()
+	{
+    	if ( m_kBoundingBox == null )
+    	{
+    		initBoundingBox();
+    	}
+    	return new Vector3f[]{ new Vector3f( m_kMinBB ), new Vector3f( m_kMaxBB ) };
+	}
     
     
     public boolean testIntersection( Vector3f kP0 )
