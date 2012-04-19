@@ -62,8 +62,12 @@ Hakim
  * uniformly distributed theta the resulting value m = sqrt((a*cos(theta) + x)**2 + (a*sin(theta) + y)**2) 
  * is Rician distributed.  MR images have Rician noise.
  * 
- * Reference for Rician noise generation: Optimal acquisition schemes in high angular resolution diffusion
+ * References for Rician noise generation: Optimal acquisition schemes in high angular resolution diffusion
  * weighted imaging" MSC Thesis by Hakim Achterberg.
+ * Denoising of Complex MRI Data by Wiener-like Filtering in the Wavelet Domain: Application to High b-value
+ * Diffusion Weighted Imaging by Adnan Bibic.
+ * Noise Removal Methods for High Resolution MRI by R. L. Gregg and R. D. Novak
+ * MRI denoising via phase error estimation by Dylan Tisdall and M. Stella Atkins
  * Confirmation that the zero angle phase noise generator leads to a Rician noise distribution is found in
  *  "Analytically exact correct scheme for signal extraction from noisy magnitude MR signals" by Cheng Guan Koay
  *  and Peter J. Basser, Journal of Magnetic Resonance, 179, 2006, pp. 317-322, Equations 2 - 4.
