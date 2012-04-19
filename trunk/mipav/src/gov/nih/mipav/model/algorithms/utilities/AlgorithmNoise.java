@@ -17,19 +17,7 @@ import java.io.*;
  * not including 0.  The Rayleigh cumulative distribution function F(x) =  1 - exp(-(x**2)/(2*sigma**2)) is simply 
  * set equal to U and then the inverse function is obtained by solving for x in terms of U, 
  * giving x = sigma * sqrt(-2.0 * ln(1 - U)) and finally noting that 1 - U has the same distribution as U.
- * 
- * Hakim,
 
-  In Commentary on Signal-to-noise ratio in MRI by T. W. Redpath, he states, "Quadrature coils can give a sqrt(2)
-  improvement in SNR by acquiring the signal independently through two orthogonally orientated coils, or through
-  two modes of the same coil.  This is achieved because the noise voltages in each coil are more or less uncorrelated,
-  while the signals can be added after appropriate phase-shifting."  My inclination would be to assume an MRI
-  system has been designed to maximize signal to noise ratio and go with the 0.25 pi phase shift so that the 
-  magnitude is split into 2 equal parts.
-
-                                                    Thanks for great help,
-
-                                                      William Gandler
 
 -----Original Message-----
 From: hakim.achterberg@gmail.com [mailto:hakim.achterberg@gmail.com] On Behalf Of Hakim Achterberg
@@ -70,13 +58,12 @@ Kind regards,
 Hakim
 
  * Rician noise is not additive, but is instead data dependent.  Let a be the original noiseless data value,
- * and x and y be gaussian random variables with zero mean and identical standard deviations sigma.  Then for a 45
- * degrees phase signal the resulting value m = sqrt((a/sqrt(2) + x)**2 + (a/sqrt(2) + y)**2) is Rician distributed.  
- * MR images have Rician noise.
+ * and x and y be gaussian random variables with zero mean and identical standard deviations sigma.  Then with a 
+ * uniformly distributed theta the resulting value m = sqrt((a*cos(theta) + x)**2 + (a*sin(theta) + y)**2) 
+ * is Rician distributed.  MR images have Rician noise.
  * 
- * Reference for Rician noise generation: "Rician noise removal by non-Local Means filtering for low signal-
- * to noise ratio MRI: applications to DT-MRI" by Nicolas Wiest-Daessle, Sylvain Prima, Pierrick Coupe, Sean
- * Patrick Morrissey, and Christian Barillot.
+ * Reference for Rician noise generation: Optimal acquisition schemes in high angular resolution diffusion
+ * weighted imaging" MSC Thesis by Hakim Achterberg.
  * Confirmation that the zero angle phase noise generator leads to a Rician noise distribution is found in
  *  "Analytically exact correct scheme for signal extraction from noisy magnitude MR signals" by Cheng Guan Koay
  *  and Peter J. Basser, Journal of Magnetic Resonance, 179, 2006, pp. 317-322, Equations 2 - 4.
@@ -125,8 +112,6 @@ public class AlgorithmNoise extends AlgorithmBase {
 
     /** Reference to the random number generator. */
     private RandomNumberGen randomGen;
-    
-    private double sqrt2 = Math.sqrt(2.0);
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -240,6 +225,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double poissEvents[] = null;
         double sum;
         double sum2;
+        double theta;
 
         try {
             length = srcImage.getSliceSize();
@@ -282,10 +268,11 @@ public class AlgorithmNoise extends AlgorithmBase {
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
             else if (noiseType == RICIAN) {
+            	theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
                 noise = randomGen.genGaussianRandomNum(-level, level);
-                sum = noise + buffer[i]/sqrt2;
+                sum = noise + buffer[i]*Math.cos(theta);
                 noise = randomGen.genGaussianRandomNum(-level, level);
-                sum2 = noise + buffer[i]/sqrt2;
+                sum2 = noise + buffer[i]*Math.sin(theta);
                 pixel = Math.sqrt(sum*sum + sum2*sum2);
             }
             else {
@@ -333,6 +320,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double poissEvents[] = null;
         double sum;
         double sum2;
+        double theta;
 
         try {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
@@ -378,10 +366,11 @@ public class AlgorithmNoise extends AlgorithmBase {
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
             else if (noiseType == RICIAN) {
-            	noise = randomGen.genGaussianRandomNum(-level, level);
-                sum = noise + buffer[i]/sqrt2;
+            	theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
                 noise = randomGen.genGaussianRandomNum(-level, level);
-                sum2 = noise + buffer[i]/sqrt2;
+                sum = noise + buffer[i]*Math.cos(theta);
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum2 = noise + buffer[i]*Math.sin(theta);
                 pixel = Math.sqrt(sum*sum + sum2*sum2);
             }
             else {
@@ -429,6 +418,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double poissEvents[] = null;
         double sum;
         double sum2;
+        double theta;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -480,10 +470,11 @@ public class AlgorithmNoise extends AlgorithmBase {
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
             else if (noiseType == RICIAN) {
-            	noise = randomGen.genGaussianRandomNum(-level, level);
-                sum = noise + buffer[i]/sqrt2;
+            	theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
                 noise = randomGen.genGaussianRandomNum(-level, level);
-                sum2 = noise + buffer[i]/sqrt2;
+                sum = noise + buffer[i]*Math.cos(theta);
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum2 = noise + buffer[i]*Math.sin(theta);
                 pixel = Math.sqrt(sum*sum + sum2*sum2);
             }
             else {
@@ -525,6 +516,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         double poissEvents[] = null;
         double sum;
         double sum2;
+        double theta;
 
         try {
             destImage.setLock(ModelStorageBase.RW_LOCKED);
@@ -578,10 +570,11 @@ public class AlgorithmNoise extends AlgorithmBase {
             	pixel = buffer[i] + sigma * Math.sqrt(-2.0 * Math.log(noise));
             }
             else if (noiseType == RICIAN) {
-            	noise = randomGen.genGaussianRandomNum(-level, level);
-                sum = noise + buffer[i]/sqrt2;
+            	theta = randomGen.genUniformRandomNum(0.0, 2.0*Math.PI);
                 noise = randomGen.genGaussianRandomNum(-level, level);
-                sum2 = noise + buffer[i]/sqrt2;
+                sum = noise + buffer[i]*Math.cos(theta);
+                noise = randomGen.genGaussianRandomNum(-level, level);
+                sum2 = noise + buffer[i]*Math.sin(theta);
                 pixel = Math.sqrt(sum*sum + sum2*sum2);
             }
             else {
