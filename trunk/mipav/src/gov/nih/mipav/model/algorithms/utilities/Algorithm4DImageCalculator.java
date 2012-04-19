@@ -136,6 +136,15 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 		}else if (dataType == ModelStorageBase.ARGB_USHORT) {
 			intBuff = new int[4 * xDim * yDim];
 			intBuffXYT = new int[4 * xDim * yDim * tDim];	
+		}else if (dataType == ModelStorageBase.ARGB_FLOAT) {
+			floatBuff = new float[4 * xDim * yDim];
+			floatBuffXYT = new float[4 * xDim * yDim * tDim];	
+		}else if (dataType == ModelStorageBase.COMPLEX) {
+			floatBuff = new float[2 * xDim * yDim];
+			floatBuffXYT = new float[2 * xDim * yDim * tDim];	
+		}else if (dataType == ModelStorageBase.DCOMPLEX) {
+			doubleBuff = new double[2 * xDim * yDim];
+			doubleBuffXYT = new double[2 * xDim * yDim * tDim];	
 		}
 		
 		
@@ -163,7 +172,8 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 						for(int k=0;k<intBuff.length;k++) {
 							intBuffXYT[k + (sliceLength * t)] = intBuff[k];
 						}
-					}else if(dataType == ModelStorageBase.FLOAT) {
+					}else if(dataType == ModelStorageBase.FLOAT || dataType == ModelStorageBase.ARGB_FLOAT ||
+							dataType == ModelStorageBase.COMPLEX) {
 						image.exportData(start, sliceLength, floatBuff);
 						for(int k=0;k<floatBuff.length;k++) {
 							floatBuffXYT[k + (sliceLength * t)] = floatBuff[k];
@@ -173,7 +183,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 						for(int k=0;k<longBuff.length;k++) {
 							longBuffXYT[k + (sliceLength * t)] = longBuff[k];
 						}
-					}else if(dataType == ModelStorageBase.DOUBLE) {
+					}else if(dataType == ModelStorageBase.DOUBLE || dataType == ModelStorageBase.DCOMPLEX) {
 						image.exportData(start, sliceLength, doubleBuff);
 						for(int k=0;k<doubleBuff.length;k++) {
 							doubleBuffXYT[k + (sliceLength * t)] = doubleBuff[k];
@@ -288,21 +298,32 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 						destImage.importData(i*sliceLength, doubleSliceBuff, false);
 					}
 				} else if (dataType == ModelStorageBase.LONG || dataType == ModelStorageBase.UINTEGER) {
-					long[] longSliceBuff = null;
-					if(operationType == ADD) {
-						longSliceBuff = doLongAddClip(longBuffXYT);
-					}else if(operationType == AVERAGE) {
-						longSliceBuff = doLongAverage(longBuffXYT);
-					}else if(operationType == MAXIMUM) {
-						longSliceBuff = doLongMax(longBuffXYT);
-					}else if(operationType == MINIMUM) {
-						longSliceBuff = doLongMin(longBuffXYT);
-					}else if(operationType == STDDEV) {
-						longSliceBuff = doLongStdDev(longBuffXYT);
-					}else if(operationType == NORM) {
-						longSliceBuff = doLongNormClip(longBuffXYT);
+					if (doClip) {
+						long[] longSliceBuff = null;
+						if(operationType == ADD) {
+							longSliceBuff = doLongAddClip(longBuffXYT);
+						}else if(operationType == AVERAGE) {
+							longSliceBuff = doLongAverage(longBuffXYT);
+						}else if(operationType == MAXIMUM) {
+							longSliceBuff = doLongMax(longBuffXYT);
+						}else if(operationType == MINIMUM) {
+							longSliceBuff = doLongMin(longBuffXYT);
+						}else if(operationType == STDDEV) {
+							longSliceBuff = doLongStdDev(longBuffXYT);
+						}else if(operationType == NORM) {
+							longSliceBuff = doLongNormClip(longBuffXYT);
+						}
+						destImage.importData(i*sliceLength, longSliceBuff, false);	
 					}
-					destImage.importData(i*sliceLength, longSliceBuff, false);	
+					else {
+						double[] doubleSliceBuff = null;
+						if(operationType == ADD) {
+							doubleSliceBuff = doLongAddPromote(longBuffXYT);
+						}else if(operationType == NORM) {
+							doubleSliceBuff = doLongNormPromote(longBuffXYT);
+						}
+						destImage.importData(i*sliceLength, doubleSliceBuff, false);
+					}
 				} else if (dataType == ModelStorageBase.DOUBLE) {
 					double[] doubleSliceBuff = null;
 					if(operationType == ADD) {
@@ -348,21 +369,83 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 					}
 				}
 				else if (dataType == ModelStorageBase.ARGB_USHORT) {
-					int[] intSliceBuff = null;
-					if(operationType == ADD) {
-						intSliceBuff = doIntAddClipARGB(intBuffXYT);
-					}else if(operationType == AVERAGE) {
-						intSliceBuff = doIntAverageARGB(intBuffXYT);
-					}else if(operationType == MAXIMUM) {
-						intSliceBuff = doIntMaxARGB(intBuffXYT);
-					}else if(operationType == MINIMUM) {
-						intSliceBuff = doIntMinARGB(intBuffXYT);
-					}else if(operationType == STDDEV) {
-						intSliceBuff = doIntStdDevARGB(intBuffXYT);
-					}else if(operationType == NORM) {
-						intSliceBuff = doIntNormClipARGB(intBuffXYT);
+					if (doClip) {
+						int[] intSliceBuff = null;
+						if(operationType == ADD) {
+							intSliceBuff = doIntAddClipARGB(intBuffXYT);
+						}else if(operationType == AVERAGE) {
+							intSliceBuff = doIntAverageARGB(intBuffXYT);
+						}else if(operationType == MAXIMUM) {
+							intSliceBuff = doIntMaxARGB(intBuffXYT);
+						}else if(operationType == MINIMUM) {
+							intSliceBuff = doIntMinARGB(intBuffXYT);
+						}else if(operationType == STDDEV) {
+							intSliceBuff = doIntStdDevARGB(intBuffXYT);
+						}else if(operationType == NORM) {
+							intSliceBuff = doIntNormClipARGB(intBuffXYT);
+						}
+						destImage.importData(i*sliceLength, intSliceBuff, false);
 					}
-					destImage.importData(i*sliceLength, intSliceBuff, false);	
+					else {
+						float[] floatSliceBuff = null;
+						if(operationType == ADD) {
+							floatSliceBuff = doIntAddPromoteARGB(intBuffXYT);
+						}else if(operationType == NORM) {
+							floatSliceBuff = doIntNormPromoteARGB(intBuffXYT);
+						}
+						destImage.importData(i*sliceLength, floatSliceBuff, false);	
+					}
+				}
+				else if (dataType == ModelStorageBase.ARGB_FLOAT) {
+					float[] floatSliceBuff = null;
+					if(operationType == ADD) {
+						floatSliceBuff = doFloatAddClipARGB(floatBuffXYT);
+					}else if(operationType == AVERAGE) {
+						floatSliceBuff = doFloatAverageARGB(floatBuffXYT);
+					}else if(operationType == MAXIMUM) {
+						floatSliceBuff = doFloatMaxARGB(floatBuffXYT);
+					}else if(operationType == MINIMUM) {
+						floatSliceBuff = doFloatMinARGB(floatBuffXYT);
+					}else if(operationType == STDDEV) {
+						floatSliceBuff = doFloatStdDevARGB(floatBuffXYT);
+					}else if(operationType == NORM) {
+						floatSliceBuff = doFloatNormClipARGB(floatBuffXYT);
+					}
+					destImage.importData(i*sliceLength, floatSliceBuff, false);	
+				}
+				else if (dataType == ModelStorageBase.COMPLEX) {
+					if(doClip) {
+						float[] floatSliceBuff = null;
+						if(operationType == ADD) {
+							floatSliceBuff = doFloatAddClipComplex(floatBuffXYT);
+						}else if(operationType == AVERAGE) {
+							floatSliceBuff = doFloatAverageComplex(floatBuffXYT);
+						}else if(operationType == MAXIMUM) {
+							floatSliceBuff = doFloatMaxComplex(floatBuffXYT);
+						}else if(operationType == MINIMUM) {
+							floatSliceBuff = doFloatMinComplex(floatBuffXYT);
+						}
+						destImage.importData(i*sliceLength, floatSliceBuff, false);
+					}else {
+						double[] doubleSliceBuff = null;
+						if(operationType == ADD) {
+							doubleSliceBuff = doFloatAddPromoteComplex(floatBuffXYT);
+						} 
+						destImage.importData(i*sliceLength, doubleSliceBuff, false);
+					}
+				}
+				else if (dataType == ModelStorageBase.DCOMPLEX) {
+					double[] doubleSliceBuff = null;
+					if(operationType == ADD) {
+						doubleSliceBuff = doDoubleAddClipComplex(doubleBuffXYT);
+					}else if(operationType == AVERAGE) {
+						doubleSliceBuff = doDoubleAverageComplex(doubleBuffXYT);
+					}else if(operationType == MAXIMUM) {
+						doubleSliceBuff = doDoubleMaxComplex(doubleBuffXYT);
+					}else if(operationType == MINIMUM) {
+						doubleSliceBuff = doDoubleMinComplex(doubleBuffXYT);
+					}
+					destImage.importData(i*sliceLength, doubleSliceBuff, false);	    	
 				}
 			}
 			
@@ -1969,6 +2052,75 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 	 * @param xytBuff
 	 * @return
 	 */
+	private double[] doLongAddPromote(long[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		double[] sliceBuff = new double[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				long pix = xytBuff[i + (sliceLength * t)];
+
+				sum = (sum + pix);
+				
+				
+				
+			}
+			
+
+			sliceBuff[counter] = sum;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the norm between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private double[] doLongNormPromote(long[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = xDim * yDim;
+		double[] sliceBuff = new double[xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i++) {
+			double sum = 0;
+			for(int t=0;t<tDim;t++) {
+				long pix = xytBuff[i + (sliceLength * t)];
+				double pixSquared = pix * pix;
+
+				sum = (sum + pixSquared);
+				
+				
+			}
+
+			
+			double d = Math.sqrt(sum);
+			
+
+			sliceBuff[counter] = d;
+			counter++;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates addition between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
 	private double[] doDoubleAddClip(double[] xytBuff) {
 		int xDim = image.getExtents()[0];
 		int yDim = image.getExtents()[1];
@@ -2985,6 +3137,822 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 			sliceBuff[counter++] = normR;
 			sliceBuff[counter++] = normG;
 			sliceBuff[counter++] = normB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates addition between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doIntAddPromoteARGB(int[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			for(int t=0;t<tDim;t++) {
+				int pixA = xytBuff[i + (sliceLength * t)];
+				int pixR = xytBuff[i + 1 + (sliceLength * t)];
+				int pixG = xytBuff[i + 2 + (sliceLength * t)];
+				int pixB = xytBuff[i + 3 + (sliceLength * t)];
+
+				sumA = (sumA + pixA);
+				sumR = (sumR + pixR);
+				sumG = (sumG + pixG);
+				sumB = (sumB + pixB);
+			}
+			
+
+
+			sliceBuff[counter++] = (float)sumA;
+			sliceBuff[counter++] = (float)sumR;
+			sliceBuff[counter++] = (float)sumG;
+			sliceBuff[counter++] = (float)sumB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the norm between 2 short images
+	 * @param xytBuff - the xyt
+	 * @return
+	 */
+	private float[] doIntNormPromoteARGB(int[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			
+			for(int t=0;t<tDim;t++) {
+				int pixA = xytBuff[i + (sliceLength * t)];
+				int pixR = xytBuff[i + 1 + (sliceLength * t)];
+				int pixG = xytBuff[i + 2 + (sliceLength * t)];
+				int pixB = xytBuff[i + 3 + (sliceLength * t)];
+				double pixSquaredA = pixA * pixA;
+				double pixSquaredR = pixR * pixR;
+				double pixSquaredG = pixG * pixG;
+				double pixSquaredB = pixB * pixB;
+
+				sumA = (sumA+ pixSquaredA);
+				sumR = (sumR+ pixSquaredR);
+				sumG = (sumG+ pixSquaredG);
+				sumB = (sumB+ pixSquaredB);
+			}
+
+			
+	
+			double dA = Math.sqrt(sumA);
+			double dR = Math.sqrt(sumR);
+			double dG = Math.sqrt(sumG);
+			double dB = Math.sqrt(sumB);
+
+			float normA = (float)dA;
+			float normR = (float)dR;
+			float normG = (float)dG;
+			float normB = (float)dB;
+			sliceBuff[counter++] = normA;
+			sliceBuff[counter++] = normR;
+			sliceBuff[counter++] = normG;
+			sliceBuff[counter++] = normB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates addition between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatAddClipARGB(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+
+				sumA = (sumA + pixA);
+				sumR = (sumR + pixR);
+				sumG = (sumG + pixG);
+				sumB = (sumB + pixB);
+				
+			}
+			
+			if(sumA > Float.MAX_VALUE) {
+				sumA = Float.MAX_VALUE;
+			} else if (sumA < -Float.MAX_VALUE) {
+				sumA = -Float.MAX_VALUE;
+			}
+			if(sumR > Float.MAX_VALUE) {
+				sumR = Float.MAX_VALUE;
+			} else if (sumR < -Float.MAX_VALUE) {
+				sumR = -Float.MAX_VALUE;
+			}
+			if(sumG > Float.MAX_VALUE) {
+				sumG = Float.MAX_VALUE;
+			} else if (sumG < -Float.MAX_VALUE) {
+				sumG = -Float.MAX_VALUE;
+			}
+			if(sumB > Float.MAX_VALUE) {
+				sumB = Float.MAX_VALUE;
+			} else if (sumB < -Float.MAX_VALUE) {
+				sumB = -Float.MAX_VALUE;
+			}
+
+			sliceBuff[counter++] = (float)sumA;
+			sliceBuff[counter++] = (float)sumR;
+			sliceBuff[counter++] = (float)sumG;
+			sliceBuff[counter++] = (float)sumB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the average between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatAverageARGB(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+
+				sumA = (sumA + pixA);
+				sumR = (sumR + pixR);
+				sumG = (sumG + pixG);
+				sumB = (sumB + pixB);
+				
+			}
+
+			
+			float averageA = (float)(sumA/tDim);
+			float averageR = (float)(sumR/tDim);
+			float averageG = (float)(sumG/tDim);
+			float averageB = (float)(sumB/tDim);
+			sliceBuff[counter++] = averageA;
+			sliceBuff[counter++] = averageR;
+			sliceBuff[counter++] = averageG;
+			sliceBuff[counter++] = averageB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the max between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatMaxARGB(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			float maxA = 0;
+			float maxR = 0;
+			float maxG = 0;
+			float maxB = 0;
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+				if(t == 0) {
+					maxA = pixA;
+					maxR = pixR;
+					maxG = pixG;
+					maxB = pixB;
+				}
+				if(pixA > maxA) {
+					maxA = pixA;
+				}
+				if(pixR > maxR) {
+					maxR = pixR;
+				}
+				if(pixG > maxG) {
+					maxG = pixG;
+				}
+				if(pixB > maxB) {
+					maxB = pixB;
+				}
+			}
+
+			sliceBuff[counter++] = maxA;
+			sliceBuff[counter++] = maxR;
+			sliceBuff[counter++] = maxG;
+			sliceBuff[counter++] = maxB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the minimum between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatMinARGB(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			float minA = 0;
+			float minR = 0;
+			float minG = 0;
+			float minB = 0;
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+				if(t == 0) {
+					minA = pixA;
+					minR = pixR;
+					minG = pixG;
+					minB = pixB;
+				}
+				if(pixA < minA) {
+					minA = pixA;
+				}
+				if(pixR < minR) {
+					minR = pixR;
+				}
+				if(pixG < minG) {
+					minG = pixG;
+				}
+				if(pixB < minB) {
+					minB = pixB;
+				}
+			}
+
+			sliceBuff[counter++] = minA;
+			sliceBuff[counter++] = minR;
+			sliceBuff[counter++] = minG;
+			sliceBuff[counter++] = minB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the standard deviation between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatStdDevARGB(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		double[] sliceBuff = new double[4 * xDim * yDim];
+		int counter = 0;
+		//first do averaging
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+				sumA = (sumA + pixA);
+				sumR = (sumR + pixR);
+				sumG = (sumG + pixG);
+				sumB = (sumB + pixB);
+			}
+
+			double averageA = (sumA/tDim);
+			double averageR = (sumR/tDim);
+			double averageG = (sumG/tDim);
+			double averageB = (sumB/tDim);
+			sliceBuff[counter++] = averageA;
+			sliceBuff[counter++] = averageR;
+			sliceBuff[counter++] = averageG;
+			sliceBuff[counter++] = averageB;
+		}
+		
+		
+		//now calculate std dev
+		counter = 0;
+		float[] sliceStdDevBuff = new float[4 * xDim * yDim];
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			double averageA = sliceBuff[i];
+			double averageR = sliceBuff[i+1];
+			double averageG = sliceBuff[i+2];
+			double averageB = sliceBuff[i+3];
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+				double calcA = (pixA-averageA) * (pixA-averageA);
+				double calcR = (pixR-averageR) * (pixR-averageR);
+				double calcG = (pixG-averageG) * (pixG-averageG);
+				double calcB = (pixB-averageB) * (pixB-averageB);
+				sumA = sumA + calcA;
+				sumR = sumR + calcR;
+				sumG = sumG + calcG;
+				sumB = sumB + calcB;
+			}
+
+			float stddevA = (float)(Math.sqrt(sumA/tDim));
+			float stddevR = (float)(Math.sqrt(sumR/tDim));
+			float stddevG = (float)(Math.sqrt(sumG/tDim));
+			float stddevB = (float)(Math.sqrt(sumB/tDim));
+			sliceStdDevBuff[counter++] = stddevA;
+			sliceStdDevBuff[counter++] = stddevR;
+			sliceStdDevBuff[counter++] = stddevG;
+			sliceStdDevBuff[counter++] = stddevB;
+		}
+		
+
+		return sliceStdDevBuff;
+	}
+	
+	/**
+	 * Calculates the norm between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatNormClipARGB(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 4 * xDim * yDim;
+		float[] sliceBuff = new float[4 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=4) {
+			double sumA = 0;
+			double sumR = 0;
+			double sumG = 0;
+			double sumB = 0;
+			for(int t=0;t<tDim;t++) {
+				float pixA = xytBuff[i + (sliceLength * t)];
+				float pixR = xytBuff[i + 1 + (sliceLength * t)];
+				float pixG = xytBuff[i + 2 + (sliceLength * t)];
+				float pixB = xytBuff[i + 3 + (sliceLength * t)];
+				double pixSquaredA = pixA * pixA;
+				double pixSquaredR = pixR * pixR;
+				double pixSquaredG = pixG * pixG;
+				double pixSquaredB = pixB * pixB;
+
+				sumA = (sumA + pixSquaredA);
+				sumR = (sumR + pixSquaredR);
+				sumG = (sumG + pixSquaredG);
+				sumB = (sumB + pixSquaredB);
+			}
+
+			
+			double dA = Math.sqrt(sumA);
+			double dR = Math.sqrt(sumR);
+			double dG = Math.sqrt(sumG);
+			double dB = Math.sqrt(sumB);
+			
+			if(dA > Float.MAX_VALUE) {
+				dA = Float.MAX_VALUE;
+			}
+			if(dR > Float.MAX_VALUE) {
+				dR = Float.MAX_VALUE;
+			}
+			if(dG > Float.MAX_VALUE) {
+				dG = Float.MAX_VALUE;
+			}
+			if(dB > Float.MAX_VALUE) {
+				dB = Float.MAX_VALUE;
+			}
+			
+			sliceBuff[counter++] = (float)dA;
+			sliceBuff[counter++] = (float)dR;
+			sliceBuff[counter++] = (float)dG;
+			sliceBuff[counter++] = (float)dB;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates addition between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatAddClipComplex(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		float[] sliceBuff = new float[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double sum = 0;
+			double sumI = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				float pixI = xytBuff[i + 1 + (sliceLength * t)];
+
+				sum = (sum + pix);
+				sumI = (sumI + pixI);
+				
+				
+			}
+			
+			if(sum > Float.MAX_VALUE) {
+				sum = Float.MAX_VALUE;
+			} else if (sum < -Float.MAX_VALUE) {
+				sum = -Float.MAX_VALUE;
+			}
+			if(sumI > Float.MAX_VALUE) {
+				sumI = Float.MAX_VALUE;
+			} else if (sumI < -Float.MAX_VALUE) {
+				sumI = -Float.MAX_VALUE;
+			}
+
+			sliceBuff[counter++] = (float)sum;
+			sliceBuff[counter++] = (float)sum;
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the average between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatAverageComplex(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		float[] sliceBuff = new float[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double sum = 0;
+			double sumI = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				float pixI = xytBuff[i + 1 + (sliceLength * t)];
+
+				sum = (sum + pix);
+                sumI = (sumI + pixI);
+				
+			}
+
+			
+			float average = (float)(sum/tDim);
+			float averageI = (float)(sumI/tDim);
+			sliceBuff[counter++] = average;
+			sliceBuff[counter++] = averageI;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the max between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatMaxComplex(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		float[] sliceBuff = new float[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			float max = 0;
+			float maxI = 0;
+			double maxMag = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				float pixI = xytBuff[i + 1 + (sliceLength * t)];
+				double mag = Math.sqrt(pix*pix + pixI*pixI);
+				if(t == 0) {
+					max = pix;
+					maxI = pixI;
+					maxMag = mag;
+				}
+				if(mag > maxMag) {
+					max = pix;
+					maxI = pixI;
+					maxMag = mag;
+				}
+				
+			}
+
+			sliceBuff[counter++] = max;
+			sliceBuff[counter++] = maxI;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the minimum between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private float[] doFloatMinComplex(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		float[] sliceBuff = new float[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			float min = 0;
+			float minI = 0;
+			double minMag = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+				float pixI = xytBuff[i + 1 + (sliceLength * t)];
+				double mag = Math.sqrt(pix*pix + pixI*pixI);
+				if(t == 0) {
+					min = pix;
+					minI = pixI;
+					minMag = mag;
+				}
+				if(mag < minMag) {
+					min = pix;
+					minI = pixI;
+					minMag = mag;
+				}
+				
+				
+				
+			}
+
+			sliceBuff[counter++] = min;
+			sliceBuff[counter++] = minI;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates addition between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private double[] doFloatAddPromoteComplex(float[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		double[] sliceBuff = new double[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double sum = 0;
+			double sumI = 0;
+			for(int t=0;t<tDim;t++) {
+				float pix = xytBuff[i + (sliceLength * t)];
+                float pixI = xytBuff[i + 1 + (sliceLength * t)];
+				sum = (sum + pix);
+				sumI = (sumI + pixI);
+				
+				
+			}
+			
+
+			sliceBuff[counter++] = sum;
+			sliceBuff[counter++] = sumI;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates addition between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private double[] doDoubleAddClipComplex(double[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		double[] sliceBuff = new double[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double sum = 0;
+			double sumI = 0;
+
+			for(int t=0;t<tDim;t++) {
+				double pix = xytBuff[i + (sliceLength * t)];
+				double pixI = xytBuff[i + 1 + (sliceLength * t)];
+
+				sum = (sum + pix);
+				sumI = (sumI + pixI);
+				
+				
+			}
+			
+			if(sum > Double.MAX_VALUE) {
+				sum = Double.MAX_VALUE;
+			} else if (sum < -Double.MAX_VALUE) {
+				sum = -Double.MAX_VALUE;
+			}
+			if(sumI > Double.MAX_VALUE) {
+				sumI = Double.MAX_VALUE;
+			} else if (sumI < -Double.MAX_VALUE) {
+				sumI = -Double.MAX_VALUE;
+			}
+
+			sliceBuff[counter++] = sum;
+			sliceBuff[counter++] = sumI;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the average between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private double[] doDoubleAverageComplex(double[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		double[] sliceBuff = new double[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double sum = 0;
+			double sumI = 0;
+			for(int t=0;t<tDim;t++) {
+				double pix = xytBuff[i + (sliceLength * t)];
+				double pixI = xytBuff[i + 1 + (sliceLength * t)];
+
+				sum = (sum + pix);
+				sumI = (sumI + pixI);
+				
+			}
+			
+			sliceBuff[counter++] = sum/tDim;
+			sliceBuff[counter++] = sumI/tDim;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the max between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private double[] doDoubleMaxComplex(double[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		double[] sliceBuff = new double[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double max = 0;
+			double maxI = 0;
+			double maxMag = 0;
+			for(int t=0;t<tDim;t++) {
+				double pix = xytBuff[i + (sliceLength * t)];
+				double pixI = xytBuff[i + 1 + (sliceLength * t)];
+				double mag = Math.sqrt(pix*pix + pixI*pixI);
+				if(t == 0) {
+					max = pix;
+					maxI = pixI;
+					maxMag = mag;
+				}
+				if(mag > maxMag) {
+					max = pix;
+					maxI = pixI;
+					maxMag = mag;
+				}
+				
+				
+				
+			}
+
+			sliceBuff[counter] = max;
+			sliceBuff[counter++] = maxI;
+			
+		}
+		
+
+		return sliceBuff;
+	}
+	
+	/**
+	 * Calculates the minimum between 2 images
+	 * @param xytBuff
+	 * @return
+	 */
+	private double[] doDoubleMinComplex(double[] xytBuff) {
+		int xDim = image.getExtents()[0];
+		int yDim = image.getExtents()[1];
+		int tDim = image.getExtents()[3];
+		int sliceLength = 2 * xDim * yDim;
+		double[] sliceBuff = new double[2 * xDim * yDim];
+		int counter = 0;
+		for(int i=0;i<sliceLength;i+=2) {
+			double min = 0;
+			double minI = 0;
+			double minMag = 0;
+			for(int t=0;t<tDim;t++) {
+				double pix = xytBuff[i + (sliceLength * t)];
+				double pixI = xytBuff[i + 1 + (sliceLength * t)];
+				double mag = Math.sqrt(pix*pix + pixI*pixI);
+				if(t == 0) {
+					min = pix;
+					minI = pixI;
+					minMag = mag;
+				}
+				if(mag < minMag) {
+					min = pix;
+					minI = pixI;
+					minMag = mag;
+				}
+				
+				
+				
+			}
+
+			sliceBuff[counter++] = min;
+			sliceBuff[counter++] = minI;
+			
 		}
 		
 
