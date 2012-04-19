@@ -220,7 +220,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 						destImage.importData(i*sliceLength, shortSliceBuff, false);
 					}
 				}else if(dataType == ModelStorageBase.SHORT  || dataType == ModelStorageBase.UBYTE) {
-					if(doClip) {
+					if(doClip || dataType == ModelStorageBase.UBYTE) {
 						short[] shortSliceBuff = null;
 						if(operationType == ADD) {
 							shortSliceBuff = doShortAddClip(shortBuffXYT);
@@ -246,7 +246,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 						destImage.importData(i*sliceLength, intSliceBuff, false);
 					}
 				}else if(dataType == ModelStorageBase.INTEGER || dataType == ModelStorageBase.USHORT) {
-					if(doClip) {
+					if(doClip || dataType == ModelStorageBase.USHORT) {
 						int[] intSliceBuff = null;
 						if(operationType == ADD) {
 							intSliceBuff = doIntAddClip(intBuffXYT);
@@ -298,7 +298,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 						destImage.importData(i*sliceLength, doubleSliceBuff, false);
 					}
 				} else if (dataType == ModelStorageBase.LONG || dataType == ModelStorageBase.UINTEGER) {
-					if (doClip) {
+					if (doClip  || dataType == ModelStorageBase.UINTEGER) {
 						long[] longSliceBuff = null;
 						if(operationType == ADD) {
 							longSliceBuff = doLongAddClip(longBuffXYT);
@@ -939,7 +939,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 					d = Short.MAX_VALUE;
 				}
 			}
-			else if (dataType == ModelStorageBase.UBYTE) {
+			else if ((dataType == ModelStorageBase.UBYTE)&& (doClip)) {
 				if (d > 255) {
 					d = 255;
 				}
@@ -1080,7 +1080,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 				else if (sum < Short.MIN_VALUE) {
 					sum = Short.MIN_VALUE;
 				}
-			}else if(dataType == ModelStorageBase.UBYTE) {
+			}else if((dataType == ModelStorageBase.UBYTE)&& (doClip)) {
 				if(sum > 255) {
 					sum = 255;
 				}
@@ -1286,7 +1286,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 					d = Integer.MAX_VALUE;
 				}
 			}
-			else if (dataType == ModelStorageBase.USHORT) {
+			else if ((dataType == ModelStorageBase.USHORT) && (doClip)) {
 				if (d > 65535) {
 					d = 65535;
 				}
@@ -1424,7 +1424,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 				else if (sum < Integer.MIN_VALUE) {
 					sum = Integer.MIN_VALUE;
 				}
-			}else if(dataType == ModelStorageBase.USHORT) {
+			}else if((dataType == ModelStorageBase.USHORT) && (doClip)){
 				if(sum > 65535) {
 					sum = 65535;
 				} else if (sum < 0) {
@@ -1835,7 +1835,7 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 				else if (sum < Long.MIN_VALUE) {
 					sum = Long.MIN_VALUE;
 				}
-			}else if(dataType == ModelStorageBase.UINTEGER) {
+			}else if((dataType == ModelStorageBase.UINTEGER) && (doClip)){
 				if(sum > 4294967295L) {
 					sum = 4294967295L;
 				}
@@ -2033,8 +2033,15 @@ public class Algorithm4DImageCalculator extends AlgorithmBase {
 			
 			double d = Math.sqrt(sum);
 			
-			if(d > Long.MAX_VALUE) {
-				d = Long.MAX_VALUE;
+			if (dataType == ModelStorageBase.LONG) {
+				if(d > Long.MAX_VALUE) {
+					d = Long.MAX_VALUE;
+				}
+			}
+			else if((dataType == ModelStorageBase.UINTEGER) && (doClip)){
+				if(d > 4294967295L) {
+					d = 4294967295L;
+				}
 			}
 			
 			long norm = Math.round(d);
