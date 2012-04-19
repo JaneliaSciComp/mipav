@@ -219,15 +219,15 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 			if(type == ModelStorageBase.BYTE) {
 				type = ModelStorageBase.SHORT;
 			}else if (type == ModelStorageBase.UBYTE) {
-				type = ModelStorageBase.INTEGER;
+				type = ModelStorageBase.SHORT;
 			}else if(type == ModelStorageBase.SHORT) {
 				type = ModelStorageBase.INTEGER;
 			}else if (type == ModelStorageBase.USHORT) {
-				type = ModelStorageBase.LONG;
+				type = ModelStorageBase.INTEGER;
 			}else if(type == ModelStorageBase.INTEGER) {
 				type = ModelStorageBase.LONG;
 			} else if(type == ModelStorageBase.UINTEGER) {
-				type = ModelStorageBase.DOUBLE;
+				type = ModelStorageBase.LONG;
 			}else if (type == ModelStorageBase.LONG) {
 				type = ModelStorageBase.DOUBLE;
 			}else if(type == ModelStorageBase.FLOAT) {
