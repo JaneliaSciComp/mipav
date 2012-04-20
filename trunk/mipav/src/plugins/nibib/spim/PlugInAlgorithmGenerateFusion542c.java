@@ -514,6 +514,8 @@ public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
         
         private ModelImage subGeoImage = null, subAriImage = null;
         
+        private float[] finalRes;
+        
         private Frame parentFrame;
         
         public FusionAlg(Frame parentFrame, ModelImage baseImage, ModelImage transformImage) {
@@ -534,6 +536,7 @@ public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
 
             baseImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
             transformImage.setResolutions(new float[]{(float) resX, (float) resY, (float) resZ});
+            finalRes = new float[baseImage.getResolutions(0).length];
             
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
                 baseImage.getFileInfo(i).setSliceThickness(baseImage.getResolutions(i)[2]);
@@ -590,6 +593,9 @@ public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
             case DownsampleToBase:
                 //downsampleToBase(); transform image has already been downsampled
                 resultImageInfoBase = baseImage.getFileInfo(0);
+                for(int i=0; i<baseImage.getResolutions(0).length; i++) {
+                    finalRes[i] = baseImage.getResolutions(0)[i];
+                }
                 break;
             
             case DownsampleUpsampleCombined:
@@ -611,6 +617,8 @@ public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
                 resultImageInfoBase.setExtents(new int[]{transformImage.getExtents()[0], baseImage.getExtents()[1], baseImage.getExtents()[2]});
                 break;
             }
+            
+            resultImageInfoBase.setResolutions(finalRes);
             
             if(showGeoMean || saveGeoMean) {
                 subGeoImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
@@ -853,6 +861,9 @@ public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
             baseImage = subTransform(baseImage, mat, baseImage.getExtents(), baseImage.getResolutions(0));
             
             baseImage.setResolutions(new float[]{transformImage.getResolutions(0)[0], transformImage.getResolutions(0)[1], transformImage.getResolutions(0)[2]});
+            for(int i=0; i<baseImage.getResolutions(0).length; i++) {
+                finalRes[i] = baseImage.getResolutions(0)[i];
+            }
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
                 baseImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
@@ -869,6 +880,9 @@ public class PlugInAlgorithmGenerateFusion542c extends AlgorithmBase {
             
             baseImage = subTransform(baseImage, mat, baseImage.getExtents(), baseImage.getResolutions(0));
             
+            for(int i=0; i<baseImage.getResolutions(0).length; i++) {
+                finalRes[i] = transformImage.getResolutions(0)[i];
+            }
             for(int i=0; i<baseImage.getFileInfo().length; i++) {
                 baseImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
