@@ -308,10 +308,13 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 popup.add(propSubMenu);
                 popup.add(flipSubMenu);
                 popup.add(graphSubMenu);
-                if (isVOIOpen()) {
-                    popup.add(itemClose);
-                } else {
+                if (!isVOIOpen()) {
+                    if(selectedVOI != null && !selectedVOI.isClosed()) {
+                        popup.add(itemClose);  //allow drawn contour to become closed
+                    }
                     popup.add(itemCrop);
+                } else if(selectedVOI != null && selectedVOI.getGroup().getCurves().size() == 1){
+                    popup.add(itemClose);
                 }
             } 
             if(selectedVOI.getSubtype() == VOIBase.CIRCLE) {
