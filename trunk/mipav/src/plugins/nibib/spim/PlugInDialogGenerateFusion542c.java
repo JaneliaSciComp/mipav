@@ -329,7 +329,7 @@ public class PlugInDialogGenerateFusion542c extends JDialogScriptableBase implem
     } //end storeParamsFromGUI()
    
     private void init() {
-        
+        setResizable(true);
         setForeground(Color.black);
         setTitle("Generate fusion 542c");
         try {
@@ -677,10 +677,19 @@ public class PlugInDialogGenerateFusion542c extends JDialogScriptableBase implem
         JScrollPane scroll = new JScrollPane(mainPanel);
 
         getContentPane().add(scroll, BorderLayout.CENTER);
-
+        
+        Dimension dim = Toolkit.getDefaultToolkit().getScreenSize();
+        if(dim.getHeight() < 950) {
+            getContentPane().setMaximumSize(new Dimension(685, 850));
+            getContentPane().setPreferredSize(new Dimension(685, 850));
+        }
+        
+        
         pack();
         setVisible(true);
-        setResizable(false);
+        setResizable(true);
+        
+        
         System.gc();
         
     } // end init()
