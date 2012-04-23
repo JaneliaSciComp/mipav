@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.util.MipavCoordinateSystems;
-import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
@@ -15,7 +14,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 
 import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
 import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
@@ -27,7 +25,6 @@ import WildMagic.LibFoundation.Mathematics.Triangle3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibFoundation.System.UnorderedSetInt;
 import WildMagic.LibGraphics.Collision.PickRecord;
-import WildMagic.LibGraphics.Collision.Picker;
 import WildMagic.LibGraphics.Detail.Edge;
 import WildMagic.LibGraphics.Effects.Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
@@ -41,7 +38,6 @@ import WildMagic.LibGraphics.SceneGraph.BoxBV;
 import WildMagic.LibGraphics.SceneGraph.Culler;
 import WildMagic.LibGraphics.SceneGraph.Geometry;
 import WildMagic.LibGraphics.SceneGraph.Node;
-import WildMagic.LibGraphics.SceneGraph.Spatial;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
@@ -1300,6 +1296,11 @@ public class VolumeSurface extends VolumeObject
     }
     
     
+    /**
+     * Creates a BitSet mask that is the volume enclosed by the triangle mesh.
+     * This function is not accurate if the mesh is not closed, however it will still return a mask.
+     * @return
+     */
     public BitSet createMask( )
     {
     	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
@@ -1369,6 +1370,9 @@ public class VolumeSurface extends VolumeObject
     }
     
 
+	/**
+	 * Initializes the bounding box for the mesh. The volume bounding box is in volume-index coordinats.
+	 */
 	private void initBoundingBox()
 	{
 		m_kBoundingBox = new BoxBV();
@@ -1386,6 +1390,10 @@ public class VolumeSurface extends VolumeObject
     	}
 	}
 	
+	/**
+	 * Returns the min/max bounding box coordinates for the mesh in volume-index coordinates.
+	 * @return the min/max bounding box coordinates for the mesh in volume-index coordinates.
+	 */
 	public Vector3f[] getMinMax()
 	{
     	if ( m_kBoundingBox == null )
@@ -1396,6 +1404,11 @@ public class VolumeSurface extends VolumeObject
 	}
     
     
+    /**
+     * Test if the input point is inside the triangle mesh.
+     * @param kP0 input point.
+     * @return true if the point is inside the mesh, false otherwise.
+     */
     public boolean testIntersection( Vector3f kP0 )
     {
     	if ( m_kBoundingBox == null )
@@ -1428,14 +1441,20 @@ public class VolumeSurface extends VolumeObject
 		return false;
     }
     
-    public boolean testIntersection( Vector3f kP0, Vector3f kP1 )
+    /**
+     * Tests if the line segment specified by the two input points intersects the mesh.
+     * @param kP0 first end-point of the line sement in volume-index coordinates.
+     * @param kP1 second end-point of the line sement in volume-index coordinates.
+     * @param bPrint flag to print debugging printouts.
+     * @return true if the line segment intersects the mesh, false otherwise.
+     */
+    public boolean testIntersection( Vector3f kP0, Vector3f kP1, boolean bPrint )
     {        
     	if ( m_kBoundingBox == null )
     	{
     		initBoundingBox();
     	}
-    	        
-
+    	
     	// convert to 'mesh' coords...
     	Vector3f kP0Mesh = new Vector3f(kP0);
     	Vector3f kP1Mesh = new Vector3f(kP1);
@@ -1443,47 +1462,64 @@ public class VolumeSurface extends VolumeObject
     	volumeToMeshCoords(kP0Mesh);
     	volumeToMeshCoords(kP1Mesh);
     	
-    	if  ( !( (kP0.X >= m_kMinBB.X) && (kP0.X <= m_kMaxBB.X) &&
-    			(kP0.Y >= m_kMinBB.Y) && (kP0.Y <= m_kMaxBB.Y) &&
-    			(kP0.Z >= m_kMinBB.Z) && (kP0.Z <= m_kMaxBB.Z) ) 
-    			&&
-    			!( (kP1.X >= m_kMinBB.X) && (kP1.X <= m_kMaxBB.X) &&
-    	    			(kP1.Y >= m_kMinBB.Y) && (kP1.Y <= m_kMaxBB.Y) &&
-    	    			(kP1.Z >= m_kMinBB.Z) && (kP1.Z <= m_kMaxBB.Z) )  )
-    	{
-    		return false;
-    	}
+		if ( bPrint )
+		{
+			System.err.println( kP0Mesh + " inside BB? " + m_kBoundingBox.Contains( kP0Mesh ) );
+			System.err.println( kP1Mesh + " inside BB? " + m_kBoundingBox.Contains( kP1Mesh ) );
+		}
 
-    	if ( m_kBoundingBox.Contains( kP0Mesh ) || m_kBoundingBox.Contains( kP1Mesh ) )
-    	{
-    		if ( testIntersections( kP0Mesh, kP1Mesh ) )
-    		{
-    			return true;
-    		}
-    		if ( testIntersection( kP0 ) && testIntersection( kP1 ) )
-    		{
-    			return true;
-    		}
-    	}
-    	return false;
+		if ( testIntersections( kP0Mesh, kP1Mesh ) )
+		{
+			return true;
+		}
+		else if ( bPrint )
+		{
+			System.err.println( "testIntersections " + kP0Mesh + " " + kP1Mesh + "  FAILED " );
+		}
+		if ( testIntersection( kP0 ) && testIntersection( kP1 ) )
+		{
+			return true;
+		}
+		else if ( bPrint )
+		{
+			System.err.println( "testIntersection " + kP0 + " " + testIntersection( kP0 ) );
+			System.err.println( "testIntersection " + kP1 + " " + testIntersection( kP1 ) );
+		}
+		return false;
     }
     
     
     
+    /**
+     * Converts the input point from volume-index coordinates into local mesh coordinates used to display the surface in the volume renderer.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
     public void volumeToMeshCoords(Vector3f kVolume)
     {
     	kVolume.Mult( m_kVolumeScale );
     	kVolume.Sub( m_kVolumeTrans );	
     	kVolume.Scale( m_fVolumeDiv );			
     }
-    
+
+    /**
+     * Converts the input point from local mesh coordinates used to display the surface in the volume renderer into volume-index coordinates.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
     public void meshToVolumeCoords(Vector3f kMesh)
     {
     	kMesh.Scale( m_fVolumeMult );	
     	kMesh.Add( m_kVolumeTrans );			
     	kMesh.Mult( m_kMeshScale );
     }
-    
+
+
+    /**
+     * Converts the input point from local mesh coordinates used to display the surface in scanner coordinates.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
     public void meshToScannerCoords(Vector3f kMesh)
     {
     	meshToVolumeCoords(kMesh);    	
@@ -1865,6 +1901,12 @@ public class VolumeSurface extends VolumeObject
         }
     }   
     
+    /**
+     * Test if the input point is inside the mesh.
+     * @param origin point to test for inside/outside mesh.
+     * @param directions set of randomised directions for counting mesh-intersections (odd = inside, even = outside).
+     * @return true when the point is inside the mesh, false otherwise.
+     */
     private boolean testIntersections( Vector3f origin, Vector3f[] directions )
     {
     	int[] lineIntersectionCount = new int[directions.length]; 
@@ -1906,11 +1948,17 @@ public class VolumeSurface extends VolumeObject
     	return ( oddCount >= (1 + directions.length/2) );
     }
 
-    
-    private boolean testIntersections( Vector3f kP0, Vector3f kP1 )
+    /**
+     * Tests if the line segment determined by the two input end-points intersects the mesh.
+     * @param kP0 end-point of the line segment.
+     * @param kP1 end-point of the line segment.
+     * @return true if the line segment intersects the mesh.
+     */
+    private boolean testIntersections( final Vector3f kP0, final Vector3f kP1 )
     {
     	// Compute intersections with the model-space triangles.
     	int iTQuantity = m_kMesh.GetTriangleQuantity();
+    	// Compute intersections with the model-space triangles.
     	for (int i = 0; i < iTQuantity; i++)
     	{
     		int iV0, iV1, iV2;

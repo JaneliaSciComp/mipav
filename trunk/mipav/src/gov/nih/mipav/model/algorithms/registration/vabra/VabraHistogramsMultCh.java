@@ -17,7 +17,7 @@ public class VabraHistogramsMultCh extends VabraHistograms{
 		this.numOfSub = numOfSub;
 		this.numOfTar = numOfTar;
 		
-		this.numOfCh = Math.min(numOfSub, numOfTar);
+		this.numOfCh = 1;
 		
 		chWeights = new double[numOfCh];
 		for (int i = 0; i < numOfCh; i++ ) chWeights[i] = 1/((double)numOfCh);
@@ -59,10 +59,10 @@ public class VabraHistogramsMultCh extends VabraHistograms{
 			// initializeHistograms();
 		}
 		for (int ch = 0; ch < numOfCh; ch++) {
-			RegistrationUtilities.Histogram3D(normedDeformedSubject.data, ch, numOfBins, boundingBox, origDeformedSubject);
-			RegistrationUtilities.Histogram3D(normedTarget.data, ch, numOfBins, boundingBox, origTarget);
+			RegistrationUtilities.Histogram3D(normedDeformedSubject.data, ch, numOfBins, boundingBox, origDeformedSubject, normedDeformedSubject.XN, normedDeformedSubject.YN, normedDeformedSubject.ZN );
+			RegistrationUtilities.Histogram3D(normedTarget.data, ch, numOfBins, boundingBox, origTarget, normedTarget.XN, normedTarget.YN, normedTarget.ZN);
 			RegistrationUtilities.JointHistogram3D(normedDeformedSubject.data,normedTarget.data, ch, 
-					numOfBins, boundingBox, origJointST);
+					numOfBins, boundingBox, origJointST, normedTarget.XN, normedTarget.YN, normedTarget.ZN);
 		}
 	}
 	
@@ -157,7 +157,7 @@ public class VabraHistogramsMultCh extends VabraHistograms{
 		if (x < subject.getXN() && x >= 0 && y < subject.getYN() && y >= 0 && z < subject.getZN() && z >= 0) {
 			subject.interpolate(x, y, z, testValsD);
 		} else {
-			for (int ch = 0; ch < numOfSub; ch++) testValsD[ch] = subject.minValsD[ch];
+			for (int ch = 0; ch < numOfSub; ch++) testValsD[ch] = subject.minValsD;
 		}
 		
 		for (int ch = 0; ch < numOfSub; ch++) {

@@ -784,7 +784,7 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             final float closeKernelSize = (Math.max(m_kB0Image.getFileInfo(0).getResolutions()[0], m_kB0Image
                     .getFileInfo(0).getResolutions()[1]) * 6) + 1;
             alg = new AlgorithmBrainSurfaceExtractor(m_kB0Image, 3, 0.5f, .62f, false, 1, closeKernelSize, 1, false,
-                    false, true, true);
+                    true, true, true);
             alg.setRunningInSeparateThread(isRunningInSeparateThread());
             alg.addListener(this);
             alg.run();

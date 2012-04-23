@@ -10,7 +10,6 @@ import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.renderer.WildMagic.VolumeTriPlanarRender;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileFiberTrack;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurfaceVTKXML_WM;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.FileSurface_WM;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeSurface;
@@ -25,15 +24,9 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.RandomAccessFile;
 import java.util.Vector;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -60,9 +53,7 @@ import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.SceneGraph.Attributes;
-import WildMagic.LibGraphics.SceneGraph.IndexBuffer;
 import WildMagic.LibGraphics.SceneGraph.Polyline;
-import WildMagic.LibGraphics.SceneGraph.TriMesh;
 import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
 
 public class JPanelDTIParametersPanel extends JInterfaceBase 
@@ -157,16 +148,13 @@ implements ListSelectionListener, ChangeListener {
 
 	private ModelImage m_kImage;
 
-	private JCheckBox m_kNegX;
-	private JCheckBox m_kNegY;
-	private JCheckBox m_kNegZ;
 	private JTextField m_kFAMinThreshold;
 
 	private JTextField m_kFAMaxThreshold;
 	private JTextField m_kMaxAngle;
 	private JTextField m_kMinLength;
+	private JTextField m_kMaxLength;
 	private JTextField m_kVoxelStepsize;
-	//private JCheckBox displayAllCheckBox;
 	private int displayMode;
 	private static int Polylines = 0;
 	private static int Ellipsoids = 1;
@@ -174,7 +162,6 @@ implements ListSelectionListener, ChangeListener {
 	private static int Cylinders = 3;
 	private static int Arrows = 4;
 
-	private boolean displayAll;
 	private ColorRGB m_kCInclude = new ColorRGB(0,1,0);
 	private ColorRGB m_kCExclude = new ColorRGB(.5f,0,0);
 	private ColorRGB m_kCIgnore = new ColorRGB(.2f,.2f,.2f);
@@ -188,6 +175,7 @@ implements ListSelectionListener, ChangeListener {
 	private float m_fMaxAngle = (float)Math.PI/4.0f;
 
 	private int m_iMinTractLength;
+	private int m_iMaxTractLength;
 
 	/** list to hold the glyphs type name */
 	private JComboBox glyphsList;
@@ -341,8 +329,24 @@ implements ListSelectionListener, ChangeListener {
 					m_iMinTractLength = Integer.valueOf(m_kMinLength.getText()).intValue();
 				}
 			}
+			else if ( command.equals( "MaxLengthChanged" ) )
+			{
+				if (!JDialogBase.testParameterMin(m_kMaxLength.getText(), m_iMinTractLength))
+				{
+					m_kMaxLength.requestFocus();
+					m_kMaxLength.selectAll();
+				}
+				else
+				{
+					m_iMaxTractLength = Integer.valueOf(m_kMaxLength.getText()).intValue();
+				}
+			}
 			else if ( command.equals( "VoxelStepsizeChanged" ) )
 			{
+
+	            float val = Float.valueOf(m_kVoxelStepsize.getText()).floatValue();
+	            System.err.println( val );
+	            /*
 				if (!JDialogBase.testParameter(m_kVoxelStepsize.getText(), 0.10f, 1.0f))
 				{
 					m_kVoxelStepsize.requestFocus();
@@ -351,7 +355,7 @@ implements ListSelectionListener, ChangeListener {
 				else
 				{
 					m_fFraction = Float.valueOf(m_kVoxelStepsize.getText()).floatValue();
-				}
+				}*/
 			}
 
 		}
@@ -439,6 +443,7 @@ implements ListSelectionListener, ChangeListener {
 
 		m_fFraction = Float.valueOf(m_kVoxelStepsize.getText()).floatValue();
 		m_iMinTractLength = Integer.valueOf(m_kMinLength.getText()).intValue();
+		m_iMaxTractLength = Integer.valueOf(m_kMaxLength.getText()).intValue();
 		m_fFAMin = Float.valueOf(m_kFAMinThreshold.getText()).floatValue();
 		m_fFAMax = Float.valueOf(m_kFAMaxThreshold.getText()).floatValue();
 
@@ -637,6 +642,7 @@ implements ListSelectionListener, ChangeListener {
 
 		m_fFraction = Float.valueOf(m_kVoxelStepsize.getText()).floatValue();
 		m_iMinTractLength = Integer.valueOf(m_kMinLength.getText()).intValue();
+		m_iMaxTractLength = Integer.valueOf(m_kMaxLength.getText()).intValue();
 		m_fFAMin = Float.valueOf(m_kFAMinThreshold.getText()).floatValue();
 		m_fFAMax = Float.valueOf(m_kFAMaxThreshold.getText()).floatValue();
 
@@ -652,11 +658,15 @@ implements ListSelectionListener, ChangeListener {
 		float faVal;
 		int count = 0;
 		
-		int xMin = 0, xMax = m_iDimX, yMin = 0, yMax = m_iDimY, zMin = 0, zMax = m_iDimZ;
 		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
 		{
+			int xMin = 0, xMax = m_iDimX, yMin = 0, yMax = m_iDimY, zMin = 0, zMax = m_iDimZ;
+			if ( m_kVOIParamsList.get(j).Ignore  )
+			{				
+				continue;
+			}
 			if ( m_kVOIParamsList.get(j).Include  )
-			{
+			{				
 				Vector3f[] akMinMax = m_kVOIParamsList.get(j).Surface.getMinMax();
 				xMin = (int)Math.floor(akMinMax[0].X);
 				yMin = (int)Math.floor(akMinMax[0].Y);
@@ -665,25 +675,23 @@ implements ListSelectionListener, ChangeListener {
 				yMax = (int)Math.ceil(akMinMax[1].Y);
 				zMax = (int)Math.ceil(akMinMax[1].Z);
 			}
-		}
-		
-		
 
-		for ( int z = zMin; z < zMax; z++ )
-		{
-			for ( int y = yMin; y < yMax; y++ )
+			for ( int z = zMin; z < zMax; z++ )
 			{
-				for ( int x = xMin; x < xMax; x++ )
+				for ( int y = yMin; y < yMax; y++ )
 				{
-					faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
-					if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
+					for ( int x = xMin; x < xMax; x++ )
 					{
-						count += diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
+						faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
+						if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
+						{
+							count += diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
+						}
 					}
 				}
+				int iValue = (int)(100 * (float)(z+1 - zMin)/(zMax - zMin));
+				kProgressBar.updateValueImmed( iValue );
 			}
-			int iValue = (int)(100 * (float)(z+1)/(zMax - zMin));
-			kProgressBar.updateValueImmed( iValue );
 		}
 		kProgressBar.dispose();
 		if ( count > 0 )
@@ -738,51 +746,29 @@ implements ListSelectionListener, ChangeListener {
 		slicePanel.add(slicePicckableLabel, BorderLayout.WEST);
 		slicePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 		slicePanel.setAlignmentY(Component.TOP_ALIGNMENT);
-
-		/*
-        m_kNegX = new JCheckBox("+/- x");
-        m_kNegX.setSelected(false);
-        m_kNegX.addActionListener(this);
-        m_kNegX.setActionCommand("NegX");
-        m_kNegX.setEnabled(true);
-
-        m_kNegY = new JCheckBox("+/- y");
-        m_kNegY.setSelected(false);
-        m_kNegY.addActionListener(this);
-        m_kNegY.setActionCommand("NegY");
-        m_kNegY.setEnabled(true);
-
-        m_kNegZ = new JCheckBox("+/- z");
-        m_kNegZ.setSelected(false);
-        m_kNegZ.addActionListener(this);
-        m_kNegZ.setActionCommand("NegZ");
-        m_kNegZ.setEnabled(true);
-
-        JPanel kVectorPanel = new JPanel();
-        kVectorPanel.setLayout(new BoxLayout(kVectorPanel, BoxLayout.X_AXIS));
-        kVectorPanel.add(m_kNegX);
-        kVectorPanel.add(m_kNegY);
-        kVectorPanel.add(m_kNegZ);
-        //kVectorPanel.setBorder(buildTitledBorder("Vector component-wise negation"));
-
-		 */
+		
 		m_iDimX = parentFrame.getFAimage().getExtents()[0];
 		m_iDimY = parentFrame.getFAimage().getExtents()[1];
 		m_iDimZ = parentFrame.getFAimage().getExtents()[2];
 
-		m_kFAMinThreshold = new JTextField( Double.toString(parentFrame.getFAimage().getMin()), 4);
+		m_kFAMinThreshold = new JTextField( Double.toString(Math.max( 0.2, parentFrame.getFAimage().getMin() )), 4);
 		m_kFAMinThreshold.setActionCommand("FAMINChanged");
 		m_kFAMinThreshold.addActionListener(this);
 		m_kFAMaxThreshold = new JTextField( Double.toString(parentFrame.getFAimage().getMax()), 4);
 		m_kFAMaxThreshold.setActionCommand("FAMAXChanged");
 		m_kFAMaxThreshold.addActionListener(this);
-		m_kMaxAngle = new JTextField("60", 4);
+		m_kMaxAngle = new JTextField("45", 4);
 		m_kMaxAngle.setActionCommand("MaxAngleChanged");
 		m_kMaxAngle.addActionListener(this);
+		m_iMinTractLength = 20;
 		m_kMinLength = new JTextField("20", 4);
 		m_kMinLength.setActionCommand("MinLengthChanged");
 		m_kMinLength.addActionListener(this);
-		m_kVoxelStepsize = new JTextField("0.5", 4);
+		m_iMaxTractLength = 250;
+		m_kMaxLength = new JTextField("250", 4);
+		m_kMaxLength.setActionCommand("MaxLengthChanged");
+		m_kMaxLength.addActionListener(this);
+		m_kVoxelStepsize = new JTextField("1.0", 4);
 		m_kVoxelStepsize.setActionCommand("VoxelStepsizeChanged");
 		m_kVoxelStepsize.addActionListener(this);
 		JPanel kTrackPanel = new JPanel(new GridBagLayout());
@@ -790,17 +776,17 @@ implements ListSelectionListener, ChangeListener {
 		gbc.gridy = 0;
 		//kTrackPanel.add( kVectorPanel, gbc );
 		//gbc.gridy++;
-		kTrackPanel.add(new JLabel( "FA Threshold Min (0.0-1.0):"), gbc);
+		kTrackPanel.add(new JLabel( "FA Threshold Min:"), gbc);
 		gbc.gridx = 2;
 		kTrackPanel.add( m_kFAMinThreshold, gbc );
 		gbc.gridx = 0;
 		gbc.gridy++;
-		kTrackPanel.add(new JLabel( "FA Threshold Max (0.0-1.0):"), gbc);
+		kTrackPanel.add(new JLabel( "FA Threshold Max:"), gbc);
 		gbc.gridx = 2;
 		kTrackPanel.add( m_kFAMaxThreshold, gbc );
 		gbc.gridx = 0;
 		gbc.gridy++;
-		kTrackPanel.add(new JLabel( "Maximum Angle (0.0-180.0):"), gbc);
+		kTrackPanel.add(new JLabel( "Maximum Angle:"), gbc);
 		gbc.gridx = 2;
 		kTrackPanel.add( m_kMaxAngle, gbc );
 		gbc.gridx = 0;
@@ -810,7 +796,12 @@ implements ListSelectionListener, ChangeListener {
 		kTrackPanel.add( m_kMinLength, gbc );
 		gbc.gridx = 0;
 		gbc.gridy++;
-		kTrackPanel.add(new JLabel( "Voxel track step size (0.1-1.0):"), gbc);
+		kTrackPanel.add(new JLabel( "Maximum tract length to display:"), gbc);
+		gbc.gridx = 2;
+		kTrackPanel.add( m_kMaxLength, gbc );
+		gbc.gridx = 0;
+		gbc.gridy++;
+		kTrackPanel.add(new JLabel( "Voxel track step size:"), gbc);
 		gbc.gridx = 2;
 		kTrackPanel.add( m_kVoxelStepsize, gbc );
 		kTrackPanel.setBorder(buildTitledBorder("Fiber Generation Options for Interactive Fiber Selection"));
@@ -1128,52 +1119,39 @@ implements ListSelectionListener, ChangeListener {
 				bAllZero = false;
 			}
 		}
-		/*
-        if ( m_kNegX.isSelected() )
-        {
-            afVectorData[0] *= -1;
-        }
-        if ( m_kNegY.isSelected() )
-        {
-            afVectorData[1] *= -1;
-        }
-        if ( m_kNegZ.isSelected() )
-        {
-            afVectorData[2] *= -1;
-        }
-		 */
+		if ( bAllZero )
+		{
+			return 0;
+		}
 
-		if ( !bAllZero )
-		{        
-			kPos.Set( iX, iY, iZ );
-			if ( !testTrack( kPos ) )
+		kPos.Set( iX, iY, iZ );
+		if ( !testTrack( kPos ) )
+		{
+			return 0;
+		}
+
+		kTract.add( new Vector3f( kPos ) );
+
+		kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
+		kV2.Copy(kV1);
+		kV2.Neg();
+
+		kV1.Normalize();
+		kV2.Normalize();
+
+		traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV1 ), 
+				parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), true );
+
+		traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV2 ), 
+				parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), false );
+		int iVQuantity = kTract.size();
+		if ( (iVQuantity*m_fFraction >= m_iMinTractLength) )
+		{
+			//System.err.println( "Adding " + kTract.size() + " " + m_fFraction + " " + (iVQuantity*m_fFraction) );
+			if ( testTrack( kTract ) )
 			{
-				return 0;
-			}
-
-			kTract.add( new Vector3f( kPos ) );
-
-			kV1.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
-			kV2.Copy(kV1);
-			kV2.Neg();
-
-			kV1.Normalize();
-			kV2.Normalize();
-
-			traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV1 ), 
-					parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), true );
-
-			traceTract2( kTract, new Vector3f( kPos ), new Vector3f( kV2 ), 
-					parentFrame.getEVimage(), parentFrame.getEValueimage(), parentFrame.getFAimage(), parentFrame.getDTIimage(), false );
-			int iVQuantity = kTract.size();
-			if ( (iVQuantity*m_fFraction >= m_iMinTractLength) )
-			{
-				//System.err.println( "Adding " + kTract.size() + " " + m_fFraction + " " + (iVQuantity*m_fFraction) );
-				if ( testTrack( kTract ) )
-				{
-					addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
-					count++;
-				}
+				addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
+				count++;
 			}
 		}
 		return count;
@@ -1393,11 +1371,10 @@ implements ListSelectionListener, ChangeListener {
 		Vector3f kOut = new Vector3f();
 		Vector3f kNext = new Vector3f();
 		int iX, iY, iZ;
-		float fLambda1, fLambda2, fLambda3;
-		float fDot, fAngle, fFA;
+		float fAngle, fFA;
 		boolean bAllZero = true;
 
-		VOIContour currentPoints = new VOIContour(false);
+		Vector3f currentPoint = new Vector3f();
 		int maxInVoxel = 2*(int)Math.ceil(1f/m_fFraction);
 		int count = 0;
 		
@@ -1411,23 +1388,26 @@ implements ListSelectionListener, ChangeListener {
 			iY = Math.round(kNext.Y);
 			iZ = Math.round(kNext.Z);
 			Vector3f voxel = new Vector3f(iX,iY,iZ);
-			if ( currentPoints.contains(voxel) )
+			
+			if ( m_fFraction < 1 )
 			{
-				count++;
-				//System.err.println(count);
+				if ( currentPoint.equals(voxel) )
+				{
+					count++;
+					//System.err.println(count);
+				}
+				else
+				{
+					count = 0;
+					currentPoint.Copy( voxel );
+				}
+				if ( count >= maxInVoxel )
+				{
+					bDone = true;
+					//System.err.println( "Same voxel " + count + " times > " + maxInVoxel );
+					break;
+				}
 			}
-			else
-			{
-				count = 0;
-				currentPoints.add( voxel );
-			}
-			if ( count >= maxInVoxel )
-			{
-				bDone = true;
-				//System.err.println( "Same voxel " + count + " times > " + maxInVoxel );
-				break;
-			}
-
 
 			if ( (iZ < 0) || (iZ >= iDimZ) ||
 					(iY < 0) || (iY >= iDimY) ||
@@ -1440,8 +1420,8 @@ implements ListSelectionListener, ChangeListener {
 
 			if ( kFAImage != null )
 			{
-				fFA = kFAImage.getFloatTriLinearBounds(kNext.X, kNext.Y, kNext.Z);
-				//fFA = kFAImage.getFloat(iX, iY, iZ);
+				//fFA = kFAImage.getFloatTriLinearBounds(kNext.X, kNext.Y, kNext.Z);
+				fFA = kFAImage.getFloat(iX, iY, iZ);
 				if ( (fFA < m_fFAMin) || (fFA > m_fFAMax) )
 				{
 					bDone = true;
@@ -1451,18 +1431,6 @@ implements ListSelectionListener, ChangeListener {
 			}
 
 			bAllZero = true;
-			/*
-			for ( int j = 0; j < 9; j++ )
-			{
-				afVectorData[j] = eigenImage.getFloatTriLinearBoundsTime(kNext.X, kNext.Y, kNext.Z, j);
-				//afVectorData[j] = parentFrame.getEVimage().getFloat(i + j*iLen);
-				//afVectorData[j] = eigenImage.getFloat(iX, iY, iZ, j);
-				if ( afVectorData[j] != 0 )
-				{
-					bAllZero = false;
-				}
-			}
-			*/
 			for ( int j = 0; j < 6; j++ )
 			{
 				afVectorData[j] = kDTIImage.getFloat((int)kNext.X, (int)kNext.Y, (int)kNext.Z, j);
@@ -1474,87 +1442,17 @@ implements ListSelectionListener, ChangeListener {
             kMatrix.Set( afVectorData[0], afVectorData[1], afVectorData[2],
             		afVectorData[1], afVectorData[3], afVectorData[4], 
             		afVectorData[2], afVectorData[4], afVectorData[5] );
-			/*
-            if ( m_kNegX.isSelected() )
-            {
-                afVectorData[0] *= -1;
-            }
-            if ( m_kNegY.isSelected() )
-            {
-                afVectorData[1] *= -1;
-            }
-            if ( m_kNegZ.isSelected() )
-            {
-                afVectorData[2] *= -1;
-            }
-			 */
-			fLambda1 = eigenValueImage.getFloatTriLinearBounds(kNext.X, kNext.Y, kNext.Z, 1);
-			fLambda2 = eigenValueImage.getFloatTriLinearBounds(kNext.X, kNext.Y, kNext.Z, 2);
-			fLambda3 = eigenValueImage.getFloatTriLinearBounds(kNext.X, kNext.Y, kNext.Z, 3);
-			//fLambda1 = eigenValueImage.getFloat( i * 4 + 1 );
-			//fLambda2 = eigenValueImage.getFloat( i * 4 + 2 );
-			//fLambda3 = eigenValueImage.getFloat( i * 4 + 3 );
-
-
-			if ( (fLambda1 == fLambda2) && (fLambda1 == fLambda3) )
-			{
-				bDone = true;
-				//System.err.println( "Track ISOTROPIC" );
-				break;
-			}
-			else if ( !bAllZero && (fLambda1 > 0) && (fLambda2 > 0) && (fLambda3 > 0)  )
+            
+			if ( !bAllZero )
 			{
 				kMatrix.Mult( kDir, kOut );
-				
-				//kOut.Set( afVectorData[0], afVectorData[1], afVectorData[2] );
 				kOut.Normalize();
-				System.err.println( kOut );
-
-				if ( !bDir )
-				{
-					//kOut.Neg();
-				}
-				fDot = kDir.Dot( kOut );
-				if ( fDot < 0 )
-				{
-					//kOut.Neg();
-				} 
-
 
 				fAngle = Vector3f.Angle(kDir,kOut);
 				if ( fAngle > m_fMaxAngle )
 				{
-					/*
-                	if ( fLambda2 != 0 )
-                	{
-                        kOut.Set( afVectorData[3], afVectorData[4], afVectorData[5] );
-                        kOut.Normalize();
-
-                        if ( !bDir )
-                        {
-                            kOut.Neg();
-                        }
-                        fDot = kDir.Dot( kOut );
-                        if ( fDot < 0 )
-                        {
-                            kOut.Neg();
-                        } 
-                        fAngle = Vector3f.Angle(kDir,kOut);
-                        if ( fAngle > m_fMaxAngle )
-                        {
-                            bDone = true;
-                            System.err.println( "Track max angle " + fLambda1 + " " + fLambda2 + " " + fLambda3 );
-                            //System.err.println( "Track MAX ANGLE: " + (fAngle * 360f) / (2f * Math.PI) + " " + (m_fMaxAngle * 360f) / (2f * Math.PI) );
-                            //System.err.println( kDir + "         " + kOut );
-                            break;                        	
-                        }                       
-                	}
-					 */ 
-					//else
-					{
-						bDone = true;
-						break;
-					}
+					bDone = true;
+					break;
 				}
 
 
@@ -1575,6 +1473,11 @@ implements ListSelectionListener, ChangeListener {
 					{
 						kTract.add( 0,  new Vector3f( kNext ) );
 					}
+					if ( kTract.size() >= m_iMaxTractLength )
+					{
+						bDone = true;
+						break;
+					}
 				}
 				else
 				{
@@ -1588,8 +1491,7 @@ implements ListSelectionListener, ChangeListener {
 			else
 			{
 				bDone = true;
-				//System.err.println( "Track LAMBDA NEG?" );
-				//break;
+				break;
 			}
 		}
 		kNext = null;
@@ -1607,48 +1509,34 @@ implements ListSelectionListener, ChangeListener {
 		{
 			return true;
 		}
-		int iInclude = 0;
+
 		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
 		{
-			if ( m_kVOIParamsList.get(j).Include )
-			{
-				iInclude++;
-			}
-		}
-		if ( iInclude == 0 )
-		{
-			return true;
-		}
-
-		boolean[] bIncludeAll = new boolean[iInclude];
-		for ( int i = 0; i < bIncludeAll.length; i++ )
-		{
-			bIncludeAll[i] = false;
-		}
-
-		iInclude = 0;
-		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
-		{
+			boolean bInclude = false;
 			if ( m_kVOIParamsList.get(j).Include  )
 			{
 				for ( int i = 0; i < kTrack.size() - 1; i++ )
 				{
 					Vector3f kP0 = kTrack.elementAt(i);
 					Vector3f kP1 = kTrack.elementAt(i+1);
-					if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1 ) )
+					if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1, false ) )
 					{
-						bIncludeAll[iInclude++] = true;
+						bInclude = true;
 						break;
 					}
 				}
 			}
+			else
+			{
+				bInclude = true;
+			}
+			if ( !bInclude )
+			{
+				return false;
+			}
 		}
-		boolean bAll = true;
-		for ( int i = 0; i < bIncludeAll.length; i++ )
-		{
-			bAll &= bIncludeAll[i];
-		}
-		return bAll;
+
+		return true;
 	}
 
 	private boolean testTrack( Vector3f kPoint )
@@ -1684,7 +1572,7 @@ implements ListSelectionListener, ChangeListener {
 			// Add tracts from the include VOIs, check for exclusion while adding tracts...
 			if ( m_kVOIParamsList.get(j).Exclude )
 			{
-				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1 ) )
+				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1, false ) )
 				{
 					return false;
 				}

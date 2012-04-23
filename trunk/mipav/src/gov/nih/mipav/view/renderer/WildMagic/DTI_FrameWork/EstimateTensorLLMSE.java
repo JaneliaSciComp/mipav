@@ -4,6 +4,7 @@ import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import imaging.B_VectorScheme;
 import imaging.DW_Scheme;
@@ -589,6 +590,11 @@ public class EstimateTensorLLMSE {
 		//***************************************************
 		// Step 2: Loop over all voxels and estimate tensors 
 		//***************************************************
+        final ViewJProgressBar progressBar = new ViewJProgressBar("vabra",
+                "vabra deformation field...", 0, 100, false, null, null);
+        progressBar.setVisible(true);
+        progressBar.updateValueImmed(0);
+        
 		double data[] = new double[DWdata[0][0][0].length];
 		for(int i=0;i<DWdata.length;i++) {
 			for(int j=0;j<DWdata[0].length;j++) {
@@ -599,6 +605,7 @@ public class EstimateTensorLLMSE {
 						}				
 
 						//						 {exitcode, ln A^\star(0), Dxx, Dxy, Dxz, Dyy, Dyz, Dzz}
+						try {
 						double []estResult = dtiFit.invert(data);
 						exitcode[i][j][k][0]=(float)estResult[0];
 						
@@ -607,7 +614,7 @@ public class EstimateTensorLLMSE {
 						for(int l=0;l<6;l++) {
 							tensors[i][j][k][l]=(float)(estResult[l+2]*1e6);	
 						}
-
+						} catch ( misc.LoggedException e ) {}
 					} else {
 						exitcode[i][j][k][0]=Float.NaN;
 						intensity[i][j][k][0]=Float.NaN;
@@ -617,7 +624,10 @@ public class EstimateTensorLLMSE {
 					}
 				}
 			}
+			progressBar.updateValueImmed( (int)(100 * i / (float)DWdata.length) );
 		}
+        progressBar.updateValueImmed(100);
+        progressBar.dispose();
 	}
 	/**
 	 * Uses Camino algorithms to estimate tensors from DW imaging data on a voxel-wise basis. 

@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.registration.vabra;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,17 +27,19 @@ public class VabraSubjectTargetPairs {
 
 	protected ModelImage currentDeformField; //deformation field 
 	//protected float[][][][] currentDeformFieldM; //deformation field as an array for easy access
-	protected ModelImage totalDeformField; //deformation field 
+	protected float[] totalDeformField; //deformation field 
 	//protected float[][][][] totalDeformFieldM; //deformation field as an array for easy access
 
-	protected List<ModelImage> origSubjectList;
-	protected List<ModelImage> origTargetList;
+	protected ModelImage origSubjectList;
+	protected ModelImage origTargetList;
 	
-	protected int[] chInterpType;
+	protected int chInterpType;
 	protected int numOfBins;
 	protected int numOfSub;
 	protected int numOfTar;
 	protected float RobustMinThresh, RobustMaxThresh;
+	protected int defFieldUpdateMode;
+	public int curX, curY, curZ;
 	
 	public void dispose() {
 		
@@ -96,24 +99,24 @@ public class VabraSubjectTargetPairs {
 		hist.dispose();
 	}
 
-	public VabraSubjectTargetPairs(List<ModelImage> subjectVols, List<ModelImage> targetVols,
-			int[] InterpType,boolean useMNMI) {
-		this(subjectVols, targetVols, 0.000f, 0.000f, VabraHistograms.defaultBins, InterpType,useMNMI);
-	}
-
-	public VabraSubjectTargetPairs(List<ModelImage> subjectVols, List<ModelImage> targetVols, 
-			float robustMaxT, float robustMinT, int numBins, int[] interpType,boolean useMNMI) {
+	public VabraSubjectTargetPairs(ModelImage subjectVols, ModelImage targetVols, 
+			float robustMaxT, float robustMinT, int numBins, int interpType,boolean useMNMI, int defFieldUpdateMode) {
 		this.numOfBins = numBins;
 		this.origSubjectList=subjectVols;
 		this.origTargetList=targetVols;
 		this.chInterpType = interpType;
-		this.subject=new VabraVolumeCollection(subjectVols, chInterpType, numOfBins);
+		this.subject=new VabraVolumeCollection(subjectVols, chInterpType, numOfBins, true);
 		deformedSubject=this.subject.clone();
-		this.target=new VabraVolumeCollection(targetVols, chInterpType, numOfBins);
+		this.target=new VabraVolumeCollection(targetVols, chInterpType, numOfBins, true);
+		this.defFieldUpdateMode = defFieldUpdateMode;
 
-		numOfSub = origSubjectList.size();
-		numOfTar = origTargetList.size();
-		
+		numOfSub = 1;
+		numOfTar = 1;
+
+
+		curX = subjectVols.getExtents().length > 0 ? subjectVols.getExtents()[0] : 1;
+		curY = subjectVols.getExtents().length > 1 ? subjectVols.getExtents()[1] : 1;
+		curZ = subjectVols.getExtents().length > 2 ? subjectVols.getExtents()[2] : 1;
 
 		calculateBoundingBox();
 
@@ -129,8 +132,9 @@ public class VabraSubjectTargetPairs {
 		targetBinned = target.clone();
 		targetBinned.rescaleToBins();
 		
-		if(useMNMI)hist = new VabraHistogramsMNMI(numOfSub, numOfTar, numOfBins);
-		else hist = new VabraHistogramsMultCh(numOfSub, numOfTar, numOfBins);
+		hist = new VabraHistogramsMultCh(numOfSub, numOfTar, numOfBins);
+		//if(useMNMI)hist = new VabraHistogramsMNMI(numOfSub, numOfTar, numOfBins);
+		//else hist = new VabraHistogramsMultCh(numOfSub, numOfTar, numOfBins);
 		
 		//incrementCompletedUnits();
 
@@ -154,29 +158,34 @@ public class VabraSubjectTargetPairs {
 		float robustMax, robustMin;
 		int XN, YN, ZN, i, j, k;
 
-		for (int ch = 0; ch < imgVec.getNumOfCh(); ch++) {
-			XN = imgVec.data[ch].getExtents().length > 0 ? imgVec.data[ch].getExtents()[0] : 1;
-			YN = imgVec.data[ch].getExtents().length > 1 ? imgVec.data[ch].getExtents()[1] : 1;
-			ZN = imgVec.data[ch].getExtents().length > 2 ? imgVec.data[ch].getExtents()[2] : 1;
+		XN = imgVec.XN;
+		YN = imgVec.YN;
+		ZN = imgVec.ZN;
 
-			if (RobustMaxThresh > 0.00001f) {
-				robustMax = robustMaximum(imgVec.data[ch], RobustMaxThresh, 2, XN, YN, ZN);
-				for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
-					if (imgVec.data[ch].getFloat(i, j, k) > robustMax) {
-						imgVec.data[ch].set(i, j, k, robustMax);
-					}
-				}
-			}
-
-			if (RobustMinThresh > 0.00001f) {
-				robustMin = robustMinimum(imgVec.data[ch], RobustMinThresh, 2, XN, YN, ZN);
-				for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
-					if (imgVec.data[ch].getFloat(i, j, k) < robustMin) {
-						imgVec.data[ch].set(i, j, k, robustMin);
-					}
+		int index;
+		int slice = XN * YN;
+		if (RobustMaxThresh > 0.00001f) {
+			robustMax = robustMaximum(imgVec.data, RobustMaxThresh, 2, XN, YN, ZN);
+			for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
+				index = k * slice + j * XN + i;
+				float val = imgVec.data[index];
+				if (val > robustMax) {
+					imgVec.data[index] = robustMax;
 				}
 			}
 		}
+
+		if (RobustMinThresh > 0.00001f) {
+			robustMin = robustMinimum(imgVec.data, RobustMinThresh, 2, XN, YN, ZN);
+			for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
+				index = k * slice + j * XN + i;
+				float val = imgVec.data[index];
+				if (val < robustMin) {
+					imgVec.data[index] = robustMin;
+				}
+			}
+		}
+
 		imgVec.calculateMaxAndMinVals();
 	}
 
@@ -210,11 +219,14 @@ public class VabraSubjectTargetPairs {
 		}
 		deformedSubject = subject.returnDeformedCopy(totalDeformField);
 		setAlltoRobustHist();
-		if ( deformedSubjectCopy != null )
-		{
-			deformedSubjectCopy.disposeLocal();
+		if ( defFieldUpdateMode == 1 )
+		{			
+			if ( deformedSubjectCopy != null )
+			{
+				deformedSubjectCopy.disposeLocal();
+			}
+			deformedSubjectCopy = deformedSubject.clone();
 		}
-		deformedSubjectCopy = deformedSubject.clone();
 		
 		// find binned copies of target and deformated subject
 		if ( targetBinned != null )
@@ -233,7 +245,6 @@ public class VabraSubjectTargetPairs {
 		calculateBoundingBox();
 		hist.updateHistograms(targetBinned,deformedSubjectBinned,boundingBox);
 	}
-
 
 	public void setResolution(float downSampleFactor) {
 
@@ -264,33 +275,41 @@ public class VabraSubjectTargetPairs {
 		target.downSample(newX, newY, newZ, sigma);
 		if (totalDeformField == null) {
 			// setup deformation fields for first time
-			totalDeformField = new ModelImage( ModelStorageBase.FLOAT, new int[]{subject.getXN(), subject.getYN(), subject.getZN(), 3}, "df" );
+			totalDeformField = new float[ subject.getXN() * subject.getYN() * subject.getZN() * 3 ];
 		} else {
 			// resample deformation fields
-			ModelImage totalDeformFieldTemp = new ModelImage( ModelStorageBase.FLOAT, new int[]{subject.getXN(), subject.getYN(), subject.getZN(), 3}, "dfTemp" );
+			float[] totalDeformFieldTemp = new float[ subject.getXN() * subject.getYN() * subject.getZN() * 3 ];
 			RegistrationUtilities.DeformationFieldResample3DM(totalDeformField, totalDeformFieldTemp, oldX, oldY, oldZ, newX, newY, newZ);
-			totalDeformField.disposeLocal();
+			totalDeformField = null;
 			totalDeformField = totalDeformFieldTemp;
 		}
+		curX = subject.getXN();
+		curY = subject.getYN();
+		curZ = subject.getZN();
 
-		if ( currentDeformField != null )
+		/*
+		if ( defFieldUpdateMode == 1 )
 		{
-			currentDeformField.disposeLocal();
-		}
-		currentDeformField = new ModelImage( ModelStorageBase.FLOAT, new int[]{subject.getXN(), subject.getYN(), subject.getZN(), 3}, "currentDeformField" );
-
-		for(int c = 0; c < totalDeformField.getExtents()[3]; c++){
-			if ( totalDeformFieldSplit[c] != null )
+			if ( currentDeformField != null )
 			{
-				totalDeformFieldSplit[c].disposeLocal();
+				currentDeformField.disposeLocal(false);
 			}
-			totalDeformFieldSplit[c] = new ModelImage( ModelStorageBase.FLOAT, new int[]{subject.getXN(), subject.getYN(), subject.getZN()}, "totalDeformFieldSplit" );
-			for(int i = 0; i < subject.getXN(); i++)
-				for(int j = 0; j < subject.getYN(); j++)
-					for(int k = 0; k < subject.getZN(); k++){
-						totalDeformFieldSplit[c].set(i, j, k, totalDeformField.getDouble(i, j, k, c));
-					}
+			currentDeformField = new ModelImage( ModelStorageBase.FLOAT, new int[]{subject.getXN(), subject.getYN(), subject.getZN(), 3}, "currentDeformField" );
+
+			for(int c = 0; c < 3; c++){
+				if ( totalDeformFieldSplit[c] != null )
+				{
+					totalDeformFieldSplit[c].disposeLocal(false);
+				}
+				totalDeformFieldSplit[c] = new ModelImage( ModelStorageBase.FLOAT, new int[]{subject.getXN(), subject.getYN(), subject.getZN()}, "totalDeformFieldSplit" );
+				for(int i = 0; i < subject.getXN(); i++)
+					for(int j = 0; j < subject.getYN(); j++)
+						for(int k = 0; k < subject.getZN(); k++){
+							totalDeformFieldSplit[c].set(i, j, k, totalDeformField.getDouble(i, j, k, c));
+						}
+			}
 		}
+		*/
 	}
 
 	VabraVolumeCollection deformedSubjectCopy;
@@ -310,10 +329,13 @@ public class VabraSubjectTargetPairs {
 	public void updateDefField(int[] regionToUpdate){
 
 		double newVec, oldVec, x, y, z;
-		int XN = totalDeformField.getExtents().length > 0 ? totalDeformField.getExtents()[0] : 1;
-		int YN = totalDeformField.getExtents().length > 1 ? totalDeformField.getExtents()[1] : 1;
-		int ZN = totalDeformField.getExtents().length > 2 ? totalDeformField.getExtents()[2] : 1;
-		int components = totalDeformField.getExtents().length > 3 ? totalDeformField.getExtents()[3] : 1;
+		int XN = curX;
+		int YN = curY;
+		int ZN = curZ;
+		int components = 3;
+		int slice = XN * YN;
+		int size = ZN * slice;
+		int index;
 
 		for(int i = regionToUpdate[0]; i <= regionToUpdate[1]; i++)
 			for(int j = regionToUpdate[2]; j <= regionToUpdate[3]; j++)
@@ -326,7 +348,9 @@ public class VabraSubjectTargetPairs {
 						for(int c = 0; c < 3; c++){
 							oldVec = RegistrationUtilities.Interpolation(totalDeformFieldSplit[c], XN, YN, ZN, x, y, z, 0);
 							newVec = currentDeformField.getFloat(i,j,k,c) + oldVec;
-							totalDeformField.set(i, j, k, c, newVec);
+							//totalDeformField.set(i, j, k, c, newVec);
+							index = c * size + k * slice + j * XN + i;
+							totalDeformField[index] = (float)newVec;
 							currentDeformField.set(i,j,k,c, 0);
 						}
 					}
@@ -337,52 +361,27 @@ public class VabraSubjectTargetPairs {
 			for(int i = regionToUpdate[0]; i <= regionToUpdate[1]; i++)
 				for(int j = regionToUpdate[2]; j <= regionToUpdate[3]; j++)
 					for(int k = regionToUpdate[4]; k <= regionToUpdate[5]; k++){
-						totalDeformFieldSplit[c].set(i, j, k, totalDeformField.getDouble(i, j, k, c));
+						index = c * size + k * slice + j * XN + i;
+						//totalDeformFieldSplit[c].set(i, j, k, totalDeformField.getDouble(i, j, k, c));
+						totalDeformFieldSplit[c].set(i, j, k, totalDeformField[index]);
 					}
 		}
 
 	}
 	
 
-	public double totalDeformFieldInterpolate(double x, double y, double z, int dim){
-		int XN = totalDeformField.getExtents().length > 0 ? totalDeformField.getExtents()[0] : 1;
-		int YN = totalDeformField.getExtents().length > 1 ? totalDeformField.getExtents()[1] : 1;
-		int ZN = totalDeformField.getExtents().length > 2 ? totalDeformField.getExtents()[2] : 1;
-		int i0, j0, k0, i1, j1, k1;
-		double dx, dy, dz, hx, hy, hz;
-		if (x < 0 || x > (XN - 1) || y < 0 || y > (YN - 1) || z < 0
-				|| z > (ZN - 1)) {
-			return 0;
-		} else {
-			j1 = (int) Math.ceil(x);
-			i1 = (int) Math.ceil(y);
-			k1 = (int) Math.ceil(z);
-			j0 = (int) Math.floor(x);
-			i0 = (int) Math.floor(y);
-			k0 = (int) Math.floor(z);
-			dx = x - j0;
-			dy = y - i0;
-			dz = z - k0;
-
-			// Introduce more variables to reduce computation
-			hx = 1.0f - dx;
-			hy = 1.0f - dy;
-			hz = 1.0f - dz;
-			// Optimized below
-			return   (((totalDeformField.getDouble(j0, i0, k0, dim) * hx + totalDeformField.getDouble(j1, i0, k0, dim) * dx) * hy 
-					+ (totalDeformField.getDouble(j0, i1, k0, dim) * hx + totalDeformField.getDouble(j1, i1, k0, dim) * dx) * dy) * hz 
-					+ ((totalDeformField.getDouble(j0, i0, k1, dim) * hx + totalDeformField.getDouble(j1, i0, k1, dim) * dx) * hy 
-							+ (totalDeformField.getDouble(j0, i1, k1, dim) * hx + totalDeformField.getDouble(j1, i1, k1, dim) * dx) * dy)* dz);
-
-		}
-	}
-
-
 	public int coarseGradientParameters() {
 		return 3; 
 	}
 
 	void reintializeFromFile() {
+		double sMin = this.subject.getMin();
+		double sMax = this.subject.getMax();
+		double sIntervals = this.subject.getIntervals();
+		
+		double tMin = this.target.getMin();
+		double tMax = this.target.getMax();
+		double tIntervals = this.target.getIntervals();
 		if ( this.subject != null )
 		{
 			this.subject.disposeLocal();
@@ -391,9 +390,10 @@ public class VabraSubjectTargetPairs {
 		{
 			this.target.disposeLocal();
 		}
-		this.subject=new VabraVolumeCollection(origSubjectList, chInterpType, numOfBins);
-		this.target=new VabraVolumeCollection(origTargetList, chInterpType, numOfBins);
-		System.gc();
+		this.subject=new VabraVolumeCollection(origSubjectList, chInterpType, numOfBins, false);
+		this.target=new VabraVolumeCollection(origTargetList, chInterpType, numOfBins, false);
+		this.subject.setMinMax( sMin, sMax, sIntervals );
+		this.target.setMinMax( tMin, tMax, tIntervals );
 	}
 
 	void calculateBoundingBox() {
@@ -411,19 +411,20 @@ public class VabraSubjectTargetPairs {
 		boundingBox[5] = 0;
 		boundingBox[4] = subject.getZN();
 
-		for (ch = 0; ch < Math.min(numOfSub,numOfTar); ch++) {
-			ModelImage sub=deformedSubject.data[ch];
-			ModelImage tar=target.data[ch];
-			for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++){
-				if ((Math.abs(sub.getDouble(i, j, k)) > 0.0000001) || (Math.abs(tar.getDouble(i, j, k)) > 0.0000001))
-				{
-					if (i < boundingBox[0]) boundingBox[0] = i;
-					if (i > boundingBox[1]) boundingBox[1] = i;
-					if (j < boundingBox[2]) boundingBox[2] = j;
-					if (j > boundingBox[3]) boundingBox[3] = j;
-					if (k < boundingBox[4]) boundingBox[4] = k;
-					if (k > boundingBox[5]) boundingBox[5] = k;
-				}
+		int slice = XN * YN;
+		int index;
+		float[] sub=deformedSubject.data;
+		float[] tar=target.data;
+		for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++){
+			index = k * slice + j * XN + i;
+			if ((Math.abs(sub[index]) > 0.0000001) || (Math.abs(tar[index]) > 0.0000001))
+			{
+				if (i < boundingBox[0]) boundingBox[0] = i;
+				if (i > boundingBox[1]) boundingBox[1] = i;
+				if (j < boundingBox[2]) boundingBox[2] = j;
+				if (j > boundingBox[3]) boundingBox[3] = j;
+				if (k < boundingBox[4]) boundingBox[4] = k;
+				if (k > boundingBox[5]) boundingBox[5] = k;
 			}
 		}
 
@@ -438,31 +439,30 @@ public class VabraSubjectTargetPairs {
 	}
 
 
-	List<ModelImage> getDeformedSubject(){
-		ArrayList<ModelImage> out = new ArrayList<ModelImage>();
-		ModelImage defSub, origSub;
-		for (int i = 0; i < numOfSub; i++){
-			
-			origSub = (ModelImage)origSubjectList.get(i);
-			defSub = (ModelImage)origSub.clone();	
+	ModelImage getDeformedSubject(){
+		ModelImage origSub= (ModelImage)origSubjectList;
 
-			int rows = origSub.getExtents().length > 0 ? origSub.getExtents()[0] : 1;
-			int cols = origSub.getExtents().length > 1 ? origSub.getExtents()[1] : 1;
-			int slices = origSub.getExtents().length > 2 ? origSub.getExtents()[2] : 1;
-			
-			RegistrationUtilities.DeformImage3D(origSub, defSub, totalDeformField, rows,
-					cols, slices, chInterpType[i]); 
-			defSub.setImageName(origSubjectList.get(i).getImageName() + "_reg");
-			defSub.calcMinMax();
-			out.add(defSub);
-		}
-		return out;
+		int rows = origSub.getExtents().length > 0 ? origSub.getExtents()[0] : 1;
+		int cols = origSub.getExtents().length > 1 ? origSub.getExtents()[1] : 1;
+		int slices = origSub.getExtents().length > 2 ? origSub.getExtents()[2] : 1;
+
+		ModelImage defSub = new ModelImage( ModelStorageBase.FLOAT, new int[]{rows,cols,slices}, "d" );
+
+		RegistrationUtilities.DeformImage3D(origSub, defSub, totalDeformField, rows,
+				cols, slices, chInterpType); 
+		defSub.setImageName(origSubjectList.getImageName() + "_reg");
+		defSub.calcMinMax();
+		return defSub;
 	}
 
 	ModelImage getDeformationField(){
-		totalDeformField.setImageName(origSubjectList.get(0).getImageName()+"_def_field");
-		totalDeformField.calcMinMax();
-		return totalDeformField;
+		ModelImage defField = new ModelImage( ModelStorageBase.FLOAT, new int[]{curX, curY, curZ, 3}, origSubjectList.getImageName()+"_def_field");
+		try {
+			defField.importData( 0, totalDeformField, true );
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return defField;
 	}
 	
 	public int[] getBoundingBox() {
@@ -476,21 +476,25 @@ public class VabraSubjectTargetPairs {
 	 *    @param 	scales	int: the number of times the scale is refined for finding the robust minimum
 	 *	  @return 			the robust minimum value	
      */
-    public static final float robustMinimum(ModelImage image, float ratio, int scales, int nx, int ny, int nz ) {
+    public static final float robustMinimum(float[] image, float ratio, int scales, int nx, int ny, int nz ) {
 		float Imin,Imax,Rmin;
 		int Nbins = 10;
 		float[] bins = new float[Nbins];
 		float count;
 		int n;
+		int index;
+		int slice = nx * ny;
 		
 		// ratio: global value
 		ratio = ratio*nx*ny*nz;
 		
 		// find first min, max
-		Imin = image.getFloat(0,0,0);
-		Imax = image.getFloat(0,0,0);
+		Imin = image[0];
+		Imax = image[0];
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
-			float val = image.getFloat(x,y,z);
+			//float val = image.getFloat(x,y,z);
+			index = z *slice + y * nx + x;
+			float val = image[index];
 			if (val>Imax) Imax = val;
 			if (val<Imin) Imin = val;
 		}
@@ -504,7 +508,9 @@ public class VabraSubjectTargetPairs {
 			for (n=0;n<Nbins;n++) bins[n] = 0;
 			
 			for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
-				float val = image.getFloat(x,y,z);
+				//float val = image.getFloat(x,y,z);
+				index = z *slice + y * nx + x;
+				float val = image[index];
 				// first one include both boundaries 
 				if (  (val >= Imin )
 					&&(val <= Imin + 1.0f/(float)Nbins*(Imax-Imin) ) ) bins[0]++;
@@ -544,21 +550,25 @@ public class VabraSubjectTargetPairs {
 	 *	  @param	nx,ny,nz	image dimensions
 	 *	  @return 			the robust maximum value	
      */
-    public static final float robustMaximum(ModelImage image, float ratio, int scales, int nx, int ny, int nz ) {
+    public static final float robustMaximum(float[] image, float ratio, int scales, int nx, int ny, int nz ) {
 		float Imin,Imax,Rmax;
 		int Nbins = 10;
 		float[] bins = new float[Nbins];
 		float count;
 		int n;
+		int index;
+		int slice = nx * ny;
 		
 		// ratio: global value
 		ratio = ratio*nx*ny*nz;
 		
 		// find first min, max
-		Imin = image.getFloat(0, 0, 0);
-		Imax = image.getFloat(0, 0, 0);
+		Imin = image[0];
+		Imax = image[0];
 		for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
-			float val = image.getFloat(x,y,z);
+			//float val = image.getFloat(x,y,z);
+			index = z *slice + y * nx + x;
+			float val = image[index];
 			if (val>Imax) Imax = val;
 			if (val<Imin) Imin = val;
 		}
@@ -572,7 +582,9 @@ public class VabraSubjectTargetPairs {
 			for (n=0;n<Nbins;n++) bins[n] = 0;
 			
 			for (int x=0;x<nx;x++) for (int y=0;y<ny;y++) for (int z=0;z<nz;z++) {
-				float val = image.getFloat(x,y,z);
+				//float val = image.getFloat(x,y,z);
+				index = z *slice + y * nx + x;
+				float val = image[index];
 				// first one include both boundaries 
 				if (  (val >= Imin )
 					&&(val <= Imin + 1.0f/(float)Nbins*(Imax-Imin) ) ) bins[0]++;

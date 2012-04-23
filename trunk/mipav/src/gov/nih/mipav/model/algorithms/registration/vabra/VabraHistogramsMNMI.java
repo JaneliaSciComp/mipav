@@ -49,13 +49,16 @@ public class VabraHistogramsMNMI extends VabraHistograms{
 			// initializeHistograms();
 		}
 		for(int ch = 0; ch < numOfSub; ch++){
-			RegistrationUtilities.Histogram3D(normedDeformedSubject.data[ch], numOfBins, boundingBox, origDeformedSubject[ch]);
+			RegistrationUtilities.Histogram3D(normedDeformedSubject.data, numOfBins, boundingBox, origDeformedSubject[ch],
+					normedDeformedSubject.getXN(), normedDeformedSubject.getYN(), normedDeformedSubject.getZN() );
 		}
 		for(int ch = 0; ch < numOfTar; ch++){
-			RegistrationUtilities.Histogram3D(normedTarget.data[ch], numOfBins, boundingBox, origTarget[ch]);
+			RegistrationUtilities.Histogram3D(normedTarget.data, numOfBins, boundingBox, origTarget[ch],
+			normedTarget.getXN(), normedTarget.getYN(), normedTarget.getZN() );
 		}
 			
-		origJointST.fillJointHistogram(normedDeformedSubject.data,normedTarget.data, boundingBox);
+		origJointST.fillJointHistogram(normedDeformedSubject.data,normedTarget.data, boundingBox,
+				normedDeformedSubject.getXN(), normedDeformedSubject.getYN(), normedDeformedSubject.getZN() );
 	}
 	
 	
@@ -120,7 +123,7 @@ public class VabraHistogramsMNMI extends VabraHistograms{
 			if (x < subject.getXN() && x >= 0 && y < subject.getYN() && y >= 0 && z < subject.getZN() && z >= 0) {
 				subject.interpolate(x, y, z, testValsD);
 			} else {
-				for (int ch = 0; ch < numOfSub; ch++) testValsD[ch] = subject.minValsD[ch];
+				for (int ch = 0; ch < numOfSub; ch++) testValsD[ch] = subject.minValsD;
 			}
 			
 			for (int ch = 0; ch < numOfSub; ch++) {
