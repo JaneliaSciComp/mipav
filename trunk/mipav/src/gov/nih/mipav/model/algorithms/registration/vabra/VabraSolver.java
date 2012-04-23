@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 public class VabraSolver {
 	private ArrayList<Integer> downSampleFactor; //list of resolutions at which to register the images
