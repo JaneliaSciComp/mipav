@@ -57,6 +57,29 @@ I hope that this helps and does not only add confusion.
 Kind regards,
 Hakim
 
+Email from MRI manufacturer neusoft supports using random phase for Rician noise generation:
+FW: NIH questions FW: MRI phase characterization
+
+Dear Keith
+
+There are several key points about the questions as below:
+1)	About Quadrature coils, the two coils are orthogonally orientated having 90 degree phase difference to maximizing the SNR.
+ We do not adjust the phase difference between the 2 coils to 45 degrees just before combining them into a magnitude signal.
+2)	About a complex signal, the phases of a set of actual data of MRI not simulation  is usually not the only 45 degree.
+3)	About noise, it be added to the real and imaginary parts of the signal  respectively is benefit to getting Rician noise.
+
+FYI.
+Best Regards,
+Polly Yang
+Software Team Leader, MR R&D Department
+Philips and Neusoft Medical Systems Co.,Ltd.
+No.16 Century Road, Hun Nan New District Shenyang 110179, PRC
+Tel: (86 24)8366 0778
+Fax: (86 24)8366 1915
+Mobile: (86)13940069636
+Email: yangp@neusoft.com
+
+
  * Rician noise is not additive, but is instead data dependent.  Let a be the original noiseless data value,
  * and x and y be gaussian random variables with zero mean and identical standard deviations sigma.  Then with a 
  * uniformly distributed theta the resulting value m = sqrt((a*cos(theta) + x)**2 + (a*sin(theta) + y)**2) 
