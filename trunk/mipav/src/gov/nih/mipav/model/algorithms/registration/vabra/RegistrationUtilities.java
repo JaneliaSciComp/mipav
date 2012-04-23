@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
+import gov.nih.mipav.model.algorithms.registration.vabra.RegistrationUtilities.InterpolationType;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 
@@ -20,9 +21,11 @@ public class RegistrationUtilities {
 
 	/* imA is assumed to be from 0 and numBin-1 */
 	/* imB is assumed to be from 0 and numBin-1 */
-	public static void JointHistogram3D(ModelImage imA, ModelImage imB,
-			int numBin, int[] roi, int[][] jointHist) {
+	public static void JointHistogram3D(float[] imA, float[] imB,
+			int numBin, int[] roi, int[][] jointHist, int XN, int YN, int ZN) {
 		int i, j, k, binA, binB;
+		int index;
+		int slice = XN * YN;
 		for (j = 0; j < numBin; j++) {
 			for (i = 0; i < numBin; i++) {
 				jointHist[j][i] = 0;
@@ -31,12 +34,15 @@ public class RegistrationUtilities {
 		for (k = roi[4]; k <= roi[5]; k++) {
 			for (j = roi[2]; j <= roi[3]; j++) {
 				for (i = roi[0]; i <= roi[1]; i++) {
-					binA = imA.getUByte(i, j, k);
+					index = k * slice + j * XN + i;
+					binA = ((short) ((int) imA[index] & 0xff));
+					//binA = imA.getUByte(i, j, k);
 					if (binA >= numBin)
 						binA = numBin - 1;
 					if (binA < 0)
 						binA = 0;
-					binB = imB.getUByte(i, j, k);
+					binB = ((short) ((int) imB[index] & 0xff));
+					//binB = imB.getUByte(i, j, k);
 					if (binB >= numBin)
 						binB = numBin - 1;
 					if (binB < 0)
@@ -47,23 +53,26 @@ public class RegistrationUtilities {
 		}
 	}
 
-	public static void JointHistogram3D(ModelImage imA[], ModelImage imB[],
-			int channel, int numBin, int[] roi, int[][][] jointHist) {
-		JointHistogram3D(imA[channel], imB[channel], numBin, roi,
-				jointHist[channel]);
+	public static void JointHistogram3D(float[] imA, float[] imB,
+			int channel, int numBin, int[] roi, int[][][] jointHist, int XN, int YN, int ZN) {
+		JointHistogram3D(imA, imB, numBin, roi,
+				jointHist[channel], XN, YN, ZN);
 	}
 
 	/* the max value is assumed to be numBin-1, and min value 0 */
-	public static void Histogram3D(ModelImage im, int numBin, int[] roi,
-			int[] hist) {
+	public static void Histogram3D(float[] im, int numBin, int[] roi,
+			int[] hist, int XN, int YN, int ZN) {
 		int i, j, k;
 		int bin;
+		int index;
+		int slice = XN * YN;
 		for (i = 0; i < numBin; i++)
 			hist[i] = 0;
 		for (k = roi[4]; k <= roi[5]; k++) {
 			for (j = roi[2]; j <= roi[3]; j++) {
 				for (i = roi[0]; i <= roi[1]; i++) {
-					bin = im.getUByte(i, j, k);
+					index = k * slice + j * XN + i;
+					bin = ((short) ((int) im[index] & 0xff));
 					if (bin >= numBin)
 						bin = numBin - 1;
 					if (bin < 0)
@@ -74,91 +83,79 @@ public class RegistrationUtilities {
 		}
 	}
 
-	public static void Histogram3D(ModelImage im[], int channel, int numBin,
-			int[] roi, int[][] hist) {
-		Histogram3D(im[channel], numBin, roi, hist[channel]);
+	public static void Histogram3D(float[] im, int channel, int numBin,
+			int[] roi, int[][] hist, int XN, int YN, int ZN) {
+		Histogram3D(im, numBin, roi, hist[channel], XN, YN, ZN);
 
 	}
 	
-	public static ModelImage DeformImageFloat3D(ModelImage im,
-			ModelImage DF) {	
-		int rows = im.getExtents().length > 0 ? im.getExtents()[0] : 1;
-		int cols = im.getExtents().length > 1 ? im.getExtents()[1] : 1;
-		int slices = im.getExtents().length > 2 ? im.getExtents()[2] : 1;				
-		ModelImage vol = new ModelImage( ModelStorageBase.FLOAT, new int[]{rows, cols, slices}, im.getImageName() + "_def");
-		DeformImage3D(im, vol, DF, rows, cols, slices, RegistrationUtilities.InterpolationType.TRILINEAR);
-		return vol;
-	}
-	 
-	public static ModelImage DeformImage3D(ModelImage im, ModelImage DF, int type) {
-		int rows = im.getExtents().length > 0 ? im.getExtents()[0] : 1;
-		int cols = im.getExtents().length > 1 ? im.getExtents()[1] : 1;
-		int slices = im.getExtents().length > 2 ? im.getExtents()[2] : 1;
-		ModelImage vol = new ModelImage( ModelStorageBase.FLOAT, new int[]{rows, cols, slices}, im.getImageName() + "_def");
-		DeformImage3D(im, vol, DF, rows, cols, slices, type);
-		return vol;
-	}
-
-	public static void DeformImage3D(ModelImage im, ModelImage deformedIm,
-			ModelImage DF, int sizeX, int sizeY, int sizeZ, int type) {
-		int i, j, k;
+	public static void DeformImage3D(float[] im, float[] deformedIm,
+			float[] DF, int sizeX, int sizeY, int sizeZ, int type) {
+		int i, j, k, index;
+		int size = sizeX * sizeY * sizeZ;
+		int slice = sizeX * sizeY;
 		for (i = 0; i < sizeX; i++) for (j = 0; j < sizeY; j++) for (k = 0; k < sizeZ; k++) {
-			if (DF.getFloat(i,j,k,0) != 0 || DF.getFloat(i,j,k,1) != 0
-					|| DF.getFloat(i,j,k,2) != 0) {
-				deformedIm.set(i, j, k, Interpolation(im, sizeX,
-						sizeY, sizeZ, i + DF.getFloat(i,j,k,0), j
-						+ DF.getFloat(i,j,k,1), k
-						+ DF.getFloat(i,j,k,2), type));
+			index = k * slice + j * sizeX + i;
+			if (DF[index] != 0 || DF[size + index]!= 0
+					|| DF[size * 2 + index] != 0) {
+				deformedIm[index] =  (float) Interpolation(im, sizeX,
+						sizeY, sizeZ, i + DF[index], j
+						+ DF[size + index], k
+						+ DF[size * 2 + index], type);
 			} else {
-				deformedIm.set(i, j, k, im.getDouble(i, j, k));
+				deformedIm[index] = im[index];
+			}
+		}
+	}
+	
+	public static void DeformImage3D(ModelImage im, ModelImage deformedIm,
+			float[] DF, int sizeX, int sizeY, int sizeZ, int type) {
+		int i, j, k, index;
+		int size = sizeX * sizeY * sizeZ;
+		int slice = sizeX * sizeY;
+		for (i = 0; i < sizeX; i++) for (j = 0; j < sizeY; j++) for (k = 0; k < sizeZ; k++) {
+			index = k * slice + j * sizeX + i;
+			if (DF[index] != 0 || DF[size + index]!= 0
+					|| DF[size * 2 + index] != 0) {
+				deformedIm.set( index,  (float) Interpolation(im, sizeX,
+						sizeY, sizeZ, i + DF[index], j
+						+ DF[size + index], k
+						+ DF[size * 2 + index], type) );
+			} else {
+				deformedIm.set( index, im.getFloat(index) );
 			}
 		}
 	}
 
 	
-	public static void DeformationFieldResample3DM(ModelImage oldDF,
-			ModelImage newDF, int oldSizeX, int oldSizeY, int oldSizeZ,
+	public static void DeformationFieldResample3DM(float[] oldDF,
+			float[] newDF, int oldSizeX, int oldSizeY, int oldSizeZ,
 			int newSizeX, int newSizeY, int newSizeZ) {
 
 		int i, j, k, dim;
-		float x, y, z;
+		double x, y, z;
 		float ratio[] = new float[3];
-		//		ratio[0] = (float) Math.floor((float) newSizeX / oldSizeX + 0.5);
-		//		ratio[1] = (float) Math.floor((float) newSizeY / oldSizeY + 0.5);
-		//		ratio[2] = (float) Math.floor((float) newSizeZ / oldSizeZ + 0.5);
 
 		ratio[0] = (float) newSizeX / oldSizeX;
 		ratio[1] = (float) newSizeY / oldSizeY;
 		ratio[2] = (float) newSizeZ / oldSizeZ;
-
-
-		ModelImage oldDFX = new ModelImage(ModelStorageBase.FLOAT, new int[]{oldSizeX, oldSizeY, oldSizeZ}, "oldDFX");
-		ModelImage oldDFY = new ModelImage(ModelStorageBase.FLOAT, new int[]{oldSizeX, oldSizeY, oldSizeZ}, "oldDFY");
-		ModelImage oldDFZ = new ModelImage(ModelStorageBase.FLOAT, new int[]{oldSizeX, oldSizeY, oldSizeZ}, "oldDFZ");
 		
-		
-		for(i=0; i < oldSizeX; i++) for(j=0; j < oldSizeY; j++) for(k=0; k < oldSizeZ; k++){
-			oldDFX.set(i,j,k, oldDF.getFloat(i,j,k,0));
-			oldDFY.set(i,j,k, oldDF.getFloat(i,j,k,1));
-			oldDFZ.set(i,j,k, oldDF.getFloat(i,j,k,2));
-		}
-
+		int size = newSizeZ * newSizeY * newSizeX;
+		int slice = newSizeX * newSizeY;
+		int index;
 		for (i = 0; i < newSizeX; i++) {
 			x = ((i+1) / ratio[0])-1;
 			for (j = 0; j < newSizeY; j++) {
 				y = ((j+1) / ratio[1])-1;
 				for (k = 0; k < newSizeZ; k++) {
 					z = ((k+1) / ratio[2])-1;
-					newDF.set(i,j,k,0, (float) (Interpolation(oldDFX, oldSizeX, oldSizeY, oldSizeZ, x, y, z, InterpolationType.TRILINEAR) * ratio[0]));
-					newDF.set(i,j,k,1, (float) (Interpolation(oldDFY, oldSizeX, oldSizeY, oldSizeZ, x, y, z, InterpolationType.TRILINEAR) * ratio[1]));
-					newDF.set(i,j,k,2, (float) (Interpolation(oldDFZ, oldSizeX, oldSizeY, oldSizeZ, x, y, z, InterpolationType.TRILINEAR) * ratio[2]));
+					index = k * slice + j * newSizeX + i;
+					newDF[index] = (float) (Interpolation(oldDF, oldSizeX, oldSizeY, oldSizeZ, x, y, z, 0, InterpolationType.TRILINEAR) * ratio[0]);
+					newDF[size + index] = (float) (Interpolation(oldDF, oldSizeX, oldSizeY, oldSizeZ, x, y, z, 1, InterpolationType.TRILINEAR) * ratio[1]);
+					newDF[size * 2 + index] =  (float) (Interpolation(oldDF, oldSizeX, oldSizeY, oldSizeZ, x, y, z, 2, InterpolationType.TRILINEAR) * ratio[2]);
 				}
 			}
 		}
-
-		oldDFX.disposeLocal();
-		oldDFY.disposeLocal();
-		oldDFZ.disposeLocal();
 	}
 
 
@@ -191,6 +188,21 @@ public class RegistrationUtilities {
 
 
 
+	public static double Interpolation(float[] oldV, int XN, int YN,
+			int ZN, double x, double y, double z, int c, int type) {
+		switch(type){
+
+		case InterpolationType.TRILINEAR: //Trilinear
+			return TrilinearInterpolation(oldV, XN, YN,	ZN, x, y, z, c);
+		case InterpolationType.NEAREST_NEIGHTBOR: //Nearest Neighbor
+			return NNInterpolation(oldV, XN, YN, ZN, x, y, z, c);
+		default:
+			return 0;
+		}
+	}
+	
+
+
 	public static double Interpolation(ModelImage oldV, int XN, int YN,
 			int ZN, double x, double y, double z, int type) {
 		switch(type){
@@ -205,13 +217,27 @@ public class RegistrationUtilities {
 
 	}
 
+
+	public static double Interpolation(float[] oldV, int XN, int YN,
+			int ZN, double x, double y, double z, int type) {
+		switch(type){
+
+		case InterpolationType.TRILINEAR: //Trilinear
+			return TrilinearInterpolation(oldV, XN, YN,	ZN, x, y, z);
+		case InterpolationType.NEAREST_NEIGHTBOR: //Nearest Neighbor
+			return NNInterpolation(oldV, XN, YN, ZN, x, y, z);
+		default:
+			return 0;
+		}
+	}
+
 	public static class InterpolationType{
 		public static final int TRILINEAR = 0;
 		public static final int NEAREST_NEIGHTBOR = 1;
 	}
 
 	// Nearest Neighbor interpolation
-	public static double NNInterpolation(ModelImage oldV, int XN, int YN, int ZN,
+	public static double NNInterpolation(float[] oldV, int XN, int YN, int ZN,
 			double x, double y, double z) {
 		double d000 = 0.0, d001 = 0.0, d010 = 0.0, d011 = 0.0;
 		double d100 = 0.0, d101 = 0.0, d110 = 0.0, d111 = 0.0;
@@ -249,41 +275,50 @@ public class RegistrationUtilities {
 					(double) x1);
 
 			dist = d000;
-			value = oldV.getDouble(x0, y0, z0);
+			int slice = XN * YN;
+			//value = oldV.getDouble(x0, y0, z0);
+			value = oldV[z0 * slice + y0 * XN + x0];
 
 			if (dist > d001) {
 				dist = d001;
-				value = oldV.getDouble(x0, y0, z1);
+				//value = oldV.getDouble(x0, y0, z1);
+				value = oldV[z1 * slice + y0 * XN + x0];
 			}
 
 			if (dist > d010) {
 				dist = d010;
-				value = oldV.getDouble(x0, y1, z0);
+				//value = oldV.getDouble(x0, y1, z0);
+				value = oldV[z0 * slice + y1 * XN + x0];
 			}
 
 			if (dist > d011) {
 				dist = d011;
-				value = oldV.getDouble(x0, y1, z1);
+				//value = oldV.getDouble(x0, y1, z1);
+				value = oldV[z1 * slice + y1 * XN + x0];
 			}
 
 			if (dist > d100) {
 				dist = d100;
-				value = oldV.getDouble(x1, y0, z0);
+				//value = oldV.getDouble(x1, y0, z0);
+				value = oldV[z0 * slice + y0 * XN + x1];
 			}
 
 			if (dist > d101) {
 				dist = d101;
-				value = oldV.getDouble(x1, y0, z1);
+				//value = oldV.getDouble(x1, y0, z1);
+				value = oldV[z1 * slice + y0 * XN + x1];
 			}
 
 			if (dist > d110) {
 				dist = d110;
-				value = oldV.getDouble(x1, y1, z0);
+				//value = oldV.getDouble(x1, y1, z0);
+				value = oldV[z0 * slice + y1 * XN + x1];
 			}
 
 			if (dist > d111) {
 				dist = d111;
-				value = oldV.getDouble(x1, y1, z1);
+				//value = oldV.getDouble(x1, y1, z1);
+				value = oldV[z1 * slice + y1 * XN + x1];
 			}
 
 			return value;
@@ -292,6 +327,99 @@ public class RegistrationUtilities {
 		}
 	}	
 
+	public static double NNInterpolation(float[] oldV, int XN, int YN, int ZN,
+			double x, double y, double z, int c) {
+		double d000 = 0.0, d001 = 0.0, d010 = 0.0, d011 = 0.0;
+		double d100 = 0.0, d101 = 0.0, d110 = 0.0, d111 = 0.0;
+		double value = 0.0, dist = 0.0;
+		int x0 = (int) x, y0 = (int) y, z0 = (int) z;
+		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
+
+		/*
+		if (x == (double) (XN - 1))
+			x1 = XN - 1;
+		if (y == (double) (YN - 1))
+			y1 = YN - 1;
+		if (z == (double) (ZN - 1))
+			z1 = ZN - 1;
+		 */
+
+		int slice = XN * YN;
+		int vol = c * slice * ZN;
+		
+		if (!((x0 < 0) || (x1 > (XN - 1)) || (y0 < 0) || (y1 > (YN - 1))
+				|| (z0 < 0) || (z1 > (ZN - 1)))) {
+			d000 = DoubleDistance(z, y, x, (double) z0, (double) y0,
+					(double) x0);
+			d100 = DoubleDistance(z, y, x, (double) z0, (double) y0,
+					(double) x1);
+			d010 = DoubleDistance(z, y, x, (double) z0, (double) y1,
+					(double) x0);
+			d110 = DoubleDistance(z, y, x, (double) z0, (double) y1,
+					(double) x1);
+
+			d001 = DoubleDistance(z, y, x, (double) z1, (double) y0,
+					(double) x0);
+			d101 = DoubleDistance(z, y, x, (double) z1, (double) y0,
+					(double) x1);
+			d011 = DoubleDistance(z, y, x, (double) z1, (double) y1,
+					(double) x0);
+			d111 = DoubleDistance(z, y, x, (double) z1, (double) y1,
+					(double) x1);
+
+			dist = d000;
+			//value = oldV.getDouble(x0, y0, z0, c);
+			value = oldV[vol + z0 * slice + y0 * XN + x0];
+
+			if (dist > d001) {
+				dist = d001;
+				//value = oldV.getDouble(x0, y0, z1, c);
+				value = oldV[vol + z1 * slice + y0 * XN + x0];
+			}
+
+			if (dist > d010) {
+				dist = d010;
+				//value = oldV.getDouble(x0, y1, z0, c);
+				value = oldV[vol + z0 * slice + y1 * XN + x0];
+			}
+
+			if (dist > d011) {
+				dist = d011;
+				//value = oldV.getDouble(x0, y1, z1, c);
+				value = oldV[vol + z1 * slice + y1 * XN + x0];
+			}
+
+			if (dist > d100) {
+				dist = d100;
+				//value = oldV.getDouble(x1, y0, z0, c);
+				value = oldV[vol + z0 * slice + y0 * XN + x1];
+			}
+
+			if (dist > d101) {
+				dist = d101;
+				//value = oldV.getDouble(x1, y0, z1, c);
+				value = oldV[vol + z1 * slice + y0 * XN + x1];
+			}
+
+			if (dist > d110) {
+				dist = d110;
+				//value = oldV.getDouble(x1, y1, z0, c);
+				value = oldV[vol + z0 * slice + y1 * XN + x1];
+			}
+
+			if (dist > d111) {
+				dist = d111;
+				//value = oldV.getDouble(x1, y1, z1, c);
+				value = oldV[vol + z1 * slice + y1 * XN + x1];
+			}
+
+			return value;
+		} else {
+			return 0;
+		}
+	}	
+	
+	
 	// Nearest Neighbor interpolation Boolean
 	public static boolean NNInterpolationBool(boolean[][][] oldV, int XN, int YN, int ZN,
 			double x, double y, double z) {
@@ -482,6 +610,101 @@ public class RegistrationUtilities {
 		return valAndLoc;
 	}	
 
+	public static double TrilinearInterpolation(float[] oldV, int XN, int YN,
+			int ZN, double x, double y, double z) {
+		int i0, j0, k0, i1, j1, k1;
+		double dx, dy, dz, hx, hy, hz;
+		if (x < 0 || x > (XN - 1) || y < 0 || y > (YN - 1) || z < 0
+				|| z > (ZN - 1)) {
+			return 0;
+		} else {
+			j1 = (int) Math.ceil(x);
+			i1 = (int) Math.ceil(y);
+			k1 = (int) Math.ceil(z);
+			j0 = (int) Math.floor(x);
+			i0 = (int) Math.floor(y);
+			k0 = (int) Math.floor(z);
+			dx = x - j0;
+			dy = y - i0;
+			dz = z - k0;
+
+			// Introduce more variables to reduce computation
+			hx = 1.0f - dx;
+			hy = 1.0f - dy;
+			hz = 1.0f - dz;
+			// Optimized below
+			int slice = XN * YN;
+			return   (
+					//((oldV.getDouble(j0, i0, k0) * hx + 
+							((oldV[k0 * slice + i0 * XN + j0] * hx + 
+									//oldV.getDouble(j1, i0, k0) * dx) * hy 
+									oldV[k0 * slice + i0 * XN + j1] * dx) * hy 
+									//+ (oldV.getDouble(j0, i1, k0) * hx + 
+											+ (oldV[k0 * slice + i1 * XN + j0] * hx + 
+													//oldV.getDouble(j1, i1, k0) * dx) * dy) * hz 
+													oldV[k0 * slice + i1 * XN + j1] * dx) * dy) * hz 
+													//+ ((oldV.getDouble(j0, i0, k1) * hx + 
+															+ ((oldV[k1 * slice + i0 * XN + j0] * hx + 
+																	//oldV.getDouble(j1, i0, k1) * dx) * hy  
+																	oldV[k1 * slice + i0 * XN + j1] * dx) * hy 
+																	//+ (oldV.getDouble(j0, i1, k1) * hx + 
+																			+ (oldV[k1 * slice + i1 * XN + j0] * hx + 
+																					//oldV.getDouble(j1, i1, k1) * dx) * dy)* dz
+																					oldV[k1 * slice + i1 * XN + j1] * dx) * dy)* dz
+									);
+
+		}
+	}
+
+	public static double TrilinearInterpolation(float[] oldV, int XN, int YN,
+			int ZN, double x, double y, double z, int c) {
+		int i0, j0, k0, i1, j1, k1;
+		double dx, dy, dz, hx, hy, hz;
+		if (x < 0 || x > (XN - 1) || y < 0 || y > (YN - 1) || z < 0
+				|| z > (ZN - 1)) {
+			return 0;
+		} else {
+			j1 = (int) Math.ceil(x);
+			i1 = (int) Math.ceil(y);
+			k1 = (int) Math.ceil(z);
+			j0 = (int) Math.floor(x);
+			i0 = (int) Math.floor(y);
+			k0 = (int) Math.floor(z);
+			dx = x - j0;
+			dy = y - i0;
+			dz = z - k0;
+
+			// Introduce more variables to reduce computation
+			hx = 1.0f - dx;
+			hy = 1.0f - dy;
+			hz = 1.0f - dz;
+
+			int slice = XN * YN;
+			int vol = c * slice * ZN;
+			// Optimized below
+			return   (
+					//((oldV.getDouble(j0, i0, k0) * hx + 
+							((oldV[vol + k0 * slice + i0 * XN + j0] * hx + 
+									//oldV.getDouble(j1, i0, k0) * dx) * hy 
+									oldV[vol + k0 * slice + i0 * XN + j1] * dx) * hy 
+									//+ (oldV.getDouble(j0, i1, k0) * hx + 
+											+ (oldV[vol + k0 * slice + i1 * XN + j0] * hx + 
+													//oldV.getDouble(j1, i1, k0) * dx) * dy) * hz 
+													oldV[vol + k0 * slice + i1 * XN + j1] * dx) * dy) * hz 
+													//+ ((oldV.getDouble(j0, i0, k1) * hx + 
+															+ ((oldV[vol + k1 * slice + i0 * XN + j0] * hx + 
+																	//oldV.getDouble(j1, i0, k1) * dx) * hy  
+																	oldV[vol + k1 * slice + i0 * XN + j1] * dx) * hy 
+																	//+ (oldV.getDouble(j0, i1, k1) * hx + 
+																			+ (oldV[vol + k1 * slice + i1 * XN + j0] * hx + 
+																					//oldV.getDouble(j1, i1, k1) * dx) * dy)* dz
+																					oldV[vol + k1 * slice + i1 * XN + j1] * dx) * dy)* dz
+									);
+
+		}
+	}
+	
+
 	public static double TrilinearInterpolation(ModelImage oldV, int XN, int YN,
 			int ZN, double x, double y, double z) {
 		int i0, j0, k0, i1, j1, k1;
@@ -512,6 +735,89 @@ public class RegistrationUtilities {
 
 		}
 	}
+
+
+	public static double NNInterpolation(ModelImage oldV, int XN, int YN, int ZN,
+			double x, double y, double z) {
+		double d000 = 0.0, d001 = 0.0, d010 = 0.0, d011 = 0.0;
+		double d100 = 0.0, d101 = 0.0, d110 = 0.0, d111 = 0.0;
+		double value = 0.0, dist = 0.0;
+		int x0 = (int) x, y0 = (int) y, z0 = (int) z;
+		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
+
+		/*
+		if (x == (double) (XN - 1))
+			x1 = XN - 1;
+		if (y == (double) (YN - 1))
+			y1 = YN - 1;
+		if (z == (double) (ZN - 1))
+			z1 = ZN - 1;
+		 */
+
+		if (!((x0 < 0) || (x1 > (XN - 1)) || (y0 < 0) || (y1 > (YN - 1))
+				|| (z0 < 0) || (z1 > (ZN - 1)))) {
+			d000 = DoubleDistance(z, y, x, (double) z0, (double) y0,
+					(double) x0);
+			d100 = DoubleDistance(z, y, x, (double) z0, (double) y0,
+					(double) x1);
+			d010 = DoubleDistance(z, y, x, (double) z0, (double) y1,
+					(double) x0);
+			d110 = DoubleDistance(z, y, x, (double) z0, (double) y1,
+					(double) x1);
+
+			d001 = DoubleDistance(z, y, x, (double) z1, (double) y0,
+					(double) x0);
+			d101 = DoubleDistance(z, y, x, (double) z1, (double) y0,
+					(double) x1);
+			d011 = DoubleDistance(z, y, x, (double) z1, (double) y1,
+					(double) x0);
+			d111 = DoubleDistance(z, y, x, (double) z1, (double) y1,
+					(double) x1);
+
+			dist = d000;
+			value = oldV.getDouble(x0, y0, z0);
+
+			if (dist > d001) {
+				dist = d001;
+				value = oldV.getDouble(x0, y0, z1);
+			}
+
+			if (dist > d010) {
+				dist = d010;
+				value = oldV.getDouble(x0, y1, z0);
+			}
+
+			if (dist > d011) {
+				dist = d011;
+				value = oldV.getDouble(x0, y1, z1);
+			}
+
+			if (dist > d100) {
+				dist = d100;
+				value = oldV.getDouble(x1, y0, z0);
+			}
+
+			if (dist > d101) {
+				dist = d101;
+				value = oldV.getDouble(x1, y0, z1);
+			}
+
+			if (dist > d110) {
+				dist = d110;
+				value = oldV.getDouble(x1, y1, z0);
+			}
+
+			if (dist > d111) {
+				dist = d111;
+				value = oldV.getDouble(x1, y1, z1);
+			}
+
+			return value;
+		} else {
+			return 0;
+		}
+	}	
+
 
 
 	public static double TrilinearInterpolateDefField(ModelImage defField, int XN, int YN,

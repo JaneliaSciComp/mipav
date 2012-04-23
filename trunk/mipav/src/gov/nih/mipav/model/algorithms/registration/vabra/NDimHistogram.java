@@ -106,11 +106,14 @@ public class NDimHistogram extends IntensityHistogram{
 	}	
 	
 	//given subject and target images, fill up the joint histogram
-	public void fillJointHistogram(ModelImage[] subjects, ModelImage[] targets, int[] boundingBox){
+	public void fillJointHistogram(float[] subjects, float[] targets, int[] boundingBox, int XN, int YN, int ZN){
 		if((subjects.length != numOfSub) || (targets.length != numOfTar)){
 			System.out.format("Subjects/Target Length Does Not Match Histogram Size\n");
 			return;
 		}
+
+		int index;
+		int slice = XN * YN;
 		
 		int[] subIndexes = new int[subjects.length];
 		int[] tarIndexes = new int[targets.length];
@@ -121,9 +124,11 @@ public class NDimHistogram extends IntensityHistogram{
 			for (int j = boundingBox[2]; j <= boundingBox[3]; j++) 
 				for (int k = boundingBox[4]; k <= boundingBox[5]; k++) {
 
+					index = k * slice + j * XN + i;
 					//get bin index for all subjects
-					for(int ch = 0; ch < subjects.length; ch++ ){
-						bin = subjects[ch].getUByte(i, j, k);
+					//for(int ch = 0; ch < subjects.length; ch++ ){
+						//bin = subjects[ch].getUByte(i, j, k);
+						bin = ((short) ((int) subjects[index] & 0xff));
 						
 						//Make sure is in bounds
 						if (bin >= numOfBins){
@@ -134,12 +139,13 @@ public class NDimHistogram extends IntensityHistogram{
 							bin = 0;
 							System.out.format("Value outside of bin range\n");
 						}
-						subIndexes[ch] = bin;
-					}
+						subIndexes[0] = bin;
+					//}
 					
 					//get bin index for all targets
-					for(int ch = 0; ch < targets.length; ch++ ){
-						bin = targets[ch].getUByte(i, j, k);
+					//for(int ch = 0; ch < targets.length; ch++ ){
+						//bin = targets[ch].getUByte(i, j, k);
+						bin = ((short) ((int) targets[index] & 0xff));
 						
 						//Make sure is in bounds
 						if (bin >= numOfBins){
@@ -150,8 +156,8 @@ public class NDimHistogram extends IntensityHistogram{
 							bin = 0;
 							System.out.format("Value outside of bin range\n");
 						}
-						tarIndexes[ch] = bin;
-					}
+						tarIndexes[0] = bin;
+					//}
 					
 					//increment bin
 					increment(subIndexes,tarIndexes);

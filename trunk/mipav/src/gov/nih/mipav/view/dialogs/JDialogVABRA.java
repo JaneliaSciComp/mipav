@@ -96,14 +96,8 @@ public class JDialogVABRA extends JDialogBase implements AlgorithmInterface {
 		// if you pass in null as the second argument it will extract the B0 image to use as the subject:
 		vabra.solve( imageA, imageB );
 		// Opens the Deformation Field in a window:
-		new ViewJFrameImage( vabra.getDeformationField() );
-		
-		List<ModelImage> results = vabra.getRegisteredResults();
-		for ( int i = 0; i < results.size(); i++ )
-		{
-		    // Open the registered result in a window...
-			new ViewJFrameImage( results.get(i) );
-		}
+		new ViewJFrameImage( vabra.getDeformationField() );		
+		new ViewJFrameImage( vabra.getRegisteredResults() );
 		
     }
 

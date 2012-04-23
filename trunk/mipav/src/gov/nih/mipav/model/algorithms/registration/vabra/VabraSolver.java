@@ -5,8 +5,11 @@ import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.mentorgen.tools.profile.runtime.Profile;
 
 public class VabraSolver {
 	private ArrayList<Integer> downSampleFactor; //list of resolutions at which to register the images
@@ -77,6 +80,9 @@ public class VabraSolver {
 
 	public void registerImages()
 	{
+		long startTime = System.currentTimeMillis();
+		//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
+		//-Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
         final ViewJProgressBar progressBar = new ViewJProgressBar("vabra",
                 "vabra deformation field...", 0, 100, false, null, null);
         progressBar.setVisible(true);
@@ -85,6 +91,8 @@ public class VabraSolver {
 		currentResolutionIdx=0;
 		//setTotalUnits(gridSpacingX.size()*2+1);
 		for(currentLevelIdx=0;currentLevelIdx<gridSpacingX.size();currentLevelIdx++){
+			//Profile.clear();
+			//Profile.start();
 			//1.) Change Resolution if Necessary
 			if(currentResolutionIdx <resolutionSwitchPoints.size()){				
 				if(resolutionSwitchPoints.get(currentResolutionIdx)==currentLevelIdx)
@@ -104,6 +112,10 @@ public class VabraSolver {
 			saveIntermediateResults();
 			registerAtCurrentLevel();
 			progressBar.updateValueImmed( (int)(100 * currentLevelIdx / (float)gridSpacingX.size()) );
+			//Profile.stop();
+			//Profile.setFileName( "profile_out_vabra4" );
+			//Profile.shutdown();
+			//return;
 		}
 		saveIntermediateResults();
 		//4.)Return to original resolution
@@ -111,6 +123,14 @@ public class VabraSolver {
 		imgSubTarPairs.prepareForNextLevel();
         progressBar.updateValueImmed(100);
         progressBar.dispose();
+
+		long now = System.currentTimeMillis();
+		double elapsedTime = (double) (now - startTime);
+		if (elapsedTime <= 0) {
+			elapsedTime = (double) 0.0;
+		}
+		double timeinSec =  (double) (elapsedTime / 1000.0);        
+		System.err.println( "Elapsed time: " + timeinSec + " seconds " );
 	}
 
 	void saveIntermediateResults(){
@@ -122,18 +142,26 @@ public class VabraSolver {
 			int oldYN = imgSubTarPairs.subject.getYN(); 
 			int oldZN = imgSubTarPairs.subject.getZN(); 
 
-			int newXN = imgSubTarPairs.origSubjectList.get(0).getExtents().length > 0 ? imgSubTarPairs.origSubjectList.get(0).getExtents()[0] : 1;
-			int newYN = imgSubTarPairs.origSubjectList.get(0).getExtents().length > 1 ? imgSubTarPairs.origSubjectList.get(0).getExtents()[1] : 1;
-			int newZN = imgSubTarPairs.origSubjectList.get(0).getExtents().length > 2 ? imgSubTarPairs.origSubjectList.get(0).getExtents()[2] : 1;
+			int newXN = imgSubTarPairs.origSubjectList.getExtents().length > 0 ? imgSubTarPairs.origSubjectList.getExtents()[0] : 1;
+			int newYN = imgSubTarPairs.origSubjectList.getExtents().length > 1 ? imgSubTarPairs.origSubjectList.getExtents()[1] : 1;
+			int newZN = imgSubTarPairs.origSubjectList.getExtents().length > 2 ? imgSubTarPairs.origSubjectList.getExtents()[2] : 1;
 
-			ModelImage defField = new ModelImage( ModelStorageBase.FLOAT, new int[]{newXN, newYN, newZN, 3}, "temp" );
+			float[] defField = new float[newXN * newYN * newZN * 3];
+			ModelImage im = new ModelImage( ModelStorageBase.FLOAT, new int[]{newXN, newYN, newZN, 3}, "temp" );
 
 			//Resample Deformation Field back to original resolution and save
-			RegistrationUtilities.DeformationFieldResample3DM(imgSubTarPairs.getDeformationField(), defField, oldXN, oldYN, oldZN, newXN, newYN, newZN);
-			defField.setImageName(imgSubTarPairs.origSubjectList.get(0).getImageName()+"_def_field_lvl"+currentLevelIdx);
-			ModelImage.saveImage( defField, defField.getImageName(), intermOutputDir+File.separator );			
+			RegistrationUtilities.DeformationFieldResample3DM(imgSubTarPairs.totalDeformField, defField, oldXN, oldYN, oldZN, newXN, newYN, newZN);
+			
+			try {
+				im.importData( 0, defField, false );
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			im.setImageName(imgSubTarPairs.origSubjectList.getImageName()+"_def_field_lvl"+currentLevelIdx);
+			ModelImage.saveImage( im, im.getImageName(), intermOutputDir+File.separator );			
 
-			defField.disposeLocal();
+			im.disposeLocal();
 		}
 	}
 
@@ -143,7 +171,7 @@ public class VabraSolver {
 		generateGrid(gridSpacingX.get(currentLevelIdx),gridSpacingY.get(currentLevelIdx),gridSpacingZ.get(currentLevelIdx));
 
 		// 2. Identify regions of mismatch based on local gradient wrt NMI
-		System.gc();
+		//System.gc();
 		identifyRegions();
 
 		// 3. Maximize NMI over the regions identified
@@ -352,7 +380,7 @@ public class VabraSolver {
 
 	}
 
-	public List<ModelImage> getDeformedSubject(){
+	public ModelImage getDeformedSubject(){
 		return imgSubTarPairs.getDeformedSubject();
 	}
 

@@ -152,6 +152,13 @@ public class VabraOptimizer {
 		supportRBF[4] = Math.max(imgSubTarPairs.boundingBox[4], regionCenter[2] - rbf.getScale());
 		supportRBF[5] = Math.min(imgSubTarPairs.boundingBox[5], regionCenter[2] + rbf.getScale());
 
+		int XN = imgSubTarPairs.curX;
+		int YN = imgSubTarPairs.curY;
+		int ZN = imgSubTarPairs.curZ;
+		int index;
+		int slice = XN * YN;
+		int size = XN * YN * ZN;
+		
 		for (int i = supportRBF[0]; i <= supportRBF[1]; i++) 
 			for (int j = supportRBF[2]; j <= supportRBF[3]; j++) 
 				for (int k = supportRBF[4]; k <= supportRBF[5]; k++) {
@@ -161,6 +168,8 @@ public class VabraOptimizer {
 					tz_valRBFoff = k - regionCenter[2] + rbf.getOffset();
 					if (rbf.values[tx_valRBFoff][ty_valRBFoff][tz_valRBFoff] != 0) {
 
+						index = k * slice + j * XN + i;
+						
 						//Calculate rbf at point multiplied by step size
 
 						defX = deltaC[0]*rbf.values[tx_valRBFoff][ty_valRBFoff][tz_valRBFoff];
@@ -169,19 +178,21 @@ public class VabraOptimizer {
 
 						//Find values(normalized) of subject and target at the point 
 						for (int ch = 0; ch < imgSubTarPairs.numOfSub; ch++) {
-							subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data[ch].getUByte(i,j, k);
+							//subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data.getUByte(i,j, k);
+							subjectBins[ch] = ((short) ((int) imgSubTarPairs.deformedSubjectBinned.data[index] & 0xff));
 							//System.out.format(subjectBins[ch]+"\n");
 						}
 						for (int ch = 0; ch < imgSubTarPairs.numOfTar; ch++) {
-							targetBins[ch] = imgSubTarPairs.targetBinned.data[ch].getUByte(i, j, k);
+							//targetBins[ch] = imgSubTarPairs.targetBinned.data.getUByte(i, j, k);
+							targetBins[ch] = ((short) ((int) imgSubTarPairs.targetBinned.data[index] & 0xff));
 							//System.out.format(targetBins[ch]+"\n");
 						}
 
 						//Check which type of deformation update method to use(see "defFieldUPdateMode" variable declaration for details)
 						if (defFieldUpdateMode == 0){
-							x = i + imgSubTarPairs.totalDeformField.getFloat(i,j,k,0);
-							y = j + imgSubTarPairs.totalDeformField.getFloat(i,j,k,1);
-							z = k + imgSubTarPairs.totalDeformField.getFloat(i,j,k,2);
+							x = i + imgSubTarPairs.totalDeformField[index];
+							y = j + imgSubTarPairs.totalDeformField[size + index];
+							z = k + imgSubTarPairs.totalDeformField[size * 2 + index];
 							referenceSubject = imgSubTarPairs.subject;	
 						}else{
 							x = i;
@@ -300,9 +311,9 @@ public class VabraOptimizer {
 
 
 		//temp start
-		int XN = imgSubTarPairs.totalDeformField.getExtents().length > 0 ? imgSubTarPairs.totalDeformField.getExtents()[0] : 1;
-		int YN = imgSubTarPairs.totalDeformField.getExtents().length > 1 ? imgSubTarPairs.totalDeformField.getExtents()[1] : 1;
-		int ZN = imgSubTarPairs.totalDeformField.getExtents().length > 2 ? imgSubTarPairs.totalDeformField.getExtents()[2] : 1;
+		int XN = imgSubTarPairs.curX;
+		int YN = imgSubTarPairs.curY;
+		int ZN = imgSubTarPairs.curZ;
 		//temp end
 
 		imgSubTarPairs.hist.resetCurrentHistograms();
@@ -314,6 +325,10 @@ public class VabraOptimizer {
 		coeff_y = ((double) tlambda) * localCoarseGradient[1];
 		coeff_z = ((double) tlambda) * localCoarseGradient[2];
 
+		int index;
+		int slice = XN * YN;
+		int size = XN * YN * ZN;
+		
 		//optimized by putting outside and incrementing.
 		for (int i = localROI[0]; i <= localROI[1]; i++) {
 			for (int j = localROI[2]; j <= localROI[3]; j++) {
@@ -335,11 +350,13 @@ public class VabraOptimizer {
 						defZ = directionsOptmizationWeight[2]*coeff_z*rbfVal;
 						
 
+						index = k * slice + j * XN + i;
+						
 						//Check which type of deformation update method to use(see "defFieldUPdateMode" variable declaration for details)
 						if (defFieldUpdateMode == 0){
-							x = i + imgSubTarPairs.totalDeformField.getFloat(i,j,k,0);
-							y = j + imgSubTarPairs.totalDeformField.getFloat(i,j,k,1);
-							z = k + imgSubTarPairs.totalDeformField.getFloat(i,j,k,2);
+							x = i + imgSubTarPairs.totalDeformField[index];
+							y = j + imgSubTarPairs.totalDeformField[size + index];
+							z = k + imgSubTarPairs.totalDeformField[size * 2 + index];
 							referenceSubject = imgSubTarPairs.subject;	
 						}else{
 							x = i;
@@ -350,13 +367,15 @@ public class VabraOptimizer {
 
 
 						for (int ch = 0; ch < imgSubTarPairs.numOfSub; ch++) {
-							subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data[ch].getUByte(i,j, k);
-							interpValsD[ch] = RegistrationUtilities.Interpolation(referenceSubject.data[ch], XN, YN, ZN, x + defX, y + defY,z + defZ, imgSubTarPairs.chInterpType[ch]);
+							//subjectBins[ch] = imgSubTarPairs.deformedSubjectBinned.data.getUByte(i,j, k);
+							subjectBins[ch] = ((short) ((int) imgSubTarPairs.deformedSubjectBinned.data[index] & 0xff));
+							interpValsD[ch] = RegistrationUtilities.Interpolation(referenceSubject.data, XN, YN, ZN, x + defX, y + defY,z + defZ, imgSubTarPairs.chInterpType);
 							testBin[ch] = referenceSubject.calculateBin(interpValsD[ch], ch);
 							//if(coeff == 0 && subjectBins[ch] != testBin[ch]) System.out.format(subjectBins[ch]+" "+interpValsD[ch]+" "+ testBin[ch]+"\n");
 						}
 						for (int ch = 0; ch < imgSubTarPairs.numOfTar; ch++) {
-							targetBins[ch] = imgSubTarPairs.targetBinned.data[ch].getUByte(i, j, k);
+							//targetBins[ch] = imgSubTarPairs.targetBinned.data.getUByte(i, j, k);
+							targetBins[ch] = ((short) ((int) imgSubTarPairs.targetBinned.data[index] & 0xff));
 						}
 						//System.out.format("interp"+interpValsD[0]+"submax"+referenceSubject.maxValsD[0]+"\n");
 						//System.out.format("sub"+subjectBins[0]+"test"+testBin[0]+"tar"+targetBins[0]+"\n");
@@ -365,9 +384,9 @@ public class VabraOptimizer {
 						if(commitUpdate){			
 							//Check which type of deformation update method to use(see "defFieldUPdateMode" variable declaration for details)
 							if (defFieldUpdateMode == 0){
-								imgSubTarPairs.totalDeformField.set(i,j,k,0, imgSubTarPairs.totalDeformField.getFloat(i,j,k,0) + (float)defX);
-								imgSubTarPairs.totalDeformField.set(i,j,k,1, imgSubTarPairs.totalDeformField.getFloat(i,j,k,1) + (float)defY);
-								imgSubTarPairs.totalDeformField.set(i,j,k,2, imgSubTarPairs.totalDeformField.getFloat(i,j,k,2) + (float)defZ);
+								imgSubTarPairs.totalDeformField[index] += (float)defX;
+								imgSubTarPairs.totalDeformField[size + index] += defY;
+								imgSubTarPairs.totalDeformField[size * 2 + index] += (float)defZ;
 							}else{
 								imgSubTarPairs.currentDeformField.set(i,j,k,0, (float)defX);
 								imgSubTarPairs.currentDeformField.set(i,j,k,1, (float)defY);
@@ -376,8 +395,8 @@ public class VabraOptimizer {
 
 							//change images and real histograms if actually updating
 							for (int ch = 0; ch < imgSubTarPairs.numOfSub; ch++) {
-								imgSubTarPairs.deformedSubject.data[ch].set(i, j, k, interpValsD[ch]);
-								imgSubTarPairs.deformedSubjectBinned.data[ch].set(i, j, k, testBin[ch]);
+								imgSubTarPairs.deformedSubject.data[index] = (float) interpValsD[ch];
+								imgSubTarPairs.deformedSubjectBinned.data[index] = testBin[ch];
 							}
 							imgSubTarPairs.hist.adjustOrigBins(subjectBins, targetBins,testBin);
 
@@ -395,12 +414,12 @@ public class VabraOptimizer {
 			imgSubTarPairs.hist.commitCurrentJointHistogram();
 			//System.out.format("After:"+ -imgSubTarPairs.hist.getMNMI(imgSubTarPairs.hist.currentDeformedSubject, imgSubTarPairs.hist.origTarget, imgSubTarPairs.hist.currentJointST)+"\n");
 			if (defFieldUpdateMode == 1){
-				for(int ch = 0; ch < imgSubTarPairs.numOfSub; ch++){
-					for (int i = localROI[0]; i <= localROI[1]; i++) 
-						for (int j = localROI[2]; j <= localROI[3]; j++) 
-							for (int k = localROI[4]; k <= localROI[5]; k++) 
-								imgSubTarPairs.deformedSubjectCopy.data[ch].set(i, j, k, imgSubTarPairs.deformedSubject.data[ch].getDouble(i, j, k));
-				}
+				for (int i = localROI[0]; i <= localROI[1]; i++) 
+					for (int j = localROI[2]; j <= localROI[3]; j++) 
+						for (int k = localROI[4]; k <= localROI[5]; k++) {
+							index = k * slice + j * XN + i;
+							imgSubTarPairs.deformedSubjectCopy.data[index] = imgSubTarPairs.deformedSubject.data[index];
+						}
 
 				imgSubTarPairs.updateDefField(localROI);
 			}

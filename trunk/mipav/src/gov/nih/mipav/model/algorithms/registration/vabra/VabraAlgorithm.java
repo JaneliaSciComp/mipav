@@ -13,7 +13,7 @@ import java.util.List;
 public class VabraAlgorithm  {
 
 	protected ModelImage deformationField;
-	protected List<ModelImage> registeredResults;
+	protected ModelImage registeredResults;
 	
 	public VabraAlgorithm() {}
 
@@ -22,26 +22,19 @@ public class VabraAlgorithm  {
 	 * @param target  The 3D Structural image.
 	 * @return the list of ModelImages that are the registered subjects.
 	 */
-	public List<ModelImage> solve(ModelImage subject, ModelImage target) {
+	public ModelImage solve(ModelImage subject, ModelImage target) {
 		/*
 		registeredResults = new ArrayList<ModelImage>();
 		registeredResults.add( VabraSubjectTargetPairs.convertToModelImage( (ImageDataFloat)VabraSubjectTargetPairs.convertToImage( subject ) ) );
 		deformationField = VabraSubjectTargetPairs.convertToModelImage( (ImageDataFloat)VabraSubjectTargetPairs.convertToImage( target ) );
 		*/
 		
-		
-		List<ModelImage> subjectVols = new ArrayList<ModelImage>();
-		subjectVols.add(subject);
+		subject.calcMinMax();
 
-		List<ModelImage> targetVols = new ArrayList<ModelImage>();
-		targetVols.add(target);
+		target.calcMinMax();
 		
 		
-		int[] InterpType = new int[subjectVols.size()]; 
-		for ( int i = 0; i < InterpType.length; i++ )
-		{
-			InterpType[i] = RegistrationUtilities.InterpolationType.TRILINEAR;
-		}
+		int InterpType = RegistrationUtilities.InterpolationType.TRILINEAR;
 		double[] directionsOptmizationWeight = {1, 1, 1};
 
         final URL fileURL = Thread.currentThread().getContextClassLoader().getResource("config.xml");
@@ -68,8 +61,8 @@ public class VabraAlgorithm  {
 
 		
 		//1.)Construct Target and Subject Pairs 
-		VabraSubjectTargetPairs imgSubTarPairs = new VabraSubjectTargetPairs(subjectVols, targetVols, 
-				robustMaxT, robustMinT, numBins, InterpType, useMNMI);
+		VabraSubjectTargetPairs imgSubTarPairs = new VabraSubjectTargetPairs(subject, target, 
+				robustMaxT, robustMinT, numBins, InterpType, useMNMI, defFieldUpdateMode);
 		
 		//2.)Construct Vabra Solver
 		//VabraSolver solver = new VabraSolver(imgSubTarPairs, config, new File(subject.getImageDirectory()), true, directionsOptmizationWeight, defFieldUpdateMode);
@@ -97,7 +90,7 @@ public class VabraAlgorithm  {
 		return deformationField;
 	}
 	
-	public List<ModelImage> getRegisteredResults() {
+	public ModelImage getRegisteredResults() {
 		return registeredResults;
 	}
 }
