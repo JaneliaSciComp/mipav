@@ -1330,6 +1330,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     protected void makeFileTemporaryDirectory(final GridBagConstraints gbc, final GridBagLayout gbl) {
         final JLabel tempDirLabel = new JLabel("Temporary Directory : ");
+        tempDirLabel.setFont(MipavUtil.font12);
         gbc.insets = new Insets(0, 0, 0, 5);
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
@@ -1347,6 +1348,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         fileMiscPanel.add(fileTempDirField);
 
         fileTempDirBrowseButton = new JButton("Browse");
+        fileTempDirBrowseButton.setFont(MipavUtil.font12);
         fileTempDirBrowseButton.addActionListener(this);
         fileTempDirBrowseButton.setActionCommand("fileTempDirBrowse");
         gbc.insets = new Insets(0, 25, 0, 0);

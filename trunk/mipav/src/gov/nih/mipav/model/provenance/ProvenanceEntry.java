@@ -67,7 +67,7 @@ public class ProvenanceEntry extends ModelSerialCloneable {
     public void setToCurrent() {
     	Calendar cal = Calendar.getInstance();
     	//System.err.println(cal);
-    	timeStamp = cal.get(Calendar.YEAR) + "/" + cal.get(Calendar.MONTH) + "/" 
+    	timeStamp = cal.get(Calendar.YEAR) + "/" + (cal.get(Calendar.MONTH) + 1) + "/" 
     		+ cal.get(Calendar.DAY_OF_MONTH) + "-" + cal.get(Calendar.HOUR_OF_DAY) + "-" 
     		+ cal.get(Calendar.MINUTE) + "-" + cal.get(Calendar.SECOND) + "-"
     		+ cal.get(Calendar.MILLISECOND) + "-" + cal.getTimeZone().getDisplayName();
