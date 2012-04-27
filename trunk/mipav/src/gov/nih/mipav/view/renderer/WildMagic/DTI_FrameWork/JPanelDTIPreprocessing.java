@@ -1,17 +1,21 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 
+import gov.nih.mipav.util.MipavCoordinateSystems;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmCostFunctions;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR35D;
 import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR3D;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmInsertVolume;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRemoveTSlices;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileInfoNIFTI;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 
@@ -21,6 +25,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 import java.awt.Color;
 import java.awt.Component;
@@ -49,6 +54,8 @@ import javax.swing.JTextField;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import Jama.Matrix;
 
@@ -223,6 +230,14 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
     private float[][] correctedGradients;
 
+    private AlgorithmTransform algoTrans;
+
+    private String resultT2String;
+
+    private ModelImage matchT2image;
+    
+    private AlgorithmAddMargins imageMarginsAlgo;
+
 
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
@@ -249,11 +264,26 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
         if (command.equals("RUN OAR 3.5D")) {
             if (pipeline.T2Image != null) {
-                callT2Algorithm();
-                setVariables();
-                callReg35Algorithm();
+                B0extraction();
+                if(matchB0image!=null){
+                    if(pipeline.T2Image.getExtents()!= matchB0image.getExtents()){
+                        resampleT2();                
+                        callT2Algorithm();
+                        setVariablesForOAR35D();
+                        callReg35Algorithm();   
+                    }
+                    else{
+                        callT2Algorithm();
+                        setVariablesForOAR35D();
+                        callReg35Algorithm(); 
+                    }
+                }
+                else{
+                    MipavUtil.displayError("Error extracting B0 image");   
+                }
+
             } else {
-                setVariables();
+                setVariablesForOAR35D();
                 callReg35Algorithm();
             }
 
@@ -456,7 +486,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                                 resultB0RemoveString);
 
                         removeTSlicesAlgo = new AlgorithmRemoveTSlices(srcB0Image, resultB0RemoveImage, tVolumeRemove);
-                        // createProgressBar(resultB0RemoveString, removeTSlicesAlgo);
+                        createProgressBar(resultB0RemoveString, removeTSlicesAlgo);
                         removeTSlicesAlgo.run();
 
                         if ( (removeTSlicesAlgo.isCompleted() == true) && (resultB0RemoveImage != null)) {
@@ -557,30 +587,114 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
             matrixDirectory = pipeline.DWIImage.getImageDirectory();
             arrayTransMatrix = reg35.getArrayTransMatrix();
 
-            //Testing
-            /*for (int i = 0; i < arrayTransMatrix.length; i++) {
-                System.out.println("TestarrayTransMatrix: " + arrayTransMatrix[i]);
-            }*/
-
             result35RegImage = reg35.getTransformedImage();
             if (result35RegImage != null) {
                 result35RegImage.calcMinMax();
                 result35RegImage.setImageName(pipeline.DWIImage.getImageName() + comboBoxDOF.getSelectedItem());
                 dtiRegParams = new DTIParameters(result35RegImage.getExtents()[3]);
                 dtiRegParams = pipeline.DWIImage.getDTIParameters();
-                //Testing
-                /*System.out.println("dtiRegparamsvol: " + dtiRegParams.getNumVolumes());
-                if (dtiRegParams.getNumVolumes() == result35RegImage.getExtents()[3]) {
-                    System.out.println("dtiRegparamsvol1: " + dtiRegParams.getNumVolumes());
-                    for (int i = 0; i < dtiRegParams.getNumVolumes(); i++) {
-                        System.out.println("dtibvalsparamsvol1: " + dtiRegParams.getbValues()[i]);
-                    }
-                }*/
             }
 
         }
+        
 
     }
+    private void B0extraction(){
+        srcB0Image = pipeline.DWIImage;
+        destB0Extents = new int[3];
+        destB0Extents[0] = srcB0Image.getExtents()[0];
+        destB0Extents[1] = srcB0Image.getExtents()[1];
+        destB0Extents[2] = srcB0Image.getExtents()[2];
+        resultB0String = srcB0Image.getImageName() + "T=" + refImageNumText.getText();
+        resultB0Image = new ModelImage(srcB0Image.getType(), destB0Extents, resultB0String);
+        //B0 extraction from DWI dataset
+        if (resultB0Image != null) {
+            subsetAlgo = new AlgorithmSubset(pipeline.DWIImage, resultB0Image, AlgorithmSubset.REMOVE_T, refVolNum);
+            createProgressBar(srcB0Image.getImageName(), subsetAlgo);
+            subsetAlgo.run();
+        }
+
+        if ( (subsetAlgo.isCompleted() == true) && (resultB0Image != null)) {
+            matchB0image = resultB0Image;
+        }
+    }
+    private void resampleT2() {
+        
+        //Parameters for algoTrans
+        TransMatrix xfrm = new TransMatrix(4);
+        xfrm.MakeIdentity();
+        int[] units = matchB0image.getUnitsOfMeasure();
+        float fovX = pipeline.T2Image.getResolutions(0)[0] * (pipeline.T2Image.getExtents()[0] - 1);
+        float fovY = pipeline.T2Image.getResolutions(0)[1]  * (pipeline.T2Image.getExtents()[1] - 1);
+        float fovZ = pipeline.T2Image.getResolutions(0)[2]  * (pipeline.T2Image.getExtents()[2] - 1);
+        int oXdim = Math.round(fovX / (matchB0image.getResolutions(0)[0]) + 1);
+        int oYdim = Math.round(fovY / (matchB0image.getResolutions(0)[1]) + 1);
+        int oZdim = Math.round(fovZ / (matchB0image.getResolutions(0)[2]) + 1);
+        
+        //Sets T2 resolutions the same as the B0 volume
+        algoTrans = new AlgorithmTransform(pipeline.T2Image, xfrm, 0, matchB0image.getResolutions(0)[0], 
+                matchB0image.getResolutions(0)[1], matchB0image.getResolutions(0)[2], oXdim, 
+                oYdim, oZdim, units, false, false, false, false, null);
+        algoTrans.addListener(this);
+        
+        algoTrans.run();
+        
+        /*if (algoTrans.isCompleted()){
+            if(algoTrans.getTransformedImage()!=null){
+                new ViewJFrameImage(algoTrans.getTransformedImage());
+            }
+        }*/
+                
+        int[] addCropXArr = new int[2];
+        int[] addCropYArr = new int[2];
+        int[] addCropZArr = new int[2];
+
+        resultT2String = pipeline.T2Image.getImageName() + "Resample";
+        matchT2image = new ModelImage(pipeline.T2Image.getType(), destB0Extents, resultT2String);
+        //Add or remove padding from T2 image
+        float addCropX = (matchB0image.getExtents()[0]-algoTrans.getTransformedImage().getExtents()[0])/2;
+        float addCropY =(matchB0image.getExtents()[1]-algoTrans.getTransformedImage().getExtents()[1])/2;
+        float addCropZ =(matchB0image.getExtents()[2]-algoTrans.getTransformedImage().getExtents()[2])/2;
+        if (String.valueOf(addCropX/2).contains(".5")){
+            addCropX = (float) (addCropX + 1.0);
+            addCropXArr[0]= (int) (addCropX + .5); 
+            addCropXArr[1]= (int) (addCropX - .5); 
+        }
+        else{
+            addCropXArr[0]= (int) (addCropX); 
+            addCropXArr[1]= (int) (addCropX); 
+        }
+        if (String.valueOf(addCropY/2).contains(".5")){
+            addCropY = (float) (addCropY + 1.0);
+            addCropYArr[0]= (int) (addCropY + .5); 
+            addCropYArr[1]= (int) (addCropY - .5); 
+        }
+        else{
+            addCropYArr[0]= (int) (addCropY); 
+            addCropYArr[1]= (int) (addCropY); 
+        }
+        if (String.valueOf(addCropZ/2).contains(".5")){
+            addCropZ = (float) (addCropZ + 1.0);
+            addCropZArr[0]= (int) (addCropZ + .5); 
+            addCropZArr[1]= (int) (addCropZ - .5); 
+        }
+        else{
+            addCropZArr[0]= (int) (addCropZ); 
+            addCropZArr[1]= (int) (addCropZ); 
+        }
+        
+        imageMarginsAlgo = new AlgorithmAddMargins(algoTrans.getTransformedImage(), matchT2image,addCropXArr ,addCropYArr ,addCropZArr);
+        imageMarginsAlgo.addListener(this);
+        createProgressBar(pipeline.T2Image.getImageName(), imageMarginsAlgo);
+        imageMarginsAlgo.run();
+        if((imageMarginsAlgo.isCompleted() == true) && matchT2image!=null){
+            new ViewJFrameImage(matchT2image);
+        }
+        algoTrans = null;
+
+    }
+    
+
 
     /**
      * Calls the algorithm with the set-up parameters.
@@ -619,26 +733,14 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      */
     protected void callT2Algorithm() {
 
+        if (matchT2image!= null){
+            refT2image = matchT2image;
+        }
+        else{
         refT2image = pipeline.T2Image;
-        srcB0Image = pipeline.DWIImage;
-        destB0Extents = new int[3];
-        destB0Extents[0] = srcB0Image.getExtents()[0];
-        destB0Extents[1] = srcB0Image.getExtents()[1];
-        destB0Extents[2] = srcB0Image.getExtents()[2];
-        resultB0String = srcB0Image.getImageName() + "T=" + refImageNumText.getText();
-        resultB0Image = new ModelImage(srcB0Image.getType(), destB0Extents, resultB0String);
+        }
         refVolNum = Integer.parseInt(refImageNumText.getText());
 
-        if (resultB0Image != null) {
-            subsetAlgo = new AlgorithmSubset(pipeline.DWIImage, resultB0Image, AlgorithmSubset.REMOVE_T, refVolNum);
-            // createProgressBar(srcB0Image.getImageName(), subsetAlgo);
-            subsetAlgo.run();
-        }
-
-        if ( (subsetAlgo.isCompleted() == true) && (resultB0Image != null)) {
-            matchB0image = resultB0Image;
-
-        }
 
         costT2 = 1;
         DOFT2 = 6;
@@ -662,9 +764,11 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                 maxIterations, numMinima);
 
         reg3.addListener(this);
+        createProgressBar(refT2image.getImageName(), reg3);
         reg3.run();
 
     }
+    
 
     private TitledBorder buildTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
@@ -934,16 +1038,10 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         matrixComboBox.setBackground(Color.white);
         matrixComboBox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        // refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
 
         if (pipeline.T2Image != null) {
             matrixComboBox.addItem(pipeline.T2Image.getImageDirectory());
         }
-
-        // System.out.println("srcImageDir: " +srcB0Image.getImageDirectory());
-
-        // refImage = UI.getRegisteredImageByName((String) comboBoxImage.getSelectedItem());
-
 
 
         gbc.fill = GridBagConstraints.NONE;
@@ -970,20 +1068,12 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         gbc.fill = GridBagConstraints.HORIZONTAL;
         outPanel.add(correctGradTransCheckbox, gbc);
 
-        /*gbc.gridx = 1;
-        gbc.gridy = 1;
-        gbc.weightx = 1;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        
-        outPanel.add(matrixComboBox, gbc);*/
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
         buttonPanel.add(OKButton);
         buildCancelButton();
-        //buttonPanel.add(cancelButton);
         buildHelpButton();
-        //buttonPanel.add(helpButton);
         
         highlightBorderPanel = new JPanel();
         highlightBorderPanel.setLayout(new GridBagLayout());
@@ -1129,7 +1219,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
      * 
      * @return <code>true</code> if the variables are properly set, <code>false</code> otherwise.
      */
-    private boolean setVariables() {
+    private boolean setVariablesForOAR35D() {
 
         switch (comboBoxDOF.getSelectedIndex()) {
 
