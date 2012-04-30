@@ -14,7 +14,7 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
 /**
  * This code fits data points to a 3D ellipsoid. The part of the code up to the derivation of v[0] through v[9] for the
  * 3D ellipsoid model comes from the port of MATLAB code provided by Lecturer Qingde Li Department of Computer Science,
- * University of Hull, Hull HU6 7RX, UK [q.li@dcs.hull.ac.uk] Reference: "Least Squares Ellipsoid Specific Fitting" by
+ * University of Hull, Hull HU6 7RX, UK [q.li@hull.ac.uk] Reference: "Least Squares Ellipsoid Specific Fitting" by
  * Qingde Li and John G. Griffiths, Proceedings of the Geometric Modeling and Processing 2004, IEEE Computer Society.
  *
  * <p>The second part of this code that derives the length of the three axes from the ellipsoid equation is based on
@@ -22,7 +22,6 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * by Timothy S. Newman and Hong Yi, 15th International Conference on Pattern Recognition, Vol. 4, 2000, pp. 328-331.
  * </p>
  */
-
 public class AlgorithmEllipsoidFit {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
