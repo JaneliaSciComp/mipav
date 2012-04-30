@@ -238,6 +238,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     
     private AlgorithmAddMargins imageMarginsAlgo;
 
+    private TransMatrix b0toStructInverseMat;
+
 
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
@@ -441,7 +443,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         if (algorithm instanceof AlgorithmRegOAR3D) {
             if (reg3.isCompleted()) {
                 b0toStructMatrix = reg3.getTransform();
-               
                     final int xdimA = refT2image.getExtents()[0];
                     final int ydimA = refT2image.getExtents()[1];
                     final int zdimA = refT2image.getExtents()[2];
@@ -519,34 +520,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                         transform = null;
                     }
                 
-
-                xOrig = (matchB0image.getExtents()[0] - 1.0) / 2.0;
-                yOrig = (matchB0image.getExtents()[1] - 1.0) / 2.0;
-                zOrig = (matchB0image.getExtents()[2] - 1.0) / 2.0;
-                resX = matchB0image.getFileInfo()[0].getResolutions()[0];
-                resY = matchB0image.getFileInfo()[0].getResolutions()[1];
-                resZ = matchB0image.getFileInfo()[0].getResolutions()[2];
-                xCen = xOrig * resX;
-                yCen = yOrig * resY;
-                zCen = zOrig * resZ;
-                b0toStructMatrix.Inverse();
-                xCenNew = xCen * b0toStructMatrix.Get(0, 0) + yCen * b0toStructMatrix.Get(0, 1) + zCen
-                        * b0toStructMatrix.Get(0, 2) + b0toStructMatrix.Get(0, 3);
-                yCenNew = xCen * b0toStructMatrix.Get(1, 0) + yCen * b0toStructMatrix.Get(1, 1) + zCen
-                        * b0toStructMatrix.Get(1, 2) + b0toStructMatrix.Get(1, 3);
-                zCenNew = xCen * b0toStructMatrix.Get(2, 0) + yCen * b0toStructMatrix.Get(2, 1) + zCen
-                        * b0toStructMatrix.Get(2, 2) + b0toStructMatrix.Get(2, 3);
-                Preferences.debug("The geometric center of " + matchB0image.getImageName() + " at (" + xCen + ", "
-                        + yCen + ", " + zCen + ")\n", Preferences.DEBUG_ALGORITHM);
-                if (resultB0toT2Image != null) {
-                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
-                            + ") in " + resultB0toT2Image.getImageName() + ".\n";
-                } else {
-                    comStr = "moves to (" + nf.format(xCenNew) + ", " + nf.format(yCenNew) + ", " + nf.format(zCenNew)
-                            + ").\n";
-                }
-                Preferences.debug(comStr, Preferences.DEBUG_ALGORITHM);
-
                 if (resultB0toT2Image != null) {
                     resultB0toT2Image.getMatrixHolder().replaceMatrices(refT2image.getMatrixHolder().getMatrices());
 
