@@ -238,9 +238,6 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
     
     private AlgorithmAddMargins imageMarginsAlgo;
 
-    private TransMatrix b0toStructInverseMat;
-
-
     public JPanelDTIPreprocessing(DTIPipeline pipeline) {
         super();
         // super(theParentFrame, false);
@@ -443,6 +440,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
         if (algorithm instanceof AlgorithmRegOAR3D) {
             if (reg3.isCompleted()) {
                 b0toStructMatrix = reg3.getTransform();
+               
                     final int xdimA = refT2image.getExtents()[0];
                     final int ydimA = refT2image.getExtents()[1];
                     final int zdimA = refT2image.getExtents()[2];
@@ -520,6 +518,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                         transform = null;
                     }
                 
+
+
+
                 if (resultB0toT2Image != null) {
                     resultB0toT2Image.getMatrixHolder().replaceMatrices(refT2image.getMatrixHolder().getMatrices());
 
