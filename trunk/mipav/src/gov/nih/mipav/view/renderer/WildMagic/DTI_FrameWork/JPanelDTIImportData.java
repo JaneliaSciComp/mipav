@@ -619,7 +619,7 @@ import Jama.Matrix;
             if (returnValue == JFileChooser.APPROVE_OPTION) {
                 currDir = chooser.getSelectedFile().getAbsolutePath();
                 try{
-                    readBValGradientFile(currDir);
+                    readBVGradBMatfile(currDir);
                     DWIButtonPanel.setBorder(highlightTitledBorder("Table Options"));
                     loadTable.setBorder(buildTitledBorder("Upload B-Value/Gradient File  or B-Matrix File"));
                     saveBvalGradButton.setEnabled(true);
@@ -692,15 +692,15 @@ import Jama.Matrix;
                     filebvalGradTxtName = saveGradchooser.getSelectedFile().getPath();
                    if (fslButton.isSelected()){
                       gradBvalText = 1;
-                      createBValGradFileTXT();
+                      createBVGradBMatFileTXT();
                    }
                    else if (dtiStudioButton.isSelected()){
                        gradBvalText = 2;
-                       createBValGradFileTXT();                  
+                       createBVGradBMatFileTXT();                  
                    }               
                    else if (mipavStandardButton.isSelected()){
                        gradBvalText = 3;
-                       createBValGradFileTXT();                  
+                       createBVGradBMatFileTXT();                  
                    }  
                     
                 }
@@ -1500,9 +1500,9 @@ import Jama.Matrix;
                         gbc.gridx = 1;
                         GradCreatorPanel.add(philRelBox,gbc);
                         
-                        if (fileInfoPARREC != null  && fileInfoPARREC.getVersion().equals("V4") ||
+                        if (fileInfoPARREC != null  && fileInfoPARREC.getVersion().equals("V4.1") ||
                                 fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V4.2") 
-                                || parNversion.equals("V4") || parNversion.equals("V4.2") ){
+                                || parNversion != null && parNversion.equals("V4.1") || parNversion != null && parNversion.equals("V4.2") ){
                           //Add all parameters not aquired in PAR file for user to input
                             osLabel = new JLabel("OS"); //Operating System
                             osLabel.setForeground(Color.lightGray);
@@ -1547,7 +1547,9 @@ import Jama.Matrix;
                             srcPanel.add(GradCreatorPanel, gbc2);
                         }
                         
-                        else if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V3") ||  parNversion.equals("V3")){
+                        else if (fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V3")||
+                                fileInfoPARREC != null && fileInfoPARREC.getVersion().equals("V4") || 
+                               parNversion != null && parNversion.equals("V3") || parNversion != null && parNversion.equals("V4")){
                             //Add all parameters not aquired in PAR file for user to input
                             patientPosLabel = new JLabel("Patient Position");
                             patientPosTextField = new JTextField(5);
@@ -3286,13 +3288,12 @@ import Jama.Matrix;
                        mosaicToSliceAlgo.addListener(this);
                        
                        mosaicToSliceAlgo.run();
-
                        
                        try {
-                           
-                           m_kDWIImage = mosaicToSliceAlgo.getResultImage();
-
-                           new ViewJFrameImage(m_kDWIImage, null, new Dimension(610, 200));
+                           if (mosaicToSliceAlgo.getResultImage() != null){
+                               m_kDWIImage = mosaicToSliceAlgo.getResultImage();
+                               new ViewJFrameImage(m_kDWIImage, null, new Dimension(610, 200));
+                           }
                        } catch (OutOfMemoryError error) {
                            System.gc();
                            MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -3340,7 +3341,7 @@ import Jama.Matrix;
          * @param gradientFilePath
          * @return
          */
-        public boolean readBValGradientFile(final String gradientFilePath) {
+        public boolean readBVGradBMatfile(final String gradientFilePath) {
                    
             if (srcTableModel.getRowCount()>0){
                 int rowCount = srcTableModel.getRowCount();
@@ -3773,7 +3774,7 @@ import Jama.Matrix;
          * 
          * @return
          */
-        public boolean createBValGradFileTXT() {
+        public boolean createBVGradBMatFileTXT() {
             try {
                 StringBuffer sb;
                 int padLength;
