@@ -9,57 +9,66 @@ import gov.nih.mipav.view.Preferences;
 
 
 /**
- * DOCUMENT ME!
+ * This extended precision FFT should only be used when it is necessary to perform a N-dimensional FFT on non-power of
+ * two data without adding padding. Otherwise, developsers should use AlgorithmFFT2 (which has multithreading/jocl
+ * optimizations).
+ * 
+ * For forward transforms arrays a and b originally hold the real and imaginary components of the data, and return the
+ * real and imaginary components of the resulting fourier coefficients. The roles reverse for the inverse transform.
+ * multivariate data is indexed according to Java indexing conventions in which the last dimension is contiguous in
+ * memory, without limit on the number of implied multiple subscripts. the subroutine is called once for each variate.
+ * the calls for a multivariate transform may be in any order. n is the dimension of the current variable. If n has more
+ * than 15 "factors", FFT terminates with an error message. The smallest number with 16 "factors" is 12,754,584, so this
+ * error condition should not occur very often. nspn is the spacing of consecutive data values while indexing the
+ * current variable. nseg*n*nspn is the total number of complex data values. The sign of isn determines the sign of the
+ * complex exponential, and the magnitude of isn is normally one. isn is -1 for the forward transform and +1 for the
+ * inverse transform. The magnitude of isn determines the indexing increment for a & b. If fft is called twice, with
+ * opposite signs on isn, an identity transformation is done. Calls can be in either order. The results are scaled by
+ * 1/n when the sign of isn is positive. a tri-variate transform with a(n1,n2,n3), b(n1,n2,n3) is computed by FFTUtility
+ * fft = new FFTUtility(a,b,n1*n2,n3,1,-1,FFTUtility.FFT); fft.run(); fft = new
+ * FFTUtility(a,b,n1,n2,n3,-1,FFTUtility.FFT); fft.run(); fft = new FFTUtility(a,b,1,n1,n2*n3,-1,FFTUtility.FFT);
+ * fft.run(); for a single-variate transform, FFTUtility fft = new FFTUtility(a,b,1,n,1,-1,FFTUtility.FFT); fft.run();
+ * 
+ * @see AlgorithmFFT2
+ * 
+ * <hr>
+ * 
+ * This class is based on the Fortran/C code for R. C. Singleton's mixed radix FFT algorithm, released under the below
+ * license by Mark Olesen on NETLIB (netlib.org).
+ * 
+ * References: R. C. Singleton, An algorithm for computing the mixed radix fast Fourier transform, IEEE Transactions on
+ * Audio and Electroacoustics, AU-17, no. 2, June, 1969, pp. 93-103.
+ * 
+ * multivariate complex fourier transform, computed in place using mixed-radix fast fourier transform algorithm. by r.
+ * c. singleton, stanford research institute, sept. 1968
+ * 
+ * <pre>
+ * Copyright(c)1995,97 Mark Olesen &lt;olesen@me.QueensU.CA&gt;
+ *      Queen's Univ at Kingston (Canada)
+ * 
+ * Permission to use, copy, modify, and distribute this software for
+ * any purpose without fee is hereby granted, provided that this
+ * entire notice is included in all copies of any software which is
+ * or includes a copy or modification of this software and in all
+ * copies of the supporting documentation for such software.
+ * 
+ * THIS SOFTWARE IS BEING PROVIDED &quot;AS IS&quot;, WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTY.  IN PARTICULAR, NEITHER THE AUTHOR NOR QUEEN'S
+ * UNIVERSITY AT KINGSTON MAKES ANY REPRESENTATION OR WARRANTY OF ANY
+ * KIND CONCERNING THE MERCHANTABILITY OF THIS SOFTWARE OR ITS
+ * FITNESS FOR ANY PARTICULAR PURPOSE.
+ * 
+ * All of which is to say that you can do what you like with this
+ * source code provided you don't try to sell it as your own and you
+ * include an unaltered copy of this message (including the
+ * copyright).
+ * 
+ * It is also implicitly understood that bug fixes and improvements
+ * should make their way back to the general Internet community so
+ * that everyone benefits.
+ * </pre>
  */
 public class FFTUtilityEP extends AlgorithmBase {
-    // This code is a port of a FORTRAN 77 subroutine written by R. C. Singleton.
-    // The code was obtained from http://michaelgellis.tripod.com/dsp/pgm08.html.
-    // This code is a revised version of a 1968 program by R. C. Singleton.
-    // The code appeared in Programs for Digital Signal Processing, 1979,
-    // ISBN 0-87942-127-4 (an IEEE Press Book)
-    // Reference: R. C. Singleton, An algorithm for computing the mixed radix fast
-    // Fourier transform, IEEE Transactions on Audio and Electroacoustics, AU-17,
-    // no. 2, June, 1969, pp. 93-103.
-    // multivariate complex fourier transform, computed in place
-    // using mixed-radix fast fourier transform algorithm.
-    // by r. c. singleton, stanford research institute, sept. 1968
-    // For forward transforms arrays a and b originally hold the real and imaginary
-    // components of the data, and return the real and
-    // imaginary components of the resulting fourier coefficients.
-    // The roles reverse for the inverse transform.
-    // multivariate data is indexed according to Java indexing conventions
-    // in which the last dimension is contiguous in memory, without limit
-    // on the number of implied multiple subscripts.
-    // the subroutine is called once for each variate.
-    // the calls for a multivariate transform may be in any order.
-    // n is the dimension of the current variable.
-    // If n has more than 15 "factors", FFT terminates with an error message.  The
-    // smallest number with 16 "factors" is 12,754,584, so this error condition
-    // should not occur very often.
-    // nspn is the spacing of consecutive data values
-    // while indexing the current variable.
-    // nseg*n*nspn is the total number of complex data values.
-    // The sign of isn determines the sign of the complex
-    // exponential, and the magnitude of isn is normally one.
-    // isn is -1 for the forward transform and +1 for the inverse transform.
-    // The magnitude of isn determines the indexing increment for a & b.
-    // If fft is called twice, with opposite signs on isn, an identity
-    // transformation is done.  Calls can be in either order.  The results are
-    // scaled by 1/n when the sign of isn is positive.
-    // a tri-variate transform with a(n1,n2,n3), b(n1,n2,n3)
-    // is computed by
-    // FFTUtility fft = new FFTUtility(a,b,n1*n2,n3,1,-1,FFTUtility.FFT);
-    // fft.run();
-    // fft = new FFTUtility(a,b,n1,n2,n3,-1,FFTUtility.FFT);
-    // fft.run();
-    // fft = new FFTUtility(a,b,1,n1,n2*n3,-1,FFTUtility.FFT);
-    // fft.run();
-    // for a single-variate transform,
-    // FFTUtility fft = new FFTUtility(a,b,1,n,1,-1,FFTUtility.FFT);
-    // fft.run();
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
     /** DOCUMENT ME! */
     public static final int FFT = 1;
 
@@ -72,9 +81,10 @@ public class FFTUtilityEP extends AlgorithmBase {
     /** DOCUMENT ME! */
     public static final int SELF_TEST = 4;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
+    // ~ Instance fields
+    // ------------------------------------------------------------------------------------------------
     private double adbl[] = null;
-    
+
     private double bdbl[] = null;
 
     /** DOCUMENT ME! */
@@ -98,12 +108,13 @@ public class FFTUtilityEP extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int nspn;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * This constructor should only be used for functionType == SELF_TEST.
-     *
-     * @param  functionType  DOCUMENT ME!
+     * 
+     * @param functionType DOCUMENT ME!
      */
     public FFTUtilityEP(int functionType) {
         this.functionType = functionType;
@@ -115,17 +126,17 @@ public class FFTUtilityEP extends AlgorithmBase {
 
     /**
      * Creates a new FFTUtility object.
-     *
-     * @param  a             DOCUMENT ME!
-     * @param  b             DOCUMENT ME!
-     * @param  nseg          DOCUMENT ME!
-     * @param  n             DOCUMENT ME!
-     * @param  nspn          DOCUMENT ME!
-     * @param  isn           DOCUMENT ME!
-     * @param  functionType  DOCUMENT ME!
+     * 
+     * @param a DOCUMENT ME!
+     * @param b DOCUMENT ME!
+     * @param nseg DOCUMENT ME!
+     * @param n DOCUMENT ME!
+     * @param nspn DOCUMENT ME!
+     * @param isn DOCUMENT ME!
+     * @param functionType DOCUMENT ME!
      */
     public FFTUtilityEP(double[] adbl, double[] bdbl, int nseg, int n, int nspn, int isn, int functionType) {
-    	int i;
+        int i;
         this.adbl = adbl;
         this.bdbl = bdbl;
         this.nseg = nseg;
@@ -136,26 +147,27 @@ public class FFTUtilityEP extends AlgorithmBase {
         a = new DoubleDouble[adbl.length];
         b = new DoubleDouble[bdbl.length];
         for (i = 0; i < adbl.length; i++) {
-        	a[i] = DoubleDouble.valueOf(adbl[i]);
+            a[i] = DoubleDouble.valueOf(adbl[i]);
         }
         for (i = 0; i < bdbl.length; i++) {
-        	b[i] = DoubleDouble.valueOf(bdbl[i]);
+            b[i] = DoubleDouble.valueOf(bdbl[i]);
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
      */
     public void finalize() {
-    	int i;
-    	for (i = 0; i < a.length; i++) {
-    	    a[i] = null;	
-    	}
+        int i;
+        for (i = 0; i < a.length; i++) {
+            a[i] = null;
+        }
         a = null;
         for (i = 0; i < b.length; i++) {
-        	b[i] = null;
+            b[i] = null;
         }
         b = null;
         adbl = null;
@@ -179,20 +191,20 @@ public class FFTUtilityEP extends AlgorithmBase {
         }
         if (adbl != null) {
             for (i = 0; i < a.length; i++) {
-            	adbl[i] = a[i].doubleValue();
+                adbl[i] = a[i].doubleValue();
             }
         } // if (adbl != null)
         if (bdbl != null) {
-        	for (i = 0; i < b.length; i++) {
-        		bdbl[i] = b[i].doubleValue();
-        	}
+            for (i = 0; i < b.length; i++) {
+                bdbl[i] = b[i].doubleValue();
+            }
         }
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     DoubleDouble[] normal() {
 
@@ -207,12 +219,12 @@ public class FFTUtilityEP extends AlgorithmBase {
         randomGen = new RandomNumberGen();
 
         do { // while (r >= 1.0)
-            rx = DoubleDouble.valueOf(randomGen.genUniformRandomNum(-1.0, 1.0));
-            ry = DoubleDouble.valueOf(randomGen.genUniformRandomNum(-1.0, 1.0));
+            rx = DoubleDouble.valueOf(randomGen.genUniformRandomNum( -1.0, 1.0));
+            ry = DoubleDouble.valueOf(randomGen.genUniformRandomNum( -1.0, 1.0));
             r = (rx.multiply(rx)).add(ry.multiply(ry));
         } while (r.ge(DoubleDouble.valueOf(1.0)));
 
-        r = (((DoubleDouble.valueOf(-2.0)).multiply(r.log())).divide(r)).sqrt();
+        r = ( ( (DoubleDouble.valueOf( -2.0)).multiply(r.log())).divide(r)).sqrt();
         output[0] = rx.multiply(r);
         output[1] = ry.multiply(r);
 
@@ -221,14 +233,14 @@ public class FFTUtilityEP extends AlgorithmBase {
 
     /**
      * DOCUMENT ME!
-     *
-     * @param   a  DOCUMENT ME!
-     * @param   b  DOCUMENT ME!
-     * @param   c  DOCUMENT ME!
-     * @param   d  DOCUMENT ME!
-     * @param   n  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * 
+     * @param a DOCUMENT ME!
+     * @param b DOCUMENT ME!
+     * @param c DOCUMENT ME!
+     * @param d DOCUMENT ME!
+     * @param n DOCUMENT ME!
+     * 
+     * @return DOCUMENT ME!
      */
     DoubleDouble[] rms(DoubleDouble[] a, DoubleDouble[] b, DoubleDouble[] c, DoubleDouble[] d, int n) {
         // Computes rms error for transform-inverse pair arrays a,b = transform, inverse results arrays c,d = original
@@ -260,7 +272,7 @@ public class FFTUtilityEP extends AlgorithmBase {
      */
     private void fft() {
 
-        // ARRAY NFAC IS WORKING STORAGE FOR FACTORING N.  THE SMALLEST
+        // ARRAY NFAC IS WORKING STORAGE FOR FACTORING N. THE SMALLEST
         // NUMBER EXCEEDING THE 15 LOCATIONS PROVIDED IS 12,754,584.
         int[] nfac = new int[15];
         int m;
@@ -364,8 +376,6 @@ public class FFTUtilityEP extends AlgorithmBase {
 
         fireProgressStateChanged("FFT", "Performing FFT...");
 
-        
-
         // DETERMINE THE FACTORS OF n
         m = 0;
         nf = Math.abs(n);
@@ -373,7 +383,7 @@ public class FFTUtilityEP extends AlgorithmBase {
 
         if (nf == 1) {
             MipavUtil.displayError("Error! Dimension length less than 2");
-            
+
             setCompleted(false);
 
             return;
@@ -382,17 +392,17 @@ public class FFTUtilityEP extends AlgorithmBase {
         nspan = Math.abs(nf * nspn);
         ntot = Math.abs(nspan * nseg);
 
-        if ((isn * ntot) == 0) {
+        if ( (isn * ntot) == 0) {
             MipavUtil.displayError("Error! Zero in FFT parameters");
             Preferences.debug("nseg = " + nseg + " n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n", Preferences.DEBUG_ALGORITHM);
-            
+
             setCompleted(false);
 
             return;
         } // if ((isn*ntot) == 0)
 
-        while ((k - ((k / 16) * 16)) == 0) {
+        while ( (k - ( (k / 16) * 16)) == 0) {
             m = m + 1;
             nfac[m - 1] = 4;
             k = k / 16;
@@ -403,7 +413,7 @@ public class FFTUtilityEP extends AlgorithmBase {
 
         do { // while (jj <= k)
 
-            while ((k % jj) == 0) {
+            while ( (k % jj) == 0) {
                 m = m + 1;
                 nfac[m - 1] = j;
                 k = k / jj;
@@ -423,7 +433,7 @@ public class FFTUtilityEP extends AlgorithmBase {
         } // if (k <= 4)
         else { // k > 4
 
-            if ((k - ((k / 4) * 4)) == 0) {
+            if ( (k - ( (k / 4) * 4)) == 0) {
                 m = m + 1;
                 nfac[m - 1] = 2;
                 k = k / 4;
@@ -436,13 +446,13 @@ public class FFTUtilityEP extends AlgorithmBase {
 
             do { // while (j <= k)
 
-                if ((k % j) == 0) {
+                if ( (k % j) == 0) {
                     m = m + 1;
                     nfac[m - 1] = j;
                     k = k / j;
                 } // if ((k%j) == 0)
 
-                j = (((j + 1) / 2) * 2) + 1;
+                j = ( ( (j + 1) / 2) * 2) + 1;
             } while (j <= k);
         } // else k > 4
 
@@ -450,9 +460,9 @@ public class FFTUtilityEP extends AlgorithmBase {
             maxp = m + kt + 1;
         } // if (m <= (kt+1))
 
-        if ((m + kt) > 15) {
+        if ( (m + kt) > 15) {
             MipavUtil.displayError("Error! FFT parameter n = " + n + " has more than 15 factors");
-            
+
             setCompleted(false);
 
             return;
@@ -523,16 +533,16 @@ public class FFTUtilityEP extends AlgorithmBase {
             maxf = Math.max(nfac[kt - 1], maxf);
         } // if (kt > 0)
 
-//     COMPUTE FOURIER TRANSFORM
+        // COMPUTE FOURIER TRANSFORM
 
-outer:
-        do { // while (goBack)
+        outer: do { // while (goBack)
             goBack = false;
 
             if (seg40to40a) {
-                dr = ((DoubleDouble.valueOf(8.0)).multiply(DoubleDouble.valueOf((double) (jc)))).divide(DoubleDouble.valueOf((double) (kspan)));
-                sindrrad = (((DoubleDouble.valueOf(0.5)).multiply(dr)).multiply(rad)).sin();
-                cd = ((DoubleDouble.valueOf(2.0)).multiply(sindrrad)).multiply(sindrrad);
+                dr = ( (DoubleDouble.valueOf(8.0)).multiply(DoubleDouble.valueOf((double) (jc)))).divide(DoubleDouble
+                        .valueOf((double) (kspan)));
+                sindrrad = ( ( (DoubleDouble.valueOf(0.5)).multiply(dr)).multiply(rad)).sin();
+                cd = ( (DoubleDouble.valueOf(2.0)).multiply(sindrrad)).multiply(sindrrad);
                 sd = (dr.multiply(rad)).sin();
                 kk = 1;
                 i = i + 1;
@@ -557,8 +567,8 @@ outer:
 
                         do { // while (kk <= nn)
                             k2 = kk + kspan;
-                            ak = (DoubleDouble)a[k2 - 1].clone();
-                            bk = (DoubleDouble)b[k2 - 1].clone();
+                            ak = (DoubleDouble) a[k2 - 1].clone();
+                            bk = (DoubleDouble) b[k2 - 1].clone();
                             a[k2 - 1] = a[kk - 1].subtract(ak);
                             b[k2 - 1] = b[kk - 1].subtract(bk);
                             a[kk - 1] = a[kk - 1].add(ak);
@@ -580,7 +590,7 @@ outer:
 
                             if (seg60to70) {
                                 c1 = (DoubleDouble.valueOf(1.0)).subtract(cd);
-                                s1 = (DoubleDouble)sd.clone();
+                                s1 = (DoubleDouble) sd.clone();
                                 mm = Math.min(k1 / 2, klim);
                             } // if (seg60to70)
 
@@ -590,14 +600,15 @@ outer:
                             do { // while kk <= mm
 
                                 if (seg70to80) {
-                                    ak = c1.subtract((cd.multiply(c1)).add(sd.multiply(s1)));
-                                    s1 = ((sd.multiply(c1)).subtract(cd.multiply(s1))).add(s1);
+                                    ak = c1.subtract( (cd.multiply(c1)).add(sd.multiply(s1)));
+                                    s1 = ( (sd.multiply(c1)).subtract(cd.multiply(s1))).add(s1);
 
                                     // THE FOLLOWING THREE STATEMENTS COMPENSATE FOR
                                     // TRUNCATION ERROR.IF ROUNDED ARITHMETIC IS USED, SUBSTITUTE
                                     // C1 = AK
 
-                                    c1 = ((DoubleDouble.valueOf(0.5)).divide((ak.multiply(ak)).add(s1.multiply(s1)))).add(DoubleDouble.valueOf(0.5));
+                                    c1 = ( (DoubleDouble.valueOf(0.5)).divide( (ak.multiply(ak)).add(s1.multiply(s1))))
+                                            .add(DoubleDouble.valueOf(0.5));
                                     s1 = c1.multiply(s1);
                                     c1 = c1.multiply(ak);
                                 } // if (seg70to80)
@@ -632,7 +643,7 @@ outer:
                             }
 
                             k1 = k1 + inc + inc;
-                            kk = ((k1 - kspan) / 2) + jc;
+                            kk = ( (k1 - kspan) / 2) + jc;
                         } while (kk <= (jc + jc));
 
                         if (seg80ato90) {
@@ -642,7 +653,7 @@ outer:
                         } // if (seg80ato90)
 
                         seg80ato90 = true;
-                        s1 = ((DoubleDouble.valueOf((double) ((kk - 1) / jc))).multiply(dr)).multiply(rad);
+                        s1 = ( (DoubleDouble.valueOf((double) ( (kk - 1) / jc))).multiply(dr)).multiply(rad);
                         c1 = (s1).cos();
                         s1 = (s1).sin();
                         mm = Math.min(k1 / 2, mm + klim);
@@ -659,14 +670,14 @@ outer:
                     do { // while (kk < nn)
                         k1 = kk + kspan;
                         k2 = k1 + kspan;
-                        ak = (DoubleDouble)a[kk - 1].clone();
-                        bk = (DoubleDouble)b[kk - 1].clone();
+                        ak = (DoubleDouble) a[kk - 1].clone();
+                        bk = (DoubleDouble) b[kk - 1].clone();
                         aj = a[k1 - 1].add(a[k2 - 1]);
                         bj = b[k1 - 1].add(b[k2 - 1]);
                         a[kk - 1] = ak.add(aj);
                         b[kk - 1] = bk.add(bj);
-                        ak = ((DoubleDouble.valueOf(-0.5)).multiply(aj)).add(ak);
-                        bk = ((DoubleDouble.valueOf(-0.5)).multiply(bj)).add(bk);
+                        ak = ( (DoubleDouble.valueOf( -0.5)).multiply(aj)).add(ak);
+                        bk = ( (DoubleDouble.valueOf( -0.5)).multiply(bj)).add(bk);
                         aj = (a[k1 - 1].subtract(a[k2 - 1])).multiply(s120);
                         bj = (b[k1 - 1].subtract(b[k2 - 1])).multiply(s120);
                         a[k1 - 1] = ak.subtract(bj);
@@ -719,13 +730,14 @@ outer:
                         if (seg130to150) {
 
                             if (seg130to140) {
-                                c2 = c1.subtract((cd.multiply(c1)).add(sd.multiply(s1)));
-                                s1 = ((sd.multiply(c1)).subtract(cd.multiply(s1))).add(s1);
+                                c2 = c1.subtract( (cd.multiply(c1)).add(sd.multiply(s1)));
+                                s1 = ( (sd.multiply(c1)).subtract(cd.multiply(s1))).add(s1);
 
                                 // THE FOLLOWING THREE STATEMENTS COMPENSATE FOR TRUNCATION
                                 // ERROR.IF ROUNDED ARITHMETIC IS USED, SUBSTITUTE C1 = C2
 
-                                c1 = ((DoubleDouble.valueOf(0.5)).divide((c2.multiply(c2)).add(s1.multiply(s1)))).add(DoubleDouble.valueOf(0.5));
+                                c1 = ( (DoubleDouble.valueOf(0.5)).divide( (c2.multiply(c2)).add(s1.multiply(s1))))
+                                        .add(DoubleDouble.valueOf(0.5));
                                 s1 = c1.multiply(s1);
                                 c1 = c1.multiply(c2);
                             } // if (seg130to140)
@@ -859,12 +871,12 @@ outer:
                         seg180to190 = true;
 
                         if (seg190to200) {
-                            a[k1 - 1] = (DoubleDouble)akp.clone();
-                            b[k1 - 1] = (DoubleDouble)bkp.clone();
-                            a[k2 - 1] = (DoubleDouble)ajp.clone();
-                            b[k2 - 1] = (DoubleDouble)bjp.clone();
-                            a[k3 - 1] = (DoubleDouble)akm.clone();
-                            b[k3 - 1] = (DoubleDouble)bkm.clone();
+                            a[k1 - 1] = (DoubleDouble) akp.clone();
+                            b[k1 - 1] = (DoubleDouble) bkp.clone();
+                            a[k2 - 1] = (DoubleDouble) ajp.clone();
+                            b[k2 - 1] = (DoubleDouble) bjp.clone();
+                            a[k3 - 1] = (DoubleDouble) akm.clone();
+                            b[k3 - 1] = (DoubleDouble) bkm.clone();
                             kk = k3 + kspan;
 
                             if (kk <= nt) {
@@ -888,7 +900,7 @@ outer:
                         seg190to200 = true;
 
                         if (seg200to210) {
-                            s1 = ((DoubleDouble.valueOf((double) ((kk - 1) / jc))).multiply(dr)).multiply(rad);
+                            s1 = ( (DoubleDouble.valueOf((double) ( (kk - 1) / jc))).multiply(dr)).multiply(rad);
                             c1 = (s1).cos();
                             s1 = (s1).sin();
                             mm = Math.min(kspan, mm + klim);
@@ -904,7 +916,7 @@ outer:
 
                     // TRANSFORM FOR FACTOR OF 5 (OPTIONAL CODE)
                     c2 = (c72.multiply(c72)).subtract(s72.multiply(s72));
-                    s2 = ((DoubleDouble.valueOf(2.0)).multiply(c72)).multiply(s72);
+                    s2 = ( (DoubleDouble.valueOf(2.0)).multiply(c72)).multiply(s72);
 
                     do { // while (kk <= kspan)
 
@@ -921,20 +933,20 @@ outer:
                             ajm = a[k2 - 1].subtract(a[k3 - 1]);
                             bjp = b[k2 - 1].add(b[k3 - 1]);
                             bjm = b[k2 - 1].subtract(b[k3 - 1]);
-                            aa = (DoubleDouble)a[kk - 1].clone();
-                            bb = (DoubleDouble)b[kk - 1].clone();
+                            aa = (DoubleDouble) a[kk - 1].clone();
+                            bb = (DoubleDouble) b[kk - 1].clone();
                             a[kk - 1] = (aa.add(akp)).add(ajp);
                             b[kk - 1] = (bb.add(bkp)).add(bjp);
-                            ak = ((akp.multiply(c72)).add(ajp.multiply(c2))).add(aa);
-                            bk = ((bkp.multiply(c72)).add(bjp.multiply(c2))).add(bb);
+                            ak = ( (akp.multiply(c72)).add(ajp.multiply(c2))).add(aa);
+                            bk = ( (bkp.multiply(c72)).add(bjp.multiply(c2))).add(bb);
                             aj = (akm.multiply(s72)).add(ajm.multiply(s2));
                             bj = (bkm.multiply(s72)).add(bjm.multiply(s2));
                             a[k1 - 1] = ak.subtract(bj);
                             a[k4 - 1] = ak.add(bj);
                             b[k1 - 1] = bk.add(aj);
                             b[k4 - 1] = bk.subtract(aj);
-                            ak = ((akp.multiply(c2)).add(ajp.multiply(c72))).add(aa);
-                            bk = ((bkp.multiply(c2)).add(bjp.multiply(c72))).add(bb);
+                            ak = ( (akp.multiply(c2)).add(ajp.multiply(c72))).add(aa);
+                            bk = ( (bkp.multiply(c2)).add(bjp.multiply(c72))).add(bb);
                             aj = (akm.multiply(s2)).subtract(ajm.multiply(s72));
                             bj = (bkm.multiply(s2)).subtract(bjm.multiply(s72));
                             a[k2 - 1] = ak.subtract(bj);
@@ -993,7 +1005,7 @@ outer:
 
                     if (k != jf) {
                         jf = k;
-                        s1 = rad.divide((DoubleDouble.valueOf((double) (k))).divide(DoubleDouble.valueOf(8.0)));
+                        s1 = rad.divide( (DoubleDouble.valueOf((double) (k))).divide(DoubleDouble.valueOf(8.0)));
                         c1 = (s1).cos();
                         s1 = (s1).sin();
                         ck[jf - 1] = DoubleDouble.valueOf(1.0);
@@ -1015,10 +1027,10 @@ outer:
                         do { // while (kk <= nn)
                             k1 = kk;
                             k2 = kk + kspnn;
-                            aa = (DoubleDouble)a[kk - 1].clone();
-                            bb = (DoubleDouble)b[kk - 1].clone();
-                            ak = (DoubleDouble)aa.clone();
-                            bk = (DoubleDouble)bb.clone();
+                            aa = (DoubleDouble) a[kk - 1].clone();
+                            bb = (DoubleDouble) b[kk - 1].clone();
+                            ak = (DoubleDouble) aa.clone();
+                            bk = (DoubleDouble) bb.clone();
                             j = 1;
                             k1 = k1 + kspan;
 
@@ -1035,8 +1047,8 @@ outer:
                                 k1 = k1 + kspan;
                             } while (k1 < k2);
 
-                            a[kk - 1] = (DoubleDouble)ak.clone();
-                            b[kk - 1] = (DoubleDouble)bk.clone();
+                            a[kk - 1] = (DoubleDouble) ak.clone();
+                            b[kk - 1] = (DoubleDouble) bk.clone();
                             k1 = kk;
                             k2 = kk + kspnn;
                             j = 1;
@@ -1045,8 +1057,8 @@ outer:
                                 k1 = k1 + kspan;
                                 k2 = k2 - kspan;
                                 jj = j;
-                                ak = (DoubleDouble)aa.clone();
-                                bk = (DoubleDouble)bb.clone();
+                                ak = (DoubleDouble) aa.clone();
+                                bk = (DoubleDouble) bb.clone();
                                 aj = DoubleDouble.valueOf(0.0);
                                 bj = DoubleDouble.valueOf(0.0);
                                 k = 1;
@@ -1097,7 +1109,7 @@ outer:
 
                 if (seg300to310) {
                     c2 = (DoubleDouble.valueOf(1.0)).subtract(cd);
-                    s1 = (DoubleDouble)sd.clone();
+                    s1 = (DoubleDouble) sd.clone();
                     mm = Math.min(kspan, klim);
                 } // if (seg300to310)
 
@@ -1107,26 +1119,27 @@ outer:
                 do { // while (kk <= mm)
 
                     if (seg310to320) {
-                        c2 = c1.subtract((cd.multiply(c1)).add(sd.multiply(s1)));
-                        s1 = s1.add((sd.multiply(c1)).subtract(cd.multiply(s1)));
+                        c2 = c1.subtract( (cd.multiply(c1)).add(sd.multiply(s1)));
+                        s1 = s1.add( (sd.multiply(c1)).subtract(cd.multiply(s1)));
 
                         // THE FOLLOWING THREE STATEMENTS COMPENSATE FOR TRUNCATION
                         // ERROR.IF ROUNDED ARITHMETIC IS USED, THEY MAY BE DELETED.
 
-                        c1 = ((DoubleDouble.valueOf(0.5)).divide((c2.multiply(c2)).add(s1.multiply(s1)))).add(DoubleDouble.valueOf(0.5));
+                        c1 = ( (DoubleDouble.valueOf(0.5)).divide( (c2.multiply(c2)).add(s1.multiply(s1))))
+                                .add(DoubleDouble.valueOf(0.5));
                         s1 = c1.multiply(s1);
                         c2 = c1.multiply(c2);
                     } // if (seg310to320)
 
                     seg310to320 = true;
-                    c1 = (DoubleDouble)c2.clone();
-                    s2 = (DoubleDouble)s1.clone();
+                    c1 = (DoubleDouble) c2.clone();
+                    s2 = (DoubleDouble) s1.clone();
                     kk = kk + kspan;
 
                     do { // while (kk <= kspnn)
 
                         do { // while (kk <= nt)
-                            ak = (DoubleDouble)a[kk - 1].clone();
+                            ak = (DoubleDouble) a[kk - 1].clone();
                             a[kk - 1] = (c2.multiply(ak)).subtract(s2.multiply(b[kk - 1]));
                             b[kk - 1] = (s2.multiply(ak)).add(c2.multiply(b[kk - 1]));
                             kk = kk + kspnn;
@@ -1155,7 +1168,7 @@ outer:
                     continue outer;
                 } // if (kk >= kspan)
 
-                s1 = ((DoubleDouble.valueOf((double) ((kk - 1) / jc))).multiply(dr)).multiply(rad);
+                s1 = ( (DoubleDouble.valueOf((double) ( (kk - 1) / jc))).multiply(dr)).multiply(rad);
                 c2 = (s1).cos();
                 s1 = (s1).sin();
                 mm = Math.min(kspan, mm + klim);
@@ -1196,16 +1209,15 @@ outer:
 
             if (nf == ntot) {
 
-// PERMUTATION FOR SINGLE - VARIATE TRANSFORM(OPTIONAL CODE)
-outer5:
-                do { // while (goBack5)
+                // PERMUTATION FOR SINGLE - VARIATE TRANSFORM(OPTIONAL CODE)
+                outer5: do { // while (goBack5)
                     goBack5 = false;
-                    ak = (DoubleDouble)a[kk - 1].clone();
-                    a[kk - 1] = (DoubleDouble)a[k2 - 1].clone();
-                    a[k2 - 1] = (DoubleDouble)ak.clone();
-                    bk = (DoubleDouble)b[kk - 1].clone();
-                    b[kk - 1] = (DoubleDouble)b[k2 - 1].clone();
-                    b[k2 - 1] = (DoubleDouble)bk.clone();
+                    ak = (DoubleDouble) a[kk - 1].clone();
+                    a[kk - 1] = (DoubleDouble) a[k2 - 1].clone();
+                    a[k2 - 1] = (DoubleDouble) ak.clone();
+                    bk = (DoubleDouble) b[kk - 1].clone();
+                    b[kk - 1] = (DoubleDouble) b[k2 - 1].clone();
+                    b[k2 - 1] = (DoubleDouble) bk.clone();
                     kk = kk + inc;
                     k2 = kspan + k2;
 
@@ -1243,19 +1255,18 @@ outer5:
             } // if (nf == ntot)
             else { // nf != ntot
 
-// PERMUTATION FOR MULTIVARIATE TRANSFORM
-outer6:
-                do { // while (goBack6)
+                // PERMUTATION FOR MULTIVARIATE TRANSFORM
+                outer6: do { // while (goBack6)
                     goBack6 = false;
                     k = kk + jc;
 
                     do { // while (kk < k)
-                        ak = (DoubleDouble)a[kk - 1].clone();
-                        a[kk - 1] = (DoubleDouble)a[k2 - 1].clone();
-                        a[k2 - 1] = (DoubleDouble)ak.clone();
-                        bk = (DoubleDouble)b[kk - 1].clone();
-                        b[kk - 1] = (DoubleDouble)b[k2 - 1].clone();
-                        b[k2 - 1] = (DoubleDouble)bk.clone();
+                        ak = (DoubleDouble) a[kk - 1].clone();
+                        a[kk - 1] = (DoubleDouble) a[k2 - 1].clone();
+                        a[k2 - 1] = (DoubleDouble) ak.clone();
+                        bk = (DoubleDouble) b[kk - 1].clone();
+                        b[kk - 1] = (DoubleDouble) b[k2 - 1].clone();
+                        b[k2 - 1] = (DoubleDouble) bk.clone();
                         kk = kk + inc;
                         k2 = k2 + inc;
                     } while (kk < k);
@@ -1306,8 +1317,8 @@ outer6:
             } // else nf != ntot
         } // if (kt != 0)
 
-        if (((2 * kt) + 1) >= m) {
-            
+        if ( ( (2 * kt) + 1) >= m) {
+
             setCompleted(true);
 
             return;
@@ -1332,8 +1343,7 @@ outer6:
         seg460to470 = false;
         seg470to480 = false;
 
-outer7:
-        do { // while (goBack7)
+        outer7: do { // while (goBack7)
             goBack7 = false;
 
             if (seg460to470) {
@@ -1372,8 +1382,7 @@ outer7:
         j = 0;
         seg490to500 = false;
 
-outer8:
-        do { // while (goBack8)
+        outer8: do { // while (goBack8)
             goBack8 = false;
 
             if (seg490to500) {
@@ -1442,8 +1451,8 @@ outer8:
 
                         do { // while (k1 != kk)
                             k2 = k2 + 1;
-                            at[k2 - 1] = (DoubleDouble)a[k1 - 1].clone();
-                            bt[k2 - 1] = (DoubleDouble)b[k1 - 1].clone();
+                            at[k2 - 1] = (DoubleDouble) a[k1 - 1].clone();
+                            bt[k2 - 1] = (DoubleDouble) b[k1 - 1].clone();
                             k1 = k1 - inc;
                         } while (k1 != kk);
 
@@ -1453,8 +1462,8 @@ outer8:
                             k = -np[k - 1];
 
                             do { // while (k1 != kk)
-                                a[k1 - 1] = (DoubleDouble)a[k2 - 1].clone();
-                                b[k1 - 1] = (DoubleDouble)b[k2 - 1].clone();
+                                a[k1 - 1] = (DoubleDouble) a[k2 - 1].clone();
+                                b[k1 - 1] = (DoubleDouble) b[k2 - 1].clone();
                                 k1 = k1 - inc;
                                 k2 = k2 - inc;
                             } while (k1 != kk);
@@ -1467,8 +1476,8 @@ outer8:
 
                         do { // while (k1 != kk)
                             k2 = k2 + 1;
-                            a[k1 - 1] = (DoubleDouble)at[k2 - 1].clone();
-                            b[k1 - 1] = (DoubleDouble)bt[k2 - 1].clone();
+                            a[k1 - 1] = (DoubleDouble) at[k2 - 1].clone();
+                            b[k1 - 1] = (DoubleDouble) bt[k2 - 1].clone();
                             k1 = k1 - inc;
                         } while (k1 != kk);
                     } while (jj != 0);
@@ -1481,7 +1490,6 @@ outer8:
             i = nt - inc + 1;
         } while (nt >= 0);
 
-        
         setCompleted(true);
 
         return;
@@ -1543,16 +1551,13 @@ outer8:
 
         fireProgressStateChanged("FFT", "Performing FFT REALS...");
 
-        
-
-
         inc = Math.abs(isn);
         nf = Math.abs(n);
 
-        if ((nf * isn) == 0) {
+        if ( (nf * isn) == 0) {
             MipavUtil.displayError("Error! Zero in REALS parameters");
             Preferences.debug("n = " + n + " isn = " + isn + "\n", Preferences.DEBUG_ALGORITHM);
-            
+
             setCompleted(false);
 
             return;
@@ -1561,9 +1566,9 @@ outer8:
         nk = (nf * inc) + 2;
         nh = nk / 2;
         rad = (DoubleDouble.PI).divide(DoubleDouble.valueOf(4.0));
-        dr = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf((double) (nf)));
-        sindrrad = (((DoubleDouble.valueOf(0.5)).multiply(dr)).multiply(rad)).sin();
-        cd = ((DoubleDouble.valueOf(2.0)).multiply(sindrrad)).multiply(sindrrad);
+        dr = (DoubleDouble.valueOf( -4.0)).divide(DoubleDouble.valueOf((double) (nf)));
+        sindrrad = ( ( (DoubleDouble.valueOf(0.5)).multiply(dr)).multiply(rad)).sin();
+        cd = ( (DoubleDouble.valueOf(2.0)).multiply(sindrrad)).multiply(sindrrad);
         sd = (dr.multiply(rad)).sin();
 
         // SIN,COS VALUES ARE RE-INITIALIZED EACH LIM STEPS
@@ -1574,13 +1579,13 @@ outer8:
         sn = DoubleDouble.valueOf(0.0);
 
         if (isn > 0) {
-            cn = DoubleDouble.valueOf(-1.0);
+            cn = DoubleDouble.valueOf( -1.0);
             sd = sd.negate();
         } // if (isn > 0)
         else {
             cn = DoubleDouble.valueOf(1.0);
-            a[nk - 2] = (DoubleDouble)a[0].clone();
-            b[nk - 2] = (DoubleDouble)b[0].clone();
+            a[nk - 2] = (DoubleDouble) a[0].clone();
+            b[nk - 2] = (DoubleDouble) b[0].clone();
         } // else
 
         for (j = 0; j < nh; j += inc) {
@@ -1599,29 +1604,29 @@ outer8:
 
             if (ml == mm) {
                 mm = mm + lim;
-                sn = ((DoubleDouble.valueOf((double) (ml))).multiply(dr)).multiply(rad);
+                sn = ( (DoubleDouble.valueOf((double) (ml))).multiply(dr)).multiply(rad);
                 cn = (sn).cos();
 
                 if (isn > 0) {
-                    cn =cn.negate();
+                    cn = cn.negate();
                 }
 
                 sn = (sn).sin();
             } // if (ml == mm)
             else {
-                aa = cn.subtract((cd.multiply(cn)).add(sd.multiply(sn)));
-                sn = ((sd.multiply(cn)).subtract(cd.multiply(sn))).add(sn);
+                aa = cn.subtract( (cd.multiply(cn)).add(sd.multiply(sn)));
+                sn = ( (sd.multiply(cn)).subtract(cd.multiply(sn))).add(sn);
 
                 // THE FOLLOWING THREE STATEMENTS COMPENSATE FOR TRUNCATION
                 // ERROR.IF ROUNDED ARITHMETIC IS USED, SUBSTITUTE cn = aa
 
-                cn = ((DoubleDouble.valueOf(0.5)).divide((aa.multiply(aa)).add(sn.multiply(sn)))).add(DoubleDouble.valueOf(0.5));
+                cn = ( (DoubleDouble.valueOf(0.5)).divide( (aa.multiply(aa)).add(sn.multiply(sn)))).add(DoubleDouble
+                        .valueOf(0.5));
                 sn = cn.multiply(sn);
                 cn = cn.multiply(aa);
             } // else
         } // for (j = 0; j < nh; j += inc)
 
-        
         setCompleted(true);
 
         return;
@@ -1660,13 +1665,13 @@ outer8:
 
         // This subroutine is set up to do the above-described operation on
         // all sub-vectors within any dimension of a multi-dimensional
-        // Fourier transform.  The parameters nseg, n, nspn, and inc
+        // Fourier transform. The parameters nseg, n, nspn, and inc
         // should agree with those used in the associated call of 'FFT'.
         // The folding frequency cosine coefficients are stored at the end
         // of array a (with zeros in corresponding locations in array b),
-        // in a sub-matrix of dimension one less than the main array.  The
+        // in a sub-matrix of dimension one less than the main array. The
         // deleted dimension is that corresponding to the parameter n in
-        // the call of realt.  Thus arrays a and b must have dimension
+        // the call of realt. Thus arrays a and b must have dimension
         // nseg*nspn*(n+1).
 
         int inc;
@@ -1698,11 +1703,7 @@ outer8:
         DoubleDouble em;
         boolean goBack = false;
 
-
         fireProgressStateChanged("FFT", "Performing FFT REALT...");
-
-        
-
 
         inc = Math.abs(isn);
         ks = Math.abs(nspn) * inc;
@@ -1710,11 +1711,11 @@ outer8:
         ns = ks * nf;
         nt = Math.abs(ns * nseg);
 
-        if ((isn * nt) == 0) {
+        if ( (isn * nt) == 0) {
             MipavUtil.displayError("Error! Zero in REALT parameters");
             Preferences.debug("nseg = " + nseg + " n = " + n + "\n", Preferences.DEBUG_ALGORITHM);
             Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n", Preferences.DEBUG_ALGORITHM);
-            
+
             setCompleted(false);
 
             return;
@@ -1728,9 +1729,9 @@ outer8:
         nt = nt + 1;
         kk = 1;
         rad = (DoubleDouble.PI).divide(DoubleDouble.valueOf(4.0));
-        dr = (DoubleDouble.valueOf(-4.0)).divide(DoubleDouble.valueOf((double) (nf)));
-        sindrrad = (((DoubleDouble.valueOf(0.5)).multiply(dr)).multiply(rad)).sin();
-        cd = ((DoubleDouble.valueOf(2.0)).multiply(sindrrad)).multiply(sindrrad);
+        dr = (DoubleDouble.valueOf( -4.0)).divide(DoubleDouble.valueOf((double) (nf)));
+        sindrrad = ( ( (DoubleDouble.valueOf(0.5)).multiply(dr)).multiply(rad)).sin();
+        cd = ( (DoubleDouble.valueOf(2.0)).multiply(sindrrad)).multiply(sindrrad);
         sd = (dr.multiply(rad)).sin();
 
         // SIN,COS VALUES ARE RE-INITIALIZED EACH LIM STEPS
@@ -1745,8 +1746,8 @@ outer8:
             do { // while (kk <= jc)
 
                 do { // while (kk <= nn)
-                    aa = (DoubleDouble)a[kk - 1].clone();
-                    ba = (DoubleDouble)a[nt - 1].clone();
+                    aa = (DoubleDouble) a[kk - 1].clone();
+                    ba = (DoubleDouble) a[nt - 1].clone();
                     a[kk - 1] = (aa.add(ba)).multiply(DoubleDouble.valueOf(0.5));
                     b[kk - 1] = (aa.subtract(ba)).multiply(DoubleDouble.valueOf(0.5));
                     nt = nt + jc;
@@ -1757,7 +1758,7 @@ outer8:
                 kk = kk - nn;
             } while (kk <= jc);
 
-            cn = DoubleDouble.valueOf(-1.0);
+            cn = DoubleDouble.valueOf( -1.0);
             sd = sd.negate();
         } // if (isn > 0)
         else { // isn <= 0
@@ -1765,8 +1766,8 @@ outer8:
             do { // while (kk <= jc)
 
                 do { // while (kk <= nn)
-                    aa = (DoubleDouble)a[kk - 1].clone();
-                    ba = (DoubleDouble)b[kk - 1].clone();
+                    aa = (DoubleDouble) a[kk - 1].clone();
+                    ba = (DoubleDouble) b[kk - 1].clone();
                     b[kk - 1] = DoubleDouble.valueOf(0.0);
                     a[kk - 1] = aa.add(ba);
                     a[nt - 1] = aa.subtract(ba);
@@ -1783,22 +1784,22 @@ outer8:
         } // else isn <= 0
 
         if (nf == 1) {
-            
+
             setCompleted(true);
 
             return;
         }
 
-outer:
-        do { // while (goBack)
+        outer: do { // while (goBack)
             goBack = false;
-            aa = cn.subtract((cd.multiply(cn)).add(sd.multiply(sn)));
-            sn = ((sd.multiply(cn)).subtract(cd.multiply(sn))).add(sn);
+            aa = cn.subtract( (cd.multiply(cn)).add(sd.multiply(sn)));
+            sn = ( (sd.multiply(cn)).subtract(cd.multiply(sn))).add(sn);
 
             // THE FOLLOWING THREE STATEMENTS COMPENSATE FOR TRUNCATION
-            // ERROR.  IF ROUNDED ARITHMETIC IS USED, SUBSTITUTE cn = aa
+            // ERROR. IF ROUNDED ARITHMETIC IS USED, SUBSTITUTE cn = aa
 
-            cn = ((DoubleDouble.valueOf(0.5)).divide((aa.multiply(aa)).add(sn.multiply(sn)))).add(DoubleDouble.valueOf(0.5));
+            cn = ( (DoubleDouble.valueOf(0.5)).divide( (aa.multiply(aa)).add(sn.multiply(sn)))).add(DoubleDouble
+                    .valueOf(0.5));
             sn = cn.multiply(sn);
             cn = cn.multiply(aa);
 
@@ -1833,13 +1834,13 @@ outer:
                 }
 
                 if (kk > nh) {
-                    
+
                     setCompleted(true);
 
                     return;
                 }
 
-                sn = ((DoubleDouble.valueOf((double) (jc / ks))).multiply(dr)).multiply(rad);
+                sn = ( (DoubleDouble.valueOf((double) (jc / ks))).multiply(dr)).multiply(rad);
                 cn = (sn).cos();
 
                 if (isn > 0) {
@@ -1850,7 +1851,6 @@ outer:
                 mm = Math.min(nh, mm + klim);
             } while (true);
         } while (goBack);
-
 
     }
 
@@ -1863,9 +1863,7 @@ outer:
 
         DoubleDouble[] c = new DoubleDouble[4097];
         DoubleDouble[] d = new DoubleDouble[4097];
-        int[] nc = new int[] {
-                       2, 3, 5, 210, 1000, 2000, 1024, 2048, 4096, 2187, 3125, 2401, 1331, 2197, 289, 361, 529
-                   };
+        int[] nc = new int[] {2, 3, 5, 210, 1000, 2000, 1024, 2048, 4096, 2187, 3125, 2401, 1331, 2197, 289, 361, 529};
         DoubleDouble[] ra = new DoubleDouble[64];
         DoubleDouble[] rb = new DoubleDouble[64];
         RandomNumberGen randomGen;
@@ -1875,13 +1873,13 @@ outer:
         DoubleDouble ss1;
         DoubleDouble ss2;
         int n1, n2, n3;
-        
+
         for (i = 0; i < ra.length; i++) {
-        	ra[i] = DoubleDouble.valueOf(0.0);
+            ra[i] = DoubleDouble.valueOf(0.0);
         }
-        
+
         for (i = 0; i < rb.length; i++) {
-        	rb[i] = DoubleDouble.valueOf(0.0);
+            rb[i] = DoubleDouble.valueOf(0.0);
         }
 
         n = 16;
@@ -1889,9 +1887,9 @@ outer:
 
         for (j = 0; j < n; j++) {
             c[j] = DoubleDouble.valueOf(randomGen.genUniformRandomNum(0.0, 1.0));
-            a[j] = (DoubleDouble)c[j].clone();
+            a[j] = (DoubleDouble) c[j].clone();
             d[j] = DoubleDouble.valueOf(randomGen.genUniformRandomNum(0.0, 1.0));
-            b[j] = (DoubleDouble)d[j].clone();
+            b[j] = (DoubleDouble) d[j].clone();
         } // for (j = 0; j < n; j++)
 
         Preferences.debug("Test of FFT, REALS, and REALT for real values\n", Preferences.DEBUG_ALGORITHM);
@@ -1937,10 +1935,10 @@ outer:
         } // for (j = 0; j < n; j++)
 
         for (j = 0; j < n; j++) {
-            a[2 * j] = (DoubleDouble)c[j].clone();
-            a[(2 * j) + 1] = (DoubleDouble)d[j].clone();
+            a[2 * j] = (DoubleDouble) c[j].clone();
+            a[ (2 * j) + 1] = (DoubleDouble) d[j].clone();
             b[2 * j] = DoubleDouble.valueOf(0.0);
-            b[(2 * j) + 1] = DoubleDouble.valueOf(0.0);
+            b[ (2 * j) + 1] = DoubleDouble.valueOf(0.0);
         } // for (j = 0; j < n; j++)
 
         Preferences.debug("Test of FFT for real values\n", Preferences.DEBUG_ALGORITHM);
@@ -1965,8 +1963,8 @@ outer:
         // Generate test data for transform of maximum size 4096
         for (j = 0; j < 4096; j++) {
             output = normal();
-            c[j] = (DoubleDouble)output[0].clone();
-            d[j] = (DoubleDouble)output[1].clone();
+            c[j] = (DoubleDouble) output[0].clone();
+            d[j] = (DoubleDouble) output[1].clone();
         } // for (j = 0; j < 4096; j++)
 
         Preferences.debug("Single-variate tests of subroutines\n", Preferences.DEBUG_ALGORITHM);
@@ -1975,8 +1973,8 @@ outer:
             n = nc[i];
 
             for (j = 0; j < n; j++) {
-                a[j] = (DoubleDouble)c[j].clone();
-                b[j] = (DoubleDouble)d[j].clone();
+                a[j] = (DoubleDouble) c[j].clone();
+                b[j] = (DoubleDouble) d[j].clone();
             } // for (j = 0; j < n; j++)
 
             isn = -1;
@@ -1984,13 +1982,13 @@ outer:
             isn = 1;
             fft();
             output = rms(a, b, c, d, n);
-            ss1 = (DoubleDouble)output[0].clone();
-            ss2 = (DoubleDouble)output[1].clone();
+            ss1 = (DoubleDouble) output[0].clone();
+            ss2 = (DoubleDouble) output[1].clone();
             Preferences.debug("FFT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             for (j = 0; j < n; j++) {
-                a[j] = (DoubleDouble)c[j].clone();
-                b[j] = (DoubleDouble)d[j].clone();
+                a[j] = (DoubleDouble) c[j].clone();
+                b[j] = (DoubleDouble) d[j].clone();
             } // for (j = 0; j < n; j++)
 
             isn = -1;
@@ -1998,13 +1996,13 @@ outer:
             isn = 1;
             reals();
             output = rms(a, b, c, d, n);
-            ss1 = (DoubleDouble)output[0].clone();
-            ss2 = (DoubleDouble)output[1].clone();
+            ss1 = (DoubleDouble) output[0].clone();
+            ss2 = (DoubleDouble) output[1].clone();
             Preferences.debug("REALS n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
             for (j = 0; j < n; j++) {
-                a[j] = (DoubleDouble)c[j].clone();
-                b[j] = (DoubleDouble)d[j].clone();
+                a[j] = (DoubleDouble) c[j].clone();
+                b[j] = (DoubleDouble) d[j].clone();
             } // for (j = 0; j < n; j++)
 
             isn = -1;
@@ -2012,8 +2010,8 @@ outer:
             isn = 1;
             realt();
             output = rms(a, b, c, d, n);
-            ss1 = (DoubleDouble)output[0].clone();
-            ss2 = (DoubleDouble)output[1].clone();
+            ss1 = (DoubleDouble) output[0].clone();
+            ss2 = (DoubleDouble) output[1].clone();
             Preferences.debug("REALT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
         } // for (i = 0; i <= 16; i++)
@@ -2025,8 +2023,8 @@ outer:
         n = n1 * n2 * n3;
 
         for (j = 0; j < n; j++) {
-            a[j] = (DoubleDouble)c[j].clone();
-            b[j] = (DoubleDouble)d[j].clone();
+            a[j] = (DoubleDouble) c[j].clone();
+            b[j] = (DoubleDouble) d[j].clone();
         } // for (j = 0; j < n; j++)
 
         isn = -1;
@@ -2057,13 +2055,13 @@ outer:
         fft();
         n = n1 * n2 * n3;
         output = rms(a, b, c, d, n);
-        ss1 = (DoubleDouble)output[0].clone();
-        ss2 = (DoubleDouble)output[1].clone();
+        ss1 = (DoubleDouble) output[0].clone();
+        ss2 = (DoubleDouble) output[1].clone();
         Preferences.debug("FFT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
 
         for (j = 0; j < n; j++) {
-            a[j] = (DoubleDouble)c[j].clone();
-            b[j] = (DoubleDouble)d[j].clone();
+            a[j] = (DoubleDouble) c[j].clone();
+            b[j] = (DoubleDouble) d[j].clone();
         } // for (j = 0; j < n; j++)
 
         nseg = n1;
@@ -2075,17 +2073,17 @@ outer:
         realt();
         n = n1 * n2 * n3;
         output = rms(a, b, c, d, n);
-        ss1 = (DoubleDouble)output[0].clone();
-        ss2 = (DoubleDouble)output[1].clone();
+        ss1 = (DoubleDouble) output[0].clone();
+        ss2 = (DoubleDouble) output[1].clone();
         Preferences.debug("REALT n = " + n + " ss1 = " + ss1 + " ss2 = " + ss2 + "\n", Preferences.DEBUG_ALGORITHM);
     }
 
     /**
      * DOCUMENT ME!
-     *
-     * @param  a    DOCUMENT ME!
-     * @param  n    DOCUMENT ME!
-     * @param  tag  DOCUMENT ME!
+     * 
+     * @param a DOCUMENT ME!
+     * @param n DOCUMENT ME!
+     * @param tag DOCUMENT ME!
      */
     private void sortg(DoubleDouble[] a, int n, DoubleDouble[] tag) {
         // Sorts array a into increasing order, from a[0] TO a[n-1]
@@ -2094,9 +2092,9 @@ outer:
         // TO SORT N ELEMENTS STARTING WITH A(K), CALL WITH A(K) AND TAG(K).
         // AN EARLIER VERSION OF THIS ALGORITHM, WITHOUT THE TAG ARRAY, WAS
         // PUBLISHED BY R.C. SINGLETON AS ACM ALGORITHM 347,
-        // COMM. ACM 12 (MARCH 1969), 1865-1866.  THE CURRENT VERSION
+        // COMM. ACM 12 (MARCH 1969), 1865-1866. THE CURRENT VERSION
         // SOLVES A MACHINE-DEPENDENT PROBLEM PRESENT IN THE EARLIER
-        // VERSION AND ALMOST ALL OTHER SORT SUBROUTINES.  ON MANY
+        // VERSION AND ALMOST ALL OTHER SORT SUBROUTINES. ON MANY
         // COMPUTERS, COMPARING A VERY LARGE NEGATIVE NUMBER WITH A
         // VERY LARGE POSITIVE NUMBER GIVES A WRONG RESULT AND A BAD SORT.
         // THIS PROBLEM WAS NOTED BY R. GRIFFIN AND K.A. REDISH, "REMARK
@@ -2153,8 +2151,7 @@ outer:
             seg20 = false;
         }
 
-outer:
-        do { // while (true)
+        outer: do { // while (true)
 
             if (seg10) {
 
@@ -2174,7 +2171,7 @@ outer:
             if (seg20) {
                 l = l - 1;
 
-                if ((l - i) <= 0) {
+                if ( (l - i) <= 0) {
                     seg30 = false;
                     seg40 = false;
                     seg50 = false;
@@ -2216,7 +2213,7 @@ outer:
             if (seg50) {
                 k = k + 1;
 
-                if ((j - k) <= 0) {
+                if ( (j - k) <= 0) {
                     seg60 = false;
                 } else {
                     seg10 = false;
@@ -2247,15 +2244,15 @@ outer:
             if (seg70) {
                 k = i;
                 ij = (j + i) / 2;
-                t = (DoubleDouble)a[ij - 1].clone();
+                t = (DoubleDouble) a[ij - 1].clone();
 
                 if (a[i - 1].gt(t)) {
-                    a[ij - 1] = (DoubleDouble)a[i - 1].clone();
-                    a[i - 1] = (DoubleDouble)t.clone();
-                    t = (DoubleDouble)a[ij - 1].clone();
-                    tg = (DoubleDouble)tag[ij - 1].clone();
-                    tag[ij - 1] = (DoubleDouble)tag[i - 1].clone();
-                    tag[i - 1] = (DoubleDouble)tg.clone();
+                    a[ij - 1] = (DoubleDouble) a[i - 1].clone();
+                    a[i - 1] = (DoubleDouble) t.clone();
+                    t = (DoubleDouble) a[ij - 1].clone();
+                    tg = (DoubleDouble) tag[ij - 1].clone();
+                    tag[ij - 1] = (DoubleDouble) tag[i - 1].clone();
+                    tag[i - 1] = (DoubleDouble) tg.clone();
                 } // if (a[i-1] > t)
             } // if (seg70)
 
@@ -2267,20 +2264,20 @@ outer:
                 l = j;
 
                 if (a[j - 1].lt(t)) {
-                    a[ij - 1] = (DoubleDouble)a[j - 1].clone();
-                    a[j - 1] = (DoubleDouble)t.clone();
-                    t = (DoubleDouble)a[ij - 1].clone();
-                    tg = (DoubleDouble)tag[ij - 1].clone();
-                    tag[ij - 1] = (DoubleDouble)tag[j - 1].clone();
-                    tag[j - 1] = (DoubleDouble)tg.clone();
+                    a[ij - 1] = (DoubleDouble) a[j - 1].clone();
+                    a[j - 1] = (DoubleDouble) t.clone();
+                    t = (DoubleDouble) a[ij - 1].clone();
+                    tg = (DoubleDouble) tag[ij - 1].clone();
+                    tag[ij - 1] = (DoubleDouble) tag[j - 1].clone();
+                    tag[j - 1] = (DoubleDouble) tg.clone();
 
                     if (a[i - 1].gt(t)) {
-                        a[ij - 1] = (DoubleDouble)a[i - 1].clone();
-                        a[i - 1] = (DoubleDouble)t.clone();
-                        t = (DoubleDouble)a[ij - 1].clone();
-                        tg = (DoubleDouble)tag[ij - 1].clone();
-                        tag[ij - 1] = (DoubleDouble)tag[i - 1].clone();
-                        tag[i - 1] = (DoubleDouble)tg.clone();
+                        a[ij - 1] = (DoubleDouble) a[i - 1].clone();
+                        a[i - 1] = (DoubleDouble) t.clone();
+                        t = (DoubleDouble) a[ij - 1].clone();
+                        tg = (DoubleDouble) tag[ij - 1].clone();
+                        tag[ij - 1] = (DoubleDouble) tag[i - 1].clone();
+                        tag[i - 1] = (DoubleDouble) tg.clone();
                     } // if (a[i-1] > t)
                 } // if (a[j-1] < t)
             } // if (seg80)
@@ -2288,17 +2285,17 @@ outer:
             seg80 = true;
 
             if (seg90) {
-                tt = (DoubleDouble)a[l - 1].clone();
+                tt = (DoubleDouble) a[l - 1].clone();
             } // if (seg90)
 
             seg90 = true;
 
             if (seg100) {
-                a[l - 1] = (DoubleDouble)a[k - 1].clone();
-                a[k - 1] = (DoubleDouble)tt.clone();
-                tg = (DoubleDouble)tag[l - 1].clone();
-                tag[l - 1] = (DoubleDouble)tag[k - 1].clone();
-                tag[k - 1] = (DoubleDouble)tg.clone();
+                a[l - 1] = (DoubleDouble) a[k - 1].clone();
+                a[k - 1] = (DoubleDouble) tt.clone();
+                tg = (DoubleDouble) tag[l - 1].clone();
+                tag[l - 1] = (DoubleDouble) tag[k - 1].clone();
+                tag[k - 1] = (DoubleDouble) tg.clone();
             } // if (seg100)
 
             seg100 = true;
@@ -2309,7 +2306,7 @@ outer:
                     l = l - 1;
                 } while (a[l - 1].gt(t));
 
-                tt = (DoubleDouble)a[l - 1].clone();
+                tt = (DoubleDouble) a[l - 1].clone();
             } // if (seg110)
 
             seg110 = true;
@@ -2334,7 +2331,7 @@ outer:
                     continue;
                 }
 
-                if ((l - i) > (j - k)) {
+                if ( (l - i) > (j - k)) {
                     il[m - 1] = i;
                     iu[m - 1] = l;
                     i = k;
@@ -2371,7 +2368,7 @@ outer:
 
             if (seg150) {
 
-                if ((j - i) > 10) {
+                if ( (j - i) > 10) {
                     seg10 = false;
                     seg20 = false;
                     seg30 = false;
@@ -2418,20 +2415,20 @@ outer:
                     continue outer;
                 }
 
-                t = (DoubleDouble)a[i].clone();
+                t = (DoubleDouble) a[i].clone();
             } while (a[i - 1].le(t));
 
-            tg = (DoubleDouble)tag[i].clone();
+            tg = (DoubleDouble) tag[i].clone();
             k = i;
 
             do { // while (t < a[k-1])
-                a[k] = (DoubleDouble)a[k - 1].clone();
-                tag[k] = (DoubleDouble)tag[k - 1].clone();
+                a[k] = (DoubleDouble) a[k - 1].clone();
+                tag[k] = (DoubleDouble) tag[k - 1].clone();
                 k = k - 1;
             } while (t.lt(a[k - 1]));
 
-            a[k] = (DoubleDouble)t.clone();
-            tag[k] = (DoubleDouble)tg.clone();
+            a[k] = (DoubleDouble) t.clone();
+            tag[k] = (DoubleDouble) tg.clone();
             seg10 = false;
             seg20 = false;
             seg30 = false;
