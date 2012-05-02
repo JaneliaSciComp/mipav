@@ -153,7 +153,7 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         String command = event.getActionCommand();
 
         if(command.equalsIgnoreCase("OK")) {
-            if(!setVariables()) {
+            if(setVariables()) {
                 callAlgorithm();
             }
         }
