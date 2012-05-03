@@ -60,7 +60,7 @@ import java.io.*;
  * This class is based on the DoubleDouble created by Martin Davis and distributed under the following license:
  * 
  * <pre>
- * Copyright © 2008-2012 Martin Davis. All Rights Reserved.
+ * Copyright (c) 2008-2012 Martin Davis. All Rights Reserved.
  * 
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
  * following conditions are met:
