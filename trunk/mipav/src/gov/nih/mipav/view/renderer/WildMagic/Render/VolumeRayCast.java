@@ -281,17 +281,15 @@ public class VolumeRayCast extends VolumeObject
     public void recreateShaderEffect( Renderer kRenderer, Texture targetTexture )
     {
     	//if ( m_kVolumeImageB.GetImage() != null )
-    	//{
-    	//	m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-        //        targetTexture);
-    	//}
-    	//else
-    	//{    		
+    	{
     		//m_kVolumeShaderEffect = new VolumeShaderEffectMultiPass( m_kVolumeImageA, m_kVolumeImageB,
-            //        targetTexture);
+            //    targetTexture);
+    	}
+    	//else
+    	{    		
     		m_kVolumeShaderEffect = new VolumeShaderEffectMultiPassDynamic( m_kVolumeImageA, m_kVolumeImageB,
     				targetTexture);
-    	//}
+    	}
         kRenderer.LoadResources(m_kVolumeShaderEffect);
         kRenderer.LoadResources(m_kMesh);
         m_kScene.UpdateGS();

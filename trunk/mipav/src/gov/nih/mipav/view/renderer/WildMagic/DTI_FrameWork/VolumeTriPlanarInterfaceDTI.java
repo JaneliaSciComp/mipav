@@ -60,26 +60,21 @@ implements ChangeListener {
 	
 	private String m_kParentDir;
 
-	private JPanel DTIFiberPanel;
-	
 	private JPanel DTIParametersPanel;
 	
-	  /** Tract input file. */
-    private String m_kTractFileName = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
    
 
-    public VolumeTriPlanarInterfaceDTI(ModelImage colorTensorImage, ModelImage tensorImage, ModelImage eigenVectorImage,
-    		ModelImage eigenValueImage, ModelImage fAImage, String tractFileName ) {
-        super(colorTensorImage, null);
+    public VolumeTriPlanarInterfaceDTI( ModelImage colorTensorImage, ModelImage imageB, ModelImage tensorImage, ModelImage eigenVectorImage,
+    		ModelImage eigenValueImage, ModelImage fAImage ) {
+        super(colorTensorImage, imageB);
         m_kEigenVectorImage = eigenVectorImage;
         m_kEigenValueImage = eigenValueImage;
         m_kAnisotropyImage = fAImage;
         m_kDTIImage = tensorImage; 
         m_kDTIColorImage = colorTensorImage;
-        m_kTractFileName = tractFileName;
         
         buildDTIParametersPanel();
 
@@ -99,7 +94,7 @@ implements ChangeListener {
     public void buildDTIParametersPanel() {
     	DTIParametersPanel = new JPanel();
     	
-    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM, m_kTractFileName);
+    	DTIparamsPanel = new JPanelDTIParametersPanel(this, raycastRenderWM);
     	
     	DTIParametersPanel.add(DTIparamsPanel.getMainPanel());
     	
@@ -213,11 +208,6 @@ implements ChangeListener {
     	m_kAnisotropyImage = _m_kAnisotropyImage;
     }
     
-    
-    public void setFiberTrackActive() {
-    	insertTab("Fiber Tracks", DTIFiberPanel);
-    }
-
     
     public void setParentDir(String _path) {
        m_kParentDir = _path;

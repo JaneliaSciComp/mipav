@@ -71,7 +71,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 	/** DOCUMENT ME! */
 	protected JButton nextButton; 
 	
-	/** The current image in the pipeline */
+	/** The current DWI image in the pipeline */
 	private ModelImage currentImage = null;
 
 	/** Diffusion weighted image read from file or from active image. */
@@ -217,7 +217,13 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		final String command = event.getActionCommand();
 		
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
-		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) /*&& (currentImage != null)*/ )
+		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == EPI_DISTORTION) )
+		{
+			currentImage = EPIpanel.getResult();
+			estTensorPanel.setImage(currentImage);
+			tabbedPane.setSelectedIndex(TENSOR_ESTIMATION);
+		}
+		else if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) )
 		{
 			estTensorPanel.calcTensor(currentImage);
 		}
@@ -257,7 +263,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			}
             srcBvalGradTable = importData.srcTableModel;
 			DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
-			DTIPreprocessing.highlightBorderPanel.setBorder(highlightTitledBorder(""));
+			//DTIPreprocessing.highlightBorderPanel.setBorder(highlightTitledBorder(""));
 			if(dtiparams.getGradients() != null){
     			for (int i = 0; i <dtiparams.getbValues().length-1; i++){
     			    if (dtiparams.getbValues()[i] == 0 && dtiparams.getGradients()[i][0] ==0 ){
@@ -266,6 +272,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
     			    
     			}
 			}
+			DTIPreprocessing.setOutputDirectory(DWIImage.getImageDirectory());
 			repaint();
 
 
@@ -278,7 +285,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			}
 
 			else{
-			    DTIPreprocessing.highlightBorderPanel.setBorder(buildTitleBorder(""));
+			    //DTIPreprocessing.highlightBorderPanel.setBorder(buildTitleBorder(""));
 				MipavUtil.displayError("Please load B-values and Gradients or Bmatrix file");
 			}
 
@@ -291,7 +298,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			        DTIPreprocessing.transformB0MatCheckbox.setEnabled(true);
 			        DTIPreprocessing.blanklabel.setEnabled(true);
 			        DTIPreprocessing.transformB0Checkbox.setEnabled(true);
-			        DTIPreprocessing.epiCheckbox.setEnabled(true);
+			        //DTIPreprocessing.epiCheckbox.setEnabled(true);
 				}
 				else{
 		          
@@ -315,38 +322,20 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			if (DTIPreprocessing.result35RegImage !=null){
 				DWINewB0Image = DTIPreprocessing.result35RegImage;
 				refImageNum = DTIPreprocessing.refVolNum;
+				currentImage = DTIPreprocessing.result35RegImage;
 			}
-			
-			if (DTIPreprocessing.epiCheckbox.isSelected()){
-			    if (T2Image != null && DWINewB0Image !=null){
-	                 arrayTransMatrix = DTIPreprocessing.arrayTransMatrix;
-	                 b0toStructMatrix = DTIPreprocessing.b0toStructMatrix;
-    			     tabbedPane.setSelectedIndex(2);
-    	             nextButton.setEnabled(false);
-    	             goBackButton.setEnabled(true);
-    	             goBackButton.setActionCommand("back2");
-			    }
+			if (DWINewB0Image !=null){
+				inputTensorImage = DWINewB0Image;  
 			}
-			else{
-			      if (DWINewB0Image !=null){
-			          inputTensorImage = DWINewB0Image;  
-			      }
-			      else if (DTIPreprocessing.inputPreTensorImage != null){			          
-			          inputTensorImage = DTIPreprocessing.inputPreTensorImage;
-			      }
+			else if (DTIPreprocessing.inputPreTensorImage != null){			          
+				inputTensorImage = DTIPreprocessing.inputPreTensorImage;
+			}
 
-	              tabbedPane.setSelectedIndex(3);
-	              /*
-	              estTensorPanel.maskOpenPanel.setBorder(highlightTitledBorder("Upload Mask Image"));
-	              estTensorPanel.maskLabel.setEnabled(true);
-	              estTensorPanel.openMaskImageButton.setEnabled(true);
-	              estTensorPanel.textMaskimage.setEnabled(true);
-	              */
-	              nextButton.setEnabled(true);
-	              goBackButton.setEnabled(true);
-	              goBackButton.setActionCommand("back3");
-			      }
-			}
+			tabbedPane.setSelectedIndex(EPI_DISTORTION);
+			nextButton.setEnabled(true);
+			goBackButton.setEnabled(true);
+			goBackButton.setActionCommand("back3");
+		}
 	      else if (command.equals("back2")){
 	            tabbedPane.setSelectedIndex(1);
 	            nextButton.setEnabled(true);
@@ -404,14 +393,14 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 		DTIPreprocessing = new JPanelDTIPreprocessing(this);
 
-		return DTIPreprocessing.mainPrePanel ;
+		return DTIPreprocessing;
 	}
 
 	private JPanel buildEPIPanel() {
 
 		EPIpanel = new JPanelEPIDistortionCorrection(this);
 
-		return EPIpanel.mainEPIPanel ;
+		return EPIpanel;
 
 	}
 	
@@ -430,8 +419,22 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		return visualization;
 	}
 
+	public void finishPreProcessingPanel( ModelImage registeredDWI, ModelImage resampledT2, 
+			TransMatrix matB0toT2, String matB0FileName, TransMatrix[] matRegistered, String matRegisteredFileName )
+	{
+		EPIpanel.setRegisteredDWIImage( registeredDWI );
+		EPIpanel.setResampledT2Image( resampledT2 );
+		EPIpanel.setB0toT2Matrix( matB0toT2, matB0FileName );
+		EPIpanel.setRegisteredMatrices( matRegistered, matRegisteredFileName );
+		nextButton.setEnabled(true);
+	}
+	
+	public void finishEPIPanel()
+	{
+		nextButton.setEnabled(true);		
+	}
 
-	public void finishTensorPanel(ModelImage resultImage )
+	public void finishTensorPanel( ModelImage resultImage )
 	{
 		this.tensorImage = resultImage;
 		// Set up the fiber tracking panel inputs:

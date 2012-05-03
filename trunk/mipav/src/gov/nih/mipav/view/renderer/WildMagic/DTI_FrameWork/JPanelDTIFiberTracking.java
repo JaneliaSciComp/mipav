@@ -821,84 +821,6 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
         mainPanel.add( imageOutputPanel );
         
-        
-        /*
-        
-        negXCheckBox = new JCheckBox("+/- x");
-        negXCheckBox.setSelected(false);
-        negXCheckBox.addActionListener(this);
-        negXCheckBox.setActionCommand("NegX");
-        negXCheckBox.setEnabled(true);
-
-        negYCheckBox = new JCheckBox("+/- y");
-        negYCheckBox.setSelected(false);
-        negYCheckBox.addActionListener(this);
-        negYCheckBox.setActionCommand("NegY");
-        negYCheckBox.setEnabled(true);
-
-        negZCheckBox = new JCheckBox("+/- z");
-        negZCheckBox.setSelected(true);
-        negZCheckBox.addActionListener(this);
-        negZCheckBox.setActionCommand("NegZ");
-        negZCheckBox.setEnabled(true);
-
-        final JPanel kVectorPanel = new JPanel();
-        kVectorPanel.setLayout(new BoxLayout(kVectorPanel, BoxLayout.X_AXIS));
-        kVectorPanel.add(negXCheckBox);
-        kVectorPanel.add(negYCheckBox);
-        kVectorPanel.add(negZCheckBox);
-
-        faMinThresholdTextField = new JTextField("0.0", 4);
-        faMinThresholdTextField.setActionCommand("FAMINChanged");
-        faMinThresholdTextField.addActionListener(this);
-        faMaxThresholdTextField = new JTextField("1.0", 4);
-        faMaxThresholdTextField.setActionCommand("FAMAXChanged");
-        faMaxThresholdTextField.addActionListener(this);
-        maxAngleTextField = new JTextField("45", 4);
-        maxAngleTextField.setActionCommand("MaxAngleChanged");
-        maxAngleTextField.addActionListener(this);
-        final JPanel kTrackPanel = new JPanel(new GridBagLayout());
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        kTrackPanel.add(new JLabel("FA Threshold Min (0.0-1.0):"), gbc);
-        gbc.gridx = 2;
-        kTrackPanel.add(faMinThresholdTextField, gbc);
-        gbc.gridx = 0;
-        gbc.gridy++;
-        kTrackPanel.add(new JLabel("FA Threshold Max (0.0-1.0):"), gbc);
-        gbc.gridx = 2;
-        kTrackPanel.add(faMaxThresholdTextField, gbc);
-        gbc.gridx = 0;
-        gbc.gridy++;
-        kTrackPanel.add(new JLabel("Maximum Angle (0.0-180.0):"), gbc);
-        gbc.gridx = 2;
-        kTrackPanel.add(maxAngleTextField, gbc);
-        
-
-        gbc.gridx = 0;
-        gbc.gridy++;
-        final JLabel m_kTractsMinLength = new JLabel("Minimum tract length:");
-        kTrackPanel.add(m_kTractsMinLength, gbc);
-        gbc.gridx = 2;
-        minTractLengthTextField = new JTextField("20", 5);
-        minTractLengthTextField.setBackground(Color.white);
-        kTrackPanel.add(minTractLengthTextField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        final JPanel kTractOPtionsPanel = new JPanel();
-        kTractOPtionsPanel.setLayout(new GridBagLayout());
-        kTractOPtionsPanel.add(kVectorPanel, gbc);
-        gbc.gridy = 1;
-        kTractOPtionsPanel.add(kTrackPanel, gbc);
-        kTractOPtionsPanel.setBorder(buildTitledBorder("Fiber Track Recontruction Options"));
-
-        gbc.gridy = 2;
-        gbc.gridx = 0;
-        gbc.gridwidth = 3;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        mainPanel.add(kTractOPtionsPanel, gbc);
-*/
         if ( bStandAlone )
         {
         	JPanel OKCancelPanel = new JPanel();
@@ -922,22 +844,6 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         setVisible(true);
     }
 
-    /**
-     * Calls AlgorithmDTITRACT to calculate fiber bundle tracts 
-     */
-    private void trackFibers() {
-        final float fFAMin = Float.valueOf(faMinThresholdTextField.getText()).floatValue();
-        final float fFAMax = Float.valueOf(faMaxThresholdTextField.getText()).floatValue();
-        final float fMaxAngle = Float.valueOf(maxAngleTextField.getText()).floatValue();
-        final int iMinLength = Integer.valueOf(minTractLengthTextField.getText()).intValue();
-        AlgorithmDTITract kTractAlgorithm = new AlgorithmDTITract(tensorImage, FAImage, eigenVectorImage,
-                eigenValueImage, outputDirTextField.getText() + File.separator + TrackFileName, negXCheckBox
-                        .isSelected(), negYCheckBox.isSelected(), negZCheckBox.isSelected(), 
-                        fFAMin, fFAMax, fMaxAngle, iMinLength);
-        kTractAlgorithm.run();
-        kTractAlgorithm.disposeLocal();
-        kTractAlgorithm = null;
-    }
 
     private boolean validateData() {
         final boolean success = true;
@@ -949,28 +855,6 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
             MipavUtil.displayError("Tensor Image and Output Dir are required parameters");
             return false;
         }
-/*
-        try {
-            final float fFAMin = Float.valueOf(faMinThresholdTextField.getText()).floatValue();
-            final float fFAMax = Float.valueOf(faMaxThresholdTextField.getText()).floatValue();
-            final float fMaxAngle = Float.valueOf(maxAngleTextField.getText()).floatValue();
-            if (fFAMin < 0 || fFAMin > 1) {
-                MipavUtil.displayError("FA Threshold Min is not in acceptable range");
-                return false;
-            }
-            if (fFAMax < 0 || fFAMax > 1) {
-                MipavUtil.displayError("FA Threshold Max is not in acceptable range");
-                return false;
-            }
-            if (fMaxAngle < 0 || fMaxAngle > 180) {
-                MipavUtil.displayError("Maximum Angle is not in acceptable range");
-                return false;
-            }
-        } catch (final NumberFormatException e) {
-            MipavUtil.displayError("One or more values enteres is not valid");
-            return false;
-        }
-*/
         return success;
     }
 

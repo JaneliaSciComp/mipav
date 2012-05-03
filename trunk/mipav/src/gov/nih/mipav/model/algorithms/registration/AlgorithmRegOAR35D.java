@@ -834,47 +834,27 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
     
    
     
-    public TransMatrix[] getArrayTransMatrix(){
-        boolean useIndexNumBreak = false;
-        int indexNumBreak = 0;
-        int counter = 0;
-        ArrayList<TransMatrix> arrayList1 = new ArrayList<TransMatrix>() ;
-        ArrayList<TransMatrix> arrayList2 = new ArrayList<TransMatrix>() ;
-        
-        if (TransMatsInumber[0] != 1){
-            if (TransMatsInumber[0]>TransMatsInumber[1]){
-                useIndexNumBreak = true;
-                for (int i = 0; i< inputImage.getExtents()[3]-1;i++){
-                    if (i < TransMatsInumber[i]){
-                        indexNumBreak++;
-                        }
-                }
-            }
-            for (int i = 0; i< inputImage.getExtents()[3]-1;i++){
-                if (i < TransMatsInumber[i]){
-                    if (useIndexNumBreak == false){
-                        arrayList1.add(i,VolumesToReferenceTransformations[i]);
-                    }
-                    else{
-                        arrayList1.add(i,VolumesToReferenceTransformations[(indexNumBreak-1)-i]);
-                    }
-                }               
-                else if (i > TransMatsInumber[i]){
-                    arrayList2.add(counter,VolumesToReferenceTransformations[(inputImage.getExtents()[3]-2)-counter]);
-                    counter++;
-                }
-            }       
-            arrayList2.addAll(arrayList1);
-            
-            for(int i=0; i< arrayList2.size(); i++){
-                VolumesToReferenceTransformations[i] = arrayList2.get(i);
-            }
-            
-           return VolumesToReferenceTransformations;
-        }
-        else{       
-            return VolumesToReferenceTransformations;
-        }
+    /**
+     * Sorts the array of transformation matricies and returns the sorted array.
+     * If the sub-volumes are sorted to a sub-volume within the 4D image, then the matrix
+     * for the reference volume is the identity matrix.
+     * @return Array of TransMatrix, one for each sub-volume in the 4D image.
+     */
+    public TransMatrix[] getArrayTransMatrix() {
+    	TransMatrix[] sortedArray = new TransMatrix[inputImage.getExtents()[3]];
+    	for ( int i = 0; i < sortedArray.length; i++ )
+    	{
+    		sortedArray[i] = new TransMatrix(4);
+    	}
+
+    	for ( int i = 0; i < sortedArray.length; i++ )
+    	{
+    		if ( i < TransMatsInumber.length )
+    		{
+    			sortedArray[ TransMatsInumber[i] ] = new TransMatrix( VolumesToReferenceTransformations[i] );
+    		}
+    	}
+    	return sortedArray;
     }
     
     

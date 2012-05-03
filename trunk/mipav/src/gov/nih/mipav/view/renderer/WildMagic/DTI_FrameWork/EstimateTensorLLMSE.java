@@ -590,8 +590,8 @@ public class EstimateTensorLLMSE {
 		//***************************************************
 		// Step 2: Loop over all voxels and estimate tensors 
 		//***************************************************
-        final ViewJProgressBar progressBar = new ViewJProgressBar("vabra",
-                "vabra deformation field...", 0, 100, false, null, null);
+        final ViewJProgressBar progressBar = new ViewJProgressBar("tensor estimation",
+                "estimating tensor...", 0, 100, false, null, null);
         progressBar.setVisible(true);
         progressBar.updateValueImmed(0);
         

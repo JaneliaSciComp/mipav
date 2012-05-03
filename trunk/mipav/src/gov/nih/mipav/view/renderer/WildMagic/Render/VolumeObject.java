@@ -393,14 +393,20 @@ public abstract class VolumeObject
     protected void scale( VertexBuffer kVertexBuffer )
     {
         ModelImage kImageA = m_kVolumeImageA.GetImage();
-        Vector3f kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
-                m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
-                m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
+        Vector3f kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX(), m_kVolumeImageA.GetScaleY(), m_kVolumeImageA.GetScaleZ()  );
+        Vector3f kExtentsScale = new Vector3f(1f/(kImageA.getExtents()[0] - 1), 
+                1f/(kImageA.getExtents()[1] - 1), 
+                1f/(kImageA.getExtents()[2] - 1)  );
 
         for ( int i = 0; i < kVertexBuffer.GetVertexQuantity(); i++ )
         {
             Vector3f kPos = new Vector3f();
             kVertexBuffer.GetPosition3(i, kPos);
+            kPos.Mult(kExtentsScale);
+            if ( kVertexBuffer.GetAttributes().HasTCoord(0) )
+            {            	
+            	kVertexBuffer.SetTCoord3(0, i, kPos);
+            }
             kPos.Mult(kVolumeScale);
             kVertexBuffer.SetPosition3(i, kPos);
         }

@@ -797,7 +797,7 @@ public class VolumeShaderEffectMultiPass extends VolumeClipEffect
         SetPShader(0,m_kPShaderCMP);
     }
 
-       
+
     protected void initTexturesVol( PixelShader kPShader )
     {        
         int iTex = 0;

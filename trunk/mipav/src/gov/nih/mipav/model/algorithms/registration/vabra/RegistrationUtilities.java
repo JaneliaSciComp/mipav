@@ -126,6 +126,25 @@ public class RegistrationUtilities {
 			}
 		}
 	}
+	
+	public static void DeformImage3D(ModelImage im, ModelImage deformedIm,
+			ModelImage DF, int sizeX, int sizeY, int sizeZ, int type) {
+		int i, j, k, index;
+		int size = sizeX * sizeY * sizeZ;
+		int slice = sizeX * sizeY;
+		for (i = 0; i < sizeX; i++) for (j = 0; j < sizeY; j++) for (k = 0; k < sizeZ; k++) {
+			index = k * slice + j * sizeX + i;
+			if (DF.getFloat(index) != 0 || DF.getFloat(size + index)!= 0
+					|| DF.getFloat(size * 2 + index) != 0) {
+				deformedIm.set( index,  (float) Interpolation(im, sizeX,
+						sizeY, sizeZ, i + DF.getFloat(index), j
+						+ DF.getFloat(size + index), k
+						+ DF.getFloat(size * 2 + index), type) );
+			} else {
+				deformedIm.set( index, im.getFloat(index) );
+			}
+		}
+	}
 
 	
 	public static void DeformationFieldResample3DM(float[] oldDF,

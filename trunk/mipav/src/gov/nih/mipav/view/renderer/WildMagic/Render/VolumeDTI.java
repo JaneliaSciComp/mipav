@@ -29,6 +29,7 @@ import WildMagic.LibGraphics.SceneGraph.Polyline;
 import WildMagic.LibGraphics.SceneGraph.StandardMesh;
 import WildMagic.LibGraphics.SceneGraph.Transformation;
 import WildMagic.LibGraphics.SceneGraph.TriMesh;
+import WildMagic.LibGraphics.Shaders.PixelShader;
 import WildMagic.LibGraphics.Shaders.Program;
 import WildMagic.LibGraphics.Surfaces.TubeSurface;
 
@@ -46,7 +47,7 @@ public class VolumeDTI extends VolumeObject
 	private HashMap<Integer,Node>  m_kTubes = null;
 
 	/** Hashmap for multiple fiber bundles: */
-	private HashMap<Integer,ShaderEffect>  m_kShaders = null;
+	private HashMap<Integer,ShaderEffect[]>  m_kShaders = null;
 
 	/** Hashmap for multiple fiber bundles: */
 	private HashMap<Integer,Vector<VOIContour>> m_kGlyphs = null;
@@ -166,7 +167,7 @@ public class VolumeDTI extends VolumeObject
 		{
 			m_kTracts = new HashMap<Integer,Node>();
 			m_kGlyphs = new HashMap<Integer,Vector<VOIContour>>();
-			m_kShaders = new HashMap<Integer,ShaderEffect>();
+			m_kShaders = new HashMap<Integer,ShaderEffect[]>();
 			m_kTubes = new HashMap<Integer,Node>();
 			constantColor = new HashMap<Integer, ColorRGB>();
 		}        
@@ -209,9 +210,12 @@ public class VolumeDTI extends VolumeObject
 			kTractNode.AttachChild(kLine);
 			m_kTracts.put( iIGroup, kTractNode );
 
-			String kShaderName = new String( "ConstantColor" );
-			VertexColor3Effect kPolylineShader = new VertexColor3Effect( kShaderName, true );
-			m_kShaders.put( iIGroup, kPolylineShader );
+			
+			ShaderEffect[] shaders = new ShaderEffect[4];
+			shaders[0] = new VolumePreRenderEffect(true, true, false); // pre-render non transparent
+			shaders[1] = new VolumePreRenderEffect(false, true, true); // pre-render transparent
+			shaders[2] = new VertexColor3Effect( ); // render in color non transparent
+			m_kShaders.put( iIGroup, shaders );
 
 
 			Node kTubeNode = new Node();
@@ -465,11 +469,11 @@ public class VolumeDTI extends VolumeObject
 			DisplayGlyphs( m_kVolumeImageA.GetImage(), kRenderer );
 		}
 		else if ( m_bDisplayTubes ) {
-			DisplayTubes(m_kVolumeImageA.GetImage(), kRenderer);
+			DisplayTubes(m_kVolumeImageA.GetImage(), kRenderer, bPreRender);
 		}
 		else 
 		{
-			DisplayTract( kRenderer );
+			DisplayTract( kRenderer, bPreRender, bSolid );
 		}
 		kRenderer.SetAlphaState(aTemp);
 	}
@@ -773,7 +777,7 @@ public class VolumeDTI extends VolumeObject
 	/** Displays a polyline fiber bundle tract with the given shader attached.
 	 * @param kInputStader shader to apply to the polyline.
 	 */    
-	private void DisplayTract( Renderer kRenderer )
+	private void DisplayTract( Renderer kRenderer, boolean bPreRender, boolean bSolid  )
 	{
 		Iterator<Integer> kIterator = m_kTracts.keySet().iterator();
 		Integer iKey;
@@ -788,57 +792,70 @@ public class VolumeDTI extends VolumeObject
 			kTractNode = m_kTracts.get(iKey);
 
 			ColorRGB kColor1 = null;
-			ShaderEffect kShader = m_kShaders.get(iKey);
-			Program pkCProgram = kShader.GetCProgram(0);
-			if ( (pkCProgram != null) && (pkCProgram.GetUC("UseConstantColor") != null) )
-			{
-				pkCProgram.GetUC("UseConstantColor").GetData()[0] = 2;
-			}
-			
 			for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
 			{
-				if (!isUsingVolumeColor) {
-					kColor1 = new ColorRGB(constantColor.get(iKey));
-
-					kTract = (Polyline) kTractNode.GetChild(i);
-					kTract.AttachGlobalState(m_kLinesMaterial);
-					kTract.DetachAllEffects();
-					kTract.AttachEffect(m_kLightShader);
-
-					kTract.UpdateRS();
-
-					m_kLinesMaterial.Ambient = new ColorRGB(kColor1.R, kColor1.G, kColor1.B); 
-					m_kLinesMaterial.Diffuse = new ColorRGB(kColor1.R, kColor1.G, kColor1.B);
-					m_kLinesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
-					m_kLinesMaterial.Specular = new ColorRGB(ColorRGB.BLACK);
-					m_kLinesMaterial.Alpha = 1.0f;
-					m_kLinesMaterial.Shininess = 100f;
-
-					m_kScene.SetChild(0, kTract);
-					m_kScene.UpdateGS();
-					m_kScene.DetachChild(kTract);
-					kRenderer.Draw(kTract);
-					kTract.DetachEffect(m_kLightShader);
-
-				} else {
+				ShaderEffect[] kShader = m_kShaders.get(iKey);
+				if ( bPreRender )
+				{						
 					kTract = (Polyline)kTractNode.GetChild(i);
 					kTract.DetachAllEffects();
-					kTract.AttachEffect( kShader );
+					kTract.AttachEffect( kShader[0] );
 
 					m_kScene.SetChild(0,kTract);
 					m_kScene.UpdateGS();
 					m_kScene.DetachChild(kTract);
 					kRenderer.Draw(kTract);
-					kTract.DetachEffect( kShader );
+					kTract.DetachEffect( kShader[0] );						
+				}
+				else
+				{
+					if (!isUsingVolumeColor) {
+						kColor1 = new ColorRGB(constantColor.get(iKey));
+
+						kTract = (Polyline) kTractNode.GetChild(i);
+						kTract.AttachGlobalState(m_kLinesMaterial);
+						kTract.DetachAllEffects();
+						kTract.AttachEffect(m_kLightShader);
+
+						kTract.UpdateRS();
+
+						m_kLinesMaterial.Ambient = new ColorRGB(kColor1.R, kColor1.G, kColor1.B); 
+						m_kLinesMaterial.Diffuse = new ColorRGB(kColor1.R, kColor1.G, kColor1.B);
+						m_kLinesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+						m_kLinesMaterial.Specular = new ColorRGB(ColorRGB.BLACK);
+						m_kLinesMaterial.Alpha = 1.0f;
+						m_kLinesMaterial.Shininess = 100f;
+
+						m_kScene.SetChild(0, kTract);
+						m_kScene.UpdateGS();
+						m_kScene.DetachChild(kTract);
+						kRenderer.Draw(kTract);
+						kTract.DetachEffect(m_kLightShader);
+
+					} 
+					else
+					{
+						kTract = (Polyline)kTractNode.GetChild(i);
+						kTract.DetachAllEffects();
+						kTract.AttachEffect( kShader[1] );
+
+						m_kScene.SetChild(0,kTract);
+						m_kScene.UpdateGS();
+						m_kScene.DetachChild(kTract);
+						kRenderer.Draw(kTract);
+						kTract.DetachEffect( kShader[1] );								
+					}
 				}
 			}
 		}
 	}
+	
+	
 
 	/** Displays a tube fiber bundle tract with the given shader attached.
 	 * @param kInputStader shader to apply to the tube.
 	 */    
-	private void DisplayTubes( ModelImage kImage, Renderer kRenderer )
+	private void DisplayTubes( ModelImage kImage, Renderer kRenderer, boolean bPreRender )
 	{
 		Node kTubeNode;
 		Integer iKey;
@@ -856,33 +873,50 @@ public class VolumeDTI extends VolumeObject
 			kTubeNode = m_kTubes.get(iKey);   
 			for ( int i = 0; i < kTubeNode.GetQuantity(); i++ )
 			{
-				kTube = (TubeSurface)kTubeNode.GetChild(i);                           
+				kTube = (TubeSurface)kTubeNode.GetChild(i);     
+				
+				ShaderEffect[] kShader = m_kShaders.get(iKey);
+				if ( bPreRender )
+				{						
+					kTube.AttachEffect(kShader[0]);
 
-				ColorRGB kColor1 = ColorRGB.WHITE;
-				kColor1 = new ColorRGB(constantColor.get(iKey));
+					m_kScene.SetChild(0,kTube);
+					m_kScene.UpdateGS();
+					m_kScene.UpdateRS();
+					m_kScene.DetachChild(kTube);
+					kRenderer.Draw(kTube);
 
-				m_kLightShader.SetSurfaceTexture(isUsingVolumeColor, false, false);
+					kTube.DetachAllEffects();					
+				}
+				else
+				{                      
 
-				kTube.AttachGlobalState(m_kTubesMaterial);
+					ColorRGB kColor1 = ColorRGB.WHITE;
+					kColor1 = new ColorRGB(constantColor.get(iKey));
 
-				kTube.AttachEffect(m_kLightShader);
-				kTube.UpdateRS();
+					m_kLightShader.SetSurfaceTexture(isUsingVolumeColor, false, false);
 
-				m_kTubesMaterial.Ambient = new ColorRGB(kColor1);
-				m_kTubesMaterial.Diffuse = new ColorRGB(kColor1);
-				m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
-				m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
-				m_kTubesMaterial.Alpha = 1.0f;
-				m_kTubesMaterial.Shininess = 100f;
+					kTube.AttachGlobalState(m_kTubesMaterial);
+
+					kTube.AttachEffect(m_kLightShader);
+					kTube.UpdateRS();
+
+					m_kTubesMaterial.Ambient = new ColorRGB(kColor1);
+					m_kTubesMaterial.Diffuse = new ColorRGB(kColor1);
+					m_kTubesMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+					m_kTubesMaterial.Specular = new ColorRGB(ColorRGB.WHITE); 
+					m_kTubesMaterial.Alpha = 1.0f;
+					m_kTubesMaterial.Shininess = 100f;
 
 
-				m_kScene.SetChild(0,kTube);
-				m_kScene.UpdateGS();
-				m_kScene.UpdateRS();
-				m_kScene.DetachChild(kTube);
-				kRenderer.Draw(kTube);
+					m_kScene.SetChild(0,kTube);
+					m_kScene.UpdateGS();
+					m_kScene.UpdateRS();
+					m_kScene.DetachChild(kTube);
+					kRenderer.Draw(kTube);
 
-				kTube.DetachAllEffects();
+					kTube.DetachAllEffects();
+				}
 			}
 		}
 	}

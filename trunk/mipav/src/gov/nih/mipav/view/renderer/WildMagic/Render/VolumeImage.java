@@ -348,7 +348,7 @@ public class VolumeImage implements Serializable {
 		int iSize = iXBound * iYBound * iZBound;
 		byte[] aucData = new byte[iSize * 4];
 		try {
-			kImage.exportDataUseMask(iTimeSlice * iSize * 4, iSize * 4, true, aucData);
+			kImage.exportDataUseMask(0, iSize * 4, true, aucData);
 			byte[] volumeData = m_kVolume[iTimeSlice].GetData();
 			for (int i = 0; i < iSize; i++) {
 				volumeData[i*4 + 1] = aucData[i*4 + 1];
@@ -377,7 +377,7 @@ public class VolumeImage implements Serializable {
 		if ( kImageL != null )
 		{
 			try {
-				kImageL.exportDataUseMask(iTimeSlice * iSize, iSize, false, aucDataL);
+				kImageL.exportDataUseMask(0, iSize, false, aucDataL);
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}
@@ -388,7 +388,7 @@ public class VolumeImage implements Serializable {
 			iSize *= 4;
 			aucDataGM = new byte[iSize];
 			try {
-				kImageGM.exportDataUseMask(iTimeSlice * iSize, iSize, false, aucDataGM);
+				kImageGM.exportDataUseMask(0, iSize, false, aucDataGM);
 				if (bSwap) {
 					for (int i = 0, j = 0; i < iSize; i += 4) {
 						aucDataGM[i] = aucDataGM[i + 1];
@@ -400,7 +400,7 @@ public class VolumeImage implements Serializable {
 						}
 					}
 				}
-				kImageGM.importData( iTimeSlice * iSize, aucDataGM, false );
+				kImageGM.importData( 0, aucDataGM, false );
 			} catch (final IOException e) {
 				e.printStackTrace();
 			}
@@ -413,7 +413,7 @@ public class VolumeImage implements Serializable {
 		} else {
 			aucDataGM = new byte[iSize];
 			try {
-				kImageGM.exportDataUseMask(iTimeSlice * iSize, iSize, false, aucDataGM);
+				kImageGM.exportDataUseMask(0, iSize, false, aucDataGM);
 				byte[] aucData2 = new byte[iSize*4];
 				for (int i = 0; i < iSize; i++) {
 					aucData2[i * 4 + 0] = aucDataGM[i];
@@ -1182,7 +1182,7 @@ public class VolumeImage implements Serializable {
 	 * @param kImage2
 	 * @return true if the images match extends, units and resolutions.
 	 */
-	private boolean checkImage(ModelImage kImage1, ModelImage kImage2 )
+	public static boolean checkImage(ModelImage kImage1, ModelImage kImage2 )
 	{
 		for ( int i = 0; i < Math.min( kImage1.getExtents().length, kImage2.getExtents().length ); i++ )
 		{

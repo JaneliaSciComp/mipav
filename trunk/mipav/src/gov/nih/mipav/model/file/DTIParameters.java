@@ -30,6 +30,51 @@ public class DTIParameters implements Serializable {
     public DTIParameters(int numVolumes) {
         this.numVolumes = numVolumes;
     }
+    
+    /**
+     * Copy constructor, copies the entire input DTIParameters into this DTIParameters object.
+     * @param params
+     */
+    public DTIParameters(DTIParameters params) {
+        this.numVolumes = params.numVolumes;
+    	if ( params.bValues != null )
+    	{
+    		this.bValues = new float[numVolumes];
+    	}
+
+    	if ( params.gradients != null )
+    	{
+    		this.gradients = new float[numVolumes][3];
+    	}
+    	
+    	if ( params.bMatrixVals != null )
+    	{
+    		this.bMatrixVals = new float[numVolumes][6];
+    	}
+        for ( int i = 0; i < numVolumes; i++ )
+        {   
+        	if ( params.bValues != null )
+        	{
+        		this.bValues[i] = params.bValues[i];
+        	}
+
+        	if ( params.gradients != null )
+        	{
+        		for ( int j = 0; j < 3; j++ )
+        		{
+        			this.gradients[i][j] = params.gradients[i][j];
+        		}
+        	}
+
+        	if ( params.bMatrixVals != null )
+        	{
+        		for ( int j = 0; j < 6; j++ )
+        		{
+        			this.bMatrixVals[i][j] = params.bMatrixVals[i][j];
+        		}
+        	}
+        }
+    }
 
     // Getters and Setters
     public float[] getbValues() {

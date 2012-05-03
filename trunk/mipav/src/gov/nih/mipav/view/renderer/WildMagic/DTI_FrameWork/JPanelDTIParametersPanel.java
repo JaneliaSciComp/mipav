@@ -49,6 +49,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import com.mentorgen.tools.profile.runtime.Profile;
+
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -196,8 +198,7 @@ implements ListSelectionListener, ChangeListener {
 	private int m_iDimY;
 	private int m_iDimZ;
 
-	public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay,
-			String tractFileName ) {
+	public JPanelDTIParametersPanel(VolumeTriPlanarInterfaceDTI _parentFrame, VolumeTriPlanarRender _m_kVolumeDisplay ) {
 		parentFrame = _parentFrame;
 		m_kVolumeDisplay = _m_kVolumeDisplay;
 		mainPanel = new JPanel();
@@ -599,7 +600,8 @@ implements ListSelectionListener, ChangeListener {
 		Attributes kAttr = new Attributes();
 		kAttr.SetPChannels(3);
 		kAttr.SetCChannels(0,3);
-		kAttr.SetCChannels(1,3);
+		//kAttr.SetCChannels(1,3);
+        kAttr.SetTChannels(0,3);
 		VertexBuffer pkVBuffer = new VertexBuffer(kAttr,iVQuantity);                        
 
 		try {
@@ -626,7 +628,7 @@ implements ListSelectionListener, ChangeListener {
 
 				pkVBuffer.SetPosition3(i, kPos);
 				pkVBuffer.SetColor3(0,i, kColor1 );
-				pkVBuffer.SetColor3(1,i, new ColorRGB(kPos.X, kPos.Y, kPos.Z));
+				//pkVBuffer.SetColor3(1,i, new ColorRGB(kPos.X, kPos.Y, kPos.Z));
 			}
 		} catch ( Exception e ) {
 			return;
@@ -657,25 +659,52 @@ implements ListSelectionListener, ChangeListener {
 
 		float faVal;
 		int count = 0;
-		
-		for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
+
+		//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
+		//-Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
+		//Profile.clear();
+		//Profile.start();
+		if ( m_kUseVOICheck.isEnabled() && m_kUseVOICheck.isSelected() )
+		{
+			for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
+			{
+				int xMin = 0, xMax = m_iDimX, yMin = 0, yMax = m_iDimY, zMin = 0, zMax = m_iDimZ;
+				if ( m_kVOIParamsList.get(j).Ignore  )
+				{				
+					continue;
+				}
+				if ( m_kVOIParamsList.get(j).Include  )
+				{				
+					Vector3f[] akMinMax = m_kVOIParamsList.get(j).Surface.getMinMax();
+					xMin = (int)Math.floor(akMinMax[0].X);
+					yMin = (int)Math.floor(akMinMax[0].Y);
+					zMin = (int)Math.floor(akMinMax[0].Z);
+					xMax = (int)Math.ceil(akMinMax[1].X);
+					yMax = (int)Math.ceil(akMinMax[1].Y);
+					zMax = (int)Math.ceil(akMinMax[1].Z);
+				}
+
+				for ( int z = zMin; z < zMax; z++ )
+				{
+					for ( int y = yMin; y < yMax; y++ )
+					{
+						for ( int x = xMin; x < xMax; x++ )
+						{
+							faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
+							if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
+							{
+								count += diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
+							}
+						}
+					}
+					int iValue = (int)(100 * (float)(z+1 - zMin)/(zMax - zMin));
+					kProgressBar.updateValueImmed( iValue );
+				}
+			}
+		}
+		else	
 		{
 			int xMin = 0, xMax = m_iDimX, yMin = 0, yMax = m_iDimY, zMin = 0, zMax = m_iDimZ;
-			if ( m_kVOIParamsList.get(j).Ignore  )
-			{				
-				continue;
-			}
-			if ( m_kVOIParamsList.get(j).Include  )
-			{				
-				Vector3f[] akMinMax = m_kVOIParamsList.get(j).Surface.getMinMax();
-				xMin = (int)Math.floor(akMinMax[0].X);
-				yMin = (int)Math.floor(akMinMax[0].Y);
-				zMin = (int)Math.floor(akMinMax[0].Z);
-				xMax = (int)Math.ceil(akMinMax[1].X);
-				yMax = (int)Math.ceil(akMinMax[1].Y);
-				zMax = (int)Math.ceil(akMinMax[1].Z);
-			}
-
 			for ( int z = zMin; z < zMax; z++ )
 			{
 				for ( int y = yMin; y < yMax; y++ )
@@ -693,6 +722,11 @@ implements ListSelectionListener, ChangeListener {
 				kProgressBar.updateValueImmed( iValue );
 			}
 		}
+		
+		//Profile.stop();
+		//Profile.setFileName( "profile_out_fiber6" );
+		//Profile.shutdown();
+		
 		kProgressBar.dispose();
 		if ( count > 0 )
 		{
