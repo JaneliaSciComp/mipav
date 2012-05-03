@@ -338,11 +338,13 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                        }
                     
                     dtiRegParams.setGradients(correctedGradients);
+                    result35RegImage.setDTIParameters(dtiRegParams);
 
                 }
                 else{
                     dtiRegParams = new DTIParameters(result35RegImage.getExtents()[3]);
                     dtiRegParams = pipeline.DWIImage.getDTIParameters();
+                    result35RegImage.setDTIParameters(dtiRegParams);
                 }
 
             }
