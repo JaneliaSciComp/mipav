@@ -7,6 +7,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
+import gov.nih.mipav.view.renderer.WildMagic.Render.VolumeImage;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -26,6 +27,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 public class JPanelDTIVisualization extends JPanel implements ActionListener {
 
@@ -42,6 +44,9 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 
 	/** Button enabled when all required images are loaded. Pressing 'Load' launches the Volume DTI Renderer. */
 	private JButton loadButton;
+
+	/** Anisotropy image * */
+	private ModelImage m_kT2Image;
 
 	/** Anisotropy image * */
 	private ModelImage m_kAnisotropyImage;
@@ -71,7 +76,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 	private final JDialog parentFrame;
 
 	/** Text boxes for the tensor, color image, eigen vector, eigen value, and functional anisotropy files: */
-	private JTextField textDTIimage, textDTIColorImage, textEVimage, textEValueImage, textFAimage;
+	private JTextField textDTIimage, textDTIColorImage, textEVimage, textEValueImage, textFAimage, textT2image;
 
 	/**
 	 * Creates the DTI Visualization panel inside the parent dialog.
@@ -96,6 +101,8 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 			loadEVFile();
 		} else if (command.equals("browseFAFile")) {
 			loadFAFile();
+		} else if (command.equals("browseT2File")) {
+			loadT2File();
 		} else if (command.equals("browseEValueFile")) {
 			loadEValueFile();
 		} else if (command.equalsIgnoreCase("compute")) {       
@@ -103,6 +110,17 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 			{
 				final FileIO fileIO = new FileIO();
 				m_kDTIColorImage = fileIO.readImage(textDTIColorImage.getText());
+
+				if ( m_kT2Image != null )
+				{
+					if ( !VolumeImage.checkImage( m_kT2Image, m_kDTIColorImage ) )
+					{
+						MipavUtil.displayError( "T2 image must match extents, resolutions, and units as " + m_kDTIColorImage.getImageName() );
+						m_kT2Image.disposeLocal(false);
+						m_kT2Image = null;
+						return;
+					}
+				}
 			}
 			if ( m_kEigenVectorImage == null )
 			{
@@ -120,9 +138,8 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 				m_kAnisotropyImage = fileIO.readImage(textFAimage.getText());
 			}
 
-
-			new VolumeTriPlanarInterfaceDTI( m_kDTIColorImage, m_kDTIImage, 
-					m_kEigenVectorImage, m_kEigenValueImage, m_kAnisotropyImage, null /* m_kTractPath.getText() */ );
+			new VolumeTriPlanarInterfaceDTI( m_kDTIColorImage, m_kT2Image, m_kDTIImage, 
+						m_kEigenVectorImage, m_kEigenValueImage, m_kAnisotropyImage );
 
 			if ( parentFrame != null )
 			{
@@ -513,59 +530,53 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 		mainPanel.add(DTIloadPanel);
 	}
 
-	private void buildLoadTractPanel() {
-		final JPanel tractLoadPanel = new JPanel(new BorderLayout());
-		tractLoadPanel.setLayout(new GridBagLayout());
-		tractLoadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+	private void buildT2LoadPanel() {
+
+		final JPanel DTIloadPanel = new JPanel();
+		DTIloadPanel.setLayout(new GridBagLayout());
+		DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
 
 		final GridBagConstraints gbc = new GridBagConstraints();
+
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		gbc.gridwidth = 1;
 		gbc.gridheight = 1;
-		gbc.weightx = 0;
-		gbc.fill = GridBagConstraints.NONE;
+		gbc.weightx = 1;
+		gbc.fill = GridBagConstraints.CENTER;
 		gbc.anchor = GridBagConstraints.WEST;
-		gbc.insets = new Insets(0, 0, 10, 0);
 
-		final JPanel filesPanel = new JPanel(new GridBagLayout());
+		JButton openT2imageButton = new JButton("Browse");
+		openT2imageButton.setToolTipText("Browse T2 image file");
+		openT2imageButton.addActionListener(this);
+		openT2imageButton.setActionCommand("browseT2File");
+		openT2imageButton.setEnabled(true);
+
+		textT2image = new JTextField();
+		textT2image.setPreferredSize(new Dimension(275, 21));
+		textT2image.setEditable(true);
+		textT2image.setBackground(Color.white);
+		textT2image.setFont(MipavUtil.font12);
+
+		JLabel dtiFAFileLabel = new JLabel("T2 Image: ");
 
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.insets = new Insets(0, 0, 10, 0);
-		gbc.fill = GridBagConstraints.NONE;
-
-		final JLabel kTractLabel = new JLabel(" DTI tract file: ");
-		filesPanel.add(kTractLabel, gbc);
+		gbc.anchor = GridBagConstraints.WEST;
+		DTIloadPanel.add(dtiFAFileLabel, gbc);
 
 		gbc.gridx = 1;
 		gbc.gridy = 0;
 		gbc.weightx = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		m_kTractPath = new JTextField();
-		m_kTractPath.setPreferredSize(new Dimension(275, 21));
-		m_kTractPath.setEditable(true);
-		m_kTractPath.setBackground(Color.white);
-		filesPanel.add(m_kTractPath, gbc);
+		gbc.anchor = GridBagConstraints.EAST;
+		DTIloadPanel.add(textT2image, gbc);
 
 		gbc.gridx = 2;
 		gbc.gridy = 0;
-		gbc.weightx = 1;
-		gbc.insets = new Insets(0, 10, 10, 0);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
-		final JButton kTractLoadButton = new JButton("Browse");
-		kTractLoadButton.addActionListener(this);
-		kTractLoadButton.setActionCommand("tractLoad");
-
-		filesPanel.add(kTractLoadButton, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		tractLoadPanel.add(filesPanel, gbc);
-
-		mainPanel.add(tractLoadPanel);
-
+		gbc.weightx = 0;
+		gbc.anchor = GridBagConstraints.EAST;
+		DTIloadPanel.add(openT2imageButton, gbc);
+		mainPanel.add(DTIloadPanel);
 	}
 
 	private void init(boolean bStandAlone) {
@@ -579,7 +590,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 		buildEVLoadPanel();
 		buildFALoadPanel();
 		buildEValueLoadPanel();
-		//buildLoadTractPanel();
+		buildT2LoadPanel();
 		GridBagConstraints gbc2 = new GridBagConstraints();
 		gbc2.fill = GridBagConstraints.NONE;
 		gbc2.weightx = 1;
@@ -630,6 +641,17 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 
 			m_kDTIColorImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory()
 					+ File.separator);
+			
+			if ( m_kDTIColorImage != null && m_kT2Image != null )
+			{
+				if ( !VolumeImage.checkImage( m_kT2Image, m_kDTIColorImage ) )
+				{
+					MipavUtil.displayError( "Color Map image must match extents, resolutions, and units as " + m_kT2Image.getImageName() );
+					m_kDTIColorImage.disposeLocal(false);
+					m_kDTIColorImage = null;
+					return;
+				}
+			}
 
 			textDTIColorImage.setText(chooser.getSelectedFile().getAbsolutePath());
 			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
@@ -720,7 +742,7 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 	private void loadFAFile() {
 		final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 		chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-		chooser.setDialogTitle("Choose EigenVector image file");
+		chooser.setDialogTitle("Choose Functional Anisotropy image file");
 		final int returnValue = chooser.showOpenDialog(this);
 		if (returnValue == JFileChooser.APPROVE_OPTION) {
 			final FileIO fileIO = new FileIO();
@@ -729,6 +751,33 @@ public class JPanelDTIVisualization extends JPanel implements ActionListener {
 					+ File.separator);
 
 			textFAimage.setText(chooser.getSelectedFile().getAbsolutePath());
+			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+		}
+	}
+
+	private void loadT2File() {
+		final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+		chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+		chooser.setDialogTitle("Choose T2 image file");
+		final int returnValue = chooser.showOpenDialog(this);
+		if (returnValue == JFileChooser.APPROVE_OPTION) {
+			final FileIO fileIO = new FileIO();
+
+			m_kT2Image = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory()
+					+ File.separator);
+
+			if ( m_kDTIColorImage != null && m_kT2Image != null )
+			{
+				if ( !VolumeImage.checkImage( m_kT2Image, m_kDTIColorImage ) )
+				{
+					MipavUtil.displayError( "T2 image must match extents, resolutions, and units as " + m_kDTIColorImage.getImageName() );
+					m_kT2Image.disposeLocal(false);
+					m_kT2Image = null;
+					return;
+				}
+			}
+			
+			textT2image.setText(chooser.getSelectedFile().getAbsolutePath());
 			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
 		}
 	}

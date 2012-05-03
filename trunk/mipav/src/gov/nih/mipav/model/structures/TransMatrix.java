@@ -599,6 +599,54 @@ public class TransMatrix extends Matrix4f
     }
 
     /**
+     * Reads a file containing a list of multiple TransMatrix values. Returns the new TransMatrix array.
+     * Format is
+     * rows (int)
+     * columns (int)
+     * Matrix line 1
+     * Matrix line 2
+     * Matrix line 3
+     * Matrix line 4 (optional)
+     * new line
+     * <repeat>
+     * @param raFile
+     * @return
+     */
+    public static TransMatrix[] readMultiMatrix(RandomAccessFile raFile) {
+        int r = 4, c = 4;
+
+        if (raFile == null) return null;
+
+        Vector<TransMatrix> matrixList = new Vector<TransMatrix>();
+
+        try {
+        	String line = raFile.readLine();
+        	while ( line != null )
+        	{
+        		r = Integer.valueOf(line.trim()).intValue();
+        		c = Integer.valueOf(raFile.readLine().trim()).intValue();
+
+        		TransMatrix mat = new TransMatrix(r);
+        		for ( int i = 0; i < r; i++ ) {
+        			decodeLine(raFile, i, mat, c);
+        		}
+        		matrixList.add( mat );
+        		raFile.readLine();
+        		line = raFile.readLine();
+        	}
+        } catch (IOException error) {
+        	MipavUtil.displayError("Matrix read error " + error);
+        	return null;
+        }
+        
+        TransMatrix[] list = new TransMatrix[matrixList.size()];
+        for ( int i = 0; i < list.length; i++ )
+        {
+        	list[i] = matrixList.elementAt(i);
+        }
+        return list;
+    }
+    /**
      * Saves transformation matrix to a text file MIPAV format 
      * @see saveMatrix(RandomAccessFile raFile)
      * @param  fileName  - file name, including the path
@@ -1599,6 +1647,62 @@ public class TransMatrix extends Matrix4f
             index = 0;
 
             for (c = 0; c < getDim(); c++) {
+
+                if (str.indexOf("  ", index) > 0) {
+                    nextIndex = str.indexOf("  ", index); // - handle FSL matrix files with two spaces
+                    twoSpace = true;
+                } else {
+                    nextIndex = str.indexOf(" ", index);
+                }
+
+                if (nextIndex != -1) {
+                    tmpStr = str.substring(index, nextIndex).trim();
+
+                    if (twoSpace == true) {
+                        index = nextIndex + 2;
+                    } else {
+                        index = nextIndex + 1;
+                    }
+                } else { // spaces trimmed from end
+                    tmpStr = str.substring(index, str.length()).trim();
+                    index = nextIndex;
+                }
+                if (tmpStr.indexOf(".") != -1) {
+                    matrix.Set(row, c, Float.valueOf(tmpStr).floatValue());
+                } else {
+                    matrix.Set(row, c, Integer.valueOf(tmpStr).floatValue());
+                }
+            }
+
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix read error " + error);
+
+            return;
+        }
+    }
+    
+    /**
+     * Reads a row of the matrix from file
+     * @param raFile file containing matrix data
+     * @param row row
+     * @param matrix matrix
+     * @param dim column dimension
+     */
+    private static void decodeLine(RandomAccessFile raFile, int row, Matrix4f matrix, int dim) {
+        int c;
+        int index, nextIndex;
+        String str, tmpStr;
+        boolean twoSpace = false;
+
+        try {
+            str = raFile.readLine().trim();
+            //xfm files have a ";" at end of matrix...so get rid of it
+            if(str.indexOf(";") != -1) {
+                str = str.substring(0, str.indexOf(";"));
+            }
+            index = 0;
+
+            for (c = 0; c < dim; c++) {
 
                 if (str.indexOf("  ", index) > 0) {
                     nextIndex = str.indexOf("  ", index); // - handle FSL matrix files with two spaces

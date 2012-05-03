@@ -135,6 +135,9 @@ public class JPanelHistoRGB
     /** Toggle buttons for transfer, threshold and threshold inverse. */
     private JToggleButton transferButton, thresholdButton, inverseThresholdButton;
 
+    /** Update the LUT in real-time: */
+    private boolean bImageUpdate = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -196,6 +199,22 @@ public class JPanelHistoRGB
         scrollPanel.add(tabbedPane, BorderLayout.NORTH);
 
         mainPanel.add(scroller, BorderLayout.CENTER);
+    }
+    
+    /**
+     * Makes a frame of the histogram.
+     *
+     * @param  _imageA      Model of imageA
+     * @param  _imageB      Model of imageB
+     * @param  _RGBTA       Model RGB
+     * @param  _RGBTB       Model RGB
+     * @param  _entireFlag  Flag indicating if histogram should be done on all of image.
+     * @param  bUpdateImage  update the displayed image continuously when true or on mouse-release when false.
+     */
+    public JPanelHistoRGB(ModelImage _imageA, ModelImage _imageB, ModelRGB _RGBTA, ModelRGB _RGBTB,
+                          boolean _entireFlag, boolean bUpdateImage) {
+        this(_imageA, _imageB, _RGBTA, _RGBTB, _entireFlag);
+        this.bImageUpdate = bUpdateImage;
     }
 
     /**
@@ -581,9 +600,7 @@ public class JPanelHistoRGB
      * {@inheritDoc}
      */
     public boolean isImageUpdate() {
-
-        // return updateCheckBoxA.isSelected();
-        return false;
+        return bImageUpdate;
     }
 
     // ********************************************************************

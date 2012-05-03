@@ -43,7 +43,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	+ "uniform sampler1D gOpacityMapA_GM;" + "\n";
 
 	private static String colorMapGMB = ""
-    	+ "uniform sampler1D gOpacityMapA_GM;" + "\n";
+    	+ "uniform sampler1D oOpacityMapB_GM;" + "\n";
 
     private static String blendParameters = ""
     	+ "uniform float Blend;" + "\n";
@@ -535,14 +535,7 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
          * is implemented in the VolumeShaderVertex.cg file: */        
         m_pkVShader = new VertexShader("VolumeShaderVertex");
 
-        //if ( m_kVolumeImageB.GetImage() == null )
-        //{
-            m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", createProgramText(), true );
-        //}
-        //else
-        //{
-         //   m_kPShaderCMP = new PixelShader("VolumeShaderABMultiPass");
-        //}
+        m_kPShaderCMP = new PixelShader("VolumeShaderMultiPass", createProgramText(), true );
         initTexturesVol(m_kPShaderCMP);
                  
         SetVShader(0,m_pkVShader);
@@ -569,11 +562,11 @@ public class VolumeShaderEffectMultiPassDynamic extends VolumeShaderEffectMultiP
     	m_afABBlendParam[0] = fBlend;
     	if ( fBlend == 0 )
     	{
-    		System.err.println( fBlend );
+    		//System.err.println( fBlend );
     	}
     	if ( fBlend == 1 )
     	{
-    		System.err.println( fBlend );
+    		//System.err.println( fBlend );
     	}
         Program kCProgram = GetCProgram(0);  
         if ( (kCProgram != null) && kCProgram.GetUC("ABBlend") != null ) 

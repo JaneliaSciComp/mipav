@@ -1318,6 +1318,7 @@ public class VolumeSurface extends VolumeObject
     	int insideBB = 0;
     	
     	Vector3f[] directions = new Vector3f[5];
+		Line3f[] akLines = new Line3f[directions.length];
     	directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
     	directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
     	directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
@@ -1343,7 +1344,11 @@ public class VolumeSurface extends VolumeObject
 					if ( m_kBoundingBox.Contains( kTest ) )
 					{
 						insideBB++;
-						if ( testIntersections( kTest, directions ) )
+				    	for ( int i = 0; i < directions.length; i++ )
+				    	{
+				    		akLines[i] = new Line3f( kTest, directions[i] );
+				    	}
+						if ( testIntersections( kTest, akLines ) )
 						{
 							mask.set( z * iDimX * iDimY + y * iDimX + x );
 							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
@@ -1415,17 +1420,6 @@ public class VolumeSurface extends VolumeObject
     	{
     		initBoundingBox();
     	}    	
-    	
-    	Vector3f[] directions = new Vector3f[5];
-    	directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
-    	directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
-    	directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
-    	directions[3] = new Vector3f( (float)Math.random(), (float)Math.random(), -(float)Math.random() );
-    	directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
-    	for ( int i = 0; i < directions.length; i++ )
-    	{
-    		directions[i].Normalize();
-    	}
 
     	// convert to 'mesh' coords...
     	Vector3f kP0Mesh = new Vector3f(kP0);    	
@@ -1433,12 +1427,24 @@ public class VolumeSurface extends VolumeObject
 
     	if ( m_kBoundingBox.Contains( kP0Mesh ) )
     	{
-    		if ( testIntersections( kP0Mesh, directions ) )
+    		Vector3f[] directions = new Vector3f[5];
+    		directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
+    		directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
+    		directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
+    		directions[3] = new Vector3f( (float)Math.random(), (float)Math.random(), -(float)Math.random() );
+    		directions[4] = new Vector3f( -(float)Math.random(), (float)Math.random(), -(float)Math.random() );
+    		Line3f[] akLines = new Line3f[directions.length];
+    		for ( int i = 0; i < directions.length; i++ )
+    		{
+    			directions[i].Normalize();
+            	akLines[i] = new Line3f(kP0Mesh,directions[i]);
+    		}
+    		if ( testIntersections( kP0Mesh, akLines ) )
     		{
     			return true;
     		}
     	}
-		return false;
+    	return false;
     }
     
     /**
@@ -1907,30 +1913,38 @@ public class VolumeSurface extends VolumeObject
      * @param directions set of randomised directions for counting mesh-intersections (odd = inside, even = outside).
      * @return true when the point is inside the mesh, false otherwise.
      */
-    private boolean testIntersections( Vector3f origin, Vector3f[] directions )
+    private boolean testIntersections( Vector3f origin, Line3f[] akLines )
     {
-    	int[] lineIntersectionCount = new int[directions.length]; 
+    	int[] lineIntersectionCount = new int[akLines.length]; 
+    	
+    	
         // Compute intersections with the model-space triangles.
+		Triangle3f kTriangle = new Triangle3f();
         int iTQuantity = m_kMesh.GetTriangleQuantity();
+    	IntrLine3Triangle3f kIntr = new IntrLine3Triangle3f();
+        
+        int iV0, iV1, iV2;
+        int[] aiTris = new int[3];
+        
         for (int i = 0; i < iTQuantity; i++)
         {
-            int iV0, iV1, iV2;
-            int[] aiTris = new int[3];
             if (!m_kMesh.GetTriangle(i,aiTris) )
             {
                 continue;
             }
 
-            iV0 = aiTris[0];            iV1 = aiTris[1];            iV2 = aiTris[2];
-            Triangle3f kTriangle = new Triangle3f(
-            		m_kMesh.VBuffer.GetPosition3(iV0),
-            		m_kMesh.VBuffer.GetPosition3(iV1),
-            		m_kMesh.VBuffer.GetPosition3(iV2));
+            iV0 = aiTris[0];
+            iV1 = aiTris[1];
+            iV2 = aiTris[2];
+
+    		m_kMesh.VBuffer.GetPosition3(iV0, kTriangle.V[0]);
+    		m_kMesh.VBuffer.GetPosition3(iV1, kTriangle.V[1]);
+    		m_kMesh.VBuffer.GetPosition3(iV2, kTriangle.V[2]);
             
-            for ( int j = 0; j < directions.length; j++ )
+            for ( int j = 0; j < akLines.length; j++ )
             {
-            	Line3f kLine = new Line3f(origin,directions[j]);
-            	IntrLine3Triangle3f kIntr = new IntrLine3Triangle3f(kLine,kTriangle);
+            	kIntr.Line = akLines[j];
+            	kIntr.Triangle = kTriangle;
             	if (kIntr.Find() && 0 <= kIntr.GetLineT() &&  kIntr.GetLineT() <= Float.MAX_VALUE )
             	{
             		lineIntersectionCount[j]++;
@@ -1938,14 +1952,14 @@ public class VolumeSurface extends VolumeObject
             }  	
         }
         int oddCount = 0;
-        for ( int j = 0; j < directions.length; j++ )
+        for ( int j = 0; j < akLines.length; j++ )
         {
         	if ( (lineIntersectionCount[j]%2) == 1 )
         	{
         		oddCount++;
         	}
         }
-    	return ( oddCount >= (1 + directions.length/2) );
+    	return ( oddCount >= (1 + akLines.length/2) );
     }
 
     /**
@@ -1959,10 +1973,15 @@ public class VolumeSurface extends VolumeObject
     	// Compute intersections with the model-space triangles.
     	int iTQuantity = m_kMesh.GetTriangleQuantity();
     	// Compute intersections with the model-space triangles.
+		Triangle3f kTriangle = new Triangle3f();
+		IntrSegment3Triangle3f kIntr = new IntrSegment3Triangle3f();
+		Segment3f kSegment = new Segment3f(kP0, kP1);
+		kIntr.Segment = kSegment;
+		
+		int iV0, iV1, iV2;
+		int[] aiTris = new int[3];
     	for (int i = 0; i < iTQuantity; i++)
     	{
-    		int iV0, iV1, iV2;
-    		int[] aiTris = new int[3];
     		if (!m_kMesh.GetTriangle(i,aiTris) )
     		{
     			continue;
@@ -1971,13 +1990,12 @@ public class VolumeSurface extends VolumeObject
     		iV0 = aiTris[0]; 
     		iV1 = aiTris[1];
     		iV2 = aiTris[2];
-    		Triangle3f kTriangle = new Triangle3f(
-    				m_kMesh.VBuffer.GetPosition3(iV0),
-    				m_kMesh.VBuffer.GetPosition3(iV1),
-    				m_kMesh.VBuffer.GetPosition3(iV2));
 
-    		Segment3f kSegment = new Segment3f(kP0, kP1);
-    		IntrSegment3Triangle3f kIntr = new IntrSegment3Triangle3f(kSegment,kTriangle);
+    		m_kMesh.VBuffer.GetPosition3(iV0, kTriangle.V[0]);
+    		m_kMesh.VBuffer.GetPosition3(iV1, kTriangle.V[1]);
+    		m_kMesh.VBuffer.GetPosition3(iV2, kTriangle.V[2]);
+
+    		kIntr.Triangle = kTriangle;
     		if ( kIntr.Test() )
     		{
     			return true;

@@ -3052,11 +3052,9 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
 
         if (m_kVolumeImageA.GetImage().isColorImage()) {
-            panelHistoRGB = new JPanelHistoRGB(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), m_kVolumeImageA
-                    .GetRGB(), m_kVolumeImageB.GetRGB(), true);
+            panelHistoRGB = new JPanelHistoRGB(m_kVolumeImageA.GetImage(), null, m_kVolumeImageA.GetRGB(), null, true, true);
         } else {
-            panelHistoLUT = new JPanelHistoLUT(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), m_kVolumeImageA
-                    .GetLUT(), m_kVolumeImageB.GetLUT(), true, true);
+            panelHistoLUT = new JPanelHistoLUT(m_kVolumeImageA.GetImage(), null, m_kVolumeImageA.GetLUT(), null, true, true);
         }
 
         if (m_kVolumeImageA.GetImage().is4DImage()) {
@@ -3100,7 +3098,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             panelHistoLUT.updateComponentLUT();
         }
         if (panelHistoRGB != null) {
-            panelHistoRGB.updateHistoRGB(m_kVolumeImageA.GetImage(), m_kVolumeImageB.GetImage(), false);
+            panelHistoRGB.updateHistoRGB(m_kVolumeImageA.GetImage(), null, false);
             panelHistoRGB.updateFrames(false);
         }
 

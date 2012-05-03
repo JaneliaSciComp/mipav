@@ -641,7 +641,7 @@ public class JPanelSurfaceTexture_WM extends JInterfaceBase implements ViewImage
             }
             
             /* Create LUT panel: */
-            mHistoRGB = new JPanelHistoRGB(mLUTImageA, null, mRGBSeparate, null, true);
+            mHistoRGB = new JPanelHistoRGB(mLUTImageA, null, mRGBSeparate, null, true, true);
         }
 
         if (!mImageA.isColorImage()) {

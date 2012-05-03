@@ -1225,7 +1225,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		  Vector3f kCRight = new Vector3f();
 		  kCRight.Cross( kCDir, kCUp );
 		  Vector3f kCLoc = new Vector3f(kCDir);
-		  kCLoc.Scale(-1.4f);
+		  kCLoc.Scale(-2.4f);
 		  m_spkCamera.SetFrame(kCLoc,kCDir,kCUp,kCRight);
 
 

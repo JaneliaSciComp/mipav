@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.ModelRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.ColorRGBA;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
 import WildMagic.LibGraphics.Rendering.CullState;
 import WildMagic.LibGraphics.Rendering.GlobalState;
@@ -27,7 +28,10 @@ import WildMagic.LibGraphics.SceneGraph.VertexBuffer;
  */
 public class VolumeSlices extends VolumeObject
 {
-    /** ShaderEffect for the plane bounding-boxes. */
+	private VolumePreRenderEffect[] m_kBoundingBoxShaderSolid;
+	private VolumePreRenderEffect[] m_kBoundingBoxShaderTransparent;
+	
+    /** ShaderEffect for the pre-render stage the bounding-box and the slice share the same pre-render effect. */
     private VolumePreRenderEffect[] m_kVolumePreShader;
     private VolumePreRenderEffect[] m_kVolumePreShaderTransparent;
 
@@ -67,16 +71,21 @@ public class VolumeSlices extends VolumeObject
         super(kImageA,kImageB,kTranslate,fX,fY,fZ);
 
         //System.err.println( kTranslate.ToString() );
+        m_kBoundingBoxShaderSolid = new VolumePreRenderEffect[3];
+        m_kBoundingBoxShaderTransparent = new VolumePreRenderEffect[3];
         m_akPlaneEffect = new VolumePlaneEffect[3];
         m_akPlaneEffectTransparent = new VolumePlaneEffect[3];
         m_kVolumePreShader = new VolumePreRenderEffect[3];
         m_kVolumePreShaderTransparent = new VolumePreRenderEffect[3];
         for ( int i = 0; i < 3; i++ )
         {
+        	m_kBoundingBoxShaderSolid[i] = new VolumePreRenderEffect(false, true, false);
+        	m_kBoundingBoxShaderTransparent[i] = new VolumePreRenderEffect(false, true, true);
+        	
             m_akPlaneEffect[i] = new VolumePlaneEffect( m_kVolumeImageA, m_kVolumeImageB, true, false );
             m_akPlaneEffectTransparent[i] = new VolumePlaneEffect( m_kVolumeImageA, m_kVolumeImageB, true, true );
             
-            m_kVolumePreShader[i] = new VolumePreRenderEffect(false, true, false);
+            m_kVolumePreShader[i] = new VolumePreRenderEffect(true, true, false);
             m_kVolumePreShaderTransparent[i] = new VolumePreRenderEffect(false, true, true);
         }
 
@@ -116,6 +125,25 @@ public class VolumeSlices extends VolumeObject
     {
         for ( int i = 0; i < 3; i++ )
         {   
+
+            if ( m_kBoundingBoxShaderSolid != null )
+            {
+            	if ( m_kBoundingBoxShaderSolid[i] != null )
+            	{
+                	kRenderer.ReleaseResources(m_kBoundingBoxShaderSolid[i]);
+                	m_kBoundingBoxShaderSolid[i].dispose();
+                	m_kBoundingBoxShaderSolid[i] = null;            		
+            	}
+            }
+            if ( m_kBoundingBoxShaderTransparent != null )
+            {
+            	if ( m_kBoundingBoxShaderTransparent[i] != null )
+            	{
+                	kRenderer.ReleaseResources(m_kBoundingBoxShaderTransparent[i]);
+                	m_kBoundingBoxShaderTransparent[i].dispose();
+                	m_kBoundingBoxShaderTransparent[i] = null;            		
+            	}
+            }
             if ( m_kVolumePreShader != null )
             {
                 if ( m_kVolumePreShader[i] != null )
@@ -290,26 +318,28 @@ public class VolumeSlices extends VolumeObject
             }
             if ( bSolid )
             {
-                m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
                 if ( bPreRender )
                 {
                     m_akPlanes[i].AttachEffect( m_kVolumePreShader[i] );
+                    m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
                 }
                 else
                 {
                     m_akPlanes[i].AttachEffect( m_akPlaneEffect[i] );
+                    m_akBoundingBox[i].AttachEffect( m_kBoundingBoxShaderSolid[i] );
                 }
             }
             else
             {
-                m_akBoundingBox[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
                 if ( bPreRender )
                 {
                     m_akPlanes[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
+                    m_akBoundingBox[i].AttachEffect( m_kVolumePreShaderTransparent[i] );
                 }
                 else
                 {
                     m_akPlanes[i].AttachEffect( m_akPlaneEffectTransparent[i] );
+                    m_akBoundingBox[i].AttachEffect( m_kBoundingBoxShaderTransparent[i] );
                 }
             }
         }
@@ -398,6 +428,8 @@ public class VolumeSlices extends VolumeObject
      */
     public void SetCenter( Vector3f kCenter )
     {
+    	//System.err.println( "SetCenter" );
+    	
         float fX = m_fX * kCenter.X;
         float fY = m_fY * kCenter.Y;
         float fZ = m_fZ * kCenter.Z;
@@ -464,16 +496,28 @@ public class VolumeSlices extends VolumeObject
         m_akBoundingBox[0].VBuffer.SetPosition3( 1, fX, 0, m_fZ ) ;
         m_akBoundingBox[0].VBuffer.SetPosition3( 2, fX, m_fY, m_fZ ) ;
         m_akBoundingBox[0].VBuffer.SetPosition3( 3, fX, m_fY, 0 ) ;
+        m_akBoundingBox[0].VBuffer.SetTCoord3( 0, 0, fTCX, 0, 0 ) ;
+        m_akBoundingBox[0].VBuffer.SetTCoord3( 0, 1, fTCX, 0, 1.0f ) ;
+        m_akBoundingBox[0].VBuffer.SetTCoord3( 0, 2, fTCX, 1.0f, 1.0f ) ;
+        m_akBoundingBox[0].VBuffer.SetTCoord3( 0, 3, fTCX, 1.0f, 0 ) ;
 
         m_akBoundingBox[1].VBuffer.SetPosition3( 0, m_fX, fY, m_fZ ) ;
         m_akBoundingBox[1].VBuffer.SetPosition3( 1, 0, fY, m_fZ ) ;
         m_akBoundingBox[1].VBuffer.SetPosition3( 2, 0, fY, 0 ) ;
         m_akBoundingBox[1].VBuffer.SetPosition3( 3, m_fX, fY, 0 ) ;
+        m_akBoundingBox[1].VBuffer.SetTCoord3( 0, 0, 1.0f, fTCY, 1.0f ) ;
+        m_akBoundingBox[1].VBuffer.SetTCoord3( 0, 1, 0, fTCY, 1.0f ) ;
+        m_akBoundingBox[1].VBuffer.SetTCoord3( 0, 2, 0, fTCY, 0 ) ;
+        m_akBoundingBox[1].VBuffer.SetTCoord3( 0, 3, 1.0f, fTCY, 0 ) ;
 
         m_akBoundingBox[2].VBuffer.SetPosition3( 0, m_fX, 0, fZ ) ;
         m_akBoundingBox[2].VBuffer.SetPosition3( 1, 0, 0, fZ ) ;
         m_akBoundingBox[2].VBuffer.SetPosition3( 2, 0, m_fY, fZ ) ;
         m_akBoundingBox[2].VBuffer.SetPosition3( 3, m_fX, m_fY, fZ ) ;
+        m_akBoundingBox[2].VBuffer.SetTCoord3( 0, 0, 1.0f, 0, fTCZ ) ;
+        m_akBoundingBox[2].VBuffer.SetTCoord3( 0, 1, 0, 0, fTCZ ) ;
+        m_akBoundingBox[2].VBuffer.SetTCoord3( 0, 2, 0, 1.0f, fTCZ ) ;
+        m_akBoundingBox[2].VBuffer.SetTCoord3( 0, 3, 1.0f, 1.0f, fTCZ ) ;
 
         for ( int i = 0; i < 3; i++ )
         {
@@ -508,6 +552,8 @@ public class VolumeSlices extends VolumeObject
         m_akPlaneEffectTransparent[iIndex].Blend( fAlpha );
         m_kVolumePreShader[iIndex].Blend(fAlpha);
         m_kVolumePreShaderTransparent[iIndex].Blend(fAlpha);
+        m_kBoundingBoxShaderSolid[iIndex].Blend(fAlpha);
+        m_kBoundingBoxShaderTransparent[iIndex].Blend(fAlpha);
     }
     /** Turns on/off displaying the bounding box for the given plane.
      * @param i the plane index (0-3) in file coordinates.
@@ -564,6 +610,7 @@ public class VolumeSlices extends VolumeObject
         Attributes kAttr = new Attributes();
         kAttr.SetPChannels(3);
         kAttr.SetCChannels(0,3);
+        kAttr.SetTChannels(0,3);
 
         float fX = m_fX * .5f;
         float fY = m_fY * .5f;
@@ -600,7 +647,7 @@ public class VolumeSlices extends VolumeObject
         for ( int i = 0; i < 3; i++ )
         {
             m_akBoundingBox[i] = new Polyline( new VertexBuffer(akOutlineSquare[i]), true, true );
-            m_akBoundingBox[i].AttachEffect( m_kVolumePreShader[i] );
+            m_akBoundingBox[i].AttachEffect( m_kBoundingBoxShaderSolid[i] );
             m_akBoundingBox[i].Local.SetTranslate(m_kTranslate);
             m_kScene.AttachChild(m_akBoundingBox[i]);
             m_akBoundingBox[i].VBuffer.SetShared(true);
