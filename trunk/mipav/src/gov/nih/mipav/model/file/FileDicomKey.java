@@ -46,13 +46,14 @@ public class FileDicomKey extends ModelSerialCloneable {
 
         if (verify(keyStr)) {
             key = keyStr;
+            System.out.println("Created");
         } else {
             throw new IllegalArgumentException(keyStr + " cannot represent a DICOM key");
         }
     }
 
     /**
-     * Creates a Key from the given group and element numbers provided.
+     * Creates a Key from the given group and element numbers provided.  Example call: new FileDicomKey(0x0080,0x001F);
      *
      * @param   group    Dicom tag group number.
      * @param   element  Dicom tag element number.
@@ -73,6 +74,7 @@ public class FileDicomKey extends ModelSerialCloneable {
         }
 
         key = gr + "," + el;
+        System.out.println("Created");
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
