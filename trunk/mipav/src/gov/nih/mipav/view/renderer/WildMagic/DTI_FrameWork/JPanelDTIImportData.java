@@ -3788,10 +3788,12 @@ import Jama.Matrix;
                 String bvalString = "";
 
                 
+               
+               
                 for (int i = 0; i < numVolumes; i++) {
                   if (gradBvalText == 1){
                       //FSL format
-                      if(srcTableModel.getValueAt(i,5) != null){
+                     if(srcTableModel.getColumnCount() > 5){
                           printStream.print(srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4)
                           + "    " +srcTableModel.getValueAt(i,5) + "    " +srcTableModel.getValueAt(i,6)); 
                           printStream.println(); 
@@ -3800,7 +3802,8 @@ import Jama.Matrix;
                           firstGrad = firstGrad + srcTableModel.getValueAt(i,2)+ "    ";
                           secondGrad = secondGrad + srcTableModel.getValueAt(i,3)+ "    ";
                           thirdGrad = thirdGrad + srcTableModel.getValueAt(i,4)+ "    ";
-                          bvalString = bvalString + srcTableModel.getValueAt(i,1) + "    " ;  
+                          bvalString = bvalString + srcTableModel.getValueAt(i,1) + "    " ;
+
                       }
                         
                   }
@@ -3811,7 +3814,7 @@ import Jama.Matrix;
                     }
                     else if (gradBvalText == 3){
                         //Standard MIPAV format
-                        if(srcTableModel.getValueAt(i,5) != null){
+                        if(srcTableModel.getColumnCount() > 5){
                             //Bmatrix file
                             printStream.print((i) +":" + "\t" +srcTableModel.getValueAt(i,1) + "    " +srcTableModel.getValueAt(i,2) + "    " +srcTableModel.getValueAt(i,3) + "    "+srcTableModel.getValueAt(i,4)
                                     + "    " +srcTableModel.getValueAt(i,5) + "    " +srcTableModel.getValueAt(i,6));                  
@@ -3827,10 +3830,10 @@ import Jama.Matrix;
                    
                 }
                 if(!firstGrad.equals("")){
-                printStream.println(firstGrad);
-                printStream.println(secondGrad);
-                printStream.println(thirdGrad);
-                printStream.println(bvalString);
+                    printStream.println(firstGrad);
+                    printStream.println(secondGrad);
+                    printStream.println(thirdGrad);
+                    printStream.println(bvalString);
                 }
 
                 outputStream.close();
