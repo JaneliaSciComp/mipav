@@ -322,16 +322,28 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
                 gradTableRegCorrect = new DTIGradTableCorrectionAfterTrans(pipeline.gradients, pipeline.bvalues, arrayTransMatrix, refVolNum);
                 setVisible(true);
                 gradTableRegCorrect.run();
-                correctedGradients = gradTableRegCorrect.getCorrectedGradients();                
-                dtiparams = pipeline.DWIImage.getDTIParameters();
-                for (int i = 0; i < pipeline.DWIImage.getExtents()[3]; i++) {
-                    // Populate Gradient column
-                    pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][0]), i, 2);
-                    pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][1]), i, 3);
-                    pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][2]), i, 4);
-                   }
-                
-                dtiparams.setGradients(correctedGradients);
+                correctedGradients = gradTableRegCorrect.getCorrectedGradients(); 
+                if (correctGradTransCheckbox.isSelected()) {
+                    gradTableRegCorrect = new DTIGradTableCorrectionAfterTrans(pipeline.gradients, pipeline.bvalues, arrayTransMatrix, refVolNum);
+                    setVisible(true);
+                    gradTableRegCorrect.run();
+                    correctedGradients = gradTableRegCorrect.getCorrectedGradients(); 
+                    dtiRegParams = new DTIParameters(result35RegImage.getExtents()[3]);
+                    dtiRegParams = pipeline.DWIImage.getDTIParameters();
+                    for (int i = 0; i < pipeline.DWIImage.getExtents()[3]; i++) {
+                        // Populate Gradient column
+                        pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][0]), i, 2);
+                        pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][1]), i, 3);
+                        pipeline.srcBvalGradTable.setValueAt(String.valueOf(correctedGradients[i][2]), i, 4);
+                       }
+                    
+                    dtiRegParams.setGradients(correctedGradients);
+
+                }
+                else{
+                    dtiRegParams = new DTIParameters(result35RegImage.getExtents()[3]);
+                    dtiRegParams = pipeline.DWIImage.getDTIParameters();
+                }
 
             }
             
