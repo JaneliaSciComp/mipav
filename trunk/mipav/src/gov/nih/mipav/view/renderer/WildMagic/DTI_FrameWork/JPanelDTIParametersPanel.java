@@ -49,7 +49,7 @@ import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import com.mentorgen.tools.profile.runtime.Profile;
+//import com.mentorgen.tools.profile.runtime.Profile;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
