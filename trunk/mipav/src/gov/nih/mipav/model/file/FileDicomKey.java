@@ -46,7 +46,7 @@ public class FileDicomKey extends ModelSerialCloneable {
 
         if (verify(keyStr)) {
             key = keyStr;
-            System.out.println("Created");
+            //System.out.println("Created");
         } else {
             throw new IllegalArgumentException(keyStr + " cannot represent a DICOM key");
         }
@@ -74,7 +74,7 @@ public class FileDicomKey extends ModelSerialCloneable {
         }
 
         key = gr + "," + el;
-        System.out.println("Created");
+        //System.out.println("Created");
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
