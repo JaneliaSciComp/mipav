@@ -81,8 +81,36 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
     /** DOCUMENT ME! */
     private JTextField textNumber;
+    
+    /** If this 2D black and white image is present, it is matched to the closest slice and/or color in the
+     * source image model by looking for the closest match of the weights of the principal components.
+     */
+    private ModelImage matchImage = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+    
+    /**
+     * Creates a new AlgorithmPrincipalComponents object.
+     *
+     * @param  destImg        image model where result image is to stored
+     * @param  srcImg         source image model
+     * @param  matchImage     match image match this image to the closest slice and/or color in the source image
+     * @param  doFilter       if true create a filtered version of the original image
+     * @param  doAveraging    if true create an image averaging together the slices in the filtered version
+     * @param  displayAndAsk  if true display principal component images and ask how many to retain
+     * @param  pNumber        if displayAndAsk if false pNumber is the number of principal component images to retain
+     */
+    public AlgorithmPrincipalComponents(ModelImage[] destImg, ModelImage srcImg, ModelImage matchImage, boolean doFilter, boolean doAveraging,
+                                        boolean displayAndAsk, int pNumber) {
+
+        destImage = destImg; // Put results in destination image.
+        srcImage = srcImg;
+        this.matchImage = matchImage;
+        this.doFilter = doFilter;
+        this.doAveraging = doAveraging;
+        this.displayAndAsk = displayAndAsk;
+        this.pNumber = pNumber;
+    }
 
     /**
      * Creates a new AlgorithmPrincipalComponents object.
@@ -376,6 +404,14 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         float rMin;
         float rMax;
         float scaledValues[] = null;
+        float matchValues[] = null;
+        double matchMean;
+        double weight[] = null;
+        double diff;
+        double diffSquared;
+        double maxDiffSquared;
+        int zClosest;
+        int cClosest;
 
         if (haveColor) {
 
@@ -939,6 +975,87 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             } // for (j = 0; j < samples; j++)
         } // else not color
+        
+        if (matchImage != null) {
+            matchValues = new float[samples];
+            
+            try {
+                matchImage.exportData(0, samples, matchValues); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm PComponent: matchImage locked");
+                setCompleted(false);
+
+                setThreadStopped(true);
+
+                return;
+            }
+            
+            matchMean = 0.0;
+            for (j = 0; j < samples; j++) {
+                matchMean += matchValues[j];
+            }
+
+            matchMean /= samples;
+            
+            weight = new double[pNumber];
+            
+            for (i = 0; i < pNumber; i++) {
+                for (j = 0; j < samples; j++) {
+                    weight[i] += (matchValues[j] - matchMean)*pTrunc[i][j];
+                }
+            }
+
+            maxDiffSquared = Double.MAX_VALUE;
+            zClosest = 0;
+            if (haveColor) { 
+                cClosest = 1;
+                for (z = 0; z < zDim; z++) {
+                    for (i = 1; i < 4; i++) {
+                        diffSquared = 0.0;
+                        for (k = 0; k < pNumber; k++) {
+                            diff = (weight[k] - eigenInverse[(3*z) + i - 1][k]);
+                            diffSquared += (diff*diff);
+                        }
+                        if (diffSquared < maxDiffSquared) {
+                            maxDiffSquared = diffSquared;
+                            zClosest = z;
+                            cClosest = i;
+                        }
+                    } // for (i = 1; i < 4; i++)
+                } // for (z = 0; z < zDim; z++)
+                if (zDim > 1) {
+                    Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
+                    ViewUserInterface.getReference().setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");  
+                }
+                if (cClosest == 1) {
+                    Preferences.debug("The closest color to the matchImage is red\n");
+                    ViewUserInterface.getReference().setDataText("The closest color to the matchImage is red\n");
+                }
+                else if (cClosest == 2) {
+                    Preferences.debug("The closest color to the matchImage is green\n");
+                    ViewUserInterface.getReference().setDataText("The closest color to the matchImage is green\n");    
+                }
+                else {
+                    Preferences.debug("The closest color to the matchImage is blue\n");
+                    ViewUserInterface.getReference().setDataText("The closest color to the matchImage is blue\n");
+                }
+            } // if (haveColor)
+            else { // not color
+                for (z = 0; z < zDim; z++) {
+                    diffSquared = 0.0;
+                    for (k = 0; k < pNumber; k++) {
+                        diff = (weight[k] - eigenInverse[z][k]);
+                        diffSquared += (diff*diff);
+                    }
+                    if (diffSquared < maxDiffSquared) {
+                        maxDiffSquared = diffSquared;
+                        zClosest = z;
+                    }
+                } // for (z = 0; z < zDim; z++)
+                Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
+                ViewUserInterface.getReference().setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
+            } // else not color
+        } // if (matchImage != null)
 
         for (i = 0; i < eigenInverse.length; i++) {
             eigenInverse[i] = null;
