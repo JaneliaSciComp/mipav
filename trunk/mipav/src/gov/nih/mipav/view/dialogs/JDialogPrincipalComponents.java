@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -10,6 +11,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
 
 import javax.swing.*;
 
@@ -79,6 +81,18 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private JTextField textNumber;
+    
+    private ModelImage matchImage = null;
+    
+    private JButton buttonMatchFile;
+    
+    private JTextField textMatchFile;
+    
+    private String directoryMatch;
+    
+    private String fileNameMatch;
+    
+    private ViewUserInterface UI;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -96,6 +110,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
     public JDialogPrincipalComponents(Frame theParentFrame, ModelImage image) {
         super(theParentFrame, false);
         srcImage = image;
+        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -126,7 +141,52 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
                 textNumber.setEnabled(true);
                 labelNumber.setEnabled(true);
             }
-        }
+        } else if (command.equals("MatchFile")) {
+
+            try {
+                JFileChooser chooser = new JFileChooser();
+
+                if (UI.getDefaultDirectory() != null) {
+                    File file = new File(UI.getDefaultDirectory());
+
+                    if (file != null) {
+                        chooser.setCurrentDirectory(file);
+                    } else {
+                        chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                    }
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+
+                chooser.setDialogTitle("Open 2D BW match file");
+                directoryMatch = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+
+                int returnValue = chooser.showOpenDialog(UI.getMainFrame());
+
+                if (returnValue == JFileChooser.APPROVE_OPTION) {
+                    fileNameMatch = chooser.getSelectedFile().getName();
+                    directoryMatch = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    UI.setDefaultDirectory(directoryMatch);
+                } else {
+                    fileNameMatch = null;
+
+                    return;
+                }
+
+                if (fileNameMatch != null) {
+                    textMatchFile.setText(fileNameMatch);
+                }
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory in JDialogPtrincipalComponents.");
+
+                return;
+            }
+    }
     }
 
     // ************************************************************************
@@ -320,7 +380,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
 
             // Make algorithm:
             try {
-                pComponentAlgo = new AlgorithmPrincipalComponents(resultImage, srcImage, doFilter, doAveraging,
+                pComponentAlgo = new AlgorithmPrincipalComponents(resultImage, srcImage, matchImage, doFilter, doAveraging,
                                                                   displayAndAsk, pNumber);
             } catch (OutOfMemoryError e) {
                 pComponentAlgo = null;
@@ -477,6 +537,23 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
         textNumber.setEnabled(false);
         textNumber.addFocusListener(this);
         optionsPanel.add(textNumber, gbc);
+        
+        buttonMatchFile = new JButton("Choose optional 2D BW file for matching");
+        buttonMatchFile.setForeground(Color.black);
+        buttonMatchFile.setFont(serif12B);
+        buttonMatchFile.addActionListener(this);
+        buttonMatchFile.setActionCommand("MatchFile");
+        buttonMatchFile.setPreferredSize(new Dimension(260, 30));
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        optionsPanel.add(buttonMatchFile, gbc);
+
+        textMatchFile = new JTextField(30);
+        textMatchFile.setFont(serif12);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 1;
+        optionsPanel.add(textMatchFile, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -538,6 +615,42 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
             textNumber.selectAll();
 
             return false;
+        }
+        
+        fileNameMatch = textMatchFile.getText(); 
+        if ((fileNameMatch != null) && (fileNameMatch.trim() != null)) {
+            try {
+                FileIO fileIO = new FileIO();
+                matchImage = fileIO.readImage(fileNameMatch, directoryMatch, false, null);
+    
+                if (matchImage == null) {
+                    MipavUtil.displayError("Match image is not valid.");
+    
+                    return false;
+                } else if (matchImage.getNDims() != 2) {
+                    MipavUtil.displayError("Match image must be 2D");
+    
+                    return false;
+                } else if (matchImage.isColorImage()) {
+                    MipavUtil.displayError("Match image must be black and white");
+                    
+                    return false;    
+                }
+    
+                for (int i = 0; i < 2; i++) {
+    
+                    if (srcImage.getExtents()[i] != matchImage.getExtents()[i]) {
+                        MipavUtil.displayError("First 2 dimensions of source image must match the match image.");
+    
+                        return false;
+                    }
+                }
+    
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory in JDialogPrincipalComponents");
+    
+                return false;
+            }
         }
 
         return true;
