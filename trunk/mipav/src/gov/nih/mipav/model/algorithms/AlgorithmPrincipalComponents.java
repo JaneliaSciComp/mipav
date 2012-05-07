@@ -26,7 +26,10 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * components; it concentrates the information content of the data in as small a number of components as possible. This
  * algorithm is based on: 1.) Digital Image Processing, Third Edition by Rafael C. Gonzalez and Richard E. Woods,
  * Section 11.4 Use of Principal Components for Description, pp. 842 - 852, 2008 by Pearson Education, Inc.
- * 2.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
+ * 2.) Information about using a matchImage: 
+ * Eigenfaces for Recognition by Matthew Turk and Alex Pentland Vision and Modeling Group The Media Laboratory
+ * Massachusetts Institute of Technology
+ * 3.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
  * M. Berman, CSIRO Division of Mathemetics and Statistics P.O. Box 218, Lindfield, N.S.W., 2070 Consulting Report
  * NSW/85/31/MB9 Note that this algorithm has 4 different names: Hotelling, eigenvector, principal component, and
  * Karhunen-Loeve transform. Also note that when the noise variance is the same in all bands and the noise is uncorrelated
