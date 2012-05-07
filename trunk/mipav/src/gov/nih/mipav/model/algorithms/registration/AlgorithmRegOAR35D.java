@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms.registration;
 
+import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -856,6 +857,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         }
                 }
             }
+            //Sorts trans matrices based on volume number
             for (int i = 0; i< inputImage.getExtents()[3]-1;i++){
                 if (i < TransMatsInumber[i]){
                     if (useIndexNumBreak == false){
@@ -871,12 +873,34 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 }
             }       
             arrayList2.addAll(arrayList1);
-            
-            for(int i=0; i< arrayList2.size(); i++){
-                VolumesToReferenceTransformations[i] = arrayList2.get(i);
+            TransMatrix transIndentity = new TransMatrix(4,4);
+            //Creates identity matrix
+            for(int i = 0; i<4;i++){
+                for(int j = 0; j<4;j++){
+                    if (i==j){
+                        transIndentity.set(i, j, 1.0); 
+                    }
+                    else{
+                        transIndentity.set(i, j, 0.0); 
+                    }
+                }
             }
+
+            TransMatrix[] sortedTransArray = new TransMatrix[inputImage.getExtents()[3]];
+            int volCounter = 0;
+            for(int i=0; i< arrayList2.size()+1; i++){
+                //Adds identity matrix corresponding to reference volume number
+                if (i==refImageNo){
+                    sortedTransArray[i] =  transIndentity; 
+                    volCounter = 1;
+                }
+                else{
+                    sortedTransArray[i] = arrayList2.get(i-volCounter);
+                }
+            }
+
             
-           return VolumesToReferenceTransformations;
+           return sortedTransArray;
         }
         else{       
             return VolumesToReferenceTransformations;
