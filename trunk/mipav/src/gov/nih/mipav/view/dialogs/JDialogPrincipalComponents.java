@@ -618,7 +618,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
         }
         
         fileNameMatch = textMatchFile.getText(); 
-        if ((fileNameMatch != null) && (fileNameMatch.trim() != null)) {
+        if ((fileNameMatch != null) && (fileNameMatch.trim() != null)  && (fileNameMatch.trim().length() >= 1)) {
             try {
                 FileIO fileIO = new FileIO();
                 matchImage = fileIO.readImage(fileNameMatch, directoryMatch, false, null);
