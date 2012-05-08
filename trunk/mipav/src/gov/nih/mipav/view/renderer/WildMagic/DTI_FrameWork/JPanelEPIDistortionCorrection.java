@@ -275,6 +275,10 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
      */
     public void setRegisteredDWIImage( ModelImage registeredImage )
     {
+    	if ( registeredImage == null )
+    	{
+    		return;
+    	}
     	registeredDWI = registeredImage;
     	registeredDWIText.setText( registeredDWI.getImageDirectory() + registeredDWI.getImageName() );
 		if ( outputDir.getText().isEmpty() )

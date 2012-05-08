@@ -833,7 +833,33 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         return trans;
     }
     
-   
+    
+    /**
+     * Sorts the array of transformation matricies and returns the sorted array.
+     * If the sub-volumes are sorted to a sub-volume within the 4D image, then the matrix
+     * for the reference volume is the identity matrix.
+     * @return Array of TransMatrix, one for each sub-volume in the 4D image.
+     */
+    public TransMatrix[] getArrayTransMatrix2() {
+    	TransMatrix[] sortedArray = new TransMatrix[inputImage.getExtents()[3]];
+    	for ( int i = 0; i < sortedArray.length; i++ )
+    	{
+    		if ( i < TransMatsInumber.length )
+    		{
+    			sortedArray[ TransMatsInumber[i] ] = new TransMatrix( VolumesToReferenceTransformations[i] );
+    		}
+    	}
+    	for ( int i = 0; i < sortedArray.length; i++ )
+    	{
+    		if ( sortedArray[i] == null )
+    		{
+    			// set to the identity matrix:
+    			sortedArray[i] = new TransMatrix(4);
+    		}    		
+    	}
+    	
+    	return sortedArray;
+    }
     
     /**
      * Sorts the array of transformation matricies and returns the sorted array.

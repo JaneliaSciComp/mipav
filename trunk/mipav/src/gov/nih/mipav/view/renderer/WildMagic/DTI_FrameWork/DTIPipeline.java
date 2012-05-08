@@ -225,6 +225,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		}
 		else if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) )
 		{
+			System.err.println( currentImage.getImageName() );
 			estTensorPanel.calcTensor(currentImage);
 		}
 		// creates the derived images from the tensor image and sets up the visualization panel inputs.
@@ -319,18 +320,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		}
 
 		else if (command.equals("next2")){
-			if (DTIPreprocessing.result35RegImage !=null){
-				DWINewB0Image = DTIPreprocessing.result35RegImage;
-				refImageNum = DTIPreprocessing.refVolNum;
-				currentImage = DTIPreprocessing.result35RegImage;
-			}
-			if (DWINewB0Image !=null){
-				inputTensorImage = DWINewB0Image;  
-			}
-			else if (DTIPreprocessing.inputPreTensorImage != null){			          
-				inputTensorImage = DTIPreprocessing.inputPreTensorImage;
-			}
-
 			tabbedPane.setSelectedIndex(EPI_DISTORTION);
 			nextButton.setEnabled(true);
 			goBackButton.setEnabled(true);
@@ -427,6 +416,8 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		EPIpanel.setB0toT2Matrix( matB0toT2, matB0FileName );
 		EPIpanel.setRegisteredMatrices( matRegistered, matRegisteredFileName );
 		nextButton.setEnabled(true);
+		currentImage = registeredDWI;
+		System.err.println( currentImage.getImageName() );
 	}
 	
 	public void finishEPIPanel()
