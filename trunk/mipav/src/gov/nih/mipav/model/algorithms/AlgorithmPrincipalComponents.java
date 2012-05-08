@@ -412,7 +412,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         double weight[] = null;
         double diff;
         double diffSquared;
-        double maxDiffSquared;
+        double minDiffSquared;
+        double minDiff;
         int zClosest;
         int cClosest;
         double total;
@@ -1017,7 +1018,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             for (i = 0; i < pNumber; i++) {
                 weight[i] /= total;
             }
-            maxDiffSquared = Double.MAX_VALUE;
+            minDiffSquared = Double.MAX_VALUE;
             zClosest = 0;
             if (haveColor) {
                 // Normalize eigenInverse
@@ -1041,8 +1042,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                             diff = (weight[k] - eigenInverse[(3*z) + i - 1][k]);
                             diffSquared += (diff*diff);
                         }
-                        if (diffSquared < maxDiffSquared) {
-                            maxDiffSquared = diffSquared;
+                        if (diffSquared < minDiffSquared) {
+                            minDiffSquared = diffSquared;
                             zClosest = z;
                             cClosest = i;
                         }
@@ -1083,16 +1084,17 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                         diff = (weight[k] - eigenInverse[z][k]);
                         diffSquared += (diff*diff);
                     }
-                    if (diffSquared < maxDiffSquared) {
-                        maxDiffSquared = diffSquared;
+                    if (diffSquared < minDiffSquared) {
+                        minDiffSquared = diffSquared;
                         zClosest = z;
                     }
                 } // for (z = 0; z < zDim; z++)
                 Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
             } // else not color
-            Preferences.debug("The Euclidean squared matching error = " + maxDiffSquared + "\n");
-            ViewUserInterface.getReference().setDataText("The Euclidean squared matching error = " + maxDiffSquared + "\n");
+            minDiff = Math.sqrt(minDiffSquared);
+            Preferences.debug("The Euclidean matching error = " + minDiff + "\n");
+            ViewUserInterface.getReference().setDataText("The Euclidean matching error = " + minDiff + "\n");
         } // if (matchImage != null)
 
         for (i = 0; i < eigenInverse.length; i++) {
