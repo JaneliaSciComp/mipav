@@ -415,6 +415,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         double maxDiffSquared;
         int zClosest;
         int cClosest;
+        double total;
 
         if (haveColor) {
 
@@ -1007,10 +1008,31 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                     weight[i] += (matchValues[j] - matchMean)*pTrunc[i][j];
                 }
             }
-
+            // Normalize weight
+            total = 0.0;
+            for (i = 0; i < pNumber; i++) {
+                total += weight[i]*weight[i];
+            }
+            total = Math.sqrt(total);
+            for (i = 0; i < pNumber; i++) {
+                weight[i] /= total;
+            }
             maxDiffSquared = Double.MAX_VALUE;
             zClosest = 0;
-            if (haveColor) { 
+            if (haveColor) {
+                // Normalize eigenInverse
+                for (z = 0; z < zDim; z++) {
+                    for (i = 1; i < 4; i++) {
+                        total = 0.0;
+                        for (k = 0; k < pNumber; k++) {
+                            total += eigenInverse[(3*z) + i - 1][k]*eigenInverse[(3*z) + i - 1][k];
+                        }
+                        total = Math.sqrt(total);
+                        for (k = 0; k < pNumber; k++) {
+                            eigenInverse[(3*z) + i - 1][k] /= total;
+                        }
+                    }
+                }
                 cClosest = 1;
                 for (z = 0; z < zDim; z++) {
                     for (i = 1; i < 4; i++) {
@@ -1044,8 +1066,19 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             } // if (haveColor)
             else { // not color
+                // Normalize eigenInverse
                 for (z = 0; z < zDim; z++) {
-                    diffSquared = 0.0;
+                    total = 0.0;
+                    for (k = 0; k < pNumber; k++) {
+                        total += eigenInverse[z][k]*eigenInverse[z][k];
+                    }
+                    total = Math.sqrt(total);
+                    for (k = 0; k < pNumber; k++) {
+                        eigenInverse[z][k] /= total;    
+                    }       
+                }
+                for (z = 0; z < zDim; z++) {
+                    diffSquared = 0.0;  
                     for (k = 0; k < pNumber; k++) {
                         diff = (weight[k] - eigenInverse[z][k]);
                         diffSquared += (diff*diff);
@@ -1058,6 +1091,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
                 ViewUserInterface.getReference().setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
             } // else not color
+            Preferences.debug("The Euclidean squared matching error = " + maxDiffSquared + "\n");
+            ViewUserInterface.getReference().setDataText("The Euclidean squared matching error = " + maxDiffSquared + "\n");
         } // if (matchImage != null)
 
         for (i = 0; i < eigenInverse.length; i++) {
