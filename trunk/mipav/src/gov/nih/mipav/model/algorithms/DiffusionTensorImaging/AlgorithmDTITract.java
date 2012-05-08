@@ -18,7 +18,7 @@ import WildMagic.LibFoundation.Mathematics.*;
  * This algorithm works in conjunction with AlgorithmDTI2EGFA to create the 
  * MIPAV DTI Fiber Tracking/ Statistics Dialog
  * 
- * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
+ * See:Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
 public class AlgorithmDTITract extends AlgorithmBase
 {
