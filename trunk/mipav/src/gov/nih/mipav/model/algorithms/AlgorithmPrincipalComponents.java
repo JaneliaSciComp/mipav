@@ -943,11 +943,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         }
 
-        for (i = 0; i < eigenvector.length; i++) {
+        /*for (i = 0; i < eigenvector.length; i++) {
             eigenvector[i] = null;
         }
 
-        eigenvector = null;
+        eigenvector = null;*/
         // p is [nPlanes][samples] so we only want the first pNumber rows
         // of p.
 
@@ -971,11 +971,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         }
 
-        for (i = 0; i < p.length; i++) {
+        /*for (i = 0; i < p.length; i++) {
             p[i] = null;
         }
 
-        p = null;
+        p = null;*/
 
         if (haveColor) {
 
@@ -1008,138 +1008,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             } // for (j = 0; j < samples; j++)
         } // else not color
         
-        if (matchImage != null) {
-            matchValues = new double[samples];
-            
-            try {
-                matchImage.exportData(0, samples, matchValues); // locks and releases lock
-            } catch (IOException error) {
-                displayError("Algorithm PComponent: matchImage locked");
-                setCompleted(false);
-
-                setThreadStopped(true);
-
-                return;
-            }
-            
-            matchMean = 0.0;
-            for (j = 0; j < samples; j++) {
-                matchMean += matchValues[j];
-            }
-
-            matchMean /= samples;
-            
-            weight = new double[pNumber];
-            
-            for (j = 0; j < samples; j++) {
-                matchValues[j] -= matchMean;
-            }
-            
-            for (i = 0; i < pNumber; i++) {
-                for (j = 0; j < samples; j++) {
-                    weight[i] += matchValues[j]*pTrunc[i][j];
-                }
-            }
-            // Normalize weight
-            total = 0.0;
-            for (i = 0; i < pNumber; i++) {
-                total += weight[i]*weight[i];
-            }
-            total = Math.sqrt(total);
-            for (i = 0; i < pNumber; i++) {
-                weight[i] /= total;
-            }
-            minDiffSquared = Double.MAX_VALUE;
-            zClosest = 0;
-            if (haveColor) {
-                // Normalize eigenInverse
-                for (z = 0; z < zDim; z++) {
-                    for (i = 1; i < 4; i++) {
-                        total = 0.0;
-                        for (k = 0; k < pNumber; k++) {
-                            total += eigenInverse[(3*z) + i - 1][k]*eigenInverse[(3*z) + i - 1][k];
-                        }
-                        total = Math.sqrt(total);
-                        for (k = 0; k < pNumber; k++) {
-                            eigenInverse[(3*z) + i - 1][k] /= total;
-                        }
-                    }
-                }
-                cClosest = 1;
-                for (z = 0; z < zDim; z++) {
-                    for (i = 1; i < 4; i++) {
-                        diffSquared = 0.0;
-                        for (k = 0; k < pNumber; k++) {
-                            diff = (weight[k] - eigenInverse[(3*z) + i - 1][k]);
-                            diffSquared += (diff*diff);
-                        }
-                        if (diffSquared < minDiffSquared) {
-                            minDiffSquared = diffSquared;
-                            zClosest = z;
-                            cClosest = i;
-                        }
-                    } // for (i = 1; i < 4; i++)
-                } // for (z = 0; z < zDim; z++)
-                if (zDim > 1) {
-                    Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
-                    UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");  
-                }
-                if (cClosest == 1) {
-                    Preferences.debug("The closest color to the matchImage is red\n");
-                    UI.setDataText("The closest color to the matchImage is red\n");
-                }
-                else if (cClosest == 2) {
-                    Preferences.debug("The closest color to the matchImage is green\n");
-                    UI.setDataText("The closest color to the matchImage is green\n");    
-                }
-                else {
-                    Preferences.debug("The closest color to the matchImage is blue\n");
-                    UI.setDataText("The closest color to the matchImage is blue\n");
-                }
-            } // if (haveColor)
-            else { // not color
-                // Normalize eigenInverse
-                for (z = 0; z < zDim; z++) {
-                    total = 0.0;
-                    for (k = 0; k < pNumber; k++) {
-                        total += eigenInverse[z][k]*eigenInverse[z][k];
-                    }
-                    total = Math.sqrt(total);
-                    for (k = 0; k < pNumber; k++) {
-                        eigenInverse[z][k] /= total;  
-                    }       
-                }
-                for (z = 0; z < zDim; z++) {
-                    diffSquared = 0.0;  
-                    for (k = 0; k < pNumber; k++) {
-                        diff = (weight[k] - eigenInverse[z][k]);
-                        diffSquared += (diff*diff);
-                    }
-                    if (diffSquared < minDiffSquared) {
-                        minDiffSquared = diffSquared;
-                        zClosest = z;
-                    }
-                } // for (z = 0; z < zDim; z++)
-                Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
-                UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
-            } // else not color
-            minDiff = Math.sqrt(minDiffSquared);
-            Preferences.debug("The Euclidean matching error = " + minDiff + "\n");
-            UI.setDataText("The Euclidean matching error = " + minDiff + "\n");
-        } // if (matchImage != null)
-
-        for (i = 0; i < eigenInverse.length; i++) {
-            eigenInverse[i] = null;
-        }
-
-        eigenInverse = null;
-
-        for (i = 0; i < pTrunc.length; i++) {
-            pTrunc[i] = null;
-        }
-
-        pTrunc = null;
-        mean = null;
+        
         fireProgressStateChanged(80);
 
         if (threadStopped) {
@@ -1239,10 +1108,10 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         } // if (doFilter)
 
-        if (!doAveraging) {
+        if ((!doAveraging) && (matchImage == null)) {
 
             setCompleted(true);
-        } // if (!doAveraging)
+        } // if ((!doAveraging) && (matchImage == null))
 
         // Now simply average the reconstructed 3D slices to obtain an average
         fireProgressStateChanged("Averaging reconstructed data");
@@ -1289,6 +1158,267 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 result[j] /= nPlanes;
             }
         } // else not color
+        
+        if (matchImage != null) {
+            matchValues = new double[samples];
+            
+            try {
+                matchImage.exportData(0, samples, matchValues); // locks and releases lock
+            } catch (IOException error) {
+                displayError("Algorithm PComponent: matchImage locked");
+                setCompleted(false);
+
+                setThreadStopped(true);
+
+                return;
+            }
+            
+            weight = new double[pNumber];
+            
+            for (j = 0; j < samples; j++) {
+                matchValues[j] -= result[j];
+            }
+            
+            for (i = 0; i < nPlanes; i++) {
+
+                for (j = 0; j < nPlanes; j++) {
+                    covar[i][j] = 0.0;
+                }
+            }
+            
+            if (haveColor) {
+
+                for (j = 0; j < samples; j++) {
+
+                    for (z = 0; z < zDim; z++) {
+
+                        for (i = 1; i < 4; i++) {
+                            x[(i - 1) + (3 * z)] = values[(4 * z * samples) + (4 * j) + i] - result[j];
+                        }
+                    }
+
+                    for (k = 0; k < nPlanes; k++) {
+
+                        for (m = 0; m < nPlanes; m++) {
+                            covar[k][m] += x[k] * x[m];
+                        }
+                    }
+                }
+            } // if haveColor
+            else { // not color
+
+                for (j = 0; j < samples; j++) {
+
+                    for (z = 0; z < zDim; z++) {
+                        x[z] = values[(z * samples) + j] - result[j];
+                    }
+
+                    for (k = 0; k < nPlanes; k++) {
+
+                        for (m = 0; m < nPlanes; m++) {
+                            covar[k][m] += x[k] * x[m];
+                        }
+                    }
+                }
+            } // else not color
+            
+            Eigenvalue.decompose( covar, V, eigenvalue, e1 );
+            
+            // In EigenvalueDecomposition the columns of V represent the eigenvectors,
+            // but in this algorithm we want the eigenvectors in rows.
+            for ( i = 0; i < eigenvector.length; i++ )
+            {
+                for ( j = 0; j < eigenvector[i].length; j++ )
+                {
+                    eigenvector[i][j] = V[j][i];
+                }
+            }
+
+            // Arrange the eigenvalues and corresponding eigenvectors in descending order
+            // so that ej >= ej+1
+
+            for (i = 0; i < nPlanes; i++) {
+                index = i;
+
+                for (j = i + 1; j < nPlanes; j++) {
+
+                    if (eigenvalue[j] > eigenvalue[i]) {
+                        index = j;
+                    }
+                } // for (j = i+1; j < nPlanes; j++)
+
+                if (index != i) {
+                    temp = eigenvalue[i];
+                    eigenvalue[i] = eigenvalue[index];
+                    eigenvalue[index] = temp;
+
+                    for (j = 0; j < nPlanes; j++) {
+                        tempRow[j] = eigenvector[i][j];
+                        eigenvector[i][j] = eigenvector[index][j];
+                        eigenvector[index][j] = tempRow[j];
+                    }
+                } // if (index != i)
+            } // for (i = 0; i < nPlanes; i++)
+            
+            for (i = 0; i < nPlanes; i++) {
+
+                for (j = 0; j < samples; j++) {
+                    p[i][j] = 0.0f;
+                }
+            }
+
+            if (haveColor) {
+
+                for (j = 0; j < samples; j++) {
+
+                    for (z = 0; z < zDim; z++) {
+
+                        for (i = 1; i < 4; i++) {
+                            x[(i - 1) + (3 * z)] = values[(4 * z * samples) + (4 * j) + i] - result[j];
+                        }
+                    }
+
+                    for (k = 0; k < nPlanes; k++) {
+
+                        for (m = 0; m < nPlanes; m++) {
+                            p[k][j] += x[m] * eigenvector[k][m];
+                        }
+                    }
+                } // for (j = 0; j < samples; j++)
+            } // if (haveColor)
+            else { // not color
+
+                for (j = 0; j < samples; j++) {
+
+                    for (z = 0; z < zDim; z++) {
+                        x[z] = values[(z * samples) + j] - result[j];
+                    }
+
+                    for (k = 0; k < nPlanes; k++) {
+
+                        for (m = 0; m < nPlanes; m++) {
+                            p[k][j] += x[m] * eigenvector[k][m];
+                        }
+                    }
+                } // for (j = 0; j < samples; j++)
+            } // else not color
+            
+            for (i = 0; i < nPlanes; i++) {
+
+                for (j = 0; j < pNumber; j++) {
+                    eigenInverse[i][j] = eigenvector[j][i];
+                }
+            }
+            
+            for (i = 0; i < pNumber; i++) {
+                for (j = 0; j < samples; j++) {
+                    weight[i] += matchValues[j]*p[i][j];
+                }
+            }
+            // Normalize weight
+            total = 0.0;
+            for (i = 0; i < pNumber; i++) {
+                total += weight[i]*weight[i];
+            }
+            total = Math.sqrt(total);
+            for (i = 0; i < pNumber; i++) {
+                weight[i] /= total;
+            }
+            minDiffSquared = Double.MAX_VALUE;
+            zClosest = 0;
+            if (haveColor) {
+                // Normalize eigenInverse
+                for (z = 0; z < zDim; z++) {
+                    for (i = 1; i < 4; i++) {
+                        total = 0.0;
+                        for (k = 0; k < pNumber; k++) {
+                            total += eigenInverse[(3*z) + i - 1][k]*eigenInverse[(3*z) + i - 1][k];
+                        }
+                        total = Math.sqrt(total);
+                        for (k = 0; k < pNumber; k++) {
+                            eigenInverse[(3*z) + i - 1][k] /= total;
+                        }
+                    }
+                }
+                cClosest = 1;
+                for (z = 0; z < zDim; z++) {
+                    for (i = 1; i < 4; i++) {
+                        diffSquared = 0.0;
+                        for (k = 0; k < pNumber; k++) {
+                            diff = (weight[k] - eigenInverse[(3*z) + i - 1][k]);
+                            diffSquared += (diff*diff);
+                        }
+                        if (diffSquared < minDiffSquared) {
+                            minDiffSquared = diffSquared;
+                            zClosest = z;
+                            cClosest = i;
+                        }
+                    } // for (i = 1; i < 4; i++)
+                } // for (z = 0; z < zDim; z++)
+                if (zDim > 1) {
+                    Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
+                    UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");  
+                }
+                if (cClosest == 1) {
+                    Preferences.debug("The closest color to the matchImage is red\n");
+                    UI.setDataText("The closest color to the matchImage is red\n");
+                }
+                else if (cClosest == 2) {
+                    Preferences.debug("The closest color to the matchImage is green\n");
+                    UI.setDataText("The closest color to the matchImage is green\n");    
+                }
+                else {
+                    Preferences.debug("The closest color to the matchImage is blue\n");
+                    UI.setDataText("The closest color to the matchImage is blue\n");
+                }
+            } // if (haveColor)
+            else { // not color
+                // Normalize eigenInverse
+                for (z = 0; z < zDim; z++) {
+                    total = 0.0;
+                    for (k = 0; k < pNumber; k++) {
+                        total += eigenInverse[z][k]*eigenInverse[z][k];
+                    }
+                    total = Math.sqrt(total);
+                    for (k = 0; k < pNumber; k++) {
+                        eigenInverse[z][k] /= total;
+                    }       
+                }
+                for (z = 0; z < zDim; z++) {
+                    diffSquared = 0.0;  
+                    for (k = 0; k < pNumber; k++) {
+                        diff = (weight[k] - eigenInverse[z][k]);
+                        diffSquared += (diff*diff);
+                    }
+                    if (diffSquared < minDiffSquared) {
+                        minDiffSquared = diffSquared;
+                        zClosest = z;
+                    }
+                } // for (z = 0; z < zDim; z++)
+                Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
+                UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
+            } // else not color
+            minDiff = Math.sqrt(minDiffSquared);
+            Preferences.debug("The Euclidean matching error = " + minDiff + "\n");
+            UI.setDataText("The Euclidean matching error = " + minDiff + "\n");
+        } // if (matchImage != null)
+
+        for (i = 0; i < eigenInverse.length; i++) {
+            eigenInverse[i] = null;
+        }
+
+        eigenInverse = null;
+
+        for (i = 0; i < pTrunc.length; i++) {
+            pTrunc[i] = null;
+        }
+
+        pTrunc = null;
+        mean = null;
+        
+        if (!doAveraging) {
+            setCompleted(true);
+        }
 
         fireProgressStateChanged(90);
         fireProgressStateChanged("Importing averaged destination data");
