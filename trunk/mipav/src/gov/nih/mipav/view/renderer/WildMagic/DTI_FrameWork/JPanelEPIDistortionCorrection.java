@@ -218,13 +218,6 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		else if (command.equals(loadAllMatrixComand))
 		{
 			matRegistered = readMultiTransformMatrix( matricesFile );
-			if ( matRegistered != null )
-			{
-				for ( int i = 0; i < matRegistered.length; i++ )
-				{
-					System.err.println( matRegistered[i] );
-				}
-			}
 		}
 		else if (command.equals(computeEpiCommand))
 		{
