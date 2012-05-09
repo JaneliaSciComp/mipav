@@ -418,28 +418,31 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				result35RegImage.setImageName(pipeline.DWIImage.getImageName() + comboBoxDOF.getSelectedItem());
 				result35RegImage.setDTIParameters( new DTIParameters( pipeline.DWIImage.getDTIParameters() ) );
 				// Update the gradients in the new 4D image:
-				if ( (result35RegImage.getDTIParameters().getGradients() != null) && 
-						(result35RegImage.getDTIParameters().getGradients().length == arrayTransMatrix.length) )
+				if ( correctGradTransCheckbox.isSelected() && correctGradTransCheckbox.isEnabled() )
 				{
-					for ( int i = 0; i < arrayTransMatrix.length; i++ )
+					if ( (result35RegImage.getDTIParameters().getGradients() != null) && 
+							(result35RegImage.getDTIParameters().getGradients().length == arrayTransMatrix.length) )
 					{
-						//System.err.println( arrayTransMatrix[i] );
+						for ( int i = 0; i < arrayTransMatrix.length; i++ )
+						{
+							//System.err.println( arrayTransMatrix[i] );
 
-						System.err.print( result35RegImage.getDTIParameters().getGradients()[i][0] + " " + 
-								result35RegImage.getDTIParameters().getGradients()[i][1] + " " + 
-								result35RegImage.getDTIParameters().getGradients()[i][2] + "      --->     ");
+							//System.err.print( result35RegImage.getDTIParameters().getGradients()[i][0] + " " + 
+							//		result35RegImage.getDTIParameters().getGradients()[i][1] + " " + 
+							//		result35RegImage.getDTIParameters().getGradients()[i][2] + "      --->     ");
 
-						float[] grad = result35RegImage.getDTIParameters().getGradients()[i];
-						Vector4f gradVec = new Vector4f( grad[0], grad[1], grad[2], 0 );
-						Vector4f newGradVec = new Vector4f();
-						arrayTransMatrix[i].Mult( gradVec, newGradVec );
-						grad[0] = newGradVec.X;
-						grad[1] = newGradVec.Y;
-						grad[2] = newGradVec.Z;
+							float[] grad = result35RegImage.getDTIParameters().getGradients()[i];
+							Vector4f gradVec = new Vector4f( grad[0], grad[1], grad[2], 0 );
+							Vector4f newGradVec = new Vector4f();
+							arrayTransMatrix[i].Mult( gradVec, newGradVec );
+							grad[0] = newGradVec.X;
+							grad[1] = newGradVec.Y;
+							grad[2] = newGradVec.Z;
 
-						System.err.println( result35RegImage.getDTIParameters().getGradients()[i][0] + " " + 
-								result35RegImage.getDTIParameters().getGradients()[i][1] + " " + 
-								result35RegImage.getDTIParameters().getGradients()[i][2] );
+							//System.err.println( result35RegImage.getDTIParameters().getGradients()[i][0] + " " + 
+							//		result35RegImage.getDTIParameters().getGradients()[i][1] + " " + 
+							//		result35RegImage.getDTIParameters().getGradients()[i][2] );
+						}
 					}
 				}
 				// Save the final result:
