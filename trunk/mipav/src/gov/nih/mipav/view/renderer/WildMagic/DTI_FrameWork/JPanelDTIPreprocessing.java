@@ -1107,10 +1107,19 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 			new ViewJFrameImage(matchT2);
 			matchT2.setImageDirectory(outputDir.getText());
 			ModelImage.saveImage( matchT2, matchT2.getImageName() + ".xml", outputDir.getText() );
-			return matchT2;
 		}
+		else
+		{
+			matchT2.disposeLocal();
+			matchT2 = null;
+			MipavUtil.displayError( "Unable to generated resampled image for " + oldT2.getImageName() + " to match " + matchB0.getImageName() );
+		}
+		// Clean up temporary image:
+		algoTrans.getTransformedImage().disposeLocal(false);
+		algoTrans.disposeLocal();
 		algoTrans = null;
-		return null;
+		imageMarginsAlgo = null;
+		return matchT2;
 	}
 
 	/**

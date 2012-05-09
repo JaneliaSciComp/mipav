@@ -13,6 +13,7 @@ import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.DialogDTIColorDisplay;
@@ -156,21 +157,18 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         		parentFrame.dispose();
         	}
         }
-        else if (command.equalsIgnoreCase("browseDTIFile")) {
-            final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+        else if (command.equalsIgnoreCase("browseDTIFile")) {    		
+    		final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
+    		chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+    		chooser.setDialogTitle("Choose image file");
+    		final int returnValue = chooser.showOpenDialog(this);
+    		if (returnValue == JFileChooser.APPROVE_OPTION) {
+    			final FileIO fileIO = new FileIO();
 
-            if (currDir != null) {
-                chooser.setCurrentDirectory(new File(currDir));
-            }
-            chooser.setDialogTitle("Choose image");
-            chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-            final int returnValue = chooser.showOpenDialog(this);
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
-                currDir = chooser.getSelectedFile().getAbsolutePath();
-                final FileIO fileIO = new FileIO();
-                fileIO.setQuiet(true);
-                tensorImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory()
-                        + File.separator, true, null);
+    			tensorImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser.getCurrentDirectory()
+    					+ File.separator);
+    			Preferences.setProperty(Preferences.PREF_IMAGE_DIR, chooser.getCurrentDirectory().toString());
+    			
                 if (tensorImage.getNDims() != 4) {
                     MipavUtil.displayError("Tensor Image must be a 4D image");
                     
@@ -185,7 +183,7 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
                 }
                 else
                 {
-                	textDTIimage.setText(currDir);
+                	textDTIimage.setText(tensorImage.getImageDirectory());
                 	outputDirTextField.setText(tensorImage.getImageDirectory());
 
                 	createADC.setEnabled(true);
@@ -451,66 +449,77 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         AlgorithmDTI2EGFA kAlgorithm = new AlgorithmDTI2EGFA(tensorImage);
         kAlgorithm.run();
 
-        if ( createTrace.isSelected() )
+        traceImage = kAlgorithm.getTraceImage();
+        if ( traceImage != null )
         {
-        	traceImage = kAlgorithm.getTraceImage();
-        	traceImage.setImageName( TraceImageName );
-        	ModelImage.saveImage( traceImage, traceImage.getImageName() + ".xml", outputDirTextField.getText() );
-            if ( displayTrace.isSelected() )
-            {
-            	traceImage.calcMinMax();
-            	new ViewJFrameImage(traceImage);
-            }
-            else
-            {
-            	traceImage.disposeLocal();
-            }
-    		
+        	if ( createTrace.isSelected() )
+        	{        	
+        		traceImage.setImageName( TraceImageName );
+        		ModelImage.saveImage( traceImage, traceImage.getImageName() + ".xml", outputDirTextField.getText() );
+        		if ( displayTrace.isSelected() )
+        		{
+        			traceImage.calcMinMax();
+        			new ViewJFrameImage(traceImage);
+        		}
+        	}
+        	if ( !createTrace.isSelected() || !displayTrace.isSelected() )
+        	{
+        		traceImage.disposeLocal();
+        	}
         }
 
-        if ( createRA.isSelected() )
+        raImage = kAlgorithm.getRAImage();
+        if ( raImage != null )
         {
-        	raImage = kAlgorithm.getRAImage();
-        	raImage.setImageName( RAImageName );
-        	ModelImage.saveImage( raImage, raImage.getImageName() + ".xml", outputDirTextField.getText() );
-        	if ( displayRA.isSelected() )
+        	if ( createRA.isSelected() )
         	{
-        		raImage.calcMinMax();
-        		new ViewJFrameImage(raImage);
+        		raImage.setImageName( RAImageName );
+        		ModelImage.saveImage( raImage, raImage.getImageName() + ".xml", outputDirTextField.getText() );
+        		if ( displayRA.isSelected() )
+        		{
+        			raImage.calcMinMax();
+        			new ViewJFrameImage(raImage);
+        		}
         	}
-        	else
+        	if ( !createRA.isSelected() || !displayRA.isSelected() )
         	{
         		raImage.disposeLocal();
         	}
         }
 
-        if ( createVR.isSelected() )
+        vrImage = kAlgorithm.getVRImage();
+        if ( vrImage != null )
         {
-        	vrImage = kAlgorithm.getVRImage();
-        	vrImage.setImageName( VRImageName );
-        	ModelImage.saveImage( vrImage, vrImage.getImageName() + ".xml", outputDirTextField.getText() );
-        	if ( displayVR.isSelected() )
+        	if ( createVR.isSelected() )
         	{
-        		vrImage.calcMinMax();
-        		new ViewJFrameImage(vrImage);
+        		vrImage.setImageName( VRImageName );
+        		ModelImage.saveImage( vrImage, vrImage.getImageName() + ".xml", outputDirTextField.getText() );
+        		if ( displayVR.isSelected() )
+        		{
+        			vrImage.calcMinMax();
+        			new ViewJFrameImage(vrImage);
+        		}
         	}
-        	else
+        	if ( !createVR.isSelected() || !displayVR.isSelected() )
         	{
         		vrImage.disposeLocal();
         	}
         }
 
-        if ( createADC.isSelected() )
+        adcImage = kAlgorithm.getADCImage();
+        if ( adcImage != null )
         {
-        	adcImage = kAlgorithm.getADCImage();
-        	adcImage.setImageName( ADCImageName );
-        	ModelImage.saveImage( adcImage, adcImage.getImageName() + ".xml", outputDirTextField.getText() );
-        	if ( displayADC.isSelected() )
+        	if ( createADC.isSelected() )
         	{
-        		adcImage.calcMinMax();
-        		new ViewJFrameImage(adcImage);
+        		adcImage.setImageName( ADCImageName );
+        		ModelImage.saveImage( adcImage, adcImage.getImageName() + ".xml", outputDirTextField.getText() );
+        		if ( displayADC.isSelected() )
+        		{
+        			adcImage.calcMinMax();
+        			new ViewJFrameImage(adcImage);
+        		}
         	}
-        	else
+        	if ( !createADC.isSelected() || !displayADC.isSelected() )
         	{
         		adcImage.disposeLocal();
         	}

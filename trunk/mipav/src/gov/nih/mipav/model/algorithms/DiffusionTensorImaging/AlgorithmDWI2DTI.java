@@ -1,29 +1,35 @@
 package gov.nih.mipav.model.algorithms.DiffusionTensorImaging;
 
 
-import gov.nih.mipav.util.ThreadUtil;
-
-import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmBrainSurfaceExtractor;
+import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmConcatMult3Dto4D;
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.file.DTIParameters;
+import gov.nih.mipav.model.file.FileDicom;
+import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.util.ThreadUtil;
+import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameBase;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIPipeline;
 
 import java.awt.Dimension;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.BitSet;
+import java.util.HashMap;
 import java.util.concurrent.CountDownLatch;
 
-import javax.vecmath.GMatrix;
-
-import apps.EstimateSNR;
-
-import Jama.*;
+import Jama.Matrix;
 import WildMagic.LibFoundation.Mathematics.GMatrixf;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import apps.EstimateSNR;
 import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
 
 
@@ -32,11 +38,7 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Singularvalue;
  * 
  * See: Introduction to Diffusion Tensor Imaging, by Susumu Mori
  */
-/**
- * @author alexa
- *
- */
-public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateInterface, AlgorithmInterface {
+public class AlgorithmDWI2DTI extends AlgorithmBase implements AlgorithmInterface {
     /** Mask Image for masking brain regions during tensor calculation: */
     private ModelImage m_kMaskImage = null;
     
@@ -278,6 +280,239 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
 
     }
 
+    public void calculateDTI(final int start, final int end, final float[] dtiData, final float[][][] weightData,
+            final Matrix B, final Matrix H) {
+        for (int iSlice = start; iSlice < end; iSlice++) {
+            final float[][] buffer = new float[m_iWeights][];
+            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
+                buffer[iWeight] = readSliceWeight(iSlice, iWeight);
+            }
+            for (int iY = 0; iY < m_iDimY; iY++) {
+                for (int iX = 0; iX < m_iDimX; iX++) {
+                    calculateDTIVoxel(dtiData, buffer, weightData, iX, iY, iSlice, B);
+                }
+            }
+            // int iValue = (int)(100 * (float)(iSlice+1)/(float)m_iSlices);
+            // kProgressBar.updateValueImmed( iValue );
+        }
+
+    }
+
+    public void calculateDTIVoxel(final float[] dtiData, final float[][] dwiData, final float[][][] weightData,
+            final int x, final int y, final int z, final Matrix B) {
+        final int vol = m_iWeights;
+        final int indexInVolume = z * (m_iDimY * m_iDimX) + (y * m_iDimX) + x;
+        final int indexInSlice = (y * m_iDimX) + x;
+        final int volumeSize = m_iSlices * m_iDimY * m_iDimX;
+        if (m_kMaskImage.getBoolean(indexInVolume)) {
+            final Matrix SIGMA = Matrix.identity(vol, vol);
+            final Matrix X = new Matrix(new double[vol][1]);
+            final int[] r = new int[vol];
+            final int[] c = new int[vol];
+            int idx = 0;
+
+            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
+                double p = dwiData[iWeight][indexInSlice];
+                double w = 0; // aaafWeights[iWeight][iSlice][iIndex];
+                if (weightData[m_aiMatrixEntries[iWeight]][z][indexInSlice] != 0) {
+                    w = p / weightData[m_aiMatrixEntries[iWeight]][z][indexInSlice];
+                }
+                if (w > 0.196) {
+                    r[idx] = iWeight;
+                    c[idx] = iWeight;
+                    idx++;
+                }
+
+                // SIGMA is a diagonal matrix and its inverse would be
+                // diag(1/S(i,i))
+                if (p < m_fMeanNoise) {
+                    p = m_fMeanNoise;
+                }
+
+                X.set(iWeight, 0, Math.log(p));
+                SIGMA.set(iWeight, iWeight, (p * p * w)); // SIGMA here
+                // becomes
+                // SIGMA.inverse
+            }
+            final Matrix B2 = B.getMatrix(r, 0, 6);
+            final Matrix SIGMA2 = SIGMA.getMatrix(r, c);
+            final Matrix X2 = X.getMatrix(r, 0, 0);
+            final Matrix A = ( (B2.transpose()).times(SIGMA2)).times(B2);
+            final Matrix Y = ( (B2.transpose()).times(SIGMA2)).times(X2);
+          		            		
+            int m = A.getRowDimension();
+            int n = A.getColumnDimension();
+            double[][] u = new double[m][n];
+            double[][] v = new double[n][n];
+            double[] s = new double[Math.min(m+1,n)];
+            Singularvalue.decompose( A.getArray(), u, v, s );
+            Matrix uMat = new Matrix(u);
+            Matrix vMat = new Matrix(v);
+            Matrix S1 = new Matrix(s.length, s.length);
+            for (int i = 0; i < S1.getRowDimension(); i++) {
+                S1.set(i, i, 1 / s[i]);
+            }
+            Matrix D = ( ( (vMat).times(S1)).times(uMat.transpose())).times(Y);
+            
+            // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude]
+            final float[] tensor = new float[10 + vol];
+            for (int i = 0; i < 6; i++) {
+                tensor[i] = (float) ( -D.get(i, 0) * 1000000); // um^2/sec
+                if (i == 0 && tensor[0] < 0) {
+                    tensor[0] = (float) 0.01;
+                }
+                if (i == 3 && tensor[3] < 0) {
+                    tensor[3] = (float) 0.01;
+                }
+                if (i == 5 && tensor[5] < 0) {
+                    tensor[5] = (float) 0.01;
+                }
+            }
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInVolume + iT * volumeSize] = tensor[iT];
+            }
+        } else {
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInVolume + iT * volumeSize] = 0;
+            }
+        }
+
+    }
+
+    public void calculateDTIVoxel2(final float[] dtiData, final float[][] dwiData, final float[][][] weightData,
+            final int x, final int y, final int z, final Matrix H, final int volumeSize) {
+        final int indexInSlice = (y * m_iDimX) + x;
+        final int indexInVolume = z * m_iDimX * m_iDimY + (y * m_iDimX) + x;
+        if (m_kMaskImage.getBoolean(indexInSlice)) {
+            final Matrix Y = new Matrix(m_iWeights, 1);
+            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
+                Y.set(iWeight, 0, dwiData[iWeight][indexInSlice]);
+            }
+            final float[] tensor = solve(Y, H);
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInVolume + iT * volumeSize] = tensor[iT] * 1000000;
+            }
+        } else {
+            for (int iT = 0; iT < 6; iT++) {
+                dtiData[indexInSlice + iT * volumeSize] = 0;
+            }
+        }
+
+    }
+
+    public Matrix calculateMatrix(final Matrix m) {
+        final int nrows = m.getRowDimension();
+        final int ncols = m.getColumnDimension();
+        final Matrix m2 = new Matrix(nrows, ncols);
+        for (int i = 0; i < nrows; i++) {
+            for (int j = 0; j < ncols - 1; j++) {
+                m2.set(i, j + 1, -1 * m.get(i, j));
+            }
+            m2.set(i, 0, m.get(i, ncols - 1));
+        }
+        final Matrix m3 = m2.transpose().times(m2);
+        return m3.inverse().times(m2.transpose());
+    }
+
+
+    /**
+     * Second step in processing the diffusion weighted images. This function is called once the brain extractor is
+     * complete. The brain image is transformed into a mask image, which is passed to this function. The mask image
+     * limits where the tensor calculations are performed. The tensor is calculated, then the eigen vectors and
+     * functional anisotropy images. The DialogDTIColorDisplay is then launched.
+     * 
+     * @param kMaskImage mask image representing the brain.
+     */
+    public float[] createDWIImage() {
+    	if ( m_kBMatrix == null )
+		{
+			MipavUtil.displayError( "DWI Image must have b-balues or b-Matrix" );
+			return null;
+		}
+    	
+        final long startTime = System.currentTimeMillis();
+        final float[][][] aaafWeights = createTensorWeights();
+
+        final int iLen = m_iDimX * m_iDimY * m_iSlices;
+        final float[] afTensorData = new float[iLen * 6];
+
+        final Matrix B = new Matrix(m_kBMatrix.GetRows(), 6 + 1);
+        for (int iR = 0; iR < m_kBMatrix.GetRows(); iR++) {
+            for (int iC = 0; iC < 6 + 1; iC++) {
+                B.set(iR, iC, m_kBMatrix.Get(iR, iC));
+            }
+        }
+        final Matrix H = calculateMatrix(B);
+
+        // ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "calculating tensor...", 0, 100, true);
+
+        if (multiThreadingEnabled) {
+            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+            final float step = ((float) m_iSlices) / nthreads;
+            for (int i = 0; i < nthreads; i++) {
+                final int start = (int) (i * step);
+                final int end = (int) ( (i + 1) * step);
+                final Runnable task = new Runnable() {
+                    public void run() {
+                        calculateDTI(start, end, afTensorData, aaafWeights, B, H);
+                        doneSignal.countDown();
+                    }
+                };
+
+                ThreadUtil.mipavThreadPool.execute(task);
+            }
+            try {
+                doneSignal.await();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {
+            calculateDTI(0, m_iSlices, afTensorData, aaafWeights, B, H);
+        }
+        // kProgressBar.dispose();
+
+        final int[] extents = new int[] {m_iDimX, m_iDimY, m_iSlices, 6};
+		String name = new String("DiffusionTensorImage");
+        if ( m_bUseDTIParameters && m_kDWIImage != null )
+        {
+    		name = JDialogBase.makeImageName(m_kDWIImage.getImageName(), "_tensor");        	
+        }
+        m_kDTI = new ModelImage(ModelStorageBase.FLOAT, extents, name);
+        try {
+            m_kDTI.importData(0, afTensorData, true);
+        } catch (final IOException e) {
+            e.printStackTrace();
+        }
+        if ( m_bUseDTIParameters && m_kDWIImage != null )
+        {
+    		JDialogBase.updateFileInfo( m_kDWIImage, m_kDTI );       	
+    		m_kDTI.setImageDirectory( m_kDWIImage.getImageDirectory() );
+        }
+
+        setCompleted(true);
+        Preferences.debug("DWI->DTI:" + (System.currentTimeMillis() - startTime) + "\n", Preferences.DEBUG_ALGORITHM);
+        return afTensorData;
+    }
+    
+    
+    public void deleteImages()
+    {
+    	if ( m_kB0Image != null )
+    	{
+			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_kB0Image);
+			if (kImageFrame != null) {
+				kImageFrame.close();
+			}    		
+    	}
+    	if ( m_kMaskImage != null )
+    	{
+			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_kMaskImage);
+			if (kImageFrame != null) {
+				kImageFrame.close();
+			}
+    	}
+    }
+
     public void disposeLocal() {
         m_kMaskImage = null;
         m_kB0Image = null;
@@ -286,14 +521,6 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         m_aiMatrixEntries = null;
         m_kRawImageFormat = null;
         m_kDTI = null;
-    }
-
-    /** Calculate the DTI image. If the mask image is null, calculate the mask image first. */
-    public void runAlgorithm() {
-        if (m_kMaskImage == null) {
-            createMaskImage();
-        }
-        createDWIImage();
     }
 
     /**
@@ -313,7 +540,23 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         return m_kDWIImage;
     }
 
+    /** Calculate the DTI image. If the mask image is null, calculate the mask image first. */
+    public void runAlgorithm() {
+        if (m_kMaskImage == null) {
+            createMaskImage();
+        }
+        createDWIImage();
+    }
 
+    public float[] solve(final Matrix y, final Matrix m) {
+        final Matrix b = m.times(y);
+        final float[] a = new float[b.getRowDimension()];
+        for (int i = 1; i < a.length; i++) {
+            a[i - 1] = (float) b.get(i, 0);
+        }
+        return a;
+    }
+    
     private void createDWI()
     {
     	if ( m_aakDWIList == null )
@@ -337,8 +580,109 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
     	AlgorithmConcatMult3Dto4D concat = new AlgorithmConcatMult3Dto4D(vol, m_kDWIImage );
     	concat.run();
     }
-    
-    
+
+    /**
+     * Create the mask image. Create an image with the B0 weighted data, if one has not already been created. Next use
+     * the JDialogBrainSurfaceExtractor to extract only the brain regions.
+     */
+    private void createMaskImage() {
+        if (m_kB0Frame == null) {
+            final int iWeight = 0;
+            final int[] imageExtents = new int[] {m_iDimX, m_iDimY, m_iSlices};
+            m_kB0Image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String("BrainImage"));
+
+            final int length = m_iDimX * m_iDimY;
+            for (int iSlice = 0; iSlice < m_iSlices; iSlice++) {
+                final float[] buffer = readSliceWeight(iSlice, iWeight);
+                try {
+                    m_kB0Image.importData(length * iSlice, buffer, false);
+                } catch (final IOException e) {}
+            }
+
+        }
+        m_kB0Frame = new ViewJFrameImage(m_kB0Image, null, new Dimension(610, 200), false);
+
+        if (m_bDisplayB0) {
+            return;
+        }
+
+        try {
+            // call the algorithm
+            final float closeKernelSize = (Math.max(m_kB0Image.getFileInfo(0).getResolutions()[0], m_kB0Image
+                    .getFileInfo(0).getResolutions()[1]) * 6) + 1;
+            alg = new AlgorithmBrainSurfaceExtractor(m_kB0Image, 3, 0.5f, .62f, false, 1, closeKernelSize, 1, false,
+            		true, false, true);
+            alg.setRunningInSeparateThread(false);
+            alg.run();
+
+            // now need to handle the stuff from algorithm performed
+            final BitSet paintMask = alg.getComputedPaintMask();
+            m_kB0Frame.getImageA().setMask(paintMask);
+            m_kB0Frame.setActiveImage(ViewJFrameBase.IMAGE_A);
+
+            if ( alg.getResultImage() != null )
+            {
+            	alg.getResultImage().disposeLocal(false);
+            }
+            alg.finalize();
+
+            // necessary for paint to appear when using 'extract to paint' option
+            if (m_kB0Frame != null) {
+            	m_kB0Frame.getComponentImage().setPaintMask(m_kB0Image.getMask());
+            }
+            m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(
+            		m_kB0Frame.getComponentImage().commitPaintToMask());
+
+            alg = null;
+        } catch (final OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("Unable to allocate enough memory");
+
+            return;
+        }
+
+    }
+
+    /**
+     * Creates the weighted data for the tensor calculation from the diffusion weighted images.
+     * 
+     * @return float[][][] containing the weights used in the tensor calculation.
+     */
+    private float[][][] createTensorWeights() {
+
+        // ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "creating weights mask...", 0, 100, true);
+
+        final float[][][] norm = new float[m_iBOrig][m_iSlices][m_iDimX * m_iDimY];
+
+        for (int i = 0; i < m_iBOrig; i++) {
+            for (int j = 0; j < m_iWeights; j++) {
+                if (m_aiMatrixEntries[j] == i) {
+                    for (int slice = 0; slice < m_iSlices; slice++) {
+                        final float[] buffer = readSliceWeight(slice, j);
+
+                        for (int iY = 0; iY < m_iDimY; iY++) {
+                            for (int iX = 0; iX < m_iDimX; iX++) {
+                                final int iIndex = (iY * m_iDimX) + iX;
+                                if (m_kMaskImage.getBoolean(slice * m_iDimY * m_iDimX + iIndex)) {
+                                    final float fValue = buffer[iIndex];
+                                    norm[i][slice][iIndex] += fValue;
+                                } else {
+                                    norm[i][slice][iIndex] = 0;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            //final int iValue = (int) (100 * (float) (i + 1) / m_iBOrig);
+            // kProgressBar.updateValueImmed( iValue );
+        }
+
+        // kProgressBar.dispose();
+        // kProgressBar = null;
+        return norm;
+    }
+
     /**
      * Get the slice data for the image with the given slice and weight.
      * 
@@ -371,6 +715,23 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         }
         fileDicom = null;
         return buffer;
+    }
+
+    /**
+     * Translates the byte[] into float values at the given indes iIndex.
+     * 
+     * @param abData byte[] containing float values.
+     * @param iIndex index into the array to get the float from.
+     * @return float value representing 4 bytes starting at abData[iIndex*4].
+     */
+    private float readFloat(final byte[] abData, final int iIndex) {
+        final int b1 = abData[iIndex * 4 + 0] & 0xff;
+        final int b2 = abData[iIndex * 4 + 1] & 0xff;
+        final int b3 = abData[iIndex * 4 + 2] & 0xff;
+        final int b4 = abData[iIndex * 4 + 3] & 0xff;
+        final int tmpInt = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+        final float fValue = Float.intBitsToFloat(tmpInt);
+        return fValue;
     }
 
     /**
@@ -550,6 +911,22 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
     }
 
     /**
+     * Translates the byte[] into integer values at the given indes iIndex.
+     * 
+     * @param abData byte[] containing integer values.
+     * @param iIndex index into the array to get the float from.
+     * @return integer value representing 4 bytes starting at abData[iIndex*4].
+     */
+    private int readInteger(final byte[] abData, final int iIndex) {
+        final int b1 = abData[iIndex * 4 + 0] & 0xff;
+        final int b2 = abData[iIndex * 4 + 1] & 0xff;
+        final int b3 = abData[iIndex * 4 + 2] & 0xff;
+        final int b4 = abData[iIndex * 4 + 3] & 0xff;
+        final int iValue = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
+        return iValue;
+    }
+
+    /**
      * Get the slice data for the image with the given slice and weight. For 3d and 4d non-multifile images, the whole
      * buffer is read in and stored...then slice data is extracted from that buffer
      * 
@@ -724,6 +1101,8 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
         return afResult;
     }
 
+
+    
     /**
      * Get the slice data for the image with the given slice and weight.
      * 
@@ -751,407 +1130,6 @@ public class AlgorithmDWI2DTI extends AlgorithmBase implements ViewImageUpdateIn
             buffer = readIntegerWeight(iSlice, iWeight);
         }
         return buffer;
-    }
-
-    /**
-     * Create the mask image. Create an image with the B0 weighted data, if one has not already been created. Next use
-     * the JDialogBrainSurfaceExtractor to extract only the brain regions.
-     */
-    private void createMaskImage() {
-        if (m_kB0Frame == null) {
-            final int iWeight = 0;
-            final int[] imageExtents = new int[] {m_iDimX, m_iDimY, m_iSlices};
-            m_kB0Image = new ModelImage(ModelStorageBase.FLOAT, imageExtents, new String("BrainImage"));
-
-            final int length = m_iDimX * m_iDimY;
-            for (int iSlice = 0; iSlice < m_iSlices; iSlice++) {
-                final float[] buffer = readSliceWeight(iSlice, iWeight);
-                try {
-                    m_kB0Image.importData(length * iSlice, buffer, false);
-                } catch (final IOException e) {}
-            }
-
-            m_kB0Image.addImageDisplayListener(this);
-        }
-        m_kB0Frame = new ViewJFrameImage(m_kB0Image, null, new Dimension(610, 200), false);
-
-        if (m_bDisplayB0) {
-            return;
-        }
-
-        try {
-            // call the algorithm
-            final float closeKernelSize = (Math.max(m_kB0Image.getFileInfo(0).getResolutions()[0], m_kB0Image
-                    .getFileInfo(0).getResolutions()[1]) * 6) + 1;
-            alg = new AlgorithmBrainSurfaceExtractor(m_kB0Image, 3, 0.5f, .62f, false, 1, closeKernelSize, 1, false,
-                    true, true, true);
-            alg.setRunningInSeparateThread(isRunningInSeparateThread());
-            alg.addListener(this);
-            alg.run();
-
-            // now need to handle the stuff from algorithm performed
-            final BitSet paintMask = alg.getComputedPaintMask();
-            m_kB0Frame.getImageA().setMask(paintMask);
-            m_kB0Frame.setActiveImage(ViewJFrameBase.IMAGE_A);
-
-            alg.finalize();
-
-            // necessary for paint to appear when using 'extract to paint' option
-            if (m_kB0Frame != null) {
-                m_kB0Frame.getComponentImage().setPaintMask(m_kB0Image.getMask());
-            }
-
-            m_kB0Image.notifyImageDisplayListeners(null, true);
-            alg = null;
-        } catch (final OutOfMemoryError x) {
-            System.gc();
-            MipavUtil.displayError("Unable to allocate enough memory");
-
-            return;
-        }
-
-    }
-
-    /**
-     * Creates the weighted data for the tensor calculation from the diffusion weighted images.
-     * 
-     * @return float[][][] containing the weights used in the tensor calculation.
-     */
-    private float[][][] createTensorWeights() {
-
-        // ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "creating weights mask...", 0, 100, true);
-
-        final float[][][] norm = new float[m_iBOrig][m_iSlices][m_iDimX * m_iDimY];
-
-        for (int i = 0; i < m_iBOrig; i++) {
-            for (int j = 0; j < m_iWeights; j++) {
-                if (m_aiMatrixEntries[j] == i) {
-                    for (int slice = 0; slice < m_iSlices; slice++) {
-                        final float[] buffer = readSliceWeight(slice, j);
-
-                        for (int iY = 0; iY < m_iDimY; iY++) {
-                            for (int iX = 0; iX < m_iDimX; iX++) {
-                                final int iIndex = (iY * m_iDimX) + iX;
-                                if (m_kMaskImage.getBoolean(slice * m_iDimY * m_iDimX + iIndex)) {
-                                    final float fValue = buffer[iIndex];
-                                    norm[i][slice][iIndex] += fValue;
-                                } else {
-                                    norm[i][slice][iIndex] = 0;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            //final int iValue = (int) (100 * (float) (i + 1) / m_iBOrig);
-            // kProgressBar.updateValueImmed( iValue );
-        }
-
-        // kProgressBar.dispose();
-        // kProgressBar = null;
-        return norm;
-    }
-    
-    /**
-     * Second step in processing the diffusion weighted images. This function is called once the brain extractor is
-     * complete. The brain image is transformed into a mask image, which is passed to this function. The mask image
-     * limits where the tensor calculations are performed. The tensor is calculated, then the eigen vectors and
-     * functional anisotropy images. The DialogDTIColorDisplay is then launched.
-     * 
-     * @param kMaskImage mask image representing the brain.
-     */
-    public float[] createDWIImage() {
-    	if ( m_kBMatrix == null )
-		{
-			MipavUtil.displayError( "DWI Image must have b-balues or b-Matrix" );
-			return null;
-		}
-    	
-        final long startTime = System.currentTimeMillis();
-        final float[][][] aaafWeights = createTensorWeights();
-
-        final int iLen = m_iDimX * m_iDimY * m_iSlices;
-        final float[] afTensorData = new float[iLen * 6];
-
-        final Matrix B = new Matrix(m_kBMatrix.GetRows(), 6 + 1);
-        for (int iR = 0; iR < m_kBMatrix.GetRows(); iR++) {
-            for (int iC = 0; iC < 6 + 1; iC++) {
-                B.set(iR, iC, m_kBMatrix.Get(iR, iC));
-            }
-        }
-        final Matrix H = calculateMatrix(B);
-
-        // ViewJProgressBar kProgressBar = new ViewJProgressBar("Calculating tensor", "calculating tensor...", 0, 100, true);
-
-        if (multiThreadingEnabled) {
-            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
-            final float step = ((float) m_iSlices) / nthreads;
-            for (int i = 0; i < nthreads; i++) {
-                final int start = (int) (i * step);
-                final int end = (int) ( (i + 1) * step);
-                final Runnable task = new Runnable() {
-                    public void run() {
-                        calculateDTI(start, end, afTensorData, aaafWeights, B, H);
-                        doneSignal.countDown();
-                    }
-                };
-
-                ThreadUtil.mipavThreadPool.execute(task);
-            }
-            try {
-                doneSignal.await();
-            } catch (final InterruptedException e) {
-                e.printStackTrace();
-            }
-        } else {
-            calculateDTI(0, m_iSlices, afTensorData, aaafWeights, B, H);
-        }
-        // kProgressBar.dispose();
-
-        final int[] extents = new int[] {m_iDimX, m_iDimY, m_iSlices, 6};
-		String name = new String("DiffusionTensorImage");
-        if ( m_bUseDTIParameters && m_kDWIImage != null )
-        {
-    		name = JDialogBase.makeImageName(m_kDWIImage.getImageName(), "_tensor");        	
-        }
-        m_kDTI = new ModelImage(ModelStorageBase.FLOAT, extents, name);
-        try {
-            m_kDTI.importData(0, afTensorData, true);
-        } catch (final IOException e) {
-            e.printStackTrace();
-        }
-        if ( m_bUseDTIParameters && m_kDWIImage != null )
-        {
-    		JDialogBase.updateFileInfo( m_kDWIImage, m_kDTI );       	
-    		m_kDTI.setImageDirectory( m_kDWIImage.getImageDirectory() );
-        }
-
-        setCompleted(true);
-        Preferences.debug("DWI->DTI:" + (System.currentTimeMillis() - startTime) + "\n", Preferences.DEBUG_ALGORITHM);
-        return afTensorData;
-    }
-
-    public void calculateDTI(final int start, final int end, final float[] dtiData, final float[][][] weightData,
-            final Matrix B, final Matrix H) {
-        for (int iSlice = start; iSlice < end; iSlice++) {
-            final float[][] buffer = new float[m_iWeights][];
-            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
-                buffer[iWeight] = readSliceWeight(iSlice, iWeight);
-            }
-            for (int iY = 0; iY < m_iDimY; iY++) {
-                for (int iX = 0; iX < m_iDimX; iX++) {
-                    calculateDTIVoxel(dtiData, buffer, weightData, iX, iY, iSlice, B);
-                }
-            }
-            // int iValue = (int)(100 * (float)(iSlice+1)/(float)m_iSlices);
-            // kProgressBar.updateValueImmed( iValue );
-        }
-
-    }
-
-    public void calculateDTIVoxel(final float[] dtiData, final float[][] dwiData, final float[][][] weightData,
-            final int x, final int y, final int z, final Matrix B) {
-        final int vol = m_iWeights;
-        final int indexInVolume = z * (m_iDimY * m_iDimX) + (y * m_iDimX) + x;
-        final int indexInSlice = (y * m_iDimX) + x;
-        final int volumeSize = m_iSlices * m_iDimY * m_iDimX;
-        if (m_kMaskImage.getBoolean(indexInVolume)) {
-            final Matrix SIGMA = Matrix.identity(vol, vol);
-            final Matrix X = new Matrix(new double[vol][1]);
-            final int[] r = new int[vol];
-            final int[] c = new int[vol];
-            int idx = 0;
-
-            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
-                double p = dwiData[iWeight][indexInSlice];
-                double w = 0; // aaafWeights[iWeight][iSlice][iIndex];
-                if (weightData[m_aiMatrixEntries[iWeight]][z][indexInSlice] != 0) {
-                    w = p / weightData[m_aiMatrixEntries[iWeight]][z][indexInSlice];
-                }
-                if (w > 0.196) {
-                    r[idx] = iWeight;
-                    c[idx] = iWeight;
-                    idx++;
-                }
-
-                // SIGMA is a diagonal matrix and its inverse would be
-                // diag(1/S(i,i))
-                if (p < m_fMeanNoise) {
-                    p = m_fMeanNoise;
-                }
-
-                X.set(iWeight, 0, Math.log(p));
-                SIGMA.set(iWeight, iWeight, (p * p * w)); // SIGMA here
-                // becomes
-                // SIGMA.inverse
-            }
-            final Matrix B2 = B.getMatrix(r, 0, 6);
-            final Matrix SIGMA2 = SIGMA.getMatrix(r, c);
-            final Matrix X2 = X.getMatrix(r, 0, 0);
-            final Matrix A = ( (B2.transpose()).times(SIGMA2)).times(B2);
-            final Matrix Y = ( (B2.transpose()).times(SIGMA2)).times(X2);
-          		            		
-            int m = A.getRowDimension();
-            int n = A.getColumnDimension();
-            double[][] u = new double[m][n];
-            double[][] v = new double[n][n];
-            double[] s = new double[Math.min(m+1,n)];
-            Singularvalue.decompose( A.getArray(), u, v, s );
-            Matrix uMat = new Matrix(u);
-            Matrix vMat = new Matrix(v);
-            Matrix S1 = new Matrix(s.length, s.length);
-            for (int i = 0; i < S1.getRowDimension(); i++) {
-                S1.set(i, i, 1 / s[i]);
-            }
-            Matrix D = ( ( (vMat).times(S1)).times(uMat.transpose())).times(Y);
-            
-            // D = [Dxx, Dxy, Dxz, Dyy, Dyz, Dzz, Amplitude]
-            final float[] tensor = new float[10 + vol];
-            for (int i = 0; i < 6; i++) {
-                tensor[i] = (float) ( -D.get(i, 0) * 1000000); // um^2/sec
-                if (i == 0 && tensor[0] < 0) {
-                    tensor[0] = (float) 0.01;
-                }
-                if (i == 3 && tensor[3] < 0) {
-                    tensor[3] = (float) 0.01;
-                }
-                if (i == 5 && tensor[5] < 0) {
-                    tensor[5] = (float) 0.01;
-                }
-            }
-            for (int iT = 0; iT < 6; iT++) {
-                dtiData[indexInVolume + iT * volumeSize] = tensor[iT];
-            }
-        } else {
-            for (int iT = 0; iT < 6; iT++) {
-                dtiData[indexInVolume + iT * volumeSize] = 0;
-            }
-        }
-
-    }
-
-    public void calculateDTIVoxel2(final float[] dtiData, final float[][] dwiData, final float[][][] weightData,
-            final int x, final int y, final int z, final Matrix H, final int volumeSize) {
-        final int indexInSlice = (y * m_iDimX) + x;
-        final int indexInVolume = z * m_iDimX * m_iDimY + (y * m_iDimX) + x;
-        if (m_kMaskImage.getBoolean(indexInSlice)) {
-            final Matrix Y = new Matrix(m_iWeights, 1);
-            for (int iWeight = 0; iWeight < m_iWeights; iWeight++) {
-                Y.set(iWeight, 0, dwiData[iWeight][indexInSlice]);
-            }
-            final float[] tensor = solve(Y, H);
-            for (int iT = 0; iT < 6; iT++) {
-                dtiData[indexInVolume + iT * volumeSize] = tensor[iT] * 1000000;
-            }
-        } else {
-            for (int iT = 0; iT < 6; iT++) {
-                dtiData[indexInSlice + iT * volumeSize] = 0;
-            }
-        }
-
-    }
-
-    public Matrix calculateMatrix(final Matrix m) {
-        final int nrows = m.getRowDimension();
-        final int ncols = m.getColumnDimension();
-        final Matrix m2 = new Matrix(nrows, ncols);
-        for (int i = 0; i < nrows; i++) {
-            for (int j = 0; j < ncols - 1; j++) {
-                m2.set(i, j + 1, -1 * m.get(i, j));
-            }
-            m2.set(i, 0, m.get(i, ncols - 1));
-        }
-        final Matrix m3 = m2.transpose().times(m2);
-        return m3.inverse().times(m2.transpose());
-    }
-
-    public float[] solve(final Matrix y, final Matrix m) {
-        final Matrix b = m.times(y);
-        final float[] a = new float[b.getRowDimension()];
-        for (int i = 1; i < a.length; i++) {
-            a[i - 1] = (float) b.get(i, 0);
-        }
-        return a;
-    }
-
-    /**
-     * Translates the byte[] into float values at the given indes iIndex.
-     * 
-     * @param abData byte[] containing float values.
-     * @param iIndex index into the array to get the float from.
-     * @return float value representing 4 bytes starting at abData[iIndex*4].
-     */
-    private float readFloat(final byte[] abData, final int iIndex) {
-        final int b1 = abData[iIndex * 4 + 0] & 0xff;
-        final int b2 = abData[iIndex * 4 + 1] & 0xff;
-        final int b3 = abData[iIndex * 4 + 2] & 0xff;
-        final int b4 = abData[iIndex * 4 + 3] & 0xff;
-        final int tmpInt = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-        final float fValue = Float.intBitsToFloat(tmpInt);
-        return fValue;
-    }
-
-    /**
-     * Translates the byte[] into integer values at the given indes iIndex.
-     * 
-     * @param abData byte[] containing integer values.
-     * @param iIndex index into the array to get the float from.
-     * @return integer value representing 4 bytes starting at abData[iIndex*4].
-     */
-    private int readInteger(final byte[] abData, final int iIndex) {
-        final int b1 = abData[iIndex * 4 + 0] & 0xff;
-        final int b2 = abData[iIndex * 4 + 1] & 0xff;
-        final int b3 = abData[iIndex * 4 + 2] & 0xff;
-        final int b4 = abData[iIndex * 4 + 3] & 0xff;
-        final int iValue = ( (b1 << 24) | (b2 << 16) | (b3 << 8) | b4);
-        return iValue;
-    }
-
-    /** ViewImageUpdateInterface : stub */
-    public void setSlice(final int slice) {}
-
-    /** ViewImageUpdateInterface : stub */
-    public void setTimeSlice(final int tSlice) {}
-
-    /** ViewImageUpdateInterface : stub */
-    public boolean updateImageExtents() {
-        return false;
-    }
-
-    /** ViewImageUpdateInterface : called when the JDialogBrainSurfaceExtractor finishes. Calls processDWI. */
-    public boolean updateImages() {
-        if ( !m_bDisplayB0) {
-            m_kMaskImage = ViewUserInterface.getReference().getRegisteredImageByName(
-                    m_kB0Frame.getComponentImage().commitPaintToMask());
-            m_kB0Image.removeImageDisplayListener(this);
-        }
-        return false;
-    }
-    
-    public void deleteImages()
-    {
-    	if ( m_kB0Frame != null )
-    	{
-    		m_kB0Frame.close();
-    		m_kB0Frame = null;
-    	}
-    	if ( m_kMaskImage != null )
-    	{
-			final ViewJFrameImage kImageFrame = ViewUserInterface.getReference().getFrameContainingImage(m_kMaskImage);
-			if (kImageFrame != null) {
-				kImageFrame.close();
-			}
-    	}
-    }
-
-    /** ViewImageUpdateInterface : stub */
-    public boolean updateImages(final boolean flag) {
-        return false;
-    }
-
-    /** ViewImageUpdateInterface : stub */
-    public boolean updateImages(final ModelLUT LUTa, final ModelLUT LUTb, final boolean flag, final int interpMode) {
-        return false;
     }
 
 }
