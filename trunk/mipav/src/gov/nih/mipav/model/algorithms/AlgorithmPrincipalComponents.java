@@ -408,8 +408,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         double rMax;
         double scaledValues[] = null;
         double matchValues[] = null;
-        double matchMean;
         double weight[] = null;
+        double weightf[][] = null;
         double diff;
         double diffSquared;
         double minDiffSquared;
@@ -1324,28 +1324,54 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             for (i = 0; i < pNumber; i++) {
                 weight[i] /= total;
             }
-            minDiffSquared = Double.MAX_VALUE;
-            zClosest = 0;
+            
+            weightf = new double[nPlanes][pNumber];
+            
             if (haveColor) {
-                // Normalize eigenInverse
-                for (z = 0; z < zDim; z++) {
-                    for (i = 1; i < 4; i++) {
-                        total = 0.0;
-                        for (k = 0; k < pNumber; k++) {
-                            total += eigenInverse[(3*z) + i - 1][k]*eigenInverse[(3*z) + i - 1][k];
+
+                for (m = 0; m < pNumber; m++) { 
+                    for (j = 0; j < samples; j++) {
+    
+                        for (z = 0; z < zDim; z++) {
+    
+                            for (i = 1; i < 4; i++) {
+                                weightf[(i - 1) + (3 * z)][m] += (values[(4 * z * samples) + (4 * j) + i] - result[j])*p[m][j];
+                            }
                         }
-                        total = Math.sqrt(total);
-                        for (k = 0; k < pNumber; k++) {
-                            eigenInverse[(3*z) + i - 1][k] /= total;
+                    } // for (j = 0; j < samples; j++)
+                } // for (m = 0; m < pNumber; m++)
+            } // if (haveColor)
+            else { // not color
+                for (m = 0; m < pNumber; m++) {
+                    for (j = 0; j < samples; j++) {
+                        for (z = 0; z < zDim; z++) {
+                            weightf[z][m] += (values[(z*samples) + j] - result[j])*p[m][j];
                         }
                     }
                 }
+            } // else not color
+            
+            // Normalize weightf
+            for (k = 0; k < nPlanes; k++) {
+                total = 0.0;
+                for (i = 0; i < pNumber; i++) {
+                    total += weightf[k][i]*weightf[k][i];
+                }
+                total = Math.sqrt(total);
+                for (i = 0; i < pNumber; i++) {
+                    weightf[k][i] /= total;
+                }
+            }
+            
+            minDiffSquared = Double.MAX_VALUE;
+            zClosest = 0;
+            if (haveColor) {
                 cClosest = 1;
                 for (z = 0; z < zDim; z++) {
                     for (i = 1; i < 4; i++) {
                         diffSquared = 0.0;
                         for (k = 0; k < pNumber; k++) {
-                            diff = (weight[k] - eigenInverse[(3*z) + i - 1][k]);
+                            diff = (weight[k] - weightf[(3*z) + i - 1][k]);
                             diffSquared += (diff*diff);
                         }
                         if (diffSquared < minDiffSquared) {
@@ -1373,21 +1399,10 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             } // if (haveColor)
             else { // not color
-                // Normalize eigenInverse
-                for (z = 0; z < zDim; z++) {
-                    total = 0.0;
-                    for (k = 0; k < pNumber; k++) {
-                        total += eigenInverse[z][k]*eigenInverse[z][k];
-                    }
-                    total = Math.sqrt(total);
-                    for (k = 0; k < pNumber; k++) {
-                        eigenInverse[z][k] /= total;
-                    }       
-                }
                 for (z = 0; z < zDim; z++) {
                     diffSquared = 0.0;  
                     for (k = 0; k < pNumber; k++) {
-                        diff = (weight[k] - eigenInverse[z][k]);
+                        diff = (weight[k] - weightf[z][k]);
                         diffSquared += (diff*diff);
                     }
                     if (diffSquared < minDiffSquared) {
