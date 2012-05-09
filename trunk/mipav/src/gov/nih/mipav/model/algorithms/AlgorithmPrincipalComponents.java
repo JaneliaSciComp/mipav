@@ -383,31 +383,31 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         int i, j, k, m;
         int z;
         int zDim;
-        float[] values;
+        double[] values;
         int totalLength;
         double[][] covar;
         double[] x;
         int index;
         double temp;
         double[] tempRow;
-        float[][] p;
+        double[][] p;
         ModelImage[] pImage = null;
         int[] pExtents;
         ViewJFrameImage[] imageFrame = null;
         double[][] eigenInverse;
         double[][] pTrunc;
-        float[] result;
+        double[] result;
         int iNumber;
-        float vMin;
-        float vMax;
+        double vMin;
+        double vMax;
         double typeMin;
         double typeMax;
         double a;
         double b;
-        float rMin;
-        float rMax;
-        float scaledValues[] = null;
-        float matchValues[] = null;
+        double rMin;
+        double rMax;
+        double scaledValues[] = null;
+        double matchValues[] = null;
         double matchMean;
         double weight[] = null;
         double diff;
@@ -418,6 +418,9 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         int cClosest;
         double total;
         ViewUserInterface UI = ViewUserInterface.getReference();
+        double totalVariance;
+        double presentVariance;
+        double presentPercentage;
 
         if (haveColor) {
 
@@ -462,7 +465,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         fireProgressStateChanged("Exporting source data");
 
         try {
-            values = new float[totalLength];
+            values = new double[totalLength];
         } catch (OutOfMemoryError e) {
             values = null;
             System.gc();
@@ -706,13 +709,35 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         } // for (i = 0; i < nPlanes; i++)
 
         // Print out all the eigenvalues.
-        UI.setDataText("The " + nPlanes + " eigenvalues for the principal components are:\n");
-        Preferences.debug("The " + nPlanes + " eigenvalues for the principal components are:\n", 
+        UI.setDataText("The " + nPlanes + " eigenvalues = variances for the principal components are:\n");
+        Preferences.debug("The " + nPlanes + " eigenvalues = variances for the principal components are:\n", 
         		Preferences.DEBUG_ALGORITHM);
 
         for (i = 0; i < nPlanes; i++) {
-            UI.setDataText(eigenvalue[i] + "\n");
-            Preferences.debug(eigenvalue[i] + "\n", Preferences.DEBUG_ALGORITHM);
+            UI.setDataText((i+1) + ".)  " + eigenvalue[i] + "\n");
+            Preferences.debug((i+1) + ".)  " + eigenvalue[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        totalVariance = 0.0;
+        for (i = 0; i < nPlanes; i++) {
+            totalVariance += eigenvalue[i];
+        }
+        
+        presentVariance = 0.0;
+        for (i = 0; i < nPlanes; i++) {
+            presentVariance += eigenvalue[i];
+            presentPercentage = 100.0 * presentVariance/totalVariance;
+            if (i == 0) {
+                UI.setDataText("The percentage of the total variance captured by 1 principal component = " + presentPercentage + "\n");
+                Preferences.debug("The percentage of the total variance captured by 1 principal component = " + presentPercentage + "\n",
+                        Preferences.DEBUG_ALGORITHM);
+            }
+            else {
+                UI.setDataText("The percentage of the total variance captured by " + (i+1) + " principal components = " + 
+                                presentPercentage + "\n");
+                Preferences.debug("The percentage of the total variance captured by " + (i+1) + " principal components = " + presentPercentage + "\n",
+                        Preferences.DEBUG_ALGORITHM);    
+            }
         }
 
         fireProgressStateChanged(40);
@@ -731,7 +756,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         // product on the first row of eigenvector with the column vector
         // (x - mx)Transpose.
         try {
-            p = new float[nPlanes][samples];
+            p = new double[nPlanes][samples];
         } catch (OutOfMemoryError e) {
             p = null;
             System.gc();
@@ -833,7 +858,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
 
             for (i = nPresent - 1; (i >= 0) && (!threadStopped); i--) {
-                pImage[i] = new ModelImage(ModelImage.FLOAT, pExtents, srcImage.getImageName() + "_p" + (i + 1));
+                pImage[i] = new ModelImage(ModelImage.DOUBLE, pExtents, srcImage.getImageName() + "_p" + (i + 1));
 
                 try {
                     pImage[i].importData(0, p[i], true);
@@ -959,7 +984,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 for (z = 0; z < zDim; z++) {
 
                     for (i = 1; i < 4; i++) {
-                        values[(4 * z * samples) + (4 * j) + i] = (float)mean[(3 * z) + i - 1];
+                        values[(4 * z * samples) + (4 * j) + i] = mean[(3 * z) + i - 1];
 
                         for (k = 0; k < pNumber; k++) {
                             values[(4 * z * samples) + (4 * j) + i] += (eigenInverse[(3 * z) + i - 1][k] *
@@ -974,7 +999,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             for (j = 0; j < samples; j++) {
 
                 for (z = 0; z < zDim; z++) {
-                    values[(z * samples) + j] = (float)mean[z];
+                    values[(z * samples) + j] = mean[z];
 
                     for (k = 0; k < pNumber; k++) {
                         values[(z * samples) + j] += (eigenInverse[z][k] * pTrunc[k][j]);
@@ -984,7 +1009,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         } // else not color
         
         if (matchImage != null) {
-            matchValues = new float[samples];
+            matchValues = new double[samples];
             
             try {
                 matchImage.exportData(0, samples, matchValues); // locks and releases lock
@@ -1006,9 +1031,13 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             
             weight = new double[pNumber];
             
+            for (j = 0; j < samples; j++) {
+                matchValues[j] -= matchMean;
+            }
+            
             for (i = 0; i < pNumber; i++) {
                 for (j = 0; j < samples; j++) {
-                    weight[i] += (matchValues[j] - matchMean)*pTrunc[i][j];
+                    weight[i] += matchValues[j]*pTrunc[i][j];
                 }
             }
             // Normalize weight
@@ -1125,8 +1154,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         
         if (doFilter) {
             
-            vMin = Float.MAX_VALUE;
-            vMax = -Float.MAX_VALUE;
+            vMin = Double.MAX_VALUE;
+            vMax = -Double.MAX_VALUE;
             for (i = 0; i < totalLength; i++) {
                   if (values[i] < vMin) {
                       vMin = values[i];
@@ -1183,13 +1212,13 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
             
             if ((vMin < typeMin) || (vMax > typeMax)) {
-                scaledValues = new float[totalLength];
+                scaledValues = new double[totalLength];
                 // typeMax = a * vMax + b;
                 // typeMin = a * vMin + b;
                 a = (typeMax - typeMin)/(vMax - vMin);
                 b = typeMax - a * vMax;
                 for (i = 0; i < totalLength; i++) {
-                    scaledValues[i] = (float)(a * values[i] + b);
+                    scaledValues[i] = (a * values[i] + b);
                 }
             }
 
@@ -1219,7 +1248,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         fireProgressStateChanged("Averaging reconstructed data");
 
         try {
-            result = new float[samples];
+            result = new double[samples];
         } catch (OutOfMemoryError e) {
             result = null;
             System.gc();
@@ -1264,8 +1293,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         fireProgressStateChanged(90);
         fireProgressStateChanged("Importing averaged destination data");
         
-        rMin = Float.MAX_VALUE;
-        rMax = -Float.MAX_VALUE;
+        rMin = Double.MAX_VALUE;
+        rMax = -Double.MAX_VALUE;
         for (i = 0; i < samples; i++) {
               if (result[i] < rMin) {
                   rMin = result[i];
@@ -1327,7 +1356,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             a = (typeMax - typeMin)/(rMax - rMin);
             b = typeMax - a * rMax;
             for (i = 0; i < samples; i++) {
-                result[i] = (float)(a * result[i] + b);
+                result[i] = (a * result[i] + b);
             }
         }
 
