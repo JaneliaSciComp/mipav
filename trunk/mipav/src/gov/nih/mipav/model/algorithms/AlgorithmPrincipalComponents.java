@@ -417,6 +417,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         int zClosest;
         int cClosest;
         double total;
+        ViewUserInterface UI = ViewUserInterface.getReference();
 
         if (haveColor) {
 
@@ -704,12 +705,13 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             } // if (index != i)
         } // for (i = 0; i < nPlanes; i++)
 
-        // Print out the first 10 eigenvalues or all that are present if less than 10.
-        nPresent = Math.min(10, nPlanes);
-        Preferences.debug("The first " + nPresent + " eigenvalues for the principal components are:\n", 
+        // Print out all the eigenvalues.
+        UI.setDataText("The " + nPlanes + " eigenvalues for the principal components are:\n");
+        Preferences.debug("The " + nPlanes + " eigenvalues for the principal components are:\n", 
         		Preferences.DEBUG_ALGORITHM);
 
-        for (i = 0; i < nPresent; i++) {
+        for (i = 0; i < nPlanes; i++) {
+            UI.setDataText(eigenvalue[i] + "\n");
             Preferences.debug(eigenvalue[i] + "\n", Preferences.DEBUG_ALGORITHM);
         }
 
@@ -957,11 +959,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 for (z = 0; z < zDim; z++) {
 
                     for (i = 1; i < 4; i++) {
-                        values[(4 * z * samples) + (4 * j) + i] = 0;
+                        values[(4 * z * samples) + (4 * j) + i] = (float)mean[(3 * z) + i - 1];
 
                         for (k = 0; k < pNumber; k++) {
                             values[(4 * z * samples) + (4 * j) + i] += (eigenInverse[(3 * z) + i - 1][k] *
-                                                                            pTrunc[k][j]) + mean[(3 * z) + i - 1];
+                                                                            pTrunc[k][j]);
                         }
                     }
                 }
@@ -972,10 +974,10 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             for (j = 0; j < samples; j++) {
 
                 for (z = 0; z < zDim; z++) {
-                    values[(z * samples) + j] = 0;
+                    values[(z * samples) + j] = (float)mean[z];
 
                     for (k = 0; k < pNumber; k++) {
-                        values[(z * samples) + j] += (eigenInverse[z][k] * pTrunc[k][j]) + mean[z];
+                        values[(z * samples) + j] += (eigenInverse[z][k] * pTrunc[k][j]);
                     }
                 }
             } // for (j = 0; j < samples; j++)
@@ -1051,19 +1053,19 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 } // for (z = 0; z < zDim; z++)
                 if (zDim > 1) {
                     Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
-                    ViewUserInterface.getReference().setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");  
+                    UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");  
                 }
                 if (cClosest == 1) {
                     Preferences.debug("The closest color to the matchImage is red\n");
-                    ViewUserInterface.getReference().setDataText("The closest color to the matchImage is red\n");
+                    UI.setDataText("The closest color to the matchImage is red\n");
                 }
                 else if (cClosest == 2) {
                     Preferences.debug("The closest color to the matchImage is green\n");
-                    ViewUserInterface.getReference().setDataText("The closest color to the matchImage is green\n");    
+                    UI.setDataText("The closest color to the matchImage is green\n");    
                 }
                 else {
                     Preferences.debug("The closest color to the matchImage is blue\n");
-                    ViewUserInterface.getReference().setDataText("The closest color to the matchImage is blue\n");
+                    UI.setDataText("The closest color to the matchImage is blue\n");
                 }
             } // if (haveColor)
             else { // not color
@@ -1075,7 +1077,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                     }
                     total = Math.sqrt(total);
                     for (k = 0; k < pNumber; k++) {
-                        eigenInverse[z][k] /= total;    
+                        eigenInverse[z][k] /= total;  
                     }       
                 }
                 for (z = 0; z < zDim; z++) {
@@ -1090,11 +1092,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                     }
                 } // for (z = 0; z < zDim; z++)
                 Preferences.debug("The closest slice to the matchImage is z = " + zClosest + "\n", Preferences.DEBUG_ALGORITHM);
-                ViewUserInterface.getReference().setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
+                UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
             } // else not color
             minDiff = Math.sqrt(minDiffSquared);
             Preferences.debug("The Euclidean matching error = " + minDiff + "\n");
-            ViewUserInterface.getReference().setDataText("The Euclidean matching error = " + minDiff + "\n");
+            UI.setDataText("The Euclidean matching error = " + minDiff + "\n");
         } // if (matchImage != null)
 
         for (i = 0; i < eigenInverse.length; i++) {
