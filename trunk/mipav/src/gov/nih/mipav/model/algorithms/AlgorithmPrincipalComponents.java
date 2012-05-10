@@ -26,12 +26,20 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * components; it concentrates the information content of the data in as small a number of components as possible. This
  * algorithm is based on: 1.) Digital Image Processing, Third Edition by Rafael C. Gonzalez and Richard E. Woods,
  * Section 11.4 Use of Principal Components for Description, pp. 842 - 852, 2008 by Pearson Education, Inc.
- * 2.) Information about using a matchImage: 
+ * Information about using a matchImage: 
  * Eigenfaces for Recognition by Matthew Turk and Alex Pentland Vision and Modeling Group The Media Laboratory
  * Massachusetts Institute of Technology
- * 3.) Eigenfaces for Face Detection/Recognition states that "it has been reported that Mahalanobis distance
- * performs better."
- * 4.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
+ * 2.)  Gabor Feature Based Classification Using the Enhanced Linear Discriminant Model for Face Recognition by
+ * Chengjun Liu and Harry Wechsler states "For the Eigenfaces method, the Mahalanobis distance measure 
+ * performs better than the L1 distance measure, followed in order by the L2 distance measure and the cosine 
+ * similarity measure as shown in Fig. 6.  The Mahalanobis distance measure performs better than the other 
+ * similarity measures because the Mahalanobis distance measure counteracts the fact that the L1 and L2 distance
+ * measures in PCA space weight preferentially for low frequencies, and this is consistent with results reported
+ * by Moghaddam and Pentland and Sung and Poggio.  As the L2 measure weights more the low frequencies than L1 does,
+ * the L1 distance measure should perform better than the L2 distance measure, a conjecture validated by our
+ * experiments as shown in Figure 6.  The cosine similarity measure does not compensate the low frequency
+ * preference, and it performs worst among all the measures."  
+ * 3.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
  * M. Berman, CSIRO Division of Mathemetics and Statistics P.O. Box 218, Lindfield, N.S.W., 2070 Consulting Report
  * NSW/85/31/MB9 Note that this algorithm has 4 different names: Hotelling, eigenvector, principal component, and
  * Karhunen-Loeve transform. Also note that when the noise variance is the same in all bands and the noise is uncorrelated
@@ -93,6 +101,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
     private ModelImage matchImage = null;
     
     // Matching can be done with either Euclidean or MahalanobisDistance
+    // Using the Mahalanobis distance weight each eigenface equally
     private boolean doMahalanobisDistance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
