@@ -791,7 +791,7 @@ public class FileIO {
 
                     if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
                             (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
-
+                        //Sorts DWI images based on gradient values corresponding to each volume in the series
                       if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
                           if ((String) tagTable.getValue("0018,9089") != null){
                               dtiSliceCounter = 0;
@@ -806,6 +806,7 @@ public class FileIO {
                                   String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9087");
                                   String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0018,9087");
                                   if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                                      //Stores order of gradients
                                       IndexVolArrayList.add(dtiSliceCounter,i);
                                       dtiSliceCounter++;
                                   }
@@ -834,7 +835,8 @@ public class FileIO {
                                      indices = zInst;                                  
                               }
                            }
-                         }// If PHILIPS
+                         }// if PHILIPS Note: New sort method may need to be 
+                            //added for different versions of Philips DWI dicom data sets. See GE code
                       else if (scannerType != null && scannerType.toUpperCase().contains("GE")) {  
                           if ((String) tagTable.getValue("0019,10BB") != null && (String) tagTable.getValue("0019,10BC") != null
                                   && (String) tagTable.getValue("0019,10BD") != null && (String) tagTable.getValue("0043,1039") != null){
@@ -856,6 +858,7 @@ public class FileIO {
                                   String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
                                   String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
                                   if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                                      //Stores order of gradients
                                       IndexVolArrayList.add(dtiSliceCounter,i);
                                       dtiSliceCounter++;
                                   }
