@@ -29,7 +29,9 @@ import de.jtem.numericalMethods.algebra.linear.decompose.Eigenvalue;
  * 2.) Information about using a matchImage: 
  * Eigenfaces for Recognition by Matthew Turk and Alex Pentland Vision and Modeling Group The Media Laboratory
  * Massachusetts Institute of Technology
- * 3.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
+ * 3.) Eigenfaces for Face Detection/Recognition states that "it has been reported that Mahalanobis distance
+ * performs better."
+ * 4.) "The statistical properties of three noise removal procedures for multichannel remotely sensed data" by
  * M. Berman, CSIRO Division of Mathemetics and Statistics P.O. Box 218, Lindfield, N.S.W., 2070 Consulting Report
  * NSW/85/31/MB9 Note that this algorithm has 4 different names: Hotelling, eigenvector, principal component, and
  * Karhunen-Loeve transform. Also note that when the noise variance is the same in all bands and the noise is uncorrelated
@@ -89,6 +91,9 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
      * source image model by looking for the closest match of the weights of the principal components.
      */
     private ModelImage matchImage = null;
+    
+    // Matching can be done with either Euclidean or MahalanobisDistance
+    private boolean doMahalanobisDistance;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -102,9 +107,10 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
      * @param  doAveraging    if true create an image averaging together the slices in the filtered version
      * @param  displayAndAsk  if true display principal component images and ask how many to retain
      * @param  pNumber        if displayAndAsk if false pNumber is the number of principal component images to retain
+     * @param  doMahalanobisDistance Select Euclidean or Mahalanobis distance for matching 
      */
     public AlgorithmPrincipalComponents(ModelImage[] destImg, ModelImage srcImg, ModelImage matchImage, boolean doFilter, boolean doAveraging,
-                                        boolean displayAndAsk, int pNumber) {
+                                        boolean displayAndAsk, int pNumber, boolean doMahalanobisDistance) {
 
         destImage = destImg; // Put results in destination image.
         srcImage = srcImg;
@@ -113,6 +119,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         this.doAveraging = doAveraging;
         this.displayAndAsk = displayAndAsk;
         this.pNumber = pNumber;
+        this.doMahalanobisDistance = doMahalanobisDistance;
     }
 
     /**
@@ -1008,6 +1015,19 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             } // for (j = 0; j < samples; j++)
         } // else not color
         
+        for (i = 0; i < eigenInverse.length; i++) {
+            eigenInverse[i] = null;
+        }
+
+        eigenInverse = null;
+
+        for (i = 0; i < pTrunc.length; i++) {
+            pTrunc[i] = null;
+        }
+
+        pTrunc = null;
+        mean = null;
+        
         
         fireProgressStateChanged(80);
 
@@ -1175,6 +1195,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             
             weight = new double[pNumber];
             
+            // Subtract out the average of the source image slices from the matchImage
             for (j = 0; j < samples; j++) {
                 matchValues[j] -= result[j];
             }
@@ -1186,6 +1207,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             }
             
+            // Subtract out the average of the source image slices from the source image.
+            // Compute the covariance matrix
             if (haveColor) {
 
                 for (j = 0; j < samples; j++) {
@@ -1267,6 +1290,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             }
 
+            // Calculate the eigenfaces p[k]
             if (haveColor) {
 
                 for (j = 0; j < samples; j++) {
@@ -1303,13 +1327,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 } // for (j = 0; j < samples; j++)
             } // else not color
             
-            for (i = 0; i < nPlanes; i++) {
-
-                for (j = 0; j < pNumber; j++) {
-                    eigenInverse[i][j] = eigenvector[j][i];
-                }
-            }
-            
+            // Calculate the vector weight that describes the contribution of each of the first pNumber eigenfaces
+            // in representing the match image
             for (i = 0; i < pNumber; i++) {
                 for (j = 0; j < samples; j++) {
                     weight[i] += matchValues[j]*p[i][j];
@@ -1325,6 +1344,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 weight[i] /= total;
             }
             
+            // For each slice in the source image calculate the vector weightf[z] that describes the 
+            // contribution of each of the first pNumber eigenfaces in representing the slice
             weightf = new double[nPlanes][pNumber];
             
             if (haveColor) {
@@ -1351,7 +1372,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             } // else not color
             
-            // Normalize weightf
+            // Normalize all weightf[z]
             for (k = 0; k < nPlanes; k++) {
                 total = 0.0;
                 for (i = 0; i < pNumber; i++) {
@@ -1363,6 +1384,8 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             }
             
+            // Find the z = zClosest that minimizes that minimizes the Euclidean or Mahalanobis distance
+            // between weight and weightf[z]
             minDiffSquared = Double.MAX_VALUE;
             zClosest = 0;
             if (haveColor) {
@@ -1372,7 +1395,12 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                         diffSquared = 0.0;
                         for (k = 0; k < pNumber; k++) {
                             diff = (weight[k] - weightf[(3*z) + i - 1][k]);
-                            diffSquared += (diff*diff);
+                            if (doMahalanobisDistance) {
+                                diffSquared += (diff*diff/eigenvalue[k]);
+                            }
+                            else {
+                                diffSquared += (diff*diff);
+                            }
                         }
                         if (diffSquared < minDiffSquared) {
                             minDiffSquared = diffSquared;
@@ -1403,7 +1431,12 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                     diffSquared = 0.0;  
                     for (k = 0; k < pNumber; k++) {
                         diff = (weight[k] - weightf[z][k]);
-                        diffSquared += (diff*diff);
+                        if (doMahalanobisDistance) {
+                            diffSquared += (diff*diff/eigenvalue[k]);
+                        }
+                        else {
+                            diffSquared += (diff*diff);
+                        }
                     }
                     if (diffSquared < minDiffSquared) {
                         minDiffSquared = diffSquared;
@@ -1414,22 +1447,15 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 UI.setDataText("The closest slice to the matchImage is z = " + zClosest + "\n");
             } // else not color
             minDiff = Math.sqrt(minDiffSquared);
-            Preferences.debug("The Euclidean matching error = " + minDiff + "\n");
-            UI.setDataText("The Euclidean matching error = " + minDiff + "\n");
+            if (doMahalanobisDistance) {
+                Preferences.debug("The Mahalanobis matching error = " + minDiff + "\n");
+                UI.setDataText("The Mahalanobis matching error = " + minDiff + "\n");    
+            }
+            else {
+                Preferences.debug("The Euclidean matching error = " + minDiff + "\n");
+                UI.setDataText("The Euclidean matching error = " + minDiff + "\n");
+            }
         } // if (matchImage != null)
-
-        for (i = 0; i < eigenInverse.length; i++) {
-            eigenInverse[i] = null;
-        }
-
-        eigenInverse = null;
-
-        for (i = 0; i < pTrunc.length; i++) {
-            pTrunc[i] = null;
-        }
-
-        pTrunc = null;
-        mean = null;
         
         if (!doAveraging) {
             setCompleted(true);
