@@ -64,7 +64,7 @@ public class CustomUIBuilder {
     public static final UIParams PARAM_VOI_PROPAGATE_ALL = new UIParams("PropVOIAll", "To all slices", "voipropall");
     public static final UIParams PARAM_VOI_QUICK_AND_OP = new UIParams("QuickMask", "<html>" + "Quick AND VOI mask operation." +
                                                                        "<br>" + "[right-click for options]" + "</html>", "quickvoimask");
-    public static final UIParams PARAM_VOI_QUICK_NOT_OP = new UIParams("QuickMaskReverse", "<html>" + "Quick NOT VOI mask operation." +
+    public static final UIParams PARAM_VOI_QUICK_NOT_OP = new UIParams("QuickMaskReverse", "<html>" + "Fill VOI mask operation." +
                                                                        "<br>" + "[right-click for options]" + "</html>", "quickvoimaskreverse");
     public static final UIParams PARAM_VOI_3D_INTERSECTION = new UIParams("3DVOIIntersect", "Make 3D VOI Intersection", "intersection");
     public static final UIParams PARAM_VOI_3D_UNION = new UIParams("3DVOIUnion", "Make 3D VOI Union", "union");
