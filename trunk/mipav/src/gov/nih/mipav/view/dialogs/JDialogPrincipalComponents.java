@@ -93,6 +93,14 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
     private String fileNameMatch;
     
     private ViewUserInterface UI;
+    
+    private boolean doMahalanobisDistance = false;
+    
+    private ButtonGroup distanceGroup;
+    
+    private JRadioButton EuclideanButton;
+    
+    private JRadioButton MahalanobisButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -381,7 +389,7 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
             // Make algorithm:
             try {
                 pComponentAlgo = new AlgorithmPrincipalComponents(resultImage, srcImage, matchImage, doFilter, doAveraging,
-                                                                  displayAndAsk, pNumber);
+                                                                  displayAndAsk, pNumber, doMahalanobisDistance);
             } catch (OutOfMemoryError e) {
                 pComponentAlgo = null;
                 MipavUtil.displayError("JDialogPrincipalComponents: Out of Memory allocating pComponentAlgo");
@@ -554,6 +562,23 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 1;
         optionsPanel.add(textMatchFile, gbc);
+        
+        distanceGroup = new ButtonGroup();
+        EuclideanButton = new JRadioButton("Euclidean distance used in image matching", true);
+        EuclideanButton.setFont(serif12);
+        EuclideanButton.setForeground(Color.black);
+        distanceGroup.add(EuclideanButton);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        optionsPanel.add(EuclideanButton, gbc);
+        
+        MahalanobisButton = new JRadioButton("Mahalanobis distance used in image matching", false);
+        MahalanobisButton.setFont(serif12);
+        MahalanobisButton.setForeground(Color.black);
+        distanceGroup.add(MahalanobisButton);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        optionsPanel.add(MahalanobisButton, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -651,6 +676,13 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase
     
                 return false;
             }
+        }
+        
+        if (EuclideanButton.isSelected()) {
+            doMahalanobisDistance = false;
+        }
+        else {
+            doMahalanobisDistance = true;
         }
 
         return true;
