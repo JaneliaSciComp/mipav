@@ -453,8 +453,14 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         if ( traceImage != null )
         {
         	if ( createTrace.isSelected() )
-        	{        	
-        		traceImage.setImageName( TraceImageName );
+        	{   
+                if (pipeline.DWIImage != null){
+                    traceImage.setImageName(pipeline.DWIImage.getImageName()+"_" + TraceImageName );
+                }
+                else{
+                    traceImage.setImageName( TraceImageName ); 
+                }
+        		
         		ModelImage.saveImage( traceImage, traceImage.getImageName() + ".xml", outputDirTextField.getText() );
         		if ( displayTrace.isSelected() )
         		{
@@ -473,7 +479,13 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         {
         	if ( createRA.isSelected() )
         	{
-        		raImage.setImageName( RAImageName );
+                if (pipeline.DWIImage != null){
+                    raImage.setImageName(pipeline.DWIImage.getImageName()+"_" + RAImageName  );
+                }
+                else{
+                    raImage.setImageName( RAImageName ); 
+                }
+        		
         		ModelImage.saveImage( raImage, raImage.getImageName() + ".xml", outputDirTextField.getText() );
         		if ( displayRA.isSelected() )
         		{
@@ -492,7 +504,13 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         {
         	if ( createVR.isSelected() )
         	{
-        		vrImage.setImageName( VRImageName );
+                if (pipeline.DWIImage != null){
+                    vrImage.setImageName(pipeline.DWIImage.getImageName()+"_" +  VRImageName   );
+                }
+                else{
+                    vrImage.setImageName( VRImageName ); 
+                }
+        		
         		ModelImage.saveImage( vrImage, vrImage.getImageName() + ".xml", outputDirTextField.getText() );
         		if ( displayVR.isSelected() )
         		{
@@ -511,7 +529,14 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         {
         	if ( createADC.isSelected() )
         	{
-        		adcImage.setImageName( ADCImageName );
+                if (pipeline.DWIImage != null){
+                    adcImage.setImageName(pipeline.DWIImage.getImageName()+"_" +  ADCImageName  );
+                }
+                else{
+                    adcImage.setImageName( ADCImageName );
+                }
+                
+        		
         		ModelImage.saveImage( adcImage, adcImage.getImageName() + ".xml", outputDirTextField.getText() );
         		if ( displayADC.isSelected() )
         		{
@@ -531,7 +556,12 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         if ( createEValue.isSelected() )
         {
         	eigenValueImage = kAlgorithm.getEigenValueImage();
-        	eigenValueImage.setImageName( EigenValueImageName );
+        	if (pipeline.DWIImage != null){
+        	    eigenValueImage.setImageName(pipeline.DWIImage.getImageName()+"_" + EigenValueImageName );
+        	}
+        	else{
+        	    eigenValueImage.setImageName( EigenValueImageName );  
+        	}
         	ModelImage.saveImage( eigenValueImage, eigenValueImage.getImageName() + ".xml", outputDirTextField.getText() );
         	if ( displayEValue.isSelected() )
         	{
@@ -542,8 +572,14 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
         if ( createEVector.isSelected() )
         {
-        	eigenVectorImage = kAlgorithm.getEigenVectorImage();
-        	eigenVectorImage.setImageName( EigenVectorImageName );
+            eigenVectorImage = kAlgorithm.getEigenVectorImage();
+            if (pipeline.DWIImage != null){
+                eigenVectorImage.setImageName(pipeline.DWIImage.getImageName()+"_" +  EigenVectorImageName  );
+            }
+            else{
+                eigenVectorImage.setImageName( EigenVectorImageName );
+            }
+        	
         	ModelImage.saveImage( eigenVectorImage, eigenVectorImage.getImageName() + ".xml", outputDirTextField.getText() );
         	if ( displayEVector.isSelected() )
         	{
@@ -555,7 +591,13 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         if ( createFA.isSelected() )
         {
         	FAImage = kAlgorithm.getFAImage();
-        	FAImage.setImageName( FAImageName );
+            if (pipeline.DWIImage != null){
+                FAImage.setImageName(pipeline.DWIImage.getImageName()+"_" +  FAImageName );
+            }
+            else{
+                FAImage.setImageName( FAImageName );
+            }
+        
         	ModelImage.saveImage( FAImage, FAImage.getImageName() + ".xml", outputDirTextField.getText() );
         	if ( displayFA.isSelected() )
         	{
@@ -567,7 +609,13 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         if ( createColor.isSelected() )
         {
         	rgbImage = kAlgorithm.getColorImage();
-        	rgbImage.setImageName( ColorMapImageName );
+            if (pipeline.DWIImage != null){
+                rgbImage.setImageName(pipeline.DWIImage.getImageName()+"_" +  ColorMapImageName );
+            }
+            else{
+                rgbImage.setImageName( ColorMapImageName );
+            }
+        
         	ModelImage.saveImage( rgbImage, rgbImage.getImageName() + ".xml", outputDirTextField.getText() );
         	if ( displayColor.isSelected() )
         	{
