@@ -217,7 +217,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
 		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == EPI_DISTORTION) )
 		{
-		    System.out.println("tensor calcul epi distortion");
 			currentImage = EPIpanel.getResult();
 			estTensorPanel.setImage(currentImage);
 			tabbedPane.setSelectedIndex(TENSOR_ESTIMATION);
