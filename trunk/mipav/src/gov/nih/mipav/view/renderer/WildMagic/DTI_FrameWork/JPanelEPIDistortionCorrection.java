@@ -46,52 +46,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 
 	private static final long serialVersionUID = 5817025147038892937L;
 
-	public static void buildLoadPanel( ActionListener listener, JPanel mainPanel, 
-			JLabel label, JTextField imageName, String tooltip, String actionCommand ) {
-
-		final JPanel DTIloadPanel = new JPanel();
-		DTIloadPanel.setLayout(new GridBagLayout());
-		DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
-
-		final GridBagConstraints gbc = new GridBagConstraints();
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.weightx = 1;
-		gbc.fill = GridBagConstraints.CENTER;
-		gbc.anchor = GridBagConstraints.WEST;
-
-		JButton openT2imageButton = new JButton("Browse");
-		openT2imageButton.setToolTipText( tooltip );
-		openT2imageButton.addActionListener(listener);
-		openT2imageButton.setActionCommand( actionCommand );
-		openT2imageButton.setEnabled(true);
-
-		imageName.setPreferredSize(new Dimension(275, 21));
-		imageName.setEditable(true);
-		imageName.setBackground(Color.white);
-		imageName.setFont(MipavUtil.font12);
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.anchor = GridBagConstraints.WEST;
-		DTIloadPanel.add(label, gbc);
-
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.EAST;
-		DTIloadPanel.add(imageName, gbc);
-
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.EAST;
-		DTIloadPanel.add(openT2imageButton, gbc);
-		mainPanel.add(DTIloadPanel);
-	}
+	
 
 	public static ModelImage extractSubVolume( ModelImage dwiImage, int index ) {
         int[] destB0Extents = new int[3];
@@ -161,6 +116,12 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
     
     /** Array of transformation matrices after registering the DWI image series to the B0 reference volume. */
 	private TransMatrix[] matRegistered;
+    private JPanel T2loadPanel;
+    private JPanel RegisteredDWIPanel;
+    private JPanel DefLoadPanel;
+    private JPanel B0toStructTransPanel;
+    private JPanel DWITransPanel;
+    private JPanel OutputPanel;
     
     /**
      * Creates the EPI-Distortion correction panel for the DTI Pipeline
@@ -577,29 +538,17 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
         gbc.fill = GridBagConstraints.REMAINDER;
         optPanel.add(refImageNumText, gbc);
         
-        mainPanel.add(optPanel);
+        //mainPanel.add(optPanel);
         
 
-        buildLoadPanel( this, mainPanel, new JLabel("Resampled T2 image:"), resampledT2Text, "Browse resampled T2 image file", loadT2Command );
-        buildLoadPanel( this, mainPanel, new JLabel("Registered DWI image:" ), registeredDWIText, "Browse registered 4D DWI image file", loadDWICommand );
-        buildLoadPanel( this, mainPanel, new JLabel("Output dir:" ), outputDir, "Browse output directory", outputCommand );
-		
-
-		GridBagConstraints gbc2 = new GridBagConstraints();
-		gbc2.fill = GridBagConstraints.NONE;
-		gbc2.weightx = 1;
-		gbc2.weighty = 1;
-		gbc2.gridx = 0;
-		gbc2.gridy = 0;
-		gbc2.anchor = GridBagConstraints.NORTHWEST;
-		this.add(mainPanel, gbc2);
-		
-		
+        T2loadPanel = buildLoadPanel( this, mainPanel, new JLabel("Resampled T2 image:"), resampledT2Text, "Browse resampled T2 image file", loadT2Command,T2loadPanel );
+        RegisteredDWIPanel = buildLoadPanel( this, mainPanel, new JLabel("Registered DWI image:" ), registeredDWIText, "Browse registered 4D DWI image file", loadDWICommand,RegisteredDWIPanel);
+				
 
 		// build button panel
 		JPanel buttonPanel1 = new JPanel();
 		buttonPanel1.setLayout(new GridBagLayout());
-		buttonPanel1.setBorder(JInterfaceBase.buildTitledBorder(""));
+		buttonPanel1.setBorder(JInterfaceBase.buildTitledBorder("VABRA Registration Input Parameters"));
 		gbc = new GridBagConstraints();
 
 		computeDeformationFieldButton.setToolTipText("Compute deformation field B0 to T2");
@@ -614,24 +563,33 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.CENTER;
 		gbc.anchor = GridBagConstraints.WEST;
+		buttonPanel1.add(optPanel, gbc);
+		gbc.gridy++;
+		buttonPanel1.add(T2loadPanel, gbc);
+		gbc.gridy++;
+		buttonPanel1.add(RegisteredDWIPanel, gbc);
+		gbc.gridy++;
 		buttonPanel1.add(displayDeformationField, gbc);
 		gbc.gridy++;
 		buttonPanel1.add(displayRegisteredB0, gbc);
 		gbc.gridy++;
+	    gbc.fill = GridBagConstraints.CENTER;
+	    gbc.anchor = GridBagConstraints.CENTER;
 		buttonPanel1.add(computeDeformationFieldButton, gbc);
 		mainPanel.add(buttonPanel1);
 
 
-		buildLoadPanel( this, mainPanel, new JLabel("Deformation Field:" ), deformationB0T2Text, "Browse deformation field", loadDeformationFieldCommand );
-		buildLoadPanel( this, mainPanel, new JLabel("B0 to T2 Transformation Matrix:" ), B0MatrixFile, "Browse matrix file", loadB0MatrixComand );
-		buildLoadPanel( this, mainPanel, new JLabel("4D Transformation Matrix:" ), matricesFile, "Browse all matrix files", loadAllMatrixComand );
+		DefLoadPanel = buildLoadPanel( this, mainPanel, new JLabel("Deformation Field:" ), deformationB0T2Text, "Browse deformation field", loadDeformationFieldCommand, DefLoadPanel);
+		B0toStructTransPanel = buildLoadPanel( this, mainPanel, new JLabel("B0 to T2 Transformation Matrix:" ), B0MatrixFile, "Browse matrix file", loadB0MatrixComand, B0toStructTransPanel );
+		DWITransPanel = buildLoadPanel( this, mainPanel, new JLabel("4D Transformation Matrix:" ), matricesFile, "Browse all matrix files", loadAllMatrixComand,DWITransPanel);
+        OutputPanel = buildLoadPanel( this, mainPanel, new JLabel("EPI Distortion Correction Output Directory:" ), outputDir, "Browse output directory", outputCommand, OutputPanel);
 		
 
 
 		// build button panel
 		JPanel buttonPanel2 = new JPanel();
 		buttonPanel2.setLayout(new GridBagLayout());
-		buttonPanel2.setBorder(JInterfaceBase.buildTitledBorder(""));
+		buttonPanel2.setBorder(JInterfaceBase.buildTitledBorder("EPI Distortion Correction Input Parameters"));
 		gbc = new GridBagConstraints();
 
 		computeEpiCorrectionButton.setToolTipText("Compute epi-distortion correction");
@@ -646,10 +604,31 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.CENTER;
 		gbc.anchor = GridBagConstraints.WEST;
+		buttonPanel2.add(DefLoadPanel, gbc);
+	    gbc.gridy++;
+		buttonPanel2.add(B0toStructTransPanel, gbc);
+		gbc.gridy++;
+		buttonPanel2.add(DWITransPanel, gbc);
+		gbc.gridy++;
+		buttonPanel2.add(OutputPanel, gbc);
+        gbc.gridy++;
 		buttonPanel2.add(displayEPIResult, gbc);
 		gbc.gridy++;
+	    gbc.fill = GridBagConstraints.CENTER;
+	    gbc.anchor = GridBagConstraints.CENTER;
 		buttonPanel2.add(computeEpiCorrectionButton, gbc);
 		mainPanel.add(buttonPanel2);
+		
+
+		
+	    GridBagConstraints gbc2 = new GridBagConstraints();
+	    gbc2.fill = GridBagConstraints.HORIZONTAL;
+	    gbc2.weightx = 1;
+	    gbc2.weighty = 1;
+	    gbc2.gridx = 0;
+	    gbc2.gridy = 0;
+	    gbc2.anchor = GridBagConstraints.NORTHWEST;
+	    this.add(mainPanel, gbc2);
     }
 
 	/**
@@ -776,6 +755,91 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 			deformationB0T2Text.setText( outputDir.getText() + File.separator + deformationB0T2.getImageName() + ".xml");
 			enableComputeEpiDistortion();
     	}
+    }
+	public JPanel buildLoadPanel( ActionListener listener, JPanel mainPanel, 
+            JLabel label, JTextField imageName, String tooltip, String actionCommand, JPanel panelName ) {
+
+  
+
+        final JPanel DTIloadPanel = new JPanel();
+        DTIloadPanel.setLayout(new GridBagLayout());
+
+        final GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.CENTER;
+        gbc.anchor = GridBagConstraints.WEST;
+
+        JButton openT2imageButton = new JButton("Browse");
+        openT2imageButton.setToolTipText( tooltip );
+        openT2imageButton.addActionListener(listener);
+        openT2imageButton.setActionCommand( actionCommand );
+        openT2imageButton.setEnabled(true);
+        
+        JLabel blankLabel;
+        if(panelName == T2loadPanel){
+            blankLabel = new JLabel("  ");
+        }
+        else if(panelName == RegisteredDWIPanel){
+            blankLabel = new JLabel("");
+        }
+        else if(panelName == DefLoadPanel){
+            blankLabel = new JLabel("                                             ");
+        }
+        else if(panelName == B0toStructTransPanel){
+            blankLabel = new JLabel("                    ");
+        }
+        else if(panelName == DWITransPanel){
+            blankLabel = new JLabel("                              ");
+        }
+        else if(panelName == OutputPanel){
+            blankLabel = new JLabel("");
+        }
+        else{
+            blankLabel = new JLabel("");
+        }
+          
+
+        imageName.setPreferredSize(new Dimension(275, 21));
+        imageName.setEditable(true);
+        imageName.setBackground(Color.white);
+        imageName.setFont(MipavUtil.font12);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 0;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.insets = new Insets(0, 2, 0, 2);
+        DTIloadPanel.add(label, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.weightx = 0.25;
+        gbc.fill = GridBagConstraints.NONE;
+        DTIloadPanel.add(blankLabel , gbc);
+        
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.weightx = 0.15;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        DTIloadPanel.add(imageName, gbc);
+
+        gbc.gridx = 3;
+        gbc.gridy = 0;
+        gbc.weightx = 0.25;
+        gbc.fill = GridBagConstraints.NONE;
+        DTIloadPanel.add(openT2imageButton, gbc);
+        //mainPanel.add(DTIloadPanel);
+        
+        return DTIloadPanel;
     }
 	
 }
