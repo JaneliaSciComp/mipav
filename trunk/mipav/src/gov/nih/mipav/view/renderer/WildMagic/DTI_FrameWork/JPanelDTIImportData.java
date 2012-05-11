@@ -407,6 +407,8 @@ import Jama.Matrix;
         
         private FileInfoPARREC fileInfoPARREC = null;
 
+        private boolean checkSiemens;
+
         
 
 
@@ -643,9 +645,11 @@ import Jama.Matrix;
                     srcBvalGradTable.setBackground(Color.white);    
                     srcBvalGradTable.setEnabled(true);
                     clearDWITableButton.setEnabled(true);
-                    negXCheckBox.setEnabled(true);
-                    negYCheckBox.setEnabled(true);
-                    negZCheckBox.setEnabled(true);                
+                    if(srcTableModel.getColumnCount()==5){ 
+                        negXCheckBox.setEnabled(true);
+                        negYCheckBox.setEnabled(true);
+                        negZCheckBox.setEnabled(true); 
+                    }
                     }   
                  
                     else {
@@ -666,14 +670,27 @@ import Jama.Matrix;
                 //Entire table can be cleared with this command
                        srcBvalGradTable.setBackground(Color.white);
                        srcBvalGradTable.setEnabled(true);
+                       if(srcTableModel.getColumnCount()==5){ 
                         for (int i = 0; i < numVolumes; i++) {
                             // Add empty rows based on number of volumes
-                            srcTableModel.setValueAt("",i, 0);
                             srcTableModel.setValueAt("",i, 1);
                             srcTableModel.setValueAt("",i, 2);
                             srcTableModel.setValueAt("",i, 3);
                             srcTableModel.setValueAt("",i, 4);                
                             }
+                       }
+                       else if(srcTableModel.getColumnCount()==7){
+                           for (int i = 0; i < numVolumes; i++) {
+                               // Add empty rows based on number of volumes
+                               srcTableModel.setValueAt("",i, 1);
+                               srcTableModel.setValueAt("",i, 2);
+                               srcTableModel.setValueAt("",i, 3);
+                               srcTableModel.setValueAt("",i, 4);
+                               srcTableModel.setValueAt("",i, 5); 
+                               srcTableModel.setValueAt("",i, 6); 
+                               }
+                          } 
+                       
 
                         
 
@@ -780,19 +797,26 @@ import Jama.Matrix;
                             else if (m_kDWIImage != null && m_kDWIImage.isDicomImage() ==true &&
                                     m_kDWIImage.is3DImage()==true){
                                 checkSiemens3d();
-                                getImageDTIParams(); 
-                                DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
-                                browseDWIButton.setEnabled(false);
-                                activeDWIButton.setEnabled(false);
-                                textDWIDataimage.setText(m_kDWIImage.getImageDirectory()+m_kDWIImage.getImageFileName());
-                                textDWIDataimage.setEnabled(false);
-                                openDWIButton.setEnabled(false);
-                                t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
-                                t2FileLabel.setEnabled(true);
-                                textT2image.setEnabled(true);
-                                openT2Button.setEnabled(true);
-                                useT2CheckBox.setEnabled(true);
-                                pipeline.repaint();
+                                if (checkSiemens ==true){
+                                    getImageDTIParams(); 
+                                    DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
+                                    browseDWIButton.setEnabled(false);
+                                    activeDWIButton.setEnabled(false);
+                                    textDWIDataimage.setText(m_kDWIImage.getImageDirectory()+m_kDWIImage.getImageFileName());
+                                    textDWIDataimage.setEnabled(false);
+                                    openDWIButton.setEnabled(false);
+                                    t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
+                                    t2FileLabel.setEnabled(true);
+                                    textT2image.setEnabled(true);
+                                    openT2Button.setEnabled(true);
+                                    useT2CheckBox.setEnabled(true);
+                                    pipeline.repaint();
+                                }
+                                else{
+                                    m_kDWIImage = null;   
+                                    openDWIButton.setEnabled(true);
+                                    textDWIDataimage.setEnabled(true);
+                                }
                             }
                             else{
                                 m_kDWIImage = null;
@@ -830,6 +854,12 @@ import Jama.Matrix;
             } else if (command.equals("browseDWIFile")) {
                 try{
                     loadDWIFile();
+                    if (m_kDWIImage != null && m_kDWIImage.isDicomImage() ==true &&
+                            m_kDWIImage.is3DImage()==true && checkSiemens ==false){
+                        m_kDWIImage = null;
+                        textDWIDataimage.setText("");               
+                    }
+                    else{
                     DWIOpenPanel.setBorder(buildTitledBorder("Upload DWI Image"));
                     browseDWIButton.setEnabled(false);
                     activeDWIButton.setEnabled(false);
@@ -841,6 +871,7 @@ import Jama.Matrix;
                     openT2Button.setEnabled(true);
                     useT2CheckBox.setEnabled(true);
                     pipeline.repaint();
+                    }
                 }
                 catch (Exception e){
                     MipavUtil.displayError("Error loading DWI File");
@@ -901,20 +932,6 @@ import Jama.Matrix;
                         }
                         
                         pipeline.repaint();
-                    //}
-                    /*else{
-                        MipavUtil.displayError("Structural Image and DWI Image X,Y, and Z extents must be the same");
-                        t2OpenPanel.setBorder(highlightTitledBorder("Use Structural Image as Reference Space (optional)"));
-                        t2FileLabel.setEnabled(true);
-                        textT2image.setEnabled(true);
-                        openT2Button.setEnabled(true);
-                        useT2CheckBox.setEnabled(true);
-                        textBvalGradFile.setEnabled(false);
-                        bvalGradFileLabel.setEnabled(false);
-                        loadBValGradFileButton.setEnabled(false);
-                        DWIButtonPanel.setBorder(buildTitledBorder("Table Options"));
-                        
-                    }*/
                 }
                 catch (Exception e){
                     MipavUtil.displayError("Error loading Structural Image");
@@ -1790,12 +1807,12 @@ import Jama.Matrix;
                     }
                     else{
                         osLabel.setForeground(Color.red);
-                        MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " or Operating System "+ os + " are not consistent with gradient table choice - expected 32,35, or 31 dimensions");
+                        MipavUtil.displayError("Philips Gradient Creator"+"Image dimensions " + numVolumes + " or Operating System "+ os + " are not consistent with gradient resolution choice - expected 32,35, or 31 dimensions");
                     }
                 }
                 
                 else{
-                    MipavUtil.displayError("Gradient Table Creator "+"Jones30 is valid only for the KIRBY scanners");
+                    MipavUtil.displayError("Philips Gradient Creator "+"Jones30 is valid only for the KIRBY scanners");
                 }
             }
             
@@ -1814,7 +1831,7 @@ import Jama.Matrix;
                     }       
                 }           
                 else{
-                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
+                    MipavUtil.displayError("Philips Gradient Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
                 }            
             }
             
@@ -1832,7 +1849,7 @@ import Jama.Matrix;
                     }            
                 }           
                 else{
-                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
+                    MipavUtil.displayError("Philips Gradient Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient resolution choice - expected 17 dimensions");
                 } 
             } 
             
@@ -1855,7 +1872,7 @@ import Jama.Matrix;
                     }           
                 }
                 else{
-                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 35 dimensions");
+                    MipavUtil.displayError("Philips Gradient Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient resolution  choice - expected 35 dimensions");
                 } 
             }
             else if(gradResWOP.equals("NoLow")){
@@ -1867,7 +1884,7 @@ import Jama.Matrix;
                      }           
                 }
                 else{
-                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 8 dimensions");
+                    MipavUtil.displayError("Philips Gradient Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient resolution choice - expected 8 dimensions");
                 } 
             }
             
@@ -1880,7 +1897,7 @@ import Jama.Matrix;
                      }           
             }
                 else{
-                    MipavUtil.displayError("Gradient Table Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 17 dimensions");
+                    MipavUtil.displayError("Philips Gradient Creator "+"Image dimensions " + numVolumes + " are not consistent with gradient resolution choice - expected 17 dimensions");
                 }              
             }
             
@@ -1893,12 +1910,12 @@ import Jama.Matrix;
                      }          
                 }
                 else{
-                    MipavUtil.displayError("Gradient Table Creator"+"Image dimensions " + numVolumes + " are not consistent with gradient table choice - expected 34 dimensions");
+                    MipavUtil.displayError("Philips Gradient Creator"+"Image dimensions " + numVolumes + " are not consistent with gradient resolution choice - expected 34 dimensions");
                 }
             }
             
             else{
-                MipavUtil.displayError("Gradient Table Creator "+"Could not determine a table!");
+                MipavUtil.displayError("Philips Gradient Creator "+"Could not determine a table!");
             }              
         }
       
@@ -2486,10 +2503,10 @@ import Jama.Matrix;
             double[][] rev_Tfsd_s = {{1,0,0},{0,1,0},{0,0,-1}};
 
 
-            double[][] Tprep;
-            double[][] rev_Tprep;
-            double[][] Tfsd;
-            double[][] rev_Tfsd;
+            double[][] Tprep = null;
+            double[][] rev_Tprep = null;
+            double[][] Tfsd = null;
+            double[][] rev_Tfsd = null;
             if(fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 1 || parNorient == 1){
                 
                 if((fileInfoPARREC != null && fileInfoPARREC.getPatientPosition()!= null && fileInfoPARREC.getPreparationDirection().toUpperCase().contains("ANTERIOR")) 
@@ -2537,10 +2554,10 @@ import Jama.Matrix;
                     
                     fatShiftLabel.setForeground(Color.red);
                     MipavUtil.displayError("Fat Shift Label Error");
-                    Tprep=null;
+                    /*Tprep=null;
                     rev_Tprep=null;
                     Tfsd = null;
-                    rev_Tfsd = null;
+                    rev_Tfsd = null;*/
                 }
             }
             else if(fileInfoPARREC != null && fileInfoPARREC != null && fileInfoPARREC.getSliceOrient()== 3 || parNorient == 3){
@@ -3231,6 +3248,7 @@ import Jama.Matrix;
             if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
                     (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
                if (scannerType != null && scannerType.toUpperCase().contains("SIEMEN")) {
+                   checkSiemens = true;
                    if (tagTable.getValue("0018,1310") != null) {
                        // Acquisition matrix
                        FileDicomTag tag = tagTable.get(new FileDicomKey("0018,1310"));
@@ -3302,6 +3320,12 @@ import Jama.Matrix;
 
                    }
                }
+               else{
+                   MipavUtil.displayError("Please select a 4D DWI Image");  
+               }
+            }
+            else{
+                MipavUtil.displayError("Please select a 4D DWI Image");  
             }
             
         }
