@@ -124,8 +124,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 	public ViewJFrameImage T2frame;
 
-	public ViewJFrameImage DWINewB0Frame;
-
 	public TransMatrix [] arrayTransMatrix;
 
 	public TransMatrix b0toStructMatrix;
@@ -219,6 +217,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		// currentImage is used in case the user skips the pre-processing or EPI distortion correction steps
 		if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == EPI_DISTORTION) )
 		{
+		    System.out.println("tensor calcul epi distortion");
 			currentImage = EPIpanel.getResult();
 			estTensorPanel.setImage(currentImage);
 			tabbedPane.setSelectedIndex(TENSOR_ESTIMATION);
@@ -264,7 +263,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			}
             srcBvalGradTable = importData.srcTableModel;
 			DTIPreprocessing.matrixComboBox.addItem(DWIImage.getImageDirectory());
-			//DTIPreprocessing.highlightBorderPanel.setBorder(highlightTitledBorder(""));
+
 			if(dtiparams.getGradients() != null){
     			for (int i = 0; i <dtiparams.getbValues().length-1; i++){
     			    if (dtiparams.getbValues()[i] == 0 && dtiparams.getGradients()[i][0] ==0 ){
@@ -286,7 +285,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			}
 
 			else{
-			    //DTIPreprocessing.highlightBorderPanel.setBorder(buildTitleBorder(""));
 				MipavUtil.displayError("Please load B-values and Gradients or Bmatrix file");
 			}
 
@@ -295,6 +293,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 					T2Image = importData.m_kT2Image;
 					T2frame = importData.t2frame;
 			        DTIPreprocessing.transformMatDWICheckbox.setEnabled(true);
+			        DTIPreprocessing.performEPICheckbox.setEnabled(true);
 			        DTIPreprocessing.transformB0label.setEnabled(true);
 			        DTIPreprocessing.transformB0MatCheckbox.setEnabled(true);
 			        DTIPreprocessing.blanklabel.setEnabled(true);
@@ -323,8 +322,20 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			tabbedPane.setSelectedIndex(EPI_DISTORTION);
 			nextButton.setEnabled(true);
 			goBackButton.setEnabled(true);
-			goBackButton.setActionCommand("back3");
+			goBackButton.setActionCommand("back2");
 		}
+	      else if (command.equals("next3")){
+	            if (DTIPreprocessing.result35RegImage != null){
+    	            estTensorPanel.setImage(DTIPreprocessing.result35RegImage);
+    	            tabbedPane.setSelectedIndex(TENSOR_ESTIMATION);
+    	            goBackButton.setActionCommand("back2");
+	            }
+	            else{
+	                estTensorPanel.setImage(DWIImage);
+	                tabbedPane.setSelectedIndex(TENSOR_ESTIMATION);
+	                goBackButton.setActionCommand("back2");  
+	            }
+	        }
 	      else if (command.equals("back2")){
 	            tabbedPane.setSelectedIndex(1);
 	            nextButton.setEnabled(true);
@@ -342,10 +353,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 	}
 	
-    private TitledBorder highlightTitledBorder(String title){
-        return new TitledBorder(new LineBorder( Color.black, 2), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                Color.black);
-    }
+
     
     private TitledBorder buildTitleBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
