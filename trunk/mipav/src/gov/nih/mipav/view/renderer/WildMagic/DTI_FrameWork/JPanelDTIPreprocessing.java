@@ -161,6 +161,18 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 	/** action command when the user presses the browse button to select the output directory: */
 	private String outputCommand = new String("browseOutput");
 
+    JPanel buttonPanel;
+
+    ModelImage result35RegImage;
+
+    JCheckBox performEPICheckbox;
+
+    private JTextField preProsText;
+
+    private JLabel preProsLabel;
+
+    private JButton openDirButton;
+
 	public JPanelDTIPreprocessing(DTIPipeline pipeline) {
 		super(new GridBagLayout());
 		this.pipeline = pipeline;
@@ -215,8 +227,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		} 
 		else if (command.equals("skipPre")) {
 			if (skipPreCheckbox.isSelected()) {
-				transformMatDWICheckbox.setEnabled(false);
-				transformDWICheckbox.setEnabled(false);
+				//transformMatDWICheckbox.setEnabled(false);
+				//transformDWICheckbox.setEnabled(false);
+				correctGradTransCheckbox.setEnabled(false);
 				labelInternal.setEnabled(false);
 				refImageNumText.setEnabled(false);              
 				labelDOF.setEnabled(false); 
@@ -226,19 +239,24 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				labelCost.setEnabled(false);
 				comboBoxCostFunct.setEnabled(false);
 				OKButton.setEnabled(false);
+				buttonPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+				preProsText.setEnabled(false);
+				preProsLabel.setEnabled(false);
+				openDirButton.setEnabled(false);
 				if (pipeline.T2Image != null){
 					transformB0label.setEnabled(false);
 					transformB0MatCheckbox.setEnabled(false);
 					blanklabel.setEnabled(false);
+					performEPICheckbox.setEnabled(false);
 					transformB0Checkbox.setEnabled(false);
 				}
 				pipeline.nextButton.setEnabled(true);
-				pipeline.nextButton.setActionCommand("next2");
+				pipeline.nextButton.setActionCommand("next3");
 			}
 			else{
-				transformMatDWICheckbox.setEnabled(true);
-				transformB0label.setEnabled(true);
-				transformB0MatCheckbox.setEnabled(true);
+			    //transformMatDWICheckbox.setEnabled(true);
+			    //transformDWICheckbox.setEnabled(true);
+				correctGradTransCheckbox.setEnabled(true);
 				labelInternal.setEnabled(true);
 				refImageNumText.setEnabled(true);              
 				labelDOF.setEnabled(true);
@@ -247,7 +265,17 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				comboBoxInterp.setEnabled(true);
 				labelCost.setEnabled(true);
 				comboBoxCostFunct.setEnabled(true);
+                preProsText.setEnabled(true);
+                preProsLabel.setEnabled(true);
+                openDirButton.setEnabled(true);
 				OKButton.setEnabled(true);
+                if (pipeline.T2Image != null){
+                    transformB0label.setEnabled(true);
+                    transformB0MatCheckbox.setEnabled(true);
+                    blanklabel.setEnabled(true);
+                    performEPICheckbox.setEnabled(true);
+                    transformB0Checkbox.setEnabled(true);
+                }
 
 				pipeline.nextButton.setEnabled(false);
 				pipeline.nextButton.setActionCommand("next2");
@@ -412,7 +440,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				saveTransformMatrix( arrayMatrixFileName, arrayTransMatrix );
 			}
 
-			ModelImage result35RegImage = reg35.getTransformedImage();
+			result35RegImage = reg35.getTransformedImage();
 			if (result35RegImage != null) {
 				result35RegImage.calcMinMax();
 				result35RegImage.setImageName(pipeline.DWIImage.getImageName() + comboBoxDOF.getSelectedItem());
@@ -459,6 +487,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 					}
 				}
 				// Tell the parent DTIPipeline that the work is finished on this panel and update the pipeline variables:
+				if (performEPICheckbox.isSelected() && imageT2!= null){
 				pipeline.nextButton.setEnabled(true);
 				pipeline.nextButton.setActionCommand("next2");
 				
@@ -466,6 +495,11 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				pipeline.finishPreProcessingPanel( result35RegImage, imageT2, 
 						b0toStructMatrix, b0MatrixFileName, 
 						arrayTransMatrix, arrayMatrixFileName );
+				}
+				else{
+		           pipeline.nextButton.setEnabled(true);
+		           pipeline.nextButton.setActionCommand("next3");  
+				}
 			}		
 		}
 	}
@@ -668,14 +702,14 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 			if ( (subsetAlgo.isCompleted() == true) && (resultB0Image != null))
 			{
-				new ViewJFrameImage(resultB0Image);
+				//new ViewJFrameImage(resultB0Image);
 				return resultB0Image;
 			}
 		}
 		return null;
 	}
 
-	private JButton buildOKButton() {
+	private JButton buildOARButton() {
 		OKButton = new JButton("RUN OAR 3.5D");
 		OKButton.addActionListener(this);
 		OKButton.setFont(serif12B);
@@ -687,10 +721,61 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				Color.black);
 	}
 
-	private TitledBorder highlightTitledBorder(String title){
-		return new TitledBorder(new LineBorder( Color.black, 2), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-				Color.black);
-	}
+
+	   public void buildLoadPanel( ActionListener listener, JPanel mainPanel, 
+	            JLabel label, JTextField imageName, String tooltip, String actionCommand ) {
+
+	        final JPanel DTIloadPanel = new JPanel();
+	        DTIloadPanel.setLayout(new GridBagLayout());
+	        DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+
+	        final GridBagConstraints gbc = new GridBagConstraints();
+
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.gridwidth = 1;
+	        gbc.gridheight = 1;
+	        gbc.weightx = 1;
+	        gbc.fill = GridBagConstraints.CENTER;
+	        gbc.anchor = GridBagConstraints.WEST;
+
+	        openDirButton = new JButton("Browse");
+	        openDirButton.setToolTipText( tooltip );
+	        openDirButton.addActionListener(listener);
+	        openDirButton.setActionCommand( actionCommand );
+	        openDirButton.setEnabled(true);
+
+	        preProsText = imageName;
+	        preProsText.setPreferredSize(new Dimension(275, 21));
+	        preProsText.setEditable(true);
+	        preProsText.setBackground(Color.white);
+	        preProsText.setFont(MipavUtil.font12);
+
+	        preProsLabel = label;
+	        gbc.gridx = 0;
+	        gbc.gridy = 0;
+	        gbc.weightx = 1;
+	        gbc.gridwidth = 1;
+	        gbc.gridheight = 1;
+	        gbc.weightx = 0;
+	        gbc.fill = GridBagConstraints.NONE;
+	        gbc.anchor = GridBagConstraints.WEST;
+	        gbc.insets = new Insets(0, 2, 0, 2);
+	        DTIloadPanel.add(preProsLabel, gbc);
+
+	        gbc.gridx = 1;
+	        gbc.gridy = 0;
+	        gbc.weightx = 0.15;
+	        gbc.fill = GridBagConstraints.HORIZONTAL;
+	        DTIloadPanel.add(preProsText, gbc);
+
+	        gbc.gridx = 2;
+	        gbc.gridy = 0;
+	        gbc.weightx = 0.25;
+	        gbc.fill = GridBagConstraints.NONE;
+	        DTIloadPanel.add(openDirButton, gbc);
+	        mainPanel.add(DTIloadPanel);
+	    }
 
 	/**
 	 * Initializes the GUI components and displays the dialog.
@@ -718,6 +803,14 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		transformB0MatCheckbox.setSelected(true);
 		transformB0MatCheckbox.addActionListener(this);
 		transformB0MatCheckbox.setEnabled(false);
+		
+		performEPICheckbox = new JCheckBox("Peform EPI Distortion Correction");
+		performEPICheckbox.setFont(serif12);
+		performEPICheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+		performEPICheckbox.setForeground(Color.black);
+		performEPICheckbox.setSelected(true);
+		performEPICheckbox.addActionListener(this);
+		performEPICheckbox.setEnabled(false);
 
 
 		blanklabel = new JLabel("-------------------------------------------------------------------------------" +
@@ -748,11 +841,17 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		structOptPanel.add(transformB0Checkbox, gbc);
 
-		gbc.gridx = 0;
+		/*gbc.gridx = 0;
 		gbc.gridy++;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		structOptPanel.add(transformB0MatCheckbox, gbc);
+		structOptPanel.add(transformB0MatCheckbox, gbc);*/
+		
+	    gbc.gridx = 0;
+	    gbc.gridy++;
+	    gbc.weightx = 1;
+	    gbc.fill = GridBagConstraints.HORIZONTAL;
+	    structOptPanel.add(performEPICheckbox, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -949,22 +1048,22 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		outPanel.add(transformDWICheckbox, gbc);
 
-		gbc.gridx = 0;
+		/*gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		outPanel.add(transformMatDWICheckbox, gbc);
+		outPanel.add(transformMatDWICheckbox, gbc);*/
 
 		gbc.gridx = 0;
-		gbc.gridy = 2;
+		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		outPanel.add(correctGradTransCheckbox, gbc);
 
 
 
-		buildOKButton();
-		JPanel buttonPanel = new JPanel();
+		buildOARButton();
+		buttonPanel = new JPanel();
 		buttonPanel.setLayout(new GridBagLayout());
 		buttonPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
 		gbc = new GridBagConstraints();
@@ -974,7 +1073,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		gbc.gridheight = 1;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.CENTER;
-		gbc.anchor = GridBagConstraints.WEST;
+		gbc.anchor = GridBagConstraints.CENTER;
 		buttonPanel.add(OKButton, gbc);
 
 
@@ -1005,28 +1104,28 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		mainPanel.add(structOptPanel, gbc);
 
 
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.anchor = GridBagConstraints.NORTHWEST;
-		gbc.fill = GridBagConstraints.CENTER;
-		gbc.anchor = GridBagConstraints.WEST;
-		gbc.gridx = 0;
-		gbc.gridy = 2;
-		gbc.gridwidth = 1;
-		gbc.weightx = 1;
-		gbc.weighty = 1;
+	    buildLoadPanel( this, mainPanel, 
+	           new JLabel("Pre-processing Output Directory:" ), outputDir, "Browse output directory", outputCommand );
+		
+		gbc.gridx = 2;
+		gbc.gridy = 4;
+        gbc.weightx = 1;
+        gbc.weighty = 0;
+        gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.anchor = GridBagConstraints.CENTER;
 		mainPanel.add(buttonPanel, gbc);	
 
-		JPanelEPIDistortionCorrection.buildLoadPanel( this, mainPanel, 
-				new JLabel("Output dir:" ), outputDir, "Browse output directory", outputCommand );
+		//JPanelEPIDistortionCorrection.buildLoadPanel( this, mainPanel, 
+				//new JLabel("Pre-processing Output Directory:" ), outputDir, "Browse output directory", outputCommand );
 
 		GridBagConstraints gbc2 = new GridBagConstraints();
-		gbc2.fill = GridBagConstraints.NONE;
-		gbc2.weightx = 1;
-		gbc2.weighty = 1;
-		gbc2.gridx = 0;
-		gbc2.gridy = 0;
-		gbc2.anchor = GridBagConstraints.NORTHWEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
+        gbc2.weightx = 1;
+        gbc2.weighty = 1;
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
 		this.add(mainPanel, gbc2);
 		setVisible(true);
 
@@ -1104,7 +1203,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		createProgressBar(oldT2.getImageName(), imageMarginsAlgo);
 		imageMarginsAlgo.run();
 		if((imageMarginsAlgo.isCompleted() == true) && matchT2!=null){
-			new ViewJFrameImage(matchT2);
+			//new ViewJFrameImage(matchT2);
 			matchT2.setImageDirectory(outputDir.getText());
 			ModelImage.saveImage( matchT2, matchT2.getImageName() + ".xml", outputDir.getText() );
 		}
@@ -1205,6 +1304,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 		return true;
 	}
+	
 
 }
 
