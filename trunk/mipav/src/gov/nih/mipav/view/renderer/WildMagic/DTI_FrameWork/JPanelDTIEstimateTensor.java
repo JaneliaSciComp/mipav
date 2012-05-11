@@ -337,7 +337,7 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
         
         final JPanel DTIloadPanel = new JPanel(new GridBagLayout());
         DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder("Upload Mask Image"));            
-        JLabel maskLabel = new JLabel("Mask Image: ");
+        JLabel maskLabel = new JLabel("Mask Image (optional): ");
         maskLabel.setFont(serif12);
         maskLabel.setEnabled(true);
         gbc.gridx = 0;
@@ -469,7 +469,7 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 		displayIntensity.setEnabled(false);
 		DTIOutputPanel.add( displayIntensity, gbc );
 		
-        JLabel dtiOutputLabel = new JLabel("Output Directory: ");
+        JLabel dtiOutputLabel = new JLabel("Tensor Estimation Output Directory: ");
         dtiOutputLabel.setFont(serif12);
         
         
