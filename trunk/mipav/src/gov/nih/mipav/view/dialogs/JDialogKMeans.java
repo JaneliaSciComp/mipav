@@ -19,6 +19,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.WindowEvent;
 import java.io.BufferedReader;
@@ -27,10 +28,12 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Enumeration;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -194,6 +197,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     private JTextField axesRatioText;
     
     private double axesRatio[];
+
+	private JComboBox imageList;
 	
 	
 	public JDialogKMeans() {
@@ -208,21 +213,10 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	 */
 	public void actionPerformed(ActionEvent event) {
 		int dimPt;
-		double buffer[];
-		int length;
 		int i;
-		int x, y, z, t;
-		int xDim, yDim, zDim, tDim;
-		int sliceSize;
-		int volume;
-		int index;
+		
 		int nval;
-		double redMin;
-		double redMax;
-		double greenMin;
-		double greenMax;
-		double blueMin;
-		double blueMax;
+
 		String fileNameBase = null;
 		boolean readWeight;
 		Object source = event.getSource();
@@ -364,177 +358,6 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    		 axesRatioLabel.setEnabled(false);
 	    		 axesRatioText.setEnabled(false);	 
 	    	 }
-	     } else if (command.equals("AddImageBrowse")) {
-	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-	         JFileChooser chooser = fileChooser.getFileChooser();
-	         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                 chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-             } else {
-                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-             }
-	         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-	         chooser.setDialogTitle("Choose image");
-	         int returnValue = chooser.showOpenDialog(this);
-	         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
-	         	FileIO fileIO = new FileIO();
-	         	isMultifile = fileChooser.isMulti();
-	         	image = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator,
-	         			                 isMultifile, null);
-	         	i = chooser.getSelectedFile().getName().indexOf(".");
-				if (i > 0) {
-					fileNameBase = chooser.getSelectedFile().getName().substring(0,i);
-				}
-				else {
-					fileNameBase = new String(chooser.getSelectedFile().getName());
-				}
-	         	resultsFileName = chooser.getCurrentDirectory() + File.separator + fileNameBase + "_kmeans.txt";
-	         	resultsFileNameLabel.setEnabled(true);
-            	resultsFileNameText.setEnabled(true);
-            	resultsFileNameText.setText(resultsFileName);
-         		if (image.isComplexImage()) {
-         			MipavUtil.displayError("Image cannot be a complex image");
-         		    image.disposeLocal();
-         		    image = null;
-         		    return;	
-         		}
-	         } 
-	         else {
-	        	 return;
-	         }
-	         nDims = image.getNDims();
-	         extents = image.getExtents();
-	         length = extents[0];
-	         for (i = 1; i < nDims; i++) {
-	        	 length = length * extents[i];
-	         }
-	         if (image.isColorImage()) {
-	        	 scale = new double[2];
-	        	 scale[0] = 1.0;
-	        	 scale[1] = 1.0;
-	        	 redMin = image.getMinR();
-	        	 redMax = image.getMaxR();
-	        	 if (redMin != redMax) {
-		        	 redBuffer = new float[length];
-		        	 try {
-		             image.exportRGBData(1, 0, length, redBuffer); 
-		        	 }
-		        	 catch (IOException e) {
-			        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(1, 0, length, redBuffer)");
-			        	 image.disposeLocal();
-		      		     image = null;
-		      		     return;	
-			         }
-	        	 } // if (redMin != redMax)
-	        	 greenMin = image.getMinG();
-	        	 greenMax = image.getMaxG();
-	        	 if (greenMin != greenMax) {
-		        	 greenBuffer = new float[length];
-		        	 try {
-		             image.exportRGBData(2, 0, length, greenBuffer); 
-		        	 }
-		        	 catch (IOException e) {
-			        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(2, 0, length, greenBuffer)");
-			        	 image.disposeLocal();
-		      		     image = null;
-		      		     return;	
-			         }
-	        	 } // if (greenMin != greenMax)
-	        	 blueMin = image.getMinB();
-	        	 blueMax = image.getMaxB();
-	        	 if (blueMin != blueMax) {
-		        	 blueBuffer = new float[length];
-		        	 try {
-		             image.exportRGBData(3, 0, length, blueBuffer); 
-		        	 }
-		        	 catch (IOException e) {
-			        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(3, 0, length, blueBuffer)");
-			        	 image.disposeLocal();
-		      		     image = null;
-		      		     return;	
-			         }
-	        	 } // if (blueMin != blueMax)
-	        	 textImage.setText(image.getImageFileName());
-	        	 nPoints = length;
-	         } // if (image.isColorImage())
-	         else { // black and white point image
-	        	 scale = new double[nDims];
-		         for (i = 0; i < nDims; i++) {
-		        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
-		         }
-		         buffer = new double[length];
-		         try {
-		        	 image.exportData(0, length, buffer);
-		         }
-		         catch (IOException e) {
-		        	 MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, buffer)");
-		        	 image.disposeLocal();
-	      		     image = null;
-	      		     return;	
-		         }
-		         nPoints = 0;
-		         for (i = 0; i < length; i++) {
-		        	 if (buffer[i] > 0) {
-		        		 nPoints++;
-		        	 }
-		         }
-		         if (nPoints == 0) {
-		        	 MipavUtil.displayError("No set of point values found in " + image.getImageFileName());
-		        	 image.disposeLocal();
-		        	 image = null;
-	                 return;	 
-		         }
-	             textImage.setText(image.getImageFileName());
-		         groupNum = new int[nPoints];
-	             pos = new double[nDims][nPoints];
-	             weight = new double[nPoints];
-	             if (nDims >= 4) {
-	            	 tDim = extents[3];
-	             }
-	             else {
-	            	 tDim = 1;
-	             }
-		         if (nDims >= 3) {
-		        	 zDim = extents[2];
-		         }
-		         else {
-		        	 zDim = 1;
-		         }
-		         if (nDims >= 2) {
-		        	 yDim = extents[1];
-		         }
-		         else {
-		        	 yDim = 1;
-		         }
-		         xDim = extents[0];
-		         sliceSize = xDim * yDim;
-		         volume = sliceSize * zDim;
-		         nval = 0;
-		         for (t = 0; t < tDim; t++) {
-		        	 for (z = 0; z < zDim; z++) {
-		        		 for (y = 0; y < yDim; y++) {
-		        			 for (x = 0; x < xDim; x++) {
-		        			     index = x + y*xDim + z*sliceSize + t*volume;
-		        			     if (buffer[index] > 0) {
-		        			    	 weight[nval] = buffer[index];
-		        			         pos[0][nval] = x;
-		        			         if (nDims >= 2) {
-		        			        	 pos[1][nval] = y;
-		        			        	 if (nDims >= 3) {
-		        			        		 pos[2][nval] = z;
-		        			        		 if (nDims >= 4) {
-		        			        			 pos[3][nval] = t;
-		        			        		 }
-		        			        	 }
-		        			         }
-		        			         nval++;
-		        			     } // if (buffer[index] > 0)
-		        			 }
-		        		 }
-		        	 }
-		         } // for (t = 0; t < tDim; t++)
-		         buffer = null;
-	         } // else black and white point image
-	         havePoints = true;
 	     } else if (command.equals("PointFile")) {
 
 	            try {
@@ -930,6 +753,48 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 		
 	}
 	
+	private void loadImage() {
+    	String fileNameBase;
+    	int i;
+		ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+         JFileChooser chooser = fileChooser.getFileChooser();
+         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        } else {
+            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+        }
+         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+         chooser.setDialogTitle("Choose image");
+         int returnValue = chooser.showOpenDialog(this);
+         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
+         	FileIO fileIO = new FileIO();
+         	isMultifile = fileChooser.isMulti();
+         	image = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator,
+         			                 isMultifile, null);
+         	i = chooser.getSelectedFile().getName().indexOf(".");
+			if (i > 0) {
+				fileNameBase = chooser.getSelectedFile().getName().substring(0,i);
+			}
+			else {
+				fileNameBase = new String(chooser.getSelectedFile().getName());
+			}
+         	resultsFileName = chooser.getCurrentDirectory() + File.separator + fileNameBase + "_kmeans.txt";
+         	resultsFileNameLabel.setEnabled(true);
+         	resultsFileNameText.setEnabled(true);
+         	resultsFileNameText.setText(resultsFileName);
+    		if (image.isComplexImage()) {
+    			MipavUtil.displayError("Image cannot be a complex image");
+    		    image.disposeLocal();
+    		    image = null;
+    		    return;	
+    		}
+    		
+    		imageList.addItem(image.getImageName());
+    		imageList.setSelectedItem(image.getImageName());
+    		textImage.setText(image.getImageName());
+         } 
+     } 
+	
 	
 	/**
 	 *  algorithm performed
@@ -960,6 +825,8 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
      */
     private void init() {
 
+    	GuiBuilder gui = new GuiBuilder(this);
+    	
         JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -982,19 +849,19 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         JLabel choiceLabel2 = new JLabel("A black and white image with only points generates centroids");
         choiceLabel2.setForeground(Color.black);
         choiceLabel2.setFont(serif12);
-        gbc.gridy = 1;
+        gbc.gridy++;
         mainPanel.add(choiceLabel2, gbc);
         
         JLabel choiceLabel3 = new JLabel("Point value gives weighing");
         choiceLabel3.setForeground(Color.black);
         choiceLabel3.setFont(serif12);
-        gbc.gridy = 2;
+        gbc.gridy++;
         mainPanel.add(choiceLabel3, gbc);
         
         JLabel choiceLabel4 = new JLabel("A color or multispectral image is segmented");
         choiceLabel4.setForeground(Color.black);
         choiceLabel4.setFont(serif12);
-        gbc.gridy = 3;
+        gbc.gridy++;
         mainPanel.add(choiceLabel4, gbc);
         
         buttonImage = new JButton("Choose an image");
@@ -1005,8 +872,25 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
         buttonImage.setPreferredSize(new Dimension(235, 30));
         gbc.fill = GridBagConstraints.NONE;
         gbc.gridx = 0;
-        gbc.gridy = 4;
-        mainPanel.add(buttonImage, gbc);
+        gbc.gridy++;
+        
+        Object[] imgList = new Object[ViewUserInterface.getReference().getRegisteredImagesNum()+1];
+        imgList[0] = "Load image...";
+        Enumeration<String> strEnum = ViewUserInterface.getReference().getRegisteredImageNames();
+        for(int i=1; i<imgList.length; i++) {
+        	imgList[i] = strEnum.nextElement();
+        }
+        imageList = gui.buildComboBox("Choose an image: ", imgList, 0);
+        imageList.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+	            if(imageList.getSelectedIndex() == 0) {
+	            	loadImage();
+	            } else {
+	            	textImage.setText(imageList.getSelectedItem().toString());
+	            }
+            }
+        });
+        mainPanel.add(imageList.getParent(), gbc);
 
         textImage = new JTextField();
         textImage.setFont(serif12);
@@ -1266,8 +1150,170 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
     }
     
     private boolean setVariables() {
+    	double redMin;
+		double redMax;
+		double greenMin;
+		double greenMax;
+		double blueMin;
+		double blueMax;
+		
+		int index;
+		double buffer[];
+		int length;
+		
+		int x, y, z, t;
+		int xDim, yDim, zDim, tDim;
+		int sliceSize;
+		int volume;
+		
+		int i;
+    	
+		int nval;
+		
+    	image = ViewUserInterface.getReference().getRegisteredImageByName(imageList.getSelectedItem().toString());
+    	
+    	if(image == null) {
+    		MipavUtil.displayError("No image with name "+imageList.getSelectedItem()+" was found.");
+    		return false;
+    	}
+    	
+    	nDims = image.getNDims();
+        extents = image.getExtents();
+        length = extents[0];
+        for (i = 1; i < nDims; i++) {
+       	 length = length * extents[i];
+        }
+        if (image.isColorImage()) {
+       	 scale = new double[2];
+       	 scale[0] = 1.0;
+       	 scale[1] = 1.0;
+       	 redMin = image.getMinR();
+       	 redMax = image.getMaxR();
+       	 if (redMin != redMax) {
+	        	 redBuffer = new float[length];
+	        	 try {
+	             image.exportRGBData(1, 0, length, redBuffer); 
+	        	 }
+	        	 catch (IOException e) {
+		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(1, 0, length, redBuffer)");
+		        	 image.disposeLocal();
+	      		     image = null;
+	      		     return false;	
+		         }
+       	 } // if (redMin != redMax)
+       	 greenMin = image.getMinG();
+       	 greenMax = image.getMaxG();
+       	 if (greenMin != greenMax) {
+	        	 greenBuffer = new float[length];
+	        	 try {
+	             image.exportRGBData(2, 0, length, greenBuffer); 
+	        	 }
+	        	 catch (IOException e) {
+		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(2, 0, length, greenBuffer)");
+		        	 image.disposeLocal();
+	      		     image = null;
+	      		     return false;	
+		         }
+       	 } // if (greenMin != greenMax)
+       	 blueMin = image.getMinB();
+       	 blueMax = image.getMaxB();
+       	 if (blueMin != blueMax) {
+	        	 blueBuffer = new float[length];
+	        	 try {
+	             image.exportRGBData(3, 0, length, blueBuffer); 
+	        	 }
+	        	 catch (IOException e) {
+		        	 MipavUtil.displayError("IOException " + e + " on image.exportRGBData(3, 0, length, blueBuffer)");
+		        	 image.disposeLocal();
+	      		     image = null;
+	      		     return false;	
+		         }
+       	 } // if (blueMin != blueMax)
+       	 textImage.setText(image.getImageFileName());
+       	 nPoints = length;
+        } // if (image.isColorImage())
+        else { // black and white point image
+       	 scale = new double[nDims];
+	         for (i = 0; i < nDims; i++) {
+	        	 scale[i] = image.getFileInfo()[0].getResolutions()[i];
+	         }
+	         buffer = new double[length];
+	         try {
+	        	 image.exportData(0, length, buffer);
+	         }
+	         catch (IOException e) {
+	        	 MipavUtil.displayError("IOException " + e + " on image.exportData(0, length, buffer)");
+	        	 image.disposeLocal();
+     		     image = null;
+     		     return false;	
+	         }
+	         nPoints = 0;
+	         for (i = 0; i < length; i++) {
+	        	 if (buffer[i] > 0) {
+	        		 nPoints++;
+	        	 }
+	         }
+	         if (nPoints == 0) {
+	        	 MipavUtil.displayError("No set of point values found in " + image.getImageFileName());
+	        	 image.disposeLocal();
+	        	 image = null;
+                return false;	 
+	         }
+            textImage.setText(image.getImageFileName());
+	         groupNum = new int[nPoints];
+            pos = new double[nDims][nPoints];
+            weight = new double[nPoints];
+            if (nDims >= 4) {
+           	 tDim = extents[3];
+            }
+            else {
+           	 tDim = 1;
+            }
+	         if (nDims >= 3) {
+	        	 zDim = extents[2];
+	         }
+	         else {
+	        	 zDim = 1;
+	         }
+	         if (nDims >= 2) {
+	        	 yDim = extents[1];
+	         }
+	         else {
+	        	 yDim = 1;
+	         }
+	         xDim = extents[0];
+	         sliceSize = xDim * yDim;
+	         volume = sliceSize * zDim;
+	         nval = 0;
+	         for (t = 0; t < tDim; t++) {
+	        	 for (z = 0; z < zDim; z++) {
+	        		 for (y = 0; y < yDim; y++) {
+	        			 for (x = 0; x < xDim; x++) {
+	        			     index = x + y*xDim + z*sliceSize + t*volume;
+	        			     if (buffer[index] > 0) {
+	        			    	 weight[nval] = buffer[index];
+	        			         pos[0][nval] = x;
+	        			         if (nDims >= 2) {
+	        			        	 pos[1][nval] = y;
+	        			        	 if (nDims >= 3) {
+	        			        		 pos[2][nval] = z;
+	        			        		 if (nDims >= 4) {
+	        			        			 pos[3][nval] = t;
+	        			        		 }
+	        			        	 }
+	        			         }
+	        			         nval++;
+	        			     } // if (buffer[index] > 0)
+	        			 }
+	        		 }
+	        	 }
+	         } // for (t = 0; t < tDim; t++)
+	         buffer = null;
+        } // else black and white point image
+        havePoints = true;
+    	
     	String tmpStr;
-    	int i;
+    	i = 0;
     	double totalWeight;
     	int dim;
     	double totalSum = 0.0;
