@@ -104,15 +104,11 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 	private JPanelDTIVisualization visualization;
 
-	private JPanelDTIRegistrationEddyCurrent35D eddyCurReg;
-
 	private JPanelDTIPreprocessing DTIPreprocessing;
 	
 	private JPanelDTIEstimateTensor estTensorPanel;
 
 	private JPanelEPIDistortionCorrection EPIpanel;
-
-	private JPanelT2Load t2load;
 
 	/** DOCUMENT ME! */
 	private ViewUserInterface userInterface;
@@ -371,20 +367,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		return importData.scrollPane;
 	}
 
-	private JPanel buildT2Panel() {
-
-		t2load = new JPanelT2Load(this);
-
-		return t2load.mainT2Panel;
-
-	}
-
-	private JPanel buildRegEddyCurPanel() {
-
-		eddyCurReg = new JPanelDTIRegistrationEddyCurrent35D(this);
-
-		return eddyCurReg.mainRegPanel ;
-	}
 	private JPanel buildPreprocessingPanel() {
 
 		DTIPreprocessing = new JPanelDTIPreprocessing(this);
