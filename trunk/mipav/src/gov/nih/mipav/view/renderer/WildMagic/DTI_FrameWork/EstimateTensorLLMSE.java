@@ -562,7 +562,7 @@ public class EstimateTensorLLMSE {
 	}
 
 	private static void estimateCamino(float [][][][]DWdata, 
-			byte [][][]mask, DT_Inversion dtiFit, 
+			byte [][][]mask, int dtiType, DW_Scheme scheme, DT_Inversion dtiFit, 
 			float [][][][]tensors,float [][][][]exitcode, float [][][][]intensity) {
 
 		//***************************************************
@@ -595,26 +595,46 @@ public class EstimateTensorLLMSE {
         progressBar.setVisible(true);
         progressBar.updateValueImmed(0);
         
+        boolean allZero = false;
 		double data[] = new double[DWdata[0][0][0].length];
 		for(int i=0;i<DWdata.length;i++) {
 			for(int j=0;j<DWdata[0].length;j++) {
 				for(int k=0;k<DWdata[0][0].length;k++) {
 					if(mask[i][j][k]!=0) {
+						allZero = true;
 						for(int l=0;l<data.length;l++) {
 							data[l]=DWdata[i][j][k][l];
+							if ( data[l] != 0 )
+							{
+								allZero = false;
+							}
 						}				
+						
+						if ( !allZero  )
+						{
+							// if the type is something other than Nonlinear or Restore, compute the inversion.
+							// if the type is either Nonlinear or Restore, check the mean...
+							if ( !(dtiType == DTIPipeline.NON_LINEAR || dtiType == DTIPipeline.RESTORE) || (scheme.geoMeanZeroMeas(data) > 0) )
+							{
+								//						 {exitcode, ln A^\star(0), Dxx, Dxy, Dxz, Dyy, Dyz, Dzz}
+								try {
+									double []estResult = dtiFit.invert(data);
+									exitcode[i][j][k][0]=(float)estResult[0];
 
-						//						 {exitcode, ln A^\star(0), Dxx, Dxy, Dxz, Dyy, Dyz, Dzz}
-						try {
-						double []estResult = dtiFit.invert(data);
-						exitcode[i][j][k][0]=(float)estResult[0];
-						
-						intensity[i][j][k][0]=(float)Math.exp(estResult[1]);
-						
-						for(int l=0;l<6;l++) {
-							tensors[i][j][k][l]=(float)(estResult[l+2]*1e6);	
+									intensity[i][j][k][0]=(float)Math.exp(estResult[1]);
+
+									for(int l=0;l<6;l++) {
+										tensors[i][j][k][l]=(float)(estResult[l+2]*1e6);	
+									}
+								} catch ( misc.LoggedException e ) {}
+							}
 						}
-						} catch ( misc.LoggedException e ) {}
+						else
+						{							
+							for(int l=0;l<6;l++) {
+								tensors[i][j][k][l]=0;	
+							}
+						}
 					} else {
 						exitcode[i][j][k][0]=Float.NaN;
 						intensity[i][j][k][0]=Float.NaN;
@@ -770,7 +790,7 @@ public class EstimateTensorLLMSE {
 		float [][][][] exitCode = new float[dimX][dimY][dimZ][1];
 		float [][][][] intensity = new float[dimX][dimY][dimZ][1];
 
-		estimateCamino( DWdata, mask, dtiFit, tensors, exitCode, intensity );
+		estimateCamino( DWdata, mask, dtiType, scheme, dtiFit, tensors, exitCode, intensity );
 		String name = JDialogBase.makeImageName(image.getImageName(), "_tensor");	
 		ModelImage tensorImage = makeTensorImage( tensors, exitCode, name );
 		JDialogBase.updateFileInfo( image, tensorImage );
