@@ -1,22 +1,13 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTI2EGFA;
-import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTIColorDisplay;
-import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDTITract;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmRGBConcat;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.file.FileInfoImageXML;
-import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelLUT;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.DialogDTIColorDisplay;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
 import java.awt.BorderLayout;
@@ -31,7 +22,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
-import java.io.IOException;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -41,8 +31,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.border.EtchedBorder;
-import javax.swing.border.TitledBorder;
 
 public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
     
@@ -82,20 +70,6 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
     private ModelImage tensorImage, eigenVectorImage, FAImage, eigenValueImage, rgbImage, traceImage, raImage,
             vrImage, adcImage;
-
-    private JCheckBox negXCheckBox;
-
-    private JCheckBox negYCheckBox;
-
-    private JCheckBox negZCheckBox;
-
-    private JTextField faMinThresholdTextField;
-
-    private JTextField faMaxThresholdTextField;
-
-    private JTextField maxAngleTextField;
-    
-    private JTextField minTractLengthTextField;
 
 
     JCheckBox createADC = new JCheckBox( "Create ADC Image" );
@@ -385,62 +359,6 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 		mainPanel.add(DTIloadPanel);
 	}
 	
-	
-	/*private void buildDTIOutputPanel() {
-
-		final JPanel DTIloadPanel = new JPanel();
-		DTIloadPanel.setLayout(new GridBagLayout());
-		DTIloadPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
-
-		final GridBagConstraints gbc = new GridBagConstraints();
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.gridwidth = 1;
-		gbc.gridheight = 1;
-		gbc.weightx = 1;
-		gbc.fill = GridBagConstraints.CENTER;
-		gbc.anchor = GridBagConstraints.WEST;
-
-		JButton openDTIOutputButton = new JButton("Browse");
-		openDTIOutputButton.setToolTipText("Browse diffusion tensor output directory");
-		openDTIOutputButton.addActionListener(this);
-		openDTIOutputButton.setActionCommand("browseOutput");
-		openDTIOutputButton.setEnabled(true);
-
-		outputDirTextField = new JTextField();
-		outputDirTextField.setPreferredSize(new Dimension(275, 21));
-		outputDirTextField.setEditable(true);
-		outputDirTextField.setBackground(Color.white);
-		outputDirTextField.setFont(MipavUtil.font12);
-
-		JLabel dtiOutputLabel = new JLabel("Output Directory: ");
-
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.anchor = GridBagConstraints.WEST;
-		DTIloadPanel.add(dtiOutputLabel, gbc);
-
-		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.EAST;
-		DTIloadPanel.add(outputDirTextField, gbc);
-
-		gbc.gridx = 2;
-		gbc.gridy = 0;
-		gbc.weightx = 0;
-		gbc.anchor = GridBagConstraints.EAST;
-		DTIloadPanel.add(openDTIOutputButton, gbc);
-
-		mainPanel.add(DTIloadPanel);
-	}*/
-    
-    private TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                                Color.black);
-    }
-
     /** Calls AlgorithmDTI2EGFA to create an Apparent Diffusion Coefficient Image, 
      * Functional Anisotropy Image, Color Image, Eigen Value Image, Eigen Vector Image, Relative Anisotropy Image,
      * Trace Image, and Volume Ratio Image. */
@@ -810,7 +728,7 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         outputDirTextField.setBackground(Color.white);
         outputDirTextField.setFont(MipavUtil.font12);
 
-        JLabel dtiOutputLabel = new JLabel("Output Directory: ");
+        JLabel dtiOutputLabel = new JLabel("Tensor Statistics Output Directory: ");
         dtiOutputLabel.setFont(serif12);
 
         gbc.gridx = 0;
