@@ -83,7 +83,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 	private JCheckBox displayDeformationField = new JCheckBox( "Display Deformation Field" );
 
 	private JCheckBox displayRegisteredB0 = new JCheckBox( "Display B0 registered to T2" );
-	private JCheckBox displayEPIResult = new JCheckBox( "Display EPI-Distortion Corrected Image" );
+	private JCheckBox displayEPIResult = new JCheckBox( "Display EPI Distortion Corrected Image" );
 	/** button commands */
 	private String loadT2Command = new String("browseT2File");
 	private String loadDWICommand = new String("browseDWIFile");
@@ -96,9 +96,9 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 	private String loadAllMatrixComand = new String("browseAllMatrixFile");
 	
 	/** button for computing the deformation field: */
-	private JButton computeDeformationFieldButton = new JButton("Compute Deformation Field");
+	private JButton computeDeformationFieldButton = new JButton("Compute VABRA Deformation Field");
 	/** button for applying the deformation field to the input 4D image */
-	private JButton computeEpiCorrectionButton = new JButton("Compute Epi-Distortion Correction");
+	private JButton computeEpiCorrectionButton = new JButton("Compute EPI Distortion Correction");
 	/** Structural T2 image, resampled to match the DWI image series. */
 	private ModelImage resampledT2 = null;
 	/** DWI image series that has been registered within series to the B0 volume. */
@@ -411,8 +411,8 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		ModelImage temp = new ModelImage( ModelStorageBase.FLOAT, new int[]{dimX,dimY,dimZ}, "temp" );
 		ModelImage deformedDWI = new ModelImage( result35RegImage.getType(), result35RegImage.getExtents(), result35RegImage.getImageName() + "_epi_corrected" );
 
-        final ViewJProgressBar progressBar = new ViewJProgressBar("epi-distortion correction",
-                "epi-distortion correction...", 0, 100, false, null, null);
+        final ViewJProgressBar progressBar = new ViewJProgressBar("EPI Distortion Correction",
+                "EPI distortion correction...", 0, 100, false, null, null);
         progressBar.setVisible(true);
         progressBar.updateValueImmed(0);
 		for ( int i = 0; i < numVolumes; i++ )
@@ -579,7 +579,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		mainPanel.add(buttonPanel1);
 
 
-		DefLoadPanel = buildLoadPanel( this, mainPanel, new JLabel("Deformation Field:" ), deformationB0T2Text, "Browse deformation field", loadDeformationFieldCommand, DefLoadPanel);
+		DefLoadPanel = buildLoadPanel( this, mainPanel, new JLabel("VABRA Deformation Field:" ), deformationB0T2Text, "Browse deformation field", loadDeformationFieldCommand, DefLoadPanel);
 		B0toStructTransPanel = buildLoadPanel( this, mainPanel, new JLabel("B0 to T2 Transformation Matrix:" ), B0MatrixFile, "Browse matrix file", loadB0MatrixComand, B0toStructTransPanel );
 		DWITransPanel = buildLoadPanel( this, mainPanel, new JLabel("4D Transformation Matrix:" ), matricesFile, "Browse all matrix files", loadAllMatrixComand,DWITransPanel);
         OutputPanel = buildLoadPanel( this, mainPanel, new JLabel("EPI Distortion Correction Output Directory:" ), outputDir, "Browse output directory", outputCommand, OutputPanel);
@@ -592,7 +592,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		buttonPanel2.setBorder(JInterfaceBase.buildTitledBorder("EPI Distortion Correction Input Parameters"));
 		gbc = new GridBagConstraints();
 
-		computeEpiCorrectionButton.setToolTipText("Compute epi-distortion correction");
+		computeEpiCorrectionButton.setToolTipText("Compute EPI distortion correction");
 		computeEpiCorrectionButton.addActionListener(this);
 		computeEpiCorrectionButton.setActionCommand( computeEpiCommand );
 		computeEpiCorrectionButton.setVisible(true);
@@ -788,7 +788,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
             blankLabel = new JLabel("");
         }
         else if(panelName == DefLoadPanel){
-            blankLabel = new JLabel("                                             ");
+            blankLabel = new JLabel("                               ");
         }
         else if(panelName == B0toStructTransPanel){
             blankLabel = new JLabel("                    ");
