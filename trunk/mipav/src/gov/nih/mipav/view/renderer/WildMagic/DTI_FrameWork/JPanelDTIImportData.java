@@ -13,19 +13,14 @@ import gov.nih.mipav.model.file.FileDicomTagTable;
 import gov.nih.mipav.model.file.FileInfoDicom;
 import gov.nih.mipav.model.file.FileInfoNIFTI;
     import gov.nih.mipav.model.file.FileInfoPARREC;
-import gov.nih.mipav.model.file.FileInfoBase.Unit;
-import gov.nih.mipav.model.structures.CustomHashtable;
     import gov.nih.mipav.model.structures.ModelImage;
 
     import gov.nih.mipav.view.MipavUtil;
     import gov.nih.mipav.view.Preferences;
-    import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewOpenFileUI;
     import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.components.PanelManager;
 
-import java.awt.BorderLayout;
     import java.awt.Color;
     import java.awt.Dimension;
 import java.awt.Font;
@@ -37,32 +32,26 @@ import java.awt.Frame;
     import java.awt.event.ActionEvent;
     import java.awt.event.ActionListener;
     import java.awt.event.MouseEvent;
-import java.io.BufferedReader;
     import java.io.File;
 import java.io.FileNotFoundException;
     import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
     import java.io.PrintStream;
     import java.io.RandomAccessFile;
     import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.HashMap;
     import java.util.Vector;
 
-import javax.swing.BorderFactory;
     import javax.swing.ButtonGroup;
     import javax.swing.JButton;
     import javax.swing.JCheckBox;
     import javax.swing.JComboBox;
-import javax.swing.JComponent;
     import javax.swing.JFileChooser;
     import javax.swing.JLabel;
     import javax.swing.JPanel;
     import javax.swing.JRadioButton;
     import javax.swing.JScrollPane;
-    import javax.swing.JTabbedPane;
     import javax.swing.JTable;
     import javax.swing.JTextArea;
     import javax.swing.JTextField;
@@ -72,9 +61,6 @@ import javax.swing.border.LineBorder;
     import javax.swing.border.TitledBorder;
 import javax.swing.table.DefaultTableModel;
 
-import WildMagic.LibFoundation.Mathematics.GMatrixf;
-
-import Jama.Matrix;
 
 /**
 * <hr>
@@ -113,13 +99,7 @@ import Jama.Matrix;
         // ~ Instance fields
         // ------------------------------------------------------------------------------------------------    
         /** table to display the src image names. */
-        
-        /** src image * */
-        private ModelImage image;
-        
-        /** Eigenvector image * */
-        //private ModelImage m_kEigenVectorImage;
-        
+                        
         /** Diffusion Tensor image. */
         public ModelImage m_kDWIImage;
         
@@ -129,27 +109,16 @@ import Jama.Matrix;
         public JScrollPane scrollPane;
         
         private DTIParameters dtiparams, newDTIparams, parDTIParams;
-        
-        /** main panel * */
-        private JPanel mainPanel;
-        
+
         private Font serif12;
-        
-        private Font serif12b;
-        
+               
         /** TextArea of main dialogfor text output.* */
         private JTextArea outputTextArea;
-        
-        /** grid bag constraints * */
-        private GridBagConstraints gbc, gbc2, gbc3;
-        
+               
         private JTable srcBvalGradTable;
         
         private JTextField textDWIDataimage;
-        
-        /** DOCUMENT ME! */
-        private JTextField invertedTextField;
-          
+                 
         /** DOCUMENT ME! */
         private JComboBox invertedBox;
         
@@ -168,8 +137,6 @@ import Jama.Matrix;
         /** number of Volumes in DWI Image */
         private int numVolumes;
         
-        /** number of Volumes in DWI Image */
-        private int dwiBrowse;
         
         /**int to determine which format user selects for gradBval test file */
         private int gradBvalText;
@@ -179,37 +146,7 @@ import Jama.Matrix;
         
         /** table model for the srcimages. */
         public DefaultTableModel srcTableModel;
-        
-        /** DOCUMENT ME! */
-        private JTextField bValueTextField;
-
-        /** DOCUMENT ME! */
-        private JTextField gradientTextField;
-
-        /** DOCUMENT ME! */
-        private JTextField fatshiftTextField;
-
-        /** DOCUMENT ME! */
-        private JTextField gradResTextField;
-
-        /** DOCUMENT ME! */
-        private JTextField gradOPTextField;
-        
-        /** DOCUMENT ME! */
-        private JTextField philRelTextField;
-        
-        /** DOCUMENT ME! */
-        private JTextField patientPosTextField;
-        
-        /** DOCUMENT ME! */
-        private JTextField patientOrientTextField;
-        
-        /** DOCUMENT ME! */
-        private JTextField foldOverTextField;
-        
-        /** DOCUMENT ME! */
-        private JTextField osTextField;
-        
+            
         /** DOCUMENT ME! */
         private JCheckBox isDWICellEditBox;
         
@@ -224,12 +161,6 @@ import Jama.Matrix;
         
         /** DOCUMENT ME! */
         private JCheckBox openedImageCheckBox;
-        
-        /** DOCUMENT ME! */
-        private JLabel dwiFileLabel;
-        
-        /** DOCUMENT ME! */
-        private JTextField textDWIimage; 
         
         /** DOCUMENT ME! */
         private JButton openDWIButton; 
@@ -284,10 +215,7 @@ import Jama.Matrix;
         
         /** DOCUMENT ME! */
         private JComboBox osBox;
-        
-        /** DOCUMENT ME! */
-        private JCheckBox isDWITableDeleteBox;
-        
+             
         /** DOCUMENT ME! */
         private double[][] gradCreatetable;
         
@@ -326,18 +254,7 @@ import Jama.Matrix;
         
         /** DOCUMENT ME! */
         private JLabel philRelLabel;
-        
-        private String openImage = "";
 
-        /** DOCUMENT ME! */
-        private JPanel accessoryPanel = new JPanel();
-        
-        /** DOCUMENT ME! */
-        private JCheckBox multiBox = null;
-        
-        /** DOCUMENT ME! */
-        private boolean saveAs = false;
-        
         private DTIPipeline pipeline;
         
         private ViewUserInterface ui;
@@ -374,8 +291,6 @@ import Jama.Matrix;
         private JButton clearDWITableButton;
 
         private JButton saveBvalGradButton;
-
-        private JCheckBox useBMatCheckBox;
 
         private double sliceAng0;
 
@@ -608,7 +523,6 @@ import Jama.Matrix;
             
             
        else if (command.equals("bvalGradBrowse")) {
-            dwiBrowse = 1;
             final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
 
             if (currDir != null) {
@@ -911,7 +825,12 @@ import Jama.Matrix;
             }else if (command.equals("browseT2File")) {
                 try{
                     loadT2File();
-                    //if (m_kT2Image.getExtents()[0] == m_kDWIImage.getExtents()[0] && m_kT2Image.getExtents()[1] == m_kDWIImage.getExtents()[1]){
+                }
+                    catch (Exception e){
+                        MipavUtil.displayError("Error loading Structural Image");
+                    }
+                    if(m_kT2Image != null && m_kT2Image.is3DImage() 
+                            && m_kT2Image.getImageOrientation()== m_kDWIImage.getImageOrientation()){
                         textT2image.setText(openFile.getImagePath());
                         t2FileLabel.setEnabled(false);
                         textT2image.setEnabled(false);
@@ -931,12 +850,26 @@ import Jama.Matrix;
                             loadTable.setBorder(highlightTitledBorder("Upload B-Value/Gradient or B-Matrix File  or B-Matrix File"));  
                         }
                         
-                        pipeline.repaint();
-                }
-                catch (Exception e){
-                    MipavUtil.displayError("Error loading Structural Image");
-                }
-        } else if (command.equals("UseBMat")){
+                        pipeline.repaint();  
+                    }
+                    else{
+                        String DWIorientation = "";
+                        if (m_kDWIImage.getImageOrientation()== 0){
+                            DWIorientation = "Axial";
+                        }
+                        else if (m_kDWIImage.getImageOrientation()== 1){
+                            DWIorientation = "Sagittal";
+                        }
+                        else if(m_kDWIImage.getImageOrientation()== 2){
+                            DWIorientation = "Coronal";
+                        }
+                        
+                        MipavUtil.displayError("Please select 3D Structural Image with " + DWIorientation + " orientation" ); 
+                    }
+
+                
+
+            } else if (command.equals("UseBMat")){
             java.lang.Object[] newColIdentifiers = {"Volume","bxx","bxy", "bxz", "byy", "byz", "bzz"};
             srcTableModel.setColumnIdentifiers(newColIdentifiers);
             bvalGradFileLabel = new JLabel("B-matrix File: ");
@@ -952,14 +885,12 @@ import Jama.Matrix;
          */
 
         public void init() {
-            gbc = new GridBagConstraints();
-            gbc2 = new GridBagConstraints();
-            gbc3 = new GridBagConstraints();
+            GridBagConstraints gbc = new GridBagConstraints();
+            GridBagConstraints gbc2 = new GridBagConstraints();
             
 
 
             gbc2 = new GridBagConstraints();
-            mainPanel = new JPanel(new GridBagLayout());
 
             //Create table that will display gradients and bvalues
             srcPanel = new JPanel(new GridBagLayout());
@@ -1436,13 +1367,13 @@ import Jama.Matrix;
                         //Determine if Philips PAR/REC is version 3 or 4 to determine which gradient table dialog to be displayed
                         final JPanel GradCreatorPanel = new JPanel(new GridBagLayout());
                         final GridBagConstraints gbc = new GridBagConstraints();
+                        final GridBagConstraints gbc2 = new GridBagConstraints();
                         gbc.insets = new Insets(5, 1, 1, 5);
                         gbc.fill = GridBagConstraints.BOTH;
                         
                         //Add all parameters not aquired in PAR file for user to input
                         GradCreatorPanel.setBorder(buildTitledBorder("Philips Gradient Creator Input Parameters"));
                         fatShiftLabel = new JLabel("Fatshift");
-                        fatshiftTextField = new JTextField(5);
                         fatshiftBox = new JComboBox();
                         fatshiftBox.setBackground(Color.white);
                         fatshiftBox.addItem("R"); //Right
@@ -1474,7 +1405,6 @@ import Jama.Matrix;
                         
     
                         gradResLabel = new JLabel("Gradient Resolution");
-                        gradResTextField = new JTextField(5);
                         gradResBox = new JComboBox();
                         gradResBox.setBackground(Color.white);
                         gradResBox.addItem("Low");//Volumes = 8
@@ -1488,7 +1418,6 @@ import Jama.Matrix;
                         GradCreatorPanel.add(gradResBox,gbc);
     
                         gradOPLabel = new JLabel("Gradient Overplus");
-                        gradOPTextField = new JTextField(5);
                         gradOPBox = new JComboBox();
                         gradOPBox.setBackground(Color.white);
                         gradOPBox.addItem("No");
@@ -1501,7 +1430,6 @@ import Jama.Matrix;
                         GradCreatorPanel.add(gradOPBox,gbc);
                         
                         philRelLabel = new JLabel("Philips Release");
-                        philRelTextField = new JTextField(5);
                         philRelBox = new JComboBox();
                         philRelBox.setBackground(Color.white);
                         philRelBox.addItem("Rel_1.5");
@@ -1523,7 +1451,6 @@ import Jama.Matrix;
                           //Add all parameters not aquired in PAR file for user to input
                             osLabel = new JLabel("OS"); //Operating System
                             osLabel.setForeground(Color.lightGray);
-                            osTextField = new JTextField(5);
                             osBox = new JComboBox();
                             osBox.setForeground(Color.lightGray);
                             osBox.addItem("Windows");
@@ -1537,7 +1464,6 @@ import Jama.Matrix;
                             
                             invertedLabel = new JLabel("Inverted");
                             invertedLabel.setForeground(Color.lightGray);
-                            invertedTextField = new JTextField(5);
                             invertedBox = new JComboBox();
                             invertedBox.setForeground(Color.lightGray);
                             invertedBox.addItem("No");
@@ -1569,7 +1495,6 @@ import Jama.Matrix;
                                parNversion != null && parNversion.equals("V3") || parNversion != null && parNversion.equals("V4")){
                             //Add all parameters not aquired in PAR file for user to input
                             patientPosLabel = new JLabel("Patient Position");
-                            patientPosTextField = new JTextField(5);
                             patientPosBox = new JComboBox();
                             patientPosBox.setBackground(Color.white);
                             patientPosBox.addItem("Head First");
@@ -1582,7 +1507,6 @@ import Jama.Matrix;
                             GradCreatorPanel.add(patientPosBox,gbc);
                             
                             patientOrientLabel = new JLabel("Patient Orientation");
-                            patientOrientTextField = new JTextField(5);
                             patientOrientBox = new JComboBox();
                             patientOrientBox.setBackground(Color.white);
                             patientOrientBox.addItem("SP"); //Supine
@@ -1597,7 +1521,6 @@ import Jama.Matrix;
                             GradCreatorPanel.add(patientOrientBox,gbc);
                             
                             foldOverLabel = new JLabel("Fold Over");
-                            foldOverTextField = new JTextField(5);
                             foldOverBox = new JComboBox();
                             foldOverBox.setBackground(Color.white);
                             foldOverBox.addItem("AP"); //Anterior-Posterior
@@ -1612,7 +1535,6 @@ import Jama.Matrix;
                                                     
                             osLabel = new JLabel("OS"); //Operating System
                             osLabel.setForeground(Color.lightGray);
-                            osTextField = new JTextField(5);
                             osBox = new JComboBox();
                             osBox.setForeground(Color.lightGray);
                             osBox.addItem("Windows");
@@ -1626,7 +1548,6 @@ import Jama.Matrix;
                             
                             invertedLabel = new JLabel("Inverted");
                             invertedLabel.setForeground(Color.lightGray);
-                            invertedTextField = new JTextField(5);
                             invertedBox = new JComboBox();
                             invertedBox.setForeground(Color.lightGray);
                             invertedBox.addItem("No");
