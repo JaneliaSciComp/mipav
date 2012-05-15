@@ -3,8 +3,6 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 import gov.nih.mipav.model.structures.TransMatrix;
 
-import gov.nih.mipav.view.ViewUserInterface;
-
 import Jama.Matrix;
 
 import gov.nih.mipav.model.algorithms.*;
@@ -13,7 +11,7 @@ import gov.nih.mipav.model.algorithms.*;
 /**
 *
 * The DTI gradient table correction after transformation algorithm corrects gradients after their corresponding
-* DWI volumes have been registered using OAR35D to a structural image.
+* DWI volumes have been registered using OAR35D to a B0 image.
 * 
 * 
 * <hr>
@@ -108,9 +106,10 @@ public class DTIGradTableCorrectionAfterTrans extends AlgorithmBase {
         }
 
         angCorrGT = new float[bValues.length][3];
+        System.out.println("angCoorGT.length" +angCorrGT.length);
 
         int bOcount = 0;
-        for (int i = 0; i < angCorrGT.length; i++) {
+        for (int i = 0; i < arrayTransMatrix.length; i++) {
            
 
             float[][] row = { {gradients[i][0]}, {gradients[i][1]}, {gradients[i][2]}};
@@ -129,6 +128,9 @@ public class DTIGradTableCorrectionAfterTrans extends AlgorithmBase {
                 TransMatrix A;
                 
                  A = arrayTransMatrix[i-bOcount];
+                 System.out.println("i: " +i);
+                 System.out.println("i-b0Count" +(i-bOcount));
+                 System.out.println("arrayTransMatrix: " +arrayTransMatrix[i-bOcount]);
                  float[][] newrow = matrixMultiply(A,row);
                  angCorrGT[i][0]=newrow[0][0];
                  angCorrGT[i][1]=newrow[1][0];
@@ -138,6 +140,7 @@ public class DTIGradTableCorrectionAfterTrans extends AlgorithmBase {
         }
 
     }
+    
 
     private float[][] matrixMultiply(TransMatrix A, float[][] B) {
         float[][] C = new float[4][B[0].length];

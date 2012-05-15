@@ -227,8 +227,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		} 
 		else if (command.equals("skipPre")) {
 			if (skipPreCheckbox.isSelected()) {
-				//transformMatDWICheckbox.setEnabled(false);
-				//transformDWICheckbox.setEnabled(false);
+				transformMatDWICheckbox.setEnabled(false);
+				transformDWICheckbox.setEnabled(false);
 				correctGradTransCheckbox.setEnabled(false);
 				labelInternal.setEnabled(false);
 				refImageNumText.setEnabled(false);              
@@ -254,8 +254,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				pipeline.nextButton.setActionCommand("next3");
 			}
 			else{
-			    //transformMatDWICheckbox.setEnabled(true);
-			    //transformDWICheckbox.setEnabled(true);
+			    transformMatDWICheckbox.setEnabled(true);
+			    transformDWICheckbox.setEnabled(true);
 				correctGradTransCheckbox.setEnabled(true);
 				labelInternal.setEnabled(true);
 				refImageNumText.setEnabled(true);              
@@ -402,6 +402,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				// Save the B0 to T2 transform matrix to the output directory:
 				b0MatrixFileName = new String( outputDir.getText() + imageB0.getImageName() + "_To_"
 						+ imageT2.getImageName() + ".mtx" );
+	            if(performEPICheckbox.isSelected()){
+	                transformB0MatCheckbox.setSelected(true);
+	            }
 				if (transformB0MatCheckbox.isSelected()) {
 					String message = "Using cost function, " + "Correlation ration";
 					message += ", the cost is " + Double.toString(reg3.getAnswer()) + ".\n";
@@ -435,6 +438,9 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 			// Save the transform matrices array:
 			TransMatrix[] arrayTransMatrix = reg35.getArrayTransMatrix2();
 			String arrayMatrixFileName = new String( outputDir.getText() + pipeline.DWIImage.getImageName() + "TransMats" + ".mtx");
+			if(performEPICheckbox.isSelected()){
+			    transformMatDWICheckbox.setSelected(true);
+			}
 			if (transformMatDWICheckbox.isSelected()) {
 				//createArrayTransMatrixTXT(); 
 				saveTransformMatrix( arrayMatrixFileName, arrayTransMatrix );
@@ -488,13 +494,13 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 				}
 				// Tell the parent DTIPipeline that the work is finished on this panel and update the pipeline variables:
 				if (performEPICheckbox.isSelected() && imageT2!= null){
-				pipeline.nextButton.setEnabled(true);
-				pipeline.nextButton.setActionCommand("next2");
-				
-				// The next step in the pipeline needs the following images:
-				pipeline.finishPreProcessingPanel( result35RegImage, imageT2, 
-						b0toStructMatrix, b0MatrixFileName, 
-						arrayTransMatrix, arrayMatrixFileName );
+    				pipeline.nextButton.setEnabled(true);
+    				pipeline.nextButton.setActionCommand("next2");
+    				
+    				// The next step in the pipeline needs the following images:
+    				pipeline.finishPreProcessingPanel( result35RegImage, imageT2, 
+    						b0toStructMatrix, b0MatrixFileName, 
+    						arrayTransMatrix, arrayMatrixFileName );
 				}
 				else{
 		           pipeline.nextButton.setEnabled(true);
@@ -511,7 +517,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 
 	/**
-	 * This method creates the B-Value/Gradient file for DTI Tab
+	 * This method creates the Trans Matrices Array file for DTI Preprocessing
 	 * 
 	 * @return
     public void createArrayTransMatrixTXT() {
@@ -841,11 +847,11 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		structOptPanel.add(transformB0Checkbox, gbc);
 
-		/*gbc.gridx = 0;
+		gbc.gridx = 0;
 		gbc.gridy++;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		structOptPanel.add(transformB0MatCheckbox, gbc);*/
+		structOptPanel.add(transformB0MatCheckbox, gbc);
 		
 	    gbc.gridx = 0;
 	    gbc.gridy++;
@@ -1048,14 +1054,14 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		outPanel.add(transformDWICheckbox, gbc);
 
-		/*gbc.gridx = 0;
+		gbc.gridx = 0;
 		gbc.gridy = 1;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
-		outPanel.add(transformMatDWICheckbox, gbc);*/
+		outPanel.add(transformMatDWICheckbox, gbc);
 
 		gbc.gridx = 0;
-		gbc.gridy = 1;
+		gbc.gridy = 2;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		outPanel.add(correctGradTransCheckbox, gbc);

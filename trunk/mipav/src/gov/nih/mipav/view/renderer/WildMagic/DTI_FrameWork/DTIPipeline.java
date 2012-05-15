@@ -1,54 +1,26 @@
 package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
-
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI;
-import gov.nih.mipav.model.algorithms.registration.AlgorithmRegOAR35D;
-import gov.nih.mipav.model.algorithms.registration.vabra.VabraAlgorithm;
 import gov.nih.mipav.model.file.DTIParameters;
-import gov.nih.mipav.model.file.FileIO;
-import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewImageFileFilter;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
-import gov.nih.mipav.view.dialogs.ActionDiscovery;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
-import gov.nih.mipav.view.renderer.WildMagic.Interface.JInterfaceBase;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Frame;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.io.File;
-import java.util.List;
 
-import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
 import javax.swing.border.EtchedBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -111,9 +83,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 	private JPanelEPIDistortionCorrection EPIpanel;
 
 	/** DOCUMENT ME! */
-	private ViewUserInterface userInterface;
-
-	/** DOCUMENT ME! */
 	protected JTabbedPane tabbedPane;
 
 	public ViewJFrameImage DWIframe;
@@ -124,12 +93,14 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 	public TransMatrix b0toStructMatrix;
 
-
-	private JComboBox comboBoxDTI_Algorithm;
     public float[][] gradients;
+    
     public float[][] bmatValues;
+    
     public float[] bvalues;
+    
     public int refImageNum;
+    
     public DefaultTableModel srcBvalGradTable;
 
 	// ~ Constructors
@@ -347,14 +318,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		       
 
 	}
-	
 
-    
-    private TitledBorder buildTitleBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
-                Color.black);
-    }
-    
     private TitledBorder buildGrayTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
                 Color.gray);
