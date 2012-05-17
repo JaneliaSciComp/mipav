@@ -271,6 +271,10 @@ public class JDialogDICOMTagEditor extends JDialogBase {
     public boolean wasDialogOkay() {
         return struckOkayButton;
     }
+    
+    public void setStruckOkayButton(boolean struckOkayButton) {
+        this.struckOkayButton = struckOkayButton;
+    }
 
     /**
      * builds the panel which allows user to accept or decline using this algorithm.
