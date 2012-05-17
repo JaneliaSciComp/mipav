@@ -155,6 +155,11 @@ implements ChangeListener {
         
     }
     
+    public ModelImage getColorimage()
+    {
+    	return m_kDTIColorImage;
+    }
+    
     public ModelImage getDTIimage() { 
 		return m_kDTIImage;
 	}

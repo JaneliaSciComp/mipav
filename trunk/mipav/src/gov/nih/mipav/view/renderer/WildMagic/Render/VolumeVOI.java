@@ -35,8 +35,8 @@ public class VolumeVOI extends VolumeObject
 	private VOIBase m_kVOI;
 	private Polyline m_kVOILine;
 	private Polyline m_kVOITicMarks;
-	private VolumeVOIEffect m_kVolumePreShader;
-	private VolumeVOIEffect m_kVolumePreShaderTransparent;
+	private VolumeVOIEffect m_kVOIShader;
+	private VolumePreRenderEffect m_kVOIPreShader;
 	private ZBufferState m_kZState = new ZBufferState();
 	private Vector3f m_kVolumeScale;
 	private ColorRGB m_kColor = new ColorRGB(1,1,0);
@@ -86,17 +86,17 @@ public class VolumeVOI extends VolumeObject
 			m_kVOITicMarks.dispose();
 			m_kVOITicMarks = null;
 		}
-		if ( m_kVolumePreShader != null )
+		if ( m_kVOIShader != null )
 		{
-			kRenderer.ReleaseResources( m_kVolumePreShader );
-			m_kVolumePreShader.dispose();
-			m_kVolumePreShader = null;
+			kRenderer.ReleaseResources( m_kVOIShader );
+			m_kVOIShader.dispose();
+			m_kVOIShader = null;
 		}
-		if ( m_kVolumePreShaderTransparent != null )
+		if ( m_kVOIPreShader != null )
 		{
-			kRenderer.ReleaseResources( m_kVolumePreShaderTransparent );
-			m_kVolumePreShaderTransparent.dispose();
-			m_kVolumePreShaderTransparent = null;
+			kRenderer.ReleaseResources( m_kVOIPreShader );
+			m_kVOIPreShader.dispose();
+			m_kVOIPreShader = null;
 		}
 		if ( m_kZState != null )
 		{
@@ -159,41 +159,26 @@ public class VolumeVOI extends VolumeObject
 			return;
 		}
 		m_kVOILine.DetachAllEffects();
-		if ( bSolid )
+		if ( bPreRender )
 		{
-			m_kVOILine.AttachEffect( m_kVolumePreShader );
+			m_kVOILine.AttachEffect( m_kVOIPreShader );
 		}
 		else
 		{
-			m_kVOILine.AttachEffect( m_kVolumePreShaderTransparent );
+			m_kVOILine.AttachEffect( m_kVOIShader );
 		}
 		m_kScene.DetachGlobalState(GlobalState.StateType.ALPHA);
 		m_kScene.DetachGlobalState(GlobalState.StateType.ZBUFFER);
-		if ( !bSolid )
-		{
-			m_kScene.AttachGlobalState(m_kAlphaTransparency);
-			m_kScene.AttachGlobalState(m_kZBufferTransparency);
-			m_kZBufferTransparency.Writable = false;
-		}
-		else
-		{
-			m_kScene.AttachGlobalState(m_kAlpha);
-			m_kScene.AttachGlobalState(m_kZState);
-		}
-		if ( (m_kVOITicMarks != null) && ((m_kVOI.getType() == VOI.LINE) || (m_kVOI.getType() == VOI.PROTRACTOR)  || (m_kVOI.getType() == VOI.ANNOTATION)) )
+		m_kScene.AttachGlobalState(m_kAlpha);
+		m_kScene.AttachGlobalState(m_kZState);
+			
+		if ( !bPreRender && (m_kVOITicMarks != null) && ((m_kVOI.getType() == VOI.LINE) || (m_kVOI.getType() == VOI.PROTRACTOR)  || (m_kVOI.getType() == VOI.ANNOTATION)) )
 		{
 			m_kScene.DetachChild(m_kVOITicMarks);
 			if ( m_kVOI.isActive() || (m_kVOI.getType() == VOI.ANNOTATION))
 			{
 				m_kVOITicMarks.DetachAllEffects();
-				if ( bSolid )
-				{
-					m_kVOITicMarks.AttachEffect( m_kVolumePreShader );
-				}
-				else
-				{
-					m_kVOITicMarks.AttachEffect( m_kVolumePreShaderTransparent );
-				}
+				m_kVOITicMarks.AttachEffect( m_kVOIShader );
 				m_kScene.AttachChild(m_kVOITicMarks);
 			}
 		}
@@ -241,8 +226,7 @@ public class VolumeVOI extends VolumeObject
 	 */
 	public void setBlend( float fBlend)
 	{
-		m_kVolumePreShader.Blend(fBlend);
-		m_kVolumePreShaderTransparent.Blend(fBlend);
+		m_kVOIShader.Blend(fBlend);
 	}
 
 	/**
@@ -279,8 +263,7 @@ public class VolumeVOI extends VolumeObject
 	public void setSlice( boolean bUseSlice, int iWhichSlice, float fSlice )
 	{
 		//System.err.println( (fSlice == m_kVOILine.VBuffer.GetPosition3fZ(0)) + " " + fSlice + " " + m_kVOILine.VBuffer.GetPosition3fZ(0) );
-		m_kVolumePreShader.SetSlice(bUseSlice, iWhichSlice, fSlice);
-		m_kVolumePreShaderTransparent.SetSlice(bUseSlice, iWhichSlice, fSlice);
+		m_kVOIShader.SetSlice(bUseSlice, iWhichSlice, fSlice);
 	}
 
 	/**
@@ -704,7 +687,7 @@ public class VolumeVOI extends VolumeObject
 		{
 			m_kVOITicMarks = new Polyline( kVBuffer, false, false );
 			m_kVOITicMarks.AttachGlobalState(m_kZState);
-			m_kVOITicMarks.AttachEffect( m_kVolumePreShader );
+			m_kVOITicMarks.AttachEffect( m_kVOIShader );
 			m_kVOITicMarks.Local.SetTranslate(m_kTranslate);
 		}
 		else
@@ -739,7 +722,7 @@ public class VolumeVOI extends VolumeObject
 		{
 			m_kVOITicMarks = new Polyline( kVBuffer, false, false );
 			m_kVOITicMarks.AttachGlobalState(m_kZState);
-			m_kVOITicMarks.AttachEffect( m_kVolumePreShader );
+			m_kVOITicMarks.AttachEffect( m_kVOIShader );
 			m_kVOITicMarks.Local.SetTranslate(m_kTranslate);
 		}
 		else
@@ -754,8 +737,8 @@ public class VolumeVOI extends VolumeObject
 	 */
 	private void scaleVOI()
 	{
-		m_kVolumePreShader = new VolumeVOIEffect(false);
-		m_kVolumePreShaderTransparent = new VolumeVOIEffect(true);
+		m_kVOIShader = new VolumeVOIEffect(false);
+		m_kVOIPreShader = new VolumePreRenderEffect(true, true, false);
 
 		m_kScene = new Node();
 		m_kCull = new CullState();
@@ -771,10 +754,17 @@ public class VolumeVOI extends VolumeObject
 		m_kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX()/(kImageA.getExtents()[0] - 1), 
 				m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
 				m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
+		
+
+        Vector3f kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX(), m_kVolumeImageA.GetScaleY(), m_kVolumeImageA.GetScaleZ()  );
+        Vector3f kExtentsScale = new Vector3f(1f/(kImageA.getExtents()[0] - 1), 
+                1f/(kImageA.getExtents()[1] - 1), 
+                1f/(kImageA.getExtents()[2] - 1)  );
 
 		Attributes kAttributes = new Attributes();
 		kAttributes.SetCChannels(0, 3);
 		kAttributes.SetPChannels(3);
+		kAttributes.SetTChannels(0, 3);
 
 		VertexBuffer kVBuffer = null;
 		if ( m_kVOI.getType() == VOI.POINT )
@@ -808,7 +798,10 @@ public class VolumeVOI extends VolumeObject
 			for ( int i = 0; i < kVBuffer.GetVertexQuantity(); i++ )
 			{
 				Vector3f kPos = new Vector3f( m_kVOI.get(i) );
-				kPos.Mult(m_kVolumeScale);
+	            kPos.Mult(kExtentsScale);
+	            kVBuffer.SetTCoord3(0, i, kPos);
+	            kPos.Mult(kVolumeScale);
+	            
 				kVBuffer.SetPosition3(i, kPos );
 				kVBuffer.SetColor3(0, i, m_kColor );
 			}
@@ -817,7 +810,7 @@ public class VolumeVOI extends VolumeObject
 		boolean bClosed = m_kVOI.isClosed();
 		m_kVOILine = new Polyline( kVBuffer, bClosed, true );
 		m_kVOILine.AttachGlobalState(m_kZState);
-		m_kVOILine.AttachEffect( m_kVolumePreShader );
+		m_kVOILine.AttachEffect( m_kVOIShader );
 		m_kVOILine.Local.SetTranslate(m_kTranslate);
 		m_kScene.AttachChild(m_kVOILine);
 		m_kScene.UpdateGS();
@@ -854,7 +847,7 @@ public class VolumeVOI extends VolumeObject
 		{
 			m_kVOITicMarks = new Polyline( kVBuffer, false, false );
 			m_kVOITicMarks.AttachGlobalState(m_kZState);
-			m_kVOITicMarks.AttachEffect( m_kVolumePreShader );
+			m_kVOITicMarks.AttachEffect( m_kVOIShader );
 			m_kVOITicMarks.Local.SetTranslate(m_kTranslate);
 		}
 		else
