@@ -1512,9 +1512,10 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                                 tagDialog = (JDialogDICOMTagEditor) e.getSource();
 
                                 if (tagDialog.wasDialogOkay()) {
+                                    // Prevent second entry when JDialogFileInfoDICOM window closes
+                                    tagDialog.setStruckOkayButton(false);
 
                                     if (tagDialog.applyToAllSlices()) { // apply change to all slices
-
                                         int i;
 
                                         if (imageA.getNDims() == 2) {
