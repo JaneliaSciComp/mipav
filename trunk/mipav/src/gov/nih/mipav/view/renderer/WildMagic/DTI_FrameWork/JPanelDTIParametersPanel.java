@@ -581,7 +581,7 @@ implements ListSelectionListener, ChangeListener {
 	 */
 	private void addTract( VOIContour kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ )
 	{
-		m_kImage = parentFrame.getImageA();
+		m_kImage = parentFrame.getColorimage();
 		int iXBound = m_kImage.getExtents()[0];
 		int iYBound = m_kImage.getExtents()[1];
 		int iZBound = m_kImage.getExtents()[2];

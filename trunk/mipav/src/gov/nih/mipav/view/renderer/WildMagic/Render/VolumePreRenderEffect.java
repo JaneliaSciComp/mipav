@@ -17,6 +17,7 @@
 //
 
 package gov.nih.mipav.view.renderer.WildMagic.Render;
+import WildMagic.LibFoundation.Mathematics.Vector3f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.ObjectSystem.StreamInterface;
 import WildMagic.LibGraphics.ObjectSystem.StringTree;
@@ -54,6 +55,24 @@ public class VolumePreRenderEffect extends ShaderEffect
         }
     }
     
+    public VolumePreRenderEffect( )
+    {
+    	// Uses object position and World matrix to compute position color.
+    	super(1);
+    	String kShaderText = new String (
+    			  "uniform mat4 WVPMatrix;"
+    			+ "uniform vec3 ConstantColor;"
+    			+ "void main() {"
+    		    // Transform the position from model space to clip space.
+    			+ "gl_Position = WVPMatrix*gl_Vertex;"
+    	    	+ "gl_FrontColor.rgb = ConstantColor;"
+    	    	+ "gl_FrontColor.a = 1;"
+    			+ "}"
+    			);
+    	m_kVShader.set( 0,  new VertexShader( "VolumePreRenderMatrix", kShaderText, true ) );
+    	m_kPShader.set( 0, new PixelShader( "PassThrough4", true ) );
+    }
+    
     /**
      * Set the blend value.
      * @param fValue blend value.
@@ -71,6 +90,23 @@ public class VolumePreRenderEffect extends ShaderEffect
         }
     }
 
+    public boolean SetColor( Vector3f kPos )
+    {
+        Program pkCProgram = GetCProgram(0);
+        if ( pkCProgram == null )
+        {
+            return false;
+        }
+        if ( pkCProgram.GetUC("ConstantColor") != null)
+        {
+            pkCProgram.GetUC("ConstantColor").GetData()[0] = kPos.X;
+            pkCProgram.GetUC("ConstantColor").GetData()[1] = kPos.Y;
+            pkCProgram.GetUC("ConstantColor").GetData()[2] = kPos.Z;
+            return true;
+        }    	
+        return false;
+    }
+    
     /* (non-Javadoc)
      * @see WildMagic.LibGraphics.Effects.ShaderEffect#OnLoadPrograms(int, WildMagic.LibGraphics.Shaders.Program, WildMagic.LibGraphics.Shaders.Program)
      */

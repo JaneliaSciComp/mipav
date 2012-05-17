@@ -15,6 +15,7 @@ import WildMagic.LibFoundation.Mathematics.Ellipsoid3f;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
 import WildMagic.LibFoundation.Mathematics.Vector2f;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
+import WildMagic.LibFoundation.Mathematics.Vector4f;
 import WildMagic.LibGraphics.Effects.ShaderEffect;
 import WildMagic.LibGraphics.Effects.VertexColor3Effect;
 import WildMagic.LibGraphics.Rendering.AlphaState;
@@ -47,7 +48,7 @@ public class VolumeDTI extends VolumeObject
 	private HashMap<Integer,Node>  m_kTubes = null;
 
 	/** Hashmap for multiple fiber bundles: */
-	private HashMap<Integer,ShaderEffect[]>  m_kShaders = null;
+	private HashMap<Integer,VolumePreRenderEffect[]>  m_kShaders = null;
 
 	/** Hashmap for multiple fiber bundles: */
 	private HashMap<Integer,Vector<VOIContour>> m_kGlyphs = null;
@@ -167,7 +168,7 @@ public class VolumeDTI extends VolumeObject
 		{
 			m_kTracts = new HashMap<Integer,Node>();
 			m_kGlyphs = new HashMap<Integer,Vector<VOIContour>>();
-			m_kShaders = new HashMap<Integer,ShaderEffect[]>();
+			m_kShaders = new HashMap<Integer,VolumePreRenderEffect[]>();
 			m_kTubes = new HashMap<Integer,Node>();
 			constantColor = new HashMap<Integer, ColorRGB>();
 		}        
@@ -211,10 +212,10 @@ public class VolumeDTI extends VolumeObject
 			m_kTracts.put( iIGroup, kTractNode );
 
 			
-			ShaderEffect[] shaders = new ShaderEffect[4];
+			VolumePreRenderEffect[] shaders = new VolumePreRenderEffect[4];
 			shaders[0] = new VolumePreRenderEffect(true, true, false); // pre-render non transparent
 			shaders[1] = new VolumePreRenderEffect(false, true, true); // pre-render transparent
-			shaders[2] = new VertexColor3Effect( ); // render in color non transparent
+			shaders[2] = new VolumePreRenderEffect();
 			m_kShaders.put( iIGroup, shaders );
 
 
@@ -466,7 +467,7 @@ public class VolumeDTI extends VolumeObject
 
 		if ( m_bDisplayEllipsoids || m_bDisplayCylinders ||  m_bDisplayArrows )
 		{
-			DisplayGlyphs( m_kVolumeImageA.GetImage(), kRenderer );
+			DisplayGlyphs( m_kVolumeImageA.GetImage(), kRenderer, bPreRender );
 		}
 		else if ( m_bDisplayTubes ) {
 			DisplayTubes(m_kVolumeImageA.GetImage(), kRenderer, bPreRender);
@@ -633,7 +634,7 @@ public class VolumeDTI extends VolumeObject
 	/**
 	 * Display a fiber bundle tract with a Glyph.
 	 */    
-	private void DisplayGlyphs( ModelImage kImage, Renderer kRenderer )
+	private void DisplayGlyphs( ModelImage kImage, Renderer kRenderer, boolean bPreRender )
 	{
 		if ( m_kGlyphs == null )
 		{
@@ -665,10 +666,13 @@ public class VolumeDTI extends VolumeObject
 		float maxBox = Math.max(xBox, Math.max(yBox, zBox));    
 		float fX, fY, fZ;
 
+        Vector3f kExtentsScale = new Vector3f(1f/(float)(m_iDimX - 1), 1f/(float)(m_iDimY - 1), 1f/(float)(m_iDimZ - 1) );
+		
 		while ( kIterator.hasNext() )
 		{
 			kKey = (Integer)kIterator.next();
 			kGlyphVector = m_kGlyphs.get(kKey);     
+			VolumePreRenderEffect[] kShader = m_kShaders.get(kKey);
 			for ( int i = 0; i < kGlyphVector.size(); i++ )
 			{
 				kContour = kGlyphVector.get(i);
@@ -743,28 +747,43 @@ public class VolumeDTI extends VolumeObject
 						}
 						else if ( m_bDisplayArrows )
 						{
-							m_kArrow.Local.Copy(kTransform);
-
-							m_kEllipseMaterial.Ambient = m_kColorEllipse;
-							m_kEllipseMaterial.Diffuse = m_kColorEllipse;
-							m_kScene.SetChild(0,m_kArrow);
-							m_kScene.UpdateGS();
-							m_kScene.DetachChild(m_kArrow);
-							kRenderer.Draw((TriMesh)m_kArrow.GetChild(0));
-							//kRenderer.Draw((TriMesh)m_kArrow.GetChild(1));
+							kGlyph = (TriMesh)m_kArrow.GetChild(0);
 						}
 						if ( kGlyph != null )
 						{
 							kGlyph.Local.Copy(kTransform);
 							kGlyph.AttachGlobalState(m_kZBuffer);
 							kGlyph.UpdateGS();
-
+							
+							if ( bPreRender )
+							{
+								// use a constant color shader w/above position...
+								kGlyph.AttachEffect( kShader[2] );
+								kGlyph.UpdateRS();
+								Vector3f kPosColor = new Vector3f(kPos);
+								kPosColor.Mult(kExtentsScale);
+								if ( !kShader[2].SetColor(kPosColor) )
+								{
+									kShader[2].LoadPrograms(kRenderer, 0, kRenderer.GetMaxColors(), kRenderer.GetMaxTCoords(),
+											kRenderer.GetMaxVShaderImages(), kRenderer.GetMaxPShaderImages());
+									kShader[2].SetColor(kPosColor);
+								}
+							}
+							else
+							{
+								// user regular light shader
+								kGlyph.AttachEffect( m_kLightShader );
+							}
+							
 							m_kEllipseMaterial.Ambient = m_kColorEllipse;
 							m_kEllipseMaterial.Diffuse = m_kColorEllipse;
 							m_kScene.SetChild(0,kGlyph);
 							m_kScene.UpdateGS();
+							m_kScene.UpdateRS();
 							m_kScene.DetachChild(kGlyph);
-							kRenderer.Draw(kGlyph);
+							kRenderer.Draw(kGlyph);							
+							
+							kGlyph.DetachAllEffects();
 						}
 					}
 					iCount++;
@@ -794,7 +813,7 @@ public class VolumeDTI extends VolumeObject
 			ColorRGB kColor1 = null;
 			for ( int i = 0; i < kTractNode.GetQuantity(); i++ )
 			{
-				ShaderEffect[] kShader = m_kShaders.get(iKey);
+				VolumePreRenderEffect[] kShader = m_kShaders.get(iKey);
 				if ( bPreRender )
 				{						
 					kTract = (Polyline)kTractNode.GetChild(i);
@@ -875,7 +894,7 @@ public class VolumeDTI extends VolumeObject
 			{
 				kTube = (TubeSurface)kTubeNode.GetChild(i);     
 				
-				ShaderEffect[] kShader = m_kShaders.get(iKey);
+				VolumePreRenderEffect[] kShader = m_kShaders.get(iKey);
 				if ( bPreRender )
 				{						
 					kTube.AttachEffect(kShader[0]);
