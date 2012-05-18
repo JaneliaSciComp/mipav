@@ -539,14 +539,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
 
     /**
-     * Finds values contained within this contour, based on the rangeFlag, ignorMin and ignoreMax.
+     * Finds values contained within this contour, based on the rangeFlag,
+     *  ignoreMinR, ignoreMaxR, ignoreMinG, ignoreMaxG, ignoreMinB, and ignoreMaxB.
      * @param kImage input image.
-     * @param ignoreMin intensity minimum.
-     * @param ignoreMax intensity maximum.
+     * @param kMin.
+     * @param kMax.
+     * @param kSum.
+     * @param ignoreMinR intensity minimum red.
+     * @param ignoreMaxR intensity maximum red.
+     * @param ignoreMinG intensity minimum green.
+     * @param ignoreMaxG intensity maximum green.
+     * @param ignoreMinB intensity minimum blue.
+     * @param ignoreMaxB intensity maximum blue.
      * @param rangeFlag flag indicating (between, outside, none).
      * @return list of values inside this contour that fit the parameters.
      */
-    public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMin, float ignoreMax, RangeType rangeFlag) {
+    public Vector<ColorRGB> calcRGBIntensity(ModelImage kImage, ColorRGB kMin, ColorRGB kMax, ColorRGB kSum, float ignoreMinR, float ignoreMaxR,
+            float ignoreMinG, float ignoreMaxG, float ignoreMinB, float ignoreMaxB, RangeType rangeFlag) {
         Vector<ColorRGB> values = new Vector<ColorRGB>();
         float r, g, b;
         Vector<Vector3f> kMaskPositions = getAllContourPoints();
@@ -561,10 +570,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
             r = kImage.getFloatC(x,y,z,1);
             g = kImage.getFloatC(x,y,z,2);
             b = kImage.getFloatC(x,y,z,3);
-            //TODO: Allow separate values for RGB ignore ranges
-            if ( !MipavUtil.inRange( ignoreMin, ignoreMax, r, rangeFlag ) &&
-                    !MipavUtil.inRange( ignoreMin, ignoreMax, g, rangeFlag ) &&
-                    !MipavUtil.inRange( ignoreMin, ignoreMax, b, rangeFlag ) &&
+  
+            if ( !MipavUtil.inRange( ignoreMinR, ignoreMaxR, r, rangeFlag ) &&
+                    !MipavUtil.inRange( ignoreMinG, ignoreMaxG, g, rangeFlag ) &&
+                    !MipavUtil.inRange( ignoreMinB, ignoreMaxB, b, rangeFlag ) && 
                     (!Float.isNaN(r)) && (!Float.isNaN(g)) && (!Float.isNaN(b)))
             {
                 ColorRGB kColor = new ColorRGB(r,g,b);
