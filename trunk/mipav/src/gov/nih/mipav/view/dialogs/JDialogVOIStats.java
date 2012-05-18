@@ -386,17 +386,56 @@ public class JDialogVOIStats extends JDialogBase
             
             //set min/max ranges for all VOIs that are in the process list
             for(int i=0; i<processList.size(); i++) {
-                try {
-                    processList.get(i).setMinimumIgnore(excluder.getLowerBound());
-                } catch(final NullPointerException npe) {
-                    processList.get(i).setMinimumIgnore(-Float.MAX_VALUE);
-                }
-                
-                try {
-                    processList.get(i).setMaximumIgnore(excluder.getUpperBound());
-                } catch(final NullPointerException npe) {
-                    processList.get(i).setMaximumIgnore(Float.MAX_VALUE);
-                }
+                if (image.isColorImage()) {
+                    try {
+                        processList.get(i).setMinimumIgnoreR(excluder.getLowerBoundR());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMinimumIgnoreR(-Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        processList.get(i).setMaximumIgnoreR(excluder.getUpperBoundR());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMaximumIgnoreR(Float.MAX_VALUE);
+                    } 
+                    
+                    try {
+                        processList.get(i).setMinimumIgnoreG(excluder.getLowerBoundG());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMinimumIgnoreG(-Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        processList.get(i).setMaximumIgnoreG(excluder.getUpperBoundG());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMaximumIgnoreG(Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        processList.get(i).setMinimumIgnoreB(excluder.getLowerBoundB());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMinimumIgnoreB(-Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        processList.get(i).setMaximumIgnoreB(excluder.getUpperBoundB());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMaximumIgnoreB(Float.MAX_VALUE);
+                    }
+                } // if (image.isColorImage())
+                else { // black and white image
+                    try {
+                        processList.get(i).setMinimumIgnore(excluder.getLowerBound());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMinimumIgnore(-Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        processList.get(i).setMaximumIgnore(excluder.getUpperBound());
+                    } catch(final NullPointerException npe) {
+                        processList.get(i).setMaximumIgnore(Float.MAX_VALUE);
+                    }
+                } // else black and white image
             }
             
             // only loading the image works because we have been changing
@@ -997,7 +1036,7 @@ public class JDialogVOIStats extends JDialogBase
             listPanel.setCheckBoxesEnabled();
         }
         
-        excluder = new JPanelPixelExclusionSelector(listPanel);
+        excluder = new JPanelPixelExclusionSelector(listPanel, image.isColorImage());
         
         checkboxSaveStats = new JCheckBox("Save statistics in header");
         checkboxSaveStats.setFont(serif12);
