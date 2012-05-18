@@ -632,7 +632,7 @@ public class PlugInAlgorithmGenerateFusion542d extends AlgorithmBase {
                 threshold(transformImage, thresholdIntensity); //all transformations are complete
             }
             
-            if(doShowPrefusion) {
+            if(doShowPrefusion || savePrefusion) {
                 fireProgressStateChanged(15, "Transform", "Creating prefusion images");
                 
                 ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
