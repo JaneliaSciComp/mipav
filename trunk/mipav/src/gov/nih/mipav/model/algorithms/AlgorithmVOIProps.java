@@ -1105,11 +1105,8 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
                     statsList[ indexOf( volumeDescription ) ] ||
                     statsList[ indexOf( areaDescription ) ] )
             {               
-                if(srcImage.isColorImage()) {
-                    stats.nVox = stats.valuesRGB.size();
-                } else {
-                    stats.nVox = stats.values.size();
-                }
+                
+                stats.nVox = stats.valuesRGB.size();
 
                 stats.area = stats.nVox * (fileInfo.getResolutions()[0] * fileInfo.getResolutions()[1]);
                 stats.volume = stats.area * fileInfo.getResolutions()[2]; 
