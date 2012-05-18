@@ -37,36 +37,69 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
     private static final long serialVersionUID = 1471564039185960351L;
 
     /** The lower bound of the exclusion */
-    private final JTextField boundA;
+    private JTextField boundA = null;
 
     /** The upper bound of the exclusion */
-    private final JTextField boundB;
+    private JTextField boundB = null;
+    
+    /** The lower red bound of the exclusion */
+    private JTextField boundLR = null;
+
+    /** The upper red bound of the exclusion */
+    private JTextField boundUR = null;
+    
+    /** The lower green bound of the exclusion */
+    private JTextField boundLG = null;
+
+    /** The upper green bound of the exclusion */
+    private JTextField boundUG = null;
+    
+    /** The lower blue bound of the exclusion */
+    private JTextField boundLB = null;
+
+    /** The upper blue bound of the exclusion */
+    private JTextField boundUB= null;
 
     /** Lists available exclusion types */
     private final JComboBox excludeSelection;
 
     /** The lower limit of the exclusion */
     private Float lowerLimit;
+    
+    private Float lowerLimitR;
+    
+    private Float lowerLimitG;
+    
+    private Float lowerLimitB;
 
     /** Whether pixels will be excluded from a calculation based on intensity values */
     private final JCheckBox permitExclusion;
 
     /** held for switching between states of the exclusion. */
     private Float upperLimit;
+    
+    private Float upperLimitR;
+    
+    private Float upperLimitG;
+    
+    private Float upperLimitB;
 
     /** The range type that this pixel exclusion selector covers. */
     private RangeType rangeFlag = RangeType.NO_RANGE;
     
     /** A reference to the JDialogVOIStatistic or JDialogVOIStats check box panel. */
     private JPanelStatisticsList checkBoxPanel;
+    
+    private boolean doColor;
 
     /**
      * Creates an exclusion panel which has a checkbox to make the range controls available, a selector to choose
      * the range controls (&quot;Between&quot;, &quot;Above&quot; and &quot;Below&quot;), and the range inputs for
      * these controls.
      */
-    public JPanelPixelExclusionSelector(JPanelStatisticsList checkBoxPanel) {
+    public JPanelPixelExclusionSelector(JPanelStatisticsList checkBoxPanel, boolean doColor) {
         super(new GridBagLayout());
+        this.doColor = doColor;
         this.setBorder(new TitledBorder(new EtchedBorder(), "Pixel Exclusion", TitledBorder.DEFAULT_JUSTIFICATION,
                 TitledBorder.DEFAULT_POSITION, MipavUtil.font12B));
 
@@ -77,7 +110,12 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 3;
+        if (!doColor) {
+            gbc.gridwidth = 3;
+        }
+        else {
+            gbc.gridwidth = 4;
+        }
         gbc.gridheight = 1;
         gbc.weightx = 1;
         gbc.weighty = 0;
@@ -107,34 +145,124 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
         gbc.insets = new Insets(1, 2, 2, 2);
         gbc.fill = GridBagConstraints.BOTH;
         add(excludeSelection, gbc);
-        boundA = new JTextField(3);
-        MipavUtil.makeNumericsOnly(boundA, true, true);
-        boundA.setEnabled(false);
-        gbc.gridy++;
-        gbc.insets = new Insets(7, 2, 7, 0);
-        gbc.gridwidth = 1;
-        gbc.weightx = .45;
-        add(boundA, gbc);
-        gbc.gridx++;
-        gbc.anchor = GridBagConstraints.CENTER;
-        gbc.weightx = .1;
-        gbc.insets = new Insets(7, 8, 7, 0);
-        add(new JLabel(" - "), gbc);
-
-        boundB = new JTextField(3);
-        MipavUtil.makeNumericsOnly(boundB, true, true);
-        boundB.setEnabled(false);
-        gbc.gridx++;
-        gbc.insets = new Insets(7, 0, 7, 2);
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = .45;
-        add(boundB, gbc);
+        if (!doColor) {
+            boundA = new JTextField(3);
+            MipavUtil.makeNumericsOnly(boundA, true, true);
+            boundA.setEnabled(false);
+            gbc.gridy++;
+            gbc.insets = new Insets(7, 2, 7, 0);
+            gbc.gridwidth = 1;
+            gbc.weightx = .45;
+            add(boundA, gbc);
+            gbc.gridx++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 8, 7, 0);
+            add(new JLabel(" - "), gbc);
+    
+            boundB = new JTextField(3);
+            MipavUtil.makeNumericsOnly(boundB, true, true);
+            boundB.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 0, 7, 2);
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = .45;
+            add(boundB, gbc);
+        } // if (!doColor)
+        else { // doColor
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 0, 7, 0);
+            add(new JLabel("R"), gbc);
+            boundLR = new JTextField(5);
+            MipavUtil.makeNumericsOnly(boundLR, true, true);
+            boundLR.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 2, 7, 0);
+            gbc.gridwidth = 1;
+            gbc.weightx = .45;
+            add(boundLR, gbc);
+            gbc.gridx++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 2, 7, 2);
+            add(new JLabel(" - "), gbc);
+    
+            boundUR = new JTextField(5);
+            MipavUtil.makeNumericsOnly(boundUR, true, true);
+            boundUR.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 0, 7, 2);
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = .45;
+            add(boundUR, gbc); 
+            
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 0, 7, 0);
+            add(new JLabel("G"), gbc);
+            boundLG = new JTextField(5);
+            MipavUtil.makeNumericsOnly(boundLG, true, true);
+            boundLG.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 2, 7, 0);
+            gbc.gridwidth = 1;
+            gbc.weightx = .45;
+            add(boundLG, gbc);
+            gbc.gridx++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 2, 7, 2);
+            add(new JLabel(" - "), gbc);
+    
+            boundUG = new JTextField(5);
+            MipavUtil.makeNumericsOnly(boundUG, true, true);
+            boundUG.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 0, 7, 2);
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = .45;
+            add(boundUG, gbc);
+            
+            gbc.gridx = 0;
+            gbc.gridy++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 0, 7, 0);
+            add(new JLabel("B"), gbc);
+            boundLB = new JTextField(5);
+            MipavUtil.makeNumericsOnly(boundLB, true, true);
+            boundLB.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 2, 7, 0);
+            gbc.gridwidth = 1;
+            gbc.weightx = .45;
+            add(boundLB, gbc);
+            gbc.gridx++;
+            gbc.anchor = GridBagConstraints.CENTER;
+            gbc.weightx = .1;
+            gbc.insets = new Insets(7, 2, 7, 2);
+            add(new JLabel(" - "), gbc);
+    
+            boundUB = new JTextField(5);
+            MipavUtil.makeNumericsOnly(boundUB, true, true);
+            boundUB.setEnabled(false);
+            gbc.gridx++;
+            gbc.insets = new Insets(7, 0, 7, 2);
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.weightx = .45;
+            add(boundUB, gbc);    
+        } // else doColor
     }
 
     /**
      * When state changes in some elements of the panel, the panel must make display changes; these changes are
      * registered here. When state the state of the checkbox changes (from checked to un- or vice-versa), the
-     * excluded selection's state is changed and the Exlusion range property is reset.
+     * excluded selection's state is changed and the Exclusion range property is reset.
      * 
      * <p>
      * Checks state of:
@@ -158,13 +286,32 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
                 selectRangeInput();
             } else {
                 excludeSelection.setEnabled(false);
-                boundA.setEnabled(false);
-                boundB.setEnabled(false);
-                rangeFlag = RangeType.NO_RANGE;
-
-                // storeLimitValues(); // store before blanking the values
-                boundA.setText("");
-                boundB.setText("");
+                if (doColor) {
+                    boundLR.setEnabled(false);
+                    boundUR.setEnabled(false);
+                    boundLG.setEnabled(false);
+                    boundUG.setEnabled(false);
+                    boundLB.setEnabled(false);
+                    boundUB.setEnabled(false);
+                    rangeFlag = RangeType.NO_RANGE;
+    
+                    // storeLimitValues(); // store before blanking the values
+                    boundLR.setText("");
+                    boundUR.setText("");  
+                    boundLG.setText("");
+                    boundUG.setText("");
+                    boundLB.setText("");
+                    boundUB.setText("");    
+                }
+                else {
+                    boundA.setEnabled(false);
+                    boundB.setEnabled(false);
+                    rangeFlag = RangeType.NO_RANGE;
+    
+                    // storeLimitValues(); // store before blanking the values
+                    boundA.setText("");
+                    boundB.setText("");
+                }
             }
         }
 
@@ -197,6 +344,102 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
                 return new Float(boundA.getText());
             } else {
                 return new Float(boundB.getText());
+            }
+        } catch (final NumberFormatException notANumber) {
+            return null;
+        } catch (final NullPointerException noNumber) {
+            return null;
+        }
+    }
+    
+    /**
+     * Returns the lower bound text as a number. May be too negative for some applications.
+     * 
+     * <p>
+     * There is a side-effect in that when the permitExclusion checkbox is unchecked, the lower bound returned is
+     * <CODE>null</CODE>. This means that relying on the upperbound also means relying on the text fields being
+     * editable as well.
+     * </p>
+     * 
+     * @return lower bound text as a Float; null is returned if the panel is not set to be used or one of the text
+     *         entries is empty or not a number.
+     */
+    public Float getLowerBoundR() {
+
+        if ( !permitExclusion.isSelected()) {
+            return null;
+        }
+
+        try {
+
+            if (Float.parseFloat(boundLR.getText()) < Float.parseFloat(boundUR.getText())) {
+                return new Float(boundLR.getText());
+            } else {
+                return new Float(boundUR.getText());
+            }
+        } catch (final NumberFormatException notANumber) {
+            return null;
+        } catch (final NullPointerException noNumber) {
+            return null;
+        }
+    }
+    
+    /**
+     * Returns the lower bound text as a number. May be too negative for some applications.
+     * 
+     * <p>
+     * There is a side-effect in that when the permitExclusion checkbox is unchecked, the lower bound returned is
+     * <CODE>null</CODE>. This means that relying on the upperbound also means relying on the text fields being
+     * editable as well.
+     * </p>
+     * 
+     * @return lower bound text as a Float; null is returned if the panel is not set to be used or one of the text
+     *         entries is empty or not a number.
+     */
+    public Float getLowerBoundG() {
+
+        if ( !permitExclusion.isSelected()) {
+            return null;
+        }
+
+        try {
+
+            if (Float.parseFloat(boundLG.getText()) < Float.parseFloat(boundUG.getText())) {
+                return new Float(boundLG.getText());
+            } else {
+                return new Float(boundUG.getText());
+            }
+        } catch (final NumberFormatException notANumber) {
+            return null;
+        } catch (final NullPointerException noNumber) {
+            return null;
+        }
+    }
+    
+    /**
+     * Returns the lower bound text as a number. May be too negative for some applications.
+     * 
+     * <p>
+     * There is a side-effect in that when the permitExclusion checkbox is unchecked, the lower bound returned is
+     * <CODE>null</CODE>. This means that relying on the upperbound also means relying on the text fields being
+     * editable as well.
+     * </p>
+     * 
+     * @return lower bound text as a Float; null is returned if the panel is not set to be used or one of the text
+     *         entries is empty or not a number.
+     */
+    public Float getLowerBoundB() {
+
+        if ( !permitExclusion.isSelected()) {
+            return null;
+        }
+
+        try {
+
+            if (Float.parseFloat(boundLB.getText()) < Float.parseFloat(boundUB.getText())) {
+                return new Float(boundLB.getText());
+            } else {
+                return new Float(boundUB.getText());
             }
         } catch (final NumberFormatException notANumber) {
             return null;
@@ -243,6 +486,102 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
             return null;
         }
     }
+    
+    /**
+     * Returns the upper bound text as a number. May be too positive for some applications.
+     * 
+     * <p>
+     * There is a side-effect in that when the permitExclusion checkbox is unchecked, the upper bound returned is
+     * <CODE>null</CODE>. This means that relying on the upperbound also means relying on the text fields being
+     * editable as well.
+     * </p>
+     * 
+     * @return upper bound text as a Float; null is returned if the panel is not set to be used or one of the text
+     *         entries is empty or not a number.
+     */
+    public Float getUpperBoundR() {
+
+        if ( !permitExclusion.isSelected()) {
+            return null;
+        }
+
+        try {
+
+            if (Float.parseFloat(boundLR.getText()) > Float.parseFloat(boundUR.getText())) {
+                return new Float(boundLR.getText());
+            } else {
+                return new Float(boundUR.getText());
+            }
+        } catch (final NumberFormatException notANumber) {
+            return null;
+        } catch (final NullPointerException noNumber) {
+            return null;
+        }
+    }
+    
+    /**
+     * Returns the upper bound text as a number. May be too positive for some applications.
+     * 
+     * <p>
+     * There is a side-effect in that when the permitExclusion checkbox is unchecked, the upper bound returned is
+     * <CODE>null</CODE>. This means that relying on the upperbound also means relying on the text fields being
+     * editable as well.
+     * </p>
+     * 
+     * @return upper bound text as a Float; null is returned if the panel is not set to be used or one of the text
+     *         entries is empty or not a number.
+     */
+    public Float getUpperBoundG() {
+
+        if ( !permitExclusion.isSelected()) {
+            return null;
+        }
+
+        try {
+
+            if (Float.parseFloat(boundLG.getText()) > Float.parseFloat(boundUG.getText())) {
+                return new Float(boundLG.getText());
+            } else {
+                return new Float(boundUG.getText());
+            }
+        } catch (final NumberFormatException notANumber) {
+            return null;
+        } catch (final NullPointerException noNumber) {
+            return null;
+        }
+    }
+    
+    /**
+     * Returns the upper bound text as a number. May be too positive for some applications.
+     * 
+     * <p>
+     * There is a side-effect in that when the permitExclusion checkbox is unchecked, the upper bound returned is
+     * <CODE>null</CODE>. This means that relying on the upperbound also means relying on the text fields being
+     * editable as well.
+     * </p>
+     * 
+     * @return upper bound text as a Float; null is returned if the panel is not set to be used or one of the text
+     *         entries is empty or not a number.
+     */
+    public Float getUpperBoundB() {
+
+        if ( !permitExclusion.isSelected()) {
+            return null;
+        }
+
+        try {
+
+            if (Float.parseFloat(boundLB.getText()) > Float.parseFloat(boundUB.getText())) {
+                return new Float(boundLB.getText());
+            } else {
+                return new Float(boundUB.getText());
+            }
+        } catch (final NumberFormatException notANumber) {
+            return null;
+        } catch (final NullPointerException noNumber) {
+            return null;
+        }
+    }
 
     /**
      * Sets the fields' value and accessability based on the state of the drop-down. &quot;Above&quot; will display
@@ -252,71 +591,182 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
      */
     public void selectRangeInput() {
         rangeFlag = RangeType.NO_RANGE;
-
-        if (excludeSelection.getSelectedItem().equals("Above")) {
-            rangeFlag = RangeType.BETWEEN;
-            storeLimitValues();
-            boundB.setEnabled(false);
-            boundB.setText(Float.toString(Float.MAX_VALUE));
-            boundA.setEnabled(true);
-
-            try {
-                boundA.setText(lowerLimit.toString());
-            } catch (final NullPointerException noLower) {
-                boundA.setText(Float.toString( -Float.MAX_VALUE));
-            }
-        } else if (excludeSelection.getSelectedItem().equals("Below")) {
-            rangeFlag = RangeType.BETWEEN;
-            storeLimitValues();
-            boundA.setEnabled(false);
-            boundA.setText(Float.toString( -Float.MAX_VALUE));
-            boundB.setEnabled(true);
-
-            try {
-                boundB.setText(upperLimit.toString());
-            } catch (final NullPointerException noUpper) {
+        if (doColor) {
+            if (excludeSelection.getSelectedItem().equals("Above")) {
+                rangeFlag = RangeType.BETWEEN;
+                storeLimitValues();
+                boundUR.setEnabled(false);
+                boundUR.setText(Float.toString(Float.MAX_VALUE));
+                boundLR.setEnabled(true);
+                boundUG.setEnabled(false);
+                boundUG.setText(Float.toString(Float.MAX_VALUE));
+                boundLG.setEnabled(true);
+                boundUB.setEnabled(false);
+                boundUB.setText(Float.toString(Float.MAX_VALUE));
+                boundLB.setEnabled(true);
+    
+                try {
+                    boundLR.setText(lowerLimitR.toString());
+                    boundLG.setText(lowerLimitG.toString());
+                    boundLB.setText(lowerLimitB.toString());
+                } catch (final NullPointerException noLower) {
+                    boundLR.setText(Float.toString( -Float.MAX_VALUE));
+                    boundLG.setText(Float.toString( -Float.MAX_VALUE));
+                    boundLB.setText(Float.toString( -Float.MAX_VALUE));
+                }
+            } else if (excludeSelection.getSelectedItem().equals("Below")) {
+                rangeFlag = RangeType.BETWEEN;
+                storeLimitValues();
+                boundLR.setEnabled(false);
+                boundLR.setText(Float.toString( -Float.MAX_VALUE));
+                boundUR.setEnabled(true);
+                boundLG.setEnabled(false);
+                boundLG.setText(Float.toString( -Float.MAX_VALUE));
+                boundUG.setEnabled(true);
+                boundLB.setEnabled(false);
+                boundLB.setText(Float.toString( -Float.MAX_VALUE));
+                boundUB.setEnabled(true);
+    
+                try {
+                    boundUR.setText(upperLimitR.toString());
+                    boundUG.setText(upperLimitG.toString());
+                    boundUB.setText(upperLimitB.toString());
+                } catch (final NullPointerException noUpper) {
+                    boundUR.setText(Float.toString(Float.MAX_VALUE));
+                    boundUG.setText(Float.toString(Float.MAX_VALUE));
+                    boundUB.setText(Float.toString(Float.MAX_VALUE));
+                }
+            } else if (excludeSelection.getSelectedItem().equals("Between")) {
+    
+                // set both text-inputs as needed, then make them editable
+                rangeFlag = RangeType.BETWEEN;
+                storeLimitValues();
+    
+                if (lowerLimit != null) {
+                    boundLR.setText(lowerLimitR.toString());
+                    boundLG.setText(lowerLimitG.toString());
+                    boundLB.setText(lowerLimitB.toString());
+                } else {
+                    boundLR.setText(Float.toString( -Float.MAX_VALUE));
+                    boundLG.setText(Float.toString( -Float.MAX_VALUE));
+                    boundLB.setText(Float.toString( -Float.MAX_VALUE));
+                }
+    
+                if (upperLimit != null) {
+                    boundUR.setText(upperLimitR.toString());
+                    boundUG.setText(upperLimitG.toString());
+                    boundUB.setText(upperLimitB.toString());
+                } else {
+                    boundUR.setText(Float.toString(Float.MAX_VALUE));
+                    boundUG.setText(Float.toString(Float.MAX_VALUE));
+                    boundUB.setText(Float.toString(Float.MAX_VALUE));
+                }
+    
+                boundLR.setEnabled(true);
+                boundUR.setEnabled(true);
+                boundLG.setEnabled(true);
+                boundUG.setEnabled(true);
+                boundLB.setEnabled(true);
+                boundUB.setEnabled(true);
+            } else if (excludeSelection.getSelectedItem().equals("Outside")) {
+                rangeFlag = RangeType.OUTSIDE;
+                storeLimitValues();
+    
+                // set both text-inputs as needed, then make them editable
+                if (lowerLimit != null) {
+                    boundLR.setText(lowerLimitR.toString());
+                    boundLG.setText(lowerLimitG.toString());
+                    boundLB.setText(lowerLimitB.toString());
+                } else {
+                    boundLR.setText(Float.toString( -Float.MAX_VALUE));
+                    boundLG.setText(Float.toString( -Float.MAX_VALUE));
+                    boundLB.setText(Float.toString( -Float.MAX_VALUE));
+                }
+    
+                if (upperLimit != null) {
+                    boundUR.setText(upperLimitR.toString());
+                    boundUG.setText(upperLimitG.toString());
+                    boundUB.setText(upperLimitB.toString());
+                } else {
+                    boundUR.setText(Float.toString(Float.MAX_VALUE));
+                    boundUG.setText(Float.toString(Float.MAX_VALUE));
+                    boundUB.setText(Float.toString(Float.MAX_VALUE));
+                }
+    
+                boundLR.setEnabled(true);
+                boundUR.setEnabled(true);
+                boundLG.setEnabled(true);
+                boundUG.setEnabled(true);
+                boundLB.setEnabled(true);
+                boundUB.setEnabled(true);
+            }    
+        } // if (doColor)
+        else { // black and white
+            if (excludeSelection.getSelectedItem().equals("Above")) {
+                rangeFlag = RangeType.BETWEEN;
+                storeLimitValues();
+                boundB.setEnabled(false);
                 boundB.setText(Float.toString(Float.MAX_VALUE));
-            }
-        } else if (excludeSelection.getSelectedItem().equals("Between")) {
-
-            // set both text-inputs as needed, then make them editable
-            rangeFlag = RangeType.BETWEEN;
-            storeLimitValues();
-
-            if (lowerLimit != null) {
-                boundA.setText(lowerLimit.toString());
-            } else {
+                boundA.setEnabled(true);
+    
+                try {
+                    boundA.setText(lowerLimit.toString());
+                } catch (final NullPointerException noLower) {
+                    boundA.setText(Float.toString( -Float.MAX_VALUE));
+                }
+            } else if (excludeSelection.getSelectedItem().equals("Below")) {
+                rangeFlag = RangeType.BETWEEN;
+                storeLimitValues();
+                boundA.setEnabled(false);
                 boundA.setText(Float.toString( -Float.MAX_VALUE));
+                boundB.setEnabled(true);
+    
+                try {
+                    boundB.setText(upperLimit.toString());
+                } catch (final NullPointerException noUpper) {
+                    boundB.setText(Float.toString(Float.MAX_VALUE));
+                }
+            } else if (excludeSelection.getSelectedItem().equals("Between")) {
+    
+                // set both text-inputs as needed, then make them editable
+                rangeFlag = RangeType.BETWEEN;
+                storeLimitValues();
+    
+                if (lowerLimit != null) {
+                    boundA.setText(lowerLimit.toString());
+                } else {
+                    boundA.setText(Float.toString( -Float.MAX_VALUE));
+                }
+    
+                if (upperLimit != null) {
+                    boundB.setText(upperLimit.toString());
+                } else {
+                    boundB.setText(Float.toString(Float.MAX_VALUE));
+                }
+    
+                boundA.setEnabled(true);
+                boundB.setEnabled(true);
+            } else if (excludeSelection.getSelectedItem().equals("Outside")) {
+                rangeFlag = RangeType.OUTSIDE;
+                storeLimitValues();
+    
+                // set both text-inputs as needed, then make them editable
+                if (lowerLimit != null) {
+                    boundA.setText(lowerLimit.toString());
+                } else {
+                    boundA.setText(Float.toString( -Float.MAX_VALUE));
+                }
+    
+                if (upperLimit != null) {
+                    boundB.setText(upperLimit.toString());
+                } else {
+                    boundB.setText(Float.toString(Float.MAX_VALUE));
+                }
+    
+                boundA.setEnabled(true);
+                boundB.setEnabled(true);
             }
-
-            if (upperLimit != null) {
-                boundB.setText(upperLimit.toString());
-            } else {
-                boundB.setText(Float.toString(Float.MAX_VALUE));
-            }
-
-            boundA.setEnabled(true);
-            boundB.setEnabled(true);
-        } else if (excludeSelection.getSelectedItem().equals("Outside")) {
-            rangeFlag = RangeType.OUTSIDE;
-            storeLimitValues();
-
-            // set both text-inputs as needed, then make them editable
-            if (lowerLimit != null) {
-                boundA.setText(lowerLimit.toString());
-            } else {
-                boundA.setText(Float.toString( -Float.MAX_VALUE));
-            }
-
-            if (upperLimit != null) {
-                boundB.setText(upperLimit.toString());
-            } else {
-                boundB.setText(Float.toString(Float.MAX_VALUE));
-            }
-
-            boundA.setEnabled(true);
-            boundB.setEnabled(true);
-        }
+        } // else black and white
     }
 
     /**
@@ -327,6 +777,33 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
     public void setLowerBound(final String floatValue) {
         boundA.setText(floatValue);
     }
+    
+    /**
+     * Set the lower red bound from the script dialog.
+     * 
+     * @param floatValue lower red bound string
+     */
+    public void setLowerBoundR(final String floatValue) {
+        boundLR.setText(floatValue);
+    }
+    
+    /**
+     * Set the lower green bound from the script dialog.
+     * 
+     * @param floatValue lower green bound string
+     */
+    public void setLowerBoundG(final String floatValue) {
+        boundLG.setText(floatValue);
+    }
+    
+    /**
+     * Set the lower blue bound from the script dialog.
+     * 
+     * @param floatValue lower blue bound string
+     */
+    public void setLowerBoundB(final String floatValue) {
+        boundLB.setText(floatValue);
+    }
 
     /**
      * Set the upper bound from the script dialog.
@@ -335,6 +812,33 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
      */
     public void setUpperBound(final String floatValue) {
         boundB.setText(floatValue);
+    }
+    
+    /**
+     * Set the upper red bound from the script dialog.
+     * 
+     * @param floatValue Maximum red value string
+     */
+    public void setUpperBoundR(final String floatValue) {
+        boundUR.setText(floatValue);
+    }
+    
+    /**
+     * Set the upper green bound from the script dialog.
+     * 
+     * @param floatValue Maximum green value string
+     */
+    public void setUpperBoundG(final String floatValue) {
+        boundUG.setText(floatValue);
+    }
+    
+    /**
+     * Set the upper blue bound from the script dialog.
+     * 
+     * @param floatValue Maximum blue value string
+     */
+    public void setUpperBoundB(final String floatValue) {
+        boundUB.setText(floatValue);
     }
 
     /**
@@ -345,29 +849,101 @@ public class JPanelPixelExclusionSelector extends JPanel implements ActionListen
      * @see Float#MIN_VALUE
      */
     protected void storeLimitValues() {
-
-        /*
-         * try to store the upper and lower bounds; only do so if they are valid values to store
-         */
-        try {
-
-            if ( !getUpperBound().isInfinite() && !getUpperBound().isNaN()
-                    && (getUpperBound().floatValue() != Float.MAX_VALUE)) {
-                upperLimit = getUpperBound();
+        
+        if (doColor) {
+            /*
+             * try to store the upper and lower bounds; only do so if they are valid values to store
+             */
+            try {
+    
+                if ( !getUpperBoundR().isInfinite() && !getUpperBoundR().isNaN()
+                        && (getUpperBoundR().floatValue() != Float.MAX_VALUE)) {
+                    upperLimitR = getUpperBoundR();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing t do */
             }
-        } catch (final NullPointerException inValidNumber) {
-            /* nothing t do */
-        }
-
-        try {
-
-            if ( !getLowerBound().isInfinite() && !getLowerBound().isNaN()
-                    && (getLowerBound().floatValue() != -Float.MAX_VALUE)) {
-                lowerLimit = getLowerBound();
+    
+            try {
+    
+                if ( !getLowerBoundR().isInfinite() && !getLowerBoundR().isNaN()
+                        && (getLowerBoundR().floatValue() != -Float.MAX_VALUE)) {
+                    lowerLimitR = getLowerBoundR();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing to do */
+            }  
+            
+            /*
+             * try to store the upper and lower bounds; only do so if they are valid values to store
+             */
+            try {
+    
+                if ( !getUpperBoundG().isInfinite() && !getUpperBoundG().isNaN()
+                        && (getUpperBoundG().floatValue() != Float.MAX_VALUE)) {
+                    upperLimitG = getUpperBoundG();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing t do */
             }
-        } catch (final NullPointerException inValidNumber) {
-            /* nothing to do */
-        }
+    
+            try {
+    
+                if ( !getLowerBoundG().isInfinite() && !getLowerBoundG().isNaN()
+                        && (getLowerBoundG().floatValue() != -Float.MAX_VALUE)) {
+                    lowerLimitG = getLowerBoundG();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing to do */
+            }
+            
+            /*
+             * try to store the upper and lower bounds; only do so if they are valid values to store
+             */
+            try {
+    
+                if ( !getUpperBoundB().isInfinite() && !getUpperBoundB().isNaN()
+                        && (getUpperBoundB().floatValue() != Float.MAX_VALUE)) {
+                    upperLimitB = getUpperBoundB();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing t do */
+            }
+    
+            try {
+    
+                if ( !getLowerBoundB().isInfinite() && !getLowerBoundB().isNaN()
+                        && (getLowerBoundB().floatValue() != -Float.MAX_VALUE)) {
+                    lowerLimitB = getLowerBoundB();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing to do */
+            }
+        } // if (doColor)
+        else { // black and white
+            /*
+             * try to store the upper and lower bounds; only do so if they are valid values to store
+             */
+            try {
+    
+                if ( !getUpperBound().isInfinite() && !getUpperBound().isNaN()
+                        && (getUpperBound().floatValue() != Float.MAX_VALUE)) {
+                    upperLimit = getUpperBound();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing t do */
+            }
+    
+            try {
+    
+                if ( !getLowerBound().isInfinite() && !getLowerBound().isNaN()
+                        && (getLowerBound().floatValue() != -Float.MAX_VALUE)) {
+                    lowerLimit = getLowerBound();
+                }
+            } catch (final NullPointerException inValidNumber) {
+                /* nothing to do */
+            }
+        } // else black and white
     }
     
     /**
