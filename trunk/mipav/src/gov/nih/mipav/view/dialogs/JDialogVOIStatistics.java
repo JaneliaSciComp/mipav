@@ -116,6 +116,18 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private float rangeMinimum = 0f;
+    
+    private float rangeMaximumR = 0f;
+    
+    private float rangeMinimumR = 0f;
+    
+    private float rangeMaximumG = 0f;
+    
+    private float rangeMinimumG  = 0f;
+    
+    private float rangeMaximumB = 0f;
+    
+    private float rangeMinimumB = 0f;
 
     /** List of selected VOIs. */
     protected JList selectedList = new JList();
@@ -434,23 +446,72 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         scriptRange = RangeType.valueOf(rangeFlag);
         
         if (scriptRange != RangeType.NO_RANGE) {
-            rangeMinimum = scriptParameters.getParams().getFloat("exclusion_range_min");
-            rangeMaximum = scriptParameters.getParams().getFloat("exclusion_range_max");
-
-            for (int i = 0; i < selectedList.getModel().getSize(); i++) {
-
-                try {
-                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(rangeMaximum);
-                } catch (final NullPointerException noMax) {
-                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(Float.MAX_VALUE);
+            if (image.isColorImage()) {
+                rangeMinimumR = scriptParameters.getParams().getFloat("exclusion_range_minr");
+                rangeMaximumR = scriptParameters.getParams().getFloat("exclusion_range_maxr");
+                rangeMinimumG = scriptParameters.getParams().getFloat("exclusion_range_ming");
+                rangeMaximumG = scriptParameters.getParams().getFloat("exclusion_range_maxg");
+                rangeMinimumB = scriptParameters.getParams().getFloat("exclusion_range_minb");
+                rangeMaximumB = scriptParameters.getParams().getFloat("exclusion_range_maxb");
+    
+                for (int i = 0; i < selectedList.getModel().getSize(); i++) {
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreR(rangeMaximumR);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreR(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreR(rangeMinimumR);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreR( -Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreG(rangeMaximumG);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreG(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreG(rangeMinimumG);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreG( -Float.MAX_VALUE);
+                    }
+                    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreB(rangeMaximumB);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreB(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreB(rangeMinimumB);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreB( -Float.MAX_VALUE);
+                    }
+                }    
+            } // if (image.isColorImage())
+            else { // black and white image
+                rangeMinimum = scriptParameters.getParams().getFloat("exclusion_range_min");
+                rangeMaximum = scriptParameters.getParams().getFloat("exclusion_range_max");
+    
+                for (int i = 0; i < selectedList.getModel().getSize(); i++) {
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(rangeMaximum);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(Float.MAX_VALUE);
+                    }
+    
+                    try {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(rangeMinimum);
+                    } catch (final NullPointerException noMax) {
+                        ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore( -Float.MAX_VALUE);
+                    }
                 }
-
-                try {
-                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(rangeMinimum);
-                } catch (final NullPointerException noMax) {
-                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore( -Float.MAX_VALUE);
-                }
-            }
+            } // else black and white image
         }
 
         checkList = scriptParameters.getParams().getList("stat_checklist").getAsBooleanArray();
@@ -483,12 +544,34 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_exclusion_range", outputOptionsPanel.getExcluder().getRangeFlag().name()));
 
         if (outputOptionsPanel.getExcluder().getRangeFlag() != RangeType.NO_RANGE) {
-            scriptParameters.getParams().put(
-                    ParameterFactory.newParameter("exclusion_range_min", outputOptionsPanel.getExcluder().getLowerBound()
-                            .floatValue()));
-            scriptParameters.getParams().put(
-                    ParameterFactory.newParameter("exclusion_range_max", outputOptionsPanel.getExcluder().getUpperBound()
-                            .floatValue()));
+            if (image.isColorImage()) {
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_minr", outputOptionsPanel.getExcluder().getLowerBoundR()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_maxr", outputOptionsPanel.getExcluder().getUpperBoundR()
+                                .floatValue()));    
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_ming", outputOptionsPanel.getExcluder().getLowerBoundG()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_maxg", outputOptionsPanel.getExcluder().getUpperBoundG()
+                                .floatValue()));   
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_minb", outputOptionsPanel.getExcluder().getLowerBoundB()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_maxb", outputOptionsPanel.getExcluder().getUpperBoundB()
+                                .floatValue()));    
+            }
+            else {
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_min", outputOptionsPanel.getExcluder().getLowerBound()
+                                .floatValue()));
+                scriptParameters.getParams().put(
+                        ParameterFactory.newParameter("exclusion_range_max", outputOptionsPanel.getExcluder().getUpperBound()
+                                .floatValue()));
+            }
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("output_precision", precision));
@@ -987,22 +1070,73 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         // NOTE: it might be better to do the setting through either the
         // algorithm or the VOI vector.
         for (int i = 0; i < selectedList.getModel().getSize(); i++) {
-
-            try {
-                //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
-                ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(outputOptionsPanel.getExcluder().getUpperBound()
-                        .floatValue());
-            } catch (final NullPointerException noMax) {
-                ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(Float.MAX_VALUE);
-            }
-
-            try {
-                //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
-                ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(outputOptionsPanel.getExcluder().getLowerBound()
-                        .floatValue());
-            } catch (final NullPointerException noMax) {
-                ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore( -Float.MAX_VALUE);
-            }
+            
+            if (image.isColorImage()) {
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreR(outputOptionsPanel.getExcluder().getUpperBoundR()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreR(Float.MAX_VALUE);
+                }
+    
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreR(outputOptionsPanel.getExcluder().getLowerBoundR()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreR( -Float.MAX_VALUE);
+                }    
+                
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreG(outputOptionsPanel.getExcluder().getUpperBoundG()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreG(Float.MAX_VALUE);
+                }
+    
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreG(outputOptionsPanel.getExcluder().getLowerBoundG()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreG( -Float.MAX_VALUE);
+                }
+                
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreB(outputOptionsPanel.getExcluder().getUpperBoundB()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnoreB(Float.MAX_VALUE);
+                }
+    
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreB(outputOptionsPanel.getExcluder().getLowerBoundB()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnoreB( -Float.MAX_VALUE);
+                }
+            } // if (image.isColorImage())
+            else { // black and white image
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(outputOptionsPanel.getExcluder().getUpperBound()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMaximumIgnore(Float.MAX_VALUE);
+                }
+    
+                try {
+                    //System.out.println( ((VOI) selectedList.getModel().getElementAt(i)).getName());
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore(outputOptionsPanel.getExcluder().getLowerBound()
+                            .floatValue());
+                } catch (final NullPointerException noMax) {
+                    ((VOI) selectedList.getModel().getElementAt(i)).setMinimumIgnore( -Float.MAX_VALUE);
+                }
+            } // else black and white image
         }
 
         processType = outputOptionsPanel.getProcessType();
@@ -1552,7 +1686,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             group.add(byContour);
             group.add(byContourSlice);
             group.add(byTotalVOI);
-            excluder = new JPanelPixelExclusionSelector(checkBoxPanel);
+            excluder = new JPanelPixelExclusionSelector(checkBoxPanel, image.isColorImage());
 
             add(byContour);
             add(byContourSlice);
