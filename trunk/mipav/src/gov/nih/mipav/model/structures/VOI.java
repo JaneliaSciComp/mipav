@@ -9,8 +9,6 @@ import gov.nih.mipav.view.ViewJFrameGraph;
 
 import java.awt.Color;
 import java.awt.Polygon;
-import java.io.FileOutputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Random;
@@ -400,11 +398,29 @@ public class VOI extends ModelSerialCloneable {
 	/** ID of the VOI, also used when choosing the display color. */
 	private short ID;
 
-	/** Sets the maximum intensity value for operations on images segmented by this VOI */
+	/** Sets the maximum intensity value for operations on  B & W images segmented by this VOI */
 	private float ignoreMax = -Float.MAX_VALUE;
 
-	/** Sets the minimum intensity value for operations on images segmented by this VOI */
+	/** Sets the minimum intensity value for operations on B & W images segmented by this VOI */
 	private float ignoreMin = Float.MAX_VALUE;
+	
+	/** Sets the maximum red intensity value for operations on RGB images segmented by this VOI */
+    private float ignoreMaxR = -Float.MAX_VALUE;
+
+    /** Sets the minimum red intensity value for operations on RGB images segmented by this VOI */
+    private float ignoreMinR = Float.MAX_VALUE;
+    
+    /** Sets the maximum green intensity value for operations on RGB images segmented by this VOI */
+    private float ignoreMaxG = -Float.MAX_VALUE;
+
+    /** Sets the minimum green intensity value for operations on RGB images segmented by this VOI */
+    private float ignoreMinG = Float.MAX_VALUE;
+    
+    /** Sets the maximum blue intensity value for operations on RGB images segmented by this VOI */
+    private float ignoreMaxB = -Float.MAX_VALUE;
+
+    /** Sets the minimum blue intensity value for operations on RGB images segmented by this VOI */
+    private float ignoreMinB = Float.MAX_VALUE;
 
 	/** Name of the VOI stored as a string. */
 	private String name;
@@ -543,6 +559,12 @@ public class VOI extends ModelSerialCloneable {
 		this.ID = kVOI.ID;
 		this.ignoreMax = kVOI.ignoreMax;
 		this.ignoreMin = kVOI.ignoreMin;
+		this.ignoreMaxR = kVOI.ignoreMaxR;
+        this.ignoreMinR = kVOI.ignoreMinR;
+        this.ignoreMaxG = kVOI.ignoreMaxG;
+        this.ignoreMinG = kVOI.ignoreMinG;
+        this.ignoreMaxB = kVOI.ignoreMaxB;
+        this.ignoreMinB = kVOI.ignoreMinB;
 
 		if ( kVOI.listenerList != null) {
 			kVOI.listenerList.getListenerCount(VOIListener.class);
@@ -1675,6 +1697,60 @@ public class VOI extends ModelSerialCloneable {
 	public float getMinimumIgnore() {
 		return ignoreMin;
 	}
+	
+	/**
+     * Accessor that returns the maximum of the range of red intensities to ignore.
+     *
+     * @return  The maximum.
+     */
+    public float getMaximumIgnoreR() {
+        return ignoreMaxR;
+    }
+
+    /**
+     * Accessor that returns the minimum of the range of red intensities to ignore.
+     *
+     * @return  The minimum.
+     */
+    public float getMinimumIgnoreR() {
+        return ignoreMinR;
+    }
+    
+    /**
+     * Accessor that returns the maximum of the range of green intensities to ignore.
+     *
+     * @return  The maximum.
+     */
+    public float getMaximumIgnoreG() {
+        return ignoreMaxG;
+    }
+
+    /**
+     * Accessor that returns the minimum of the range of green intensities to ignore.
+     *
+     * @return  The minimum.
+     */
+    public float getMinimumIgnoreG() {
+        return ignoreMinG;
+    }
+    
+    /**
+     * Accessor that returns the maximum of the range of blue intensities to ignore.
+     *
+     * @return  The maximum.
+     */
+    public float getMaximumIgnoreB() {
+        return ignoreMaxB;
+    }
+
+    /**
+     * Accessor that returns the minimum of the range of blue intensities to ignore.
+     *
+     * @return  The minimum.
+     */
+    public float getMinimumIgnoreB() {
+        return ignoreMinB;
+    }
 
 	/**
 	 * Accessor that returns the name of the VOI.
@@ -2544,6 +2620,60 @@ public class VOI extends ModelSerialCloneable {
 	public void setMinimumIgnore(float min) {
 		ignoreMin = min;
 	}
+	
+	/**
+     * Accessor that sets the maximum of the range of red intensities to ignore.
+     *
+     * @param  max  The maximum.
+     */
+    public void setMaximumIgnoreR(float max) {
+        ignoreMaxR = max;
+    }
+
+    /**
+     * Accessor that sets the minimum of the range of red intensities to ignore.
+     *
+     * @param  min  The minimum.
+     */
+    public void setMinimumIgnoreR(float min) {
+        ignoreMinR = min;
+    }
+    
+    /**
+     * Accessor that sets the maximum of the range of green intensities to ignore.
+     *
+     * @param  max  The maximum.
+     */
+    public void setMaximumIgnoreG(float max) {
+        ignoreMaxG = max;
+    }
+
+    /**
+     * Accessor that sets the minimum of the range of green intensities to ignore.
+     *
+     * @param  min  The minimum.
+     */
+    public void setMinimumIgnoreG(float min) {
+        ignoreMinG = min;
+    }
+    
+    /**
+     * Accessor that sets the maximum of the range of blue intensities to ignore.
+     *
+     * @param  max  The maximum.
+     */
+    public void setMaximumIgnoreB(float max) {
+        ignoreMaxB = max;
+    }
+
+    /**
+     * Accessor that sets the minimum of the range of blue intensities to ignore.
+     *
+     * @param  min  The minimum.
+     */
+    public void setMinimumIgnoreB(float min) {
+        ignoreMinB = min;
+    }
 
 	/**
 	 * Accessor that sets the VOI's name to the parameter.
