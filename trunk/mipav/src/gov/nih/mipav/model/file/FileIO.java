@@ -1535,7 +1535,8 @@ public class FileIO {
             float sliceThickness = -1;
             float sliceSpacing = -1;
 
-            // First check slice thickness tag:
+            boolean getValidZRes = false;
+            // First check slice spacing tag for getting validzRes:
             if ( (firstSliceTagTable.get("0018,0050") != null) || (firstSliceTagTable.get("0018,0088") != null)) {
 
                 if ((String) firstSliceTagTable.getValue("0018,0050") != null) {
@@ -1552,6 +1553,10 @@ public class FileIO {
                 if ((String) firstSliceTagTable.getValue("0018,0088") != null) {
                     try {
                         sliceSpacing = Float.parseFloat((String) firstSliceTagTable.getValue("0018,0088"));
+                        for (int m = 0; m < nImages; m++) {
+                            image.getFileInfo(m).setResolutions(sliceSpacing, 2);
+                        }
+                        getValidZRes = true;
                     } catch (final NumberFormatException nfe) {
                         Preferences.debug("0018,0088:\tInvalid float value found in slice spacing tag.",
                                 Preferences.DEBUG_FILEIO);
@@ -1559,22 +1564,53 @@ public class FileIO {
                 }
 
                 // System.err.println("Slice Spacing: " + sliceSpacing);
-                if (sliceSpacing != -1) {
+                if (sliceThickness == -1 && sliceSpacing != -1) {
                     sliceThickness = sliceSpacing;
                     // System.err.println("Slice Thickness: " + sliceThickness);
                 }
 
                 if (sliceThickness > 0) {
-
                     for (int m = 0; m < nImages; m++) {
                         image.getFileInfo(m).setSliceThickness(sliceThickness);
                     }
                 }
             }
 
-            // finally, if slice spacing and slice location failed to produce a z-res,
+            float sliceDifference = -1;
+
+            // if slice spacing tag wasn't there or was 0, check slice location (and take the difference)
+            if (!getValidZRes && (firstSliceTagTable.get("0020,1041") != null) && (sliceThickness == -1)) {
+
+                if ((String) firstSliceTagTable.getValue("0020,1041") != null) {
+                    sliceDifference = Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(1)).getTagTable()
+                            .getValue("0020,1041"))
+                            - Float.parseFloat((String) firstSliceTagTable.getValue("0020,1041"));
+
+                    // System.err.println("Slice difference: " + sliceDifference);
+                    if ( (Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
+                        image.getFileInfo(0).setResolutions(sliceDifference, 2);
+
+                        for (int m = 1; m < (nImages - 1); m++) {
+                            image.getFileInfo(m).setResolutions(
+                                    Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(m + 1)).getTagTable()
+                                            .getValue("0020,1041"))
+                                            - Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(m))
+                                                    .getTagTable().getValue("0020,1041")), 2);
+                        }
+
+                        if (nImages > 2) {
+                            image.getFileInfo(nImages - 1).setResolutions(
+                                    image.getFileInfo(nImages - 2).getResolution(2), 2);
+                        }
+                    }
+                    
+                    getValidZRes = true;
+                }
+            }
+            
+            // finally, if slice spacing failed to produce a z-res,
             // check for image position
-            if (firstSliceTagTable.get("0020,0032") != null) {
+            if (!getValidZRes && firstSliceTagTable.get("0020,0032") != null) {
                 double xLoc0 = ((FileInfoDicom) image.getFileInfo(0)).xLocation;
                 double yLoc0 = ((FileInfoDicom) image.getFileInfo(0)).yLocation;
                 double zLoc0 = ((FileInfoDicom) image.getFileInfo(0)).zLocation;
@@ -1612,43 +1648,20 @@ public class FileIO {
                     }
 
                     image.getFileInfo(nImages - 1).setResolutions((float) res3Dim, 2);
+                    getValidZRes = true;
                 }
             }
-
-            float sliceDifference = -1;
-
-            // if slice thickness tag wasn't there or was 0, check slice location (and take the difference)
-            if ( (firstSliceTagTable.get("0020,1041") != null) && (sliceThickness == -1)) {
-
-                if ((String) firstSliceTagTable.getValue("0020,1041") != null) {
-                    sliceDifference = Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(1)).getTagTable()
-                            .getValue("0020,1041"))
-                            - Float.parseFloat((String) firstSliceTagTable.getValue("0020,1041"));
-
-                    // System.err.println("Slice difference: " + sliceDifference);
-
-                    // TODO: is this check ever true?
-                    if ( (Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
-                        image.getFileInfo(0).setResolutions(sliceDifference, 2);
-
-                        for (int m = 1; m < (nImages - 1); m++) {
-                            image.getFileInfo(m).setResolutions(
-                                    Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(m + 1)).getTagTable()
-                                            .getValue("0020,1041"))
-                                            - Float.parseFloat((String) ((FileInfoDicom) image.getFileInfo(m))
-                                                    .getTagTable().getValue("0020,1041")), 2);
-                        }
-
-                        if (nImages > 2) {
-                            image.getFileInfo(nImages - 1).setResolutions(
-                                    image.getFileInfo(nImages - 2).getResolution(2), 2);
-                        }
-                    }
+            
+            //if calculations were not successful and sliceThickness tag exists, populate with slice thickness
+            if(!getValidZRes && sliceThickness != -1) {
+                for (int m = 0; m < nImages; m++) {
+                    image.getFileInfo(m).setResolutions(sliceThickness, 2);
                 }
+                getValidZRes = true;
             }
-
+            
             // see if we found z-res somewhere
-            if ( (sliceThickness == -1) && (sliceDifference == -1)) {
+            if (!getValidZRes) {
                 Preferences.debug("error calculating z-resolution in FileIO.readDicom()", Preferences.DEBUG_FILEIO);
             }
         }
