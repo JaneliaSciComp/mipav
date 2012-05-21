@@ -50,7 +50,9 @@ import java.util.*;
  *
  * <p>The calculated data is passed to ViewJFrameColocalization.</p>
  *
- * <p>References: 1.) Expectation Maximization Algorithm by Ismet Bayraktaroglu
+ * <p>References:</p>
+ * 
+ * <p>1.) Expectation Maximization Algorithm by Ismet Bayraktaroglu (ismet@bayraktaroglu.org)
  * Code for circles was originally found at 
  * http://www-cse.ucsd.edu/users/ibayrakt/java/em
  * but this site is no longer available.</p>
@@ -67,7 +69,6 @@ import java.util.*;
  * <p>5.) Principles of Data Mining by David Hand, Heikki Mannila, and Padhraic Smith, A Bradford Book The MIT Press,
  * 2001, pp. 260 - 265, 281 - 284, 315 - 323.</p>
  */
-
 public class AlgorithmColocalizationEM extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
