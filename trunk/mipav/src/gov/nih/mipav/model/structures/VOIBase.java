@@ -560,6 +560,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
         float r, g, b;
         Vector<Vector3f> kMaskPositions = getAllContourPoints();
         //getAllContourPoints();
+        boolean firstValue = true;
         for ( int i = 0; i < kMaskPositions.size(); i++ )
         {
             Vector3f kPos = kMaskPositions.elementAt(i);
@@ -578,8 +579,9 @@ public abstract class VOIBase extends Vector<Vector3f> {
             {
                 ColorRGB kColor = new ColorRGB(r,g,b);
                 values.add( kColor );
-                if ( i == 0 )
+                if (firstValue)
                 {
+                    firstValue = false;
                     kMin.Copy(kColor);
                     kMax.Copy(kColor);
                 }
