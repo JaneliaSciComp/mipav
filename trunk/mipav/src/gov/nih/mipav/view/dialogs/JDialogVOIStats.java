@@ -519,7 +519,24 @@ public class JDialogVOIStats extends JDialogBase
                 
                 for(int k=0; k < statLabels.length; k++) { //all selected statistics
                     name = statLabels[k];
-                    UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(name).toString()+"\n");
+                    if (image.isColorImage()) {
+                        if ((name.equals("Min Intensity")) || (name.equals("Max Intensity")) ||
+                            (name.equals("Avg Voxel Intensity")) || (name.equals("Std Dev of Intensity")) ||
+                            (name.equals("Sum Intensities")) || (name.equals("Center of Mass")) ||
+                            (name.equals("Coefficient of skewness")) || (name.equals("Coefficient of kurtosis")) ||
+                            (name.equals("Median Intensity")) || (name.equals("Mode Intensity")) ||
+                            (name.equals("Mode Count"))) {
+                            UI.setDataText("  "+name+"Red\t\t= "+properties.getVOIStatistic(name+"Red").toString()+"\n"); 
+                            UI.setDataText("  "+name+"Green\t\t= "+properties.getVOIStatistic(name+"Green").toString()+"\n");
+                            UI.setDataText("  "+name+"Blue\t\t= "+properties.getVOIStatistic(name+"Blue").toString()+"\n");  
+                        }
+                        else {
+                            UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(name).toString()+"\n");    
+                        }
+                    }
+                    else { 
+                        UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(name).toString()+"\n");
+                    }
                 }
             }
         }
