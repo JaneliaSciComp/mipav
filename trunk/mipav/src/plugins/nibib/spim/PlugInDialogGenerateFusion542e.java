@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.Iterator;
 
 import javax.swing.*;
@@ -165,6 +166,7 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
     private JTextField transformAriWeightText, baseAriWeightText, transformGeoWeightText, baseGeoWeightText;
     /** Weighting scheme for arithmetic and geometric weighting, unweighted by default. */
     private double baseAriWeight = 1, transformAriWeight = 1, baseGeoWeight = 1, transformGeoWeight = 1;
+    private JTextField rangeFusionText;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -306,7 +308,7 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
     	
     	baseImage = scriptParameters.getParams().getString("baseImage");
     	
-    	populateFileLists();
+    	populateFileLists(null);
     	
     } //end setGUIFromParams()
 
@@ -382,7 +384,11 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
         mtxPanel.add(transformPanel, gbc);
         gbc.gridy++;
         
-        JLabel dirMove = new JLabel("Enter translation to apply to transformed image (needed since padding occurs)");
+        rangeFusionText = gui.buildField("Range of images to fuse (ex. 3-7, 12, 18-21, etc.): ", " ");
+        mtxPanel.add(rangeFusionText.getParent(), gbc);
+        gbc.gridy++;
+        
+        JLabel dirMove = new JLabel("Enter translation to apply to transformed image (optional)");
         mtxPanel.add(dirMove, gbc);
         gbc.gridy++;
         
@@ -866,6 +872,7 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
 	            return false;
 	        }
 	    } catch(Exception e) {
+	        
 	        MipavUtil.displayError("Invalid matrix file.");
 	        return false;
 	    }
@@ -876,9 +883,32 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
 	    
 	    mode = (SampleMode) modeOption.getSelectedItem();
 	    
+	    String rangeFusion = rangeFusionText.getText();
+	    HashSet<Integer> includeRange = new HashSet<Integer>();
+	    if(rangeFusion != null) {  
+	        String[] ranges = rangeFusion.split("[,;]");
+	        for(int i=0; i<ranges.length; i++) {
+	            String[] subset = ranges[i].split("-");
+	            int lowerBound = -1, bound = 0;
+	            for(int j=0; j<subset.length; j++) {
+	                try {
+	                    bound = Integer.valueOf(subset[j].trim());
+	                    if(lowerBound == -1) {
+	                        lowerBound = bound;
+	                        includeRange.add(lowerBound);
+	                    } 
+	                } catch(NumberFormatException e) {
+	                    Preferences.debug("Invalid range specified: "+bound, Preferences.DEBUG_ALGORITHM);
+	                }
+	            }
+	            
+	            for(int k=lowerBound+1; k<=bound; k++) {
+                    includeRange.add(k);
+                }
+	        }
+	    }
 	    
-	    
-	    if(!populateFileLists()) {
+	    if(!populateFileLists(includeRange)) {
 	        return false;
 	    }
 		
@@ -899,7 +929,7 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
 		return true;
 	} //end setVariables()
 
-    private boolean populateFileLists() {
+    private boolean populateFileLists(HashSet<Integer> includeRange) {
         ArrayList<File> baseImageList = new ArrayList<File>();
         ArrayList<File> transformImageList = new ArrayList<File>();
         try {
@@ -948,6 +978,17 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
             return false;
         }
         
+        if(includeRange != null) {
+            int originalSize = baseImageList.size();
+            for(int i=originalSize; i>0; i--) {
+                int index = getIndex(baseImageList.get(i-1));
+                if(!includeRange.contains(index)) {
+                    baseImageList.remove(i-1);
+                    transformImageList.remove(i-1);
+                }
+            }
+        }
+        
         FileCompare f = new FileCompare();
         Collections.sort(baseImageList, f);
         Collections.sort(transformImageList, f);
@@ -958,6 +999,35 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
         return true;
     }
     
+    private int getIndex(File file) {
+        String name = file.getName();
+        int upper = -1, lower = -1;
+        boolean inRange = false;
+        for(int i=name.length(); i > 0; i--) {
+            if(Character.isDigit(name.charAt(i-1))) {
+                if(!inRange) {
+                    upper = i;
+                    lower = i;
+                    inRange = true;
+                } else {
+                    lower = i;
+                }
+            } else {
+                inRange = false;
+                if(upper != -1 && lower != -1) {
+                    break;
+                }
+            }
+        }
+        
+        try {
+            return Integer.valueOf(name.substring(lower-1, upper)).intValue();
+        } catch(Exception e) {
+            return -1;
+        }
+    }
+
+
     private class FileCompare implements Comparator<File> {
         public int compare(File arg0, File arg1) {
             if(arg0.getName().length() != arg1.getName().length()) {
