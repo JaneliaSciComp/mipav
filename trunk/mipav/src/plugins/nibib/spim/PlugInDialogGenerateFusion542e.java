@@ -36,6 +36,8 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -45,8 +47,11 @@ import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Vector;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.text.JTextComponent;
 
 import nibib.spim.PlugInAlgorithmGenerateFusion542e.SampleMode;
 
@@ -167,6 +172,7 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
     /** Weighting scheme for arithmetic and geometric weighting, unweighted by default. */
     private double baseAriWeight = 1, transformAriWeight = 1, baseGeoWeight = 1, transformGeoWeight = 1;
     private JTextField rangeFusionText;
+    private JTable fusionConfirmTable;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -889,7 +895,7 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
 	        String[] ranges = rangeFusion.split("[,;]");
 	        for(int i=0; i<ranges.length; i++) {
 	            String[] subset = ranges[i].split("-");
-	            int lowerBound = -1, bound = 0;
+	            int lowerBound = -1, bound = -1;
 	            for(int j=0; j<subset.length; j++) {
 	                try {
 	                    bound = Integer.valueOf(subset[j].trim());
@@ -908,27 +914,98 @@ public class PlugInDialogGenerateFusion542e extends JDialogScriptableBase implem
 	        }
 	    }
 	    
+	    if(includeRange.size() == 0) {
+	        includeRange = null;
+	    }
+	   
 	    if(!populateFileLists(includeRange)) {
 	        return false;
 	    }
 		
-	    StringBuffer transformMessage = new StringBuffer();
+	    Object[][] transformMessage = new Object[baseImageAr.length][];
 	    for(int i=0; i<baseImageAr.length; i++) {
-	        transformMessage.append("Image ").append(transformImageAr[i].getName()).append(" transformed to ").append(baseImageAr[i].getName()).append("\n");
+	        transformMessage[i] = new Object[1];
+	        transformMessage[i][0] = "Image "+transformImageAr[i].getName()+" transformed to "+baseImageAr[i].getName();
 	    }
-	    JTextArea area = new JTextArea("Proceed with the following operations?\n"+transformMessage);
-	    area.setEditable(false);
-	    JScrollPane scroll = new JScrollPane(area);
+	    
+	    String[] columns = {"Proceed with the following operations?"};
+	    
+	    DefaultTableModel d = new DefaultTableModel() {
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+	    };
+	    d.setColumnCount(1);
+	    d.setColumnIdentifiers(columns);
+	    for(int i=0; i<baseImageAr.length; i++) {
+	        d.addRow(transformMessage[i]);
+	    }
+	    
+	    fusionConfirmTable = new JTable();
+
+	    fusionConfirmTable.setModel(d);
+
+	    fusionConfirmTable.addKeyListener(new KeyListener() {
+
+            public void keyPressed(KeyEvent key) {
+              
+                switch(key.getKeyCode()) {
+               
+                case KeyEvent.VK_DELETE:
+                case KeyEvent.VK_BACK_SPACE:
+                    doDeleteRows();
+                }
+            }
+
+            
+
+            public void keyReleased(KeyEvent key) {}
+
+            public void keyTyped(KeyEvent key) {}
+	        
+	    });
+	    
+	    fusionConfirmTable.setRequestFocusEnabled(true);
+	    fusionConfirmTable.setFocusable(true);
+	    
+	    JScrollPane scroll = new JScrollPane(fusionConfirmTable);
 	    scroll.setPreferredSize(new Dimension(400, 300));
 	    
 	    int returnOption = JOptionPane.showConfirmDialog(this, scroll, "Algorithm run confirm", JOptionPane.YES_NO_OPTION);
-	    if(returnOption == JOptionPane.NO_OPTION) {
+	    if(returnOption != JOptionPane.YES_OPTION) {
 	        return false;
+	    }
+	    
+	    
+	    
+	    DefaultTableModel dReturn = (DefaultTableModel) fusionConfirmTable.getModel();
+	    if(dReturn.getRowCount() != baseImageAr.length) {
+	        File[] baseImageArRevised = new File[dReturn.getRowCount()];
+	        File[] transformImageArRevised = new File[dReturn.getRowCount()];
+	        
+	        int index = 0;
+	        for(int i=0; i<dReturn.getRowCount(); i++) {
+	            while(!((Vector)dReturn.getDataVector().elementAt(i)).elementAt(0).toString().contains(baseImageAr[index].getName())) {
+	                index++;
+	            }
+	            baseImageArRevised[i] = baseImageAr[index];
+	            transformImageArRevised[i] = transformImageAr[index];
+	        }
+	        
+	        baseImageAr = baseImageArRevised;
+	        transformImageAr = transformImageArRevised;
 	    }
 	    
 		return true;
 	} //end setVariables()
 
+	private void doDeleteRows() {
+        int[] rows = fusionConfirmTable.getSelectedRows();
+        for(int i=rows.length-1; i>=0; i--) {
+            ((DefaultTableModel)fusionConfirmTable.getModel()).removeRow(rows[i]);
+        }
+    }
+	
     private boolean populateFileLists(HashSet<Integer> includeRange) {
         ArrayList<File> baseImageList = new ArrayList<File>();
         ArrayList<File> transformImageList = new ArrayList<File>();
