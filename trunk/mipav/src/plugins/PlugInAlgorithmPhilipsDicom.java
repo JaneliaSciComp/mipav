@@ -94,37 +94,46 @@ public class PlugInAlgorithmPhilipsDicom extends AlgorithmBase {
         
         for(int i=0; i<srcImage.getFileInfo().length; i++) {
             FileInfoDicom fileInfo = ((FileInfoDicom)srcImage.getFileInfo(i));
-            
-            fileInfo.setDataType(DataType.DOUBLE.getLegacyNum());
-            fileInfo.getTagTable().setValue("0028,1053", rescaleSlopeTag / scaleSlopeTag);
+
+            fileInfo.getTagTable().setValue("0028,1052", (rescaleInterceptTag / (scaleSlopeTag*rescaleSlopeTag)) / 10.0);
+            fileInfo.getTagTable().setValue("0028,1053", (rescaleSlopeTag / (scaleSlopeTag*rescaleSlopeTag)) / 10.0);
             fileInfo.getTagTable().setValue("2005,100E", 1);
-            
+            fileInfo.setRescaleIntercept((rescaleInterceptTag / (scaleSlopeTag*rescaleSlopeTag)) / 10.0);
+            fileInfo.setRescaleSlope((rescaleSlopeTag / (scaleSlopeTag*rescaleSlopeTag)) / 10.0);
             destImage.setFileInfo(fileInfo, i);
             srcImage.getFileInfo()[i] = null;
         }
         
-        Preferences.data("Philips scale slope tag (2005,100E) set to 1\nNew rescale slope tag value: "+(rescaleSlopeTag / scaleSlopeTag));
+        Preferences.data("Philips scale slope tag (2005,100E) set to 1\nNew rescale slope tag value: "+(rescaleSlopeTag / (scaleSlopeTag*rescaleSlopeTag)) / 10.0);
         
+        double newRescaleInterceptTag = Double.valueOf(((FileInfoDicom)destImage.getFileInfo()[0]).getTagTable().getValue("0028,1052").toString());
+        double newRescaleSlopeTag =  Double.valueOf(((FileInfoDicom)destImage.getFileInfo()[0]).getTagTable().getValue("0028,1053").toString());
+                
         double x = 0;
         for(int i=0; i<srcImage.getDataSize(); i++) {
             if(i%1000 == 0) {
                 fireProgressStateChanged((int)(i/1200.0));
             }
-            
             x = srcImage.getDouble(i);
-            x = x - rescaleInterceptTag;
-            x = x*(1/scaleSlopeTag);
-            x = x + rescaleInterceptTag;
-            
+            if(x != 0) {
+                //System.out.print("At y:"+i%srcImage.getExtents()[0]+"x: "+i/srcImage.getExtents()[0]+" the value: "+x+" is changed to ");
+                
+                x = x - rescaleInterceptTag;
+                x = (int)(x/rescaleSlopeTag);
+                x = x*newRescaleSlopeTag;
+                x = x+newRescaleInterceptTag;
+                //System.out.println(x);
+            }
             destImage.set(i, x);
         }
         
         destImage.calcMinMax();
         destImage.setImageName(srcImage.getImageName()+"_rescaled", true);
+        ViewUserInterface.getReference().registerImage(destImage);
 
         srcImage.getParentFrame().setVisible(false);
         srcImage.getParentFrame().close();
-        //ViewUserInterface.getReference().unRegisterImage(srcImage);
+        ViewUserInterface.getReference().unRegisterImage(srcImage);
         srcImage.disposeLocal();
         
         fireProgressStateChanged(70);     
