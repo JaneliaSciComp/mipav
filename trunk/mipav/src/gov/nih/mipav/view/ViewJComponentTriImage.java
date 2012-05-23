@@ -13,6 +13,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -1772,8 +1773,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         int i, j, index;
         int[] iterFactors = imageActive.getVolumeIterationFactors();
 
-        Vector3f paintPoint = new Vector3f();
-        Vector3f patientPaintPoint = new Vector3f();
+        Vector3d paintPoint = new Vector3d();
+        Vector3d patientPaintPoint = new Vector3d();
         final int xDim = imageActive.getExtents()[0];
         final int yDim = imageActive.getExtents()[1];
         final int zDim = imageActive.getExtents()[2];
@@ -1797,8 +1798,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
                     final int idx = ( (heightCursor * brushXDim) + widthCursor);
                     if (paintBrush.get(idx)) {
 
-                        patientPaintPoint.X = (float) (x + width);
-                        patientPaintPoint.Y = (float) (y + height);
+                        patientPaintPoint.X =  (x + width);
+                        patientPaintPoint.Y =  (y + height);
                         patientPaintPoint.Z = slice;
                         MipavCoordinateSystems.patientToFile(patientPaintPoint, paintPoint, imageActive, orientation);
                         if ( ( (paintPoint.X <= (xDim - 1)) && (paintPoint.X >= 0)) && (paintPoint.Y <= (yDim - 1))
