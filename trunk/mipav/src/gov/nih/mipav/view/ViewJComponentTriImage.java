@@ -1787,10 +1787,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
 
             final double minResol = Math.min(resolutionX, resolutionY);
 
-            for (height = 0, heightCursor = 0; heightCursor < brushYDim; heightCursor++, height += minResol
+            for (height = 0, heightCursor = 0; (heightCursor < brushYDim) && ((y + height) <= (imageDim.height-1));
+                    heightCursor++, height += minResol
                     / resolutionY) {
 
-                for (width = 0, widthCursor = 0; widthCursor < brushXDim; widthCursor++, width += minResol
+                for (width = 0, widthCursor = 0; (widthCursor < brushXDim) && ((x + width) <= (imageDim.width - 1));
+                        widthCursor++, width += minResol
                         / resolutionX) {
                     final int idx = ( (heightCursor * brushXDim) + widthCursor);
                     if (paintBrush.get(idx)) {
