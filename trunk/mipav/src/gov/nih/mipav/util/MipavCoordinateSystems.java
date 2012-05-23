@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import WildMagic.LibFoundation.Mathematics.Vector2f;
+import WildMagic.LibFoundation.Mathematics.Vector3d;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 
@@ -514,6 +515,80 @@ public class MipavCoordinateSystems {
         pOut.X = MipavMath.round(modelPoint[0]);
         pOut.Y = MipavMath.round(modelPoint[1]);
         pOut.Z = MipavMath.round(modelPoint[2]);
+    }
+    
+    /**
+     * PatientToFile transform. Transforms points that are in PatientCoordinates into FileCoordinates space, based on
+     * the ModelImage and the given oriented view -- either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT. Always allows for flipping of the axies using the image
+     * orientation information as needed.
+     * 
+     * @param pIn the FileCoordinates Point
+     * @param pOut the Point in PatientCoordinates
+     * @param image the ModelImage for which the point is being transformed.
+     * @param orientation the desired PatientCoordinates orientation.
+     */
+    public static final void patientToFile(final Vector3d pIn, final Vector3d pOut, final ModelStorageBase image,
+            final int orientation) {
+        MipavCoordinateSystems.patientToFile(pIn, pOut, image, orientation, true);
+    }
+    
+    
+    /**
+     * PatientToFile transform. Transforms points that are in PatientCoordinates into FileCoordinates space, based on
+     * the ModelImage and the given oriented view -- either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT:
+     * 
+     * @param pIn the PatientCoordinates Point
+     * @param pOut the Point in FileCoordinates
+     * @param image the ModelImage for which the point is being transformed.
+     * @param orientation the given PatientCoordinates orientation.
+     * @param bFlip when true use axisFlip to flip the PatientCoordinates axis
+     */
+    public static final void patientToFile(final Vector3d pIn, final Vector3d pOut, final ModelStorageBase image,
+            final int orientation, final boolean bFlip) {
+
+        // axisOrder represents the mapping of FileCoordinates volume axes to PatientCoordinates space axes
+        final int[] axisOrder = MipavCoordinateSystems.getAxisOrder(image, orientation);
+
+        // axisFlip represents whether to invert the axes after they are reordered
+        final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(image, orientation);
+
+        // extents gets the image extents re-mapped to patient coordinates
+        final int[] extents = image.getExtents(orientation);
+
+        // axisOrderInverse is the inverse axis re-mapping from PatientCoordinates to FileCoordinates
+        final int[] axisOrderInverse = new int[3];
+
+        // get the inverse mapping
+        MipavCoordinateSystems.getAxisOrderInverse(axisOrder, axisOrderInverse);
+
+        // input point in PatientCoordinates
+        final double[] patientPoint = new double[3];
+        patientPoint[0] = pIn.X;
+        patientPoint[1] = pIn.Y;
+        patientPoint[2] = pIn.Z;
+
+        // output point in FileCoordinates
+        final double[] modelPoint = new double[3];
+
+        // First invert
+        for (int i = 0; i < 3; i++) {
+
+            if (axisFlip[i] && bFlip) {
+                patientPoint[i] = extents[i] - patientPoint[i] - 1;
+            }
+        }
+
+        // then remap the axes
+        for (int i = 0; i < 3; i++) {
+            modelPoint[i] = patientPoint[axisOrderInverse[i]];
+        }
+
+        // assign the transformed point to pOut
+        pOut.X = Math.round(modelPoint[0]);
+        pOut.Y = Math.round(modelPoint[1]);
+        pOut.Z = Math.round(modelPoint[2]);
     }
 
     /**
