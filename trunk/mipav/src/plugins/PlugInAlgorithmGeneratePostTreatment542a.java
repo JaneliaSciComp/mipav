@@ -58,6 +58,16 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
     private ModelImage postTreatment;
 
     private double stdDevNum;
+
+    private double image1ThresholdLower, image1ThresholdUpper;
+
+    private double image2ThresholdLower, image2ThresholdUpper;
+
+    private double postThresholdLower, postThresholdUpper;
+
+    private boolean image1cVOI, image2cVOI, postVOI;
+
+    private double normalTissue;
     
     /**
      * Constructor.
@@ -70,10 +80,23 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
      * @param scale 
      * @param image2Intensity 
      * @param image1Intensity 
+     * @param image1TresholdUpper 
+     * @param image1ThresholdLower 
+     * @param image1cVOI 
      * @param stdDevNum 
+     * @param stdDevNum2 
+     * @param image2ThresholdUpper 
+     * @param image2cVOI 
+     * @param postThresholdUpper 
+     * @param postThresholdLower 
+     * @param postVOI 
+     * @param normalTissue 
      */
     public PlugInAlgorithmGeneratePostTreatment542a(ModelImage image1, double image1Intensity, double image1Scale, double image1Noise, 
-                                                    ModelImage image2, double image2Intensity, double image2Scale, double image2Noise, double stdDevNum) {
+                                                    double image1ThresholdLower, double image1ThresholdUpper, 
+                                                    boolean image1cVOI, ModelImage image2, double image2Intensity, double image2Scale, double image2Noise, 
+                                                    double image2ThresholdLower, double image2ThresholdUpper, 
+                                                    boolean image2cVOI, double stdDevNum, double postThresholdLower, double postThresholdUpper, boolean postVOI, double normalTissue) {
         super(null, image1);
         
         this.image1a = image1;
@@ -85,6 +108,9 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
         this.image1Intensity = image1Intensity;
         this.image1Scale = image1Scale;
         this.image1Noise = image1Noise;
+        this.image1ThresholdLower = image1ThresholdLower;
+        this.image1ThresholdUpper = image1ThresholdUpper;
+        this.image1cVOI = image1cVOI;
         
         this.image2b = (ModelImage) image2.clone();
         image2b.setImageName("image2b");
@@ -92,6 +118,15 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
         this.image2Intensity = image2Intensity;
         this.image2Scale = image2Scale;
         this.image2Noise = image2Noise;
+        this.image2ThresholdLower = image2ThresholdLower;
+        this.image2ThresholdUpper = image2ThresholdUpper;
+        this.image2cVOI = image2cVOI;
+        
+        this.postThresholdLower = postThresholdLower;
+        this.postThresholdUpper = postThresholdUpper;
+        this.postVOI = postVOI;
+        
+        this.normalTissue = normalTissue;
         
         this.stdDevNum = stdDevNum;
     }
@@ -121,13 +156,19 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
         image1c.setImageName("image1c");
         image1c = subtractImages(image1c, image1a, image1b);
         
+        threshold(image1c, image1ThresholdLower, image1ThresholdUpper);
+        
         image2c = (ModelImage) image2b.clone();
         image2c.setImageName("image2c");
         image2c = subtractImages(image2c, image2a, image2b);
         
+        threshold(image2c, image2ThresholdLower, image2ThresholdUpper);
+        
         postTreatment = (ModelImage) image2c.clone();
         postTreatment.setImageName("postTreatment");
         postTreatment = subtractImages(postTreatment, image2c, image1c);
+        
+        threshold(postTreatment, postThresholdLower, postThresholdUpper);
         
         reportStatistics(postTreatment, image1Intensity > image2Intensity ? image1Intensity : image2Intensity, 
                                             image1Noise > image2Noise ? image1Noise : image2Noise);
