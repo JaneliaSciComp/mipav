@@ -53,7 +53,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogSimulateParams542a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogSimulateParams542b extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -68,9 +68,9 @@ public class PlugInDialogSimulateParams542a extends JDialogScriptableBase implem
     /** This source image is typically set by the constructor */
     private ModelImage image; // 
 
-    private PlugInDialogCreateTumorMap542a createTumorDialog;
+    private PlugInDialogCreateTumorMap542b createTumorDialog;
 
-    private PlugInDialogGeneratePostTreatment542a generatePostTreatmentDialog;
+    private PlugInDialogGeneratePostTreatment542b generatePostTreatmentDialog;
 
     private JTextField tumorSizeDevText;
 
@@ -87,7 +87,7 @@ public class PlugInDialogSimulateParams542a extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogSimulateParams542a() { }
+    public PlugInDialogSimulateParams542b() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -95,11 +95,11 @@ public class PlugInDialogSimulateParams542a extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogSimulateParams542a(boolean modal) {
+    public PlugInDialogSimulateParams542b(boolean modal) {
         super(modal); 
         
-        createTumorDialog = new PlugInDialogCreateTumorMap542a();
-        generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment542a();
+        createTumorDialog = new PlugInDialogCreateTumorMap542b();
+        generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment542b();
         
         init();
     }
@@ -156,7 +156,7 @@ public class PlugInDialogSimulateParams542a extends JDialogScriptableBase implem
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Run simulation 542a");
+        setTitle("Run simulation 542b");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
