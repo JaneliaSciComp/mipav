@@ -344,7 +344,7 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         image1ScaleText = gui.buildDecimalField("Partial volume scaling: ", .67);
         image1Panel.add(image1ScaleText.getParent(), gbc);
         
-        double noise1 = .05, noise2 = .05;
+        double noise1 = 1, noise2 = 1;
         String noiseSearch = Preferences.getData();
         try {
             int loc = noiseSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542a.NOISE_LEVEL);
@@ -397,7 +397,7 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         
         gbc.gridy++;
         gbc.gridx = 0;
-        image2ThresholdText = gui.buildField("Image 2 threshold range: ", (((int)intensity2*.9))+" - "+(((int)intensity2*1.1)));
+        image2ThresholdText = gui.buildField("Image 2 threshold range: ", ((int)(intensity2*.9))+" - "+((int)(intensity2*1.1)));
         image2Panel.add(image2ThresholdText.getParent(), gbc);
         
         gbc.gridx++;
@@ -418,21 +418,22 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         postTreatmentThresholdText = gui.buildField("Post-treatment threshold range: ", ((int)((intensity2 - intensity1)*.9))+" - "+((int)((intensity2 - intensity1)*1.1)));
         mainPanel.add(postTreatmentThresholdText.getParent(), gbc);
         
-        gbc.gridy++;
-        normalTissueText = gui.buildDecimalField("Normal tissue: ", normalTissue);
-        mainPanel.add(normalTissueText.getParent(), gbc);
-        
         gbc.gridx++;
         doPostVOIBox = gui.buildCheckBox("Create VOI in post-treatment", false);
         mainPanel.add(doPostVOIBox.getParent(), gbc);
         
         gbc.gridy++;
-        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        normalTissueText = gui.buildDecimalField("Normal tissue: ", normalTissue);
+        mainPanel.add(normalTissueText.getParent(), gbc);
+              
+        gbc.gridx++;
         doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
         mainPanel.add(doInterImagesCheckBox.getParent(), gbc);
         
         if(doOKCancel) {
             gbc.gridy++;
+                gbc.gridwidth = 2;
             okCancelPanel = gui.buildOKCancelPanel();
             mainPanel.add(okCancelPanel, gbc);
         }

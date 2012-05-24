@@ -149,10 +149,12 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         setBasicInfo(fileInfoImage1);
         setBasicInfo(fileInfoImage2);
         
-        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1, false);
+        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
+        image1a.getParentFrame().setVisible(false);
         image1a.setImageName("image1a");
-        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2, false);
+        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2);
         image2a.setImageName("image2a");
+        image2a.getParentFrame().setVisible(false);
         
         setNormalTissue(image1a);
         setNormalTissue(image2a);
@@ -192,6 +194,8 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       
             image2a = subsample(image2a);
+            image1a.getParentFrame().setVisible(false);
+            image2a.getParentFrame().setVisible(false);
         }
         
         image1a.setImageName("image1a");
@@ -222,6 +226,7 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         image1a.calcMinMax();
         image2a.calcMinMax();
         
+
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()

@@ -259,17 +259,21 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
     }
 
     private void scaleAndRemoveTumor(ModelImage image,
-            double imageIntensity, Double imageScale, Double imageNoise) {
-        double lowerBound = imageIntensity - imageNoise;
-        double upperBound = imageIntensity + imageNoise;
+            double tumorIntensity, Double partialVolumeScale, Double imageNoise) {
+        double lowerTumorBound = tumorIntensity - imageNoise;
+        double upperTumorBound = tumorIntensity + imageNoise;
+        double lowerNormalBound = normalTissue - imageNoise;
+        double upperNormalBound = normalTissue + imageNoise;
         double intensity = 0;
         for(int i=0; i<image.getDataSize(); i++) {
             intensity = image.getDouble(i);
             if(intensity != 0) {
-                if(intensity >= lowerBound && intensity <= upperBound) {
+                if(intensity >= lowerTumorBound && intensity <= upperTumorBound) {
                     image.set(i, 0);
+                } else if(intensity >= lowerNormalBound && intensity <= upperNormalBound) { 
+                    //leave image intensity as is (for now)
                 } else {
-                    image.set(i, intensity*imageScale);
+                    image.set(i, intensity*partialVolumeScale);
                 }
             }
         }
