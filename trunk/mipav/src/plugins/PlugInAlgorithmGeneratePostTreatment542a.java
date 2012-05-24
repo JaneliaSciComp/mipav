@@ -190,7 +190,7 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
             numPosPixelsTotal += numPosPixelsSlice;
             numNegPixelsTotal += numNegPixelsSlice;
             
-            printData("Slice "+z, numPixelsSlice, sumIntensitiesSlice, numNegPixelsSlice, sumNegIntensitiesSlice, numPosPixelsSlice, sumPosIntensitiesSlice);
+            //printData("Slice "+z, numPixelsSlice, sumIntensitiesSlice, numNegPixelsSlice, sumNegIntensitiesSlice, numPosPixelsSlice, sumPosIntensitiesSlice);
         }
         
         printData("All slices", numPixelsTotal, sumIntensitiesTotal, numNegPixelsTotal, sumNegIntensitiesTotal, numPosPixelsTotal, sumPosIntensitiesTotal);
@@ -219,8 +219,8 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
 
     private void scaleAndRemoveTumor(ModelImage image,
             double imageIntensity, Double imageScale, Double imageNoise) {
-        double lowerBound = imageIntensity - 2*imageNoise;
-        double upperBound = imageIntensity + 2*imageNoise;
+        double lowerBound = imageIntensity - imageNoise;
+        double upperBound = imageIntensity + imageNoise;
         double intensity = 0;
         for(int i=0; i<image.getDataSize(); i++) {
             intensity = image.getDouble(i);
@@ -230,6 +230,16 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
                 } else {
                     image.set(i, intensity*imageScale);
                 }
+            }
+        }
+    }
+    
+    private void threshold(ModelImage image, double lowerBound, double upperBound) {
+        double intensity = 0.0;
+        for(int i=0; i<image.getDataSize(); i++) {
+            intensity = image.getDouble(i);
+            if(intensity >= lowerBound && intensity <= upperBound) {
+                image.set(i, 0);
             }
         }
     }
