@@ -30,6 +30,7 @@ import java.util.Random;
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmNoise;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.file.FileInfoImageXML;
 import gov.nih.mipav.model.file.FileInfoXML;
@@ -76,8 +77,8 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
     private boolean doBoundCheck;
     /** Whether sphere should be populated entirely within field of view */
     private boolean doCenter;
-    /** Percent Rayleigh-distributed noise */
-    private double noisePercent;
+    /** Maximum of Rician distributed noise */
+    private double noiseMax;
     
     
     public PlugInAlgorithmCreateTumorMap542a() {
@@ -89,13 +90,14 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
      * Constructor.
      * @param intensity1 
      * @param intensity2 
-     * @param noisePercent 
+     * @param noiseMax 
      * @param subsample 
      *
      */
 	public PlugInAlgorithmCreateTumorMap542a(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap542a.TumorSimMode simMode, double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noisePercent) {
+            PlugInDialogCreateTumorMap542a.TumorSimMode simMode, 
+            double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noiseMax) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
@@ -117,7 +119,7 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         
         this.subsampleAmount = subsampleAmount;
         
-        this.noisePercent = noisePercent;
+        this.noiseMax = noiseMax;
     }
     
 	//  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -206,11 +208,11 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         Preferences.debug("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+";\n");
         Preferences.data("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+";\n");
         
-        if(noisePercent != 0) {
-            generateNoise(image1a, intensity1);
-            generateNoise(image2a, intensity2);
+        if(noiseMax != 0) {
+            generateNoise(image1a);
+            generateNoise(image2a);
         }
-        Preferences.data(NOISE_LEVEL+noisePercent+";\n");
+        Preferences.data(NOISE_LEVEL+noiseMax+";\n");
         
         image1a.calcMinMax();
         image2a.calcMinMax();
@@ -219,16 +221,10 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
 
     } // end runAlgorithm()
 
-    private void generateNoise(ModelImage image, double intensity) {
-        Random r = new Random();
-        double threshold = intensity*noisePercent;
-        for(int i=0; i<image.getDataSize(); i++) {
-            if(image.get(i).doubleValue() < threshold) {
-                image.set(i, r.nextGaussian()*intensity*noisePercent);
-            } else {
-                image.set(i, image.get(i).doubleValue() + image.get(i).doubleValue()*(r.nextGaussian()*noisePercent));                //TODO: make Rayleigh distributed
-            }
-        }
+    private void generateNoise(ModelImage image) {
+        AlgorithmNoise noise = new AlgorithmNoise(image, AlgorithmNoise.RICIAN, noiseMax, 5, 1, 0, 1);
+        noise.setRunningInSeparateThread(false);
+        noise.run();
     }
 
 
