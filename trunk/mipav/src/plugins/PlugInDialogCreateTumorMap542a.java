@@ -124,9 +124,12 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
 
     private Double intensity2;
 
-    private JTextField noisePercentText;
+    private JTextField noiseMaxText;
 
-    private Double noisePercent;
+    private Double noiseMax;
+
+    /** Whether partial-voluming minimization using perturbation should occur. */
+    private boolean doPerturbRadius = true;
 
     
 
@@ -212,7 +215,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noisePercent);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noiseMax);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -295,6 +298,14 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
 
     public PlugInAlgorithmCreateTumorMap542a getTumorSimAlgo() {
         return tumorSimAlgo;
+    }
+
+    public boolean doPerturbRadius() {
+        return doPerturbRadius;
+    }
+
+    public void setDoPerturbRadius(boolean doPerturbRadius) {
+        this.doPerturbRadius = doPerturbRadius;
     }
 
     public JPanel buildMainPanel(boolean doOKCancel, GuiBuilder gui) {
@@ -395,8 +406,8 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
         tumorSimPanel.add(percentChangeText.getParent(), gbc);
         
         gbc.gridy++;
-        noisePercentText = gui.buildDecimalField("Noise std dev percentage: ", .025);
-        tumorSimPanel.add(noisePercentText.getParent(), gbc);
+        noiseMaxText = gui.buildDecimalField("Maximum Rician noise value: ", 1);
+        tumorSimPanel.add(noiseMaxText.getParent(), gbc);
         
         gbc.gridy = 1;
         mainPanel.add(tumorSimPanel, gbc);
@@ -433,11 +444,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
     	    intensity1 = Double.valueOf(intensity1Text.getText());
     	    intensity2 = Double.valueOf(intensity2Text.getText());
     	    
-    	    noisePercent = Double.valueOf(noisePercentText.getText());
-    	    
-    	    if(noisePercent > 1) {
-    	        noisePercent /= 100;
-    	    }
+    	    noiseMax = Double.valueOf(noiseMaxText.getText());
     	    
     	    Preferences.data("====Create tumor map algorithm information====\n");
             Preferences.data("Dimensions:\tXY: "+xyDim+"\tZ: "+zDim+"\n");
@@ -446,7 +453,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
             Preferences.data("Subsample: "+subsample+"\n");
             Preferences.data("Percent change: "+tumorChange+"\n");
             Preferences.data("Intensity1: "+intensity1+"\tIntensity2: "+intensity2+"\n");
-            Preferences.data("Noise percentage: "+noisePercent+"\n");
+            Preferences.data("Noise maximum: "+noiseMax+"\n");
             Preferences.data("====End create tumor map algorithm information====\n");
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
@@ -457,7 +464,9 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
 
 	    simMode = (TumorSimMode)growthShrinkCombo.getSelectedItem();
 	    
-	    initRadius = perturbRadius(initRadius, xyRes, zRes);
+	    if(doPerturbRadius) {
+	        initRadius = perturbRadius(initRadius, xyRes, zRes);
+	    }
 	    
 		return true;
 	} //end setVariables()
