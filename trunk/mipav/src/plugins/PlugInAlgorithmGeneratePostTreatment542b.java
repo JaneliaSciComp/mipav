@@ -40,7 +40,7 @@ import gov.nih.mipav.view.ViewJFrameImage;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
+public class PlugInAlgorithmGeneratePostTreatment542b extends AlgorithmBase {
 
 	/** Whether to perform a gaussian blur */
     private double image1Intensity, image2Intensity;
@@ -92,7 +92,7 @@ public class PlugInAlgorithmGeneratePostTreatment542a extends AlgorithmBase {
      * @param postVOI 
      * @param normalTissue 
      */
-    public PlugInAlgorithmGeneratePostTreatment542a(ModelImage image1, double image1Intensity, double image1Scale, double image1Noise, 
+    public PlugInAlgorithmGeneratePostTreatment542b(ModelImage image1, double image1Intensity, double image1Scale, double image1Noise, 
                                                     double image1ThresholdLower, double image1ThresholdUpper, 
                                                     boolean image1cVOI, ModelImage image2, double image2Intensity, double image2Scale, double image2Noise, 
                                                     double image2ThresholdLower, double image2ThresholdUpper, 

@@ -54,7 +54,7 @@ import javax.swing.*;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
     private ModelImage resultImage = null;
     
     /** This is your algorithm */
-    private PlugInAlgorithmCreateTumorMap542a tumorSimAlgo = null;
+    private PlugInAlgorithmCreateTumorMap542b tumorSimAlgo = null;
 
     private JTextField initRadiusText;
 
@@ -142,7 +142,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogCreateTumorMap542a() { }
+    public PlugInDialogCreateTumorMap542b() { }
 
     /**
      * Sets up variables but does not show dialog.
@@ -150,7 +150,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogCreateTumorMap542a(boolean modal) {
+    public PlugInDialogCreateTumorMap542b(boolean modal) {
         super(modal); 
 
         init();
@@ -188,7 +188,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-       if (algorithm instanceof PlugInAlgorithmCreateTumorMap542a) {
+       if (algorithm instanceof PlugInAlgorithmCreateTumorMap542b) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((tumorSimAlgo.isCompleted() == true)) {
@@ -219,7 +219,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noiseMax, normalTissue);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noiseMax, normalTissue);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -273,7 +273,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
    
     private void init() {
         setForeground(Color.black);
-        setTitle("Create tumor maps 541f");
+        setTitle("Create tumor maps 542b");
         try {
 			setIconImage(MipavUtil.getIconImage("divinci.gif"));
 		} catch (FileNotFoundException e) {
@@ -300,7 +300,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
         return Double.valueOf(initRadiusText.getText()).doubleValue();
     }
 
-    public PlugInAlgorithmCreateTumorMap542a getTumorSimAlgo() {
+    public PlugInAlgorithmCreateTumorMap542b getTumorSimAlgo() {
         return tumorSimAlgo;
     }
 
