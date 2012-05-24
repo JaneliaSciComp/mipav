@@ -329,7 +329,7 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         }
         
         gbc.gridx++;
-        image1NoiseText = gui.buildDecimalField("Image 1 noise std dev percentage: ", noise1);
+        image1NoiseText = gui.buildDecimalField("Image 1 max noise: ", noise1);
         image1Panel.add(image1NoiseText.getParent(), gbc);
          
         gbc.gridx = 0;
@@ -355,7 +355,7 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         image2Panel.add(image2ScaleText.getParent(), gbc);
         
         gbc.gridx++;
-        image2NoiseText = gui.buildDecimalField("Image 2 noise std dev percentage: ", noise2);
+        image2NoiseText = gui.buildDecimalField("Image 2 max noise: ", noise2);
         image2Panel.add(image2NoiseText.getParent(), gbc);  
         
         gbc.gridy = 1;
