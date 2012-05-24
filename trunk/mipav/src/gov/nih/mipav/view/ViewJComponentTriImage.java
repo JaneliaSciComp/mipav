@@ -1733,14 +1733,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage implements M
         opacityInt = opacityInt << 24;
 
         if (slice >= 0) {
-            final Vector3f paintPoint = new Vector3f();
+            final Vector3d paintPoint = new Vector3d();
             int iIndex;
             final int[] iterFactors = imageActive.getVolumeIterationFactors();
 
             for (int iX = 0; iX < localImageExtents[0]; iX++) {
 
                 for (int iY = 0; iY < localImageExtents[1]; iY++) {
-                    MipavCoordinateSystems.patientToFile(new Vector3f(iX, iY, slice), paintPoint, imageActive,
+                    MipavCoordinateSystems.patientToFile(new Vector3d(iX, iY, slice), paintPoint, imageActive,
                             orientation);
 
                     iIndex = (int) ( (iterFactors[0] * paintPoint.X) + (iterFactors[1] * paintPoint.Y) + (iterFactors[2] * paintPoint.Z));
