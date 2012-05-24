@@ -37,6 +37,7 @@ import java.awt.event.ActionEvent;
 import java.io.FileNotFoundException;
 import java.util.Collections;
 import java.util.Enumeration;
+import java.util.HashSet;
 
 import javax.swing.*;
 
@@ -105,6 +106,27 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
     private double stdDevNum;
 
     private GuiBuilder gui = new GuiBuilder(this);
+
+    /** Threshold intensity bounds */
+    private JTextField image2ThresholdText, image1ThresholdText, postTreatmentThresholdText;
+    
+    private double image1ThresholdLower, image1ThresholdUpper, image2ThresholdLower, image2ThresholdUpper, postThresholdLower, postThresholdUpper;
+
+    private JCheckBox doPostVOIBox;
+
+    private JCheckBox doImage2cVOIBox;
+
+    private JCheckBox doImage1cVOIBox;
+
+    private boolean image1cVOI;
+
+    private boolean image2cVOI;
+
+    private boolean postVOI;
+
+    private JTextField normalTissueText;
+
+    private double normalTissue;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -194,8 +216,9 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment542a(image1, image1Intensity, image1Scale, image1Noise,
-                                                                            image2, image2Intensity, image2Scale, image2Noise, stdDevNum);
+            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment542a(image1, image1Intensity, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
+                                                                            image2, image2Intensity, image2Scale, image2Noise, image2ThresholdLower, image2ThresholdUpper, image2cVOI, stdDevNum, 
+                                                                            postThresholdLower, postThresholdUpper, postVOI, normalTissue);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -297,16 +320,19 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
         image1Panel.add(image1Combo.getParent(), gbc);
         
-        double intensity1 = 109, intensity2 = 201;
+        double intensity1 = 109, intensity2 = 201, normalTissue = 70;
         String intenSearch = Preferences.getData();
         try {
             int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542a.INTENSITY1);
             intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542a.INTENSITY1.length(), intenSearch.indexOf(';', loc)).trim());
             loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542a.INTENSITY2);
             intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542a.INTENSITY2.length(), intenSearch.indexOf(';', loc)).trim());
+            loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542a.NORMAL_TISSUE);
+            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542a.NORMAL_TISSUE.length(), intenSearch.indexOf(';', loc)).trim());
         } catch(Exception e) {
             intensity1 = 109;
             intensity2 = 201;
+            normalTissue =  5;
         }
         
         gbc.gridx++;
@@ -331,9 +357,19 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         gbc.gridx++;
         image1NoiseText = gui.buildDecimalField("Image 1 max noise: ", noise1);
         image1Panel.add(image1NoiseText.getParent(), gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        image1ThresholdText = gui.buildField("Image 1 threshold range: ", ((int)(intensity1*.9))+" - "+((int)(intensity1*1.1)));
+        image1Panel.add(image1ThresholdText.getParent(), gbc);
+        
+        gbc.gridx++;
+        doImage1cVOIBox = gui.buildCheckBox("Create VOI in image1c", false);
+        image1Panel.add(doImage1cVOIBox.getParent(), gbc);
          
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 2;
         mainPanel.add(image1Panel, gbc);
         
         JPanel image2Panel = new JPanel(new GridBagLayout());
@@ -342,6 +378,7 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         
         gbc.gridx = 0;
         gbc.gridy = 0;
+        gbc.gridwidth = 1;
         image2Combo = gui.buildComboBox("Image 2: ", imageAr, numDefault2);
         image2Panel.add(image2Combo.getParent(), gbc);
         
@@ -358,8 +395,18 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         image2NoiseText = gui.buildDecimalField("Image 2 max noise: ", noise2);
         image2Panel.add(image2NoiseText.getParent(), gbc);  
         
+        gbc.gridy++;
+        gbc.gridx = 0;
+        image2ThresholdText = gui.buildField("Image 2 threshold range: ", (((int)intensity2*.9))+" - "+(((int)intensity2*1.1)));
+        image2Panel.add(image2ThresholdText.getParent(), gbc);
+        
+        gbc.gridx++;
+        doImage2cVOIBox = gui.buildCheckBox("Create VOI in image2c", false);
+        image2Panel.add(doImage2cVOIBox.getParent(), gbc);
+        
         gbc.gridy = 1;
         gbc.gridx = 0;
+        gbc.gridwidth = 2;
         mainPanel.add(image2Panel, gbc);
         
         gbc.gridy++;
@@ -367,6 +414,20 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         mainPanel.add(stdDevNumText.getParent(), gbc);
         
         gbc.gridy++;
+        gbc.gridwidth = 1;
+        postTreatmentThresholdText = gui.buildField("Post-treatment threshold range: ", ((int)((intensity2 - intensity1)*.9))+" - "+((int)((intensity2 - intensity1)*1.1)));
+        mainPanel.add(postTreatmentThresholdText.getParent(), gbc);
+        
+        gbc.gridy++;
+        normalTissueText = gui.buildDecimalField("Normal tissue: ", normalTissue);
+        mainPanel.add(normalTissueText.getParent(), gbc);
+        
+        gbc.gridx++;
+        doPostVOIBox = gui.buildCheckBox("Create VOI in post-treatment", false);
+        mainPanel.add(doPostVOIBox.getParent(), gbc);
+        
+        gbc.gridy++;
+        gbc.gridwidth = 2;
         doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
         mainPanel.add(doInterImagesCheckBox.getParent(), gbc);
         
@@ -395,6 +456,21 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
         this.image2Combo.setSelectedItem(imageName);
     }
 
+    private double[] getThreshold(String rangeStr) {
+        String[] subset = rangeStr.split("-");
+        try {
+            double[] range = new double[2];
+            range[0] = Double.valueOf(subset[0].trim());
+            range[1] = Double.valueOf(subset[1].trim());
+        
+            return range;
+        } catch(NumberFormatException e) {
+            Preferences.debug("Invalid range specified: "+rangeStr, Preferences.DEBUG_ALGORITHM);
+        }
+        
+        return null;
+    }
+    
     /**
      * This method could ensure everything in your dialog box has been set correctly
      * 
@@ -405,16 +481,32 @@ public class PlugInDialogGeneratePostTreatment542a extends JDialogScriptableBase
 		    image1Intensity = Double.valueOf(image1IntensityText.getText());
 		    image1Scale = Double.valueOf(image1ScaleText.getText());
 		    image1Noise = Double.valueOf(image1NoiseText.getText());
+		    double[] image1Range = getThreshold(image1ThresholdText.getText());
+		    image1ThresholdLower = image1Range[0];
+		    image1ThresholdUpper = image1Range[1];
+		    image1cVOI = doImage1cVOIBox.isSelected();
 		    
 		    image2Intensity = Double.valueOf(image2IntensityText.getText());
 		    image2Scale = Double.valueOf(image2ScaleText.getText());
             image2Noise = Double.valueOf(image2NoiseText.getText());
+            double[] image2Range = getThreshold(image2ThresholdText.getText());
+            image2ThresholdLower = image2Range[0];
+            image2ThresholdUpper = image2Range[1];
+            image2cVOI = doImage2cVOIBox.isSelected();
+            
+            double[] postTreatmentRange = getThreshold(postTreatmentThresholdText.getText());
+            postThresholdLower = postTreatmentRange[0];
+            postThresholdUpper = postTreatmentRange[1];
+            postVOI = doPostVOIBox.isSelected();
+            
+            normalTissue = Double.valueOf(normalTissueText.getText());
             
             stdDevNum = Double.valueOf(stdDevNumText.getText());
             
             Preferences.data("====Generate Post-treatment algorithm information====\n");
-            Preferences.data("Image 1 information:\n\tIntensity: "+image1Intensity+"\n\tScale: "+image1Scale+"\n\tNoise: "+image1Noise+"\n");
-            Preferences.data("Image 2 information:\n\tIntensity: "+image2Intensity+"\n\tScale: "+image2Scale+"\n\tNoise: "+image2Noise+"\n");
+            Preferences.data("Image 1 information:\n\tIntensity: "+image1Intensity+"\n\tScale: "+image1Scale+"\n\tNoise: "+image1Noise+"\tRange: "+image1ThresholdLower+" - "+image1ThresholdUpper+"\n");   
+            Preferences.data("Image 2 information:\n\tIntensity: "+image2Intensity+"\n\tScale: "+image2Scale+"\n\tNoise: "+image2Noise+"\tRange: "+image2ThresholdLower+" - "+image2ThresholdUpper+"\n");
+            Preferences.data("Post-treatment information: "+"\tRange: "+postThresholdLower+" - "+postThresholdUpper+"\n");
             Preferences.data("Standard deviation number: "+stdDevNum+"\n");
             Preferences.data("====End generate Post-treatment algorithm information====\n");
 		    

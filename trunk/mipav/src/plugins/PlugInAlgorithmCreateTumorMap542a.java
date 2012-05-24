@@ -57,6 +57,7 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
     public static final String INTENSITY1 = "Intensity1: ";
     public static final String INTENSITY2 = "Intensity2: ";
     public static final String NOISE_LEVEL = "Adding noise level: ";
+    public static final String NORMAL_TISSUE = "Normal tissue: ";
     
     /** Image dimensions */
     private int xyDim, zDim;
@@ -79,25 +80,26 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
     private boolean doCenter;
     /** Maximum of Rician distributed noise */
     private double noiseMax;
-    
-    
+    /** Normal tissue value, assummed same for image 1 and 2 */
+    private double normalTissue;
+   
     public PlugInAlgorithmCreateTumorMap542a() {
-        
+        // TODO Auto-generated constructor stub
     }
-    
     
     /**
      * Constructor.
      * @param intensity1 
      * @param intensity2 
      * @param noiseMax 
+     * @param normalTissue 
      * @param subsample 
      *
      */
 	public PlugInAlgorithmCreateTumorMap542a(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
             PlugInDialogCreateTumorMap542a.TumorSimMode simMode, 
-            double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noiseMax) {
+            double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noiseMax, double normalTissue) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
@@ -120,11 +122,12 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         this.subsampleAmount = subsampleAmount;
         
         this.noiseMax = noiseMax;
+        
+        this.normalTissue = normalTissue;
     }
     
 	//  ~ Methods --------------------------------------------------------------------------------------------------------
 
-        
     /**
      * Prepares this class for destruction.
      */
@@ -146,12 +149,13 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         setBasicInfo(fileInfoImage1);
         setBasicInfo(fileInfoImage2);
         
-        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
-        image1a.getParentFrame().setVisible(false);
+        image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1, false);
         image1a.setImageName("image1a");
-        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2);
-        image2a.getParentFrame().setVisible(false);
+        image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2, false);
         image2a.setImageName("image2a");
+        
+        setNormalTissue(image1a);
+        setNormalTissue(image2a);
         
         int xyLargerRadius = (int)Math.ceil(defineLargerRadius()/xyRes);
         
@@ -180,6 +184,7 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
         
         Preferences.data(INTENSITY1+intensity1+";\n");
         Preferences.data(INTENSITY2+intensity2+";\n");
+        Preferences.data(NORMAL_TISSUE+normalTissue+";\n");
         
         populateSphere(initRadius, intensity1, image1a);      
         populateSphere(getChangedRadius(), intensity2, image2a);
@@ -220,6 +225,12 @@ public class PlugInAlgorithmCreateTumorMap542a extends AlgorithmBase {
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
+
+    private void setNormalTissue(ModelImage image) {
+        for(int i=0; i<image.getDataSize(); i++) {
+            image.set(i, normalTissue);
+        }
+    }
 
     private void generateNoise(ModelImage image) {
         AlgorithmNoise noise = new AlgorithmNoise(image, AlgorithmNoise.RICIAN, noiseMax, 5, 1, 0, 1);

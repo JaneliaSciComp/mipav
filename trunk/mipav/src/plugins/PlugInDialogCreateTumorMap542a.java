@@ -131,6 +131,10 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
     /** Whether partial-voluming minimization using perturbation should occur. */
     private boolean doPerturbRadius = true;
 
+    private JTextField normalTissueText;
+
+    private double normalTissue;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -215,7 +219,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
 
         try {
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noiseMax);
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542a(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noiseMax, normalTissue);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -367,11 +371,15 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
         tumorSimPanel.add(doCenterCheck.getParent(), gbc);
         
         gbc.gridy++;
-        intensity1Text = gui.buildDecimalField("Image 1 intensity: ", 109);
+        normalTissueText = gui.buildDecimalField("Normal tissue intensity: ", 70);
+        tumorSimPanel.add(normalTissueText.getParent(), gbc);
+        
+        gbc.gridy++;
+        intensity1Text = gui.buildDecimalField("Image 1 tumor intensity: ", 109);
         tumorSimPanel.add(intensity1Text.getParent(), gbc);
         
         gbc.gridx++;
-        intensity2Text = gui.buildDecimalField("Image 2 intensity: ", 201);
+        intensity2Text = gui.buildDecimalField("Image 2 tumor intensity: ", 201);
         tumorSimPanel.add(intensity2Text.getParent(), gbc);
         
         gbc.gridx = 0;
@@ -446,6 +454,8 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
     	    
     	    noiseMax = Double.valueOf(noiseMaxText.getText());
     	    
+    	    normalTissue = Double.valueOf(normalTissueText.getText());
+    	    
     	    Preferences.data("====Create tumor map algorithm information====\n");
             Preferences.data("Dimensions:\tXY: "+xyDim+"\tZ: "+zDim+"\n");
             Preferences.data("Resolution:\tXY: "+xyRes+"\nZ: "+zRes+"\n");
@@ -454,6 +464,7 @@ public class PlugInDialogCreateTumorMap542a extends JDialogScriptableBase implem
             Preferences.data("Percent change: "+tumorChange+"\n");
             Preferences.data("Intensity1: "+intensity1+"\tIntensity2: "+intensity2+"\n");
             Preferences.data("Noise maximum: "+noiseMax+"\n");
+            Preferences.data("Noise maximum: "+normalTissue+"\n");
             Preferences.data("====End create tumor map algorithm information====\n");
 	    } catch(NumberFormatException nfe) {
 	        MipavUtil.displayError("Input error, enter numerical values only.");
