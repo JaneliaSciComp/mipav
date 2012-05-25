@@ -141,63 +141,59 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "0.1";
+    private static final String pluginVersion = "0.2";
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
-    // public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that
-    // pertain to the collection\n"
-    // + "and display of imaging data. Before accessing and using MIPAV, please ensure that you\n"
-    // + "familiarize yourself with our privacy rules, available through the NDAR Rules of Behavior\n"
-    // + "document and supporting documentation.\n"
-    // + "\n"
-    // + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
-    // + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research\n"
-    // + "around autism and autism treatment. This information may be disclosed to researchers for\n"
-    // + "research purposes, and to system administrators for evaluation and data normalization.\n"
-    // + "\n"
-    // + "Rules governing submission of this information are based on the data sharing rules defined\n"
-    // + "in the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing\n"
-    // + "requirements, data submission is voluntary. Data entered into NDAR will be used solely for\n"
-    // + "scientific and research purposes and is designed to further the understanding of autism and\n"
-    // + "autism treatments. Modification of NDAR information may be addressed by contacting your NDAR\n"
-    // + "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n"
-    // + "on the NDAR site as required.";
+     public static final String FITBIR_PRIVACY_NOTICE = "FITBIR is a collaborative environment with privacy rules that pertain to the collection\n"
+         + "and display of imaging data. Before accessing and using FITBIR, please ensure that you\n"
+         + "familiarize yourself with our privacy rules, available through the FITBIR Rules of Behavior\n"
+         + "document and supporting documentation.\n"
+         + "\n"
+         + "Collection of this information is authorized under 42 U.S.C. 241, 242, 248, 281(a)(b)(1)(P)\n"
+         + "and 44 U.S.C. 3101. The primary use of this information is to facilitate medical research\n"
+         + "around Tramatic Brain Injury and Tramatic Brain Injury treatment. This information may be\n"
+         + "disclosed to researchers for research purposes, and to system administrators for evaluation\n"
+         + "and data normalization.\n"
+         + "\n"
+         + "Rules governing submission of this information are based on the data sharing rules defined in\n"
+         + "the Notice of Grant Award (NOGA). If you do not have a grant defining data sharing requirements,\n"
+         + "data submission is voluntary. Data entered into FITBIR will be used solely for scientific and\n"
+         + "research purposes and is designed to further the understanding of Traumatic Brain Injury.\n"
+         + "Modification of FITBIR information may be addressed by contacting your FITBIR system\n"
+         + "administrator at FITBIR-ops@mail.nih.gov. Significant system update information may be posted on\n"
+         + "the FITBIR site as required.";
     
     public PlugInDialogFITBIR() {
         super(false);
-        Icon icon = null;
-        try {
-            icon = new ImageIcon(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (final Exception e) {
 
+        final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.FITBIR_PRIVACY_NOTICE,
+                "FITBIR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (response == JOptionPane.YES_OPTION) {
+            outputDirBase = Preferences.getProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR);
+            if (outputDirBase == null) {
+                outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
+                        + "FITBIR_Imaging_Submission" + File.separator;
+                Preferences.setProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR, outputDirBase);
+            }
+
+            csvFileDir = Preferences.getProperty(Preferences.PREF_FITBIR_PLUGIN_CSV_DIR);
+            if (csvFileDir == null) {
+                csvFileDir = ViewUserInterface.getReference().getDefaultDirectory();
+            }
+
+            init();
+            setVisible(true);
+            validate();
+        } else {
+            if (JDialogStandalonePlugin.isExitRequired()) {
+                System.exit(0);
+                // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
+            } else {
+                return;
+            }
         }
-        // final int response = JOptionPane.showConfirmDialog(this, PlugInDialogFITBIR.FITBIR_PRIVACY_NOTICE,
-        // "FITBIR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-
-        // if (response == JOptionPane.YES_OPTION) {
-        outputDirBase = Preferences.getProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR);
-        if (outputDirBase == null) {
-            outputDirBase = System.getProperty("user.home") + File.separator + "mipav" + File.separator
-                    + "FITBIR_Imaging_Submission" + File.separator;
-            Preferences.setProperty(Preferences.PREF_FITBIR_PLUGIN_OUTPUT_DIR, outputDirBase);
-        }
-
-        csvFileDir = Preferences.getProperty(Preferences.PREF_FITBIR_PLUGIN_CSV_DIR);
-        if (csvFileDir == null) {
-            csvFileDir = ViewUserInterface.getReference().getDefaultDirectory();
-        }
-
-        init();
-        setVisible(true);
-        validate();
-        // } else {
-        // if (JDialogStandalonePlugin.isExitRequired()) {
-        // System.exit(0);
-        // // ViewUserInterface.getReference().windowClosing(new WindowEvent(this, WindowEvent.WINDOW_CLOSING));
-        // } else {
-        // return;
-        // }
-        // }
 
         final Thread thread = new WebServiceThread(this);
         thread.start();
@@ -220,7 +216,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
             removeSourceButton.setEnabled(sourceTableModel.getRowCount() > 0);
             completeDataElementsButton.setEnabled(sourceTableModel.getRowCount() > 0);
-            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Data Structure(s) "));
+            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Form Structure(s) "));
 
         } else if (command.equalsIgnoreCase("loadCSV")) {
             JFileChooser chooser = new JFileChooser();
@@ -279,7 +275,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 finishButton.setEnabled(false);
 
             }
-            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Data Structure(s) "));
+            listPane.setBorder(buildTitledBorder(sourceTableModel.getRowCount() + " Form Structure(s) "));
         } else if (command.equalsIgnoreCase("Help")) {
 
             // MipavUtil.showHelp("ISPImages01");
@@ -306,7 +302,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             // }
             //
             // if ( !areAllCompleted) {
-            // MipavUtil.displayError("Please complete required fields for all Data Structures");
+            // MipavUtil.displayError("Please complete required fields for all Form Structures");
             // return;
             // }
 
@@ -322,7 +318,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
             }
 
             if ( !areGuidsCompleted) {
-                MipavUtil.displayError("Please complete FITBIR GUID field for all Data Structures");
+                MipavUtil.displayError("Please complete FITBIR GUID field for all Form Structures");
                 return;
             }
 
@@ -393,8 +389,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     csvParamsArr = arr;
                 }
 
-                InfoDialog dlg = new InfoDialog(this, dsName, false, false, csvParamsArr);
-
+                new InfoDialog(this, dsName, false, false, csvParamsArr);
             }
             fis.close();
         } catch (Exception e) {
@@ -537,7 +532,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
 
     private JScrollPane buildSourcePanel() {
         sourceTableModel = new ViewTableModel();
-        sourceTableModel.addColumn("Data Structure Name");
+        sourceTableModel.addColumn("Form Structure Name");
         sourceTableModel.addColumn("Completed?");
 
         sourceTable = new JTable(sourceTableModel);
@@ -552,7 +547,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         sourceTable.getColumn("Completed?").setCellRenderer(new MyRightCellRenderer());
 
         listPane = WidgetFactory.buildScrollPane(sourceTable);
-        listPane.setBorder(buildTitledBorder(0 + " Data Structure(s) "));
+        listPane.setBorder(buildTitledBorder(0 + " Form Structure(s) "));
 
         return listPane;
     }
@@ -1225,7 +1220,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                     }
                 }
 
-                // TODO: should we be outputting all fields? - if not, need to not include element name in header
+                // should we be outputting all fields? - if not, need to not include element name in header
 
                 // if ( !value.trim().equalsIgnoreCase("")) {
                 final File f = new File(value);
@@ -1314,8 +1309,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
 
-        addSourceButton = new JButton("Add Data Structure");
-        addSourceButton.setToolTipText("Add Data Structure");
+        addSourceButton = new JButton("Add Form Structure");
+        addSourceButton.setToolTipText("Add Form Structure");
         addSourceButton.addActionListener(this);
         addSourceButton.setActionCommand("AddSource");
 
@@ -1324,8 +1319,8 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         loadCSVButton.addActionListener(this);
         loadCSVButton.setActionCommand("loadCSV");
 
-        removeSourceButton = new JButton("Remove Data Structure");
-        removeSourceButton.setToolTipText("Remove the selected Data Structure");
+        removeSourceButton = new JButton("Remove Form Structure");
+        removeSourceButton.setToolTipText("Remove the selected Form Structure");
         removeSourceButton.addActionListener(this);
         removeSourceButton.setActionCommand("RemoveSource");
 
@@ -1335,7 +1330,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
         finishButton.setActionCommand("Finish");
 
         completeDataElementsButton = new JButton("Edit Data Elements");
-        completeDataElementsButton.setToolTipText("Edit data elements for selected Data Structure");
+        completeDataElementsButton.setToolTipText("Edit data elements for selected Form Structure");
         completeDataElementsButton.addActionListener(this);
         completeDataElementsButton.setActionCommand("completeDataElements");
 
@@ -1758,7 +1753,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
          * init
          */
         private void init() {
-            setTitle("Choose Data Structure");
+            setTitle("Choose Form Structure");
             final int numColumns = 4;
             final String[] columnNames = {"Name", "Description", "Version", "Status"};
             structsModel = new ViewTableModel();
@@ -1791,11 +1786,14 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 String shortname = ds.getShortName();
                 String version = ds.getVersion().toString();
                 String status = ds.getStatus().toString();
+                String type = ds.getFileType().getType();
 
-                descAL.add(desc);
-                shortNameAL.add(shortname);
-                versionAL.add(version);
-                statusAL.add(status);
+                if (type.equalsIgnoreCase("imaging")) {
+                    descAL.add(desc);
+                    shortNameAL.add(shortname);
+                    versionAL.add(version);
+                    statusAL.add(status);
+                }
             }
 
             // old way of using web service
@@ -2062,10 +2060,9 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                 String s = dataStructure.getShortName();
                 String d = dataStructure.getDescription();
                 String v = dataStructure.getVersion().toString();
-                // TODO structure data type not present yet?
-                // String t = dataStructure.getDispDataType();
+                String t = dataStructure.getFileType().getType();
 
-                final DataStruct dataStruct = new DataStruct(n, s, d, v, "-");
+                final DataStruct dataStruct = new DataStruct(n, s, d, v, t);
                 boolean found = false;
                 for (int i = 0; i < dataStructures.size(); i++) {
                     final String sn = dataStructures.get(i).getShortname();
@@ -3648,7 +3645,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                         // test int if its in valuerange
                                         final int min = Integer.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
-                                        // TODO: I think that 0 should be included in allowed range
+                                        // I think that 0 should be included in allowed range
                                         // if (min == 0) {
                                         // if (intValue <= min) {
                                         // errs.add(labelText + " must be greater than 0");
@@ -3682,7 +3679,7 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
                                         // test int if its in valuerange
                                         final float min = Float.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
-                                        // TODO: I think that 0 should be included in allowed range
+                                        // I think that 0 should be included in allowed range
                                         // if (min == 0) {
                                         // if (floatValue <= min) {
                                         // errs.add(labelText + " must be greater than 0");
