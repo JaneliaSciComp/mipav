@@ -110,6 +110,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     protected int processType = AlgorithmVOIProps.PROCESS_PER_VOI;
+    
+    private boolean doAllVolumes = false;
 
     /** DOCUMENT ME! */
     private float rangeMaximum = 0f;
@@ -527,6 +529,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         }
 
         processType = scriptParameters.getParams().getInt("processing_level");
+        doAllVolumes = scriptParameters.getParams().getBoolean("do_all_volumes");
         showTotals = scriptParameters.getParams().getBoolean("do_show_totals");
         precision = scriptParameters.getParams().getInt("output_precision");
         doForce = scriptParameters.getParams().getBoolean("do_force_precision");
@@ -540,6 +543,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         scriptParameters.getParams().put(ParameterFactory.newParameter("stat_checklist", checkList));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("processing_level", processType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_all_volumes", doAllVolumes));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_totals", showTotals));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_exclusion_range", outputOptionsPanel.getExcluder().getRangeFlag().name()));
 
@@ -1140,6 +1144,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         }
 
         processType = outputOptionsPanel.getProcessType();
+        doAllVolumes = outputOptionsPanel.getVolumeType();
         precision = outputOptionsPanel.getPrecision();
         doForce = outputOptionsPanel.doForcePrecision();
         showTotals = outputOptionsPanel.isShowTotals();
@@ -1633,6 +1638,12 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
 
         /** A check box to opt for VOI totals. */
         JCheckBox showTotals;
+        
+        /** A radio button to select calculation only for the active volume */
+        JRadioButton activeVolumeButton = null;
+        
+        /** A radio button to select calculation for all volumes */
+        JRadioButton allVolumesButton = null;
 
         /**
          * Creates a default view of the panel, including all options displayed. The option to calculate for the total
@@ -1640,7 +1651,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
          */
         public JPanelStatisticsOptions() {
             setBorder(buildTitledBorder("Statistics options"));
-            setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+            setLayout(new GridBagLayout());
+            GridBagConstraints gbc = new GridBagConstraints();
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
             StatisticsOptionsActionListener statOptionsListener = new StatisticsOptionsActionListener();
             byContour = new JRadioButton("By contour");
             byContour.setFont(MipavUtil.font12);
@@ -1688,13 +1703,64 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             group.add(byTotalVOI);
             excluder = new JPanelPixelExclusionSelector(checkBoxPanel, image.isColorImage());
 
-            add(byContour);
-            add(byContourSlice);
-            add(bySlice);
-            add(byTotalVOI);
-            add(showTotals);
-            add(precisionPanel);
-            add(excluder);
+            if (image.getNDims() < 4) {
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                add(byContour, gbc);
+                gbc.gridy = 1;
+                add(byContourSlice, gbc);
+                gbc.gridy = 2;
+                add(bySlice, gbc);
+                gbc.gridy = 3;
+                add(byTotalVOI, gbc);
+            }
+            else { // image.getNDims() >= 4
+                ButtonGroup volumeGroup = new ButtonGroup();
+                activeVolumeButton = new JRadioButton("Active volume only");
+                activeVolumeButton.setFont(MipavUtil.font12);
+                volumeGroup.add(activeVolumeButton);
+                
+                allVolumesButton = new JRadioButton("Across all volumes");
+                allVolumesButton.setFont(MipavUtil.font12);
+                volumeGroup.add(allVolumesButton);
+                
+                activeVolumeButton.setSelected(true);
+                allVolumesButton.setSelected(false);
+                
+                gbc.gridx = 0;
+                gbc.gridy = 0;
+                gbc.gridwidth = 1;
+                add(activeVolumeButton, gbc);
+                gbc.gridx = 1;
+                add(byContour, gbc);
+                gbc.gridx = 0;
+                gbc.gridy = 1;
+                add(allVolumesButton, gbc);
+                gbc.gridx = 1;
+                add(byContourSlice, gbc);
+                JLabel blankLabel = new JLabel("   ");
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                add(blankLabel, gbc);
+                gbc.gridx = 1;
+                add(bySlice, gbc);
+                JLabel blankLabel2 = new JLabel("   ");
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                add(blankLabel2, gbc);
+                gbc.gridx = 1;
+                add(byTotalVOI, gbc);
+                gbc.gridwidth = 2;
+                
+            } // else image.getNDims() >= 4
+            gbc.gridx = 0;
+            gbc.gridy = 4;
+            add(showTotals, gbc);
+            gbc.gridy = 5;
+            add(precisionPanel, gbc);
+            gbc.gridy = 6;
+            add(excluder, gbc);
             
         }
 
@@ -1739,6 +1805,21 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             } else {
                 return AlgorithmVOIProps.PROCESS_PER_SLICE;
             }
+        }
+        
+        public boolean getVolumeType() {
+            if ((activeVolumeButton != null) && (allVolumesButton != null)) {
+                if (activeVolumeButton.isSelected()) {
+                    doAllVolumes = false;
+                }
+                else {
+                    doAllVolumes = true;
+                }
+            }
+            else {
+                doAllVolumes = false;
+            }
+            return doAllVolumes;
         }
 
         /**
