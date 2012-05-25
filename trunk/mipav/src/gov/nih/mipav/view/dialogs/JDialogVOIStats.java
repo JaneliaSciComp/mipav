@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmExtractSlicesVolumes;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -20,6 +22,12 @@ import javax.swing.event.*;
 import javax.swing.tree.*;
 
 import java.util.Date;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.io.FileNotFoundException;
 import java.text.SimpleDateFormat;
 
@@ -173,6 +181,22 @@ public class JDialogVOIStats extends JDialogBase
     private ViewVOIVector processList;
 
     protected VOIHandlerInterface voiHandler;
+    
+    private JRadioButton activeVolumeButton = null;
+    
+    private JRadioButton allVolumesButton = null;
+    
+    private int activeVolume;
+    
+    private boolean doAllVolumes;
+    
+    private int t;
+    
+    private int tDim;
+    
+    private AlgorithmSubset subsetAlgo;
+    
+    private ModelImage subsetImage = null;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -438,14 +462,46 @@ public class JDialogVOIStats extends JDialogBase
                 } // else black and white image
             }
             
+            doAllVolumes = false;
+            tDim = 1;
+            int destExtents[] = null;
+            activeVolume = 0;
+            if (image.getNDims() >= 4) {
+                tDim = image.getExtents()[3];
+                destExtents = new int[3];
+                destExtents[0] = image.getExtents()[0];
+                destExtents[1] = image.getExtents()[1];
+                destExtents[2] = image.getExtents()[2];
+             // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
+                subsetImage = new ModelImage(image.getType(), destExtents, image.getImageName());
+                if (allVolumesButton.isSelected()) {
+                    doAllVolumes = true;
+                }
+                else {
+                    activeVolume = image.getParentFrame().getComponentImage().getTimeSlice();
+                }
+            }
+            
             // only loading the image works because we have been changing
             // the thing held BY the image.
-            algoVOI = new AlgorithmVOIProps(image, AlgorithmVOIProps.PROCESS_PER_VOI, excluder.getRangeFlag(), processList); //TODO: Allow user to select processing method based on curves selected in processList
+            
+            if (tDim == 1) {
+                subsetImage = image;
+            }
+            
+                
+            if (tDim > 1) {
+                subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
+                subsetAlgo.run();
+            }
+            algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_VOI,
+                          excluder.getRangeFlag(), processList); //TODO: Allow user to select processing method based on curves selected in processList
             
             algoVOI.addListener(this);
             //only calculate these if appropriate box is checked for speed.
             algoVOI.setSelectedStatistics(listPanel.getSelectedList());
-            createProgressBar(image.getImageName(), algoVOI);
+            createProgressBar(subsetImage.getImageName(), algoVOI);
+            
             
             if (isRunInSeparateThread()) {
 
@@ -456,13 +512,16 @@ public class JDialogVOIStats extends JDialogBase
             } else {
 
                 algoVOI.run();
-            }
+            }   
+                
  
         } else if (source == cancelButton) {
             cancelFlag = true;
             setVisible(false);
         }
     }
+    
+   
    
 
 
@@ -472,6 +531,7 @@ public class JDialogVOIStats extends JDialogBase
 
     public void algorithmPerformed(AlgorithmBase algorithm) {
         if(algorithm instanceof AlgorithmVOIProps && algoVOI.isCompleted()) {
+            
             VOIStatisticalProperties properties;
             String[] statLabels = listPanel.getNameList();
             
@@ -515,6 +575,9 @@ public class JDialogVOIStats extends JDialogBase
                 ViewUserInterface UI = ViewUserInterface.getReference();
                 UI.setDataText("\n -----------------------------------------------------------------------------\n");
                 UI.setDataText("Image:     " + image.getImageName() + "\n");
+                if (image.getNDims() >= 4) {
+                    UI.setDataText("Active volume = " + activeVolume + "\n");
+                }
                 UI.setDataText("VOI  :     " + tempVOI.getName() + "\n");
                 
                 for(int k=0; k < statLabels.length; k++) { //all selected statistics
@@ -539,8 +602,39 @@ public class JDialogVOIStats extends JDialogBase
                     }
                 }
             }
+            if (doAllVolumes && (activeVolume < tDim - 1)) {
+               anotherCall();    
+            }
         }
+        
     }
+    
+    private void anotherCall() {
+        activeVolume++;
+        subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
+        subsetAlgo.run();
+        algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_VOI,
+                      excluder.getRangeFlag(), processList); //TODO: Allow user to select processing method based on curves selected in processList
+        
+        algoVOI.addListener(this);
+        //only calculate these if appropriate box is checked for speed.
+        algoVOI.setSelectedStatistics(listPanel.getSelectedList());
+        createProgressBar(subsetImage.getImageName(), algoVOI);
+        
+        
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (algoVOI.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            algoVOI.run();
+        }       
+    }
+    
+    
 
     /**
      * Test the seed value and if appropriate, sets it.
@@ -1053,6 +1147,32 @@ public class JDialogVOIStats extends JDialogBase
             listPanel.setCheckBoxesEnabled();
         }
         
+        JPanel volumePanel = null;
+        if (image.getNDims() >= 4) {
+            ButtonGroup volumeGroup = new ButtonGroup();
+            activeVolumeButton = new JRadioButton("Active volume only");
+            activeVolumeButton.setFont(MipavUtil.font12);
+            volumeGroup.add(activeVolumeButton);
+            
+            allVolumesButton = new JRadioButton("Across all volumes");
+            allVolumesButton.setFont(MipavUtil.font12);
+            volumeGroup.add(allVolumesButton);
+            
+            activeVolumeButton.setSelected(true);
+            allVolumesButton.setSelected(false);
+            
+            volumePanel = new JPanel();
+            volumePanel.setLayout(new GridBagLayout());
+            volumePanel.setBorder(new TitledBorder(new EtchedBorder(), "Volume Selection", TitledBorder.DEFAULT_JUSTIFICATION,
+                    TitledBorder.DEFAULT_POSITION, MipavUtil.font12B));
+            GridBagConstraints gbc3 = new GridBagConstraints();
+            gbc3.gridx = 0;
+            gbc3.gridy = 0;
+            volumePanel.add(activeVolumeButton, gbc3);
+            gbc3.gridy = 1;
+            volumePanel.add(allVolumesButton, gbc3);
+        }
+        
         excluder = new JPanelPixelExclusionSelector(listPanel, image.isColorImage());
         
         checkboxSaveStats = new JCheckBox("Save statistics in header");
@@ -1072,6 +1192,9 @@ public class JDialogVOIStats extends JDialogBase
         JPanel statsPanel = new JPanel();
         statsPanel.setLayout(new BoxLayout(statsPanel, BoxLayout.Y_AXIS));
         statsPanel.add(listPanel);
+        if (image.getNDims() >= 4) {
+            statsPanel.add(volumePanel);
+        }
         statsPanel.add(excluder);
 
         JLabel labelSeed = new JLabel("Seed value (0-32K)");
