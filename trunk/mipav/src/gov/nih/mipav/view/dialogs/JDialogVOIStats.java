@@ -605,6 +605,10 @@ public class JDialogVOIStats extends JDialogBase
             if (doAllVolumes && (activeVolume < tDim - 1)) {
                anotherCall();    
             }
+            else if (image.getNDims() >= 4) {
+                subsetImage.disposeLocal();
+                subsetImage = null;
+            }
         }
         
     }
