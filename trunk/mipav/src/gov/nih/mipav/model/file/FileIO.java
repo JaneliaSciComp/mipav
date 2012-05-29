@@ -95,6 +95,8 @@ public class FileIO {
     private String[] dataFileName = null;
     
     private DTIParameters dtiparams;
+
+    private boolean isDTISort = false;
     
     
 
@@ -792,7 +794,7 @@ public class FileIO {
                     if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
                             (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
                         //Sorts DWI images based on gradient values corresponding to each volume in the series
-                      if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+                      if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
                           if ((String) tagTable.getValue("0018,9089") != null){
                               dtiSliceCounter = 0;
                               int dtiSliceCounter2 = 0;// Helps check for incomplete DWI series
@@ -884,6 +886,7 @@ public class FileIO {
                                            }
                                       }
                                       if (dtiSliceCounter == dtiSliceCounter3){
+                                          isDTISort = true;
                                           int rintCounter = 0;
                                           int tVolumeNum = instanceNums.length/dtiSliceCounter;
                                           float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
@@ -903,6 +906,7 @@ public class FileIO {
                                   }
 
                                   else if (dtiSliceCounter == dtiSliceCounter2){
+                                      isDTISort = true;
                                       int rintCounter = 0;
                                       int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
                                       float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
@@ -941,7 +945,8 @@ public class FileIO {
               }
                 
                 //always try to generate validOriSort, if a validOriSort that trumps a validInstanceSort
-                if ( (nImages > 1) && dtiSliceCounter == 0) {// && !validInstanceSort) {
+
+                if ( (nImages > 1 && isDTISort == false)) {// && !validInstanceSort) {
                     // sort so that zOrients is now in ascending order.
                     // zOri[i] represents where in the image buffer image
                     // number i should be stored; so that if the images were
@@ -1190,7 +1195,7 @@ public class FileIO {
                 extents[2] = sliceDim;
             } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSub ==false || 
                             (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSub ==false) {
-                if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) {  
+                if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
                     extents[2] = dtiSliceCounter;
                     extents[3] = nImages / dtiSliceCounter;
                 }
