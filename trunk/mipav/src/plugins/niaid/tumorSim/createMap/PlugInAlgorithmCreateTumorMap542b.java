@@ -60,6 +60,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
 
     public static final String INTENSITY1 = "Intensity1: ";
     public static final String INTENSITY2 = "Intensity2: ";
+    public static final String RADIUS1 = "Radius 1: ";
+    public static final String RADIUS2 = "Radius 2: ";
     public static final String STD_DEV = "std dev: ";
     public static final String NOISE_LEVEL = "Adding noise level: ";
     public static final String NORMAL_TISSUE = "Normal tissue: ";
@@ -278,11 +280,13 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         Preferences.debug("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+";\n");
         Preferences.data("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+";\n");
         
-        if(noiseMax != 0) {
+        if(noiseMax != 0 && stdDevGaussian != 0) {
             generateNoise(image1a);
             generateNoise(image2a);
         }
-        Preferences.data(NOISE_LEVEL+noiseMax+";\n");
+        
+        Preferences.data(RADIUS1+initRadius);
+        Preferences.data(RADIUS2+getChangedRadius());
         
         image1a.calcMinMax();
         image2a.calcMinMax();
@@ -320,9 +324,11 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         switch(noise) {
         case gaussian:
             noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.GAUSSIAN, stdDevGaussian*4.0, 5, 1, 0, 1); //alg uses 4*std_dev to define min/max
+            Preferences.data(NOISE_LEVEL+stdDevGaussian+";\n");
             break;
         default:
             noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.RICIAN, noiseMax, 5, 1, 0, 1);
+            Preferences.data(NOISE_LEVEL+noiseMax+";\n");
             break;
         }
         noiseAlg.setRunningInSeparateThread(false);

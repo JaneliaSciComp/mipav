@@ -69,6 +69,8 @@ public class PlugInAlgorithmGeneratePostTreatment542b extends AlgorithmBase {
     private boolean image1cVOI, image2cVOI, postVOI;
 
     private double normalTissue;
+
+    private double image1IntensityStd, image2IntensityStd, normalTissueStd;
     
     /**
      * Constructor.
@@ -93,11 +95,11 @@ public class PlugInAlgorithmGeneratePostTreatment542b extends AlgorithmBase {
      * @param postVOI 
      * @param normalTissue 
      */
-    public PlugInAlgorithmGeneratePostTreatment542b(ModelImage image1, double image1Intensity, double image1Scale, double image1Noise, 
+    public PlugInAlgorithmGeneratePostTreatment542b(ModelImage image1, double image1Intensity, double image1IntensityStd, double image1Scale, double image1Noise, 
                                                     double image1ThresholdLower, double image1ThresholdUpper, 
-                                                    boolean image1cVOI, ModelImage image2, double image2Intensity, double image2Scale, double image2Noise, 
+                                                    boolean image1cVOI, ModelImage image2, double image2Intensity, double image2IntensityStd, double image2Scale, double image2Noise, 
                                                     double image2ThresholdLower, double image2ThresholdUpper, 
-                                                    boolean image2cVOI, double stdDevNum, double postThresholdLower, double postThresholdUpper, boolean postVOI, double normalTissue) {
+                                                    boolean image2cVOI, double stdDevNum, double postThresholdLower, double postThresholdUpper, boolean postVOI, double normalTissue, double normalTissueStd) {
         super(null, image1);
         
         this.image1a = image1;
@@ -107,6 +109,7 @@ public class PlugInAlgorithmGeneratePostTreatment542b extends AlgorithmBase {
         image1b.setImageName("image1b");
         
         this.image1Intensity = image1Intensity;
+        this.image1IntensityStd = image1IntensityStd;
         this.image1Scale = image1Scale;
         this.image1Noise = image1Noise;
         this.image1ThresholdLower = image1ThresholdLower;
@@ -117,6 +120,7 @@ public class PlugInAlgorithmGeneratePostTreatment542b extends AlgorithmBase {
         image2b.setImageName("image2b");
         
         this.image2Intensity = image2Intensity;
+        this.image2IntensityStd = image2IntensityStd;
         this.image2Scale = image2Scale;
         this.image2Noise = image2Noise;
         this.image2ThresholdLower = image2ThresholdLower;
@@ -128,6 +132,7 @@ public class PlugInAlgorithmGeneratePostTreatment542b extends AlgorithmBase {
         this.postVOI = postVOI;
         
         this.normalTissue = normalTissue;
+        this.normalTissueStd = normalTissueStd;
         
         this.stdDevNum = stdDevNum;
     }
