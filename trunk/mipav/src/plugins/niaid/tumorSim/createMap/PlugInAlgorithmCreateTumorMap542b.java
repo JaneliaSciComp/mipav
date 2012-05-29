@@ -1,3 +1,4 @@
+package niaid.tumorSim.createMap;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -27,6 +28,7 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
@@ -91,7 +93,9 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
      * Constructor.
      * @param intensity1 
      * @param intensity2 
-     * @param noiseMax 
+     * @param stdDevIntensity2 
+     * @param intensity22 
+     * @param noiseParam either rician or gaussian noise parameter
      * @param normalTissue 
      * @param subsample 
      *
@@ -99,7 +103,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
 	public PlugInAlgorithmCreateTumorMap542b(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
             PlugInDialogCreateTumorMap542b.TumorSimMode simMode, 
-            double intensity1, double intensity2, int subsampleAmount, boolean doCenter, double noiseMax, double normalTissue) {
+            double intensity1, double stdDevIntensity1, double intensity2, double stdDevIntensity2, 
+            int subsampleAmount, boolean doCenter, double noiseParam, double normalTissue) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
@@ -121,7 +126,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         
         this.subsampleAmount = subsampleAmount;
         
-        this.noiseMax = noiseMax;
+        this.noiseMax = noiseParam;
         
         this.normalTissue = normalTissue;
     }

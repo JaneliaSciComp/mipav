@@ -30,6 +30,8 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
+import niaid.tumorSim.simParams.PlugInDialogSimulateParams542b;
+
 /**
  * 
  * This is the main driver for a plug-in.  As a PlugInAlgorithm, it requires an image 
