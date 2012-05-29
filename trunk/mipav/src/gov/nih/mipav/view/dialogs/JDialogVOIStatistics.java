@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -111,7 +112,21 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     /** DOCUMENT ME! */
     protected int processType = AlgorithmVOIProps.PROCESS_PER_VOI;
     
+    private int activeVolume;
+    
+    private int initialActiveVolume;
+    
+    private int tDim;
+    
+    private AlgorithmSubset subsetAlgo;
+    
+    private ModelImage subsetImage = null;
+    
     private boolean doAllVolumes = false;
+    
+    private ViewVOIVector processList = null;
+    
+    private RangeType r = RangeType.NO_RANGE;
 
     /** DOCUMENT ME! */
     private float rangeMaximum = 0f;
@@ -258,15 +273,68 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     	//update stat log to include calculations from AlgorithmVOIProps (or alternate statistics computer)
     	updateStatLog();
     	
-        if ( !isScriptRunning()) {
+        if (( !isScriptRunning()) && ((!doAllVolumes) || (doAllVolumes && (activeVolume == tDim-1)))) {
             updateDialog(); //do not update GUI when in script
         	insertScriptLine();
         }
         
         //write stat log to file specified by user
-        writeStatisticFile();
+        if ((!doAllVolumes) || (doAllVolumes && (activeVolume == tDim-1))) {
+            writeStatisticFile();
+        }
+        
+        if (doAllVolumes && (activeVolume < tDim - 1)) {
+            anotherCall();    
+         }
+         else if (image.getNDims() >= 4) {
+             subsetImage.disposeLocal();
+             subsetImage = null;
+         }
 
         System.gc(); // to reclaim lost land.
+    }
+    
+    private void anotherCall() {
+        activeVolume++;
+        subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
+        subsetAlgo.run();
+        
+        calculator = new AlgorithmVOIProps(subsetImage, processType, r, processList);
+        calculator.setPrecisionDisplay(precision, doForce);
+        calculator.setSelectedStatistics( checkList );
+        calculator.addListener(this);
+
+        // only calculate these if appropriate box is checked for speed.
+        int largestDistanceIndex = -1, largestSliceDistanceIndex = -1;
+        for (int i = 0; i < VOIStatisticList.numberOfStatistics; i++) {
+            if (VOIStatisticList.statisticDescription[i].equals(VOIStatisticList.largestDistanceDescription)) {
+                largestDistanceIndex = i;
+            } else if (VOIStatisticList.statisticDescription[i]
+                    .equals(VOIStatisticList.largestSliceDistanceDescription)) {
+                largestSliceDistanceIndex = i;
+            }
+        }
+
+        calculator.setDistanceFlag(checkList[largestDistanceIndex]);
+        calculator.setSliceDistanceFlag(checkList[largestSliceDistanceIndex]);
+
+        createProgressBar(image.getImageName(), calculator);
+
+        calculator.setVOIList(selectedList.getModel());
+        calculator.setShowTotals(showTotals);
+        // da.addTextUpdateListener(this); // unimplemented -- meant to permit messaging between running thread and
+        // this' logging pane.
+        
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (calculator.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            calculator.run();
+        }
     }
 
     /**
@@ -343,18 +411,47 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      * Once all the necessary variables are set, call the VOI Props algorithm to run the statistic calculation.
      */
     protected void callAlgorithm() {
-        ViewVOIVector processList = new ViewVOIVector(selectedList.getModel().getSize());
+        processList = new ViewVOIVector(selectedList.getModel().getSize());
         for(int i=0; i<selectedList.getModel().getSize(); i++) {
             processList.add((VOI)selectedList.getModel().getElementAt(i));
         }
         
-        RangeType r = RangeType.NO_RANGE;
+        r = RangeType.NO_RANGE;
         if(isScriptRunning()) {
             r = scriptRange;
         } else {
             r = outputOptionsPanel.getExcluder().getRangeFlag();
         }
-        calculator = new AlgorithmVOIProps(image, processType, r, processList);
+        doAllVolumes = false;
+        tDim = 1;
+        int destExtents[] = null;
+        activeVolume = 0;
+        if (image.getNDims() >= 4) {
+            tDim = image.getExtents()[3];
+            destExtents = new int[3];
+            destExtents[0] = image.getExtents()[0];
+            destExtents[1] = image.getExtents()[1];
+            destExtents[2] = image.getExtents()[2];
+            // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
+            subsetImage = new ModelImage(image.getType(), destExtents, image.getImageName());
+            // Set doAllVolumes
+            outputOptionsPanel.getVolumeType();
+            if (!doAllVolumes) {
+                activeVolume = image.getParentFrame().getComponentImage().getTimeSlice();
+            }
+        }
+        initialActiveVolume = activeVolume;
+        
+        if (tDim == 1) {
+            subsetImage = image;
+        }
+        
+            
+        if (tDim > 1) {
+            subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
+            subsetAlgo.run();
+        }
+        calculator = new AlgorithmVOIProps(subsetImage, processType, r, processList);
         calculator.setPrecisionDisplay(precision, doForce);
         calculator.setSelectedStatistics( checkList );
         calculator.addListener(this);
@@ -1144,7 +1241,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         }
 
         processType = outputOptionsPanel.getProcessType();
-        doAllVolumes = outputOptionsPanel.getVolumeType();
+        // Sets doAllVolumes
+        outputOptionsPanel.getVolumeType();
         precision = outputOptionsPanel.getPrecision();
         doForce = outputOptionsPanel.doForcePrecision();
         showTotals = outputOptionsPanel.isShowTotals();
@@ -1186,15 +1284,17 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             return;
         }
         
-        //the stat log is always rewritten unless specified by user //TODO:add append option
-        createNewLogModel();
-
         VOIStatisticalProperties properties;
         Vector<VOIBase> contours;
 
         final ListModel list = selectedList.getModel();
         
-        writeLogHeader();
+        if (activeVolume == initialActiveVolume) {
+            //the stat log is always rewritten unless specified by user //TODO:add append option
+            createNewLogModel();
+            
+            writeLogHeader();
+        }
 
         // for each element in the list ....
         for (int i = 0; i < list.getSize(); i++) {
@@ -1205,9 +1305,16 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             if ( processType == AlgorithmVOIProps.PROCESS_PER_CONTOUR ) {   
                 contours = ((VOI) list.getElementAt(i)).getCurves();
                 updateDialogRow((VOI) list.getElementAt(i), new Vector[]{contours}, properties, list, i, rowData, totalData);
-            } else if(processType == AlgorithmVOIProps.PROCESS_PER_VOI) {  
-                rowData[0] = list.getElementAt(i).toString();
-                logModel.addRow(updateRowStatistics((VOI) list.getElementAt(i), properties, rowData, totalData, "", 1));
+            } else if(processType == AlgorithmVOIProps.PROCESS_PER_VOI) {
+                if (image.getNDims() >= 4) {
+                    rowData[0] = String.valueOf(activeVolume);
+                    rowData[1] = list.getElementAt(i).toString();
+                    logModel.addRow(updateRowStatistics((VOI) list.getElementAt(i), properties, rowData, totalData, "", 2));
+                }
+                else {
+                    rowData[0] = list.getElementAt(i).toString();
+                    logModel.addRow(updateRowStatistics((VOI) list.getElementAt(i), properties, rowData, totalData, "", 1));
+                }
             } else { //processType is by slice or by slice-and-contour
                 Vector<VOIBase>[] sortedContoursZ = ((VOI) list.getElementAt(i)).getSortedCurves(VOIBase.ZPLANE, image.getExtents()[2]);
                 updateDialogRow((VOI) list.getElementAt(i), sortedContoursZ, properties, list, i, rowData, totalData);
@@ -1230,6 +1337,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
     protected void updateDialogRow(VOI voi, Vector<VOIBase>[] contours, 
             VOIStatisticalProperties properties, ListModel list, int i, 
             String[] rowData, String[] totalData) {
+   
         for (int slice = 0; slice < contours.length; slice++) {
             if ( contours[slice].size() <= 0 ) {
                 continue;
@@ -1244,6 +1352,11 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             
             //this for loop produces different statistics depending on the processType, the statistics fetched are determined by the "end" string
             for (int num = 0; num < stop; num++) {
+                if (image.getNDims() >= 4) {
+                    rowData[count] = String.valueOf(activeVolume);
+                    totalData[count] = String.valueOf(activeVolume);
+                    count++;
+                }
                 rowData[count] = list.getElementAt(i).toString();
                 totalData[count] = "Totals:";
                 count++;
@@ -1330,6 +1443,9 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
      */
     protected void writeLogHeader() {
         Vector<String> logModelCol = new Vector<String>();
+        if (image.getNDims() >= 4) {
+            logModelCol.add("Volume");
+        }
         logModelCol.add("Name");
         if(processType == AlgorithmVOIProps.PROCESS_PER_SLICE || processType == AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR) {
             logModelCol.add("Slice");
@@ -1482,6 +1598,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             } else { // WRITE
                 statFW = new FileWriter(statFile.getAbsolutePath());
             }
+        
             logFileText = writeLogModelToString();
             statFW.write(logFileText.toString());
             statFW.flush();
@@ -1807,7 +1924,7 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             }
         }
         
-        public boolean getVolumeType() {
+        public void getVolumeType() {
             if ((activeVolumeButton != null) && (allVolumesButton != null)) {
                 if (activeVolumeButton.isSelected()) {
                     doAllVolumes = false;
@@ -1819,7 +1936,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
             else {
                 doAllVolumes = false;
             }
-            return doAllVolumes;
         }
 
         /**
