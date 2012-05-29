@@ -29,6 +29,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
+import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542b.NoiseMode;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
@@ -82,8 +84,12 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     private boolean doCenter;
     /** Maximum of Rician distributed noise */
     private double noiseMax;
+    /** Standard deviation of Gaussian distributed noise */
+    private double stdDevGaussian;
     /** Normal tissue value, assummed same for image 1 and 2 */
     private double normalTissue;
+    /** Standard deviation of normal tissue intensity */
+    private double stdDevIntensity1, stdDevIntensity2;
    
     public PlugInAlgorithmCreateTumorMap542b() {
         // TODO Auto-generated constructor stub
@@ -94,9 +100,11 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
      * @param intensity1 
      * @param intensity2 
      * @param stdDevIntensity2 
+     * @param noise 
      * @param intensity22 
      * @param noiseParam either rician or gaussian noise parameter
      * @param normalTissue 
+     * @param stdDevNormal 
      * @param subsample 
      *
      */
@@ -104,7 +112,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
             double zRes, double initRadius, double tumorChange,
             PlugInDialogCreateTumorMap542b.TumorSimMode simMode, 
             double intensity1, double stdDevIntensity1, double intensity2, double stdDevIntensity2, 
-            int subsampleAmount, boolean doCenter, double noiseParam, double normalTissue) {
+            int subsampleAmount, boolean doCenter, NoiseMode noise, double noiseParam, double normalTissue, double stdDevNormal) {
         this.xyDim = xyDim;
         this.zDim = zDim;
         
@@ -122,11 +130,21 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         this.tumorChange = tumorChange;
         this.simMode = simMode;
         this.intensity1 = intensity1;
+        this.stdDevIntensity1 = stdDevIntensity1;
         this.intensity2 = intensity2;
+        this.stdDevIntensity2 = stdDevIntensity2;
         
         this.subsampleAmount = subsampleAmount;
         
-        this.noiseMax = noiseParam;
+        switch(noise) {
+        case gaussian:
+            this.stdDevGaussian = noiseParam;
+            break;
+        default:
+            this.noiseMax = noiseParam;
+            break;
+        }
+        
         
         this.normalTissue = normalTissue;
     }

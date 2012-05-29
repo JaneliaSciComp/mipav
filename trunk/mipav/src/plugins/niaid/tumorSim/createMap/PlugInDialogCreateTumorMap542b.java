@@ -155,7 +155,7 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
     private JTextField gaussianText;
 
     /** Standard deviations for normal tissue, tumor1, tumor2, and noise profile*/
-    private double stdDevNormal, stdDevIntensity1, stdDevIntensity2, guassian;
+    private double stdDevNormal, stdDevIntensity1, stdDevIntensity2, stdDevGaussian;
 
     private NoiseMode noise;
 
@@ -245,7 +245,7 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
             double noiseParam;
             switch(noise) {
             case gaussian:
-                noiseParam = guassian;
+                noiseParam = stdDevGaussian;
                 break;
             default:
                 noiseParam = noiseMax;
@@ -254,7 +254,7 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
             
             
             tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, 
-                    intensity1, stdDevIntensity1, intensity2, stdDevIntensity2, subsample, doCenter, noiseParam, normalTissue);
+                    intensity1, stdDevIntensity1, intensity2, stdDevIntensity2, subsample, doCenter, noise, noiseParam, normalTissue, stdDevNormal);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -549,7 +549,7 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
     	    
     	    noiseMax = Double.valueOf(noiseMaxText.getText());
     	    
-    	    guassian = Double.valueOf(gaussianText.getText());
+    	    stdDevGaussian = Double.valueOf(gaussianText.getText());
     	    
     	    normalTissue = Double.valueOf(normalTissueText.getText());
     	    
