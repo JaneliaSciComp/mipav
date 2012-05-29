@@ -263,7 +263,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     private void setNormalTissue(ModelImage image, double stdDevIntensity) {
         Random r = new Random();
         for(int i=0; i<image.getDataSize(); i++) {
-            image.set(i, normalTissue+r.nextGaussian()+stdDevIntensity);
+            image.set(i, normalTissue+r.nextGaussian()*stdDevIntensity);
         }
     }
 
