@@ -63,7 +63,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     public static final String RADIUS1 = "Radius 1: ";
     public static final String RADIUS2 = "Radius 2: ";
     public static final String STD_DEV = "std dev: ";
-    public static final String NOISE_LEVEL = "Adding noise level: ";
+    public static final String NOISE_LEVEL = "Adding noise parameter: ";
     public static final String NORMAL_TISSUE = "Normal tissue: ";
     public static final String PARTIAL = "Partial volume pixels: ";
     public static final String TOTAL = "Total voxels in tumor";
