@@ -63,6 +63,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     public static final String STD_DEV = "std dev: ";
     public static final String NOISE_LEVEL = "Adding noise level: ";
     public static final String NORMAL_TISSUE = "Normal tissue: ";
+    public static final String PARTIAL = "Partial volume pixels: ";
+    public static final String TOTAL = "Total voxels in tumor";
     
     /** Image dimensions */
     private int xyDim, zDim;
@@ -77,6 +79,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     private double intensity1, intensity2;
     /** Result images */
     private ModelImage image1a, image2a;
+    /** Tumor only images */
+    private ModelImage image1aTumor, image2aTumor;
     private int[][] sphere;
     private int subsampleAmount;
     /** Whether boundary checking is necessary during sphere population */
@@ -175,8 +179,14 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         FileInfoImageXML fileInfoImage1 = new FileInfoImageXML("image1a", null, FileUtility.RAW);
         FileInfoImageXML fileInfoImage2 = new FileInfoImageXML("image2a", null, FileUtility.RAW);
         
+        FileInfoImageXML fileInfoImage1TumorOnly = new FileInfoImageXML("image1a_tumor", null, FileUtility.RAW);
+        FileInfoImageXML fileInfoImage2TumorOnly = new FileInfoImageXML("image2a_tumor", null, FileUtility.RAW);
+        
         setBasicInfo(fileInfoImage1);
         setBasicInfo(fileInfoImage2);
+        
+        setBasicInfo(fileInfoImage1TumorOnly);
+        setBasicInfo(fileInfoImage2TumorOnly);
         
         image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
         image1a.getParentFrame().setVisible(false);
@@ -184,6 +194,13 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         image2a = ViewUserInterface.getReference().createBlankImage(fileInfoImage2);
         image2a.setImageName("image2a");
         image2a.getParentFrame().setVisible(false);
+        
+        image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
+        image1aTumor.getParentFrame().setVisible(false);
+        image1aTumor.setImageName("image1a_tumor");
+        image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2);
+        image2aTumor.setImageName("image2a_tumor");
+        image2aTumor.getParentFrame().setVisible(false);
         
         setNormalTissue(image1a, stdDevIntensity1);
         setNormalTissue(image2a, stdDevIntensity2);
@@ -217,15 +234,30 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         Preferences.data(INTENSITY2+intensity2+"\t"+STD_DEV+stdDevIntensity2+";\n");
         Preferences.data(NORMAL_TISSUE+normalTissue+"\t"+STD_DEV+stdDevNormal+";\n");
         
+        fireProgressStateChanged("Populating spheres");
+        
         populateSphere(initRadius, intensity1, stdDevIntensity1, image1a);      
         populateSphere(getChangedRadius(), intensity2, stdDevIntensity2, image2a);
+        
+        populateSphere(initRadius, intensity1, 0, image1aTumor); //use to find subsampling effect     
+        populateSphere(getChangedRadius(), intensity2, 0, image2aTumor); //use to find subsampling effect
         
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       
             image2a = subsample(image2a);
+            image1aTumor = subsample(image1aTumor);
+            image2aTumor = subsample(image2aTumor);
             image1a.getParentFrame().setVisible(false);
             image2a.getParentFrame().setVisible(false);
+            image1aTumor.getParentFrame().setVisible(false);
+            image2aTumor.getParentFrame().setVisible(false);
         }
+        
+        countPixels(image1aTumor, intensity1);
+        countPixels(image2aTumor, intensity2);
+        
+        ViewUserInterface.getReference().unRegisterImage(image1aTumor);
+        ViewUserInterface.getReference().unRegisterImage(image2aTumor);
         
         image1a.setImageName("image1a");
         for(int i=0; i<image1a.getFileInfo().length; i++) {
@@ -259,6 +291,22 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
+
+    private void countPixels(ModelImage image, double intensity) {
+        int numPixelsTumor = 0;
+        int numPixelsSubsampled = 0;
+        for(int i=0; i<image.getDataSize(); i++) {
+            if(image.getDouble(i) != 0) {
+                if(image.getDouble(i) != intensity) {
+                    numPixelsSubsampled++;
+                } 
+                numPixelsTumor++;
+            }
+        }
+        
+        Preferences.data("For "+image.getImageName()+" "+TOTAL+" "+numPixelsTumor+"\n");
+        Preferences.data("For "+image.getImageName()+" "+PARTIAL+" "+numPixelsSubsampled+"\n");
+    }
 
     private void setNormalTissue(ModelImage image, double stdDevIntensity) {
         Random r = new Random();
