@@ -131,6 +131,18 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
 
     private double normalTissue;
 
+    private JTextField image1IntensityStdText;
+
+    private JTextField image2IntensityStdText;
+
+    private JTextField normalTissueStdText;
+
+    private double image1IntensityStd;
+
+    private double image2IntensityStd;
+
+    private double normalTissueStd;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -219,9 +231,9 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment542b(image1, image1Intensity, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
-                                                                            image2, image2Intensity, image2Scale, image2Noise, image2ThresholdLower, image2ThresholdUpper, image2cVOI, stdDevNum, 
-                                                                            postThresholdLower, postThresholdUpper, postVOI, normalTissue);
+            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment542b(image1, image1Intensity, image1IntensityStd, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
+                                                                            image2, image2Intensity, image1IntensityStd, image2Scale, image2Noise, image2ThresholdLower, image2ThresholdUpper, image2cVOI, stdDevNum, 
+                                                                            postThresholdLower, postThresholdUpper, postVOI, normalTissue, normalTissueStd);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -323,24 +335,38 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
         image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
         image1Panel.add(image1Combo.getParent(), gbc);
         
-        double intensity1 = 109, intensity2 = 201, normalTissue = 70;
-        String intenSearch = Preferences.getData();
+        double intensity1 = 109, intensity1Std = 10, intensity2 = 201, intensity2Std = 20, normalTissue = 70, normalTissueStd = 7;
+        String intenSearch = Preferences.getData(), subSearch;
         try {
             int loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542b.INTENSITY1);
-            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.INTENSITY1.length(), intenSearch.indexOf(';', loc)).trim());
-            loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542b.INTENSITY2);
-            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.INTENSITY2.length(), intenSearch.indexOf(';', loc)).trim());
-            loc = intenSearch.lastIndexOf(PlugInAlgorithmCreateTumorMap542b.NORMAL_TISSUE);
-            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.NORMAL_TISSUE.length(), intenSearch.indexOf(';', loc)).trim());
+
+            intensity1 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.INTENSITY1.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            loc++;
+            intensity1Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
+            loc+=2;
+            intensity2 = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.INTENSITY2.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            loc++;
+            intensity2Std = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.STD_DEV.length(), loc = intenSearch.indexOf(';', loc)).trim());
+            loc+=2;
+            normalTissue = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.NORMAL_TISSUE.length(), loc = intenSearch.indexOf('\t', loc)).trim());
+            loc++;
+            normalTissueStd = Double.valueOf(intenSearch.substring(loc+PlugInAlgorithmCreateTumorMap542b.STD_DEV.length(), intenSearch.indexOf(';', loc)).trim());
         } catch(Exception e) {
             intensity1 = 109;
+            intensity1Std = (int)(intensity1*.1);
             intensity2 = 201;
+            intensity2Std = (int)(intensity2*.1);
             normalTissue =  5;
+            normalTissueStd = (int)(normalTissue*.1);
         }
         
-        gbc.gridx++;
+        gbc.gridy++;
         image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", intensity1);            
         image1Panel.add(image1IntensityText.getParent(), gbc);
+        
+        gbc.gridx++;
+        image1IntensityStdText = gui.buildDecimalField("Std dev: ", intensity1Std);
+        image1Panel.add(image1IntensityStdText.getParent(), gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -358,7 +384,7 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
         }
         
         gbc.gridx++;
-        image1NoiseText = gui.buildDecimalField("Image 1 max noise: ", noise1);
+        image1NoiseText = gui.buildDecimalField("Image 1 noise param: ", noise1);
         image1Panel.add(image1NoiseText.getParent(), gbc);
         
         gbc.gridy++;
@@ -381,13 +407,18 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
         
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
+        gbc.gridwidth = 2;
         image2Combo = gui.buildComboBox("Image 2: ", imageAr, numDefault2);
         image2Panel.add(image2Combo.getParent(), gbc);
         
-        gbc.gridx++;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
         image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", intensity2);
         image2Panel.add(image2IntensityText.getParent(), gbc);
+        
+        gbc.gridx++;
+        image2IntensityStdText = gui.buildDecimalField("Std dev: ", intensity2Std);
+        image2Panel.add(image2IntensityStdText.getParent(), gbc);
         
         gbc.gridy++;
         gbc.gridx = 0;
@@ -395,7 +426,7 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
         image2Panel.add(image2ScaleText.getParent(), gbc);
         
         gbc.gridx++;
-        image2NoiseText = gui.buildDecimalField("Image 2 max noise: ", noise2);
+        image2NoiseText = gui.buildDecimalField("Image 2 noise param: ", noise2);
         image2Panel.add(image2NoiseText.getParent(), gbc);  
         
         gbc.gridy++;
@@ -429,8 +460,14 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
         gbc.gridx = 0;
         normalTissueText = gui.buildDecimalField("Normal tissue: ", normalTissue);
         mainPanel.add(normalTissueText.getParent(), gbc);
-              
+          
         gbc.gridx++;
+        normalTissueStdText = gui.buildDecimalField("Std dev: ", normalTissueStd);
+        mainPanel.add(normalTissueStdText.getParent(), gbc);
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         doInterImagesCheckBox = gui.buildCheckBox("Output intermediate images", true);
         mainPanel.add(doInterImagesCheckBox.getParent(), gbc);
         
@@ -483,6 +520,7 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
 	private boolean setVariables() {
 		try {
 		    image1Intensity = Double.valueOf(image1IntensityText.getText());
+		    image1IntensityStd = Double.valueOf(image1IntensityStdText.getText());
 		    image1Scale = Double.valueOf(image1ScaleText.getText());
 		    image1Noise = Double.valueOf(image1NoiseText.getText());
 		    double[] image1Range = getThreshold(image1ThresholdText.getText());
@@ -491,6 +529,7 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
 		    image1cVOI = doImage1cVOIBox.isSelected();
 		    
 		    image2Intensity = Double.valueOf(image2IntensityText.getText());
+		    image2IntensityStd = Double.valueOf(image2IntensityStdText.getText());
 		    image2Scale = Double.valueOf(image2ScaleText.getText());
             image2Noise = Double.valueOf(image2NoiseText.getText());
             double[] image2Range = getThreshold(image2ThresholdText.getText());
@@ -504,12 +543,13 @@ public class PlugInDialogGeneratePostTreatment542b extends JDialogScriptableBase
             postVOI = doPostVOIBox.isSelected();
             
             normalTissue = Double.valueOf(normalTissueText.getText());
+            normalTissueStd = Double.valueOf(normalTissueStdText.getText());
             
             stdDevNum = Double.valueOf(stdDevNumText.getText());
             
             Preferences.data("====Generate Post-treatment algorithm information====\n");
-            Preferences.data("Image 1 information:\n\tIntensity: "+image1Intensity+"\n\tScale: "+image1Scale+"\n\tNoise: "+image1Noise+"\tRange: "+image1ThresholdLower+" - "+image1ThresholdUpper+"\n");   
-            Preferences.data("Image 2 information:\n\tIntensity: "+image2Intensity+"\n\tScale: "+image2Scale+"\n\tNoise: "+image2Noise+"\tRange: "+image2ThresholdLower+" - "+image2ThresholdUpper+"\n");
+            Preferences.data("Image 1 information:\n\tIntensity: "+image1Intensity+"\n\tStd dev: "+image1IntensityStd+"\n\tScale: "+image1Scale+"\n\tNoise: "+image1Noise+"\tRange: "+image1ThresholdLower+" - "+image1ThresholdUpper+"\n");   
+            Preferences.data("Image 2 information:\n\tIntensity: "+image2Intensity+"\n\tStd dev: "+image2IntensityStd+"\n\tScale: "+image2Scale+"\n\tNoise: "+image2Noise+"\tRange: "+image2ThresholdLower+" - "+image2ThresholdUpper+"\n");
             Preferences.data("Post-treatment information: "+"\tRange: "+postThresholdLower+" - "+postThresholdUpper+"\n");
             Preferences.data("Standard deviation number: "+stdDevNum+"\n");
             Preferences.data("====End generate Post-treatment algorithm information====\n");
