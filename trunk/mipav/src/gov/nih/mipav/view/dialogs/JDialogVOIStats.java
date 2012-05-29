@@ -190,8 +190,6 @@ public class JDialogVOIStats extends JDialogBase
     
     private boolean doAllVolumes;
     
-    private int t;
-    
     private int tDim;
     
     private AlgorithmSubset subsetAlgo;
