@@ -60,6 +60,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
 
     public static final String INTENSITY1 = "Intensity1: ";
     public static final String INTENSITY2 = "Intensity2: ";
+    public static final String STD_DEV = "std dev: ";
     public static final String NOISE_LEVEL = "Adding noise level: ";
     public static final String NORMAL_TISSUE = "Normal tissue: ";
     
@@ -88,8 +89,10 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
     private double stdDevGaussian;
     /** Normal tissue value, assummed same for image 1 and 2 */
     private double normalTissue;
-    /** Standard deviation of normal tissue intensity */
-    private double stdDevIntensity1, stdDevIntensity2;
+    /** Standard deviation of normal tissue intensity and tumor intensities*/
+    private double stdDevIntensity1, stdDevIntensity2, stdDevNormal;
+    /** Noise mode */
+    private NoiseMode noise;
    
     public PlugInAlgorithmCreateTumorMap542b() {
         // TODO Auto-generated constructor stub
@@ -136,6 +139,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         
         this.subsampleAmount = subsampleAmount;
         
+        this.noise = noise;
+        
         switch(noise) {
         case gaussian:
             this.stdDevGaussian = noiseParam;
@@ -147,6 +152,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         
         
         this.normalTissue = normalTissue;
+        this.stdDevNormal = stdDevNormal;
     }
     
 	//  ~ Methods --------------------------------------------------------------------------------------------------------
@@ -179,8 +185,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         image2a.setImageName("image2a");
         image2a.getParentFrame().setVisible(false);
         
-        setNormalTissue(image1a);
-        setNormalTissue(image2a);
+        setNormalTissue(image1a, stdDevIntensity1);
+        setNormalTissue(image2a, stdDevIntensity2);
         
         int xyLargerRadius = (int)Math.ceil(defineLargerRadius()/xyRes);
         
@@ -207,12 +213,12 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         Preferences.debug("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         Preferences.data("Center of tumor: "+xCenter+", "+yCenter+", "+zCenter+"\n");
         
-        Preferences.data(INTENSITY1+intensity1+";\n");
-        Preferences.data(INTENSITY2+intensity2+";\n");
-        Preferences.data(NORMAL_TISSUE+normalTissue+";\n");
+        Preferences.data(INTENSITY1+intensity1+"\t"+STD_DEV+stdDevIntensity1+";\n");
+        Preferences.data(INTENSITY2+intensity2+"\t"+STD_DEV+stdDevIntensity2+";\n");
+        Preferences.data(NORMAL_TISSUE+normalTissue+"\t"+STD_DEV+stdDevNormal+";\n");
         
-        populateSphere(initRadius, intensity1, image1a);      
-        populateSphere(getChangedRadius(), intensity2, image2a);
+        populateSphere(initRadius, intensity1, stdDevIntensity1, image1a);      
+        populateSphere(getChangedRadius(), intensity2, stdDevIntensity2, image2a);
         
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       
@@ -254,16 +260,25 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
 
     } // end runAlgorithm()
 
-    private void setNormalTissue(ModelImage image) {
+    private void setNormalTissue(ModelImage image, double stdDevIntensity) {
+        Random r = new Random();
         for(int i=0; i<image.getDataSize(); i++) {
-            image.set(i, normalTissue);
+            image.set(i, normalTissue+r.nextGaussian()+stdDevIntensity);
         }
     }
 
     private void generateNoise(ModelImage image) {
-        AlgorithmNoise noise = new AlgorithmNoise(image, AlgorithmNoise.RICIAN, noiseMax, 5, 1, 0, 1);
-        noise.setRunningInSeparateThread(false);
-        noise.run();
+        AlgorithmNoise noiseAlg = null;
+        switch(noise) {
+        case gaussian:
+            noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.GAUSSIAN, stdDevGaussian, 5, 1, 0, 1);
+            break;
+        default:
+            noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.RICIAN, noiseMax, 5, 1, 0, 1);
+            break;
+        }
+        noiseAlg.setRunningInSeparateThread(false);
+        noiseAlg.run();
     }
 
 
@@ -281,7 +296,8 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         return subsample.getResultImage();
     }
 
-    private void populateSphere(double radius, double intensity, ModelImage image) {
+    private void populateSphere(double radius, double intensity, double stdDev, ModelImage image) {
+        Random r = new Random();
         sphere = CircleUtil.get3DPointsInSphere(xCenter, yCenter, zCenter, xyRes, xyRes, zRes, radius);
         int xyDimBound = xyDim-1;
         int zDimBound = zDim-1;
@@ -294,7 +310,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
                     continue;
                 }
             }
-            image.set(sphere[i][0], sphere[i][1], sphere[i][2], intensity);
+            image.set(sphere[i][0], sphere[i][1], sphere[i][2], intensity+r.nextGaussian()*stdDev);
         }
     }
     
