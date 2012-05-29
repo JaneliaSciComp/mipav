@@ -1,3 +1,4 @@
+package niaid.tumorSim.createMap;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -68,6 +69,12 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         shrink,
         grow,
         none;
+    }
+    
+    /** Noise profile mode */
+    public enum NoiseMode {
+        gaussian,
+        rician;
     }
     
     
@@ -146,6 +153,11 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
     private JRadioButton gaussianRadio;
 
     private JTextField gaussianText;
+
+    /** Standard deviations for normal tissue, tumor1, tumor2, and noise profile*/
+    private double stdDevNormal, stdDevIntensity1, stdDevIntensity2, guassian;
+
+    private NoiseMode noise;
 
     
 
@@ -230,8 +242,19 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
     protected void callAlgorithm() {
 
         try {
+            double noiseParam;
+            switch(noise) {
+            case gaussian:
+                noiseParam = guassian;
+                break;
+            default:
+                noiseParam = noiseMax;
+                break;
+            }
             
-            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, intensity1, intensity2, subsample, doCenter, noiseMax, normalTissue);
+            
+            tumorSimAlgo = new PlugInAlgorithmCreateTumorMap542b(xyDim, zDim, xyRes, zRes, initRadius, tumorChange, simMode, 
+                    intensity1, stdDevIntensity1, intensity2, stdDevIntensity2, subsample, doCenter, noiseParam, normalTissue);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -517,11 +540,25 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
     	    tumorChange = Double.valueOf(percentChangeText.getText());
     	    
     	    intensity1 = Double.valueOf(intensity1Text.getText());
+    	    
+    	    stdDevIntensity1 = Double.valueOf(stdDevIntensity1Text.getText());
+    	    
     	    intensity2 = Double.valueOf(intensity2Text.getText());
+    	    
+    	    stdDevIntensity2 = Double.valueOf(stdDevIntensity2Text.getText());
     	    
     	    noiseMax = Double.valueOf(noiseMaxText.getText());
     	    
+    	    guassian = Double.valueOf(gaussianText.getText());
+    	    
     	    normalTissue = Double.valueOf(normalTissueText.getText());
+    	    
+    	    stdDevNormal = Double.valueOf(stdDevNormalText.getText());
+    	    
+    	    noise = NoiseMode.rician; //default
+    	    if(gaussianRadio.isSelected()) {
+    	        noise = NoiseMode.gaussian;
+    	    }
     	    
     	    Preferences.data("====Create tumor map algorithm information====\n");
             Preferences.data("Dimensions:\tXY: "+xyDim+"\tZ: "+zDim+"\n");

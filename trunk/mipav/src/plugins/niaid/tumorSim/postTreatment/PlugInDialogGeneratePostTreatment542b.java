@@ -1,3 +1,4 @@
+package niaid.tumorSim.postTreatment;
 //MIPAV is freely available from http://mipav.cit.nih.gov
 
 //THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
@@ -40,6 +41,8 @@ import java.util.Enumeration;
 import java.util.HashSet;
 
 import javax.swing.*;
+
+import niaid.tumorSim.createMap.PlugInAlgorithmCreateTumorMap542b;
 
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
