@@ -271,7 +271,7 @@ public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
         AlgorithmNoise noiseAlg = null;
         switch(noise) {
         case gaussian:
-            noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.GAUSSIAN, stdDevGaussian, 5, 1, 0, 1);
+            noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.GAUSSIAN, stdDevGaussian*4.0, 5, 1, 0, 1); //alg uses 4*std_dev to define min/max
             break;
         default:
             noiseAlg = new AlgorithmNoise(image, AlgorithmNoise.RICIAN, noiseMax, 5, 1, 0, 1);
