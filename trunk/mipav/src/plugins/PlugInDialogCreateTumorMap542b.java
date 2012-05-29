@@ -135,6 +135,18 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
 
     private double normalTissue;
 
+    private JTextField stdDevNormalText;
+
+    private JTextField stdDevIntensity1Text;
+
+    private JTextField stdDevIntensity2Text;
+
+    private JRadioButton ricianRadio;
+
+    private JRadioButton gaussianRadio;
+
+    private JTextField gaussianText;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -374,13 +386,27 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         normalTissueText = gui.buildDecimalField("Normal tissue intensity: ", 70);
         tumorSimPanel.add(normalTissueText.getParent(), gbc);
         
+        gbc.gridx++;
+        stdDevNormalText = gui.buildDecimalField("Std dev: ", (int)(70*.1));
+        tumorSimPanel.add(stdDevNormalText.getParent(), gbc);
+        
+        gbc.gridx = 0;
         gbc.gridy++;
         intensity1Text = gui.buildDecimalField("Image 1 tumor intensity: ", 109);
         tumorSimPanel.add(intensity1Text.getParent(), gbc);
         
         gbc.gridx++;
+        stdDevIntensity1Text = gui.buildDecimalField("Std dev: ", (int)(109*.1));
+        tumorSimPanel.add(stdDevIntensity1Text.getParent(), gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
         intensity2Text = gui.buildDecimalField("Image 2 tumor intensity: ", 201);
         tumorSimPanel.add(intensity2Text.getParent(), gbc);
+        
+        gbc.gridx++;
+        stdDevIntensity2Text = gui.buildDecimalField("Std dev: ", (int)(201*.1));
+        tumorSimPanel.add(stdDevIntensity2Text.getParent(), gbc);
         
         gbc.gridx = 0;
         gbc.gridy++;
@@ -412,13 +438,54 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         gbc.gridy++;      
         percentChangeText = gui.buildDecimalField("Percentage change: ", .33);
         tumorSimPanel.add(percentChangeText.getParent(), gbc);
-        
-        gbc.gridy++;
-        noiseMaxText = gui.buildDecimalField("Maximum Rician noise value: ", 1);
-        tumorSimPanel.add(noiseMaxText.getParent(), gbc);
-        
+              
         gbc.gridy = 1;
         mainPanel.add(tumorSimPanel, gbc);
+       
+        JPanel noisePanel = new JPanel(new GridBagLayout());
+        noisePanel.setForeground(Color.black);
+        noisePanel.setBorder(MipavUtil.buildTitledBorder("Noise profile"));
+        
+        ButtonGroup noise = new ButtonGroup();
+        
+        gbc.gridy = 0;
+        gbc.gridx = 0;
+        ricianRadio = gui.buildRadioButton("Rician", true);
+        noise.add(ricianRadio);
+        noisePanel.add(ricianRadio.getParent(), gbc);
+       
+        gbc.gridx++;
+        gaussianRadio = gui.buildRadioButton("Gaussian", false);
+        noise.add(gaussianRadio);
+        noisePanel.add(gaussianRadio.getParent(), gbc);
+        
+        ricianRadio.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                noiseMaxText.getParent().setVisible(ricianRadio.isSelected());
+                gaussianText.getParent().setVisible(gaussianRadio.isSelected());
+            }
+        });
+        
+        gaussianRadio.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                noiseMaxText.getParent().setVisible(ricianRadio.isSelected());
+                gaussianText.getParent().setVisible(gaussianRadio.isSelected());
+            }
+        });
+        
+        gbc.gridy++;
+        gbc.gridx = 0;
+        noiseMaxText = gui.buildDecimalField("Maximum Rician noise value: ", 1);
+        noisePanel.add(noiseMaxText.getParent(), gbc);
+        
+        gbc.gridy++;
+        gaussianText = gui.buildDecimalField("Standard deviation", 1);
+        noisePanel.add(gaussianText.getParent(), gbc);
+        gaussianText.getParent().setVisible(false);
+        
+        gbc.gridy = 2;
+        gbc.gridx = 0;
+        mainPanel.add(noisePanel, gbc);
         
         if(doOKCancel) {
             gbc.gridy++;
