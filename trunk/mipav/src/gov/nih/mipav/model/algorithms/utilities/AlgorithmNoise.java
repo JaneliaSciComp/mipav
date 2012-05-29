@@ -89,7 +89,8 @@ Email: yangp@neusoft.com
  * weighted imaging" MSC Thesis by Hakim Achterberg.
  * Denoising of Complex MRI Data by Wiener-like Filtering in the Wavelet Domain: Application to High b-value
  * Diffusion Weighted Imaging by Adnan Bibic.
- * Noise Removal Methods for High Resolution MRI by R. L. Gregg and R. D. Novak
+ * Noise Removal Methods for High Resolution MRI by R. L. Gregg and R. D. Nowak
+ * Wavelet-Based Rician Noise Removal for Magnetic Resonance Imaging by Robert D. Nowak
  * MRI denoising via phase error estimation by Dylan Tisdall and M. Stella Atkins
  * Confirmation that the zero angle phase noise generator leads to a Rician noise distribution is found in
  *  "Analytically exact correct scheme for signal extraction from noisy magnitude MR signals" by Cheng Guan Koay
