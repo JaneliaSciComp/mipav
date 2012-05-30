@@ -159,6 +159,12 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
 
     private NoiseMode noise;
 
+	private JRadioButton adcButton;
+
+	private JRadioButton kTransButton;
+
+	private JRadioButton rStarButton;
+
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -361,7 +367,33 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-
+        
+        JPanel simTypePanel = new JPanel(new GridBagLayout());
+        simTypePanel.setForeground(Color.black);
+        simTypePanel.setBorder(MipavUtil.buildTitledBorder("Sample simulation params (based on image 1 tumor)"));
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        adcButton = gui.buildRadioButton("ADC", true);
+        simTypePanel.add(adcButton.getParent(), gbc);
+        
+        gbc.gridx++;
+        kTransButton = gui.buildRadioButton("Ktrans", false);
+        simTypePanel.add(kTransButton.getParent(), gbc);
+        
+        gbc.gridx++;
+        rStarButton = gui.buildRadioButton("R*", false);
+        simTypePanel.add(rStarButton.getParent(), gbc);
+        
+        ButtonGroup simMode = new ButtonGroup();
+        simMode.add(adcButton);
+        simMode.add(kTransButton);
+        simMode.add(rStarButton);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        mainPanel.add(simTypePanel, gbc);
+        
         JPanel imageSizePanel = new JPanel(new GridBagLayout());
         imageSizePanel.setForeground(Color.black);
         imageSizePanel.setBorder(buildTitledBorder("Image size parameters"));
@@ -394,7 +426,7 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         unitsCombo = gui.buildComboBox("Units of image: ", UnitType.getUnitsOfType(UnitType.LENGTH), selected);
         imageSizePanel.add(unitsCombo.getParent(), gbc);
         
-        gbc.gridy = 0;
+        gbc.gridy = 1;
         gbc.gridx = 0;
         mainPanel.add(imageSizePanel, gbc);
         
@@ -462,7 +494,7 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         percentChangeText = gui.buildDecimalField("Percentage change: ", .33);
         tumorSimPanel.add(percentChangeText.getParent(), gbc);
               
-        gbc.gridy = 1;
+        gbc.gridy = 2;
         mainPanel.add(tumorSimPanel, gbc);
        
         JPanel noisePanel = new JPanel(new GridBagLayout());
@@ -506,9 +538,15 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         noisePanel.add(gaussianText.getParent(), gbc);
         gaussianText.getParent().setVisible(false);
         
-        gbc.gridy = 2;
+        gbc.gridy = 3;
         gbc.gridx = 0;
         mainPanel.add(noisePanel, gbc);
+        
+        ActionListener listen = new TumorSimListener();
+        
+        adcButton.addActionListener(listen);
+        kTransButton.addActionListener(listen);
+        rStarButton.addActionListener(listen);
         
         if(doOKCancel) {
             gbc.gridy++;
@@ -517,6 +555,13 @@ public class PlugInDialogCreateTumorMap542b extends JDialogScriptableBase implem
         }
         
         return mainPanel;
+    }
+    
+    private class TumorSimListener implements ActionListener {
+
+        public void actionPerformed(ActionEvent e) {
+	        System.out.println("Simulating "+e.getSource().toString());
+        }
     }
 
     /**

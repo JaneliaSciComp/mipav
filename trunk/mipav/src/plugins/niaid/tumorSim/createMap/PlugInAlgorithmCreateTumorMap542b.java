@@ -58,10 +58,10 @@ import gov.nih.mipav.view.dialogs.JDialogSubsample;
 
 public class PlugInAlgorithmCreateTumorMap542b extends AlgorithmBase {
 
-    public static final String INTENSITY1 = "Intensity1: ";
-    public static final String INTENSITY2 = "Intensity2: ";
-    public static final String RADIUS1 = "Radius 1: ";
-    public static final String RADIUS2 = "Radius 2: ";
+    public static final String INTENSITY1 = "Intensity Pre: ";
+    public static final String INTENSITY2 = "Intensity Post: ";
+    public static final String RADIUS1 = "Radius Pre: ";
+    public static final String RADIUS2 = "Radius Post: ";
     public static final String STD_DEV = "std dev: ";
     public static final String NOISE_LEVEL = "Adding noise parameter: ";
     public static final String NORMAL_TISSUE = "Normal tissue: ";
