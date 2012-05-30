@@ -79,6 +79,87 @@ Fax: (86 24)8366 1915
 Mobile: (86)13940069636
 Email: yangp@neusoft.com
 
+Dear William,
+
+Thanks for your interest in my paper.  If X and Y are independent Gaussian random variables, then R=sqrt(X^2+Y^2) is Rician distributed.
+
+In particular, if X had mean mu*cos(theta) and variance sigma^2 and Y has mean mu*sin(theta) and variance sigma^2, then R is Rician distributed with parameters mu and sigma.  If mu is much larger than sigma, then R is approximately Gaussian distributed with mean mu and variance sigma^2.
+
+The motivation for using this form in MRI is the fact that the raw
+(received) signals have real and imaginary component (the component in-phase with the RF excitation and the component out-of-phase with the excitation).  The value of theta, above, reflects how much is in and out of phase.  However, the raw signals are measured with noise (due to many
+factors) and the noise in each component is independent.  This gives rise to the Rician model that is generally accepted in MRI.
+
+This paper by Prof. Makovski is gives an excellent explanation of the physics that lead to this model:
+www.ncbi.nlm.nih.gov/pubmed/8875425
+
+I hope this is helpful.
+
+Best wishes,
+
+Rob
+
+Gandler, William (NIH/CIT) [E] wrote:
+>
+> Dear Robert Nowak:
+>
+>  
+>
+>   In Noise Removal Methods for High Resolution MRI you present a model 
+> for Rician noise generation in equation (1).  Is there a reference or 
+> motivation for using this particular form?  Some researchers use an 
+> equation for Rician noise generation where the phase is zero and all 
+> of the signal is in the real part.  Other researchers split the signal 
+> into equal real and imaginary parts.
+>
+>  
+>
+>                                                          
+>                                                                            
+> Sincerely,
+>
+>  
+>
+>                                                                                                                                  
+> William Gandler
+>
+>  
+>
+
+--
+Robert Nowak
+University of Wisconsin-Madison
+www.ece.wisc.edu/~nowak
+
+Dear William, 
+
+To generate Rician noise, it doesn't really matter if the signal is in real part only or if it is split into real and imaginary parts. The important thing is to add Gaussian noise to both channels and then make the magnitude image. You will always get exactly the same noise distribution independently of the phase angle. Equation 2 represents the signal in a real MR image, and there is phase angle neither zero or 45 degrees.
+
+Best regards 
+
+Adnan Bibic, MSc
+Research Engineer
+Preclinical MRI systems, LBIC
+Faculty of Medicine, Lund University
+Klinikgatan 32, building D11
+SE-221 84 Sweden
+ 
+Phone: +46 46 222 42 15
+homepage (LBIC): www.med.lu.se/bioimaging_center
+________________________________________
+From: Gandler, William (NIH/CIT) [E] [ilb@mail.nih.gov]
+Sent: 29 May 2012 20:51
+To: Adnan Bibic
+Cc: Senseney, Justin (NIH/CIT) [E]; McAuliffe, Matthew (NIH/CIT) [E]
+Subject: Rician noise generation equation
+Dear Adnan Bibic:
+ 
+  In  your master of science thesis you present a model for Rician noise generation in equation (2).  Is there a reference or motivation for using this particular form?  Some researchers use an equation for Rician noise generation where the phase is zero and all of the signal is in the real part.  Other researchers split the signal into equal real and imaginary parts.
+ 
+                                                                                                                                    Sincerely,
+ 
+                                                                                                                                 William Gandler
+
+
 
  * Rician noise is not additive, but is instead data dependent.  Let a be the original noiseless data value,
  * and x and y be gaussian random variables with zero mean and identical standard deviations sigma.  Then with a 
