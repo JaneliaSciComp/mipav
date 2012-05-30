@@ -42,8 +42,8 @@ import java.util.Random;
 
 import javax.swing.*;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542b;
-import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment542b;
+import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542c;
+import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment542c;
 
 /**
  * This class displays a basic dialog for a MIPAV plug-in.  The dialog has been made scriptable, 
@@ -57,7 +57,7 @@ import niaid.tumorSim.postTreatment.PlugInDialogGeneratePostTreatment542b;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogSimulateParams542b extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogSimulateParams542c extends JDialogScriptableBase implements AlgorithmInterface {
     
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -72,9 +72,9 @@ public class PlugInDialogSimulateParams542b extends JDialogScriptableBase implem
     /** This source image is typically set by the constructor */
     private ModelImage image; // 
 
-    private PlugInDialogCreateTumorMap542b createTumorDialog;
+    private PlugInDialogCreateTumorMap542c createTumorDialog;
 
-    private PlugInDialogGeneratePostTreatment542b generatePostTreatmentDialog;
+    private PlugInDialogGeneratePostTreatment542c generatePostTreatmentDialog;
 
     private JTextField tumorSizeDevText;
 
@@ -91,7 +91,7 @@ public class PlugInDialogSimulateParams542b extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogSimulateParams542b() { }
+    public PlugInDialogSimulateParams542c() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -99,11 +99,11 @@ public class PlugInDialogSimulateParams542b extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogSimulateParams542b(boolean modal) {
+    public PlugInDialogSimulateParams542c(boolean modal) {
         super(modal); 
         
-        createTumorDialog = new PlugInDialogCreateTumorMap542b();
-        generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment542b();
+        createTumorDialog = new PlugInDialogCreateTumorMap542c();
+        generatePostTreatmentDialog = new PlugInDialogGeneratePostTreatment542c();
         
         init();
     }
