@@ -154,7 +154,7 @@ public class VolumeDTI extends VolumeObject
 		createScene();
 	}
 
-	/** Add a polyline to the display. Used to display fiber tract bundles.
+	/** Add a polyline to the display. Used to display an approximation fiber tract bundles.
 	 * @param kLine new polyline to display.
 	 * @param iGroup the group the polyline belongs to.
 	 */
