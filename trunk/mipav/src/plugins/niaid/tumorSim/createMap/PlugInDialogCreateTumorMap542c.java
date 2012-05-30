@@ -224,7 +224,8 @@ public class PlugInDialogCreateTumorMap542c extends JDialogScriptableBase implem
             if ((tumorSimAlgo.isCompleted() == true)) {
                 tumorSimAlgo.getImage1a().getParentFrame().setVisible(true);
                 tumorSimAlgo.getImage2a().getParentFrame().setVisible(true);
-                
+                tumorSimAlgo.getImage1aTumor().getParentFrame().setVisible(true);
+                tumorSimAlgo.getImage2aTumor().getParentFrame().setVisible(true);
             } 
 
             if (tumorSimAlgo.isCompleted()) {

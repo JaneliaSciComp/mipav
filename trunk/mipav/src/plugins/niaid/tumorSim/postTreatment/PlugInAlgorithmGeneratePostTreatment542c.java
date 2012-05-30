@@ -71,9 +71,14 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
     private double normalTissue;
 
     private double image1IntensityStd, image2IntensityStd, normalTissueStd;
+
+    private ModelImage image1aTumor;
+
+    private ModelImage image2aTumor;
     
     /**
      * Constructor.
+     * @param image1Tumor 
      * @param image1Noise 
      * @param image1Scale 
      * @param image1Intensity 
@@ -86,6 +91,7 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
      * @param image1TresholdUpper 
      * @param image1ThresholdLower 
      * @param image1cVOI 
+     * @param image2Tumor 
      * @param stdDevNum 
      * @param stdDevNum2 
      * @param image2ThresholdUpper 
@@ -95,15 +101,18 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
      * @param postVOI 
      * @param normalTissue 
      */
-    public PlugInAlgorithmGeneratePostTreatment542c(ModelImage image1, double image1Intensity, double image1IntensityStd, double image1Scale, double image1Noise, 
+    public PlugInAlgorithmGeneratePostTreatment542c(ModelImage image1, ModelImage image1aTumor, double image1Intensity, double image1IntensityStd, double image1Scale, double image1Noise, 
                                                     double image1ThresholdLower, double image1ThresholdUpper, 
-                                                    boolean image1cVOI, ModelImage image2, double image2Intensity, double image2IntensityStd, double image2Scale, double image2Noise, 
+                                                    boolean image1cVOI, ModelImage image2, ModelImage image2aTumor, double image2Intensity, double image2IntensityStd, double image2Scale, double image2Noise, 
                                                     double image2ThresholdLower, double image2ThresholdUpper, 
                                                     boolean image2cVOI, double stdDevNum, double postThresholdLower, double postThresholdUpper, boolean postVOI, double normalTissue, double normalTissueStd) {
         super(null, image1);
         
         this.image1a = image1;
         this.image2a = image2;
+        
+        this.image1aTumor = image1aTumor;
+        this.image2aTumor = image2aTumor;
         
         this.image1b = (ModelImage) image1.clone();
         image1b.setImageName("image1b");
@@ -154,8 +163,9 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-        scaleAndRemoveTumor(image1b, image1Intensity, image1Scale, image1Noise);
-        scaleAndRemoveTumor(image2b, image2Intensity, image2Scale, image2Noise);
+        //b image is subtractive scale factor (so image1Scale=0 would produce blank image1b)
+        scaleAndRemoveTumor(image1b, image1aTumor, image1Intensity, 1-image1Scale); 
+        scaleAndRemoveTumor(image2b, image2aTumor, image2Intensity, 1-image2Scale);
         
         
         image1c = (ModelImage) image1b.clone();
@@ -264,20 +274,13 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
         return algo1.getDestImage();
     }
 
-    private void scaleAndRemoveTumor(ModelImage image,
-            double tumorIntensity, Double partialVolumeScale, Double imageNoise) {
-        double lowerTumorBound = tumorIntensity - imageNoise;
-        double upperTumorBound = tumorIntensity + imageNoise;
-        double lowerNormalBound = normalTissue - imageNoise;
-        double upperNormalBound = normalTissue + imageNoise;
-        double intensity = 0;
+    private void scaleAndRemoveTumor(ModelImage image, ModelImage tumorImage, double tumorIntensity, double partialVolumeScale) {
+        double intensity = 0.0;
         for(int i=0; i<image.getDataSize(); i++) {
-            intensity = image.getDouble(i);
+            intensity = tumorImage.getDouble(i);
             if(intensity != 0) {
-                if(intensity >= lowerTumorBound && intensity <= upperTumorBound) {
+                if(intensity == tumorIntensity) {
                     image.set(i, 0);
-                } else if(intensity >= lowerNormalBound && intensity <= upperNormalBound) { 
-                    //leave image intensity as is (for now)
                 } else {
                     image.set(i, intensity*partialVolumeScale);
                 }

@@ -84,6 +84,7 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
     /** Tumor only images */
     private ModelImage image1aTumor, image2aTumor;
     private int[][] sphere;
+    /** Amount of subsampling to occur */
     private int subsampleAmount;
     /** Whether boundary checking is necessary during sphere population */
     private boolean doBoundCheck;
@@ -249,6 +250,8 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
             image2a = subsample(image2a);
             image1aTumor = subsample(image1aTumor);
             image2aTumor = subsample(image2aTumor);
+            image1aTumor.setImageName("image1aTumor");
+            image2aTumor.setImageName("image2aTumor");
             image1a.getParentFrame().setVisible(false);
             image2a.getParentFrame().setVisible(false);
             image1aTumor.getParentFrame().setVisible(false);
@@ -257,9 +260,6 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
         
         countPixels(image1aTumor, intensity1);
         countPixels(image2aTumor, intensity2);
-        
-        ViewUserInterface.getReference().unRegisterImage(image1aTumor);
-        ViewUserInterface.getReference().unRegisterImage(image2aTumor);
         
         image1a.setImageName("image1a");
         for(int i=0; i<image1a.getFileInfo().length; i++) {
@@ -290,8 +290,10 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
         
         image1a.calcMinMax();
         image2a.calcMinMax();
-        
 
+        image1aTumor.calcMinMax();
+        image2aTumor.calcMinMax();
+        
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
@@ -453,6 +455,14 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
         return image2a;
     }
     
+public ModelImage getImage1aTumor() {
+        return image1aTumor;
+    }
+
+    public ModelImage getImage2aTumor() {
+        return image2aTumor;
+    }
+
 private class RayleighRandom extends Random {
         
         /**

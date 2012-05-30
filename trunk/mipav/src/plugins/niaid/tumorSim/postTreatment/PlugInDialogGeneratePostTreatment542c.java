@@ -143,6 +143,10 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
 
     private double normalTissueStd;
 
+    private JComboBox image1TumorCombo, image2TumorCombo;
+
+    private ModelImage image1Tumor, image2Tumor;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -231,8 +235,8 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
 
         try {
             
-            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment542c(image1, image1Intensity, image1IntensityStd, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
-                                                                            image2, image2Intensity, image1IntensityStd, image2Scale, image2Noise, image2ThresholdLower, image2ThresholdUpper, image2cVOI, stdDevNum, 
+            generatePostAlgo = new PlugInAlgorithmGeneratePostTreatment542c(image1, image1Tumor, image1Intensity, image1IntensityStd, image1Scale, image1Noise, image1ThresholdLower, image1ThresholdUpper, image1cVOI, 
+                                                                            image2, image2Tumor, image2Intensity, image2IntensityStd, image2Scale, image2Noise, image2ThresholdLower, image2ThresholdUpper, image2cVOI, stdDevNum, 
                                                                             postThresholdLower, postThresholdUpper, postVOI, normalTissue, normalTissueStd);
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -319,14 +323,22 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         image1Panel.setForeground(Color.black);
         image1Panel.setBorder(buildTitledBorder("Image 1 parameters"));
         
-        int numDefault1=0, numDefault2=0, i=0;
+        int numDefault1=0, numDefault2=0, numDefault1Tumor=0, numDefault2Tumor=0, i=0;
         Enumeration<String> imageList = ViewUserInterface.getReference().getRegisteredImageNames();
         while(imageList.hasMoreElements()) {
             String name = imageList.nextElement();
             if(name.contains("1a")) {
-                numDefault1 = i;
+                if(name.contains("Tumor")) {
+                    numDefault1Tumor = i;
+                } else {
+                    numDefault1 = i;
+                }
             } else if(name.contains("2a")) {
-                numDefault2 = i;
+                if(name.contains("Tumor")) {
+                    numDefault2Tumor = i;
+                } else {
+                    numDefault2 = i;
+                }
             }
             i++;
         }
@@ -334,6 +346,10 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         
         image1Combo = gui.buildComboBox("Image 1: ", imageAr, numDefault1);
         image1Panel.add(image1Combo.getParent(), gbc);
+        
+        gbc.gridx++;
+        image1TumorCombo = gui.buildComboBox("Image 1 tumor: ", imageAr, numDefault1Tumor);
+        image1Panel.add(image1TumorCombo.getParent(), gbc);
         
         double intensity1 = 109, intensity1Std = 10, intensity2 = 201, intensity2Std = 20, normalTissue = 70, normalTissueStd = 7;
         String intenSearch = Preferences.getData(), subSearch;
@@ -361,6 +377,7 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         }
         
         gbc.gridy++;
+        gbc.gridx = 0;
         image1IntensityText = gui.buildDecimalField("Tumor intensity value: ", intensity1);            
         image1Panel.add(image1IntensityText.getParent(), gbc);
         
@@ -407,12 +424,16 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 1;
         image2Combo = gui.buildComboBox("Image 2: ", imageAr, numDefault2);
         image2Panel.add(image2Combo.getParent(), gbc);
         
-        gbc.gridy++;
-        gbc.gridwidth = 1;
+        gbc.gridx++;
+        image2TumorCombo = gui.buildComboBox("Image 2 tumor: ", imageAr, numDefault2Tumor);
+        image2Panel.add(image2TumorCombo.getParent(), gbc);
+        
+        gbc.gridy = 1;
+        gbc.gridx = 0;
         image2IntensityText = gui.buildDecimalField("Tumor intensity value: ", intensity2);
         image2Panel.add(image2IntensityText.getParent(), gbc);
         
@@ -488,6 +509,14 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         
         this.image1Combo.setSelectedItem(imageName);
     }
+    
+    public void setImage1TumorComboItem(String imageName) { 
+        Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
+
+        image1TumorCombo = gui.buildComboBox("Image 1 Tumor: ", imageAr, 0);
+        
+        this.image1TumorCombo.setSelectedItem(imageName);
+    }
 
     public void setImage2ComboItem(String imageName) { 
         Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
@@ -495,6 +524,14 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         image2Combo = gui.buildComboBox("Image 2: ", imageAr, 0);
         
         this.image2Combo.setSelectedItem(imageName);
+    }
+    
+    public void setImage2TumorComboItem(String imageName) { 
+        Object[] imageAr = Collections.list(ViewUserInterface.getReference().getRegisteredImageNames()).toArray();
+
+        image2TumorCombo = gui.buildComboBox("Image 2 Tumor: ", imageAr, 0);
+        
+        this.image2TumorCombo.setSelectedItem(imageName);
     }
 
     private double[] getThreshold(String rangeStr) {
@@ -568,6 +605,18 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
 		image2 = ViewUserInterface.getReference().getRegisteredImageByName(image2Combo.getSelectedItem().toString());
 		if(image2 == null) {
             MipavUtil.displayError(image2Combo.getSelectedItem().toString()+" is not a valid image name.");
+            return false;
+        }
+		
+		image1Tumor = ViewUserInterface.getReference().getRegisteredImageByName(image1TumorCombo.getSelectedItem().toString());
+        if(image1Tumor == null) {
+            MipavUtil.displayError(image1TumorCombo.getSelectedItem().toString()+" is not a valid image name.");
+            return false;
+        }
+        
+        image2Tumor = ViewUserInterface.getReference().getRegisteredImageByName(image2TumorCombo.getSelectedItem().toString());
+        if(image2Tumor == null) {
+            MipavUtil.displayError(image2TumorCombo.getSelectedItem().toString()+" is not a valid image name.");
             return false;
         }
 		

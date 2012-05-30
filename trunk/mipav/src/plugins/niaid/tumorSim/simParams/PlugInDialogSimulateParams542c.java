@@ -246,6 +246,8 @@ public class PlugInDialogSimulateParams542c extends JDialogScriptableBase implem
             generatePostTreatmentDialog.setSeparateThread(false);
             generatePostTreatmentDialog.setImage1ComboItem(createTumorDialog.getTumorSimAlgo().getImage1a().getImageName());
             generatePostTreatmentDialog.setImage2ComboItem(createTumorDialog.getTumorSimAlgo().getImage2a().getImageName());
+            generatePostTreatmentDialog.setImage1TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage1aTumor().getImageName());
+            generatePostTreatmentDialog.setImage2TumorComboItem(createTumorDialog.getTumorSimAlgo().getImage2aTumor().getImageName());
             generatePostTreatmentDialog.actionPerformed(new ActionEvent(this, 0, "OK"));
             
             Preferences.data("************End Iteration "+i+"*****************\n");
