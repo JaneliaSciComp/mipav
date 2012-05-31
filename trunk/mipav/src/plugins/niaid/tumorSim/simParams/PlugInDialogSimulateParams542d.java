@@ -238,7 +238,12 @@ public class PlugInDialogSimulateParams542d extends JDialogScriptableBase implem
         Random r = new Random();
         for(int i=0; i<iterNum; i++) {
             Preferences.data("************Begin Iteration "+i+"*****************\n");
-            double radius = createTumorDialog.getRadiusField() + r.nextGaussian()*tumorSizeDev;
+            
+            double radius = 0;
+            while(radius <= 0) {
+                radius = createTumorDialog.getRadiusField() + r.nextGaussian()*tumorSizeDev;
+            }
+            
             Preferences.data("Unique simulation fields:\nRadius: "+radius+"\n");
             
             createTumorDialog.setRadiusField(radius);
