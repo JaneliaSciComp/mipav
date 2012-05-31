@@ -30,7 +30,7 @@ import gov.nih.mipav.view.*;
 
 import java.awt.*;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542c;
+import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542d;
 
 /**
  * 
@@ -44,9 +44,9 @@ import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542c;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInCreateTumorMap542c implements PlugInGeneric {
+public class PlugInCreateTumorMap542d implements PlugInGeneric {
 
-	public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "542c"};
+	public static final String[] CATEGORY = {"Parametric Maps", "Simulation", "542d"};
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -60,7 +60,7 @@ public class PlugInCreateTumorMap542c implements PlugInGeneric {
      * @see    ViewJFrameImage
      */
     public void run() {
-        new PlugInDialogCreateTumorMap542c(false);
+        new PlugInDialogCreateTumorMap542d(false);
         
     }
 }
