@@ -177,7 +177,7 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
         threshold(image1c, image1ThresholdLower, image1ThresholdUpper);
         
         if(image1cVOI) {
-            PlugInAlgorithmCreateTumorMap542c.createVOI(image1c, image1Intensity-image1Intensity*stdDevNum*image1IntensityStd, image1Intensity+image1Intensity*stdDevNum*image1IntensityStd);
+            PlugInAlgorithmCreateTumorMap542c.createVOI(image1c, image1Intensity-stdDevNum*image1IntensityStd, image1Intensity+stdDevNum*image1IntensityStd);
         }
         
         image2c = (ModelImage) image2b.clone();
@@ -185,7 +185,7 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
         image2c = subtractImages(image2c, image2a, image2b);
         
         if(image2cVOI) {
-            PlugInAlgorithmCreateTumorMap542c.createVOI(image2c, image2Intensity-image2Intensity*stdDevNum*image2IntensityStd, image2Intensity+image2Intensity*stdDevNum*image2IntensityStd);
+            PlugInAlgorithmCreateTumorMap542c.createVOI(image2c, image2Intensity-stdDevNum*image2IntensityStd, image2Intensity+stdDevNum*image2IntensityStd);
         }
         
         threshold(image2c, image2ThresholdLower, image2ThresholdUpper);
@@ -200,7 +200,7 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
             //calculate propagation of error
             double postStdDev = Math.sqrt(image1IntensityStd*image1IntensityStd + image2IntensityStd*image2IntensityStd);
             double postIntensity = image2Intensity - image1Intensity;
-            PlugInAlgorithmCreateTumorMap542c.createVOI(postTreatment, postIntensity-postIntensity*stdDevNum*postStdDev, postIntensity+postIntensity*stdDevNum*postStdDev);
+            PlugInAlgorithmCreateTumorMap542c.createVOI(postTreatment, postIntensity-stdDevNum*postStdDev, postIntensity+stdDevNum*postStdDev);
         }
         
         reportStatistics(postTreatment, image1Intensity > image2Intensity ? image1Intensity : image2Intensity, 
