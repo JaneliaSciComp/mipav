@@ -119,7 +119,7 @@ public class CustomUIBuilder {
     /** VOI Graphing: */
     public static final UIParams PARAM_VOI_GRAPH_OPEN = new UIParams("Open VOI intensity graph", "OpenNewGraph", UIParams.INVALID_MNEMONIC, null, "open");
     public static final UIParams PARAM_VOI_GRAPH_BOUNDARY_INTENSITY = new UIParams("Boundary intensity", "boundaryIntensity", UIParams.INVALID_MNEMONIC, null, null );
-    public static final UIParams PARAM_VOI_INTENSITY_HISTOGRAM = new UIParams("Intensity histogram", "intensityHistogram", UIParams.INVALID_MNEMONIC, null, null );
+    public static final UIParams PARAM_VOI_GRAPH_INTENSITY_HISTOGRAM = new UIParams("Intensity histogram", "intensityHistogram", UIParams.INVALID_MNEMONIC, null, null );
     public static final UIParams PARAM_VOI_GRAPH_TOTAL_INTENSITY = new UIParams("Total intensity", "totalIntensity", UIParams.INVALID_MNEMONIC, null, null);
     public static final UIParams PARAM_VOI_GRAPH_AVERAGE_INTENSITY = new UIParams("Average intensity", "avgIntensity", UIParams.INVALID_MNEMONIC, null, null);
     public static final UIParams PARAM_VOI_GRAPH_TOTAL_INTENSITY_THRESHOLD = new UIParams("Total intensity with threshold", "totalIntensityThreshold", UIParams.INVALID_MNEMONIC, null, null);
