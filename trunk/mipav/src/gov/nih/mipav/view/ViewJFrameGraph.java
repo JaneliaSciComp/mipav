@@ -256,7 +256,13 @@ public class ViewJFrameGraph extends JFrame
     private JMenuBar openingMenuBar;
 
     /** DOCUMENT ME! */
-    private JCheckBox pointsCheckbox; // check box for drawing specific points on the graph where
+    private JRadioButton linesOnlyButton;
+    
+    private JRadioButton pointsAndLinesButton;
+    
+    private JRadioButton pointsOnlyButton;
+    
+    private ButtonGroup pointsAndLinesGroup;
 
     /** DOCUMENT ME! */
     private JPanel pointsVisiblePanel;
@@ -404,7 +410,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels("Position on Curve (pixels)", "Intensity"); // default axis labels
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -518,7 +524,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels("Position on Curve (pixels)", "Intensity"); // sets default axis labels
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -631,7 +637,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels("Position on Curve (pixels)", "Intensity"); // sets default axis labels
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -750,7 +756,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels(labelX, labelY);
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -865,7 +871,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels(labelX, labelY);
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -971,7 +977,7 @@ public class ViewJFrameGraph extends JFrame
         setUnitsInLabel(units);
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -1085,7 +1091,7 @@ public class ViewJFrameGraph extends JFrame
         setUnitsInLabel(units);
         graph.setBackground(Color.red);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -1177,7 +1183,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels(labelX, labelY);
         graph.setBackground(color);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -1283,7 +1289,7 @@ public class ViewJFrameGraph extends JFrame
         graph.setLabels(labelX, labelY);
         graph.setBackground(colorArray[0]);
 
-        graph.setPointsVisible(false);
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
         graph.setGridlinesVisible(true);
         graph.setMinorTickMarksVisible(true);
 
@@ -1484,8 +1490,17 @@ public class ViewJFrameGraph extends JFrame
             }
 
             update(getGraphics());
-        } else if (command.equals("Points")) { // sets the points of the functions visible
-            graph.setPointsVisible(pointsCheckbox.isSelected());
+        } else if ((source == linesOnlyButton) || (source == pointsAndLinesButton) || (source == pointsOnlyButton)) { 
+            // sets the points and lines of the functions visible
+            if (linesOnlyButton.isSelected()) {
+                graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);    
+            }
+            else if (pointsAndLinesButton.isSelected()) {
+                graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_AND_LINES);
+            }
+            else {
+                graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_POINTS_ONLY);
+            }
             update(getGraphics());
         } else if (command.equals("Legend")) { // toggles the displaying of the legend
             graph.setLegendVisible(legendCheckbox.isSelected());
@@ -3177,7 +3192,11 @@ public class ViewJFrameGraph extends JFrame
             functionLabel = new JLabel[5]; // an array of labels for the corresponding function text fields
         
             pointsVisiblePanel = new JPanel();
-            pointsCheckbox = new JCheckBox("Show Points", graph.getPointsVisible());
+            pointsAndLinesGroup = new ButtonGroup();
+            linesOnlyButton = new JRadioButton("Show only lines", graph.getPointsAndLinesDisplay() == ViewJComponentGraph.SHOW_LINES_ONLY);
+            pointsAndLinesButton = new JRadioButton("Show points and lines",
+                    graph.getPointsAndLinesDisplay() == ViewJComponentGraph.SHOW_POINTS_AND_LINES);
+            pointsOnlyButton = new JRadioButton("Show only points", graph.getPointsAndLinesDisplay() == ViewJComponentGraph.SHOW_POINTS_ONLY);
             functVisibleCheckbox = new JCheckBox[5];
             functLineColorButton = new JButton[5];
             name = new String[5];
@@ -3200,7 +3219,7 @@ public class ViewJFrameGraph extends JFrame
         showPanel.setLayout(null);
         legendPanel.add(showPanel);
 
-        functionPropPanel.setBounds(PANEL_OFFSET, 55, 465, 260);
+        functionPropPanel.setBounds(PANEL_OFFSET, 119, 465, 260);
         functionPropPanel.setBorder(MipavUtil.buildTitledBorder("Functions"));
         functionPropPanel.setLayout(new GridBagLayout());
         legendPanel.add(functionPropPanel);
@@ -3211,16 +3230,28 @@ public class ViewJFrameGraph extends JFrame
         legendCheckbox.setFont(MipavUtil.font12);
         showPanel.add(legendCheckbox);
         
-        pointsVisiblePanel.setBounds(250, PANEL_OFFSET, 222, 35);
+        pointsVisiblePanel.setBounds(250, PANEL_OFFSET, 222, 99);
         pointsVisiblePanel.setBorder(new EtchedBorder());
         pointsVisiblePanel.setLayout(null);
         legendPanel.add(pointsVisiblePanel);
 
-        pointsCheckbox.addActionListener(this);
-        pointsCheckbox.setActionCommand("Points");
-        pointsCheckbox.setBounds(5, 5, 150, 22);
-        pointsCheckbox.setFont(MipavUtil.font12);
-        pointsVisiblePanel.add(pointsCheckbox);
+        linesOnlyButton.addActionListener(this);
+        linesOnlyButton.setBounds(5, 5, 150, 22);
+        linesOnlyButton.setFont(MipavUtil.font12);
+        pointsAndLinesGroup.add(linesOnlyButton);
+        pointsVisiblePanel.add(linesOnlyButton);
+        
+        pointsAndLinesButton.addActionListener(this);
+        pointsAndLinesButton.setBounds(5, 37, 150, 22);
+        pointsAndLinesButton.setFont(MipavUtil.font12);
+        pointsAndLinesGroup.add(pointsAndLinesButton);
+        pointsVisiblePanel.add(pointsAndLinesButton);
+        
+        pointsOnlyButton.addActionListener(this);
+        pointsOnlyButton.setBounds(5, 69, 150, 22);
+        pointsOnlyButton.setFont(MipavUtil.font12);
+        pointsAndLinesGroup.add(pointsOnlyButton);
+        pointsVisiblePanel.add(pointsOnlyButton);
 
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.BOTH;
@@ -3747,7 +3778,7 @@ public class ViewJFrameGraph extends JFrame
 
         tabbedPane.setFont(MipavUtil.font12B);
 
-        modifyDialog.setSize(503, 440);
+        modifyDialog.setSize(503, 504);
         modifyDialog.getContentPane().setLayout(null);
         modifyDialog.setResizable(false);
 
@@ -3759,7 +3790,7 @@ public class ViewJFrameGraph extends JFrame
         modifyDialog.getContentPane().add(tabbedPane, "Center");
         tabbedPane.validate();
         tabbedPane.addChangeListener(this);
-        tabbedPane.setSize(490, 360);
+        tabbedPane.setSize(490, 424);
 
         applyButton.setFont(MipavUtil.font12B);
         applyButton.addActionListener(this);
