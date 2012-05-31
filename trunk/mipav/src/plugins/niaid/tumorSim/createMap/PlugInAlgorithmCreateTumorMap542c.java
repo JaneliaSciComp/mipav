@@ -33,6 +33,8 @@ import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542c.NoiseMode;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
+import gov.nih.mipav.model.algorithms.AlgorithmMorphology3D;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmNoise;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -44,6 +46,8 @@ import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.util.CircleUtil;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogSubsample;
 
@@ -185,11 +189,11 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
         FileInfoImageXML fileInfoImage1TumorOnly = new FileInfoImageXML("image1a_tumor", null, FileUtility.RAW);
         FileInfoImageXML fileInfoImage2TumorOnly = new FileInfoImageXML("image2a_tumor", null, FileUtility.RAW);
         
-        setBasicInfo(fileInfoImage1);
-        setBasicInfo(fileInfoImage2);
+        setBasicInfo(fileInfoImage1, DataType.FLOAT);
+        setBasicInfo(fileInfoImage2, DataType.FLOAT);
         
-        setBasicInfo(fileInfoImage1TumorOnly);
-        setBasicInfo(fileInfoImage2TumorOnly);
+        setBasicInfo(fileInfoImage1TumorOnly, DataType.FLOAT);
+        setBasicInfo(fileInfoImage2TumorOnly, DataType.FLOAT);
         
         image1a = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
         image1a.getParentFrame().setVisible(false);
@@ -198,10 +202,10 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
         image2a.setImageName("image2a");
         image2a.getParentFrame().setVisible(false);
         
-        image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1);
+        image1aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage1TumorOnly);
         image1aTumor.getParentFrame().setVisible(false);
         image1aTumor.setImageName("image1a_tumor");
-        image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2);
+        image2aTumor = ViewUserInterface.getReference().createBlankImage(fileInfoImage2TumorOnly);
         image2aTumor.setImageName("image2a_tumor");
         image2aTumor.getParentFrame().setVisible(false);
         
@@ -258,6 +262,9 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
             image2aTumor.getParentFrame().setVisible(false);
         }
         
+        createVOI(image1aTumor, 0+Double.MIN_VALUE, Double.MAX_VALUE);
+        createVOI(image2aTumor, 0+Double.MIN_VALUE, Double.MAX_VALUE);
+        
         countPixels(image1aTumor, intensity1);
         countPixels(image2aTumor, intensity2);
         
@@ -285,8 +292,8 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
             generateNoise(image2a);
         }
         
-        Preferences.data(RADIUS1+initRadius);
-        Preferences.data(RADIUS2+getChangedRadius());
+        Preferences.data(RADIUS1+initRadius+"\n");
+        Preferences.data(RADIUS2+getChangedRadius()+"\n");
         
         image1a.calcMinMax();
         image2a.calcMinMax();
@@ -297,6 +304,41 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
+
+    public static void createVOI(ModelImage image, double lowerBound, double upperBound) {
+
+        FileInfoImageXML fileInfo = (FileInfoImageXML) image.getFileInfo()[0].clone();
+        fileInfo.setDataType(DataType.BOOLEAN.getLegacyNum());
+        
+        ModelImage imageBin = ViewUserInterface.getReference().createBlankImage(fileInfo);
+        imageBin.getParentFrame().setVisible(false);
+        
+        double intensityValue = 0.0;
+        for(int i=0; i<image.getDataSize(); i++) {
+            intensityValue = image.getDouble(i);
+            if(intensityValue >= lowerBound && intensityValue <= upperBound) {
+                imageBin.set(i, true);
+            }
+        }
+        
+        AlgorithmMorphology3D idObjectsAlgo3D;
+        int method = AlgorithmMorphology3D.ID_OBJECTS;
+        
+        idObjectsAlgo3D = new AlgorithmMorphology3D(imageBin, 0, 0, method, 0, 0, 0, 0, true);
+        idObjectsAlgo3D.setMinMax(1, Integer.MAX_VALUE);
+        idObjectsAlgo3D.run();
+        idObjectsAlgo3D.finalize();
+        idObjectsAlgo3D = null;
+
+        imageBin.calcMinMax();
+        final AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(imageBin);
+        VOIExtractionAlgo.setRunningInSeparateThread(false);
+        VOIExtractionAlgo.run();
+        
+        image.registerVOI(imageBin.getVOIs().get(0));
+        
+        ViewUserInterface.getReference().unRegisterImage(imageBin);
+    }
 
     private void countPixels(ModelImage image, double intensity) {
         int numPixelsTumor = 0;
@@ -437,8 +479,8 @@ public class PlugInAlgorithmCreateTumorMap542c extends AlgorithmBase {
         return largerRadius;
     }
 
-    private void setBasicInfo(FileInfoImageXML fileInfo) {
-        fileInfo.setDataType(DataType.FLOAT.getLegacyNum());
+    private void setBasicInfo(FileInfoImageXML fileInfo, DataType type) {
+        fileInfo.setDataType(type.getLegacyNum());
         fileInfo.setExtents(new int[]{xyDim, xyDim, zDim});
         fileInfo.setUnitsOfMeasure(new Unit[]{Unit.MILLIMETERS, Unit.MILLIMETERS, Unit.MILLIMETERS});
         fileInfo.setResolutions(new float[]{(float) xyRes, (float) xyRes, (float) zRes});

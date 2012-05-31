@@ -325,11 +325,13 @@ public class PlugInDialogCreateTumorMap542c extends JDialogScriptableBase implem
         
         JPanel mainPanel = buildMainPanel(true, gui);
 
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(mainPanel);
+        
+        getContentPane().add(scroll, BorderLayout.CENTER);
 
         pack();
         setVisible(true);
-        setResizable(false);
+        setResizable(true);
         System.gc();
         
     } // end init()

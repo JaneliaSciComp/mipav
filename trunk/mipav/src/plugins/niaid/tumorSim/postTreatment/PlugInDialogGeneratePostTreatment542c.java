@@ -295,11 +295,13 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
 
         JPanel mainPanel = buildMainPanel(true, gui);
 
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(mainPanel);
+        
+        getContentPane().add(scroll, BorderLayout.CENTER);
 
         pack();
         setVisible(true);
-        setResizable(false);
+        setResizable(true);
         System.gc();
         
     } // end init()
@@ -406,7 +408,7 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         
         gbc.gridy++;
         gbc.gridx = 0;
-        image1ThresholdText = gui.buildField("Image 1 threshold range: ", ((int)(intensity1*.9))+" - "+((int)(intensity1*1.1)));
+        image1ThresholdText = gui.buildField("Image 1 threshold range: ", "0 - 0");//((int)(intensity1*.9))+" - "+((int)(intensity1*1.1)));
         image1Panel.add(image1ThresholdText.getParent(), gbc);
         
         gbc.gridx++;
@@ -452,7 +454,7 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         
         gbc.gridy++;
         gbc.gridx = 0;
-        image2ThresholdText = gui.buildField("Image 2 threshold range: ", ((int)(intensity2*.9))+" - "+((int)(intensity2*1.1)));
+        image2ThresholdText = gui.buildField("Image 2 threshold range: ", "0 - 0");//((int)(intensity2*.9))+" - "+((int)(intensity2*1.1)));
         image2Panel.add(image2ThresholdText.getParent(), gbc);
         
         gbc.gridx++;
@@ -470,7 +472,7 @@ public class PlugInDialogGeneratePostTreatment542c extends JDialogScriptableBase
         
         gbc.gridy++;
         gbc.gridwidth = 1;
-        postTreatmentThresholdText = gui.buildField("Post-treatment threshold range: ", ((int)((intensity2 - intensity1)*.9))+" - "+((int)((intensity2 - intensity1)*1.1)));
+        postTreatmentThresholdText = gui.buildField("Post-treatment threshold range: ", "0 - 0");//((int)((intensity2 - intensity1)*.9))+" - "+((int)((intensity2 - intensity1)*1.1)));
         mainPanel.add(postTreatmentThresholdText.getParent(), gbc);
         
         gbc.gridx++;
