@@ -25,6 +25,8 @@ This software may NOT be used for diagnostic purposes.
 
 import java.util.Random;
 
+import niaid.tumorSim.createMap.PlugInAlgorithmCreateTumorMap542c;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
@@ -163,7 +165,7 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
      * a controlling dialog.  Instead, see AlgorithmBase.run() or start().
      */
     public void runAlgorithm() {
-        //b image is subtractive scale factor (so image1Scale=0 would produce blank image1b)
+        //b image is subtractive scale factor (so image1Scale=0 would produce blank image1b (and image1c = image1a)
         scaleAndRemoveTumor(image1b, image1aTumor, image1Intensity, 1-image1Scale); 
         scaleAndRemoveTumor(image2b, image2aTumor, image2Intensity, 1-image2Scale);
         
@@ -174,9 +176,17 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
         
         threshold(image1c, image1ThresholdLower, image1ThresholdUpper);
         
+        if(image1cVOI) {
+            PlugInAlgorithmCreateTumorMap542c.createVOI(image1c, image1Intensity-image1Intensity*stdDevNum*image1IntensityStd, image1Intensity+image1Intensity*stdDevNum*image1IntensityStd);
+        }
+        
         image2c = (ModelImage) image2b.clone();
         image2c.setImageName("image2c");
         image2c = subtractImages(image2c, image2a, image2b);
+        
+        if(image2cVOI) {
+            PlugInAlgorithmCreateTumorMap542c.createVOI(image2c, image2Intensity-image2Intensity*stdDevNum*image2IntensityStd, image2Intensity+image2Intensity*stdDevNum*image2IntensityStd);
+        }
         
         threshold(image2c, image2ThresholdLower, image2ThresholdUpper);
         
@@ -185,6 +195,13 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
         postTreatment = subtractImages(postTreatment, image2c, image1c);
         
         threshold(postTreatment, postThresholdLower, postThresholdUpper);
+        
+        if(postVOI) {
+            //calculate propagation of error
+            double postStdDev = Math.sqrt(image1IntensityStd*image1IntensityStd + image2IntensityStd*image2IntensityStd);
+            double postIntensity = image2Intensity - image1Intensity;
+            PlugInAlgorithmCreateTumorMap542c.createVOI(postTreatment, postIntensity-postIntensity*stdDevNum*postStdDev, postIntensity+postIntensity*stdDevNum*postStdDev);
+        }
         
         reportStatistics(postTreatment, image1Intensity > image2Intensity ? image1Intensity : image2Intensity, 
                                             image1Noise > image2Noise ? image1Noise : image2Noise);
@@ -274,6 +291,14 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
         return algo1.getDestImage();
     }
 
+    /**
+     * Scales all partial voluming pixels by scaling factor, removes all other pixels
+     * 
+     * @param image
+     * @param tumorImage
+     * @param tumorIntensity
+     * @param partialVolumeScale
+     */
     private void scaleAndRemoveTumor(ModelImage image, ModelImage tumorImage, double tumorIntensity, double partialVolumeScale) {
         double intensity = 0.0;
         for(int i=0; i<image.getDataSize(); i++) {
@@ -284,6 +309,8 @@ public class PlugInAlgorithmGeneratePostTreatment542c extends AlgorithmBase {
                 } else {
                     image.set(i, intensity*partialVolumeScale);
                 }
+            } else {
+                image.set(i, 0);
             }
         }
     }
