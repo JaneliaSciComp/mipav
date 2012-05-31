@@ -9,6 +9,7 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
+import java.awt.datatransfer.*;
 
 import java.io.*;
 
@@ -68,11 +69,23 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     /** Button for selecting region mode. */
     private JRadioButton regionButton;
 
-    /** Flag that indicates whether to save capture as file or put it in new frame on screen. */
+    /** Flag that indicates whether to save capture as file. */
     private boolean save;
+    
+    /** Flag that indicates whether to copy capture to clipboard*/
+    private boolean copy;
+    
+    /** Flag that indicates whether to put capture in a new frame on screen. */
+    private boolean display;
 
-    /** Checkbox for selecting display in window. */
-    private JCheckBox saveCheck;
+    /** Button for selecting display in window. */
+    private JRadioButton displayCheck;
+    
+    /** Button for selecting copy to clipboard. */
+    private JRadioButton copyCheck;
+    
+    /** Button for selecting save to computer. */
+    private JRadioButton saveCheck;
 
     /** Pointer to the user interface. */
     private ViewUserInterface userInterface;
@@ -94,7 +107,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     public JDialogCaptureScreen(ViewJFrameImage parent) {
         super(parent, false);
         userInterface = ViewUserInterface.getReference();
-        save = true;
+        save = false;
+        copy = false;
+        display = false;
         mode = NONE;
 
         Frame[] frames = Frame.getFrames();
@@ -216,14 +231,18 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     }
 
     /**
-     * Sets save flag based on whether or not the save checkbox is checked.
+     * Sets save and copy flags based on whether or not the save and copy checkboxes are checked.
      *
      * @param  event  Event that triggered this function.
      */
     public void itemStateChanged(ItemEvent event) {
 
         if (event.getSource() == saveCheck) {
-            save = !(saveCheck.isSelected());
+            save = saveCheck.isSelected();
+        } else if (event.getSource() == copyCheck){
+        	copy = copyCheck.isSelected();
+        } else {
+        	display = displayCheck.isSelected();
         }
     }
 
@@ -330,8 +349,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     private void init() {
         setTitle("Capture screen");
 
-        ButtonGroup group = new ButtonGroup();
-
         regionButton = new JRadioButton("Region");
         regionButton.setFont(MipavUtil.font12);
         regionButton.setForeground(Color.black);
@@ -343,9 +360,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         windowButton.setForeground(Color.black);
         windowButton.addActionListener(this);
         windowButton.setActionCommand("Window");
+        
+        ButtonGroup sampleImage = new ButtonGroup();
 
-        group.add(regionButton);
-        group.add(windowButton);
+        sampleImage.add(regionButton);
+        sampleImage.add(windowButton);
 
         instructions = new JLabel("Draw a rectangle with the mouse around the");
         instructions.setFont(MipavUtil.font12);
@@ -354,11 +373,29 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         instructions2.setFont(MipavUtil.font12);
         instructions2.setForeground(Color.black);
 
-        saveCheck = new JCheckBox("Display in window instead of save");
+        saveCheck = new JRadioButton("Save selection");
         saveCheck.setFont(MipavUtil.font12);
         saveCheck.setForeground(Color.black);
         saveCheck.setActionCommand("Save");
         saveCheck.addItemListener(this);
+        
+        copyCheck = new JRadioButton("Copy to clipboard");
+        copyCheck.setFont(MipavUtil.font12);
+        copyCheck.setForeground(Color.black);
+        copyCheck.setActionCommand("Copy");
+        copyCheck.addItemListener(this);
+        
+        displayCheck = new JRadioButton("Display in new window");
+        displayCheck.setFont(MipavUtil.font12);
+        displayCheck.setForeground(Color.black);
+        displayCheck.setActionCommand("Display");
+        displayCheck.addItemListener(this);
+        
+        ButtonGroup saveOptions = new ButtonGroup();
+        
+        saveOptions.add(saveCheck);
+        saveOptions.add(copyCheck);
+        saveOptions.add(displayCheck);
 
         buildOKButton();
         buildCancelButton();
@@ -387,9 +424,22 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         panel.add(regionButton, gbc);
         gbc.gridy = 3;
         panel.add(windowButton, gbc);
+        panel.setBorder(buildTitledBorder("Image options"));
+        regionButton.setSelected(true);
+        
+        JPanel options = new JPanel();
+        options.setLayout(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 1;
+        gbc.gridy = 2;
+        options.add(saveCheck, gbc);
+        gbc.gridy = 3;
+        options.add(copyCheck, gbc);
         gbc.gridy = 4;
-        panel.add(saveCheck, gbc);
-        panel.setBorder(buildTitledBorder("Capture options"));
+        options.add(displayCheck, gbc);
+        options.setBorder(buildTitledBorder("Capture options"));
+        saveCheck.setSelected(true);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OKButton);
@@ -397,13 +447,12 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(panel);
+        mainPanel.add(panel, BorderLayout.WEST);
+        mainPanel.add(options, BorderLayout.EAST);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         getContentPane().add(mainPanel);
         pack();
-        instructions.setText("Choose type of screen capture.");
-        instructions2.setText("");
     }
 
     /**
@@ -419,12 +468,13 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         ModelImage testImage = null;
         Robot robot;
         String imageName;
+        Image imagePix;
 
 
         try {
             robot = new Robot();
 
-            Image imagePix = robot.createScreenCapture(currentRectangle);
+            imagePix = robot.createScreenCapture(currentRectangle);
             xDim = currentRectangle.width;
             yDim = currentRectangle.height;
             bufferSize = 4 * xDim * yDim;
@@ -479,7 +529,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         }
 
         testImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
-
+       	
         if (save) {
             String fileName;
             String directory;
@@ -517,12 +567,38 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             }
             
             testImage.disposeLocal();
-        } else {
-            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
+        } 
+        if (copy) {
+        	Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        	Transferable imagePixTransferable = new imageConverter(imagePix);
+        	clipboard.setContents(imagePixTransferable, null); 
         }
+        if (display) {
+            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
+        } 
 
         return true;
     }
+    
+    /** changes an image to a Transferable*/
+	public static class imageConverter implements Transferable{
+		private Image temp;
+		public imageConverter(Image image){
+			temp = image;
+		}
+		public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+			if (DataFlavor.imageFlavor.equals(flavor)){
+				return temp;
+			}
+			throw new UnsupportedFlavorException(flavor);
+		}
+		public DataFlavor[] getTransferDataFlavors() {
+			return new DataFlavor[] {DataFlavor.imageFlavor};
+		}
+		public boolean isDataFlavorSupported(DataFlavor flavor) {
+			return DataFlavor.imageFlavor.equals(flavor);
+		}
+	}
     
     
     /** 
