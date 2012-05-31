@@ -151,9 +151,15 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
     /** DOCUMENT ME! */
     private boolean showMinorTickMarks = true;
+    
+    public static final int SHOW_LINES_ONLY = 0;
+    
+    public static final int SHOW_POINTS_AND_LINES = 1;
+    
+    public static final int SHOW_POINTS_ONLY = 2;
 
     /** DOCUMENT ME! */
-    private boolean showPoints = false;
+    private int showPointsAndLines = SHOW_LINES_ONLY;
 
     /** DOCUMENT ME! */
     private String title = null;
@@ -608,10 +614,10 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     /**
      * Accessor that gets the visible flag.
      *
-     * @return  the boolean visible flag
+     * @return  the integer visible flag
      */
-    public boolean getPointsVisible() {
-        return showPoints;
+    public int getPointsAndLinesDisplay() {
+        return showPointsAndLines;
     }
 
     /**
@@ -1652,12 +1658,12 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
     }
 
     /**
-     * Accessor that tells whether to show the gridlines.
+     * Accessor that sets whether to display lines only, points and lines, or points only
      *
-     * @param  visible  boolean to set it to
+     * @param  visible integer to set it to
      */
-    public void setPointsVisible(boolean visible) {
-        showPoints = visible;
+    public void setPointsAndLinesDisplay(int showPointsAndLines) {
+        this.showPointsAndLines = showPointsAndLines;
     }
 
     /**
@@ -1809,7 +1815,9 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             g.setColor(functions[k].getColor());
 
             if (functions[k].getFunctionVisible()) {
-                g.drawPolyline(newX, newY, functions[k].getXs().length);
+                if ((showPointsAndLines == SHOW_POINTS_AND_LINES) || (showPointsAndLines == SHOW_LINES_ONLY)) {
+                    g.drawPolyline(newX, newY, functions[k].getXs().length);
+                }
             }
         }
 
@@ -1841,7 +1849,9 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 fittedFunctions[k].setNewXs(newX, fittedFunctions[k].getXs().length);
                 fittedFunctions[k].setNewYs(newY, fittedFunctions[k].getYs().length);
                 g.setColor(Color.yellow);
-                g.drawPolyline(newX, newY, fittedFunctions[k].getXs().length);
+                if ((showPointsAndLines == SHOW_POINTS_AND_LINES) || (showPointsAndLines == SHOW_LINES_ONLY)) {
+                    g.drawPolyline(newX, newY, fittedFunctions[k].getXs().length);
+                }
             }
         }
 
@@ -1982,7 +1992,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                          graphBounds.y + graphBounds.height + 30);
         }
 
-        if (showPoints) {
+        if ((showPointsAndLines == SHOW_POINTS_AND_LINES) || (showPointsAndLines == SHOW_POINTS_ONLY)) {
 
             for (int k = 0; k < functions.length; k++) {
 
@@ -2082,7 +2092,9 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             g.setColor(functions[k].getColor());
 
             if (functions[k].getFunctionVisible()) {
-                g.drawPolyline(newX, newY, newX.length);
+                if ((showPointsAndLines == SHOW_POINTS_AND_LINES) || (showPointsAndLines == SHOW_LINES_ONLY)) {    
+                    g.drawPolyline(newX, newY, newX.length);
+                }
             }
         }
 
@@ -2110,7 +2122,9 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 g.setColor(fittedFunctions[k].getColor());
 
                 if (functions[k].getFunctionVisible()) {
-                    g.drawPolyline(newX, newY, newX.length);
+                    if ((showPointsAndLines == SHOW_POINTS_AND_LINES) || (showPointsAndLines == SHOW_LINES_ONLY)) {
+                        g.drawPolyline(newX, newY, newX.length);
+                    }
                 }
             }
         }
@@ -2223,7 +2237,7 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             j--;
         }
 
-        if (showPoints) {
+        if ((showPointsAndLines == SHOW_POINTS_AND_LINES) || (showPointsAndLines == SHOW_POINTS_ONLY)) {
 
             for (int k = 0; k < functions.length; k++) {
 
