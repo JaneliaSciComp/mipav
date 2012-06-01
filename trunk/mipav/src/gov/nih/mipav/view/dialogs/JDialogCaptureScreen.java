@@ -31,14 +31,12 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -2364847865242983737L;
 
-    /** DOCUMENT ME! */
-    private static final int NONE = -1;
-
-    /** DOCUMENT ME! */
-    private static final int REGION = 0;
-
-    /** DOCUMENT ME! */
-    private static final int WINDOW = 1;
+    public enum WindowProperties{
+    	/** Selected region of the window */
+    	REGION,
+    	/** The entire image window */
+    	WINDOW;
+    }
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -52,7 +50,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     private JLabel instructions2;
 
     /** Mode - region, window, or none. */
-    private int mode;
+    private WindowProperties mode;
 
     /**
      * Special glass panes for all the valid frames in the GUI so that the user can draw rectangles on top of objects in
@@ -110,7 +108,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         save = false;
         copy = false;
         display = false;
-        mode = NONE;
+        mode = WindowProperties.REGION;
 
         Frame[] frames = Frame.getFrames();
 
@@ -170,7 +168,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
         if (command.equals("OK")) {
 
-            if ((mode != NONE) && (currentRectangle != null) && !currentRectangle.isEmpty() &&
+            if ((currentRectangle != null) && !currentRectangle.isEmpty() &&
                     (currentRectangle.x > -1) && (currentRectangle.y > -1)) {
 
                 if (writeImage()) {
@@ -216,7 +214,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
             instructions.setText("Draw a rectangle with the mouse around the");
             instructions2.setText("region you want to save.  Then press OK.");
-            mode = REGION;
+            mode = WindowProperties.REGION;
         } else if (command.equals("Window")) {
 
             for (int i = 0; i < myGlassPanes.length; i++) {
@@ -225,7 +223,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 
             instructions.setText("Select the window you want to save.");
             instructions2.setText("Then press OK.");
-            mode = WINDOW;
+            mode = WindowProperties.WINDOW;
         }
 
     }
@@ -295,25 +293,15 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
      */
     public void windowActivated(WindowEvent event) {
         // not in window mode
-        if (mode == REGION) {
+        switch(mode){
+        case REGION:
         	if(event.getWindow() instanceof ViewJFrameImage) {
 	        	ViewJFrameImage frame = (ViewJFrameImage) event.getWindow();
 	            activeFrame = frame;
-
-	            return;
         	}
-        	else {
-        		return;
-        	}
-        }
-        
-        if(mode == WINDOW) {
-	        // don't save the dialog as the screen capture -
-	        // and the dialog will be the last window activated
-	        if (event.getWindow().equals(this)) {
-	            return;
-	        } else {
-	
+        	break;
+        case WINDOW:
+        	if (!event.getWindow().equals(this)) {
 	            try {
 	                ViewJFrameImage frame = (ViewJFrameImage) event.getWindow();
 	                activeFrame = frame;
@@ -339,6 +327,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 	                currentRectangle = new Rectangle(p, d);
 	            } catch (ClassCastException error) { }
 	        }
+        	break;
         }
     }
 
