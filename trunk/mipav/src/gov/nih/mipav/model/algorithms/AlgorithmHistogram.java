@@ -49,7 +49,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
      * Indicates which channel of the RGB image the histogram should be calculated. 1 = Red channel 2 = Green channel 3
      * = Blue channel
      */
-    private int RGBOffset;
+    private int RGBOffset = 0;
 
     /**
      * Used to indicate the number of histogram bins when using the constructors that do NOT pass in the histogram
@@ -612,8 +612,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
         double factor;
         int i;
         ViewUserInterface UI;
-        double[] intensity = null;
-        double[] count = null;
+        float[] intensity = null;
+        float[] count = null;
         boolean sameLowHigh;
 
         if (image == null) {
@@ -673,10 +673,10 @@ public class AlgorithmHistogram extends AlgorithmBase {
         lowValue = new double[bins];
         highValue = new double[bins];
         if (displayGraph) {
-            intensity = new double[bins];
-            count = new double[bins];
+            intensity = new float[bins];
+            count = new float[bins];
             for (i = 0; i < bins; i++) {
-                intensity[i] = (imageMin + i * (imageMax - imageMin)/(bins - 1));
+                intensity[i] = (float)(imageMin + i * (imageMax - imageMin)/(bins - 1));
             }
         }
 
@@ -803,15 +803,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         image.releaseLock();
         
         if (displayGraph) {
-            float[] intensityf = new float[intensity.length];
-            for (i = 0; i < intensity.length; i++) {
-                intensityf[i] = (float)intensity[i];
-            }
-            float[] countf = new float[count.length];
-            for (i = 0; i < count.length; i++) {
-                countf[i] = (float)count[i];
-            }
-            new ViewJFrameGraph(intensityf, countf, "Histogram", "Intensity", "Count");
+            new ViewJFrameGraph(image, RGBOffset, entireImage, intensity, count, "Histogram", "Intensity", "Count");
         }
         
         if (image.isColorImage()) {
