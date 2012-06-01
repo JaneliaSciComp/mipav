@@ -82,9 +82,9 @@ public class PlugInDialogSimulateParams542d extends JDialogScriptableBase implem
 
     private JPanel okCancelPanel;
 
-    private Double tumorSizeDev;
+    private double tumorSizeDev;
 
-    private Integer iterNum;
+    private int iterNum;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 

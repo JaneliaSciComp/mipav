@@ -179,7 +179,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
     private PlugInAlgorithmCTThigh542a thighSeg;
     
     /**The algorithm for producing an abdomen automatically. */
-    private PlugInAlgorith1mCTAbdomen542a abdomenSeg;
+    private PlugInAlgorithmCTAbdomen542a abdomenSeg;
     
     /**A map indicating whether a VOI of a particular name should be calculated. */
     private TreeMap<String, Boolean> calcTree;
@@ -605,25 +605,25 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone542a)algorithm).getSegmentationTimeBone());
 				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTBone542a)algorithm).getSegmentationTimeBone());
 			}
-		} else if(algorithm instanceof PlugInAlgorith1mCTAbdomen542a) {
-			if(((PlugInAlgorith1mCTAbdomen542a)algorithm).getAbdomenVOI() != null) {
+		} else if(algorithm instanceof PlugInAlgorithmCTAbdomen542a) {
+			if(((PlugInAlgorithmCTAbdomen542a)algorithm).getAbdomenVOI() != null) {
 				ViewUserInterface.getReference().getMessageFrame().append("Abdomen alg completed\n", ViewJFrameMessage.DEBUG);
-				firstVOI = ((PlugInAlgorith1mCTAbdomen542a)algorithm).getAbdomenVOI().getCurves();
+				firstVOI = ((PlugInAlgorithmCTAbdomen542a)algorithm).getAbdomenVOI().getCurves();
 				firstBufferVOI = voiBuffer.get("Abdomen");
 				for(int j=0; j<firstVOI.size(); j++) {
 				    firstBufferVOI.importCurve((VOIContour)firstVOI.get(j));
 				}
 				firstBufferVOI.setComputerGenerated(true);
-				firstBufferVOI.setSegmentationTime(((PlugInAlgorith1mCTAbdomen542a)algorithm).getSegmentationTimeAbd());
+				firstBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen542a)algorithm).getSegmentationTimeAbd());
 			}
-			if(((PlugInAlgorith1mCTAbdomen542a)algorithm).getSubcutaneousVOI() != null) {
-				secondVOI = ((PlugInAlgorith1mCTAbdomen542a)algorithm).getSubcutaneousVOI().getCurves();
+			if(((PlugInAlgorithmCTAbdomen542a)algorithm).getSubcutaneousVOI() != null) {
+				secondVOI = ((PlugInAlgorithmCTAbdomen542a)algorithm).getSubcutaneousVOI().getCurves();
 				secondBufferVOI = voiBuffer.get("Subcutaneous area");
 				for(int j=0; j<secondVOI.size(); j++) {
 				    secondBufferVOI.importCurve((VOIContour)secondVOI.get(j));
 				}
 				secondBufferVOI.setComputerGenerated(true);
-				secondBufferVOI.setSegmentationTime(((PlugInAlgorith1mCTAbdomen542a)algorithm).getSegmentationTimeSub());
+				secondBufferVOI.setSegmentationTime(((PlugInAlgorithmCTAbdomen542a)algorithm).getSegmentationTimeSub());
 			}
 		}
 	
@@ -1303,7 +1303,7 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 															JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
 				if(segment == 0) {
 	    			ModelImage resultImage = (ModelImage)srcImage.clone();
-	    			abdomenSeg = new PlugInAlgorith1mCTAbdomen542a(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
+	    			abdomenSeg = new PlugInAlgorithmCTAbdomen542a(resultImage, srcImage, imageDir, voiBuffer.get("Abdomen").getColor());
 	    			performSegmentation(abdomenSeg, resultImage);
 				}
 			}
