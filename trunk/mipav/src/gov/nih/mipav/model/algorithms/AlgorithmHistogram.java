@@ -62,9 +62,9 @@ public class AlgorithmHistogram extends AlgorithmBase {
     // If true, histogram covers from userMin to userMax instead of image.getMin() to image.getMax()
     private boolean userLimits = false;
     
-    private float userMin;
+    private double userMin;
     
-    private float userMax;
+    private double userMax;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -130,6 +130,34 @@ public class AlgorithmHistogram extends AlgorithmBase {
      */
     public AlgorithmHistogram(ModelImage image, int summaryBins, boolean maskFlag, boolean displayGraph,
                               boolean userLimits, float userMin, float userMax) {
+        this.image = image;
+        this.summaryBins = summaryBins;
+        dataOutput = true;
+        this.entireImage = maskFlag;
+        this.displayGraph = displayGraph;
+        this.userLimits = userLimits;
+        this.userMin = userMin;
+        this.userMax = userMax;
+
+        if (entireImage == false) {
+            mask = image.generateVOIMask();
+        }
+    }
+    
+    /**
+     * Constructs the histogram calculation object for an image.
+     *
+     * @param  image        ModelImage the image
+     * @param  summaryBins  number of bins in the histogram
+     * @param  maskFlag     Flag that indicates that the histogram will be calculated for the whole image if equal to
+     *                      true
+     * @param displayGraph  If true, produces a graph for display
+     * @param userLimits    If true, histogram goes from userMin to userMax instead of image.getMin() to image.getMax()
+     * @param userMin
+     * @param usermax
+     */
+    public AlgorithmHistogram(ModelImage image, int summaryBins, boolean maskFlag, boolean displayGraph,
+                              boolean userLimits, double userMin, double userMax) {
         this.image = image;
         this.summaryBins = summaryBins;
         dataOutput = true;
@@ -227,6 +255,36 @@ public class AlgorithmHistogram extends AlgorithmBase {
             mask = image.generateVOIMask();
         }
     }
+    
+    /**
+     * Constructs the histogram calculation object for an RGB image.
+     *
+     * @param  image        ModelImage the image
+     * @param  summaryBins  number of bins in the histogram
+     * @param  RGBOffset    correct offset for RED = 1 , GREEN = 2, or BLUE = 3 component to be exported
+     * @param  maskFlag     Flag that indicates that the histogram will be calculated for the whole image if equal to
+     *                      true
+     * @param  displayGraph If true, produces a graph for display
+     * * @param userLimits    If true, histogram goes from userMin to userMax instead of image.getMin() to image.getMax()
+     * @param userMin
+     * @param usermax
+     */
+    public AlgorithmHistogram(ModelImage image, int summaryBins, int RGBOffset, boolean maskFlag, boolean displayGraph,
+                              boolean userLimits, double userMin, double userMax) {
+        this.image = image;
+        this.summaryBins = summaryBins;
+        this.RGBOffset = RGBOffset;
+        dataOutput = true;
+        this.entireImage = maskFlag;
+        this.displayGraph = displayGraph;
+        this.userLimits = userLimits;
+        this.userMin = userMin;
+        this.userMax = userMax;
+
+        if (entireImage == false) {
+            mask = image.generateVOIMask();
+        }
+    }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -309,7 +367,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         int i;
         int length = 1;
         int bins = 1;
-        float[] imgBuffer;
+        double[] imgBuffer;
 
         if (dataOutput) {
             runData(summaryBins);
@@ -372,6 +430,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 break;
 
             case ModelStorageBase.ARGB_USHORT:
+            case ModelStorageBase.ARGB_FLOAT:
                 if (RGBOffset == 1) {
                     imageMin = image.getMinR();
                     imageMax = image.getMaxR();
@@ -386,19 +445,19 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 break;
 
             case ModelStorageBase.SHORT:
-                imageMin = (double) image.getMin();
-                imageMax = (double) image.getMax();
+                imageMin = image.getMin();
+                imageMax = image.getMax();
                 break;
 
             default: {
-                imageMin = (double) image.getMin();
-                imageMax = (double) image.getMax();
+                imageMin = image.getMin();
+                imageMax = image.getMax();
                 break;
             }
         }
 
         length = image.getSliceSize();
-        imgBuffer = new float[length];
+        imgBuffer = new double[length];
 
         if (image.getNDims() > 2) {
             zStop = image.getExtents()[2];
@@ -419,7 +478,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
             try {
 
-                if (image.getType() == ModelStorageBase.COMPLEX) {
+                if (image.isComplexImage()) {
                     image.exportMagData(2 * z * length, length, imgBuffer);
                 } else if (image.isColorImage()) {
                     image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
@@ -433,10 +492,10 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 return;
             }
 
-            if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
+            if ((image.isComplexImage()) && (image.getLogMagDisplay() == true)) {
 
                 for (i = 0; i < length; i++) {
-                    imgBuffer[i] = (float) (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+                    imgBuffer[i] =  (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
                 }
             }
 
@@ -454,7 +513,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 for (i = 0; i < length; i++) {
 
                     if (mask.get((z * length) + i)) { // just calc. for VOI
-                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
+                        value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5);
                         histoBuffer[value]++;
                     }
                 }
@@ -462,7 +521,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
                 // Calculate for the entire image
                 for (i = 0; i < length; i++) {
-                    value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5f);
+                    value = (int) (((imgBuffer[i] - imageMin) * factor) + 0.5);
 
                     // System.out.println( "histoBuffer[value] = " + histoBuffer[value]);
                     histoBuffer[value]++;
@@ -485,7 +544,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         int stRange = -1;
         int endRange = -1;
         int mode = 0;
-        float mean = 0;
+        double mean = 0;
         long temp;
 
         for (i = 0; i < bins; i++) {
@@ -536,16 +595,16 @@ public class AlgorithmHistogram extends AlgorithmBase {
         int cnt = 0;
         double mean;
         double stdDev;
-        float sort[];
+        double sort[];
         int index = 0;
         double median;
         int countInMaximumPeak = 0;
-        float mode;
+        double mode;
         int numberMaximumPeaks = 0;
         int runLength;
         DecimalFormat df;
         double imageMax, imageMin;
-        float[] imgBuffer;
+        double[] imgBuffer;
         int z, zStop;
         int value;
         int length;
@@ -553,8 +612,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
         double factor;
         int i;
         ViewUserInterface UI;
-        float[] intensity = null;
-        float[] count = null;
+        double[] intensity = null;
+        double[] count = null;
         boolean sameLowHigh;
 
         if (image == null) {
@@ -592,8 +651,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 break;
 
             default:
-                imageMin = (double) image.getMin();
-                imageMax = (double) image.getMax();
+                imageMin = image.getMin();
+                imageMax = image.getMax();
                 break;
         }
         
@@ -610,14 +669,14 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
         histoBuffer = new int[bins];
         length = image.getSliceSize();
-        imgBuffer = new float[length];
+        imgBuffer = new double[length];
         lowValue = new double[bins];
         highValue = new double[bins];
         if (displayGraph) {
-            intensity = new float[bins];
-            count = new float[bins];
+            intensity = new double[bins];
+            count = new double[bins];
             for (i = 0; i < bins; i++) {
-                intensity[i] = (float)(imageMin + i * (imageMax - imageMin)/(bins - 1));
+                intensity[i] = (imageMin + i * (imageMax - imageMin)/(bins - 1));
             }
         }
 
@@ -640,7 +699,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
             try {
 
-                if (image.getType() == ModelStorageBase.COMPLEX) {
+                if (image.isComplexImage()) {
                     image.exportMagData(2 * z * length, length, imgBuffer);
                 } else if (image.isColorImage()) {
                     image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
@@ -657,7 +716,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
 
                 for (i = 0; i < length; i++) {
-                    imgBuffer[i] = (float) (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+                    imgBuffer[i] = (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
                 }
             }
 
@@ -703,12 +762,12 @@ public class AlgorithmHistogram extends AlgorithmBase {
             fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
         }
         
-        sort = new float[cnt];
+        sort = new double[cnt];
         for (z = 0; z < zStop; z++) {
 
             try {
 
-                if (image.getType() == ModelStorageBase.COMPLEX) {
+                if (image.isComplexImage()) {
                     image.exportMagData(2 * z * length, length, imgBuffer);
                 } else if (image.isColorImage()) {
                     image.exportRGBDataNoLock(RGBOffset, 4 * z * length, length, imgBuffer);
@@ -725,7 +784,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             if ((image.getType() == ModelStorageBase.COMPLEX) && (image.getLogMagDisplay() == true)) {
 
                 for (i = 0; i < length; i++) {
-                    imgBuffer[i] = (float) (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
+                    imgBuffer[i] = (0.4342944819 * java.lang.Math.log(1 + imgBuffer[i]));
                 }
             }
 
@@ -744,7 +803,15 @@ public class AlgorithmHistogram extends AlgorithmBase {
         image.releaseLock();
         
         if (displayGraph) {
-            new ViewJFrameGraph(intensity, count, "Histogram", "Intensity", "Count");
+            float[] intensityf = new float[intensity.length];
+            for (i = 0; i < intensity.length; i++) {
+                intensityf[i] = (float)intensity[i];
+            }
+            float[] countf = new float[count.length];
+            for (i = 0; i < count.length; i++) {
+                countf[i] = (float)count[i];
+            }
+            new ViewJFrameGraph(intensityf, countf, "Histogram", "Intensity", "Count");
         }
         
         if (image.isColorImage()) {
