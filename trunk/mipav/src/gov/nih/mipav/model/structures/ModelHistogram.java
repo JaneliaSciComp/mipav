@@ -29,7 +29,7 @@ public class ModelHistogram extends ModelStorageBase {
     private int maxEntropyThreshold;
 
     /** DOCUMENT ME! */
-    private float mean;
+    private double mean;
 
     /** DOCUMENT ME! */
     private int mode;
@@ -80,7 +80,7 @@ public class ModelHistogram extends ModelStorageBase {
      *
      * @return  mean pixel intensity
      */
-    public float getMean() {
+    public double getMean() {
         return mean;
     }
 
@@ -154,7 +154,7 @@ public class ModelHistogram extends ModelStorageBase {
      *
      * @param  mean  mean value of intensity
      */
-    public void setMean(float mean) {
+    public void setMean(double mean) {
         this.mean = mean;
     }
 
