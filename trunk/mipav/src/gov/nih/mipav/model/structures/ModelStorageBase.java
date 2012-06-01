@@ -2092,6 +2092,44 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         throw new IOException("Export data error - bounds incorrect");
     }
+    
+    /**
+     * export magnitude data to values array.
+     * 
+     * @param start indicates starting position in data array
+     * @param length length of magnitude data to be copied from data array
+     * @param values array where magnitude data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void exportMagData(final int start, final int length, final double[] values)
+            throws IOException {
+        int i, j;
+        double real, imaginary;
+
+        if ( (start >= 0) && ( (start + (2 * length)) <= dataSize) && (length <= values.length)) {
+
+            try {
+                setLock(ModelStorageBase.W_LOCKED);
+
+                for (i = start, j = 0; j < length; i += 2, j++) {
+                    real = data.getDouble(i);
+                    imaginary = data.getDouble(i + 1);
+                    values[j] = Math.sqrt( (real * real) + (imaginary * imaginary));
+                }
+
+            } catch (final IOException error) {
+                releaseLock();
+                throw error;
+            } finally {
+                releaseLock();
+            }
+
+            return;
+        }
+
+        throw new IOException("Export data error - bounds incorrect");
+    }
 
     /**
      * export data in values array.
@@ -2257,6 +2295,32 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
             for (i = start, j = 0; j < length; i += 4, j++) {
                 values[j] = data.getFloat(i + offset);
+            }
+
+            return;
+        }
+
+        throw new IOException("Export RGB data error - bounds incorrect");
+    }
+    
+    /**
+     * Export data in values array WITHOUT using locking.
+     * 
+     * @param offset offset into the data array
+     * @param start indicates starting position in data array
+     * @param length length of data to be copied from data array
+     * @param values array where data is to be deposited
+     * 
+     * @throws IOException Throws an error when there is a locking or bounds error.
+     */
+    public final synchronized void exportRGBDataNoLock(final int offset, final int start, final int length,
+            final double[] values) throws IOException {
+        int i, j;
+
+        if ( (start >= 0) && ( (start + (4 * length)) <= dataSize) && (length <= values.length)) {
+
+            for (i = start, j = 0; j < length; i += 4, j++) {
+                values[j] = data.getDouble(i + offset);
             }
 
             return;
