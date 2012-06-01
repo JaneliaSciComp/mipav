@@ -340,6 +340,14 @@ public class ViewJFrameGraph extends JFrame
     private JTextField numVariablesField;
     
     private int numVariables = 5;
+    
+    private ModelImage image = null;
+    
+    private int RGBOffset = 0;
+    
+    private boolean entireImage = true;
+    
+    private JPanel histogramPanel = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -681,6 +689,105 @@ public class ViewJFrameGraph extends JFrame
      */
     public ViewJFrameGraph(float[][] x, float[][] y, String title, VOI v) {
         this(x, y, title, v, null);
+    }
+    
+    /**
+     * Constructor Constructs the frame, with the graph component in one panel and the user options in the other. Draws
+     * initial default graph of desired function / intensity plot.
+     *
+     * @param  xInit   the array of x coordinates to be plotted in the graph
+     * @param  yInit   the array of y coordinates to be plotted in the graph
+     * @param  title   the title of the frame
+     * @param  labelX  x axis label
+     * @param  labelY  y aixs label
+     */
+    public ViewJFrameGraph(ModelImage image, int RGBOffset, boolean entireImage,
+                           float[] xInit, float[] yInit, String title, String labelX, String labelY) {
+        super(title);
+        
+        this.image = image;
+        this.RGBOffset = RGBOffset;
+        this.entireImage = entireImage;
+
+        ViewJComponentFunct[] functArray;
+        ViewJComponentFunct[] fittedFuncts;
+
+        voi = null;
+        setBounds(0, 0, 500, 400);
+
+        float[] x = new float[xInit.length];
+        float[] y = new float[xInit.length];
+
+        for (int i = 0; i < xInit.length; i++) {
+            x[i] = xInit[i];
+            y[i] = yInit[i];
+        }
+
+        try {
+            mainPanel = new JPanel();
+            mainPanel.setBounds(0, 0, getSize().width, getSize().height);
+            graph = new ViewJComponentGraph(this, mainPanel.getBounds().width, mainPanel.getBounds().height - 60);
+            functArray = new ViewJComponentFunct[1];
+            functArray[0] = new ViewJComponentFunct(x, y, Color.red, 1, voi,null); // empty function
+            fittedFuncts = new ViewJComponentFunct[1];
+            fittedFuncts[0] = new ViewJComponentFunct(x, y, Color.red, voi,null); // empty function
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory: ViewJFrameGraph constructor");
+
+            return;
+        }
+
+        addNotify();
+        setResizable(true);
+
+        try {
+            setIconImage(MipavUtil.getIconImage("graph.gif"));
+        } catch (FileNotFoundException error) {
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
+            System.err.println("Exception ocurred while getting <" + error.getMessage() +
+                               ">.  Check that this file is available.\n");
+        }
+
+        // setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        mainPanel.setLayout(null);
+        mainPanel.setBackground(Color.lightGray);
+        mainPanel.setForeground(Color.black);
+
+        graph.setFuncts(functArray);
+        graph.setFittedFuncts(fittedFuncts);
+
+        graph.calculateDefaultRangeDomain();
+        graph.setDefaultRangeDomain();
+
+        buildMenu();
+
+        graph.setNumberOfXGridLines(4); // draws default number of grid lines
+        graph.setNumberOfYGridLines(4);
+        graph.setTitle(title); // sets title above graph to same as window title
+        graph.setLabels(labelX, labelY);
+        graph.setBackground(Color.red);
+
+        graph.setPointsAndLinesDisplay(ViewJComponentGraph.SHOW_LINES_ONLY);
+        graph.setGridlinesVisible(true);
+        graph.setMinorTickMarksVisible(true);
+
+        mainPanel.add(graph);
+
+        getContentPane().add(mainPanel);
+        setJMenuBar(openingMenuBar);
+
+        addComponentListener(this);
+        addWindowListener(this);
+
+        if (xInit.length != yInit.length) { // must be pairs of x and y coordinates, or the graph cannot be drawn
+            MipavUtil.displayError("X and Y Arrays must be of equal length");
+            this.dispose();
+        } else {
+            setVisible(true);
+        }
+
     }
 
     /**
@@ -3621,13 +3728,26 @@ public class ViewJFrameGraph extends JFrame
             minRangeLabel = new JLabel("Min. for Range (<" + Float.toString(graph.getDefaultMinRange()) + ")");
             maxRangeField = new JTextField("" + graph.getMaxRange());
             maxRangeLabel = new JLabel("Max. for Range (>" + Float.toString(graph.getDefaultMaxRange()) + ")");
+            if (image != null) {
+                histogramPanel = new JPanel();
+            }
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory: ViewJComponentGraph.buildModifyGraphPanel");
 
             return;
         }
 
-        modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 253);
+        if (image != null) {
+            if (image.isColorImage()) {
+                modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 463);    
+            }
+            else {
+                modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 373);    
+            }
+        }
+        else {
+            modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 253);
+        }
         modifyGraphPanel.setLayout(null);
         modifyGraphPanel.setBorder(new EtchedBorder());
 
@@ -3650,6 +3770,15 @@ public class ViewJFrameGraph extends JFrame
         rangePanel.setBorder(new EtchedBorder());
         rangePanel.setLayout(null);
         modifyGraphPanel.add(rangePanel);
+        
+        if (image != null) {
+            if (image.isColorImage()) {
+                histogramPanel.setBounds(PANEL_OFFSET, 302, 250, 200);    
+            }
+            else {
+                histogramPanel.setBounds(PANEL_OFFSET, 302, 250, 110);
+            }
+        }
 
         gridlinesCheckbox.setBounds(PANEL_OFFSET, PANEL_OFFSET, 150, 20);
         gridlinesCheckbox.addActionListener(this);
@@ -3790,7 +3919,17 @@ public class ViewJFrameGraph extends JFrame
         modifyDialog.getContentPane().add(tabbedPane, "Center");
         tabbedPane.validate();
         tabbedPane.addChangeListener(this);
-        tabbedPane.setSize(490, 424);
+        if (image != null) {
+            if (image.isColorImage()) {
+                tabbedPane.setSize(490, 634);    
+            }
+            else {
+                tabbedPane.setSize(490, 544);
+            }
+        }
+        else {
+            tabbedPane.setSize(490, 424);
+        }
 
         applyButton.setFont(MipavUtil.font12B);
         applyButton.addActionListener(this);
