@@ -68,6 +68,7 @@ import gov.nih.mipav.view.dialogs.JDialogEditSquareLength;
 import gov.nih.mipav.view.dialogs.JDialogEvolveBoundaryManual;
 import gov.nih.mipav.view.dialogs.JDialogFlip;
 import gov.nih.mipav.view.dialogs.JDialogGVF;
+import gov.nih.mipav.view.dialogs.JDialogIntensityHistogram;
 import gov.nih.mipav.view.dialogs.JDialogIntensityThreshold;
 import gov.nih.mipav.view.dialogs.JDialogLivewire;
 import gov.nih.mipav.view.dialogs.JDialogMask;
@@ -980,7 +981,17 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         } 
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_BOUNDARY_INTENSITY.getActionCommand())) {
             graphVOI();
-        } 
+        }
+        else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_INTENSITY_HISTOGRAM.getActionCommand())) {
+            m_bDefaultImage = true;
+            m_kTempImage = m_kVOIManagers.get(m_iActive).getLocalImage();
+            if ( m_kTempImage != getActiveImage() )
+            {
+                m_bDefaultImage = false;
+                m_kTempImage = (ModelImage)m_kTempImage.clone();
+            } 
+            new JDialogIntensityHistogram(m_kParent.getFrame(), m_kTempImage);    
+        }
         else if (command.equals(CustomUIBuilder.PARAM_VOI_GRAPH_TOTAL_INTENSITY.getActionCommand())) {
             graph25VOI_CalcInten(true, false, 0);
         } 
