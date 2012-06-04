@@ -359,7 +359,6 @@ public class ViewJFrameGraph extends JFrame
     private double imageMin;
     private double imageMax;
     private int maxBins;
-    private JButton resetBinsButton = null;
     
     
     private JPanel histogramPanel = null;
