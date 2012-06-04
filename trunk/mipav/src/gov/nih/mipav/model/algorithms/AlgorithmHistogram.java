@@ -803,7 +803,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
         image.releaseLock();
         
         if (displayGraph) {
-            new ViewJFrameGraph(image, RGBOffset, entireImage, intensity, count, "Histogram", "Intensity", "Count");
+            new ViewJFrameGraph(image, RGBOffset, entireImage, summaryBins, userMin, userMax,
+                                intensity, count, "Histogram", "Intensity", "Count");
         }
         
         if (image.isColorImage()) {
