@@ -347,6 +347,21 @@ public class ViewJFrameGraph extends JFrame
     
     private boolean entireImage = true;
     
+    private int initialSummaryBins;
+    private int summaryBins;
+    private double initialUserMin;
+    private double userMin;
+    private double initialUserMax;
+    private double userMax;
+    private JTextField minField = null;
+    private JTextField maxField = null;
+    private JTextField binsField = null;
+    private double imageMin;
+    private double imageMax;
+    private int maxBins;
+    private JButton resetBinsButton = null;
+    
+    
     private JPanel histogramPanel = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -701,13 +716,17 @@ public class ViewJFrameGraph extends JFrame
      * @param  labelX  x axis label
      * @param  labelY  y aixs label
      */
-    public ViewJFrameGraph(ModelImage image, int RGBOffset, boolean entireImage,
+    public ViewJFrameGraph(ModelImage image, int RGBOffset, boolean entireImage, int initialSummaryBins,
+                           double initialUserMin, double initialUserMax, 
                            float[] xInit, float[] yInit, String title, String labelX, String labelY) {
         super(title);
         
         this.image = image;
         this.RGBOffset = RGBOffset;
         this.entireImage = entireImage;
+        this.initialSummaryBins = initialSummaryBins;
+        this.initialUserMin = initialUserMin;
+        this.initialUserMax = initialUserMax;
 
         ViewJComponentFunct[] functArray;
         ViewJComponentFunct[] fittedFuncts;
@@ -1657,6 +1676,71 @@ public class ViewJFrameGraph extends JFrame
             }
 
         } else if (command.equals("ApplyModifyGraph")) {
+            if (image != null) {
+                try {
+                    userMin = new Double(minField.getText()).doubleValue();
+                } catch (Exception ex) {
+                    MipavUtil.displayError("minValue must be a double value");
+
+                    return;
+                }
+                if (userMin < imageMin) {
+                    MipavUtil.displayError("Minimum must be at least " + imageMin);
+                    return;
+                }
+                
+                try {
+                    userMax = new Double(maxField.getText()).doubleValue();
+                } catch (Exception ex) {
+                    MipavUtil.displayError("maxValue must be a double value");
+
+                    return;
+                }
+                if (userMax > imageMax) {
+                    MipavUtil.displayError("maxValue cannot exceed " + imageMax);
+                    return;
+                }
+                if (userMax <= userMin) {
+                    MipavUtil.displayError("maxValue must be greater than " + userMin);
+                    return;
+                }
+                
+                try {
+                    summaryBins = new Integer(binsField.getText()).intValue();
+                }
+                catch (Exception ex) {
+                    MipavUtil.displayError("numBins must be an integer value");
+                    return;
+                }
+                
+                if (summaryBins < 2) {
+                    MipavUtil.displayError("Number of bins must be at least 2");
+                    return;
+                }
+                
+                if (summaryBins > maxBins) {
+                    MipavUtil.displayError("Number of bins cannot exceed " + maxBins);
+                    return;
+                }
+
+                if ((summaryBins != initialSummaryBins) || (userMin != initialUserMin) || (userMax != initialUserMax)) {
+                    setVisible(false);
+                    AlgorithmHistogram histAlgo;
+                    boolean displayGraph = true;
+                    boolean userLimits = true;
+                    if (image.isColorImage()) {
+                        histAlgo = new AlgorithmHistogram(image, summaryBins, RGBOffset, entireImage, displayGraph,
+                                userLimits, userMin, userMax);
+                    } // if (image.isColorImage())
+                    else {
+                        histAlgo = new AlgorithmHistogram(image, summaryBins, entireImage, displayGraph,
+                                                                         userLimits, userMin, userMax);
+                    }
+                    histAlgo.run();
+                    
+                    this.dispose();   
+                } // if ((summaryBins != initialSummaryBins) || (userMin != initialUserMin) || (userMax != initialUserMax))
+            } // if (image != null)
             String xText = xGridLineField.getText(); // stores the input for the number of gridlines along the x and y
                                                      // axis
             String yText = yGridLineField.getText();
@@ -3738,12 +3822,7 @@ public class ViewJFrameGraph extends JFrame
         }
 
         if (image != null) {
-            if (image.isColorImage()) {
-                modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 463);    
-            }
-            else {
-                modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 373);    
-            }
+            modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 333);    
         }
         else {
             modifyGraphPanel.setBounds(PANEL_OFFSET, PANEL_OFFSET, 480, 253);
@@ -3772,13 +3851,61 @@ public class ViewJFrameGraph extends JFrame
         modifyGraphPanel.add(rangePanel);
         
         if (image != null) {
-            if (image.isColorImage()) {
-                histogramPanel.setBounds(PANEL_OFFSET, 302, 250, 200);    
+            histogramPanel.setBounds(PANEL_OFFSET, 302, 250, 150);
+            histogramPanel.setBorder(new EtchedBorder());
+            histogramPanel.setLayout(null);
+            modifyGraphPanel.add(histogramPanel);
+            
+            imageMin = image.getMin();
+            imageMax = image.getMax();
+            int dataType = image.getFileInfo()[0].getDataType();
+            if ((dataType != ModelStorageBase.FLOAT) && (dataType != ModelStorageBase.DOUBLE) &&
+                (dataType != ModelStorageBase.ARGB_FLOAT)) {
+                maxBins = (int)Math.round(imageMax - imageMin + 1);
             }
             else {
-                histogramPanel.setBounds(PANEL_OFFSET, 302, 250, 110);
+                maxBins = 4096;
             }
-        }
+            
+            JLabel minLabel = new JLabel("Minimum value   ");
+            minLabel.setForeground(Color.black);
+            minLabel.setFont(MipavUtil.font12);
+            minLabel.setBounds(120, PANEL_OFFSET, 100, 30);
+            histogramPanel.add(minLabel);
+
+            minField = new JTextField();
+            minField.setText(String.valueOf(initialUserMin));
+            minField.setForeground(Color.black);
+            minField.setFont(MipavUtil.font12);
+            minField.setBounds(PANEL_OFFSET, PANEL_OFFSET, 100, 30);
+            histogramPanel.add(minField);
+            
+            JLabel maxLabel = new JLabel("Maximum value   ");
+            maxLabel.setForeground(Color.black);
+            maxLabel.setFont(MipavUtil.font12);
+            maxLabel.setBounds(120, 50, 100, 30);
+            histogramPanel.add(maxLabel);
+
+            maxField = new JTextField();
+            maxField.setText(String.valueOf(initialUserMax));
+            maxField.setForeground(Color.black);
+            maxField.setFont(MipavUtil.font12);
+            maxField.setBounds(PANEL_OFFSET, 50, 100, 30);
+            histogramPanel.add(maxField);
+            
+            JLabel binsLabel = new JLabel("Number of bins   ");
+            binsLabel.setForeground(Color.black);
+            binsLabel.setFont(MipavUtil.font12);
+            binsLabel.setBounds(120, 90, 100, 30);
+            histogramPanel.add(binsLabel);
+
+            binsField = new JTextField();
+            binsField.setText(String.valueOf(initialSummaryBins));
+            binsField.setForeground(Color.black);
+            binsField.setFont(MipavUtil.font12);
+            binsField.setBounds(PANEL_OFFSET, 90, 100, 30);
+            histogramPanel.add(binsField);
+        } // if (image != null)
 
         gridlinesCheckbox.setBounds(PANEL_OFFSET, PANEL_OFFSET, 150, 20);
         gridlinesCheckbox.addActionListener(this);
@@ -3907,7 +4034,12 @@ public class ViewJFrameGraph extends JFrame
 
         tabbedPane.setFont(MipavUtil.font12B);
 
-        modifyDialog.setSize(503, 504);
+        if (image != null) {
+            modifyDialog.setSize(503, 584);
+        }
+        else {
+            modifyDialog.setSize(503, 504);
+        }
         modifyDialog.getContentPane().setLayout(null);
         modifyDialog.setResizable(false);
 
@@ -3920,12 +4052,7 @@ public class ViewJFrameGraph extends JFrame
         tabbedPane.validate();
         tabbedPane.addChangeListener(this);
         if (image != null) {
-            if (image.isColorImage()) {
-                tabbedPane.setSize(490, 634);    
-            }
-            else {
-                tabbedPane.setSize(490, 544);
-            }
+            tabbedPane.setSize(490, 504);
         }
         else {
             tabbedPane.setSize(490, 424);
