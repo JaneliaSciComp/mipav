@@ -7,7 +7,7 @@ import gov.nih.mipav.view.*;
 
 /**
  * For -infinity < a < +infinity and b > 0
- * y = (2/b)*(x - a)*exp(-((x-a)**2)/b)*u(x - a)
+ * y = scale factor * (2/b)*(x - a)*exp(-((x-a)**2)/b)*u(x - a)
  * where u(x-a) = 0 for x < a and = 1 for x >= a.
  * cumulative function = [1 - exp(-((x-a)**2)/b)]*u(x-a)
  * Mean of x = a + sqrt(PI*b/4)
@@ -21,20 +21,22 @@ public class FitRayleigh extends NLFittedFunction {
      */
     public FitRayleigh() {
 
-        // 10 points, 2 parameters, and function type
-        super(10, 2);
+        // 10 points, 3 parameters, and function type
+        super(10, 3);
         
         bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
-        bl = new double[2];
-        bu = new double[2];
+        bl = new double[3];
+        bu = new double[3];
         bl[0] = -Double.MAX_VALUE;
         bu[0] = +Double.MAX_VALUE;
         bl[1] = Double.MIN_VALUE;
         bu[1] = Double.MAX_VALUE;
+        bl[2] = 1.0;
+        bu[2] = Double.MAX_VALUE;
         
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
@@ -56,7 +58,7 @@ public class FitRayleigh extends NLFittedFunction {
     public FitRayleigh(int nPoints, float[] xData, float[] yData) {
 
         // nPoints data points, 2 coefficients, and exponential fitting
-        super(nPoints, 2);
+        super(nPoints, 3);
         
         xSeries = new double[xData.length];
         ySeries = new double[yData.length];   
@@ -101,8 +103,8 @@ public class FitRayleigh extends NLFittedFunction {
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
-        bl = new double[2];
-        bu = new double[2];
+        bl = new double[3];
+        bu = new double[3];
         if (yData[0] <= 0.0) {
             bl[0] = xMin;
         }
@@ -112,6 +114,8 @@ public class FitRayleigh extends NLFittedFunction {
         bu[0] = xMean;
         bl[1] = variance * 0.2/(4.0 - Math.PI);
         bu[1] = variance * 80.0/(4.0 - Math.PI);
+        bl[2] = 1.0;
+        bu[2] = Double.MAX_VALUE;
         
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
@@ -122,7 +126,7 @@ public class FitRayleigh extends NLFittedFunction {
 
         gues[0] = xMin; // starting point of distribution
         gues[1] = variance * 4.0/(4.0 - Math.PI);
-
+        gues[2] = yCount;
         
     }
 
@@ -140,6 +144,8 @@ public class FitRayleigh extends NLFittedFunction {
         		Preferences.DEBUG_ALGORITHM);
         Preferences.debug("a1 " + String.valueOf(a[1]) + " +/- " + String.valueOf(Math.sqrt(covarMat[1][1])) + "\n\n", 
         		Preferences.DEBUG_ALGORITHM);
+        Preferences.debug("a2 " + String.valueOf(a[2]) + " +/- " + String.valueOf(Math.sqrt(covarMat[2][2])) + "\n\n", 
+                Preferences.DEBUG_ALGORITHM);
 
     }
     
@@ -165,7 +171,7 @@ public class FitRayleigh extends NLFittedFunction {
                 for (j = 0; j < nPts; j++) {
                     if (xSeries[j] >= a[0]) {
                         diff = xSeries[j] - a[0];
-                        ymod = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
+                        ymod = a[2]*(2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
                     }
                     else {
                         ymod = 0.0;
@@ -181,8 +187,9 @@ public class FitRayleigh extends NLFittedFunction {
                         diff = xSeries[j] - a[0];
                         diffSquared = diff * diff;
                         expon = Math.exp(-diffSquared/a[1]);
-                        covarMat[j][0] = (2.0/a[1])*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
-                        covarMat[j][1] = (2.0*diff/(a[1]*a[1]))*expon*((diffSquared/a[1]) - 1.0); // a1 partial derivative
+                        covarMat[j][0] = a[2]*(2.0/a[1])*expon*((2.0*diffSquared/a[1]) - 1.0); // a0 partial derivative
+                        covarMat[j][1] = a[2]*(2.0*diff/(a[1]*a[1]))*expon*((diffSquared/a[1]) - 1.0); // a1 partial derivative
+                        covarMat[j][2] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
                     }
                     else {
                         covarMat[j][0] = 0.0;
@@ -208,6 +215,7 @@ public class FitRayleigh extends NLFittedFunction {
         
         gues[0] = 0.5;
         gues[1] = 0.5;
+        gues[2] = 0.5;
         // Actual a[0] = 0 and a[1] = 1
 
         xSeries[0] = 0;
@@ -250,7 +258,7 @@ public class FitRayleigh extends NLFittedFunction {
 		for (j = 0; j < nPts; j++) {
 		    if (xSeries[j] >= a[0]) {
 		        diff = xSeries[j] - a[0];
-                yDataFitted[j] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+                yDataFitted[j] = a[2]*(2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
 		    }
 		    else {
 		        yDataFitted[j] = 0.0;
@@ -267,7 +275,7 @@ public class FitRayleigh extends NLFittedFunction {
     	    double r;
     	    if (xSeries[i] >= a[0]) {
     	        diff = xSeries[i] - a[0];
-    		    r = ySeries[i] -  (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+    		    r = ySeries[i] -  a[2]*(2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
     	    }
     	    else {
     	        r = ySeries[i];
