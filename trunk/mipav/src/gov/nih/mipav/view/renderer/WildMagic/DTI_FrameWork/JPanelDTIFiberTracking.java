@@ -23,6 +23,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 
+import javax.swing.AbstractButton;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -67,6 +68,8 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
     /** current directory * */
     private String currDir = null;
+    
+    private JPanelDTIVisualization visualization;
 
     private ModelImage tensorImage, eigenVectorImage, FAImage, eigenValueImage, rgbImage, traceImage, raImage,
             vrImage, adcImage;
@@ -97,6 +100,8 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
     JCheckBox displayVR = new JCheckBox( "Display VR Image" );
 
     private Font serif12;
+
+    private AbstractButton calcStats;
 
     /**
      * Constructs the Fiber Tracking input panel:
@@ -183,6 +188,21 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
                 currDir = chooser.getSelectedFile().getAbsolutePath() + File.separator;
                 outputDirTextField.setText(currDir);
             }
+        }//TODO:
+        else if (command.equals("computeStats")) {
+            if ( (getTensorImage() != null) &&  (getOutputDirectory() != null) )
+            {
+                createDerivedImages();
+                tensorImage = getTensorImage();
+                visualization.setDTIImage(tensorImage);
+                visualization.setDTIColorImage(getColorMapImage());
+                visualization.setEVImage(getEigenVectorImage());
+                visualization.setEValueImage(getEigenValueImage());
+                visualization.setFAImage(getFAImage());
+                visualization.setTractFile(tensorImage.getImageDirectory() + JPanelDTIFiberTracking.TrackFileName);
+                visualization.enableLoad();
+            }
+            
         }
         if ( (pipeline != null) && (tensorImage != null) && (outputDirTextField.getText() != null) )
         {
@@ -796,6 +816,25 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
         mainPanel.add( imageOutputPanel );
         
+        //TODO:
+        calcStats = new JButton("Compute");
+        calcStats.addActionListener(this);
+        calcStats.setActionCommand("computeStats");
+        calcStats.setEnabled(false);
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridBagLayout());
+        buttonPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
+        buttonPanel.add(calcStats, gbc);
+        //mainPanel.add(buttonPanel);
+        
         if ( bStandAlone )
         {
         	JPanel OKCancelPanel = new JPanel();
@@ -817,6 +856,11 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
         
         
         setVisible(true);
+    }
+    
+    public void enableComputeButton()
+    {
+        calcStats.setEnabled(true);
     }
 
 
