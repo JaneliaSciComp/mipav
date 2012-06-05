@@ -194,6 +194,7 @@ public class FitRayleigh extends NLFittedFunction {
                     else {
                         covarMat[j][0] = 0.0;
                         covarMat[j][1] = 0.0;
+                        covarMat[j][2] = 0.0;
                     }
                 }
             }
