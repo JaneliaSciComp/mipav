@@ -10,8 +10,8 @@ import gov.nih.mipav.view.*;
  * y = (2/b)*(x - a)*exp(-((x-a)**2)/b)*u(x - a)
  * where u(x-a) = 0 for x < a and = 1 for x >= a.
  * cumulative function = [1 - exp(-((x-a)**2)/b)]*u(x-a)
- * Mean = a + sqrt(PI*b/4)
- * Variance = b*(4 - PI)/4
+ * Mean of x = a + sqrt(PI*b/4)
+ * Variance of x = b*(4 - PI)/4
  */
 public class FitRayleigh extends NLFittedFunction {
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -59,14 +59,42 @@ public class FitRayleigh extends NLFittedFunction {
         super(nPoints, 2);
         
         xSeries = new double[xData.length];
-        ySeries = new double[yData.length];
+        ySeries = new double[yData.length];   
         int i;
+        double xMin = xData[0];
+        int minIndex = 0;
+        boolean firstPosFound;
+        if (yData[0] > 0.0) {
+            firstPosFound = true;
+        }
+        else {
+            firstPosFound = false;
+        }
         for (i = 0; i < xData.length; i++) {
         	xSeries[i] = xData[i];
+        	if ((i < xData.length - 1) && (yData[i] <= 0.0) && (yData[i+1] > 0.0) && (!firstPosFound)) {
+        	    xMin = xData[i];
+        	    minIndex = i;
+        	    firstPosFound = true;
+        	}
         }
+        double xTotal = 0.0;
+        double yCount = 0.0;
         for (i = 0; i < yData.length; i++) {
         	ySeries[i] = yData[i];
+        	if (i >= minIndex) {
+        	    xTotal += xData[i]*yData[i];
+        	    yCount += yData[i];
+        	}
         }
+        double xMean = xTotal/yCount;
+        double diff;
+        double totalSquaredDifference = 0.0;
+        for (i = minIndex; i < yData.length; i++) {
+            diff = xData[i] - xMean;
+            totalSquaredDifference += diff*diff*yData[i];
+        }
+        double variance = totalSquaredDifference/(yCount-1.0);
         
         bounds = 2; // bounds = 0 means unconstrained
         // bounds = 1 means same lower and upper bounds for
@@ -75,10 +103,15 @@ public class FitRayleigh extends NLFittedFunction {
         // for all parameters
         bl = new double[2];
         bu = new double[2];
-        bl[0] = -Double.MAX_VALUE;
-        bu[0] = +Double.MAX_VALUE;
-        bl[1] = Double.MIN_VALUE;
-        bu[1] = Double.MAX_VALUE;
+        if (yData[0] <= 0.0) {
+            bl[0] = xMin;
+        }
+        else {
+            bl[0] = -Double.MAX_VALUE;
+        }
+        bu[0] = xMean;
+        bl[1] = variance * 0.2/(4.0 - Math.PI);
+        bu[1] = variance * 80.0/(4.0 - Math.PI);
         
         // The default is internalScaling = false
         // To make internalScaling = true and have the columns of the
@@ -87,8 +120,8 @@ public class FitRayleigh extends NLFittedFunction {
         // Suppress diagnostic messages
         outputMes = false;      
 
-        gues[0] = 0; // starting point of distribution
-        gues[1] = 1; // Variance * 4/(4 - PI) 
+        gues[0] = xMin; // starting point of distribution
+        gues[1] = variance * 4.0/(4.0 - Math.PI);
 
         
     }
@@ -126,14 +159,13 @@ public class FitRayleigh extends NLFittedFunction {
 
         try {
             ctrl = ctrlMat[0];
-            // Preferences.debug("ctrl = " + ctrl + " a[0] = " + a[0] + " a[1] = " + a[1] + "\n", Preferences.DEBUG_ALGORITHM);
             if ( (ctrl == -1) || (ctrl == 1)) {
                 
                 // evaluate the residuals[j] = ymod - yData[j]
                 for (j = 0; j < nPts; j++) {
                     if (xSeries[j] >= a[0]) {
                         diff = xSeries[j] - a[0];
-                        ymod = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+                        ymod = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]); 
                     }
                     else {
                         ymod = 0.0;
@@ -159,9 +191,9 @@ public class FitRayleigh extends NLFittedFunction {
                 }
             }
             // Calculate the Jacobian numerically
-            // else if (ctrl == 2) {
-            // ctrlMat[0] = 0;
-            // }
+             else if (ctrl == 2) {
+             ctrlMat[0] = 0;
+             }
         } catch (final Exception exc) {
             Preferences.debug("function error: " + exc.getMessage() + "\n", Preferences.DEBUG_ALGORITHM);
         }
@@ -216,8 +248,13 @@ public class FitRayleigh extends NLFittedFunction {
 		double diff;
 		yDataFitted = new double[nPts];
 		for (j = 0; j < nPts; j++) {
-		    diff = xSeries[j] - a[0];
-            yDataFitted[j] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+		    if (xSeries[j] >= a[0]) {
+		        diff = xSeries[j] - a[0];
+                yDataFitted[j] = (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+		    }
+		    else {
+		        yDataFitted[j] = 0.0;
+		    }
 		}
 		
 	}
@@ -227,8 +264,14 @@ public class FitRayleigh extends NLFittedFunction {
 	    double diff;
 		Matrix residuals = new Matrix(nPts, 1);
     	for(int i=0; i<nPts; i++) {
-    	    diff = xSeries[i] - a[0];
-    		double r = ySeries[i] -  (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+    	    double r;
+    	    if (xSeries[i] >= a[0]) {
+    	        diff = xSeries[i] - a[0];
+    		    r = ySeries[i] -  (2.0/a[1])*diff*Math.exp(-diff*diff/a[1]);
+    	    }
+    	    else {
+    	        r = ySeries[i];
+    	    }
     		residuals.set(i, 0, r);
     	}
     	
