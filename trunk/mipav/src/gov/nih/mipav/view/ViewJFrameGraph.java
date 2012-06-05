@@ -56,7 +56,10 @@ public class ViewJFrameGraph extends JFrame
     	fitLorentz("Fit Lorentz Distribution", FitLorentz.class),
     	
     	/** Mode indicates constant plus sum of decaying exponentials */
-    	fitMultiExponential("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)", FitMultiExponential.class);
+    	fitMultiExponential("Fit Multiexponential a0 + sum of a[2*k+1]*exp(a[2*k+2]*x)", FitMultiExponential.class),
+    	
+    	/** Mode indicates Rayleigh fitting in progress */
+    	fitRayleigh("Fit Rayleigh Distribution (2/b)*(x-a)*exp(-(x-a)*(x-a)/b)*u(x-a)", FitRayleigh.class);
     	
     	private String listEntry;
     	private Constructor cl;
