@@ -716,7 +716,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 	}
 
 	private JButton buildOARButton() {
-		OKButton = new JButton("RUN OAR 3.5D");
+		OKButton = new JButton("Run OAR Registration");
 		OKButton.addActionListener(this);
 		OKButton.setFont(serif12B);
 		return OKButton;
