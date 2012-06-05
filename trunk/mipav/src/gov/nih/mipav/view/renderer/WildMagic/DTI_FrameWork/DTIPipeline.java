@@ -44,7 +44,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 	protected JButton nextButton; 
 	
 	/** The current DWI image in the pipeline */
-	private ModelImage currentImage = null;
+	public ModelImage currentImage = null;
 
 	/** Diffusion weighted image read from file or from active image. */
 	public ModelImage DWIImage;
@@ -130,8 +130,6 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 
 		setTitle("DTI Pipeline");
 		tabbedPane.addTab("Import Data", null, buildImportDataPanel());
-		//tabbedPane.addTab("T2 Image Registration", null, buildT2Panel());
-		//tabbedPane.addTab("Motion Correction/Eddy Current", null, buildRegEddyCurPanel());
 		tabbedPane.addTab("Pre-processing", null, buildPreprocessingPanel());
 		tabbedPane.addTab("EPI Distortion Correction", null, buildEPIPanel());
 		tabbedPane.addTab("Tensor Estimation", null, buildTensorPanel());
@@ -187,29 +185,37 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			currentImage = EPIpanel.getResult();
 			estTensorPanel.setImage(currentImage);
 			tabbedPane.setSelectedIndex(TENSOR_ESTIMATION);
+	        //estTensorPanel.enableCalcButton();
+
 		}
 		else if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == TENSOR_ESTIMATION) )
 		{
-			System.err.println( currentImage.getImageName() );
+		    System.err.println( currentImage.getImageName() );
+		    //TODO:
+		    //tabbedPane.setSelectedIndex(FIBER_TRACKING);
+	        //fiberTrack.enableComputeButton();
 			estTensorPanel.calcTensor(currentImage);
 		}
 		// creates the derived images from the tensor image and sets up the visualization panel inputs.
 		else if ( (event.getSource() == nextButton) && (tabbedPane.getSelectedIndex() == FIBER_TRACKING) )
 		{  	
-			if ( (fiberTrack.getTensorImage() != null) &&  (fiberTrack.getOutputDirectory() != null) )
-			{
-				fiberTrack.createDerivedImages();
-				tabbedPane.setSelectedIndex(VISUALIZATION);
-				nextButton.setEnabled(false);
-				tensorImage = fiberTrack.getTensorImage();
-				visualization.setDTIImage(tensorImage);
-				visualization.setDTIColorImage(fiberTrack.getColorMapImage());
-				visualization.setEVImage(fiberTrack.getEigenVectorImage());
-				visualization.setEValueImage(fiberTrack.getEigenValueImage());
-				visualization.setFAImage(fiberTrack.getFAImage());
-				visualization.setTractFile(tensorImage.getImageDirectory() + JPanelDTIFiberTracking.TrackFileName);
-				visualization.enableLoad();
-			}
+		    //TODO:
+		    //tabbedPane.setSelectedIndex(VISUALIZATION);
+	          if ( (fiberTrack.getTensorImage() != null) &&  (fiberTrack.getOutputDirectory() != null) )
+	            {
+	                fiberTrack.createDerivedImages();
+	                tabbedPane.setSelectedIndex(VISUALIZATION);
+	                nextButton.setEnabled(false);
+	                tensorImage = fiberTrack.getTensorImage();
+	                visualization.setDTIImage(tensorImage);
+	                visualization.setDTIColorImage(fiberTrack.getColorMapImage());
+	                visualization.setEVImage(fiberTrack.getEigenVectorImage());
+	                visualization.setEValueImage(fiberTrack.getEigenValueImage());
+	                visualization.setFAImage(fiberTrack.getFAImage());
+	                visualization.setTractFile(tensorImage.getImageDirectory() + JPanelDTIFiberTracking.TrackFileName);
+	                visualization.enableLoad();
+	            }
+	        
 		}
 
 		else if (command.equals("next1")){
@@ -220,11 +226,15 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 			if (dtiparams.getGradients()!= null && dtiparams.getbValues()!=null){
                 gradients = dtiparams.getGradients();
                 bvalues =dtiparams.getbValues();
+                //estTensorPanel.enableCalcButton();
+
 			}
 			else if(dtiparams.getbMatrixVals()!= null){
 			    bmatValues = dtiparams.getbMatrixVals();
 			    DTIPreprocessing.correctGradTransCheckbox.setSelected(false);
                 DTIPreprocessing.correctGradTransCheckbox.setEnabled(false);
+                //estTensorPanel.enableCalcButton();
+
 			    
 			}
             srcBvalGradTable = importData.srcTableModel;
@@ -383,7 +393,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		this.tensorImage = resultImage;
 		// Set up the fiber tracking panel inputs:
 		tabbedPane.setSelectedIndex(FIBER_TRACKING);
-		fiberTrack.setInputImage( tensorImage );
+		fiberTrack.setInputImage(tensorImage);
 		nextButton.setEnabled(true);
 	}
 
@@ -399,15 +409,17 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 				else {
 					nextButton.setEnabled(false);
 				}
+				//nextButton.setEnabled(false);
 				nextButton.setEnabled(true);
 			}
 			if ( tabbedPane.getSelectedIndex() == FIBER_TRACKING ) {
-				if ( (fiberTrack.getTensorImage() != null) && (fiberTrack.getOutputDirectory() != null) ) {
-					nextButton.setEnabled(true);
-				}
-				else {
-					nextButton.setEnabled(false);
-				}
+			    if ( (fiberTrack.getTensorImage() != null) && (fiberTrack.getOutputDirectory() != null) ) {
+                    nextButton.setEnabled(true);
+                }
+                else {
+                    nextButton.setEnabled(false);
+                }
+			    //nextButton.setEnabled(false);
 			}
 			if ( tabbedPane.getSelectedIndex() == VISUALIZATION )
 			{

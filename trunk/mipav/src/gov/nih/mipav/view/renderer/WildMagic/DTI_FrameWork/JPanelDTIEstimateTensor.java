@@ -68,6 +68,7 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 	private JTextField textMaskimage;
 	/** DWI .list location: */
 	private JTextField textListFile;
+	private JPanelEPIDistortionCorrection EPIpanel;
 	
 	/** Check boxes enable the user to save and display output images: */
 	private JCheckBox displayExit = new JCheckBox( "Display Exit Code Image" );
@@ -78,6 +79,8 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
 	private JCheckBox saveTensor = new JCheckBox( "Save Tensor Image" );
 
     private Font serif12;
+
+    private JButton calcTensor;
     
     public JPanelDTIEstimateTensor(DTIPipeline pipeline) {
 		super(new GridBagLayout());
@@ -101,7 +104,10 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
             }
         } else if (command.equalsIgnoreCase("DWIListBrowse")) {
             loadDWIListFile();
-        } 
+        }//TODO:
+        else if (command.equalsIgnoreCase("calcTensor")) { 
+            calcTensor(pipeline.currentImage);
+        }
 
 		displayExit.setEnabled( saveExit.isSelected() );
 		displayIntensity.setEnabled( saveIntensity.isSelected() );
@@ -508,8 +514,30 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
         DTIOutputPanel.add(openDTIOutputButton, gbc);
 		
 		mainPanel.add(DTIOutputPanel);
+		
+		
+		//TODO:
+		calcTensor = new JButton("Calculate Tensor");
+        calcTensor.addActionListener(this);
+        calcTensor.setActionCommand("calcTensor");
+        calcTensor.setEnabled(false);
+        
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new GridBagLayout());
+        buttonPanel.setBorder(JInterfaceBase.buildTitledBorder(""));
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
+        buttonPanel.add(calcTensor, gbc);
+        //mainPanel.add(buttonPanel);
 
 	}
+	
+	
 
 	private void loadMaskImage() {
 		final JFileChooser chooser = new JFileChooser(new File(Preferences.getProperty(Preferences.PREF_IMAGE_DIR)));
@@ -638,6 +666,11 @@ public class JPanelDTIEstimateTensor extends JPanel implements AlgorithmInterfac
             m_fResX /= m_iDimX;
             m_fResY /= m_iDimY;
         }
+    }
+    //TODO:
+    public void enableCalcButton()
+    {
+           calcTensor.setEnabled(true);
     }
 
     private String[][] m_aakDWIList;
