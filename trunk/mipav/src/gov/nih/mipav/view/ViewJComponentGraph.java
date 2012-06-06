@@ -188,6 +188,10 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
     /** DOCUMENT ME! */
     private double yTick;
+    
+    private boolean doLog = false;
+    
+    private boolean zeroYMin = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -315,9 +319,10 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
         // calculate domain and range according to min and max x and y values,
         // to be used by plotGraph()
         float xMin = Float.MAX_VALUE;
-        float xMax = Float.MIN_VALUE;
+        float xMax = -Float.MAX_VALUE;
         float yMin = Float.MAX_VALUE;
-        float yMax = Float.MIN_VALUE;
+        float nonZeroYMin = Float.MAX_VALUE;
+        float yMax = -Float.MAX_VALUE;
         int len = -1;
         int i;
         boolean functVisible = false;
@@ -352,10 +357,17 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                     if (functions[k].getYs()[i] < yMin) {
                         yMin = functions[k].getYs()[i];
                     }
+                    
+                    if (functions[k].getYs()[i] != 0.0) {
+                        if (functions[k].getYs()[i] < nonZeroYMin) {
+                            nonZeroYMin = functions[k].getYs()[i];
+                        }    
+                    }
 
                     if (functions[k].getYs()[i] > yMax) {
                         yMax = functions[k].getYs()[i];
                     }
+                    
                 }
             }
 
@@ -374,10 +386,17 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                     if (fittedFunctions[k].getYs()[i] < yMin) {
                         yMin = fittedFunctions[k].getYs()[i];
                     }
+                    
+                    if (fittedFunctions[k].getYs()[i] != 0.0) {
+                        if (fittedFunctions[k].getYs()[i] < nonZeroYMin) {
+                            nonZeroYMin = fittedFunctions[k].getYs()[i];
+                        }    
+                    }
 
                     if (fittedFunctions[k].getYs()[i] > yMax) {
                         yMax = fittedFunctions[k].getYs()[i];
                     }
+                    
                 }
             }
 
@@ -387,8 +406,21 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             xMin = xMax = yMin = yMax = 0;
         }
 
-        defaultMinRange = yMin;
-        defaultMaxRange = yMax;
+        if (doLog) {
+            if (yMin == 0.0) {
+                defaultMinRange = (float)(Math.log10(nonZeroYMin) - 1.0);
+                zeroYMin = true;
+            }
+            else {
+                defaultMinRange = (float)Math.log10(yMin);
+                zeroYMin = false;
+            }
+            defaultMaxRange = (float)Math.log10(yMax);
+        }
+        else {
+            defaultMinRange = yMin;
+            defaultMaxRange = yMax;
+        }
         defaultMinDomain = xMin;
         defaultMaxDomain = xMax;
     }
@@ -1551,6 +1583,14 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
         minDomain = defaultMinDomain;
         maxDomain = defaultMaxDomain;
     }
+    
+    /**
+     * 
+     * @param doLog
+     */
+    public void setDoLog(boolean doLog) {
+        this.doLog = doLog;
+    }
 
     /**
      * Sets the domain of the graph according to the min and max parmaters.
@@ -1806,7 +1846,17 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
             for (i = 0; i < functions[k].getXs().length; i++) {
                 newX[i] = (int) Math.round((functions[k].getXs()[i] * xScale) - (xMin * xScale)) + graphBounds.x;
-                newY[i] = (int) Math.round((yMax - functions[k].getYs()[i]) * yScale) + graphBounds.y;
+                if (doLog) {
+                    if (functions[k].getYs()[i] == 0.0) {
+                        newY[i] = (int) Math.round((yMax - yMin) * yScale) + graphBounds.y;    
+                    }
+                    else {
+                        newY[i] = (int) Math.round((yMax - Math.log10(functions[k].getYs()[i])) * yScale) + graphBounds.y;    
+                    }
+                }
+                else {
+                    newY[i] = (int) Math.round((yMax - functions[k].getYs()[i]) * yScale) + graphBounds.y;
+                }
 
             }
 
@@ -1843,7 +1893,18 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 for (i = 0; i < fittedFunctions[k].getXs().length; i++) {
                     newX[i] = (int) Math.round((fittedFunctions[k].getXs()[i] * xScale) - (xMin * xScale)) +
                               graphBounds.x;
-                    newY[i] = (int) Math.round((yMax - fittedFunctions[k].getYs()[i]) * yScale) + graphBounds.y;
+                    if (doLog) {
+                        if (fittedFunctions[k].getYs()[i] == 0.0) {
+                            newY[i] = (int) Math.round((yMax - yMin) * yScale) + graphBounds.y;    
+                        }
+                        else {
+                            newY[i] = (int) Math.round((yMax - Math.log10(fittedFunctions[k].getYs()[i])) * yScale) + graphBounds.y;    
+                        }
+                    }
+                    else {
+                        newY[i] = (int) Math.round((yMax - fittedFunctions[k].getYs()[i]) * yScale) + graphBounds.y;
+                    }
+
                 }
 
                 fittedFunctions[k].setNewXs(newX, fittedFunctions[k].getXs().length);
@@ -1937,6 +1998,14 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             } else {
                 tmp = (i * (yMax - yMin) / yGridLines) + yMin;
             }
+            if (doLog) {
+                if (zeroYMin && tmp == yMin) {
+                    tmp = 0.0f;
+                }
+                else {
+                    tmp = (float)Math.pow(10.0,tmp);
+                }
+            }
 
             tmpString = String.valueOf(tmp);
             index = tmpString.indexOf('.');
@@ -2000,30 +2069,85 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
                     for (i = 0; i < functions[k].getNewXsLength(); i++) {
                         g.setColor(Color.black);
-
-                        if (k == 0) {
-                            g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (functions[k].getNewYs()[i] - 1),
-                                       3, 3);
+                        if (doLog) {
+                            if (functions[k].getNewYs()[i] == 0.0) {
+                                if (k == 0) {
+                                    g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (yMin - 1),
+                                               3, 3);
+                                }
+        
+                                if (k == 1) {
+                                    fun2Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }
+        
+                                if (k == 2) {
+                                    fun3Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }
+        
+                                if (k == 3) {
+                                    fun4Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }
+        
+                                if (k == 4) {
+                                    fun5Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }    
+                            }
+                            else {
+                                if (k == 0) {
+                                    g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (Math.log10(functions[k].getNewYs()[i]) - 1),
+                                               3, 3);
+                                }
+        
+                                if (k == 1) {
+                                    fun2Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }
+        
+                                if (k == 2) {
+                                    fun3Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }
+        
+                                if (k == 3) {
+                                    fun4Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }
+        
+                                if (k == 4) {
+                                    fun5Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }    
+                            }
                         }
-
-                        if (k == 1) {
-                            fun2Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                               (int) (functions[k].getNewYs()[i] - 3));
-                        }
-
-                        if (k == 2) {
-                            fun3Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                               (int) (functions[k].getNewYs()[i] - 3));
-                        }
-
-                        if (k == 3) {
-                            fun4Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                               (int) (functions[k].getNewYs()[i] - 3));
-                        }
-
-                        if (k == 4) {
-                            fun5Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                               (int) (functions[k].getNewYs()[i] - 3));
+                        else {
+                            if (k == 0) {
+                                g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (functions[k].getNewYs()[i] - 1),
+                                           3, 3);
+                            }
+    
+                            if (k == 1) {
+                                fun2Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
+    
+                            if (k == 2) {
+                                fun3Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
+    
+                            if (k == 3) {
+                                fun4Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
+    
+                            if (k == 4) {
+                                fun5Icon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
                         }
                     }
                 }
@@ -2084,7 +2208,17 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
             for (i = 0; i < newX.length; i++) {
                 newX[i] = (int) Math.round((functions[k].getXs()[i] * xScale) - (xMin * xScale)) + graphBounds.x;
-                newY[i] = (int) Math.round((yMax - functions[k].getYs()[i]) * yScale) + graphBounds.y;
+                if (doLog) {
+                    if (functions[k].getYs()[i] == 0.0) {
+                        newY[i] = (int) Math.round((yMax - yMin) * yScale) + graphBounds.y;    
+                    }
+                    else {
+                        newY[i] = (int) Math.round((yMax - Math.log10(functions[k].getYs()[i])) * yScale) + graphBounds.y;    
+                    }
+                }
+                else {
+                    newY[i] = (int) Math.round((yMax - functions[k].getYs()[i]) * yScale) + graphBounds.y;
+                }
             }
 
             functions[k].setNewXs(newX, functions[k].getXs().length);
@@ -2114,7 +2248,17 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
                 for (i = 0; i < newX.length; i++) {
                     newX[i] = (int) Math.round((fittedFunctions[k].getXs()[i] * xScale) - (xMin * xScale)) +
                               graphBounds.x;
-                    newY[i] = (int) Math.round((yMax - fittedFunctions[k].getYs()[i]) * yScale) + graphBounds.y;
+                    if (doLog) {
+                        if (fittedFunctions[k].getYs()[i] == 0.0) {
+                            newY[i] = (int) Math.round((yMax - yMin) * yScale) + graphBounds.y;    
+                        }
+                        else {
+                            newY[i] = (int) Math.round((yMax - Math.log10(fittedFunctions[k].getYs()[i])) * yScale) + graphBounds.y;    
+                        }
+                    }
+                    else {
+                        newY[i] = (int) Math.round((yMax - fittedFunctions[k].getYs()[i]) * yScale) + graphBounds.y;
+                    }
                 }
 
                 fittedFunctions[k].setNewXs(newX, fittedFunctions[k].getXs().length);
@@ -2219,6 +2363,14 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
             } else {
                 tmp = (i * (yMax - yMin) / yGridLines) + yMin;
             }
+            if (doLog) {
+                if (zeroYMin && tmp == yMin) {
+                    tmp = 0.0f;
+                }
+                else {
+                    tmp = (float)Math.pow(10.0,tmp);
+                }
+            }
 
             tmpString = String.valueOf(tmp);
             index = tmpString.indexOf('.');
@@ -2245,30 +2397,85 @@ public class ViewJComponentGraph extends JComponent implements MouseListener, Mo
 
                     for (i = 0; i < functions[k].getNewXsLength(); i++) {
                         g.setColor(Color.black);
-
-                        if (k == 0) {
-                            g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (functions[k].getNewYs()[i] - 1),
-                                       3, 3);
+                        if (doLog) {
+                            if (functions[k].getNewYs()[i] == 0.0) {
+                                if (k == 0) {
+                                    g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (yMin - 1),
+                                               3, 3);
+                                }
+        
+                                if (k == 1) {
+                                    fun2PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }
+        
+                                if (k == 2) {
+                                    fun3PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }
+        
+                                if (k == 3) {
+                                    fun4PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }
+        
+                                if (k == 4) {
+                                    fun5PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (yMin - 3));
+                                }    
+                            }
+                            else {
+                                if (k == 0) {
+                                    g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (Math.log10(functions[k].getNewYs()[i]) - 1),
+                                               3, 3);
+                                }
+        
+                                if (k == 1) {
+                                    fun2PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }
+        
+                                if (k == 2) {
+                                    fun3PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }
+        
+                                if (k == 3) {
+                                    fun4PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }
+        
+                                if (k == 4) {
+                                    fun5PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                       (int) (Math.log10(functions[k].getNewYs()[i]) - 3));
+                                }    
+                            }
                         }
-
-                        if (k == 1) {
-                            fun2PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                                    (int) (functions[k].getNewYs()[i] - 3));
-                        }
-
-                        if (k == 2) {
-                            fun3PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                                    (int) (functions[k].getNewYs()[i] - 3));
-                        }
-
-                        if (k == 3) {
-                            fun4PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                                    (int) (functions[k].getNewYs()[i] - 3));
-                        }
-
-                        if (k == 4) {
-                            fun5PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
-                                                    (int) (functions[k].getNewYs()[i] - 3));
+                        else {
+                            if (k == 0) {
+                                g.fillRect((int) (functions[k].getNewXs()[i] - 1), (int) (functions[k].getNewYs()[i] - 1),
+                                           3, 3);
+                            }
+    
+                            if (k == 1) {
+                                fun2PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
+    
+                            if (k == 2) {
+                                fun3PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
+    
+                            if (k == 3) {
+                                fun4PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
+    
+                            if (k == 4) {
+                                fun5PrintIcon.paintIcon(null, g, (int) (functions[k].getNewXs()[i] - 3),
+                                                   (int) (functions[k].getNewYs()[i] - 3));
+                            }
                         }
                     }
                 }
