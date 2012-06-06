@@ -278,6 +278,10 @@ public class ViewJFrameGraph extends JFrame
 
     /** DOCUMENT ME! */
     private JButton resetRangeButton;
+    
+    private JCheckBox logScaleCheckbox;
+    
+    private boolean doLog = false;
 
     /** DOCUMENT ME! */
     private JPanel showPanel;
@@ -1521,6 +1525,15 @@ public class ViewJFrameGraph extends JFrame
             graph.calculateDefaultRangeDomain();
             graph.setDefaultRangeDomain();
             update(getGraphics());
+        } else if (command.equals("LogScaleRange")) {
+            boolean originalDoLog = doLog;
+            doLog = logScaleCheckbox.isSelected();
+            if (doLog != originalDoLog) {
+                graph.setDoLog(doLog);
+                graph.calculateDefaultRangeDomain();
+                graph.setDefaultRangeDomain();
+                update(getGraphics());
+            }
         } else if(command.equals("FitFunctions")) {
         	fitFunctions((FitMode)fitType.getSelectedItem());
         } else if (command.equals("SaveGraph")) { // saves the graph to a file
@@ -3809,6 +3822,7 @@ public class ViewJFrameGraph extends JFrame
             yAxisLabel = new JLabel("Y-Axis Label");
             backgroundButton = new JButton();
             resetRangeButton = new JButton("Reset Default Range");
+            logScaleCheckbox = new JCheckBox("Log scale range", doLog);
             backgroundLabel = new JLabel("Change Background Color");
             minRangeField = new JTextField("" + graph.getMinRange());
             minRangeLabel = new JLabel("Min. for Range (<" + Float.toString(graph.getDefaultMinRange()) + ")");
@@ -3847,7 +3861,7 @@ public class ViewJFrameGraph extends JFrame
         backgroundPanel.setLayout(null);
         modifyGraphPanel.add(backgroundPanel);
 
-        rangePanel.setBounds(270, 147, 205, 145);
+        rangePanel.setBounds(270, 147, 205, 175);
         rangePanel.setBorder(new EtchedBorder());
         rangePanel.setLayout(null);
         modifyGraphPanel.add(rangePanel);
@@ -4008,6 +4022,12 @@ public class ViewJFrameGraph extends JFrame
         resetRangeButton.addActionListener(this);
         resetRangeButton.setActionCommand("ResetRangeButton");
         rangePanel.add(resetRangeButton);
+        
+        logScaleCheckbox.setBounds(PANEL_OFFSET, 145, 175, 20);
+        logScaleCheckbox.addActionListener(this);
+        logScaleCheckbox.setActionCommand("LogScaleRange");
+        logScaleCheckbox.setFont(MipavUtil.font12);
+        rangePanel.add(logScaleCheckbox);
 
         tabbedPane.addTab("Graph", null, modifyGraphPanel);
 
