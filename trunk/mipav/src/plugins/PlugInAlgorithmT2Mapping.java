@@ -10,8 +10,6 @@ import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
 
-import gov.nih.mipav.model.algorithms.t2mapping.t2map.*;
-import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2MapMonoExp;
 import java.io.IOException;
 import java.util.BitSet;
 
@@ -84,10 +82,11 @@ public class PlugInAlgorithmT2Mapping extends AlgorithmBase {
         {
         	init();
 
-        	T2MapMonoExp t2mapMonoExp = new T2MapMonoExp(srcImage.getExtents()[0], srcImage.getExtents()[1],
-        	                                 srcImage.getExtents()[2], TEValues);
+        	//TODO:Fit each T2 map to multiexponential
+        	//TODO: Make first channel major exponential component
+        	//TODO: Make second channel total X^2
         	
-        	ModelImage map = t2mapMonoExp.map(srcImage);
+        	ModelImage map = null;//t2mapMonoExp.map(srcImage);
         }
 
         if (!initializedFlag)

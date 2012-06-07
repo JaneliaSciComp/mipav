@@ -1,6 +1,4 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2MapNLEngine.FittingType;
-import gov.nih.mipav.model.algorithms.t2mapping.t2map.T2MapNLEngine.NoiseEstimation;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -22,6 +20,61 @@ import javax.swing.*;
  */
 public class PlugInDialogT2Mapping extends JDialogScriptableBase implements AlgorithmInterface
 {
+    
+    public enum FittingType {
+        //TODO: Find compatible classes in NLEngine
+        BiExp(null, "Bi-exponential"),
+        BiExpFixedT2(null, "Bi-exp w/ fixed T2"),
+        BiExpSweep(null, "Bi-exp w/ sweep"),
+        L1(null, "L1"),
+        MonoExp(null, "Mono-exponential"),
+        NNLS(null, "NNLS"), 
+        MultiExp(null, "Multi-exponential");
+        
+        private String name;
+        
+        FittingType(Class c, String name) {
+            this.name = name;
+            
+;       }
+        
+        /* (non-Javadoc)
+         * @see java.lang.Enum#toString()
+         */
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+    
+    
+    // Noise Estimators.
+
+    public enum NoiseEstimation {
+        /** No noise estimation. */
+        NE_NONE("None"),
+        /** Estimate the noise across the rows */
+        NE_ACROSS_ROW("Across Row"),
+        /** Estimate the noise across the columns. */
+        NE_ACROSS_COLUMN("Across Column"),
+        /** Estimate the noise in the image (gradientMethod). */
+        NE_ACROSS_IMAGE("Across Slice");
+        
+        private String name;
+
+        NoiseEstimation(String name) {
+            this.name = name;
+        }
+
+        /* (non-Javadoc)
+         * @see java.lang.Enum#toString()
+         */
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+    
                                                              
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
