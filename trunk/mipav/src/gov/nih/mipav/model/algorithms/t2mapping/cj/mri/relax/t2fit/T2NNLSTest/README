@@ -1,4 +1,0 @@
-This directory contains matlab code that will create text files that have
-TE decay and errors and the LS and small norm results based on the Matlab
-code.  There is also java code that will read in the file and compare
-the Java results with the Matlab results.
