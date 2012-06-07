@@ -24,7 +24,7 @@ import javax.swing.event.*;
  * created by MIPAV is fair game to draw upon, but clicking elsewhere on the screen will make MIPAV inactive and the
  * rectangle drawn invalid.
  */
-public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
+public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -49,7 +49,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     /** Instructions on how to use screen capture, line 2. */
     private JLabel instructions2;
 
-    /** Mode - region, window, or none. */
+    /** Mode - region or window */
     private WindowProperties mode;
 
     /**
@@ -93,6 +93,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     
     /** Active frame **/
     private ViewJFrameImage activeFrame;
+    
+    /** Frame for resizing */
+    private static JFrame resizer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -188,7 +191,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
                     //dispose();
                     //System.gc();
                 	
-                	currentRectangle = null;
                 }
             } else {
                 MipavUtil.displayError("You must choose a region or window to capture.");
@@ -208,6 +210,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             System.gc();
         } else if (command.equals("Region")) {
 
+        	currentRectangle = null;
             for (int i = 0; i < myGlassPanes.length; i++) {
                 myGlassPanes[i].setVisible(true);
             }
@@ -217,6 +220,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             mode = WindowProperties.REGION;
         } else if (command.equals("Window")) {
 
+        	currentRectangle = null;
             for (int i = 0; i < myGlassPanes.length; i++) {
                 myGlassPanes[i].setVisible(false);
             }
@@ -229,19 +233,16 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     }
 
     /**
-     * Sets save and copy flags based on whether or not the save and copy checkboxes are checked.
+     * Sets save, copy, and display flags based on whether or not they are selected.
      *
      * @param  event  Event that triggered this function.
      */
     public void itemStateChanged(ItemEvent event) {
 
-        if (event.getSource() == saveCheck) {
             save = saveCheck.isSelected();
-        } else if (event.getSource() == copyCheck){
         	copy = copyCheck.isSelected();
-        } else {
         	display = displayCheck.isSelected();
-        }
+        
     }
 
     /**
@@ -329,6 +330,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
 	        }
         	break;
         }
+    
     }
 
     /**
@@ -337,6 +339,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
      */
     private void init() {
         setTitle("Capture screen");
+        
+        currentRectangle = null;
+        for (int i = 0; i < myGlassPanes.length; i++) {
+            myGlassPanes[i].setVisible(true);
+        }
 
         regionButton = new JRadioButton("Region");
         regionButton.setFont(MipavUtil.font12);
@@ -441,6 +448,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         getContentPane().add(mainPanel);
+        
+        //resizer.addComponentListener(this);
         pack();
     }
 
@@ -558,9 +567,13 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             testImage.disposeLocal();
         } 
         if (copy) {
-        	Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        	Transferable imagePixTransferable = new imageConverter(imagePix);
-        	clipboard.setContents(imagePixTransferable, null); 
+        	try{
+        		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        		Transferable imagePixTransferable = new ImageConverter(imagePix);
+            	clipboard.setContents(imagePixTransferable, null); 
+        	} catch(Exception e) {
+        		MipavUtil.displayError("Cannot access system clipboard");
+        	}
         }
         if (display) {
             new ViewJFrameImage(testImage, null, new Dimension(610, 200));
@@ -570,9 +583,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
     }
     
     /** changes an image to a Transferable*/
-	public static class imageConverter implements Transferable{
+	public static class ImageConverter implements Transferable{
 		private Image temp;
-		public imageConverter(Image image){
+		public ImageConverter(Image image){
 			temp = image;
 		}
 		public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
@@ -811,6 +824,23 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
             this.y = y;
         }
     }
+
+
+	@Override
+	public void componentHidden(ComponentEvent e) {}
+
+	@Override
+	public void componentMoved(ComponentEvent e) {}
+
+	@Override
+	public void componentResized(ComponentEvent event) {
+		resizer = activeFrame;
+		ViewJFrameImage frame = (ViewJFrameImage) event.getComponent();
+        activeFrame = frame;
+	}
+
+	@Override
+	public void componentShown(ComponentEvent e) {}
 
 
 }
