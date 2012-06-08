@@ -541,7 +541,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             rendererGUI.setDisplaySlicesCheck(true);
             raycastRenderWM.displayVolumeSlices(rendererGUI.getSlicesCheck().isSelected());
         } else if (command.equals("VolumeSlices")) {
-            sliceGUI.getMainPanel().setVisible(true);
             raycastRenderWM.displayVolumeSlices(rendererGUI.getSlicesCheck().isSelected());
         } else if (command.equals("Surface")) {
             raycastRenderWM.displaySurface(rendererGUI.getSurfaceCheck().isSelected());
