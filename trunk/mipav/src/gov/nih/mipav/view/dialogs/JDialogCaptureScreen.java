@@ -93,9 +93,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     
     /** Active frame **/
     private ViewJFrameImage activeFrame;
-    
-    /** Frame for resizing */
-    private static JFrame resizer;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -285,8 +282,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      * @param  e  DOCUMENT ME!
      */
     public void mouseReleased(MouseEvent e) { }
-
-    /**
+    
+   /**
      * If in Window mode, captures the content pane of the window activated and sets the current rectangle to the bounds
      * of the content pane.
      *
@@ -294,11 +291,12 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      */
     public void windowActivated(WindowEvent event) {
         // not in window mode
-        switch(mode){
+    	switch(mode){
         case REGION:
         	if(event.getWindow() instanceof ViewJFrameImage) {
 	        	ViewJFrameImage frame = (ViewJFrameImage) event.getWindow();
 	            activeFrame = frame;
+	            activeFrame.addComponentListener(this);
         	}
         	break;
         case WINDOW:
@@ -306,6 +304,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	            try {
 	                ViewJFrameImage frame = (ViewJFrameImage) event.getWindow();
 	                activeFrame = frame;
+	                activeFrame.addComponentListener(this);
 
 	                Point p = new Point();
 	                // These ought to have been (0,0) in all cases
@@ -829,14 +828,49 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	@Override
 	public void componentHidden(ComponentEvent e) {}
 
-	@Override
-	public void componentMoved(ComponentEvent e) {}
+	/** Moves the currentRectangle to the location of the window on the screen to maintain the correct image */
+	public void componentMoved(ComponentEvent event) {
+		if(windowButton.isSelected()){
+			ViewJFrameImage frame = (ViewJFrameImage) SwingUtilities.getRoot(event.getComponent());
+            activeFrame = frame;
+            Point p = new Point();
+            p.x = 0;
+            p.y = 0;
+            SwingUtilities.convertPointToScreen(p, frame.getContentPane());
+            p.x++; // must correct this slightly
+            p.y++; // ""
 
-	@Override
+            Dimension d = new Dimension();
+            d.width = frame.getContentPane().getWidth() - 3; // the -3 is a correction
+            d.height = frame.getContentPane().getHeight() - 3; // ""
+            currentRectangle = new Rectangle(p, d);
+
+		} else if(regionButton.isSelected()){
+			currentRectangle = null;			
+		}
+	}
+
+	/** Resizes the currentRectangle to the dimensions of the changed window */
 	public void componentResized(ComponentEvent event) {
-		resizer = activeFrame;
-		ViewJFrameImage frame = (ViewJFrameImage) event.getComponent();
-        activeFrame = frame;
+		
+		if(windowButton.isSelected()){
+			ViewJFrameImage frame = (ViewJFrameImage) SwingUtilities.getRoot(event.getComponent());
+            activeFrame = frame;
+            Point p = new Point();
+            p.x = 0;
+            p.y = 0;
+            SwingUtilities.convertPointToScreen(p, frame.getContentPane());
+            p.x++; // must correct this slightly
+            p.y++; // ""
+
+            Dimension d = new Dimension();
+            d.width = frame.getContentPane().getWidth() - 3; // the -3 is a correction
+            d.height = frame.getContentPane().getHeight() - 3; // ""
+            currentRectangle = new Rectangle(p, d);
+
+		} else if(regionButton.isSelected()){
+			currentRectangle = null;
+		}
 	}
 
 	@Override
