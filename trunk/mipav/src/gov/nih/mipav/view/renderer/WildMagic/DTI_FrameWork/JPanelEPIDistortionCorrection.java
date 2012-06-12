@@ -9,6 +9,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageFileFilter;
@@ -30,6 +31,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.util.concurrent.CountDownLatch;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -182,6 +184,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		}
 		else if (command.equals(computeEpiCommand))
 		{
+			long startTime = System.currentTimeMillis();
 	        int indexB0 = Integer.parseInt(refImageNumText.getText());
     		deformedDWI = applyDeformationField( indexB0, matB0T2, matRegistered, deformationB0T2, registeredDWI );
     		if ( deformedDWI != null )
@@ -192,6 +195,15 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
     			}
     			pipeline.finishEPIPanel();
     		}
+    		long now = System.currentTimeMillis();
+    		double elapsedTime = (double) (now - startTime);
+
+    		// if elasedTime is invalid, then set it to 0
+    		if (elapsedTime <= 0) {
+    			elapsedTime = (double) 0.0;
+    		}
+    		double timeinSec =  (double) (elapsedTime / 1000.0);        
+    		System.err.println( "Elapsed time calcEigenVectorImage: " + timeinSec );
 		}
 		enableComputeVabra();
 		enableComputeEpiDistortion();
@@ -307,17 +319,17 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 	 * @param resolutions resolutions of the input image
 	 * @return deformed input image
 	 */
-	private ModelImage applyDefField( Matrix m, ModelImage image, ModelImage defField, float[] resolutions )
+	private void applyDefField( ModelImage vol4DIn, ModelImage vol4DOut, int vol, Matrix m, ModelImage defField, int[] extents, float[] resolutions )
 	{
-		int dimX = image.getExtents().length > 0 ? image.getExtents()[0] : 1;
-		int dimY = image.getExtents().length > 1 ? image.getExtents()[1] : 1;
-		int dimZ = image.getExtents().length > 2 ? image.getExtents()[2] : 1;
+		int dimX = extents.length > 0 ? extents[0] : 1;
+		int dimY = extents.length > 1 ? extents[1] : 1;
+		int dimZ = extents.length > 2 ? extents[2] : 1;
 
 		double[] b0Def = new double[3];
 		double[] newVec = new double[3];
 		double[] currentVec = new double[3];
         ModelImage matrixDef = new ModelImage( ModelStorageBase.FLOAT, new int[]{dimX,dimY,dimZ,3}, "matDefField" );
-        ModelImage combinedDef = new ModelImage( ModelStorageBase.FLOAT, new int[]{dimX,dimY,dimZ,3}, "defField" );
+        float[] combinedDef = new float[dimX*dimY*dimZ*3];
         
 		// create a new Deformation Field from the matrix m...
 		for(int i = 0; i < dimX; i++)
@@ -336,7 +348,7 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 					{
 						newVec[ch] = vp.get(ch,0) - newVec[ch];
 						matrixDef.set( i, j, k, ch, newVec[ch]/resolutions[ch] );
-						combinedDef.set( i, j, k, ch, newVec[ch]/resolutions[ch] );
+						combinedDef[ ch * dimZ * dimY * dimX + k * dimY * dimX + j * dimX + i] = (float) (newVec[ch]/resolutions[ch]);
 					}
 				}
 			}
@@ -361,23 +373,32 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 								b0Def[0]+i, b0Def[1]+j, b0Def[2]+k, c); 
 					}
 					for (int c = 0; c < 3; c++)
-					{
-						combinedDef.set( i, j, k, c, b0Def[c]+currentVec[c]);
+					{	
+						combinedDef[ c * dimZ * dimY * dimX + k * dimY * dimX + j * dimX + i] = (float) (b0Def[c]+currentVec[c]);
 					}
 				}
 			}
 		}
 		
+		float[] defSub = new float[dimX*dimY*dimZ];
 		// apply combined deformation field to the input image:
-		ModelImage defSub = new ModelImage( ModelStorageBase.FLOAT, new int[]{dimX,dimY,dimZ}, "d" );
-
+		float[] image = new float[dimX*dimY*dimZ];
+		try {
+			vol4DIn.exportDataNoLock( vol * image.length, image.length, image );
+		} catch (IOException e) {}
+		
 		RegistrationUtilities.DeformImage3D(image, defSub, combinedDef, dimX,
 				dimY, dimZ, InterpolationType.TRILINEAR); 
-		defSub.setImageName(image.getImageName() + "_reg");
+
 		
+        int ptr = vol * defSub.length;
+        for (int i = 0; i < defSub.length; i++, ptr++) {
+        	vol4DOut.set(ptr, defSub[i]);
+        }
 		matrixDef.disposeLocal(false);
-		combinedDef.disposeLocal(false);
-		return defSub;
+		combinedDef = null;
+		defSub = null;
+		image = null;
 	}
 
 	/**
@@ -389,8 +410,16 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 	 * @param result35RegImage input 4D image
 	 * @return new image result
 	 */
-	private ModelImage applyDeformationField( int indexB0, TransMatrix b0toStructMatrix, TransMatrix[] arrayTransMatrix, ModelImage defField, ModelImage result35RegImage )
+	private ModelImage applyDeformationField( int indexB0, TransMatrix b0toStructMatrix, TransMatrix[] arrayTransMatrix, final ModelImage defField, final ModelImage result35RegImage )
 	{        
+
+		
+
+		//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
+		//-Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
+		//Profile.clear();
+		//Profile.start();
+		
 		Matrix b0 = new Matrix(4,4);
         for(int j=0; j<4; j++)
         {
@@ -400,53 +429,72 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
             }                   
         }
 		
-		float[] res = result35RegImage.getResolutions(0);
+		final float[] res = result35RegImage.getResolutions(0);
 		
 		int dimX = result35RegImage.getExtents().length > 0 ? result35RegImage.getExtents()[0] : 1;
 		int dimY = result35RegImage.getExtents().length > 1 ? result35RegImage.getExtents()[1] : 1;
 		int dimZ = result35RegImage.getExtents().length > 2 ? result35RegImage.getExtents()[2] : 1;
 		int numVolumes = result35RegImage.getExtents().length > 3 ? result35RegImage.getExtents()[3] : 1;
 		int volSize = dimX*dimY*dimZ;
-		float[] buffer = new float[volSize];
-		ModelImage temp = new ModelImage( ModelStorageBase.FLOAT, new int[]{dimX,dimY,dimZ}, "temp" );
-		ModelImage deformedDWI = new ModelImage( result35RegImage.getType(), result35RegImage.getExtents(), result35RegImage.getImageName() + "_epi_corrected" );
+		final int[] extents = new int[]{dimX,dimY,dimZ};
+		final ModelImage deformedDWI = new ModelImage( result35RegImage.getType(), result35RegImage.getExtents(), result35RegImage.getImageName() + "_epi_corrected" );
 
         final ViewJProgressBar progressBar = new ViewJProgressBar("EPI Distortion Correction",
                 "EPI distortion correction...", 0, 100, false, null, null);
         progressBar.setVisible(true);
         progressBar.updateValueImmed(0);
+        
+
+		final Matrix[] combinedMatrix = new Matrix[numVolumes];
 		for ( int i = 0; i < numVolumes; i++ )
 		{
-			try {
-				result35RegImage.exportData( i * volSize, volSize, buffer );
-			} catch (IOException e) {}
-			try {
-				temp.importData( 0, buffer, false );
-			} catch (IOException e) { }     
-			Matrix combinedMatrix = new Matrix(4,4);
-			for (int j=0; j<4; j++)
-			{
-				for (int k=0; k<4; k++)
-				{   
-					combinedMatrix.set(j, k, arrayTransMatrix[i].Get(j, k));
-				}                   
-			}
-			//Multiple B0 to Struct trans matrix from trans matrix corresponding to DWI volume
-			//combinedMatrix = b0.times(combinedMatrix);
 			if ( i == indexB0 )
 			{
-				combinedMatrix = b0;
+				combinedMatrix[i] = b0;
 			}
-			ModelImage deformedSubVol = applyDefField( combinedMatrix, temp, defField, res );
-			try {
-				deformedSubVol.exportData( 0, volSize, buffer );
-				deformedDWI.importData( i * volSize, buffer, false );
-			}  catch (IOException e) { }     
-			deformedSubVol.disposeLocal(false);
-			
-			progressBar.updateValueImmed( (int)(100 * i / (float)numVolumes) );
+			else
+			{
+				combinedMatrix[i] = new Matrix(4,4);
+				for (int j=0; j<4; j++)
+				{
+					for (int k=0; k<4; k++)
+					{   
+						combinedMatrix[i].set(j, k, arrayTransMatrix[i].Get(j, k));
+					}                   
+				}	
+			}
 		}
-		temp.disposeLocal(false);
+		
+
+
+
+        if (Preferences.isMultiThreadingEnabled()) {
+            final CountDownLatch doneSignal = new CountDownLatch(numVolumes);
+            for (int i = 0; i < numVolumes; i++) {
+            	final int vol = i;
+                final Runnable task = new Runnable() {
+                    public void run() {
+            			applyDefField( result35RegImage, deformedDWI, vol, combinedMatrix[vol], defField, extents, res );
+                        doneSignal.countDown();
+                    }
+                };
+
+                ThreadUtil.mipavThreadPool.execute(task);
+    			progressBar.updateValueImmed( (int)(100 * i / (float)numVolumes) );
+            }
+            try {
+                doneSignal.await();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+        } else {    
+    		for ( int i = 0; i < numVolumes; i++ )
+    		{
+    			applyDefField( result35RegImage, deformedDWI, i, combinedMatrix[i], defField, extents, res );
+    			progressBar.updateValueImmed( (int)(100 * i / (float)numVolumes) );
+    		}
+            
+        }
 		
         progressBar.updateValueImmed(100);
         progressBar.dispose();
@@ -455,6 +503,13 @@ public class JPanelEPIDistortionCorrection extends JPanel implements ActionListe
 		JDialogBase.updateFileInfo( result35RegImage, deformedDWI );
 		deformedDWI.calcMinMax();
 		ModelImage.saveImage( deformedDWI, deformedDWI.getImageName() + ".xml", outputDir.getText() );
+
+		
+
+		//Profile.stop();
+		//Profile.setFileName( "profile_out_epi" );
+		//Profile.shutdown();
+		
 		return deformedDWI;
 	}
 

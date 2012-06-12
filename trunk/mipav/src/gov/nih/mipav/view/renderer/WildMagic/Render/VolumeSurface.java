@@ -5,7 +5,10 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelLUT;
 import gov.nih.mipav.model.structures.ModelRGB;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.util.MipavCoordinateSystems;
+import gov.nih.mipav.util.ThreadUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 
@@ -14,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 import WildMagic.LibFoundation.Intersection.IntrLine3Triangle3f;
 import WildMagic.LibFoundation.Intersection.IntrSegment3Triangle3f;
@@ -1301,24 +1305,20 @@ public class VolumeSurface extends VolumeObject
      * This function is not accurate if the mesh is not closed, however it will still return a mask.
      * @return
      */
-    public BitSet createMask( )
+    private BitSet createMask( )
     {
-    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
-    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	final int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	final int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
     	
-    	ModelImage kOutputImage = new ModelImage( ModelStorageBase.INTEGER, m_kVolumeImageA.GetImage().getExtents(), "SurfaceMask" );
+    	//final ModelImage kOutputImage = new ModelImage( ModelStorageBase.INTEGER, m_kVolumeImageA.GetImage().getExtents(), "SurfaceMask" );
     	if ( m_kBoundingBox == null )
     	{
     		initBoundingBox();
     	}
             	
-    	BitSet mask = new BitSet();
-    	Vector3f kTest = new Vector3f();
+    	final BitSet mask = new BitSet();
     	
-    	int insideBB = 0;
-    	
-    	Vector3f[] directions = new Vector3f[5];
-		Line3f[] akLines = new Line3f[directions.length];
+    	final Vector3f[] directions = new Vector3f[5];
     	directions[0] = new Vector3f( (float)Math.random(), (float)Math.random(), (float)Math.random() );
     	directions[1] = new Vector3f( -(float)Math.random(), (float)Math.random(), (float)Math.random() );
     	directions[2] = new Vector3f( (float)Math.random(), -(float)Math.random(), (float)Math.random() );
@@ -1328,35 +1328,75 @@ public class VolumeSurface extends VolumeObject
     	{
     		directions[i].Normalize();
     	}
+        long startTime = System.currentTimeMillis();
     	
 
-        long startTime = System.currentTimeMillis();
-		for ( int z = (int)Math.floor(m_kMinBB.Z); z <= m_kMaxBB.Z; z++ )
-		{
-			for ( int y = (int)Math.floor(m_kMinBB.Y); y <= m_kMaxBB.Y; y++ )
-			{
-				for ( int x = (int)Math.floor(m_kMinBB.X); x <= m_kMaxBB.X; x++ )
-				{
-					kTest.Set(x,y,z);
-					// convert to 'mesh' coords...
-					volumeToMeshCoords(kTest);
-					
-					if ( m_kBoundingBox.Contains( kTest ) )
-					{
-						insideBB++;
-				    	for ( int i = 0; i < directions.length; i++ )
-				    	{
-				    		akLines[i] = new Line3f( kTest, directions[i] );
-				    	}
-						if ( testIntersections( kTest, akLines ) )
-						{
-							mask.set( z * iDimX * iDimY + y * iDimX + x );
-							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
-						}
-					}
-				}
-			}
-		}
+		int xMin = (int)Math.floor(m_kMinBB.X);
+		int yMin = (int)Math.floor(m_kMinBB.Y);
+		int zMin = (int)Math.floor(m_kMinBB.Z);
+		int xMax = (int)Math.ceil(m_kMaxBB.X);
+		int yMax = (int)Math.ceil(m_kMaxBB.Y);
+		int zMax = (int)Math.ceil(m_kMaxBB.Z);
+
+        if (Preferences.isMultiThreadingEnabled())
+        {
+        	int nthreads = ThreadUtil.getAvailableCores();
+        	int intervalX = xMax - xMin;
+        	int intervalY = yMax - yMin;
+        	int intervalZ = zMax - zMin;
+            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+            float stepX = 0;
+            if ( intervalX > intervalY && intervalX > intervalZ )
+            {
+            	stepX = (float)intervalX / (float)nthreads;
+            }
+            float stepY = 0;
+            if ( intervalY > intervalX && intervalY > intervalZ )
+            {
+            	stepY = (float)intervalY / (float)nthreads;
+            }
+            float stepZ = 0;
+            if ( intervalZ > intervalX && intervalZ > intervalY )
+            {
+            	stepZ = (float)intervalZ / (float)nthreads;
+            }
+            if ( stepX == 0 && stepY == 0 && stepZ == 0 )
+            {
+            	stepZ = (float)intervalZ / (float)nthreads;			            	
+            }
+
+            for (int i = 0; i < nthreads; i++) {
+                final int startX = stepX == 0 ? xMin : (int) (xMin + (    i * stepX));
+                final int   endX = stepX == 0 ? xMax : (int) (xMin + ((i+1) * stepX));
+                final int startY = stepY == 0 ? yMin : (int) (yMin + (    i * stepY));
+                final int   endY = stepY == 0 ? yMax : (int) (yMin + ((i+1) * stepY));
+                final int startZ = stepZ == 0 ? zMin : (int) (zMin + (    i * stepZ));
+                final int   endZ = stepZ == 0 ? zMax : (int) (zMin + ((i+1) * stepZ));
+                System.err.println( startX + " " + endX + "      " + startY + " " + endY + "      " + startZ + "  " + endZ );
+                final Runnable task = new Runnable() {
+                    public void run() {
+                        calcMask( mask, null, directions, startX, endX, startY, endY, startZ, endZ,
+                        		iDimX, iDimY );
+                        doneSignal.countDown();
+                    }
+                };
+
+                ThreadUtil.mipavThreadPool.execute(task);
+            }
+            try {
+                doneSignal.await();
+            } catch (final InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        else
+        {
+            calcMask( mask, null, directions, xMin, xMax, yMin, yMax, zMin, zMax,
+            		iDimX, iDimY );
+        }
+    	
+    	
+        
         long now = System.currentTimeMillis();
         double elapsedTime = (double) (now - startTime);
 
@@ -1368,12 +1408,55 @@ public class VolumeSurface extends VolumeObject
         double timeinSec =  (double) (elapsedTime / 1000.0); // return in seconds!!
         
         System.err.println( "Elapsed time: " + timeinSec );
-		System.err.println( "Num voxels inside : " + mask.cardinality() + " " + insideBB );
-		kOutputImage.calcMinMax();
-		new ViewJFrameImage( kOutputImage );
+		//kOutputImage.calcMinMax();
+		//new ViewJFrameImage( kOutputImage );
 		return mask;
     }
-    
+
+
+    private void calcMask( final BitSet mask, final ModelImage kOutputImage, final Vector3f[] directions, 
+    		final int xMin, final int xMax,
+    		final int yMin, final int yMax, 
+    		final int zMin, final int zMax,
+    		final int iDimX, final int iDimY )
+    {
+    	Vector3f kTest = new Vector3f();
+    	Line3f[] akLines = new Line3f[directions.length];
+		for ( int i = 0; i < directions.length; i++ )
+		{
+			akLines[i] = new Line3f( Vector3f.ONE, directions[i] );
+		}
+    	
+    	
+    	for ( int z = zMin; z <= zMax; z++ )
+    	{
+    		for ( int y = yMin; y <= yMax; y++ )
+    		{
+    			for ( int x = xMin; x <= xMax; x++ )
+    			{
+    				kTest.Set(x,y,z);
+    				// convert to 'mesh' coords...
+    				volumeToMeshCoords(kTest);
+
+    				if ( m_kBoundingBox.Contains( kTest ) )
+    				{
+    					for ( int i = 0; i < directions.length; i++ )
+    					{
+    						akLines[i].Origin = kTest;
+    					}
+    					if ( testIntersections( kTest, akLines ) )
+    					{
+    						mask.set( z * iDimX * iDimY + y * iDimX + x );
+    						if ( kOutputImage != null )
+    						{
+    							kOutputImage.set( z * iDimX * iDimY + y * iDimX + x, 50 );
+    						}
+    					}
+    				}
+    			}
+    		}
+    	}
+    }
 
 	/**
 	 * Initializes the bounding box for the mesh. The volume bounding box is in volume-index coordinats.
@@ -1414,8 +1497,12 @@ public class VolumeSurface extends VolumeObject
      * @param kP0 input point.
      * @return true if the point is inside the mesh, false otherwise.
      */
-    public boolean testIntersection( Vector3f kP0 )
+    public boolean testIntersection( Vector3f kP0, boolean bUseMask )
     {
+    	if ( bUseMask )
+    	{
+    		return testIntersectionMask(kP0);
+    	}
     	if ( m_kBoundingBox == null )
     	{
     		initBoundingBox();
@@ -1454,7 +1541,7 @@ public class VolumeSurface extends VolumeObject
      * @param bPrint flag to print debugging printouts.
      * @return true if the line segment intersects the mesh, false otherwise.
      */
-    public boolean testIntersection( Vector3f kP0, Vector3f kP1, boolean bPrint )
+    public boolean testIntersection( Vector3f kP0, Vector3f kP1, boolean bUseMask, boolean bPrint )
     {        
     	if ( m_kBoundingBox == null )
     	{
@@ -1482,18 +1569,31 @@ public class VolumeSurface extends VolumeObject
 		{
 			System.err.println( "testIntersections " + kP0Mesh + " " + kP1Mesh + "  FAILED " );
 		}
-		if ( testIntersection( kP0 ) && testIntersection( kP1 ) )
+		/*
+		if ( testIntersection( kP0, bUseMask ) && testIntersection( kP1, bUseMask ) )
 		{
 			return true;
 		}
 		else if ( bPrint )
 		{
-			System.err.println( "testIntersection " + kP0 + " " + testIntersection( kP0 ) );
-			System.err.println( "testIntersection " + kP1 + " " + testIntersection( kP1 ) );
+			System.err.println( "testIntersection " + kP0 + " " + testIntersection( kP0, bUseMask ) );
+			System.err.println( "testIntersection " + kP1 + " " + testIntersection( kP1, bUseMask ) );
 		}
+		*/
 		return false;
     }
     
+    private BitSet m_kMask = null;
+    private boolean testIntersectionMask( Vector3f kPos )
+    {
+    	if ( m_kMask == null )
+    	{
+    		m_kMask = createMask();
+    	}
+    	final int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	final int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+		return m_kMask.get( (int) (kPos.Z * iDimX * iDimY + kPos.Y * iDimX + kPos.X) );
+    }
     
     
     /**
@@ -1501,7 +1601,7 @@ public class VolumeSurface extends VolumeObject
      * The input position is overwritten in the process.
      * @param kVolume the input position.
      */
-    public void volumeToMeshCoords(Vector3f kVolume)
+    private void volumeToMeshCoords(Vector3f kVolume)
     {
     	kVolume.Mult( m_kVolumeScale );
     	kVolume.Sub( m_kVolumeTrans );	
@@ -1513,7 +1613,7 @@ public class VolumeSurface extends VolumeObject
      * The input position is overwritten in the process.
      * @param kVolume the input position.
      */
-    public void meshToVolumeCoords(Vector3f kMesh)
+    private void meshToVolumeCoords(Vector3f kMesh)
     {
     	kMesh.Scale( m_fVolumeMult );	
     	kMesh.Add( m_kVolumeTrans );			
@@ -1526,7 +1626,7 @@ public class VolumeSurface extends VolumeObject
      * The input position is overwritten in the process.
      * @param kVolume the input position.
      */
-    public void meshToScannerCoords(Vector3f kMesh)
+    private void meshToScannerCoords(Vector3f kMesh)
     {
     	meshToVolumeCoords(kMesh);    	
     	Vector3f kScanner = new Vector3f();

@@ -28,6 +28,7 @@ public class VabraAlgorithm  {
 		registeredResults.add( VabraSubjectTargetPairs.convertToModelImage( (ImageDataFloat)VabraSubjectTargetPairs.convertToImage( subject ) ) );
 		deformationField = VabraSubjectTargetPairs.convertToModelImage( (ImageDataFloat)VabraSubjectTargetPairs.convertToImage( target ) );
 		*/
+		long startTime = System.currentTimeMillis();
 		
 		subject.calcMinMax();
 
@@ -53,7 +54,7 @@ public class VabraAlgorithm  {
 		}		
 		float robustMaxT = 0.000f;
 		float robustMinT = 0.000f;
-		int numBins = VabraHistograms.defaultBins;
+		int numBins = 64;
 		int defFieldUpdateMode = 0;
 		boolean useMNMI = false;
 		
@@ -62,11 +63,11 @@ public class VabraAlgorithm  {
 		
 		//1.)Construct Target and Subject Pairs 
 		VabraSubjectTargetPairs imgSubTarPairs = new VabraSubjectTargetPairs(subject, target, 
-				robustMaxT, robustMinT, numBins, InterpType, useMNMI, defFieldUpdateMode);
+				robustMaxT, robustMinT, numBins, InterpType, useMNMI, directionsOptmizationWeight, defFieldUpdateMode);
 		
 		//2.)Construct Vabra Solver
 		//VabraSolver solver = new VabraSolver(imgSubTarPairs, config, new File(subject.getImageDirectory()), true, directionsOptmizationWeight, defFieldUpdateMode);
-		VabraSolver solver = new VabraSolver(imgSubTarPairs, config, null, false, directionsOptmizationWeight, defFieldUpdateMode);
+		VabraSolver solver = new VabraSolver(imgSubTarPairs, config, null, false);
 
 		//System.out.println(getClass().getCanonicalName()+"\t"+"VABRA-ALG: Before Register");
 
@@ -82,6 +83,16 @@ public class VabraAlgorithm  {
 		imgSubTarPairs.dispose();
 		solver.dispose();
 		System.gc();
+		
+		long now = System.currentTimeMillis();
+		double elapsedTime = (double) (now - startTime);
+
+		// if elasedTime is invalid, then set it to 0
+		if (elapsedTime <= 0) {
+			elapsedTime = (double) 0.0;
+		}
+		double timeinSec =  (double) (elapsedTime / 1000.0);        
+		System.err.println( "Elapsed time 4D reg: " + timeinSec );
 
 		return registeredResults;
 	}

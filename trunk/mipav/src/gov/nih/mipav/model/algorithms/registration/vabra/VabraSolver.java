@@ -1,15 +1,11 @@
 package gov.nih.mipav.model.algorithms.registration.vabra;
 
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.view.ViewJProgressBar;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 
-//import com.mentorgen.tools.profile.runtime.Profile;
 
 public class VabraSolver {
 	private ArrayList<Integer> downSampleFactor; //list of resolutions at which to register the images
@@ -32,7 +28,7 @@ public class VabraSolver {
 	//boolean useMNMI;
 
 	VabraSubjectTargetPairs imgSubTarPairs; //subject/target pair of images
-	VabraOptimizer optimizer;
+	//VabraOptimizer optimizer;
 	File outputDir;
 
 
@@ -41,14 +37,14 @@ public class VabraSolver {
 	int[] index;
 
 	public void dispose(){
-		optimizer.dispose();
+		//optimizer.dispose();
 		imgSubTarPairs.dispose();
 	}
 
 	//	configFile is an XML file containing program options
 	//	st contains subject/target pair
 	public VabraSolver(VabraSubjectTargetPairs imgSubTarPairs,File configFile, File outputDir, 
-			boolean saveIntermResults, double[] directionsOptmizationWeight,int defFieldUpdateMode)
+			boolean saveIntermResults)
 	{
 		this.outputDir = outputDir;
 		this.saveIntermResults = saveIntermResults;
@@ -57,7 +53,7 @@ public class VabraSolver {
 		this.imgSubTarPairs=imgSubTarPairs;
 		//if(useMNMI) optimizer = new VabraOptimizerMNMI(imgSubTarPairs, parent, directionsToOptmize, defFieldUpdateMode); 
 		//else 
-		optimizer = new VabraOptimizer(imgSubTarPairs, directionsOptmizationWeight, defFieldUpdateMode); 
+		//optimizer = new VabraOptimizer(imgSubTarPairs, directionsOptmizationWeight, defFieldUpdateMode); 
 		grid=null;
 		readConfigFile(configFile);
 	}
@@ -87,12 +83,12 @@ public class VabraSolver {
                 "vabra deformation field...", 0, 100, false, null, null);
         progressBar.setVisible(true);
         progressBar.updateValueImmed(0);
+		//Profile.clear();
+		//Profile.start();
 		
 		currentResolutionIdx=0;
 		//setTotalUnits(gridSpacingX.size()*2+1);
 		for(currentLevelIdx=0;currentLevelIdx<gridSpacingX.size();currentLevelIdx++){
-			//Profile.clear();
-			//Profile.start();
 			//1.) Change Resolution if Necessary
 			if(currentResolutionIdx <resolutionSwitchPoints.size()){				
 				if(resolutionSwitchPoints.get(currentResolutionIdx)==currentLevelIdx)
@@ -106,23 +102,23 @@ public class VabraSolver {
 			}
 
 			//2.) Prepare data and histograms for level
-			imgSubTarPairs.prepareForNextLevel();
+			int[] boundingBox = imgSubTarPairs.prepareForNextLevel();
 
 			//3.) Register at level
-			saveIntermediateResults();
-			registerAtCurrentLevel();
+			registerAtCurrentLevel(boundingBox);
 			progressBar.updateValueImmed( (int)(100 * currentLevelIdx / (float)gridSpacingX.size()) );
-			//Profile.stop();
-			//Profile.setFileName( "profile_out_vabra4" );
-			//Profile.shutdown();
-			//return;
 		}
-		saveIntermediateResults();
 		//4.)Return to original resolution
-		if(downSampleFactor.get(currentResolutionIdx-1)!=1) imgSubTarPairs.setResolution(1.0f);
-		imgSubTarPairs.prepareForNextLevel();
+		if(downSampleFactor.get(currentResolutionIdx-1)!=1) 
+		{
+			imgSubTarPairs.setResolution(1.0f);
+		}
         progressBar.updateValueImmed(100);
         progressBar.dispose();
+        
+		//Profile.stop();
+		//Profile.setFileName( "profile_out_vabra_14_new" );
+		//Profile.shutdown();
 
 		long now = System.currentTimeMillis();
 		double elapsedTime = (double) (now - startTime);
@@ -133,42 +129,10 @@ public class VabraSolver {
 		System.err.println( "Elapsed time: " + timeinSec + " seconds " );
 	}
 
-	void saveIntermediateResults(){
-		if((outputDir != null) && saveIntermResults){
-			File intermOutputDir = new File(outputDir.toString()+File.separator+"VABRAIntermResults");
-			intermOutputDir.mkdir();
-
-			int oldXN = imgSubTarPairs.subject.getXN(); 
-			int oldYN = imgSubTarPairs.subject.getYN(); 
-			int oldZN = imgSubTarPairs.subject.getZN(); 
-
-			int newXN = imgSubTarPairs.origSubjectList.getExtents().length > 0 ? imgSubTarPairs.origSubjectList.getExtents()[0] : 1;
-			int newYN = imgSubTarPairs.origSubjectList.getExtents().length > 1 ? imgSubTarPairs.origSubjectList.getExtents()[1] : 1;
-			int newZN = imgSubTarPairs.origSubjectList.getExtents().length > 2 ? imgSubTarPairs.origSubjectList.getExtents()[2] : 1;
-
-			float[] defField = new float[newXN * newYN * newZN * 3];
-			ModelImage im = new ModelImage( ModelStorageBase.FLOAT, new int[]{newXN, newYN, newZN, 3}, "temp" );
-
-			//Resample Deformation Field back to original resolution and save
-			RegistrationUtilities.DeformationFieldResample3DM(imgSubTarPairs.totalDeformField, defField, oldXN, oldYN, oldZN, newXN, newYN, newZN);
-			
-			try {
-				im.importData( 0, defField, false );
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			
-			im.setImageName(imgSubTarPairs.origSubjectList.getImageName()+"_def_field_lvl"+currentLevelIdx);
-			ModelImage.saveImage( im, im.getImageName(), intermOutputDir+File.separator );			
-
-			im.disposeLocal();
-		}
-	}
-
-	void registerAtCurrentLevel()
+	void registerAtCurrentLevel(int[] boundingBox)
 	{
 		// 1. generate a uniform grid based on parameters from config file
-		generateGrid(gridSpacingX.get(currentLevelIdx),gridSpacingY.get(currentLevelIdx),gridSpacingZ.get(currentLevelIdx));
+		generateGrid(boundingBox, gridSpacingX.get(currentLevelIdx),gridSpacingY.get(currentLevelIdx),gridSpacingZ.get(currentLevelIdx));
 
 		// 2. Identify regions of mismatch based on local gradient wrt NMI
 		//System.gc();
@@ -192,14 +156,15 @@ public class VabraSolver {
 		gradMag=new float[gridPoints];
 
 		//Set the scale of local deformations based on the current grid spacing
-		optimizer.getRBF().setScale(interval_x, interval_y, interval_z);
+		//optimizer.getRBF().setScale(interval_x, interval_y, interval_z);
+		imgSubTarPairs.getRBF().setScale(interval_x, interval_y, interval_z);
 
 		//find the gradient wrt a CostFunction at each grid point 
 		for(i=0;i<gridPoints;i++)
 		{
 			//System.out.format("COARSE GRADIENT %d/%d\n",i,gridPoints);
-			optimizer.coarseGradient(grid[i],gradients[i]);
-
+			//optimizer.coarseGradient(grid[i],gradients[i]);
+			imgSubTarPairs.coarseGradient(grid[i],gradients[i]);
 			gradMag[i]=(float)RegistrationUtilities.VectorNormalization(gradients[i],gradParam);
 
 		}
@@ -223,25 +188,22 @@ public class VabraSolver {
 			//System.out.format("At ("+grid[idx][0]+","+grid[idx][1]+","+grid[idx][2]+") Mag:"+gradMag[i]+"\n");
 			//If gradMag meets threshold, then optimize
 			if (gradMag[i]>.00001) {
-				optimizer.coarseOptimize(grid[idx],gradients[idx]);
+				//optimizer.coarseOptimize(grid[idx],gradients[idx]);
+				imgSubTarPairs.coarseOptimize(grid[idx],gradients[idx]);
 			}
 		}
 	}
 	
-	void generateGrid(int xPoints, int yPoints, int zPoints)
+	void generateGrid(int[] boundingBox, int xPoints, int yPoints, int zPoints)
 	{
 		xPts=xPoints;
 		yPts=yPoints;
 		zPts=zPoints;
-		generateGrid();
+		generateGrid(boundingBox);
 	}
 
-	void generateGrid()
+	void generateGrid(int[] box)
 	{
-
-		int box[]=new int[6];
-		box=imgSubTarPairs.getBoundingBox();
-
 		if(grid!=null)
 		{
 			grid=null;

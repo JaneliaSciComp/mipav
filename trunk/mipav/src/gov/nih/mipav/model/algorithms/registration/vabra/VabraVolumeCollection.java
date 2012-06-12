@@ -157,11 +157,11 @@ public class VabraVolumeCollection implements Cloneable {
 
 	}
 
-	public void interpolate(double x, double y, double z, double[] results) {
-		results[0] = RegistrationUtilities.Interpolation(data, XN, YN, ZN, x, y,z, chInterpType);
+	public double interpolate(double x, double y, double z) {
+		return RegistrationUtilities.Interpolation(data, XN, YN, ZN, x, y,z, chInterpType);
 	}
 
-	public int calculateBin(double val, int ch) {
+	public int calculateBin(double val) {
 		return (int) Math.floor((val - minValsD) / intervalsD);
 	}
 
@@ -172,7 +172,7 @@ public class VabraVolumeCollection implements Cloneable {
 		int k, j, i, index;
 		for (i = 0; i < XN; i++) for (j = 0; j < YN; j++) for (k = 0; k < ZN; k++) {
 			index = k * XN * YN + j * XN + i;
-			data[index] = calculateBin(data[index],0);
+			data[index] = calculateBin(data[index]);
 		}
 	}
 

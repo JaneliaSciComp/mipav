@@ -52,6 +52,41 @@ public class RegistrationUtilities {
 			}
 		}
 	}
+	
+
+	/* imA is assumed to be from 0 and numBin-1 */
+	/* imB is assumed to be from 0 and numBin-1 */
+	public static void JointHistogram3D(float[] imA, float[] imB,
+			int numBin, int[] roi, int[] jointHist, int XN, int YN, int ZN) {
+		int i, j, k, binA, binB;
+		int index;
+		int slice = XN * YN;
+		for (j = 0; j < numBin; j++) {
+			for (i = 0; i < numBin; i++) {
+				jointHist[j*numBin + i] = 0;
+			}
+		}
+		for (k = roi[4]; k <= roi[5]; k++) {
+			for (j = roi[2]; j <= roi[3]; j++) {
+				for (i = roi[0]; i <= roi[1]; i++) {
+					index = k * slice + j * XN + i;
+					binA = ((short) ((int) imA[index] & 0xff));
+					//binA = imA.getUByte(i, j, k);
+					if (binA >= numBin)
+						binA = numBin - 1;
+					if (binA < 0)
+						binA = 0;
+					binB = ((short) ((int) imB[index] & 0xff));
+					//binB = imB.getUByte(i, j, k);
+					if (binB >= numBin)
+						binB = numBin - 1;
+					if (binB < 0)
+						binB = 0;
+					jointHist[binA*numBin + binB] += 1;
+				}
+			}
+		}
+	}
 
 	public static void JointHistogram3D(float[] imA, float[] imB,
 			int channel, int numBin, int[] roi, int[][][] jointHist, int XN, int YN, int ZN) {
@@ -180,13 +215,7 @@ public class RegistrationUtilities {
 
 	public static double DoubleDistance(double z0, double y0, double x0,
 			double z1, double y1, double x1) {
-		double tmp = 0.0;
-
-		tmp += (x0 - x1) * (x0 - x1);
-		tmp += (y0 - y1) * (y0 - y1);
-		tmp += (z0 - z1) * (z0 - z1);
-
-		return Math.sqrt(tmp);
+		return Math.sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1) + (z0 - z1) * (z0 - z1));
 	}
 
 
@@ -646,6 +675,7 @@ public class RegistrationUtilities {
 			dx = x - j0;
 			dy = y - i0;
 			dz = z - k0;
+			
 
 			// Introduce more variables to reduce computation
 			hx = 1.0f - dx;
@@ -653,23 +683,27 @@ public class RegistrationUtilities {
 			hz = 1.0f - dz;
 			// Optimized below
 			int slice = XN * YN;
+			k0 *= slice;
+			k1 *= slice;
+			i0 *= XN;
+			i1 *= XN;
 			return   (
 					//((oldV.getDouble(j0, i0, k0) * hx + 
-							((oldV[k0 * slice + i0 * XN + j0] * hx + 
+							((oldV[k0 + i0 + j0] * hx + 
 									//oldV.getDouble(j1, i0, k0) * dx) * hy 
-									oldV[k0 * slice + i0 * XN + j1] * dx) * hy 
+									oldV[k0 + i0 + j1] * dx) * hy 
 									//+ (oldV.getDouble(j0, i1, k0) * hx + 
-											+ (oldV[k0 * slice + i1 * XN + j0] * hx + 
+											+ (oldV[k0 + i1 + j0] * hx + 
 													//oldV.getDouble(j1, i1, k0) * dx) * dy) * hz 
-													oldV[k0 * slice + i1 * XN + j1] * dx) * dy) * hz 
+													oldV[k0 + i1 + j1] * dx) * dy) * hz 
 													//+ ((oldV.getDouble(j0, i0, k1) * hx + 
-															+ ((oldV[k1 * slice + i0 * XN + j0] * hx + 
+															+ ((oldV[k1 + i0 + j0] * hx + 
 																	//oldV.getDouble(j1, i0, k1) * dx) * hy  
-																	oldV[k1 * slice + i0 * XN + j1] * dx) * hy 
+																	oldV[k1 + i0 + j1] * dx) * hy 
 																	//+ (oldV.getDouble(j0, i1, k1) * hx + 
-																			+ (oldV[k1 * slice + i1 * XN + j0] * hx + 
+																			+ (oldV[k1 + i1 + j0] * hx + 
 																					//oldV.getDouble(j1, i1, k1) * dx) * dy)* dz
-																					oldV[k1 * slice + i1 * XN + j1] * dx) * dy)* dz
+																					oldV[k1 + i1 + j1] * dx) * dy)* dz
 									);
 
 		}
@@ -969,6 +1003,46 @@ public class RegistrationUtilities {
 			return (HA + HB) / HAB;
 	}
 
+	public static double NMI(int[] histA, int[] histB, int[] histAB,
+			int numBin) {
+		int i = 0, j = 0;
+		double HA = 0, HB = 0, HAB = 0;
+		int numVoxelA = 0, numVoxelB = 0, numVoxelAB = 0;
+		double tmp = 0;
+		for (i = 0; i < numBin; i++) {
+			//System.out.format(histA[i] + "\n");
+			numVoxelA += histA[i];
+			numVoxelB += histB[i];
+			for (j = 0; j < numBin; j++) {
+				numVoxelAB += histAB[j*numBin + i];
+			}
+		}
+		for (i = 0; i < numBin; i++) {
+			if (histA[i] > 0) {
+				tmp = ((double) histA[i]) / numVoxelA;
+				HA -= tmp * Math.log(tmp);
+			}
+			if (histB[i] > 0) {
+				tmp = ((double) histB[i]) / numVoxelB;
+				HB -= tmp * Math.log(tmp);
+			}
+			for (j = 0; j < numBin; j++) {
+				if (histAB[j*numBin + i] > 0) {
+					tmp = ((double) histAB[j*numBin + i]) / numVoxelAB;
+					HAB -= tmp * Math.log(tmp);
+				}
+			}
+		}
+
+		//System.out.format(HA+" "+HB+" "+HAB+" "+numVoxelAB+"\n");
+		if (HA == 0 && HB == 0 && HAB == 0)
+			return 2;
+		else
+			return (HA + HB) / HAB;
+	}
+
+	
+	
 	public static double MI(int[] histA, int[] histB, int[][] histAB,
 			int numBin) {
 		int i = 0, j = 0;

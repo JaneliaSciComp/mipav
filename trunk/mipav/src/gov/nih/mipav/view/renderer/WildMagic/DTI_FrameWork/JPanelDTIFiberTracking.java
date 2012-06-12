@@ -240,16 +240,12 @@ public class JPanelDTIFiberTracking extends JPanel implements ActionListener {
 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
 
-        
-
         if ( createADC.isSelected() || createColor.isSelected() || createEValue.isSelected() ||
         		createEVector.isSelected() || createFA.isSelected() || createRA.isSelected() ||
         		createTrace.isSelected() || createVR.isSelected() )
         {
         	calcEigenVectorImage();      
         }
-
-        //trackFibers();
 
         setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
         return true;
