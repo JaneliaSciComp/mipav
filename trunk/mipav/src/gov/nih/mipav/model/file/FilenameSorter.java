@@ -54,7 +54,7 @@ public class FilenameSorter {
             return 1; // if this happens, no number is in the filename, default to greater than for str1
         }
 
-        substring1 = str1.substring(begin, end + 1);
+        substring1 = str1.substring(begin, end + 1).replaceAll("_", "");
 
         end = lastNumericalSequenceEnd(str2);
         begin = lastNumericalSequenceBegin(str2, end);
@@ -63,7 +63,7 @@ public class FilenameSorter {
             return -1; // if this happens, no number is in the filename, default to less than for str2
         }
 
-        substring2 = str2.substring(begin, end + 1);
+        substring2 = str2.substring(begin, end + 1).replaceAll("_", "");
 
         Long long1;
         Long long2;
@@ -147,7 +147,7 @@ public class FilenameSorter {
 
         for (int i = lastNumSequenceEnd; i > 0; i--) {
 
-            if (!Character.isDigit(str.charAt(i - 1))) {
+            if (!Character.isDigit(str.charAt(i - 1)) && !(str.charAt(i - 1) == '_')) {
                 return i;
             }
         }
