@@ -10,6 +10,11 @@ public class VOIBaseVector extends Vector<VOIBase> {
     private static final long serialVersionUID = 8244024438846673669L;
     public VOI parent;
     
+    public VOIBaseVector() {
+        super();
+        this.parent = null;
+    }
+    
     public VOIBaseVector(VOI parent) {
         super();
         this.parent = parent;
@@ -27,8 +32,11 @@ public class VOIBaseVector extends Vector<VOIBase> {
 	public boolean add(VOIBase e)
     {
         boolean result = super.add(e);
-        e.setGroup(parent);
-        parent.fireVOIBaseAdded(e);
+        if ( parent != null )
+        {
+        	e.setGroup(parent);
+        	parent.fireVOIBaseAdded(e);
+        }
         return result;
     }
         
@@ -36,8 +44,11 @@ public class VOIBaseVector extends Vector<VOIBase> {
 	public void addElement(VOIBase obj )
     {
         super.addElement(obj);
-        obj.setGroup(parent);
-        parent.fireVOIBaseAdded(obj);
+        if ( parent != null )
+        {
+        	obj.setGroup(parent);
+        	parent.fireVOIBaseAdded(obj);
+        }
     }
     
     @Override

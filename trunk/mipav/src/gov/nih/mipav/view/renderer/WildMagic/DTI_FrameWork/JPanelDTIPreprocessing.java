@@ -11,6 +11,7 @@ import gov.nih.mipav.model.algorithms.utilities.AlgorithmAddMargins;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmSubset;
 import gov.nih.mipav.model.file.DTIParameters;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.ModelStorageBase;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
@@ -419,15 +420,15 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 					Preferences.debug("Saved " + b0MatrixFileName + "\n", Preferences.DEBUG_FILEIO);
 				}
 
+				// NOW start the 4D within-volume registration:
+				setVariablesForOAR35D();
+				callReg35Algorithm( imageUpdatedDWI );   
 			}
 
 			if (reg3 != null) {
 				reg3.disposeLocal();
 				reg3 = null;
 			}			
-			// NOW start the 4D within-volume registration:
-			setVariablesForOAR35D();
-			callReg35Algorithm( imageUpdatedDWI );   
 		}
 		
 		// The AlgorithmRegOAR35D has completed. This algorithm computes the within-volume 4D registration of the
@@ -616,9 +617,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		reg35.run();
 		// see algorithmPerformed for the results of the AlgorithmRegOAR35D
 	}
-
-
-
+	
 	/**
 	 * Calls the algorithm with the set-up parameters.
 	 */
@@ -639,7 +638,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		float rotateEndZ = (float) 30.0;
 		float coarseRateZ = (float) 15.0;
 		float fineRateZ = (float) 6.0;
-
+		
 		reg3 = new AlgorithmRegOAR3D(refT2Image, matchB0Image, costT2, DOFT2, interpT2, rotateBeginX, rotateEndX,
 				coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY, rotateBeginZ, rotateEndZ,
 				coarseRateZ, fineRateZ, maxOfMinResol, doSubsample, doMultiThread, fastMode,
@@ -717,6 +716,7 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 
 	private JButton buildOARButton() {
 		OKButton = new JButton("Run OAR Registration");
+		OKButton.setActionCommand("RUN OAR 3.5D");
 		OKButton.addActionListener(this);
 		OKButton.setFont(serif12B);
 		return OKButton;

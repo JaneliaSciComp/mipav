@@ -2,8 +2,11 @@ package gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork;
 
 
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.VOIBaseVector;
 import gov.nih.mipav.model.structures.VOIContour;
+import gov.nih.mipav.util.ThreadUtil;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJColorChooser;
 import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -27,6 +30,7 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Vector;
+import java.util.concurrent.CountDownLatch;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -48,8 +52,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-
-//import com.mentorgen.tools.profile.runtime.Profile;
 
 import WildMagic.LibFoundation.Mathematics.ColorRGB;
 import WildMagic.LibFoundation.Mathematics.Matrix3f;
@@ -456,7 +458,11 @@ implements ListSelectionListener, ChangeListener {
 		int iDimX = m_kDTIImage.getExtents()[0];
 		int iDimY = m_kDTIImage.getExtents()[1];
 		int iDimZ = m_kDTIImage.getExtents()[2];
-		diplayTract( iX, iY, iZ, iDimX, iDimY, iDimZ, false );
+		VOIContour kTract = diplayTract( iX, iY, iZ, iDimX, iDimY, iDimZ, false );
+		if ( kTract != null )
+		{
+			addTract(kTract, iDimX, iDimY, iDimZ);
+		}
 	}
 
 
@@ -579,8 +585,9 @@ implements ListSelectionListener, ChangeListener {
 	 * @param iDimY the y-dimensions of the DTI image used to create the tract.
 	 * @param iDimZ the z-dimensions of the DTI image used to create the tract.
 	 */
-	private void addTract( VOIContour kTract, int iVQuantity, int iDimX, int iDimY, int iDimZ )
+	private void addTract( VOIContour kTract, int iDimX, int iDimY, int iDimZ )
 	{
+		int iVQuantity = kTract.size();
 		m_kImage = parentFrame.getColorimage();
 		int iXBound = m_kImage.getExtents()[0];
 		int iYBound = m_kImage.getExtents()[1];
@@ -651,20 +658,26 @@ implements ListSelectionListener, ChangeListener {
 		m_fMaxAngle = Float.valueOf(m_kMaxAngle.getText()).floatValue();
 		m_fMaxAngle = (float)(m_fMaxAngle*Math.PI/180.0f);
 
-		ViewJProgressBar kProgressBar =
+		final ViewJProgressBar kProgressBar =
 				new ViewJProgressBar("Calculating Fiber Bundle Tracts ",
 						"Calculating tracts...", 0, 100, true);
 
-		ModelImage fAImage = parentFrame.getFAimage();
+		final ModelImage fAImage = parentFrame.getFAimage();
 
 		float faVal;
-		int count = 0;
 
 		//-javaagent:C:\GeometricToolsInc\mipav\src\lib\profile.jar
 		//-Dprofile.properties=C:\GeometricToolsInc\mipav\src\lib\profile.properties
 		//Profile.clear();
 		//Profile.start();
-		if ( m_kUseVOICheck.isEnabled() && m_kUseVOICheck.isSelected() )
+		int nthreads = 1;
+        if (Preferences.isMultiThreadingEnabled())
+        {
+        	nthreads = ThreadUtil.getAvailableCores();
+        }
+        final VOIBaseVector[] tracksAdded = new VOIBaseVector[nthreads];
+    		
+    		if ( m_kUseVOICheck.isEnabled() && m_kUseVOICheck.isSelected() )
 		{
 			for ( int j = 0; j < m_kVOIParamsList.size(); j++ )
 			{
@@ -682,24 +695,69 @@ implements ListSelectionListener, ChangeListener {
 					xMax = (int)Math.ceil(akMinMax[1].X);
 					yMax = (int)Math.ceil(akMinMax[1].Y);
 					zMax = (int)Math.ceil(akMinMax[1].Z);
+					
+	                System.err.println( xMin + " " + yMin + "      " + zMin + " " + xMax + "      " + yMax + "  " + zMax );
+	                System.err.println("");
+			        if (Preferences.isMultiThreadingEnabled())
+			        {
+			        	int intervalX = xMax - xMin;
+			        	int intervalY = yMax - yMin;
+			        	int intervalZ = zMax - zMin;
+			            final CountDownLatch doneSignal = new CountDownLatch(nthreads);
+			            float stepX = 0;
+			            if ( intervalX > intervalY && intervalX > intervalZ )
+			            {
+			            	stepX = (float)intervalX / (float)nthreads;
+			            }
+			            float stepY = 0;
+			            if ( intervalY > intervalX && intervalY > intervalZ )
+			            {
+			            	stepY = (float)intervalY / (float)nthreads;
+			            }
+			            float stepZ = 0;
+			            if ( intervalZ > intervalX && intervalZ > intervalY )
+			            {
+			            	stepZ = (float)intervalZ / (float)nthreads;
+			            }
+			            if ( stepX == 0 && stepY == 0 && stepZ == 0 )
+			            {
+			            	stepZ = (float)intervalZ / (float)nthreads;			            	
+			            }
+
+			            for (int i = 0; i < nthreads; i++) {
+			            	tracksAdded[i] = new VOIBaseVector();
+			                final int startX = stepX == 0 ? xMin : (int) (xMin + (    i * stepX));
+			                final int   endX = stepX == 0 ? xMax : (int) (xMin + ((i+1) * stepX));
+			                final int startY = stepY == 0 ? yMin : (int) (yMin + (    i * stepY));
+			                final int   endY = stepY == 0 ? yMax : (int) (yMin + ((i+1) * stepY));
+			                final int startZ = stepZ == 0 ? zMin : (int) (zMin + (    i * stepZ));
+			                final int   endZ = stepZ == 0 ? zMax : (int) (zMin + ((i+1) * stepZ));
+			                System.err.println( startX + " " + endX + "      " + startY + " " + endY + "      " + startZ + "  " + endZ );
+			                final int index = i;
+			                final Runnable task = new Runnable() {
+			                    public void run() {
+						        	calcTracts( tracksAdded, index, startX, endX, startY, endY, startZ, endZ,
+						        			fAImage, null );
+			                        doneSignal.countDown();
+			                    }
+			                };
+
+			                ThreadUtil.mipavThreadPool.execute(task);
+			            }
+			            try {
+			                doneSignal.await();
+			            } catch (final InterruptedException e) {
+			                e.printStackTrace();
+			            }
+			        }
+			        else
+			        {
+			        	tracksAdded[0] = new VOIBaseVector();
+			        	calcTracts( tracksAdded, 0, xMin, xMax, yMin, yMax, zMin, zMax,
+			        			fAImage, kProgressBar );
+			        }
 				}
 
-				for ( int z = zMin; z < zMax; z++ )
-				{
-					for ( int y = yMin; y < yMax; y++ )
-					{
-						for ( int x = xMin; x < xMax; x++ )
-						{
-							faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
-							if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
-							{
-								count += diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
-							}
-						}
-					}
-					int iValue = (int)(100 * (float)(z+1 - zMin)/(zMax - zMin));
-					kProgressBar.updateValueImmed( iValue );
-				}
 			}
 		}
 		else	
@@ -714,7 +772,11 @@ implements ListSelectionListener, ChangeListener {
 						faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
 						if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
 						{
-							count += diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
+							VOIContour kTrack = diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
+							if ( kTrack != null )
+							{
+								tracksAdded[0].add(kTrack);
+							}
 						}
 					}
 				}
@@ -724,16 +786,30 @@ implements ListSelectionListener, ChangeListener {
 		}
 		
 		//Profile.stop();
-		//Profile.setFileName( "profile_out_fiber6" );
+		//Profile.setFileName( "profile_out_fiber9" );
 		//Profile.shutdown();
-		
+
+    	kProgressBar.updateValueImmed( 100 );
 		kProgressBar.dispose();
-		if ( count > 0 )
+		boolean bAdded = false;
+		int count = 0;
+		for ( int i = 0; i < tracksAdded.length; i++ )
+		{
+			if ( tracksAdded[i].size() > 0 )
+			{
+				for ( int j = 0; j < tracksAdded[i].size(); j++ )
+				{
+					addTract((VOIContour)tracksAdded[i].elementAt(j), m_iDimX, m_iDimY, m_iDimZ);
+				}
+				count += tracksAdded[i].size();
+				bAdded = true;
+			}
+		}
+		if ( bAdded )
 		{
 			addTract();
 		}
-
-
+		
 		long now = System.currentTimeMillis();
 		double elapsedTime = (double) (now - startTime);
 
@@ -748,6 +824,37 @@ implements ListSelectionListener, ChangeListener {
 		MipavUtil.displayInfo( "Added " + count + " fiber tracts." );
 	}    
 
+	private void calcTracts( VOIBaseVector[] tracksList, int index, int xMin, int xMax, int yMin, int yMax, int zMin, int zMax,
+			ModelImage fAImage, ViewJProgressBar kProgressBar )
+	{
+
+		for ( int z = zMin; z < zMax; z++ )
+		{
+			for ( int y = yMin; y < yMax; y++ )
+			{
+				for ( int x = xMin; x < xMax; x++ )
+				{
+					float faVal = fAImage.getFloat(z*m_iDimX*m_iDimY + y*m_iDimX + x);
+					if ( (faVal >= m_fFAMin) && (faVal <= m_fFAMax) )
+					{
+						VOIContour kTrack = diplayTract(x,y,z, m_iDimX, m_iDimY, m_iDimZ, true);
+						if ( kTrack != null )
+						{
+							tracksList[index].add(kTrack);
+						}
+					}
+				}
+			}
+			int iValue = (int)(100 * (float)(z+1 - zMin)/(zMax - zMin));
+			System.err.println( "calcTracts " + z );
+			if ( kProgressBar != null )
+			{
+				kProgressBar.updateValueImmed( iValue );
+			}
+		}
+	}
+	
+	
 	/**
 	 * Creates the user-interface for the Fiber Bundle Tract dialog.
 	 * 
@@ -1132,9 +1239,8 @@ implements ListSelectionListener, ChangeListener {
 		return kTractPanel;
 	}
 
-	private int diplayTract(int iX, int iY, int iZ, int iDimX, int iDimY, int iDimZ, boolean bUseSizeLimit)
+	private VOIContour diplayTract( final int iX, final int iY, final int iZ, final int iDimX, final int iDimY, final int iDimZ, final boolean bUseSizeLimit)
 	{
-		int count = 0;
 		int iLen = iDimX * iDimY * iDimZ;
 		float[] afVectorData = new float[3];
 		VOIContour kTract = new VOIContour(false);
@@ -1155,13 +1261,13 @@ implements ListSelectionListener, ChangeListener {
 		}
 		if ( bAllZero )
 		{
-			return 0;
+			return null;
 		}
 
 		kPos.Set( iX, iY, iZ );
 		if ( !testTrack( kPos ) )
 		{
-			return 0;
+			return null;
 		}
 
 		kTract.add( new Vector3f( kPos ) );
@@ -1184,11 +1290,15 @@ implements ListSelectionListener, ChangeListener {
 			//System.err.println( "Adding " + kTract.size() + " " + m_fFraction + " " + (iVQuantity*m_fFraction) );
 			if ( testTrack( kTract ) )
 			{
-				addTract(kTract, iVQuantity, iDimX, iDimY, iDimZ);
-				count++;
+				return kTract;
+			}
+			else
+			{
+				kTract.dispose();
+				kTract = null;
 			}
 		}
-		return count;
+		return null;
 	}
 
 
@@ -1305,7 +1415,7 @@ implements ListSelectionListener, ChangeListener {
 				for ( int j = 0; j < akSelected.size(); j++ )
 				{
 					VOIContour kTract = akSelected.elementAt(j);
-					addTract( kTract, kTract.size(), m_iDimX, m_iDimY, m_iDimZ );
+					addTract( kTract, m_iDimX, m_iDimY, m_iDimZ );
 				}
 				addTract();
 			}
@@ -1392,8 +1502,8 @@ implements ListSelectionListener, ChangeListener {
 		}
 	}
 
-	private void traceTract2( VOIContour kTract, Vector3f kStart, Vector3f kDir,
-			ModelImage eigenImage, ModelImage eigenValueImage, ModelImage kFAImage, ModelImage kDTIImage, boolean bDir )
+	private void traceTract2( final VOIContour kTract, final Vector3f kStart, final Vector3f kDir,
+			final ModelImage eigenImage, final ModelImage eigenValueImage, final ModelImage kFAImage, final ModelImage kDTIImage, final boolean bDir )
 	{
 		int iDimX = eigenImage.getExtents()[0];
 		int iDimY = eigenImage.getExtents()[1];
@@ -1537,7 +1647,7 @@ implements ListSelectionListener, ChangeListener {
 		m_iCurrentGroup = getMinUnused(m_kGroupList);
 	}
 
-	private boolean testTrack( VOIContour kTrack )
+	private boolean testTrack( final VOIContour kTrack )
 	{
 		if ( !m_kUseVOICheck.isSelected() )
 		{
@@ -1553,7 +1663,7 @@ implements ListSelectionListener, ChangeListener {
 				{
 					Vector3f kP0 = kTrack.elementAt(i);
 					Vector3f kP1 = kTrack.elementAt(i+1);
-					if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1, false ) )
+					if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1, true, false ) )
 					{
 						bInclude = true;
 						break;
@@ -1585,7 +1695,7 @@ implements ListSelectionListener, ChangeListener {
 			// Add tracts from the include VOIs, check for exclusion while adding tracts...
 			if ( m_kVOIParamsList.get(j).Exclude )
 			{
-				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kPoint ) )
+				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kPoint, true ) )
 				{
 					return false;
 				}
@@ -1606,7 +1716,7 @@ implements ListSelectionListener, ChangeListener {
 			// Add tracts from the include VOIs, check for exclusion while adding tracts...
 			if ( m_kVOIParamsList.get(j).Exclude )
 			{
-				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1, false ) )
+				if ( m_kVOIParamsList.get(j).Surface.testIntersection( kP0, kP1, true, false ) )
 				{
 					return false;
 				}

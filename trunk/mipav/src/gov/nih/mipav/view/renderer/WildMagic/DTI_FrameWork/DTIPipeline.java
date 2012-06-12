@@ -26,7 +26,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 
-
 public class DTIPipeline extends JDialogBase implements ActionListener, ChangeListener {
 
 	private final static int IMPORT = 0;
@@ -382,6 +381,7 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 		currentImage = registeredDWI;
 		System.err.println( currentImage.getImageName() );
 	}
+	
 	
 	public void finishEPIPanel()
 	{

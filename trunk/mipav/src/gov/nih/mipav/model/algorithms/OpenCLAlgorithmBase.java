@@ -60,8 +60,10 @@ public abstract class OpenCLAlgorithmBase extends AlgorithmBase {
 	 * If false only process the image over the mask areas.
 	 */
 	protected boolean entireImage;
+	public OpenCLAlgorithmBase() {}
 
-	public OpenCLAlgorithmBase(final ModelImage destImg, final ModelImage srcImg, final boolean entireImage, final long type) {
+	public OpenCLAlgorithmBase(final ModelImage destImg, final ModelImage srcImg, final boolean entireImage, final long type)
+	{
 
 		super(destImg, srcImg);
 		width  = srcImg.getExtents().length > 0 ? srcImg.getExtents()[0] : 1;
