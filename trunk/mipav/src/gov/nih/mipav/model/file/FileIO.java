@@ -5218,7 +5218,7 @@ public class FileIO {
     }
 
     /**
-     * Sorts an array of floats (using insertion sort), turns into array of ints used to sort images by slice location;
+     * Sorts an array of floats (using Arrays.sort), turns into array of ints used to sort images by A;
      * thus, the final value of B[i] is for the ith image read in, put that image at location B[i] in the image buffer.
      * This is necessary for images labeled dicom1, dicom2, etc because dicom11, dicom12, ... will come before dicom2.
      * Also our only indication of the "true" ordering is slice location.
@@ -5230,41 +5230,43 @@ public class FileIO {
      * @return <code>false</code> only if any of the numbers in the array are equal.
      */
     private static boolean sort(final float[] A, final int[] B, final int size) {
-        boolean flag = true;
-        int stop = size - 1, i, tmp2;
-        float tmp;
-        while (stop > 0) {
-
-            for (i = 0; i < stop; i++) {
-
-                if (A[i] > A[i + 1]) {
-                    tmp = A[i];
-                    A[i] = A[i + 1];
-                    A[i + 1] = tmp;
-                    tmp2 = B[i];
-                    B[i] = B[i + 1];
-                    B[i + 1] = tmp2;
-                }
-
-                if (A[i] == A[i + 1]) {
-                    flag = false;
-                }
+        
+        LinkedNum[] n = new LinkedNum[size];
+        for(int i=0; i<size; i++) {
+            n[i] = new LinkedNum(A[i], B[i]);
+        }
+        
+        Arrays.sort(n, new LinkedComparator());
+        
+        for(int i=0; i<size; i++) {
+            B[i] = n[i].index;
+            A[i] = n[i].num;
+        }
+        
+        for(int i=0; i<size-1; i++) {
+            if(A[i] == A[i+1]) {
+                return false;
             }
-
-            stop--;
         }
-
-        final int[] C = new int[size];
-
-        for (i = 0; i < size; i++) {
-            C[B[i]] = i;
+        
+        return true;
+    }
+    
+    static class LinkedNum {
+        float num;
+        int index;
+        
+        public LinkedNum(float num, int index) {
+            this.num = num;
+            this.index = index;
         }
-
-        for (i = 0; i < size; i++) {
-            B[i] = C[i];
+    }
+    
+    private static class LinkedComparator implements Comparator<LinkedNum> {
+        public int compare(LinkedNum arg0, LinkedNum arg1) {
+            return (int) (arg0.num - arg1.num);
         }
-
-        return flag;
+        
     }
 
     /**
