@@ -7888,6 +7888,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         super.finalize();
     }
 
+    /**
+     * Get total buffer length.
+     */
     public int getDataSize() {
         return dataSize;
     }
