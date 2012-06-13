@@ -144,6 +144,8 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kVolumeImageB = kVolumeImageB;
         m_kParent = kParent;
         
+        
+        //TODO: Try rotations here
         m_kRotate.FromAxisAngle(Vector3f.UNIT_Z, (float)Math.PI/18.0f);
     }
     
