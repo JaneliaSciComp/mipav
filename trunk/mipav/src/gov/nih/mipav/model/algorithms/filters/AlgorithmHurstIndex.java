@@ -16,15 +16,15 @@ import java.util.List;
 /**
  * DOCUMENT ME!
  *
- * @version  0.1 June 13, 2012
+ * @version  0.1 June 14, 2012
  * @author   William Gandler 
  * Reference: "Sonographic Texture Characterization of Salivary  Gland Tumors by Fractal Analysis",
- * by Toru Chikui, Kenji Tokumori, Kazunori Yoshiura, Kazunari Oobi, Seiji Nakamura, and Katsumasa Nakamura,
+ * by Toru Chikui, Kenji Tokumori, Kazunori Yoshiura, Kazunari Oobu, Seiji Nakamura, and Katsumasa Nakamura,
  * Ultrasound in Medicine and Biology, Vol. 31, No. 10, pp. 1297-1304, 2005.
  * In 2D for every point in the image find the absolute value of the intensity differences to all points 
  * between a minimum distance of minDist and a maximum distance of maxDist.  Have the option to define the
  * distance as the integer part of the Euclidean distance.  For every distance between minDist and maxDist
- * find the average value of the absolute value of the intensity difference.  Fit the best fit to the line
+ * find the average value of the absolute value of the intensity difference.  Find the best fit to the line
  * log(average absolute value of the intensity difference) = log(c) + H*log(distance) where H is the Hurst index.
  * 
  * The Hurst index varies from 0 to 1.  If H is 0.5, each step can be up or down completely at random.  If H is
@@ -183,7 +183,14 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
                 srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
             }
         } catch (IOException error) {
-            MipavUtil.displayError("AlgorithmHurstIndex: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
+            if (srcImage.isColorImage()) {
+                MipavUtil.displayError(
+                "AlgorithmHurstIndex: IOException on srcImage.exportRGBData(RGBOffset,4*z*sliceSize,sliceSize,floatBuffer)");
+            }
+            else {
+                MipavUtil.displayError(
+                "AlgorithmHurstIndex: IOException on srcImage.exportData(z*sliceSize,sliceSize,sourceBuffer)");    
+            }
             setCompleted(false);
 
             return;
@@ -277,7 +284,7 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
         try {
             destImage.importData(z*sliceSize, hurstBuffer, false);
         } catch (IOException error) {
-            MipavUtil.displayError("AlgorithmHurstIndex: IOException on destImage.importData(0,hurstBuffer,false)");
+            MipavUtil.displayError("AlgorithmHurstIndex: IOException on destImage.importData(z*sliceSize,hurstBuffer,false)");
             setCompleted(false);
 
             return;
