@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmHurstIndex
  */
 public class JDialogHurstIndex extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+        implements AlgorithmInterface, DialogDefaultsInterface, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -73,6 +73,8 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      */
     private boolean integerDistancePart = true;
     
+    private JLabel labelVOI;
+    
     private JTextField textMinDistance;
     
     private JLabel labelMinDistance;
@@ -88,9 +90,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
-
-    /** DOCUMENT ME! */
-    private ModelImage hurstImage = null; // Hurst index image
 
     /** DOCUMENT ME! */
     private AlgorithmHurstIndex hurstAlgo;
@@ -154,32 +153,13 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         if (algorithm instanceof AlgorithmHurstIndex) {
             image.clearMask();
 
-            if ((hurstAlgo.isCompleted() == true) && (hurstImage != null)) {
+            if (hurstAlgo.isCompleted() == true) {
 
                 
             	// save the completion status for later
-            	setComplete(hurstAlgo.isCompleted());
-
+            	setComplete(hurstAlgo.isCompleted()); 
                 
-                updateFileInfo(image, hurstImage);
-                hurstImage.clearMask();
-                
-                try {
-                    new ViewJFrameImage(hurstImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
-                    System.gc();
-                    JOptionPane.showMessageDialog(null, "Out of memory: unable to open new resultImage frame",
-                                                  "Error", JOptionPane.ERROR_MESSAGE);
-                }
-
-            } else if (hurstImage != null) {
-
-                // algorithm failed but result image still has garbage
-                
-                hurstImage.disposeLocal();
-                hurstImage = null;
-                System.gc();
-            }
+            } 
 
             if (algorithm.isCompleted()) {
                 insertScriptLine();
@@ -212,15 +192,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         str += integerDistancePart;
 
         return str;
-    }
-
-    /**
-     * Accessor that returns the image.
-     *
-     * @return  The result image.
-     */
-    public ModelImage getResultImage() {
-        return hurstImage;
     }
 
     /**
@@ -293,19 +264,14 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      */
     protected void callAlgorithm() {
 
-        String name = null;
-
         try {
-            
-            name = makeImageName(image.getImageName(), "_Hurst");
-            hurstImage = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
            
             if (image.isColorImage()) {
-                hurstAlgo = new AlgorithmHurstIndex(hurstImage, image, RGBOffset, minDistance, maxDistance,
+                hurstAlgo = new AlgorithmHurstIndex(image, RGBOffset, minDistance, maxDistance,
                                                     integerDistancePart);    
             }
             else {
-                hurstAlgo = new AlgorithmHurstIndex(hurstImage, image, minDistance, maxDistance, integerDistancePart);
+                hurstAlgo = new AlgorithmHurstIndex(image, minDistance, maxDistance, integerDistancePart);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -329,12 +295,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             
 
         } catch (OutOfMemoryError x) {
-
-            if (hurstImage != null) {
-
-                hurstImage.disposeLocal();
-                hurstImage = null;
-            }
             
          // save the completion status for later
             setComplete(hurstAlgo.isCompleted());
@@ -351,8 +311,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-
-        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -378,7 +336,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeImageInRecorder(getResultImage());
 
         if (image.isColorImage()) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", RGBOffset));
@@ -446,7 +403,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             mainPanel.add(colorScroll, gbc);   
         } // if (image.isColorImage())
 
-        distancePanel = new JPanel(new GridBagLayout()); //3 rows x 2 columns
+        distancePanel = new JPanel(new GridBagLayout()); //4 rows x 2 columns
         distancePanel.setForeground(Color.black);
         gbc.gridx = 0;
         gbc.gridy = ypos++;
@@ -457,11 +414,26 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         mainPanel.add(scaleScroll, gbc);
 
         GridBagConstraints gbcScale = new GridBagConstraints();
+        //first row
+        labelVOI = new JLabel("Finds distances for Hurst index within each VOI");
+        labelVOI.setForeground(Color.black);
+        labelVOI.setFont(serif12);
+        gbcScale.gridx = 0;
+        gbcScale.gridy = 0;
+        gbcScale.gridwidth = 2;
+        gbcScale.gridwidth = 1;
+        gbcScale.fill = GridBagConstraints.HORIZONTAL;
+        gbcScale.anchor = GridBagConstraints.WEST;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        distancePanel.add(labelVOI, gbcScale);
+        
+        // Second row
         labelMinDistance = new JLabel("Minimum pixel distance (>= 1.0): ");
         labelMinDistance.setForeground(Color.black);
         labelMinDistance.setFont(serif12);
         gbcScale.gridx = 0;
-        gbcScale.gridy = 0;
+        gbcScale.gridy++;
+        gbcScale.gridwidth = 1;
         gbcScale.fill = GridBagConstraints.HORIZONTAL;
         gbcScale.anchor = GridBagConstraints.WEST;
         gbcScale.insets = new Insets(0, 0, 2, 0);
@@ -474,7 +446,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         gbcScale.insets = new Insets(0, 4, 2, 0);
         distancePanel.add(textMinDistance, gbcScale);
 
-        //second row
+        //third row
         labelMaxDistance = new JLabel("Maximum pixel distance: ");
         labelMaxDistance.setForeground(Color.black);
         labelMaxDistance.setFont(serif12);
@@ -490,7 +462,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         gbcScale.insets = new Insets(0, 4, 2, 0);
         distancePanel.add(textMaxDistance, gbcScale);
         
-        //third row
+        //fourth row
         integerDistancePartCheckBox = new JCheckBox("Take integer part of Euclidean distance as distance", true);
         integerDistancePartCheckBox.setForeground(Color.black);
         integerDistancePartCheckBox.setFont(serif12);
@@ -522,6 +494,22 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      */
     private boolean setVariables() {
         String tmpStr;
+        int i;
+        
+        ViewVOIVector VOIs = image.getVOIs();
+        int nVOIs = VOIs.size();
+        int nBoundingVOIs = 0;
+        
+        for (i = 0; i < nVOIs; i++) {
+
+            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                nBoundingVOIs++;
+            }
+        }
+        if (nBoundingVOIs == 0) {
+            MipavUtil.displayError("Must have at least 1 contour of polyline VOI");
+            return false;
+        }
         
         if (image.isColorImage()) {
 
@@ -641,18 +629,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
         return table;
     }
-    
-    /**
-     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
-     * (which can be used to retrieve the image object from the image registry).
-     * 
-     * @param imageParamName The output image parameter label for which to get the image name.
-     * @return The image name of the requested output image parameter label.
-     */
-    public String getOutputImageName(final String imageParamName) {
-    		//System.out.println(resultImage.length);
-                return hurstImage.getImageName();
-        }
 
     /**
      * Returns whether the action has successfully completed its execution.
