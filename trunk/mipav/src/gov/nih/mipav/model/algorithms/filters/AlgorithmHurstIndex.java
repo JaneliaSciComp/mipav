@@ -52,15 +52,14 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
     /**
      * Creates a new AlgorithmHurstIndex object for black and white image.
      *
-     * @param              destImg            image model where result image is to stored
      * @param              srcImg             source image model
      * @param              minDist            minimum distance between pixels
      * @param              maxDist            maximum distance between pixels
      * @param              integerDistancePart   If true, take the integer part of the Euclidean distance as the distance.
      *                                           if false, take the Euclidean distance as the distance.
      */
-    public AlgorithmHurstIndex(ModelImage destImg, ModelImage srcImg, double minDist, double maxDist, boolean integerDistancePart) {
-        super(destImg, srcImg);
+    public AlgorithmHurstIndex(ModelImage srcImg, double minDist, double maxDist, boolean integerDistancePart) {
+        super(null, srcImg);
         this.minDist = minDist;
         this.maxDist = maxDist;
         this.integerDistancePart = integerDistancePart;
@@ -69,7 +68,6 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
     /**
      * Creates a new AlgorithmHurstIndex object for color image.
      *
-     * @param              destImg            image model where result image is to stored
      * @param              srcImg             source image model
      * @param              RGBOffset          selects red, green, or blue channel
      * @param              minDist            minimum distance between pixels
@@ -77,9 +75,9 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
      * @param              integerDistancePart   If true, take the integer part of the Euclidean distance as the distance.
      *                                           if false, take the Euclidean distance as the distance.
      */
-    public AlgorithmHurstIndex(ModelImage destImg, ModelImage srcImg, int RGBOffset, 
+    public AlgorithmHurstIndex(ModelImage srcImg, int RGBOffset, 
                                     double minDist, double maxDist, boolean integerDistancePart) {
-        super(destImg, srcImg);
+        super(null, srcImg);
         this.RGBOffset = RGBOffset;
         this.minDist = minDist;
         this.maxDist = maxDist;
@@ -92,7 +90,6 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        destImage = null;
         srcImage = null;
         super.finalize();
     }
@@ -160,6 +157,15 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
         double sumDistanceIntensity;
         double hurstIndex;
         double hurstBuffer[];
+        VOIVector voiVector;
+        ModelImage maskImage;
+        int vIndex;
+        VOIBaseVector curves = null;
+        int vIndex2Size;
+        int vIndex2;
+        int xBounds[] = new int[2];
+        int yBounds[] = new int[2];
+        int zBounds[] = new int[2];
         
         if (srcImage.getNDims() == 2) {
             zDim = 1;
@@ -167,132 +173,147 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
         else {
             zDim = srcImage.getExtents()[2];
         }
-
-
-        for (z = 0; z < zDim; z++) {
-        try {
-            if (srcImage.isColorImage()) {
-                floatBuffer = new float[sliceSize];
-                srcImage.exportRGBData(RGBOffset, 4*z*sliceSize, sliceSize, floatBuffer);  
-                for (i = 0; i < sliceSize; i++) {
-                    sourceBuffer[i] = (double)floatBuffer[i];
-                }
-                floatBuffer = null;
-            }
-            else {
-                srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
-            }
-        } catch (IOException error) {
-            if (srcImage.isColorImage()) {
-                MipavUtil.displayError(
-                "AlgorithmHurstIndex: IOException on srcImage.exportRGBData(RGBOffset,4*z*sliceSize,sliceSize,floatBuffer)");
-            }
-            else {
-                MipavUtil.displayError(
-                "AlgorithmHurstIndex: IOException on srcImage.exportData(z*sliceSize,sliceSize,sourceBuffer)");    
-            }
+        
+        voiVector = srcImage.getVOIs();
+        
+        if (voiVector.size() == 0) {
+            MipavUtil.displayError("No VOIs are present");
             setCompleted(false);
-
             return;
         }
-        hurstBuffer = new double[sliceSize];
         
+        try {
+            maskImage = new ModelImage(ModelStorageBase.SHORT, srcImage.getExtents(), "Short Image");
+        } catch (final OutOfMemoryError error) {
+            MipavUtil.displayError("Out of memory error reating maskImage");
+            setCompleted(false);
+            return;    
+        }
         
-        List<DistanceIntensity> list = new ArrayList<DistanceIntensity>();
-        for (y = 0; (y <= yDim-1) && !threadStopped; y++) {
-            
-            fireProgressStateChanged(((int)((z * 100.0f/zDim) + (y * (100.0f / (zDim*(yDim-1)))))), null, null);
-            jStart = Math.max(0, (int)(y - maxDist));
-            jFinish = Math.min(yDim-1, (int)Math.ceil(y + maxDist));
-            
-            for (x = 0; x <= xDim-1; x++) {
-                pos = x + (y * xDim);
-                iStart = Math.max(0, (int)(x - maxDist));
-                iFinish = Math.min(xDim-1, (int)Math.ceil(x + maxDist));
-                list.clear();
-                for (j = jStart; j <= jFinish; j++) {
-                    yDiff = j - y;
-                    yDiffSquared = yDiff*yDiff;
-                    for (i = iStart; i <= iFinish; i++) {
-                        xDiff = i - x;
-                        xDiffSquared = xDiff * xDiff;
-                        distance = Math.sqrt(xDiffSquared + yDiffSquared);
-                        if (integerDistancePart) {
-                            distance = Math.floor(distance);
+        for (vIndex = 0; vIndex < voiVector.size(); vIndex++) {
+            VOI presentVOI = voiVector.elementAt(vIndex);
+            if ((presentVOI.getCurveType() == VOI.CONTOUR) || (presentVOI.getCurveType() == VOI.POLYLINE)) {
+                curves = presentVOI.getCurves();    
+                vIndex2Size = curves.size();
+                for (vIndex2 = 0; vIndex2 < vIndex2Size; vIndex2++) {
+                    curves.get(vIndex2).getBounds(xBounds, yBounds, zBounds);    
+
+                    for (z = 0; z < zDim; z++) {
+                    try {
+                        if (srcImage.isColorImage()) {
+                            floatBuffer = new float[sliceSize];
+                            srcImage.exportRGBData(RGBOffset, 4*z*sliceSize, sliceSize, floatBuffer);  
+                            for (i = 0; i < sliceSize; i++) {
+                                sourceBuffer[i] = (double)floatBuffer[i];
+                            }
+                            floatBuffer = null;
                         }
-                        if ((distance >= minDist) && (distance <= maxDist)) {
-                            newPos = i + (j * xDim);
-                            absIntensityDiff = Math.abs(sourceBuffer[newPos] - sourceBuffer[pos]);
-                            list.add(new DistanceIntensity(distance, absIntensityDiff));
-                        } // if ((distance >= minDist) && (distance <= maxDist))
-                    } // for (i = iStart; i <= iFinish; i++)
-                } // for (j = jStart; j <= jFinish; j++)
-                Collections.sort(list, new DistanceIntensityComparator());
-                numDistances = 1;
-                for (i = 1; i < list.size(); i++) {
-                    if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
-                        numDistances++;
+                        else {
+                            srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
+                        }
+                    } catch (IOException error) {
+                        if (srcImage.isColorImage()) {
+                            MipavUtil.displayError(
+                            "AlgorithmHurstIndex: IOException on srcImage.exportRGBData(RGBOffset,4*z*sliceSize,sliceSize,floatBuffer)");
+                        }
+                        else {
+                            MipavUtil.displayError(
+                            "AlgorithmHurstIndex: IOException on srcImage.exportData(z*sliceSize,sliceSize,sourceBuffer)");    
+                        }
+                        setCompleted(false);
+            
+                        return;
                     }
-                }
-                distanceArray = new double[numDistances];
-                intensityArray = new double[numDistances];
-                distanceArray[0] = list.get(0).getDistance();
-                intensityArray[0] = list.get(0).getIntensity();
-                index = 0;
-                numAtIndex = 1;
-                for (i = 1; i < list.size(); i++) {
-                    if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
-                        intensityArray[index] = intensityArray[index]/numAtIndex;
-                        index++;
-                        numAtIndex = 1;
-                        distanceArray[index] = list.get(i).getDistance();
-                        intensityArray[index] = list.get(i).getIntensity();
+                    hurstBuffer = new double[sliceSize];
+                    
+                    
+                    List<DistanceIntensity> list = new ArrayList<DistanceIntensity>();
+                    for (y = 0; (y <= yDim-1) && !threadStopped; y++) {
+                        
+                        fireProgressStateChanged(((int)((z * 100.0f/zDim) + (y * (100.0f / (zDim*(yDim-1)))))), null, null);
+                        jStart = Math.max(0, (int)(y - maxDist));
+                        jFinish = Math.min(yDim-1, (int)Math.ceil(y + maxDist));
+                        
+                        for (x = 0; x <= xDim-1; x++) {
+                            pos = x + (y * xDim);
+                            iStart = Math.max(0, (int)(x - maxDist));
+                            iFinish = Math.min(xDim-1, (int)Math.ceil(x + maxDist));
+                            list.clear();
+                            for (j = jStart; j <= jFinish; j++) {
+                                yDiff = j - y;
+                                yDiffSquared = yDiff*yDiff;
+                                for (i = iStart; i <= iFinish; i++) {
+                                    xDiff = i - x;
+                                    xDiffSquared = xDiff * xDiff;
+                                    distance = Math.sqrt(xDiffSquared + yDiffSquared);
+                                    if (integerDistancePart) {
+                                        distance = Math.floor(distance);
+                                    }
+                                    if ((distance >= minDist) && (distance <= maxDist)) {
+                                        newPos = i + (j * xDim);
+                                        absIntensityDiff = Math.abs(sourceBuffer[newPos] - sourceBuffer[pos]);
+                                        list.add(new DistanceIntensity(distance, absIntensityDiff));
+                                    } // if ((distance >= minDist) && (distance <= maxDist))
+                                } // for (i = iStart; i <= iFinish; i++)
+                            } // for (j = jStart; j <= jFinish; j++)
+                            Collections.sort(list, new DistanceIntensityComparator());
+                            numDistances = 1;
+                            for (i = 1; i < list.size(); i++) {
+                                if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
+                                    numDistances++;
+                                }
+                            }
+                            distanceArray = new double[numDistances];
+                            intensityArray = new double[numDistances];
+                            distanceArray[0] = list.get(0).getDistance();
+                            intensityArray[0] = list.get(0).getIntensity();
+                            index = 0;
+                            numAtIndex = 1;
+                            for (i = 1; i < list.size(); i++) {
+                                if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
+                                    intensityArray[index] = intensityArray[index]/numAtIndex;
+                                    index++;
+                                    numAtIndex = 1;
+                                    distanceArray[index] = list.get(i).getDistance();
+                                    intensityArray[index] = list.get(i).getIntensity();
+                                }
+                                else {
+                                    intensityArray[index] += list.get(i).getIntensity();
+                                    numAtIndex++;
+                                }
+                            } // for (i = 1; i < list.size(); i++)
+                            intensityArray[index] = intensityArray[index]/numAtIndex;
+                            
+                            sumDistance = 0.0;
+                            sumDistanceSquared = 0.0;
+                            sumIntensity = 0.0;
+                            sumDistanceIntensity = 0.0;
+                            for (i = 0; i < numDistances; i++) {
+                                distanceArray[i] = Math.log(distanceArray[i]);
+                                intensityArray[i] = Math.log(intensityArray[i]);
+                                sumDistance += distanceArray[i];
+                                sumDistanceSquared += distanceArray[i]*distanceArray[i];
+                                sumIntensity += intensityArray[i];
+                                sumDistanceIntensity += distanceArray[i]*intensityArray[i];
+                            }
+                            hurstIndex = (sumDistanceIntensity - sumDistance*sumIntensity/numDistances)/
+                                    (sumDistanceSquared - sumDistance*sumDistance/numDistances);
+                            hurstBuffer[pos] = hurstIndex;
+                        } // for (x = 0; x <= xDim-1; x++)
+                    } // for (y = 0; (y <= yDim-1) && !threadStopped; y++)
+                    
+                    
+            
+                    if (threadStopped) {
+                        finalize();
+            
+                        return;
                     }
-                    else {
-                        intensityArray[index] += list.get(i).getIntensity();
-                        numAtIndex++;
-                    }
-                } // for (i = 1; i < list.size(); i++)
-                intensityArray[index] = intensityArray[index]/numAtIndex;
-                
-                sumDistance = 0.0;
-                sumDistanceSquared = 0.0;
-                sumIntensity = 0.0;
-                sumDistanceIntensity = 0.0;
-                for (i = 0; i < numDistances; i++) {
-                    distanceArray[i] = Math.log(distanceArray[i]);
-                    intensityArray[i] = Math.log(intensityArray[i]);
-                    sumDistance += distanceArray[i];
-                    sumDistanceSquared += distanceArray[i]*distanceArray[i];
-                    sumIntensity += intensityArray[i];
-                    sumDistanceIntensity += distanceArray[i]*intensityArray[i];
-                }
-                hurstIndex = (sumDistanceIntensity - sumDistance*sumIntensity/numDistances)/
-                        (sumDistanceSquared - sumDistance*sumDistance/numDistances);
-                hurstBuffer[pos] = hurstIndex;
-            } // for (x = 0; x <= xDim-1; x++)
-        } // for (y = 0; (y <= yDim-1) && !threadStopped; y++)
-        
-        
-
-        if (threadStopped) {
-            finalize();
-
-            return;
-        }
-        
-        try {
-            destImage.importData(z*sliceSize, hurstBuffer, false);
-        } catch (IOException error) {
-            MipavUtil.displayError("AlgorithmHurstIndex: IOException on destImage.importData(z*sliceSize,hurstBuffer,false)");
-            setCompleted(false);
-
-            return;
-        }
-
-       
-        } // for (z = 0; z < zDim; z++)
-        destImage.calcMinMax();
+                   
+                    } // for (z = 0; z < zDim; z++)
+                } // for (vIndex2 = 0; vIndex2 < vIndex2Size; vIndex2++)
+            } // if ((presentVOI.getCurveType() == VOI.CONTOUR) || (presentVOI.getCurveType() == VOI.POLYLINE))
+        } // for (vIndex = 0; vIndex < voiVector.size(); vIndex++)
         
        
         setCompleted(true);
