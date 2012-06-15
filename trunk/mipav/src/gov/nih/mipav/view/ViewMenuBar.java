@@ -4,7 +4,6 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import java.awt.Component;
-import java.awt.Menu;
 import java.awt.event.ActionListener;
 import java.util.Vector;
 
@@ -182,6 +181,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Gaussian blur", null, 0, null, false),
                         menuBuilder.buildMenuItem("Gradient magnitude", null, 0, null, false),
                         menuBuilder.buildMenuItem("Haralick texture", "Haralick", 0, null, false),
+                        menuBuilder.buildMenuItem("Hurst index", "Hurst", 0, null, false),
                         menuBuilder.buildMenuItem("Kernel regression", "kernelRegression", 0, null, false),
                         menuBuilder.buildMenuItem("Laplacian", null, 0, null, false),
                         menuBuilder.buildMenuItem("Local normalization", null, 0, null, false),
@@ -1023,6 +1023,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
+            menuBuilder.setMenuItemEnabled("Hurst index", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
@@ -1265,6 +1266,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", true);
         menuBuilder.setMenuItemEnabled("Capture image slices to new frame", true);
         menuBuilder.setMenuItemEnabled("Haralick texture", true);
+        menuBuilder.setMenuItemEnabled("Hurst index", true);
         menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
         menuBuilder.setMenuItemEnabled("Pad slices to power of 2", true);
         menuBuilder.setMenuItemEnabled("Replace blanks with averages", true);
