@@ -62,18 +62,16 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private int RGBOffset = RED_OFFSET;
     
-    // Values of 4 and 64 for minDistance and maxDistance obtained from article 
-    // "Sonographic Texture Characterization of Salivary Gland Tumors by Fractal Analysis"
-    private double minDistance = 4;
+    private double minDistance = 1;
     
-    private double maxDistance = 64;
+    private double maxDistance = 7;
     
-    /** If true, take integer part of Euclidean distance as distance
+    /** If true, take rounding of Euclidean distance as distance
      *  If false, take Euclidean distance as distance
      */
-    private boolean integerDistancePart = true;
+    private boolean integerDistanceRound = true;
     
-    private JLabel labelVOI;
+    private JLabel labelDimensionality;
     
     private JTextField textMinDistance;
     
@@ -83,7 +81,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     
     private JLabel labelMaxDistance;
     
-    private JCheckBox integerDistancePartCheckBox;
+    private JCheckBox integerDistanceRoundCheckBox;
     
     /** DOCUMENT ME! */
     private JPanel distancePanel;
@@ -93,6 +91,18 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private AlgorithmHurstIndex hurstAlgo;
+    
+    private ButtonGroup pixelOrVOIGroup;
+    
+    private JRadioButton pixelButton;
+    
+    private JRadioButton voiButton;
+    
+    // If true, give results for every pixel;
+    // If false, give results for every voi
+    private boolean pixelResult = true;
+    
+    private ModelImage resultImage = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -152,8 +162,37 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
         if (algorithm instanceof AlgorithmHurstIndex) {
             image.clearMask();
+            
+            if ((hurstAlgo.isCompleted()) && (resultImage != null) && (pixelResult)) {
 
-            if (hurstAlgo.isCompleted() == true) {
+                // The algorithm has completed and produced a new image to be displayed.
+                // Take resultImage out of array form or null pointer errors can
+                // result in one of the resultImages after another of the resultImages
+                // has been deleted.
+                
+                
+                // save the completion status for later
+                setComplete(hurstAlgo.isCompleted());
+
+                updateFileInfo(image, resultImage);
+                resultImage.clearMask();
+                
+                try {
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                    JOptionPane.showMessageDialog(null, "Out of memory: unable to open new resultImage frame",
+                                                  "Error", JOptionPane.ERROR_MESSAGE);
+                }
+
+            } else if (resultImage != null) {
+
+                // algorithm failed but result image still has garbage
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+                System.gc();
+            }
+            else if ((hurstAlgo.isCompleted()) && (!pixelResult)) {
 
                 
             	// save the completion status for later
@@ -165,7 +204,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
                 insertScriptLine();
             }
 
-        dispose();
+            dispose();
         }
 
     }
@@ -189,7 +228,8 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         }
         str += minDistance + delim;
         str += maxDistance + delim;
-        str += integerDistancePart;
+        str += integerDistanceRound + delim;
+        str += pixelResult;
 
         return str;
     }
@@ -206,7 +246,10 @@ public class JDialogHurstIndex extends JDialogScriptableBase
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 textMinDistance.setText("" + MipavUtil.getDouble(st));
                 textMaxDistance.setText("" + MipavUtil.getDouble(st));
-                integerDistancePartCheckBox.setSelected(MipavUtil.getBoolean(st));
+                integerDistanceRoundCheckBox.setSelected(MipavUtil.getBoolean(st));
+                pixelResult = (MipavUtil.getBoolean(st));
+                pixelButton.setSelected(pixelResult);
+                voiButton.setSelected(!pixelResult);
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -241,12 +284,12 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     }
     
     /**
-     * If true, the integer part of the Euclidean distance is taken as the distance
+     * If true, the rounding of the Euclidean distance is taken as the distance
      * If false, the Euclidean distance is taken as the distance
-     * @param integerDistancePart
+     * @param integerDistanceRound
      */
-    public void setIntegerDistancePart(boolean integerDistancePart) {
-        this.integerDistancePart = integerDistancePart;
+    public void setIntegerDistanceRound(boolean integerDistanceRound) {
+        this.integerDistanceRound = integerDistanceRound;
     }
 
     
@@ -258,6 +301,14 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     public void setRGBOffset(int RGBoffset) {
         this.RGBOffset = RGBoffset;
     }
+    
+    public void setPixelResult(boolean pixelResult) {
+        this.pixelResult = pixelResult;
+    }
+    
+    public ModelImage getResultImage() {
+        return resultImage;
+    }
 
     /**
      * Once all the necessary variables are set, call the Hurst Index algorithm.
@@ -266,12 +317,25 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
         try {
            
-            if (image.isColorImage()) {
-                hurstAlgo = new AlgorithmHurstIndex(image, RGBOffset, minDistance, maxDistance,
-                                                    integerDistancePart);    
+            if (pixelResult) {
+                String name =  makeImageName(image.getImageName(), "_Hurst");
+                resultImage = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
+                if (image.isColorImage()) {
+                    hurstAlgo = new AlgorithmHurstIndex(resultImage, image, RGBOffset, minDistance, maxDistance,
+                                                        integerDistanceRound);    
+                }
+                else {
+                    hurstAlgo = new AlgorithmHurstIndex(resultImage, image, minDistance, maxDistance, integerDistanceRound);
+                }    
             }
             else {
-                hurstAlgo = new AlgorithmHurstIndex(image, minDistance, maxDistance, integerDistancePart);
+                if (image.isColorImage()) {
+                    hurstAlgo = new AlgorithmHurstIndex(image, RGBOffset, minDistance, maxDistance,
+                                                        integerDistanceRound);    
+                }
+                else {
+                    hurstAlgo = new AlgorithmHurstIndex(image, minDistance, maxDistance, integerDistanceRound);
+                }
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
@@ -296,7 +360,12 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
         } catch (OutOfMemoryError x) {
             
-         // save the completion status for later
+            if (resultImage != null) {
+                resultImage.disposeLocal();
+                resultImage = null;
+            }
+            
+            // save the completion status for later
             setComplete(hurstAlgo.isCompleted());
 
             System.gc();
@@ -311,6 +380,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -328,7 +398,8 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         }
         setMinDistance(scriptParameters.getParams().getDouble("min_distance"));
         setMaxDistance(scriptParameters.getParams().getInt("max_distance"));
-        setIntegerDistancePart(scriptParameters.getParams().getBoolean("integer_distance_part"));
+        setIntegerDistanceRound(scriptParameters.getParams().getBoolean("integer_distance_round"));
+        setPixelResult(scriptParameters.getParams().getBoolean("pixel_result"));
     }
 
     /**
@@ -336,13 +407,17 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
+        if (pixelResult) {
+            scriptParameters.storeImageInRecorder(getResultImage());
+        }
 
         if (image.isColorImage()) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", RGBOffset));
         }
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_distance", minDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_distance", maxDistance));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("integer_distance_part", integerDistancePart));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("integer_distance_round", integerDistanceRound));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pixel_result", pixelResult));
     }
 
     /**
@@ -403,7 +478,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             mainPanel.add(colorScroll, gbc);   
         } // if (image.isColorImage())
 
-        distancePanel = new JPanel(new GridBagLayout()); //4 rows x 2 columns
+        distancePanel = new JPanel(new GridBagLayout()); //6 rows x 2 columns
         distancePanel.setForeground(Color.black);
         gbc.gridx = 0;
         gbc.gridy = ypos++;
@@ -414,18 +489,18 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         mainPanel.add(scaleScroll, gbc);
 
         GridBagConstraints gbcScale = new GridBagConstraints();
-        //first row
-        labelVOI = new JLabel("Finds distances for Hurst index within each VOI");
-        labelVOI.setForeground(Color.black);
-        labelVOI.setFont(serif12);
+        
+        // First row
+        labelDimensionality = new JLabel("Dimensionality = 3.0 - Hurst index ");
+        labelDimensionality.setForeground(Color.black);
+        labelDimensionality.setFont(serif12);
         gbcScale.gridx = 0;
         gbcScale.gridy = 0;
         gbcScale.gridwidth = 2;
-        gbcScale.gridwidth = 1;
         gbcScale.fill = GridBagConstraints.HORIZONTAL;
         gbcScale.anchor = GridBagConstraints.WEST;
         gbcScale.insets = new Insets(0, 0, 2, 0);
-        distancePanel.add(labelVOI, gbcScale);
+        distancePanel.add(labelDimensionality, gbcScale);
         
         // Second row
         labelMinDistance = new JLabel("Minimum pixel distance (>= 1.0): ");
@@ -439,7 +514,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         gbcScale.insets = new Insets(0, 0, 2, 0);
         distancePanel.add(labelMinDistance, gbcScale);
         textMinDistance = new JTextField(10);
-        textMinDistance.setText("4.0");
+        textMinDistance.setText(String.valueOf(minDistance));
         textMinDistance.setFont(serif12);
         textMinDistance.setForeground(Color.black);
         gbcScale.gridx++;
@@ -455,22 +530,43 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         gbcScale.insets = new Insets(0, 0, 2, 0);
         distancePanel.add(labelMaxDistance, gbcScale);
         textMaxDistance = new JTextField(10);
-        textMaxDistance.setText("64.0");
+        textMaxDistance.setText(String.valueOf(maxDistance));
         textMaxDistance.setFont(serif12);
         textMaxDistance.setForeground(Color.black);
         gbcScale.gridx++;
         gbcScale.insets = new Insets(0, 4, 2, 0);
         distancePanel.add(textMaxDistance, gbcScale);
         
-        //fourth row
-        integerDistancePartCheckBox = new JCheckBox("Take integer part of Euclidean distance as distance", true);
-        integerDistancePartCheckBox.setForeground(Color.black);
-        integerDistancePartCheckBox.setFont(serif12);
+        //Fourth row
+        integerDistanceRoundCheckBox = new JCheckBox("Take rounding of Euclidean distance as distance", true);
+        integerDistanceRoundCheckBox.setForeground(Color.black);
+        integerDistanceRoundCheckBox.setFont(serif12);
         gbcScale.gridwidth = 2;
         gbcScale.gridx = 0;
         gbcScale.gridy++;
         gbcScale.insets = new Insets(0, 0, 2, 0);
-        distancePanel.add(integerDistancePartCheckBox, gbcScale);
+        distancePanel.add(integerDistanceRoundCheckBox, gbcScale);
+        
+        pixelOrVOIGroup = new ButtonGroup();
+        // Fifth row
+        pixelButton = new JRadioButton("Calculate Hurst index for every pixel", true);
+        pixelButton.setForeground(Color.black);
+        pixelButton.setFont(serif12);
+        pixelOrVOIGroup.add(pixelButton);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        distancePanel.add(pixelButton, gbcScale);
+        
+        // Sixth row
+        voiButton = new JRadioButton("Cacluate Hurst index for every voi", false);
+        voiButton.setForeground(Color.black);
+        voiButton.setFont(serif12);
+        pixelOrVOIGroup.add(voiButton);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        distancePanel.add(voiButton, gbcScale);
         
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -495,21 +591,27 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     private boolean setVariables() {
         String tmpStr;
         int i;
-        
-        ViewVOIVector VOIs = image.getVOIs();
-        int nVOIs = VOIs.size();
         int nBoundingVOIs = 0;
         
-        for (i = 0; i < nVOIs; i++) {
-
-            if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
-                nBoundingVOIs++;
+        pixelResult = pixelButton.isSelected();
+        
+        if (!pixelResult) {
+            ViewVOIVector VOIs = image.getVOIs();
+            if (VOIs != null) {
+                int nVOIs = VOIs.size();
+                
+                for (i = 0; i < nVOIs; i++) {
+        
+                    if ((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
+                        nBoundingVOIs++;
+                    }
+                }
+            } // if VOIs != null)
+            if (nBoundingVOIs == 0) {
+                MipavUtil.displayError("Must have at least 1 contour or polyline VOI");
+                return false;
             }
-        }
-        if (nBoundingVOIs == 0) {
-            MipavUtil.displayError("Must have at least 1 contour of polyline VOI");
-            return false;
-        }
+        } // if (!pixelResult)
         
         if (image.isColorImage()) {
 
@@ -546,7 +648,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             return false;
         }
         
-        integerDistancePart = integerDistancePartCheckBox.isSelected();
+        integerDistanceRound = integerDistanceRoundCheckBox.isSelected();
         
         
         return true;
@@ -600,9 +702,10 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         	
             table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
             table.put(new ParameterInt("RGB_offset",1));
-            table.put(new ParameterDouble("min_distance", 4.0));
-            table.put(new ParameterDouble("max_distance", 64.0));
-            table.put(new ParameterBoolean("integer_distance_part", true));
+            table.put(new ParameterDouble("min_distance", 1.0));
+            table.put(new ParameterDouble("max_distance", 7.0));
+            table.put(new ParameterBoolean("integer_distance_round", true));
+            table.put(new ParameterBoolean("pixel_result", true));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
