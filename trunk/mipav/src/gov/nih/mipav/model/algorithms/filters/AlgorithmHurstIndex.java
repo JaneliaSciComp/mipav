@@ -36,6 +36,11 @@ import java.util.List;
  * to be followed by an upward step.  Therefore, a lower Hurst index indicates a higher complexity of the
  * distribution of pixel values.
  * 
+ * Dimensionality = 3 - Hurst coefficient.
+ * 
+ * The fractal dimension has lower values on the boundary of different texture regions, and tends to be
+ * constant over uniform texture regions.
+ * 
  * References: 1.) "Sonographic Texture Characterization of Salivary  Gland Tumors by Fractal Analysis",
  * by Toru Chikui, Kenji Tokumori, Kazunori Yoshiura, Kazunari Oobu, Seiji Nakamura, and Katsumasa Nakamura,
  * Ultrasound in Medicine and Biology, Vol. 31, No. 10, pp. 1297-1304, 2005.
