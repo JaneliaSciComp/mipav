@@ -21,6 +21,7 @@ import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIFiberTrackin
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.JPanelDTIVisualization;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.VolumeTriPlanarInterfaceDTI;
 import gov.nih.mipav.view.renderer.WildMagic.Interface.JDialogDTIInput;
+import gov.nih.mipav.view.dialogs.reportbug.*;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -444,6 +445,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             ProvenanceRecorder.getReference().addLine(new ActionCollectGarbage());
             ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
             return;
+        } else if (command.equals("reportbug")) {
+        	ReportBugBuilder form = new ReportBugBuilder();
         } else if (command.equals("Dicom")) {
 
             if (Preferences.is(Preferences.PREF_ASK_DICOM_RECEIVER)) {
@@ -3523,17 +3526,32 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     protected JPanel initCreateMemoryUsagePanel() {
         final JPanel panel = new JPanel();
+        JToolBar bottom = new JToolBar();
 
         final JButton btnRecycle = new JButton(MipavUtil.getIcon("recycle.gif"));
+        final JButton btnReportBug = new JButton(MipavUtil.getIcon("reportbugsmall.gif"));
         btnRecycle.setFont(MipavUtil.font12);
         btnRecycle.setActionCommand("gc");
         btnRecycle.addActionListener(this);
+        btnReportBug.setFont(MipavUtil.font12);
+        //btnReportBug.setBorderPainted(false);
+        btnReportBug.setFocusPainted(false);
+        btnReportBug.setToolTipText("Report a bug in MIPAV");
+        btnReportBug.setRolloverEnabled(true);
+        //btnReportBug.setRolloverIcon(MipavUtil.getIcon("reportbugroll.gif"));
+        btnReportBug.setActionCommand("reportbug");
+        btnReportBug.addActionListener(this);
 
         memoryUsageLabel = new JLabel("Memory: ");
         memoryUsageLabel.setFont(MipavUtil.font12);
 
         panel.add(memoryUsageLabel);
         panel.add(btnRecycle);
+//        bottom.add(btnReportBug);
+//        bottom.setFloatable(false);
+//        bottom.setRollover(false);
+//        bottom.setBorderPainted(false);
+        panel.add(btnReportBug);
 
         try {
             memoryUsageThread = new ReminderThread(1000);
