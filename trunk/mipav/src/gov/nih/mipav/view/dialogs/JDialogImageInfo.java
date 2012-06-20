@@ -3256,9 +3256,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         if (newMatrix != null) {
             final int dim = newMatrix.getDim();
 
-            if (dim != textMatrix.length) {
-                return;
-            }
+            // Do not use because textMatrix.length = 4 for both 2D and 3D matrices
+            // while dim = 3 for 2D matrices and 4 for 3D matrices.
+            //if (dim != textMatrix.length) {
+                //return;
+            //}
 
             for (int i = 0; i < dim; i++) {
 
