@@ -2735,7 +2735,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             } else {
                 textRes3.requestFocus();
                 textRes3.selectAll();
-
                 return false;
             }
 
@@ -2826,8 +2825,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             if (JDialogBase.testParameter(tmpStr, -10000, 10000)) {
                 tmpOrigin[3] = Double.valueOf(tmpStr).floatValue();
             } else {
-                textSt3.requestFocus();
-                textSt3.selectAll();
+                textSt4.requestFocus();
+                textSt4.selectAll();
 
                 return false;
             }
