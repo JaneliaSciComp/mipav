@@ -1767,6 +1767,18 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
         tagsModel.setValueAt(null, i, 0);
         tagsModel.setValueAt(new Double(DicomInfo.getMax()), i, 3);
         tagsModel.addRow(rowData);
+        tagsModel.setValueAt("X origin", ++i, 2);
+        tagsModel.setValueAt(null, i, 0);
+        tagsModel.setValueAt(new Float(DicomInfo.getOrigin()[0]), i, 3);
+        tagsModel.addRow(rowData);
+        tagsModel.setValueAt("Y origin", ++i, 2);
+        tagsModel.setValueAt(null, i, 0);
+        tagsModel.setValueAt(new Float(DicomInfo.getOrigin()[1]), i, 3);
+        tagsModel.addRow(rowData);
+        tagsModel.setValueAt("Z origin", ++i, 2);
+        tagsModel.setValueAt(null, i, 0);
+        tagsModel.setValueAt(new Float(DicomInfo.getOrigin()[2]), i, 3);
+        tagsModel.addRow(rowData);
         tagsModel.setValueAt("Orientation", ++i, 2);
         tagsModel.setValueAt(null, i, 0);
 
