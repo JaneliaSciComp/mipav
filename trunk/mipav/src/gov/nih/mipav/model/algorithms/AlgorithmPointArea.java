@@ -119,7 +119,7 @@ public class AlgorithmPointArea extends AlgorithmBase {
 
         // check to see that image is 3 dim
         if (image.getNDims() != 3) {
-            MipavUtil.displayError("" + image.getNDims() + "AlgorithmPointAverageIntensities not supported.");
+            MipavUtil.displayError("AlgorithmPointAverageIntensities not supported for " + image.getNDims() + "D images");
             disposeLocal();
 
             return;
