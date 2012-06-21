@@ -278,12 +278,12 @@ public class ReportBugBuilder extends JDialogBase{
 					fullReport.setFileName(file);
 					parts.addBodyPart(fullReport);
 					
-					BodyPart console = new MimeBodyPart();
-					file = "console.txt";
-					source = new FileDataSource(file);
-					console.setDataHandler(new DataHandler(source));
-					console.setFileName(file);
-					parts.addBodyPart(console);
+//					BodyPart console = new MimeBodyPart();
+//					file = "console.txt";
+//					source = new FileDataSource(file);
+//					console.setDataHandler(new DataHandler(source));
+//					console.setFileName(file);
+//					parts.addBodyPart(console);
 					
 					report.setContent(parts);
 					
@@ -292,6 +292,7 @@ public class ReportBugBuilder extends JDialogBase{
 					JOptionPane.showMessageDialog(null, "Message sent succesfully");
 				} catch (MessagingException e) {
 					MipavUtil.displayError("nope");
+					e.printStackTrace();
 				}
 				
 			}
@@ -512,16 +513,16 @@ public class ReportBugBuilder extends JDialogBase{
     	
     	JPanel mainPanel = new JPanel();
     	mainPanel.setLayout(new BorderLayout());
-    	
-    	if (userType == 1){
-    		mainPanel.add(sidePanel, BorderLayout.WEST);
-    		mainPanel.add(descriptions, BorderLayout.EAST);
-    		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-    	}
-    	
-    	frame = new JFrame("Report a Bug");
-    	frame.getContentPane().add(mainPanel);
-		frame.pack();
-		frame.setVisible(true);
+//    	
+//    	if (userType == 1){
+//    		mainPanel.add(sidePanel, BorderLayout.WEST);
+//    		mainPanel.add(descriptions, BorderLayout.EAST);
+//    		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+//    	}
+//    	
+//    	frame = new JFrame("Report a Bug");
+//    	frame.getContentPane().add(mainPanel);
+//		frame.pack();
+//		frame.setVisible(true);
 	}
 }
