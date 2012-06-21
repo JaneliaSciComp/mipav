@@ -304,7 +304,12 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
                     for (i = 1; i < list.size(); i++) {
                         if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
                             intensityArray[index] = intensityArray[index]/numAtIndex;
-                            index++;
+                            if (intensityArray[index] > 0.0) {
+                                index++;
+                            }
+                            else {
+                                numDistances--;
+                            }
                             numAtIndex = 1;
                             distanceArray[index] = list.get(i).getDistance();
                             intensityArray[index] = list.get(i).getIntensity();
@@ -315,6 +320,9 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
                         }
                     } // for (i = 1; i < list.size(); i++)
                     intensityArray[index] = intensityArray[index]/numAtIndex;
+                    if (intensityArray[index] == 0.0) {
+                        numDistances--;
+                    }
                     
                     sumDistance = 0.0;
                     sumDistanceSquared = 0.0;
@@ -543,7 +551,12 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
                     for (i = 1; i < list.size(); i++) {
                         if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
                             intensityArray[index] = intensityArray[index]/numAtIndex;
-                            index++;
+                            if (intensityArray[index] > 0.0) {
+                                index++;
+                            }
+                            else {
+                                numDistances--;
+                            }
                             numAtIndex = 1;
                             distanceArray[index] = list.get(i).getDistance();
                             intensityArray[index] = list.get(i).getIntensity();
@@ -554,6 +567,9 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
                         }
                     } // for (i = 1; i < list.size(); i++)
                     intensityArray[index] = intensityArray[index]/numAtIndex;
+                    if (intensityArray[index] == 0.0) {
+                        numDistances--;
+                    }
                     
                     sumDistance = 0.0;
                     sumDistanceSquared = 0.0;
