@@ -27,9 +27,6 @@ import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.filechooser.*;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.xml.namespace.QName;
-
-import org.apache.axiom.om.*;
 
 import WildMagic.LibFoundation.Mathematics.*;
 
@@ -81,13 +78,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
     private static final String CSV_OUTPUT_DELIM = ",";
 
-    private OMElement dataStructElement, documentElement;
-
-    /** hash table of OMElements * */
-    // private final Hashtable<String, OMElement> documentElements = new Hashtable<String, OMElement>();
-    // private ArrayList<IDataStructure> dataStructuresList = new ArrayList<IDataStructure>();
-    private String namespace;
-
     private final ArrayList<ViewJComponentPreviewImage> previewImages = new ArrayList<ViewJComponentPreviewImage>();
 
     private final ArrayList<File> imageFiles = new ArrayList<File>();
@@ -122,15 +112,12 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
     private int brightness = 0;
 
     protected VToolSimpleAccessionClient client;
-
-    // private OMElement publishedDataStructs = null;
-
-    // private String data_dictionary_server_url =
-    // "http://ndar-stage-apps.cit.nih.gov/NewDataDictionary/dataDictionary?wsdl";
-
-    private String data_dictionary_server_url = "http://ndardemo.nih.gov/NewDataDictionary/dataDictionary?wsdl";
-
-    // private String data_dictionary_server_url = "http://ndarportal.nih.gov/NewDataDictionary/dataDictionary?wsdl";
+    
+    private static final String stageServer = "ndar-stage-apps.cit.nih.gov";
+    private static final String demoServer = "ndardemo.nih.gov";
+    private static final String prodServer = "ndarportal.nih.gov";
+    
+    private String data_dictionary_server_url = "http://" + prodServer + "/NewDataDictionary/dataDictionary?wsdl";
 
     private List<XmlDataType> dataTypes;
 
@@ -152,7 +139,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
      */
     private int resolveConflictsUsing = 0;
 
-    private static final String pluginVersion = "2.3";
+    private static final String pluginVersion = "2.4";
 
     /** Text of the NDAR privacy notice displayed to the user before the plugin can be used. */
     public static final String NDAR_PRIVACY_NOTICE = "MIPAV is a collaborative environment with privacy rules that pertain to the collection\n"
@@ -173,22 +160,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             + "system administrator at ndarhelp@nih.gov. Significant system update information may be posted\n"
             + "on the NDAR site as required.";
 
-    /*
-     * private enum NDARServer { PROD("PROD"), DEMO("DEMO");
-     * 
-     * public String name;
-     * 
-     * NDARServer(final String s) { name = s; } }
-     */
-
     public PlugInDialogNDAR() {
         super(false);
-        Icon icon = null;
-        try {
-            icon = new ImageIcon(MipavUtil.getIconImage(Preferences.getIconName()));
-        } catch (final Exception e) {
-
-        }
+        
         final int response = JOptionPane.showConfirmDialog(this, PlugInDialogNDAR.NDAR_PRIVACY_NOTICE,
                 "NDAR Image Submission Package Creation Tool", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
@@ -411,8 +385,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     csvParamsArr = arr;
                 }
 
-                InfoDialog dlg = new InfoDialog(this, dsName, false, false, csvParamsArr);
-
+                new InfoDialog(this, dsName, false, false, csvParamsArr);
             }
             fis.close();
         } catch (Exception e) {
@@ -760,8 +733,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
 
         final int numDataStructs = sourceTableModel.getRowCount();
-
-        // TODO: new export to CSV
 
         // for each data structure chosen by the user, create a place to put rows of csv data
         csvStructRowData = new Hashtable<String, String>();
@@ -1245,7 +1216,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     }
                 }
 
-                // TODO: should we be outputting all fields? - if not, need to not include element name in header
+                // should we be outputting all fields? - if not, need to not include element name in header
 
                 // if ( !value.trim().equalsIgnoreCase("")) {
                 final File f = new File(value);
@@ -1515,25 +1486,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         }
     }
 
-    public void mouseEntered(final MouseEvent e) {
-    // TODO Auto-generated method stub
+    public void mouseEntered(final MouseEvent e) {}
 
-    }
+    public void mouseExited(final MouseEvent e) {}
 
-    public void mouseExited(final MouseEvent e) {
-    // TODO Auto-generated method stub
+    public void mousePressed(final MouseEvent e) {}
 
-    }
-
-    public void mousePressed(final MouseEvent e) {
-    // TODO Auto-generated method stub
-
-    }
-
-    public void mouseReleased(final MouseEvent e) {
-    // TODO Auto-generated method stub
-
-    }
+    public void mouseReleased(final MouseEvent e) {}
 
     public boolean contains(final File f) {
         boolean contains = false;
@@ -1832,21 +1791,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             }
 
-            // old way of using web service
-            /*
-             * final Iterator<OMElement> iter2 = publishedDataStructs.getChildElements(); while (iter2.hasNext()) {
-             * final OMElement e = iter2.next();
-             * 
-             * if (e.getLocalName().equalsIgnoreCase("data_structure")) { final String shortname =
-             * e.getAttributeValue(qName); final String version = e.getAttributeValue(qVersion); // This can also be
-             * obtained using the last // two // characters of short name final String status =
-             * e.getAttributeValue(qStatus); final String dataType = e.getAttributeValue(qDataType); final String desc =
-             * e.getAttributeValue(qDescription); final String parent = e.getAttributeValue(qParentDataStructure); if
-             * (dataType.equalsIgnoreCase("Imaging")) {
-             * 
-             * descAL.add(desc); shortNameAL.add(shortname); versionAL.add(version); statusAL.add(status); } } }
-             */
-
             TreeSet<String> sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
             for (int i = 0; i < shortNameAL.size(); i++) {
                 sortedNamesSet.add(shortNameAL.get(i));
@@ -1868,7 +1812,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     }
                 }
             }
-            sortedNamesSet = new TreeSet(new AlphabeticalComparator());
+            sortedNamesSet = new TreeSet<String>(new AlphabeticalComparator());
             for (int i = 0; i < sortedNamesArray.length; i++) {
                 if ( !sortedNamesArray[i].equals("")) {
                     sortedNamesSet.add(sortedNamesArray[i]);
@@ -1878,7 +1822,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
             final Object[] rowData = new Object[numColumns];
 
-            Iterator iter = sortedNamesSet.iterator();
+            Iterator<String> iter = sortedNamesSet.iterator();
 
             while (iter.hasNext()) {
                 String name = (String) iter.next();
@@ -1947,13 +1891,11 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         /**
          * This inner class is used to sort the list by instance number
          */
-        private class AlphabeticalComparator implements Comparator {
-            public int compare(Object a, Object b) {
-                return (a.toString().toLowerCase().compareTo(b.toString().toLowerCase()));
-
+        private class AlphabeticalComparator implements Comparator<String> {
+            public int compare(String a, String b) {
+                return (a.toLowerCase().compareTo(b.toLowerCase()));
             }
         }
-
     }
 
     /**
@@ -2220,6 +2162,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     fileIO.setQuiet(true);
                     File file;
                     boolean isMultifile = false;
+                    
+                    // TODO: testing without unzipping
                     if (imageFile.endsWith(".zip")) {
 
                         String destName = imageFile.replace("/", File.separator);
@@ -2287,13 +2231,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                         // final String labelName = command.substring(command.indexOf("_") + 1, command.length());
 
-                        final Set keySet = labelsAndComps.keySet();
-                        final Iterator iter = keySet.iterator();
+                        final Set<JLabel> keySet = labelsAndComps.keySet();
+                        final Iterator<JLabel> iter = keySet.iterator();
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
                             if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                final String n = file.getName();
+                                //final String n = file.getName();
                                 tf.setText("Automatically generated JPEG");
                             } else if (l.getName().equalsIgnoreCase("image_file")) {
                                 final JTextField tf = (JTextField) labelsAndComps.get(l);
@@ -2353,8 +2297,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
                                 if ( !key.equals("image_file")) {
-                                    final Set keySet2 = labelsAndComps.keySet();
-                                    final Iterator iter2 = keySet2.iterator();
+                                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
+                                    final Iterator<JLabel> iter2 = keySet2.iterator();
                                     // System.out.println();
                                     while (iter2.hasNext()) {
                                         final JLabel l = (JLabel) iter2.next();
@@ -2391,8 +2335,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                 key = csvFieldNames[i];
                                 value = csvParams[i];
                                 if ( !key.equals("image_file")) {
-                                    final Set keySet2 = labelsAndComps.keySet();
-                                    final Iterator iter2 = keySet2.iterator();
+                                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
+                                    final Iterator<JLabel> iter2 = keySet2.iterator();
                                     // System.out.println();
                                     while (iter2.hasNext()) {
                                         final JLabel l = (JLabel) iter2.next();
@@ -2440,8 +2384,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     key = csvFieldNames[i];
                     value = csvParams[i];
 
-                    final Set keySet2 = labelsAndComps.keySet();
-                    final Iterator iter2 = keySet2.iterator();
+                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
+                    final Iterator<JLabel> iter2 = keySet2.iterator();
                     // System.out.println();
                     while (iter2.hasNext()) {
                         final JLabel l = (JLabel) iter2.next();
@@ -2500,8 +2444,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
             JPanel panel;
             JScrollPane sp;
-            final Set keySet = labelsAndComps.keySet();
-            final Iterator iter = keySet.iterator();
+            final Set<JLabel> keySet = labelsAndComps.keySet();
+            final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel l = (JLabel) iter.next();
                 final JComponent t = labelsAndComps.get(l);
@@ -2510,7 +2454,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 if (t instanceof JTextField) {
                     if ( ((JTextField) t).getToolTipText().contains("File")) {
                         isFile = true;
-
                     }
                 }
                 for (int k = 0; k < ds2.size(); k++) {
@@ -2564,14 +2507,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
          */
         private void parse_new(final IDataStructure iDataStructure, final DataStruct ds2, final String shortname,
                 final TreeMap<JLabel, JComponent> labelsAndComps) {
-            // final Iterator iter = omElement.getChildElements();
-            OMElement childElement;
-            OMAttribute attr;
-            QName qname;
-            String childElementName;
-
-            Collection dataElements = iDataStructure.getDataElements();
-            Iterator iter = dataElements.iterator();
+            Collection<IDataElement> dataElements = iDataStructure.getDataElements();
+            Iterator<IDataElement> iter = dataElements.iterator();
 
             while (iter.hasNext()) {
                 IDataElement dataElement = (IDataElement) iter.next();
@@ -2739,8 +2676,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         public void populateFieldsFromInProcessState(final TreeMap<JLabel, JComponent> labelsAndComps,
                 final LinkedHashMap<String, String> infoMap2) {
             if (infoMap2 != null) {
-                final Set keySet = infoMap2.keySet();
-                final Iterator iter = keySet.iterator();
+                final Set<String> keySet = infoMap2.keySet();
+                final Iterator<String> iter = keySet.iterator();
                 String key;
                 String value;
                 while (iter.hasNext()) {
@@ -2749,8 +2686,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     /*
                      * if(!value.equals("")) { System.out.println(" * " + key + " * " + value); }
                      */
-                    final Set keySet2 = labelsAndComps.keySet();
-                    final Iterator iter2 = keySet2.iterator();
+                    final Set<JLabel> keySet2 = labelsAndComps.keySet();
+                    final Iterator<JLabel> iter2 = keySet2.iterator();
                     // System.out.println();
                     while (iter2.hasNext()) {
                         final JLabel l = (JLabel) iter2.next();
@@ -2990,8 +2927,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             final int orient = img.getFileInfo(0).getImageOrientation();
             final String orientation = FileInfoBase.getImageOrientationStr(orient);
             // get index for extents
-            Set keySet = labelsAndComps.keySet();
-            Iterator iter = keySet.iterator();
+            Set<JLabel> keySet = labelsAndComps.keySet();
+            Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final String l = label.getName();
@@ -3276,13 +3213,13 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                             final String labelName = command.substring(command.indexOf("_") + 1, command.length());
 
-                            final Set keySet = labelsAndComps.keySet();
-                            final Iterator iter = keySet.iterator();
+                            final Set<JLabel> keySet = labelsAndComps.keySet();
+                            final Iterator<JLabel> iter = keySet.iterator();
                             while (iter.hasNext()) {
                                 final JLabel l = (JLabel) iter.next();
                                 if (l.getName().equalsIgnoreCase("image_thumbnail_file")) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
-                                    final String n = file.getName();
+                                    //final String n = file.getName();
                                     tf.setText("Automatically generated JPEG");
                                 } else if (l.getName().equalsIgnoreCase(labelName)) {
                                     final JTextField tf = (JTextField) labelsAndComps.get(l);
@@ -3344,8 +3281,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                         final File file = chooser.getSelectedFile();
 
-                        final Set keySet = labelsAndComps.keySet();
-                        final Iterator iter = keySet.iterator();
+                        final Set<JLabel> keySet = labelsAndComps.keySet();
+                        final Iterator<JLabel> iter = keySet.iterator();
                         while (iter.hasNext()) {
                             final JLabel l = (JLabel) iter.next();
                             if (l.getName().equalsIgnoreCase(labelName)) {
@@ -3484,8 +3421,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     // get the corresponding value from this component
                     // and replace
                     String name = token.substring(1, token.length());
-                    Set keySet = labelsAndComps.keySet();
-                    Iterator iter = keySet.iterator();
+                    Set<JLabel> keySet = labelsAndComps.keySet();
+                    Iterator<JLabel> iter = keySet.iterator();
                     while (iter.hasNext()) {
                         final JLabel label = (JLabel) iter.next();
                         final JComponent comp = labelsAndComps.get(label);
@@ -3577,8 +3514,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                     final String name = de.getName();
 
                     // need to get appropriat value
-                    Set keySet = labelsAndComps.keySet();
-                    Iterator iter = keySet.iterator();
+                    Set<JLabel> keySet = labelsAndComps.keySet();
+                    Iterator<JLabel> iter = keySet.iterator();
                     while (iter.hasNext()) {
                         label = (JLabel) iter.next();
                         JComponent comp = labelsAndComps.get(label);
@@ -3659,7 +3596,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                         // test int if its in valuerange
                                         final int min = Integer.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).intValue();
-                                        // TODO: I think that 0 should be included in allowed range
+                                        // I think that 0 should be included in allowed range
                                         // if (min == 0) {
                                         // if (intValue <= min) {
                                         // errs.add(labelText + " must be greater than 0");
@@ -3693,7 +3630,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                                         // test int if its in valuerange
                                         final float min = Float.valueOf(
                                                 valuerange.substring(0, valuerange.indexOf("+")).trim()).floatValue();
-                                        // TODO: I think that 0 should be included in allowed range
+                                        // I think that 0 should be included in allowed range
                                         // if (min == 0) {
                                         // if (floatValue <= min) {
                                         // errs.add(labelText + " must be greater than 0");
@@ -3743,8 +3680,8 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
             // System.out.println("in complete");
             final LinkedHashMap<String, String> infoMap = new LinkedHashMap<String, String>();
             String value = "";
-            final Set keySet = labelsAndComps.keySet();
-            final Iterator iter = keySet.iterator();
+            final Set<JLabel> keySet = labelsAndComps.keySet();
+            final Iterator<JLabel> iter = keySet.iterator();
             while (iter.hasNext()) {
                 final JLabel label = (JLabel) iter.next();
                 final JComponent comp = labelsAndComps.get(label);
@@ -3806,7 +3743,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
                 infoList.set(infoList.size() - 1, infoMap);
                 // infoTable.put(k, infoMap);
-                final Vector rowData = new Vector();
+                final Vector<String> rowData = new Vector<String>();
                 rowData.add(name);
                 if (isComplete) {
                     rowData.add("Yes");
@@ -3822,15 +3759,9 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         }
 
-        public void windowActivated(final WindowEvent e) {
-        // TODO Auto-generated method stub
+        public void windowActivated(final WindowEvent e) {}
 
-        }
-
-        public void windowClosed(final WindowEvent e) {
-        // TODO Auto-generated method stub
-
-        }
+        public void windowClosed(final WindowEvent e) {}
 
         public void windowClosing(final WindowEvent e) {
             // System.out.println("windowClosing");
@@ -3839,33 +3770,19 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
 
         }
 
-        public void windowDeactivated(final WindowEvent e) {
-        // TODO Auto-generated method stub
+        public void windowDeactivated(final WindowEvent e) {}
 
-        }
+        public void windowDeiconified(final WindowEvent e) {}
 
-        public void windowDeiconified(final WindowEvent e) {
-        // TODO Auto-generated method stub
+        public void windowIconified(final WindowEvent e) {}
 
-        }
-
-        public void windowIconified(final WindowEvent e) {
-        // TODO Auto-generated method stub
-
-        }
-
-        public void windowOpened(final WindowEvent e) {
-        // TODO Auto-generated method stub
-
-        }
+        public void windowOpened(final WindowEvent e) {}
 
         /**
          * This inner class is used to sort the list by instance number
          */
-        private class JLabelComparator implements Comparator {
-            public int compare(final Object oA, final Object oB) {
-                final JLabel lA = (JLabel) oA;
-                final JLabel lB = (JLabel) oB;
+        private class JLabelComparator implements Comparator<JLabel> {
+            public int compare(final JLabel lA, final JLabel lB) {
                 final String aText = lA.getName();
                 final String bText = lB.getName();
                 return aText.compareTo(bText);
@@ -3875,28 +3792,22 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
         @Override
         public void itemStateChanged(ItemEvent e) {
             validateFields();
-
         }
 
         @Override
-        public void focusGained(FocusEvent e) {
-        // TODO Auto-generated method stub
-
-        }
+        public void focusGained(FocusEvent e) {}
 
         @Override
         public void focusLost(FocusEvent e) {
             validateFields();
-
         }
-
     }
 
     // inner class
     /**
      * represents the DataStructure of the xml
      */
-    public class DataStruct extends Vector {
+    public class DataStruct extends Vector<DataElement> {
         private final String name;
 
         private String shortname;
@@ -4058,22 +3969,6 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                         true);
                 progressBar.setVisible(true);
                 progressBar.updateValue(20);
-                /*
-                 * client = Startup.getClient(ndarServer);
-                 * 
-                 * try { publishedDataStructs = client.getPublishedStructures(); } catch (final AxisFault e) {
-                 * e.printStackTrace(); } Iterator<OMElement> iter2 = publishedDataStructs.getChildElements(); QName
-                 * qDataType = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "type"); QName qName =
-                 * new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "short_name"); QName
-                 * qParentDataStructure = new QName(publishedDataStructs.getNamespace().getNamespaceURI(), "parent");
-                 * progressBar.updateValue(60); while (iter2.hasNext()) { final OMElement e = iter2.next(); if
-                 * (e.getLocalName().equalsIgnoreCase("data_structure")) { final String dataType =
-                 * e.getAttributeValue(qDataType); final String parent = e.getAttributeValue(qParentDataStructure);
-                 * final String shortname = e.getAttributeValue(qName); if (dataType.equalsIgnoreCase("Imaging")) { if
-                 * (parent.trim().equalsIgnoreCase("")) { // set up all the OMElements final OMElement ome =
-                 * client.getDataDictionary(shortname); System.out.println(shortname); documentElements.put(shortname,
-                 * ome); } } // TODO: Store or throw away the information about this data structure } }
-                 */
 
                 dataDictionaryProvider = new DataDictionaryProvider(data_dictionary_server_url);
 
