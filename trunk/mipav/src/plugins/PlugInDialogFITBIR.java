@@ -109,16 +109,16 @@ public class PlugInDialogFITBIR extends JDialogStandalonePlugin implements Actio
     private int brightness = 0;
 
     /** Dev data dictionary server. */
-    private static final String devServerHostname = "tbi-dev-apps.cit.nih.gov";
+    private static final String devServerHostname = "fitbir-dev-apps.cit.nih.gov";
     
     /** Staging data dictionary server. */
-    private static final String stageServerHostname = "tbi-stage-apps.cit.nih.gov";
+    private static final String stageServerHostname = "fitbir-stage-apps.cit.nih.gov";
     
     /** Demo data dictionary server. */
-    private static final String demoServerHostname = "tbi-demo-apps.cit.nih.gov";
+    private static final String demoServerHostname = "fitbir-demo-apps.cit.nih.gov";
     
     /** Prod data dictionary server. */
-    private static final String prodServerHostname = "tbi-apps.cit.nih.gov";
+    private static final String prodServerHostname = "fitbir.nih.gov";
     
     /** Full data dictionary server url */
     private static final String dataDictionaryServerUrl = "http://" + stageServerHostname;
