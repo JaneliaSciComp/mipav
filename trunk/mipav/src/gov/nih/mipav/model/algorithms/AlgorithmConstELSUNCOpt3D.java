@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
+
 import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 import gov.nih.mipav.model.structures.*;
@@ -9,15 +10,23 @@ import gov.nih.mipav.view.*;
 
 /**
  * Runs ELSUNC for a 3D image.
- *
- * @version  0.1 March 19, 2012
- * @author   William Gandler
+ * 
+ * <hr>
+ * 
+ * <p>Based on ELSUNC allowed by the author with acknowledgement:</p>
+ * 
+ * <p>Gauss-Newton Based Algorithms For Constrained Nonlinear Least Squares Problems by Per Lindstrom and Per-Ake Wedin,
+ * Institute of Information Processing, University of Umea, S-901 87 Umea, Sweden This can be downleaded from
+ * http://www.cs.umu.se/~perl/reports/alg.ps.gz</p>
+ * 
+ * @version 0.1 March 19, 2012
+ * @author William Gandler
  */
 public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
-	
-	FitOAR3DConstrainedModel dModel;
-	
-	/** The initial bracket size for first iteration of ELSUNC. */
+
+    FitOAR3DConstrainedModel dModel;
+
+    /** The initial bracket size for first iteration of ELSUNC. */
     private int bracketBound;
 
     /** Cost function called to measure cost - 1D. */
@@ -31,7 +40,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
     /** The cost of the function at the best minimum. */
     private double functionAtBest;
-    
+
     private double minFunctionAtBest;
 
     /** The maximum number of iterations the optimization allows. */
@@ -69,29 +78,29 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
     /** Array of translation and rotation limits for each dimension. */
     private float[][] trLimits;
-    
+
     private int status;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+    // ~ Constructors
+    // ---------------------------------------------------------------------------------------------------
 
     /**
      * Constructs a new algorithm with the given centers of mass (needed for setting the transformations), the given
      * cost function (which was constructed with the proper images), the initial point we're looking at, some tolerance
      * within that point to look for the minimum, and the maximum number of iterations.
-     *
-     * @param  parent           Algorithm that called this optimization.
-     * @param  com              Center of Mass of the input image.
-     * @param  degreeOfFreedom  Degree of freedom for transformation (must be 3, 4, 6, 7, 9, or 12).
-     * @param  costFunc         Cost function to use.
-     * @param  initial          Initial point to start from, length of 12.
-     * @param  tols             Tolerance for each dimension (tols.length == degreeOfFreedom).
-     * @param  maxIter          Maximum number of iterations.
-     * @param  bracketBound     DOCUMENT ME!
+     * 
+     * @param parent Algorithm that called this optimization.
+     * @param com Center of Mass of the input image.
+     * @param degreeOfFreedom Degree of freedom for transformation (must be 3, 4, 6, 7, 9, or 12).
+     * @param costFunc Cost function to use.
+     * @param initial Initial point to start from, length of 12.
+     * @param tols Tolerance for each dimension (tols.length == degreeOfFreedom).
+     * @param maxIter Maximum number of iterations.
+     * @param bracketBound DOCUMENT ME!
      */
     public AlgorithmConstELSUNCOpt3D(AlgorithmBase parent, Vector3f com, int degreeOfFreedom,
-            AlgorithmOptimizeFunctionBase costFunc, double[] initial, double[] tols,
-            int maxIter, int bracketBound) {
-    	nDims = degreeOfFreedom;
+            AlgorithmOptimizeFunctionBase costFunc, double[] initial, double[] tols, int maxIter, int bracketBound) {
+        nDims = degreeOfFreedom;
         costFunction = costFunc;
         OARTolerance = tols;
         maxIterations = maxIter;
@@ -105,7 +114,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             toOrigin.setTranslate(com.X, com.Y, com.Z);
 
             fromOrigin = new TransMatrixd(4);
-            fromOrigin.setTranslate(-com.X, -com.Y, -com.Z);
+            fromOrigin.setTranslate( -com.X, -com.Y, -com.Z);
         }
 
         finalPoint = new double[start.length];
@@ -146,8 +155,9 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         }
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
-    
+    // ~ Methods
+    // --------------------------------------------------------------------------------------------------------
+
     /**
      * Sets everything to null and prepares this class for destruction.
      */
@@ -168,15 +178,15 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * only the translations; 4 means translation and global scaling; 6 means rotation and translation; 7 means
      * rotation, translation, and global scaling; 9 means rotation, translation, and scaling; and 12 means rotation,
      * translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * 
+     * @param vector Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
+     * 
+     * @return The transformation matrix created from the vector.
      */
     public TransMatrixd convertToMatrix(double[] vector) {
 
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-        // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
+        // = 6 + 1 scale = 7 + 3 scales = 9 + 3 skews = 12
         double rotX = start[0];
         double rotY = start[1];
         double rotZ = start[2];
@@ -200,7 +210,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             transY = vector[2];
             transZ = vector[3];
             scaleX = scaleY = scaleZ = vector[0];
-        } else if ((vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
+        } else if ( (vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
             rotX = vector[0];
             rotY = vector[1];
             rotZ = vector[2];
@@ -229,7 +239,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
-        //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+        // Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
         return matrix;
     }
@@ -241,15 +251,15 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * only the translations; 4 means translation and global scaling; 6 means rotation and translation; 7 means
      * rotation, translation, and global scaling; 9 means rotation, translation, and scaling; and 12 means rotation,
      * translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * 
+     * @param vector Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
+     * 
+     * @return The transformation matrix created from the vector.
      */
     public TransMatrixd convertToMatrixHalf(double[] vector) {
 
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-        // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
+        // = 6 + 1 scale = 7 + 3 scales = 9 + 3 skews = 12
         double rotX = start[0];
         double rotY = start[1];
         double rotZ = start[2];
@@ -273,7 +283,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             transY = vector[2];
             transZ = vector[3];
             scaleX = scaleY = scaleZ = vector[0];
-        } else if ((vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
+        } else if ( (vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
             rotX = vector[0];
             rotY = vector[1];
             rotZ = vector[2];
@@ -315,9 +325,9 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
-        //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+        // Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
-        //matrix.convertFromMatrix(mtx);
+        // matrix.convertFromMatrix(mtx);
 
         return matrix;
     }
@@ -329,15 +339,15 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * only the translations; 4 means translation and global scaling; 6 means rotation and translation; 7 means
      * rotation, translation, and global scaling; 9 means rotation, translation, and scaling; and 12 means rotation,
      * translation, scaling, and skewing.
-     *
-     * @param   vector  Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
-     *
-     * @return  The transformation matrix created from the vector.
+     * 
+     * @param vector Vector that represented a "point" in the algorithm which needs to be converted to a matrix.
+     * 
+     * @return The transformation matrix created from the vector.
      */
     public TransMatrixd convertToMatrixMidsagittal(double[] vector) {
 
         // 3 rotations, then 3 translations, then 3 scalings, then 3 skews
-        // = 6       + 1 scale = 7   + 3 scales = 9   + 3 skews = 12
+        // = 6 + 1 scale = 7 + 3 scales = 9 + 3 skews = 12
         double rotX = start[0];
         double rotY = start[1];
         double rotZ = start[2];
@@ -361,7 +371,7 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             transY = vector[2];
             transZ = vector[3];
             scaleX = scaleY = scaleZ = vector[0];
-        } else if ((vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
+        } else if ( (vector.length == 6) || (vector.length == 7) || (vector.length == 9) || (vector.length == 12)) {
             rotX = vector[0];
             rotY = vector[1];
             rotZ = vector[2];
@@ -404,9 +414,9 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         matrix.MultLeft(toOrigin);
         matrix.Mult(fromOrigin);
-        //Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
+        // Matrix mtx = (toOrigin.times(matrix)).times(fromOrigin);
 
-        //matrix.convertFromMatrix(mtx);
+        // matrix.convertFromMatrix(mtx);
 
         return matrix;
     }
@@ -414,8 +424,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     /**
      * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
      * tranformation.
-     *
-     * @return  vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     * 
+     * @return vector representing the best transformation in terms of translations, rotations, scales, and skews.
      */
     public double[] getFinal() {
 
@@ -445,11 +455,12 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
         return finalPoint;
     }
+
     /**
      * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
      * tranformation.
-     *
-     * @return  vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     * 
+     * @return vector representing the best transformation in terms of translations, rotations, scales, and skews.
      */
     public double[] getFinal(double[] point) {
 
@@ -480,14 +491,13 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         return finalPoint;
     }
 
-
     /**
      * Accessor that returns the final point with translations, rotations, scales, and skews representing the best
      * tranformation.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  vector representing the best transformation in terms of translations, rotations, scales, and skews.
+     * 
+     * @param sample the voxel resolution
+     * 
+     * @return vector representing the best transformation in terms of translations, rotations, scales, and skews.
      */
     public double[] getFinal(float sample) {
         double transX = 0.0;
@@ -540,8 +550,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
     /**
      * Accessor that returns the matrix representing the best transformation.
-     *
-     * @return  matrix representing the best transformation.
+     * 
+     * @return matrix representing the best transformation.
      */
     public TransMatrixd getMatrix() {
         return convertToMatrix(point);
@@ -552,10 +562,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
      * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
      * the sample value.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  matrix representing the best transformation.
+     * 
+     * @param sample the voxel resolution
+     * 
+     * @return matrix representing the best transformation.
      */
     public TransMatrixd getMatrix(float sample) {
 
@@ -575,8 +585,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     /**
      * Accessor that returns the matrix representing the best tranformation. All of the components of the transformation
      * are halved from the 'best transformation' matrix.
-     *
-     * @return  matrix representing the best transformation with its components halved.
+     * 
+     * @return matrix representing the best transformation with its components halved.
      */
     public TransMatrixd getMatrixHalf() {
         return convertToMatrixHalf(point);
@@ -587,10 +597,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * resolution (same in all directions and for both input and reference images, since resampled isotropically). Since
      * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
      * the sample value. All of the components of the transformation are halved from the 'best transformation' matrix.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  matrix representing the best transformation with its components halved.
+     * 
+     * @param sample the voxel resolution
+     * 
+     * @return matrix representing the best transformation with its components halved.
      */
     public TransMatrixd getMatrixHalf(float sample) {
 
@@ -610,8 +620,8 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     /**
      * Accessor that returns the matrix representing the best tranformation. This transformation contains only the z
      * rotation and the x and y translation, to be used in the midsagittal alignment algorithm.
-     *
-     * @return  matrix representing the best transformation's z rot and x and y trans.
+     * 
+     * @return matrix representing the best transformation's z rot and x and y trans.
      */
     public TransMatrixd getMatrixMidsagittal() {
         return convertToMatrixMidsagittal(point);
@@ -623,10 +633,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
      * the optimization was done in pixel space, not millimeter space, the translation parameters need to be scaled by
      * the sample value. This transformation contains only the z rotation and the x and y translation, to be used in the
      * midsagittal alignment algorithm.
-     *
-     * @param   sample  the voxel resolution
-     *
-     * @return  matrix representing the best transformation's z rot and x and y trans.
+     * 
+     * @param sample the voxel resolution
+     * 
+     * @return matrix representing the best transformation's z rot and x and y trans.
      */
     public TransMatrixd getMatrixMidsagittal(float sample) {
 
@@ -651,13 +661,13 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
     }
 
     /**
-     * Runs ELSUNC along one dimension at a time as long as the costFunction improves during one cycle
-     * of runs along every dimension.
+     * Runs ELSUNC along one dimension at a time as long as the costFunction improves during one cycle of runs along
+     * every dimension.
      */
     public void runAlgorithm() {
-    	int i;
-    	boolean anotherCycle = true;
-    	double[] lastPoint = new double[nDims];
+        int i;
+        boolean anotherCycle = true;
+        double[] lastPoint = new double[nDims];
         // Initialize data.
         functionAtBest = Double.MAX_VALUE;
         minFunctionAtBest = Double.MAX_VALUE;
@@ -665,47 +675,46 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
         int maxCycles = 10;
 
         while (anotherCycle) {
-        	cycles++;
-    		if (cycles > maxCycles) {
-    			break;
-    		}
-        	anotherCycle = false;
-	        for (i = 0; i < nDims; i++) {
-	        	lastPoint[i] = point[i];
-		        dModel = new FitOAR3DConstrainedModel(i);
-		        dModel.driver();
-		        status = dModel.getExitStatus();
-		        //dModel.statusMessage(status);
-		        // status == -2 if maxIterations reached
-		        if ((status > 0) || (status == -2)) {
-			        double params[] = dModel.getParameters();
-			        point[i] = params[0];
-			        double[]fullPoint = getFinal(point);
-			        functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
-			        if (functionAtBest < minFunctionAtBest) {
-			        	minFunctionAtBest = functionAtBest;
-			        	if (Math.abs(point[i] - lastPoint[i]) > OARTolerance[i]) {
-			        	    anotherCycle = true;
-			        	}
-			        }
-			        else {
-			        	point[i] = lastPoint[i];
-			        }
-		        } // if (status > 0)
-		        else {
-		        	point[i] = lastPoint[i];
-		        }
-	        } // for (i = 0; i < nDims; i++)
+            cycles++;
+            if (cycles > maxCycles) {
+                break;
+            }
+            anotherCycle = false;
+            for (i = 0; i < nDims; i++) {
+                lastPoint[i] = point[i];
+                dModel = new FitOAR3DConstrainedModel(i);
+                dModel.driver();
+                status = dModel.getExitStatus();
+                // dModel.statusMessage(status);
+                // status == -2 if maxIterations reached
+                if ( (status > 0) || (status == -2)) {
+                    double params[] = dModel.getParameters();
+                    point[i] = params[0];
+                    double[] fullPoint = getFinal(point);
+                    functionAtBest = costFunction.cost(convertToMatrix(fullPoint));
+                    if (functionAtBest < minFunctionAtBest) {
+                        minFunctionAtBest = functionAtBest;
+                        if (Math.abs(point[i] - lastPoint[i]) > OARTolerance[i]) {
+                            anotherCycle = true;
+                        }
+                    } else {
+                        point[i] = lastPoint[i];
+                    }
+                } // if (status > 0)
+                else {
+                    point[i] = lastPoint[i];
+                }
+            } // for (i = 0; i < nDims; i++)
         } // while (anotherCycle)
     }
 
     /**
      * Sets the initial point to the value passed in.
-     *
-     * @param  initial  Initial point.
+     * 
+     * @param initial Initial point.
      */
     public void setInitialPoint(double[] initial) {
-        
+
         for (int i = 0; i < initial.length; i++) {
             start[i] = initial[i];
         }
@@ -730,31 +739,19 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
     /**
      * Sets the limits on rotation and translation.
-     *
-     * @param  limits  limits
+     * 
+     * @param limits limits
      */
     public void setLimits(float[][] limits) {
-    	/*double[][] xi = new double[nDims][nDims];
-    	double[] unit_tolerance = new double[nDims];
-        for (int i = 0; i < nDims; i++) {
-            xi[i][i] = 1.0;
-            double tol = 0, sum = 0;
-
-            for (int j = 0; j < nDims; j++) {
-                sum += xi[j][i] * xi[j][i];
-            }
-            sum = Math.sqrt(sum);
-
-            for (int j = 0; j < nDims; j++) {
-                if (tolerance[j] > 1.0E-20) {
-                    tol += Math.abs(xi[j][i] / (sum * tolerance[j]));
-                }
-            }
-            unit_tolerance[i] = Math.abs(1.0 / tol);
-        }*/
-        
-
-        
+        /*
+         * double[][] xi = new double[nDims][nDims]; double[] unit_tolerance = new double[nDims]; for (int i = 0; i <
+         * nDims; i++) { xi[i][i] = 1.0; double tol = 0, sum = 0;
+         * 
+         * for (int j = 0; j < nDims; j++) { sum += xi[j][i] * xi[j][i]; } sum = Math.sqrt(sum);
+         * 
+         * for (int j = 0; j < nDims; j++) { if (tolerance[j] > 1.0E-20) { tol += Math.abs(xi[j][i] / (sum *
+         * tolerance[j])); } } unit_tolerance[i] = Math.abs(1.0 / tol); }
+         */
 
         if (nDims == 3) {
             trLimits = new float[2][3];
@@ -765,15 +762,15 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
                     trLimits[j][i] = limits[j][i + 3];
                 }
 
-                Preferences.debug("3D optimization.  For direction " + i + ", the minimum is: " + trLimits[0][i] +
-                        " and the maximum is " + trLimits[1][i] + " pixels.\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("3D optimization.  For direction " + i + ", the minimum is: " + trLimits[0][i]
+                        + " and the maximum is " + trLimits[1][i] + " pixels.\n", Preferences.DEBUG_ALGORITHM);
             }
         } else if (nDims == 4) {
             trLimits = new float[2][4];
             trLimits[0][0] = -(float) Math.pow(10, 10); // global scale is unbound
             trLimits[1][0] = (float) Math.pow(10, 10); // global scale is unbound
-            //trLimits[0][0] = (float)(point[0] - bracketBound * unit_tolerance[0]);
-            //trLimits[1][0] = (float)(point[0] + bracketBound * unit_tolerance[0]);
+            // trLimits[0][0] = (float)(point[0] - bracketBound * unit_tolerance[0]);
+            // trLimits[1][0] = (float)(point[0] + bracketBound * unit_tolerance[0]);
 
             for (int i = 0; i < 3; i++) { // translation x, y, z; i=0, 1, 2
 
@@ -790,32 +787,32 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
                     trLimits[j][i] = limits[j][i];
                 }
 
-                Preferences.debug("6D optimization.  For direction " + i + ", minimum is: " + trLimits[0][i] +
-                        ", maximum is " + trLimits[1][i] + ".\n", Preferences.DEBUG_ALGORITHM);
+                Preferences.debug("6D optimization.  For direction " + i + ", minimum is: " + trLimits[0][i]
+                        + ", maximum is " + trLimits[1][i] + ".\n", Preferences.DEBUG_ALGORITHM);
             }
 
             for (int i = limits[0].length; i < nDims; i++) {
                 trLimits[0][i] = -Float.MAX_VALUE;
                 trLimits[1][i] = Float.MAX_VALUE;
-            	//trLimits[0][i] = (float)(point[i] - bracketBound * unit_tolerance[i]);
-                //trLimits[1][i] = (float)(point[i] + bracketBound * unit_tolerance[i]);
+                // trLimits[0][i] = (float)(point[i] - bracketBound * unit_tolerance[i]);
+                // trLimits[1][i] = (float)(point[i] + bracketBound * unit_tolerance[i]);
             }
         }
     }
-    
+
     /**
      * Returns the cost of the best transformation.
-     *
-     * @return  The cost of the best transformation.
+     * 
+     * @return The cost of the best transformation.
      */
     public double getCost() {
         return functionAtBest;
     }
-    
+
     /**
      * Returns the optimized point, with length == degrees of freedom.
-     *
-     * @return  The optimized point.
+     * 
+     * @return The optimized point.
      */
     public double[] getPoint() {
         double[] pt = new double[point.length];
@@ -829,49 +826,48 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
 
     /**
      * Sets the maximum number of iterations.
-     *
-     * @param  max  The max number of iterations.
+     * 
+     * @param max The max number of iterations.
      */
     public void setMaxIterations(int max) {
         maxIterations = max;
     }
-    
+
     /**
      * Returns whether or not a minimum was found.
-     *
-     * @return  whether or not a minimum was found.
+     * 
+     * @return whether or not a minimum was found.
      */
     public boolean didSucceed() {
-    	// status == -2 for maxIterations reached
-    	if ((status > 0) || (status == -2)) {
-    		success = true;
-    	}
-    	else {
-    		success = false;
-    	}
+        // status == -2 for maxIterations reached
+        if ( (status > 0) || (status == -2)) {
+            success = true;
+        } else {
+            success = false;
+        }
         return success;
     }
 
     /**
      * Accessor that sets the progress bar so it can be updated from here.
-     *
-     * @param  progress  DOCUMENT ME!
-     * @param  begin     Value of progress bar when sent here.
-     * @param  max       Maximum value allowed.
+     * 
+     * @param progress DOCUMENT ME!
+     * @param begin Value of progress bar when sent here.
+     * @param max Maximum value allowed.
      */
     public void setProgressBar(ViewJProgressBar progress, int begin, int max) {
         myProgressBar = progress;
         progressBegin = begin;
         progressMax = max;
     }
-    
+
     class FitOAR3DConstrainedModel extends NLConstrainedEngine {
         private int currentDim;
+
         /**
          * Creates a new FitOAR3DConstrainedModel object.
          * 
-         * @param currentDim
-         * Only optimize along 1 dimension at a time
+         * @param currentDim Only optimize along 1 dimension at a time
          */
         public FitOAR3DConstrainedModel(int currentDim) {
 
@@ -884,10 +880,10 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             // all parameters
             // bounds = 2 means different lower and upper bounds
             // for all parameters
-            bl[0] = trLimits[0][currentDim];	
+            bl[0] = trLimits[0][currentDim];
             bu[0] = trLimits[1][currentDim];
             gues[0] = point[currentDim];
-            
+
             // The default is internalScaling = false
             // To make internalScaling = true and have the columns of the
             // Jacobian scaled to have unit length include the following line.
@@ -927,11 +923,11 @@ public class AlgorithmConstELSUNCOpt3D extends AlgorithmBase {
             try {
                 ctrl = ctrlMat[0];
                 if ( (ctrl == -1) || (ctrl == 1)) {
-                	point[currentDim] = a[0];
-                	double[]fullPoint = getFinal(point);
+                    point[currentDim] = a[0];
+                    double[] fullPoint = getFinal(point);
                     residuals[0] = costFunction.cost(convertToMatrix(fullPoint));
                 } // if ((ctrl == -1) || (ctrl == 1))
-                
+
                 // Calculate the Jacobian numerically
                 else if (ctrl == 2) {
                     ctrlMat[0] = 0;

@@ -16,6 +16,14 @@ import gov.nih.mipav.view.Preferences;
 
 /**
  * Runs ELSUNC, LEVENBERG_MARQUARDT, or NL2SOL for a 2D image.
+ * 
+ * <hr>
+ * 
+ * <p>Based on ELSUNC allowed by the author with acknowledgement:</p>
+ * 
+ * <p>Gauss-Newton Based Algorithms For Constrained Nonlinear Least Squares Problems by Per Lindstrom and Per-Ake Wedin,
+ * Institute of Information Processing, University of Umea, S-901 87 Umea, Sweden This can be downleaded from
+ * http://www.cs.umu.se/~perl/reports/alg.ps.gz</p>
  *
  * @version  0.1 March 22, 2012
  * @author William Gandler

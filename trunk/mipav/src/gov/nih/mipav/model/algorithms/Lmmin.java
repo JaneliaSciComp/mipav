@@ -6,9 +6,8 @@ import gov.nih.mipav.view.*;
  * This is a port of lmmin.c and lmmin.h from C into Java.
  * The port is performed by William Gandler.
  *
- */
-
-/**
+ * <hr>
+ * 
  * Project:  LevenbergMarquardtLeastSquaresFitting
  *
  * File:     lmmin.c
@@ -19,9 +18,9 @@ import gov.nih.mipav.view.*;
  * Author:   Joachim Wuttke <j.wuttke@fz-juelich.de>
  *
  * Homepage: www.messen-und-deuten.de/lmfit
- */
-
-/**
+ * 
+ * <hr>
+ * 
  * lmfit is released under the LMFIT-BEER-WARE licence:
  *
  * In writing this software, I borrowed heavily from the public domain,
