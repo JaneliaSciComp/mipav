@@ -352,7 +352,7 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
                 destImage.importData(z*sliceSize, hurstBuffer, false);
             } catch (IOException error) {
                 MipavUtil.displayError("" +
-                        "AlgorithmHurstIndex: IOException on destImage.importData(0, hurstBuffer, false)");
+                        "AlgorithmHurstIndex: IOException on destImage.importData(z*sliceSize, hurstBuffer, false)");
                setCompleted(false);
 
                return;
