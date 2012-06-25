@@ -106,9 +106,32 @@ public class ReportBugBuilder extends JDialogBase{
     
 	private JFrame frame;
     
+	private JTextField descriptionField = new JTextField();
+	
+	private JTextField summaryField = new JTextField();
+	
+	private JTextField nameField = new JTextField(20);
+	
+    private JTextField emailField = new JTextField(20);
+    
+    private JTextField branchField = new JTextField(20);
+    
+    private JTextField standardPlatform = new JTextField(20);
+    
+    private JTextField standardOS = new JTextField(20);
+    
+    private JTextField standardVersion = new JTextField(20);
+	
+    private JTextField standardUrgency = new JTextField(20);
+    
+    private File bugReport = new File("BugReport.txt");
+    
+    private File console = new File("console.txt");
     
     public ReportBugBuilder(){
     	init();
+    	bugReport.delete();
+    	console.delete();
     }
     
     private void init(){
@@ -122,7 +145,18 @@ public class ReportBugBuilder extends JDialogBase{
 		String command = event.getActionCommand();
 		
 		if (command.equals("OK")){
-			if (mipavList.isSelected() || mipavDev.isSelected() || bugzilla.isSelected() || userType == 1){
+			description = descriptionField.getText();
+			summary = summaryField.getText();
+			if (userType == 1){
+				name = nameField.getText();
+				if (!emailField.getText().contains("@"))
+					JOptionPane.showMessageDialog(null, "This is not a valid email address. Please check it and try again.", "Error", JOptionPane.ERROR_MESSAGE);
+				email = emailField.getText();
+				branch = branchField.getText();
+				version = standardVersion.getText();
+				platform = standardPlatform.getText();
+				os = standardOS.getText();
+				urgency = standardUrgency.getText();
 				sendReport();
 				frame.setVisible(false);
 			}
@@ -196,7 +230,10 @@ public class ReportBugBuilder extends JDialogBase{
 	
 	private void compileReport(){
 		try {
-			BufferedWriter report = new BufferedWriter(new FileWriter("BugReport.txt"));
+			if (!bugReport.exists()) {
+				bugReport.createNewFile();
+			}
+			BufferedWriter report = new BufferedWriter(new FileWriter(bugReport.getName(), true));
 			report.write("Bug Report");
 			report.newLine();
 			report.newLine();
@@ -217,24 +254,38 @@ public class ReportBugBuilder extends JDialogBase{
 			report.newLine();
 			report.write("OS: " + os);
 			report.newLine();
-			report.write("Priority: " + priority);
-			report.newLine();
-			report.write("Severity: " + severity);
-			report.newLine();
-			report.write("Urgency: " + urgency);
-			report.write("Component" + component);
+			if(userType == 1){
+				report.write("Urgency: " + urgency);
+				report.newLine();
+			}
+			if (userType == 0){
+				report.write("Priority: " + priority);
+				report.newLine();
+				report.write("Severity: " + severity);
+				report.newLine();
+				report.write("Component: " + component);
+				report.newLine();
+			}
 			report.write("Summary: " + summary);
 			report.newLine();
+			report.newLine();
 			report.write(description);
+			report.newLine();
 			report.newLine();
 			report.write("System specifications:");
 			report.newLine();
 			report.write("osArch = " + osArch);
+			report.newLine();
 			report.write("osName = " + osName);
+			report.newLine();
 			report.write("osVersion = " + osVersion);
+			report.newLine();
 			report.write("javaVersion = " + javaVersion);
+			report.newLine();
 			report.write("javaVendor = " + javaVendor);
+			report.newLine();
 			report.write("javaVendorUrl = " + javaVendorUrl);
+			report.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -244,11 +295,16 @@ public class ReportBugBuilder extends JDialogBase{
 	private void sendReport(){
 		compileReport();
 		try {
-			PrintStream consoleErrors = new PrintStream(new FileOutputStream("console.txt"));
+			if (!console.exists())
+				console.createNewFile();
+			PrintStream consoleErrors = new PrintStream(new FileOutputStream(console.getName()));
 			System.setErr(consoleErrors);
 		} catch (FileNotFoundException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		try {
 			Address to = new InternetAddress("shens2@mail.nih.gov");
@@ -271,27 +327,26 @@ public class ReportBugBuilder extends JDialogBase{
 					Multipart parts = new MimeMultipart();
 					parts.addBodyPart(reportSummary);
 					
-					BodyPart fullReport = new MimeBodyPart();
+					reportSummary = new MimeBodyPart();
 					String file = "BugReport.txt";
 					DataSource source = new FileDataSource(file);
-					fullReport.setDataHandler(new DataHandler(source));
-					fullReport.setFileName(file);
-					parts.addBodyPart(fullReport);
+					reportSummary.setDataHandler(new DataHandler(source));
+					reportSummary.setFileName(file);
+					parts.addBodyPart(reportSummary);
 					
-//					BodyPart console = new MimeBodyPart();
-//					file = "console.txt";
-//					source = new FileDataSource(file);
-//					console.setDataHandler(new DataHandler(source));
-//					console.setFileName(file);
-//					parts.addBodyPart(console);
+					BodyPart console = new MimeBodyPart();
+					file = "console.txt";
+					source = new FileDataSource(file);
+					console.setDataHandler(new DataHandler(source));
+					console.setFileName(file);
+					parts.addBodyPart(console);
 					
 					report.setContent(parts);
 					
 					Transport.send(report);
 					
-					JOptionPane.showMessageDialog(null, "Message sent succesfully");
+					JOptionPane.showMessageDialog(null, "Message sent successfully");
 				} catch (MessagingException e) {
-					MipavUtil.displayError("nope");
 					e.printStackTrace();
 				}
 				
@@ -320,7 +375,7 @@ public class ReportBugBuilder extends JDialogBase{
 		
 		
 		/** temporary placeholder for the GUI */
-		//if(userType == 0)
+		if(userType == 0)
 			JOptionPane.showMessageDialog(null, "This feature is not ready yet", "Report a Bug", JOptionPane.ERROR_MESSAGE);
     	
     	setTitle("Report a Bug");
@@ -354,18 +409,16 @@ public class ReportBugBuilder extends JDialogBase{
         
         
         JLabel summaryInstructions = new JLabel("Please give a brief (no more than 250 character) summary of the bug you encountered");
-    	JTextField summaryField = new JTextField();
     	summaryField.setPreferredSize(new Dimension(400,20));
     	summaryInstructions.setFont(MipavUtil.font12);
         summaryInstructions.setForeground(Color.black);
-        summary = summaryField.getText();
+        summaryField.addActionListener(this);
         
     	JLabel descInstructions = new JLabel("Please give a detailed description of the bug encountered");
-        JTextField descriptionField = new JTextField();
         descriptionField.setPreferredSize(new Dimension(400,20));
     	descInstructions.setFont(MipavUtil.font12);
     	descInstructions.setForeground(Color.black);
-    	description = descriptionField.getText();
+    	descriptionField.addActionListener(this);
     	
     	JPanel descriptions = new JPanel();
     	descriptions.setLayout(new GridBagLayout());
@@ -384,22 +437,19 @@ public class ReportBugBuilder extends JDialogBase{
     	descriptions.add(descriptionField, gbc);
     	
     	JLabel emailLabel = new JLabel("Your email address");
-    	JTextField emailField = new JTextField(20);
     	emailLabel.setFont(MipavUtil.font12);
     	emailLabel.setForeground(Color.black);
-    	email = emailField.getText();
+    	//emailField.addActionListener(this);
     	
     	JLabel nameLabel = new JLabel("Your name");
-    	JTextField nameField = new JTextField(20);
     	nameLabel.setFont(MipavUtil.font12);
     	nameLabel.setForeground(Color.black);
-    	name = nameField.getText();
+    	//nameField.addActionListener(this);
     	
     	JLabel branchLabel = new JLabel("Your branch");
-    	JTextField branchField = new JTextField(20);
     	branchLabel.setFont(MipavUtil.font12);
     	branchLabel.setForeground(Color.black);
-    	branch = branchField.getText();
+    	//branchField.addActionListener(this);
     	
     	JPanel personalInfo = new JPanel();
     	personalInfo.setLayout(new GridBagLayout());
@@ -422,28 +472,23 @@ public class ReportBugBuilder extends JDialogBase{
     	
     	
     	JLabel versionLabel = new JLabel("Version of MIPAV you are running");
-    	JTextField standardVersion = new JTextField(20);
     	versionLabel.setFont(MipavUtil.font12);
     	versionLabel.setForeground(Color.black);
-    	version = standardVersion.getText();
+    	//standardVersion.addActionListener(this);
     	
     	JLabel platformLabel = new JLabel("Platform you are operating (ex. PC)");
-    	JTextField standardPlatform = new JTextField(20);
     	platformLabel.setFont(MipavUtil.font12);
     	platformLabel.setForeground(Color.black);
-    	platform = standardPlatform.getText();
+    	//standardPlatform.addActionListener(this);
     	
     	JLabel osLabel = new JLabel("Operating System you are using");
-    	JTextField standardOS = new JTextField(20);
     	osLabel.setFont(MipavUtil.font12);
     	osLabel.setForeground(Color.black);
-    	os = standardOS.getText();
+    	
     	
     	JLabel urgencyLabel = new JLabel("How urgent is this bug? When do you need it fixed by?");
-    	JTextField standardUrgency = new JTextField(20);
     	urgencyLabel.setFont(MipavUtil.font12);
     	urgencyLabel.setForeground(Color.black);
-    	urgency = standardUrgency.getText();
     	
     	JPanel standardUserInput = new JPanel();
     	standardUserInput.setLayout(new GridBagLayout());
@@ -513,16 +558,16 @@ public class ReportBugBuilder extends JDialogBase{
     	
     	JPanel mainPanel = new JPanel();
     	mainPanel.setLayout(new BorderLayout());
-//    	
-//    	if (userType == 1){
-//    		mainPanel.add(sidePanel, BorderLayout.WEST);
-//    		mainPanel.add(descriptions, BorderLayout.EAST);
-//    		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-//    	}
-//    	
-//    	frame = new JFrame("Report a Bug");
-//    	frame.getContentPane().add(mainPanel);
-//		frame.pack();
-//		frame.setVisible(true);
+    	
+    	if (userType == 1){
+    		mainPanel.add(sidePanel, BorderLayout.WEST);
+    		mainPanel.add(descriptions, BorderLayout.EAST);
+    		mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+    	}
+    	
+    	frame = new JFrame("Report a Bug");
+    	frame.getContentPane().add(mainPanel);
+		frame.pack();
+		frame.setVisible(true);
 	}
 }
