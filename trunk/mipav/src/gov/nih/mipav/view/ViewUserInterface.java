@@ -3529,7 +3529,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         JToolBar bottom = new JToolBar();
 
         final JButton btnRecycle = new JButton(MipavUtil.getIcon("recycle.gif"));
-        final JButton btnReportBug = new JButton(MipavUtil.getIcon("reportbugsmall.gif"));
+        final JButton btnReportBug = new JButton(MipavUtil.getIcon("reportbug.gif"));
         btnRecycle.setFont(MipavUtil.font12);
         btnRecycle.setActionCommand("gc");
         btnRecycle.addActionListener(this);

@@ -1,0 +1,23 @@
+Bug Report
+
+Date: 25/06/2012 15:29:39
+Name: 
+Email: 
+Branch: 
+
+Product: MIPAV
+Version: 
+Platform: 
+OS: 
+Urgency: 
+Summary: 
+
+
+
+System specifications:
+osArch = amd64
+osName = Windows 7
+osVersion = 6.1
+javaVersion = 1.6.0_29
+javaVendor = Sun Microsystems Inc.
+javaVendorUrl = null
