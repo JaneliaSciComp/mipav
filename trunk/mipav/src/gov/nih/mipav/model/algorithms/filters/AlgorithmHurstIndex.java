@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * DOCUMENT ME!
  *
- * @version  0.1 June 18, 2012
+ * @version  0.1 June 25, 2012
  * @author   William Gandler 
 
  * In 2D for image points find the absolute value of the intensity differences to all points 
@@ -31,8 +31,8 @@ import java.util.List;
  * find the average value of the absolute value of the intensity difference.  Find the best fit to the line
  * log(average absolute value of the intensity difference) = log(c) + H*log(distance) where H is the Hurst index.
  * 
- * For VOIs the Hurst index varies from 0 to 1.  If H is 0.5, each step can be up or down completely at random.  If H is
- * less than 0.5, each step upward is likely to be followed by a downward step and each downward step is likely
+ * For VOIs and slices the Hurst index varies from 0 to 1.  If H is 0.5, each step can be up or down completely at random. 
+ * If H is less than 0.5, each step upward is likely to be followed by a downward step and each downward step is likely
  * to be followed by an upward step.  Therefore, a lower Hurst index indicates a higher complexity of the
  * distribution of pixel values.
  * 
@@ -56,6 +56,12 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
     
     /** Red channel. */
     private static final int RED_OFFSET = 1;
+    
+    private static final int PIXEL_GROUPING = 1;
+    
+    private static final int VOI_GROUPING = 2;
+    
+    //private static final int SLICE_GROUPING = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -68,7 +74,9 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
     private boolean integerDistanceRound;
     
     
-    private int RGBOffset = RED_OFFSET;
+    private int RGBOffset = RED_OFFSET; 
+    
+    private int grouping = PIXEL_GROUPING;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -117,12 +125,15 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
      * @param              maxDist            maximum distance between pixels
      * @param              integerDistanceRound   If true, take the rounding of the Euclidean distance as the distance.
      *                                           if false, take the Euclidean distance as the distance.
+     * @param              grouping           VOI_GROUPING or SLICE_GROUPING
      */
-    public AlgorithmHurstIndex(ModelImage srcImg, double minDist, double maxDist, boolean integerDistanceRound) {
+    public AlgorithmHurstIndex(ModelImage srcImg, double minDist, double maxDist, boolean integerDistanceRound,
+                               int grouping) {
         super(null, srcImg);
         this.minDist = minDist;
         this.maxDist = maxDist;
         this.integerDistanceRound = integerDistanceRound;
+        this.grouping = grouping;
     }
     
     /**
@@ -134,14 +145,16 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
      * @param              maxDist            maximum distance between pixels
      * @param              integerDistancePart   If true, take the integer part of the Euclidean distance as the distance.
      *                                           if false, take the Euclidean distance as the distance.
+     * @param              grouping           VOI_GROUPING or SLICE_GROUPING
      */
     public AlgorithmHurstIndex(ModelImage srcImg, int RGBOffset, 
-                                    double minDist, double maxDist, boolean integerDistanceRound) {
+                                    double minDist, double maxDist, boolean integerDistanceRound, int grouping) {
         super(null, srcImg);
         this.RGBOffset = RGBOffset;
         this.minDist = minDist;
         this.maxDist = maxDist;
         this.integerDistanceRound = integerDistanceRound;
+        this.grouping = grouping;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -181,8 +194,11 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
        if (destImage != null) {
             calculatePixelHurstIndex();
        }
-       else {
+       else if (grouping == VOI_GROUPING){
            calculateVOIHurstIndex();
+       }
+       else {
+           calculateSliceHurstIndex();
        }
     }
 
@@ -598,6 +614,178 @@ public class AlgorithmHurstIndex extends AlgorithmBase {
 
         return;
         
+    }
+    
+    private void calculateSliceHurstIndex() {
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int sliceSize = xDim * yDim;
+        int zDim;
+        double xDiff;
+        double yDiff;
+        double xDiffSquared;
+        double yDiffSquared;
+        double distance;
+        double absIntensityDiff;
+        double[] sourceBuffer = new double[sliceSize];
+        float[] floatBuffer;
+        int x, y;
+        int i, j;
+        int index;
+        int pos;
+        int z;
+        int iStart;
+        int iFinish;
+        int jStart;
+        int jFinish;
+        int numDistances;
+        double distanceArray[];
+        double intensityArray[];
+        int numAtIndex;
+        double sumDistance;
+        double sumDistanceSquared;
+        double sumIntensity;
+        double sumDistanceIntensity;
+        double hurstIndex;
+        int pos2;
+        ViewUserInterface UI = ViewUserInterface.getReference();
+        DecimalFormat kDecimalFormat = new DecimalFormat();
+        kDecimalFormat.setMinimumFractionDigits(3);
+        kDecimalFormat.setMaximumFractionDigits(3);
+        
+        if (srcImage.getNDims() == 2) {
+            zDim = 1;
+        }
+        else {
+            zDim = srcImage.getExtents()[2];
+        }
+        List<DistanceIntensity> list = new ArrayList<DistanceIntensity>();  
+
+        for (z = 0; z < zDim; z++) {
+            list.clear();
+            try {
+                if (srcImage.isColorImage()) {
+                    floatBuffer = new float[sliceSize];
+                    srcImage.exportRGBData(RGBOffset, 4*z*sliceSize, sliceSize, floatBuffer);  
+                    for (i = 0; i < sliceSize; i++) {
+                        sourceBuffer[i] = (double)floatBuffer[i];
+                    }
+                    floatBuffer = null;
+                }
+                else {
+                    srcImage.exportData(z*sliceSize, sliceSize, sourceBuffer);
+                }
+            } catch (IOException error) {
+                if (srcImage.isColorImage()) {
+                    MipavUtil.displayError(
+                    "AlgorithmHurstIndex: IOException on srcImage.exportRGBData(RGBOffset,4*z*sliceSize,sliceSize,floatBuffer)");
+                }
+                else {
+                    MipavUtil.displayError(
+                    "AlgorithmHurstIndex: IOException on srcImage.exportData(z*sliceSize,sliceSize,sourceBuffer)");    
+                }
+                setCompleted(false);
+    
+                return;
+            } 
+            
+            for (y = 0; (y < yDim) && !threadStopped; y++) {
+                
+                fireProgressStateChanged(((int)((z * 100.0f/zDim) + (y * (100.0f / (zDim*(yDim-1)))))), null, null);
+                jStart = Math.max(0, (int)(y - maxDist));
+                jFinish = Math.min(yDim-1, (int)Math.ceil(y + maxDist));
+                
+                for (x = 0; x < xDim; x++) {
+                    pos = x + (y * xDim);
+                    iStart = Math.max(0, (int)(x - maxDist));
+                    iFinish = Math.min(xDim-1, (int)Math.ceil(x + maxDist));
+                    
+                    for (j = jStart; j <= jFinish; j++) {
+                        yDiff = j - y;
+                        yDiffSquared = yDiff*yDiff;
+                        for (i = iStart; i <= iFinish; i++) {
+                            pos2 = i + (j * xDim);
+                            xDiff = i - x;
+                            xDiffSquared = xDiff * xDiff;
+                            distance = Math.sqrt(xDiffSquared + yDiffSquared);
+                            if (integerDistanceRound) {
+                                distance = Math.round(distance);
+                            }
+                            if ((distance >= minDist) && (distance <= maxDist)) {
+                                absIntensityDiff = Math.abs(sourceBuffer[pos2] - sourceBuffer[pos]);
+                                list.add(new DistanceIntensity(distance, absIntensityDiff));
+                            } // if ((distance >= minDist) && (distance <= maxDist))
+                        } // for (i = iStart; i <= iFinish; i++)
+                    } // for (j = jStart; j <= jFinish; j++)
+                } // for (x = 0; x < xDim; x++)
+            } // for (y = 0; (y < yDim) && !threadStopped; y++)
+            
+            
+    
+            if (threadStopped) {
+                finalize();
+    
+                return;
+            }
+            Collections.sort(list, new DistanceIntensityComparator());
+            numDistances = 1;
+            for (i = 1; i < list.size(); i++) {
+                if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
+                    numDistances++;
+                }
+            }
+            distanceArray = new double[numDistances];
+            intensityArray = new double[numDistances];
+            distanceArray[0] = list.get(0).getDistance();
+            intensityArray[0] = list.get(0).getIntensity();
+            index = 0;
+            numAtIndex = 1;
+            for (i = 1; i < list.size(); i++) {
+                if (list.get(i).getDistance() > list.get(i-1).getDistance()) {
+                    intensityArray[index] = intensityArray[index]/numAtIndex;
+                    if (intensityArray[index] > 0.0) {
+                        index++;
+                    }
+                    else {
+                        numDistances--;
+                    }
+                    numAtIndex = 1;
+                    distanceArray[index] = list.get(i).getDistance();
+                    intensityArray[index] = list.get(i).getIntensity();
+                }
+                else {
+                    intensityArray[index] += list.get(i).getIntensity();
+                    numAtIndex++;
+                }
+            } // for (i = 1; i < list.size(); i++)
+            intensityArray[index] = intensityArray[index]/numAtIndex;
+            if (intensityArray[index] == 0.0) {
+                numDistances--;
+            }
+            
+            sumDistance = 0.0;
+            sumDistanceSquared = 0.0;
+            sumIntensity = 0.0;
+            sumDistanceIntensity = 0.0;
+            for (i = 0; i < numDistances; i++) {
+                distanceArray[i] = Math.log(distanceArray[i]);
+                intensityArray[i] = Math.log(intensityArray[i]);
+                sumDistance += distanceArray[i];
+                sumDistanceSquared += distanceArray[i]*distanceArray[i];
+                sumIntensity += intensityArray[i];
+                sumDistanceIntensity += distanceArray[i]*intensityArray[i];
+            }
+            hurstIndex = (sumDistanceIntensity - sumDistance*sumIntensity/numDistances)/
+                    (sumDistanceSquared - sumDistance*sumDistance/numDistances);
+            UI.setDataText("Slice number = " + z + " Hurst Index = " + 
+                    kDecimalFormat.format(hurstIndex) + " Dimensionality = " + 
+                    kDecimalFormat.format(3.0 - hurstIndex) + "\n");
+        } // for (z = 0; z < zDim; z++)
+               
+       
+        setCompleted(true);
+
+        return;    
     }
     
     class DistanceIntensity {
