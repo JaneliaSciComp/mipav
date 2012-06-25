@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  *
- * @version  0.1 June 14, 2012
+ * @version  0.1 June 25, 2012
  * @author   William Gandler
  * @see      AlgorithmHurstIndex
  */
@@ -98,9 +98,15 @@ public class JDialogHurstIndex extends JDialogScriptableBase
     
     private JRadioButton voiButton;
     
-    // If true, give results for every pixel;
-    // If false, give results for every voi
-    private boolean pixelResult = true;
+    private JRadioButton sliceButton;
+    
+    private static final int PIXEL_GROUPING = 1;
+    
+    private static final int VOI_GROUPING = 2;
+    
+    private static final int SLICE_GROUPING = 3;
+    
+    private int grouping = PIXEL_GROUPING;
     
     private ModelImage resultImage = null;
 
@@ -163,7 +169,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         if (algorithm instanceof AlgorithmHurstIndex) {
             image.clearMask();
             
-            if ((hurstAlgo.isCompleted()) && (resultImage != null) && (pixelResult)) {
+            if ((hurstAlgo.isCompleted()) && (resultImage != null) && (grouping == PIXEL_GROUPING)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
                 // Take resultImage out of array form or null pointer errors can
@@ -192,7 +198,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
                 resultImage = null;
                 System.gc();
             }
-            else if ((hurstAlgo.isCompleted()) && (!pixelResult)) {
+            else if ((hurstAlgo.isCompleted()) && (grouping != PIXEL_GROUPING)) {
 
                 
             	// save the completion status for later
@@ -229,7 +235,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         str += minDistance + delim;
         str += maxDistance + delim;
         str += integerDistanceRound + delim;
-        str += pixelResult;
+        str += grouping;
 
         return str;
     }
@@ -247,9 +253,10 @@ public class JDialogHurstIndex extends JDialogScriptableBase
                 textMinDistance.setText("" + MipavUtil.getDouble(st));
                 textMaxDistance.setText("" + MipavUtil.getDouble(st));
                 integerDistanceRoundCheckBox.setSelected(MipavUtil.getBoolean(st));
-                pixelResult = (MipavUtil.getBoolean(st));
-                pixelButton.setSelected(pixelResult);
-                voiButton.setSelected(!pixelResult);
+                grouping = (MipavUtil.getInt(st));
+                pixelButton.setSelected(grouping == PIXEL_GROUPING);
+                voiButton.setSelected(grouping == VOI_GROUPING);
+                sliceButton.setSelected(grouping == SLICE_GROUPING);
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -302,8 +309,8 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         this.RGBOffset = RGBoffset;
     }
     
-    public void setPixelResult(boolean pixelResult) {
-        this.pixelResult = pixelResult;
+    public void setGrouping(int grouping) {
+        this.grouping = grouping;
     }
     
     public ModelImage getResultImage() {
@@ -317,7 +324,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
 
         try {
            
-            if (pixelResult) {
+            if (grouping == PIXEL_GROUPING) {
                 String name =  makeImageName(image.getImageName(), "_Hurst");
                 resultImage = new ModelImage(ModelStorageBase.DOUBLE, image.getExtents(), name);
                 if (image.isColorImage()) {
@@ -331,10 +338,10 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             else {
                 if (image.isColorImage()) {
                     hurstAlgo = new AlgorithmHurstIndex(image, RGBOffset, minDistance, maxDistance,
-                                                        integerDistanceRound);    
+                                                        integerDistanceRound, grouping);    
                 }
                 else {
-                    hurstAlgo = new AlgorithmHurstIndex(image, minDistance, maxDistance, integerDistanceRound);
+                    hurstAlgo = new AlgorithmHurstIndex(image, minDistance, maxDistance, integerDistanceRound, grouping);
                 }
             }
 
@@ -399,7 +406,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         setMinDistance(scriptParameters.getParams().getDouble("min_distance"));
         setMaxDistance(scriptParameters.getParams().getInt("max_distance"));
         setIntegerDistanceRound(scriptParameters.getParams().getBoolean("integer_distance_round"));
-        setPixelResult(scriptParameters.getParams().getBoolean("pixel_result"));
+        setGrouping(scriptParameters.getParams().getInt("group"));
     }
 
     /**
@@ -407,7 +414,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        if (pixelResult) {
+        if (grouping == PIXEL_GROUPING) {
             scriptParameters.storeImageInRecorder(getResultImage());
         }
 
@@ -417,7 +424,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("min_distance", minDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("max_distance", maxDistance));
         scriptParameters.getParams().put(ParameterFactory.newParameter("integer_distance_round", integerDistanceRound));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pixel_result", pixelResult));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("group", grouping));
     }
 
     /**
@@ -568,6 +575,15 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         gbcScale.insets = new Insets(0, 0, 2, 0);
         distancePanel.add(voiButton, gbcScale);
         
+        sliceButton = new JRadioButton("Cacluate Hurst index for every slice", false);
+        sliceButton.setForeground(Color.black);
+        sliceButton.setFont(serif12);
+        pixelOrVOIGroup.add(sliceButton);
+        gbcScale.gridx = 0;
+        gbcScale.gridy++;
+        gbcScale.insets = new Insets(0, 0, 2, 0);
+        distancePanel.add(sliceButton, gbcScale);
+        
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -593,9 +609,17 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         int i;
         int nBoundingVOIs = 0;
         
-        pixelResult = pixelButton.isSelected();
+        if (pixelButton.isSelected()) {
+            grouping = PIXEL_GROUPING;
+        }
+        else if (voiButton.isSelected()) {
+            grouping = VOI_GROUPING;
+        }
+        else {
+            grouping = SLICE_GROUPING;
+        }
         
-        if (!pixelResult) {
+        if (grouping == VOI_GROUPING) {
             ViewVOIVector VOIs = image.getVOIs();
             if (VOIs != null) {
                 int nVOIs = VOIs.size();
@@ -611,7 +635,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
                 MipavUtil.displayError("Must have at least 1 contour or polyline VOI");
                 return false;
             }
-        } // if (!pixelResult)
+        } // if (grouping == VOI_GROUPING)
         
         if (image.isColorImage()) {
 
@@ -705,7 +729,7 @@ public class JDialogHurstIndex extends JDialogScriptableBase
             table.put(new ParameterDouble("min_distance", 1.0));
             table.put(new ParameterDouble("max_distance", 7.0));
             table.put(new ParameterBoolean("integer_distance_round", true));
-            table.put(new ParameterBoolean("pixel_result", true));
+            table.put(new ParameterInt("group", PIXEL_GROUPING));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
