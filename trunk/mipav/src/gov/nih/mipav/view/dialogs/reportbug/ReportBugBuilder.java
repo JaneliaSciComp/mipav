@@ -154,8 +154,8 @@ public class ReportBugBuilder extends JDialogBase{
      */
     public ReportBugBuilder(){
     	init();
-    	bugReport.delete();
-    	console.delete();
+    	bugReport.deleteOnExit();
+    	console.deleteOnExit();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
