@@ -150,7 +150,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Perfoms the following actions based on the command:<br>
+     * Performs the following actions based on the command:<br>
      *
      * <ul>
      *   <li>OK - uses the "current rectangle" set either by a listener of a glass pane (region mode) or by the window
