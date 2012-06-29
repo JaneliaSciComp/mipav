@@ -3856,7 +3856,6 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
 
         if (fileMatrix.isSelected() && (spline == null)) { // read matrix from file
 
-            // xfrm.Mult(readTransformMatrixFile(matrixFile));
             readTransformMatrixFile(matrixFile);
             ((ViewJFrameImage) parentFrame).getUserInterface().setGlobalDataText(
                     "Matrix loaded from Transform dialog:\n");
