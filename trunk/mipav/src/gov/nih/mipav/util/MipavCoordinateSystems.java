@@ -884,7 +884,7 @@ public class MipavCoordinateSystems {
 
         final float[] afUpperLeft = kImage.getOrigin();
         
-        if ( kImage.getExtents().length < 3 )
+        if ( kImage.getExtents().length < 3 && (!kImage.isDicomImage()))
         {
             return new Vector3f( afUpperLeft[0], afUpperLeft[1], afUpperLeft[2] );
         }
@@ -899,10 +899,15 @@ public class MipavCoordinateSystems {
                 afLowerRight[i] = afUpperLeft[i] - ((extents[i] - 1) * afRes[i]);
             }
         }
-        if ( (axisOrient[2] == 1) || (axisOrient[2] == 3) || (axisOrient[2] == 5)) {
-            afLowerRight[2] = afUpperLeft[2] + ((extents[2] - 1) * afRes[2]);
-        } else {
-            afLowerRight[2] = afUpperLeft[2] - ((extents[2] - 1) * afRes[2]);
+        if ((kImage.getExtents().length < 3) && (kImage.isDicomImage())) {
+            afLowerRight[2] = afUpperLeft[2];
+        }
+        else {
+            if ( (axisOrient[2] == 1) || (axisOrient[2] == 3) || (axisOrient[2] == 5)) {
+                afLowerRight[2] = afUpperLeft[2] + ((extents[2] - 1) * afRes[2]);
+            } else {
+                afLowerRight[2] = afUpperLeft[2] - ((extents[2] - 1) * afRes[2]);
+            }
         }
 
         
