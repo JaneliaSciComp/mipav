@@ -1333,7 +1333,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         dim3.setFont(serif12);
         dim3.setForeground(Color.black);
 
-        if (nDims < 3) {
+        if ((nDims < 3) && (!image.isDicomImage())) {
             dim3.setEnabled(false);
         }
 
@@ -1365,7 +1365,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         textSt3.setFont(serif12);
         textSt3.addFocusListener(this);
 
-        if (nDims < 3) {
+        if ((nDims < 3) && (!image.isDicomImage())) {
             textSt3.setEnabled(false);
         } else {
             textSt3.setText(String.valueOf(image.getFileInfo()[0].getOrigin(2)));
@@ -1669,7 +1669,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         dim3.setFont(serif12);
         dim3.setForeground(Color.black);
 
-        if (nDims < 3) {
+        if ((nDims < 3) && (!image.isDicomImage())) {
             dim3.setEnabled(false);
         }
 
@@ -1701,7 +1701,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         textSt3.setFont(serif12);
         textSt3.addFocusListener(this);
 
-        if (nDims < 3) {
+        if ((nDims < 3) && (!image.isDicomImage())) {
             textSt3.setEnabled(false);
         } else {
             textSt3.setText(String.valueOf(image.getFileInfo()[0].getOrigin(2)));
