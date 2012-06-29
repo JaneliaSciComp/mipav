@@ -187,6 +187,10 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                     resols[3] = (float)sliceResolution;
                     destFileInfo[sliceCounter].setResolutions(resols);
                     destFileInfo[sliceCounter].setExtents(destImage.getExtents());
+                    destFileInfo[sliceCounter].setOrigin(srcImage.getFileInfo()[z].getOrigin()[0], 0);
+                    destFileInfo[sliceCounter].setOrigin(srcImage.getFileInfo()[z].getOrigin()[1], 1);
+                    destFileInfo[sliceCounter].setOrigin(srcImage.getFileInfo()[z].getOrigin()[2], 2);
+                    destFileInfo[sliceCounter].setOrigin(t*resols[3],3);
                     destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[0], 0);
                     destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[1], 1);
                     destFileInfo[sliceCounter].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation()[2], 2);
