@@ -446,7 +446,7 @@ public class FileIO {
             if (modality != null && modality.equals("SR")) {
                 // TODO:Structured report handling would be implemented here (since the rest of this method reads the
                 // image file
-                fileList = removeFromImageList(selectedFileName, fileList);
+                removeFromImageList(selectedFileName, fileList);
                 if (fileList.length == 0) {
                     if ( !quiet) {
                         MipavUtil.displayInfo("MIPAV cannot process this structured report DICOM file.");
@@ -618,7 +618,7 @@ public class FileIO {
 
             nImages = 0;
 
-            for (int i = 0; i < nListImages; i++) {
+nList:      for (int i = 0; i < nListImages; i++) {
 
                 try {
 
@@ -655,7 +655,7 @@ public class FileIO {
                         return readDicom(selectedFileName, fileList, performSort);
                     }
 
-                    // If study and series number match - Continue;
+                    // If study and series number match - Continue.  If these weren't equal MIPAV will not be able to handle this
                     if (fileInfoTemp.getTagTable().getValue("0020,0010") != null) {
                         studyID = (String) (fileInfoTemp.getTagTable().getValue("0020,0010"));
                         studyID = studyID.trim();
@@ -669,6 +669,16 @@ public class FileIO {
                     if (fileInfoTemp.getTagTable().getValue("0020,0012") != null) {
                         acqNo = (String) (fileInfoTemp.getTagTable().getValue("0020,0012"));
                         acqNo = acqNo.trim();
+                    }
+                    
+                    //if dimensions match - Continue;
+                    if(refFileInfo.getExtents() != null && fileInfoTemp.getExtents() != null) {
+                        for(int j=0; j<fileInfoTemp.getExtents().length; j++) {
+                            if(fileInfoTemp.getExtents()[j] != refFileInfo.getExtents()[j]) {
+                                fileList = removeFromImageList(fileList[i], fileList);
+                                continue nList;
+                            }
+                        }
                     }
 
                     if (performSort) {
@@ -740,6 +750,11 @@ public class FileIO {
                     return null;
                 }
 
+            }
+            
+            if(fileList.length != savedFileInfos.length) {
+                progressBar.dispose();
+                return readDicom(selectedFileName, fileList, performSort); //fileList has been modified, read dicom based on this new file list
             }
             
 
@@ -1927,21 +1942,18 @@ public class FileIO {
 
     private String[] removeFromImageList(String selectedFileName, String[] fileList) {
         final String[] fileListTemp = new String[fileList.length - 1];
-        int indexTemp = 0;
-        for (int i = 0; i < fileList.length; i++) {
-            if ( !fileList[i].contains(selectedFileName)) {
-                fileListTemp[indexTemp++] = fileList[i];
+
+        for (int i = 0, j=0; i < fileListTemp.length; i++, j++) {
+            if (fileList[i].contains(selectedFileName)) {
+                j++;
             }
+            fileListTemp[i] = fileList[j]; 
         }
         fileList = fileListTemp;
-        if (fileList.length > 0) {
-            selectedFileName = fileList[0];
-        } else {
-            selectedFileName = null;
-        }
+
         return fileList;
     }
-
+    
     /**
      * Gets the value of the Dicom modality tag, 0008,0060. SR tags indicate a structured report file.
      * 
