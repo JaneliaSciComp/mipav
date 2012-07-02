@@ -650,22 +650,15 @@ public class JPanelSurface_WM extends JInterfaceBase
 		                    	 found = true;
 			                   	 tmesh[j].doDecimation(decimationPercentage);
 			                   	 TriMesh mesh = new TriMesh(tmesh[j].getDecimatedVBuffer(), tmesh[j].getDecimatedIBuffer());
-			                   	 mesh.SetName(kMesh.GetName());
-			                   	 MaterialState kMaterial = new MaterialState();
-			                   	 kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
-			                   	 kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
-			                   	 kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
-			                   	 kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
-			                     kMaterial.Shininess = 32f;
-			            		 mesh.AttachGlobalState(kMaterial);
-			            		 mesh.UpdateMS();
+			                   	 mesh.SetName(new String(kMesh.GetName()));
 			            		 SurfaceState kState = new SurfaceState( mesh, mesh.GetName() );
-			
+			            		 
 			                     m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+			                     m_akSurfaceStates.remove(aiSelected[i]);
+			                     
+			                     m_akSurfaceStates.add( kState );        
 			                     m_kVolumeViewer.addSurface(kState);
 			
-			                     m_akSurfaceStates.get(aiSelected[i]).Surface = mesh;
-			                     
 			                     numTriangles = tmesh[j].getDecimatedIBuffer().GetIndexQuantity();
 		                     } 
                     	 }
@@ -925,25 +918,26 @@ public class JPanelSurface_WM extends JInterfaceBase
         
         if ( m_kVolumeViewer != null )
         {
-            TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
+            //TriMesh[] akSurfaces = new TriMesh[ aiSelected.length ];
            
-            DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
+            //DefaultListModel kList = (DefaultListModel)surfaceList.getModel();
             tmesh = new TriangleMesh[ aiSelected.length ];
             for (int i = 0; i < aiSelected.length; i++) {
             	
-                TriMesh kMesh = m_akSurfaceStates.get(aiSelected[0]).Surface;
+                TriMesh kMesh = m_akSurfaceStates.get(aiSelected[i]).Surface;
+                
                 VertexBuffer kVBuffer = new VertexBuffer(kMesh.VBuffer);
                 IndexBuffer kIBuffer = new IndexBuffer( kMesh.IBuffer);
                 tmesh[i] = new TriangleMesh(kVBuffer, kIBuffer);
-                TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
-                mesh.SetName( kMesh.GetName() );
                 tmesh[i].SetName(kMesh.GetName());
-                akSurfaces[i] = mesh;
+                
+                //TriMesh mesh = new TriMesh(kVBuffer, kIBuffer);
+                //mesh.SetName( kMesh.GetName() );
+                //akSurfaces[i] = mesh;
 
-                m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
-
-                m_akSurfaceStates.get(aiSelected[0]).Surface = mesh;
-                m_kVolumeViewer.addSurface(m_akSurfaceStates.get(aiSelected[0]));
+                //m_kVolumeViewer.removeSurface( (String)kList.elementAt(aiSelected[i]) );
+                //m_akSurfaceStates.get(aiSelected[0]).Surface = mesh;
+                //m_kVolumeViewer.addSurface(m_akSurfaceStates.get(aiSelected[0]));
             }
 
 

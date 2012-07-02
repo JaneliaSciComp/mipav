@@ -461,29 +461,16 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             } else {
                 insertTab("LUT", panelHistoLUT.getMainPanel());
             }
-        } else if (command.equals("VolRender")) {} else if (command.equals("Geodesic")) {
+        } else if (command.equals("VolRender")) {}
+        else if (command.equals("Geodesic")) {
             insertTab("Geodesic", geodesicGUI.getMainPanel());
         } else if (command.equals("Sculpt")) {
             insertTab("Sculpt", sculptGUI.getMainPanel());
-            sculptGUI.getMainPanel().setVisible(true);
         } else if (command.equals("Clipping")) {
-            clipGUI.getMainPanel().setVisible(true);
             insertTab("Clip", clipGUI.getMainPanel());
-
-            setSize(getSize().width, getSize().height - 1);
-            final int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height
-                    - panelToolbar.getHeight();
-            clipGUI.resizePanel(maxPanelWidth, height);
         } else if (command.equals("OpacityHistogram")) {
             insertTab("Opacity", m_kVolOpacityPanel.getMainPanel());
         } else if (command.equals("Opacity")) {
-            clipGUI.getMainPanel().setVisible(true);
-            clipButton.setEnabled(true);
-            clipPlaneButton.setEnabled(true);
-            clipDisableButton.setEnabled(true);
-            clipMaskButton.setEnabled(true);
-            clipMaskUndoButton.setEnabled(true);
-            clipSaveButton.setEnabled(true);
             insertTab("Opacity", m_kVolOpacityPanel.getMainPanel());
             raycastRenderWM.displayVolumeRaycast(true);
             rendererGUI.setDisplayVolumeCheck(true);
@@ -491,13 +478,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
             raycastRenderWM.displayVolumeSlices(rendererGUI.getSlicesCheck().isSelected());
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
         } else if (command.equals("VolumeRayCast")) {
-            clipGUI.getMainPanel().setVisible(true);
-            clipButton.setEnabled(true);
-            clipPlaneButton.setEnabled(true);
-            clipDisableButton.setEnabled(true);
-            clipMaskButton.setEnabled(true);
-            clipMaskUndoButton.setEnabled(true);
-            clipSaveButton.setEnabled(true);
             raycastRenderWM.displayVolumeRaycast(rendererGUI.getVolumeCheck().isSelected());
             raycastRenderWM.setVolumeBlend(rendererGUI.getBlendSliderValue() / 100.0f);
         } else if (command.equals("StereoOFF")) {
@@ -511,20 +491,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         } else if (command.equals("Box")) {
             insertTab("Display", displayGUI.getMainPanel());
         } else if (command.equals("InvokeClipping")) {
-            clipGUI.getMainPanel().setVisible(true);
             clipGUI.invokeClippingPlanes();
             insertTab("Clip", clipGUI.getMainPanel());
-
-            setSize(getSize().width, getSize().height - 1);
-            final int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height
-                    - panelToolbar.getHeight();
-            clipGUI.resizePanel(maxPanelWidth, height);
-
-            insertTab("Clip", clipGUI.getMainPanel());
         } else if (command.equals("DisableClipping")) {
-            clipGUI.getMainPanel().setVisible(true);
             clipGUI.disable6Planes();
-            insertTab("Clip", clipGUI.getMainPanel());
         } else if (command.equals("CropClipVolume")) {
             raycastRenderWM.cropClipVolume();
             setModified();
@@ -533,8 +503,6 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         } else if (command.equals("SaveCropVolume")) {
             raycastRenderWM.saveImageFromTexture();
         } else if (command.equals("Slices")) {
-            sliceGUI.getMainPanel().setVisible(true);
-            // insertTab("Slices", slicePanel);
             insertTab("Slices", sliceGUI.getMainPanel());
             raycastRenderWM.displayVolumeRaycast(false);
             rendererGUI.setDisplayVolumeCheck(false);
@@ -556,11 +524,8 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
 
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfaceGUI.getMainPanel());
-            surfaceGUI.getMainPanel().setVisible(true);
-            setSize(getSize().width, getSize().height - 1);
         } else if (command.equals("SurfaceTexture")) {
             insertTab("SurfaceTexture", surfaceTextureGUI.getMainPanel());
-            surfaceTextureGUI.getMainPanel().setVisible(true);
             surfaceTextureGUI.setSurfacePanel(surfaceGUI);
             if (surfaceGUI.surfaceAdded()) {
                 surfaceTextureGUI.setEnabled(true);
@@ -3383,6 +3348,7 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         }
 
         pack();
+        setSize( 1331, 925 );
         setVisible(true);
     }
 
