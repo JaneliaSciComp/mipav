@@ -2761,7 +2761,7 @@ public class VOI extends ModelSerialCloneable {
 	}
 
 	/**
-	 * Trims all active contours in the VOI based on the Preferences getTrim and getTrimAdjacent values. 
+	 * Trims all active contours in the VOI based on the Preferences getTrimVoi and getTrimAdjacent values. 
 	 */
 	public void trim()
 	{
