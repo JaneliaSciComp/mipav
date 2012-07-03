@@ -12,10 +12,11 @@ import javax.swing.event.*;
 
 
 /**
- * Simple dialog to change Magnification Box Settings.
+ * Simple dialog to change trim parameters.
  *
- * @version  1.0 Sep 15, 1999
+ * @version  2.0 Jul 3, 2012
  * @author   Matthew J. McAuliffe
+ * @author   Justin Senseney
  */
 
 public class JDialogTrim extends JDialogBase implements ActionListener, ChangeListener, WindowListener {
@@ -27,23 +28,20 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private JLabel current;
+    /** Labels for values of the voi trim points property */
+    private JLabel voiCurrent, voiMaximum, voiMinimum;
 
-    /** DOCUMENT ME! */
-    private JLabel maximum;
-
-    /** DOCUMENT ME! */
-    private JLabel minimum;
-
-    /** DOCUMENT ME! */
+    /** Checkbox for whether adjacent points are trimmed */
     private JCheckBox trimCheckbox;
 
-
-    /** DOCUMENT ME! */
-    private JSlider trimSlider;
+    /** Sliders for setting the mask and voi trim parameters */
+    private JSlider voiTrimSlider, maskTrimSlider;
     
+    /** The currently selected image */
     private ModelImage activeImage;
+
+    /** Labels for values of the mask trim points property */
+    private JLabel maskMaximum, maskCurrent, maskMinimum;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -73,33 +71,21 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
         Object source = event.getSource();
 
         if (source == trimCheckbox) {
-
-            if (trimCheckbox.isSelected()) {
-
-                // Enable trim slider and set preferences to slider value
-                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "true");
-            } else {
-
-                // Disable trim slider
-                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "false");
-            }
+            //only set trim when OK is pressed
+            //Preferences.setProperty(Preferences.PREF_TRIM_FLAG, trimCheckbox.isSelected());  
         } else if (source == OKButton) {
 
-            if (trimCheckbox.isSelected()) {
-                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "true");
-            } else {
-                Preferences.setProperty(Preferences.PREF_TRIM_FLAG, "false");
-            }
-
-            Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
+            Preferences.setProperty(Preferences.PREF_TRIM_FLAG, trimCheckbox.isSelected()); 
+            Preferences.setProperty(Preferences.PREF_TRIM_MASK, String.valueOf(maskTrimSlider.getValue() / (float) 100));
+            Preferences.setProperty(Preferences.PREF_TRIM_VOI, String.valueOf(voiTrimSlider.getValue() / (float) 100));
             
-            if ( activeImage != null )
-            {
+            if ( activeImage != null ) {
                 activeImage.trimVOIs();
             }
             dispose();
         } else if (source == cancelButton) {
-            Preferences.setProperty(Preferences.PREF_TRIM, String.valueOf(trimSlider.getValue() / (float) 100));
+            //Preferences.setProperty(Preferences.PREF_TRIM_VOI, String.valueOf(voiTrimSlider.getValue() / (float) 100));
+            //only set trim when OK is pressed
             dispose();
         }
     }
@@ -112,8 +98,10 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
 
-        if (source == trimSlider) {
-            current.setText(String.valueOf(trimSlider.getValue() / (float) 100));
+        if (source == voiTrimSlider) {
+            voiCurrent.setText(String.valueOf(voiTrimSlider.getValue() / (float) 100));
+        } else if(source == maskTrimSlider) {
+            maskCurrent.setText(String.valueOf(maskTrimSlider.getValue() / (float) 100));
         }
     }
 
@@ -122,32 +110,57 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
      */
     private void init() {
 
-        setTitle("VOI trim parameter");
+        setTitle("VOI and mask trim parameters");
 
-        int initialVal = 50;
+        int initialVoiVal = 50, initialMaskVal = 0;
 
-        if (Preferences.getProperty(Preferences.PREF_TRIM) != null) {
-            initialVal = (int) (Float.valueOf(Preferences.getProperty(Preferences.PREF_TRIM)).floatValue() * 100);
+        if (Preferences.getProperty(Preferences.PREF_TRIM_VOI) != null) {
+            initialVoiVal = (int) (Float.valueOf(Preferences.getProperty(Preferences.PREF_TRIM_VOI)).floatValue() * 100);
+        }
+        
+        if (Preferences.getProperty(Preferences.PREF_TRIM_MASK) != null) {
+            initialMaskVal = (int) (Float.valueOf(Preferences.getProperty(Preferences.PREF_TRIM_MASK)).floatValue() * 100);
         }
 
-        trimSlider = new JSlider(JSlider.HORIZONTAL, 0, 200, initialVal);
+        //initialize voi gui elements
+        voiTrimSlider = new JSlider(JSlider.HORIZONTAL, 0, 200, initialVoiVal);
 
-        trimSlider.setMajorTickSpacing(20);
-        trimSlider.setPaintTicks(true);
-        trimSlider.setEnabled(true);
-        trimSlider.addChangeListener(this);
+        voiTrimSlider.setMajorTickSpacing(20);
+        voiTrimSlider.setPaintTicks(true);
+        voiTrimSlider.setEnabled(true);
+        voiTrimSlider.addChangeListener(this);
 
-        maximum = new JLabel(String.valueOf((trimSlider.getMaximum()) / 100.0f));
-        maximum.setForeground(Color.black);
-        maximum.setFont(serif12);
+        voiMaximum = new JLabel(String.valueOf((voiTrimSlider.getMaximum()) / 100.0f));
+        voiMaximum.setForeground(Color.black);
+        voiMaximum.setFont(serif12);
 
-        current = new JLabel(String.valueOf(trimSlider.getValue() / 100.0f));
-        current.setForeground(Color.black);
-        current.setFont(serif12B);
+        voiCurrent = new JLabel(String.valueOf(voiTrimSlider.getValue() / 100.0f));
+        voiCurrent.setForeground(Color.black);
+        voiCurrent.setFont(serif12B);
 
-        minimum = new JLabel(String.valueOf(trimSlider.getMinimum() / 100.0f));
-        minimum.setForeground(Color.black);
-        minimum.setFont(serif12);
+        voiMinimum = new JLabel(String.valueOf(voiTrimSlider.getMinimum() / 100.0f));
+        voiMinimum.setForeground(Color.black);
+        voiMinimum.setFont(serif12);
+        
+        //initialize mask gui elements
+        maskTrimSlider = new JSlider(JSlider.HORIZONTAL, 0, 200, initialMaskVal);
+
+        maskTrimSlider.setMajorTickSpacing(20);
+        maskTrimSlider.setPaintTicks(true);
+        maskTrimSlider.setEnabled(true);
+        maskTrimSlider.addChangeListener(this);
+
+        maskMaximum = new JLabel(String.valueOf((maskTrimSlider.getMaximum()) / 100.0f));
+        maskMaximum.setForeground(Color.black);
+        maskMaximum.setFont(serif12);
+
+        maskCurrent = new JLabel(String.valueOf(maskTrimSlider.getValue() / 100.0f));
+        maskCurrent.setForeground(Color.black);
+        maskCurrent.setFont(serif12B);
+
+        maskMinimum = new JLabel(String.valueOf(maskTrimSlider.getMinimum() / 100.0f));
+        maskMinimum.setForeground(Color.black);
+        maskMinimum.setFont(serif12);
 
         boolean flag = true;
 
@@ -167,38 +180,93 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
         JPanel sliderPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
+        //set voi trim gui elements
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
+        gbc.insets = new Insets(5, 0, 3, 0);
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        sliderPanel.add(new JLabel("VOI trim parameter:"), gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.gridheight = 1;
+        gbc.insets = new Insets(0, 0, 0, 0);
         gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        sliderPanel.add(trimSlider, gbc);
+        sliderPanel.add(voiTrimSlider, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 1;
+        gbc.gridy++;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.NONE;
 
-        sliderPanel.add(minimum, gbc);
+        sliderPanel.add(voiMinimum, gbc);
 
         gbc.gridx = 1;
         gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
-        sliderPanel.add(current, gbc);
+        sliderPanel.add(voiCurrent, gbc);
 
         gbc.gridx = 2;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
-        sliderPanel.add(maximum, gbc);
+        sliderPanel.add(voiMaximum, gbc);
+        
+        //set mask trim gui elements
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.gridheight = 1;
+        gbc.insets = new Insets(10, 0, 3, 0);
+        gbc.anchor = GridBagConstraints.WEST;
+        
+        sliderPanel.add(new JLabel("Mask trim parameter:"), gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 3;
+        gbc.weightx = 1;
+        gbc.gridheight = 1;
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        sliderPanel.add(maskTrimSlider, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 2;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+
+        sliderPanel.add(maskMinimum, gbc);
+
+        gbc.gridx = 1;
+        gbc.anchor = GridBagConstraints.CENTER;
+        gbc.weightx = .5;
+
+        sliderPanel.add(maskCurrent, gbc);
+
+        gbc.gridx = 2;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbc.weightx = 0;
+
+        sliderPanel.add(maskMaximum, gbc);
+
+        //set trim adjacent points gui elements
+        gbc.gridx = 0;
+        gbc.gridy++;
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
@@ -206,7 +274,7 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
 
         sliderPanel.add(trimCheckbox, gbc);
 
-        sliderPanel.setBorder(buildTitledBorder("Trim parameter"));
+        sliderPanel.setBorder(buildTitledBorder("Trim parameters"));
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
