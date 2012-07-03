@@ -2769,7 +2769,7 @@ public class VOI extends ModelSerialCloneable {
 		{
 			if ( curves.get(i).isActive() )
 			{
-				curves.get(i).trimPoints(Preferences.getTrim(),
+				curves.get(i).trimPoints(Preferences.getTrimVoi(),
 						Preferences.getTrimAdjacient());
 			}
 		}

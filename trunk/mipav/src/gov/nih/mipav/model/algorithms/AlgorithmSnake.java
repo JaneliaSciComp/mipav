@@ -243,7 +243,7 @@ public class AlgorithmSnake extends AlgorithmBase {
                 setPoints(xPoints, yPoints, zPoints, contours.elementAt(j));
                 VOIContour resultContour = new VOIContour( false, true );
                 runSnake(xPoints, yPoints, zPoints, imgBuffer, resultContour );
-                resultContour.trimPoints(Preferences.getTrim(),
+                resultContour.trimPoints(Preferences.getTrimVoi(),
                             Preferences.getTrimAdjacient());
                 if ( resultContour.size() > 0 )
                 {
@@ -320,7 +320,7 @@ public class AlgorithmSnake extends AlgorithmBase {
                 System.err.println( baseNPts );
                 
                 
-                resultContour.trimPoints(Preferences.getTrim(),
+                resultContour.trimPoints(Preferences.getTrimVoi(),
                         Preferences.getTrimAdjacient());
                 if ( resultContour.size() > 0 )
                 {
@@ -973,7 +973,7 @@ public class AlgorithmSnake extends AlgorithmBase {
 
                     break;
                 }
-                resultContour.trimPoints(Preferences.getTrim(),
+                resultContour.trimPoints(Preferences.getTrimVoi(),
                         Preferences.getTrimAdjacient());
                 resultVOI.importCurve(resultContour);
 
@@ -1075,7 +1075,7 @@ public class AlgorithmSnake extends AlgorithmBase {
 
                     break;
                 }
-                resultContour.trimPoints(Preferences.getTrim(),
+                resultContour.trimPoints(Preferences.getTrimVoi(),
                         Preferences.getTrimAdjacient());
                 resultVOI.importCurve(resultContour);
 

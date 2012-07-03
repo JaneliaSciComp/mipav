@@ -319,7 +319,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                     // add the polygon to an existing VOI
                                     VOIs.VOIAt(VOIIndexArray[i]).importPolygon(contourPolygon, z);
                                     ((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves().lastElement()))
-                                        .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                                        .trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                                 }
                             }
 
@@ -337,7 +337,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                 VOIIndexArray[grayScaleNumber] = VOIs.size() - 1;
                                 VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).importPolygon(contourPolygon, z);
                                 ((VOIContour) (VOIs.VOIAt(VOIIndexArray[grayScaleNumber]).getCurves().lastElement()))
-                                    .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                                    .trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                                 grayScaleNumber++;
 
                                 if (nameTable != null) {
@@ -449,7 +449,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                         // add the polygon to an existing VOI
                                         VOIs.VOIAt(VOIIndexArray[i]).importPolygon(contourPolygon, z);
                                         ((VOIContour) (VOIs.VOIAt(VOIIndexArray[i]).getCurves().lastElement()))
-                                            .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                                            .trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                                     }
                                 }
                             }

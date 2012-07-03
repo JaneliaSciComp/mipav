@@ -483,7 +483,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
 
                         // add the polygon to an existing VOI
                         addedVOI.importPolygon(contourPolygon, z);
-                        ((VOIContour) (addedVOI.getCurves().lastElement())).trimPoints(Preferences.getTrim(),
+                        ((VOIContour) (addedVOI.getCurves().lastElement())).trimPoints(Preferences.getTrimVoi(),
                                                                                           Preferences.getTrimAdjacient());
 
                     }
@@ -574,7 +574,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
 
                         // add the polygon to an existing VOI
                         addedVOI.importPolygon(contourPolygon, z);
-                        ((VOIContour) (addedVOI.getCurves().lastElement())).trimPoints(Preferences.getTrim(),
+                        ((VOIContour) (addedVOI.getCurves().lastElement())).trimPoints(Preferences.getTrimVoi(),
                                                                                           Preferences.getTrimAdjacient());
                     }
                 } // for (x = 0; x < xDim2 && !threadStopped; x++)
