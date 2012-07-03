@@ -294,7 +294,7 @@ public class RubberbandPolyline extends Rubberband {
         }
 
         if (done) {
-            contour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+            contour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
 
             ModelImage image = ((ViewJComponentEditImage) (component)).getActiveImage();
             int constant;

@@ -765,7 +765,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                     setPoints(xPoints, yPoints, zPoints, contours.elementAt(j));
                     resultContour = new VOIContour(false, true);
                     runSnake(xPoints, yPoints, zPoints, uVal, vVal, resultContour);
-                    resultContour.trimPoints(Preferences.getTrim(),
+                    resultContour.trimPoints(Preferences.getTrimVoi(),
                             Preferences.getTrimAdjacient());
                     if ( resultContour.size() > 0 )
                     {
@@ -851,7 +851,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 if (nPts < 8) {
                     break;
                 } else {
-                    tempContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                    tempContour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                     resultVOI.importCurve(tempContour);
                 }
                 tempContour = new VOIContour(tempContour, 1);
@@ -924,7 +924,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 if (nPts < 8) {
                     break;
                 } else {
-                    tempContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                    tempContour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                     resultVOI.importCurve(tempContour);
                 }
 
@@ -1050,7 +1050,7 @@ public class AlgorithmAGVF extends AlgorithmBase implements AlgorithmInterface {
                 setPoints(xPoints, yPoints, zPoints, contours.elementAt(j));
                 VOIContour resultContour = new VOIContour(false, true);
                 runSnake(xPoints, yPoints, zPoints, uVal, vVal, resultContour);
-                resultContour.trimPoints(Preferences.getTrim(),
+                resultContour.trimPoints(Preferences.getTrimVoi(),
                         Preferences.getTrimAdjacient());
                 if ( resultContour.size() > 0 )
                 {

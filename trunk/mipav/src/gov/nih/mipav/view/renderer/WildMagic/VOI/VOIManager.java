@@ -1069,7 +1069,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 				anchorPolyline( kEvent.getX(), kEvent.getY(), true );                
 			}
 			
-			m_kCurrentVOI.trimPoints(Preferences.getTrim(),
+			m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(),
 					Preferences.getTrimAdjacient());
 			//m_bDrawVOI = false;
 			m_iNearStatus = NearNone;
@@ -1340,7 +1340,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 					// If the user clicks on the first point close the contour:
 					m_kCurrentVOI.setClosed((m_kCurrentVOI.getNearPoint() == 0));
 					//m_kCurrentVOI.removeElementAt( m_kCurrentVOI.size() -1 );
-					m_kCurrentVOI.trimPoints(Preferences.getTrim(),
+					m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(),
 							Preferences.getTrimAdjacient());
 					if ( m_kCurrentVOI.getGroup() != null )
 					{
@@ -1388,7 +1388,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		// If the draw type is levelset, trim the points on mouse release:
 		else if ( m_iDrawType == LEVELSET && m_kCurrentVOI != null )
 		{
-			m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+			m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
 			if(!kEvent.isShiftDown()) {
 				m_iDrawType = NONE;
 			}
@@ -1396,7 +1396,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		// If the mode was retrace contour, end retrace on mouse release and trim the points:
 		else if ( m_iDrawType == RETRACE && m_kCurrentVOI != null )
 		{
-			m_kCurrentVOI.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+			m_kCurrentVOI.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
 			m_iDrawType = NONE;
 			m_bDrawVOI = false;
 			resetStart();

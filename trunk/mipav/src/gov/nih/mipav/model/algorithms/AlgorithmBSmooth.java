@@ -151,7 +151,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
 	                    fireProgressStateChanged(25 + (((75 * elementNum) + 50) / nContours));
 	
 	                    if (trim) {
-	                        resultContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+	                        resultContour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
 	                    }
 	                    resultVOI.importCurve(resultContour);
 	
@@ -232,7 +232,7 @@ public class AlgorithmBSmooth extends AlgorithmBase {
                         }
 
                         if (trim) {
-                            resultContour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                            resultContour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                         }
                         resultVOI.importCurve(resultContour);
                     } else {

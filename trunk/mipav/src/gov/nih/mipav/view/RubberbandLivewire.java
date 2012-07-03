@@ -1364,7 +1364,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                     newVOI = smoothAlgo.getResultVOI();
                     newVOI.setColor(voiColor);
                 } else {
-                    contour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                    contour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                     contour.setClosed(!open);
                     newVOI.importCurve(contour);
                 }
@@ -1457,7 +1457,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
                                 VOIs.VOIAt(i).getCurves().addElement((VOIContour)
                                                                                 smoothAlgo.getResultVOI().getCurves().lastElement());
                             } else {
-                                contour.trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
+                                contour.trimPoints(Preferences.getTrimVoi(), Preferences.getTrimAdjacient());
                                 contour.setClosed(!open);
                                 //                                VOIs.VOIAt(i).getCurves()[((ViewJComponentEditImage)(component)).getSlice()].addElement(contour);
 
