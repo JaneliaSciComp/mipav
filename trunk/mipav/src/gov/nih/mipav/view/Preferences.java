@@ -426,9 +426,12 @@ public class Preferences {
     public static final String PREF_INTERPOLATE_DISPLAY = "InterpolateDisplay";
     
     /** Constant that indicates the VOI Trim level variable. */
-    public static final String PREF_TRIM = "TRIM";
+    public static final String PREF_TRIM_VOI = "TRIM_VOI";
+    
+    /** Constant that indicates the mask trim level variable. */
+    public static final String PREF_TRIM_MASK = "TRIM_MASK";
 
-    /** Constant that indicates the VOI Trim flag. */
+    /** Constant that indicates the VOI Trim flag for trimming adjacent points. */
     public static final String PREF_TRIM_FLAG = "TRIM_FLAG";
 
     /** Constant indicating the VOI Thickness. */
@@ -666,7 +669,8 @@ public class Preferences {
 
         Preferences.defaultProps.setProperty(Preferences.PREF_AUTOSTART_DICOM_RECEIVER, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_ASK_DICOM_RECEIVER, "true");
-        Preferences.defaultProps.setProperty(Preferences.PREF_TRIM, "0.3");
+        Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_VOI, "0.3");
+        Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_MASK, "0");
         Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false, false");
         Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir")
                 + File.separator + "mipav.log");
@@ -1999,13 +2003,13 @@ public class Preferences {
      * 
      * @return the trim value.
      */
-    public static final float getTrim() {
+    public static final float getTrimVoi() {
 
         if (Preferences.mipavProps == null) {
             Preferences.read();
         }
 
-        final String str = Preferences.getProperty(Preferences.PREF_TRIM);
+        final String str = Preferences.getProperty(Preferences.PREF_TRIM_VOI);
 
         if (str != null) {
             return (Float.valueOf(str).floatValue());
@@ -2013,11 +2017,32 @@ public class Preferences {
 
         return 0.3f; // no match
     }
+    
+    /**
+     * Accessor to get the TRIM parameter (trimming VOIcontour of points). Default value is 0.3 which trims no
+     * points in the contours.
+     * 
+     * @return the trim value.
+     */
+    public static final float getTrimMask() {
+
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+
+        final String str = Preferences.getProperty(Preferences.PREF_TRIM_MASK);
+
+        if (str != null) {
+            return (Float.valueOf(str).floatValue());
+        }
+
+        return 0.0f; // no match
+    }
 
     /**
-     * Accessor to get the TRIM parameter (trimming contour of points).
+     * Accessor to get the trim parameter (trimming contour of adjacent points).
      * 
-     * @return the trim boolean to indicate if the directly adjacient points should be trimmed.
+     * @return the trim boolean to indicate if the directly adjacent points should be trimmed.
      */
     public static boolean getTrimAdjacient() {
 
