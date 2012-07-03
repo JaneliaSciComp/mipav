@@ -3844,8 +3844,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     protected void initPrefsFile() {}
 
     /**
-     * Gets the TRIM and TRIM_FLAG values from the preferences file, and if it cannot find them, it sets to some default
-     * value: TRIM will be zero-point-three, and TRIM_FLAG will be true.
+     * Gets the TRIM_VOI, TRIM_MASK and TRIM_FLAG values from the preferences file, and if it cannot find them, it sets to some default
+     * value: TRIM_VOI will be 0.3, TRIM_MASK will be 0.0, and TRIM_FLAG will be true.
      * 
      * <p>
      * Over-ride this method if these defaults are unnacceptable.
@@ -3853,8 +3853,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      */
     protected void initPrefsTrim() {
 
-        if (Preferences.getProperty(Preferences.PREF_TRIM) == null) {
-            Preferences.setProperty(Preferences.PREF_TRIM, "0.3");
+        if (Preferences.getProperty(Preferences.PREF_TRIM_VOI) == null) {
+            Preferences.setProperty(Preferences.PREF_TRIM_VOI, "0.3");
+        }
+        
+        if (Preferences.getProperty(Preferences.PREF_TRIM_MASK) == null) {
+            Preferences.setProperty(Preferences.PREF_TRIM_MASK, "0.0");
         }
 
         if (Preferences.getProperty(Preferences.PREF_TRIM_FLAG) == null) {
