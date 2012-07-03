@@ -2091,19 +2091,18 @@ public abstract class VOIBase extends Vector<Vector3f> {
         }
     }
 
-
     /**
-     * Removes collinear points (or near collinear) in the contour. If the
+     * Trims a contour and then removes collinear points in the resulting contour. If the
      * perpendicular distance from the middle point to the line defined by the
      * 1st and 3rd point is small than the middle point is removed.
      * 
      * @param constraint
      *            factor that controls the number of points removed. A larger
      *            constraint removes more points 0.50 typical - removes most
-     *            "almost/and collinear" points 0.10 - removes only "collinear"
+     *            "almost/and collinear" points 0.00 - removes only "collinear"
      *            points
      * @param tFlag
-     *            if true, trim adjacient points
+     *            if true, trim collinear points
      */
     public void trimPoints(double constraint, boolean tFlag) {
         int i;
@@ -2114,28 +2113,12 @@ public abstract class VOIBase extends Vector<Vector3f> {
             return;
         }
 
-        if (tFlag == true) {
-            end = size();
-
-            for (i = 0; i < (end - 1); i++) {
-                if (MipavMath.distance( elementAt(i), elementAt(i+1) ) <= 1.5) {
-                    removeElementAt(i + 1); // remove adjacient points
-                    end = size();
-                    i = i - 1;
-                }
-
-                if (size() <= 5) {
-                    return;
-                }
-            }
-        }
-
-        while (flag == true) {
+        while (flag) {
             flag = false;
             end = size();
 
             if (size() <= 5) {
-                return;
+                break;
             }
 
             for (i = 0; (i < (end - 2)) && (end > 5); i++) {
@@ -2156,6 +2139,22 @@ public abstract class VOIBase extends Vector<Vector3f> {
                     end = size();
                     i = i - 1;
                     flag = true;
+                }
+            }
+        }
+        
+        if (tFlag) {
+            for (i = 1; i < size()-1; i++) {  
+                Vector3f a = new Vector3f(elementAt(i).X-elementAt(i-1).X, elementAt(i).Y-elementAt(i-1).Y, elementAt(i).Z-elementAt(i-1).Z);
+                Vector3f b = new Vector3f(elementAt(i+1).X-elementAt(i-1).X, elementAt(i+1).Y-elementAt(i-1).Y, elementAt(i+1).Z-elementAt(i-1).Z);
+                a.Cross(b);
+                if(a.X + a.Y + a.Z == 0) {     
+                    removeElementAt(i);
+                    i = i - 1;
+                }
+                
+                if (size() <= 5) {
+                    break;
                 }
             }
         }
