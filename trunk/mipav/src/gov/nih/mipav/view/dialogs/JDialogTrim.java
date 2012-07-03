@@ -75,7 +75,7 @@ public class JDialogTrim extends JDialogBase implements ActionListener, ChangeLi
             //Preferences.setProperty(Preferences.PREF_TRIM_FLAG, trimCheckbox.isSelected());  
         } else if (source == OKButton) {
 
-            Preferences.setProperty(Preferences.PREF_TRIM_FLAG, trimCheckbox.isSelected()); 
+            Preferences.setProperty(Preferences.PREF_TRIM_FLAG, String.valueOf(trimCheckbox.isSelected())); 
             Preferences.setProperty(Preferences.PREF_TRIM_MASK, String.valueOf(maskTrimSlider.getValue() / (float) 100));
             Preferences.setProperty(Preferences.PREF_TRIM_VOI, String.valueOf(voiTrimSlider.getValue() / (float) 100));
             
