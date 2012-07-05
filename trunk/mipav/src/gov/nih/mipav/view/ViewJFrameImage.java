@@ -2551,99 +2551,100 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (componentImage != null) {
 
+            ModelImage refImage;
+            
             if (imageB != null) {
-                float[] intensityMapB;
+                refImage = imageB;
+            } else {
+                refImage = imageA;
+            }
+            
+            
+            float[] intensityMapRef;
 
-                if (imageB.isColorImage()) {
-                    intensityMapB = new float[ (imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make
-                    // intensity map
-                } else {
-                    intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
-                }
+            if (refImage.isColorImage()) {
+                intensityMapRef = new float[ (imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make
+                // intensity map
+            } else {
+                intensityMapRef = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
+            }
 
-                // same size as image
-                // dimensions
-                final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
-                ViewJProgressBar progressBar = null;
+            // same size as image
+            // dimensions
+            final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
+            ViewJProgressBar progressBar = null;
 
-                if (showProgressBar) {
-                    progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
-                            this);
-                    MipavUtil.centerOnScreen(progressBar);
-                    progressBar.setVisible(showProgressBar);
-                }
+            if (showProgressBar) {
+                progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
+                        this);
+                MipavUtil.centerOnScreen(progressBar);
+                progressBar.setVisible(showProgressBar);
+            }
 
-                try {
-                    final int numSlices = ( (imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
+            try {
+                final int numSlices = ( (imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
 
-                    // iterate through slices
-                    for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
+                // iterate through slices
+                for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
 
-                        // here is where we get the slice
-                        imageB.exportData(currentSlice * intensityMapB.length, intensityMapB.length, intensityMapB);
+                    // here is where we get the slice
+                    refImage.exportData(currentSlice * intensityMapRef.length, intensityMapRef.length, intensityMapRef);
 
-                        // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
-                        // selected intensity
+                    // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
+                    // selected intensity
 
-                        if (imageB.isColorImage()) {
+                    if (refImage.isColorImage()) {
 
-                            for (int k = 0; k <= (intensityMapB.length - 4); k = k + 4) {
-                                int r, g, b;
-                                r = (new Float(intensityMapB[k + 1])).intValue();
-                                g = (new Float(intensityMapB[k + 2])).intValue();
-                                b = (new Float(intensityMapB[k + 3])).intValue();
+                        for (int k = 0; k <= (intensityMapRef.length - 4); k = k + 4) {
+                            int r, g, b;
+                            r = (new Float(intensityMapRef[k + 1])).intValue();
+                            g = (new Float(intensityMapRef[k + 2])).intValue();
+                            b = (new Float(intensityMapRef[k + 3])).intValue();
 
-                                if ( ! ( (r == 0) && (g == 0) && (b == 0))) {
-                                    bitSet.set( (currentSlice * (intensityMapB.length / 4)) + (k / 4)); // turn the
-                                    // paint bit
-                                    // set index to ON
-                                    intensityMapB[k + 1] = 0; // erase the painted mask from this index
-                                    intensityMapB[k + 2] = 0; // erase the painted mask from this index
-                                    intensityMapB[k + 3] = 0; // erase the painted mask from this index
-                                }
-                            }
-                        } else {
-
-                            for (int i = 0; i < intensityMapB.length; i++) {
-
-                                if (intensityMapB[i] != 0) {
-                                    bitSet.set( (currentSlice * intensityMapB.length) + i); // turn the paint bit set
-                                    // index to ON
-                                    intensityMapB[i] = 0; // erase the painted mask from this index
-                                }
+                            if ( ! ( (r == 0) && (g == 0) && (b == 0))) {
+                                bitSet.set( (currentSlice * (intensityMapRef.length / 4)) + (k / 4)); // turn the
+                                // paint bit
+                                // set index to ON
+                                intensityMapRef[k + 1] = 0; // erase the painted mask from this index
+                                intensityMapRef[k + 2] = 0; // erase the painted mask from this index
+                                intensityMapRef[k + 3] = 0; // erase the painted mask from this index
                             }
                         }
+                    } else {
 
-                        // put the modified slice back into image
-                        imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
+                        for (int i = 0; i < intensityMapRef.length; i++) {
 
-                        if (progressBar != null) {
-                            progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+                            if (intensityMapRef[i] != 0) {
+                                bitSet.set( (currentSlice * intensityMapRef.length) + i); // turn the paint bit set
+                                // index to ON
+                                intensityMapRef[i] = 0; // erase the painted mask from this index
+                            }
                         }
                     }
 
-                    updateImages(true);
-                } catch (final Exception ex) {
-
-                    // do nothing. the error will be displayed when this if block exits
-                    ex.printStackTrace();
-                    MipavUtil.displayError("Cannot complete the operation due to an internal error.");
-                } finally {
+                    // put the modified slice back into image
+                    refImage.importData(currentSlice * intensityMapRef.length, intensityMapRef, false);
 
                     if (progressBar != null) {
-                        progressBar.dispose();
+                        progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
                     }
                 }
-            } else {
 
-                // if we get here, there is no mask on the image.
-                MipavUtil
-                        .displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
+                updateImages(true);
+            } catch (final Exception ex) {
+
+                // do nothing. the error will be displayed when this if block exits
+                ex.printStackTrace();
+                MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+            } finally {
+
+                if (progressBar != null) {
+                    progressBar.dispose();
+                }
             }
+             
         } else {
-
-            // should never get to this point. big trouble.
-            MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+            MipavUtil.displayError("No image is displayed, please open an image.");
         }
     }
 
@@ -3360,106 +3361,105 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (componentImage != null) {
 
+            ModelImage refImage;
+            
             if (imageB != null) {
-                float[] intensityMapB;
+                refImage = imageB;
+            } else {
+                refImage = imageA;
+            }
+                
+            float[] intensityMapRef;
 
-                if (imageB.isColorImage()) {
-                    intensityMapB = new float[ (imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make
-                    // intensity map
-                } else {
-                    intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
-                }
+            if (refImage.isColorImage()) {
+                intensityMapRef = new float[ (imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make
+                // intensity map
+            } else {
+                intensityMapRef = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
+            }
 
-                // same size as image
-                // dimensions
-                final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
-                ViewJProgressBar progressBar = null;
+            // same size as image
+            // dimensions
+            final BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
+            ViewJProgressBar progressBar = null;
 
-                if (showProgressBar) {
-                    progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
-                            this);
-                    MipavUtil.centerOnScreen(progressBar);
-                    progressBar.setVisible(showProgressBar);
-                }
+            if (showProgressBar) {
+                progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
+                        this);
+                MipavUtil.centerOnScreen(progressBar);
+                progressBar.setVisible(showProgressBar);
+            }
 
-                try {
-                    final int numSlices = ( (imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
+            try {
+                final int numSlices = ( (imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
 
-                    // iterate through slices
-                    for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
+                // iterate through slices
+                for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
 
-                        // here is where we get the slice
-                        imageB.exportData(currentSlice * intensityMapB.length, intensityMapB.length, intensityMapB);
+                    // here is where we get the slice
+                    refImage.exportData(currentSlice * intensityMapRef.length, intensityMapRef.length, intensityMapRef);
 
-                        // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
-                        // selected intensity
+                    // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
+                    // selected intensity
 
-                        final Color activeColor = getControls().getTools().getPaintColor();
-                        final int activeRed = activeColor.getRed();
-                        final int activeGreen = activeColor.getGreen();
-                        final int activeBlue = activeColor.getBlue();
+                    final Color activeColor = getControls().getTools().getPaintColor();
+                    final int activeRed = activeColor.getRed();
+                    final int activeGreen = activeColor.getGreen();
+                    final int activeBlue = activeColor.getBlue();
 
-                        if (imageB.isColorImage()) {
+                    if (refImage.isColorImage()) {
 
-                            for (int k = 0; k <= (intensityMapB.length - 4); k = k + 4) {
-                                int r, g, b;
-                                r = (new Float(intensityMapB[k + 1])).intValue();
-                                g = (new Float(intensityMapB[k + 2])).intValue();
-                                b = (new Float(intensityMapB[k + 3])).intValue();
+                        for (int k = 0; k <= (intensityMapRef.length - 4); k = k + 4) {
+                            int r, g, b;
+                            r = (new Float(intensityMapRef[k + 1])).intValue();
+                            g = (new Float(intensityMapRef[k + 2])).intValue();
+                            b = (new Float(intensityMapRef[k + 3])).intValue();
 
-                                if ( (r == activeRed) && (g == activeGreen) && (b == activeBlue)) {
-                                    bitSet.set( (currentSlice * (intensityMapB.length / 4)) + (k / 4)); // turn the
-                                    // paint bit
+                            if ( (r == activeRed) && (g == activeGreen) && (b == activeBlue)) {
+                                bitSet.set( (currentSlice * (intensityMapRef.length / 4)) + (k / 4)); // turn the
+                                // paint bit
 
-                                    // set index to ON
-                                    intensityMapB[k + 1] = 0; // erase the painted mask from this index
-                                    intensityMapB[k + 2] = 0; // erase the painted mask from this index
-                                    intensityMapB[k + 3] = 0; // erase the painted mask from this index
-                                }
-                            }
-                        } else {
-
-                            for (int i = 0; i < intensityMapB.length; i++) {
-
-                                if (intensityMapB[i] == componentImage.intensityDropper) {
-                                    bitSet.set( (currentSlice * intensityMapB.length) + i); // turn the paint bit set
-                                    // index to ON
-                                    intensityMapB[i] = 0; // erase the painted mask from this index
-                                }
+                                // set index to ON
+                                intensityMapRef[k + 1] = 0; // erase the painted mask from this index
+                                intensityMapRef[k + 2] = 0; // erase the painted mask from this index
+                                intensityMapRef[k + 3] = 0; // erase the painted mask from this index
                             }
                         }
+                    } else {
 
-                        // put the modified slice back into image
-                        imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
+                        for (int i = 0; i < intensityMapRef.length; i++) {
 
-                        if (progressBar != null) {
-                            progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+                            if (intensityMapRef[i] == componentImage.intensityDropper) {
+                                bitSet.set( (currentSlice * intensityMapRef.length) + i); // turn the paint bit set
+                                // index to ON
+                                intensityMapRef[i] = 0; // erase the painted mask from this index
+                            }
                         }
                     }
 
-                    updateImages(true);
-                    success = true;
-                } catch (final Exception ex) {
-
-                    // do nothing. the error will be displayed when this if block exits
-                    ex.printStackTrace();
-                    MipavUtil.displayError("Cannot complete the operation due to an internal error.");
-                } finally {
+                    // put the modified slice back into image
+                    refImage.importData(currentSlice * intensityMapRef.length, intensityMapRef, false);
 
                     if (progressBar != null) {
-                        progressBar.dispose();
+                        progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
                     }
                 }
-            } else {
 
-                // if we get here, there is no mask on the image.
-                MipavUtil
-                        .displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
+                updateImages(true);
+                success = true;
+            } catch (final Exception ex) {
+                // do nothing. the error will be displayed when this if block exits
+                ex.printStackTrace();
+                MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+            } finally {
+
+                if (progressBar != null) {
+                    progressBar.dispose();
+                }
             }
+             
         } else {
-
-            // should never get to this point. big trouble.
-            MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+            MipavUtil.displayError("No image is open, please open an image.");
         }
 
         return success;
