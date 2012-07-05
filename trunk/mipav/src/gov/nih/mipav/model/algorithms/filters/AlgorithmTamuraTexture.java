@@ -15,10 +15,15 @@ import java.text.DecimalFormat;
  * @version  0.1 July 3, 2012
  * @author   William Gandler 
 
- 
+ * In the coarseness measurement a 32 wide pixel rim around the edge is excluded from the calculation.
+ * The contrast measurement uses all the pixels for the whole image measurement and leaves a cSize/2 rim
+ * around the edge for individual pixel measurements.  The directionality measurement excludes a 1 wide
+ * pixel rim around the edge.
  * 
  */
 public class AlgorithmTamuraTexture extends AlgorithmBase {
+    
+    private ModelImage destImage[] = null;
     
     /** Red channel. */
     private static final int RED_OFFSET = 1;
@@ -33,7 +38,14 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
     
     private boolean doContrast;
     
+    // Contrast neighborhood size for individual pixel calculations, must be an odd integer
+    private int cSize = 13;
+    
     private boolean doDirectionality;
+    
+    private int histogramBins = 16;
+    
+    private double histogramThreshold = 12.0;
     
     private int RGBOffset = RED_OFFSET; 
 
@@ -44,39 +56,57 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
     /**
      * Creates a new AlgorithmTamuraTexture object for black and white image.
      *
+     * @param              destImage array
      * @param              srcImg             source image model
      * @param              doCoarseness
      * @param              coarsenessThreshold
      * @param              doContrast
+     * @param              cSize
      * @param              doDirectionality
+     * @param              histogramBins
+     * @param              histogramThreshold
      */
-    public AlgorithmTamuraTexture(ModelImage srcImg, boolean doCoarseness, double coarsenessThreshold,
-                                  boolean doContrast, boolean doDirectionality) {
+    public AlgorithmTamuraTexture(ModelImage destImage[], ModelImage srcImg, boolean doCoarseness, double coarsenessThreshold,
+                                  boolean doContrast, int cSize, boolean doDirectionality, int histogramBins,
+                                  double histogramThreshold) {
         super(null, srcImg);
+        this.destImage = destImage;
         this.doCoarseness = doCoarseness;
         this.coarsenessThreshold = coarsenessThreshold;
         this.doContrast = doContrast;
+        this.cSize = cSize;
         this.doDirectionality = doDirectionality;
+        this.histogramBins = histogramBins;
+        this.histogramThreshold = histogramThreshold;
     }
     
     /**
      * Creates a new AlgorithmTamuraTexture object for color image.
      *
+     * @param              destImage          array
      * @param              srcImg             source image model
      * @param              RGBOffset          selects red, green, or blue channel
      * @param              doCoarseness
      * @param              coarsenessThreshold
      * @param              doContrast
+     * @param              cSize
      * @param              doDirectionality
+     * @param              histogramBins
+     * @param              histogramThreshold
      */
-    public AlgorithmTamuraTexture(ModelImage srcImg, int RGBOffset, boolean doCoarseness, double coarsenessThreshold,
-                                  boolean doContrast, boolean doDirectionality) {
+    public AlgorithmTamuraTexture(ModelImage destImage[], ModelImage srcImg, int RGBOffset, boolean doCoarseness,
+            double coarsenessThreshold, boolean doContrast, int cSize, boolean doDirectionality, int histogramBins,
+                                  double histogramThreshold) {
         super(null, srcImg);
+        this.destImage = destImage;
         this.RGBOffset = RGBOffset;
         this.doCoarseness = doCoarseness;
         this.coarsenessThreshold = coarsenessThreshold;
         this.doContrast = doContrast;
+        this.cSize = cSize;
         this.doDirectionality = doDirectionality;
+        this.histogramBins = histogramBins;
+        this.histogramThreshold = histogramThreshold;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -129,7 +159,7 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
         double[][] Ak = null;
         double[][] Ekh = null;
         double[][] Ekv = null;
-        double[] Sbest = null;
+        double[] buffer = new double[sliceSize];
         double Fcoarseness;
         int kMax;
         double Emax;
@@ -152,11 +182,30 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
         double kurtosis;
         double standardDeviation;
         double Fcontrast;
-        double gradH[] = null;
-        double gradV[] = null;
+        int cSquared = cSize * cSize;
+        int cHalf = cSize/2;
+        double gradH;
+        double gradV;
+        double delG[] = null;
+        double angle;
+        double theta[] = null;
         int gradSize = (xDim-2)*(yDim-2);
         int pos;
         int gradPos;
+        int totalHistogramCount;
+        int bin[] = null;
+        int binNumber;
+        double HD[] = null;
+        // -1 for valley, +1 for peak, 0 otherwise
+        int pv[] = null;
+        int lastValley;
+        double Fdirectionality;
+        int idiff;
+        boolean found;
+        int destImageIndex = 0;
+        int coarsenessIndex = 0;
+        int contrastIndex = 0;
+        int directionalityIndex = 0;
         ViewUserInterface UI = ViewUserInterface.getReference();
         DecimalFormat kDecimalFormat = new DecimalFormat();
         kDecimalFormat.setMinimumFractionDigits(3);
@@ -173,12 +222,20 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
             Ak = new double[5][kSliceSize];
             Ekh = new double[5][khvSliceSize];
             Ekv = new double[5][khvSliceSize];
-            Sbest = new double[khvSliceSize];
+            coarsenessIndex = destImageIndex++;
         } // if (doCoarseness)
         
+        if (doContrast) {
+            contrastIndex = destImageIndex++;
+        }
+        
         if (doDirectionality) {
-            gradH = new double[gradSize];
-            gradV = new double[gradSize];
+            delG = new double[gradSize];
+            theta = new double[gradSize];
+            bin = new int[histogramBins];
+            HD = new double[histogramBins];
+            pv = new int[histogramBins];
+            directionalityIndex = destImageIndex++;
         }
         
         for (z = 0; z < zDim; z++) {
@@ -271,10 +328,41 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
                                  }    
                              } // for (k = kMax+1; k <= 5; k++)
                          } // if (coarsenessThreshold < 1.0)
-                         Sbest[khvPos] = Math.pow(2.0,kMax);
-                         Fcoarseness += Sbest[khvPos];
+                         pos = x + y*xDim;
+                         buffer[pos] = Math.pow(2.0,kMax);
+                         Fcoarseness += buffer[pos];
                      } // for (x = 32; x <= xDim-32; x++)
                 } // for (y = 32; y <= (yDim-32) && !threadStopped; y++)
+                
+                
+                if (z < zDim - 1) {
+                    try {
+                        destImage[coarsenessIndex].importData(z*sliceSize, buffer, false);
+                    }
+                    catch (IOException error) {
+                        MipavUtil.displayError("AlgorithmTamuraTexture: IOException on destImage[" + coarsenessIndex +
+                                               "].importData(z*sliceSize, buffer,false)");
+                        setCompleted(false);
+        
+                        return;
+                    }
+                }
+                else {
+                    try {
+                        destImage[coarsenessIndex].importData(z*sliceSize, buffer, true);
+                    }
+                    catch (IOException error) {
+                        MipavUtil.displayError("AlgorithmTamuraTexture: IOException on destImage[" + coarsenessIndex +
+                                               "].importData(z*sliceSize, buffer,true)");
+                        setCompleted(false);
+        
+                        return;
+                    }
+                }
+                
+                for (i = 0; i < sliceSize; i++) {
+                    buffer[i] = 0;
+                }
                 
                 Fcoarseness = Fcoarseness/khvSliceSize;
                 UI.setDataText("Slice number = " + z + " Coarseness = " + 
@@ -309,6 +397,65 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
                 Fcontrast = standardDeviation/Math.pow(kurtosis, 0.25);
                 UI.setDataText("Slice number = " + z + " Contrast = " + 
                         kDecimalFormat.format(Fcontrast) + "\n");
+                
+                for (y = cHalf; y < yDim - cHalf; y++) {
+                    for (x = cHalf; x < xDim - cHalf; x++) {
+                        sum = 0.0;
+                        for (j = y-cHalf; j <= y + cHalf; j++) {
+                            for (i = x-cHalf; i <= x+cHalf; i++) {
+                                sum += sourceBuffer[i + j * xDim];    
+                            } // for (i = x-cHalf; i <= x+cHalf; i++)
+                        } // for (j = y-cHalf; j <= y + cHalf; j++)
+                        mean = sum/cSquared;
+                        
+                        squaredSum = 0.0;
+                        fourthSum = 0.0;
+                        for (j = y-cHalf; j <= y + cHalf; j++) {
+                            for (i = x-cHalf; i <= x+cHalf; i++) {
+                                diff = sourceBuffer[i + j * xDim] - mean;
+                                squaredDiff = diff * diff;
+                                squaredSum += squaredDiff;
+                                fourthDiff = squaredDiff * squaredDiff;
+                                fourthSum += fourthDiff;
+                            } // for (i = x-cHalf; i <= x+cHalf; i++)
+                        } // for (j = y-cHalf; j <= y + cHalf; j++)
+                        variance = squaredSum/cSquared;
+                        fourthCentralMoment = fourthSum/cSquared;
+                        kurtosis = fourthCentralMoment/(variance * variance);
+                        standardDeviation = Math.sqrt(variance);
+                        Fcontrast = standardDeviation/Math.pow(kurtosis, 0.25);
+                        buffer[x + y * xDim] = Fcontrast;
+                    } // for (x = cHalf; x < xDim - cHalf; x++)
+                } // for (y = cHalf; y < yDim - cHalf; y++)
+                
+                if (z < zDim - 1) {
+                    try {
+                        destImage[contrastIndex].importData(z*sliceSize, buffer, false);
+                    }
+                    catch (IOException error) {
+                        MipavUtil.displayError("AlgorithmTamuraTexture: IOException on destImage[" + contrastIndex +
+                                               "].importData(z*sliceSize, buffer,false)");
+                        setCompleted(false);
+        
+                        return;
+                    }
+                }
+                else {
+                    try {
+                        destImage[contrastIndex].importData(z*sliceSize, buffer, true);
+                    }
+                    catch (IOException error) {
+                        MipavUtil.displayError("AlgorithmTamuraTexture: IOException on destImage[" + contrastIndex +
+                                               "].importData(z*sliceSize, buffer,true)");
+                        setCompleted(false);
+        
+                        return;
+                    }
+                }
+                
+                for (i = 0; i < sliceSize; i++) {
+                    buffer[i] = 0;
+                }
             } // if (doContrast)
             
             if (doDirectionality) {
@@ -316,21 +463,157 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
                     for (x = 1; x <= xDim - 2; x++) {
                         pos = x + y * xDim; 
                         gradPos = (x - 1) + (y - 1) * (xDim - 2);
-                        gradH[gradPos] = gradH[gradPos] + sourceBuffer[pos - xDim + 1] - sourceBuffer[pos - xDim - 1]
-                                                        + sourceBuffer[pos  + 1] - sourceBuffer[pos - 1]
-                                                        + sourceBuffer[pos + xDim + 1] - sourceBuffer[pos + xDim - 1];
-                        gradV[gradPos] = gradV[gradPos] + sourceBuffer[pos - xDim - 1] - sourceBuffer[pos + xDim - 1]
-                                                        + sourceBuffer[pos - xDim] - sourceBuffer[pos + xDim]
-                                                        + sourceBuffer[pos - xDim + 1] - sourceBuffer[pos + xDim + 1];
+                        // Gradient filters for whole image results
+                        gradH = sourceBuffer[pos - xDim + 1] - sourceBuffer[pos - xDim - 1]
+                              + sourceBuffer[pos  + 1] - sourceBuffer[pos - 1]
+                              + sourceBuffer[pos + xDim + 1] - sourceBuffer[pos + xDim - 1];
+                        gradV = sourceBuffer[pos + xDim - 1] - sourceBuffer[pos - xDim - 1]
+                              + sourceBuffer[pos + xDim] - sourceBuffer[pos - xDim]
+                              + sourceBuffer[pos + xDim + 1] - sourceBuffer[pos - xDim + 1];
+                        delG[gradPos] = (Math.abs(gradH) + Math.abs(gradV))/2.0;
+                        // tan(x + PI) = tan(x)
+                        // tan(x - PI) = tan(x)
+                        // atan2 goes from -PI to PI
+                        // Wish to put into atan -PI/2 to PI/2 range
+                        angle = Math.atan2(gradV, gradH);
+                        if (angle < -Math.PI/2.0) {
+                            angle = angle + Math.PI;
+                        }
+                        else if (angle > Math.PI/2.0) {
+                            angle = angle - Math.PI;
+                        }
+                        // Now put into theta 0 to PI range by adding PI/2.0
+                        theta[gradPos] = angle + Math.PI/2.0;
+                        
+                        // Sobel filters for pixel results
+                        gradH = sourceBuffer[pos - xDim + 1] - sourceBuffer[pos - xDim - 1]
+                              + 2.0*sourceBuffer[pos  + 1] - 2.0*sourceBuffer[pos - 1]
+                              + sourceBuffer[pos + xDim + 1] - sourceBuffer[pos + xDim - 1];
+                        gradV = sourceBuffer[pos + xDim - 1] - sourceBuffer[pos - xDim - 1]
+                              + 2.0*sourceBuffer[pos + xDim] - 2.0*sourceBuffer[pos - xDim]
+                              + sourceBuffer[pos + xDim + 1] - sourceBuffer[pos - xDim + 1];
+                        delG[gradPos] = (Math.abs(gradH) + Math.abs(gradV))/2.0;
+                        // tan(x + PI) = tan(x)
+                        // tan(x - PI) = tan(x)
+                        // atan2 goes from -PI to PI
+                        // Wish to put into atan -PI/2 to PI/2 range
+                        angle = Math.atan2(gradV, gradH);
+                        if (angle < -Math.PI/2.0) {
+                            angle = angle + Math.PI;
+                        }
+                        else if (angle > Math.PI/2.0) {
+                            angle = angle - Math.PI;
+                        }
+                        // Now put into theta 0 to PI range by adding PI/2.0
+                        buffer[pos] = angle + Math.PI/2.0;
                     } // for (x = 1; x <= xDim - 2; x++)
                 } // for (y = 1; y <= yDim - 2; y++)
                 
-                if (z < zDim) {
-                    for (i = 0; i < gradSize; i++) {
-                        gradH[i] = 0.0;
-                        gradV[i] = 0.0;
+                if (z < zDim - 1) {
+                    try {
+                        destImage[directionalityIndex].importData(z*sliceSize, buffer, false);
+                    }
+                    catch (IOException error) {
+                        MipavUtil.displayError("AlgorithmTamuraTexture: IOException on destImage[" + directionalityIndex +
+                                               "].importData(z*sliceSize, buffer,false)");
+                        setCompleted(false);
+        
+                        return;
                     }
                 }
+                else {
+                    try {
+                        destImage[directionalityIndex].importData(z*sliceSize, buffer, true);
+                    }
+                    catch (IOException error) {
+                        MipavUtil.displayError("AlgorithmTamuraTexture: IOException on destImage[" + directionalityIndex +
+                                               "].importData(z*sliceSize, buffer,true)");
+                        setCompleted(false);
+        
+                        return;
+                    }
+                }
+                
+                for (i = 0; i < sliceSize; i++) {
+                    buffer[i] = 0;
+                }
+                
+                totalHistogramCount = 0;
+                for (i = 0; i < gradSize; i++) {
+                    if (delG[i] >= histogramThreshold) {
+                        totalHistogramCount++;
+                        binNumber = (int)(theta[i]/(Math.PI/histogramBins));
+                        if (binNumber == histogramBins) {
+                            // Set PI angles to 0.
+                            binNumber = 0;
+                        }
+                        bin[binNumber]++;
+                    } // if (delG[i] >= histogramThreshold)
+                } // for (i = 0; i < gradSize; i++)
+                
+                for (i = 0; i < histogramBins; i++) {
+                    HD[i] = ((double)bin[i]/(double)totalHistogramCount);
+                }
+                
+                if (z < zDim - 1) {
+                    for (i = 0; i < histogramBins; i++) {
+                        bin[i] = 0;
+                    }
+                } // if (z < zDim - 1)
+                
+                if (bin[0] > bin[1]) {
+                    pv[0] = 1;
+                }
+                else if (bin[0] < bin[1]) {
+                    pv[0] = -1;
+                }
+                if (bin[histogramBins-1] > bin[histogramBins-2]) {
+                    pv[histogramBins-1] = 1;
+                }
+                else if (bin[histogramBins-1] < bin[histogramBins-2]) {
+                    pv[histogramBins-1] = -1;
+                }
+                for (i = 1; i < histogramBins-1; i++) {
+                    if ((bin[i] > bin[i-1]) && (bin[i] > bin[i+1])) {
+                        pv[i] = 1;
+                    }
+                    else if ((bin[i] < bin[i-1]) && (bin[i] < bin[i+1]))  
+                        pv[i] = -1;
+                }
+                
+                lastValley = Integer.MAX_VALUE;
+                Fdirectionality = 0;
+                for (i = 0; i < histogramBins; i++) {
+                    if (pv[i] == 1) {
+                       for (j = lastValley; j < i; j++) {
+                           idiff = i - j;
+                           Fdirectionality += idiff*idiff*HD[j];     
+                       }
+                       found = false;
+                       for (j = i+1; (j < histogramBins)  && (!found); j++) {
+                           idiff = i - j;
+                           Fdirectionality += idiff*idiff*HD[j];
+                           if (pv[j] == -1) {
+                               found = true;
+                               lastValley = j;
+                               i = j;
+                           }
+                       }
+                    }
+                    else if (pv[i] == -1) {
+                        lastValley = i;
+                    }
+                } // for (i = 0; i < histogramBins; i++)
+                
+                if (z < zDim - 1) {
+                    for (i = 0; i < histogramBins; i++) {
+                        pv[i] = 0;
+                    }
+                } // if (z < zDim - 1)
+                
+                UI.setDataText("Slice number = " + z + " Directionality = " + 
+                        kDecimalFormat.format(Fdirectionality) + "\n");
+                
             } // if (doDirectionality)
     
             if (threadStopped) {
