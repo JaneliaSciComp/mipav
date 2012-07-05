@@ -1392,7 +1392,7 @@ public class JPanelHistoRGB
 
         controlPanel.setBorder(new EtchedBorder());
         /*
-                updateCheckBoxA = new JCheckBox( "Update (real-time)", true );
+                updateCheckBoxA = new JCheckBox( "Update image (real-time)", Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY) );
                 updateCheckBoxA.setFont( MipavUtil.font12 );
                 updateCheckBoxA.addItemListener( this );
                 updateCheckBoxA.setSelected( false );
@@ -1464,7 +1464,7 @@ public class JPanelHistoRGB
 
         controlPanelB.setBorder(new EtchedBorder());
         /*
-                updateCheckBoxB = new JCheckBox( "Update (real-time)", true );
+                updateCheckBoxB = new JCheckBox( "Update (real-time)", Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY) );
                 updateCheckBoxB.setFont( MipavUtil.font12 );
                 updateCheckBoxB.addItemListener( this );
                 updateCheckBoxB.setSelected( false );
