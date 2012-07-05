@@ -1707,7 +1707,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        updateCheckBoxA = new JCheckBox("Update (real-time)", true);
+        updateCheckBoxA = new JCheckBox("Update image (real-time)", Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
         updateCheckBoxA.setFont(MipavUtil.font12);
         updateCheckBoxA.addItemListener(this);
 
@@ -1881,7 +1881,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         colorPanel.setBorder(new TitledBorder(new EtchedBorder(), "Image components", TitledBorder.LEFT,
                                               TitledBorder.CENTER, MipavUtil.font12B, Color.black));
 
-        updateCheckBoxB = new JCheckBox("Update (real-time)", true);
+        updateCheckBoxB = new JCheckBox("Update image (real-time)", Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
         updateCheckBoxB.setFont(MipavUtil.font12);
         updateCheckBoxB.addItemListener(this);
 

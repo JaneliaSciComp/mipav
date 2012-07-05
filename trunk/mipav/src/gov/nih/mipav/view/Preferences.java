@@ -422,8 +422,11 @@ public class Preferences {
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
     public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
     
-    /** Constant that indicates whether of not an image is interpolated on display */
+    /** Constant that indicates whether or not an image is interpolated on display */
     public static final String PREF_INTERPOLATE_DISPLAY = "InterpolateDisplay";
+    
+    /** Constant that indicates whether image is updated in real-time on histogram changes */
+    public static final String PREF_HISTOGRAM_DISPLAY = "HistogramDisplay";
     
     /** Constant that indicates the VOI Trim level variable. */
     public static final String PREF_TRIM_VOI = "TRIM_VOI";
@@ -728,6 +731,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
         Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, "true");
         
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT_SIZE, "12");
@@ -2292,6 +2296,26 @@ public class Preferences {
         }
         return false;
     }
+    
+    /**
+     * Indicates whether the image display should be updated in real-time as histogram LUTs are changed
+     * 
+     * @return true if real-time operation should occur
+     */
+    public static boolean isHistogramDisplay() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String hiEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_HISTOGRAM_DISPLAY);
+        if (hiEnabled == null) {
+            hiEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_HISTOGRAM_DISPLAY);
+        }
+        if (Boolean.valueOf(hiEnabled)) {
+            return true;
+        }
+        return false;
+    }
+    
 
     /**
      * Gets the boolean state of the property, where in the preferences file the &quot;yes&quot;, &quot;on&quot;,

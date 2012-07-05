@@ -1829,7 +1829,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         controlPanel.setBorder(new EtchedBorder());
 
-        updateCheckBoxA = new JCheckBox("Update (real-time)", true);
+        updateCheckBoxA = new JCheckBox("Update image (real-time)", Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
         updateCheckBoxA.setFont(MipavUtil.font12);
         updateCheckBoxA.addItemListener(this);
 
@@ -2125,7 +2125,7 @@ public class ViewJPanelLUT extends JPanel implements ItemListener, ActionListene
 
         controlPanelB.setBorder(new EtchedBorder());
 
-        updateCheckBoxB = new JCheckBox("Update (real-time)", true);
+        updateCheckBoxB = new JCheckBox("Update image (real-time)", Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
         updateCheckBoxB.setFont(MipavUtil.font12);
         updateCheckBoxB.addItemListener(this);
 

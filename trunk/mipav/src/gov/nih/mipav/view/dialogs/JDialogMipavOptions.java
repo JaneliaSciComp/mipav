@@ -250,6 +250,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** border size for active image color **/
     private JComboBox activeImageColorBorderSize;
 
+    /** Whether images are updated in real-time based on histogram changes. */
+    private JCheckBox displayHistogram;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -302,6 +305,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeComplexImageOptions(gbc, gbl);
         makeLogMagImageOptions(gbc, gbl);
         makeInterpolateImageOptions(gbc, gbl);
+        makeHistogramImageOptions(gbc, gbl);
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
@@ -502,6 +506,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
             Preferences.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, String.valueOf(displayInterpolate.isSelected()));
+            Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, String.valueOf(displayHistogram.isSelected()));
             
             // check to see if provenance should be turned on (if it was off)
             if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) != provenanceCheckBox.isSelected()) {
@@ -1147,6 +1152,27 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
               displayInterpolate.setSelected(Preferences.is(Preferences.PREF_INTERPOLATE_DISPLAY));
           }
       }
+      
+      /**
+       * Makes checkbox for whether to update image in real-time as histogram luts are changed
+       */
+       protected void makeHistogramImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
+       
+           displayHistogram = new JCheckBox("Change image in real-time based on histogram changes");
+           displayHistogram.setFont(MipavUtil.font12);
+           displayHistogram.setForeground(Color.black);
+           displayHistogram.addActionListener(this);
+           gbc2.insets = new Insets(0, 0, 0, 0);
+           gbc2.gridwidth = GridBagConstraints.REMAINDER;
+           gbc2.anchor = GridBagConstraints.WEST;
+           displayImagePanel.add(displayHistogram, gbc2);
+           
+           if(Preferences.getProperty(Preferences.PREF_HISTOGRAM_DISPLAY) == null) {
+               Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, Boolean.valueOf(true).toString());
+           } else {
+               displayHistogram.setSelected(Preferences.is(Preferences.PREF_HISTOGRAM_DISPLAY));
+           }
+       }
     
     
     /**
