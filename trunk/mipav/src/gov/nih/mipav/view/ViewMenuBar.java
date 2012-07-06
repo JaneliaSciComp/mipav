@@ -193,6 +193,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Nonmaximum suppression", "nmsuppression", 0, null, false),
                         menuBuilder.buildMenuItem("Regularized isotropic diffusion", "RegIsoDiff", 0, null, false),
                         menuBuilder.buildMenuItem("Slice averaging", "sliceAveraging", 0, null, false),
+                        menuBuilder.buildMenuItem("Tamura texture", "Tamura", 0, null, false),
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
                         // null, null, null),
@@ -1023,6 +1024,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", false);
             menuBuilder.setMenuItemEnabled("Capture image slices to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
+            menuBuilder.setMenuItemEnabled("Tamura texture", false);
             menuBuilder.setMenuItemEnabled("Hurst index", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
             menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
@@ -1266,6 +1268,7 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Concat Multiple 2D to 3D", true);
         menuBuilder.setMenuItemEnabled("Capture image slices to new frame", true);
         menuBuilder.setMenuItemEnabled("Haralick texture", true);
+        menuBuilder.setMenuItemEnabled("Tamura texture", true);
         menuBuilder.setMenuItemEnabled("Hurst index", true);
         menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", true);
         menuBuilder.setMenuItemEnabled("Pad slices to power of 2", true);
