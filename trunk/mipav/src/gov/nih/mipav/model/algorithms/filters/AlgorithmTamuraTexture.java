@@ -12,13 +12,21 @@ import java.text.DecimalFormat;
 /**
  * DOCUMENT ME!
  *
- * @version  0.1 July 3, 2012
+ * @version  0.1 July 6, 2012
  * @author   William Gandler 
 
  * In the coarseness measurement a 32 wide pixel rim around the edge is excluded from the calculation.
- * The contrast measurement uses all the pixels for the whole image measurement and leaves a cSize/2 rim
- * around the edge for individual pixel measurements.  The directionality measurement excludes a 1 wide
- * pixel rim around the edge.
+ * The contrast measurement uses all the pixels.  The directionality measurement excludes a 1 wide
+ * pixel rim around the edge.  All measurements are calculated for whole slice values and individual
+ * pixel values.  Directionality uses the gradient filter for the whole slice result and the Sobel
+ * filter for the pixel result.
+ * 
+ * References: 1.) "Textural Features Corresponding to Visual Perception" by Hideyuki Tamura, Shunji Mori,
+ * and Takashi Yamawaki, IEEE Transactions on Systems, Man, and Cybernetics, Vol. SMC-8, No. 6, June, 1978,
+ * pp. 460 - 473.
+ * 
+ * 2.) "A Relevance Feedback Retrieval Method Based on Tamura Texture" by Ya-Li Qi, 2009 Second International
+ * Symposium on Knowledge Acquisition and Modeling, 2009, pp. 174-177.
  * 
  */
 public class AlgorithmTamuraTexture extends AlgorithmBase {
@@ -45,6 +53,7 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
     
     private int histogramBins = 16;
     
+    // Threshold for gradient magnitude for gradient angle to be included in histogram.
     private double histogramThreshold = 12.0;
     
     private int RGBOffset = RED_OFFSET; 
@@ -182,8 +191,8 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
         double kurtosis;
         double standardDeviation;
         double Fcontrast;
-        int cSquared = cSize * cSize;
         int cHalf = cSize/2;
+        int count;
         double gradH;
         double gradV;
         double delG[] = null;
@@ -398,35 +407,37 @@ public class AlgorithmTamuraTexture extends AlgorithmBase {
                 UI.setDataText("Slice number = " + z + " Contrast = " + 
                         kDecimalFormat.format(Fcontrast) + "\n");
                 
-                for (y = cHalf; y < yDim - cHalf; y++) {
-                    for (x = cHalf; x < xDim - cHalf; x++) {
+                for (y = 0; y < yDim; y++) {
+                    for (x = 0; x < xDim; x++) {
                         sum = 0.0;
-                        for (j = y-cHalf; j <= y + cHalf; j++) {
-                            for (i = x-cHalf; i <= x+cHalf; i++) {
-                                sum += sourceBuffer[i + j * xDim];    
-                            } // for (i = x-cHalf; i <= x+cHalf; i++)
-                        } // for (j = y-cHalf; j <= y + cHalf; j++)
-                        mean = sum/cSquared;
+                        count = 0;
+                        for (j = Math.max(0,y-cHalf); j <= Math.min(yDim-1,y + cHalf); j++) {
+                            for (i = Math.max(0,x-cHalf); i <= Math.min(xDim-1,x+cHalf); i++) {
+                                sum += sourceBuffer[i + j * xDim];  
+                                count++;
+                            } // for (i = Math.max(0,x-cHalf); i <= Math.min(xDim-1,x+cHalf); i++)
+                        } // for (j = Math.max(0,y-cHalf); j <= Math.min(yDim-1,y + cHalf); j++)
+                        mean = sum/count;
                         
                         squaredSum = 0.0;
                         fourthSum = 0.0;
-                        for (j = y-cHalf; j <= y + cHalf; j++) {
-                            for (i = x-cHalf; i <= x+cHalf; i++) {
+                        for (j = Math.max(0,y-cHalf); j <= Math.min(yDim-1,y + cHalf); j++) {
+                            for (i = Math.max(0,x-cHalf); i <= Math.min(xDim-1,x+cHalf); i++) {
                                 diff = sourceBuffer[i + j * xDim] - mean;
                                 squaredDiff = diff * diff;
                                 squaredSum += squaredDiff;
                                 fourthDiff = squaredDiff * squaredDiff;
                                 fourthSum += fourthDiff;
-                            } // for (i = x-cHalf; i <= x+cHalf; i++)
-                        } // for (j = y-cHalf; j <= y + cHalf; j++)
-                        variance = squaredSum/cSquared;
-                        fourthCentralMoment = fourthSum/cSquared;
+                            } // for (i = Math.max(0,x-cHalf); i <= Math.min(xDim-1,x+cHalf); i++)
+                        } // for (j = Math.max(0,y-cHalf); j <= Math.min(yDim-1,y + cHalf); j++)
+                        variance = squaredSum/count;
+                        fourthCentralMoment = fourthSum/count;
                         kurtosis = fourthCentralMoment/(variance * variance);
                         standardDeviation = Math.sqrt(variance);
                         Fcontrast = standardDeviation/Math.pow(kurtosis, 0.25);
                         buffer[x + y * xDim] = Fcontrast;
-                    } // for (x = cHalf; x < xDim - cHalf; x++)
-                } // for (y = cHalf; y < yDim - cHalf; y++)
+                    } // for (x = 0; x < xDim; x++)
+                } // for (y = 0; y < yDim; y++)
                 
                 if (z < zDim - 1) {
                     try {
