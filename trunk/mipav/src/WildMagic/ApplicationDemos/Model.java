@@ -327,6 +327,7 @@ public class Model {
 	//
 	//////////////////////////////////////////////////////////////
 	public boolean loadModelFromFile( String file ) {
+		System.err.println( file );
 		URL fileURL = getClass().getClassLoader().getResource(file);
 		if ( fileURL != null )
 		{
