@@ -86,7 +86,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 	private GLCanvas m_kCanvas;
 
 	/** GL object from GLCanvas.getGL() used to access openGL calls. */
-	private GL3 m_kGL = null;
+	private GL2 m_kGL = null;
 
 	public static void main(String[] args) {
 
@@ -121,7 +121,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 
 	@Override
 	public void display(GLAutoDrawable drawable) {	
-		m_kGL = drawable.getGL().getGL3();	
+		m_kGL = drawable.getGL().getGL2();	
 
 		if ( !m_bInit )
 		{
@@ -321,7 +321,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		System.err.println( "GLES1 " + drawable.getGL().isGLES1() );
 		System.err.println( "GL2ES1 " + drawable.getGL().isGL2ES1() );
 		try {
-		m_kGL = drawable.getGL().getGL3();
+		m_kGL = drawable.getGL().getGL2();
 		} catch ( GLException e )
 		{
 			e.printStackTrace();
@@ -413,7 +413,7 @@ public class GLEssentials implements GLEventListener, KeyListener, MouseListener
 		System.err.println( GLProfile.getDefault() );
 		System.err.println( GLProfile.getMaxProgrammable() );
 		//GLProfile kProfile = GLProfile.getMaxProgrammable();
-		GLProfile kProfile = GLProfile.get( "GL3" );
+		GLProfile kProfile = GLProfile.get( "GL2" );
 		System.err.println( kProfile );
 		GLCapabilities kGlCapabilities = new GLCapabilities(kProfile);
 		kGlCapabilities.setHardwareAccelerated(true);
