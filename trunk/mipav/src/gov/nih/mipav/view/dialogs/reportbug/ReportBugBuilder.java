@@ -1,11 +1,17 @@
 package gov.nih.mipav.view.dialogs.reportbug;
 
+import imaging.MetaImageHeader.DataType;
+
 import java.awt.*;
 import java.awt.event.*;
 
+import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
+import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -112,6 +118,9 @@ public class ReportBugBuilder extends JDialogBase{
 	/** Frame for the GUI in which the form is presented */
 	private JFrame frame;
 	
+	/** Text are for displaying the attached images*/
+	private JTextArea attachedImages = new JTextArea();
+	
 	/** Text area for user inputed bug description */
 	private JTextArea descriptionField = new JTextArea();
 	
@@ -144,6 +153,12 @@ public class ReportBugBuilder extends JDialogBase{
     
     /** File to hold the console error message if mipav encounters an unaccounted for exception while running */
     private File console = new File("console.txt");
+    
+    private String attachmentName;
+    
+    private ArrayList<String> fileNames = new ArrayList<String>();
+    
+    private String attachments;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -185,7 +200,7 @@ public class ReportBugBuilder extends JDialogBase{
 	public void actionPerformed(ActionEvent event) {
 		String command = event.getActionCommand();
 		
-		if (command.equals("OK")){
+		if (command.equals("Submit")){
 			description = descriptionField.getText();
 			summary = summaryField.getText();
 			if (userType == 1){
@@ -213,6 +228,16 @@ public class ReportBugBuilder extends JDialogBase{
 			dispose();
 			System.gc();
 			frame.setVisible(false);
+		} else if (command.equals("Attach an Image")){
+			JOptionPane.showMessageDialog(null, "This feature is not ready yet", "Report a Bug", JOptionPane.ERROR_MESSAGE);
+			
+//			final JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(null, true);
+//			attachmentName = screenCapture.fileName + ".png";
+//			fileNames.add(attachmentName);
+//			for (int x = 0; x <fileNames.size(); x++)
+//				attachments += fileNames.get(x) + "\n";
+//			attachedImages = new JTextArea(attachments);
+//			attachedImages.repaint();
 		} else {
 			comboBoxActions(event);
 		}
@@ -307,7 +332,7 @@ public class ReportBugBuilder extends JDialogBase{
 
 		try {
 			if (!bugReport.exists()) {
-				bugReport.createNewFile();
+				File.createTempFile("bugReport", ".txt");
 			}
 			BufferedWriter report = new BufferedWriter(new FileWriter(bugReport.getName(), true));
 			report.write("New Bug Report:");
@@ -370,7 +395,7 @@ public class ReportBugBuilder extends JDialogBase{
 			report.newLine();
 			report.write("java.vm.version = " + javaVmVersion);
 			report.newLine();
-			report.write("java.vm.vendor = " + javaVmVersion);
+			report.write("java.vm.vendor = " + javaVmVendor);
 			report.newLine();
 			report.write("java.vm.info = " + javaInfo);
 			report.newLine();
@@ -385,6 +410,7 @@ public class ReportBugBuilder extends JDialogBase{
 			report.write("sun.desktop = " + sunDesktop);
 			report.newLine();
 			report.write("file.separator = " + fileSeparator);
+			report.flush();
 			report.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
@@ -400,7 +426,7 @@ public class ReportBugBuilder extends JDialogBase{
 		compileReport();
 		try {
 			if (!console.exists())
-				console.createNewFile();
+				File.createTempFile("console", ".txt");
 			PrintStream consoleErrors = new PrintStream(new FileOutputStream(console.getName()));
 			System.setErr(consoleErrors);
 		} catch (FileNotFoundException e1) {
@@ -411,8 +437,8 @@ public class ReportBugBuilder extends JDialogBase{
 			e.printStackTrace();
 		}
 		try {
-			Address to = new InternetAddress("shens2@mail.nih.gov");
-			Address from = new InternetAddress("bug@mipav.cit.gov", "MIPAV Bug Report");
+			Address to = new InternetAddress("bug@mipav.cit.nih.gov");
+			Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
 			String host = "mailfwd.nih.gov";
 			Properties properties = System.getProperties();
 			properties.put("mail.host", host);
@@ -483,7 +509,6 @@ public class ReportBugBuilder extends JDialogBase{
     	gbc.anchor = GridBagConstraints.WEST;
     	gbc.weightx = 1;
 		
-		
 		/** temporary placeholder for the GUI */
 		if(userType == 0)
 			JOptionPane.showMessageDialog(null, "This feature is not ready yet", "Report a Bug", JOptionPane.ERROR_MESSAGE);
@@ -518,7 +543,7 @@ public class ReportBugBuilder extends JDialogBase{
         sendMethod.add(mipavDev);
         
         
-        JLabel summaryInstructions = new JLabel("Please give a brief (no more than 250 character) summary of the bug you encountered");
+        JLabel summaryInstructions = new JLabel("Please give a brief (one or two sentence) summary of the bug you encountered");
     	summaryField.setLineWrap(true);
     	summaryField.setWrapStyleWord(true);
     	JScrollPane summaryScroll = new JScrollPane(summaryField);
@@ -663,12 +688,35 @@ public class ReportBugBuilder extends JDialogBase{
     	bugzillaFields.add(priority);
     	bugzillaFields.add(initState);
     	
-    	buildOKButton();
+    	JPanel imageCapture = new JPanel();
+    	imageCapture.setLayout(new BorderLayout());
+    	JButton imageAttachment = new JButton("Attach an Image");
+    	imageAttachment.addActionListener(this);
+    	imageCapture.add(imageAttachment, BorderLayout.WEST);
+    	imageCapture.setBorder(buildTitledBorder("Images"));
+
+    	attachedImages.setEditable(false);
+    	attachedImages.setBackground(Color.LIGHT_GRAY);
+    	attachedImages.setLineWrap(true);
+    	attachedImages.setWrapStyleWord(true);
+        JScrollPane attachedScroll = new JScrollPane(attachedImages);
+        attachedScroll.setPreferredSize(new Dimension(400,100));
+    	imageCapture.add(attachedScroll, BorderLayout.SOUTH);
+    	
+    	OKButton = new JButton("Submit");
+        OKButton.addActionListener(this);
+        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        OKButton.setFont(serif12B);
     	buildCancelButton();
     	JPanel buttonPanel = new JPanel();
-        buttonPanel.add(OKButton);
-        buttonPanel.add(cancelButton);
-    	
+
+    	JPanel tempPanel = new JPanel();
+    	tempPanel.add(OKButton);
+        tempPanel.add(cancelButton);
+        buttonPanel.setLayout(new BorderLayout());
+    	buttonPanel.add(imageCapture, BorderLayout.NORTH);
+    	buttonPanel.add(tempPanel, BorderLayout.SOUTH);
     	
     	JPanel mainPanel = new JPanel();
     	mainPanel.setLayout(new BorderLayout());
@@ -681,6 +729,12 @@ public class ReportBugBuilder extends JDialogBase{
     	
     	frame = new JFrame("Report a Bug");
     	frame.getContentPane().add(mainPanel);
+    	try {
+			frame.setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		frame.pack();
 		frame.setVisible(true);
 	}
