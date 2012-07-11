@@ -13,6 +13,7 @@ import java.awt.datatransfer.*;
 
 import java.io.*;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -24,7 +25,7 @@ import javax.swing.event.*;
  * created by MIPAV is fair game to draw upon, but clicking elsewhere on the screen will make MIPAV inactive and the
  * rectangle drawn invalid.
  */
-public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener{
+public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener, KeyListener{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -92,7 +93,15 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     private JRadioButton windowButton;
     
     /** Active frame **/
-    private ViewJFrameImage activeFrame;
+    public ViewJFrameImage activeFrame;
+    
+    /** Boolean to indicate whether or not this class is being used by the ImageAttacher class */
+    private boolean imageAttacher;
+    
+    /** JTextField for the name of the file being attached */
+    private JTextField fileField;
+    
+    public String fileName;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -103,12 +112,17 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      * @param  parent  Parent frame of this dialog.
      */
     public JDialogCaptureScreen(ViewJFrameImage parent) {
+        this(parent, false);
+    }
+    
+    public JDialogCaptureScreen(ViewJFrameImage parent, boolean bugReport) {
         super(parent, false);
         userInterface = ViewUserInterface.getReference();
         save = false;
         copy = false;
         display = false;
         mode = WindowProperties.REGION;
+        imageAttacher = bugReport;
 
         Frame[] frames = Frame.getFrames();
 
@@ -171,8 +185,17 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
             if ((currentRectangle != null) && !currentRectangle.isEmpty() &&
                     (currentRectangle.x > -1) && (currentRectangle.y > -1)) {
 
-                if (writeImage()) {
-                	
+            } 
+            
+            if (imageAttacher) {
+        		fileName = fileField.getText();
+        		if (fileName.length() == 0)
+        			JOptionPane.showMessageDialog(null, "You must name the attachment", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        		
+            if (writeImage()) {
+            		
+            		
                 	//commented the code below out in order to leave dialog up so that you can 
                 	//select multiple regions one after the other
                 	
@@ -187,8 +210,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
                     //myGlassPanes = null;
                     //dispose();
                     //System.gc();
-                	
-                }
             } else {
                 MipavUtil.displayError("You must choose a region or window to capture.");
             }
@@ -440,16 +461,57 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
+        JPanel attachmentOptions = new JPanel();
+        attachmentOptions.setLayout(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weighty = 1;
+        gbc.gridy = 2;
+        JLabel attachmentInstruction = new JLabel("Select the window or region you would like to attach. Press ctrl+c");
+        attachmentInstruction.setFont(MipavUtil.font12);
+        attachmentInstruction.setForeground(Color.black);
+        
+        JLabel attachmentInstruction2 = new JLabel("to copy the image to clipboard or enter a file name below and press");
+        attachmentInstruction2.setFont(MipavUtil.font12);
+        attachmentInstruction2.setForeground(Color.black);
+        
+        JLabel attachmentInstruction3 = new JLabel("the OK button to attach the image as a file. \n");
+        attachmentInstruction3.setFont(MipavUtil.font12);
+        attachmentInstruction3.setForeground(Color.black);
+        
+        attachmentOptions.add(attachmentInstruction, gbc);
+        gbc.gridy = 3;
+        attachmentOptions.add(attachmentInstruction2, gbc);
+        gbc.gridy = 4;
+        attachmentOptions.add(attachmentInstruction3, gbc);
+        gbc.gridy = 6;
+        fileField = new JTextField();
+        fileField.setPreferredSize(new Dimension(320, 20));
+        attachmentOptions.add(fileField, gbc);
+        attachmentOptions.setBorder(buildTitledBorder("Image Selection"));
+        
+        
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
         mainPanel.add(panel, BorderLayout.WEST);
-        mainPanel.add(options, BorderLayout.EAST);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        getContentPane().add(mainPanel);
         
+        if (!imageAttacher){
+        	mainPanel.add(options, BorderLayout.EAST);
+	    } else {
+	    	mainPanel.add(attachmentOptions, BorderLayout.EAST);
+	    }
+        
+        getContentPane().add(mainPanel);
+        try {
+			setIconImage(MipavUtil.getIconImage("divinci.gif"));
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
         //resizer.addComponentListener(this);
         pack();
+        setVisible(true);
     }
 
     /**
@@ -527,57 +589,67 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 
         testImage.getFileInfo()[0].setPhotometric((short) 2); // Indicates RGB tiff file format
        	
-        if (save) {
-            String fileName;
-            String directory;
-            FileIO fileIO = new FileIO();
-
-            JFileChooser chooser = new JFileChooser();
-
-            //if (userInterface.getDefaultDirectory() != null) {
-             //   chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
-            //} else {
-            //    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-            //}
-
-            
-            if (testImage.getFileInfo(0).getFileDirectory() != null) {
-                chooser.setSelectedFile(new File(testImage.getFileInfo(0).getFileDirectory() + testImage.getImageFileName()));
-            }
-            else {
-                chooser.setSelectedFile(new File(testImage.getImageFileName()));
-            }
-            
-            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
-
-            int returnVal = chooser.showSaveDialog(this);
-
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-
-                fileIO.writeImage(testImage, new FileWriteOptions(fileName, directory, true));
-                userInterface.setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar);
-            } else {
-
-                return false;
-            }
-            
-            testImage.disposeLocal();
-        } 
-        if (copy) {
-        	try{
-        		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-        		Transferable imagePixTransferable = new ImageConverter(imagePix);
-            	clipboard.setContents(imagePixTransferable, null); 
-        	} catch(Exception e) {
-        		MipavUtil.displayError("Cannot access system clipboard");
-        	}
-        }
-        if (display) {
-            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
-        } 
-
+	        if (save) {
+	            String fileName;
+	            String directory;
+	            FileIO fileIO = new FileIO();
+	
+	            JFileChooser chooser = new JFileChooser();
+	
+	            //if (userInterface.getDefaultDirectory() != null) {
+	             //   chooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+	            //} else {
+	            //    chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+	            //}
+	
+	            
+	            if (testImage.getFileInfo(0).getFileDirectory() != null) {
+	                chooser.setSelectedFile(new File(testImage.getFileInfo(0).getFileDirectory() + testImage.getImageFileName()));
+	            }
+	            else {
+	                chooser.setSelectedFile(new File(testImage.getImageFileName()));
+	            }
+	            
+	            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.GEN));
+	
+	            int returnVal = chooser.showSaveDialog(this);
+	
+	            if (returnVal == JFileChooser.APPROVE_OPTION) {
+	                fileName = chooser.getSelectedFile().getName();
+	                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+	
+	                fileIO.writeImage(testImage, new FileWriteOptions(fileName, directory, true));
+	                userInterface.setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar);
+	            } else {
+	
+	                return false;
+	            }
+	            
+	            testImage.disposeLocal();
+	        } 
+	        if (copy) {
+	        	try{
+	        		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+	        		Transferable imagePixTransferable = new ImageConverter(imagePix);
+	            	clipboard.setContents(imagePixTransferable, null); 
+	        	} catch(Exception e) {
+	        		MipavUtil.displayError("Cannot access system clipboard");
+	        	}
+	        }
+	        if (display) {
+	            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
+	        } 
+	        if (imageAttacher) {
+	        	try {
+		        	BufferedImage currImage = (BufferedImage) imagePix;
+		        	File attachment;
+					attachment = File.createTempFile(fileName, ".png");
+					ImageIO.write(currImage, "png", attachment);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+	        }
         return true;
     }
     
@@ -875,6 +947,27 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 
 	@Override
 	public void componentShown(ComponentEvent e) {}
+
+	@Override
+	public void keyPressed(KeyEvent event) {
+		save = false;
+		display = false;
+		copy = true;
+		writeImage();
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyTyped(KeyEvent arg0) {
+		// TODO Auto-generated method stub
+		
+	}
 
 
 }
