@@ -402,8 +402,7 @@ public class FileIO {
         int nImages = 0;
         int nListImages;
         
-        int dtiSliceCounter = 0;
-        boolean dtiSub = false;
+        int dtiSliceCounter = -1;
         String studyDescription = null;
         String seriesDescription = null;
         String scannerType = null;
@@ -592,7 +591,7 @@ public class FileIO {
         final int[] orient = new int[3]; // for FileInfoBase values. eg:FileInfoBase.ORI_S2I_TYPE;
         int pBarVal = 0;
         
-        boolean validInstanceSort = false, validOriSort = false;
+        boolean validInstanceSort = false, validOriSort = false, validOri4DSort = false;
 
         if ( !refFileInfo.isMultiFrame()) {
 
@@ -608,8 +607,8 @@ public class FileIO {
             // the sorting has been done) as needed, depending on sorting.
             indices = new int[nListImages];
 
-            int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
-            final int[] rint = new int[nListImages]; // sorted image instance values.
+            final int[] zOri = new int[nListImages]; // sorted image orientation values (ie., image z-axis)
+            final int[] zOri4D = new int[nListImages]; //sorted image orientation values taking into account overlapping time zones
             final int[] zInst = new int[nListImages]; //sorted image instance values
             final float[] zOrients = new float[nListImages]; // image orientation values as read in.
             final float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
@@ -713,7 +712,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                             // instance numbers used in case improper DICOM and position and orientation info not given
                             instanceNums[nImages] = savedFileInfos[nImages].instanceNumber;
                             zOri[nImages] = nImages;
-                            rint[nImages] = nImages;
+                            zInst[nImages] = nImages;
                             nImages++;
                         }
                     } else {
@@ -731,7 +730,7 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         // instance numbers used in case improper DICOM and position and orientation info not given
                         instanceNums[nImages] = savedFileInfos[nImages].instanceNumber;
                         zOri[nImages] = nImages;
-                        rint[nImages] = nImages;
+                        zInst[nImages] = nImages;
                         nImages++;
                     }
                 } catch (final IOException error) {
@@ -792,176 +791,27 @@ nList:      for (int i = 0; i < nListImages; i++) {
              // sort so that instance numbers are in ascending order.
                 // rint is the index to associate input file-list with the
                 // instance number  
-                if (!(validInstanceSort = FileIO.sort(instanceNums, rint, nImages))) {
+                if (!(validInstanceSort = FileIO.sort(instanceNums, zInst, nImages))) {
                     Preferences.debug("FileIO: instance numbers sort failed\n", Preferences.DEBUG_FILEIO);
                     System.err.println("FileIO: instance numbers sort failed on " + fileList[0]);
                 } else {
-                    for(int i=0; i<zInst.length; i++) {
-                        zInst[i] = rint[i];
-                    }
                     
                     refFileInfo = (FileInfoDicom) imageFile.getFileInfo();
                     FileDicomTagTable tagTable =  refFileInfo.getTagTable();
                     studyDescription = (String) tagTable.getValue("0008,1030");
                     seriesDescription = (String) tagTable.getValue("0008,103E");
                     scannerType = (String) tagTable.getValue("0008,0070");
-
+    
                     if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) || 
-                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
-                        //Sorts DWI images based on gradient values corresponding to each volume in the series
-                      if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
-                          if ((String) tagTable.getValue("0018,9089") != null){
-                              dtiSliceCounter = 0;
-                              int dtiSliceCounter2 = 0;// Helps check for incomplete DWI series
-                              ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
-                              
-                              for (int i = 0; i < instanceNums.length; i++) {
-                                  String savedFileGradFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9089");
-                                  String savedFileGradSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9089");
-                                  String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0018,9089");
-                                  String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9087");
-                                  String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9087");
-                                  String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0018,9087");
-                                  if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
-                                      //Stores order of gradients
-                                      IndexVolArrayList.add(dtiSliceCounter,i);
-                                      dtiSliceCounter++;
-                                  }
-                                  else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
-                                      dtiSliceCounter2++;
-                                  }
-                              }
-
-                              //Checks for incomplete DWI series                                  
-                              if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
-                                  dtiSub = true; //Not complete DWI series
-                                  indices = zInst; 
-                                  }
-                                  
-                              else{
-                                  int rintCounter = 0;
-                                  int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
-                                  float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
-                                     for (int i = 0; i <tVolumeNum; i++) {
-                                         for (int j=0; j< IndexVolArrayList.size(); j++){
-                                             //rint populated by ordering of instance nums based on volume order
-                                             zInst[rintCounter] = IndexVolArrayList.get(j) + i;
-                                             rintCounter++;                                            
-                                         }
-                                     }
-                                     indices = zInst;                                  
-                              }
-                           }
-                         }// if PHILIPS Note: New sort method may need to be 
-                            //added for different versions of Philips DWI dicom data sets. See GE code
-                      else if (scannerType != null && scannerType.toUpperCase().contains("GE")) {  
-                          if ((String) tagTable.getValue("0019,10BB") != null && (String) tagTable.getValue("0019,10BC") != null
-                                  && (String) tagTable.getValue("0019,10BD") != null && (String) tagTable.getValue("0043,1039") != null){
-                              dtiSliceCounter = 0;
-                              int dtiSliceCounter2 = 0;// Checks for incomplete DWI series and determines order of grads
-                              int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads 
-                              ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
-                              for (int i = 0; i < instanceNums.length; i++) {
-                                  String savedFileGradFirst = (String)savedFileInfos[0].getTagTable().getValue("0019,10BB")+
-                                          (String)savedFileInfos[0].getTagTable().getValue("0019,10BC")+
-                                          (String)savedFileInfos[0].getTagTable().getValue("0019,10BD") ;
-                                  String savedFileGradSecond = (String)savedFileInfos[1].getTagTable().getValue("0019,10BB")+
-                                  (String)savedFileInfos[1].getTagTable().getValue("0019,10BC")+
-                                  (String)savedFileInfos[1].getTagTable().getValue("0019,10BD") ;
-                                  String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0019,10BB")+
-                                  (String)savedFileInfos[i].getTagTable().getValue("0019,10BC")+
-                                  (String)savedFileInfos[i].getTagTable().getValue("0019,10BD") ;
-                                  String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0043,1039");
-                                  String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
-                                  String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
-                                  if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
-                                      //Stores order of gradients
-                                      IndexVolArrayList.add(dtiSliceCounter,i);
-                                      dtiSliceCounter++;
-                                  }
-                                  else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
-                                      dtiSliceCounter2++;
-                                  }
-                              }
-                              if (dtiSliceCounter != 1 && dtiSliceCounter != 0 &&
-                                      (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")!= null && 
-                                      (String)savedFileInfos[dtiSliceCounter+1].getTagTable().getValue("0019,10BB")!= null){
-                                  if( dtiSliceCounter != dtiSliceCounter2){
-                                      for (int i = 0; i < dtiSliceCounter; i++){
-                                           String savedFileGrad1SecondVol = (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")+
-                                          (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BC")+
-                                          (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BD");
-                                           String savedFileGradISecondVol = (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BB")+
-                                           (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BC")+
-                                           (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BD");
-                                           String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
-                                           String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
-                                           if(savedFileGrad1SecondVol.equals(savedFileGradISecondVol) && savedFilebvalSecond.equals(savedFilebvalI)){
-                                               dtiSliceCounter3++;   
-                                           }
-                                      }
-                                      if (dtiSliceCounter == dtiSliceCounter3){
-                                          isDTISort = true;
-                                          int rintCounter = 0;
-                                          int tVolumeNum = instanceNums.length/dtiSliceCounter;
-                                          float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
-                                             for (int i = 0; i <tVolumeNum; i++) {
-                                                 for (int j=0; j< IndexVolArrayList.size(); j++){
-                                                     //rint populated by ordering of instance nums based on volume order
-                                                     zInst[rintCounter] = IndexVolArrayList.get(j) + (i*IndexVolArrayList.size());
-                                                     rintCounter++;                                            
-                                                 }
-                                             }
-                                             indices = zInst;                                  
-                                      }
-                                      else{
-                                          dtiSub = true; //Not complete DWI series
-                                          indices = zInst;   
-                                      }
-                                  }
-
-                                  else if (dtiSliceCounter == dtiSliceCounter2){
-                                      isDTISort = true;
-                                      int rintCounter = 0;
-                                      int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
-                                      float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
-                                         for (int i = 0; i <tVolumeNum; i++) {
-                                             for (int j=0; j< IndexVolArrayList.size(); j++){
-                                                 //rint populated by ordering of instance nums based on volume order
-                                                 zInst[rintCounter] = IndexVolArrayList.get(j) + i;
-                                                 rintCounter++;                                            
-                                             }
-                                         }
-                                         indices = zInst;                                   
-                                  }
-                                  else{
-                                      dtiSub = true; //Not complete DWI series
-                                      indices = zInst;   
-                                  }
-
-                              }
-                              else{
-                                  dtiSub = true; //Not complete DWI series
-                                  indices = zInst;   
-                              }
-
-                           }  
-                      }// If GE
-                      
-                      //For DTI dicom data not aquired from GE or Philips scanners
-                      else{
-                          indices = zInst;
-                        }
-                      }// If DTI
-              
-                else{
-                  indices = zInst;
+                        (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI"))) {
+                        //sortDti sets indices values
+                        dtiSliceCounter = sortDtiDicomData(studyDescription, seriesDescription, scannerType, tagTable, savedFileInfos, indices, instanceNums.length, zInst);
+                    } 
                 }
-              }
                 
                 //always try to generate validOriSort, if a validOriSort that trumps a validInstanceSort
 
-                if ( (nImages > 1 && isDTISort == false)) {// && !validInstanceSort) {
+                if ( (nImages > 1 && !isDTISort)) {// && !validInstanceSort) {
                     // sort so that zOrients is now in ascending order.
                     // zOri[i] represents where in the image buffer image
                     // number i should be stored; so that if the images were
@@ -970,136 +820,134 @@ nList:      for (int i = 0; i < nListImages; i++) {
                     if (!(validOriSort = FileIO.sort(zOrients, zOri, nImages))) {
                         Preferences.debug("FileIO: orientation number sort failed\n", Preferences.DEBUG_FILEIO);
                         System.err.println("FileIO: instance number sort failed on " + fileList[0]);
-                    }
-                    //for(int i=0; i<savedFileInfos.length; i++) {
-                    //    fileList[i] = savedFileInfos[i].getFileName();
-                    //}
-                    
-                    // Follow-on ordering:
-                    // pre-order the orientation numbers to match the instance
-                    // numbers. This is done to accomodate 4D dicom sets.
-                    // To describe the algo: I and L value lists which are
-                    // independant of each other, and M, which is a copy of L.
-                    // a & b are index lists for I and L, respectivly.
-                    // L[b[z]] = M[a[z]]
-                    // we copy the values of M, using order a, into L, using
-                    // order b, thereby making L mimic I.
-                    // we do this here with zOrients/zOri to make zOrient match
-                    // the ordering of the Instance numbers.
-                    final float[] lima = new float[zOrients.length]; // temp
+                        
+                        // Follow-on ordering if not a valid orientation sort:
+                        // pre-order the orientation numbers to *****match the instance
+                        // numbers**** (this is not a valid way to do 4D ordering). This is done to accomodate 4D dicom sets.
+                        // To describe the algo: I and L value lists which are
+                        // independant of each other, and M, which is a copy of L.
+                        // a & b are index lists for I and L, respectivly.
+                        // L[b[z]] = M[a[z]]
+                        // we copy the values of M, using order a, into L, using
+                        // order b, thereby making L mimic I.
+                        // we do this here with zOrients/zOri to make zOrient match
+                        // the ordering of the Instance numbers.
+                        final float[] lima = new float[zOrients.length]; // temp
 
-                    System.arraycopy(zOrients, 0, lima, 0, zOrients.length);
+                        System.arraycopy(zOrients, 0, lima, 0, zOrients.length);
 
-                    for (int z = 0; z < nImages; z++) {
-                        zOrients[zOri[z]] = lima[rint[z]]; // copy z-location
-                    }
+                        for (int z = 0; z < nImages; z++) {
+                            zOrients[zOri[z]] = lima[zInst[z]]; // copy z-location
+                        }
 
-                    for(int i=0; i<rint.length; i++) {
-                        zOri[i] = rint[i]; // copy the indexing
+                        for(int i=0; i<zInst.length; i++) {
+                            zOri4D[i] = zInst[i]; // copy the indexing
+                        }
+                            
+                        FileIO.sort(zOrients, zOri4D, nImages); // now sort by orientation
+
+                        // Rely on ******image instance number******* (this is not a valid way to do 4D ordering) and position information.
+                        // Build a list for all images at a particular location,
+                        // although at different times, as judged by ******image instance******.
+                        // Create a list for all possible times in the imageset:
+                        Vector<Vector<OrientStatus>> timezonesList = new Vector<Vector<OrientStatus>>();
+
+                        // Hold the original list of orients and indices:
+                        Vector<OrientStatus> orientsList = new Vector<OrientStatus>(nImages); // original index list
+
+                        for (int k = 0; k < nImages; k++) { // load original list vector
+
+                            final OrientStatus oriReference = new OrientStatus(zOri4D[k], zOrients[k]);
+
+                            orientsList.add(oriReference);
+                        }
+
+                        // each times list has a list of the images of different
+                        // locations taken at the same time (in the same time-zone)
+                        // we check on different times by going through the list of
+                        // images and looking for the next lowest image instance
+                        // with the same z location. essentially, we
+                        // pass through the orientation list multiple times,
+                        // filling a single zone with each pass.
+                        Vector<OrientStatus> tz;
+                        OrientStatus ref0, refi;
+
+                        while (orientsList.size() > 0) {
+                            tz = new Vector<OrientStatus>(); // create a new timezone
+                            ref0 = orientsList.remove(0);
+                            tz.add(ref0); // remove 1st orient, put in timezone
+                            Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
+                                    + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
+                            Vector<OrientStatus> orientsClone = (Vector<OrientStatus>) orientsList.clone();
+
+                            for (final Enumeration<OrientStatus> e = orientsClone.elements(); e.hasMoreElements();) {
+                                refi = e.nextElement();
+                                Preferences.debug("Looking at: " + refi.getIndex() + "..." + refi.getLocation(),
+                                        Preferences.DEBUG_FILEIO);
+
+                                if ( !refi.equals(ref0)) {
+                                    ref0 = null;
+                                    ref0 = refi;
+                                    tz.add(refi);
+                                    Preferences.debug("...Accepting ", Preferences.DEBUG_FILEIO);
+
+                                    if (orientsList.remove(refi)) {
+                                        Preferences.debug(" .... Successfully removed " + refi.getIndex(),
+                                                Preferences.DEBUG_FILEIO);
+                                    }
+
+                                    Preferences.debug("!!  Comparison to: " + ref0.getIndex() + ".." + ref0.getLocation()
+                                            + "\n", Preferences.DEBUG_FILEIO);
+
+                                } else {
+                                    Preferences.debug("\n", Preferences.DEBUG_FILEIO);
+                                }
+                            }
+
+                            orientsClone.clear();
+                            orientsClone = null;
+                            timezonesList.add(tz);
+                            tz = null;
+                        }
+
+                        orientsList.clear();
+                        orientsList = null;
+
+                        // new ordering for all timezones.
+                        try {
+                            int t = 0;
+
+                            for (final Vector<OrientStatus> vector : timezonesList) {
+                                Preferences.debug("Timezone\n", Preferences.DEBUG_FILEIO);
+
+                                for (final OrientStatus ref : vector) {
+                                    final int k = ref.getIndex();
+
+                                    // concatenate the sublists into one ordering list.
+                                    zOri4D[k] = t;
+                                    zOrients[k] = ref.getLocation();
+                                    Preferences.debug("reordering: (" + k + "): " + zOri4D[k] + "..." + zOrients[k] + "\n",
+                                            Preferences.DEBUG_FILEIO);
+                                    t++;
+                                }
+                            }
+
+                            Preferences.debug("4D, translation passes!  " + t + " slices!\n", Preferences.DEBUG_FILEIO);
+                        } catch (final ArrayIndexOutOfBoundsException enumTooFar) {
+                            Preferences.debug("NOT 4D, and DICOM translation fail!\n", Preferences.DEBUG_FILEIO);
+                        }
+
+                        timezonesList.clear();
+                        timezonesList = null;
+                        validOri4DSort = true;
+                        System.gc();
+                    } else {
+                        Preferences.debug("Valid orientation sort found\n", Preferences.DEBUG_FILEIO);
                     }
                         
-                    FileIO.sort(zOrients, zOri, nImages); // now sort by orientation
-
-                    // Rely on image instance number and position information.
-                    // Build a list for all images at a particular location,
-                    // although at different times, as judged by image instance.
-                    // Create a list for all possible times in the imageset:
-                    Vector<Vector<OrientStatus>> timezonesList = new Vector<Vector<OrientStatus>>();
-
-                    // Hold the original list of orients and indices:
-                    Vector<OrientStatus> orientsList = new Vector<OrientStatus>(nImages); // original index list
-
-                    for (int k = 0; k < nImages; k++) { // load original list vector
-
-                        final OrientStatus oriReference = new OrientStatus(zOri[k], zOrients[k]);
-
-                        orientsList.add(oriReference);
-                    }
-
-                    // each times list has a list of the images of different
-                    // locations taken at the same time (in the same time-zone)
-                    // we check on different times by going through the list of
-                    // images and looking for the next lowest image instance
-                    // with the same z location. essentially, we
-                    // pass through the orientation list multiple times,
-                    // filling a single zone with each pass.
-                    Vector<OrientStatus> tz;
-                    OrientStatus ref0, refi;
-
-                    while (orientsList.size() > 0) {
-                        tz = new Vector<OrientStatus>(); // create a new timezone
-                        ref0 = orientsList.remove(0);
-                        tz.add(ref0); // remove 1st orient, put in timezone
-                        Preferences.debug("Loading, and making comparison to: " + ref0.getIndex() + ".."
-                                + ref0.getLocation() + "\n", Preferences.DEBUG_FILEIO);
-                        Vector<OrientStatus> orientsClone = (Vector<OrientStatus>) orientsList.clone();
-
-                        for (final Enumeration<OrientStatus> e = orientsClone.elements(); e.hasMoreElements();) {
-                            refi = e.nextElement();
-                            Preferences.debug("Looking at: " + refi.getIndex() + "..." + refi.getLocation(),
-                                    Preferences.DEBUG_FILEIO);
-
-                            if ( !refi.equals(ref0)) {
-                                ref0 = null;
-                                ref0 = refi;
-                                tz.add(refi);
-                                Preferences.debug("...Accepting ", Preferences.DEBUG_FILEIO);
-
-                                if (orientsList.remove(refi)) {
-                                    Preferences.debug(" .... Successfully removed " + refi.getIndex(),
-                                            Preferences.DEBUG_FILEIO);
-                                }
-
-                                Preferences.debug("!!  Comparison to: " + ref0.getIndex() + ".." + ref0.getLocation()
-                                        + "\n", Preferences.DEBUG_FILEIO);
-
-                            } else {
-                                Preferences.debug("\n", Preferences.DEBUG_FILEIO);
-                            }
-                        }
-
-                        orientsClone.clear();
-                        orientsClone = null;
-                        timezonesList.add(tz);
-                        tz = null;
-                    }
-
-                    orientsList.clear();
-                    orientsList = null;
-
-                    // new ordering for all timezones.
-                    try {
-                        int t = 0;
-
-                        for (final Vector<OrientStatus> vector : timezonesList) {
-                            Preferences.debug("Timezone\n", Preferences.DEBUG_FILEIO);
-
-                            for (final OrientStatus ref : vector) {
-                                final int k = ref.getIndex();
-
-                                // concatenate the sublists into one ordering list.
-                                zOri[k] = t;
-                                zOrients[k] = ref.getLocation();
-                                Preferences.debug("reordering: (" + k + "): " + zOri[k] + "..." + zOrients[k] + "\n",
-                                        Preferences.DEBUG_FILEIO);
-                                t++;
-                            }
-                        }
-
-                        Preferences.debug("4D, translation passes!  " + t + " slices!\n", Preferences.DEBUG_FILEIO);
-                    } catch (final ArrayIndexOutOfBoundsException enumTooFar) {
-                        Preferences.debug("NOT 4D, and DICOM translation fail!\n", Preferences.DEBUG_FILEIO);
-                    }
-
-                    timezonesList.clear();
-                    timezonesList = null;
-                    validOriSort = true;
-                    System.gc();
-                } else {
-                    Preferences.debug("Not a 4D Dataset\n", Preferences.DEBUG_FILEIO);
-                }
-                // System.out.println (" Dicom matrix = \n" + matrix + "\n");
-                // System.out.println (" valid = " + valid);
+                } // end of oriSort
+                    
+                    
 
             } // end of performSort
 
@@ -1162,24 +1010,32 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 orientation = FileInfoBase.CORONAL;
             } else if ( (zCos > xCos) && (zCos > yCos)) {
                 orientation = FileInfoBase.AXIAL;
-            } else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) { //fallback methods, these should not be reached
+            } else if (!validInstanceSort) { // xLocation, yLocation, and zLocation were probably undefined and instance numbers equal.
                 orientation = FileInfoBase.AXIAL;
-                indices = rint;
+                validOriSort = true;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
-            } else { // xLocation, yLocation, and zLocation were probably undefined and instance numbers equal.
+            }  else if ( (instanceNums.length > 1) && (instanceNums[0] != instanceNums[1])) { //fallback method to using instance number
                 orientation = FileInfoBase.AXIAL;
-                indices = zOri;
+                validInstanceSort = true;
                 orient[0] = FileInfoBase.ORI_R2L_TYPE;
                 orient[1] = FileInfoBase.ORI_A2P_TYPE;
                 orient[2] = FileInfoBase.ORI_I2S_TYPE;
+            } else {
+                Preferences.debug("FileIO: Dicom orientation information could not be determined.  \n", Preferences.DEBUG_FILEIO);
             }
             
             if(validOriSort) {
                 indices = zOri;
             } else if(validInstanceSort) {
                 indices = zInst;
+            } else if(validOri4DSort) { 
+                indices = zOri4D;
+            } else { //valid sorting could not be determined, order by file ordering
+                for(int i=0; i<indices.length; i++) {
+                    indices[i] = i;
+                }
             }
 
             // problems if we reach this point!
@@ -1208,8 +1064,8 @@ nList:      for (int i = 0; i < nListImages; i++) {
                         sliceDim*timeDim == nImages) {
                 extents[3] = timeDim;
                 extents[2] = sliceDim;
-            } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSub ==false || 
-                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSub ==false) {
+            } else if ((studyDescription != null && studyDescription.toUpperCase().contains("DTI")) && dtiSliceCounter != 0 || 
+                            (seriesDescription != null && seriesDescription.toUpperCase().contains("DTI")) && dtiSliceCounter != 0) {
                 if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
                     extents[2] = dtiSliceCounter;
                     extents[3] = nImages / dtiSliceCounter;
@@ -1334,12 +1190,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 start = i;
                 location = i;
             } else {
-                filename = fileList[i];
                 start = 0;
+                location = i;
                 if(performSort) {
-                    location = indices[i];
+                    filename = fileList[indices[i]];
                 } else {
-                    location = i;
+                    filename = fileList[i];
                 }
 
 
@@ -1365,7 +1221,11 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 FileInfoDicom curFileInfo;
                 
                 if ( !multiframe) {
-                    curFileInfo = savedFileInfos[i];
+                    if(performSort) {
+                        curFileInfo = savedFileInfos[indices[i]];
+                    } else {
+                        curFileInfo = savedFileInfos[i];
+                    }
                 } else {
                     FileDicomTagTable table = refFileInfo.getTagTable();
                     refFileInfo.setTagTable(null);
@@ -1890,6 +1750,149 @@ nList:      for (int i = 0; i < nListImages; i++) {
         }
         
         return image;
+    }
+
+    private int sortDtiDicomData(String studyDescription, String seriesDescription, String scannerType, FileDicomTagTable tagTable, FileInfoDicom[] savedFileInfos, int[] indices, int instanceNumsLength, int[] zInst) {
+      //Sorts DWI images based on gradient values corresponding to each volume in the series
+        int dtiSliceCounter = -1;
+        if (scannerType != null && scannerType.toUpperCase().contains("PHILIPS")) { 
+            if ((String) tagTable.getValue("0018,9089") != null){
+                dtiSliceCounter = 0;
+                int dtiSliceCounter2 = 0;// Helps check for incomplete DWI series
+                ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
+                
+                for (int i = 0; i < instanceNumsLength; i++) {
+                    String savedFileGradFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9089");
+                    String savedFileGradSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9089");
+                    String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0018,9089");
+                    String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0018,9087");
+                    String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0018,9087");
+                    String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0018,9087");
+                    if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                        //Stores order of gradients
+                        IndexVolArrayList.add(dtiSliceCounter,i);
+                        dtiSliceCounter++;
+                    }
+                    else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
+                        dtiSliceCounter2++;
+                    }
+                }
+
+                //Checks for incomplete DWI series                                  
+                if (dtiSliceCounter == 1 || dtiSliceCounter == 0 || dtiSliceCounter != dtiSliceCounter2++){
+                    dtiSliceCounter = -1; //Not complete DWI series
+                    }
+                    
+                else{
+                    int rintCounter = 0;
+                    int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
+                       for (int i = 0; i <tVolumeNum; i++) {
+                           for (int j=0; j< IndexVolArrayList.size(); j++){
+                               //rint populated by ordering of instance nums based on volume order
+                               zInst[rintCounter] = IndexVolArrayList.get(j) + i;
+                               rintCounter++;                                            
+                           }
+                       }                                
+                }
+             }
+           }// if PHILIPS Note: New sort method may need to be 
+              //added for different versions of Philips DWI dicom data sets. See GE code
+        else if (scannerType != null && scannerType.toUpperCase().contains("GE")) {  
+            if ((String) tagTable.getValue("0019,10BB") != null && (String) tagTable.getValue("0019,10BC") != null
+                    && (String) tagTable.getValue("0019,10BD") != null && (String) tagTable.getValue("0043,1039") != null){
+                dtiSliceCounter = 0;
+                int dtiSliceCounter2 = 0;// Checks for incomplete DWI series and determines order of grads
+                int dtiSliceCounter3 = 0;// Checks for incomplete DWI series and determines order of grads 
+                ArrayList<Integer> IndexVolArrayList = new ArrayList<Integer>() ;
+                for (int i = 0; i < instanceNumsLength; i++) {
+                    String savedFileGradFirst = (String)savedFileInfos[0].getTagTable().getValue("0019,10BB")+
+                            (String)savedFileInfos[0].getTagTable().getValue("0019,10BC")+
+                            (String)savedFileInfos[0].getTagTable().getValue("0019,10BD") ;
+                    String savedFileGradSecond = (String)savedFileInfos[1].getTagTable().getValue("0019,10BB")+
+                    (String)savedFileInfos[1].getTagTable().getValue("0019,10BC")+
+                    (String)savedFileInfos[1].getTagTable().getValue("0019,10BD") ;
+                    String savedFileGradI = (String)savedFileInfos[i].getTagTable().getValue("0019,10BB")+
+                    (String)savedFileInfos[i].getTagTable().getValue("0019,10BC")+
+                    (String)savedFileInfos[i].getTagTable().getValue("0019,10BD") ;
+                    String savedFilebvalFirst = (String) savedFileInfos[0].getTagTable().getValue("0043,1039");
+                    String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
+                    String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
+                    if (savedFileGradFirst.equals(savedFileGradI) && savedFilebvalFirst.equals(savedFilebvalI) ){
+                        //Stores order of gradients
+                        IndexVolArrayList.add(dtiSliceCounter,i);
+                        dtiSliceCounter++;
+                    }
+                    else if(savedFileGradSecond.equals(savedFileGradI) && savedFilebvalSecond.equals(savedFilebvalI)){
+                        dtiSliceCounter2++;
+                    }
+                }
+                if (dtiSliceCounter != 1 && dtiSliceCounter != 0 &&
+                        (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")!= null && 
+                        (String)savedFileInfos[dtiSliceCounter+1].getTagTable().getValue("0019,10BB")!= null){
+                    if( dtiSliceCounter != dtiSliceCounter2){
+                        for (int i = 0; i < dtiSliceCounter; i++){
+                             String savedFileGrad1SecondVol = (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BB")+
+                            (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BC")+
+                            (String)savedFileInfos[dtiSliceCounter].getTagTable().getValue("0019,10BD");
+                             String savedFileGradISecondVol = (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BB")+
+                             (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BC")+
+                             (String)savedFileInfos[dtiSliceCounter+i].getTagTable().getValue("0019,10BD");
+                             String savedFilebvalSecond = (String) savedFileInfos[1].getTagTable().getValue("0043,1039");
+                             String savedFilebvalI = (String)savedFileInfos[i].getTagTable().getValue("0043,1039");
+                             if(savedFileGrad1SecondVol.equals(savedFileGradISecondVol) && savedFilebvalSecond.equals(savedFilebvalI)){
+                                 dtiSliceCounter3++;   
+                             }
+                        }
+                        if (dtiSliceCounter == dtiSliceCounter3){
+                            isDTISort = true;
+                            int rintCounter = 0;
+                            int tVolumeNum = instanceNumsLength/dtiSliceCounter;
+                            float [][] instanceNumIndices = new float[tVolumeNum][IndexVolArrayList.size()];
+                               for (int i = 0; i <tVolumeNum; i++) {
+                                   for (int j=0; j< IndexVolArrayList.size(); j++){
+                                       //rint populated by ordering of instance nums based on volume order
+                                       zInst[rintCounter] = IndexVolArrayList.get(j) + (i*IndexVolArrayList.size());
+                                       rintCounter++;                                            
+                                   }
+                               }                              
+                        }
+                        else{
+                            dtiSliceCounter = -1; //Not complete DWI series
+                        }
+                    }
+
+                    else if (dtiSliceCounter == dtiSliceCounter2){
+                        isDTISort = true;
+                        int rintCounter = 0;
+                        int tVolumeNum = (IndexVolArrayList.get(1)-IndexVolArrayList.get(0));
+                           for (int i = 0; i <tVolumeNum; i++) {
+                               for (int j=0; j< IndexVolArrayList.size(); j++){
+                                   //rint populated by ordering of instance nums based on volume order
+                                   zInst[rintCounter] = IndexVolArrayList.get(j) + i;
+                                   rintCounter++;                                            
+                               }
+                           }                                  
+                    } else {
+                        dtiSliceCounter = -1; //Not complete DWI series 
+                    }
+
+                } else {
+                    dtiSliceCounter = -1; //Not complete DWI series 
+                }
+
+             }  
+        } else{ //For DTI dicom data not aquired from GE or Philips scanners
+            dtiSliceCounter = -1;
+        }
+        
+        if(dtiSliceCounter != -1) {
+            for(int i=0; i<indices.length; i++) {
+                indices[i] = zInst[i];
+            }
+        }
+        
+        return dtiSliceCounter;
+        
     }
 
     /**
