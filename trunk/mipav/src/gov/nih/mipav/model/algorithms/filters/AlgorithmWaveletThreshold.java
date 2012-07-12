@@ -25,8 +25,9 @@ import java.io.IOException;
  * <p>
  * The forward and inverse Daubechies wavelet transform routines are taken from Numerical Recipes in C The Art of
  * Scientific Computing, 2nd edition, by William H. Press, Saul A. Teukolsky, William T. Vetterling, and Brian P.
- * Flannery, Cambridge University Press, 1997, Chapter 13.10, pp. 591 - 606. The wavelet routines in Numerical Recipes
- * in C are in the public domain. See {@link http://www.nr.com/public-domain.html} for more information.
+ * Flannery, Cambridge University Press, 1997, Chapter 13.10, pp. 591 - 606. The wavelet routines daub4, pwt, wt1,
+ * wtn, and pwtset in Numerical Recipes in C are in the public domain. See {@link http://www.nr.com/public-domain.html}
+ * for more information.
  * </p>
  * 
  * <p>
