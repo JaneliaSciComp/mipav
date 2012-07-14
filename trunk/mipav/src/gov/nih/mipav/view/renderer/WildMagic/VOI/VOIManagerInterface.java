@@ -2362,7 +2362,12 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         if ( m_kParent != null && m_kParent.getActiveImage() != null &&
         		m_kParent.getActiveImage().getParentFrame() != null )
         {
-        	m_kParent.getActiveImage().getParentFrame().toFront();
+            if(m_kParent.getActiveImage().getTriImageFrame() != null && 
+                    m_kParent.equals(m_kParent.getActiveImage().getTriImageFrame())) {
+                m_kParent.getActiveImage().getTriImageFrame().toFront();
+            } else {
+                m_kParent.getActiveImage().getParentFrame().toFront();
+            }
         }
         updateDisplay();
     }
