@@ -885,10 +885,7 @@ public class JDialogVOIStats extends JDialogBase
                 }
 
                 updateContourPane(leadBase);
-                updateVOIPanel(leadBase.getGroup(), image);
-                if(voiHandler instanceof VOIManagerInterface) {
-                    ((VOIManagerInterface) voiHandler).setSelectedVOI(leadBase.getGroup(), false, false);
-                }
+                setVOIActive(leadBase.getGroup());
 
             } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
                 //curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
@@ -896,10 +893,25 @@ public class JDialogVOIStats extends JDialogBase
                 if (frameFollowsSelection && (image.getNDims() > 2)) {
                     //voiHandler.setSlice(curveIndex);
                 }
+            } else if (leadObjects[leadObjects.length - 1] instanceof VOIGroupNode) {
+                VOI leadGroup = ((VOIGroupNode) leadObjects[leadObjects.length - 1]).getVOIgroup();
+                leadGroup.setActive(true);
+                
+                setVOIActive(leadGroup);
             }
 
         }
         treeSelectionChange = true;
+    }
+    
+    /**
+     * Internal method for setting all relevant parts of the GUI and the MIPAV interface to reflect the active VOI.
+     */
+    private void setVOIActive(VOI v) {
+        updateVOIPanel(v, image);
+        if(voiHandler instanceof VOIManagerInterface) {
+            ((VOIManagerInterface) voiHandler).setSelectedVOI(v, false, false);
+        }
     }
 
     /**
