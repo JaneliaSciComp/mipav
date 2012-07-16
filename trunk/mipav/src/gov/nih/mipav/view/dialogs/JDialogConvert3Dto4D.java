@@ -72,6 +72,12 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
 
     /** DOCUMENT ME! */
     private int volumeLength;
+    
+    /** Checkbox for representing whether to copy all file info */
+    private JCheckBox copyAllInfoBox;
+
+    /** Whether all info in the image's FileInfo is copied */
+    private boolean copyAllInfo = true;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -219,7 +225,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
             System.gc();
 
             // Make algorithm
-            convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, volumeLength, res3, res4, measure3, measure4);
+            convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, volumeLength, res3, res4, measure3, measure4, copyAllInfo);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -267,6 +273,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         res4 = scriptParameters.getParams().getFloat("4_dim_resolution");
         measure3 = scriptParameters.getParams().getInt("3_dim_unit");
         measure4 = scriptParameters.getParams().getInt("4_dim_unit");
+        copyAllInfo = scriptParameters.getParams().getBoolean("copy_all_image_info");
     }
 
     /**
@@ -281,6 +288,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_resolution", res4));
         scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_unit", measure3));
         scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_unit", measure4));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", true));
     }
 
     /**
@@ -393,6 +401,17 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         gbc.gridy = 2;
         mainPanel.add(comboPanel, gbc);
 
+        JPanel optionsPanel = new JPanel(new GridLayout(1, 1));
+        optionsPanel.setForeground(Color.black);
+        optionsPanel.setBorder(buildTitledBorder("FileInfo options "));
+        
+        copyAllInfoBox = new JCheckBox("Copy all file information");
+        copyAllInfoBox.setEnabled(true);
+        optionsPanel.add(copyAllInfoBox);
+        
+        gbc.gridy++;
+        mainPanel.add(optionsPanel, gbc);
+        
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -614,6 +633,8 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
                 measure4 = Unit.UNKNOWN_MEASURE.getLegacyNum();
         }
 
+        copyAllInfo = copyAllInfoBox.isSelected();
+        
         return true;
     }
 
@@ -669,6 +690,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
             table.put(new ParameterInt("volume_length", 2));
             table.put(new ParameterFloat("3_dim_resolution", 1.5f));
             table.put(new ParameterFloat("4_dim_resolution", 1.0f));
+            table.put(new ParameterBoolean("copy_all_image_info", true));
             
             //Go to FileInfoBase.java for information on 3_dim_unit and 4_dim_unit
             //There is no obvious way to display the string these integers represent in the dialog
