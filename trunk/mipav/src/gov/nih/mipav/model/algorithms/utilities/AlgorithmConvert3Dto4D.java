@@ -29,6 +29,9 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
     /** number of slices in the 3rd dimension. 4th dim length = sourceImage.3rd_dim / volumeLength */
     private int volumeLength = 1;
 
+    /** Whether all file information is copied */
+    private boolean copyAllInfo;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -42,8 +45,9 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
      * @param res4 resolution of the 4rd dimension
      * @param unit3 units of measure for the 3rd dimension
      * @param unit4 units of measure for the 4rd dimension
+     * @param copyAllInfo whether all file information is copied
      */
-    public AlgorithmConvert3Dto4D(ModelImage srcImg, int volumeLength, float res3, float res4, int unit3, int unit4) {
+    public AlgorithmConvert3Dto4D(ModelImage srcImg, int volumeLength, float res3, float res4, int unit3, int unit4, boolean copyAllInfo) {
         super(null, srcImg);
 
         this.volumeLength = volumeLength;
@@ -52,6 +56,23 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
         resolUnit3 = unit3;
         resolUnit4 = unit4;
+        
+        this.copyAllInfo = copyAllInfo;
+    }
+    
+    /**
+     * Constructs new algorithm and sets source.
+     * 
+     * @param srcImg source image model
+     * @param volumeLength the 3D image will be chopped upto to volumes of this length volumeLength should divide evenly
+     *            (without remainder) into the 3rd dimension length of the original image.
+     * @param res3 resolution of the 3rd dimension
+     * @param res4 resolution of the 4rd dimension
+     * @param unit3 units of measure for the 3rd dimension
+     * @param unit4 units of measure for the 4rd dimension
+     */
+    public AlgorithmConvert3Dto4D(ModelImage srcImg, int volumeLength, float res3, float res4, int unit3, int unit4) {
+        this(srcImg, volumeLength, res3, res4, unit3, unit4, false);
     }
 
     // ~ Methods
