@@ -3057,10 +3057,10 @@ public class VOI extends ModelSerialCloneable {
 		Object[] listeners = listenerList.getListenerList();
 		// Process the listeners last to first, notifying
 		// those that are interested in this event
-		for (int i = listeners.length - 2; i >= 0; i -= 2) {
+		for (int i = listeners.length - 1; i >= 0; i--) {
 
-			if (listeners[i] == VOIListener.class) {
-				((VOIListener) listeners[i + 1]).selectedVOI(voiUpdate);
+			if (listeners[i] instanceof VOIListener) {
+				((VOIListener) listeners[i]).selectedVOI(voiUpdate);
 			}
 		}
 	}
