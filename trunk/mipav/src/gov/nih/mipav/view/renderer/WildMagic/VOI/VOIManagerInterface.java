@@ -1433,8 +1433,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         {
             selectAllVOIs(true);
             ScriptRecorder.getReference().addLine(new ActionSelectAllVOIs(getActiveImage()));
-        }
-        else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_NONE.getActionCommand())) {
+        } else if(kCommand.equals(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL.getActionCommand())) {
+            setSelectedVOI(m_kCurrentVOIGroup, true, false);
+        } else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_SELECT_NONE.getActionCommand())) {
             selectAllVOIs(false);
         } 
         else if (kCommand.equals(CustomUIBuilder.PARAM_VOI_GROUP.getActionCommand())) {
