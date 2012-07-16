@@ -1122,7 +1122,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     public void addedCurve(VOIEvent added) {
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( added.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( added.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
     }
@@ -1133,7 +1133,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         newVOIselection.getVOI().addVOIListener(this);
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( newVOIselection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( newVOIselection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
         
@@ -1222,13 +1222,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -1635,6 +1635,14 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             return m_kVOIManagers.elementAt(i);
         }
         return null;
+    }
+    
+    /**
+     * Returns the number of VOIManagers controlled by this VOIHandler.
+     */
+    public int getVOIManagerNum()
+    {
+        return m_kVOIManagers.size();
     }
 
     /* (non-Javadoc)
@@ -2258,13 +2266,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -2279,13 +2287,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -2379,7 +2387,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         //System.err.println( "VOIManagerInterface.selectedVOI" );
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( selection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }
         if ( m_kVOILogicalOperationsDialog != null )
@@ -2724,7 +2732,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         //System.err.println( "VOIManagerInterface.vectorSelected" );
         if ( m_kVOIDialog != null )
         {
-            m_kVOIDialog.updateVOI( selection.getVOI(), getActiveImage() );
+            m_kVOIDialog.updateVOIPanel( selection.getVOI(), getActiveImage() );
             m_kVOIDialog.updateTree();
         }        
     }
@@ -3532,13 +3540,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -3922,13 +3930,13 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             ViewVOIVector VOIs = kActive.getVOIs();
             for (int i = 0; i < VOIs.size(); i++) {
                 if (VOIs.VOIAt(i).isActive()) {
-                    m_kVOIDialog.updateVOI( VOIs.VOIAt(i), kActive );
+                    m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(i), kActive );
                     m_kVOIDialog.updateTree();
                     return;
                 }
             }
             if (VOIs.size() > 0) {
-                m_kVOIDialog.updateVOI( VOIs.VOIAt(0), kActive );
+                m_kVOIDialog.updateVOIPanel( VOIs.VOIAt(0), kActive );
                 m_kVOIDialog.updateTree();
             }
         }
@@ -4351,7 +4359,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
         }
         if (m_kVOIDialog != null) {
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+            m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
         }
         updateDisplay();
     }
@@ -5561,7 +5569,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             imageStatList.refreshVOIList(getActiveImage().getVOIs());
         }
         if (m_kVOIDialog != null) {
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+            m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
         }
         updateDisplay();
     }
@@ -5613,7 +5621,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
 
         if (m_kVOIDialog != null) {
             m_kVOIDialog.setVisible(true);
-            m_kVOIDialog.updateVOI(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
+            m_kVOIDialog.updateVOIPanel(m_kCurrentVOIGroup, m_kParent.getActiveImage() );
         }
     }
 
