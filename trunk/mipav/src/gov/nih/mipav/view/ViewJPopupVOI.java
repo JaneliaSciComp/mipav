@@ -94,7 +94,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
         selectionMenu = ViewMenuBuilder.buildMenu("Select", 0, false);
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, this, false));
-        //selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, this, false));
+        selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, this, false));
         selectionMenu.add(ViewMenuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, this, false));
         
 

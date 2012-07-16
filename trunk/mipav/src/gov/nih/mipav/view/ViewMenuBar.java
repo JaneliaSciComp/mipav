@@ -793,6 +793,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_PASTE, true),}),
                                 menuBuilder.makeMenu("Select VOI", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_ALL, false),
+                                        menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_CONTOUR_SELECT_ALL, false),
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_SELECT_NONE, false),}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("VOI grouping", true, new JMenuItem[] {
