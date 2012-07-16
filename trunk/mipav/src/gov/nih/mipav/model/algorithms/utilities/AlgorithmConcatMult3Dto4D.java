@@ -28,12 +28,22 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmBase {
 	 * constructor
 	 * @param images
 	 * @param destImage
+	 * @param copyAllInfo 
 	 */
-	public AlgorithmConcatMult3Dto4D(ModelImage[] images, ModelImage destImage) {
+	public AlgorithmConcatMult3Dto4D(ModelImage[] images, ModelImage destImage, boolean copyAllInfo) {
 		this.images = images;
 		this.destImage = destImage;
 		
 	}
+	
+	/**
+     * constructor
+     * @param images
+     * @param destImage
+     */
+    public AlgorithmConcatMult3Dto4D(ModelImage[] images, ModelImage destImage) {
+        this(images, destImage, false);
+    }
 	
 	
 	/**
