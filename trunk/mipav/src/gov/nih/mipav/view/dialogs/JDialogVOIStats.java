@@ -887,7 +887,7 @@ public class JDialogVOIStats extends JDialogBase
                 updateContourPane(leadBase);
                 updateVOIPanel(leadBase.getGroup(), image);
                 if(voiHandler instanceof VOIManagerInterface) {
-                    ((VOIManagerInterface) voiHandler).setSelectedVOI(leadBase.getGroup(), false, true);
+                    ((VOIManagerInterface) voiHandler).setSelectedVOI(leadBase.getGroup(), false, false);
                 }
 
             } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
