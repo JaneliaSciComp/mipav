@@ -21,13 +21,22 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmBase {
 	 * comstructor
 	 * @param images
 	 * @param destImage
+	 * @param copyAllInfo 
 	 */
-	public AlgorithmConcatMult3Dto3D(ModelImage[] images, ModelImage destImage) {
+	public AlgorithmConcatMult3Dto3D(ModelImage[] images, ModelImage destImage, boolean copyAllInfo) {
 		this.images = images;
 		this.destImage = destImage;
 		
 	}
 	
+	/**
+     * comstructor
+     * @param images
+     * @param destImage
+     */
+    public AlgorithmConcatMult3Dto3D(ModelImage[] images, ModelImage destImage) {
+        this(images, destImage, false);
+    }
 	
 	/**
 	 * run algorithm
