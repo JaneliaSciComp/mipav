@@ -9,6 +9,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -226,7 +227,7 @@ public class JDialogVOIStats extends JDialogBase
         voiHandler = theVoiHandler;
 
         init();
-        updateVOI(voi,image);
+        updateVOIPanel(voi,image);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -365,9 +366,9 @@ public class JDialogVOIStats extends JDialogBase
                 image.groupVOIs(newVOIVector, where, name);
 
                 Vector<VOI> VOIs = image.getVOIs();
-                updateVOI((VOIs.elementAt(VOIs.size() - 1)), image);
+                updateVOIPanel((VOIs.elementAt(VOIs.size() - 1)), image);
             } else {
-                updateVOI(voi, image);
+                updateVOIPanel(voi, image);
             }
 
             updateTree();
@@ -699,7 +700,7 @@ public class JDialogVOIStats extends JDialogBase
         } 
         if ( voi != newVOIselection.getChangedVolumeOfInterest() )
         {
-            updateVOI(newVOIselection.getChangedVolumeOfInterest(), voiHandler.getActiveImage());
+            updateVOIPanel(newVOIselection.getChangedVolumeOfInterest(), voiHandler.getActiveImage());
         }
         updateTree();
     }
@@ -758,7 +759,7 @@ public class JDialogVOIStats extends JDialogBase
      * @param  _voi  VOI whose properties we want to calculate.
      * @param  img   Image where voi is to be updated
      */
-    public void updateVOI(VOI _voi, ModelImage img) {
+    public void updateVOIPanel(VOI _voi, ModelImage img) {
 
         voi = _voi;
         image = img;
@@ -884,7 +885,10 @@ public class JDialogVOIStats extends JDialogBase
                 }
 
                 updateContourPane(leadBase);
-                updateVOI(leadBase.getGroup(), image);
+                updateVOIPanel(leadBase.getGroup(), image);
+                if(voiHandler instanceof VOIManagerInterface) {
+                    ((VOIManagerInterface) voiHandler).setSelectedVOI(leadBase.getGroup(), false, true);
+                }
 
             } else if (leadObjects[leadObjects.length - 1] instanceof VOIFrameNode) {
                 //curveIndex = ((VOIFrameNode) leadObjects[leadObjects.length - 1]).getFrameNumber();
