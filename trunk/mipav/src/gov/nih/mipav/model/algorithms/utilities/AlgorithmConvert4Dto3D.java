@@ -17,9 +17,19 @@ public class AlgorithmConvert4Dto3D extends AlgorithmBase {
      * Constructs new algorithm and sets source.
      *
      * @param  srcImg  source image model
+     * @param copyAllInfo 
+     */
+    public AlgorithmConvert4Dto3D(ModelImage srcImg, boolean copyAllInfo) {
+        super(null, srcImg);
+    }
+    
+    /**
+     * Constructs new algorithm and sets source.
+     *
+     * @param  srcImg  source image model
      */
     public AlgorithmConvert4Dto3D(ModelImage srcImg) {
-        super(null, srcImg);
+        this(srcImg, false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
