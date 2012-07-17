@@ -104,7 +104,7 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
                        fireProgressStateChanged((100 * sliceCounter)/(destImage.getExtents()[3]));
                        
                        if(images[t].isDicomImage()) {
-                           copyDicomInfo(destFileInfo, resols, z, t, sliceCounter); 
+                           copyDicomInfo(destFileInfo, images[t].getFileInfo(0), resols, z, t, sliceCounter); 
                            
                        } else {
                            destFileInfo[sliceCounter] = (FileInfoBase) images[t].getFileInfo(z).clone();
