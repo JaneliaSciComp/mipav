@@ -88,7 +88,7 @@ public class AlgorithmConcatMult3Dto3D extends AlgorithmConcatMult {
                         fireProgressStateChanged((100 * counter)/(destImage.getExtents()[2]));
                         
                         if(images[i].isDicomImage()) {
-                            copyDicomInfo(fileInfo, resols, k, i, counter); 
+                            copyDicomInfo(fileInfo, images[i].getFileInfo(0), resols, k, i, counter); 
                         } else {
                             fileInfo[counter] = (FileInfoBase) images[i].getFileInfo(k).clone();
                             copyBaseInfo(fileInfo, images[i].getFileInfo(k), resols, counter); //used for copying resolution inof
