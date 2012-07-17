@@ -328,6 +328,9 @@ public class JDialogConcatMult3Dto3D extends JDialogScriptableBase implements
         copyAllInfoBox.setSelected(copyAllInfo);
         optionsPanel.add(copyAllInfoBox);
 
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        
         mainPanel.add(optionsPanel, gbc);
         
         gbc.gridy++;
