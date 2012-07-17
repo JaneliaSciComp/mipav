@@ -337,8 +337,10 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
         optionsPanel.setForeground(Color.black);
         optionsPanel.setBorder(buildTitledBorder("FileInfo options "));
         
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         copyAllInfoBox = new JCheckBox("Copy all file information");
-        copyAllInfoBox.setEnabled(true);
+        copyAllInfoBox.setSelected(copyAllInfo);
         optionsPanel.add(copyAllInfoBox);
 
         mainPanel.add(optionsPanel, gbc);
@@ -469,14 +471,14 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	 */
 	protected void storeParamsFromGUI() throws ParserException {
 		// TODO Auto-generated method stub
-	    scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", true));
+	    scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", copyAllInfo));
 	}
 
 	/**
 	 * algorithm performed
 	 */
 	public void algorithmPerformed(AlgorithmBase algorithm) {
-		if(algorithm instanceof AlgorithmConcatMult3Dto4D) {
+	    if(algorithm instanceof AlgorithmConcatMult3Dto4D) {
 			if (alg.isCompleted() == true) {
 				new ViewJFrameImage(destImage);
 				cleanup();
