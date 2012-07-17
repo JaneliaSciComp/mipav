@@ -86,7 +86,6 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
 	        origins[2] = images[0].getFileInfo()[0].getOrigin(2);
 	        origins[3] = 0;
 
-	        FileInfoBase[] fileInfo = null;
 	        
 
             
@@ -98,7 +97,7 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
          destFileInfo = new FileInfoBase[numInfos];
 
          if(copyAllInfo) {  
-             int sliceCounter = 0; //Keeps track of every slice to populate tag
+               int sliceCounter = 0; //Keeps track of every slice to populate tag
                for (int t = 0; t < destImage.getExtents()[3]; t++) {
                    for (int z = 0; z <destImage.getExtents()[2] ; z++) {
                        fireProgressStateChanged((100 * sliceCounter)/(destImage.getExtents()[3]));
@@ -116,11 +115,11 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
                
                destImage.setFileInfo(destFileInfo);
          } else {
-             fileInfo = destImage.getFileInfo();
+             destFileInfo = destImage.getFileInfo();
 
              for (int i = 0; (i < (destImage.getExtents()[2] * destImage.getExtents()[3])); i++) {
                  fireProgressStateChanged((100 * i)/(destImage.getExtents()[3]));
-                 copyBaseInfo(fileInfo, images[0].getFileInfo()[0], resols, i);
+                 copyBaseInfo(destFileInfo, images[0].getFileInfo()[0], resols, i);
              }
 
              counter = 0;
@@ -130,7 +129,7 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
           
                      if(img.getFileInfo()[0] instanceof FileInfoImageXML) {
                          if (((FileInfoImageXML) img.getFileInfo()[k]).getPSetHashtable() != null) {
-                             ((FileInfoImageXML) fileInfo[counter]).setPSetHashtable(((FileInfoImageXML) img.getFileInfo()[k]).getPSetHashtable());
+                             ((FileInfoImageXML) destFileInfo[counter]).setPSetHashtable(((FileInfoImageXML) img.getFileInfo()[k]).getPSetHashtable());
                          }
                      }
                      counter++;
@@ -139,7 +138,7 @@ public class AlgorithmConcatMult3Dto4D extends AlgorithmConcatMult {
          }
 
         setCompleted(true);
-        fileInfo = null;
+        destFileInfo = null;
 
 		}catch(Exception e) {
 			e.printStackTrace();
