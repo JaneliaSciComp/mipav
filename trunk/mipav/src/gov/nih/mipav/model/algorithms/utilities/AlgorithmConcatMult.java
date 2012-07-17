@@ -60,8 +60,7 @@ public abstract class AlgorithmConcatMult extends AlgorithmBase {
              String sliceGapString = ((String) ((FileInfoDicom) destFileInfo[sliceCounter]).getTagTable().getValue("0018,0088")).trim();
              sliceResolution = new Double(sliceGapString.trim()).doubleValue();
          }          
-         
-         fireProgressStateChanged((((100 * (t*2)))/(destImage.getExtents()[2]+1)));
+
          resols[0] = images[t].getFileInfo(z).getResolutions()[0];
          resols[1] = images[t].getFileInfo(z).getResolutions()[1];
          if(resols.length > 2) {
