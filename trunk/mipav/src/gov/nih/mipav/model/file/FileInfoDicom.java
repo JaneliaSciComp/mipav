@@ -215,9 +215,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @param  format     format (in this case, DICOM)
      */
     public FileInfoDicom(String name, String directory, int format) {
-        super(name, directory, format);
-
-        tagTable = new FileDicomTagTable(this, vr_type);
+        this(name, directory, format, null);
     }
 
     /**
@@ -231,9 +229,14 @@ public class FileInfoDicom extends FileInfoBase {
      */
     public FileInfoDicom(String name, String directory, int format, FileInfoDicom refInfo) {
         super(name, directory, format);
-        this.vr_type = refInfo.vr_type;
-
-        tagTable = new FileDicomTagTable(this, refInfo.getTagTable(), vr_type);
+        
+        FileDicomTagTable tagTable = null;
+        if(refInfo != null) {
+            this.vr_type = refInfo.vr_type;
+            tagTable = refInfo.getTagTable();
+        }
+            
+        tagTable = new FileDicomTagTable(this, tagTable, vr_type);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

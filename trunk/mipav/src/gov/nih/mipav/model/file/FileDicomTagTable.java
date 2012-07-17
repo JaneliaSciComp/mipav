@@ -56,17 +56,11 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
      * @param  parent  The dicom file info that this tag table belongs to.
      */
     public FileDicomTagTable(FileInfoDicom parent, VRtype vr_type) {
-        this.tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
-
-        this.referenceTagTable = null;
-        this.isReferenceTagTable = true;
-        this.parentFileInfo = parent;
-        this.vr_type = vr_type;
+        this(parent, null, vr_type);
     }
 
     /**
-     * Creates a new FileDicomTagTable object. Should <b>not</b> be used for the tags from first slice of an image
-     * volume.
+     * Creates a new FileDicomTagTable object. 
      *
      * @param  parent          The dicom file info that this tag table belongs to.
      * @param  firstSliceTags  A reference to the tag table for the first slice of the image volume
@@ -75,7 +69,7 @@ public class FileDicomTagTable implements java.io.Serializable, Cloneable {
         this.tagTable = new Hashtable<FileDicomKey,FileDicomTag>();
 
         this.referenceTagTable = firstSliceTags;
-        this.isReferenceTagTable = false;
+        this.isReferenceTagTable = firstSliceTags == null;  //no first slice tags means image is the first slice of the volume
 
         this.parentFileInfo = parent;
         this.vr_type = vr_type;
