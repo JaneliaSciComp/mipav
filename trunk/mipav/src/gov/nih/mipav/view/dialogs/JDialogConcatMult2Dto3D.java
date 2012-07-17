@@ -335,8 +335,10 @@ public class JDialogConcatMult2Dto3D extends JDialogScriptableBase implements
         optionsPanel.setForeground(Color.black);
         optionsPanel.setBorder(buildTitledBorder("FileInfo options "));
         
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
         copyAllInfoBox = new JCheckBox("Copy all file information");
-        copyAllInfoBox.setEnabled(true);
+        copyAllInfoBox.setSelected(copyAllInfo);
         optionsPanel.add(copyAllInfoBox);
 
         mainPanel.add(optionsPanel, gbc);
