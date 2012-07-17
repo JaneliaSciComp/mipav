@@ -325,7 +325,7 @@ public class JDialogConcatMult3Dto3D extends JDialogScriptableBase implements
         optionsPanel.setBorder(buildTitledBorder("FileInfo options "));
         
         copyAllInfoBox = new JCheckBox("Copy all file information");
-        copyAllInfoBox.setEnabled(true);
+        copyAllInfoBox.setSelected(copyAllInfo);
         optionsPanel.add(copyAllInfoBox);
 
         mainPanel.add(optionsPanel, gbc);
