@@ -172,8 +172,8 @@ public class FileInfoDicom extends FileInfoBase {
     public Short pixelPaddingValue = null;
 
     /** DICOM tag (0028, 0103) 
-     * 	-1 = undefined
-     * 	 0 = unsigned 
+     *  -1 = undefined
+     *   0 = unsigned 
      *   1 = signed */
     public short pixelRepresentation = UNDEFINED_PIXEL_REP;
     
@@ -230,13 +230,13 @@ public class FileInfoDicom extends FileInfoBase {
     public FileInfoDicom(String name, String directory, int format, FileInfoDicom refInfo) {
         super(name, directory, format);
         
-        FileDicomTagTable tagTable = null;
+        FileDicomTagTable refTagTable = null;
         if(refInfo != null) {
             this.vr_type = refInfo.vr_type;
-            tagTable = refInfo.getTagTable();
+            refTagTable = refInfo.getTagTable();
         }
             
-        tagTable = new FileDicomTagTable(this, tagTable, vr_type);
+        tagTable = new FileDicomTagTable(this, refTagTable, vr_type);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -270,8 +270,8 @@ public class FileInfoDicom extends FileInfoBase {
             try {
 
                 if (list[i]) {
-                	String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
-                	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
+                    String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
+                    getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
                 }
             } catch (NullPointerException npe) { // an IllegalArgumentException is probably not right here....
                 throw new IllegalArgumentException("(" + anonymizeTagIDs[i] + ") is a required type 2 tag.");
@@ -286,8 +286,8 @@ public class FileInfoDicom extends FileInfoBase {
             // change each of the following tags to (empty)
             // if we are asked to anonymize this info and if the tag exists in the hashtable.
             if ((list[i]) && (tagTable.getValue(anonymizeTagIDs[i]) != null)) {
-        		String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
-            	getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
+                String anonValue = generateNewTagValue(anonymizeTagIDs[i]).toString();
+                getTagTable().setValue(anonymizeTagIDs[i], anonValue, anonValue.length());
             }
         }
         // this fileInfo is now an expurgated/sanitised version
@@ -299,7 +299,7 @@ public class FileInfoDicom extends FileInfoBase {
      * @return
      */
     public Object generateNewTagValue(String key) {
-    	return generateNewTagValue(key, getTagTable());
+        return generateNewTagValue(key, getTagTable());
     }
     
     /**
@@ -477,10 +477,10 @@ public class FileInfoDicom extends FileInfoBase {
             dirCos[1][0] = Double.valueOf(orientation.substring(index3 + 1, index4)).doubleValue();
             dirCos[1][1] = Double.valueOf(orientation.substring(index4 + 1, index5)).doubleValue();
             if (index6 == notSet)
-            	dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
+                dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1)).doubleValue();
             else
-            	dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1, index6)).doubleValue();
-            	
+                dirCos[1][2] = Double.valueOf(orientation.substring(index5 + 1, index6)).doubleValue();
+                
             dirCos[1][3] = 0;
 
             // cross product
@@ -893,14 +893,14 @@ public class FileInfoDicom extends FileInfoBase {
                     }
                 }
                 if (index1 != -1)
-                	xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
+                    xLocation = Float.valueOf(orientation.substring(0, index1)).floatValue();
                 if (index1 != -1 && index2 != -1)
-                	yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
+                    yLocation = Float.valueOf(orientation.substring(index1 + 1, index2)).floatValue();
                 if (index2 != -1)
-                	zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
+                    zLocation = Float.valueOf(orientation.substring(index2 + 1)).floatValue();
               
                 if (index1 == -1 || index2 == -1)
-                	Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Warning reading tag 0020, 0032 - too few items \n", Preferences.DEBUG_FILEIO);
                 
             } else if (tagKey.equals("0020,0013")) { // type 2
                 instanceNumber = Integer.parseInt(tag.getValue(true).toString());
@@ -908,7 +908,7 @@ public class FileInfoDicom extends FileInfoBase {
                 sliceLocation =  Float.valueOf(tag.getValue(true).toString()).floatValue();
             } else if (tagKey.equals("0028,0030") &&
                            ((tagTable.get("0018,1164") == null) || (tagTable.get("0018,1164").getValue(false) == null))) { // type 2
-            	// y resolution followed by x resolution
+                // y resolution followed by x resolution
     
                 String valueStr = ((String) tag.getValue(false)).trim();
                 String firstHalf, secondHalf;
@@ -1106,14 +1106,14 @@ public class FileInfoDicom extends FileInfoBase {
     }
 
     public boolean isEnhancedDicom() {
-		return isEnhancedDicom;
-	}
+        return isEnhancedDicom;
+    }
 
-	public void setIsEnhancedDicom(boolean isEnhancedDicom) {
-		this.isEnhancedDicom = isEnhancedDicom;
-	}
+    public void setIsEnhancedDicom(boolean isEnhancedDicom) {
+        this.isEnhancedDicom = isEnhancedDicom;
+    }
 
-	/**
+    /**
      * Uses the DICOM tag value to set the Image modality field.
      *
      * @param  value  Object used is the value of DICOM tag (0008,0060)
