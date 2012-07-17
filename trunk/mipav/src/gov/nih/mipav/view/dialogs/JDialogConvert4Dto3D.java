@@ -134,7 +134,7 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", true));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("copy_all_image_info", copyAllInfo));
     }
 
     /**
