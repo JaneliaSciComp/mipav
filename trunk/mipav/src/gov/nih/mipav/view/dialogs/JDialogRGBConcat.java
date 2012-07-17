@@ -321,7 +321,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
 
                 // Make algorithm
                 mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, resultImage, remapMode, commonMapping,
-                                                  remapHighestValue, true);
+                                                  remapHighestValue, true, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -365,7 +365,7 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // Make the algorithm class
                 // Make algorithm
                 mathAlgo = new AlgorithmRGBConcat(imageR, imageG, imageB, dataType.getLegacyNum(), remapMode, commonMapping,
-                                                  remapHighestValue, true);
+                                                  remapHighestValue, true, true);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.

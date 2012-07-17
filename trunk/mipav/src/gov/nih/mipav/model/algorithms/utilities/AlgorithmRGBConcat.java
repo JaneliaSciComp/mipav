@@ -67,7 +67,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired             
      */
     public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, int dataType, boolean remap, 
-                              boolean commonMapping, float remapHighestValue, boolean performBoundsChecking) {
+                              boolean commonMapping, float remapHighestValue, boolean performBoundsChecking, boolean copyAllInfo) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
@@ -92,9 +92,10 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
      * @param  commonMapping
      * @param  remapHighestValue The highest value that will occur if remapping occurs
      * * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired 
+     * @param copyAllInfo 
      */
     public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, ModelImage destImg,
-                              boolean remap, boolean commonMapping, float remapHighestValue, boolean performBoundsChecking) {
+                              boolean remap, boolean commonMapping, float remapHighestValue, boolean performBoundsChecking, boolean copyAllInfo) {
 
         srcImageR = srcImgR; // Put results in red   destination image.
         srcImageG = srcImgG; // Put results in green destination image.
@@ -105,6 +106,43 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         this.commonMapping = commonMapping;
         this.remapHighestValue = remapHighestValue;
         this.performBoundsChecking = performBoundsChecking;
+    }
+    
+    /**
+     * Creates a new AlgorithmRGBConcat object.
+     *
+     * @param  srcImgR  image model where result image of the Red channel is to be stored
+     * @param  srcImgG  image model where result image of the Green channel is to be stored
+     * @param  srcImgB  image model where result image of the Blue channel is to be stored
+     * @param  destImg  destination image image model
+     * @param  remap    if true and srcImage data max is < remapHighestValue data will be remapped [0-remapHighestValue]
+     *                  else if image max > remapHighestValue data will automatically be remapped [0-remapHighestValue].
+     * @param  commonMapping
+     * @param  remapHighestValue The highest value that will occur if remapping occurs
+     * * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired 
+     */
+    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, ModelImage destImg,
+                              boolean remap, boolean commonMapping, float remapHighestValue, boolean performBoundsChecking) {
+        this(srcImgR, srcImgG, srcImgB, destImg, remap, commonMapping, remapHighestValue, performBoundsChecking, true);
+    }
+    
+    /**
+     * Creates a new AlgorithmRGBConcat object.
+     *
+     * @param  srcImgR  image model where result image of the Red channel is to be stored
+     * @param  srcImgG  image model where result image of the Green channel is to be stored
+     * @param  srcImgB  image model where result image of the Blue channel is to be stored
+     * @param  dataType Tells if srcImage will become ARGB, ARGB_USHORT, or ARGB_FLOAT
+     * @param  remap    if true and srcImage data max is < remapHighestValue data will be remapped [0-remapHighestValue]
+     *                  else if image max > remapHighestValue data will automatically be remapped [0-remapHighestValue].
+     * @param  commonMapping
+     * @param  remapHighestValue The highest value that will occur if remapping occurs
+     * @param performBoundsChecking  flag for performing bounds checking...normally should be set to true unless negative numbers are desired             
+     */
+    public AlgorithmRGBConcat(ModelImage srcImgR, ModelImage srcImgG, ModelImage srcImgB, int dataType, boolean remap, 
+            boolean commonMapping, float remapHighestValue, boolean performBoundsChecking) {
+        this(srcImgR, srcImgG, srcImgB, dataType, remap, 
+            commonMapping, remapHighestValue, performBoundsChecking, true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
