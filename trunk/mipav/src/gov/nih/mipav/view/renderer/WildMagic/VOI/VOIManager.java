@@ -942,6 +942,24 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		case KeyEvent.VK_DOWN:   m_kParent.moveVOI("MoveDown", m_kDrawingContext.getZoomY()*m_kDrawingContext.getResolutionY()); return;
 		case KeyEvent.VK_LEFT:   m_kParent.moveVOI("MoveLeft", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
 		case KeyEvent.VK_RIGHT:  m_kParent.moveVOI("MoveRight", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
+		case KeyEvent.VK_M:     
+		    VOIVector vec = m_kImageActive.getVOIs();
+		    for(int i=0; i<vec.size(); i++) {
+		        if(vec.get(i).getCurveType() == VOI.LINE) {
+		            VOI v = vec.get(i);
+		            if(v.isActive()) {
+    		            for(int j=0; j<v.getCurves().size(); j++) {
+    		                if(vec.get(i).getCurves().get(j).isActive()) {
+    		                    m_kParent.showIntensityInfo(vec.get(i).getCurves().get(j), false);
+    		                }
+    		            }
+		            }
+		        } else {
+		            
+		        }
+		    }
+		    return;
+		    
 		}
 		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
 		String command = Preferences.getShortcutCommand(ks);
