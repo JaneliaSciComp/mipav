@@ -2580,6 +2580,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         
         
         String lineName = kVOI.getName();
+        int sliceNum = kVOI.slice();
+        int curveNum = kVOI.getContourID();
+        
         Vector<Vector3f> positions = new Vector<Vector3f>();
         Vector<ColorRGB> colors = new Vector<ColorRGB>();
 
@@ -2642,16 +2645,16 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
 
             ViewUserInterface.getReference().setDataText(
-                    "Line\tname\tmean \tstandard deviation\tlength " + "\n");
+                    "Line\tname\tslice\tnumber\tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference()
             .setDataText(
-                    "Red\t" + lineName + "\t" + rgbMeanIntenR + "\t"
+                    "Red\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + rgbMeanIntenR + "\t"
                     + rgbStdDevIntenR + "\t" + dec.format(length) + "\n");
             ViewUserInterface.getReference().setDataText(
-                    "Green\t" + lineName + "\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
+                    "Green\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + rgbMeanIntenG + "\t" + rgbStdDevIntenG
                     + "\t" + dec.format(length) +"\n");
             ViewUserInterface.getReference().setDataText(
-                    "Blue\t" + lineName + "\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
+                    "Blue\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + rgbMeanIntenB + "\t" + rgbStdDevIntenB
                     + "\t" + dec.format(length) +"\n");
         } else {
             float[] pos = new float[pts];
@@ -2696,9 +2699,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
 
             ViewUserInterface.getReference().setDataText(
-                    "Line\tname\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
+                    "Line\tname\tslice\tnumber\tmin \tmax \ttotal \tmean \tstandard deviation\tlength " + "\n");
             ViewUserInterface.getReference().setDataText(
-            		"\t" + lineName + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + dec.format(length) +"\n");
+            		"\t" + lineName + "\t" + sliceNum + "\t" + curveNum + "\t" + min + "\t" + max + "\t" + totalInten + "\t" + rgbMeanIntenR + "\t" + rgbStdDevIntenR + "\t" + dec.format(length) +"\n");
         }
     }
     
