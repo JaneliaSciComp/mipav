@@ -7,14 +7,14 @@ import javax.swing.tree.*;
 
 
 /**
- * This class is used to represent a ... in a tree. This is a node of the .... . It has a gov.nih.mipav.structure.VOI as
+ * This class is used to represent a contour node in a tree. This is a node of the VOITreeNode . It has a gov.nih.mipav.structure.VOIBase as
  * its object.
  *
  * <p>Nodes in the tree are expanded by calling this class's explore method.</p>
  *
- * @author  David Parsons
+ * @author  Justin Senseney
  */
-public class VOINode extends DefaultMutableTreeNode {
+public class VOIContourNode extends DefaultMutableTreeNode {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -28,7 +28,7 @@ public class VOINode extends DefaultMutableTreeNode {
      *
      * @param  node  File for tree leaf.
      */
-    public VOINode(VOIBase node) {
+    public VOIContourNode(VOIBase node) {
         setUserObject(node);
 
         // unless we drop in information about the VOIbase here...
