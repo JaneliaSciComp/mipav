@@ -3010,6 +3010,7 @@ public class Preferences {
         Preferences.defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
         Preferences.defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
         Preferences.defaultShortcutTable.put("quickLUT", KeyStroke.getKeyStroke('Q', 0, false));
+        Preferences.defaultShortcutTable.put("measureVOI", KeyStroke.getKeyStroke('M', 0, false));
 
         for (int i = 0; i < 9; i++) {
             Preferences.defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i + 1)
