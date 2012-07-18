@@ -493,7 +493,7 @@ public class JDialogVOIStats extends JDialogBase
                 subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
                 subsetAlgo.run();
             }
-            algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_VOI,
+            algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR,
                           excluder.getRangeFlag(), processList); //TODO: Allow user to select processing method based on curves selected in processList
             
             algoVOI.addListener(this);
@@ -533,71 +533,83 @@ public class JDialogVOIStats extends JDialogBase
             
             VOIStatisticalProperties properties;
             String[] statLabels = listPanel.getNameList();
+            int processType = ((AlgorithmVOIProps)algorithm).getProcessType();
             
             for(int i=0; i<processList.size(); i++) { //all VOIs that are selected for processing
                 VOI tempVOI = processList.get(i);
                 properties = algoVOI.getVOIProperties(tempVOI);
                 String pSetDesc = tempVOI.getName();
-                String name, valueType;
+                String name, valueType, specificName;
                 Object value;
                 SimpleDateFormat dFormat = new SimpleDateFormat("yyyy-MM-dd");
                 SimpleDateFormat tFormat = new SimpleDateFormat("HH:mm:ss");
                 Date date = new Date();
                 String dateStr = dFormat.format(date);
                 String timeStr = tFormat.format(date);
-             
-                // Save statistics in the header only if image format is XML.
-                if (((image.getFileInfo(0).getFileFormat() == FileUtility.XML) ||
-                        (image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats.isSelected()) {
-                    for (int j = 0; j < image.getFileInfo().length; j++) { //all imageInfos for image
-                        
-                        ((FileInfoImageXML)image.getFileInfo(j)).createPSet(pSetDesc);
-                        for(int k=0; k < statLabels.length; k++) { //all selected statistics
-                            name = statLabels[k];
-                            value = properties.getVOIStatistic(name);
-                            ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).addParameter(name);
-                            ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(name).setValue(value.toString());
-                            if(value instanceof Integer) {
-                                valueType = "int";
-                            } else if(value instanceof Float) {
-                                valueType = "float";
-                            } else {
-                                valueType = "string";
+
+                int numCurves = processType == AlgorithmVOIProps.PROCESS_PER_VOI ? 1 : tempVOI.getCurves().size();
+                for(int curve=0; curve<numCurves; curve++) {
+                    
+                    // Save statistics in the header only if image format is XML.
+                    if (((image.getFileInfo(0).getFileFormat() == FileUtility.XML) ||
+                            (image.getFileInfo(0).getFileFormat() == FileUtility.XML_MULTIFILE)) && checkboxSaveStats.isSelected()) {
+                        for (int j = 0; j < image.getFileInfo().length; j++) { //all imageInfos for image
+                            
+                            ((FileInfoImageXML)image.getFileInfo(j)).createPSet(pSetDesc);
+                            for(int k=0; k < statLabels.length; k++) { //all selected statistics
+                                name = statLabels[k];
+                                specificName = extendName(name, tempVOI, curve, processType);
+                                value = properties.getVOIStatistic(specificName);
+                                ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).addParameter(specificName);
+                                ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(specificName).setValue(value.toString());
+                                if(value instanceof Integer) {
+                                    valueType = "int";
+                                } else if(value instanceof Float) {
+                                    valueType = "float";
+                                } else {
+                                    valueType = "string";
+                                }
+                                ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(specificName).setValueType(valueType);
+                                ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(specificName).setDate(dateStr);
+                                ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(specificName).setTime(timeStr);
                             }
-                            ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(name).setValueType(valueType);
-                            ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(name).setDate(dateStr);
-                            ((FileInfoImageXML)image.getFileInfo(j)).getPSet(pSetDesc).getParameter(name).setTime(timeStr);
                         }
                     }
-                }
-                
-                ViewUserInterface UI = ViewUserInterface.getReference();
-                UI.setDataText("\n -----------------------------------------------------------------------------\n");
-                UI.setDataText("Image:     " + image.getImageName() + "\n");
-                if (image.getNDims() >= 4) {
-                    UI.setDataText("Active volume = " + activeVolume + "\n");
-                }
-                UI.setDataText("VOI  :     " + tempVOI.getName() + "\n");
-                
-                for(int k=0; k < statLabels.length; k++) { //all selected statistics
-                    name = statLabels[k];
-                    if (image.isColorImage()) {
-                        if ((name.equals("Min Intensity")) || (name.equals("Max Intensity")) ||
-                            (name.equals("Avg Voxel Intensity")) || (name.equals("Std Dev of Intensity")) ||
-                            (name.equals("Sum Intensities")) || (name.equals("Center of Mass")) ||
-                            (name.equals("Coefficient of skewness")) || (name.equals("Coefficient of kurtosis")) ||
-                            (name.equals("Median Intensity")) || (name.equals("Mode Intensity")) ||
-                            (name.equals("Mode Count"))) {
-                            UI.setDataText("  "+name+"Red\t\t= "+properties.getVOIStatistic(name+"Red").toString()+"\n"); 
-                            UI.setDataText("  "+name+"Green\t\t= "+properties.getVOIStatistic(name+"Green").toString()+"\n");
-                            UI.setDataText("  "+name+"Blue\t\t= "+properties.getVOIStatistic(name+"Blue").toString()+"\n");  
-                        }
-                        else {
-                            UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(name).toString()+"\n");    
-                        }
+                    
+                    ViewUserInterface UI = ViewUserInterface.getReference();
+                    UI.setDataText("\n -----------------------------------------------------------------------------\n");
+                    UI.setDataText("Image:     " + image.getImageName() + "\n");
+                    if (image.getNDims() >= 4) {
+                        UI.setDataText("Active volume = " + activeVolume + "\n");
                     }
-                    else { 
-                        UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(name).toString()+"\n");
+                    UI.setDataText("VOI  :     " + tempVOI.getName() + "\n");
+                    if(processType != AlgorithmVOIProps.PROCESS_PER_VOI) {
+                        UI.setDataText("Contour :     "+curve+"     Slice: "+tempVOI.getCurves().get(curve).slice()+"\n");
+                    }
+                    
+                    
+                    for(int k=0; k < statLabels.length; k++) { //all selected statistics
+                        name = statLabels[k];
+                        specificName = extendName(name, tempVOI, curve, processType);
+                        
+                        if (image.isColorImage()) {
+                            if ((name.equals("Min Intensity")) || (name.equals("Max Intensity")) ||
+                                (name.equals("Avg Voxel Intensity")) || (name.equals("Std Dev of Intensity")) ||
+                                (name.equals("Sum Intensities")) || (name.equals("Center of Mass")) ||
+                                (name.equals("Coefficient of skewness")) || (name.equals("Coefficient of kurtosis")) ||
+                                (name.equals("Median Intensity")) || (name.equals("Mode Intensity")) ||
+                                (name.equals("Mode Count"))) {
+                                UI.setDataText("  "+name+"\tRed\t\t= "+properties.getVOIStatistic(specificName+"Red").toString()+"\n"); 
+                                UI.setDataText("  "+name+"\tGreen\t\t= "+properties.getVOIStatistic(specificName+"Green").toString()+"\n");
+                                UI.setDataText("  "+name+"\tBlue\t\t= "+properties.getVOIStatistic(specificName+"Blue").toString()+"\n");  
+                            }
+                            else {
+                                UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");    
+                            }
+                        }
+                        else { 
+                            UI.setDataText("  "+name+"\t\t= "+properties.getVOIStatistic(specificName).toString()+"\n");
+                        }
                     }
                 }
             }
@@ -610,6 +622,27 @@ public class JDialogVOIStats extends JDialogBase
             }
         }
         
+    }
+    
+    /**
+     * Changes voi name used for statistics retrieval based on processing mode
+     */
+    private String extendName(String name, VOI tempVOI, int contourNum, int processType) {
+        StringBuffer buffer = new StringBuffer(name);
+        switch (processType) {
+        case AlgorithmVOIProps.PROCESS_PER_SLICE:
+        case AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR:
+            buffer.append(tempVOI.getCurves().get(contourNum).slice());
+            break;
+        }
+           
+        switch (processType) {
+        case AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR:
+        case AlgorithmVOIProps.PROCESS_PER_CONTOUR:
+            buffer.append(VOIStatisticalProperties.DELIM).append(contourNum);
+        }
+        
+        return buffer.toString();
     }
     
     private void anotherCall() {
