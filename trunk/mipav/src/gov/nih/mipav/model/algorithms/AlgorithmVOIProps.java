@@ -2506,20 +2506,20 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
 
 
 
-    /** DOCUMENT ME! */
+    /** Algorithm sums all statistics for the entire VOI */
     public static final int PROCESS_PER_VOI = 0;
 
-    /** DOCUMENT ME! */
+    /** Algorithm maintains separate statistics per contour and denotes the slice of each contour */
     public static final int PROCESS_PER_SLICE_AND_CONTOUR = 1;
 
-    /** DOCUMENT ME! */
+    /** Algorithm sums all statistics from each contour on the same slice */
     public static final int PROCESS_PER_SLICE = 2;
 
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
+    /** Algorithm maintains separate statistics per contour */
     public static final int PROCESS_PER_CONTOUR = 3;
-
+    
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+    
     /** The VOI on which to perform the calculations. */
     private VOI activeVOI;
 
