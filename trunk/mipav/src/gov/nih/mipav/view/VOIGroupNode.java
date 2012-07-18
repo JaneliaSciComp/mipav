@@ -9,12 +9,12 @@ import javax.swing.tree.*;
 
 
 /**
- * This class is used to represent a ... in a tree. This is a node of the .... . It has a gov.nih.mipav.structure.VOI as
+ * This class is used to represent a VOI in a tree. This is a node of the graph . It has a gov.nih.mipav.structure.VOI as
  * its object.
  *
  * <p>Nodes in the tree are expanded by calling this class's explore method.</p>
  *
- * @author  David Parsons
+ * @author  Justin Senseney
  */
 public class VOIGroupNode extends DefaultMutableTreeNode {
 
@@ -93,13 +93,13 @@ public class VOIGroupNode extends DefaultMutableTreeNode {
 	    	
 	    	
 	    	if(xCurveSortedCurves!= null) {
-	    		add(new VOIOrientationNode("X Plane",xCurveSortedCurves));
+	    		add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "X Plane",xCurveSortedCurves));
 	    	}
 	    	if(yCurveSortedCurves != null) {
-	    		add(new VOIOrientationNode("Y Plane",yCurveSortedCurves));
+	    		add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "Y Plane",yCurveSortedCurves));
 	    	}
 	    	if(zCurveSortedCurves!= null) {
-	    		add(new VOIOrientationNode("Z Plane",zCurveSortedCurves));
+	    		add(new VOIOrientationNode(((VOI) getUserObject()).getName(), "Z Plane",zCurveSortedCurves));
 	    		
 	    	}
     	}else {
