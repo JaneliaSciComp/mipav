@@ -514,7 +514,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
 		{
-			m_kParent.showIntensityGraph( m_kCurrentVOI );
+			m_kParent.showIntensityInfo( m_kCurrentVOI, true );
 		}else if(command.equals("VOIProperties")) {
 			m_kParent.showVOIProperties();
 		}
