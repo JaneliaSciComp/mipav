@@ -2568,7 +2568,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Displays the Intensity Graph for the input VOIBase.
      * @param kVOI VOIBase to graph.
      */
-    public void showIntensityGraph( VOIBase kVOI ) {
+    public void showIntensityInfo( VOIBase kVOI, boolean showGraph) {
         ViewJFrameGraph lineGraph;
 
         ModelImage kImage = m_kParent.getActiveImage();
@@ -2626,17 +2626,19 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             rgbStdDevIntenG = (float)Math.sqrt(rgbStdDevIntenG/pts);
             rgbStdDevIntenB = (float)Math.sqrt(rgbStdDevIntenB/pts);
 
-            if (kVOI.getGroup().getContourGraph() == null) {
-                ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbColors, "Intensity Graph", kVOI.getGroup(),
-                		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev());
-
-                contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
-                contourGraph.setVisible(true);
-                kVOI.getGroup().setContourGraph(contourGraph);
-                contourGraph.setVOI(kVOI.getGroup());
-            } else {
-                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
-                kVOI.getGroup().getContourGraph().saveNewFunction(rgbPos, rgbColors, 0);
+            if(showGraph) {
+                if (kVOI.getGroup().getContourGraph() == null) {
+                    ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbColors, "Intensity Graph", kVOI.getGroup(),
+                    		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev());
+    
+                    contourGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
+                    contourGraph.setVisible(true);
+                    kVOI.getGroup().setContourGraph(contourGraph);
+                    contourGraph.setVOI(kVOI.getGroup());
+                } else {
+                    kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
+                    kVOI.getGroup().getContourGraph().saveNewFunction(rgbPos, rgbColors, 0);
+                }
             }
 
             ViewUserInterface.getReference().setDataText(
@@ -2679,16 +2681,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             }
             rgbStdDevIntenR = (float)Math.sqrt(rgbStdDevIntenR/pts);
 
-            if (kVOI.getGroup().getContourGraph() == null) {
-                lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", kVOI.getGroup(),
-                		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
-                lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
-                lineGraph.setVisible(true);
-                kVOI.getGroup().setContourGraph(lineGraph);
-                lineGraph.setVOI(kVOI.getGroup());
-            } else {
-                kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
-                kVOI.getGroup().getContourGraph().replaceFunction(pos, inten, xyCoords, kVOI.getGroup(), 0);
+            if(showGraph) {
+                if (kVOI.getGroup().getContourGraph() == null) {
+                    lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", kVOI.getGroup(),
+                    		Unit.getUnitFromLegacyNum(unitsOfMeasure[0]).getAbbrev(),xyCoords);
+                    lineGraph.setDefaultDirectory(ViewUserInterface.getReference().getDefaultDirectory());
+                    lineGraph.setVisible(true);
+                    kVOI.getGroup().setContourGraph(lineGraph);
+                    lineGraph.setVOI(kVOI.getGroup());
+                } else {
+                    kVOI.getGroup().getContourGraph().setUnitsInLabel(Unit.getUnitFromLegacyNum(unitsOfMeasure[1]).getAbbrev());
+                    kVOI.getGroup().getContourGraph().replaceFunction(pos, inten, xyCoords, kVOI.getGroup(), 0);
+                }
             }
 
             ViewUserInterface.getReference().setDataText(
@@ -2719,7 +2723,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     {
         if ( kVOI.getType() == VOI.LINE )
         {
-            showIntensityGraph(kVOI);
+            showIntensityInfo(kVOI, true);
         }
         else if ( kVOI.getType() == VOI.POINT )
         {
@@ -3486,7 +3490,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() )
                 {
-                    showIntensityGraph( kCurrentVOI );
+                    showIntensityInfo( kCurrentVOI, true );
                 }
             }
         }
