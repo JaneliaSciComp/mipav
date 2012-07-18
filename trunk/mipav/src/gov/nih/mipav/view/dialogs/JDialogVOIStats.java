@@ -415,16 +415,16 @@ public class JDialogVOIStats extends JDialogBase
                     v.importCurve(b);
                     processList[1].add(v);
                 }
-                
-                callVOIAlgo(processList[0]);
             }
+            
+            callVOIAlgo(processList[0], AlgorithmVOIProps.PROCESS_PER_VOI);
         } else if (source == cancelButton) {
             cancelFlag = true;
             setVisible(false);
         }
     }
     
-    private void callVOIAlgo(ViewVOIVector voiProcessingSet) {
+    private void callVOIAlgo(ViewVOIVector voiProcessingSet, int processingMode) {
       //set min/max ranges for all VOIs that are in the process list
         for(int i=0; i<voiProcessingSet.size(); i++) {
             if (image.isColorImage()) {
@@ -511,7 +511,7 @@ public class JDialogVOIStats extends JDialogBase
             subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
             subsetAlgo.run();
         }
-        algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR,
+        algoVOI = new AlgorithmVOIProps(subsetImage, processingMode,
                       excluder.getRangeFlag(), voiProcessingSet); //TODO: Allow user to select processing method based on curves selected in processList
         
         algoVOI.addListener(this);
@@ -633,8 +633,8 @@ public class JDialogVOIStats extends JDialogBase
             }
             
             processListIndex++;
-            if(processListIndex < processList.length) {
-                callVOIAlgo(processList[processListIndex]);
+            if(processListIndex < processList.length && processList[processListIndex].size() > 0) {
+                callVOIAlgo(processList[processListIndex], AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR);
             }
         }
         
