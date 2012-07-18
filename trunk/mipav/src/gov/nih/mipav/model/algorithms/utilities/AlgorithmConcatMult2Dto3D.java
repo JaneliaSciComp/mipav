@@ -81,16 +81,6 @@ public class AlgorithmConcatMult2Dto3D extends AlgorithmConcatMult {
 	        origins[0] = images[0].getFileInfo()[0].getOrigin(0);
 	        origins[1] = images[0].getFileInfo()[0].getOrigin(1);
 	        origins[2] = 0;
-
-	        
-	        
-	        boolean isFileInfoDicom = true;
-	        for(int i=0;i<images.length;i++) {
-	        	if(!(images[i].getFileInfo()[0] instanceof FileInfoDicom)) {
-	        		isFileInfoDicom = false;
-	        		break;
-	        	}
-	        }
 	        
 	         FileInfoBase destFileInfo[] = null;
 	         int numInfos = destImage.getExtents()[2];
