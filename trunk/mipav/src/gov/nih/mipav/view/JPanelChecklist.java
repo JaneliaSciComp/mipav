@@ -437,6 +437,9 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
 
         try {
             enabledList[i] = visible;
+            if(!visible) {
+                checkboxList[i].setSelected(false);
+            }
         } catch (NullPointerException npe) {
             throw npe;
         } catch (ArrayIndexOutOfBoundsException aioobe) {
@@ -453,7 +456,7 @@ public abstract class JPanelChecklist extends JPanel implements ActionListener {
     public boolean setEnabledList(String label, boolean visible) {
         for(int i=0; i<checkboxLabels.length; i++) {
             if(label.equals(checkboxLabels[i])) {
-                enabledList[i] = visible;
+                setEnabledList(i, visible);
                 return true;
             }
         }
