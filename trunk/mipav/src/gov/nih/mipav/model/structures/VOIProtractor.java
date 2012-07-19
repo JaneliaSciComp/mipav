@@ -1,5 +1,7 @@
 package gov.nih.mipav.model.structures;
 
+import gov.nih.mipav.util.MipavMath;
+
 import java.util.Vector;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -143,6 +145,16 @@ public class VOIProtractor extends VOIBase {
         }
         return fAngle;               
     }    
+    
+    /**
+     * Returns the total length of this contour, based on the input resolutions.
+     * @param resolutions.
+     * @return total length of this contour, scaled by the resolutions.
+     */
+    public double getLengthPtToPt(float[] resolutions) {
+
+        return MipavMath.distance(get(size()-2), lastElement(), resolutions);
+    }
 
 
     /**
@@ -155,6 +167,7 @@ public class VOIProtractor extends VOIBase {
         allSlices = bValue;
     }
 
+    
 
     /**
      * Translates 3 points of the protractor VOI.
