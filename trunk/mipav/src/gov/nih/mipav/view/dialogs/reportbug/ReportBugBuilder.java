@@ -4,6 +4,7 @@ import imaging.MetaImageHeader.DataType;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.BufferedImage;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -23,6 +24,8 @@ import javax.swing.*;
 import javax.swing.text.AbstractDocument;
 
 import java.util.*;
+
+import javax.imageio.ImageIO;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
@@ -159,6 +162,22 @@ public class ReportBugBuilder extends JDialogBase{
     private ArrayList<String> fileNames = new ArrayList<String>();
     
     private String attachments;
+
+	private JTextField directory;
+	
+	private JFileChooser browser;
+
+	private JButton tempOk;
+	
+	public static File capturedImage;
+	
+	public static String capturedImageName = "";
+	
+	private JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(null, true);
+
+	private ArrayList<String> filePaths = new ArrayList<String>();
+
+	public JButton screenCap;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -171,6 +190,7 @@ public class ReportBugBuilder extends JDialogBase{
     	init();
     	bugReport.deleteOnExit();
     	console.deleteOnExit();
+    	
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -184,6 +204,10 @@ public class ReportBugBuilder extends JDialogBase{
     	userType = JOptionPane.showConfirmDialog(null,"Are you a MIPAV developer?", "Report a Bug", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
     	
     	displayReportForm(userType);
+    }
+    
+    public static void setCapturedImageName(String name){
+    	capturedImageName = name;
     }
 
     /**
@@ -228,16 +252,29 @@ public class ReportBugBuilder extends JDialogBase{
 			dispose();
 			System.gc();
 			frame.setVisible(false);
-		} else if (command.equals("Attach an Image")){
-			JOptionPane.showMessageDialog(null, "This feature is not ready yet", "Report a Bug", JOptionPane.ERROR_MESSAGE);
-			
-//			final JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(null, true);
-//			attachmentName = screenCapture.fileName + ".png";
-//			fileNames.add(attachmentName);
-//			for (int x = 0; x <fileNames.size(); x++)
-//				attachments += fileNames.get(x) + "\n";
+		} else if (command.equals("Create New Image")){
+			screenCapture.init(true);
+			tempOk = screenCapture.getOKButton();
+			tempOk.addActionListener(this);
+		} else if (event.getSource() == tempOk) {
+//			attachmentName = capturedImage.getName();
+//			capturedImageName = capturedImage.getName();
+			fileNames.add(capturedImageName);
+			filePaths.add(capturedImageName);
+			attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
+			System.out.print(capturedImageName);
+		} else if (command.equals("Browse")) {
+			browser = new JFileChooser();
+			int returnVal = browser.showOpenDialog(ReportBugBuilder.this);
+			if (returnVal == JFileChooser.APPROVE_OPTION) {
+				File attachedImage = browser.getSelectedFile();
+				fileNames.add(attachedImage.getName());
+				filePaths.add(attachedImage.getAbsolutePath());
+				attachedImages.append(attachedImage.getName() + "\n");
+			}
+//		} else if (command.equals("Attach an Image")) {
 //			attachedImages = new JTextArea(attachments);
-//			attachedImages.repaint();
+//			frame.repaint();
 		} else {
 			comboBoxActions(event);
 		}
@@ -437,7 +474,7 @@ public class ReportBugBuilder extends JDialogBase{
 			e.printStackTrace();
 		}
 		try {
-			Address to = new InternetAddress("bug@mipav.cit.nih.gov");
+			Address to = new InternetAddress("shens2@mail.nih.gov");
 			Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
 			String host = "mailfwd.nih.gov";
 			Properties properties = System.getProperties();
@@ -464,18 +501,28 @@ public class ReportBugBuilder extends JDialogBase{
 					reportSummary.setFileName(file);
 					parts.addBodyPart(reportSummary);
 					
-					BodyPart console = new MimeBodyPart();
+					reportSummary = new MimeBodyPart();
 					file = "console.txt";
 					source = new FileDataSource(file);
-					console.setDataHandler(new DataHandler(source));
-					console.setFileName(file);
-					parts.addBodyPart(console);
+					reportSummary.setDataHandler(new DataHandler(source));
+					reportSummary.setFileName(file);
+					parts.addBodyPart(reportSummary);
+					
+					for (int x = 0; x < fileNames.size(); x++) {
+						reportSummary = new MimeBodyPart();
+						file = filePaths.get(x);
+						source = new FileDataSource(file);
+						reportSummary.setDataHandler(new DataHandler(source));
+						reportSummary.setFileName(fileNames.get(x));
+						parts.addBodyPart(reportSummary);
+					}
 					
 					report.setContent(parts);
 					
 					Transport.send(report);
 					
 					JOptionPane.showMessageDialog(null, "Message sent successfully");
+					frame.dispose();
 				} catch (MessagingException e) {
 					e.printStackTrace();
 				}
@@ -518,29 +565,29 @@ public class ReportBugBuilder extends JDialogBase{
     	JComboBox bugType = ref.buildComboBox("Bug type", bugTypeOptions);
     	bugType.addActionListener(this);
     	
-    	bugzilla = new JCheckBox("Bugzilla");
-        bugzilla.setFont(MipavUtil.font12);
-        bugzilla.setForeground(Color.black);
-        bugzilla.addActionListener(this);
-        bugzilla.setActionCommand("bugzilla");
-        
-        mipavList = new JCheckBox("Mipav Listserv");
-        mipavList.setFont(MipavUtil.font12);
-        mipavList.setForeground(Color.black);
-        mipavList.addActionListener(this);
-        mipavList.setActionCommand("mipavList");
-        
-        mipavDev = new JCheckBox("Mipav Developers ListServ");
-        mipavDev.setFont(MipavUtil.font12);
-        mipavDev.setForeground(Color.black);
-        mipavDev.addActionListener(this);
-        mipavDev.setActionCommand("mipavList");
-    	
-        ButtonGroup sendMethod = new ButtonGroup();
-        
-        sendMethod.add(bugzilla);
-        sendMethod.add(mipavList);
-        sendMethod.add(mipavDev);
+//    	bugzilla = new JCheckBox("Bugzilla");
+//        bugzilla.setFont(MipavUtil.font12);
+//        bugzilla.setForeground(Color.black);
+//        bugzilla.addActionListener(this);
+//        bugzilla.setActionCommand("bugzilla");
+//        
+//        mipavList = new JCheckBox("Mipav Listserv");
+//        mipavList.setFont(MipavUtil.font12);
+//        mipavList.setForeground(Color.black);
+//        mipavList.addActionListener(this);
+//        mipavList.setActionCommand("mipavList");
+//        
+//        mipavDev = new JCheckBox("Mipav Developers ListServ");
+//        mipavDev.setFont(MipavUtil.font12);
+//        mipavDev.setForeground(Color.black);
+//        mipavDev.addActionListener(this);
+//        mipavDev.setActionCommand("mipavList");
+//    	
+//        ButtonGroup sendMethod = new ButtonGroup();
+//        
+//        sendMethod.add(bugzilla);
+//        sendMethod.add(mipavList);
+//        sendMethod.add(mipavDev);
         
         
         JLabel summaryInstructions = new JLabel("Please give a brief (one or two sentence) summary of the bug you encountered");
@@ -656,44 +703,63 @@ public class ReportBugBuilder extends JDialogBase{
     	sidePanel.add(personalInfo, BorderLayout.NORTH);
     	sidePanel.add(standardUserInput, BorderLayout.CENTER);
     	sidePanel.setBorder(buildTitledBorder("Information"));
-
-    	
-    	JComboBox severity = ref.buildComboBox("Severity", severityOptions);
-    	severity.addActionListener(this);
-    	
-    	JComboBox component = ref.buildComboBox("Component", componentOptions);
-    	component.addActionListener(this);
-    	
-    	JComboBox version = ref.buildComboBox("Version", versionOptions);
-    	version.addActionListener(this);
-    	
-    	JComboBox platform = ref.buildComboBox("Platform", platformOptions);
-    	platform.addActionListener(this);
-    	
-    	JComboBox os = ref.buildComboBox("OS", osOptions);
-    	os.addActionListener(this);
-    	
-    	JComboBox priority = ref.buildComboBox("Priority", priorityOptions);
-    	priority.addActionListener(this);
-    	
-    	JComboBox initState = ref.buildComboBox("Initial State", initStateOptions);
-    	initState.addActionListener(this);
-    	
-    	JPanel bugzillaFields = new JPanel();
-    	bugzillaFields.add(severity);
-    	bugzillaFields.add(component);
-    	bugzillaFields.add(version);
-    	bugzillaFields.add(platform);
-    	bugzillaFields.add(os);
-    	bugzillaFields.add(priority);
-    	bugzillaFields.add(initState);
+//
+//    	
+//    	JComboBox severity = ref.buildComboBox("Severity", severityOptions);
+//    	severity.addActionListener(this);
+//    	
+//    	JComboBox component = ref.buildComboBox("Component", componentOptions);
+//    	component.addActionListener(this);
+//    	
+//    	JComboBox version = ref.buildComboBox("Version", versionOptions);
+//    	version.addActionListener(this);
+//    	
+//    	JComboBox platform = ref.buildComboBox("Platform", platformOptions);
+//    	platform.addActionListener(this);
+//    	
+//    	JComboBox os = ref.buildComboBox("OS", osOptions);
+//    	os.addActionListener(this);
+//    	
+//    	JComboBox priority = ref.buildComboBox("Priority", priorityOptions);
+//    	priority.addActionListener(this);
+//    	
+//    	JComboBox initState = ref.buildComboBox("Initial State", initStateOptions);
+//    	initState.addActionListener(this);
+//    	
+//    	JPanel bugzillaFields = new JPanel();
+//    	bugzillaFields.add(severity);
+//    	bugzillaFields.add(component);
+//    	bugzillaFields.add(version);
+//    	bugzillaFields.add(platform);
+//    	bugzillaFields.add(os);
+//    	bugzillaFields.add(priority);
+//    	bugzillaFields.add(initState);
     	
     	JPanel imageCapture = new JPanel();
     	imageCapture.setLayout(new BorderLayout());
-    	JButton imageAttachment = new JButton("Attach an Image");
-    	imageAttachment.addActionListener(this);
-    	imageCapture.add(imageAttachment, BorderLayout.WEST);
-    	imageCapture.setBorder(buildTitledBorder("Images"));
+    	JButton browse = new JButton("Browse");
+    	browse.setMinimumSize(MipavUtil.defaultButtonSize);
+        browse.setPreferredSize(MipavUtil.defaultButtonSize);
+        browse.setFont(serif12B);
+    	browse.addActionListener(this);
+    	directory = new JTextField(20);
+    	screenCap = new JButton("Create New Image");
+        screenCap.setFont(serif12B);
+    	screenCap.addActionListener(this);
+    	
+    	JPanel attachmentOptions = new JPanel();
+    	
+    	JPanel attachmentButtons = new JPanel();
+    	attachmentButtons.setLayout(new BorderLayout());
+    	attachmentButtons.add(directory, BorderLayout.WEST);
+    	attachmentButtons.add(browse, BorderLayout.EAST);
+    	
+    	attachmentOptions.setLayout(new BorderLayout());
+    	attachmentOptions.add(attachmentButtons, BorderLayout.WEST);
+//    	attachmentOptions.add(screenCap, BorderLayout.EAST);
+    	imageCapture.add(attachmentOptions, BorderLayout.NORTH);
+//    	imageCapture.add(imageAttachment, BorderLayout.SOUTH);
+    	imageCapture.setBorder(buildTitledBorder("Attachments"));
 
     	attachedImages.setEditable(false);
     	attachedImages.setBackground(Color.LIGHT_GRAY);
@@ -701,7 +767,7 @@ public class ReportBugBuilder extends JDialogBase{
     	attachedImages.setWrapStyleWord(true);
         JScrollPane attachedScroll = new JScrollPane(attachedImages);
         attachedScroll.setPreferredSize(new Dimension(400,100));
-    	imageCapture.add(attachedScroll, BorderLayout.SOUTH);
+    	imageCapture.add(attachedScroll, BorderLayout.CENTER);
     	
     	OKButton = new JButton("Submit");
         OKButton.addActionListener(this);
@@ -738,4 +804,21 @@ public class ReportBugBuilder extends JDialogBase{
 		frame.pack();
 		frame.setVisible(true);
 	}
+
+	public static void screenCap(Image imagePix, String name) {
+		try {
+        	BufferedImage currImage = (BufferedImage) imagePix;
+	        capturedImageName = name;
+			capturedImage = File.createTempFile(capturedImageName, ".png");
+			ImageIO.write(currImage, "png", capturedImage);
+        } catch (IllegalArgumentException e) {
+           	MipavUtil.displayError("File name must be at least three characters long.");
+		} catch (IOException e) {
+				// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
 }
