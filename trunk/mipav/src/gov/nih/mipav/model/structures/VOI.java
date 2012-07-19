@@ -1838,12 +1838,16 @@ public class VOI extends ModelSerialCloneable {
 	}
 
 	/**
-	 * Accessor that returns the process.
+	 * Accessor that returns whether voi is included in processing.
 	 *
 	 * @return  the process
 	 */
 	public boolean getProcess() {
-		return process;
+	    boolean anyProcess = process;
+        for (int i = 0; i < curves.size(); i++) {
+            anyProcess |= (curves.elementAt(i)).getProcess();
+        }
+        return anyProcess;
 	}
 
 	/**
