@@ -948,7 +948,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		    VOIVector vec = m_kImageActive.getVOIs();
 		    VOIVector vecProcess = new VOIVector();
 		    for(int i=0; i<vec.size(); i++) {
-		        if(vec.get(i).getCurveType() == VOI.LINE) {
+		        if(vec.get(i).getCurveType() == VOI.LINE || 
+		                vec.get(i).getCurveType() == VOI.PROTRACTOR) {
 		            VOI v = vec.get(i);
 		            if(v.isActive()) {
     		            for(int j=0; j<v.getCurves().size(); j++) {
