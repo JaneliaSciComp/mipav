@@ -431,7 +431,7 @@ public class JDialogVOIStats extends JDialogBase
                 }
             }
             
-            callVOIAlgo(processList[0], AlgorithmVOIProps.PROCESS_PER_VOI);
+            callVOIAlgo(processList[0], AlgorithmVOIProps.PROCESS_PER_VOI, isRunInSeparateThread());
         } else if (source == cancelButton) {
             cancelFlag = true;
             setVisible(false);
@@ -456,7 +456,7 @@ public class JDialogVOIStats extends JDialogBase
         return v;
     }
 
-    private void callVOIAlgo(ViewVOIVector voiProcessingSet, int processingMode) {
+    private void callVOIAlgo(ViewVOIVector voiProcessingSet, int processingMode, boolean inSepThread) {
       //set min/max ranges for all VOIs that are in the process list
         for(int i=0; i<voiProcessingSet.size(); i++) {
             if (image.isColorImage()) {
@@ -548,11 +548,16 @@ public class JDialogVOIStats extends JDialogBase
         
         algoVOI.addListener(this);
         //only calculate these if appropriate box is checked for speed.
+        if(processingMode != AlgorithmVOIProps.PROCESS_PER_VOI) {
+            listPanel.setSliceCount(1);
+        } else {
+            listPanel.setSliceCount(image.getExtents()[2]);
+        }
         algoVOI.setSelectedStatistics(listPanel.getSelectedList());
         createProgressBar(subsetImage.getImageName(), algoVOI);
         
         
-        if (isRunInSeparateThread()) {
+        if (inSepThread) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
             if (algoVOI.startMethod(Thread.MIN_PRIORITY) == false) {
@@ -593,6 +598,9 @@ public class JDialogVOIStats extends JDialogBase
 
                 int numCurves = processType == AlgorithmVOIProps.PROCESS_PER_VOI ? 1 : tempVOI.getCurves().size();
                 for(int curve=0; curve<numCurves; curve++) {
+                    if(processType != AlgorithmVOIProps.PROCESS_PER_VOI && !tempVOI.getCurves().get(curve).getProcess()) {
+                        continue;
+                    }
                     
                     // Save statistics in the header only if image format is XML.
                     if (((image.getFileInfo(0).getFileFormat() == FileUtility.XML) ||
@@ -628,7 +636,7 @@ public class JDialogVOIStats extends JDialogBase
                     }
                     UI.setDataText("VOI  :     " + tempVOI.getName() + "\n");
                     if(processType != AlgorithmVOIProps.PROCESS_PER_VOI) {
-                        UI.setDataText("Contour :     "+curve+"     Slice: "+tempVOI.getCurves().get(curve).slice()+"\n");
+                        UI.setDataText("Contour :     "+tempVOI.getCurves().get(curve).getContourID()+"     Slice: "+tempVOI.getCurves().get(curve).slice()+"\n");
                     }
                     
                     
@@ -666,7 +674,7 @@ public class JDialogVOIStats extends JDialogBase
             
             processListIndex++;
             if(processListIndex < processList.length && processList[processListIndex].size() > 0) {
-                callVOIAlgo(processList[processListIndex], AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR);
+                callVOIAlgo(processList[processListIndex], AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, false);
             } else {
                 processListIndex = 0;
             }
@@ -700,10 +708,10 @@ public class JDialogVOIStats extends JDialogBase
         subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
         subsetAlgo.run();
         int processType = AlgorithmVOIProps.PROCESS_PER_VOI;
-        if(processType != 0) {
+        if(processListIndex != 0) {
             processType = AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR;
         }
-        algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR,
+        algoVOI = new AlgorithmVOIProps(subsetImage, processType,
                       excluder.getRangeFlag(), processList[processListIndex]); //TODO: Allow user to select processing method based on curves selected in processList
         
         algoVOI.addListener(this);
