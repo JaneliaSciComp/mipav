@@ -216,7 +216,7 @@ public class JDialogVOIStats extends JDialogBase
      * @param  _voi            DOCUMENT ME!
      */
     public JDialogVOIStats(VOIHandlerInterface theVoiHandler, ModelImage img, VOI _voi) {
-        super(false);
+        super(ViewUserInterface.getReference().getMainFrame(), false);
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (final FileNotFoundException error) {
@@ -394,26 +394,40 @@ public class JDialogVOIStats extends JDialogBase
             processList[0] = new ViewVOIVector(); //used to store whole VOIs
             processList[1] = new ViewVOIVector(); //used to store individual contours
             //adds any VOIs that have a component selected into the list of VOIs to be calculated
+           
             for (int i = 0; i < tPaths.length; i++) {
                 currentPath = tPaths[i];
 
                 if(currentPath.getLastPathComponent() instanceof VOIGroupNode) {
                     processList[0].add(((VOIGroupNode)currentPath.getLastPathComponent()).getVOIgroup());
                 } else if(currentPath.getLastPathComponent() instanceof VOIOrientationNode) {
-                    String name = ((VOIOrientationNode)currentPath.getLastPathComponent()).getVoiName();
-                    VOI v = new VOI((short) processList[1].size(), name);
                     Vector<VOIBase>[] sortedCurves = ((VOIOrientationNode)currentPath.getLastPathComponent()).getVOI();
-                    for(int k=0; k<sortedCurves.length; k++) {
-                        for(int m=0; m<sortedCurves[k].size(); m++) {
-                            v.importCurve(sortedCurves[k].get(m));
+                    
+                    VOI parent = null;
+                    
+                    for(Object obj : currentPath.getPath()) {
+                        if(obj instanceof VOIGroupNode) {
+                            parent = ((VOIGroupNode)obj).getVOIgroup();
                         }
                     }
-                    processList[1].add(v);
+                    
+                    if(parent == null) {
+                        MipavUtil.displayError("No matching VOI found fo selected contours");
+                        return;
+                    }
+                    
+                    VOI v = getVOIforProcessing(parent);
+
+                    for(int k=0; k<sortedCurves.length; k++) {
+                        for(int m=0; m<sortedCurves[k].size(); m++) {
+                            v.getCurves().get(sortedCurves[k].get(m).getContourID()).setProcess(true); //only set the selected contours for processing
+                        } 
+                    }
                 } else if(currentPath.getLastPathComponent() instanceof VOIContourNode) {
-                    VOIBase b = (VOIBase) ((VOIContourNode)currentPath.getLastPathComponent()).getUserObject();
-                    VOI v = new VOI((short) processList[1].size(), b.getGroup().getName());
-                    v.importCurve(b);
-                    processList[1].add(v);
+                    VOIBase b = (VOIBase) ((VOIContourNode)currentPath.getLastPathComponent()).getUserObject(); 
+                    VOI v = getVOIforProcessing(b.getGroup());
+                    
+                    v.getCurves().get(b.getContourID()).setProcess(true); //only set the selected contour for processing
                 }
             }
             
@@ -424,6 +438,24 @@ public class JDialogVOIStats extends JDialogBase
         }
     }
     
+    private VOI getVOIforProcessing(VOI parent) {
+        VOI v = null;
+        for(int j=0; j<processList[1].size(); j++) {
+            if(processList[1].get(j).getName().equals(parent.getName())) {
+                v = processList[1].get(j);
+                break;
+            }
+        }
+        
+        if(v == null) {
+            v = new VOI(parent);
+            v.setProcess(false);
+            processList[1].add(v);
+        }
+        
+        return v;
+    }
+
     private void callVOIAlgo(ViewVOIVector voiProcessingSet, int processingMode) {
       //set min/max ranges for all VOIs that are in the process list
         for(int i=0; i<voiProcessingSet.size(); i++) {
@@ -635,6 +667,8 @@ public class JDialogVOIStats extends JDialogBase
             processListIndex++;
             if(processListIndex < processList.length && processList[processListIndex].size() > 0) {
                 callVOIAlgo(processList[processListIndex], AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR);
+            } else {
+                processListIndex = 0;
             }
         }
         
@@ -665,7 +699,11 @@ public class JDialogVOIStats extends JDialogBase
         activeVolume++;
         subsetAlgo = new AlgorithmSubset(image, subsetImage, AlgorithmSubset.REMOVE_T, activeVolume); 
         subsetAlgo.run();
-        algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_VOI,
+        int processType = AlgorithmVOIProps.PROCESS_PER_VOI;
+        if(processType != 0) {
+            processType = AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR;
+        }
+        algoVOI = new AlgorithmVOIProps(subsetImage, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR,
                       excluder.getRangeFlag(), processList[processListIndex]); //TODO: Allow user to select processing method based on curves selected in processList
         
         algoVOI.addListener(this);
