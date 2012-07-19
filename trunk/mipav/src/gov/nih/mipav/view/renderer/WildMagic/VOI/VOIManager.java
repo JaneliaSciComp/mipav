@@ -969,6 +969,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		                }
 		            }
 		        }
+		    }
+		    
+		    if(vecProcess.size() > 0) {
 		        JDialogVOIStats measure = new JDialogVOIStats(this.getParent(), m_kImageActive, null);
                 measure.getListPanel().setSelectedList(true);
                 measure.callVOIAlgo(vecProcess, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, true);
