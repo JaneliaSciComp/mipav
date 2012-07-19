@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer.WildMagic.VOI;
 
+import gov.nih.mipav.model.algorithms.AlgorithmVOIProps;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
@@ -25,6 +26,7 @@ import gov.nih.mipav.view.ViewJProgressBar;
 import gov.nih.mipav.view.ViewMenuBuilder;
 import gov.nih.mipav.view.dialogs.JDialogAnnotation;
 import gov.nih.mipav.view.dialogs.JDialogVOISplitter;
+import gov.nih.mipav.view.dialogs.JDialogVOIStats;
 import gov.nih.mipav.view.*;
 
 import java.awt.BasicStroke;
@@ -944,6 +946,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		case KeyEvent.VK_RIGHT:  m_kParent.moveVOI("MoveRight", m_kDrawingContext.getZoomX()*m_kDrawingContext.getResolutionX()); return;
 		case KeyEvent.VK_M:     
 		    VOIVector vec = m_kImageActive.getVOIs();
+		    VOIVector vecProcess = new VOIVector();
 		    for(int i=0; i<vec.size(); i++) {
 		        if(vec.get(i).getCurveType() == VOI.LINE) {
 		            VOI v = vec.get(i);
@@ -955,8 +958,20 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
     		            }
 		            }
 		        } else {
-		            
+		            for(int j=0; j<vec.get(i).getCurves().size(); j++) {
+		                if(vec.get(i).getCurves().get(j).isActive()) {
+		                    if(!vecProcess.contains(vec.get(i))) {
+		                        vecProcess.add(vec.get(i));
+		                    }
+		                    vec.get(i).getCurves().get(j).setProcess(true);
+		                } else {
+		                    vec.get(i).getCurves().get(j).setProcess(false);
+		                }
+		            }
 		        }
+		        JDialogVOIStats measure = new JDialogVOIStats(this.getParent(), m_kImageActive, null);
+                measure.getListPanel().setSelectedList(true);
+                measure.callVOIAlgo(vecProcess, AlgorithmVOIProps.PROCESS_PER_SLICE_AND_CONTOUR, true);
 		    }
 		    return;
 		    

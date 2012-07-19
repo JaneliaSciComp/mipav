@@ -3481,6 +3481,15 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             initialiseDataHolders(vvv.size());
         }
     }
+    
+    /**
+     * gets the selected VOIset 
+     *
+     * @param  vvv  DOCUMENT ME!
+     */
+    public ViewVOIVector getVOIList() {
+        return selectedVOIset;
+    }
 
 
     /**

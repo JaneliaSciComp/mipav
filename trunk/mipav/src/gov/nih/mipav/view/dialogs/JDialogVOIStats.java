@@ -228,6 +228,11 @@ public class JDialogVOIStats extends JDialogBase
         voi = _voi;
         image = img;
         voiHandler = theVoiHandler;
+        
+        processList = new ViewVOIVector[2];
+        processList[0] = new ViewVOIVector(); //used to store whole VOIs
+        processList[1] = new ViewVOIVector(); //used to store individual contours
+        //adds any VOIs that have a component selected into the list of VOIs to be calculated
 
         init();
         updateVOIPanel(voi,image);
@@ -456,7 +461,11 @@ public class JDialogVOIStats extends JDialogBase
         return v;
     }
 
-    private void callVOIAlgo(ViewVOIVector voiProcessingSet, int processingMode, boolean inSepThread) {
+    public JPanelStatisticsList getListPanel() {
+        return listPanel;
+    }
+
+    public void callVOIAlgo(ViewVOIVector voiProcessingSet, int processingMode, boolean inSepThread) {
       //set min/max ranges for all VOIs that are in the process list
         for(int i=0; i<voiProcessingSet.size(); i++) {
             if (image.isColorImage()) {
@@ -544,7 +553,7 @@ public class JDialogVOIStats extends JDialogBase
             subsetAlgo.run();
         }
         algoVOI = new AlgorithmVOIProps(subsetImage, processingMode,
-                      excluder.getRangeFlag(), voiProcessingSet); //TODO: Allow user to select processing method based on curves selected in processList
+                      excluder.getRangeFlag(), voiProcessingSet); 
         
         algoVOI.addListener(this);
         //only calculate these if appropriate box is checked for speed.
@@ -584,8 +593,8 @@ public class JDialogVOIStats extends JDialogBase
             String[] statLabels = listPanel.getNameList();
             int processType = ((AlgorithmVOIProps)algorithm).getProcessType();
             
-            for(int i=0; i<processList[processListIndex].size(); i++) { //all VOIs that are selected for processing
-                VOI tempVOI = processList[processListIndex].get(i);
+            for(int i=0; i<((AlgorithmVOIProps)algorithm).getVOIList().size(); i++) { //all VOIs that are selected for processing
+                VOI tempVOI = ((AlgorithmVOIProps)algorithm).getVOIList().get(i);
                 properties = algoVOI.getVOIProperties(tempVOI);
                 String pSetDesc = tempVOI.getName();
                 String name, valueType, specificName;
