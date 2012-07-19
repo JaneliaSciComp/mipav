@@ -98,7 +98,7 @@ public class VOIOrientationNode extends DefaultMutableTreeNode {
      * 
      * @return
      */
-    public String getVoiName() {
+    public String getVOIname() {
         return voiName;
     }
 
