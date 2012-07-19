@@ -122,6 +122,10 @@ public abstract class VOIBase extends Vector<Vector3f> {
     /** Reference to the containing VOI object. */
     protected VOI voiGroup = null;
 
+    /** If true this flag indicates that the shape should be included (applied) when processing the image. 
+     * It is possible that an individual contour may not be set for processing, while a VOI may be processed. */
+    protected boolean process = true;
+    
     /**
      * If doGeometricCenterLabel = true and if active == false and if closed =
      * true, execute drawGeometricCenterLabel when in drawSelf
@@ -218,6 +222,7 @@ public abstract class VOIBase extends Vector<Vector3f> {
      */
     public VOIBase() {
         super(20, 10);
+        process = true;
     }
 
 
@@ -1613,6 +1618,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
     }
     
     /**
+     * Accessor that returns the process.
+     *
+     * @return  the process
+     */
+    public boolean getProcess() {
+        return process;
+    }
+
+
+    /**
      * Returns the last selected point.
      * @return
      */
@@ -2013,6 +2028,16 @@ public abstract class VOIBase extends Vector<Vector3f> {
     {
         m_iPlane = iPlane;
         m_bUpdatePlane = false;
+    }
+    
+    /**
+     * Sets whether the shape is included in processing.
+     *
+     * @param  flag  the process flag
+     */
+    public void setProcess(boolean process) {
+        this.process = process; 
+        voiGroup.notifyParentVOIProcess(process);
     }
 
     /**

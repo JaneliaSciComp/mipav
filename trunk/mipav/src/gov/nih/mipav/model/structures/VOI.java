@@ -432,7 +432,7 @@ public class VOI extends ModelSerialCloneable {
 	private int polarity = ADDITIVE;
 
 	/** If true this flag indicates that the VOI should be included (applied) when processing the image. */
-	private boolean process;
+	private boolean process = true;
 
 	/** Unique ID for saving & retrieving. */
 	private int UID;
@@ -2718,6 +2718,24 @@ public class VOI extends ModelSerialCloneable {
 	 */
 	public void setProcess(boolean flag) {
 		this.process = flag;
+		for(int i=0; i<curves.size(); i++) {
+		    curves.get(i).setProcess(flag);
+		}
+	}
+	
+	/**
+     * Allows VOIBase's to set their parent's process flag without affecting other contours.  If not all
+     * contours are in the same state, this will not be set.
+     *
+     * @param  flag  the process flag
+     */
+	void notifyParentVOIProcess(boolean flag) {
+	    for(int i=0; i<curves.size(); i++) {
+            if(flag != curves.get(i).getProcess()) {
+                return; //only set if all contours are in same state
+            }
+        }
+	    this.process = flag;
 	}
 
 	/**
