@@ -188,6 +188,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     private JTextField minThresholdMaxProjText;
     /** MIP algorithm for later processing */
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
+    private JTextField slidingWindowText;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -627,10 +628,10 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         maxProjPanel.setForeground(Color.black);
         maxProjPanel.setBorder(MipavUtil.buildTitledBorder("Maximum projection options"));
         gbc.gridy = 0; 
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 1;
         doShowMaxProjBox = gui.buildCheckBox("Show max projection images", false);
         maxProjPanel.add(doShowMaxProjBox.getParent(), gbc);
-        gbc.gridx+=2;
+        gbc.gridx++;
         
         doSaveMaxProjBox = gui.buildCheckBox("Save max projection images", false);
         doSaveMaxProjBox.addActionListener(folderSave);
@@ -642,6 +643,9 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         
         minThresholdMaxProjText = gui.buildDecimalField("Min threshold", 0.0);
         maxProjPanel.add(minThresholdMaxProjText.getParent(), gbc);
+        
+        slidingWindowText = gui.buildIntegerField("Sliding window", 1);
+        maxProjPanel.add(slidingWindowText.getParent(), gbc);
         
         gbc.gridx++;
         doXMaxBox = gui.buildCheckBox("Do max X", true);
@@ -1110,9 +1114,11 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         maxAlgo = new AlgorithmMaximumIntensityProjection[numDim];
         
         float minThreshold = 0.0f;
+        int slidingWindow = 1;
         
         try {
             minThreshold = Float.valueOf(minThresholdMaxProjText.getText());
+            slidingWindow = Integer.valueOf(slidingWindowText.getText());
         } catch(NumberFormatException nfe) {
             MipavUtil.displayError("Bad algorithm input for maximum intensity projection.");
             return false;
@@ -1124,17 +1130,17 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         
         int index = 0;
         if(doXMaxBox.isSelected()) {
-            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, 0, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.X_PROJECTION);
+            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, slidingWindow, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.X_PROJECTION);
             index++;
         }
         
         if(doYMaxBox.isSelected()) {
-            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, 0, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Y_PROJECTION);
+            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, slidingWindow, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Y_PROJECTION);
             index++;
         }
         
         if(doZMaxBox.isSelected()) {
-            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, 0, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
+            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, slidingWindow, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
         }
         
         return true;

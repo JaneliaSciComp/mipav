@@ -717,6 +717,9 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
             
             if(showAriMean || saveAriMean) {
                 calcAriMean();
+                if(saveMaxProj || showMaxProj) {
+                    doMaxProj(subAriImage, showAriMean, saveAriMean, ariMeanDir, options, io);
+                }
             }       
                 
             if(saveAriMean) {
@@ -736,6 +739,10 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
             
             if(showGeoMean || saveGeoMean) {
                 calcGeoMean();
+                
+                if(saveMaxProj || showMaxProj) {
+                    doMaxProj(subGeoImage, showGeoMean, saveGeoMean, geoMeanDir, options, io);
+                }
             }
             
             if(saveGeoMean) {
@@ -764,6 +771,29 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
             return true;
         }
         
+        private void doMaxProj(ModelImage image, boolean parentShow, boolean parentSave, File parentDir, FileWriteOptions options, FileIO io) {
+            if(showMaxProj || saveMaxProj) {
+                for(int i=0; i<maxAlgo.length; i++) {
+                    maxAlgo[i].setSrcImage(image);
+                    maxAlgo[i].setStartSlice(0);
+                    maxAlgo[i].setStopSlice(image.getExtents()[2]-1);
+                    maxAlgo[i].setRunningInSeparateThread(false);
+                    maxAlgo[i].run();
+                    if(parentShow && showMaxProj) {
+                        resultImageList.add(maxAlgo[i].getDestImage());
+                    }
+                    
+                    if(parentSave && saveMaxProj) {
+                        options.setFileDirectory(parentDir.getAbsolutePath()+File.separator);
+                        options.setFileName(maxAlgo[i].getDestImage().getImageFileName());
+                        options.setBeginSlice(0);
+                        options.setEndSlice(maxAlgo[i].getDestImage().getExtents()[2]-1);
+                        io.writeImage(maxAlgo[i].getDestImage(), options, false);
+                    }
+                }
+            }
+        }
+
         
 
         private void transform() {
