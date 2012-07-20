@@ -59,7 +59,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
     /** Source image. */
     protected ModelImage srcImage;
-
+    
     /** Flag indicating whether or not the thread is stopped. */
     protected volatile boolean threadStopped = false;
 
@@ -483,6 +483,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     public int[] getProgressValues() {
         return new int[] { minProgressValue, maxProgressValue };
     }
+    
+    /**
+     * Gets the current source image for the algorithm
+     * 
+     * @return the source image
+     */
+    public ModelImage getSrcImage() {
+        return srcImage;
+    }
 
     /**
      * Returns flag that indicates that the algorithm has been sucessfully completed.
@@ -659,6 +668,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void setRunningInSeparateThread(boolean separateThread) {
         this.runningInSeparateThread = separateThread;
+    }
+    
+    /**
+     * Sets the source image of the algorithm
+     * 
+     * @param srcImage the source image
+     */
+    public void setSrcImage(ModelImage srcImage) {
+        this.srcImage = srcImage;
     }
 
     /**
