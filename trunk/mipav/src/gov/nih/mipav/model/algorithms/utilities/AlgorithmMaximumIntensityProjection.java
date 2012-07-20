@@ -719,6 +719,64 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		return resultImages;
 
 	}
+
+    /**
+     * @param startSlice the startSlice to set
+     */
+    public void setStartSlice(int startSlice) {
+        this.startSlice = startSlice;
+    }
+
+    /**
+     * @param stopSlice the stopSlice to set
+     */
+    public void setStopSlice(int stopSlice) {
+        this.stopSlice = stopSlice;
+    }
+
+    /**
+     * @param minIntensity the minIntensity to set
+     */
+    public void setMinIntensity(double[] minIntensity) {
+        this.minIntensity = minIntensity;
+    }
+
+    /**
+     * @param maxIntensity the maxIntensity to set
+     */
+    public void setMaxIntensity(double[] maxIntensity) {
+        this.maxIntensity = maxIntensity;
+    }
+
+    /**
+     * @param computeMaximum the computeMaximum to set
+     */
+    public void setComputeMaximum(boolean computeMaximum) {
+        this.computeMaximum = computeMaximum;
+    }
+
+    /**
+     * @param computeMinimum the computeMinimum to set
+     */
+    public void setComputeMinimum(boolean computeMinimum) {
+        this.computeMinimum = computeMinimum;
+    }
+
+    /**
+     * @param projectionDirection the projectionDirection to set
+     */
+    public void setProjectionDirection(int projectionDirection) {
+        this.projectionDirection = projectionDirection;
+    }
+
+    /* (non-Javadoc)
+     * @see gov.nih.mipav.model.algorithms.AlgorithmBase#setSrcImage(gov.nih.mipav.model.structures.ModelImage)
+     */
+    @Override
+    public void setSrcImage(ModelImage srcImage) {
+        super.setSrcImage(srcImage);
+        imResolutions = srcImage.getResolutions(0);
+    }
 }
 
 
