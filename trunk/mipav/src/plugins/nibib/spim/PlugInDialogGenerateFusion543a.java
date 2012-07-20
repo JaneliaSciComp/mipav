@@ -24,6 +24,7 @@ This software may NOT be used for diagnostic purposes.
 ******************************************************************/
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
@@ -173,6 +174,20 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     private double baseAriWeight = 1, transformAriWeight = 1, baseGeoWeight = 1, transformGeoWeight = 1;
     private JTextField rangeFusionText;
     private JTable fusionConfirmTable;
+    /** Whether to show/save the maximum intensity projections. */
+    private boolean showMaxProj, saveMaxProj;
+    /** Location of max intensity projection save directory */
+    private File maxProjDir;
+    private JCheckBox doShowMaxProjBox;
+    private JCheckBox doSaveMaxProjBox;
+    private JTextField saveMaxProjFolderText;
+    private String initMaxProjLoc;
+    /** Checkboxes for computing x, y, and z max projections */
+    private JCheckBox doXMaxBox, doYMaxBox, doZMaxBox;
+    /** Max projection lower intensity threshold text field */
+    private JTextField minThresholdMaxProjText;
+    /** MIP algorithm for later processing */
+    private AlgorithmMaximumIntensityProjection[] maxAlgo;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -257,14 +272,15 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion543a(doShowPreFusion, doInterImages, showGeoMean, showAriMean, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion543a(doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
-                                                                                saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
+                                                                                saveMaxProj, maxProjDir, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
-                                                                                baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight);
+                                                                                baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
+                                                                                maxAlgo);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
@@ -302,8 +318,8 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
      */
     protected void setGUIFromParams() {
 
-    	showAriMean = scriptParameters.getParams().getBoolean("do_arithmetic");
-    	showGeoMean = scriptParameters.getParams().getBoolean("do_geometric");
+    	showAriMean = scriptParameters.getParams().getBoolean("show_arithmetic");
+    	showGeoMean = scriptParameters.getParams().getBoolean("show_geometric");
     	doInterImages = scriptParameters.getParams().getBoolean("do_interImages");
     	doShowPreFusion = scriptParameters.getParams().getBoolean("do_subsample");
     	doThreshold = scriptParameters.getParams().getBoolean("do_threshold");
@@ -323,8 +339,8 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
      */
     protected void storeParamsFromGUI() throws ParserException {
    
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_arithmetic", showAriMean));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_geometric", showGeoMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("show_arithmetic", showAriMean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("show_geometric", showGeoMean));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_interImages", doInterImages));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doShowPreFusion));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", doThreshold));
@@ -544,126 +560,24 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         JPanel outputPanel = new JPanel(new GridBagLayout());
         outputPanel.setForeground(Color.black);
         outputPanel.setBorder(MipavUtil.buildTitledBorder("Output options"));
+
+        JPanel prefusionPanel = buildPrefusionPanel(gui, folderSave);
         
+        JPanel arithmeticPanel = buildArithmeticPanel(gui, folderSave);
         
-        JPanel prefusionPanel = new JPanel(new GridBagLayout());
-        prefusionPanel.setForeground(Color.black);
-        prefusionPanel.setBorder(MipavUtil.buildTitledBorder("Prefusion options"));
-        gbc.gridy = 0; 
-        doShowPrefusionBox = gui.buildCheckBox("Show pre-fusion images", false);
-        prefusionPanel.add(doShowPrefusionBox.getParent(), gbc);
-        gbc.gridx++;
-        
-        doSavePrefusionBox = gui.buildCheckBox("Save pre-fusion images", false);
-        doSavePrefusionBox.addActionListener(folderSave);
-        prefusionPanel.add(doSavePrefusionBox.getParent(), gbc);
-        gbc.gridwidth = 2;
-        gbc.gridy++;
-        gbc.gridx = 0;
-        
-        savePrefusionBaseFolderText = gui.buildFileField("Base image location:", initBasePrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        prefusionPanel.add(savePrefusionBaseFolderText.getParent(), gbc);
-        gbc.gridy++;  
-        savePrefusionBaseFolderText.getParent().setVisible(false);
-        
-        savePrefusionTransformFolderText = gui.buildFileField("Transformed image location:", initTransformPrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        prefusionPanel.add(savePrefusionTransformFolderText.getParent(), gbc);
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        savePrefusionTransformFolderText.getParent().setVisible(false);
-        
-        JPanel arithmeticPanel = new JPanel(new GridBagLayout());
-        arithmeticPanel.setForeground(Color.black);
-        arithmeticPanel.setBorder(MipavUtil.buildTitledBorder("Arithmetic options"));
-        arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
-        arithmeticPanel.add(arithmeticMeanShowBox.getParent(), gbc);
-        gbc.gridx++;
-        
-        arithmeticMeanSaveBox = gui.buildCheckBox("Save arithmetic mean", false);
-        arithmeticPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
-        gbc.gridy++;
-        gbc.gridwidth = 2;
-        gbc.gridx = 0;
-        final JPanel ariWeightPanel = new JPanel(new GridBagLayout());
-        ariWeightPanel.setForeground(Color.black);
-        flow = new FlowLayout(FlowLayout.LEFT);
-        ariWeightPanel.setLayout(flow);
-        
-        transformAriWeightText = gui.buildDecimalField("Transformed image arithmetic weight: ", 1.0);
-        ariWeightPanel.add(transformAriWeightText.getParent(), gbc);
-        
-        baseAriWeightText = gui.buildDecimalField("Base image arithmetic weight: ", 1.0);
-        ariWeightPanel.add(baseAriWeightText.getParent(), gbc);
-        
-        arithmeticMeanShowBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent arg0) {
-                ariWeightPanel.setVisible(arithmeticMeanSaveBox.isSelected() || arithmeticMeanShowBox.isSelected());
-            }
-        });
-        
-        arithmeticPanel.add(ariWeightPanel, gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
-        
-        arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location: ", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        arithmeticPanel.add(arithmeticMeanFolderText.getParent(), gbc);
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        arithmeticMeanFolderText.getParent().setVisible(false);
-        
-        arithmeticMeanSaveBox.addActionListener(folderSave);
-        
-        JPanel geometricPanel = new JPanel(new GridBagLayout());
-        geometricPanel.setForeground(Color.black);
-        geometricPanel.setBorder(MipavUtil.buildTitledBorder("Geometric options"));
-        geometricMeanShowBox = gui.buildCheckBox("Show geometric mean", false);
-        geometricPanel.add(geometricMeanShowBox.getParent(), gbc);
-        gbc.gridx++;
-        
-        geometricMeanSaveBox = gui.buildCheckBox("Save geometric mean", false);
-        geometricPanel.add(geometricMeanSaveBox.getParent(), gbc);
-        gbc.gridy++;
-        gbc.gridwidth = 2;
-        gbc.gridx = 0;
-        final JPanel geoWeightPanel = new JPanel(new GridBagLayout());
-        geoWeightPanel.setForeground(Color.black);
-        flow = new FlowLayout(FlowLayout.LEFT);
-        geoWeightPanel.setLayout(flow);
-        
-        transformGeoWeightText = gui.buildDecimalField("Transformed image geometric weight: ", 1.0);
-        geoWeightPanel.add(transformGeoWeightText.getParent(), gbc);
-        
-        baseGeoWeightText = gui.buildDecimalField("Base image geometric weight: ", 1.0);
-        geoWeightPanel.add(baseGeoWeightText.getParent(), gbc);
-        
-        geometricMeanShowBox.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                geoWeightPanel.setVisible(geometricMeanSaveBox.isSelected() || geometricMeanShowBox.isSelected());
-            }
-        });
-        geoWeightPanel.setVisible(false);
-        
-        geometricPanel.add(geoWeightPanel, gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
-        gbc.gridwidth = 2;
-        
-        geometricMeanFolderText = gui.buildFileField("Geometric mean folder location: ", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
-        geometricPanel.add(geometricMeanFolderText.getParent(), gbc);
-        gbc.gridwidth = 1;
-        gbc.gridy++;
-        geometricMeanFolderText.getParent().setVisible(false);
-        
-        geometricMeanSaveBox.addActionListener(folderSave);
-        
+        JPanel geometricPanel = buildGeometricPanel(gui, folderSave);
+
+        JPanel maxProjPanel = buildMaxProjPanel(gui, folderSave);
         
         gbc.gridy = 0;
+        gbc.gridwidth = 1;
         outputPanel.add(prefusionPanel, gbc);
         gbc.gridy++;
         outputPanel.add(arithmeticPanel, gbc);
         gbc.gridy++;
         outputPanel.add(geometricPanel, gbc);
+        gbc.gridy++;
+        outputPanel.add(maxProjPanel, gbc);
         gbc.gridy++;
         
         interImagesBox = gui.buildCheckBox("Show intermediate images", false);
@@ -707,6 +621,173 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     } // end init()
     
     
+    private JPanel buildMaxProjPanel(GuiBuilder gui, ActionListener folderSave) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel maxProjPanel = new JPanel(new GridBagLayout());
+        maxProjPanel.setForeground(Color.black);
+        maxProjPanel.setBorder(MipavUtil.buildTitledBorder("Maximum projection options"));
+        gbc.gridy = 0; 
+        gbc.gridwidth = 2;
+        doShowMaxProjBox = gui.buildCheckBox("Show max projection images", false);
+        maxProjPanel.add(doShowMaxProjBox.getParent(), gbc);
+        gbc.gridx+=2;
+        
+        doSaveMaxProjBox = gui.buildCheckBox("Save max projection images", false);
+        doSaveMaxProjBox.addActionListener(folderSave);
+        maxProjPanel.add(doSaveMaxProjBox.getParent(), gbc);
+             
+        gbc.gridx = 0;
+        gbc.gridwidth = 1;
+        gbc.gridy++;
+        
+        minThresholdMaxProjText = gui.buildDecimalField("Min threshold", 0.0);
+        maxProjPanel.add(minThresholdMaxProjText.getParent(), gbc);
+        
+        gbc.gridx++;
+        doXMaxBox = gui.buildCheckBox("Do max X", true);
+        maxProjPanel.add(doXMaxBox.getParent(), gbc);
+        
+        gbc.gridx++;
+        doYMaxBox = gui.buildCheckBox("Do max Y", true);
+        maxProjPanel.add(doYMaxBox.getParent(), gbc);
+        
+        gbc.gridx++;
+        doZMaxBox = gui.buildCheckBox("Do max Z", true);
+        maxProjPanel.add(doZMaxBox.getParent(), gbc);
+        
+        gbc.gridwidth = 4;
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+//        saveMaxProjFolderText = gui.buildFileField("Maximum projection image location:", initMaxProjLoc, false, JFileChooser.DIRECTORIES_ONLY);
+//        maxProjPanel.add(saveMaxProjFolderText.getParent(), gbc);
+//        gbc.gridy++;  
+//        saveMaxProjFolderText.getParent().setVisible(false);
+        
+        return maxProjPanel;
+    }
+
+    private JPanel buildPrefusionPanel(GuiBuilder gui, ActionListener folderSave) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel prefusionPanel = new JPanel(new GridBagLayout());
+        prefusionPanel.setForeground(Color.black);
+        prefusionPanel.setBorder(MipavUtil.buildTitledBorder("Prefusion options"));
+        gbc.gridy = 0; 
+        doShowPrefusionBox = gui.buildCheckBox("Show pre-fusion images", false);
+        prefusionPanel.add(doShowPrefusionBox.getParent(), gbc);
+        gbc.gridx++;
+        
+        doSavePrefusionBox = gui.buildCheckBox("Save pre-fusion images", false);
+        doSavePrefusionBox.addActionListener(folderSave);
+        prefusionPanel.add(doSavePrefusionBox.getParent(), gbc);
+        gbc.gridwidth = 2;
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
+        savePrefusionBaseFolderText = gui.buildFileField("Base image location:", initBasePrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        prefusionPanel.add(savePrefusionBaseFolderText.getParent(), gbc);
+        gbc.gridy++;  
+        savePrefusionBaseFolderText.getParent().setVisible(false);
+        
+        savePrefusionTransformFolderText = gui.buildFileField("Transformed image location:", initTransformPrefusionLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        prefusionPanel.add(savePrefusionTransformFolderText.getParent(), gbc);
+        savePrefusionTransformFolderText.getParent().setVisible(false);
+        
+        return prefusionPanel;
+    }
+
+    private JPanel buildArithmeticPanel(GuiBuilder gui, ActionListener folderSave) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel arithmeticPanel = new JPanel(new GridBagLayout());
+        arithmeticPanel.setForeground(Color.black);
+        arithmeticPanel.setBorder(MipavUtil.buildTitledBorder("Arithmetic options"));
+        arithmeticMeanShowBox = gui.buildCheckBox("Show arithmetic mean", true);
+        arithmeticPanel.add(arithmeticMeanShowBox.getParent(), gbc);
+        gbc.gridx++;
+        
+        arithmeticMeanSaveBox = gui.buildCheckBox("Save arithmetic mean", false);
+        arithmeticPanel.add(arithmeticMeanSaveBox.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        final JPanel ariWeightPanel = new JPanel(new GridBagLayout());
+        ariWeightPanel.setForeground(Color.black);
+        FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
+        ariWeightPanel.setLayout(flow);
+        
+        transformAriWeightText = gui.buildDecimalField("Transformed image arithmetic weight: ", 1.0);
+        ariWeightPanel.add(transformAriWeightText.getParent(), gbc);
+        
+        baseAriWeightText = gui.buildDecimalField("Base image arithmetic weight: ", 1.0);
+        ariWeightPanel.add(baseAriWeightText.getParent(), gbc);
+        
+        arithmeticMeanShowBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+                ariWeightPanel.setVisible(arithmeticMeanSaveBox.isSelected() || arithmeticMeanShowBox.isSelected());
+            }
+        });
+        
+        arithmeticPanel.add(ariWeightPanel, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        
+        arithmeticMeanFolderText = gui.buildFileField("Arithmetic mean folder location: ", initAriLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        arithmeticPanel.add(arithmeticMeanFolderText.getParent(), gbc);
+        arithmeticMeanFolderText.getParent().setVisible(false);
+        
+        arithmeticMeanSaveBox.addActionListener(folderSave);
+        
+        return arithmeticPanel;
+    }
+
+    private JPanel buildGeometricPanel(GuiBuilder gui, ActionListener folderSave) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        JPanel geometricPanel = new JPanel(new GridBagLayout());
+        geometricPanel.setForeground(Color.black);
+        geometricPanel.setBorder(MipavUtil.buildTitledBorder("Geometric options"));
+        geometricMeanShowBox = gui.buildCheckBox("Show geometric mean", false);
+        geometricPanel.add(geometricMeanShowBox.getParent(), gbc);
+        gbc.gridx++;
+        
+        geometricMeanSaveBox = gui.buildCheckBox("Save geometric mean", false);
+        geometricPanel.add(geometricMeanSaveBox.getParent(), gbc);
+        gbc.gridy++;
+        gbc.gridwidth = 2;
+        gbc.gridx = 0;
+        final JPanel geoWeightPanel = new JPanel(new GridBagLayout());
+        geoWeightPanel.setForeground(Color.black);
+        FlowLayout flow = new FlowLayout(FlowLayout.LEFT);
+        geoWeightPanel.setLayout(flow);
+        
+        transformGeoWeightText = gui.buildDecimalField("Transformed image geometric weight: ", 1.0);
+        geoWeightPanel.add(transformGeoWeightText.getParent(), gbc);
+        
+        baseGeoWeightText = gui.buildDecimalField("Base image geometric weight: ", 1.0);
+        geoWeightPanel.add(baseGeoWeightText.getParent(), gbc);
+        
+        geometricMeanShowBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                geoWeightPanel.setVisible(geometricMeanSaveBox.isSelected() || geometricMeanShowBox.isSelected());
+            }
+        });
+        geoWeightPanel.setVisible(false);
+        
+        geometricPanel.add(geoWeightPanel, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        
+        geometricMeanFolderText = gui.buildFileField("Geometric mean folder location: ", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
+        geometricPanel.add(geometricMeanFolderText.getParent(), gbc);
+        geometricMeanFolderText.getParent().setVisible(false);
+        
+        geometricMeanSaveBox.addActionListener(folderSave);
+        
+        return geometricPanel;
+    }
+
+
     private class FolderSaveActionListener implements ActionListener {
         
         public void actionPerformed(ActionEvent e) {
@@ -719,6 +800,8 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
             
             savePrefusionTransformFolderText.getParent().setVisible(doSavePrefusionBox.isSelected());
             savePrefusionBaseFolderText.getParent().setVisible(doSavePrefusionBox.isSelected());
+            
+//            saveMaxProjFolderText.getParent().setVisible(doSaveMaxProjBox.isSelected() || doShowMaxProjBox.isSelected());
             
             if(transformFileLocText.getText() != null && 
                     transformFileLocText.getText().length() > 0) {
@@ -752,6 +835,12 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
                             }
                         }
                     }
+                    
+//                    if(saveMaxProjFolderText.isVisible()) {
+//                        if(saveMaxProjFolderText.getText().equals(initMaxProjLoc)) {
+//                            saveMaxProjFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "MaxProj" + File.separator);
+//                        }
+//                    }
                     
                 } catch(Exception e1) {
                     e1.printStackTrace();
@@ -996,10 +1085,62 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
 	        transformImageAr = transformImageArRevised;
 	    }
 	    
+	    if(showMaxProj || saveMaxProj) {
+	        setMaxProjVariables();
+	    }
+	    
 		return true;
 	} //end setVariables()
 
-	private void doDeleteRows() {
+	private boolean setMaxProjVariables() {
+	    
+	    int numDim = 0;
+        if(doXMaxBox.isSelected()) {
+            numDim++;
+        }
+        
+        if(doYMaxBox.isSelected()) {
+            numDim++;
+        }
+        
+        if(doZMaxBox.isSelected()) {
+            numDim++;
+        }
+        
+        maxAlgo = new AlgorithmMaximumIntensityProjection[numDim];
+        
+        float minThreshold = 0.0f;
+        
+        try {
+            minThreshold = Float.valueOf(minThresholdMaxProjText.getText());
+        } catch(NumberFormatException nfe) {
+            MipavUtil.displayError("Bad algorithm input for maximum intensity projection.");
+            return false;
+        }
+        
+//        if((maxProjDir = createDirectory(saveMaxProjFolderText)) == null) {
+//            return false;
+//        }
+        
+        int index = 0;
+        if(doXMaxBox.isSelected()) {
+            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, 0, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.X_PROJECTION);
+            index++;
+        }
+        
+        if(doYMaxBox.isSelected()) {
+            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, 0, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Y_PROJECTION);
+            index++;
+        }
+        
+        if(doZMaxBox.isSelected()) {
+            maxAlgo[index] = new AlgorithmMaximumIntensityProjection(null, 0, 0, 0, minThreshold, 0, true, false, AlgorithmMaximumIntensityProjection.Z_PROJECTION);
+        }
+        
+        return true;
+    }
+
+    private void doDeleteRows() {
         int[] rows = fusionConfirmTable.getSelectedRows();
         for(int i=rows.length-1; i>=0; i--) {
             ((DefaultTableModel)fusionConfirmTable.getModel()).removeRow(rows[i]);
