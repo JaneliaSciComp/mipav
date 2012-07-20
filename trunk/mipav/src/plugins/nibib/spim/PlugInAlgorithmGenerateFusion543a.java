@@ -43,6 +43,7 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath;
+import gov.nih.mipav.model.algorithms.utilities.AlgorithmMaximumIntensityProjection;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageMath.Operator;
 import gov.nih.mipav.model.file.FileIO;
@@ -120,6 +121,12 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
     private double baseAriWeight, transformAriWeight;
     private double baseGeoWeight;
     private double transformGeoWeight;
+    /** Whether maximum projections are shown and saved */
+    private boolean showMaxProj, saveMaxProj;
+    /** Directory for max projection files */
+    private File maxProjDir;
+    /** Optional MIP algorithm */
+    private AlgorithmMaximumIntensityProjection[] maxAlgo;
 
     /**
      * Constructor.
@@ -138,6 +145,7 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
      * @param resY 
      * @param resX 
      * @param doThreshold 
+     * @param doThreshold 
      * @param mtxFileLoc 
      * @param zMovement 
      * @param yMovement 
@@ -154,18 +162,20 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
      * @param baseAriWeight 
      * @param transformGeoWeight 
      * @param baseGeoWeight 
+     * @param maxAlgo can be null if no MIP is supposed to take place
      */
-    public PlugInAlgorithmGenerateFusion543a(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean doThreshold, 
-                                                    double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
+    public PlugInAlgorithmGenerateFusion543a(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
+                                                    boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
-                                                    boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
+                                                    boolean saveMaxProj, File maxProjDir, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
-                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight) {
+                                                    double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
         this.doInterImages = doInterImages;
         this.showGeoMean = doGeoMean;
+        this.showMaxProj = showMaxProj;
         this.doThreshold = doThreshold;
         
         this.resX = resX;
@@ -200,6 +210,9 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
         this.geoMeanDir = geoMeanDir;
         this.saveAriMean = saveAriMean;
         this.ariMeanDir = ariMeanDir;
+        this.saveMaxProj = saveMaxProj;
+        this.maxProjDir = maxProjDir;
+        
         
         this.savePrefusion = savePrefusion;
         this.prefusionBaseDir = prefusionBaseDir;
@@ -210,6 +223,8 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
         
         this.baseGeoWeight = baseGeoWeight;
         this.transformGeoWeight = transformGeoWeight;
+        
+        this.maxAlgo = maxAlgo;
     }
         
     //  ~ Methods --------------------------------------------------------------------------------------------------------
