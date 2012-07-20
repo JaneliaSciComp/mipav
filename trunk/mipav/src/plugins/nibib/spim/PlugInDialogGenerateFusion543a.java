@@ -571,7 +571,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         JPanel maxProjPanel = buildMaxProjPanel(gui, folderSave);
         
         gbc.gridy = 0;
-        gbc.gridwidth = 1;
+        //gbc.gridwidth = 1;
         outputPanel.add(prefusionPanel, gbc);
         gbc.gridy++;
         outputPanel.add(arithmeticPanel, gbc);
@@ -644,10 +644,14 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         minThresholdMaxProjText = gui.buildDecimalField("Min threshold", 0.0);
         maxProjPanel.add(minThresholdMaxProjText.getParent(), gbc);
         
+        gbc.gridx++;
+        gbc.gridwidth = 2;
         slidingWindowText = gui.buildIntegerField("Sliding window", 1);
         maxProjPanel.add(slidingWindowText.getParent(), gbc);
         
-        gbc.gridx++;
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.gridwidth = 1;
         doXMaxBox = gui.buildCheckBox("Do max X", true);
         maxProjPanel.add(doXMaxBox.getParent(), gbc);
         
