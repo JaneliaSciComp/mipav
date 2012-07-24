@@ -185,6 +185,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     /** MIP algorithm for later processing */
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
     private JTextField slidingWindowText;
+    private JCheckBox doSlideWindowBox;
     
   //~ Constructors ---------------------------------------------------------------------------------------------------
     
@@ -646,7 +647,11 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         doSaveMaxProjBox = gui.buildCheckBox("Save max projection images", false);
         doSaveMaxProjBox.addActionListener(folderSave);
         maxProjPanel.add(doSaveMaxProjBox.getParent(), gbc);
-             
+        
+        gbc.gridx++; 
+        doSlideWindowBox = gui.buildCheckBox("Do sliding window", false);
+        maxProjPanel.add(doSlideWindowBox.getParent(), gbc);
+        
         gbc.gridx = 0;
         gbc.gridwidth = 1;
         gbc.gridy++;
@@ -654,10 +659,18 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         minThresholdMaxProjText = gui.buildDecimalField("Min threshold", 0.0);
         maxProjPanel.add(minThresholdMaxProjText.getParent(), gbc);
         
-        gbc.gridx++;
-        gbc.gridwidth = 2;
+        gbc.gridx+=2;
+        gbc.gridwidth = 1;
         slidingWindowText = gui.buildIntegerField("Sliding window", 1);
+        slidingWindowText.setEnabled(false);
         maxProjPanel.add(slidingWindowText.getParent(), gbc);
+        
+        doSlideWindowBox.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                slidingWindowText.setEnabled(doSlideWindowBox.isSelected());
+            }
+        });
+        
         
         gbc.gridx = 0;
         gbc.gridy++;
@@ -1134,7 +1147,11 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         
         try {
             minThreshold = Float.valueOf(minThresholdMaxProjText.getText());
-            slidingWindow = Integer.valueOf(slidingWindowText.getText());
+            if(doSlideWindowBox.isSelected()) {
+                slidingWindow = Integer.valueOf(slidingWindowText.getText());
+            } else {
+                slidingWindow = -1;
+            }
         } catch(NumberFormatException nfe) {
             MipavUtil.displayError("Bad algorithm input for maximum intensity projection.");
             return false;
