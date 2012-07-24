@@ -76,7 +76,7 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	 */
 	public AlgorithmMaximumIntensityProjection(ModelImage srcImg, 
 			int _startSlice, int _stopSlice, int _window,
-			float _minIntensity, float _maxIntensity, 
+			double _minIntensity, double _maxIntensity, 
 			boolean _computeMaximum, boolean _computeMinimum, int _projectionDirection ) {
 		super(null, srcImg);
 		startSlice = _startSlice;
@@ -85,7 +85,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		computeMaximum = _computeMaximum;
 		computeMinimum = _computeMinimum;
 		projectionDirection = _projectionDirection;
-		imResolutions = srcImg.getResolutions(0);
+		if(srcImg != null) {
+		    imResolutions = srcImg.getResolutions(0);
+		}
 		resultImages = new Vector<ModelImage>();
 		
 		colorFactor = 1;
@@ -113,9 +115,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 	 */
 	public AlgorithmMaximumIntensityProjection(ModelImage srcImg, 
 			int _startSlice, int _stopSlice, int _window,
-			float _minR, float _maxR,
-			float _minG, float _maxG, 
-			float _minB, float _maxB, 
+			double _minR, double _maxR,
+			double _minG, double _maxG, 
+			double _minB, double _maxB, 
 			boolean _computeMaximum, boolean _computeMinimum, int _projectionDirection) {
 		super(null, srcImg);
 		startSlice = _startSlice;
@@ -124,7 +126,9 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 		computeMaximum = _computeMaximum;
 		computeMinimum = _computeMinimum;
 		projectionDirection = _projectionDirection;
-		imResolutions = srcImg.getResolutions(0);
+		if(srcImg != null) {
+		    imResolutions = srcImg.getResolutions(0);
+		}
 		resultImages = new Vector<ModelImage>();
 		
 		colorFactor = 4;
@@ -713,12 +717,68 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
 
 
 	/**
+     * @return the startSlice
+     */
+    public int getStartSlice() {
+        return startSlice;
+    }
+
+    /**
+     * @return the stopSlice
+     */
+    public int getStopSlice() {
+        return stopSlice;
+    }
+
+    /**
+     * @return the minIntensity
+     */
+    public double[] getMinIntensity() {
+        return minIntensity;
+    }
+
+    /**
+     * @return the maxIntensity
+     */
+    public double[] getMaxIntensity() {
+        return maxIntensity;
+    }
+
+    /**
+     * @return the computeMaximum
+     */
+    public boolean isComputeMaximum() {
+        return computeMaximum;
+    }
+
+    /**
+     * @return the computeMinimum
+     */
+    public boolean isComputeMinimum() {
+        return computeMinimum;
+    }
+
+    /**
+     * @return the projectionDirection
+     */
+    public int getProjectionDirection() {
+        return projectionDirection;
+    }
+
+    /**
 	 * This method returns the projection images in a Vector.
 	 */
 	public Vector<ModelImage> getResultImage() {
 		return resultImages;
 
 	}
+
+    /**
+     * @return the window
+     */
+    public int getWindow() {
+        return window;
+    }
 
     /**
      * @param startSlice the startSlice to set
@@ -776,6 +836,13 @@ public class AlgorithmMaximumIntensityProjection extends AlgorithmBase {
     public void setSrcImage(ModelImage srcImage) {
         super.setSrcImage(srcImage);
         imResolutions = srcImage.getResolutions(0);
+    }
+
+    /**
+     * @param window the window to set
+     */
+    public void setWindow(int window) {
+        this.window = window;
     }
 }
 
