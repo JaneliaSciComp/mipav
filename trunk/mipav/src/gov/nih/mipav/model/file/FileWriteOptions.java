@@ -61,7 +61,7 @@ public class FileWriteOptions {
     /** DOCUMENT ME! */
     private int fileStartNumber = 0;
 
-    /** DOCUMENT ME! */
+    /** A FileUtility.Type */
     private int fileType = FileUtility.UNDEFINED;
 
     /** DOCUMENT ME! */
