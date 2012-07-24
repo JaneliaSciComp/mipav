@@ -176,12 +176,8 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     private JTable fusionConfirmTable;
     /** Whether to show/save the maximum intensity projections. */
     private boolean showMaxProj, saveMaxProj;
-    /** Location of max intensity projection save directory */
-    private File maxProjDir;
-    private JCheckBox doShowMaxProjBox;
-    private JCheckBox doSaveMaxProjBox;
-    private JTextField saveMaxProjFolderText;
-    private String initMaxProjLoc;
+    /** Whether to save/show max projection of created images */
+    private JCheckBox doShowMaxProjBox, doSaveMaxProjBox;
     /** Checkboxes for computing x, y, and z max projections */
     private JCheckBox doXMaxBox, doYMaxBox, doZMaxBox;
     /** Max projection lower intensity threshold text field */
@@ -279,7 +275,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
                                                                                 minX, minY, minZ, maxX, maxY, maxZ, stepSize, 
-                                                                                saveMaxProj, maxProjDir, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
+                                                                                saveMaxProj, saveGeoMean, geoMeanDir, saveAriMean, ariMeanDir, 
                                                                                 savePrefusion, prefusionBaseDir, prefusionTransformDir, 
                                                                                 baseAriWeight, transformAriWeight, baseGeoWeight, transformGeoWeight, 
                                                                                 maxAlgo);
@@ -904,6 +900,8 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         doShowPreFusion = doShowPrefusionBox.isSelected();
         doThreshold = doThresholdBox.isSelected();
         doInterImages = interImagesBox.isSelected();
+        saveMaxProj = doSaveMaxProjBox.isSelected();
+        showMaxProj = doShowMaxProjBox.isSelected();
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
         
