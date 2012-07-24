@@ -5674,8 +5674,21 @@ public class FileTiff extends FileBase {
             }
 
             index = fileName.indexOf(".");
+            if(index == -1) {
+                index = fileName.length();
+            }
             prefix = fileName.substring(0, index); // Used for setting file name
-            fileSuffix = fileName.substring(index);
+            
+            if(fileName.length() != index) {
+                fileSuffix = fileName.substring(index);
+            } else {
+                fileSuffix = new String();
+            }
+            
+            if(!fileSuffix.contains("tif")) {
+                fileSuffix = "tiff";
+                fileName = prefix+"."+fileSuffix;
+            }
             zRes = -1.0;
 
             if ((image.getNDims() > 2) && (image.getFileInfo(0).getResolutions().length > 2)) {

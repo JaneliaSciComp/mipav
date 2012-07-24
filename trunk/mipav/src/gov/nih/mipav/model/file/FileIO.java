@@ -3534,8 +3534,9 @@ nList:      for (int i = 0; i < nListImages; i++) {
             // System.err.println("FileType: " + fileType);
 
             options.setDefault(true); // this would already be set.... hrmm....
-        } else { // otherwise, get the file-type from the file-info.
-
+        } else if(options.getFileType() != FileUtility.UNDEFINED) {  // otherwise, get the file-type from the options, if it has been set
+            fileType = options.getFileType();
+        } else { //else get the file-type from the file info
             fileType = image.getFileInfo(0).getFileFormat();
         }
         
