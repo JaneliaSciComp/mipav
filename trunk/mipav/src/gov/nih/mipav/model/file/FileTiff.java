@@ -5686,7 +5686,7 @@ public class FileTiff extends FileBase {
             }
             
             if(!fileSuffix.contains("tif")) {
-                fileSuffix = "tiff";
+                fileSuffix = "tif";
                 fileName = prefix+"."+fileSuffix;
             }
             zRes = -1.0;
