@@ -232,6 +232,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         } else if (command.equals("Cancel")) {
             dispose();
         }
+        System.out.print(this.getSize());
     } // end actionPerformed()
 
     /**
@@ -353,6 +354,21 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         scriptParameters.getParams().put(ParameterFactory.newParameter("baseImageText", baseImageText));
     } //end storeParamsFromGUI()
    
+    private GridBagConstraints createGBC() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        
+        return gbc;
+    }
+    
     private void init() {
         setResizable(true);
         setForeground(Color.black);
@@ -623,12 +639,10 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     
     
     private JPanel buildMaxProjPanel(GuiBuilder gui, ActionListener folderSave) {
-        GridBagConstraints gbc = new GridBagConstraints();
+        GridBagConstraints gbc = createGBC();
         JPanel maxProjPanel = new JPanel(new GridBagLayout());
         maxProjPanel.setForeground(Color.black);
         maxProjPanel.setBorder(MipavUtil.buildTitledBorder("Maximum projection options"));
-        gbc.gridy = 0; 
-        gbc.gridwidth = 1;
         doShowMaxProjBox = gui.buildCheckBox("Show max projection images", false);
         maxProjPanel.add(doShowMaxProjBox.getParent(), gbc);
         gbc.gridx++;
@@ -676,11 +690,10 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     }
 
     private JPanel buildPrefusionPanel(GuiBuilder gui, ActionListener folderSave) {
-        GridBagConstraints gbc = new GridBagConstraints();
+        GridBagConstraints gbc = createGBC();
         JPanel prefusionPanel = new JPanel(new GridBagLayout());
         prefusionPanel.setForeground(Color.black);
         prefusionPanel.setBorder(MipavUtil.buildTitledBorder("Prefusion options"));
-        gbc.gridy = 0; 
         doShowPrefusionBox = gui.buildCheckBox("Show pre-fusion images", false);
         prefusionPanel.add(doShowPrefusionBox.getParent(), gbc);
         gbc.gridx++;
@@ -705,7 +718,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     }
 
     private JPanel buildArithmeticPanel(GuiBuilder gui, ActionListener folderSave) {
-        GridBagConstraints gbc = new GridBagConstraints();
+        GridBagConstraints gbc = createGBC();
         JPanel arithmeticPanel = new JPanel(new GridBagLayout());
         arithmeticPanel.setForeground(Color.black);
         arithmeticPanel.setBorder(MipavUtil.buildTitledBorder("Arithmetic options"));
@@ -750,7 +763,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
     }
 
     private JPanel buildGeometricPanel(GuiBuilder gui, ActionListener folderSave) {
-        GridBagConstraints gbc = new GridBagConstraints();
+        GridBagConstraints gbc = createGBC();
         JPanel geometricPanel = new JPanel(new GridBagLayout());
         geometricPanel.setForeground(Color.black);
         geometricPanel.setBorder(MipavUtil.buildTitledBorder("Geometric options"));
@@ -785,6 +798,7 @@ public class PlugInDialogGenerateFusion543a extends JDialogScriptableBase implem
         gbc.gridy++;
         gbc.gridx = 0;
         gbc.gridwidth = 2;
+        gbc.fill = GridBagConstraints.BOTH;
         
         geometricMeanFolderText = gui.buildFileField("Geometric mean folder location: ", initGeoLoc, false, JFileChooser.DIRECTORIES_ONLY);
         geometricPanel.add(geometricMeanFolderText.getParent(), gbc);
