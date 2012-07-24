@@ -4678,23 +4678,23 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
             }
 
-            // updates menubar for each image
-            final Vector<Frame> imageFrames = UI.getImageFrameVector();
-
-            if (imageFrames.size() < 1) {
-                UI.buildMenu();
-                UI.setControls();
-            } else {
-                UI.buildMenu();
-
-                for (i = 0; i < imageFrames.size(); i++) {
-
-                    if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
-                        ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-                    }
-                }
-
-                UI.getActiveImageFrame().setControls();
+            // updates menubar for each image when in interactive mode
+            if(!quiet) {
+	            if (UI.getImageFrameVector().size() < 1) {
+	                UI.buildMenu();
+	                UI.setControls();
+	            } else {
+	                UI.buildMenu();
+	
+	                for (i = 0; i < UI.getImageFrameVector().size(); i++) {
+	
+	                    if (UI.getImageFrameVector().elementAt(i) instanceof ViewJFrameImage) {
+	                        ((ViewJFrameImage) (UI.getImageFrameVector().elementAt(i))).updateMenubar();
+	                    }
+	                }
+	
+	                UI.getActiveImageFrame().setControls();
+	            }
             }
         }
 
