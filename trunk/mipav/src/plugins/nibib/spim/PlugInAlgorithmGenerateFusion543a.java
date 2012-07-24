@@ -29,6 +29,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Vector;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -115,16 +116,13 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
     private boolean saveAriMean, saveGeoMean;
     private File ariMeanDir, geoMeanDir;
     private boolean savePrefusion;
-    private File prefusionBaseDir;
-    private File prefusionTransformDir;
-    /**Weights to use for calculating image means */
+    private File prefusionBaseDir, prefusionTransformDir;
+    /**Weights to use for calculating arithmetic image means */
     private double baseAriWeight, transformAriWeight;
-    private double baseGeoWeight;
-    private double transformGeoWeight;
+    /** Weights to use for calculating geometric image means */
+    private double baseGeoWeight, transformGeoWeight;
     /** Whether maximum projections are shown and saved */
     private boolean showMaxProj, saveMaxProj;
-    /** Directory for max projection files */
-    private File maxProjDir;
     /** Optional MIP algorithm */
     private AlgorithmMaximumIntensityProjection[] maxAlgo;
 
@@ -168,7 +166,7 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
-                                                    boolean saveMaxProj, File maxProjDir, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
+                                                    boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
                                                     boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
                                                     double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo) {
         this.showAriMean = doAriMean;
@@ -211,7 +209,6 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
         this.saveAriMean = saveAriMean;
         this.ariMeanDir = ariMeanDir;
         this.saveMaxProj = saveMaxProj;
-        this.maxProjDir = maxProjDir;
         
         
         this.savePrefusion = savePrefusion;
@@ -277,7 +274,16 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
         return resultImageList;
     }
     
-    
+    public static AlgorithmMaximumIntensityProjection[] generateMaxProjAlg(AlgorithmMaximumIntensityProjection[] maxAlgo) {
+        AlgorithmMaximumIntensityProjection[] maxAlgoClone = new AlgorithmMaximumIntensityProjection[maxAlgo.length];
+        for(int i=0; i<maxAlgoClone.length; i++) {
+            maxAlgoClone[i] = new AlgorithmMaximumIntensityProjection(maxAlgo[i].getSrcImage(), maxAlgo[i].getStartSlice(), maxAlgo[i].getStopSlice(), 
+                                        maxAlgo[i].getWindow(), maxAlgo[i].getMinIntensity()[0], maxAlgo[i].getMaxIntensity()[0], maxAlgo[i].isComputeMaximum(), 
+                                        maxAlgo[i].isComputeMinimum(), maxAlgo[i].getProjectionDirection());
+        }
+        
+        return maxAlgoClone;
+    }
     
     
     public class MeasureAlg implements Runnable {
@@ -773,22 +779,40 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
         
         private void doMaxProj(ModelImage image, boolean parentShow, boolean parentSave, File parentDir, FileWriteOptions options, FileIO io) {
             if(showMaxProj || saveMaxProj) {
-                for(int i=0; i<maxAlgo.length; i++) {
-                    maxAlgo[i].setSrcImage(image);
-                    maxAlgo[i].setStartSlice(0);
-                    maxAlgo[i].setStopSlice(image.getExtents()[2]-1);
-                    maxAlgo[i].setRunningInSeparateThread(false);
-                    maxAlgo[i].run();
+                AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion543a.generateMaxProjAlg(maxAlgo);
+                for(int i=0; i<maxAlgoClone.length; i++) {
+                    maxAlgoClone[i].setSrcImage(image);
+                    maxAlgoClone[i].setStartSlice(0);
+                    maxAlgoClone[i].setMaxIntensity(new double[]{image.getMax()});
+                    maxAlgoClone[i].setStopSlice(image.getExtents()[2]-1);
+                    if(maxAlgoClone[i].getWindow() == -1) {
+                        maxAlgoClone[i].setWindow(image.getExtents()[2]);
+                    }
+                    maxAlgoClone[i].setRunningInSeparateThread(false);
+                    maxAlgoClone[i].run();
+                }
+                
+                for(int i=0; i<maxAlgoClone.length; i++) {
                     if(parentShow && showMaxProj) {
-                        resultImageList.add(maxAlgo[i].getDestImage());
+                        resultImageList.addAll(maxAlgoClone[i].getResultImage());
                     }
                     
                     if(parentSave && saveMaxProj) {
-                        options.setFileDirectory(parentDir.getAbsolutePath()+File.separator);
-                        options.setFileName(maxAlgo[i].getDestImage().getImageFileName());
-                        options.setBeginSlice(0);
-                        options.setEndSlice(maxAlgo[i].getDestImage().getExtents()[2]-1);
-                        io.writeImage(maxAlgo[i].getDestImage(), options, false);
+                        Vector<ModelImage> resImageVec = maxAlgoClone[i].getResultImage();
+                        for(int j=0; j<resImageVec.size(); j++) {
+                            options.setFileDirectory(parentDir.getAbsolutePath()+File.separator);
+                            options.setFileName(resImageVec.get(j).getImageFileName());
+                            options.setFileType(FileUtility.TIFF);
+                            options.setBeginSlice(0);
+                            options.setOptionsSet(true);
+                            options.setSaveAs(false);
+                            if(resImageVec.get(j).getNDims() > 2) {
+                                options.setEndSlice(resImageVec.get(j).getExtents()[2]-1);
+                            } else {
+                                options.setEndSlice(0);
+                            }
+                            io.writeImage(resImageVec.get(j), options, false);
+                        }
                     }
                 }
             }
