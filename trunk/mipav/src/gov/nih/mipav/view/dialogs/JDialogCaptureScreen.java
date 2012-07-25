@@ -102,11 +102,17 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     /** JTextField for the name of the file being attached */
     private JTextField fileField = new JTextField(25);
     
-    public Boolean closed = false;
+    public static Boolean cancel = false;
 
 	public static String fileName;
 
 	private File attachment;
+	
+	public static int test;
+	
+	private int tester;
+
+	public static BufferedImage currImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -122,6 +128,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     
     public JDialogCaptureScreen(ViewJFrameImage parent, boolean bugReport) {
         super(parent, false);
+
         userInterface = ViewUserInterface.getReference();
         save = false;
         copy = false;
@@ -129,7 +136,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         mode = WindowProperties.REGION;
         imageAttacher = bugReport;
         
-        if (imageAttacher == false) {
+        
 
 	        Frame[] frames = Frame.getFrames();
 	
@@ -164,19 +171,17 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	                j++;
 	            } catch (ClassCastException error) { }
 	        }
-	        init();
-        }
+	        if (imageAttacher == false) {
+	        	init();
+	        } else {
+	        	init(true);
+	        }
+	        
     }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    public String getAttachmentName(){
-    	return fileName + ".png";
-    }
-    
-    public JButton getOKButton(){
-    	return OKButton;
-    }
     /**
      * Performs the following actions based on the command:<br>
      *
@@ -193,7 +198,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-
         if (command.equals("OK")) {
 
             if ((currentRectangle != null) && !currentRectangle.isEmpty() &&
@@ -201,11 +205,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
             	
             	writeImage();
             	if(imageAttacher) {
-//                	try{
-//                		fileName = fileField.getText();	
-//                	} catch (IllegalArgumentException e) {
-//                		MipavUtil.displayError("File name must be at least three characters long.");
-//                	}
+
                 	for (int i = 0; i < oldFrames.length; i++) {
                         myGlassPanes[i].setVisible(false);
                         oldFrames[i].setGlassPane(oldPanes[i]);
@@ -213,14 +213,10 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
                         oldFrames[i].removeMouseListener(this);
                         myGlassPanes[i] = null;
                     }
-//                    sendToBugReport();
                     myGlassPanes = null;
                     dispose();
                     System.gc();
                 }
-            	
-            	
-            	closed = true;
             		
             		
                 	//commented the code below out in order to leave dialog up so that you can 
@@ -251,7 +247,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
                 myGlassPanes[i] = null;
             }
             
-            closed = true;
+            cancel = true;
             myGlassPanes = null;
             dispose();
             System.gc();
@@ -511,39 +507,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     }
     
     public void init(Boolean imageAttacher) {
-    	Frame[] frames = Frame.getFrames();
     	
-        // Get count of JFrames, frames with GlassPanes that we can write on
-        // for the bounding box of a screen capture.
-        int count = 0;
-
-        for (int i = 0; i < frames.length; i++) {
-
-            if (frames[i] instanceof JFrame) {
-                count++;
-            }
-        }
-
-        myGlassPanes = new MyGlassPane[count];
-        oldPanes = new Component[count];
-        oldFrames = new JFrame[count];
-
-        // Save old frames so we can reset their glass panes at the end
-        int j = 0;
-
-        for (int i = 0; i < frames.length; i++) {
-
-            try {
-                JFrame test = (JFrame) frames[i];
-                test.addWindowListener(this);
-                test.addMouseListener(this);
-                oldPanes[j] = test.getGlassPane();
-                oldFrames[j] = test;
-                myGlassPanes[j] = new MyGlassPane();
-                test.setGlassPane(myGlassPanes[j]);
-                j++;
-            } catch (ClassCastException error) { }
-        }
     	
     	setTitle("Create New Image");
         
@@ -563,11 +527,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         windowButton.setForeground(Color.black);
         windowButton.addActionListener(this);
         windowButton.setActionCommand("Window");
-        
-        ButtonGroup sampleImage = new ButtonGroup();
-
-        sampleImage.add(regionButton);
-        sampleImage.add(windowButton);
 
         instructions = new JLabel("Draw a rectangle with the mouse around the");
         instructions.setFont(MipavUtil.font12);
@@ -616,15 +575,15 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         gbc.gridy = 0;
         gbc.weighty = 1;
         gbc.gridy = 2;
-        JLabel attachmentInstruction = new JLabel("Select the window or region you would like to attach. Press ctrl+c");
+        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. Press ctrl+c");
         attachmentInstruction.setFont(MipavUtil.font12);
         attachmentInstruction.setForeground(Color.black);
         
-        JLabel attachmentInstruction2 = new JLabel("to copy the image to clipboard or enter a file name below and press");
+        JLabel attachmentInstruction2 = new JLabel("to copy the image to clipboard or enter a file name below");
         attachmentInstruction2.setFont(MipavUtil.font12);
         attachmentInstruction2.setForeground(Color.black);
         
-        JLabel attachmentInstruction3 = new JLabel("the OK button to attach the image as a file. \n");
+        JLabel attachmentInstruction3 = new JLabel("and press the OK button to attach the image as a file. \n");
         attachmentInstruction3.setFont(MipavUtil.font12);
         attachmentInstruction3.setForeground(Color.black);
         
@@ -641,9 +600,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BorderLayout());
-        mainPanel.add(panel, BorderLayout.WEST);
+//        mainPanel.add(instruction, BorderLayout.NORTH);
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-        mainPanel.add(attachmentOptions, BorderLayout.EAST);
+        mainPanel.add(attachmentOptions, BorderLayout.NORTH);
 
         
         getContentPane().add(mainPanel);
@@ -786,19 +745,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	        } 
         } else {
         	fileName = fileField.getText();
-			//attachment = new File(fileName + ".png");
-        	ReportBugBuilder.screenCap(imagePix, fileName);
-//        	try {
-//	        	BufferedImage currImage = (BufferedImage) imagePix;
-//		        
-//				ImageIO.write(currImage, "png", attachment);
-//				ReportBugBuilder.capturedImage = attachment;
-//	        } catch (IllegalArgumentException e) {
-//	           	MipavUtil.displayError("File name must be at least three characters long.");
-//			} catch (IOException e) {
-//					// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
+        	try {
+	        	currImage = (BufferedImage) imagePix;
+	        } catch (IllegalArgumentException e) {
+	           	
+	        }
 	    }
         return true;
     }
