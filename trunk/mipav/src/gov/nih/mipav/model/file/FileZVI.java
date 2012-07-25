@@ -233,7 +233,6 @@ public class FileZVI extends FileBase {
         cArray = null;
         tArray = null;
         imageFocusPositionArray = null;
-        imageZArray = null;
         shortSectorTable = null;
         startSectorArray = null;
         offsetArray = null;
@@ -788,7 +787,7 @@ public class FileZVI extends FileBase {
                                 bytesRead += Math.min(sectorSize-offsetArray[i], bytesToRead);
                                 bytesToRead -= Math.min(sectorSize-offsetArray[i], bytesToRead);
                                 presentSector = sat[presentSector];
-                                while (bytesToRead > 0) {
+                                while ((bytesToRead > 0) && (presentSector >= 0)) {
                                     if (add128) {
                                         raFile.seek((presentSector+1)*sectorSize + 128);
                                     }
@@ -1186,6 +1185,8 @@ public class FileZVI extends FileBase {
         int emissionWavelength = Integer.MIN_VALUE;
         double acqTime = Double.NaN;
         double relTime = Double.NaN;
+        String lastElementName = null;
+        String twoAgoElementName = null;
         //      Start reading ole compound file structure
         // The header is always 512 bytes long and should be located at offset zero.
         // Offset 0 Length 8 bytes olecf file signature
@@ -1613,7 +1614,10 @@ public class FileZVI extends FileBase {
             raFile.seek(directoryStart);
             b = new byte[elementNameBytes];
             raFile.readFully(b);
-            String lastElementName = elementName;
+            if (lastElementName != null) {
+                twoAgoElementName = new String(lastElementName);
+            }
+            lastElementName = new String(elementName);
             elementName = new String(b, "UTF-16LE").trim();
             Preferences.debug("The element name is " + elementName + "\n", Preferences.DEBUG_FILEIO);
             // Read the type of object
@@ -1730,8 +1734,11 @@ public class FileZVI extends FileBase {
             
             directoryStart = directoryStart + 128;
             
-            if ((lastElementName.equals("Image")) &&
-                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize > 0)) {
+            if ((((lastElementName.equals("Image")) &&
+                    (elementName.equals("Contents"))) ||
+                 ((twoAgoElementName != null ) && (twoAgoElementName.equals("Image")) &&
+                  (lastElementName.substring(0,4).equals("Item")) && (elementName.equals("Contents"))))
+                 && (objectType[0] == 2) && (streamSize > 0)) {
                 Preferences.debug("Reading the contents stream of the container image\n", Preferences.DEBUG_FILEIO);
                       
                 bytesToRead = (int)streamSize;
@@ -1955,6 +1962,11 @@ public class FileZVI extends FileBase {
                     }
                     imageCount = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    if (imageCount == 0) {
+                        Preferences.debug("Original total number of image item storages = 0.  Setting to 100\n",
+                                          Preferences.DEBUG_FILEIO);
+                        imageCount = 100;
+                    }
                     bp += 4;
                     Preferences.debug("Total number of image item storages = " + imageCount + "\n", Preferences.DEBUG_FILEIO);
                     zArray = new int[imageCount];
@@ -2151,7 +2163,9 @@ public class FileZVI extends FileBase {
             } // if ((lastElementName.equals("Image")) &&
             
             if ((lastElementName.length() > 4) && (lastElementName.substring(0,4).equals("Item")) &&
-                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize >= sliceBytes)) {
+                    (elementName.equals("Contents")) && (objectType[0] == 2) && (streamSize >= sliceBytes) &&
+                    ((twoAgoElementName == null) || (!twoAgoElementName.equals("Image")))) {
+                
                 Preferences.debug("Reading Contents of " + lastElementName + "\n", Preferences.DEBUG_FILEIO);
                 startSectorArray[ap] = startSect;
                 bytesToRead = (int)streamSize;
