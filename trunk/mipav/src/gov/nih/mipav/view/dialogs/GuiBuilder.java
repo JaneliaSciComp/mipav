@@ -169,7 +169,9 @@ public class GuiBuilder implements ActionListener {
                     
                     text.setText(selectedFile.toString());
                     text.updateUI();
-                    updateAction.actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
+                    if(updateAction != null) {
+                        updateAction.actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
+                    }
                 }
             }
         };
