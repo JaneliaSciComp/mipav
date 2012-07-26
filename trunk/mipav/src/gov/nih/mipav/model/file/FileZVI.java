@@ -132,6 +132,8 @@ public class FileZVI extends FileBase {
     
     private int zDim = 1;
     
+    private int backupZDim = 1;
+    
     private int tDim = 1;
     
     private int channelNumber = 1;
@@ -408,6 +410,14 @@ public class FileZVI extends FileBase {
             
             channelNumber = maxC - minC + 1;
             zDim = maxZ - minZ + 1;
+            if ((zDim == 1) && (backupZDim > 1)) {
+                zDim = backupZDim;
+                minZ = 0;
+                maxZ = zDim - 1;
+                for (i = 0; i < zDim; i++) {
+                    zArray[i] = i;
+                }
+            }
             tDim = maxT - minT + 1;
             
             processedFocusPositionArray = new double[zDim];
@@ -1975,6 +1985,7 @@ public class FileZVI extends FileBase {
                     }
                     imageCount = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                    backupZDim = imageCount;
                     if (imageCount == 0) {
                         Preferences.debug("Original total number of image item storages = 0.  Setting to 100\n",
                                           Preferences.DEBUG_FILEIO);
