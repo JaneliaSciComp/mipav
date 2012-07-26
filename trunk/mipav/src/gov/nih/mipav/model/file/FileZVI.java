@@ -1168,6 +1168,7 @@ public class FileZVI extends FileBase {
         short shortValue;
         long tmpLong;
         boolean booleanValue = false;
+        boolean readImagePixels;
         int measureUnits;
         double exposureTime = Double.NaN;;
         int apotomeGridPosition = Integer.MIN_VALUE;
@@ -1740,8 +1741,20 @@ public class FileZVI extends FileBase {
                   (lastElementName.substring(0,4).equals("Item")) && (elementName.equals("Contents"))))
                  && (objectType[0] == 2) && (streamSize > 0)) {
                 Preferences.debug("Reading the contents stream of the container image\n", Preferences.DEBUG_FILEIO);
+                if  ((twoAgoElementName != null ) && (twoAgoElementName.equals("Image")) &&
+                        (lastElementName.substring(0,4).equals("Item")) && (elementName.equals("Contents"))) {
+                            readImagePixels = true;    
+                        }
+                else {
+                    readImagePixels = false;
+                }
                       
+                if (readImagePixels) {
+                    startSectorArray = new int[100];
+                    startSectorArray[ap] = startSect;    
+                }
                 bytesToRead = (int)streamSize;
+                Preferences.debug("bytesToRead = " + bytesToRead + "\n", Preferences.DEBUG_FILEIO);
                 b = new byte[bytesToRead];
                 bytesRead = 0;
                     if (streamSize < miniSectorCutoff) {
@@ -1972,7 +1985,9 @@ public class FileZVI extends FileBase {
                     zArray = new int[imageCount];
                     cArray = new int[imageCount];
                     tArray = new int[imageCount];
-                    startSectorArray = new int[imageCount];
+                    if (!readImagePixels) {
+                        startSectorArray = new int[imageCount];
+                    }
                     offsetArray = new int[imageCount];
                     imageFocusPositionArray = new double[imageCount+10];
                     imageZArray = new int[imageCount+10];
@@ -2038,127 +2053,175 @@ public class FileZVI extends FileBase {
                     Preferences.debug("Valid bits per pixel in raw image data = " + imageValidBitsPerPixel + "\n", 
                     		Preferences.DEBUG_FILEIO);
                     //fileInfo.setValidBitsPerPixel(imageValidBitsPerPixel);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_BLOB) {
-                        Preferences.debug("Expected VT_BLOB data type for {m_PluginCLSID}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {m_PluginCLSID}\n", 
+                    if (readImagePixels) {
+                        bp = 296;
+                        // Read the image header at 296 bytes from the stream beginning
+                        // Don't read dType any more
+                        Preferences.debug("Reading the image header\n", Preferences.DEBUG_FILEIO);
+                        // Stream version ID
+                        // 2 byte minor 0x2000 followed by 2 byte major 0x1000
+                        minorVersion = (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        Preferences.debug("The minor version = " + minorVersion + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("The current minor version is 8192\n", Preferences.DEBUG_FILEIO);
+                        majorVersion = (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        Preferences.debug("The major version = " + majorVersion + "\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("The current major version is 4096\n", Preferences.DEBUG_FILEIO);
+                        width = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Width = " + width + "\n", Preferences.DEBUG_FILEIO);
+                        height = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Height = " + height + "\n", Preferences.DEBUG_FILEIO);
+                        depth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Unused depth = " + depth + "\n", Preferences.DEBUG_FILEIO);
+                        pixelWidth = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Size in bytes of an image pixel = " + pixelWidth + "\n", Preferences.DEBUG_FILEIO);
+                        pixelFormat = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        displayPixelFormat(pixelFormat);
+                        // Valid bits per pixel in raw image data if 16 bit image (may be 12, 14, or 16)
+                        validBitsPerPixel = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Valid bits per pixel in raw image data = " + validBitsPerPixel + "\n", 
+                                Preferences.DEBUG_FILEIO);
+                        // Raw bytes for image slice are stored here
+                        // Store the offset into the starting sector
+                        offsetArray[ap++] = bp;
+                        break;    
+                    } // readImgagePixels
+                    else { //  not readImagePixels
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_BLOB) {
+                            Preferences.debug("Expected VT_BLOB data type for {m_PluginCLSID}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {m_PluginCLSID}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int pluginLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("The length of the {m_PluginCLSID} binary data = " + pluginLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int pluginLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("The length of the {m_PluginCLSID} binary data = " + pluginLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    bp += pluginLength;
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_BLOB) {
-                        Preferences.debug("Expected VT_BLOB data type for {Others}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {Others}\n", 
+                        bp += pluginLength;
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_BLOB) {
+                            Preferences.debug("Expected VT_BLOB data type for {Others}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_BLOB for {Others}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int othersLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("The length of the {Others} binary data = " + othersLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int othersLength = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("The length of the {Others} binary data = " + othersLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    bp += othersLength;
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Layers}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Layers}\n", 
+                        bp += othersLength;
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {Layers}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Layers}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int layersLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in Layers stored object = " + layersLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int layersLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in Layers stored object = " + layersLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    byte obj[] = new byte[layersLength];
-                    for (i = 0; i < layersLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    String str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing the vector overlay layers = " + str + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Tags}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Tags}\n", 
+                        byte obj[] = new byte[layersLength];
+                        for (i = 0; i < layersLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        String str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing the vector overlay layers = " + str + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int tagsLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in Tags stored object = " + tagsLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    obj = new byte[tagsLength];
-                    for (i = 0; i < tagsLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing the Tags information = " + str + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {Scaling}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Scaling}\n", 
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {Tags}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Tags}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int tagsLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in Tags stored object = " + tagsLength + "\n", 
                         		Preferences.DEBUG_FILEIO);
-                        break;
-                    }
-                    int scalingLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in Scaling stored object = " + scalingLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    obj = new byte[scalingLength];
-                    for (i = 0; i < scalingLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing the scaling information = " + str + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 2;
-                    if (dType == VT_STORED_OBJECT) {
-                        Preferences.debug("Expected VT_STORED_OBJECT data type for {RootFloder}\n", Preferences.DEBUG_FILEIO);
-                    }
-                    else {
-                        Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {RootFolder}\n", 
+                        obj = new byte[tagsLength];
+                        for (i = 0; i < tagsLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing the Tags information = " + str + "\n", 
                         		Preferences.DEBUG_FILEIO);
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {Scaling}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {Scaling}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int scalingLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in Scaling stored object = " + scalingLength + "\n", 
+                        		Preferences.DEBUG_FILEIO);
+                        obj = new byte[scalingLength];
+                        for (i = 0; i < scalingLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing the scaling information = " + str + "\n", 
+                        		Preferences.DEBUG_FILEIO);
+                        dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 2;
+                        if (dType == VT_STORED_OBJECT) {
+                            Preferences.debug("Expected VT_STORED_OBJECT data type for {RootFloder}\n", Preferences.DEBUG_FILEIO);
+                        }
+                        else {
+                            Preferences.debug("dType = " + dType + " instead of expected VT_STORED_OBJECT for {RootFolder}\n", 
+                            		Preferences.DEBUG_FILEIO);
+                            break;
+                        }
+                        int rootFolderLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                                ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
+                        bp += 4;
+                        Preferences.debug("Byte length of unicode string in RootFolder stored object = " + rootFolderLength + "\n", 
+                        		Preferences.DEBUG_FILEIO);
+                        obj = new byte[rootFolderLength];
+                        for (i = 0; i < rootFolderLength; i++) {
+                            obj[i] = b[bp++];
+                        }
+                        str = new String(obj, "UTF-16LE").trim();
+                        Preferences.debug("Name of the storage containing a ZiFolder object with advanced information = " 
+                                          + str + "\n", Preferences.DEBUG_FILEIO);
                         break;
-                    }
-                    int rootFolderLength =  (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
-                            ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
-                    bp += 4;
-                    Preferences.debug("Byte length of unicode string in RootFolder stored object = " + rootFolderLength + "\n", 
-                    		Preferences.DEBUG_FILEIO);
-                    obj = new byte[rootFolderLength];
-                    for (i = 0; i < rootFolderLength; i++) {
-                        obj[i] = b[bp++];
-                    }
-                    str = new String(obj, "UTF-16LE").trim();
-                    Preferences.debug("Name of the storage containing a ZiFolder object with advanced information = " 
-                                      + str + "\n", Preferences.DEBUG_FILEIO);
-                    break;
+                    } // else not readImagePixels
                 } // while (true)
             } // if ((lastElementName.equals("Image")) &&
             
@@ -2169,6 +2232,7 @@ public class FileZVI extends FileBase {
                 Preferences.debug("Reading Contents of " + lastElementName + "\n", Preferences.DEBUG_FILEIO);
                 startSectorArray[ap] = startSect;
                 bytesToRead = (int)streamSize;
+                Preferences.debug("bytesToRead = " + bytesToRead + "\n", Preferences.DEBUG_FILEIO);
                 b = new byte[bytesToRead];
                 bytesRead = 0;
                     if (streamSize < miniSectorCutoff) {
