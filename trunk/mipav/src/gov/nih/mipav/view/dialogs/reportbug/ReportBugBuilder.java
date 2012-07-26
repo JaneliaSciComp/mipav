@@ -579,7 +579,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				else if (JDialogCaptureScreen.currImage == null)
 					MipavUtil.displayError("File name must be at least three characters long.");
 				else {
-					image = new File(Preferences.getPreferencesDir() + "\\" + attachmentName);
+					image = new File(Preferences.getPreferencesDir() + File.separatorChar + attachmentName);
 					ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
 					fileNames.add(attachmentName);
 					filePaths.add(Preferences.getPreferencesDir() + "\\" + attachmentName);
