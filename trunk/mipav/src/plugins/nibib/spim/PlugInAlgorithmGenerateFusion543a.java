@@ -784,9 +784,27 @@ public class PlugInAlgorithmGenerateFusion543a extends AlgorithmBase {
                     maxAlgoClone[i].setSrcImage(image);
                     maxAlgoClone[i].setStartSlice(0);
                     maxAlgoClone[i].setMaxIntensity(new double[]{image.getMax()});
-                    maxAlgoClone[i].setStopSlice(image.getExtents()[2]-1);
-                    if(maxAlgoClone[i].getWindow() == -1) {
-                        maxAlgoClone[i].setWindow(image.getExtents()[2]);
+                    switch(maxAlgoClone[i].getProjectionDirection()) {
+                    case AlgorithmMaximumIntensityProjection.X_PROJECTION:
+                        maxAlgoClone[i].setStopSlice(image.getExtents()[0]-1);
+                        if(maxAlgoClone[i].getWindow() == -1 || maxAlgoClone[i].getWindow() > image.getExtents()[0]) {
+                            maxAlgoClone[i].setWindow(image.getExtents()[0]);
+                        }
+                        break;
+                        
+                    case AlgorithmMaximumIntensityProjection.Y_PROJECTION:
+                        maxAlgoClone[i].setStopSlice(image.getExtents()[1]-1);
+                        if(maxAlgoClone[i].getWindow() == -1 || maxAlgoClone[i].getWindow() > image.getExtents()[1]) {
+                            maxAlgoClone[i].setWindow(image.getExtents()[1]);
+                        }
+                        break;
+                        
+                    case AlgorithmMaximumIntensityProjection.Z_PROJECTION:
+                        maxAlgoClone[i].setStopSlice(image.getExtents()[2]-1);
+                        if(maxAlgoClone[i].getWindow() == -1 || maxAlgoClone[i].getWindow() > image.getExtents()[2]) {
+                            maxAlgoClone[i].setWindow(image.getExtents()[2]);
+                        }
+                        break;
                     }
                     maxAlgoClone[i].setRunningInSeparateThread(false);
                     maxAlgoClone[i].run();
