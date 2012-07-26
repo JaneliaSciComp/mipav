@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs.reportbug;
 import java.awt.*;
 import java.awt.event.*;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
@@ -75,22 +76,22 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	private JTextArea attachedImages = new JTextArea();
 	
 	/** Text area for user inputed bug description */
-	private JTextArea descriptionField = new JTextArea("Test");
+	private JTextArea descriptionField = new JTextArea();
 	
 	/** Text area for user inputed bug summary */
-	private JTextArea summaryField = new JTextArea("Test");
+	private JTextArea summaryField = new JTextArea();
 	
 	/** Text field for user inputed name */
-	private JTextField nameField = new JTextField("Test", 25);
+	private JTextField nameField = new JTextField(25);
 	
 	/** Text field for user inputed email */
-    private JTextField emailField = new JTextField("Test@tester.test", 25);
+    private JTextField emailField = new JTextField(25);
     
     /** Text field for user inputed branch */
-    private JTextField branchField = new JTextField("Test", 25);
+    private JTextField branchField = new JTextField(25);
     
     /** Text field for the user inputed operating platform */
-    private JTextField standardPlatform = new JTextField("Test", 25);
+    private JTextField standardPlatform = new JTextField(25);
     
     /** Text field for the user inputed operating system. Pre-populated using the system properties */
     private JTextField standardOS = new JTextField(System.getProperties().getProperty("os.name"),25);
@@ -99,14 +100,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     private JTextField standardVersion = new JTextField(MipavUtil.getVersion(),25);
 	
     /** Text field for the user inputed urgency of the bug */
-    private JTextField standardUrgency = new JTextField("Test", 25);
-    
-    /** File to hold the full bug report */
-    private File bugReport = new File("BugReport.txt");
-    
-    /** File to hold the console error message if mipav encounters an unaccounted for exception while running */
-    private File console = new File("console.txt");
-    
+    private JTextField standardUrgency = new JTextField(25);
+     
     private String attachmentName;
     
     private ArrayList<String> fileNames = new ArrayList<String>();
@@ -120,6 +115,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	private ArrayList<String> filePaths = new ArrayList<String>();
 
 	public JButton screenCap;
+
+	private File image;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -130,8 +127,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
      */
     public ReportBugBuilder(){
     	init();
-    	bugReport.deleteOnExit();
-    	console.deleteOnExit();
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -246,10 +241,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	    String fileSeparator = System.getProperties().getProperty("file.separator");
 
 		try {
-			if (!bugReport.exists()) {
-				File.createTempFile("bugReport", ".txt");
-			}
-			BufferedWriter report = new BufferedWriter(new FileWriter(bugReport.getName(), true));
+			File.createTempFile("bugReport", ".txt");
+			BufferedWriter report = new BufferedWriter(new FileWriter("bugReport.txt", true));
 			report.write("New Bug Report:");
 			report.newLine();
 			report.write(summary);
@@ -586,10 +579,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				else if (JDialogCaptureScreen.currImage == null)
 					MipavUtil.displayError("File name must be at least three characters long.");
 				else {
-					File image = new File(attachmentName);
+					image = new File(Preferences.getPreferencesDir() + "\\" + attachmentName);
 					ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
 					fileNames.add(attachmentName);
-					filePaths.add(attachmentName);
+					filePaths.add(Preferences.getPreferencesDir() + "\\" + attachmentName);
 					attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
 					
 					image.deleteOnExit();
