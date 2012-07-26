@@ -32,6 +32,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
+import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogScriptableBase;
 
 import java.awt.*;
@@ -399,7 +400,9 @@ public class PlugInDialogGenerateFusion543b extends JDialogScriptableBase implem
         mtxPanel.add(mtxFileLocText.getParent(), gbc);
         gbc.gridy++;
         
-        transformFileLocText = gui.buildFileField("Directory containing transform image: ", "", false, JFileChooser.DIRECTORIES_ONLY);
+        FolderSaveActionListener folderSave = new FolderSaveActionListener(this);
+        
+        transformFileLocText = gui.buildFileField("Directory containing transform image: ", "", false, JFileChooser.DIRECTORIES_ONLY, folderSave);
         mtxPanel.add(transformFileLocText.getParent(), gbc);
         gbc.gridy++;
         
@@ -411,10 +414,10 @@ public class PlugInDialogGenerateFusion543b extends JDialogScriptableBase implem
         FlowLayout transformFlow = new FlowLayout(FlowLayout.LEFT);
         transformPanel.setLayout(transformFlow);
         
-        transformImageText = gui.buildField("Transform image ", "SPIMA");
+        transformImageText = gui.buildField("Transform image ", "SPIMB");
         transformPanel.add(transformImageText.getParent());
         
-        baseImageText = gui.buildField(" to image ", "SPIMB");
+        baseImageText = gui.buildField(" to image ", "SPIMA");
         transformPanel.add(baseImageText.getParent());
         
         mtxPanel.add(transformPanel, gbc);
@@ -570,7 +573,7 @@ public class PlugInDialogGenerateFusion543b extends JDialogScriptableBase implem
         mainPanel.add(algOptionPanel, gbc);
         
         
-        FolderSaveActionListener folderSave = new FolderSaveActionListener();
+        
         JPanel outputPanel = new JPanel(new GridBagLayout());
         outputPanel.setForeground(Color.black);
         outputPanel.setBorder(MipavUtil.buildTitledBorder("Output options"));
@@ -821,6 +824,12 @@ public class PlugInDialogGenerateFusion543b extends JDialogScriptableBase implem
 
     private class FolderSaveActionListener implements ActionListener {
         
+        private JDialogBase parent;
+
+        public FolderSaveActionListener(JDialogBase parent) {
+            this.parent = parent;
+        }
+        
         public void actionPerformed(ActionEvent e) {
             
             transformAriWeightText.getParent().getParent().setVisible(arithmeticMeanSaveBox.isSelected() || arithmeticMeanShowBox.isSelected());
@@ -836,36 +845,21 @@ public class PlugInDialogGenerateFusion543b extends JDialogScriptableBase implem
             
             if(transformFileLocText.getText() != null && 
                     transformFileLocText.getText().length() > 0) {
+                
+                File rootFolderLoc = new File(transformFileLocText.getText()).getParentFile();
+                
+                if(rootFolderLoc.getName().contains("SPIMA") || rootFolderLoc.getName().contains("SPIMB")) {
+                    rootFolderLoc = rootFolderLoc.getParentFile();
+                }
+                
+                String rootFolderPath = rootFolderLoc.getAbsolutePath();
+                
+                
                 try {
-                    if(geometricMeanFolderText.isVisible()) {
-                        if(geometricMeanFolderText.getText().equals(initGeoLoc)) {
-                            geometricMeanFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "GeoMean" + File.separator);
-                        }
-                    }
-                    
-                    if(arithmeticMeanFolderText.isVisible()) {
-                        if(arithmeticMeanFolderText.getText().equals(initAriLoc)) {
-                            arithmeticMeanFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "AriMean" + File.separator);
-                        }
-                    }
-                    
-                    if(savePrefusionBaseFolderText.isVisible()) {
-                        if(baseImageText.getText() != null && baseImageText.getText().length() > 0) {
-                            if(savePrefusionBaseFolderText.getText().equals(initBasePrefusionLoc) || 
-                                    !savePrefusionBaseFolderText.getText().contains(baseImageText.getText())) {
-                                savePrefusionBaseFolderText.setText(new File(baseFileLocText.getText()).getParent() + File.separator + "Prefusion" +baseImageText.getText()+ File.separator);
-                            }
-                        }
-                    }
-                    
-                    if(savePrefusionTransformFolderText.isVisible()) {
-                        if(transformImageText.getText() != null && transformImageText.getText().length() > 0) {
-                            if(savePrefusionTransformFolderText.getText().equals(initTransformPrefusionLoc) || 
-                                    !savePrefusionTransformFolderText.getText().contains(transformImageText.getText())) {
-                                savePrefusionTransformFolderText.setText(new File(transformFileLocText.getText()).getParent() + File.separator + "Prefusion" +transformImageText.getText()+ File.separator);
-                            }
-                        }
-                    }
+                    geometricMeanFolderText.setText(rootFolderPath + File.separator + "GeoMean" + File.separator);
+                    arithmeticMeanFolderText.setText(rootFolderPath + File.separator + "AriMean" + File.separator);
+                    savePrefusionBaseFolderText.setText(rootFolderPath + File.separator + "PrefusionBase" + File.separator);
+                    savePrefusionTransformFolderText.setText(rootFolderPath + File.separator + "PrefusionTransform" + File.separator);
                     
 //                    if(saveMaxProjFolderText.isVisible()) {
 //                        if(saveMaxProjFolderText.getText().equals(initMaxProjLoc)) {
