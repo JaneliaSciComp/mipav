@@ -125,12 +125,21 @@ public class GuiBuilder implements ActionListener {
         panel.add(text);
         return text;
     }
+        
     
     public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode) {
         return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode);
     }
     
+    public JTextField buildFileField(String labelText, String initText, final boolean multiSelect, final int fileSelectionMode, ActionListener updateAction) {
+        return buildFileField(labelText, initText, Preferences.getImageDirectory(), multiSelect, fileSelectionMode, false, updateAction);
+    }
+    
     public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles) {
+        return buildFileField(labelText, initText, initDir, multiSelect, fileSelectionMode, createNewFiles, null);
+    }
+    
+    public JTextField buildFileField(String labelText, String initText, final String initDir, final boolean multiSelect, final int fileSelectionMode, final boolean createNewFiles, final ActionListener updateAction) {    
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
         JLabel label = new JLabel(labelText);
@@ -160,6 +169,7 @@ public class GuiBuilder implements ActionListener {
                     
                     text.setText(selectedFile.toString());
                     text.updateUI();
+                    updateAction.actionPerformed(new ActionEvent(this, 0, "BrowseConclude"));
                 }
             }
         };
