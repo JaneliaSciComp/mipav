@@ -171,6 +171,9 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             return;
         }
         
+        setCompleted(true);
+        return;
+        
     }
     
     /**
@@ -188,6 +191,18 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
        %
        %Copyright (c) 2000 RICE UNIVERSITY. All rights reserved.
        %Created by Ramesh Gopinath, Department of ECE, Rice University. 
+       
+       Correctly gives scaling and wavelet filters for filter length = 4 minimum phase:
+       Scaling filter:
+        0.48296291314453416
+        0.8365163037378078
+        0.2241438680420134
+        -0.12940952255126037
+        Wavelet filter:
+        0.12940952255126037
+        0.2241438680420134
+        -0.8365163037378078
+        0.48296291314453416
      */
     private void daubcqf() {
         int j, m;
@@ -336,7 +351,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             minj = Math.max(0, m + 1 - k);
             maxj = Math.min(m, k);
             for (j = minj; j <= maxj; j++) {
-                w[m] += h_0[j]*polyqtR[m + 1 - j];
+                w[m] += h_0[j]*polyqtR[m - j];
             }
         }
         sumw = 0.0;
