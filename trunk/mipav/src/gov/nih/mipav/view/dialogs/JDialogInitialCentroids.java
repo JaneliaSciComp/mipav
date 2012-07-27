@@ -119,6 +119,71 @@ public class JDialogInitialCentroids extends JDialogBase {
         pack();
         setVisible(true);
     }
+    
+    public JDialogInitialCentroids(Frame theParentFrame, int _nClasses, float _min, float _max, boolean flag) {
+        super(theParentFrame, true);
+
+
+        getContentPane().setLayout(new BorderLayout());
+        setTitle("Initial Centroids");
+        setSize(350, 230);
+        setForeground(Color.black);
+        cancelFlag = false;
+
+        nClasses = _nClasses;
+        minimum = _min;
+        maximum = _max;
+        centroids = new float[nClasses];
+
+
+        Box contentBox = new Box(BoxLayout.Y_AXIS);
+
+        // default margin value
+        JPanel defaultValuePanel = new JPanel();
+        defaultValuePanel.setBorder(buildTitledBorder("Enter Inital Centroids"));
+
+
+        // set layout
+        gbl = new GridBagLayout();
+        gbc = new GridBagConstraints();
+        defaultValuePanel.setLayout(gbl);
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        defaultValueInput = new JTextField[nClasses];
+
+        for (i = 0; i < nClasses; i++) {
+
+            // make content, place into layout
+            JLabel defaultLabel = new JLabel("Centroid[" + String.valueOf(i + 1) + "] (" + String.valueOf(minimum) +
+                                             " to " + String.valueOf(maximum) + ")");
+            defaultLabel.setFont(serif12);
+            defaultLabel.setForeground(Color.black);
+            defaultLabel.setRequestFocusEnabled(false);
+            gbc.gridwidth = 2;
+            gbl.setConstraints(defaultLabel, gbc);
+            defaultValuePanel.add(defaultLabel);
+            defaultValuePanel.add(Box.createHorizontalStrut(10));
+            defaultValueInput[i] = new JTextField(Float.toString(minimum +
+                                                                 ((maximum - minimum) * (i + 1) / (nClasses + 1))), 8);
+            defaultValueInput[i].addActionListener(this);
+            MipavUtil.makeNumericsOnly(defaultValueInput[i], true);
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+            gbl.setConstraints(defaultValueInput[i], gbc);
+            defaultValuePanel.add(defaultValueInput[i]);
+        } // for (i = 0; i < nClasses; i++)
+
+        contentBox.add(defaultValuePanel);
+
+        JPanel OKCancelPanel = new JPanel(new FlowLayout());
+        buildOKButton();
+        buildCancelButton();
+        OKCancelPanel.add(OKButton);
+        OKCancelPanel.add(cancelButton);
+        contentBox.add(OKCancelPanel);
+
+        getContentPane().add(contentBox);
+        pack();
+    }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -152,6 +217,21 @@ public class JDialogInitialCentroids extends JDialogBase {
         }
     }
 
+    public void run() {
+    	   for (i = 0; i < nClasses; i++) {
+               tmpStr = defaultValueInput[i].getText();
+
+               if (testParameter(tmpStr, minimum, maximum)) {
+                   centroids[i] = Float.parseFloat(tmpStr);
+               } else {
+                   defaultValueInput[i].requestFocus();
+                   defaultValueInput[i].selectAll();
+
+                   return;
+               }
+           }
+    }
+    
     /**
      * Accessor that returns the array of initial centroid values.
      *
