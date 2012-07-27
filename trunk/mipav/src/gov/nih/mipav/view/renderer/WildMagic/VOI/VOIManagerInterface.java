@@ -82,10 +82,7 @@ import gov.nih.mipav.view.dialogs.JDialogVOILogicalOperations;
 import gov.nih.mipav.view.dialogs.JDialogVOIShapeInterpolation;
 import gov.nih.mipav.view.dialogs.JDialogVOIStatistics;
 import gov.nih.mipav.view.dialogs.JDialogVOIStats;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogLoadProstateMask;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesClassification;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateFeaturesTrain;
-import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.JDialogProstateSaveFeatures;
+import gov.nih.mipav.view.renderer.WildMagic.ProstateFramework.*;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -4156,7 +4153,18 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
     	// final JDialogProstateSegmentationAuto prostateSegAutoDialog = new JDialogProstateSegmentationAuto(m_kParent.getFrame(), getActiveImage());
     	// prostateSegAutoDialog.validate();
     }
+    
+	private void prostateSemiAutoBSplineFuzzyC() {
+		final JDialogProstateSegmentationRegBSpline3D prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3D(
+				m_kParent.getFrame());
+		prostateSegAutoDialog.validate();
+	}
 
+	private void prostateSemiAutoBSpline() {
+		final JDialogProstateSegmentationRegBSpline3DFast prostateSegAutoDialog = new JDialogProstateSegmentationRegBSpline3DFast(
+				m_kParent.getFrame());
+		prostateSegAutoDialog.validate();
+	}
     
     /**
      * method that performs the quick LUT operation
