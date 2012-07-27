@@ -618,7 +618,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
         textFilterLength = new JTextField(10);
         textFilterLength.setFont(serif12);
-        textFilterLength.setBackground(Color.black);
         textFilterLength.setText("4");
         gbc.gridx = 1;
         paramPanel.add(textFilterLength, gbc);
