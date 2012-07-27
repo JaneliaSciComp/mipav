@@ -109,6 +109,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     
     public void runAlgorithm() {
+        int j;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -166,6 +167,14 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         waveletFilter = new double[filterLength];
         
         daubcqf();
+        Preferences.debug("Scaling filter:\n", Preferences.DEBUG_ALGORITHM);
+        for (j = 0; j < filterLength; j++) {
+            Preferences.debug(scalingFilter[j] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        Preferences.debug("Wavelet filter:\n", Preferences.DEBUG_ALGORITHM);
+        for (j = 0; j < filterLength; j++) {
+            Preferences.debug(waveletFilter[j] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
         if (error == -1) {
             setCompleted(false);
             return;
@@ -203,6 +212,22 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         0.2241438680420134
         -0.8365163037378078
         0.48296291314453416
+        
+       Correctly gives scaling and wavelet filters for filter length = 6 minimum phase
+        Scaling filter:
+        0.3326705529500828
+        0.8068915093110931
+        0.459877502118492
+        -0.1350110200102549
+        -0.08544127388202716
+        0.03522629188570937
+        Wavelet filter:
+        -0.03522629188570937
+        -0.08544127388202716
+        0.1350110200102549
+        0.459877502118492
+        -0.8068915093110931
+        0.3326705529500828
      */
     private void daubcqf() {
         int j, m;
@@ -228,6 +253,16 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         double sumw;
         double scale;
         double temp[];
+        
+        if (filterLength == 2) {
+            if (filterType == MINIMUM_PHASE) {
+                scalingFilter[0] = 1.0/Math.sqrt(2.0);
+                scalingFilter[1] = 1.0/Math.sqrt(2.0);
+                waveletFilter[0] = 1.0/Math.sqrt(2.0);
+                waveletFilter[1] = -1.0/Math.sqrt(2.0);
+            }
+            return;
+        } // if (filterLength == 2)
         
         
         for (j = 1; j <= k-1; j++) {
@@ -337,7 +372,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         polyqtR[0] = 1.0;
         polyqtI[0] = 0.0;
         for (j = 0; j <= k-2; j++) {
-            for (m = 1; m <= j+1; m++) {
+            for (m = j+1; m >= 1; m--) {
                 polyqtR[m] = polyqtR[m] - qtR[j]*polyqtR[m-1] + qtI[j]*polyqtI[m-1];
                 polyqtI[m] = polyqtI[m] - qtR[j]*polyqtI[m-1] - qtI[j]*polyqtR[m-1];
             }
@@ -387,14 +422,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             waveletFilter[j] = -waveletFilter[j];
         }
         
-        Preferences.debug("Scaling filter:\n", Preferences.DEBUG_ALGORITHM);
-        for (j = 0; j < filterLength; j++) {
-            Preferences.debug(scalingFilter[j] + "\n", Preferences.DEBUG_ALGORITHM);
-        }
-        Preferences.debug("Wavelet filter:\n", Preferences.DEBUG_ALGORITHM);
-        for (j = 0; j < filterLength; j++) {
-            Preferences.debug(waveletFilter[j] + "\n", Preferences.DEBUG_ALGORITHM);
-        }
+        return;
     } // daubcqf()
     
     class EigenvalueComplex {
