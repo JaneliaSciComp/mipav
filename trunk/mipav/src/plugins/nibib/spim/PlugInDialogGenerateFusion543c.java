@@ -74,6 +74,10 @@ public class PlugInDialogGenerateFusion543c extends JDialogScriptableBase implem
 
     /**declare UID */
     
+    public static final String XPROJ = "XProj";
+    public static final String YPROJ = "YProj";
+    public static final String ZPROJ = "ZProj";
+    
     final String initAriLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "AriMean" + File.separator;
     final String initGeoLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "GeoMean" + File.separator;
     final String initTransformPrefusionLoc = new File(Preferences.getImageDirectory()).getParent() + File.separator + "PrefusionTransform" + File.separator;
@@ -878,20 +882,42 @@ public class PlugInDialogGenerateFusion543c extends JDialogScriptableBase implem
         
     }
     
-    private File createDirectory(JTextField location) {
+    private File createDirectory(String location) {
         File f = null;
         try {
-            f = new File(location.getText());
+            f = new File(location);
             if(!f.exists()) {
                 f.mkdirs();
             }
         } catch(Exception e) {
-            MipavUtil.displayError("Error making directory "+location.getText());
+            MipavUtil.displayError("Error making directory "+location);
         }
         
         return f;
     }
 
+    private boolean createMaxProjFolders(String parentFolder) {
+        if(doXMaxBox.isSelected()) {
+            if(createDirectory(parentFolder+File.separator+XPROJ) == null) {
+                return false;
+            }
+        }
+        
+        if(doYMaxBox.isSelected()) {
+            if(createDirectory(parentFolder+File.separator+YPROJ) == null) {
+                return false;
+            }
+        }
+        
+        if(doZMaxBox.isSelected()) {
+            if(createDirectory(parentFolder+File.separator+ZPROJ) == null) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
     /**
      * This method could ensure everything in your dialog box has been set correctly
      * 
@@ -912,21 +938,40 @@ public class PlugInDialogGenerateFusion543c extends JDialogScriptableBase implem
 	    
         doSmartMovement = doSmartMovementBox.isSelected();
         
+        boolean maxProjCreate = true;
         if(saveGeoMean) {
-            if((geoMeanDir = createDirectory(geometricMeanFolderText)) == null) {
+            if((geoMeanDir = createDirectory(geometricMeanFolderText.getText())) == null) {
                 return false;
+            }
+            if(saveMaxProj) {
+                maxProjCreate = createMaxProjFolders(geometricMeanFolderText.getText());
             }
         }
         
         if(saveAriMean) {
-            if((ariMeanDir = createDirectory(arithmeticMeanFolderText)) == null) {
+            if((ariMeanDir = createDirectory(arithmeticMeanFolderText.getText())) == null) {
                 return false;
+            }
+            if(saveMaxProj) {
+                maxProjCreate = createMaxProjFolders(arithmeticMeanFolderText.getText());
             }
         }
         
         if(savePrefusion) {
-            prefusionBaseDir = createDirectory(savePrefusionBaseFolderText);
-            prefusionTransformDir = createDirectory(savePrefusionTransformFolderText);
+            if((prefusionBaseDir = createDirectory(savePrefusionBaseFolderText.getText())) == null) {
+                return false;
+            }
+            if((prefusionTransformDir = createDirectory(savePrefusionTransformFolderText.getText())) == null) {
+                return false;
+            }
+            if(saveMaxProj) {
+                maxProjCreate = createMaxProjFolders(savePrefusionBaseFolderText.getText());
+                maxProjCreate = createMaxProjFolders(savePrefusionTransformFolderText.getText());
+            }
+        }
+        
+        if(!maxProjCreate) {
+            return false;
         }
                 
 	    try {
@@ -1184,27 +1229,27 @@ public class PlugInDialogGenerateFusion543c extends JDialogScriptableBase implem
         ArrayList<File> baseImageList = new ArrayList<File>();
         ArrayList<File> transformImageList = new ArrayList<File>();
         try {
-            File fA = new File(transformFileDir);
-            File fB = new File(baseFileDir);
+            File fB = new File(transformFileDir);
+            File fA = new File(baseFileDir);
             boolean containsFiles = false;
             for(File fTry : fA.listFiles()) {
                 if(fTry.getName().contains(baseImage)) {
                     containsFiles = true;
-                    continue;
+                    break;
                 }
             }
             if(!containsFiles) {
-                fB = new File(transformFileDir);
-                fA = new File(baseFileDir);
+                fA = new File(transformFileDir);
+                fB = new File(baseFileDir);
             }
             
             if(!fA.exists() || !fA.isDirectory()) {
                 MipavUtil.displayError("Spim file directories could not be found");
                 return false;
             }
-    search:   for(File fTry : fA.listFiles()) {
-                 String s = fTry.getName(); 
-                 if(!s.contains(".mtx")) {
+    search: for(File fTry : fA.listFiles()) {
+                String s = fTry.getName(); 
+                if(!s.contains(".mtx")) {
                     if(s.contains(baseImage)) {
                         String[] subSection = s.split(baseImage);
             searchSub:  for(File fTrySub : fB.listFiles()) {
