@@ -8,9 +8,9 @@ import java.io.*;
 import gov.nih.mipav.view.*;
 
 /**
-   Documentation used was the ZVI Format Specification V 2.0.4 - June, 2009.
+   Documentation used was the ZVI Format Specification V 2.0.5 - August, 2010.
    The following email was sent to Zeiss support:
-   Here are problems I spotted in ZVI Format Specification V 2.0.4 - June, 2009:
+   Here are problems I spotted in ZVI Format Specification V 2.0.5 - August, 2010:
 2.1.1 <Contents> stream of the container image:
 TypeDescription is VT_EMPTY rather than VT_BSTR
 FileName is VT_EMPTY rather than VT_BSTR
@@ -30,17 +30,14 @@ VT_DISPATCH
 VT_DISPATCH
 RAW pixel data
 
-3.2 Scaling type:
-In the table both decimeter and meter have value 72.
-Info for Mil should be Thousandths of an inch rather than Micrometers.
-
 3.3 Coordinate ID for Image Dimensions:
 Index should be 0 1 2 3 4 5 6 7 instead of the existing 0 1 3 4 5 6 7 8.
 
 3.4 Tag IDs
 ID 301 is used for both ImageBaseTimeFirst and ImageBaseTime1.  I suspect the ImageBaseTimeFirst entry should be deleted.
 The following tags show up in .ZVI files but are not listed in your table:
-2071, 20478, 65651, 65652, 65657, 65658, 65661, 65662.  What is the info for these tags?
+2071, 20478.  What is the info for these tags?
+65781 has both AuroxCamRes6 and AuroxCamCFactor.
 
 Information for decoding the 64-bit VT_DATE structure is missing.  Is it available somewhere?
 
@@ -138,9 +135,12 @@ public class FileZVI extends FileBase {
     
     private int channelNumber = 1;
     
+    private int positionNumber = 1;
+    
     private int zArray[] = null;
     private int cArray[] = null;
     private int tArray[] = null;
+    private int positionArray[] = null;
     private int startSectorArray[] = null;
     private int offsetArray[] = null;
     // array pointer
@@ -198,6 +198,10 @@ public class FileZVI extends FileBase {
     private int minT = Integer.MAX_VALUE;
     
     private int maxT = Integer.MIN_VALUE;
+    
+    private int minPosition = Integer.MAX_VALUE;
+    
+    private int maxPosition = Integer.MIN_VALUE;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -234,6 +238,7 @@ public class FileZVI extends FileBase {
         zArray = null;
         cArray = null;
         tArray = null;
+        positionArray = null;
         imageFocusPositionArray = null;
         shortSectorTable = null;
         startSectorArray = null;
@@ -406,10 +411,27 @@ public class FileZVI extends FileBase {
                 if (tArray[i] > maxT) {
                     maxT = tArray[i];
                 }
+                
+                if (positionArray[i] < minPosition) {
+                    minPosition = positionArray[i];
+                }
+                
+                if (positionArray[i] > maxPosition) {
+                    maxPosition = positionArray[i];
+                }
             }
             
             channelNumber = maxC - minC + 1;
             zDim = maxZ - minZ + 1;
+            positionNumber = maxPosition - minPosition + 1;
+            if ((zDim == 1) && (positionNumber > 1)) {
+                zDim = positionNumber;
+                minZ = minPosition;
+                maxZ = maxPosition; 
+                for (i = 0; i < zDim; i++) {
+                    zArray[i] = positionArray[i];
+                }
+            }
             if ((zDim == 1) && (backupZDim > 1)) {
                 zDim = backupZDim;
                 minZ = 0;
@@ -1996,6 +2018,7 @@ public class FileZVI extends FileBase {
                     zArray = new int[imageCount];
                     cArray = new int[imageCount];
                     tArray = new int[imageCount];
+                    positionArray = new int[imageCount];
                     if (!readImagePixels) {
                         startSectorArray = new int[imageCount];
                     }
@@ -2524,10 +2547,10 @@ public class FileZVI extends FileBase {
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
                     Preferences.debug("Scene ID = " + sceneID + "\n", Preferences.DEBUG_FILEIO);
-                    int positionID = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
+                    positionArray[ap] = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
-                    Preferences.debug("Position ID = " + positionID + "\n", Preferences.DEBUG_FILEIO);
+                    Preferences.debug("Position ID = " + positionArray[ap] + "\n", Preferences.DEBUG_FILEIO);
                     int A = (((b[bp + 3] & 0xff) << 24) | ((b[bp + 2] & 0xff) << 16) | 
                             ((b[bp + 1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 4;
@@ -4516,8 +4539,338 @@ public class FileZVI extends FileBase {
                             case 65643:
                                 Preferences.debug("tagID = Deep view slider name\n", Preferences.DEBUG_FILEIO);
                                 break;
+                            case 65644:
+                                Preferences.debug("tagID = Roper Cam Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65646:
+                                Preferences.debug("tagID = Roper Cam Pixel Clock\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65647:
+                                Preferences.debug("tagID = Roper Cam Temperature\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65648:
+                                Preferences.debug("tagID = Camera Image Mem Unit Names\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65649:
+                                Preferences.debug("tagID = Apotome Cam Live Phase\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65650:
+                                Preferences.debug("tagID = Dual Axio Cam Algorithm Type\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65651:
+                                Preferences.debug("tagID = Apotome Cam Decay\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65652:
+                                Preferences.debug("tagID = Apotome Cam Epsilon\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65653:
+                                Preferences.debug("tagID = Axio Cam HSBuffer Number\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65654:
+                                Preferences.debug("tagID = Axio Cam HSFrame Time\n", Preferences.DEBUG_FILEIO);
+                                break;
                             case 65655:
-                                Preferences.debug("tagID = Deep view slider name\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("tagID = Axio Cam Analog Gain Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65656:
+                                Preferences.debug("tagID = Axio Cam Analog Gain Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65657:
+                                Preferences.debug("tagID = Apotome Cam Phase Angles\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65658:
+                                Preferences.debug("tagID = Apotome Cam Image Format\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65659:
+                                Preferences.debug("tagID = Camera Shading Count\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65660:
+                                Preferences.debug("tagID = Camera Image Raw Size\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65661:
+                                Preferences.debug("tagID = Apotome Cam Burst Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65662:
+                                Preferences.debug("tagID = Apotome Cam Generic Camera Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65663:
+                                Preferences.debug("tagID = Acquisition Device\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65664:
+                                Preferences.debug("tagID = Apotome Grating Period Measured\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65665:
+                                Preferences.debug("tagID = Camera Lut Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65666:
+                                Preferences.debug("tagID = Axio Cam Saturation\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65667:
+                                Preferences.debug("tagID = Camera Color Correction\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65668:
+                                Preferences.debug("tagID = Camera Color Processing Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65669:
+                                Preferences.debug("tagID = Camera Analog Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65670:
+                                Preferences.debug("tagID = Camera White Balance Target PosX\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65671:
+                                Preferences.debug("tagID = Camera White Balance Target PosY\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65672:
+                                Preferences.debug("tagID = Camera Shutter Signal Port\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65673:
+                                Preferences.debug("tagID = Axio Cam IC Saturation\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65674:
+                                Preferences.debug("tagID = Apotome Cam Cam Calib Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65675:
+                                Preferences.debug("tagID = Apotome Cam Cam Calib Value\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65676:
+                                Preferences.debug("tagID = Apotome Cam Admin Calib Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65677:
+                                Preferences.debug("tagID = Apotome Cam Is Admin\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65678:
+                                Preferences.debug("tagID = Apotome Cam Pw\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65679:
+                                Preferences.debug("tagID = Apotome Cam Admin Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65680:
+                                Preferences.debug("tagID = Camera Shutter Live Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65681:
+                                Preferences.debug("tagID = Camera Exposure Time Auto Live Enable\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65682:
+                                Preferences.debug("tagID = Camera EM Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65683:
+                                Preferences.debug("tagID = Apotome Cam Hardware Version\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65684:
+                                Preferences.debug("tagID = Apotome Cam Grid Position\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65685:
+                                Preferences.debug("tagID = Apotome Cam Auto Grid\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65703:
+                                Preferences.debug("tagID = Orca Cam Number Of Scan Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65704:
+                                Preferences.debug("tagID = Orca Cam Scan Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65705:
+                                Preferences.debug("tagID = Orca Cam EMCCD Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65706:
+                                Preferences.debug("tagID = Orca Cam EMCCD Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65707:
+                                Preferences.debug("tagID = Orca Cam Fast Acq\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65708:
+                                Preferences.debug("tagID = Orca Cam Min Exposure Time\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65709:
+                                Preferences.debug("tagID = Orca Cam Number Of Photon Imaging Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65710:
+                                Preferences.debug("tagID = Orca Cam Photon Imaging Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65711:
+                                Preferences.debug("tagID = Orca Cam Direct EM Gain Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65712:
+                                Preferences.debug("tagID = Orca Cam Direct EM Gain\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65713:
+                                Preferences.debug("tagID = Orca Cam EM Gain Protection Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65714:
+                                Preferences.debug("tagID = Orca Cam EM Gain Protection\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65716:
+                                Preferences.debug("tagID = Camera EM Gain Minimum\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65717:
+                                Preferences.debug("tagID = Camera EM Gain Maximum\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65718:
+                                Preferences.debug("tagID = Camera EM Gain Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65719:
+                                Preferences.debug("tagID = Camera EM Gain Enabled\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65736:
+                                Preferences.debug("tagID = Yokogawa Synchronize\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65737:
+                                Preferences.debug("tagID = Yokogawa Is In Sync\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65738:
+                                Preferences.debug("tagID = Yokogawa Status\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65739:
+                                Preferences.debug("tagID = Yokogawa Keep In Sync\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65740:
+                                Preferences.debug("tagID = Yokogawa Is Busy\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65741:
+                                Preferences.debug("tagID = Yokogawa Stop Disc\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65742:
+                                Preferences.debug("tagID = Yokogawa Cam Exposure Time\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65743:
+                                Preferences.debug("tagID = Yokogawa Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65744:
+                                Preferences.debug("tagID = Yokogawa Depth\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65745:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved12\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65746:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved13\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65747:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved14\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65748:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved15\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65749:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved16\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65750:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved17\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65751:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved18\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65752:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved19\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65753:
+                                Preferences.debug("tagID = Yokogawa Cam Reserved20\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65754:
+                                Preferences.debug("tagID = Aurox Cam Status\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65755:
+                                Preferences.debug("tagID = Aurox Cam Input Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65756:
+                                Preferences.debug("tagID = Aurox Cam Live Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65757:
+                                Preferences.debug("tagID = Aurox Cam Calibration Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65758:
+                                Preferences.debug("tagID = Aurox Cam Generic Camera Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65759:
+                                Preferences.debug("tagID = Aurox Cam Button Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65760:
+                                Preferences.debug("tagID = Aurox Cam Depth\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65761:
+                                Preferences.debug("tagID = Aurox Cam Center\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65762:
+                                Preferences.debug("tagID = Aurox Cam Factor\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65763:
+                                Preferences.debug("tagID = Aurox Cam Create Registration\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65764:
+                                Preferences.debug("tagID = Aurox Cam Regoistration Valid\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65765:
+                                Preferences.debug("tagID = Aurox Cam Registration Error\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65766:
+                                Preferences.debug("tagID = Aurox Cam Shading Image Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65767:
+                                Preferences.debug("tagID = Aurox Cam Shading Image Available\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65768:
+                                Preferences.debug("tagID = Aurox Cam Quality\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65769:
+                                Preferences.debug("tagID = Aurox Cam Cut Left\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65770:
+                                Preferences.debug("tagID = Aurox Cam Cut Top\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65771:
+                                Preferences.debug("tagID = Aurox Cam Cut Right\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65772:
+                                Preferences.debug("tagID = Aurox Cam Cut Bottom\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65773:
+                                Preferences.debug("tagID = Aurox Cam Mean\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65774:
+                                Preferences.debug("tagID = Aurox Cam Normalize\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65775:
+                                Preferences.debug("tagID = Aurox Cam Use Shading\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65776:
+                                Preferences.debug("tagID = Aurox Cam Shading Valid\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65777:
+                                Preferences.debug("tagID = Aurox Cam Notification\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65778:
+                                Preferences.debug("tagID = Aurox Cam Calibration ID\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65779:
+                                Preferences.debug("tagID = Aurox Cam Simple Calib Mode\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65780:
+                                Preferences.debug("tagID = Aurox Cam Calibration Name\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65781:
+                                Preferences.debug("tagID = Aurox Cam CFactor\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65782:
+                                Preferences.debug("tagID = Aurox Cam Registration Center\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65783:
+                                Preferences.debug("tagID = Aurox Cam Calibration ID2\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65784:
+                                Preferences.debug("tagID = Aurox Cam Averaging\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65785:
+                                Preferences.debug("tagID = Aurox Cam Unique ID\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65786:
+                                Preferences.debug("tagID = Aurox Cam Auto Normalize\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65787:
+                                Preferences.debug("tagID = Aurox Cam Reserved3\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65788:
+                                Preferences.debug("tagID = Aurox Cam Reserved4\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case 65789:
+                                Preferences.debug("tagID = Aurox Cam Reserved5\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 5439491:
                                 Preferences.debug("tag ID = Acquisition software\n", Preferences.DEBUG_FILEIO);
