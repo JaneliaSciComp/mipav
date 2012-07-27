@@ -881,7 +881,11 @@ public class ViewMenuBar {
                                                 menuBuilder.buildMenuItem("Extract Surface", "ProstateExtract", 0,
                                                         null, false),
                                                 menuBuilder.buildMenuItem("Open other orientation",
-                                                		"NewVOIOtherOrientation", 0, null, false)}),
+                                                		"NewVOIOtherOrientation", 0, null, false), 
+                                                menuBuilder.buildMenuItem("semi-auto B-Spline", "SemiAutoBSpline", 0,
+	                                                                null, false),
+	                                            menuBuilder.buildMenuItem("semi-auto B-Spline & Fuzzy-C", "SemiAutoBSplineFuzzyC", 0,
+                                                              null, false)}),
                                 ViewMenuBar.separator,
                                 menuBuilder.makeMenu("Graph", true, new JMenuItem[] {
                                         menuBuilder.buildMenuItem(CustomUIBuilder.PARAM_VOI_GRAPH_OPEN, true),
