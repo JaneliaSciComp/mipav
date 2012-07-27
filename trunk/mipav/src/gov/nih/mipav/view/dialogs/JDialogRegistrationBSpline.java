@@ -1358,7 +1358,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
      * Private class which holds dialog controls associated with the values in the AlgorithmRegBSpline.Options class for
      * a "pass" of registration.
      */
-    private static class Controls {
+    public static class Controls {
 
         /** DOCUMENT ME! */
         private static final int[] ms_aiBSplineDegreeOptions = {1, 2, 3, 4};
