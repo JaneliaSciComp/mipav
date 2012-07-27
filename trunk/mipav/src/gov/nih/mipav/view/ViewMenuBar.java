@@ -197,7 +197,8 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Unsharp mask", null, 0, null, false),}),
                 menuBuilder.makeMenu("Filters (wavelet)", false, new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
                         // null, null, null),
-                        menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),}),
+                        menuBuilder.buildMenuItem("Thresholding", "waveletThreshold", 0, null, false),
+                        menuBuilder.buildMenuItem("Multiscale products", "waveletMultiscaleProducts", 0, null, false),}),
                 menuBuilder.makeMenu("Fuzzy", false, new JMenuItem[] {
                 		menuBuilder.buildMenuItem("Edge extraction by FIRE operators", "fireEdgeExtraction", 0, null, false),
                 	    menuBuilder.buildMenuItem("Fuzzy minimization", "fuzzyMin", 0, null, false),
