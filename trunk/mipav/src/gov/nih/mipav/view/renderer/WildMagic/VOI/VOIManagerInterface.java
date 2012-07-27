@@ -1094,7 +1094,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             loadProstateMask();
         } else if (command.equals("ProstateSegAuto")) {
         	prostateSegAuto();
-        } else if (command.equals("SaveDicomMatrix")) {
+        } else if ( command.equals("SemiAutoBSpline")) {
+        	prostateSemiAutoBSpline();
+        } else if ( command.equals("SemiAutoBSplineFuzzyC")) {
+        	prostateSemiAutoBSplineFuzzyC();
+        }else if (command.equals("SaveDicomMatrix")) {
             saveDicomMatrixInfo();
         }  else if (command.equals(CustomUIBuilder.PARAM_VOI_LOGICAL_OPERATIONS.getActionCommand())) {
         	if ( (getActiveImage().getVOIs() != null) && (getActiveImage().getVOIs().size() >= 1 )) {
