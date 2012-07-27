@@ -780,12 +780,14 @@ public class PlugInAlgorithmGenerateFusion543b extends AlgorithmBase {
         private void doMaxProj(ModelImage image, boolean parentShow, boolean parentSave, File parentDir, FileWriteOptions options, FileIO io) {
             if(showMaxProj || saveMaxProj) {
                 AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion543b.generateMaxProjAlg(maxAlgo);
+                String projFolder = "Proj";
                 for(int i=0; i<maxAlgoClone.length; i++) {
                     maxAlgoClone[i].setSrcImage(image);
                     maxAlgoClone[i].setStartSlice(0);
                     maxAlgoClone[i].setMaxIntensity(new double[]{image.getMax()});
                     switch(maxAlgoClone[i].getProjectionDirection()) {
                     case AlgorithmMaximumIntensityProjection.X_PROJECTION:
+                        projFolder = "XProj";
                         maxAlgoClone[i].setStopSlice(image.getExtents()[0]-1);
                         if(maxAlgoClone[i].getWindow() == -1 || maxAlgoClone[i].getWindow() > image.getExtents()[0]) {
                             maxAlgoClone[i].setWindow(image.getExtents()[0]);
@@ -793,6 +795,7 @@ public class PlugInAlgorithmGenerateFusion543b extends AlgorithmBase {
                         break;
                         
                     case AlgorithmMaximumIntensityProjection.Y_PROJECTION:
+                        projFolder = "YProj";
                         maxAlgoClone[i].setStopSlice(image.getExtents()[1]-1);
                         if(maxAlgoClone[i].getWindow() == -1 || maxAlgoClone[i].getWindow() > image.getExtents()[1]) {
                             maxAlgoClone[i].setWindow(image.getExtents()[1]);
@@ -800,6 +803,7 @@ public class PlugInAlgorithmGenerateFusion543b extends AlgorithmBase {
                         break;
                         
                     case AlgorithmMaximumIntensityProjection.Z_PROJECTION:
+                        projFolder = "ZProj";
                         maxAlgoClone[i].setStopSlice(image.getExtents()[2]-1);
                         if(maxAlgoClone[i].getWindow() == -1 || maxAlgoClone[i].getWindow() > image.getExtents()[2]) {
                             maxAlgoClone[i].setWindow(image.getExtents()[2]);
@@ -818,7 +822,7 @@ public class PlugInAlgorithmGenerateFusion543b extends AlgorithmBase {
                     if(parentSave && saveMaxProj) {
                         Vector<ModelImage> resImageVec = maxAlgoClone[i].getResultImage();
                         for(int j=0; j<resImageVec.size(); j++) {
-                            options.setFileDirectory(parentDir.getAbsolutePath()+File.separator);
+                            options.setFileDirectory(parentDir.getAbsolutePath()+File.separator+projFolder+File.separator);
                             options.setFileName(resImageVec.get(j).getImageFileName());
                             options.setFileType(FileUtility.TIFF);
                             options.setBeginSlice(0);
