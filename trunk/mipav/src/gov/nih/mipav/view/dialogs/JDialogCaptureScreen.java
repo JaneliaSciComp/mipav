@@ -102,7 +102,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     /** JTextField for the name of the file being attached */
     private JTextField fileField = new JTextField(25);
     
-    public static Boolean cancel = false;
+    public Boolean cancel = false;
 
 	public static String fileName;
 

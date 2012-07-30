@@ -117,6 +117,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	public JButton screenCap;
 
 	private File image;
+
+	private File bugReport;
+
+	private JDialogCaptureScreen screenCapture;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -182,7 +186,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			System.gc();
 			frame.setVisible(false);
 		} else if (command.equals("Create New Image")){
-			JDialogCaptureScreen screenCapture = new JDialogCaptureScreen(null, true);
+			screenCapture = new JDialogCaptureScreen(null, true);
+			screenCapture.addWindowListener(this);
 		} else if (command.equals("Browse")) {
 			browser = new JFileChooser();
 			int returnVal = browser.showOpenDialog(ReportBugBuilder.this);
@@ -241,8 +246,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	    String fileSeparator = System.getProperties().getProperty("file.separator");
 
 		try {
-			File.createTempFile("bugReport", ".txt");
-			BufferedWriter report = new BufferedWriter(new FileWriter("bugReport.txt", true));
+			bugReport = new File(Preferences.getPreferencesDir() + File.separatorChar + "bugReport.txt");
+
+			BufferedWriter report = new BufferedWriter(new FileWriter(bugReport, true));
 			report.write("New Bug Report:");
 			report.newLine();
 			report.write(summary);
@@ -310,6 +316,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			report.write("file.separator = " + fileSeparator);
 			report.flush();
 			report.close();
+			
+			bugReport.deleteOnExit();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -341,8 +349,15 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			parts.addBodyPart(reportSummary);
 					
 			reportSummary = new MimeBodyPart();
-			String file = "BugReport.txt";
+			String file = bugReport.getAbsolutePath();
 			DataSource source = new FileDataSource(file);
+			reportSummary.setDataHandler(new DataHandler(source));
+			reportSummary.setFileName("bugReport.txt");
+			parts.addBodyPart(reportSummary);
+			
+			reportSummary = new MimeBodyPart();
+			file = "errors.txt";
+			source = new FileDataSource(file);
 			reportSummary.setDataHandler(new DataHandler(source));
 			reportSummary.setFileName(file);
 			parts.addBodyPart(reportSummary);
@@ -571,13 +586,13 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	}
 	
 	public void windowClosed(WindowEvent event){
-		if(!JDialogCaptureScreen.cancel){
+		if(event.getSource().equals(screenCapture) && !screenCapture.cancel){
 			attachmentName = JDialogCaptureScreen.fileName + ".png";
 			try {
-				if (JDialogCaptureScreen.fileName.length() < 3)
-					MipavUtil.displayError("File name must be at least three characters long.");
-				else if (JDialogCaptureScreen.currImage == null)
-					MipavUtil.displayError("File name must be at least three characters long.");
+				if (JDialogCaptureScreen.currImage == null)
+					MipavUtil.displayError("You must select a region to save.");
+//				else if (attachmentName.length() < 7)
+//					JOptionPane.showMessageDialog(null, "File Name must be at least three characters long.", "Error", JOptionPane.ERROR_MESSAGE);
 				else {
 					image = new File(Preferences.getPreferencesDir() + File.separatorChar + attachmentName);
 					ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
