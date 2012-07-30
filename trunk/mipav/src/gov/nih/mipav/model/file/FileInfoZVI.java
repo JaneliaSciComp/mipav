@@ -35,6 +35,10 @@ public class FileInfoZVI extends FileInfoBase {
     double exposureTime1 = Double.NaN;
     double exposureTime2 = Double.NaN;
     double exposureTime3 = Double.NaN;
+    int exposureTimeChannel0;
+    int exposureTimeChannel1;
+    int exposureTimeChannel2;
+    int exposureTimeChannel3;
     int apotomeProcessingMode = Integer.MIN_VALUE;
     // A different apotome grid position is seen for each channel
     int apotomeGridPosition0 = Integer.MIN_VALUE;
@@ -292,19 +296,19 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (!Double.isNaN(exposureTime0)) {
-            dialog.append("Channel 0 exposure time = " + exposureTime0 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel0 + " exposure time = " + exposureTime0 + " milliseconds\n");
         }
         
         if (!Double.isNaN(exposureTime1)) {
-            dialog.append("Channel 1 exposure time = " + exposureTime1 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel1 + " exposure time = " + exposureTime1 + " milliseconds\n");
         }
         
         if (!Double.isNaN(exposureTime2)) {
-            dialog.append("Channel 2 exposure time = " + exposureTime2 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel2 + " exposure time = " + exposureTime2 + " milliseconds\n");
         }
         
         if (!Double.isNaN(exposureTime3)) {
-            dialog.append("Channel 3 exposure time = " + exposureTime3 + " milliseconds\n");
+            dialog.append("Channel " + exposureTimeChannel3 + " exposure time = " + exposureTime3 + " milliseconds\n");
         }
         
         if (apotomeProcessingMode != Integer.MIN_VALUE) {
@@ -672,19 +676,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.cameraFramePixelDistance = cameraFramePixelDistance;
     }
     
-    public void setExposureTime0(double exposureTime0) {
+    public void setExposureTime0(int exposureTimeChannel0, double exposureTime0) {
+        this.exposureTimeChannel0 = exposureTimeChannel0;
         this.exposureTime0 = exposureTime0;
     }
     
-    public void setExposureTime1(double exposureTime1) {
+    public void setExposureTime1(int exposureTimeChannel1, double exposureTime1) {
+        this.exposureTimeChannel1 = exposureTimeChannel1;
         this.exposureTime1 = exposureTime1;
     }
     
-    public void setExposureTime2(double exposureTime2) {
+    public void setExposureTime2(int exposureTimeChannel2, double exposureTime2) {
+        this.exposureTimeChannel2 = exposureTimeChannel2;
         this.exposureTime2 = exposureTime2;
     }
     
-    public void setExposureTime3(double exposureTime3) {
+    public void setExposureTime3(int exposureTimeChannel3, double exposureTime3) {
+        this.exposureTimeChannel3 = exposureTimeChannel3;
         this.exposureTime3 = exposureTime3;
     }
     
