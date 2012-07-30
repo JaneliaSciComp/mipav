@@ -132,6 +132,10 @@ public class FileInfoZVI extends FileInfoBase {
     String imageRelativeTime3 = null;
     String fileDate = null;
     int fileSize = Integer.MIN_VALUE;
+    int channel0 = Integer.MIN_VALUE;
+    int channel1 = Integer.MIN_VALUE;
+    int channel2 = Integer.MIN_VALUE;
+    int channel3 = Integer.MIN_VALUE;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -216,35 +220,35 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (!Double.isNaN(blackValue0)) {
-            dialog.append("Channel 0 black value = " + blackValue0 + "\n");
+            dialog.append("Channel " + channel0 + " black value = " + blackValue0 + "\n");
         }
         
         if (!Double.isNaN(blackValue1)) {
-            dialog.append("Channel 1 black value = " + blackValue1 + "\n");
+            dialog.append("Channel " + channel1 + " black value = " + blackValue1 + "\n");
         }
         
         if (!Double.isNaN(blackValue2)) {
-            dialog.append("Channel 2 black value = " + blackValue2 + "\n");
+            dialog.append("Channel " + channel2 + " black value = " + blackValue2 + "\n");
         }
         
         if (!Double.isNaN(blackValue3)) {
-            dialog.append("Channel 3 black value = " + blackValue3 + "\n");
+            dialog.append("Channel " + channel3 + " black value = " + blackValue3 + "\n");
         }
         
         if (!Double.isNaN(whiteValue0)) {
-            dialog.append("Channel 0 white value = " + whiteValue0 + "\n");
+            dialog.append("Channel " + channel0 + " white value = " + whiteValue0 + "\n");
         }
         
         if (!Double.isNaN(whiteValue1)) {
-            dialog.append("Channel 1 white value = " + whiteValue1 + "\n");
+            dialog.append("Channel " + channel1 + " white value = " + whiteValue1 + "\n");
         }
         
         if (!Double.isNaN(whiteValue2)) {
-            dialog.append("Channel 2 white value = " + whiteValue2 + "\n");
+            dialog.append("Channel " + channel2 + " white value = " + whiteValue2 + "\n");
         }
         
         if (!Double.isNaN(whiteValue3)) {
-            dialog.append("Channel 3 white value = " + whiteValue3 + "\n");
+            dialog.append("Channel " + channel3 + " white value = " + whiteValue3 + "\n");
         }
         
         if (!Double.isNaN(gammaValue)) {
@@ -572,35 +576,35 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (cameraImageAcquisitionTime0 != null) {
-            dialog.append("Channel 0 camera image acquisition time = " + cameraImageAcquisitionTime0 + "\n");
+            dialog.append("Channel " + channel0 + " camera image acquisition time = " + cameraImageAcquisitionTime0 + "\n");
         }
         
         if (cameraImageAcquisitionTime1 != null) {
-            dialog.append("Channel 1 camera image acquisition time = " + cameraImageAcquisitionTime1 + "\n");
+            dialog.append("Channel " + channel1 + " camera image acquisition time = " + cameraImageAcquisitionTime1 + "\n");
         }
         
         if (cameraImageAcquisitionTime2 != null) {
-            dialog.append("Channel 2 camera image acquisition time = " + cameraImageAcquisitionTime2 + "\n");
+            dialog.append("Channel " + channel2 + " camera image acquisition time = " + cameraImageAcquisitionTime2 + "\n");
         }
         
         if (cameraImageAcquisitionTime3 != null) {
-            dialog.append("Channel 3 camera image acquisition time = " + cameraImageAcquisitionTime3 + "\n");
+            dialog.append("Channel " + channel3 + " camera image acquisition time = " + cameraImageAcquisitionTime3 + "\n");
         }
         
         if (imageRelativeTime0 != null) {
-            dialog.append("Channel 0 image relative time = " + imageRelativeTime0 + "\n");
+            dialog.append("Channel " + channel0 + " image relative time = " + imageRelativeTime0 + "\n");
         }
         
         if (imageRelativeTime1 != null) {
-            dialog.append("Channel 1 image relative time = " + imageRelativeTime1 + "\n");
+            dialog.append("Channel " + channel1 + " image relative time = " + imageRelativeTime1 + "\n");
         }
         
         if (imageRelativeTime2 != null) {
-            dialog.append("Channel 2 image relative time = " + imageRelativeTime2 + "\n");
+            dialog.append("Channel " + channel2 + " image relative time = " + imageRelativeTime2 + "\n");
         }
         
         if (imageRelativeTime3 != null) {
-            dialog.append("Channel 3 image relative time = " + imageRelativeTime3 + "\n");
+            dialog.append("Channel " + channel3 + " image relative time = " + imageRelativeTime3 + "\n");
         }
         
         if (fileDate != null) {
@@ -1055,4 +1059,21 @@ public class FileInfoZVI extends FileInfoBase {
     public void setFileSize(int fileSize) {
         this.fileSize = fileSize;
     }
+    
+    public void setChannel0(int channel0) {
+        this.channel0 = channel0;
+    }
+    
+    public void setChannel1(int channel1) {
+        this.channel1 = channel1;
+    }
+    
+    public void setChannel2(int channel2) {
+        this.channel2 = channel2;
+    }
+    
+    public void setChannel3(int channel3) {
+        this.channel3 = channel3;
+    }
+
 }
