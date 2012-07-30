@@ -394,6 +394,14 @@ public class FileZVI extends FileBase {
         int numberImageRelativeTime1Values = 0;
         int numberImageRelativeTime2Values = 0;
         int numberImageRelativeTime3Values = 0;
+        boolean haveFirstChannel = false;
+        boolean haveSecondChannel = false;
+        boolean haveThirdChannel = false;
+        boolean haveFourthChannel = false;
+        int ch0 = Integer.MIN_VALUE;
+        int ch1 = Integer.MIN_VALUE;
+        int ch2 = Integer.MIN_VALUE;
+        int ch3 = Integer.MIN_VALUE;
         FileInfoBase fInfo[] = null;
         
         try {
@@ -508,6 +516,142 @@ public class FileZVI extends FileBase {
                 }
             }
             
+            for (i = 0; i < imageCount; i++) {
+                if (imageC2Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC2Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC2Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC2Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC2Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC2Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC2Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC2Array[i];
+                   }
+                }
+            }
+            
+            for (i = 0; i < imageCount; i++) {
+                if (imageC3Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC3Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC3Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC3Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC3Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC3Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC3Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC3Array[i];
+                   }
+                }
+            }
+            
+            for (i = 0; i < imageCount; i++) {
+                if (imageC6Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC6Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC6Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC6Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC6Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC6Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC6Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC6Array[i];
+                   }
+                }
+            }
+            
+            for (i = 0; i < imageCount; i++) {
+                if (imageC7Array[i] != Integer.MIN_VALUE) {
+                   if (!haveFirstChannel) {
+                       haveFirstChannel = true;
+                       ch0 = imageC7Array[i];
+                   }
+                   else if ((haveFirstChannel) && (ch0 == imageC7Array[i])) {
+                       
+                   }
+                   else if (!haveSecondChannel) {
+                       haveSecondChannel = true;
+                       ch1 = imageC7Array[i];
+                   }
+                   else if ((haveSecondChannel) && (ch1 == imageC7Array[i])) {
+                       
+                   }
+                   else if (!haveThirdChannel) {
+                       haveThirdChannel = true;
+                       ch2 = imageC7Array[i];
+                   }
+                   else if ((haveThirdChannel) && (ch2 == imageC7Array[i])) {
+                       
+                   }
+                   else if (!haveFourthChannel) {
+                       haveFourthChannel = true;
+                       ch3 = imageC7Array[i];
+                   }
+                }
+            }
+            
+            if (ch0 != Integer.MIN_VALUE) {
+                fileInfo.setChannel0(ch0);
+            }
+            
+            if (ch1 != Integer.MIN_VALUE) {
+                fileInfo.setChannel1(ch1);
+            }
+            
+            if (ch2 != Integer.MIN_VALUE) {
+                fileInfo.setChannel2(ch2);
+            }
+            
+            if (ch3 != Integer.MIN_VALUE) {
+                fileInfo.setChannel3(ch3);
+            }
+            
             blackValue0Array = new double[zDim*tDim];
             blackValue1Array = new double[zDim*tDim];
             blackValue2Array = new double[zDim*tDim];
@@ -518,7 +662,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 0) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch0) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue0Array[numberBlack0Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -530,7 +674,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 1) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch1) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue1Array[numberBlack1Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -542,7 +686,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 2) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch2) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue2Array[numberBlack2Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -554,7 +698,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
-                           (imageC2Array[i] == 3) && (!Double.isNaN(imageBlackValueArray[i]))) {
+                           (imageC2Array[i] == ch3) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue3Array[numberBlack3Values++] = imageBlackValueArray[i];
                         } // if((imageT2Array[i] == t) && (imageZ2Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -571,7 +715,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 0) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch0) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue0Array[numberWhite0Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -583,7 +727,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 1) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch1) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue1Array[numberWhite1Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -595,7 +739,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 2) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch2) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue2Array[numberWhite2Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -607,7 +751,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
-                           (imageC3Array[i] == 3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
+                           (imageC3Array[i] == ch3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue3Array[numberWhite3Values++] = imageWhiteValueArray[i];
                         } // if((imageT3Array[i] == t) && (imageZ3Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -624,7 +768,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 0) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch0) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime0[numberAcqTime0Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -636,7 +780,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 1) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch1) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime1[numberAcqTime1Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -648,7 +792,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 2) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch2) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime2[numberAcqTime2Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -660,7 +804,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
-                           (imageC6Array[i] == 3) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
+                           (imageC6Array[i] == ch3) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime3[numberAcqTime3Values++] = cameraImageAcquisitionTime[i];
                         } // if((imageT6Array[i] == t) && (imageZ6Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -677,7 +821,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 0) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch0) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime0[numberImageRelativeTime0Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -689,7 +833,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 1) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch1) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime1[numberImageRelativeTime1Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -701,7 +845,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 2) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch2) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime2[numberImageRelativeTime2Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -713,7 +857,7 @@ public class FileZVI extends FileBase {
                 for (z = minZ; z <= maxZ; z++) {
                     for (i = 0; i < imageCount; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
-                           (imageC7Array[i] == 3) && (!Double.isNaN(imageRelativeTime[i]))) {
+                           (imageC7Array[i] == ch3) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime3[numberImageRelativeTime3Values++] = imageRelativeTime[i];
                         } // if((imageT7Array[i] == t) && (imageZ7Array[i] == z)
                     } // for (i = 0; i < imageCount; i++)
@@ -5125,11 +5269,23 @@ public class FileZVI extends FileBase {
                         if (imageZArray[0] != Integer.MIN_VALUE) {
                             imageZArray[0] = firstTileValue;
                         }
+                        if (imageZ2Array[0] != Integer.MIN_VALUE) {
+                            imageZ2Array[0] = firstTileValue;
+                        }
+                        if (imageZ3Array[0] != Integer.MIN_VALUE) {
+                            imageZ3Array[0] = firstTileValue;
+                        }
                         if (imageZ4Array[0] != Integer.MIN_VALUE) {
                             imageZ4Array[0] = firstTileValue;
                         }
                         if (imageZ5Array[0] != Integer.MIN_VALUE) {
                             imageZ5Array[0] = firstTileValue;
+                        }
+                        if (imageZ6Array[0] != Integer.MIN_VALUE) {
+                            imageZ6Array[0] = firstTileValue;
+                        }
+                        if (imageZ7Array[0] != Integer.MIN_VALUE) {
+                            imageZ7Array[0] = firstTileValue;
                         }
                         if (imageZXArray[0] != Integer.MIN_VALUE) {
                             imageZXArray[0] = firstTileValue;
@@ -5213,68 +5369,68 @@ public class FileZVI extends FileBase {
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
                         (tValue != Integer.MIN_VALUE) && (!Double.isNaN(blackValue))) {
                         boolean doFill = true;
                         for (i = 0; i < icp2; i++) {
-                            if ((imageZ2Array[i] == zValue) && (imageC2Array[i] == cValue) &&
+                            if ((imageZ2Array[i] == zTileValue) && (imageC2Array[i] == cValue) &&
                                 (imageT2Array[i] == tValue)) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ2Array[icp2] = zValue;
+                            imageZ2Array[icp2] = zTileValue;
                             imageC2Array[icp2] = cValue;
                             imageT2Array[icp2] = tValue;
                             imageBlackValueArray[icp2++] = blackValue;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
                         (tValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
                         boolean doFill = true;
                         for (i = 0; i < icp3; i++) {
-                            if ((imageZ3Array[i] == zValue) && (imageC3Array[i] == cValue) &&
+                            if ((imageZ3Array[i] == zTileValue) && (imageC3Array[i] == cValue) &&
                                 (imageT3Array[i] == tValue)) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ3Array[icp3] = zValue;
+                            imageZ3Array[icp3] = zTileValue;
                             imageC3Array[icp3] = cValue;
                             imageT3Array[icp3] = tValue;
                             imageWhiteValueArray[icp3++] = whiteValue;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
                         (tValue != Integer.MIN_VALUE) && (!Double.isNaN(acqTime))) {
                         boolean doFill = true;
                         for (i = 0; i < icp6; i++) {
-                            if ((imageZ6Array[i] == zValue) && (imageC6Array[i] == cValue) &&
+                            if ((imageZ6Array[i] == zTileValue) && (imageC6Array[i] == cValue) &&
                                 (imageT6Array[i] == tValue)) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ6Array[icp6] = zValue;
+                            imageZ6Array[icp6] = zTileValue;
                             imageC6Array[icp6] = cValue;
                             imageT6Array[icp6] = tValue;
                             cameraImageAcquisitionTime[icp6++] = acqTime;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
+                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
                         (tValue != Integer.MIN_VALUE) && (!Double.isNaN(relTime))) {
                         boolean doFill = true;
                         for (i = 0; i < icp7; i++) {
-                            if ((imageZ7Array[i] == zValue) && (imageC7Array[i] == cValue) &&
+                            if ((imageZ7Array[i] == zTileValue) && (imageC7Array[i] == cValue) &&
                                 (imageT7Array[i] == tValue)) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ7Array[icp7] = zValue;
+                            imageZ7Array[icp7] = zTileValue;
                             imageC7Array[icp7] = cValue;
                             imageT7Array[icp7] = tValue;
                             imageRelativeTime[icp7++] = relTime;
