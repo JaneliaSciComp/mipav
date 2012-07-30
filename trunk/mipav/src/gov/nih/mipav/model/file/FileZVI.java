@@ -146,6 +146,10 @@ public class FileZVI extends FileBase {
     // array pointer
     private int ap = 0;
     private double imageFocusPositionArray[] = null;
+    private double imageStagePositionXArray[] = null;
+    private int imageZXArray[] = null;
+    private int imageZYArray[] = null;
+    private double imageStagePositionYArray[] = null;
     private int imageZArray[] = null;
     private int imageZ2Array[] = null;
     private int imageC2Array[] = null;
@@ -181,6 +185,10 @@ public class FileZVI extends FileBase {
     private int icp6 = 0;
     // image count pointer for imageRelativeTime
     private int icp7 = 0;
+    // image count pointer for imageStagePositionX
+    private int icpX = 0;
+    // image count pointer for imageStagePositionY
+    private int icpY = 0;
     
     // Sector allocation table
     private int sat[] = null;
@@ -240,6 +248,10 @@ public class FileZVI extends FileBase {
         tArray = null;
         positionArray = null;
         imageFocusPositionArray = null;
+        imageStagePositionXArray = null;
+        imageZXArray = null;
+        imageStagePositionYArray = null;
+        imageZYArray = null;
         shortSectorTable = null;
         startSectorArray = null;
         offsetArray = null;
@@ -343,6 +355,8 @@ public class FileZVI extends FileBase {
         double processedFocusPositionArray[] = null;
         double processedRelFocusPosition1Array[] = null;
         double processedRelFocusPosition2Array[] = null;
+        double processedStagePositionXArray[] = null;
+        double processedStagePositionYArray[] = null;
         double blackValue0Array[] = null;
         double blackValue1Array[] = null;
         double blackValue2Array[] = null;
@@ -362,6 +376,8 @@ public class FileZVI extends FileBase {
         int numberFocusPositions = 0;
         int numberRelFocusPosition1s = 0;
         int numberRelFocusPosition2s = 0;
+        int numberStagePositionXs = 0;
+        int numberStagePositionYs = 0;
         int numberBlack0Values = 0;
         int numberBlack1Values = 0;
         int numberBlack2Values = 0;
@@ -468,6 +484,26 @@ public class FileZVI extends FileBase {
                 for (i = 0; i < imageCount; i++) {
                     if ((imageZ5Array[i] == z) && (!Double.isNaN(imageRelFocusPosition2Array[i]))) {
                         processedRelFocusPosition2Array[numberRelFocusPosition2s++] = imageRelFocusPosition2Array[i];    
+                    }
+                }
+            }
+            
+            processedStagePositionXArray = new double[zDim];
+            numberStagePositionXs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageZXArray[i] == z) && (!Double.isNaN(imageStagePositionXArray[i]))) {
+                        processedStagePositionXArray[numberStagePositionXs++] = imageStagePositionXArray[i];    
+                    }
+                }
+            }
+            
+            processedStagePositionYArray = new double[zDim];
+            numberStagePositionYs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageZYArray[i] == z) && (!Double.isNaN(imageStagePositionYArray[i]))) {
+                        processedStagePositionYArray[numberStagePositionYs++] = imageStagePositionYArray[i];    
                     }
                 }
             }
@@ -995,6 +1031,24 @@ public class FileZVI extends FileBase {
                 }
             }
             
+            if (numberStagePositionXs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setStagePositionX(processedStagePositionXArray[z]);
+                    }
+                }
+            }
+            
+            if (numberStagePositionYs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setStagePositionY(processedStagePositionYArray[z]);
+                    }
+                }
+            }
+            
             if (numberBlack0Values == zDim * tDim) {
                 for (t = 0; t < tDim; t++) {
                     for (z = 0; z < zDim; z++) {
@@ -1207,9 +1261,23 @@ public class FileZVI extends FileBase {
         double focusPosition = Double.NaN;
         double relFocusPosition1 = Double.NaN;
         double relFocusPosition2 = Double.NaN;
+        double stagePositionX = Double.NaN;
+        double stagePositionY = Double.NaN;
         int zValue = Integer.MIN_VALUE;
         int cValue = Integer.MIN_VALUE;
         int tValue = Integer.MIN_VALUE;
+        int tileValue = Integer.MIN_VALUE;
+        int zTileValue;
+        boolean haveFirstZValue = false;
+        boolean haveSecondZValue = false;
+        boolean haveFirstTileValue = false;
+        boolean haveSecondTileValue = false;
+        boolean useZValue = true;
+        boolean useTileValue = false;
+        int firstZValue = Integer.MIN_VALUE;
+        int secondZValue = Integer.MIN_VALUE;
+        int firstTileValue = Integer.MIN_VALUE;
+        int secondTileValue = Integer.MIN_VALUE;
         double blackValue = Double.NaN;
         double whiteValue = Double.NaN;
         int reflectorPosition = Integer.MIN_VALUE;
@@ -2045,6 +2113,10 @@ public class FileZVI extends FileBase {
                     imageC7Array = new int[imageCount+10];
                     imageT7Array = new int[imageCount+10];
                     imageRelativeTime = new double[imageCount+10];
+                    imageStagePositionXArray = new double[imageCount+10];
+                    imageZXArray = new int[imageCount+10];
+                    imageStagePositionYArray = new double[imageCount+10];
+                    imageZYArray = new int[imageCount+10];
                     for (i = 0; i < imageCount+10; i++) {
                         imageFocusPositionArray[i] = Double.NaN;
                         imageZArray[i] = Integer.MIN_VALUE;
@@ -2068,6 +2140,10 @@ public class FileZVI extends FileBase {
                         imageC7Array[i] = Integer.MIN_VALUE;
                         imageT7Array[i] = Integer.MIN_VALUE;
                         imageRelativeTime[i] = Double.NaN;
+                        imageStagePositionXArray[i] = Double.NaN;
+                        imageZXArray[i] = Integer.MIN_VALUE;
+                        imageStagePositionYArray[i] = Double.NaN;
+                        imageZYArray[i] = Integer.MIN_VALUE;
                     }
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
@@ -2843,9 +2919,12 @@ public class FileZVI extends FileBase {
                    focusPosition = Double.NaN;
                    relFocusPosition1 = Double.NaN;
                    relFocusPosition2 = Double.NaN;
+                   stagePositionX = Double.NaN;
+                   stagePositionY = Double.NaN;
                    zValue = Integer.MIN_VALUE;
                    cValue = Integer.MIN_VALUE;
                    tValue = Integer.MIN_VALUE;
+                   tileValue = Integer.MIN_VALUE;
                    blackValue = Double.NaN;
                    whiteValue = Double.NaN;
                    reflectorPosition = Integer.MIN_VALUE;
@@ -3409,13 +3488,15 @@ public class FileZVI extends FileBase {
                             case 2073:
                                 Preferences.debug("tagID = Stage position X\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_R8) {
-                                    fileInfo.setStagePositionX(doubleValue);
+                                    // Different value for every z slice
+                                    stagePositionX = doubleValue;
                                 }
                                 break;
                             case 2074:
                                 Preferences.debug("tagID = Stage position Y\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_R8) {
-                                    fileInfo.setStagePositionY(doubleValue);
+                                    // Different value for every z slice
+                                    stagePositionY = doubleValue;
                                 }
                                 break;
                             case 2075:
@@ -4099,6 +4180,14 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Image index Z\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_I4) {
                                     zValue = intValue;
+                                    if (haveFirstZValue && (!haveSecondZValue) && (zValue != firstZValue)) {
+                                        haveSecondZValue = true;
+                                        secondZValue = zValue;
+                                    }
+                                    if (!haveFirstZValue) {
+                                        haveFirstZValue = true;
+                                        firstZValue = zValue;
+                                    }
                                 }
                                 break;
                             case 2820:
@@ -4115,6 +4204,17 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2822:
                                 Preferences.debug("tagID = Image tile index\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    tileValue = intValue;                       
+                                    if (haveFirstTileValue && (!haveSecondTileValue) && (tileValue != firstTileValue)) {
+                                        haveSecondTileValue = true;
+                                        secondTileValue = tileValue;
+                                    }
+                                    if (!haveFirstTileValue) {
+                                        haveFirstTileValue = true;
+                                        firstTileValue = tileValue;
+                                    }
+                                }
                                 break;
                             case 2823:
                                 Preferences.debug("tagID = Image acquisition index\n", Preferences.DEBUG_FILEIO);
@@ -5019,42 +5119,97 @@ public class FileZVI extends FileBase {
                         } // switch(cValue)
                     } // if (multichannelColor != Integer.MIN_VALUE)
                     
-                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(focusPosition))) {
+                    if (useZValue && haveSecondTileValue && (!haveSecondZValue)) {
+                        useZValue = false;
+                        useTileValue = true;
+                        if (imageZArray[0] != Integer.MIN_VALUE) {
+                            imageZArray[0] = firstTileValue;
+                        }
+                        if (imageZ4Array[0] != Integer.MIN_VALUE) {
+                            imageZ4Array[0] = firstTileValue;
+                        }
+                        if (imageZ5Array[0] != Integer.MIN_VALUE) {
+                            imageZ5Array[0] = firstTileValue;
+                        }
+                        if (imageZXArray[0] != Integer.MIN_VALUE) {
+                            imageZXArray[0] = firstTileValue;
+                        }
+                        if (imageZYArray[0] != Integer.MIN_VALUE) {
+                            imageZYArray[0] = firstTileValue;
+                        }
+                    }
+                    
+                    if (useZValue) {
+                        zTileValue = zValue;
+                    }
+                    else {
+                        zTileValue = tileValue;
+                    }
+                    
+                    
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(focusPosition))) {
+               
                         boolean doFill = true;
                         for (i = 0; i < icp; i++) {
-                            if (imageZArray[i] == zValue) {
+                            if (imageZArray[i] == zTileValue) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZArray[icp] = zValue;
+                            imageZArray[icp] = zTileValue;
                             imageFocusPositionArray[icp++] = focusPosition;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition1))) {
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition1))) {
                         boolean doFill = true;
                         for (i = 0; i < icp4; i++) {
-                            if (imageZ4Array[i] == zValue) {
+                            if (imageZ4Array[i] == zTileValue) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ4Array[icp4] = zValue;
+                            imageZ4Array[icp4] = zTileValue;
                             imageRelFocusPosition1Array[icp4++] = relFocusPosition1;
                         }
                     }
                     
-                    if ((zValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition2))) {
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(relFocusPosition2))) {
                         boolean doFill = true;
                         for (i = 0; i < icp5; i++) {
-                            if (imageZ5Array[i] == zValue) {
+                            if (imageZ5Array[i] == zTileValue) {
                                 doFill = false;
                             }
                         }
                         if (doFill) {
-                            imageZ5Array[icp5] = zValue;
+                            imageZ5Array[icp5] = zTileValue;
                             imageRelFocusPosition2Array[icp5++] = relFocusPosition2;
+                        }
+                    }
+                    
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(stagePositionX))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icpX; i++) {
+                            if (imageZXArray[i] == zTileValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZXArray[icpX] = zTileValue;
+                            imageStagePositionXArray[icpX++] = stagePositionX;
+                        }
+                    }
+                    
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(stagePositionY))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icpY; i++) {
+                            if (imageZYArray[i] == zTileValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageZYArray[icpY] = zTileValue;
+                            imageStagePositionYArray[icpY++] = stagePositionY;
                         }
                     }
                     
