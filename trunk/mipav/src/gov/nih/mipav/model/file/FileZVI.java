@@ -1400,7 +1400,15 @@ public class FileZVI extends FileBase {
         boolean booleanValue = false;
         boolean readImagePixels;
         int measureUnits;
-        double exposureTime = Double.NaN;;
+        double exposureTime = Double.NaN;
+        boolean haveExposureTime0 = false;
+        boolean haveExposureTime1 = false;
+        boolean haveExposureTime2 = false;
+        boolean haveExposureTime3 = false;
+        int exposureTimeChannel0 = Integer.MIN_VALUE;
+        int exposureTimeChannel1 = Integer.MIN_VALUE;
+        int exposureTimeChannel2 = Integer.MIN_VALUE;
+        int exposureTimeChannel3 = Integer.MIN_VALUE;
         int apotomeGridPosition = Integer.MIN_VALUE;
         double focusPosition = Double.NaN;
         double relFocusPosition1 = Double.NaN;
@@ -5158,21 +5166,28 @@ public class FileZVI extends FileBase {
                     } // for (i = 0; i < tokenCount  && bp < b.length - 13; i++)
                     
                     if (!Double.isNaN(exposureTime)) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setExposureTime0(exposureTime);
-                                break;
-                            case 1:
-                                fileInfo.setExposureTime1(exposureTime);
-                                break;
-                            case 2:
-                                fileInfo.setExposureTime2(exposureTime);
-                                break;
-                            case 3:
-                                fileInfo.setExposureTime3(exposureTime);
-                                break;
-                            default:
-                        } // switch(cValue)
+                        if (haveExposureTime2 && (!haveExposureTime3) && (cValue != exposureTimeChannel0) &&
+                                (cValue != exposureTimeChannel1) && (cValue != exposureTimeChannel2)) {
+                            haveExposureTime3 = true;
+                            exposureTimeChannel3 = cValue;
+                            fileInfo.setExposureTime3(exposureTimeChannel3, exposureTime);
+                        }
+                        if (haveExposureTime1 && (!haveExposureTime2) && (cValue != exposureTimeChannel0) &&
+                                (cValue != exposureTimeChannel1)) {
+                            haveExposureTime2 = true;
+                            exposureTimeChannel2 = cValue;
+                            fileInfo.setExposureTime2(exposureTimeChannel2, exposureTime);
+                        }
+                        if (haveExposureTime0 && (!haveExposureTime1) && (cValue != exposureTimeChannel0)) {
+                            haveExposureTime1 = true;
+                            exposureTimeChannel1 = cValue;
+                            fileInfo.setExposureTime1(exposureTimeChannel1, exposureTime);
+                        }
+                        if (!haveExposureTime0) {
+                            haveExposureTime0 = true;
+                            exposureTimeChannel0 = cValue;
+                            fileInfo.setExposureTime0(exposureTimeChannel0, exposureTime);
+                        }
                     } // if (!Double.isNaN(exposureTime)
                     
                     if (apotomeGridPosition != Integer.MIN_VALUE) {
