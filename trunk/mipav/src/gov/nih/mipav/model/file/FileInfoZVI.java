@@ -45,6 +45,10 @@ public class FileInfoZVI extends FileInfoBase {
     int apotomeGridPosition1 = Integer.MIN_VALUE;
     int apotomeGridPosition2 = Integer.MIN_VALUE;
     int apotomeGridPosition3 = Integer.MIN_VALUE;
+    int apotomeGridPositionChannel0;
+    int apotomeGridPositionChannel1;
+    int apotomeGridPositionChannel2;
+    int apotomeGridPositionChannel3;
     int apotomeFullPhaseShift = Integer.MIN_VALUE;
     double apotomeFilterStrength = Double.NaN;
     int apotomeCamFilterHarmonics = Integer.MIN_VALUE;
@@ -78,6 +82,10 @@ public class FileInfoZVI extends FileInfoBase {
     int reflectorPosition1 = Integer.MIN_VALUE;
     int reflectorPosition2 = Integer.MIN_VALUE;
     int reflectorPosition3 = Integer.MIN_VALUE;
+    int reflectorPositionChannel0;
+    int reflectorPositionChannel1;
+    int reflectorPositionChannel2;
+    int reflectorPositionChannel3;
     double reflectorMagnification = Double.NaN;
     int transmittedLightShutter = Integer.MIN_VALUE;
     int reflectedLightShutter = Integer.MIN_VALUE;
@@ -88,9 +96,15 @@ public class FileInfoZVI extends FileInfoBase {
     int multichannelColor1 = Integer.MIN_VALUE;
     int multichannelColor2 = Integer.MIN_VALUE;
     int multichannelColor3 = Integer.MIN_VALUE;
+    int multichannelColorChannel0;
+    int multichannelColorChannel1;
+    int multichannelColorChannel2;
+    int multichannelColorChannel3;
     double multichannelWeight = Double.NaN;
     double stagePositionX = Double.NaN;
     double stagePositionY = Double.NaN;
+    double originalStagePositionX = Double.NaN;
+    double originalStagePositionY = Double.NaN;
     double scaleWidth = Double.NaN;
     double scaleHeight = Double.NaN;
     int cameraFrameStartLeft = Integer.MIN_VALUE;
@@ -122,10 +136,18 @@ public class FileInfoZVI extends FileInfoBase {
     int excitationWavelength1 = Integer.MIN_VALUE;
     int excitationWavelength2 = Integer.MIN_VALUE;
     int excitationWavelength3 = Integer.MIN_VALUE;
+    int excitationWavelengthChannel0;
+    int excitationWavelengthChannel1;
+    int excitationWavelengthChannel2;
+    int excitationWavelengthChannel3;
     int emissionWavelength0 = Integer.MIN_VALUE;
     int emissionWavelength1 = Integer.MIN_VALUE;
     int emissionWavelength2 = Integer.MIN_VALUE;
     int emissionWavelength3 = Integer.MIN_VALUE;
+    int emissionWavelengthChannel0;
+    int emissionWavelengthChannel1;
+    int emissionWavelengthChannel2;
+    int emissionWavelengthChannel3;
     String cameraImageAcquisitionTime0 = null;
     String cameraImageAcquisitionTime1 = null;
     String cameraImageAcquisitionTime2 = null;
@@ -140,6 +162,13 @@ public class FileInfoZVI extends FileInfoBase {
     int channel1 = Integer.MIN_VALUE;
     int channel2 = Integer.MIN_VALUE;
     int channel3 = Integer.MIN_VALUE;
+    int axioCamAnalogGainEnable = Integer.MIN_VALUE;
+    int cameraShutterLiveEnable = Integer.MIN_VALUE;
+    double axioCamSaturation = Double.NaN;
+    int condenserContrast = Integer.MIN_VALUE;
+    double condenserNumericalAperture = Double.NaN;
+    String stageCalibrated = null;
+    double optovar = Double.NaN;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -191,36 +220,44 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Stage position Y = " + stagePositionY + "\n");
         }
         
+        if (!Double.isNaN(originalStagePositionX)) {
+            dialog.append("Original stage position X = " + originalStagePositionX + "\n");
+        }
+        
+        if (!Double.isNaN(originalStagePositionY)) {
+            dialog.append("Original stage position Y = " + originalStagePositionY + "\n");
+        }
+        
         if (excitationWavelength0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 excitation wavelength = " + excitationWavelength0 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel0 + " excitation wavelength = " + excitationWavelength0 + "\n");
         }
         
         if (excitationWavelength1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 excitation wavelength = " + excitationWavelength1 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel1 + " excitation wavelength = " + excitationWavelength1 + "\n");
         }
         
         if (excitationWavelength2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 excitation wavelength = " + excitationWavelength2 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel2 + " excitation wavelength = " + excitationWavelength2 + "\n");
         }
         
         if (excitationWavelength3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 excitation wavelength = " + excitationWavelength3 + "\n");
+            dialog.append("Channel " + excitationWavelengthChannel3 + " excitation wavelength = " + excitationWavelength3 + "\n");
         }
         
         if (emissionWavelength0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 emission wavelength = " + emissionWavelength0 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel0 + " emission wavelength = " + emissionWavelength0 + "\n");
         }
         
         if (emissionWavelength1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 emission wavelength = " + emissionWavelength1 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel1 + " emission wavelength = " + emissionWavelength1 + "\n");
         }
         
         if (emissionWavelength2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 emission wavelength = " + emissionWavelength2 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel2 + " emission wavelength = " + emissionWavelength2 + "\n");
         }
         
         if (emissionWavelength3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 emission wavelength = " + emissionWavelength3 + "\n");
+            dialog.append("Channel " + emissionWavelengthChannel3 + " emission wavelength = " + emissionWavelength3 + "\n");
         }
         
         if (!Double.isNaN(blackValue0)) {
@@ -316,19 +353,19 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (apotomeGridPosition0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 apotome grid position = " + apotomeGridPosition0 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel0 + " apotome grid position = " + apotomeGridPosition0 + "\n");
         }
         
         if (apotomeGridPosition1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 apotome grid position = " + apotomeGridPosition1 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel1 + " apotome grid position = " + apotomeGridPosition1 + "\n");
         }
         
         if (apotomeGridPosition2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 apotome grid position = " + apotomeGridPosition2 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel2 + " apotome grid position = " + apotomeGridPosition2 + "\n");
         }
         
         if (apotomeGridPosition3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 apotome grid position = " + apotomeGridPosition3 + "\n");
+            dialog.append("Channel " + apotomeGridPositionChannel3 + " apotome grid position = " + apotomeGridPosition3 + "\n");
         }
         
         if (apotomeFullPhaseShift != Integer.MIN_VALUE) {
@@ -448,19 +485,19 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (reflectorPosition0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 reflector position = " + reflectorPosition0 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel0 + " reflector position = " + reflectorPosition0 + "\n");
         }
         
         if (reflectorPosition1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 reflector position = " + reflectorPosition1 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel1 + " reflector position = " + reflectorPosition1 + "\n");
         }
         
         if (reflectorPosition2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 reflector position = " + reflectorPosition2 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel2 + " reflector position = " + reflectorPosition2 + "\n");
         }
         
         if (reflectorPosition3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 reflector position = " + reflectorPosition3 + "\n");
+            dialog.append("Channel " + reflectorPositionChannel3 + " reflector position = " + reflectorPosition3 + "\n");
         }
         
         if (!Double.isNaN(reflectorMagnification)) {
@@ -492,19 +529,19 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (multichannelColor0 != Integer.MIN_VALUE) {
-            dialog.append("Channel 0 multichannel color = " + multichannelColor0 + "\n");
+            dialog.append("Channel " + multichannelColorChannel0 + " multichannel color = " + multichannelColor0 + "\n");
         }
         
         if (multichannelColor1 != Integer.MIN_VALUE) {
-            dialog.append("Channel 1 multichannel color = " + multichannelColor1 + "\n");
+            dialog.append("Channel " + multichannelColorChannel1 + " multichannel color = " + multichannelColor1 + "\n");
         }
         
         if (multichannelColor2 != Integer.MIN_VALUE) {
-            dialog.append("Channel 2 multichannel color = " + multichannelColor2 + "\n");
+            dialog.append("Channel " + multichannelColorChannel2 + " multichannel color = " + multichannelColor2 + "\n");
         }
         
         if (multichannelColor3 != Integer.MIN_VALUE) {
-            dialog.append("Channel 3 multichannel color = " + multichannelColor3 + "\n");
+            dialog.append("Channel " + multichannelColorChannel3 + " multichannel color = " + multichannelColor3 + "\n");
         }
         
         if (!Double.isNaN(multichannelWeight)) {
@@ -559,6 +596,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Axio cam NIR mode = " + axioCamNIRMode + "\n");
         }
         
+        if (axioCamAnalogGainEnable != Integer.MIN_VALUE) {
+            dialog.append("Axio cam analog gain enable = " + axioCamAnalogGainEnable + "\n");
+        }
+        
         if (axioCamShutterControl != Integer.MIN_VALUE) {
             dialog.append("Axio cam shutter control = " + axioCamShutterControl + "\n");
         }
@@ -569,6 +610,30 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (axioCamDelayTime != Integer.MIN_VALUE) {
             dialog.append("Axio cam delay time = " + axioCamDelayTime + "\n");
+        }
+        
+        if (cameraShutterLiveEnable != Integer.MIN_VALUE) {
+            dialog.append("Camera shutter live enable = " + cameraShutterLiveEnable + "\n");
+        }
+        
+        if (!Double.isNaN(axioCamSaturation)) {
+            dialog.append("Axio cam saturation = " + axioCamSaturation + "\n");
+        }
+        
+        if (condenserContrast != Integer.MIN_VALUE) {
+            dialog.append("Condenser contrast = " + condenserContrast + "\n");
+        }
+        
+        if (!Double.isNaN(condenserNumericalAperture)) {
+            dialog.append("Condenser numerical aperture = " + condenserNumericalAperture + "\n");
+        }
+        
+        if (stageCalibrated != null) {
+            dialog.append(stageCalibrated + "\n");
+        }
+        
+        if (!Double.isNaN(optovar)) {
+            dialog.append("Optovar = " + optovar + "\n");
         }
         
         if (objectType != Integer.MIN_VALUE) {
@@ -700,19 +765,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.apotomeProcessingMode = apotomeProcessingMode;
     }
     
-    public void setApotomeGridPosition0(int apotomeGridPosition0) {
+    public void setApotomeGridPosition0(int apotomeGridPositionChannel0, int apotomeGridPosition0) {
+        this.apotomeGridPositionChannel0 = apotomeGridPositionChannel0;
         this.apotomeGridPosition0 = apotomeGridPosition0;    
     }
     
-    public void setApotomeGridPosition1(int apotomeGridPosition1) {
+    public void setApotomeGridPosition1(int apotomeGridPositionChannel1, int apotomeGridPosition1) {
+        this.apotomeGridPositionChannel1 = apotomeGridPositionChannel1;
         this.apotomeGridPosition1 = apotomeGridPosition1;    
     }
     
-    public void setApotomeGridPosition2(int apotomeGridPosition2) {
+    public void setApotomeGridPosition2(int apotomeGridPositionChannel2, int apotomeGridPosition2) {
+        this.apotomeGridPositionChannel2 = apotomeGridPositionChannel2;
         this.apotomeGridPosition2 = apotomeGridPosition2;    
     }
     
-    public void setApotomeGridPosition3(int apotomeGridPosition3) {
+    public void setApotomeGridPosition3(int apotomeGridPositionChannel3, int apotomeGridPosition3) {
+        this.apotomeGridPositionChannel3 = apotomeGridPositionChannel3;
         this.apotomeGridPosition3 = apotomeGridPosition3;    
     }
     
@@ -816,19 +885,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.contrastManagerMode = contrastManagerMode;
     }
     
-    public void setReflectorPosition0(int reflectorPosition0) {
+    public void setReflectorPosition0(int reflectorPositionChannel0, int reflectorPosition0) {
+        this.reflectorPositionChannel0 = reflectorPositionChannel0;
         this.reflectorPosition0 = reflectorPosition0;
     }
     
-    public void setReflectorPosition1(int reflectorPosition1) {
+    public void setReflectorPosition1(int reflectorPositionChannel1, int reflectorPosition1) {
+        this.reflectorPositionChannel1 = reflectorPositionChannel1;
         this.reflectorPosition1 = reflectorPosition1;
     }
     
-    public void setReflectorPosition2(int reflectorPosition2) {
+    public void setReflectorPosition2(int reflectorPositionChannel2, int reflectorPosition2) {
+        this.reflectorPositionChannel2 = reflectorPositionChannel2;
         this.reflectorPosition2 = reflectorPosition2;
     }
     
-    public void setReflectorPosition3(int reflectorPosition3) {
+    public void setReflectorPosition3(int reflectorPositionChannel3, int reflectorPosition3) {
+        this.reflectorPositionChannel3 = reflectorPositionChannel3;
         this.reflectorPosition3 = reflectorPosition3;
     }
     
@@ -852,19 +925,23 @@ public class FileInfoZVI extends FileInfoBase {
         this.transmittedLightHalogenLampMode = transmittedLightHalogenLampMode;
     }
     
-    public void setMultichannelColor0(int multichannelColor0) {
+    public void setMultichannelColor0(int multichannelColorChannel0, int multichannelColor0) {
+        this.multichannelColorChannel0 = multichannelColorChannel0;
         this.multichannelColor0 = multichannelColor0;
     }
     
-    public void setMultichannelColor1(int multichannelColor1) {
+    public void setMultichannelColor1(int multichannelColorChannel1, int multichannelColor1) {
+        this.multichannelColorChannel1 = multichannelColorChannel1;
         this.multichannelColor1 = multichannelColor1;
     }
     
-    public void setMultichannelColor2(int multichannelColor2) {
+    public void setMultichannelColor2(int multichannelColorChannel2, int multichannelColor2) {
+        this.multichannelColorChannel2 = multichannelColorChannel2;
         this.multichannelColor2 = multichannelColor2;
     }
     
-    public void setMultichannelColor3(int multichannelColor3) {
+    public void setMultichannelColor3(int multichannelColorChannel3, int multichannelColor3) {
+        this.multichannelColorChannel3 = multichannelColorChannel3;
         this.multichannelColor3 = multichannelColor3;
     }
     
@@ -878,6 +955,14 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setStagePositionY(double stagePositionY) {
         this.stagePositionY = stagePositionY;
+    }
+    
+    public void setOriginalStagePositionX(double originalStagePositionX) {
+        this.originalStagePositionX = originalStagePositionX;
+    }
+    
+    public void setOriginalStagePositionY(double originalStagePositionY) {
+        this.originalStagePositionY = originalStagePositionY;
     }
     
     public void setScaleWidth(double scaleWidth) {
@@ -996,35 +1081,43 @@ public class FileInfoZVI extends FileInfoBase {
         this.imageMemoryUsage = imageMemoryUsage;
     }
     
-    public void setExcitationWavelength0(int excitationWavelength0) {
+    public void setExcitationWavelength0(int excitationWavelengthChannel0, int excitationWavelength0) {
+        this.excitationWavelengthChannel0 = excitationWavelengthChannel0;
         this.excitationWavelength0 = excitationWavelength0;
     }
     
-    public void setExcitationWavelength1(int excitationWavelength1) {
+    public void setExcitationWavelength1(int excitationWavelengthChannel1, int excitationWavelength1) {
+        this.excitationWavelengthChannel1 = excitationWavelengthChannel1;
         this.excitationWavelength1 = excitationWavelength1;
     }
     
-    public void setExcitationWavelength2(int excitationWavelength2) {
+    public void setExcitationWavelength2(int excitationWavelengthChannel2, int excitationWavelength2) {
+        this.excitationWavelengthChannel2 = excitationWavelengthChannel2;
         this.excitationWavelength2 = excitationWavelength2;
     }
     
-    public void setExcitationWavelength3(int excitationWavelength3) {
+    public void setExcitationWavelength3(int excitationWavelengthChannel3, int excitationWavelength3) {
+        this.excitationWavelengthChannel3 = excitationWavelengthChannel3;
         this.excitationWavelength3 = excitationWavelength3;
     }
     
-    public void setEmissionWavelength0(int emissionWavelength0) {
+    public void setEmissionWavelength0(int emissionWavelengthChannel0, int emissionWavelength0) {
+        this.emissionWavelengthChannel0 = emissionWavelengthChannel0;
         this.emissionWavelength0 = emissionWavelength0;
     }
     
-    public void setEmissionWavelength1(int emissionWavelength1) {
+    public void setEmissionWavelength1(int emissionWavelengthChannel1, int emissionWavelength1) {
+        this.emissionWavelengthChannel1 = emissionWavelengthChannel1;
         this.emissionWavelength1 = emissionWavelength1;
     }
     
-    public void setEmissionWavelength2(int emissionWavelength2) {
+    public void setEmissionWavelength2(int emissionWavelengthChannel2, int emissionWavelength2) {
+        this.emissionWavelengthChannel2 = emissionWavelengthChannel2;
         this.emissionWavelength2 = emissionWavelength2;
     }
     
-    public void setEmissionWavelength3(int emissionWavelength3) {
+    public void setEmissionWavelength3(int emissionWavelengthChannel3, int emissionWavelength3) {
+        this.emissionWavelengthChannel3 = emissionWavelengthChannel3;
         this.emissionWavelength3 = emissionWavelength3;
     }
     
@@ -1082,6 +1175,34 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setChannel3(int channel3) {
         this.channel3 = channel3;
+    }
+    
+    public void setAxioCamAnalogGainEnable(int axioCamAnalogGainEnable) {
+        this.axioCamAnalogGainEnable = axioCamAnalogGainEnable;
+    }
+    
+    public void setCameraShutterLiveEnable(int cameraShutterLiveEnable) {
+        this.cameraShutterLiveEnable = cameraShutterLiveEnable;
+    }
+    
+    public void setAxioCamSaturation(double axioCamSaturation) {
+        this.axioCamSaturation = axioCamSaturation;
+    }
+    
+    public void setCondenserContrast(int condenserContrast) {
+        this.condenserContrast = condenserContrast;
+    }
+    
+    public void setCondenserNumericalAperture(double condenserNumericalAperture) {
+        this.condenserNumericalAperture = condenserNumericalAperture;
+    }
+    
+    public void setStageCalibrated(String stageCalibrated) {
+        this.stageCalibrated = stageCalibrated;
+    }
+    
+    public void setOptovar(double optovar) {
+        this.optovar = optovar;
     }
 
 }
