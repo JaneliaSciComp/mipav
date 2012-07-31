@@ -29,6 +29,8 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
+import WildMagic.LibFoundation.Mathematics.Vector3d;
+
 import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap543a.NoiseMode;
 
 
@@ -245,9 +247,12 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         
         populateSphere(initRadius, intensity1, stdDevIntensity1, image1a);      
         populateSphere(getChangedRadius(), intensity2, stdDevIntensity2, image2a);
-        
+                
         populateSphere(initRadius, intensity1, 0, image1aTumor); //use to find subsampling effect     
         populateSphere(getChangedRadius(), intensity2, 0, image2aTumor); //use to find subsampling effect
+        
+        addPartialVoluming(initRadius, image1a, image1aTumor);
+        addPartialVoluming(getChangedRadius(), image2a, image2aTumor);
         
         if(subsampleAmount != 0) {
             image1a = subsample(image1a);       
@@ -286,7 +291,7 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
         
         Preferences.debug("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+";\n");
         Preferences.data("Center of tumor subsampled: "+xCenter+", "+yCenter+", "+zCenter+";\n");
-        
+         
         if(noiseMax != 0 && stdDevGaussian != 0) {
             generateNoise(image1a);
             generateNoise(image2a);
@@ -304,6 +309,41 @@ public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
     	setCompleted(true); //indicating to listeners that the algorithm completed successfully
 
     } // end runAlgorithm()
+
+    /**
+     * Adds partial voluming pixels to edge of sphere by multiplying edge pixels by their percent coverage of the radial line
+     * from the origin of the tumor to the tumor line.
+     * @param tumorImage image with normal tissue intensity == 0
+     */
+    private void addPartialVoluming(double radius, ModelImage image, ModelImage tumorImage) {
+        Vector3d center = new Vector3d(xCenter*xyRes, yCenter*xyRes, zCenter*zRes);
+        Vector3d point = new Vector3d();
+        double distance = 0.0, relevantRes = 0.0, percent = 0.0;
+        for(int x=0; x<image.getExtents()[0]; x++) {
+            point.X = x*xyRes;
+            for(int y=0; y<image.getExtents()[1]; y++) {
+                point.Y = y*xyRes;
+                for(int z=0; z<image.getExtents()[2]; z++) {
+                    point.Z = z*zRes;
+                    if(tumorImage.getDouble(x, y, z) != 0) {
+                        distance = center.Distance(point);
+                        if(distance > radius) {
+                            relevantRes = xyRes;
+                            if(zCenter - z > xCenter - x || 
+                                    zCenter - z > yCenter - y) {
+                                relevantRes = zRes;
+                            }
+                            percent = 1-((distance - radius)/relevantRes);  //tumor contribution to pixel
+                            tumorImage.set(x, y, z, percent*tumorImage.getDouble(x, y, z));
+                            //double old = image.getDouble(x, y, z);
+                            image.set(x, y, z, percent*image.getDouble(x, y, z) + ((1-percent)*normalTissue));
+                            //System.out.println("At: "+x+", "+y+", "+z+": "+distance+"\tvs "+radius+": "+image.getDouble(x, y, z)+"\tvs "+old);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     public static void createVOI(ModelImage image, double lowerBound, double upperBound) {
 
