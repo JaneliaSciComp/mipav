@@ -150,6 +150,10 @@ public class FileZVI extends FileBase {
     private int imageZXArray[] = null;
     private int imageZYArray[] = null;
     private double imageStagePositionYArray[] = null;
+    private double imageOriginalStagePositionXArray[] = null;
+    private int imageOriginalZXArray[] = null;
+    private int imageOriginalZYArray[] = null;
+    private double imageOriginalStagePositionYArray[] = null;
     private int imageZArray[] = null;
     private int imageZ2Array[] = null;
     private int imageC2Array[] = null;
@@ -189,6 +193,10 @@ public class FileZVI extends FileBase {
     private int icpX = 0;
     // image count pointer for imageStagePositionY
     private int icpY = 0;
+    // image count pointer for imageOriginalStagePositionX
+    private int icpOriginalX = 0;
+    // image count pointer for imageOriginalStagePositionY
+    private int icpOriginalY = 0;
     
     // Sector allocation table
     private int sat[] = null;
@@ -252,6 +260,10 @@ public class FileZVI extends FileBase {
         imageZXArray = null;
         imageStagePositionYArray = null;
         imageZYArray = null;
+        imageOriginalStagePositionXArray = null;
+        imageOriginalZXArray = null;
+        imageOriginalStagePositionYArray = null;
+        imageOriginalZYArray = null;
         shortSectorTable = null;
         startSectorArray = null;
         offsetArray = null;
@@ -357,6 +369,8 @@ public class FileZVI extends FileBase {
         double processedRelFocusPosition2Array[] = null;
         double processedStagePositionXArray[] = null;
         double processedStagePositionYArray[] = null;
+        double processedOriginalStagePositionXArray[] = null;
+        double processedOriginalStagePositionYArray[] = null;
         double blackValue0Array[] = null;
         double blackValue1Array[] = null;
         double blackValue2Array[] = null;
@@ -378,6 +392,8 @@ public class FileZVI extends FileBase {
         int numberRelFocusPosition2s = 0;
         int numberStagePositionXs = 0;
         int numberStagePositionYs = 0;
+        int numberOriginalStagePositionXs = 0;
+        int numberOriginalStagePositionYs = 0;
         int numberBlack0Values = 0;
         int numberBlack1Values = 0;
         int numberBlack2Values = 0;
@@ -512,6 +528,26 @@ public class FileZVI extends FileBase {
                 for (i = 0; i < imageCount; i++) {
                     if ((imageZYArray[i] == z) && (!Double.isNaN(imageStagePositionYArray[i]))) {
                         processedStagePositionYArray[numberStagePositionYs++] = imageStagePositionYArray[i];    
+                    }
+                }
+            }
+            
+            processedOriginalStagePositionXArray = new double[zDim];
+            numberOriginalStagePositionXs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageOriginalZXArray[i] == z) && (!Double.isNaN(imageOriginalStagePositionXArray[i]))) {
+                        processedOriginalStagePositionXArray[numberOriginalStagePositionXs++] = imageOriginalStagePositionXArray[i];    
+                    }
+                }
+            }
+            
+            processedOriginalStagePositionYArray = new double[zDim];
+            numberOriginalStagePositionYs = 0;
+            for (z = minZ; z <= maxZ; z++) {
+                for (i = 0; i < imageCount; i++) {
+                    if ((imageOriginalZYArray[i] == z) && (!Double.isNaN(imageOriginalStagePositionYArray[i]))) {
+                        processedOriginalStagePositionYArray[numberOriginalStagePositionYs++] = imageOriginalStagePositionYArray[i];    
                     }
                 }
             }
@@ -1193,6 +1229,24 @@ public class FileZVI extends FileBase {
                 }
             }
             
+            if (numberOriginalStagePositionXs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setOriginalStagePositionX(processedOriginalStagePositionXArray[z]);
+                    }
+                }
+            }
+            
+            if (numberOriginalStagePositionYs == zDim) {
+                for (t = 0; t < tDim; t++) {
+                    for (z = 0; z < zDim; z++) {
+                        index = z + t * zDim;
+                        ((FileInfoZVI)fInfo[index]).setOriginalStagePositionY(processedOriginalStagePositionYArray[z]);
+                    }
+                }
+            }
+            
             if (numberBlack0Values == zDim * tDim) {
                 for (t = 0; t < tDim; t++) {
                     for (z = 0; z < zDim; z++) {
@@ -1410,11 +1464,21 @@ public class FileZVI extends FileBase {
         int exposureTimeChannel2 = Integer.MIN_VALUE;
         int exposureTimeChannel3 = Integer.MIN_VALUE;
         int apotomeGridPosition = Integer.MIN_VALUE;
+        boolean haveApotomeGridPosition0 = false;
+        boolean haveApotomeGridPosition1 = false;
+        boolean haveApotomeGridPosition2 = false;
+        boolean haveApotomeGridPosition3 = false;
+        int apotomeGridPositionChannel0 = Integer.MIN_VALUE;
+        int apotomeGridPositionChannel1 = Integer.MIN_VALUE;
+        int apotomeGridPositionChannel2 = Integer.MIN_VALUE;
+        int apotomeGridPositionChannel3 = Integer.MIN_VALUE;
         double focusPosition = Double.NaN;
         double relFocusPosition1 = Double.NaN;
         double relFocusPosition2 = Double.NaN;
         double stagePositionX = Double.NaN;
         double stagePositionY = Double.NaN;
+        double originalStagePositionX = Double.NaN;
+        double originalStagePositionY = Double.NaN;
         int zValue = Integer.MIN_VALUE;
         int cValue = Integer.MIN_VALUE;
         int tValue = Integer.MIN_VALUE;
@@ -1424,18 +1488,48 @@ public class FileZVI extends FileBase {
         boolean haveSecondZValue = false;
         boolean haveFirstTileValue = false;
         boolean haveSecondTileValue = false;
+        // If true use Z value, if false use tile value
         boolean useZValue = true;
-        boolean useTileValue = false;
         int firstZValue = Integer.MIN_VALUE;
-        int secondZValue = Integer.MIN_VALUE;
         int firstTileValue = Integer.MIN_VALUE;
-        int secondTileValue = Integer.MIN_VALUE;
         double blackValue = Double.NaN;
         double whiteValue = Double.NaN;
         int reflectorPosition = Integer.MIN_VALUE;
+        boolean haveReflectorPosition0 = false;
+        boolean haveReflectorPosition1 = false;
+        boolean haveReflectorPosition2 = false;
+        boolean haveReflectorPosition3 = false;
+        int reflectorPositionChannel0 = Integer.MIN_VALUE;
+        int reflectorPositionChannel1 = Integer.MIN_VALUE;
+        int reflectorPositionChannel2 = Integer.MIN_VALUE;
+        int reflectorPositionChannel3 = Integer.MIN_VALUE;
         int multichannelColor = Integer.MIN_VALUE;
+        boolean haveMultichannelColor0 = false;
+        boolean haveMultichannelColor1 = false;
+        boolean haveMultichannelColor2 = false;
+        boolean haveMultichannelColor3 = false;
+        int multichannelColorChannel0 = Integer.MIN_VALUE;
+        int multichannelColorChannel1 = Integer.MIN_VALUE;
+        int multichannelColorChannel2 = Integer.MIN_VALUE;
+        int multichannelColorChannel3 = Integer.MIN_VALUE;
         int excitationWavelength = Integer.MIN_VALUE;
+        boolean haveExcitationWavelength0 = false;
+        boolean haveExcitationWavelength1 = false;
+        boolean haveExcitationWavelength2 = false;
+        boolean haveExcitationWavelength3 = false;
+        int excitationWavelengthChannel0 = Integer.MIN_VALUE;
+        int excitationWavelengthChannel1 = Integer.MIN_VALUE;
+        int excitationWavelengthChannel2 = Integer.MIN_VALUE;
+        int excitationWavelengthChannel3 = Integer.MIN_VALUE;
         int emissionWavelength = Integer.MIN_VALUE;
+        boolean haveEmissionWavelength0 = false;
+        boolean haveEmissionWavelength1 = false;
+        boolean haveEmissionWavelength2 = false;
+        boolean haveEmissionWavelength3 = false;
+        int emissionWavelengthChannel0 = Integer.MIN_VALUE;
+        int emissionWavelengthChannel1 = Integer.MIN_VALUE;
+        int emissionWavelengthChannel2 = Integer.MIN_VALUE;
+        int emissionWavelengthChannel3 = Integer.MIN_VALUE;
         double acqTime = Double.NaN;
         double relTime = Double.NaN;
         String lastElementName = null;
@@ -2269,6 +2363,10 @@ public class FileZVI extends FileBase {
                     imageZXArray = new int[imageCount+10];
                     imageStagePositionYArray = new double[imageCount+10];
                     imageZYArray = new int[imageCount+10];
+                    imageOriginalStagePositionXArray = new double[imageCount+10];
+                    imageOriginalZXArray = new int[imageCount+10];
+                    imageOriginalStagePositionYArray = new double[imageCount+10];
+                    imageOriginalZYArray = new int[imageCount+10];
                     for (i = 0; i < imageCount+10; i++) {
                         imageFocusPositionArray[i] = Double.NaN;
                         imageZArray[i] = Integer.MIN_VALUE;
@@ -2296,6 +2394,10 @@ public class FileZVI extends FileBase {
                         imageZXArray[i] = Integer.MIN_VALUE;
                         imageStagePositionYArray[i] = Double.NaN;
                         imageZYArray[i] = Integer.MIN_VALUE;
+                        imageOriginalStagePositionXArray[i] = Double.NaN;
+                        imageOriginalZXArray[i] = Integer.MIN_VALUE;
+                        imageOriginalStagePositionYArray[i] = Double.NaN;
+                        imageOriginalZYArray[i] = Integer.MIN_VALUE;
                     }
                     dType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                     bp += 2;
@@ -3073,6 +3175,8 @@ public class FileZVI extends FileBase {
                    relFocusPosition2 = Double.NaN;
                    stagePositionX = Double.NaN;
                    stagePositionY = Double.NaN;
+                   originalStagePositionX = Double.NaN;
+                   originalStagePositionY = Double.NaN;
                    zValue = Integer.MIN_VALUE;
                    cValue = Integer.MIN_VALUE;
                    tValue = Integer.MIN_VALUE;
@@ -3567,12 +3671,18 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2050:
                                 Preferences.debug("tagID = Optovar\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setOptovar(doubleValue);
+                                }
                                 break;
                             case 2051:
                                 Preferences.debug("tagID = Reflector\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2052:
                                 Preferences.debug("tagID = Condenser contrast\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCondenserContrast(intValue);
+                                }
                                 break;
                             case 2053:
                                 Preferences.debug("tagID = Transmitted light filter 1\n", Preferences.DEBUG_FILEIO);
@@ -3600,6 +3710,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2062:
                                 Preferences.debug("tagID = Condenser N.A.\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setCondenserNumericalAperture(doubleValue);
+                                }
                                 break;
                             case 2063:
                                 Preferences.debug("tagID = Light path\n", Preferences.DEBUG_FILEIO);
@@ -3833,6 +3946,14 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2133:
                                 Preferences.debug("tagID = Stage calibrated\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BOOL) {
+                                    if (booleanValue) {
+                                        fileInfo.setStageCalibrated("Stage is calibrated");
+                                    }
+                                    else {
+                                        fileInfo.setStageCalibrated("Stage is not calibrated");
+                                    }
+                                }
                                 break;
                             case 2134:
                                 Preferences.debug("tagID = Stage power\n", Preferences.DEBUG_FILEIO);
@@ -4334,7 +4455,6 @@ public class FileZVI extends FileBase {
                                     zValue = intValue;
                                     if (haveFirstZValue && (!haveSecondZValue) && (zValue != firstZValue)) {
                                         haveSecondZValue = true;
-                                        secondZValue = zValue;
                                     }
                                     if (!haveFirstZValue) {
                                         haveFirstZValue = true;
@@ -4360,7 +4480,6 @@ public class FileZVI extends FileBase {
                                     tileValue = intValue;                       
                                     if (haveFirstTileValue && (!haveSecondTileValue) && (tileValue != firstTileValue)) {
                                         haveSecondTileValue = true;
-                                        secondTileValue = tileValue;
                                     }
                                     if (!haveFirstTileValue) {
                                         haveFirstTileValue = true;
@@ -4403,9 +4522,17 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2841:
                                 Preferences.debug("tagiD = Original stage position X\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    // Different value for every z slice
+                                    originalStagePositionX = doubleValue;
+                                }
                                 break;
                             case 2842:
                                 Preferences.debug("tagID = Original stage position Y\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    // Different value for every z slice
+                                    originalStagePositionY = doubleValue;
+                                }
                                 break;
                             case 3088:
                                 Preferences.debug("tagID = Layer draw flags\n", Preferences.DEBUG_FILEIO);
@@ -4823,6 +4950,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65655:
                                 Preferences.debug("tagID = Axio Cam Analog Gain Enable\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setAxioCamAnalogGainEnable(intValue);
+                                }
                                 break;
                             case 65656:
                                 Preferences.debug("tagID = Axio Cam Analog Gain Available\n", Preferences.DEBUG_FILEIO);
@@ -4856,6 +4986,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65666:
                                 Preferences.debug("tagID = Axio Cam Saturation\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_R8) {
+                                    fileInfo.setAxioCamSaturation(doubleValue);
+                                }
                                 break;
                             case 65667:
                                 Preferences.debug("tagID = Camera Color Correction\n", Preferences.DEBUG_FILEIO);
@@ -4898,6 +5031,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65680:
                                 Preferences.debug("tagID = Camera Shutter Live Enable\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraShutterLiveEnable(intValue);
+                                }
                                 break;
                             case 65681:
                                 Preferences.debug("tagID = Camera Exposure Time Auto Live Enable\n", Preferences.DEBUG_FILEIO);
@@ -5172,18 +5308,18 @@ public class FileZVI extends FileBase {
                             exposureTimeChannel3 = cValue;
                             fileInfo.setExposureTime3(exposureTimeChannel3, exposureTime);
                         }
-                        if (haveExposureTime1 && (!haveExposureTime2) && (cValue != exposureTimeChannel0) &&
+                        else if (haveExposureTime1 && (!haveExposureTime2) && (cValue != exposureTimeChannel0) &&
                                 (cValue != exposureTimeChannel1)) {
                             haveExposureTime2 = true;
                             exposureTimeChannel2 = cValue;
                             fileInfo.setExposureTime2(exposureTimeChannel2, exposureTime);
                         }
-                        if (haveExposureTime0 && (!haveExposureTime1) && (cValue != exposureTimeChannel0)) {
+                        else if (haveExposureTime0 && (!haveExposureTime1) && (cValue != exposureTimeChannel0)) {
                             haveExposureTime1 = true;
                             exposureTimeChannel1 = cValue;
                             fileInfo.setExposureTime1(exposureTimeChannel1, exposureTime);
                         }
-                        if (!haveExposureTime0) {
+                        else if (!haveExposureTime0) {
                             haveExposureTime0 = true;
                             exposureTimeChannel0 = cValue;
                             fileInfo.setExposureTime0(exposureTimeChannel0, exposureTime);
@@ -5191,96 +5327,132 @@ public class FileZVI extends FileBase {
                     } // if (!Double.isNaN(exposureTime)
                     
                     if (apotomeGridPosition != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setApotomeGridPosition0(apotomeGridPosition);
-                                break;
-                            case 1:
-                                fileInfo.setApotomeGridPosition1(apotomeGridPosition);
-                                break;
-                            case 2:
-                                fileInfo.setApotomeGridPosition2(apotomeGridPosition);
-                                break;
-                            case 3:
-                                fileInfo.setApotomeGridPosition3(apotomeGridPosition);
-                                break;
-                            default:
-                        } // switch(cValue)
-                    } // if (apotomeGridPosition >= 0)
+                        if (haveApotomeGridPosition2 && (!haveApotomeGridPosition3) && (cValue != apotomeGridPositionChannel0) &&
+                                (cValue != apotomeGridPositionChannel1) && (cValue != apotomeGridPositionChannel2)) {
+                            haveApotomeGridPosition3 = true;
+                            apotomeGridPositionChannel3 = cValue;
+                            fileInfo.setApotomeGridPosition3(apotomeGridPositionChannel3, apotomeGridPosition);
+                        }
+                        else if (haveApotomeGridPosition1 && (!haveApotomeGridPosition2) && (cValue != apotomeGridPositionChannel0) &&
+                                (cValue != apotomeGridPositionChannel1)) {
+                            haveApotomeGridPosition2 = true;
+                            apotomeGridPositionChannel2 = cValue;
+                            fileInfo.setApotomeGridPosition2(apotomeGridPositionChannel2, apotomeGridPosition);
+                        }
+                        else if (haveApotomeGridPosition0 && (!haveApotomeGridPosition1) && (cValue != apotomeGridPositionChannel0)) {
+                            haveApotomeGridPosition1 = true;
+                            apotomeGridPositionChannel1 = cValue;
+                            fileInfo.setApotomeGridPosition1(apotomeGridPositionChannel1, apotomeGridPosition);
+                        }
+                        else if (!haveApotomeGridPosition0) {
+                            haveApotomeGridPosition0 = true;
+                            apotomeGridPositionChannel0 = cValue;
+                            fileInfo.setApotomeGridPosition0(apotomeGridPositionChannel0, apotomeGridPosition);
+                        }
+                    } // if (apotomeGridPosition != Integer.MIN_VALUE)
                     
                     if (excitationWavelength != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setExcitationWavelength0(excitationWavelength);
-                                break;
-                            case 1:
-                                fileInfo.setExcitationWavelength1(excitationWavelength);
-                                break;
-                            case 2:
-                                fileInfo.setExcitationWavelength2(excitationWavelength);
-                                break;
-                            case 3:
-                                fileInfo.setExcitationWavelength3(excitationWavelength);
-                                break;
-                        } // switch(cValue)
+                        if (haveExcitationWavelength2 && (!haveExcitationWavelength3) && (cValue != excitationWavelengthChannel0) &&
+                                (cValue != excitationWavelengthChannel1) && (cValue != excitationWavelengthChannel2)) {
+                            haveExcitationWavelength3 = true;
+                            excitationWavelengthChannel3 = cValue;
+                            fileInfo.setExcitationWavelength3(excitationWavelengthChannel3, excitationWavelength);
+                        }
+                        else if (haveExcitationWavelength1 && (!haveExcitationWavelength2) && (cValue != excitationWavelengthChannel0) &&
+                                (cValue != excitationWavelengthChannel1)) {
+                            haveExcitationWavelength2 = true;
+                            excitationWavelengthChannel2 = cValue;
+                            fileInfo.setExcitationWavelength2(excitationWavelengthChannel2, excitationWavelength);
+                        }
+                        else if (haveExcitationWavelength0 && (!haveExcitationWavelength1) && (cValue != excitationWavelengthChannel0)) {
+                            haveExcitationWavelength1 = true;
+                            excitationWavelengthChannel1 = cValue;
+                            fileInfo.setExcitationWavelength1(excitationWavelengthChannel1, excitationWavelength);
+                        }
+                        else if (!haveExcitationWavelength0) {
+                            haveExcitationWavelength0 = true;
+                            excitationWavelengthChannel0 = cValue;
+                            fileInfo.setExcitationWavelength0(excitationWavelengthChannel0, excitationWavelength);
+                        }
                     } // if (excitationWavelength != Integer.MIN_VALUE)
                     
                     if (emissionWavelength != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setEmissionWavelength0(emissionWavelength);
-                                break;
-                            case 1:
-                                fileInfo.setEmissionWavelength1(emissionWavelength);
-                                break;
-                            case 2:
-                                fileInfo.setEmissionWavelength2(emissionWavelength);
-                                break;
-                            case 3:
-                                fileInfo.setEmissionWavelength3(emissionWavelength);
-                                break;
-                        } // switch(cValue)
+                        if (haveEmissionWavelength2 && (!haveEmissionWavelength3) && (cValue != emissionWavelengthChannel0) &&
+                                (cValue != emissionWavelengthChannel1) && (cValue != emissionWavelengthChannel2)) {
+                            haveEmissionWavelength3 = true;
+                            emissionWavelengthChannel3 = cValue;
+                            fileInfo.setEmissionWavelength3(emissionWavelengthChannel3, emissionWavelength);
+                        }
+                        else if (haveEmissionWavelength1 && (!haveEmissionWavelength2) && (cValue != emissionWavelengthChannel0) &&
+                                (cValue != excitationWavelengthChannel1)) {
+                            haveEmissionWavelength2 = true;
+                            emissionWavelengthChannel2 = cValue;
+                            fileInfo.setEmissionWavelength2(emissionWavelengthChannel2, emissionWavelength);
+                        }
+                        else if (haveEmissionWavelength0 && (!haveEmissionWavelength1) && (cValue != emissionWavelengthChannel0)) {
+                            haveEmissionWavelength1 = true;
+                            emissionWavelengthChannel1 = cValue;
+                            fileInfo.setEmissionWavelength1(emissionWavelengthChannel1, emissionWavelength);
+                        }
+                        else if (!haveEmissionWavelength0) {
+                            haveEmissionWavelength0 = true;
+                            emissionWavelengthChannel0 = cValue;
+                            fileInfo.setEmissionWavelength0(emissionWavelengthChannel0, emissionWavelength);
+                        }
                     } // if (emissionWavelength != Integer.MIN_VALUE)
                     
                     if (reflectorPosition != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setReflectorPosition0(reflectorPosition);
-                                break;
-                            case 1:
-                                fileInfo.setReflectorPosition1(reflectorPosition);
-                                break;
-                            case 2:
-                                fileInfo.setReflectorPosition2(reflectorPosition);
-                                break;
-                            case 3:
-                                fileInfo.setReflectorPosition3(reflectorPosition);
-                                break;
-                            default:
-                        } // switch(cValue)
+                        if (haveReflectorPosition2 && (!haveReflectorPosition3) && (cValue != reflectorPositionChannel0) &&
+                                (cValue != reflectorPositionChannel1) && (cValue != reflectorPositionChannel2)) {
+                            haveReflectorPosition3 = true;
+                            reflectorPositionChannel3 = cValue;
+                            fileInfo.setReflectorPosition3(reflectorPositionChannel3, reflectorPosition);
+                        }
+                        else if (haveReflectorPosition1 && (!haveReflectorPosition2) && (cValue != reflectorPositionChannel0) &&
+                                (cValue != reflectorPositionChannel1)) {
+                            haveReflectorPosition2 = true;
+                            reflectorPositionChannel2 = cValue;
+                            fileInfo.setReflectorPosition2(reflectorPositionChannel2, reflectorPosition);
+                        }
+                        else if (haveReflectorPosition0 && (!haveReflectorPosition1) && (cValue != reflectorPositionChannel0)) {
+                            haveReflectorPosition1 = true;
+                            reflectorPositionChannel1 = cValue;
+                            fileInfo.setReflectorPosition1(reflectorPositionChannel1, reflectorPosition);
+                        }
+                        else if (!haveReflectorPosition0) {
+                            haveReflectorPosition0 = true;
+                            reflectorPositionChannel0 = cValue;
+                            fileInfo.setReflectorPosition0(reflectorPositionChannel0, reflectorPosition);
+                        }
                     } // if (reflectorPosition != Integer.MIN_VALUE)
                     
                     if (multichannelColor != Integer.MIN_VALUE) {
-                        switch(cValue) {
-                            case 0:
-                                fileInfo.setMultichannelColor0(multichannelColor);
-                                break;
-                            case 1:
-                                fileInfo.setMultichannelColor1(multichannelColor);
-                                break;
-                            case 2:
-                                fileInfo.setMultichannelColor2(multichannelColor);
-                                break;
-                            case 3:
-                                fileInfo.setMultichannelColor3(multichannelColor);
-                                break;
-                            default:
-                        } // switch(cValue)
+                        if (haveMultichannelColor2 && (!haveMultichannelColor3) && (cValue != multichannelColorChannel0) &&
+                                (cValue != multichannelColorChannel1) && (cValue != multichannelColorChannel2)) {
+                            haveMultichannelColor3 = true;
+                            multichannelColorChannel3 = cValue;
+                            fileInfo.setMultichannelColor3(multichannelColorChannel3, multichannelColor);
+                        }
+                        else if (haveMultichannelColor1 && (!haveMultichannelColor2) && (cValue != multichannelColorChannel0) &&
+                                (cValue != multichannelColorChannel1)) {
+                            haveMultichannelColor2 = true;
+                            multichannelColorChannel2 = cValue;
+                            fileInfo.setMultichannelColor2(multichannelColorChannel2, multichannelColor);
+                        }
+                        else if (haveMultichannelColor0 && (!haveMultichannelColor1) && (cValue != multichannelColorChannel0)) {
+                            haveMultichannelColor1 = true;
+                            multichannelColorChannel1 = cValue;
+                            fileInfo.setMultichannelColor1(multichannelColorChannel1, multichannelColor);
+                        }
+                        else if (!haveMultichannelColor0) {
+                            haveMultichannelColor0 = true;
+                            multichannelColorChannel0 = cValue;
+                            fileInfo.setMultichannelColor0(multichannelColorChannel0, multichannelColor);
+                        }
                     } // if (multichannelColor != Integer.MIN_VALUE)
                     
                     if (useZValue && haveSecondTileValue && (!haveSecondZValue)) {
                         useZValue = false;
-                        useTileValue = true;
                         if (imageZArray[0] != Integer.MIN_VALUE) {
                             imageZArray[0] = firstTileValue;
                         }
@@ -5381,6 +5553,32 @@ public class FileZVI extends FileBase {
                         if (doFill) {
                             imageZYArray[icpY] = zTileValue;
                             imageStagePositionYArray[icpY++] = stagePositionY;
+                        }
+                    }
+                    
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(originalStagePositionX))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icpOriginalX; i++) {
+                            if (imageOriginalZXArray[i] == zTileValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageOriginalZXArray[icpOriginalX] = zTileValue;
+                            imageOriginalStagePositionXArray[icpOriginalX++] = originalStagePositionX;
+                        }
+                    }
+                    
+                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(originalStagePositionY))) {
+                        boolean doFill = true;
+                        for (i = 0; i < icpOriginalY; i++) {
+                            if (imageOriginalZYArray[i] == zTileValue) {
+                                doFill = false;
+                            }
+                        }
+                        if (doFill) {
+                            imageOriginalZYArray[icpOriginalY] = zTileValue;
+                            imageOriginalStagePositionYArray[icpOriginalY++] = originalStagePositionY;
                         }
                     }
                     
