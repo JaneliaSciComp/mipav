@@ -26,25 +26,25 @@ public abstract class ViewJComponentBase extends JComponent {
 	/** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1024094346997939797L;
 
-    /** DOCUMENT ME! */
+    /** Nearest neighbor interpolation */
     public static final int NEAREST = 0;
 
-    /** DOCUMENT ME! */
+    /** Bilinear interpolation */
     public static final int BILINEAR = 1;
 
     /** DOCUMENT ME! */
     public static final int SMOOTH = 2;
 
-    /** DOCUMENT ME! */
+    /** Image interpolation only done for image A */
     public static final int INTERPOLATE_A = 1;
 
-    /** DOCUMENT ME! */
+    /** Image interpolation only done for image B */
     public static final int INTERPOLATE_B = 2;
 
-    /** DOCUMENT ME! */
+    /** Image interpolation only done for both images A and B */
     public static final int INTERPOLATE_BOTH = 3;
 
-    /** DOCUMENT ME! */
+    /** Nearest neighbor interpolation applied to both images */
     public static final int NEAREST_BOTH = 6;
 
     /** DOCUMENT ME! */
