@@ -307,14 +307,14 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         radioGroup.add(cubic);
 
         switch (componentImage.getInterpMode()) {
+        case ViewJComponentBase.NEAREST_BOTH:
+        case ViewJComponentBase.NEAREST:
+            nearest.setSelected(true);
+            break;
 
-            case ViewJComponentBase.NEAREST:
-                nearest.setSelected(true);
-                break;
-
-            case ViewJComponentBase.BILINEAR:
-                bilinear.setSelected(true);
-                break;
+        case ViewJComponentBase.BILINEAR:
+            bilinear.setSelected(true);
+            break;
         }
 
         gbc.gridx = 0;
