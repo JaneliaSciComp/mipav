@@ -29,7 +29,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
-import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap542d.NoiseMode;
+import niaid.tumorSim.createMap.PlugInDialogCreateTumorMap543a.NoiseMode;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
@@ -60,7 +60,7 @@ import gov.nih.mipav.view.dialogs.JDialogSubsample;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmCreateTumorMap542d extends AlgorithmBase {
+public class PlugInAlgorithmCreateTumorMap543a extends AlgorithmBase {
 
     public static final String INTENSITY1 = "Intensity Pre: ";
     public static final String INTENSITY2 = "Intensity Post: ";
@@ -79,7 +79,7 @@ public class PlugInAlgorithmCreateTumorMap542d extends AlgorithmBase {
     /** Tumor radius in units of image */
     private double initRadius;
     private double tumorChange;
-    private PlugInDialogCreateTumorMap542d.TumorSimMode simMode;
+    private PlugInDialogCreateTumorMap543a.TumorSimMode simMode;
     /** Center of created sphere */
     private int xCenter, yCenter, zCenter;
     private double intensity1, intensity2;
@@ -105,7 +105,7 @@ public class PlugInAlgorithmCreateTumorMap542d extends AlgorithmBase {
     /** Noise mode */
     private NoiseMode noise;
    
-    public PlugInAlgorithmCreateTumorMap542d() {
+    public PlugInAlgorithmCreateTumorMap543a() {
         // TODO Auto-generated constructor stub
     }
     
@@ -122,9 +122,9 @@ public class PlugInAlgorithmCreateTumorMap542d extends AlgorithmBase {
      * @param subsample 
      *
      */
-	public PlugInAlgorithmCreateTumorMap542d(int xyDim, int zDim, double xyRes,
+	public PlugInAlgorithmCreateTumorMap543a(int xyDim, int zDim, double xyRes,
             double zRes, double initRadius, double tumorChange,
-            PlugInDialogCreateTumorMap542d.TumorSimMode simMode, 
+            PlugInDialogCreateTumorMap543a.TumorSimMode simMode, 
             double intensity1, double stdDevIntensity1, double intensity2, double stdDevIntensity2, 
             int subsampleAmount, boolean doCenter, NoiseMode noise, double noiseParam, double normalTissue, double stdDevNormal) {
         this.xyDim = xyDim;
@@ -541,7 +541,7 @@ private class RayleighRandom extends Random {
     }
     
     public static void main(String[] args) {
-        PlugInAlgorithmCreateTumorMap542d p = new PlugInAlgorithmCreateTumorMap542d();
+        PlugInAlgorithmCreateTumorMap543a p = new PlugInAlgorithmCreateTumorMap543a();
         
         long time = System.currentTimeMillis();
         System.out.println("Start");
