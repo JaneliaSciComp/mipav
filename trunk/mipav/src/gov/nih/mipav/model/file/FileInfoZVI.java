@@ -29,6 +29,14 @@ public class FileInfoZVI extends FileInfoBase {
     double cameraFrameScalingFactor = Double.NaN;
     double cameraLiveScalingFactor = Double.NaN;
     double cameraFramePixelDistance = Double.NaN;
+    String channelName0 = null;
+    String channelName1 = null;
+    String channelName2 = null;
+    String channelName3 = null;
+    int channelNameChannel0;
+    int channelNameChannel1;
+    int channelNameChannel2;
+    int channelNameChannel3;
     // Exposure time in milliseconds
     // A different exposure time seen for each channel
     double exposureTime0 = Double.NaN;
@@ -171,6 +179,28 @@ public class FileInfoZVI extends FileInfoBase {
     double optovar = Double.NaN;
     int cameraBitDepth = Integer.MIN_VALUE;
     int externalShutter1 = Integer.MIN_VALUE;
+    String documentType = null;
+    String IDTagFileName = null;
+    String userID = null;
+    String userName = null;
+    String userCity = null;
+    String userAddress = null;
+    String userPhone = null;
+    String userFax = null;
+    String userCountry = null;
+    String userCompany = null;
+    String userCompanyLogo = null;
+    String deviceScalingName = null;
+    String camera = null;
+    String microscopeName = null;
+    String objectiveID = null;
+    String objectiveName = null;
+    String reflectorID = null;
+    String reflector = null;
+    String reference = null;
+    String fileLink = null;
+    String fileID;
+    String lastModifiedBy = null;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -228,6 +258,22 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (!Double.isNaN(originalStagePositionY)) {
             dialog.append("Original stage position Y = " + originalStagePositionY + "\n");
+        }
+        
+        if (channelName0 != null) {
+            dialog.append("Channel " + channelNameChannel0 + " channel name = " + channelName0 + "\n");
+        }
+        
+        if (channelName1 != null) {
+            dialog.append("Channel " + channelNameChannel1 + " channel name = " + channelName1 + "\n");
+        }
+        
+        if (channelName2 != null) {
+            dialog.append("Channel " + channelNameChannel2 + " channel name = " + channelName2 + "\n");
+        }
+        
+        if (channelName3 != null) {
+            dialog.append("Channel " + channelNameChannel3 + " channel name = " + channelName3 + "\n");
         }
         
         if (excitationWavelength0 != Integer.MIN_VALUE) {
@@ -298,6 +344,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Gamma value = " + gammaValue + "\n");
         }
         
+        if (camera != null) {
+            dialog.append("Camera = " + camera + "\n");
+        }
+        
         if (cameraBitDepth != Integer.MIN_VALUE) {
             dialog.append("Camera bit depth = " + cameraBitDepth + "\n");
         }
@@ -324,6 +374,10 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (cameraBinning != Integer.MIN_VALUE) {
             dialog.append("Camera binning = " + cameraBinning + "\n");
+        }
+        
+        if (deviceScalingName != null) {
+            dialog.append("Device scaling name = " + deviceScalingName + "\n");
         }
         
         if (!Double.isNaN(cameraFrameScalingFactor)) {
@@ -407,6 +461,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Apotome auto shutter used = " + apotomeAutoShutterUsed + "\n");
         }
         
+        if (microscopeName != null) {
+            dialog.append("Microscope name = " + microscopeName + "\n");
+        }
+        
         if (microscopeType != Integer.MIN_VALUE) {
             dialog.append("Microscope type = " + microscopeType + "\n");
         }
@@ -429,6 +487,14 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (microscopePort != Integer.MIN_VALUE) {
             dialog.append("Microscope port = " + microscopePort + "\n");
+        }
+        
+        if (objectiveName != null) {
+            dialog.append("Objective name = " + objectiveName + "\n");
+        }
+        
+        if (objectiveID != null) {
+            dialog.append("Objective ID = " + objectiveID + "\n");
         }
         
         if (!Double.isNaN(ocularTotalMagnification)) {
@@ -493,6 +559,14 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (contrastManagerMode != Integer.MIN_VALUE) {
             dialog.append("Contrast manager mode = " + contrastManagerMode + "\n");   
+        }
+        
+        if (reflector != null) {
+            dialog.append("Reflector = " + reflector + "\n");
+        }
+        
+        if (reflectorID != null) {
+            dialog.append("Reflector ID = " + reflectorID + "\n");
         }
         
         if (reflectorPosition0 != Integer.MIN_VALUE) {
@@ -696,12 +770,72 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Channel " + channel3 + " image relative time = " + imageRelativeTime3 + "\n");
         }
         
+        if (IDTagFileName != null) {
+            dialog.append("File name = " + IDTagFileName + "\n");
+        }
+        
         if (fileDate != null) {
             dialog.append("File date = " + fileDate + "\n");
         }
         
         if (fileSize != Integer.MIN_VALUE) {
             dialog.append("File size = " + fileSize + "\n");
+        }
+        
+        if (fileLink != null) {
+            dialog.append("File link = " + fileLink + "\n");
+        }
+        
+        if (fileID != null) {
+            dialog.append("File ID = " + fileID + "\n");
+        }
+        
+        if (reference != null) {
+            dialog.append("Reference = " + reference + "\n");
+        }
+        
+        if (lastModifiedBy != null) {
+            dialog.append("Last modified by = " + lastModifiedBy + "\n");
+        }
+        
+        if (documentType != null) {
+            dialog.append("Document type = " + documentType + "\n");
+        }
+        
+        if (userID != null) {
+            dialog.append("User ID = " + userID + "\n");
+        }
+        
+        if (userName != null) {
+            dialog.append("User name = " + userName + "\n");
+        }
+        
+        if (userCity != null) {
+            dialog.append("User city = " + userCity + "\n");
+        }
+        
+        if (userAddress != null) {
+            dialog.append("User address = " + userAddress + "\n");
+        }
+        
+        if (userPhone != null) {
+            dialog.append("User phone = " + userPhone + "\n");
+        }
+        
+        if (userFax != null) {
+            dialog.append("User fax = " + userFax + "\n");
+        }
+        
+        if (userCountry != null) {
+            dialog.append("User country = " + userCountry + "\n");
+        }
+        
+        if (userCompany != null) {
+            dialog.append("User company = " + userCompany + "\n");
+        }
+        
+        if (userCompanyLogo != null) {
+            dialog.append("User company logo = " + userCompanyLogo + "\n");
         }
     }
     
@@ -1101,6 +1235,26 @@ public class FileInfoZVI extends FileInfoBase {
         this.imageMemoryUsage = imageMemoryUsage;
     }
     
+    public void setChannelName0(int channelNameChannel0, String channelName0) {
+        this.channelNameChannel0 = channelNameChannel0;
+        this.channelName0 = channelName0;
+    }
+    
+    public void setChannelName1(int channelNameChannel1, String channelName1) {
+        this.channelNameChannel1 = channelNameChannel1;
+        this.channelName1 = channelName1;
+    }
+    
+    public void setChannelName2(int channelNameChannel2, String channelName2) {
+        this.channelNameChannel2 = channelNameChannel2;
+        this.channelName2 = channelName2;
+    }
+    
+    public void setChannelName3(int channelNameChannel3, String channelName3) {
+        this.channelNameChannel3 = channelNameChannel3;
+        this.channelName3 = channelName3;
+    }
+    
     public void setExcitationWavelength0(int excitationWavelengthChannel0, int excitationWavelength0) {
         this.excitationWavelengthChannel0 = excitationWavelengthChannel0;
         this.excitationWavelength0 = excitationWavelength0;
@@ -1231,6 +1385,94 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setExternalShutter1(int externalShutter1) {
         this.externalShutter1 = externalShutter1;
+    }
+    
+    public void setDocumentType(String documentType) {
+        this.documentType = documentType;
+    }
+    
+    public void setFilename(String IDTagFileName) {
+        this.IDTagFileName = IDTagFileName;
+    }
+    
+    public void setUserID(String userID) {
+        this.userID = userID;
+    }
+    
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+    
+    public void setUserCity(String userCity) {
+        this.userCity = userCity;
+    }
+    
+    public void setUserAddress(String userAddress) {
+        this.userAddress = userAddress;
+    }
+    
+    public void setUserPhone(String userPhone) {
+        this.userPhone = userPhone;
+    }
+    
+    public void setUserFax(String userFax) {
+        this.userFax = userFax;
+    }
+    
+    public void setUserCountry(String userCountry) {
+        this.userCountry = userCountry;
+    }
+    
+    public void setUserCompany(String userCompany) {
+        this.userCompany = userCompany;
+    }
+    
+    public void setUserCompanyLogo(String userCompanyLogo) {
+        this.userCompanyLogo = userCompanyLogo;
+    }
+    
+    public void setDeviceScalingName(String deviceScalingName) {
+        this.deviceScalingName = deviceScalingName;
+    }
+    
+    public void setCamera(String camera) {
+        this.camera = camera;
+    }
+    
+    public void setMicroscopeName(String microscopeName) {
+        this.microscopeName = microscopeName;
+    }
+    
+    public void setObjectiveID(String objectiveID) {
+        this.objectiveID = objectiveID;
+    }
+    
+    public void setObjectiveName(String objectiveName) {
+        this.objectiveName = objectiveName;
+    }
+    
+    public void setReflectorID(String reflectorID) {
+        this.reflectorID = reflectorID;
+    }
+    
+    public void setReflector(String reflector) {
+        this.reflector = reflector;
+    }
+    
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+    
+    public void setFileLink(String fileLink) {
+        this.fileLink = fileLink;
+    }
+    
+    public void setFileID(String fileID) {
+        this.fileID = fileID;
+    }
+    
+    public void setLastModifiedBy(String lastModifiedBy) {
+        this.lastModifiedBy = lastModifiedBy;
     }
 
 }
