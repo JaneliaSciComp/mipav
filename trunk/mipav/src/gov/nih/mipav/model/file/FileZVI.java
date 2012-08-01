@@ -5683,12 +5683,16 @@ public class FileZVI extends FileBase {
                     
                     if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
                             (!Double.isNaN(acqTime))) {
+                        int cNow;
                         if (cValue == Integer.MIN_VALUE) {
-                            cValue = 0;
+                            cNow = 0;
+                        }
+                        else {
+                            cNow = cValue;
                         }
                         if (imageCount == 1) {
                             imageZ6Array[0] = 0;
-                            imageC6Array[0] = cValue;
+                            imageC6Array[0] = cNow;
                             imageT6Array[0] = 0;
                             cameraImageAcquisitionTime[0] = acqTime;
                             icp6 = 1;
@@ -5696,14 +5700,14 @@ public class FileZVI extends FileBase {
                         else {
                             boolean doFill = true;
                             for (i = 0; i < icp6; i++) {
-                                if ((imageZ6Array[i] == zTileValue) && (imageC6Array[i] == cValue) &&
+                                if ((imageZ6Array[i] == zTileValue) && (imageC6Array[i] == cNow) &&
                                     (imageT6Array[i] == tValue)) {
                                     doFill = false;
                                 }
                             }
                             if (doFill) {
                                 imageZ6Array[icp6] = zTileValue;
-                                imageC6Array[icp6] = cValue;
+                                imageC6Array[icp6] = cNow;
                                 imageT6Array[icp6] = tValue;
                                 cameraImageAcquisitionTime[icp6++] = acqTime;
                             }
@@ -5712,12 +5716,16 @@ public class FileZVI extends FileBase {
                     
                     if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
                             (!Double.isNaN(relTime))) {
+                        int cNow;
                         if (cValue == Integer.MIN_VALUE) {
-                            cValue = 0;
+                            cNow = 0;
+                        }
+                        else {
+                            cNow = cValue;
                         }
                         if (imageCount == 1) {
                             imageZ7Array[0] = 0;
-                            imageC7Array[0] = cValue;
+                            imageC7Array[0] = cNow;
                             imageT7Array[0] = 0;
                             imageRelativeTime[0] = relTime;
                             icp7 = 1;
@@ -5725,14 +5733,14 @@ public class FileZVI extends FileBase {
                         else {
                             boolean doFill = true;
                             for (i = 0; i < icp7; i++) {
-                                if ((imageZ7Array[i] == zTileValue) && (imageC7Array[i] == cValue) &&
+                                if ((imageZ7Array[i] == zTileValue) && (imageC7Array[i] == cNow) &&
                                     (imageT7Array[i] == tValue)) {
                                     doFill = false;
                                 }
                             }
                             if (doFill) {
                                 imageZ7Array[icp7] = zTileValue;
-                                imageC7Array[icp7] = cValue;
+                                imageC7Array[icp7] = cNow;
                                 imageT7Array[icp7] = tValue;
                                 imageRelativeTime[icp7++] = relTime;
                             }
