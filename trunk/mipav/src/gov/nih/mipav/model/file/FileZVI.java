@@ -3253,7 +3253,7 @@ public class FileZVI extends FileBase {
                                 if (stringValue.length() == 0) {
                                     stringValue = null;
                                 }
-                                //Preferences.debug("Value = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("Value = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case VT_STORED_OBJECT:
                                 Preferences.debug("Data type of value is VT_STORED_OBJECT\n", Preferences.DEBUG_FILEIO);
