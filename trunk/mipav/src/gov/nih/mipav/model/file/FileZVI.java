@@ -1464,6 +1464,15 @@ public class FileZVI extends FileBase {
         int exposureTimeChannel2 = Integer.MIN_VALUE;
         int exposureTimeChannel3 = Integer.MIN_VALUE;
         int apotomeGridPosition = Integer.MIN_VALUE;
+        String channelName = null;
+        boolean haveChannelName0 = false;
+        boolean haveChannelName1 = false;
+        boolean haveChannelName2 = false;
+        boolean haveChannelName3 = false;
+        int channelNameChannel0 = Integer.MIN_VALUE;
+        int channelNameChannel1 = Integer.MIN_VALUE;
+        int channelNameChannel2 = Integer.MIN_VALUE;
+        int channelNameChannel3 = Integer.MIN_VALUE;
         boolean haveApotomeGridPosition0 = false;
         boolean haveApotomeGridPosition1 = false;
         boolean haveApotomeGridPosition2 = false;
@@ -2185,7 +2194,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String typeDescription = new String(b, "UTF-16LE").trim();
+                        String typeDescription = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Type description = " + typeDescription + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -2207,7 +2216,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String fileName = new String(b, "UTF-16LE").trim();
+                        String fileName = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Name of zvi file = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -2684,7 +2693,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String typeDescription = new String(b, "UTF-16LE").trim();
+                        String typeDescription = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Type description = " + typeDescription + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -2706,7 +2715,7 @@ public class FileZVI extends FileBase {
                         for (i = 0; i < stringBytes; i++) {
                             bf[i] = b[bp++];
                         }
-                        String fileName = new String(b, "UTF-16LE").trim();
+                        String fileName = new String(bf, "UTF-16LE").trim();
                         Preferences.debug("Name of zvi file = " + fileName + "\n", Preferences.DEBUG_FILEIO);
                     }
                     else {
@@ -3189,6 +3198,7 @@ public class FileZVI extends FileBase {
                    emissionWavelength = Integer.MIN_VALUE;
                    acqTime = Double.NaN;
                    relTime = Double.NaN;
+                   channelName = null;
                     for (i = 0; i < tokenCount && bp < b.length - 13; i++) {
                         short valueDType = (short) (((b[bp+1] & 0xff) << 8) | (b[bp] & 0xff));
                         bp += 2;
@@ -3239,8 +3249,11 @@ public class FileZVI extends FileBase {
                                 for (i = 0; i < stringBytes; i++) {
                                     bf[i] = b[bp++];
                                 }
-                                stringValue = new String(b, "UTF-16LE").trim();
-                                //Preferences.debug("Value = " + valueString + "\n", Preferences.DEBUG_FILEIO);
+                                stringValue = new String(bf, "UTF-16LE").trim();
+                                if (stringValue.length() == 0) {
+                                    stringValue = null;
+                                }
+                                //Preferences.debug("Value = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case VT_STORED_OBJECT:
                                 Preferences.debug("Data type of value is VT_STORED_OBJECT\n", Preferences.DEBUG_FILEIO);
@@ -3251,8 +3264,8 @@ public class FileZVI extends FileBase {
                                 for (i = 0; i < stringBytes; i++) {
                                     bf[i] = b[bp++];
                                 }
-                                stringValue = new String(b, "UTF-16LE").trim();
-                                //Preferences.debug("Value = " + valueString + "\n", Preferences.DEBUG_FILEIO);
+                                stringValue = new String(bf, "UTF-16LE").trim();
+                                //Preferences.debug("Value = " + stringValue + "\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case VT_DISPATCH:
                                 Preferences.debug("Data type of value is VT_DISPATCH\n", Preferences.DEBUG_FILEIO);
@@ -3542,6 +3555,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1042:
                                 Preferences.debug("tagID = Camera\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setCamera(stringValue);
+                                }
                                 break;
                             case 1044:
                                 Preferences.debug("tagID = Camera trigger signal type\n", Preferences.DEBUG_FILEIO);
@@ -3569,6 +3585,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1284:
                                 Preferences.debug("tagID = Channel name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    channelName = stringValue;
+                                }
                                 break;
                             case 1536:
                                 Preferences.debug("tagID = Document information group\n", Preferences.DEBUG_FILEIO);
@@ -3599,18 +3618,30 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1545:
                                 Preferences.debug("tagID = File link\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setFileLink(stringValue);
+                                }
                                 break;
                             case 1546:
                                 Preferences.debug("tagID = Document type\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setDocumentType(stringValue);
+                                }
                                 break;
                             case 1547:
                                 Preferences.debug("tagID = Storage media\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1548:
                                 Preferences.debug("tagID = File ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setFileID(stringValue);
+                                }
                                 break;
                             case 1549:
                                 Preferences.debug("tagID = Reference\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setReference(stringValue);
+                                }
                                 break;
                             case 1550:
                                 Preferences.debug("tagID = File date\n", Preferences.DEBUG_FILEIO);
@@ -3626,6 +3657,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1553:
                                 Preferences.debug("tagID = Filename\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setFilename(stringValue);
+                                }
                                 break;
                             case 1554:
                                 Preferences.debug("tagID = File attributes\n", Preferences.DEBUG_FILEIO);
@@ -3638,39 +3672,72 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1794:
                                 Preferences.debug("tagID = Last modified by\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setLastModifiedBy(stringValue);
+                                }
                                 break;
                             case 1795:
                                 Preferences.debug("tagID = User company\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCompany(stringValue);
+                                }
                                 break;
                             case 1796:
                                 Preferences.debug("tagID = User company logo\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCompanyLogo(stringValue);
+                                }
                                 break;
                             case 1797:
                                 Preferences.debug("tagID = Image\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 1800:
                                 Preferences.debug("tagID = User ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR){
+                                    fileInfo.setUserID(stringValue);
+                                }
                                 break;
                             case 1801:
                                 Preferences.debug("tagID = User name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserName(stringValue);
+                                }
                                 break;
                             case 1802:
                                 Preferences.debug("tagID = User city\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCity(stringValue);
+                                }
                                 break;
                             case 1803:
                                 Preferences.debug("tagID = User address\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserAddress(stringValue);
+                                }
                                 break;
                             case 1804:
                                 Preferences.debug("tagID = User country\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserCountry(stringValue);
+                                }
                                 break;
                             case 1805:
                                 Preferences.debug("tagID = User phone\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserPhone(stringValue);
+                                }
                                 break;
                             case 1806:
                                 Preferences.debug("tagID = User fax\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setUserFax(stringValue);
+                                }
                                 break;
                             case 2049:
                                 Preferences.debug("tagID = Objective name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setObjectiveName(stringValue);
+                                }
                                 break;
                             case 2050:
                                 Preferences.debug("tagID = Optovar\n", Preferences.DEBUG_FILEIO);
@@ -3680,6 +3747,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2051:
                                 Preferences.debug("tagID = Reflector\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setReflector(stringValue);
+                                }
                                 break;
                             case 2052:
                                 Preferences.debug("tagID = Condenser contrast\n", Preferences.DEBUG_FILEIO);
@@ -3769,6 +3839,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2075:
                                 Preferences.debug("tagID = Microscope name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setMicroscopeName(stringValue);
+                                }
                                 break;
                             case 2076:
                                 Preferences.debug("tagID = Objective magnification\n", Preferences.DEBUG_FILEIO);
@@ -4260,9 +4333,15 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2261:
                                 Preferences.debug("tagID = Objective ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setObjectiveID(stringValue);
+                                }
                                 break;
                             case 2262:
                                 Preferences.debug("tagID = Reflector ID\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setReflectorID(stringValue);
+                                }
                                 break;
                             case 2307:
                                 Preferences.debug("tagID = Camera frame start left\n", Preferences.DEBUG_FILEIO);
@@ -4863,6 +4942,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65619:
                                 Preferences.debug("tagID = Device scaling name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setDeviceScalingName(stringValue);
+                                }
                                 break;
                             case 65620:
                                 Preferences.debug("tagID = Camera shading is calculated\n", Preferences.DEBUG_FILEIO);
@@ -5331,6 +5413,31 @@ public class FileZVI extends FileBase {
                             fileInfo.setExposureTime0(exposureTimeChannel0, exposureTime);
                         }
                     } // if (!Double.isNaN(exposureTime)
+                    
+                    if (channelName != null) {
+                        if (haveChannelName2 && (!haveChannelName3) && (cValue != channelNameChannel0) &&
+                                (cValue != channelNameChannel1) && (cValue != channelNameChannel2)) {
+                            haveChannelName3 = true;
+                            channelNameChannel3 = cValue;
+                            fileInfo.setChannelName3(channelNameChannel3, channelName);
+                        }
+                        else if (haveChannelName1 && (!haveChannelName2) && (cValue != channelNameChannel0) &&
+                                (cValue != channelNameChannel1)) {
+                            haveChannelName2 = true;
+                            channelNameChannel2 = cValue;
+                            fileInfo.setChannelName2(channelNameChannel2, channelName);
+                        }
+                        else if (haveChannelName0 && (!haveChannelName1) && (cValue != channelNameChannel0)) {
+                            haveChannelName1 = true;
+                            channelNameChannel1 = cValue;
+                            fileInfo.setChannelName1(channelNameChannel1, channelName);
+                        }
+                        else if (!haveChannelName0) {
+                            haveChannelName0 = true;
+                            channelNameChannel0 = cValue;
+                            fileInfo.setChannelName0(channelNameChannel0, channelName);
+                        }
+                    } // if (channelName != null)
                     
                     if (apotomeGridPosition != Integer.MIN_VALUE) {
                         if (haveApotomeGridPosition2 && (!haveApotomeGridPosition3) && (cValue != apotomeGridPositionChannel0) &&
