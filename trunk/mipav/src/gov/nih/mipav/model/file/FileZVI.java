@@ -3509,6 +3509,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1027:
                                 Preferences.debug("tagID = Camera bit depth\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setCameraBitDepth(intValue);
+                                }
                                 break;
                             case 1029:
                                 Preferences.debug("tagID = Mono reference low\n", Preferences.DEBUG_FILEIO);
@@ -3787,6 +3790,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 2079:
                                 Preferences.debug("tagID = External shutter 1\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_I4) {
+                                    fileInfo.setExternalShutter1(intValue);
+                                }
                                 break;
                             case 2080:
                                 Preferences.debug("tagID = External shutter 2\n", Preferences.DEBUG_FILEIO);
@@ -4521,7 +4527,7 @@ public class FileZVI extends FileBase {
                                 Preferences.debug("tagID = Image count S\n", Preferences.DEBUG_FILEIO);
                                 break;
                             case 2841:
-                                Preferences.debug("tagiD = Original stage position X\n", Preferences.DEBUG_FILEIO);
+                                Preferences.debug("tagID = Original stage position X\n", Preferences.DEBUG_FILEIO);
                                 if (valueDType == VT_R8) {
                                     // Different value for every z slice
                                     originalStagePositionX = doubleValue;
@@ -5480,6 +5486,13 @@ public class FileZVI extends FileBase {
                         if (imageZYArray[0] != Integer.MIN_VALUE) {
                             imageZYArray[0] = firstTileValue;
                         }
+                        
+                        if (imageOriginalZXArray[0] != Integer.MIN_VALUE) {
+                            imageOriginalZXArray[0] = firstTileValue;
+                        }
+                        if (imageOriginalZYArray[0] != Integer.MIN_VALUE) {
+                            imageOriginalZYArray[0] = firstTileValue;
+                        }
                     }
                     
                     if (useZValue) {
@@ -5490,17 +5503,23 @@ public class FileZVI extends FileBase {
                     }
                     
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(focusPosition))) {
-               
-                        boolean doFill = true;
-                        for (i = 0; i < icp; i++) {
-                            if (imageZArray[i] == zTileValue) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(focusPosition))) {
+                        if (imageCount == 1) {
+                            imageZArray[0] = 0;
+                            imageFocusPositionArray[0] = focusPosition;
+                            icp = 1;
                         }
-                        if (doFill) {
-                            imageZArray[icp] = zTileValue;
-                            imageFocusPositionArray[icp++] = focusPosition;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp; i++) {
+                                if (imageZArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZArray[icp] = zTileValue;
+                                imageFocusPositionArray[icp++] = focusPosition;
+                            }
                         }
                     }
                     
@@ -5530,123 +5549,193 @@ public class FileZVI extends FileBase {
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(stagePositionX))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icpX; i++) {
-                            if (imageZXArray[i] == zTileValue) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(stagePositionX))) {
+                        if (imageCount == 1) {
+                            imageZXArray[0] = 0;
+                            imageStagePositionXArray[0] = stagePositionX;
+                            icpX = 1;
                         }
-                        if (doFill) {
-                            imageZXArray[icpX] = zTileValue;
-                            imageStagePositionXArray[icpX++] = stagePositionX;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpX; i++) {
+                                if (imageZXArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZXArray[icpX] = zTileValue;
+                                imageStagePositionXArray[icpX++] = stagePositionX;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(stagePositionY))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icpY; i++) {
-                            if (imageZYArray[i] == zTileValue) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(stagePositionY))) {
+                        if (imageCount == 1) {
+                            imageZYArray[0] = 0;
+                            imageStagePositionYArray[0] = stagePositionY;
+                            icpY = 1;
                         }
-                        if (doFill) {
-                            imageZYArray[icpY] = zTileValue;
-                            imageStagePositionYArray[icpY++] = stagePositionY;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpY; i++) {
+                                if (imageZYArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZYArray[icpY] = zTileValue;
+                                imageStagePositionYArray[icpY++] = stagePositionY;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(originalStagePositionX))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icpOriginalX; i++) {
-                            if (imageOriginalZXArray[i] == zTileValue) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(originalStagePositionX))) {
+                        if (imageCount == 1) {
+                            imageOriginalZXArray[0] = 0;
+                            imageOriginalStagePositionXArray[0] = originalStagePositionX;
+                            icpOriginalX = 1;
                         }
-                        if (doFill) {
-                            imageOriginalZXArray[icpOriginalX] = zTileValue;
-                            imageOriginalStagePositionXArray[icpOriginalX++] = originalStagePositionX;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpOriginalX; i++) {
+                                if (imageOriginalZXArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageOriginalZXArray[icpOriginalX] = zTileValue;
+                                imageOriginalStagePositionXArray[icpOriginalX++] = originalStagePositionX;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (!Double.isNaN(originalStagePositionY))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icpOriginalY; i++) {
-                            if (imageOriginalZYArray[i] == zTileValue) {
-                                doFill = false;
-                            }
+                    if (((zTileValue != Integer.MIN_VALUE) || (imageCount == 1)) && (!Double.isNaN(originalStagePositionY))) {
+                        if (imageCount == 1) {
+                            imageOriginalZYArray[0] = 0;
+                            imageOriginalStagePositionYArray[0] = originalStagePositionY;
+                            icpOriginalY = 1;
                         }
-                        if (doFill) {
-                            imageOriginalZYArray[icpOriginalY] = zTileValue;
-                            imageOriginalStagePositionYArray[icpOriginalY++] = originalStagePositionY;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icpOriginalY; i++) {
+                                if (imageOriginalZYArray[i] == zTileValue) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageOriginalZYArray[icpOriginalY] = zTileValue;
+                                imageOriginalStagePositionYArray[icpOriginalY++] = originalStagePositionY;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(blackValue))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp2; i++) {
-                            if ((imageZ2Array[i] == zTileValue) && (imageC2Array[i] == cValue) &&
-                                (imageT2Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                        (cValue != Integer.MIN_VALUE) && (!Double.isNaN(blackValue))) {
+                        if (imageCount == 1) {
+                            imageZ2Array[0] = 0;
+                            imageC2Array[0] = cValue;
+                            imageT2Array[0] = 0;
+                            imageBlackValueArray[0] = blackValue;
+                            icp2 = 1;
                         }
-                        if (doFill) {
-                            imageZ2Array[icp2] = zTileValue;
-                            imageC2Array[icp2] = cValue;
-                            imageT2Array[icp2] = tValue;
-                            imageBlackValueArray[icp2++] = blackValue;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp2; i++) {
+                                if ((imageZ2Array[i] == zTileValue) && (imageC2Array[i] == cValue) &&
+                                    (imageT2Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ2Array[icp2] = zTileValue;
+                                imageC2Array[icp2] = cValue;
+                                imageT2Array[icp2] = tValue;
+                                imageBlackValueArray[icp2++] = blackValue;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp3; i++) {
-                            if ((imageZ3Array[i] == zTileValue) && (imageC3Array[i] == cValue) &&
-                                (imageT3Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                            (cValue != Integer.MIN_VALUE) && (!Double.isNaN(whiteValue))) {
+                        if (imageCount == 1) {
+                            imageZ3Array[0] = 0;
+                            imageC3Array[0] = cValue;
+                            imageT3Array[0] = 0;
+                            imageWhiteValueArray[0] = whiteValue;
+                            icp3 = 1;
                         }
-                        if (doFill) {
-                            imageZ3Array[icp3] = zTileValue;
-                            imageC3Array[icp3] = cValue;
-                            imageT3Array[icp3] = tValue;
-                            imageWhiteValueArray[icp3++] = whiteValue;
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp3; i++) {
+                                if ((imageZ3Array[i] == zTileValue) && (imageC3Array[i] == cValue) &&
+                                    (imageT3Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ3Array[icp3] = zTileValue;
+                                imageC3Array[icp3] = cValue;
+                                imageT3Array[icp3] = tValue;
+                                imageWhiteValueArray[icp3++] = whiteValue;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(acqTime))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp6; i++) {
-                            if ((imageZ6Array[i] == zTileValue) && (imageC6Array[i] == cValue) &&
-                                (imageT6Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                            (!Double.isNaN(acqTime))) {
+                        if (cValue == Integer.MIN_VALUE) {
+                            cValue = 0;
                         }
-                        if (doFill) {
-                            imageZ6Array[icp6] = zTileValue;
-                            imageC6Array[icp6] = cValue;
-                            imageT6Array[icp6] = tValue;
-                            cameraImageAcquisitionTime[icp6++] = acqTime;
+                        if (imageCount == 1) {
+                            imageZ6Array[0] = 0;
+                            imageC6Array[0] = cValue;
+                            imageT6Array[0] = 0;
+                            cameraImageAcquisitionTime[0] = acqTime;
+                            icp6 = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp6; i++) {
+                                if ((imageZ6Array[i] == zTileValue) && (imageC6Array[i] == cValue) &&
+                                    (imageT6Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ6Array[icp6] = zTileValue;
+                                imageC6Array[icp6] = cValue;
+                                imageT6Array[icp6] = tValue;
+                                cameraImageAcquisitionTime[icp6++] = acqTime;
+                            }
                         }
                     }
                     
-                    if ((zTileValue != Integer.MIN_VALUE) && (cValue != Integer.MIN_VALUE) &&
-                        (tValue != Integer.MIN_VALUE) && (!Double.isNaN(relTime))) {
-                        boolean doFill = true;
-                        for (i = 0; i < icp7; i++) {
-                            if ((imageZ7Array[i] == zTileValue) && (imageC7Array[i] == cValue) &&
-                                (imageT7Array[i] == tValue)) {
-                                doFill = false;
-                            }
+                    if ((((zTileValue != Integer.MIN_VALUE) && (tValue != Integer.MIN_VALUE)) || (imageCount == 1)) && 
+                            (!Double.isNaN(relTime))) {
+                        if (cValue == Integer.MIN_VALUE) {
+                            cValue = 0;
                         }
-                        if (doFill) {
-                            imageZ7Array[icp7] = zTileValue;
-                            imageC7Array[icp7] = cValue;
-                            imageT7Array[icp7] = tValue;
-                            imageRelativeTime[icp7++] = relTime;
+                        if (imageCount == 1) {
+                            imageZ7Array[0] = 0;
+                            imageC7Array[0] = cValue;
+                            imageT7Array[0] = 0;
+                            imageRelativeTime[0] = relTime;
+                            icp7 = 1;
+                        }
+                        else {
+                            boolean doFill = true;
+                            for (i = 0; i < icp7; i++) {
+                                if ((imageZ7Array[i] == zTileValue) && (imageC7Array[i] == cValue) &&
+                                    (imageT7Array[i] == tValue)) {
+                                    doFill = false;
+                                }
+                            }
+                            if (doFill) {
+                                imageZ7Array[icp7] = zTileValue;
+                                imageC7Array[icp7] = cValue;
+                                imageT7Array[icp7] = tValue;
+                                imageRelativeTime[icp7++] = relTime;
+                            }
                         }
                     }
                     
