@@ -169,6 +169,8 @@ public class FileInfoZVI extends FileInfoBase {
     double condenserNumericalAperture = Double.NaN;
     String stageCalibrated = null;
     double optovar = Double.NaN;
+    int cameraBitDepth = Integer.MIN_VALUE;
+    int externalShutter1 = Integer.MIN_VALUE;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -296,6 +298,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Gamma value = " + gammaValue + "\n");
         }
         
+        if (cameraBitDepth != Integer.MIN_VALUE) {
+            dialog.append("Camera bit depth = " + cameraBitDepth + "\n");
+        }
+        
         if (cameraFrameStartLeft != Integer.MIN_VALUE) {
             dialog.append("Camera frame start left = " + cameraFrameStartLeft + "\n");
         }
@@ -333,7 +339,12 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (!Double.isNaN(exposureTime0)) {
-            dialog.append("Channel " + exposureTimeChannel0 + " exposure time = " + exposureTime0 + " milliseconds\n");
+            if (exposureTimeChannel0 != Integer.MIN_VALUE) {
+                dialog.append("Channel " + exposureTimeChannel0 + " exposure time = " + exposureTime0 + " milliseconds\n");
+            }
+            else {
+                dialog.append("Exposure time = " + exposureTime0 + " milliseconds\n");    
+            }
         }
         
         if (!Double.isNaN(exposureTime1)) {
@@ -485,7 +496,12 @@ public class FileInfoZVI extends FileInfoBase {
         }
         
         if (reflectorPosition0 != Integer.MIN_VALUE) {
-            dialog.append("Channel " + reflectorPositionChannel0 + " reflector position = " + reflectorPosition0 + "\n");
+            if (reflectorPositionChannel0 != Integer.MIN_VALUE) {
+                dialog.append("Channel " + reflectorPositionChannel0 + " reflector position = " + reflectorPosition0 + "\n");
+            }
+            else {
+                dialog.append("Reflector position = " + reflectorPosition0 + "\n");    
+            }
         }
         
         if (reflectorPosition1 != Integer.MIN_VALUE) {
@@ -614,6 +630,10 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (cameraShutterLiveEnable != Integer.MIN_VALUE) {
             dialog.append("Camera shutter live enable = " + cameraShutterLiveEnable + "\n");
+        }
+        
+        if (externalShutter1 != Integer.MIN_VALUE) {
+            dialog.append("External shutter 1 = " + externalShutter1 + "\n");
         }
         
         if (!Double.isNaN(axioCamSaturation)) {
@@ -1203,6 +1223,14 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setOptovar(double optovar) {
         this.optovar = optovar;
+    }
+    
+    public void setCameraBitDepth(int cameraBitDepth) {
+        this.cameraBitDepth = cameraBitDepth;
+    }
+    
+    public void setExternalShutter1(int externalShutter1) {
+        this.externalShutter1 = externalShutter1;
     }
 
 }
