@@ -201,6 +201,13 @@ public class FileInfoZVI extends FileInfoBase {
     String fileLink = null;
     String fileID;
     String lastModifiedBy = null;
+    String title = null;
+    String apotomeGridName = null;
+    String apotomeFilterName = null;
+    String apotomeCamPhaseAngles = null;
+    String apotomeCamGenericCameraName = null;
+    String documentSubtype =  null;
+    String comments = null;
         /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
     
@@ -417,6 +424,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Apotome processing mode = " + apotomeProcessingMode + "\n");
         }
         
+        if (apotomeGridName != null) {
+            dialog.append("Apotome grid name = " + apotomeGridName + "\n");
+        }
+        
         if (apotomeGridPosition0 != Integer.MIN_VALUE) {
             dialog.append("Channel " + apotomeGridPositionChannel0 + " apotome grid position = " + apotomeGridPosition0 + "\n");
         }
@@ -437,6 +448,10 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Apotome full phase shift = " + apotomeFullPhaseShift + "\n");
         }
         
+        if (apotomeFilterName != null) {
+            dialog.append("Apotome filter name = " + apotomeFilterName + "\n");
+        }
+        
         if (!Double.isNaN(apotomeFilterStrength)) {
             dialog.append("Apotome filter strength = " + apotomeFilterStrength + "\n");
         }
@@ -447,6 +462,14 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (!Double.isNaN(apotomeGratingPeriod)) {
             dialog.append("Apotome grating period = " + apotomeGratingPeriod + "\n");    
+        }
+        
+        if (apotomeCamGenericCameraName !=  null) {
+            dialog.append("Apotome cam generic camera name = " + apotomeCamGenericCameraName + "\n");
+        }
+        
+        if (apotomeCamPhaseAngles != null) {
+            dialog.append("Apotome cam phase angles = " + apotomeCamPhaseAngles + "\n");
         }
         
         if (apotomeCamNormalize != Integer.MIN_VALUE) {
@@ -770,8 +793,16 @@ public class FileInfoZVI extends FileInfoBase {
             dialog.append("Channel " + channel3 + " image relative time = " + imageRelativeTime3 + "\n");
         }
         
+        if (title != null) {
+            dialog.append("Title = " + title + "\n");
+        }
+        
         if (IDTagFileName != null) {
             dialog.append("File name = " + IDTagFileName + "\n");
+        }
+        
+        if (comments != null) {
+            dialog.append("Comments = " + comments + "\n");
         }
         
         if (fileDate != null) {
@@ -800,6 +831,10 @@ public class FileInfoZVI extends FileInfoBase {
         
         if (documentType != null) {
             dialog.append("Document type = " + documentType + "\n");
+        }
+        
+        if (documentSubtype != null) {
+            dialog.append("Document subtype = " + documentSubtype + "\n");
         }
         
         if (userID != null) {
@@ -1473,6 +1508,34 @@ public class FileInfoZVI extends FileInfoBase {
     
     public void setLastModifiedBy(String lastModifiedBy) {
         this.lastModifiedBy = lastModifiedBy;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
+    }
+    
+    public void setApotomeGridName(String apotomeGridName) {
+        this.apotomeGridName = apotomeGridName;
+    }
+    
+    public void setApotomeFilterName(String apotomeFilterName) {
+        this.apotomeFilterName = apotomeFilterName;
+    }
+    
+    public void setApotomeCamPhaseAngles(String apotomeCamPhaseAngles) {
+        this.apotomeCamPhaseAngles = apotomeCamPhaseAngles;
+    }
+    
+    public void setApotomeCamGenericCameraName(String apotomeCamGenericCameraName) {
+        this.apotomeCamGenericCameraName = apotomeCamGenericCameraName;
+    }
+    
+    public void setDocumentSubtype(String documentSubtype) {
+        this.documentSubtype = documentSubtype;
+    }
+    
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 
 }
