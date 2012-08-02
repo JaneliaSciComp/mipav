@@ -14,6 +14,7 @@ import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.JDialogVolViewResample;
 import gov.nih.mipav.view.renderer.J3D.surfaceview.plotterview.ViewJFramePlotterView;
@@ -1686,7 +1687,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogReorient(this, getActiveImage());
         } else if (command.equals("Extract slices")) {
             new JDialogExtractSlicesVolumes(this, getActiveImage());
-        } else if (command.equals("Remove slices")) {
+        } else if(command.equals("Swap slices")) {
+            new JDialogSwapSlicesVolumes(this, getActiveImage(), SwapMode.ThreeD);
+        } else if(command.equals("Swap volumes")) {
+            new JDialogSwapSlicesVolumes(this, getActiveImage(), SwapMode.FourD);
+        }else if (command.equals("Remove slices")) {
             new JDialogRemoveSlices(this, getActiveImage());
         } else if (command.equals("padding")) {
             new JDialogPadImages(this, getActiveImage());
