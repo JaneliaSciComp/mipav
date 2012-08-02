@@ -485,7 +485,7 @@ public class FileZVI extends FileBase {
             processedFocusPositionArray = new double[zDim];
             numberFocusPositions = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icp; i++) {
                     if ((imageZArray[i] == z) && (!Double.isNaN(imageFocusPositionArray[i]))) {
                         processedFocusPositionArray[numberFocusPositions++] = imageFocusPositionArray[i];    
                     }
@@ -495,7 +495,7 @@ public class FileZVI extends FileBase {
             processedRelFocusPosition1Array = new double[zDim];
             numberRelFocusPosition1s = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icp4; i++) {
                     if ((imageZ4Array[i] == z) && (!Double.isNaN(imageRelFocusPosition1Array[i]))) {
                         processedRelFocusPosition1Array[numberRelFocusPosition1s++] = imageRelFocusPosition1Array[i];    
                     }
@@ -505,7 +505,7 @@ public class FileZVI extends FileBase {
             processedRelFocusPosition2Array = new double[zDim];
             numberRelFocusPosition2s = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icp5; i++) {
                     if ((imageZ5Array[i] == z) && (!Double.isNaN(imageRelFocusPosition2Array[i]))) {
                         processedRelFocusPosition2Array[numberRelFocusPosition2s++] = imageRelFocusPosition2Array[i];    
                     }
@@ -515,7 +515,7 @@ public class FileZVI extends FileBase {
             processedStagePositionXArray = new double[zDim];
             numberStagePositionXs = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icpX; i++) {
                     if ((imageZXArray[i] == z) && (!Double.isNaN(imageStagePositionXArray[i]))) {
                         processedStagePositionXArray[numberStagePositionXs++] = imageStagePositionXArray[i];    
                     }
@@ -525,7 +525,7 @@ public class FileZVI extends FileBase {
             processedStagePositionYArray = new double[zDim];
             numberStagePositionYs = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icpY; i++) {
                     if ((imageZYArray[i] == z) && (!Double.isNaN(imageStagePositionYArray[i]))) {
                         processedStagePositionYArray[numberStagePositionYs++] = imageStagePositionYArray[i];    
                     }
@@ -535,7 +535,7 @@ public class FileZVI extends FileBase {
             processedOriginalStagePositionXArray = new double[zDim];
             numberOriginalStagePositionXs = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icpOriginalX; i++) {
                     if ((imageOriginalZXArray[i] == z) && (!Double.isNaN(imageOriginalStagePositionXArray[i]))) {
                         processedOriginalStagePositionXArray[numberOriginalStagePositionXs++] = imageOriginalStagePositionXArray[i];    
                     }
@@ -545,14 +545,14 @@ public class FileZVI extends FileBase {
             processedOriginalStagePositionYArray = new double[zDim];
             numberOriginalStagePositionYs = 0;
             for (z = minZ; z <= maxZ; z++) {
-                for (i = 0; i < imageCount; i++) {
+                for (i = 0; i < icpOriginalY; i++) {
                     if ((imageOriginalZYArray[i] == z) && (!Double.isNaN(imageOriginalStagePositionYArray[i]))) {
                         processedOriginalStagePositionYArray[numberOriginalStagePositionYs++] = imageOriginalStagePositionYArray[i];    
                     }
                 }
             }
             
-            for (i = 0; i < imageCount; i++) {
+            for (i = 0; i < icp2; i++) {
                 if (imageC2Array[i] != Integer.MIN_VALUE) {
                    if (!haveFirstChannel) {
                        haveFirstChannel = true;
@@ -582,7 +582,7 @@ public class FileZVI extends FileBase {
                 }
             }
             
-            for (i = 0; i < imageCount; i++) {
+            for (i = 0; i < icp3; i++) {
                 if (imageC3Array[i] != Integer.MIN_VALUE) {
                    if (!haveFirstChannel) {
                        haveFirstChannel = true;
@@ -612,7 +612,7 @@ public class FileZVI extends FileBase {
                 }
             }
             
-            for (i = 0; i < imageCount; i++) {
+            for (i = 0; i < icp6; i++) {
                 if (imageC6Array[i] != Integer.MIN_VALUE) {
                    if (!haveFirstChannel) {
                        haveFirstChannel = true;
@@ -642,7 +642,7 @@ public class FileZVI extends FileBase {
                 }
             }
             
-            for (i = 0; i < imageCount; i++) {
+            for (i = 0; i < icp7; i++) {
                 if (imageC7Array[i] != Integer.MIN_VALUE) {
                    if (!haveFirstChannel) {
                        haveFirstChannel = true;
@@ -696,7 +696,7 @@ public class FileZVI extends FileBase {
             numberBlack0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
                            (imageC2Array[i] == ch0) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue0Array[numberBlack0Values++] = imageBlackValueArray[i];
@@ -708,7 +708,7 @@ public class FileZVI extends FileBase {
             numberBlack1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
                            (imageC2Array[i] == ch1) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue1Array[numberBlack1Values++] = imageBlackValueArray[i];
@@ -720,7 +720,7 @@ public class FileZVI extends FileBase {
             numberBlack2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
                            (imageC2Array[i] == ch2) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue2Array[numberBlack2Values++] = imageBlackValueArray[i];
@@ -732,7 +732,7 @@ public class FileZVI extends FileBase {
             numberBlack3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp2; i++) {
                         if((imageT2Array[i] == t) && (imageZ2Array[i] == z) && 
                            (imageC2Array[i] == ch3) && (!Double.isNaN(imageBlackValueArray[i]))) {
                                 blackValue3Array[numberBlack3Values++] = imageBlackValueArray[i];
@@ -749,7 +749,7 @@ public class FileZVI extends FileBase {
             numberWhite0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
                            (imageC3Array[i] == ch0) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue0Array[numberWhite0Values++] = imageWhiteValueArray[i];
@@ -761,7 +761,7 @@ public class FileZVI extends FileBase {
             numberWhite1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
                            (imageC3Array[i] == ch1) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue1Array[numberWhite1Values++] = imageWhiteValueArray[i];
@@ -773,7 +773,7 @@ public class FileZVI extends FileBase {
             numberWhite2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
                            (imageC3Array[i] == ch2) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue2Array[numberWhite2Values++] = imageWhiteValueArray[i];
@@ -785,7 +785,7 @@ public class FileZVI extends FileBase {
             numberWhite3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp3; i++) {
                         if((imageT3Array[i] == t) && (imageZ3Array[i] == z) && 
                            (imageC3Array[i] == ch3) && (!Double.isNaN(imageWhiteValueArray[i]))) {
                                 whiteValue3Array[numberWhite3Values++] = imageWhiteValueArray[i];
@@ -802,7 +802,7 @@ public class FileZVI extends FileBase {
             numberAcqTime0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
                            (imageC6Array[i] == ch0) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime0[numberAcqTime0Values++] = cameraImageAcquisitionTime[i];
@@ -814,7 +814,7 @@ public class FileZVI extends FileBase {
             numberAcqTime1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
                            (imageC6Array[i] == ch1) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime1[numberAcqTime1Values++] = cameraImageAcquisitionTime[i];
@@ -826,7 +826,7 @@ public class FileZVI extends FileBase {
             numberAcqTime2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
                            (imageC6Array[i] == ch2) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime2[numberAcqTime2Values++] = cameraImageAcquisitionTime[i];
@@ -838,7 +838,7 @@ public class FileZVI extends FileBase {
             numberAcqTime3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp6; i++) {
                         if((imageT6Array[i] == t) && (imageZ6Array[i] == z) && 
                            (imageC6Array[i] == ch3) && (!Double.isNaN(cameraImageAcquisitionTime[i]))) {
                                 cameraImageAcquisitionTime3[numberAcqTime3Values++] = cameraImageAcquisitionTime[i];
@@ -855,7 +855,7 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime0Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
                            (imageC7Array[i] == ch0) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime0[numberImageRelativeTime0Values++] = imageRelativeTime[i];
@@ -867,7 +867,7 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime1Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
                            (imageC7Array[i] == ch1) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime1[numberImageRelativeTime1Values++] = imageRelativeTime[i];
@@ -879,7 +879,7 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime2Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
                            (imageC7Array[i] == ch2) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime2[numberImageRelativeTime2Values++] = imageRelativeTime[i];
@@ -891,7 +891,7 @@ public class FileZVI extends FileBase {
             numberImageRelativeTime3Values = 0;
             for (t = minT; t <= maxT; t++) {
                 for (z = minZ; z <= maxZ; z++) {
-                    for (i = 0; i < imageCount; i++) {
+                    for (i = 0; i < icp7; i++) {
                         if((imageT7Array[i] == t) && (imageZ7Array[i] == z) && 
                            (imageC7Array[i] == ch3) && (!Double.isNaN(imageRelativeTime[i]))) {
                                 imageRelativeTime3[numberImageRelativeTime3Values++] = imageRelativeTime[i];
@@ -3420,6 +3420,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 530:
                                 Preferences.debug("tagID = Document subtype\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setDocumentSubtype(stringValue);
+                                }
                                 break;
                             case 531:
                                 Preferences.debug("tagID = Acquisition bit depth\n", Preferences.DEBUG_FILEIO);
@@ -3594,6 +3597,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1537:
                                 Preferences.debug("tagID = Title\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setTitle(stringValue);
+                                }
                                 break;
                             case 1538:
                                 Preferences.debug("tagID = Author\n", Preferences.DEBUG_FILEIO);
@@ -3603,6 +3609,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 1540:
                                 Preferences.debug("tagID = Comments\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setComments(stringValue);
+                                }
                                 break;
                             case 1541:
                                 Preferences.debug("tagID = Sample ID\n", Preferences.DEBUG_FILEIO);
@@ -4873,6 +4882,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65602:
                                 Preferences.debug("tagID = Apotome grid name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeGridName(stringValue);
+                                }
                                 break;
                             case 65603:
                                 Preferences.debug("tagID = Apotome staining\n", Preferences.DEBUG_FILEIO);
@@ -4888,6 +4900,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65606:
                                 Preferences.debug("tagID = Apotome filter name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeFilterName(stringValue);
+                                }
                                 break;
                             case 65607:
                                 Preferences.debug("tagID = Apotome filter strength\n", Preferences.DEBUG_FILEIO);
@@ -5047,6 +5062,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65657:
                                 Preferences.debug("tagID = Apotome Cam Phase Angles\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeCamPhaseAngles(stringValue);
+                                }
                                 break;
                             case 65658:
                                 Preferences.debug("tagID = Apotome Cam Image Format\n", Preferences.DEBUG_FILEIO);
@@ -5062,6 +5080,9 @@ public class FileZVI extends FileBase {
                                 break;
                             case 65662:
                                 Preferences.debug("tagID = Apotome Cam Generic Camera Name\n", Preferences.DEBUG_FILEIO);
+                                if (valueDType == VT_BSTR) {
+                                    fileInfo.setApotomeCamGenericCameraName(stringValue);
+                                }
                                 break;
                             case 65663:
                                 Preferences.debug("tagID = Acquisition Device\n", Preferences.DEBUG_FILEIO);
