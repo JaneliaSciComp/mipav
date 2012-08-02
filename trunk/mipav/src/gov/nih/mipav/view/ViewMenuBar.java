@@ -661,7 +661,8 @@ public class ViewMenuBar {
                          menuBuilder.buildMenuItem("Remove slices", null, 0, null, false),
                          menuBuilder
                                  .buildMenuItem("Replace blanks with averages", "ReplaceBlankWithAvg", 0, null, false),
-                         menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),}),
+                         menuBuilder.buildMenuItem("Replace slice", null, 0, null, false),
+                         menuBuilder.buildMenuItem("Swap slices", null, 0, null, false),}),
                 menuBuilder.makeMenu("4D volume tools", false, new JMenuItem[] {
                         menuBuilder.buildMenuItem("Convert Single 3D to 4D", "Convert3Dto4D", 0, null, false),
                         menuBuilder.buildMenuItem("Concat Multiple 3D to 4D", "ConvertMultiple3Dto4D", 0, null, false),
@@ -673,6 +674,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Remove volumes", null, 0, null, false),
                         menuBuilder.buildMenuItem("Swap dims 3<->4", "Swap34", 0, null, false),
                         menuBuilder.buildMenuItem("Swap dims 1<->4", "Swap14", 0, null, false),
+                        menuBuilder.buildMenuItem("Swap volumes", null, 0, null, false),
                         menuBuilder.buildMenuItem("4D Image math", "4DImageCalculator", 0, null, false),}),
 
 
@@ -1062,6 +1064,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Remove volumes", false);
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Swap dims 1<->4", false);
+            menuBuilder.setMenuItemEnabled("Swap volumes", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Barrel distortion correction", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
@@ -1082,6 +1085,8 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Convert 4D to RGB", false);
             menuBuilder.setMenuItemEnabled("Brain tools", false);
             menuBuilder.setMenuItemEnabled("Extract slices", false);
+            menuBuilder.setMenuItemEnabled("Swap slices", false);
+            menuBuilder.setMenuItemEnabled("Swap volumes", false);
             menuBuilder.setMenuItemEnabled("Replace slice", false);
             menuBuilder.setMenuItemEnabled("Extract volume", false);
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
@@ -1305,6 +1310,8 @@ public class ViewMenuBar {
         menuBuilder.setMenuItemEnabled("Anonymize face (BET)", true);
         menuBuilder.setMenuItemEnabled("Cine (movie)", true);
         menuBuilder.setMenuItemEnabled("Extract slices", true);
+        menuBuilder.setMenuItemEnabled("Swap slices", true);
+        menuBuilder.setMenuItemEnabled("Swap volumes", true);
         menuBuilder.setMenuItemEnabled("Replace slice", true);
         menuBuilder.setMenuItemEnabled("Brain tools", true);
         menuBuilder.setMenuItemEnabled("Light box", true);
