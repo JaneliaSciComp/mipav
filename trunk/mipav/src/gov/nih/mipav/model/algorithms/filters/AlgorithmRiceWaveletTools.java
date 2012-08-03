@@ -87,6 +87,8 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     private int yDim;
     
+    private int sliceSize;
+    
     private int zDim;
     
     private int arrayLength;
@@ -95,21 +97,42 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     private int error = 0;
     
-    public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, int filterType) {
+    private int numberOfLevels;
+    
+    private boolean doWaveletImages;
+    
+    private ModelImage[] waveletImage = null;
+    
+    // Low pass wavelet component
+    private double yl[] = null;
+    // Create 3 high pass wavelet components for each level
+    private double yh[][] = null;
+    private double lhA[][] = null;
+    private double hlA[][] = null;
+    private double hhA[][] = null;
+    
+    public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, int filterType,
+            int numberOfLevels, boolean doWaveletImages) {
         super(destImg, srcImg);
         this.filterLength = filterLength;
         this.filterType = filterType;
+        this.numberOfLevels = numberOfLevels;
+        this.doWaveletImages = doWaveletImages;
     }
     
-    public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, int filterType) {
+    public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, int filterType, int numberOfLevels,
+            boolean doWaveletImages) {
         super(null, srcImg);
         this.filterLength = filterLength;
         this.filterType = filterType;
+        this.numberOfLevels = numberOfLevels;
+        this.doWaveletImages = doWaveletImages;
     }
     
     
     public void runAlgorithm() {
-        int j;
+        int i, j, k;
+        int divisor;
         
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -117,18 +140,67 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             return;
         }
         
-        if ((filterLength % 2) == 1) {
-            displayError("No Daubechies filter exists for odd length");
-            
-            return;
-        }
-        
-        fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
-        
         nDims = srcImage.getNDims();
         extents = srcImage.getExtents();
         xDim = extents[0];
+        if ((xDim % 2) == 1) {
+            MipavUtil.displayError("1 level of decomposition requires an even xDim");
+            setCompleted(false);
+            return;
+        }
         yDim = extents[1];
+        if ((yDim % 2) == 1) {
+            MipavUtil.displayError("1 level of decomposition requires an even yDim");
+            setCompleted(false);
+            return;
+        }
+        sliceSize = xDim * yDim;
+        
+        if ((filterLength % 2) == 1) {
+            displayError("No Daubechies filter exists for odd length");
+            setCompleted(false);
+            return;
+        }
+        
+        if (numberOfLevels <= 0) {
+            MipavUtil.displayError("A wavelet decomposition requires number of levels >= 1");
+            setCompleted(false);
+        }
+        
+        if (numberOfLevels < Integer.MAX_VALUE) {
+            divisor = 1;
+            for (i = 1; i <= numberOfLevels; i++) {
+                divisor *= 2;
+            }
+            if ((xDim % divisor) != 0) {
+                MipavUtil.displayError("Error!  xDim mod " + divisor + " does not equal 0");
+                setCompleted(false);
+                return;
+            }
+            
+            if ((yDim % divisor) != 0) {
+                MipavUtil.displayError("Error!  yDim mod " + divisor + " does not equal 0");
+                setCompleted(false);
+                return;
+            }
+        } // if (numberOfLevels < Integer.MAX_VALUE);
+        else { // Calculate maximum possible number of levels
+            i = xDim;
+            j = 0;
+            while ((i % 2) == 0) {
+                i = (i >> 1);
+                j++;
+            }
+            k = yDim;
+            i = 0;
+            while((k % 2) == 0) {
+                k = (k >> 1);
+                i++;
+            }
+            
+            numberOfLevels = Math.min(i, j);
+            Preferences.debug("The maximum possible number of levels = " + numberOfLevels + "\n", Preferences.DEBUG_FILEIO);
+        } // else calculate maximum possible number of levels
 
         if (nDims > 2) {
             zDim = extents[2];
@@ -136,7 +208,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
 
         arrayLength = 1;
 
-        for (int i = 0; i < nDims; i++) {
+        for (i = 0; i < nDims; i++) {
             arrayLength *= extents[i];
         }
 
@@ -180,10 +252,160 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             return;
         }
         
+        // Create low pass wavelet component
+        yl = new double[sliceSize];
+        
+        // Create 3 high pass components for each level
+        yh = new double[numberOfLevels][3*sliceSize];
+        lhA = new double[numberOfLevels][sliceSize];
+        hlA = new double[numberOfLevels][sliceSize];
+        hhA = new double[numberOfLevels][sliceSize];
+        
         setCompleted(true);
         return;
         
     }
+    
+    private void mrdwt() {
+        int i;
+        int lh;
+        double h0[];
+        double h1[];
+        int actual_m;
+        int actual_n;
+        int sample_f;
+        int actual_L;
+        double xdummyl[];
+        double xdummyh[];
+        double ydummyll[];
+        double ydummylh[];
+        double ydummyhl[];
+        double ydummyhh[];
+        int maxmn;
+        int n_cb;
+        int ir;
+        int n_c;
+        int ic;
+        int n_rb;
+        int n_r;
+        
+        lh = 2*filterLength;
+        h0 = new double[lh];
+        h1 = new double[lh];
+        for (i = 0; i < filterLength; i++) {
+            h0[i] = waveletFilter[filterLength - i - 1];
+            h1[i] = scalingFilter[i];
+        }
+        for (i = 0; i < filterLength; i++) {
+            h0[filterLength + i] = scalingFilter[filterLength - i - 1];
+            h1[filterLength + i] = waveletFilter[i]; 
+        }
+        
+        for (i = 0; i < lh; i += 2) {
+            h1[i] = -h1[i];
+        }
+        
+        maxmn = Math.max(xDim, yDim);
+        xdummyl = new double[maxmn + lh - 1];
+        xdummyh = new double[maxmn + lh - 1];
+        ydummyll = new double[maxmn];
+        ydummylh = new double[maxmn];
+        ydummyhl = new double[maxmn];
+        ydummyhh = new double[maxmn];
+        
+        actual_m = 2*xDim;
+        actual_n = 2*yDim;
+        for (i = 0; i < sliceSize; i++) {
+            yl[i] = aArray[i];
+        }
+        
+        /* main loop */
+        sample_f = 1;
+        for (actual_L = 1; actual_L <= numberOfLevels; actual_L++) {
+            actual_m = actual_m/2;
+            actual_n = actual_n/2;
+            
+            /* go by rows */
+            n_cb = yDim/actual_n;   /* # of column blocks per row */
+            for (ir = 0; ir < xDim; ir++) {  /* loop over rows */
+                for (n_c = 0; n_c < n_cb; n_c++) {  /* loop within one row */
+                    /* store in dummy variable */ 
+                    ic = -sample_f + n_c;
+                    for (i = 0; i < actual_n; i++) {
+                        ic = ic + sample_f;
+                        xdummyl[i] = yl[ir + ic * xDim];
+                    } // for (i = 0; i < actual_n; i++)
+                    /* perform the filtering lowpass/highpass */
+                    fpconv(xdummyl, actual_n, h0, h1, lh, ydummyll, ydummyhh);
+                    /* restore dummy variables in matrices */
+                    ic = -sample_f + n_c;
+                    for (i = 0; i < actual_n; i++) {
+                        ic = ic + sample_f;
+                        yl[ir + ic * xDim] = ydummyll[i];
+                        yh[actual_L-1][ir + ic * 3 * xDim] = ydummyhh[i];
+                    } // for (i = 0; i < actual_n; i++)
+                } // for (n_c = 0; n_c < n_cb; n_c++)
+            } // for (ir = 0; ir < xDim; ir++)
+            
+            /* go by columns */
+            n_rb = xDim/actual_m;  /* # of row blocks per column */
+            for (ic = 0; ic < yDim; ic++) { /* loop over column */
+                for (n_r = 0; n_r < n_rb; n_r++) { /* loop within one column */
+                    /* store in dummy variables */
+                    ir = -sample_f + n_r;
+                    for (i = 0; i < actual_m; i++) {
+                        ir = ir + sample_f;
+                        xdummyl[i] = yl[ir + ic * xDim];
+                        xdummyh[i] = yh[actual_L-1][ir + ic * 3 * xDim];
+                    } // for (i = 0; i < actual_m; i++)
+                    /* perform filtering, first LL/LH, then HL/HH */
+                    fpconv(xdummyl, actual_m, h0, h1, lh, ydummyll, ydummylh);
+                    fpconv(xdummyh, actual_m, h0, h1, lh, ydummyhl, ydummyhh);
+                    /* restore dummy variables in arrays */
+                    ir = -sample_f + n_r;
+                    for (i = 0; i < actual_m; i++) {
+                        ir = ir + sample_f; 
+                        yl[ir + ic * xDim] = ydummyll[i];
+                        yh[actual_L-1][ir + ic * 3 * xDim] = ydummylh[i];
+                        yh[actual_L-1][ir + (ic + xDim) * 3 * xDim] = ydummyhl[i];
+                        yh[actual_L-1][ir + (ic + 2 * xDim) * 3 * xDim] = ydummyhh[i];
+                    } // for (i = 0; i < actual_m; i++)
+                } // for (n_r = 0; n_r < n_rb; n_r++)
+            } // for (ic = 0; ic < yDim; ic++)
+            sample_f = sample_f*2;
+        } // for (actual_L = 1; actual_L <= numberOfLevels; actual_L++)
+        
+        for (i = 0; i < numberOfLevels; i++) {
+            for (ir = 0; ir < xDim; ir++) {
+                for (ic = 0; ic < yDim; ic++) {
+                    lhA[i][ir + ic * xDim] = yh[i][ir + ic * 3 * xDim];
+                    hlA[i][ir + ic * xDim] = yh[i][ir + (ic + xDim) * 3 * xDim];
+                    hhA[i][ir + ic * xDim] = yh[i][ir + (ic + 2 * xDim)* 3 * xDim];
+                }
+            }
+        }
+    } // mrdwt
+    
+    private void fpconv(double x_in[], int lx, double h0[], double h1[], int lh,
+                        double x_outl[], double x_outh[]) {
+        int i,j;
+        double x0, x1;
+        
+        for (i = lx; i < lx + lh - 1; i++) {
+            x_in[i] = x_in[i-lx];
+        }
+        
+        for (i = 0; i < lx; i++) {
+            x0 = 0;
+            x1 = 0;
+            for (j = 0; j < lh; j++) {
+                x0 = x0 + x_in[j+i]*h0[lh-1-j];
+                x1 = x1 + x_in[j+i]*h1[lh-1-j];
+            } // for (j = 0; j < lh; j++)
+            x_outl[i] = x0;
+            x_outh[i] = x1;
+        } // for (i = 0; i < lx; i++)
+    } // fpconv
     
     /**
      * Function computes the Daubechies' scaling and wavelet filters (normalized to sqrt(2)).
@@ -424,6 +646,15 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
         
         return;
     } // daubcqf()
+    
+    /**
+     * Accessor that returns the image.
+     * 
+     * @return the wavelet image
+     */
+    public ModelImage[] getWaveletImages() {
+        return waveletImage;
+    }
     
     class EigenvalueComplex {
         private double er;
