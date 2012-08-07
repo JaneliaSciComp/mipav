@@ -18,7 +18,7 @@ import java.util.*;
  * @author   Justin Senseney
  * @version  1.0
  */
-public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
+public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -49,7 +49,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
      * @param  srcImage      source image (image to extract from)
      * @param  removeSlices  list of booleans for slices that should be extracted
      */
-    public AlgorithmExtractSlicesVolumes(ModelImage srcImage, boolean[] removeSlices) {
+    public AlgorithmSwapSlicesVolume(ModelImage srcImage, boolean[] removeSlices) {
         super(null, srcImage);
         extract = removeSlices;
 
@@ -196,7 +196,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
             colorFactor = 4;
         }
         else if (srcImage.isComplexImage()) {
-        	colorFactor = 2;
+            colorFactor = 2;
         }
 
         return colorFactor;
@@ -282,7 +282,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     try {
 
                         // try copying the zSrc-th slice out of srcImage, making it the zDest-th in destImage
-                    	srcImage.exportData(zSrc * colorFactor * sliceArea, colorFactor * sliceArea, imageBuffer);
+                        srcImage.exportData(zSrc * colorFactor * sliceArea, colorFactor * sliceArea, imageBuffer);
 
                         resultImage = new ModelImage(srcImage.getType(), newExtents,
                                                      srcImage.getImageName() + "_slice" + (zSrc));
@@ -323,8 +323,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                         // System.err.println("zSrc is: " + zSrc + " tSrcOffset is: " + tSrcOffset);
                         try {
-                        	srcImage.exportData(tSrcOffset + (zSrc * colorFactor * sliceArea), 
-                        			colorFactor * sliceArea, imageBuffer);
+                            srcImage.exportData(tSrcOffset + (zSrc * colorFactor * sliceArea), 
+                                    colorFactor * sliceArea, imageBuffer);
 
                             // System.err.println("Importing data at: " + (imageBuffer.length * t));
                             resultImage.importData(imageBuffer.length * t, imageBuffer, false);
