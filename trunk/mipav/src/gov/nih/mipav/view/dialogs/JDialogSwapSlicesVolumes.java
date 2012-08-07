@@ -29,8 +29,24 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     public enum SwapMode {
-        ThreeD,
-        FourD;
+        ThreeD("slice", 2),
+        FourD("volume", 3);
+        
+        private String title;
+        private int dimLoc;
+
+        SwapMode(String title, int dimLoc) {
+            this.title = title;
+            this.dimLoc = dimLoc;
+        }
+        
+        public String getTitle() {
+            return title;
+        }
+        
+        public int getDim() {
+            return dimLoc;
+        }
     }
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -63,7 +79,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     private ModelImage[] extractedImages;
 
     /** DOCUMENT ME! */
-    private AlgorithmExtractSlicesVolumes extractSlicesAlgo;
+    private AlgorithmSwapSlicesVolume extractSlicesAlgo;
 
     /** DOCUMENT ME! */
     private int nSlices; // number of slices in image
@@ -284,7 +300,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         }
 
         if (numChecked != 0) {
-            extractSlicesAlgo = new AlgorithmExtractSlicesVolumes(srcImage, checkListExtract);
+            extractSlicesAlgo = new AlgorithmSwapSlicesVolume(srcImage, checkListExtract);
             extractSlicesAlgo.addListener(this);
 
             createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
@@ -487,9 +503,13 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
 
-        setTitle("Extract slices ");
+        setTitle("Swap "+mode.getTitle());
         setForeground(Color.black);
 
+        String[] index = new String[srcImage.getExtents()[mode.getDim()]];
+
+        
+        
         checkboxPanel = new JPanel(); // place a check-box list in here
         checkboxPanel.setLayout(new GridLayout(nSlices, 1));
         checkboxPanel.setForeground(Color.white);
@@ -590,7 +610,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         JPanel buttonPanel = new JPanel(new FlowLayout());
 
         buttonPanel.add(buildButtons());
-        OKButton.setText("Extract");
+        OKButton.setText("Swap");
 
         mainDialogPanel.setLayout(new BorderLayout());
         mainDialogPanel.add(mainPanel); // put the main panel into the center of the dialog
@@ -632,4 +652,5 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         return true;
     }
+    
 }
