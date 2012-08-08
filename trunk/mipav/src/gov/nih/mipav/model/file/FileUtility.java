@@ -255,7 +255,7 @@ public class FileUtility {
     
     /** Metaimage files are either
      *  separate .mhd header and .raw image data files or
-     *  combined .mha header and raw image file
+     *  combined .mha header and image data file
      */
     public static final int METAIMAGE = 72;
 
