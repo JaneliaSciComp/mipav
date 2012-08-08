@@ -16,6 +16,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 
 /**
@@ -29,8 +30,8 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     public enum SwapMode {
-        ThreeD("slice", 2),
-        FourD("volume", 3);
+        ThreeD("Slice", 2),
+        FourD("Volume", 3);
         
         private String title;
         private int dimLoc;
@@ -55,25 +56,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     private JCheckBox[] checkboxList;
 
     /** DOCUMENT ME! */
-    private JPanel checkboxPanel;
-
-    /** DOCUMENT ME! */
-    private JButton checkButton; // dialog button to set all checks to TRUE (checked-TRUE means 'extract this slice')
-
-    /** DOCUMENT ME! */
-    private JButton checkEvenButton; // dialog button to set all checks to FALSE
-
-    /** DOCUMENT ME! */
     private boolean[] checkListExtract;
-
-    /** DOCUMENT ME! */
-    private JButton checkOddButton; // dialog button to set all checks to TRUE (checked-TRUE means 'extract this slice')
-
-    /** DOCUMENT ME! */
-    private JLabel exampleLabel;
-
-    /** DOCUMENT ME! */
-    private JLabel exampleLabel2;
 
     /** DOCUMENT ME! */
     private ModelImage[] extractedImages;
@@ -82,30 +65,19 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     private AlgorithmSwapSlicesVolume extractSlicesAlgo;
 
     /** DOCUMENT ME! */
-    private int nSlices; // number of slices in image
-
-    /** DOCUMENT ME! */
     private int numChecked;
-
-    /** DOCUMENT ME! */
-    private JTextField rangeField;
-
-    /** DOCUMENT ME! */
-    private JScrollPane scrollPane;
-
-    /** DOCUMENT ME! */
-    private ModelImage srcImage; // source image
-
-    /** DOCUMENT ME! */
-    private JButton unCheckButton; // dialog button to set all checks to FALSE
-
-    /** DOCUMENT ME! */
-    private JCheckBox useRange;
-
-    private Object n;
 
     /** Swap mode, either 3D or 4D */
     private SwapMode mode;
+
+    /** Panel for displaying JTable */
+    private JPanel tablePanel;
+    
+    /** Number of slices in mode */
+    private int nSlices; // number of slices in image
+    
+    /** srcImage for keeping track of slices */
+    private ModelImage srcImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -122,7 +94,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     public JDialogSwapSlicesVolumes(Frame theParentFrame, ModelImage im, SwapMode mode) {
         super(theParentFrame, false);
-        srcImage = im;
+        this.srcImage = im;
         this.mode = mode;
         init();
     }
@@ -247,43 +219,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     }
 
     /**
-     * Unchanged.
-     *
-     * @param  event  DOCUMENT ME!
-     */
-    public void itemStateChanged(ItemEvent event) {
-
-        if (event.getSource() == useRange) {
-
-            if (useRange.isSelected()) {
-                rangeField.setEnabled(true);
-                exampleLabel.setEnabled(true);
-                exampleLabel2.setEnabled(true);
-                checkButton.setEnabled(false);
-                unCheckButton.setEnabled(false);
-                checkOddButton.setEnabled(false);
-                checkEvenButton.setEnabled(false);
-
-                for (int i = 0; i < checkboxList.length; i++) {
-                    checkboxList[i].setEnabled(false);
-                }
-            } else {
-                rangeField.setEnabled(false);
-                exampleLabel.setEnabled(false);
-                exampleLabel2.setEnabled(false);
-                checkButton.setEnabled(true);
-                unCheckButton.setEnabled(true);
-                checkOddButton.setEnabled(true);
-                checkEvenButton.setEnabled(true);
-
-                for (int i = 0; i < checkboxList.length; i++) {
-                    checkboxList[i].setEnabled(true);
-                }
-            }
-        }
-    }
-
-    /**
      * Once all the necessary variables are set, call the Remove Slices algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
@@ -343,7 +278,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "3D or 4D image required.");
         }
 
-        checkListExtract = parseRangeString(srcImage.getExtents()[2], scriptParameters.getParams().getString("slices"));
+        checkListExtract = null;
 
         if (checkListExtract == null) {
             throw new ParameterException("slices",
@@ -362,127 +297,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         }
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("slices",
-                                                                       getSliceRangeString(checkListExtract)));
-    }
-
-    /**
-     * Converts from a boolean array marking which slices should be extracted to a (more compact) range string
-     * indicating which slices should be extracted.
-     *
-     * @param   extractList  The boolean array indicating slices to extract.
-     *
-     * @return  A range string of comma-separated slice numbers (0-based) and/or slice ranges; ex. '0-4,5,7,10,25-31'.
-     */
-    private static String getSliceRangeString(boolean[] extractList) {
-        String rangeStr = new String();
-        boolean isFirst = true;
-
-        for (int startSlice = 0; startSlice < extractList.length; startSlice++) {
-
-            if (extractList[startSlice]) {
-                int endSlice;
-
-                // keep going until we find a slice that we don't want extracted
-                for (endSlice = startSlice; (endSlice < extractList.length)  && extractList[endSlice] ; endSlice++) { }
-
-                if (endSlice == (startSlice)) {
-
-                    // only one slice this time..
-                    if (isFirst) {
-                        rangeStr += (startSlice);
-                        isFirst = false;
-                    } else {
-                        rangeStr += "," + (startSlice);
-                    }
-                } else {
-
-                    // more than one slice..
-                    if (isFirst) {
-                        rangeStr += (startSlice) + "-" + (endSlice-1);
-                        isFirst = false;
-                    } else {
-                        rangeStr += "," + (startSlice) + "-" + (endSlice-1);
-                    }
-                }
-
-                // in effect moves to endSlice + 1 since we already know endSlice is false
-                startSlice = endSlice;
-            }
-        }
-
-        return rangeStr;
-    }
-
-    /**
-     * Extract the slices that should be extracted from a range string.
-     *
-     * @param   numSlices  The number of slices in the image being processed.
-     * @param   rangeStr   The range string to parse; ex. '1-10,13,20-32'.
-     *
-     * @return  An array of booleans for every slice in the image, where true indicates a slice that should be
-     *          extracted.
-     */
-    private static boolean[] parseRangeString(int numSlices, String rangeStr) {
-        boolean[] extractionList = new boolean[numSlices];
-
-        for (int i = 0; i < numSlices; i++) {
-            extractionList[i] = false;
-        }
-
-        // must parse the range field
-        StringTokenizer tokens = new StringTokenizer(rangeStr, ",");
-        boolean hasTokens = false;
-
-        while (tokens.hasMoreTokens()) {
-            hasTokens = true;
-
-            try {
-                String temp = tokens.nextToken();
-                StringTokenizer tokens2 = new StringTokenizer(temp, "-");
-                String startString = tokens2.nextToken();
-
-                while (startString.startsWith(" ")) {
-                    startString = startString.substring(1, startString.length());
-                }
-
-                int start = Integer.parseInt(startString);
-
-                if (!tokens2.hasMoreTokens()) {
-
-                    if (start > numSlices) {
-                        MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
-
-                        return null;
-                    } else {
-                        extractionList[start] = true;
-                    }
-                } else {
-                    String endString = tokens2.nextToken();
-                    int end = Integer.parseInt(endString);
-
-                    if ((start > end) || (end > numSlices)) {
-                        MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
-
-                        return null;
-                    } else {
-
-                        for (int i = start; i <= (end); i++) {
-                            extractionList[i] = true;
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
-
-                return null;
-            }
-        }
-
-        if (!hasTokens) {
-            return null;
-        }
-
-        return extractionList;
+                                                                       nSlices));
     }
 
     /**
@@ -499,127 +314,51 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             return; // the wrong kind of image gets sent back before wasting anymore time.
         }
 
-        nSlices = srcImage.getExtents()[2];
+        nSlices = srcImage.getExtents()[mode.getDim()];
 
         JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
 
         setTitle("Swap "+mode.getTitle());
         setForeground(Color.black);
 
-        String[] index = new String[srcImage.getExtents()[mode.getDim()]];
-
+        String[] columnName = new String[]{"Index", mode.getTitle()};
         
+        DefaultTableModel d = new DefaultTableModel() {
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        d.setColumnCount(2);
+        d.setColumnIdentifiers(columnName);
         
-        checkboxPanel = new JPanel(); // place a check-box list in here
-        checkboxPanel.setLayout(new GridLayout(nSlices, 1));
-        checkboxPanel.setForeground(Color.white);
-        checkboxPanel.setBackground(Color.white);
-        checkboxList = new JCheckBox[nSlices]; // selector for the user to choose which slices to remove.  TRUE means
-                                               // remove.
-
-        for (int i = 0; i < nSlices; i++) { // place nSlices of check options for user and give them a name
-            checkboxList[i] = new JCheckBox("Image slice index " + (String.valueOf(i)));
-
-            // checkboxList[i].setFont(serif12B);
-            checkboxList[i].setBackground(Color.white);
-            checkboxPanel.add(checkboxList[i]);
+        for(int i=0; i<nSlices; i++) {
+            Vector<String> v = new Vector<String>();
+            v.add(String.valueOf(i));
+            v.add(mode.getTitle()+" "+i);
+            
+            d.addRow(v);
         }
-
-        // make the list scroll if there are enough checkboxes
-        scrollPane = new JScrollPane(checkboxPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                     JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        mainPanel.add(scrollPane);
-        mainPanel.setBorder(buildTitledBorder("Check the slice indices to extract"));
-        mainPanel.setPreferredSize(new Dimension(210, 390));
-
-        JPanel checkPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-
-        // make check & uncheck buttons for the panel--place inside the above border
-        checkButton = new JButton("Select all");
-        checkButton.setPreferredSize(new Dimension(95, 30));
-        checkButton.setMinimumSize(new Dimension(95, 30));
-        checkButton.setFont(serif12B);
-        checkPanel.add(checkButton, gbc);
-        checkButton.addActionListener(this);
-        checkButton.setActionCommand("Check");
-
-        gbc.gridx = 1;
-        unCheckButton = new JButton("Clear");
-        unCheckButton.setPreferredSize(new Dimension(95, 30));
-        unCheckButton.setMinimumSize(new Dimension(95, 30));
-        unCheckButton.setFont(serif12B);
-        unCheckButton.addActionListener(this);
-        unCheckButton.setActionCommand("UnCheck");
-        checkPanel.add(unCheckButton, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        checkEvenButton = new JButton("Check even");
-        checkEvenButton.setPreferredSize(new Dimension(95, 30));
-        checkEvenButton.setMinimumSize(new Dimension(95, 30));
-        checkEvenButton.setFont(serif12B);
-        checkPanel.add(checkEvenButton, gbc);
-        checkEvenButton.addActionListener(this);
-        checkEvenButton.setActionCommand("CheckEven");
-
-        gbc.gridx = 1;
-        checkOddButton = new JButton("Check odd");
-        checkOddButton.setPreferredSize(new Dimension(95, 30));
-        checkOddButton.setMinimumSize(new Dimension(95, 30));
-        checkOddButton.setFont(serif12B);
-        checkPanel.add(checkOddButton, gbc);
-        checkOddButton.addActionListener(this);
-        checkOddButton.setActionCommand("CheckOdd");
-
-        JPanel rangePanel = new JPanel();
-
-        rangePanel.setLayout(new BoxLayout(rangePanel, BoxLayout.Y_AXIS));
-        rangePanel.setBorder(buildTitledBorder("Range of slice indices"));
-        useRange = new JCheckBox("Specify range of slice indices", false);
-        useRange.addItemListener(this);
-        useRange.setFont(serif12B);
-        exampleLabel = new JLabel("Enter slice number indices and/or slice range indices.");
-        exampleLabel2 = new JLabel("For example, 0,3,5-12");
-        exampleLabel.setFont(serif12);
-        exampleLabel2.setFont(serif12);
-        exampleLabel.setEnabled(false);
-        exampleLabel2.setEnabled(false);
-        rangeField = new JTextField(10);
-        rangeField.setEnabled(false);
-        rangePanel.add(useRange);
-        rangePanel.add(exampleLabel);
-        rangePanel.add(exampleLabel2);
-        rangePanel.add(rangeField);
-
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridwidth = 2;
-        checkPanel.add(rangePanel, gbc);
-
-        mainPanel.add(checkPanel, BorderLayout.SOUTH);
-
+        
+        JTable table = new JTable(d);
+        
+        table.setRequestFocusEnabled(true);
+        table.setFocusable(true);
+        
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setPreferredSize(new Dimension(340, 450));
+        
+        mainPanel.add(scroll, BorderLayout.CENTER);
         JPanel buttonPanel = new JPanel(new FlowLayout());
-
         buttonPanel.add(buildButtons());
         OKButton.setText("Swap");
 
-        mainDialogPanel.setLayout(new BorderLayout());
-        mainDialogPanel.add(mainPanel); // put the main panel into the center of the dialog
-        mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
-        mainDialogPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        getContentPane().add(mainDialogPanel);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        getContentPane().add(mainPanel);
         pack();
         setSize(350, 474);
         setVisible(true); // let someone see the dialog.
+
     }
 
     /**
@@ -628,27 +367,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        int i; // counting variable
-
-        if (!useRange.isSelected()) {
-
-            checkListExtract = new boolean[nSlices];
-
-            for (i = 0; i < nSlices; i++) {
-
-                if (checkboxList[i].isSelected()) {
-                    checkListExtract[i] = true;
-                } else {
-                    checkListExtract[i] = false;
-                }
-            }
-        } else {
-            checkListExtract = parseRangeString(nSlices, rangeField.getText());
-
-            if (checkListExtract == null) {
-                return false;
-            }
-        }
 
         return true;
     }
