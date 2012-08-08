@@ -96,7 +96,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".IDS", FileUtility.ICS);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.INTERFILE, new FileTypeInfo("Interfile", ".hdr"));
-        // .hdr used by analyze, interfile and nifti
+        // .hdr used by analyze, interfile  and nifti
         FileTypeTable.FILE_EXT_TABLE.put(".hdr", FileUtility.UNDEFINED);
         FileTypeTable.FILE_EXT_TABLE.put(".HDR", FileUtility.UNDEFINED);
         
@@ -179,6 +179,12 @@ public class FileTypeTable {
                 .put(FileUtility.NIFTI_MULTIFILE, new FileTypeInfo("NIFTI multifile", ".nii,.img"));
         FileTypeTable.FILE_EXT_TABLE.put(".nii", FileUtility.NIFTI);
         FileTypeTable.FILE_EXT_TABLE.put(".NII", FileUtility.NIFTI);
+        
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.METAIMAGE, new FileTypeInfo("MetaImage", ".mhd,.mha,.raw"));
+        FileTypeTable.FILE_EXT_TABLE.put(".mhd", FileUtility.METAIMAGE);
+        FileTypeTable.FILE_EXT_TABLE.put(".MHD", FileUtility.METAIMAGE);
+        FileTypeTable.FILE_EXT_TABLE.put(".mha", FileUtility.METAIMAGE);
+        FileTypeTable.FILE_EXT_TABLE.put(".MHA", FileUtility.METAIMAGE);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.NRRD, new FileTypeInfo("NRRD", ".nrrd,.nhdr"));
         FileTypeTable.FILE_EXT_TABLE.put(".nrrd", FileUtility.NRRD);
