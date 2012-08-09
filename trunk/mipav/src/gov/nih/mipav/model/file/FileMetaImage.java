@@ -21,9 +21,6 @@ public class FileMetaImage extends FileBase {
     private String fileDir;
 
     /** DOCUMENT ME! */
-    private File fileHeader;
-
-    /** DOCUMENT ME! */
     private FileInfoMetaImage fileInfo = null;
 
     /** DOCUMENT ME! */
@@ -32,23 +29,15 @@ public class FileMetaImage extends FileBase {
     private long headerSize;
     
     private long currentLocation;
-    
-    /** DOCUMENT ME! */
-    private boolean endianess;
 
     /** DOCUMENT ME! */
     private File file;
     
-    /** If true, header and data both stored in .mha file.
-     *  If false, header stored in filename.mhd and data
-     *  stored in filename.raw. */
-    private boolean oneFile;
-
     /** DOCUMENT ME! */
     private ModelImage image;
     
     /** DOCUMENT ME! */
-    private float[] origin;
+    private float[] origin = null;
     
     private float[] resolutions;
     
@@ -69,6 +58,8 @@ public class FileMetaImage extends FileBase {
     private boolean asciiFormat = false;
     private boolean compressedData = false;
     private int extents[] = null;
+    private TransMatrix matrix = null;
+    
     
     /**
      * Constructs new file object.
@@ -112,6 +103,20 @@ public class FileMetaImage extends FileBase {
      */
     public ModelImage readImage(final boolean one) throws IOException {
         int i;
+        double matValues[];
+        String dataString = null;
+        int dataLength;
+        boolean haveRL = false;
+        boolean haveAP = false;
+        boolean haveIS = false;
+        boolean haveAnatomicalOrientation = false;
+        double centerOfRotation[] = null;
+        int axisOrientation[] = null;
+        int dataType = ModelStorageBase.BYTE;
+        int numChannels = 1;
+        String fileDataName = null;
+        int bytesPerPixel = 1;
+        String rawDataName;
        
         try {
 
@@ -249,7 +254,51 @@ public class FileMetaImage extends FileBase {
                         }
                     }    
                 } // else if (category.equals("CompressedData"))
-                else if (category.equalsIgnoreCase("Offset")) {
+                else if ((category.equalsIgnoreCase("TransformMatrix")) || (category.equalsIgnoreCase("Orientation"))||
+                         (category.equalsIgnoreCase("Rotation"))) {
+                    if ((nDims == 3) && (numValues != 9)) {
+                        MipavUtil.displayError("nDims = 3 but numValues = " + numValues + " instead of 9 for TransformMatrix");
+                        throw new IOException();
+                    }
+                    if ((nDims == 2) && (numValues != 4)) {
+                        MipavUtil.displayError("nDims = 2 but numValues = " + numValues + " instead of 4 for TransformMatrix");
+                        throw new IOException();    
+                    }
+                    matValues = new double[numValues];
+                    for (i = 0; i < numValues; i++) {
+                        try {
+                            matValues[i] = Double.parseDouble(values[i].trim());
+                            Preferences.debug("TransformMatrix[" + i + "] = " + matValues[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        catch (final NumberFormatException e) {
+                            raFile.close();
+
+                            MipavUtil.displayError("Instead of double TransformMatrix[" + i + "] =  has " + values[i]);
+                            throw new IOException();
+                        }
+                    }
+                    if (numValues == 9) {
+                        matrix = new TransMatrix(4);
+                        matrix.set(0, 0, matValues[0]);
+                        matrix.set(0, 1, matValues[1]);
+                        matrix.set(0, 2, matValues[2]);
+                        matrix.set(1, 0, matValues[3]);
+                        matrix.set(1, 1, matValues[4]);
+                        matrix.set(1, 2, matValues[5]);
+                        matrix.set(2, 0, matValues[6]);
+                        matrix.set(2, 1, matValues[7]);
+                        matrix.set(2, 2, matValues[8]);
+                    } 
+                    if (numValues == 4) {
+                        matrix = new TransMatrix(3);
+                        matrix.set(0, 0, matValues[0]);
+                        matrix.set(0, 1, matValues[1]);
+                        matrix.set(1, 0, matValues[2]);
+                        matrix.set(1, 1, matValues[3]);
+                    }
+                } // else if ((category.equalsIgnoreCase("TransformMatrix")) || (category.equalsIgnoreCase("Orientation"))||
+                else if ((category.equalsIgnoreCase("Offset")) || (category.equalsIgnoreCase("Origin")) ||
+                        (category.equalsIgnoreCase("Position"))) {
                     if ((nDims >= 2)  && (numValues != nDims)) {
                         MipavUtil.displayError(nDims + " != " + numValues + " for Offset");
                         throw new IOException();
@@ -271,7 +320,96 @@ public class FileMetaImage extends FileBase {
                         }
                     }
                     fileInfo.setOrigin(origin);
-                } // else if (category.equalsIgnoreCase("Offset"))
+                } // else if ((category.equalsIgnoreCase("Offset")) || (category.equalsIgnoreCase("Origin")) ||
+                else if (category.equalsIgnoreCase("CenterOfRotation")) {
+                    centerOfRotation = new double[numValues];
+                    for (i = 0; i < numValues; i++) {
+                        try {
+                            centerOfRotation[i] = Double.parseDouble(values[i].trim());
+                            Preferences.debug("Center of rotation[" + i + "] = " + centerOfRotation[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        catch (final NumberFormatException e) {
+                            raFile.close();
+
+                            MipavUtil.displayError("Instead of double centerOfRotation[" + i + "] =  has " + values[i]);
+                            throw new IOException();
+                        }    
+                    } // for (i = 0; i < numValues; i++)
+                    fileInfo.setCenterOfRotation(centerOfRotation);
+                } // else if (category.equalsIgnoreCase("CenterOfRotation")) 
+                else if (category.equalsIgnoreCase("AnatomicalOrientation")) {
+                    if (numValues == 1) {
+                        Preferences.debug("AnatomicalOrientation has the expected 1 value\n", Preferences.DEBUG_FILEIO);
+                        if (values[0].trim().length() == 3) {
+                            Preferences.debug("values[0].trim().length() == 3 as expected\n", Preferences.DEBUG_FILEIO);
+                            axisOrientation = new int[3];
+                            for (i = 0; i < 3;  i++) {
+                                if (values[0].trim().substring(i, i+1).equalsIgnoreCase("R")) {
+                                    axisOrientation[i] = FileInfoBase.ORI_R2L_TYPE;
+                                    Preferences.debug("axisOrientation[" + i + "] = R to L\n", Preferences.DEBUG_FILEIO);
+                                    haveRL = true;
+                                }
+                                else if (values[0].trim().substring(i, i+1).equalsIgnoreCase("L")) {
+                                    axisOrientation[i] = FileInfoBase.ORI_L2R_TYPE; 
+                                    Preferences.debug("axisOrientation[" + i + "] = L to R\n", Preferences.DEBUG_FILEIO);
+                                    haveRL = true;
+                                }
+                                else if (values[0].trim().substring(i, i+1).equalsIgnoreCase("A")) {
+                                    axisOrientation[i] = FileInfoBase.ORI_A2P_TYPE; 
+                                    Preferences.debug("axisOrientation[" + i + "] = A to P\n", Preferences.DEBUG_FILEIO);
+                                    haveAP = true;
+                                }
+                                else if (values[0].trim().substring(i, i+1).equalsIgnoreCase("P")) {
+                                    axisOrientation[i] = FileInfoBase.ORI_P2A_TYPE;   
+                                    Preferences.debug("axisOrientation[" + i + "] = P to A\n", Preferences.DEBUG_FILEIO);
+                                    haveAP = true;
+                                }
+                                else if (values[0].trim().substring(i, i+1).equalsIgnoreCase("I")) {
+                                    axisOrientation[i] = FileInfoBase.ORI_I2S_TYPE;  
+                                    Preferences.debug("axisOrientation[" + i + "] = I to S\n", Preferences.DEBUG_FILEIO);
+                                    haveIS = true;
+                                }
+                                else if (values[0].trim().substring(i, i+1).equalsIgnoreCase("S")) {
+                                    axisOrientation[i] = FileInfoBase.ORI_S2I_TYPE;
+                                    Preferences.debug("axisOrientation[" + i + "] = S to I\n", Preferences.DEBUG_FILEIO);
+                                    haveIS = true;
+                                }
+                                else {
+                                    axisOrientation[i] = FileInfoBase.ORI_UNKNOWN_TYPE;
+                                    Preferences.debug("axisOrientation[" + i + "] = unknown orientation\n", Preferences.DEBUG_FILEIO);
+                                }
+                            }
+                            if (haveRL && haveAP && haveIS) {
+                                haveAnatomicalOrientation = true;
+                                fileInfo.setAxisOrientation(axisOrientation);
+                                if ((axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE) || (axisOrientation[2] == FileInfoBase.ORI_S2I_TYPE)) {
+                                    fileInfo.setImageOrientation(FileInfoBase.AXIAL);
+                                    Preferences.debug("Image orientation == AXIAL\n", Preferences.DEBUG_FILEIO);
+                                }
+                                else if ((axisOrientation[2] == FileInfoBase.ORI_L2R_TYPE) || (axisOrientation[2] == FileInfoBase.ORI_R2L_TYPE)) {
+                                    fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
+                                    Preferences.debug("Image orientation == SAGITTAL\n", Preferences.DEBUG_FILEIO);
+                                }
+                                else {
+                                    fileInfo.setImageOrientation(FileInfoBase.CORONAL);
+                                    Preferences.debug("Image orientation == CORONAL\n", Preferences.DEBUG_FILEIO);    
+                                }
+                            }
+                        }
+                        else {
+                            Preferences.debug("values[0].trim().length() unexpectedly == " + values[0].trim().length() + "\n",
+                                    Preferences.DEBUG_FILEIO);
+                            Preferences.debug("values[0] = " + values[0] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }
+                    else {
+                        Preferences.debug("AnatomicalOrientation unexpectedly has " + numValues + "values\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Those values are:\n", Preferences.DEBUG_FILEIO);
+                        for (i = 0; i < numValues; i++) {
+                            Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }    
+                } // else if (category.equalsIgnoreCase("AnatomicalOrientation"))
                 else if (category.equalsIgnoreCase("ElementSpacing")) {
                     if ((nDims >= 2)  && (numValues != nDims)) {
                         MipavUtil.displayError(nDims + " != " + numValues + " for ElementSpacing");
@@ -322,8 +460,224 @@ public class FileMetaImage extends FileBase {
                     }
                     fileInfo.setExtents(extents);
                 } // else if (category.equalsIgnoreCase("DimSize"))
+                else if (category.equalsIgnoreCase("ElementNumberOfChannels")) {
+                    if (numValues == 1) {
+                        Preferences.debug("ElementNumberOfChannels has the expected 1 value\n", Preferences.DEBUG_FILEIO);
+                        try {
+                            numChannels = Integer.parseInt(values[0].trim());
+                            Preferences.debug("numChannels = " + numChannels + "\n", Preferences.DEBUG_FILEIO);
+                            if (numChannels <= 0) {
+                                raFile.close();
+                                MipavUtil.displayError("numChannels has an illegal value of " + numChannels);
+                                throw new IOException();
+                            }
+                        } catch (final NumberFormatException e) {
+                            raFile.close();
+
+                            MipavUtil.displayError("Instead of integer ElementNumberOfChannels has " + values[0]);
+                            throw new IOException();
+                        }
+                    }
+                    else {
+                        Preferences.debug("ElementNumberOfChannels unexpectedly has " + numValues + "values\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Those values are:\n", Preferences.DEBUG_FILEIO);
+                        for (i = 0; i < numValues; i++) {
+                            Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }        
+                } // else if (category.equalsIgnoreCase("ElementNumberOfChannels"))
+                else if (category.equalsIgnoreCase("ElementType")) {
+                    if (numValues == 1) {
+                        Preferences.debug("ElementType has the expected 1 value\n", Preferences.DEBUG_FILEIO);
+                        dataString = values[0].trim();
+                    }
+                    else {
+                        Preferences.debug("ElementType unexpectedly has " + numValues + "values\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Those values are:\n", Preferences.DEBUG_FILEIO);
+                        for (i = 0; i < numValues; i++) {
+                            Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }    
+                } // else if (category.equalsIgnoreCase("ElementType"))
+                else if (category.equalsIgnoreCase("ElementDataFile")) {
+                    if (numValues == 1) {
+                        Preferences.debug("ElementDataFile has the expected 1 value\n", Preferences.DEBUG_FILEIO);
+                        fileDataName = values[0].trim();
+                        Preferences.debug("ElementDataFile = " + fileDataName + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    else {
+                        Preferences.debug("ElementDataFile unexpectedly has " + numValues + "values\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Those values are:\n", Preferences.DEBUG_FILEIO);
+                        for (i = 0; i < numValues; i++) {
+                            Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }        
+                } // else if (category.equalsIgnoreCase("ElementDataFile"))
             } // while (readAgain)
+        
+            if ((matrix != null) && (origin !=  null)) {
+                if (nDims == 2) {
+                    matrix.Set(0, 2, origin[0]);
+                    matrix.Set(1, 2, origin[1]);
+                }
+                if (nDims >= 3) {
+                    matrix.Set(0, 3, origin[0]);
+                    matrix.Set(1, 3, origin[1]);
+                    matrix.Set(2, 3, origin[2]);
+                }
+                if (haveAnatomicalOrientation) {
+                    matrix.setTransformID(TransMatrix.TRANSFORM_SCANNER_ANATOMICAL);    
+                }
+                else {
+                    matrix.setTransformID(TransMatrix.TRANSFORM_UNKNOWN);
+                }
+            } // if ((matrix != null) && (origin !=  null))
+            if (dataString != null) {
+                if (numChannels == 1) {
+                    if (dataString.equalsIgnoreCase("MET_CHAR")) {
+                        dataType = ModelStorageBase.BYTE;
+                        Preferences.debug("Data type = ModelStorageBase.BYTE\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 1;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_UCHAR")) {
+                        dataType = ModelStorageBase.UBYTE;
+                        Preferences.debug("Data type = ModelStorageBase.UBYTE\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 1;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_SHORT")) {
+                        dataType = ModelStorageBase.SHORT;
+                        Preferences.debug("Data type = ModelStorageBase.SHORT\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 2;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_USHORT")) {
+                        dataType = ModelStorageBase.USHORT;
+                        Preferences.debug("Data type = ModelStorageBase.USHORT\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 2;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_INT")) {
+                        dataType = ModelStorageBase.INTEGER;
+                        Preferences.debug("Data type = ModelStorageBase.INTEGER\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 4;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_UINT")) {
+                        dataType = ModelStorageBase.UINTEGER;
+                        Preferences.debug("Data type = ModelStorageBase.UINTEGER\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 4;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_LONG")) {
+                        dataType = ModelStorageBase.LONG;
+                        Preferences.debug("Data type = ModelStorageBase.LONG\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 8;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_ULONG")) {
+                        dataType = ModelStorageBase.LONG;
+                        Preferences.debug("Data type = Originally ULONG.  Set to ModelStorageBase.LONG\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 8;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_FLOAT")) {
+                        dataType = ModelStorageBase.FLOAT;
+                        Preferences.debug("Data type = ModelStorageBase.FLOAT\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 4;
+                    }
+                    else if (dataString.equalsIgnoreCase("MET_DOUBLE")) {
+                        dataType = ModelStorageBase.DOUBLE;
+                        Preferences.debug("Data type = ModelStorageBase.DOUBLE\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 8;
+                    }
+                    else {
+                        raFile.close();
+                        MipavUtil.displayError("Cannot handle " + dataString + " data type for numChannels = 1");
+                        throw new IOException();
+                    }
+                } // if (numChannels == 1)
+                else if (numChannels == 3) {
+                    if (dataString.equals("MET_UCHAR_ARRAY")) {
+                        dataType = ModelStorageBase.ARGB;
+                        Preferences.debug("Data type = ModelStorageBase.ARGB\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 3;
+                    }
+                    else if (dataString.equals("MET_USHORT_ARRAY")) {
+                        dataType = ModelStorageBase.ARGB_USHORT;
+                        Preferences.debug("Data type = ModelStorageBase.ARGB_USHORT\n", Preferences.DEBUG_FILEIO); 
+                        bytesPerPixel = 6;
+                    }
+                    else {
+                        raFile.close();
+                        MipavUtil.displayError("Cannot handle " + dataString + " data type for numChannels = 3");
+                        throw new IOException();
+                    }
+                }
+                else {
+                    raFile.close();
+                    MipavUtil.displayError("Cannot handle " + dataString + " data type for numChannels = " + numChannels);
+                    throw new IOException();    
+                }
+                fileInfo.setDataType(dataType);    
+            } // if (dataString != null)
             
+            if ((fileDataName != null) && (fileDataName.length() > 0)) {
+                if (fileDataName.equalsIgnoreCase("LOCAL")) {
+                    dataLength = bytesPerPixel;
+                    for (i = 0; i < nDims; i++) {
+                        dataLength *= extents[i];
+                    }
+                    raFile.seek(headerSize - dataLength);
+                    rawDataName = new String(fileName);
+                }
+                else {
+                    raFile.close();
+                    file = new File(fileDir + fileDataName);
+                    raFile = new RandomAccessFile(file, "r");
+                    rawDataName = new String(fileDataName);
+                }
+            }
+            else if (defaultFileDataExists) {
+                raFile.close();
+                file = new File(fileDir + defaultFileDataName);
+                raFile = new RandomAccessFile(file, "r");
+                rawDataName = new String(defaultFileDataName);
+            }
+            else {
+                dataLength = bytesPerPixel;
+                for (i = 0; i < nDims; i++) {
+                    dataLength *= extents[i];
+                }
+                raFile.seek(headerSize - dataLength); 
+                rawDataName = new String(fileName);
+            }
+            
+            if (one) {
+                
+                image = new ModelImage(dataType, new int[] { extents[0], extents[1] }, fileName);
+            } else {
+                image = new ModelImage(dataType, extents, fileName);
+            }
+            
+            image.setMatrix(matrix);
+            image.setImageOrientation(fileInfo.getImageOrientation());
+            
+            if (nDims == 2) {
+                image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
+            } else if (nDims == 3) { // If there is more than one image
+
+                for (i = 0; i < extents[2]; i++) {
+                    FileInfoMetaImage newFileInfo = (FileInfoMetaImage) fileInfo.clone();
+                    newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                    image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
+                }
+            } else if (nDims == 4) { // If there is more than one image
+                for (i = 0; i < (extents[2] * extents[3]); i++) {
+                    FileInfoMetaImage newFileInfo = (FileInfoMetaImage) fileInfo.clone();
+                    newFileInfo.setOrigin(fileInfo.getOriginAtSlice(i));
+                    image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
+                }
+            }
+            updateorigins(image.getFileInfo());
+            
+            FileRaw rawFile;
+            rawFile = new FileRaw(rawDataName, fileDir, fileInfo, FileBase.READ);
+            linkProgress(rawFile);
+            rawFile.readImage(image, (int)raFile.getFilePointer());
                       
             return image;
             
@@ -339,6 +693,43 @@ public class FileMetaImage extends FileBase {
             System.gc();
             throw new IOException();
         }
+    }
+    
+    /**
+     * Updates the start locations. Each image has a fileinfo where the start locations are stored. Note that the start
+     * location for the Z (3rd) dimension change with the change is the slice. The origin is in the upper left corner
+     * and we are using the right hand rule. + x -> left to right; + y -> top to bottom and + z -> into screen.
+     *
+     * @param  fileInfo  DOCUMENT ME!
+     */
+    private void updateorigins(FileInfoBase[] fileInfo) {
+
+        float[] origin = (float[]) (fileInfo[0].getOrigin().clone());
+        float[] resolutions = fileInfo[0].getResolutions();
+
+        if (image.getNDims() == 3) {
+
+            for (int i = 0; i < image.getExtents()[2]; i++) {
+                fileInfo[i].setOrigin(origin[0] + (matrix.get(0, 2) * i), 0);
+                fileInfo[i].setOrigin(origin[1] + (matrix.get(1, 2) * i), 1);
+                fileInfo[i].setOrigin(origin[2] + (matrix.get(2, 2) * i), 2);
+            }
+        } else if (image.getNDims() == 4) {
+
+            for (int i = 0; i < image.getExtents()[3]; i++) {
+
+                for (int j = 0; j < image.getExtents()[2]; j++) {
+                    fileInfo[i * image.getExtents()[2] + j].setOrigin(origin[0] + (matrix.get(0, 2) * j), 0);
+                    fileInfo[i * image.getExtents()[2] + j].setOrigin(origin[1] + (matrix.get(1, 2) * j), 1);
+                    fileInfo[i * image.getExtents()[2] + j].setOrigin(origin[2] + (matrix.get(2, 2) * j), 2);
+                    fileInfo[(i * image.getExtents()[2]) + j].setOrigin(origin[3] + i * resolutions[3], 3);
+                    
+                }
+            }
+        }
+        /*else if (image.getNDims() == 5) {
+         * fileInfo = image.getFileInfo(); for (int i = 0;    i <    image.getExtents()[2] * image.getExtents()[3] *
+         * image.getExtents()[4];    i++) { fileInfo[i].setorigins(startLocs); startLocs[4] += resolutions[4]; }  }*/
     }
     
     /**
