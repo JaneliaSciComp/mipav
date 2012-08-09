@@ -15,7 +15,7 @@ public class FileInfoMetaImage extends FileInfoBase {
 
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
-    
+    private double centerOfRotation[] = null;
     
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -40,13 +40,22 @@ public class FileInfoMetaImage extends FileInfoBase {
      * @param  matrix  transformation matrix
      */
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
+        int i;
         JDialogText dialog = (JDialogText) dlog;
         displayPrimaryInfo(dialog, matrix);
         
         dialog.append("\n\n                Other information\n\n");
         
+        if (centerOfRotation != null) {
+            for (i = 0; i < centerOfRotation.length; i++) {
+                dialog.append("Center of rotation[" + i + "] = " + centerOfRotation[i] + "\n");
+            }
+        }
         
-        
+    }
+    
+    public void setCenterOfRotation(double centerOfRotation[]) {
+        this.centerOfRotation = centerOfRotation;    
     }
     
     
