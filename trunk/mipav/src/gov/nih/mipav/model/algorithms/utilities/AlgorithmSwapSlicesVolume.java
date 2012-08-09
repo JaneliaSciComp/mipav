@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 
 import java.io.*;
 
@@ -22,25 +23,15 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** List of slices to remove from source image. */
-    private boolean[] extract;
-
-    /** DOCUMENT ME! */
-    private Vector<ModelImage> extractedImages;
-
-    /** Original Z dimension of the image. */
-    private int oldZdim;
-
-    /** Area of a slice (Xdim * Ydim). */
-    private int sliceArea;
-
-    /** X dimension of the image. */
-    private int Xdim;
-
-    /** Y dimension of the image. */
-    private int Ydim;
+    /** Swap mode, either 3D or 4D */
+    private SwapMode mode;
     
-    FileInfoDicom[] fileInfoDicom;
+    /** Number of slices in mode */
+    private int nSlices; // number of slices in image
+    
+    /** Reordering of slices/volumes */
+    private int[] sliceRenum;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -49,18 +40,12 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      * @param  srcImage      source image (image to extract from)
      * @param  removeSlices  list of booleans for slices that should be extracted
      */
-    public AlgorithmSwapSlicesVolume(ModelImage srcImage, boolean[] removeSlices) {
+    public AlgorithmSwapSlicesVolume(SwapMode mode, int[] sliceRenum, ModelImage srcImage) {
         super(null, srcImage);
-        extract = removeSlices;
-
-        // get local attributes from this.srcImage
-        Xdim = srcImage.getExtents()[0];
-        Ydim = srcImage.getExtents()[1];
-        sliceArea = Xdim * Ydim; // one slice has sliceArea number of pixels
-
-        oldZdim = srcImage.getExtents()[2]; //
-
-        extractedImages = new Vector<ModelImage>();
+        this.mode = mode;
+        this.nSlices = srcImage.getExtents()[mode.getDim()];
+        this.sliceRenum = sliceRenum;
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -109,7 +94,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
             if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
                 FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(slice);
                 FileDicomTagTable tagTable = dicomInfo.getTagTable();
-                fileInfoDicom = new FileInfoDicom[1];
+                FileInfoDicom[] fileInfoDicom = new FileInfoDicom[1];
                 float[] resolutions = new float[2];
                 
                 resolutions[0] = image.getFileInfo(0).getResolutions()[0];
@@ -209,7 +194,9 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         int tSrcOffset;
         int colorFactor;
         int[] newExtents;
-
+        boolean[] extract = null;
+        int sliceArea = 0;
+        
         if (srcImage.getNDims() == 4) {
             tDim = srcImage.getExtents()[3];
         } else {
@@ -219,6 +206,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         // get the colorFactor
         colorFactor = getColorFactor();
 
+        
         // initialize the image buffer (will only hold a single slice at a time)
         // however, want to make sure that the src image isn't locked by someone else,
         // so set a lock --- an exception will be thrown if image is locked.
@@ -252,6 +240,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         float progress = 0;
         float numToExtract = 0;
 
+        
         for (int j = 0; j < extract.length; j++) {
 
             if (extract[j]) {
@@ -264,6 +253,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         // start counting the slices of the destination image at the first slice.
         // for all slices in the old image
 
+        int oldZdim = nSlices;
         if (newExtents.length == 2) {
 
             for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) {
@@ -287,7 +277,6 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
                         resultImage.calcMinMax();
 
-                        extractedImages.add(resultImage);
                     } catch (IOException error) {
                         displayError("Algorithm Extract Individual Slices reports: " + error.getMessage());
                         error.printStackTrace();
@@ -332,7 +321,6 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
                     resultImage.calcMinMax();
 
-                    extractedImages.add(resultImage);
                 }
             }
 
