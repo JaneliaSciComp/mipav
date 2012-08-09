@@ -57,9 +57,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
     /** Swap mode, either 3D or 4D */
     private SwapMode mode;
-
-    /** Panel for displaying JTable */
-    private JPanel tablePanel;
     
     /** Number of slices in mode */
     private int nSlices; // number of slices in image
@@ -69,6 +66,9 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
     /** Result image */
     private ModelImage swapVolume;
+    
+    /** Reordering of slices/volumes */
+    private int[] sliceRenum;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -147,7 +147,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     protected void callAlgorithm() {
         System.gc();
 
-        swapAlgo = new AlgorithmSwapSlicesVolume(srcImage, null);
+        swapAlgo = new AlgorithmSwapSlicesVolume(mode, sliceRenum, srcImage);
         swapAlgo.addListener(this);
 
         createProgressBar(srcImage.getImageName(), swapAlgo);
@@ -215,7 +215,13 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         setTitle("Swap "+mode.getTitle());
         setForeground(Color.black);
+        
+        JLabel dir = new JLabel("<html>Use the keyboard and mouse to select the rows you would like to swap.  You can drag, drop, cut, copy, and paste.</html>");
+        
+        dir.setFont(MipavUtil.font12);
 
+        mainPanel.add(dir, BorderLayout.NORTH);
+        
         String[] columnName = new String[]{"Index", mode.getTitle()};
         
         DefaultTableModel d = new DefaultTableModel() {
@@ -252,7 +258,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         getContentPane().add(mainPanel);
         pack();
         setSize(350, 474);
-        setVisible(true); // let someone see the dialog.
+        setVisible(true); 
 
     }
 
