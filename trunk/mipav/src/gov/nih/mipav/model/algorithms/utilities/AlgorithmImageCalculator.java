@@ -1652,40 +1652,74 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         }
         
         if (findSD){
-            //System.out.println("enter");
-            double mean[] = new double[length], current[]= new double[length], total[]= new double[length];
-            try {
-                destImage.exportData(0, length, mean);
-            } catch (IOException e) {
-                
-            }
+			if (destImage.getNDims() == 5) {
+				f = destImage.getExtents()[4];
+			} else {
+				f = 1;
+			}
+	
+			if (destImage.getNDims() >= 4) {
+				t = destImage.getExtents()[3];
+			} else {
+				t = 1;
+			}
+	
+			if (destImage.getNDims() >= 3) {
+				z = destImage.getExtents()[2];
+			} else {
+				z = 1;
+			}
+			
+			ModelImage stDev = new ModelImage(ModelStorageBase.DOUBLE, destImage.getExtents(), "St Dev");
             
-            for (int ii = 0; ii < srcImages.length; ii++){
-                try {
-                    srcImages[ii].exportData(0, length, current);
-                } catch (IOException e) {
-                    
-                }
-                
-                for (int jj = 0; jj < mean.length; jj++){
-                    current[jj] = current[jj] - mean[jj];
-                    current[jj] = current[jj] * current[jj];
-                    total[jj] = current[jj] + total[jj];
-                }
-            }
+			offset=0;
+			for (m = 0; (m < f) && !threadStopped; m++) {
+				for (k = 0; (k < t) && !threadStopped; k++) {
+					for (j = 0; (j < z) && !threadStopped; j++) {
+						double mean[] = new double[length], current[]= new double[length], total[]= new double[length];
+						try {
+							offset = (m * t * z * length) + (k * z * length) + (j * length);
+							destImage.exportData(offset, length, mean);
+						} catch (Exception e) {
+							MipavUtil.displayError("I/O Problem: "+e.getMessage());
+						}
+						
+						for (int ii = 0; ii < srcImages.length; ii++){
+							try {
+								srcImages[ii].exportData(offset, length, current);
+							} catch (Exception e) {
+								MipavUtil.displayError("I/O Problem: "+e.getMessage());
+							}
+							
+							for (int jj = 0; jj < mean.length; jj++){
+								current[jj] = current[jj] - mean[jj];
+								current[jj] = current[jj] * current[jj];
+								total[jj] = current[jj] + total[jj];
+							}
+						}
+						for (int ii = 0; ii < total.length; ii++){
+							total[ii] = total[ii]/srcImages.length;
+							total[ii] = Math.sqrt(total[ii]);
+						}
+						
+						try {
+							stDev.importData(offset, total, false);
+						} catch (Exception e) {
+							MipavUtil.displayError("I/O Problem: "+e.getMessage());
+						}
+					}
+				}
+			}
+			stDev.calcMinMax();
             
-            for (int ii = 0; ii < total.length; ii++){
-                total[ii] = total[ii]/srcImages.length;
-                total[ii] = Math.sqrt(total[ii]);
-            }
-            
-            ModelImage stDev = new ModelImage(ModelStorageBase.DOUBLE, destImage.getExtents(), "St Dev");
-            try {
-                stDev.importData(0, total, true);
-            } catch (IOException e) {
-            }
-            new ViewJFrameImage(stDev);
-        }
+			try {
+				new ViewJFrameImage(stDev, null, new Dimension(610, 200));
+			} catch (Exception e) {
+				System.gc();
+				MipavUtil.displayError("Out of memory: unable to open new frame"+e.getMessage());
+			}
+
+         }
 
         setCompleted(true);
     }
