@@ -77,14 +77,8 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      *
      * @return  The extracted images.
      */
-    public ModelImage[] getExtractedImages() {
-        ModelImage[] array = new ModelImage[extractedImages.size()];
-
-        for (int i = 0; i < array.length; i++) {
-            array[i] = (ModelImage) extractedImages.get(i);
-        }
-
-        return array;
+    public ModelImage getSwappedVolume() { 
+        return destImage;
     }
 
     /**

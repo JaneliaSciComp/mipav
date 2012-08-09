@@ -52,20 +52,8 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private JCheckBox[] checkboxList;
-
-    /** DOCUMENT ME! */
-    private boolean[] checkListExtract;
-
-    /** DOCUMENT ME! */
-    private ModelImage[] extractedImages;
-
-    /** DOCUMENT ME! */
-    private AlgorithmSwapSlicesVolume extractSlicesAlgo;
-
-    /** DOCUMENT ME! */
-    private int numChecked;
+    /** Running algorithm */
+    private AlgorithmSwapSlicesVolume swapAlgo;
 
     /** Swap mode, either 3D or 4D */
     private SwapMode mode;
@@ -78,6 +66,9 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     
     /** srcImage for keeping track of slices */
     private ModelImage srcImage;
+
+    /** Result image */
+    private ModelImage swapVolume;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -110,7 +101,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         String command = event.getActionCommand();
         int i;
 
-        if (command.equals("Extract")) {
+        if (command.equals("Swap")) {
 
             if (setVariables()) {
                 callAlgorithm();
@@ -119,27 +110,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             dispose();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("U4051");
-        } else if (command.equals("Check")) {
-
-            for (i = 0; i < nSlices; i++) {
-                (checkboxList[i]).setSelected(true);
-            }
-        } else if (command.equals("UnCheck")) {
-
-            for (i = 0; i < nSlices; i++) {
-                (checkboxList[i]).setSelected(false);
-            }
-        } else if (command.equals("CheckEven")) {
-
-            for (i = 0; i < nSlices; i += 2) {
-                (checkboxList[i]).setSelected(true);
-            }
-        } else if (command.equals("CheckOdd")) {
-
-            for (i = 1; i < nSlices; i += 2) {
-                (checkboxList[i]).setSelected(true);
-            }
-        }
+        } 
     }
 
     // ************************************************************************
@@ -155,66 +126,17 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmExtractSlicesVolumes) {
-            extractedImages = extractSlicesAlgo.getExtractedImages();
+            swapVolume = swapAlgo.getSwappedVolume();
 
-            for (int i = 0; i < extractedImages.length; i++) {
-                new ViewJFrameImage(extractedImages[i]);
-            }
-
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-                int numExtracted = 0;
-                Preferences.debug("\nHave extracted slices:\n");
-
-                for (int i = 0; i < checkListExtract.length; i++) {
-
-                    if (checkListExtract[i]) {
-                        Preferences.debug("\t" + (i));
-
-                        if (((i % 5) == 4) || (numExtracted == (numChecked - 1))) {
-                            Preferences.debug("\n");
-                        }
-
-                        numExtracted++;
-                    }
-                }
-
-                if (srcImage.getNDims() == 3) {
-                    Preferences.debug("from " + srcImage.getFileInfo(0).getExtents()[2] + " slice 3D " +
-                                      srcImage.getImageName() + "\n");
-                } else {
-                    Preferences.debug("from " + srcImage.getFileInfo(0).getExtents()[2] + " slice " +
-                                      srcImage.getFileInfo(0).getExtents()[3] + " volume 4D " +
-                                      srcImage.getImageName() + "\n");
-                }
-
-                Preferences.debug("to create:\n");
-
-                if (srcImage.getNDims() == 3) {
-
-                    if (numExtracted > 1) {
-                        Preferences.debug(numExtracted + " 2D images\n");
-                    } else {
-                        Preferences.debug(numExtracted + " 2D image\n");
-                    }
-                } else {
-
-                    if (numExtracted > 1) {
-                        Preferences.debug(numExtracted + " " + srcImage.getFileInfo(0).getExtents()[3] +
-                                          " slice 3D images\n");
-                    } else {
-                        Preferences.debug(numExtracted + " " + srcImage.getFileInfo(0).getExtents()[3] +
-                                          " slice 3D image\n");
-                    }
-                }
-            } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
+            new ViewJFrameImage(swapVolume);
 
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
         } // if ( algorithm instanceof AlgorithmExtractSlicesVolumes )
 
-        extractSlicesAlgo.finalize();
-        extractSlicesAlgo = null;
+        algorithm.finalize();
+        algorithm = null;
         dispose();
     }
 
@@ -224,47 +146,30 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     protected void callAlgorithm() {
         System.gc();
-        nSlices = srcImage.getExtents()[2];
-        numChecked = 0;
 
-        for (int i = 0; i < nSlices; i++) {
+        swapAlgo = new AlgorithmSwapSlicesVolume(srcImage, null);
+        swapAlgo.addListener(this);
 
-            if (checkListExtract[i]) {
-                numChecked++;
+        createProgressBar(srcImage.getImageName(), swapAlgo);
+
+        setVisible(false); // Hide dialog
+
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (swapAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
             }
+        } else {
+            swapAlgo.run();
         }
-
-        if (numChecked != 0) {
-            extractSlicesAlgo = new AlgorithmSwapSlicesVolume(srcImage, checkListExtract);
-            extractSlicesAlgo.addListener(this);
-
-            createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
-
-            setVisible(false); // Hide dialog
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (extractSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                extractSlicesAlgo.run();
-            }
-
-        } else if (numChecked == 0) {
-            MipavUtil.displayError("No slices were selected!  Select some slices.");
-        } 
     }
 
     /**
      * Store the result image in the script runner's image table now that the action execution is finished.
      */
     protected void doPostAlgorithmActions() {
-
-        for (int i = 0; i < extractedImages.length; i++) {
-            AlgorithmParameters.storeImageInRunner(extractedImages[i]);
-        }
+        AlgorithmParameters.storeImageInRunner(swapVolume);
     }
 
     /**
@@ -277,13 +182,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         if (srcImage.getNDims() < 3) {
             throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "3D or 4D image required.");
         }
-
-        checkListExtract = null;
-
-        if (checkListExtract == null) {
-            throw new ParameterException("slices",
-                                         "A problem was encountered while parsing the list of slices to extract.");
-        }
     }
 
     /**
@@ -291,10 +189,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(srcImage);
-
-        for (int i = 0; i < extractedImages.length; i++) {
-            scriptParameters.storeImageInRecorder(extractedImages[i]);
-        }
+        scriptParameters.storeImageInRecorder(swapVolume);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("slices",
                                                                        nSlices));
