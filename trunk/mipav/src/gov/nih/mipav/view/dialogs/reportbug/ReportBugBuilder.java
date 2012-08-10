@@ -4,6 +4,7 @@ import java.awt.*;
 import java.awt.event.*;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
@@ -21,6 +22,9 @@ import javax.imageio.ImageIO;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
+
+import sun.dc.pr.PathDasher;
+import sun.misc.Unsafe;
 
 public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
@@ -60,11 +64,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     
     /** Date and time of submission */
     private Date dateHolder = new Date();;
-    DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+    DateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
     private String date = dateFormat.format(dateHolder);
-    
-    /** Branch in which the submitter works */
-    private String branch;
 
 	/** Version of MIPAV running */
 	private String version;
@@ -86,9 +87,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	
 	/** Text field for user inputed email */
     private JTextField emailField = new JTextField(25);
-    
-    /** Text field for user inputed branch */
-    private JTextField branchField = new JTextField(25);
     
     /** Text field for the user inputed operating platform */
     private JTextField standardPlatform = new JTextField(25);
@@ -167,7 +165,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			summary = summaryField.getText();
 			name = nameField.getText();
 			email = emailField.getText();
-			branch = branchField.getText();
 			version = standardVersion.getText();
 			platform = standardPlatform.getText();
 			os = standardOS.getText();
@@ -175,7 +172,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			String tempEmail = emailField.getText();
 			if (!tempEmail.contains("@") || !tempEmail.contains(".") || tempEmail.charAt(tempEmail.length() - 1) == '.' || tempEmail.charAt(0) == '@' || tempEmail.contains("@.")){
 				JOptionPane.showMessageDialog(null, "This is not a valid email address.", "Error", JOptionPane.ERROR_MESSAGE);
-			} else if (name.length() == 0 || email.length() == 0 || branch.length() == 0 || version.length() == 0 || platform.length() == 0 || os.length() == 0 || urgency.length() == 0 || description.length() == 0 || summary.length() == 0){
+			} else if (name.length() == 0 || email.length() == 0 || version.length() == 0 || platform.length() == 0 || os.length() == 0 || urgency.length() == 0 || description.length() == 0 || summary.length() == 0){
 				JOptionPane.showMessageDialog(null, "You must fill out all sections on this form.", "Error", JOptionPane.ERROR_MESSAGE);
 			} else {
 				sendReport();
@@ -260,9 +257,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			report.newLine();
 			report.write("Email: " + email);
 			report.newLine();
-			report.write("Branch: " + branch);
-			report.newLine();
-			report.newLine();
 			report.write("Product: MIPAV");
 			report.newLine();
 			report.write("Version: " + version);
@@ -273,6 +267,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			report.newLine();
 			report.write("Urgency: " + urgency);
 			report.newLine();
+			report.newLine();
+			report.write("Detailed description:");
 			report.newLine();
 			report.write(description);
 			report.newLine();
@@ -332,7 +328,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		compileReport();
 		try {
 			Address to = new InternetAddress("shens2@mail.nih.gov");
-			Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
+			final Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
 			String host = "mailfwd.nih.gov";
 			Properties properties = System.getProperties();
 			properties.put("mail.host", host);
@@ -344,7 +340,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 				
 			report.setSubject("New " + bugTypeString + " Bug Report " + date);
 			BodyPart reportSummary = new MimeBodyPart();
-			reportSummary.setText(summary);
+			reportSummary.setText(summary + "\n\n" + description);
 			Multipart parts = new MimeMultipart();
 			parts.addBodyPart(reportSummary);
 					
@@ -356,10 +352,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			parts.addBodyPart(reportSummary);
 			
 			reportSummary = new MimeBodyPart();
-			file = "errors.txt";
+			file = Preferences.getPreferencesDir() + File.separator + "exceptions.txt";
 			source = new FileDataSource(file);
 			reportSummary.setDataHandler(new DataHandler(source));
-			reportSummary.setFileName(file);
+			reportSummary.setFileName("exceptions.txt");
 			parts.addBodyPart(reportSummary);
 					
 			for (int x = 0; x < fileNames.size(); x++) {
@@ -407,7 +403,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	bugType.addActionListener(this);
 
         
-        JLabel summaryInstructions = new JLabel("Please give a brief (one or two sentence) summary of the bug you encountered");
+        JLabel summaryInstructions = new JLabel("Title");
     	summaryField.setLineWrap(true);
     	summaryField.setWrapStyleWord(true);
     	JScrollPane summaryScroll = new JScrollPane(summaryField);
@@ -448,10 +444,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	nameLabel.setFont(MipavUtil.font12);
     	nameLabel.setForeground(Color.black);
     	
-    	JLabel branchLabel = new JLabel("Your branch");
-    	branchLabel.setFont(MipavUtil.font12);
-    	branchLabel.setForeground(Color.black);
-    	
     	JPanel personalInfo = new JPanel();
     	personalInfo.setLayout(new GridBagLayout());
     	gbc.gridx = 0;
@@ -466,10 +458,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     	personalInfo.add(emailLabel, gbc);
     	gbc.gridy = 3;
     	personalInfo.add(emailField, gbc);
-    	gbc.gridy = 4;
-    	personalInfo.add(branchLabel, gbc);
-    	gbc.gridy = 5;
-    	personalInfo.add(branchField, gbc);
     	
     	
     	JLabel versionLabel = new JLabel("Version of MIPAV you are running");
@@ -591,13 +579,15 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			try {
 				if (JDialogCaptureScreen.currImage == null)
 					MipavUtil.displayError("You must select a region to save.");
+//				else if (used == true)
+//					MipavUtil.displayError("An attachment with that name already exists. Please select another name.");
 //				else if (attachmentName.length() < 7)
 //					JOptionPane.showMessageDialog(null, "File Name must be at least three characters long.", "Error", JOptionPane.ERROR_MESSAGE);
 				else {
-					image = new File(Preferences.getPreferencesDir() + File.separatorChar + attachmentName);
+					image = new File(Preferences.getPreferencesDir() + File.separator + attachmentName);
 					ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
 					fileNames.add(attachmentName);
-					filePaths.add(Preferences.getPreferencesDir() + "\\" + attachmentName);
+					filePaths.add(Preferences.getPreferencesDir() + File.separator + attachmentName);
 					attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
 					
 					image.deleteOnExit();

@@ -102,7 +102,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     /** JTextField for the name of the file being attached */
     private JTextField fileField = new JTextField(25);
     
-    public Boolean cancel = false;
+    public boolean cancel = false;
 
 	public static String fileName;
 
@@ -506,7 +506,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         setVisible(true);
     }
     
-    public void init(Boolean imageAttacher) {
+    public void init(boolean imageAttacher) {
     	
     	
     	setTitle("Create New Image");

@@ -25,7 +25,7 @@ public class LogStdStreams extends PrintStream {
     private static String logFileName;
 
     /** The only instance of this class. */
-    private static LogStdStreams logStream = null;
+    public static LogStdStreams logStream = null;
 
     /** DOCUMENT ME! */
     private static final PrintStream stdSystemErr = System.err;
