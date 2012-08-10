@@ -675,8 +675,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_VOI, "0.3");
         Preferences.defaultProps.setProperty(Preferences.PREF_TRIM_MASK, "0");
         Preferences.defaultProps.setProperty(Preferences.PREF_DEBUG, "false, false, false, false, false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, System.getProperty("user.dir")
-                + File.separator + "mipav.log");
+        Preferences.defaultProps.setProperty(Preferences.PREF_LOG_FILENAME, preferencesDir + File.separatorChar + "exceptions.txt");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_EXTENTS, "256,256,0,0,0");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_BIG_ENDIAN, "true");
         Preferences.defaultProps.setProperty(Preferences.PREF_RAW_RESOLUTIONS, "1.0,1.0,1.0,1.0,1.0");

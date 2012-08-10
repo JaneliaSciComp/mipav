@@ -220,6 +220,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** if user selects to open images as tiles, then this counter tells us how many tile sheets there are* */
     private int numTileSheets = 0;
 
+	public static File exceptions;
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -3418,6 +3420,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
 
+            LogStdStreams.logStream.close();
+            exceptions.delete();
             mainFrame.setVisible(false);
             mainFrame.dispose();
             System.exit(0); // close the application
@@ -3965,6 +3969,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             ProvenanceRecorder.getReference().startRecording();
         }
+        
+        exceptions = new File(Preferences.getPreferencesDir() + File.separatorChar + "exceptions.txt");
+		LogStdStreams.initializeErrorLogging(exceptions.getAbsolutePath(), "\n" + "Mipav Log: " + new Date() + "\n\n", true, true);
 
         initPrefsTrim();
     }
