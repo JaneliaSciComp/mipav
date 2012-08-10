@@ -417,8 +417,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                 try {
 
                     // Make result image of float type
-                    // resultImage = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                    resultImage = (ModelImage) image.clone();
+                    resultImage = new ModelImage(ModelImage.DOUBLE, destExtents, name);
+                    //resultImage = (ModelImage) image.clone();
                     resultImage.setImageName(name);
                     resultImage.resetVOIs();
 
@@ -517,8 +517,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                 try {
 
                     // Make result image of float type
-                    // resultImage  = new ModelImage(ModelImage.FLOAT, destExtents, name, userInterface);
-                    resultImage = (ModelImage) image.clone();
+                    resultImage  = new ModelImage(ModelImage.DOUBLE, destExtents, name);
+                    //resultImage = (ModelImage) image.clone();
                     resultImage.setImageName(name);
                     resultImage.resetVOIs();
 
@@ -673,6 +673,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         JLabel coeffLabel = new JLabel("Filter length (must be even)");
         coeffLabel.setForeground(Color.black);
         coeffLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
         paramPanel.add(coeffLabel, gbc);
 
         textFilterLength = new JTextField(10);
@@ -695,7 +697,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         levelsGroup.add(maximumLevelsButton);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        paramPanel.add(maximumLevelsButton);
+        paramPanel.add(maximumLevelsButton, gbc);
         
         userLevelsButton = new JRadioButton("User specified", false);
         userLevelsButton.setFont(serif12);
@@ -703,7 +705,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         levelsGroup.add(userLevelsButton);
         gbc.gridx = 0;
         gbc.gridy = 3;
-        paramPanel.add(userLevelsButton);
+        paramPanel.add(userLevelsButton, gbc);
         
         textLevels = new JTextField(10);
         textLevels.setFont(serif12);
@@ -780,7 +782,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         gbc.gridy = 11;
         paramPanel.add(scad, gbc);
 
-        waveletCheckBox = new JCheckBox("Display log magnitude wavelet images");
+        waveletCheckBox = new JCheckBox("Display wavelet images");
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
