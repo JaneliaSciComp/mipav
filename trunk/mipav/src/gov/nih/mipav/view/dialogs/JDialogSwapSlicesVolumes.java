@@ -11,11 +11,19 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.ClipboardOwner;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.*;
 
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
+import javax.swing.TransferHandler.TransferSupport;
+import javax.swing.plaf.basic.BasicTableUI;
 import javax.swing.table.DefaultTableModel;
 
 
@@ -208,7 +216,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
             return; // the wrong kind of image gets sent back before wasting anymore time.
         }
-
+        
         nSlices = srcImage.getExtents()[mode.getDim()];
 
         JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
@@ -234,7 +242,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         
         for(int i=0; i<nSlices; i++) {
             Vector<String> v = new Vector<String>();
-            v.add(String.valueOf(i));
+            v.add(String.valueOf("Position "+i));
             v.add(mode.getTitle()+" "+i);
             
             d.addRow(v);
@@ -244,6 +252,10 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         
         table.setRequestFocusEnabled(true);
         table.setFocusable(true);
+        table.setDragEnabled(true);
+        table.setDropMode(DropMode.INSERT_ROWS);
+        TableTransferImporter t = new TableTransferImporter(table);
+        table.setTransferHandler(t);
         
         JScrollPane scroll = new JScrollPane(table);
         scroll.setPreferredSize(new Dimension(340, 450));
@@ -261,6 +273,204 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         setVisible(true); 
 
     }
+    
+    /**
+     * Imports by cut/copy/paste/drag/drop slice elements from part of parent JTable 
+     * to another part of the JTable.
+     * 
+     * @author senseneyj
+     */
+    private class TableTransferImporter extends TransferHandler implements ClipboardOwner {
+
+        private JTable parent;
+        
+        public TableTransferImporter(JTable parent) {
+            this.parent = parent;
+        }
+        
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#canImport(javax.swing.JComponent, java.awt.datatransfer.DataFlavor[])
+         */
+        @Override
+        public boolean canImport(JComponent comp, DataFlavor[] transferFlavors) {
+            if(comp.equals(parent)) {
+                for(int i=0; i<transferFlavors.length; i++) {
+                    if(!transferFlavors[i].equals(DataFlavor.stringFlavor)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#createTransferable(javax.swing.JComponent)
+         */
+        @Override
+        protected Transferable createTransferable(JComponent c) {
+            if(c.equals(parent)) {
+               return new SliceTransferable(TransferHandler.MOVE); 
+            }
+            
+            return null;
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#exportAsDrag(javax.swing.JComponent, java.awt.event.InputEvent, int)
+         */
+        @Override
+        public void exportAsDrag(JComponent comp, InputEvent e, int action) {
+            // TODO Auto-generated method stub
+            super.exportAsDrag(comp, e, action);
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#exportDone(javax.swing.JComponent, java.awt.datatransfer.Transferable, int)
+         */
+        @Override
+        protected void exportDone(JComponent source, Transferable data, int action) {
+            // TODO Auto-generated method stub
+            super.exportDone(source, data, action);
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#exportToClipboard(javax.swing.JComponent, java.awt.datatransfer.Clipboard, int)
+         */
+        @Override
+        public void exportToClipboard(JComponent comp, Clipboard clip, int action) throws IllegalStateException {
+            try {
+                if(comp.equals(parent)) {
+                    SliceTransferable slice = new SliceTransferable(action);
+                    clip.setContents(slice, this);
+                }
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#getSourceActions(javax.swing.JComponent)
+         */
+        @Override
+        public int getSourceActions(JComponent c) {
+            // TODO Auto-generated method stub
+            return super.getSourceActions(c);
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#importData(javax.swing.JComponent, java.awt.datatransfer.Transferable)
+         */
+        @Override
+        public boolean importData(JComponent comp, Transferable t) {
+            try {
+                if(comp.equals(parent)) {
+                    String insertSlicesStr = t.getTransferData(DataFlavor.stringFlavor).toString();
+                    
+                    String[] insertSlices = insertSlicesStr.split(",");
+                    
+                    DefaultTableModel table = ((DefaultTableModel)parent.getModel());
+
+                    for(int i=0; i<insertSlices.length; i++) {
+                        table.addRow(new Object[]{"Position "+table.getRowCount(), ""});
+                    }
+                    for(int i=table.getRowCount()-1; i>=insertSlices.length && i>parent.getSelectedRow(); i--) {
+                        parent.setValueAt(parent.getValueAt(i-insertSlices.length, 1), i, 1);
+                    }  
+                    
+                    for(int i=0; i<insertSlices.length; i++) {
+                        parent.setValueAt(insertSlices[i], i+parent.getSelectedRow(), 1);
+                    }
+                    
+//                    parent.clearSelection();
+//                    ListSelectionModel model = parent.getSelectionModel();
+//                    model.setSelectionInterval(parent.getSelectedRow(), parent.getSelectedRow()+insertSlices.length);
+                    
+                    return true;
+                }
+                
+                return false;
+            } catch(Exception e) {
+                e.printStackTrace();
+                
+                return false;
+            }
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#importData(javax.swing.TransferHandler.TransferSupport)
+         */
+        @Override
+        public boolean importData(TransferSupport support) {
+            // TODO Auto-generated method stub
+            return super.importData(support);
+        }
+        
+        @Override
+        public void lostOwnership(Clipboard clipboard, Transferable contents) {}
+        
+        /**
+         * Describes how the TransferHandler should handle slice transfers.
+         * 
+         * @author senseneyj
+         */
+        private class SliceTransferable implements Transferable {
+
+            private String bufferData = new String();
+            private int action = TransferHandler.MOVE;
+            
+            
+            public SliceTransferable(int action) {
+                this.action = action;
+            }
+
+            @Override
+            public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+                
+                if(bufferData.length() == 0) {
+                    int[] rows =  parent.getSelectedRows();
+                    StringBuffer buffer = new StringBuffer();
+                    for(int i=0; i<rows.length; i++) {
+                        buffer.append(parent.getValueAt(rows[i], 1)).append(',');
+                    }
+                    
+                    buffer.replace(buffer.length()-1, buffer.length(), "");
+                    
+                    DefaultTableModel table = ((DefaultTableModel)parent.getModel());
+                    
+                    if(action == TransferHandler.MOVE) {
+                        int oldRowCount = parent.getRowCount();
+                        
+                        for(int i=parent.getSelectedRow(); i<oldRowCount-rows.length; i++) {
+                            parent.setValueAt(parent.getValueAt(i+rows.length, 1), i, 1);
+                        }
+                        
+                        for(int i=0; i<rows.length; i++) {
+                            table.removeRow(parent.getRowCount()-1);
+                        }
+                        
+                        parent.clearSelection();
+                    }
+
+                    bufferData = buffer.toString();
+                }
+                
+                return bufferData;
+            }
+
+            @Override
+            public DataFlavor[] getTransferDataFlavors() {
+                return new DataFlavor[]{DataFlavor.stringFlavor};
+            }
+
+            @Override
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+                return flavor.equals(DataFlavor.stringFlavor); 
+            }
+            
+        }
+        
+    }
 
     /**
      * Use the GUI results to set up the variables needed to run the algorithm.
@@ -271,5 +481,4 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         return true;
     }
-    
 }
