@@ -71,7 +71,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
     
     private int filterLength;
     
-    private int filterType;
+    private int filterType = MINIMUM_PHASE;
     
     private double[] scalingFilter;
     
@@ -134,22 +134,20 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             Calculated yl[7] = 0.1120719340210067
             Calculated yh[7] = 0.1120719340210067 */
     
-    public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength, int filterType,
+    public AlgorithmRiceWaveletTools(ModelImage destImg, ModelImage srcImg, int filterLength,
             int numberOfLevels, boolean doWaveletImages, int minimumLevel, int maximumLevel) {
         super(destImg, srcImg);
         this.filterLength = filterLength;
-        this.filterType = filterType;
         this.numberOfLevels = numberOfLevels;
         this.doWaveletImages = doWaveletImages;
         this.minimumLevel = minimumLevel;
         this.maximumLevel = maximumLevel;
     }
     
-    public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, int filterType, int numberOfLevels,
+    public AlgorithmRiceWaveletTools(ModelImage srcImg, int filterLength, int numberOfLevels,
             boolean doWaveletImages, int minimumLevel, int maximumLevel) {
         super(null, srcImg);
         this.filterLength = filterLength;
-        this.filterType = filterType;
         this.numberOfLevels = numberOfLevels;
         this.doWaveletImages = doWaveletImages;
         this.minimumLevel = minimumLevel;
@@ -484,7 +482,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                 }
                 
                 if ((actual_L == maximumLevel) && (maximumLevel > minimumLevel)) {
-                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_LMll");  
+                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mll");  
                     try {
                         waveletImage[waveletImageIndex++].importData(0, llA[minimumLevel-1], true);  
                     }
@@ -493,7 +491,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                         setCompleted(false);
                         return;
                     }    
-                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_LMlh");  
+                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mlh");  
                     try {
                         waveletImage[waveletImageIndex++].importData(0, lhA[minimumLevel-1], true);  
                     }
@@ -503,7 +501,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                         return;
                     }
                     
-                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_LMhl");  
+                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mhl");  
                     try {
                         waveletImage[waveletImageIndex++].importData(0, hlA[minimumLevel-1], true);  
                     }
@@ -513,7 +511,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
                         return;
                     }
                     
-                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_LMhh");  
+                    waveletImage[waveletImageIndex] = new ModelImage(ModelStorageBase.DOUBLE, extents,srcImage.getImageName() + "_Mhh");  
                     try {
                         waveletImage[waveletImageIndex++].importData(0, hhA[minimumLevel-1], true);  
                     }
