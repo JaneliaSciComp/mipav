@@ -3974,7 +3974,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         }
         
         if(Preferences.is(Preferences.PREF_LOGGING_ENABLED)) {
-            exceptions = new File(Preferences.getPreferencesDir() + File.separatorChar + "exceptions.txt");
+            exceptions = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
     		LogStdStreams.initializeErrorLogging(exceptions.getAbsolutePath(), "\n" + "Mipav Log: " + new Date() + "\n\n", true, true);
         }
 
