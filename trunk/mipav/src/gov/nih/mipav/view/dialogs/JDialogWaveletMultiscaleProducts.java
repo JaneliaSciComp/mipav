@@ -27,29 +27,10 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     /** Use serialVersionUID for interoperability. */
     //private static final long serialVersionUID;
 
-    public static final int MINIMUM_PHASE = 1;
-    
-    public static final int MID_PHASE = 2;
-    
-    public static final int MAXIMUM_PHASE = 3;
-
-    /** thresholding estimator. */
-    public static final int HARD = 1;
-
-    /** DOCUMENT ME! */
-    public static final int SOFT = 2;
-
-    /** DOCUMENT ME! */
-    public static final int NONNEGATIVE_GARROTE = 3;
-
-    /** DOCUMENT ME! */
-    public static final int SCAD = 4;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     private int filterLength;
     
-    private int filterType;
 
     /** DOCUMENT ME! */
     private JTextField textFilterLength;
@@ -60,12 +41,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     /** DOCUMENT ME! */
     private boolean doWaveletImages;
 
-    /** DOCUMENT ME! */
-    private JRadioButton garrote;
-
-    /** DOCUMENT ME! */
-    private JRadioButton hard;
-
+    
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
@@ -76,22 +52,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private JRadioButton scad;
-
-    /** DOCUMENT ME! */
-    private JRadioButton soft;
-
-    /** DOCUMENT ME! */
-    private JTextField textThreshold;
-
-    /** DOCUMENT ME! */
-    private float threshold;
-
-    /** DOCUMENT ME! */
-    private int thresholdType; // SOFT or HARD
+    private ModelImage resultImage = null; // result image  
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -109,12 +70,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     /** DOCUMENT ME! */
     private ModelImage[] waveletImage = null;
     
-    private JRadioButton minimum;
-    
-    private JRadioButton mid;
-    
-    private JRadioButton maximum;
-    
     // numberOfLevels == Integer.MAX_VALUE means that the maximum possible number of levels
     // is calculated and used.
     private int numberOfLevels = Integer.MAX_VALUE;
@@ -128,6 +83,14 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     private int xDim;
     
     private int yDim;
+    
+    private int minimumLevel;
+    
+    private int maximumLevel;
+    
+    private JTextField textMinimum;
+    
+    private JTextField textMaximum;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -218,31 +181,31 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
 
-                if (doWaveletImages) {
-                    waveletImage = waveletAlgo.getWaveletImages();
+                
+                waveletImage = waveletAlgo.getWaveletImages();
 
-                    if (waveletImage != null) {
-                        for (i = 0; i < waveletImage.length; i++) {
-                            
-                            if (waveletImage[i] != null) {
+                if (waveletImage != null) {
+                    for (i = 0; i < waveletImage.length; i++) {
+                        
+                        if (waveletImage[i] != null) {
 
-                                // waveletImage is same size as original image
-                                updateFileInfo(image, waveletImage[i]);
-        
-                                try {
-                                    new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (220 + i * 20)));
-                                } catch (OutOfMemoryError error) {
-                                    MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
-                                }
-                            } // if (waveletImage[i] != null)
-                            else {
-                                MipavUtil.displayError("waveletImage[" + i + "] is null");
+                            // waveletImage is same size as original image
+                            updateFileInfo(image, waveletImage[i]);
+    
+                            try {
+                                new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (220 + i * 20)));
+                            } catch (OutOfMemoryError error) {
+                                MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
                             }
-                        } // for (i = 0; i < waveletImage.length; i++)
-                    } else {
-                        MipavUtil.displayError("waveletImage array is null");
-                    }
-                } // if (doWaveletImages)*/
+                        } // if (waveletImage[i] != null)
+                        else {
+                            MipavUtil.displayError("waveletImage[" + i + "] is null");
+                        }
+                    } // for (i = 0; i < waveletImage.length; i++)
+                } else {
+                    MipavUtil.displayError("waveletImage array is null");
+                }
+          
             } else if (resultImage == null) {
 
                 // These next lines set the titles in all frames where the source image is displayed to
@@ -265,31 +228,29 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
                 image.notifyImageDisplayListeners(null, true);
                 
-                if (doWaveletImages) {
-                    waveletImage = waveletAlgo.getWaveletImages();
+                waveletImage = waveletAlgo.getWaveletImages();
 
-                    if (waveletImage != null) {
-                        for (i = 0; i < waveletImage.length; i++) {
-                            
-                            if (waveletImage[i] != null) {
+                if (waveletImage != null) {
+                    for (i = 0; i < waveletImage.length; i++) {
+                        
+                        if (waveletImage[i] != null) {
 
-                                // waveletImage is same size as original image
-                                updateFileInfo(image, waveletImage[i]);
-        
-                                try {
-                                    new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (200 + i * 20)));
-                                } catch (OutOfMemoryError error) {
-                                    MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
-                                }
-                            } // if (waveletImage[i] != null)
-                            else {
-                                MipavUtil.displayError("waveletImage[" + i + "] is null");
+                            // waveletImage is same size as original image
+                            updateFileInfo(image, waveletImage[i]);
+    
+                            try {
+                                new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (200 + i * 20)));
+                            } catch (OutOfMemoryError error) {
+                                MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
                             }
-                        } // for (i = 0; i < waveletImage.length; i++)
-                    } else {
-                        MipavUtil.displayError("waveletImage array is null");
-                    }
-                } // if (doWaveletImages)*/
+                        } // if (waveletImage[i] != null)
+                        else {
+                            MipavUtil.displayError("waveletImage[" + i + "] is null");
+                        }
+                    } // for (i = 0; i < waveletImage.length; i++)
+                } else {
+                    MipavUtil.displayError("waveletImage array is null");
+                }
                 
             } else if (resultImage != null) {
 
@@ -348,14 +309,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     public void setNumberOfLevels(int numberOfLevels) {
         this.numberOfLevels = numberOfLevels;
     }
-    
-    /**
-     * Accessor that sets the filter type to minimum phase, mid phase, or maximum phase
-     * @param filterType
-     */
-    public void setFilterType(int filterType) {
-        this.filterType = filterType;
-    }
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -380,23 +333,13 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     public void setDoWaveletImage(boolean doWaveletImages) {
         this.doWaveletImages = doWaveletImages;
     }
-
-    /**
-     * Accessor that sets the threshold.
-     *
-     * @param  threshold  DOCUMENT ME!
-     */
-    public void setThreshold(float threshold) {
-        this.threshold = threshold;
+    
+    public void setMinimumLevel(int minimumLevel) {
+        this.minimumLevel = minimumLevel;
     }
-
-    /**
-     * Accessor that sets whether soft or hard thresholding is used.
-     *
-     * @param  thresholdType  DOCUMENT ME!
-     */
-    public void setThresholdType(int thresholdType) {
-        this.thresholdType = thresholdType;
+    
+    public void setMaximumLevel(int maximumLevel) {
+        this.maximumLevel = maximumLevel;
     }
 
     /**
@@ -426,8 +369,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                      *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
                      *      } */
                     // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(resultImage, image, filterLength, filterType,
-                                      numberOfLevels, doWaveletImages);
+                    waveletAlgo = new AlgorithmRiceWaveletTools(resultImage, image, filterLength,
+                                      numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -464,8 +407,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    waveletAlgo = new AlgorithmRiceWaveletTools(image, filterLength, filterType, numberOfLevels,
-                            doWaveletImages);
+                    waveletAlgo = new AlgorithmRiceWaveletTools(image, filterLength, numberOfLevels,
+                            doWaveletImages, minimumLevel, maximumLevel);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -526,8 +469,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                      * for (int i=0; i < resultImage.getExtents()[2]; i++) {
                      * ((FileInfoDicom)(resultImage.getFileInfo(i))).setSecondaryCaptureTags(); }}*/
                     // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(resultImage, image, filterLength, filterType, numberOfLevels,
-                            doWaveletImages);
+                    waveletAlgo = new AlgorithmRiceWaveletTools(resultImage, image, filterLength, numberOfLevels,
+                            doWaveletImages, minimumLevel, maximumLevel);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -563,7 +506,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                 try {
 
                     // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(image, filterLength, filterType, numberOfLevels, doWaveletImages);
+                    waveletAlgo = new AlgorithmRiceWaveletTools(image, filterLength, numberOfLevels, doWaveletImages,
+                            minimumLevel, maximumLevel);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -634,11 +578,9 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
         filterLength = scriptParameters.getParams().getInt("filter_length");
         numberOfLevels = scriptParameters.getParams().getInt("number_of_levels");
-        filterType = scriptParameters.getParams().getInt("filter_type");
-        thresholdType = scriptParameters.getParams().getInt("threshold_type");
-        threshold = scriptParameters.getParams().getFloat("threshold");
         doWaveletImages = scriptParameters.getParams().getBoolean("do_show_wavelet_images");
-
+        minimumLevel = scriptParameters.getParams().getInt("minimum_level");
+        maximumLevel = scriptParameters.getParams().getInt("maximum_level");
     }
 
     /**
@@ -650,10 +592,9 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_length", filterLength));
         scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_levels", numberOfLevels));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("Filter_type", filterType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_type", thresholdType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_wavelet_images", doWaveletImages));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("minimum_level", minimumLevel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_level", maximumLevel));
     }
 
     /**
@@ -713,80 +654,38 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         textLevels.setEnabled(false);
         gbc.gridx = 1;
         paramPanel.add(textLevels, gbc);
-
-        JLabel labelThreshold = new JLabel("Wavelet threshold");
-        labelThreshold.setForeground(Color.black);
-        labelThreshold.setFont(serif12);
+        
+        JLabel minimumLabel = new JLabel("Minimum level for multiplication (>=1):");
+        minimumLabel.setForeground(Color.black);
+        minimumLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = 4;
-        paramPanel.add(labelThreshold, gbc);
-
-        textThreshold = new JTextField(10);
-        textThreshold.setText("1.0E-4");
-        textThreshold.setFont(serif12);
-        gbc.gridx = 1;
-        paramPanel.add(textThreshold, gbc);
+        paramPanel.add(minimumLabel, gbc);
         
-        ButtonGroup phaseGroup = new ButtonGroup();
-        minimum = new JRadioButton("Minimum phase", true);
-        minimum.setFont(serif12);
-        phaseGroup.add(minimum);
+        textMinimum = new JTextField(10);
+        textMinimum.setFont(serif12);
+        textMinimum.setText("1");
+        gbc.gridx = 1;
+        paramPanel.add(textMinimum, gbc);
+       
+        JLabel maximumLabel = new JLabel("Maximum level for multiplication (<= Number of levels):");
+        maximumLabel.setForeground(Color.black);
+        maximumLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = 5;
-        paramPanel.add(minimum, gbc);
+        paramPanel.add(maximumLabel, gbc);
         
-        mid = new JRadioButton("Mid phase", false);
-        mid.setFont(serif12);
-        phaseGroup.add(mid);
-        gbc.gridx = 0;
-        gbc.gridy = 6;
-        paramPanel.add(mid, gbc);
-        
-        maximum = new JRadioButton("Maximum phase", false);
-        maximum.setFont(serif12);
-        phaseGroup.add(maximum);
-        gbc.gridx = 0;
-        gbc.gridy = 7;
-        paramPanel.add(maximum, gbc);
-
-        ButtonGroup thresholdGroup = new ButtonGroup();
-        hard = new JRadioButton("Hard", false);
-        hard.setFont(serif12);
-        hard.addActionListener(this);
-        thresholdGroup.add(hard);
-        gbc.gridx = 0;
-        gbc.gridy = 8;
-        paramPanel.add(hard, gbc);
-
-        soft = new JRadioButton("Soft", true);
-        soft.setFont(serif12);
-        soft.addActionListener(this);
-        thresholdGroup.add(soft);
-        gbc.gridx = 0;
-        gbc.gridy = 9;
-        paramPanel.add(soft, gbc);
-
-        garrote = new JRadioButton("Nonnegative garrote", false);
-        garrote.setFont(serif12);
-        garrote.addActionListener(this);
-        thresholdGroup.add(garrote);
-        gbc.gridx = 0;
-        gbc.gridy = 10;
-        paramPanel.add(garrote, gbc);
-
-        scad = new JRadioButton("SCAD", false);
-        scad.setFont(serif12);
-        scad.addActionListener(this);
-        thresholdGroup.add(scad);
-        gbc.gridx = 0;
-        gbc.gridy = 11;
-        paramPanel.add(scad, gbc);
+        textMaximum = new JTextField(10);
+        textMaximum.setFont(serif12);
+        textMaximum.setText("2");
+        gbc.gridx = 1;
+        paramPanel.add(textMaximum, gbc);  
 
         waveletCheckBox = new JCheckBox("Display wavelet images");
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 12;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
 
@@ -920,32 +819,27 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             }
         }
         
-        if (minimum.isSelected()) {
-            filterType = MINIMUM_PHASE;
-        } else if (mid.isSelected()) {
-            filterType = MID_PHASE;
-        } else {
-            filterType = MAXIMUM_PHASE;
+        tmpStr = textMinimum.getText();
+        
+        if (testParameter(tmpStr, 1, numberOfLevels)) {
+            minimumLevel = Integer.valueOf(tmpStr).intValue();
         }
-
-        if (hard.isSelected()) {
-            thresholdType = HARD;
-        } else if (soft.isSelected()) {
-            thresholdType = SOFT;
-        } else if (garrote.isSelected()) {
-            thresholdType = NONNEGATIVE_GARROTE;
-        } else {
-            thresholdType = SCAD;
+        else {
+            textMinimum.requestFocus();
+            textMinimum.selectAll();
+            
+            return false;
         }
-
-        tmpStr = textThreshold.getText();
-
-        if (testParameter(tmpStr, 0.0, 1.0)) {
-            threshold = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textThreshold.requestFocus();
-            textThreshold.selectAll();
-
+        
+        tmpStr = textMaximum.getText();
+        
+        if (testParameter(tmpStr, minimumLevel, numberOfLevels)) {
+            maximumLevel = Integer.valueOf(tmpStr).intValue();
+        }
+        else {
+            textMaximum.requestFocus();
+            textMaximum.selectAll();
+            
             return false;
         }
 
@@ -1011,10 +905,9 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             table.put(new ParameterBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE, true));
             table.put(new ParameterInt("filter_Length", 4));
             table.put(new ParameterInt("number_of_levels", Integer.MAX_VALUE));
-            table.put(new ParameterInt("filter_type", MINIMUM_PHASE));
-            table.put(new ParameterInt("threshold_type", 2));
-            table.put(new ParameterFloat("threshold", .0001f));
             table.put(new ParameterBoolean("do_show_wavelet_images", false));
+            table.put(new ParameterInt("minimum_level", 1));
+            table.put(new ParameterInt("maximum_level", 2));
             } catch (final ParserException e) {
             // this shouldn't really happen since there isn't any real parsing going on...
             e.printStackTrace();
