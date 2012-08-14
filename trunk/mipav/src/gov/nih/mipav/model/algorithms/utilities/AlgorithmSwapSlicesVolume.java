@@ -226,13 +226,13 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      */
     private boolean transferIn(Number[] bufferIn, int in) {
         try {
-            if(sliceTouched.length < in && sliceRenum[in].length > 0 && //slice has nowhere to go 
+            if(sliceTouched.length > in && sliceRenum[in].length > 0 && //slice has nowhere to go 
             (srcImage == destImage && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
                 sliceTouched[in] = true;
                 return true;
             }
             
-            if(sliceTouched.length < in && !sliceTouched[in]) { 
+            if(sliceTouched.length > in && !sliceTouched[in]) { 
                 Number[] bufferOut = new Number[sliceSize];
                 
                 srcImage.exportData(in*sliceSize, sliceSize, bufferOut);
@@ -246,7 +246,9 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
                     destImage.importData(in*sliceSize, bufferIn, false);
                 }
             } else {
-                destImage.importData(in*sliceSize, bufferIn, false);
+                if(bufferIn != null) {
+                    destImage.importData(in*sliceSize, bufferIn, false);
+                }
             }
 
             return true;
@@ -290,7 +292,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
                 }
             }
         }
-
+        
         if (threadStopped) {
             finalize();
             return;
