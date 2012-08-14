@@ -30,7 +30,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     private int nSlices; // number of slices in image
     
     /** Reordering of slices/volumes */
-    private int[] sliceRenum;
+    private int[][] sliceRenum;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      * @param  srcImage      source image (image to extract from)
      * @param  removeSlices  list of booleans for slices that should be extracted
      */
-    public AlgorithmSwapSlicesVolume(SwapMode mode, int[] sliceRenum, ModelImage srcImage) {
+    public AlgorithmSwapSlicesVolume(SwapMode mode, int[][] sliceRenum, ModelImage srcImage) {
         super(null, srcImage);
         this.mode = mode;
         this.nSlices = srcImage.getExtents()[mode.getDim()];

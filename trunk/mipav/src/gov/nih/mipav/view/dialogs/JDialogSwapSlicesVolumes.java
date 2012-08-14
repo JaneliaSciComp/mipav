@@ -76,9 +76,12 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     private ModelImage swapVolume;
     
     /** Reordering of slices/volumes */
-    private int[] sliceRenum;
+    private int[][] sliceRenum;
 
     private TableTransferImporter importer;
+
+    /** The visible JTable for slice/volume reordering */
+    private JTable displayTable;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -109,7 +112,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        int i;
 
         if (command.equals("Swap")) {
 
@@ -254,7 +256,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             d.addRow(v);
         }
         
-        final JTable displayTable = new JTable(d);
+        displayTable = new JTable(d);
         
         displayTable.addKeyListener(new KeyListener() {
 
@@ -512,6 +514,36 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     private boolean setVariables() {
 
+        int maxSlice = 0;
+        
+        for(int i=0; i<displayTable.getRowCount(); i++) {
+            if(Integer.valueOf(displayTable.getValueAt(i, 1).toString()) > maxSlice) {
+                maxSlice = Integer.valueOf(displayTable.getValueAt(i, 1).toString());
+            }
+        }
+        
+        sliceRenum = new int[maxSlice][];
+        
+        for(int i=0; i<sliceRenum.length; i++) {
+            sliceRenum[i] = new int[0];
+        }
+        
+        for(int i=0; i<displayTable.getRowCount(); i++) {
+            int slice = Integer.valueOf(displayTable.getValueAt(i, 1).toString());
+            
+            int[] oldAr = sliceRenum[slice];
+            int[] newAr = new int[oldAr.length+1];
+            
+            for(int j=0; j<oldAr.length; j++) {
+                newAr[j] = oldAr[j];
+            }
+            
+            newAr[oldAr.length] = i;
+            
+            sliceRenum[slice] = newAr;
+        }
+        
+        
         return true;
     }
 }
