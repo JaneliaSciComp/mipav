@@ -31,6 +31,11 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     
     /** Reordering of slices/volumes */
     private int[][] sliceRenum;
+
+    /** Number of pixels used by a slice/volume */
+    private int sliceSize;
+
+    private boolean[] sliceTouched;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -44,8 +49,21 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     public AlgorithmSwapSlicesVolume(ModelImage destImage, SwapMode mode, int[][] sliceRenum, ModelImage srcImage) {
         super(destImage, srcImage);
         this.mode = mode;
-        this.nSlices = srcImage.getExtents()[mode.getDim()];
+        int extent = 0;
+        for(int i=0; i<sliceRenum.length; i++) {
+            extent += sliceRenum[i].length;
+        }
+        
+        this.nSlices = extent;
         this.sliceRenum = sliceRenum;
+        
+        sliceSize = 1;
+        
+        for(int i=0; i<mode.getDim(); i++) {
+            sliceSize *= srcImage.getExtents()[i];
+        }        
+        
+        sliceSize *= getColorFactor();
         
     }
 
@@ -78,7 +96,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
             return;
         }
 
-        extractSlices();
+        swapSlices();
     } // end run()
 
     /**
@@ -183,185 +201,102 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     } // end getColorFactor()
 
+    private boolean transfer(Number[] bufferIn, Number[] bufferOut, int in, int out) {
+        try {
+            destImage.exportData(in*sliceSize, sliceSize, bufferIn);
+            
+            destImage.exportData(out*sliceSize, sliceSize, bufferOut);
+            
+            destImage.importData(out*sliceSize, bufferIn, false);
+            
+            return true;
+        } catch(IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    /**
+     * Transfers the given buffer into the given location. Also recursively transfers all
+     * the old data the location(s) where the old data is used.
+     * 
+     * @param bufferIn relieves the symptoms of arthritis
+     * @param in location to import data
+     * @return whether import was successful
+     */
+    private boolean transferIn(Number[] bufferIn, int in) {
+        try {
+            if(sliceRenum[in].length > 0 && //slice has nowhere to go 
+            (srcImage == destImage && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
+                sliceTouched[in] = true;
+                return true;
+            }
+            
+            if(!sliceTouched[in]) { 
+                Number[] bufferOut = new Number[sliceSize];
+                
+                srcImage.exportData(in*sliceSize, sliceSize, bufferOut);
+                
+                for(int i=0; i<sliceRenum[in].length; i++) {
+                    sliceTouched[in] = true;
+                    transferIn(bufferOut, sliceRenum[in][i]);
+                }
+                
+                if(bufferIn != null) {
+                    destImage.importData(in*sliceSize, bufferIn, false);
+                }
+            } else {
+                destImage.importData(in*sliceSize, bufferIn, false);
+            }
+
+            return true;
+        } catch(IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+    
+    private boolean allSlicesTouched() {
+        for(int i=0; i<sliceTouched.length; i++) {
+            if(!sliceTouched[i]) {
+                return false;
+            }
+        }
+        
+        return true;
+    }
+    
     /**
      * Calculates the final output and stores it in the source image.
      */
-    private void extractSlices() {
-        int zSrc; // zSrc is slice-depth of srcImage; zDest is slice-depth of destination
-        float[] imageBuffer;
-        ModelImage resultImage = null;
-        int t;
-        int tDim;
-        int tSrcOffset;
-        int colorFactor;
-        int[] newExtents;
-        boolean[] extract = null;
-        int sliceArea = 0;
+    private void swapSlices() {
+        if(destImage.getExtents()[mode.getDim()] != nSlices) {
+            //reallocate destImage so that fileInfo and buffer equal required length
+            
+        }
         
-        if (srcImage.getNDims() == 4) {
-            tDim = srcImage.getExtents()[3];
-        } else {
-            tDim = 1;
+        sliceTouched = new boolean[sliceRenum.length];
+        for(int i=0; i<sliceTouched.length; i++) {
+            sliceTouched[i] = false;
         }
-
-        // get the colorFactor
-        colorFactor = getColorFactor();
-
         
-        // initialize the image buffer (will only hold a single slice at a time)
-        // however, want to make sure that the src image isn't locked by someone else,
-        // so set a lock --- an exception will be thrown if image is locked.
-        // amount of data allocated is based on colorFactor
-        try {
-            imageBuffer = new float[colorFactor * sliceArea];
-            fireProgressStateChanged(srcImage.getImageName(), "Removing Selected Slices...");
-        } catch (OutOfMemoryError e) {
-            imageBuffer = null;
-            System.gc();
-            displayError("Algorithm extract slices or volumes reports: Out of memory");
-            srcImage.releaseLock();
-            setCompleted(false);
-
-
-            return;
-        }
-
-        // make a location & view the progressbar; make length & increment of progressbar.
-
-        newExtents = new int[srcImage.getExtents().length - 1];
-
-        // System.err.println("NEW EXTENTS: " + newExtents.length);
-        newExtents[0] = srcImage.getExtents()[0];
-        newExtents[1] = srcImage.getExtents()[1];
-
-        if (srcImage.getExtents().length > 3) {
-            newExtents[2] = srcImage.getExtents()[3];
-        }
-
-        float progress = 0;
-        float numToExtract = 0;
-
-        
-        for (int j = 0; j < extract.length; j++) {
-
-            if (extract[j]) {
-                numToExtract++;
-            }
-        }
-
-        // System.err.println("tDim: " + tDim);
-
-        // start counting the slices of the destination image at the first slice.
-        // for all slices in the old image
-
-        int oldZdim = nSlices;
-        if (newExtents.length == 2) {
-
-            for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) {
-
-                if (extract[zSrc]) {
-                    progress++;
-
-                    fireProgressStateChanged((int) ((progress / numToExtract) * 100));
-
-                    try {
-
-                        // try copying the zSrc-th slice out of srcImage, making it the zDest-th in destImage
-                        srcImage.exportData(zSrc * colorFactor * sliceArea, colorFactor * sliceArea, imageBuffer);
-
-                        resultImage = new ModelImage(srcImage.getType(), newExtents,
-                                                     srcImage.getImageName() + "_slice" + (zSrc));
-
-                        resultImage.importData(0, imageBuffer, false);
-
-                        updateFileInfo(srcImage, resultImage, zSrc);
-
-                        resultImage.calcMinMax();
-
-                    } catch (IOException error) {
-                        displayError("Algorithm Extract Individual Slices reports: " + error.getMessage());
-                        error.printStackTrace();
-                        setCompleted(false);
-
-
-                        return;
-                    }
-
-                } // if (!extract[zSrc])
-                // else {do nothing; goto next zSrc-slice;}
-            } // for (zSrc = 0; zSrc < oldZdim; zSrc++)
-        } else if (newExtents.length == 3) {
-
-            for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) {
-
-                if (extract[zSrc]) {
-                    progress++;
-
-                    fireProgressStateChanged((int) ((progress / numToExtract) * 100));
-
-                    resultImage = new ModelImage(srcImage.getType(), newExtents,
-                                                 srcImage.getImageName() + "_slice" + (zSrc));
-
-                    for (t = 0; (t < tDim) && !threadStopped; t++) {
-                        tSrcOffset = getOffset(srcImage, colorFactor, t);
-
-                        // System.err.println("zSrc is: " + zSrc + " tSrcOffset is: " + tSrcOffset);
-                        try {
-                            srcImage.exportData(tSrcOffset + (zSrc * colorFactor * sliceArea), 
-                                    colorFactor * sliceArea, imageBuffer);
-
-                            // System.err.println("Importing data at: " + (imageBuffer.length * t));
-                            resultImage.importData(imageBuffer.length * t, imageBuffer, false);
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
-                    }
-
-                    // update file info
-                    updateFileInfo(srcImage, resultImage, zSrc);
-
-                    resultImage.calcMinMax();
-
+        int index = 0;
+        while(!allSlicesTouched()) {
+            transferIn(null, index);
+            for(int i=index; i<sliceTouched.length; i++) {
+                if(!sliceTouched[i]) {
+                    index = i;
+                    break;
                 }
             }
-
         }
 
         if (threadStopped) {
-            imageBuffer = null;
-            resultImage = null;
             finalize();
-
-
             return;
         }
 
-        resultImage = null; // after all, this was only temporary
-
         setCompleted(true);
-    } // extractSlices
+    } // swapSlices
 
-    /**
-     * Calculate and return the offset for the given image and time slice.
-     *
-     * @param   img          -- ModelImage whose offset is being computed
-     * @param   colorFactor  -- the image's colorFactor
-     * @param   t            -- current time slice
-     *
-     * @return  -- the computed offset into the data buffer
-     */
-    private int getOffset(ModelImage img, int colorFactor, int t) {
-
-        int offset = 0;
-
-        if (img.getNDims() > 3) {
-            offset = img.getSliceSize() * img.getExtents()[2] * colorFactor * t;
-        } else {
-            offset = img.getSliceSize() * colorFactor * t;
-        }
-
-        return offset;
-
-    } // end getOffset()
-
-        }
+}
