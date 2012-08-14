@@ -8,7 +8,6 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -22,8 +21,6 @@ import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
-import javax.swing.TransferHandler.TransferSupport;
-import javax.swing.plaf.basic.BasicTableUI;
 import javax.swing.table.DefaultTableModel;
 
 
@@ -82,6 +79,12 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
     /** The visible JTable for slice/volume reordering */
     private JTable displayTable;
+
+    /** Radio buttons for alg output options. */
+    private JRadioButton newImage, replaceImage;
+    
+    /** Whether to perform alg in place */
+    private boolean inPlace;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -161,7 +164,24 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     protected void callAlgorithm() {
         System.gc();
 
-        swapAlgo = new AlgorithmSwapSlicesVolume(mode, sliceRenum, srcImage);
+        ModelImage destImage;
+        
+        if(inPlace) {
+            destImage = srcImage;
+        } else {
+            int extent = 0;
+            for(int i=0; i<sliceRenum.length; i++) {
+                extent += sliceRenum[i].length;
+            }
+            
+            int[] extents = Arrays.copyOf(srcImage.getExtents(), srcImage.getExtents().length);
+            
+            extents[mode.getDim()] = extent;
+            
+            destImage = new ModelImage(srcImage.getDataType(), extents, srcImage.getImageName()+"_swap");
+        }
+        
+        swapAlgo = new AlgorithmSwapSlicesVolume(destImage, mode, sliceRenum, srcImage);
         swapAlgo.addListener(this);
 
         createProgressBar(srcImage.getImageName(), swapAlgo);
@@ -283,10 +303,49 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         importer = new TableTransferImporter(displayTable);
         displayTable.setTransferHandler(importer);
         
+        JPanel algOptionPanel = new JPanel();
+        algOptionPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.weightx = 1;
+        gbc.weighty = .9;
+        gbc.fill = GridBagConstraints.BOTH;
+        
         JScrollPane scroll = new JScrollPane(displayTable);
         scroll.setPreferredSize(new Dimension(340, 450));
+        algOptionPanel.add(scroll, gbc);
         
-        mainPanel.add(scroll, BorderLayout.CENTER);
+        // destination goes in the left of the lower box
+        JPanel destinationPanel = new JPanel();
+        destinationPanel.setLayout(new BoxLayout(destinationPanel, BoxLayout.Y_AXIS));
+
+        destinationPanel.setForeground(Color.black);
+        destinationPanel.setBorder(buildTitledBorder("Destination"));
+
+        ButtonGroup destinationGroup = new ButtonGroup();
+        newImage = new JRadioButton("New image", false);
+        newImage.setFont(serif12);
+        destinationGroup.add(newImage); // add the button to the grouping
+        destinationPanel.add(newImage); // add the button to the component
+
+        replaceImage = new JRadioButton("Replace image", true);
+        replaceImage.setFont(serif12);
+        destinationGroup.add(replaceImage); // add the button to the grouping
+        destinationPanel.add(replaceImage); // add the button to the component
+
+        gbc.gridy++;
+        gbc.weighty = .1;
+        algOptionPanel.add(destinationPanel, gbc);
+
+        // Only if the image is unlocked can it be replaced.
+        if (srcImage.getLockStatus() == ModelStorageBase.UNLOCKED) {
+            replaceImage.setEnabled(true);
+        } else {
+            replaceImage.setEnabled(false);
+        }
+        
+        mainPanel.add(algOptionPanel, BorderLayout.CENTER);
         JPanel buttonPanel = buildButtons();
         OKButton.setText("Swap");
         JButton append = gui.buildButton("Append");
@@ -544,6 +603,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             sliceRenum[slice] = newAr;
         }
         
+        inPlace = replaceImage.isSelected();
         
         return true;
     }
