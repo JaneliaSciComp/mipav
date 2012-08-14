@@ -218,7 +218,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     
     /**
      * Transfers the given buffer into the given location. Also recursively transfers all
-     * the old data the location(s) where the old data is used.
+     * the old data to the location(s) where the old data is used.
      * 
      * @param bufferIn relieves the symptoms of arthritis
      * @param in location to import data
@@ -226,19 +226,19 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      */
     private boolean transferIn(Number[] bufferIn, int in) {
         try {
-            if(sliceRenum[in].length > 0 && //slice has nowhere to go 
+            if(sliceTouched.length < in && sliceRenum[in].length > 0 && //slice has nowhere to go 
             (srcImage == destImage && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
                 sliceTouched[in] = true;
                 return true;
             }
             
-            if(!sliceTouched[in]) { 
+            if(sliceTouched.length < in && !sliceTouched[in]) { 
                 Number[] bufferOut = new Number[sliceSize];
                 
                 srcImage.exportData(in*sliceSize, sliceSize, bufferOut);
                 
+                sliceTouched[in] = true;        //TODO: setting this at 'in' index may be incorrect
                 for(int i=0; i<sliceRenum[in].length; i++) {
-                    sliceTouched[in] = true;
                     transferIn(bufferOut, sliceRenum[in][i]);
                 }
                 
