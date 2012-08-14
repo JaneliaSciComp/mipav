@@ -3421,7 +3421,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 }
             }
 
-            LogStdStreams.logStream.close();
+            if (LogStdStreams.logStream != null) {
+                LogStdStreams.logStream.close();
+            }
             if(exceptions != null) {
                 exceptions.delete();    
             }
