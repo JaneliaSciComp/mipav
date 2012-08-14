@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase implements AlgorithmInterface, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -35,8 +35,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     /** DOCUMENT ME! */
     private JTextField textFilterLength;
 
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
+    
 
     /** DOCUMENT ME! */
     private boolean doWaveletImages;
@@ -44,22 +43,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     
     /** DOCUMENT ME! */
     private ModelImage image; // source image
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image  
-
-    /** DOCUMENT ME! */
-    private String[] titles;
-
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
     private AlgorithmRiceWaveletTools waveletAlgo;
@@ -118,7 +101,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             MipavUtil.displayError("1 level of decomposition requires an even yDim");
             return;
         }
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -168,18 +150,8 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         if (algorithm instanceof AlgorithmRiceWaveletTools) {
             image.clearMask();
 
-            if ((waveletAlgo.isCompleted() == true) && (resultImage != null)) {
-                // The algorithm has completed and produced a new image to be displayed.
-
-                updateFileInfo(image, resultImage);
-
-                try {
-
-                    // resultImage.setImageName("Unsharp mask");
-                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-                } catch (OutOfMemoryError error) {
-                    MipavUtil.displayError("Out of memory: unable to open new frame");
-                }
+            if (waveletAlgo.isCompleted()) {
+                
 
                 
                 waveletImage = waveletAlgo.getWaveletImages();
@@ -206,57 +178,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                     MipavUtil.displayError("waveletImage array is null");
                 }
           
-            } else if (resultImage == null) {
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // image name so as to indicate that the image is now unlocked!
-                // The image frames are enabled and then registed to the userinterface.
-                Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
-
-                for (i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-                }
-
-                if (parentFrame != null) {
-                    userInterface.registerFrame(parentFrame);
-                }
-
-                image.notifyImageDisplayListeners(null, true);
-                
-                waveletImage = waveletAlgo.getWaveletImages();
-
-                if (waveletImage != null) {
-                    for (i = 0; i < waveletImage.length; i++) {
-                        
-                        if (waveletImage[i] != null) {
-
-                            // waveletImage is same size as original image
-                            updateFileInfo(image, waveletImage[i]);
-    
-                            try {
-                                new ViewJFrameImage(waveletImage[i], null, new Dimension(610, (200 + i * 20)));
-                            } catch (OutOfMemoryError error) {
-                                MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
-                            }
-                        } // if (waveletImage[i] != null)
-                        else {
-                            MipavUtil.displayError("waveletImage[" + i + "] is null");
-                        }
-                    } // for (i = 0; i < waveletImage.length; i++)
-                } else {
-                    MipavUtil.displayError("waveletImage array is null");
-                }
-                
-            } else if (resultImage != null) {
-
-                // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
             }
         }
         // Update frame
@@ -271,15 +192,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         waveletAlgo.finalize();
         waveletAlgo = null;
         dispose();
-    }
-
-    /**
-     * Accessor that returns the image.
-     *
-     * @return  the result image
-     */
-    public ModelImage getResultImage() {
-        return resultImage;
     }
 
     // *******************************************************************
@@ -311,21 +223,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     }
 
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
      * Accessor that sets whether or not the wavelet images are displayed.
      *
      * @param  doWaveletImage  DOCUMENT ME!
@@ -347,7 +244,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
      * whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_waveletThr");
 
         if (image.getNDims() == 2) { // source image is 2D
 
@@ -355,21 +251,9 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            if (displayLoc == NEW) {
-
                 try {
-
-                    // Make result image of float type
-                    resultImage = new ModelImage(ModelImage.DOUBLE, destExtents, name);
-                    //resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-                    resultImage.resetVOIs();
-
-                    /*if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
-                     *  ((FileInfoDicom)(resultImage.getFileInfo(0))).setSecondaryCaptureTags();
-                     *      } */
                     // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(resultImage, image, filterLength,
+                    waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
                                       numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -393,83 +277,20 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
                     return;
                 }
-            } else {
-
-                try {
-
-                    // No need to make new image space because the user has choosen to replace the source image
-                    // Make the algorithm class
-                    waveletAlgo = new AlgorithmRiceWaveletTools(image, filterLength, numberOfLevels,
-                            doWaveletImages, minimumLevel, maximumLevel);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    waveletAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), waveletAlgo);
-
-                    // Hide the dialog since the algorithm is about to run.
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface.
-                        if (waveletAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        waveletAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
-
-                    return;
-                }
-            }
+           
         } else if (image.getNDims() == 3) {
             int[] destExtents = new int[3];
             destExtents[0] = image.getExtents()[0];
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) {
-
                 try {
 
-                    // Make result image of float type
-                    resultImage  = new ModelImage(ModelImage.DOUBLE, destExtents, name);
-                    //resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-                    resultImage.resetVOIs();
-
-                    /* if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM){
-                     * for (int i=0; i < resultImage.getExtents()[2]; i++) {
-                     * ((FileInfoDicom)(resultImage.getFileInfo(i))).setSecondaryCaptureTags(); }}*/
+                    
                     // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(resultImage, image, filterLength, numberOfLevels,
+                    waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, numberOfLevels,
                             doWaveletImages, minimumLevel, maximumLevel);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
@@ -493,61 +314,9 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
                     return;
                 }
-            } else {
-
-                try {
-
-                    // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(image, filterLength, numberOfLevels, doWaveletImages,
-                            minimumLevel, maximumLevel);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    waveletAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), waveletAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    // These next lines set the titles in all frames where the source image is displayed to
-                    // "locked - " image name so as to indicate that the image is now read/write locked!
-                    // The image frames are disabled and then unregisted from the userinterface until the
-                    // algorithm has completed.
-                    Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
-                    titles = new String[imageFrames.size()];
-
-                    for (int i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (isRunInSeparateThread()) {
-
-                        if (waveletAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        waveletAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
-
-                    return;
-                }
-            }
+           
         }
     }
 
@@ -556,9 +325,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
      */
     protected void doPostAlgorithmActions() {
 
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
+        
     }
 
     /**
@@ -566,14 +333,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-
-        if (scriptParameters.doOutputNewImage()) {
-            this.setDisplayLocNew();
-        } else {
-            this.setDisplayLocReplace();
-        }
-
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         filterLength = scriptParameters.getParams().getInt("filter_length");
@@ -588,7 +347,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("filter_length", filterLength));
         scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_levels", numberOfLevels));
@@ -631,29 +389,29 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         gbc.gridy = 1;
         paramPanel.add(levelsLabel, gbc);
         
-        ButtonGroup levelsGroup = new ButtonGroup();
-        maximumLevelsButton = new JRadioButton("Maximum possible", true);
-        maximumLevelsButton.setFont(serif12);
-        maximumLevelsButton.addActionListener(this);
-        levelsGroup.add(maximumLevelsButton);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        paramPanel.add(maximumLevelsButton, gbc);
-        
-        userLevelsButton = new JRadioButton("User specified", false);
+        ButtonGroup levelsGroup = new ButtonGroup();  
+        userLevelsButton = new JRadioButton("User specified", true);
         userLevelsButton.setFont(serif12);
         userLevelsButton.addActionListener(this);
         levelsGroup.add(userLevelsButton);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 2;
         paramPanel.add(userLevelsButton, gbc);
         
         textLevels = new JTextField(10);
         textLevels.setFont(serif12);
         textLevels.setText("2");
-        textLevels.setEnabled(false);
+        textLevels.setEnabled(true);
         gbc.gridx = 1;
         paramPanel.add(textLevels, gbc);
+        
+        maximumLevelsButton = new JRadioButton("Maximum possible", false);
+        maximumLevelsButton.setFont(serif12);
+        maximumLevelsButton.addActionListener(this);
+        levelsGroup.add(maximumLevelsButton);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        paramPanel.add(maximumLevelsButton, gbc);
         
         JLabel minimumLabel = new JLabel("Minimum level for multiplication (>=1):");
         minimumLabel.setForeground(Color.black);
@@ -681,7 +439,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         gbc.gridx = 1;
         paramPanel.add(textMaximum, gbc);  
 
-        waveletCheckBox = new JCheckBox("Display wavelet images");
+        waveletCheckBox = new JCheckBox("Display individual level wavelet images");
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
@@ -689,34 +447,11 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
 
-        JPanel destinationPanel = new JPanel(new GridLayout(2, 1));
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        ButtonGroup destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage);
-
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         mainPanel.add(paramPanel, gbc);
-        gbc.gridy = 1;
-        mainPanel.add(destinationPanel, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
         JPanel buttonPanel = new JPanel();
@@ -747,12 +482,6 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
         String tmpStr;
         int divisor;
         int i, j, k;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
 
         tmpStr = textFilterLength.getText();
         
@@ -937,28 +666,7 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
     }
 
 
-    /**
-     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
-     * (which can be used to retrieve the image object from the image registry).
-     * 
-     * @param imageParamName The output image parameter label for which to get the image name.
-     * @return The image name of the requested output image parameter label.
-     */
-    public String getOutputImageName(final String imageParamName) {
-        if (imageParamName.equals(AlgorithmParameters.RESULT_IMAGE)) {
-            if (getResultImage() != null) {
-                // algo produced a new result image
-                return getResultImage().getImageName();
-            } else {
-                // algo was done in place
-                return image.getImageName();
-            }
-        }
-
-        Preferences.debug("Unrecognized output image parameter: " + imageParamName + "\n", Preferences.DEBUG_SCRIPTING);
-
-        return null;
-    }
+    
 
     /**
      * Returns whether the action has successfully completed its execution.
