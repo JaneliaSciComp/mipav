@@ -517,19 +517,20 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         int maxSlice = 0;
         
         for(int i=0; i<displayTable.getRowCount(); i++) {
-            if(Integer.valueOf(displayTable.getValueAt(i, 1).toString()) > maxSlice) {
-                maxSlice = Integer.valueOf(displayTable.getValueAt(i, 1).toString());
+            int slice = Integer.valueOf(displayTable.getValueAt(i, 1).toString().split(" ")[1]); 
+            if(slice > maxSlice) {
+                maxSlice = slice;
             }
         }
         
-        sliceRenum = new int[maxSlice][];
+        sliceRenum = new int[maxSlice+1][];
         
         for(int i=0; i<sliceRenum.length; i++) {
             sliceRenum[i] = new int[0];
         }
         
         for(int i=0; i<displayTable.getRowCount(); i++) {
-            int slice = Integer.valueOf(displayTable.getValueAt(i, 1).toString());
+            int slice = Integer.valueOf(displayTable.getValueAt(i, 1).toString().split(" ")[1]);
             
             int[] oldAr = sliceRenum[slice];
             int[] newAr = new int[oldAr.length+1];
