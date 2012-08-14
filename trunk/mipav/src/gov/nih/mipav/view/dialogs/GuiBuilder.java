@@ -349,6 +349,18 @@ public class GuiBuilder implements ActionListener {
         panel.add(parent.cancelButton);
         return panel;
     }
+    
+    public JButton buildButton(String text) {
+        JButton button = new JButton(text);
+        button.addActionListener(this);
+
+        button.setActionCommand(text);
+        button.setMinimumSize(MipavUtil.defaultButtonSize);
+        button.setPreferredSize(MipavUtil.defaultButtonSize);
+        button.setFont(MipavUtil.font12B);
+
+        return button;
+    }
 
     public void actionPerformed(ActionEvent e) {
         passedListeners = true;
