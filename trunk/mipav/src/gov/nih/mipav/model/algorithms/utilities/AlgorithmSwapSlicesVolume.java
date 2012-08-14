@@ -36,12 +36,13 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     /**
      * Import source and destination images into the class.
+     * @param destImage 
      *
      * @param  srcImage      source image (image to extract from)
      * @param  removeSlices  list of booleans for slices that should be extracted
      */
-    public AlgorithmSwapSlicesVolume(SwapMode mode, int[][] sliceRenum, ModelImage srcImage) {
-        super(null, srcImage);
+    public AlgorithmSwapSlicesVolume(ModelImage destImage, SwapMode mode, int[][] sliceRenum, ModelImage srcImage) {
+        super(destImage, srcImage);
         this.mode = mode;
         this.nSlices = srcImage.getExtents()[mode.getDim()];
         this.sliceRenum = sliceRenum;
