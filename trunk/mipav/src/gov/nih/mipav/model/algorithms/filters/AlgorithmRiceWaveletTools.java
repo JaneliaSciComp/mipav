@@ -315,7 +315,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             }
         }
         
-        mirdwt();
+       /* mirdwt();
         if (selfTest) {
             for (i = 0; i < xDim; i++)  {
                 Preferences.debug("aArray[" + i + "] = " + aArray[i] + "\n", Preferences.DEBUG_FILEIO);
@@ -331,7 +331,7 @@ public class AlgorithmRiceWaveletTools extends AlgorithmBase {
             MipavUtil.displayError("IOException on destImage.importData(0, aArray, true)");
             setCompleted(false);
             return;
-        }
+        } */
         
         setCompleted(true);
         return;
