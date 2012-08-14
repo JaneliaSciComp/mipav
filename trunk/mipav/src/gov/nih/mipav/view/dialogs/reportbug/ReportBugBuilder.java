@@ -313,11 +313,31 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			report.flush();
 			report.close();
 			
-			bugReport.deleteOnExit();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} 	
+	}
+	
+	private void findError(){
+		File directory = new File(System.getProperty("user.dir"));
+		String[] files = directory.list();
+		for(int x = 0; x<files.length; x++) {
+			if (files[x].contains("hs_err_pid")) {
+				SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+				String currDate = formatter.format(dateHolder);
+				
+				File temp = new File(System.getProperty("user.dir") + File.separator + files[x]);
+				long modified = temp.lastModified();
+				
+				String modifiedOn = formatter.format(new Date(modified));
+				
+				if (currDate.equals(modifiedOn)) {
+					fileNames.add(files[x]);
+					filePaths.add(System.getProperty("user.dir") + File.separator + files[x]);
+				}
+			}
+		}
 	}
 
 	/**
@@ -326,6 +346,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
      */
 	private void sendReport(){
 		compileReport();
+		findError();
 		try {
 			Address to = new InternetAddress("shens2@mail.nih.gov");
 			final Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
@@ -372,6 +393,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			Transport.send(report);
 					
 			JOptionPane.showMessageDialog(null, "Message sent successfully");
+			bugReport.delete();
+			for (int x = 0; x < fileNames.size(); x++) {
+				new File(filePaths.get(x)).delete();
+			}
 			frame.dispose();
 		} catch (MessagingException e) {
 				e.printStackTrace();
