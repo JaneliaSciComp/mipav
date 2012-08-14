@@ -78,6 +78,8 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     /** Reordering of slices/volumes */
     private int[] sliceRenum;
 
+    private TableTransferImporter importer;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -118,7 +120,9 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             dispose();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("U4051");
-        } 
+        } else if (command.equals("Append")) {
+            
+        }
     }
 
     // ************************************************************************
@@ -220,9 +224,11 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         nSlices = srcImage.getExtents()[mode.getDim()];
 
         JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
-
+        
         setTitle("Swap "+mode.getTitle());
         setForeground(Color.black);
+        
+        GuiBuilder gui = new GuiBuilder(this);
         
         JLabel dir = new JLabel("<html>Use the keyboard and mouse to select the rows you would like to swap.  You can drag, drop, cut, copy, and paste.</html>");
         
@@ -248,30 +254,69 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             d.addRow(v);
         }
         
-        JTable table = new JTable(d);
+        final JTable displayTable = new JTable(d);
         
-        table.setRequestFocusEnabled(true);
-        table.setFocusable(true);
-        table.setDragEnabled(true);
-        table.setDropMode(DropMode.INSERT_ROWS);
-        TableTransferImporter t = new TableTransferImporter(table);
-        table.setTransferHandler(t);
+        displayTable.addKeyListener(new KeyListener() {
+
+            public void keyPressed(KeyEvent key) {
+              
+                switch(key.getKeyCode()) {
+               
+                case KeyEvent.VK_DELETE:
+                case KeyEvent.VK_BACK_SPACE:
+                    doDeleteRows(displayTable);
+                }
+            }
+
+            public void keyReleased(KeyEvent key) {}
+
+            public void keyTyped(KeyEvent key) {}
+            
+        });
         
-        JScrollPane scroll = new JScrollPane(table);
+        displayTable.setRequestFocusEnabled(true);
+        displayTable.setFocusable(true);
+        displayTable.setDragEnabled(true);
+        displayTable.setDropMode(DropMode.INSERT_ROWS);
+        importer = new TableTransferImporter(displayTable);
+        displayTable.setTransferHandler(importer);
+        
+        JScrollPane scroll = new JScrollPane(displayTable);
         scroll.setPreferredSize(new Dimension(340, 450));
         
         mainPanel.add(scroll, BorderLayout.CENTER);
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.add(buildButtons());
+        JPanel buttonPanel = buildButtons();
         OKButton.setText("Swap");
+        JButton append = gui.buildButton("Append");
+        append.setToolTipText("Appends copied "+mode.getTitle().toLowerCase()+"s to end of image");
+        append.addActionListener(this);
+        buttonPanel.add(append);
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
         getContentPane().add(mainPanel);
         pack();
-        setSize(350, 474);
+        setSize(450, 500);
         setVisible(true); 
 
+    }
+    
+    private void doDeleteRows(JTable parent) {
+        int oldRowCount = parent.getRowCount();
+        DefaultTableModel table = ((DefaultTableModel)parent.getModel());
+        int[] rows = parent.getSelectedRows();
+        
+        if(rows.length > 0) {
+            for(int i=parent.getSelectedRow(); i<oldRowCount-rows.length; i++) {
+                parent.setValueAt(parent.getValueAt(i+rows.length, 1), i, 1);
+            }
+            
+            for(int i=0; i<rows.length; i++) {
+                table.removeRow(parent.getRowCount()-1);
+            }
+        }
+        
+        parent.clearSelection();
     }
     
     /**
@@ -435,21 +480,9 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
                     }
                     
                     buffer.replace(buffer.length()-1, buffer.length(), "");
-                    
-                    DefaultTableModel table = ((DefaultTableModel)parent.getModel());
-                    
+
                     if(action == TransferHandler.MOVE) {
-                        int oldRowCount = parent.getRowCount();
-                        
-                        for(int i=parent.getSelectedRow(); i<oldRowCount-rows.length; i++) {
-                            parent.setValueAt(parent.getValueAt(i+rows.length, 1), i, 1);
-                        }
-                        
-                        for(int i=0; i<rows.length; i++) {
-                            table.removeRow(parent.getRowCount()-1);
-                        }
-                        
-                        parent.clearSelection();
+                        doDeleteRows(parent);
                     }
 
                     bufferData = buffer.toString();
