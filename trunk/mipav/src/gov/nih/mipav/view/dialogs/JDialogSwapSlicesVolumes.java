@@ -272,7 +272,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         // make sure that this is a 3D image first
         // make sure this image, im, is not 2D, for removing an image's only slice makes no sense...
         if ((srcImage.getNDims() == 2) || (srcImage.getExtents()[2] == 1)) {
-            MipavUtil.displayError("Extract Individual Slices does not make sense for single-slice (2-D)\n" +
+            MipavUtil.displayError("Swap "+mode.getTitle()+" not available for single-slice (2-D)\n" +
                                    "images.  No operation may be performed.");
 
             return; // the wrong kind of image gets sent back before wasting anymore time.
@@ -350,8 +350,14 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         replaceImage = new JRadioButton("Replace image", true);
         replaceImage.setFont(serif12);
+        if(srcImage.getNDims() > 3 && mode.equals(SwapMode.ThreeD)) {
+            replaceImage.setEnabled(false);
+            newImage.setSelected(true);
+        } else {
+            destinationPanel.add(replaceImage); // add the button to the component
+        }
         destinationGroup.add(replaceImage); // add the button to the grouping
-        destinationPanel.add(replaceImage); // add the button to the component
+        
 
         gbc.gridy++;
         gbc.weighty = .1;

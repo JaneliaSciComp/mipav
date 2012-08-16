@@ -77,9 +77,6 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         
         sliceSize *= getColorFactor();
         
-        srcFileInfos = Arrays.copyOf(srcImage.getFileInfo(), srcImage.getFileInfo().length);
-        srcExtents = Arrays.copyOf(srcImage.getExtents(), srcImage.getExtents().length);
-        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -157,7 +154,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         case FourD:
             fileOut = new FileInfoBase[srcExtents[2]];
             for(int i=0; i<srcExtents[2]; i++) {
-                if(srcImage == destImage && sliceRenum[in].length == 1) {
+                if(srcImage == destImage && in < sliceRenum.length && sliceRenum[in].length == 1) {
                     fileOut[i] = srcFileInfos[in*srcExtents[2]+i]; //only transferring file info is necessary
                 } else {
                     fileOut[i] = (FileInfoBase) srcFileInfos[in*srcExtents[2]+i].clone(); //duplicates of this file info are necessary
@@ -167,7 +164,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         default:
             int index = tDim*srcExtents[2] + in; //allows 4D images to transfer single slice at given time dimension
             fileOut = new FileInfoBase[1];
-            if(srcImage == destImage && sliceRenum[index].length == 1) {
+            if(srcImage == destImage && index < sliceRenum.length && sliceRenum[index].length == 1) {
                 fileOut[0] = srcFileInfos[index]; //only transferring file info is necessary
             } else {
                 fileOut[0] = (FileInfoBase) srcFileInfos[index].clone(); //duplicates of this file info are necessary
@@ -204,7 +201,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
             Number[] bufferOut = new Number[image.getDataSize()];
             try {
                 image.exportData(0, image.getDataSize(), bufferOut);
-                int[] extents = Arrays.copyOf(srcExtents, srcExtents.length);
+                int[] extents = Arrays.copyOf(image.getExtents(), image.getExtents().length);
                 extents[mode.getDim()] = nSlices;
                 image.reallocate(extents);
                 
@@ -237,9 +234,13 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      */
     private void swapSlices() {
 
+        srcFileInfos = Arrays.copyOf(srcImage.getFileInfo(), srcImage.getFileInfo().length);
+        srcExtents = Arrays.copyOf(srcImage.getExtents(), srcImage.getExtents().length);
+        
         if(destImage.getExtents()[mode.getDim()] < nSlices) {
             reallocate(destImage);
         }
+               
         
         sliceTouched = new boolean[sliceRenum.length];
         for(int i=0; i<sliceTouched.length; i++) {
@@ -296,7 +297,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     private boolean transferIn(FileInfoBase[] fileIn, Number[] bufferIn, int in, int tDim) {
         try {
             if((sliceTouched.length > in && sliceRenum[in].length == 0 && bufferIn == null) || //slice has nowhere to go 
-            (srcImage == destImage && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
+            (srcImage == destImage && sliceTouched.length > in && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
                 sliceTouched[in] = true;
                 return true;
             }
