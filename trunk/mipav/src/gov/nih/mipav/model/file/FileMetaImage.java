@@ -12,6 +12,7 @@ import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.Inflater;
 import java.util.zip.ZipInputStream;
 import java.text.*;
 
@@ -48,6 +49,8 @@ public class FileMetaImage extends FileBase {
     
     private String category;
     
+    private String baseName;
+    
     private String[] values = new String[10];
     
     private int nDims = -1;
@@ -59,6 +62,9 @@ public class FileMetaImage extends FileBase {
     private boolean compressedData = false;
     private int extents[] = null;
     private TransMatrix matrix = null;
+    private int compressedDataSize = -1;
+    private boolean sepFound = true;
+    private Inflater zlibDecompresser = null;
     
     
     /**
@@ -79,13 +85,13 @@ public class FileMetaImage extends FileBase {
                 break;
             }
         }
-        if (fName.substring(index).equalsIgnoreCase(".MHD")) {
-            defaultFileDataName = fName.substring(0, index) + ".raw";
-            defaultFileData = new File(fDir + defaultFileDataName);
-            if (defaultFileData.exists()) {
-                defaultFileDataExists = true;
-                Preferences.debug("Default data file = " + defaultFileDataName + " exists\n", Preferences.DEBUG_FILEIO);
-            }
+        
+        baseName = fName.substring(0, index);
+        defaultFileDataName = fName.substring(0, index) + ".raw";
+        defaultFileData = new File(fDir + defaultFileDataName);
+        if (defaultFileData.exists()) {
+            defaultFileDataExists = true;
+            Preferences.debug("Default data file = " + defaultFileDataName + " exists\n", Preferences.DEBUG_FILEIO);
         }
             
         fileName = fName;
@@ -117,6 +123,12 @@ public class FileMetaImage extends FileBase {
         String fileDataName = null;
         int bytesPerPixel = 1;
         String rawDataName;
+        byte buffer[];
+        //int bufSize;
+        //boolean memoryError;
+        byte buf[] = null;
+        byte decomp[];
+        int resultLength;
        
         try {
 
@@ -128,6 +140,9 @@ public class FileMetaImage extends FileBase {
             currentLocation = raFile.getFilePointer();
             while (currentLocation < headerSize-1) {
                 readLine();
+                if (!sepFound) {
+                    break;
+                }
                 currentLocation = raFile.getFilePointer();
                 if (category.equalsIgnoreCase("ObjectType")) {
                     if (numValues == 1) {
@@ -254,6 +269,25 @@ public class FileMetaImage extends FileBase {
                         }
                     }    
                 } // else if (category.equals("CompressedData"))
+                else if (category.equals("CompressedDataSize")) {
+                    if (numValues == 1) {
+                        Preferences.debug("CompressedDataSize has the expected 1 value\n", Preferences.DEBUG_FILEIO);
+                        compressedDataSize = Integer.parseInt(values[0].trim());
+                        Preferences.debug("Compressed data size = " + compressedDataSize + "\n", Preferences.DEBUG_FILEIO);
+                        if (compressedDataSize <= 0) {
+                            raFile.close();
+                            MipavUtil.displayError("compressedDataSize has an illegal value of " + compressedDataSize);
+                            throw new IOException();
+                        }
+                    }
+                    else {
+                        Preferences.debug("CompressedDataSize unexpectedly has " + numValues + "values\n", Preferences.DEBUG_FILEIO);
+                        Preferences.debug("Those values are:\n", Preferences.DEBUG_FILEIO);
+                        for (i = 0; i < numValues; i++) {
+                            Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    }    
+                } // else if (category.equals("CompressedDataSize"))
                 else if ((category.equalsIgnoreCase("TransformMatrix")) || (category.equalsIgnoreCase("Orientation"))||
                          (category.equalsIgnoreCase("Rotation"))) {
                     if ((nDims == 3) && (numValues != 9)) {
@@ -261,7 +295,11 @@ public class FileMetaImage extends FileBase {
                         throw new IOException();
                     }
                     if ((nDims == 2) && (numValues != 4)) {
-                        MipavUtil.displayError("nDims = 2 but numValues = " + numValues + " instead of 4 for TransformMatrix");
+                        Preferences.debug("Those values are:\n", Preferences.DEBUG_FILEIO);
+                        for (i = 0; i < numValues; i++) {
+                            Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        //MipavUtil.displayError("nDims = 2 but numValues = " + numValues + " instead of 4 for TransformMatrix");
                         throw new IOException();    
                     }
                     matValues = new double[numValues];
@@ -299,15 +337,11 @@ public class FileMetaImage extends FileBase {
                 } // else if ((category.equalsIgnoreCase("TransformMatrix")) || (category.equalsIgnoreCase("Orientation"))||
                 else if ((category.equalsIgnoreCase("Offset")) || (category.equalsIgnoreCase("Origin")) ||
                         (category.equalsIgnoreCase("Position"))) {
-                    if ((nDims >= 2)  && (numValues != nDims)) {
-                        MipavUtil.displayError(nDims + " != " + numValues + " for Offset");
-                        throw new IOException();
-                    }
-                    else {
-                        nDims = numValues;
+                    if ((nDims >= 2)  && (numValues < nDims)) {
+                        Preferences.debug("nDims = " + nDims + " but numValues = " + numValues + " for Offset\n", Preferences.DEBUG_FILEIO);
                     }
                     origin = new float[nDims];
-                    for (i = 0; i < nDims; i++) {
+                    for (i = 0; i < Math.min(nDims, numValues); i++) {
                         try {
                             origin[i] = Float.parseFloat(values[i].trim());
                             Preferences.debug("Origin[" + i + "] = " + origin[i] + "\n", Preferences.DEBUG_FILEIO);
@@ -396,6 +430,10 @@ public class FileMetaImage extends FileBase {
                                 }
                             }
                         }
+                        else if (values[0].trim().equals("??")) {
+                            fileInfo.setImageOrientation(FileInfoBase.UNKNOWN_ORIENT);
+                            Preferences.debug("Image orientation == UNKNOWN_ORIENT\n", Preferences.DEBUG_FILEIO);
+                        }
                         else {
                             Preferences.debug("values[0].trim().length() unexpectedly == " + values[0].trim().length() + "\n",
                                     Preferences.DEBUG_FILEIO);
@@ -411,15 +449,14 @@ public class FileMetaImage extends FileBase {
                     }    
                 } // else if (category.equalsIgnoreCase("AnatomicalOrientation"))
                 else if (category.equalsIgnoreCase("ElementSpacing")) {
-                    if ((nDims >= 2)  && (numValues != nDims)) {
-                        MipavUtil.displayError(nDims + " != " + numValues + " for ElementSpacing");
-                        throw new IOException();
-                    }
-                    else {
-                        nDims = numValues;
+                    if ((nDims >= 2)  && (numValues < nDims)) {
+                        Preferences.debug("nDims = " + nDims + " numValues = " + numValues + " for ElementSpacing\n", Preferences.DEBUG_FILEIO);
                     }
                     resolutions = new float[nDims];
                     for (i = 0; i < nDims; i++) {
+                        resolutions[i] = 1.0f;
+                    }
+                    for (i = 0; i < Math.min(nDims, numValues); i++) {
                         try {
                             resolutions[i] = Float.parseFloat(values[i].trim());
                             Preferences.debug("Resolutions[" + i + "] = " + resolutions[i] + "\n", Preferences.DEBUG_FILEIO);
@@ -500,6 +537,8 @@ public class FileMetaImage extends FileBase {
                     }    
                 } // else if (category.equalsIgnoreCase("ElementType"))
                 else if (category.equalsIgnoreCase("ElementDataFile")) {
+                    // Should be the last tag read
+                    // If ElementDataFile = LOCAL, data should start in the next line.
                     if (numValues == 1) {
                         Preferences.debug("ElementDataFile has the expected 1 value\n", Preferences.DEBUG_FILEIO);
                         fileDataName = values[0].trim();
@@ -511,9 +550,11 @@ public class FileMetaImage extends FileBase {
                         for (i = 0; i < numValues; i++) {
                             Preferences.debug("Value[" + i + "] = " + values[i] + "\n", Preferences.DEBUG_FILEIO);
                         }
-                    }        
+                    } 
+                    currentLocation = raFile.getFilePointer();
+                    break;
                 } // else if (category.equalsIgnoreCase("ElementDataFile"))
-            } // while (readAgain)
+            } // while (currentLocation < headerSize-1)
         
             if ((matrix != null) && (origin !=  null)) {
                 if (nDims == 2) {
@@ -590,6 +631,13 @@ public class FileMetaImage extends FileBase {
                         throw new IOException();
                     }
                 } // if (numChannels == 1)
+                else if (numChannels == 2) {
+                    if (dataString.equalsIgnoreCase("MET_FLOAT")) {
+                        dataType = ModelStorageBase.COMPLEX;
+                        Preferences.debug("Data type = ModelStorageBase.COMPLEX\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 8;
+                    }    
+                }
                 else if (numChannels == 3) {
                     if (dataString.equals("MET_UCHAR_ARRAY")) {
                         dataType = ModelStorageBase.ARGB;
@@ -607,6 +655,13 @@ public class FileMetaImage extends FileBase {
                         throw new IOException();
                     }
                 }
+                else if (numChannels == 4) {
+                    if (dataString.equals("MET_FLOAT")) {
+                        dataType = ModelStorageBase.ARGB_FLOAT;
+                        Preferences.debug("Data type = ModelStorageBase.ARGB_FLOAT\n", Preferences.DEBUG_FILEIO);
+                        bytesPerPixel = 16;
+                    }
+                }
                 else {
                     raFile.close();
                     MipavUtil.displayError("Cannot handle " + dataString + " data type for numChannels = " + numChannels);
@@ -615,13 +670,15 @@ public class FileMetaImage extends FileBase {
                 fileInfo.setDataType(dataType);    
             } // if (dataString != null)
             
+            dataLength = bytesPerPixel;
+            for (i = 0; i < nDims; i++) {
+                dataLength *= extents[i];
+            }
+            Preferences.debug("dataLength of uncompressed data = " + dataLength + "\n", Preferences.DEBUG_FILEIO);
+            
             if ((fileDataName != null) && (fileDataName.length() > 0)) {
                 if (fileDataName.equalsIgnoreCase("LOCAL")) {
-                    dataLength = bytesPerPixel;
-                    for (i = 0; i < nDims; i++) {
-                        dataLength *= extents[i];
-                    }
-                    raFile.seek(headerSize - dataLength);
+                    raFile.seek(currentLocation);
                     rawDataName = new String(fileName);
                 }
                 else {
@@ -629,6 +686,7 @@ public class FileMetaImage extends FileBase {
                     file = new File(fileDir + fileDataName);
                     raFile = new RandomAccessFile(file, "r");
                     rawDataName = new String(fileDataName);
+                    currentLocation = 0L;
                 }
             }
             else if (defaultFileDataExists) {
@@ -636,13 +694,10 @@ public class FileMetaImage extends FileBase {
                 file = new File(fileDir + defaultFileDataName);
                 raFile = new RandomAccessFile(file, "r");
                 rawDataName = new String(defaultFileDataName);
+                currentLocation = 0L;
             }
             else {
-                dataLength = bytesPerPixel;
-                for (i = 0; i < nDims; i++) {
-                    dataLength *= extents[i];
-                }
-                raFile.seek(headerSize - dataLength); 
+                raFile.seek(currentLocation); 
                 rawDataName = new String(fileName);
             }
             
@@ -653,8 +708,15 @@ public class FileMetaImage extends FileBase {
                 image = new ModelImage(dataType, extents, fileName);
             }
             
+            if (matrix == null) {
+                matrix = new TransMatrix(Math.min(4, nDims+1));    
+            }
             image.setMatrix(matrix);
             image.setImageOrientation(fileInfo.getImageOrientation());
+            if (origin == null) {
+                origin = new float[nDims];
+                fileInfo.setOrigin(origin);
+            }
             
             if (nDims == 2) {
                 image.setFileInfo(fileInfo, 0); // Otherwise just set the first fileInfo
@@ -672,15 +734,99 @@ public class FileMetaImage extends FileBase {
                     image.setFileInfo(newFileInfo, i); // Set the array of fileInfos in ModelImage
                 }
             }
+        
             updateorigins(image.getFileInfo());
+            
+            if (compressedData) {
+                buffer = new byte[compressedDataSize];
+                raFile.read(buffer);
+                zlibDecompresser = new Inflater();
+                zlibDecompresser.setInput(buffer);
+                
+                // Create an expandable byte array to hand the decompressed data
+                ByteArrayOutputStream bos = new ByteArrayOutputStream(buffer.length);
+                
+                // Decompress the data
+                // Let buf be the smallest power of 2 which is at least 65536 and twice the uncompressed
+                // size so as to balance the need for speed against excessive memory use
+                // The maximum integer value is 2**31 -1, so limit size to 2**30.
+                // Cast elementBytes to long in while loop in case elementBytes >= 2**30.
+                /*bufSize = 65536;
+                while ((bufSize < 2*(long)compressedDataSize) && (bufSize < (int)Math.pow(2,30))){
+                    bufSize *= 2;
+                }
+                memoryError = true;
+                while (memoryError) {
+                    try {
+                         buf = new byte[bufSize];
+                         memoryError = false;
+                    }
+                    catch (OutOfMemoryError e) {
+                        bufSize = bufSize/2;
+                        memoryError = true;
+                    }
+                }
+                Preferences.debug("bufSize of byte buf[] used for decompression = " + bufSize + "\n", Preferences.DEBUG_FILEIO);*/
+                buf = new byte[dataLength];
+                try {
+                    while (true) {
+                        int count = 0;
+                        try {
+                            count = zlibDecompresser.inflate(buf);
+                            Preferences.debug("count from zlibDecompresser.inflate(buf) =  " + count + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        catch (Exception e) {
+                            MipavUtil.displayError("zlibDecompresser.inflate(buf) gives exception " + e);
+                            throw new IOException();
+                        }
+                        if (count > 0) {
+                            bos.write(buf, 0 , count);
+                        }
+                        else if (count == 0 && zlibDecompresser.finished()) {
+                            break;
+                        } else  {
+                            throw new RuntimeException("bad zip data, size:" + buffer.length);
+                        } 
+                    }
+                } catch (Throwable t) {
+                    throw new RuntimeException(t);
+                } finally {
+                    zlibDecompresser.end(); 
+                }
+                // Get the decompressed data
+                try {
+                    decomp = bos.toByteArray();
+                }
+                catch (Exception e) {
+                    MipavUtil.displayError("decomp = bos.toByteArray() gives exception " + e);
+                    throw new IOException();
+                }
+                resultLength = decomp.length;
+                Preferences.debug("resultLength from decom.length() = " + resultLength + "\n", Preferences.DEBUG_FILEIO);
+                rawDataName = baseName + "_uncompressed";
+                raFile.close();
+                file = new File(fileDir + rawDataName);
+                raFile = new RandomAccessFile(file, "rw");
+                raFile.setLength(0);
+                raFile.write(decomp, 0, resultLength);
+                raFile.seek(0L);
+            } // if (compressedData)
             
             FileRaw rawFile;
             rawFile = new FileRaw(rawDataName, fileDir, fileInfo, FileBase.READ);
+            if (numChannels == 4) {
+                rawFile.setNumColors(4);
+                rawFile.setRGBAOrder(false);
+            }
             linkProgress(rawFile);
+            
             rawFile.readImage(image, (int)raFile.getFilePointer());
+            
+            if (compressedData) {
+                file.delete();
+            }
                       
             return image;
-            
             
         }
         catch (final Exception e) {
@@ -747,6 +893,7 @@ public class FileMetaImage extends FileBase {
         } catch (IOException error) {
             throw (error);
         }
+        tempString = tempString.trim();
 
         index = tempString.indexOf(" = ");
 
@@ -756,11 +903,14 @@ public class FileMetaImage extends FileBase {
             
         } else {
             Preferences.debug("Separator between category and values not found\n", Preferences.DEBUG_FILEIO);
-            Preferences.debug("Header line = " + tempString, Preferences.DEBUG_FILEIO);
-            throw new IOException("Separator between category and values not found\n");
+            sepFound = false;
+            return;
         }
 
         tempString = tempString.substring(index + 3);
+        while (tempString.indexOf(fieldSeparator) == 0) {
+            tempString = tempString.substring(1);
+        }
 
         index = tempString.indexOf(fieldSeparator);
         
@@ -772,6 +922,9 @@ public class FileMetaImage extends FileBase {
         do {
             values[numValues++] = tempString.substring(0, index);
             tempString = tempString.substring(index + 1);
+            while (tempString.indexOf(fieldSeparator) == 0) {
+                tempString = tempString.substring(1);
+            }
             index = tempString.indexOf(fieldSeparator);
         } while (index != -1);
         
