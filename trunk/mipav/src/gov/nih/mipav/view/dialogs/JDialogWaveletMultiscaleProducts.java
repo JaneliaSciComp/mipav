@@ -244,80 +244,43 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
      * whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
+        int i;
 
-        if (image.getNDims() == 2) { // source image is 2D
+            int[] destExtents = new int[image.getExtents().length];
+            for (i = 0; i < image.getExtents().length; i++) {
+                destExtents[i] = image.getExtents()[i];    
+            }
 
-            int[] destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
+            try {
+                // Make algorithm
+                waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
+                                  numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
 
-                try {
-                    // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength,
-                                      numberOfLevels, doWaveletImages, minimumLevel, maximumLevel);
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                waveletAlgo.addListener(this);
 
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    waveletAlgo.addListener(this);
+                createProgressBar(image.getImageName(), waveletAlgo);
 
-                    createProgressBar(image.getImageName(), waveletAlgo);
+                // Hide dialog
+                setVisible(false);
 
-                    // Hide dialog
-                    setVisible(false);
+                if (isRunInSeparateThread()) {
 
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast.
-                        if (waveletAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        waveletAlgo.run();
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (waveletAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
                     }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
-                    return;
+                } else {
+                    waveletAlgo.run();
                 }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
+                return;
+            }
            
-        } else if (image.getNDims() == 3) {
-            int[] destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-
-                try {
-
-                    
-                    // Make algorithm
-                    waveletAlgo = new AlgorithmRiceWaveletTools(null, image, filterLength, numberOfLevels,
-                            doWaveletImages, minimumLevel, maximumLevel);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    waveletAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), waveletAlgo);
-
-                    // Hide dialog
-                    setVisible(false);
-
-                    if (isRunInSeparateThread()) {
-
-                        // Start the thread as a low priority because we wish to still have user interface work fast
-                        if (waveletAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                            MipavUtil.displayError("A thread is already running on this object");
-                        }
-                    } else {
-                        waveletAlgo.run();
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog WaveletThreshold: unable to allocate enough memory");
-                    return;
-                }
-           
-        }
+       
     }
 
     /**
