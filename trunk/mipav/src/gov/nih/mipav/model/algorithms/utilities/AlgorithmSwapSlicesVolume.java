@@ -40,10 +40,14 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     /** Slices that have been examined in recursive structure for swapping slices. */
     private boolean[] sliceTouched;
 
-    /** Internal sorting variable for sorting slices on images of greater than 3 dimensions */
-    private int extentSrc = 0;
+    /** Internal sorting variables for sorting slices on images of greater than 3 dimensions */
+    private int extentSrc = 0, extentDest = 0;
+    
+    /** Original FileInfoBase array. */
+    private FileInfoBase[] srcFileInfos = null;
 
-    private int extentDest = 0;
+    /** Original extents array */
+    private int[] srcExtents;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -72,6 +76,9 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         }        
         
         sliceSize *= getColorFactor();
+        
+        srcFileInfos = Arrays.copyOf(srcImage.getFileInfo(), srcImage.getFileInfo().length);
+        srcExtents = Arrays.copyOf(srcImage.getExtents(), srcImage.getExtents().length);
         
     }
 
@@ -105,89 +112,9 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         }
 
         swapSlices();
+        
+        destImage.calcMinMax();
     } // end run()
-
-    /**
-     * Copy important file information to resultant image structure.
-     *
-     * @param  image        Source image.
-     * @param  resultImage  Resultant image.
-     * @param  slice        DOCUMENT ME!
-     */
-    public void updateFileInfo(ModelImage image, ModelImage resultImage, int slice) {
-        FileInfoBase[] fileInfo;
-
-        if (resultImage.getNDims() == 2) {
-            if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
-                FileInfoDicom dicomInfo = (FileInfoDicom) image.getFileInfo(slice);
-                FileDicomTagTable tagTable = dicomInfo.getTagTable();
-                FileInfoDicom[] fileInfoDicom = new FileInfoDicom[1];
-                float[] resolutions = new float[2];
-                
-                resolutions[0] = image.getFileInfo(0).getResolutions()[0];
-                resolutions[1] = image.getFileInfo(0).getResolutions()[1];
-              
-                fileInfoDicom[0] = new FileInfoDicom(dicomInfo.getFileName(), dicomInfo.getFileDirectory(),
-                        dicomInfo.getFileFormat());
-                ((FileInfoDicom)fileInfoDicom[0]).setVr_type(dicomInfo.getVr_type());
-                ((FileInfoDicom) fileInfoDicom[0]).getTagTable().importTags((FileInfoDicom) image.getFileInfo(slice));
-                fileInfoDicom[0].setExtents(resultImage.getExtents());
-                fileInfoDicom[0].setResolutions(resolutions);
-                fileInfoDicom[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation()[0], 0);
-                fileInfoDicom[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation()[1], 1);
-                fileInfoDicom[0].setAxisOrientation(image.getFileInfo()[0].getAxisOrientation()[2], 2);
-                fileInfoDicom[0].setImageOrientation(image.getFileInfo()[0].getImageOrientation()); 
-                
-                resultImage.setFileInfo(fileInfoDicom);
-            }
-            
-            else{
-                fileInfo = resultImage.getFileInfo();
-    
-                fileInfo[0].setModality(image.getFileInfo()[slice].getModality());
-                fileInfo[0].setFileDirectory(image.getFileInfo()[slice].getFileDirectory());
-    
-                // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
-                fileInfo[0].setEndianess(image.getFileInfo()[slice].getEndianess());
-                fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[slice].getUnitsOfMeasure());
-                fileInfo[0].setResolutions(image.getFileInfo()[slice].getResolutions());
-                fileInfo[0].setExtents(resultImage.getExtents());
-                fileInfo[0].setMax(resultImage.getMax());
-                fileInfo[0].setMin(resultImage.getMin());
-                fileInfo[0].setImageOrientation(image.getImageOrientation());
-                fileInfo[0].setAxisOrientation(image.getFileInfo()[slice].getAxisOrientation());
-                fileInfo[0].setOrigin(image.getFileInfo()[slice].getOrigin());
-                fileInfo[0].setPixelPadValue(image.getFileInfo()[slice].getPixelPadValue());
-                fileInfo[0].setPhotometric(image.getFileInfo()[slice].getPhotometric());
-            }
-        }
-
-        if (resultImage.getNDims() == 3) {
-
-                fileInfo = resultImage.getFileInfo();
-    
-                for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                    int j = Math.min(i, image.getExtents()[2] - 1);
-                    fileInfo[i].setModality(image.getFileInfo()[j].getModality());
-                    fileInfo[i].setFileDirectory(image.getFileInfo()[j].getFileDirectory());
-    
-                    // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
-                    fileInfo[i].setEndianess(image.getFileInfo()[j].getEndianess());
-                    fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[j].getUnitsOfMeasure());
-                    fileInfo[i].setResolutions(image.getFileInfo()[j].getResolutions());
-                    fileInfo[i].setExtents(resultImage.getExtents());
-                    fileInfo[i].setMax(resultImage.getMax());
-                    fileInfo[i].setMin(resultImage.getMin());
-                    fileInfo[i].setImageOrientation(image.getImageOrientation());
-                    fileInfo[i].setAxisOrientation(image.getFileInfo()[j].getAxisOrientation());
-                    fileInfo[i].setOrigin(image.getFileInfo()[j].getOrigin());
-                    fileInfo[i].setPixelPadValue(image.getFileInfo()[j].getPixelPadValue());
-                    fileInfo[i].setPhotometric(image.getFileInfo()[j].getPhotometric());
-                
-            }
-        }
-
-    }
 
     /**
      * Calculates and returns the color factor based on the srcImage.
@@ -228,22 +155,22 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         FileInfoBase[] fileOut;
         switch(mode) {
         case FourD:
-            fileOut = new FileInfoBase[srcImage.getExtents()[2]];
-            for(int i=0; i<srcImage.getExtents()[2]; i++) {
+            fileOut = new FileInfoBase[srcExtents[2]];
+            for(int i=0; i<srcExtents[2]; i++) {
                 if(srcImage == destImage && sliceRenum[in].length == 1) {
-                    fileOut[i] = srcImage.getFileInfo(in*srcImage.getExtents()[2]+i); //only transferring file info is necessary
+                    fileOut[i] = srcFileInfos[in*srcExtents[2]+i]; //only transferring file info is necessary
                 } else {
-                    fileOut[i] = (FileInfoBase) srcImage.getFileInfo(in*srcImage.getExtents()[2]+i).clone(); //duplicates of this file info are necessary
+                    fileOut[i] = (FileInfoBase) srcFileInfos[in*srcExtents[2]+i].clone(); //duplicates of this file info are necessary
                 }
             }
             break;
         default:
-            int index = tDim*srcImage.getExtents()[2] + in; //allows 4D images to transfer single slice at given time dimension
+            int index = tDim*srcExtents[2] + in; //allows 4D images to transfer single slice at given time dimension
             fileOut = new FileInfoBase[1];
             if(srcImage == destImage && sliceRenum[index].length == 1) {
-                fileOut[0] = srcImage.getFileInfo(index); //only transferring file info is necessary
+                fileOut[0] = srcFileInfos[index]; //only transferring file info is necessary
             } else {
-                fileOut[0] = (FileInfoBase) srcImage.getFileInfo(index).clone(); //duplicates of this file info are necessary
+                fileOut[0] = (FileInfoBase) srcFileInfos[index].clone(); //duplicates of this file info are necessary
             }
         }
         
@@ -270,31 +197,38 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     /**
      * Reallocate destImage so that fileInfo and buffer equal required length 
      * 
-     * @param destImage destination image of algorithm
+     * @param image ModelImage
      */
-    private void reallocate(ModelImage destImage) {
-        if(destImage.getExtents()[mode.getDim()] != nSlices) {
-            Number[] bufferOut = new Number[destImage.getDataSize()];
+    private void reallocate(ModelImage image) {
+        if(image.getExtents()[mode.getDim()] != nSlices) {
+            Number[] bufferOut = new Number[image.getDataSize()];
             try {
-                destImage.exportData(0, destImage.getDataSize(), bufferOut);
-                int[] extents = Arrays.copyOf(srcImage.getExtents(), srcImage.getExtents().length);
+                image.exportData(0, image.getDataSize(), bufferOut);
+                int[] extents = Arrays.copyOf(srcExtents, srcExtents.length);
                 extents[mode.getDim()] = nSlices;
-                destImage.reallocate(extents);
+                image.reallocate(extents);
                 
-                destImage.importData(0, bufferOut, false);
+                Number[] newBuffer = null;
+                if(bufferOut.length > image.getDataSize()) {
+                    newBuffer = Arrays.copyOf(bufferOut, image.getDataSize());
+                } else {
+                    newBuffer = bufferOut;
+                }
+                
+                image.importData(0, newBuffer, false);
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            FileInfoBase[] fileInfo = destImage.getFileInfo();
+            FileInfoBase[] fileInfo = image.getFileInfo();
             int nInfos = 1;
-            for(int i=2; i<destImage.getExtents().length; i++) {
-                nInfos *= destImage.getExtents()[i];
+            for(int i=2; i<image.getExtents().length; i++) {
+                nInfos *= image.getExtents()[i];
             }
             FileInfoBase[] newFileInfo = new FileInfoBase[nInfos];
             for(int i=0; i<fileInfo.length && i<newFileInfo.length; i++) {
                 newFileInfo[i] = fileInfo[i];
             }
-            destImage.setFileInfo(newFileInfo);
+            image.setFileInfo(newFileInfo);
         }
     }
 
@@ -367,8 +301,8 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
                 if(sliceRenum[in].length > 0) {
                     int index = 1;
                     if(mode == SwapMode.ThreeD && srcImage.getNDims() > 3) {
-                        index = srcImage.getExtents()[3];
-                        extentSrc  = srcImage.getExtents()[2]*srcImage.getExtents()[1]*srcImage.getExtents()[0]*getColorFactor();
+                        index = srcExtents[3];
+                        extentSrc  = srcExtents[2]*srcExtents[1]*srcExtents[0]*getColorFactor();
                         extentDest   = destImage.getExtents()[2]*destImage.getExtents()[1]*destImage.getExtents()[0]*getColorFactor();
                     }
                     
