@@ -237,7 +237,9 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
      */
     private void swapSlices() {
 
-        reallocate(destImage);
+        if(destImage.getExtents()[mode.getDim()] < nSlices) {
+            reallocate(destImage);
+        }
         
         sliceTouched = new boolean[sliceRenum.length];
         for(int i=0; i<sliceTouched.length; i++) {
@@ -264,6 +266,10 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         if (threadStopped) {
             finalize();
             return;
+        }
+        
+        if(destImage.getExtents()[mode.getDim()] > nSlices) {
+            reallocate(destImage);
         }
 
         setCompleted(true);
