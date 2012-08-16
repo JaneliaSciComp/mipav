@@ -143,7 +143,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
                 undoModel = tempUndoModel;
             }
             helpButton.setText("Redo");
-            helpButton.setMnemonic(KeyEvent.VK_R);
+            helpButton.setMnemonic(KeyEvent.VK_D);
         } else if(command.equals("Redo")) {
             if(undoModel != null) {
                 DefaultTableModel tempUndoModel = buildUndoTableModel(false);
@@ -261,7 +261,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     private void init() {
         
-        setFocusable(true);
         
         // make sure that this is a 3D image first
         // make sure this image, im, is not 2D, for removing an image's only slice makes no sense...
@@ -373,6 +372,14 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         buttonPanel.add(appendButton);
         
         ActionKeyListener key = new ActionKeyListener();
+        setFocusable(true);
+        mainPanel.setFocusable(true);
+        addKeyListener(key);
+        mainPanel.addKeyListener(key);
+        OKButton.addKeyListener(key);
+        cancelButton.addKeyListener(key);
+        helpButton.addKeyListener(key);
+        appendButton.addKeyListener(key);
         displayTable.addKeyListener(key);
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -397,19 +404,16 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             } else if(e.getKeyCode() == appendButton.getMnemonic()) {
                 appendButton.doClick();
             }
-            
-            System.out.println("Here1");
         }
 
         @Override
         public void keyReleased(KeyEvent e) {
-            System.out.println("Here");
             
         }
 
         @Override
         public void keyTyped(KeyEvent e) {
-            System.out.println("Here2");
+        
         }
         
     }
