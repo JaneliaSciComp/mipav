@@ -30,7 +30,7 @@ import javax.swing.table.DefaultTableModel;
  * @author   Justin Senseney
  * @version  v1 2012
  */
-public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -714,5 +714,35 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         inPlace = replaceImage.isSelected();
         
         return true;
+    }
+
+    @Override
+    public ActionMetadata getActionMetadata() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ParameterTable createInputParameters() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ParameterTable createOutputParameters() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String getOutputImageName(String imageParamName) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean isActionComplete() {
+        // TODO Auto-generated method stub
+        return false;
     }
 }
