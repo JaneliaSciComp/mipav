@@ -8,6 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.dialogs.ActionMetadata.ImageRequirements;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -250,6 +251,29 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         if (srcImage.getNDims() < 3) {
             throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "3D or 4D image required.");
         }
+        mode = SwapMode.valueOf(scriptParameters.getParams().getString("swapMode"));
+        inPlace = scriptParameters.getParams().getBoolean("inPlace");
+        if(mode.equals(SwapMode.ThreeD) && srcImage.getNDims() > 3) {
+            inPlace = false;
+        }
+        try {
+            String sliceRenumString = scriptParameters.getParams().getString("sliceRenumString");
+            String[] srcSlices = sliceRenumString.split(";");
+            sliceRenum = new int[srcSlices.length][];
+            for(int i=0; i<sliceRenum.length; i++) {
+                String[] setupLoc = srcSlices[i].split(":");
+                String[] sliceLoc = setupLoc[1].split(",");
+                sliceRenum[i] = new int[sliceLoc.length];
+                for(int j=0; j<sliceRenum[i].length; j++) {
+                    sliceRenum[i][j] = Integer.valueOf(sliceLoc[j]);
+                }
+            }
+        } catch(Exception e) {
+            throw new ParameterException(scriptParameters.getParams().getString("sliceRenumString"), "Malformed string");
+        }
+        
+        
+        
     }
 
     /**
@@ -259,8 +283,23 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         scriptParameters.storeInputImage(srcImage);
         scriptParameters.storeImageInRecorder(swapVolume);
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("slices",
-                                                                       nSlices));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("inPlace", inPlace));
+        StringBuffer buffer = new StringBuffer();
+        for(int i=0; i<sliceRenum.length; i++) {
+            buffer.append(i).append(": ");
+            for(int j=0; j<sliceRenum[i].length; j++) {
+                buffer.append(sliceRenum[i][j]);
+                if(j<sliceRenum[i].length-1) {
+                    buffer.append(", ");
+                }
+            }
+            buffer.append(";\t");
+        }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("sliceRenumString", buffer.toString()));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("swapMode", mode.name()));
+        
+        
     }
 
     /**
@@ -716,33 +755,102 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         return true;
     }
 
-    @Override
+    /**
+     * Return meta-information about this discoverable action for categorization and labeling purposes.
+     * 
+     * @return Metadata for this action.
+     */
     public ActionMetadata getActionMetadata() {
-        // TODO Auto-generated method stub
-        return null;
+        return new MipavActionMetadata() {
+            public String getCategory() {
+                return new String("Algorithms.Utilities");
+            }
+
+            public String getDescription() {
+                return new String("Swap slices/volumes in image.");
+            }
+
+            public String getDescriptionLong() {
+                return new String("Allows slices or volumes to be swapped " +
+                        "across an entire volume/time-series set.");
+            }
+
+            public String getShortLabel() {
+                return new String("Swap Slice/Volume");
+            }
+
+            public String getLabel() {
+                return new String("Swa[ Slice/Volume");
+            }
+
+            public String getName() {
+                return new String("Swap Slice/Volume");
+            }
+    
+        };
     }
 
-    @Override
-    public ParameterTable createInputParameters() {
-        // TODO Auto-generated method stub
-        return null;
+    /**
+     * Returns a table listing the input parameters of this algorithm (which should match up with the scripting
+     * parameters used in {@link #setGUIFromParams()}).
+     * 
+     * @return A parameter table listing the inputs of this algorithm.
+     */
+   public ParameterTable createInputParameters() {
+       
+       final ParameterTable table = new ParameterTable();
+        
+        try {
+            
+            table.put(new ParameterExternalImage(AlgorithmParameters.getInputImageLabel(1)));
+            table.put(new ParameterString("swapMode", SwapMode.ThreeD.name()));
+            table.put(new ParameterString("sliceRenumString", "0: 0, 1, 2; 1: 3, 4, 5"));
+            table.put(new ParameterBoolean("inPlace", false));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
     }
 
-    @Override
+    /**
+     * Returns a table listing the output parameters of this algorithm (usually just labels used to obtain output image
+     * names later).
+     * 
+     * @return A parameter table listing the outputs of this algorithm.
+     */
     public ParameterTable createOutputParameters() {
-        // TODO Auto-generated method stub
-        return null;
+        final ParameterTable table = new ParameterTable();
+
+        try {
+            table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
+        } catch (final ParserException e) {
+            // this shouldn't really happen since there isn't any real parsing going on...
+            e.printStackTrace();
+        }
+
+        return table;
     }
 
-    @Override
-    public String getOutputImageName(String imageParamName) {
-        // TODO Auto-generated method stub
-        return null;
+    /**
+     * Returns the name of an image output by this algorithm, the image returned depends on the parameter label given
+     * (which can be used to retrieve the image object from the image registry).
+     * 
+     * @param imageParamName The output image parameter label for which to get the image name.
+     * @return The image name of the requested output image parameter label.
+     */
+    public String getOutputImageName(final String imageParamName) {
+
+        return "SwapVolume";
     }
 
-    @Override
+    /**
+     * Returns whether the action has successfully completed its execution.
+     * 
+     * @return True, if the action is complete. False, if the action failed or is still running.
+     */
     public boolean isActionComplete() {
-        // TODO Auto-generated method stub
-        return false;
+        return isComplete();
     }
 }
