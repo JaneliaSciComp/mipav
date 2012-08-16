@@ -34,14 +34,16 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
     /** Reordering of slices/volumes. */
     private int[][] sliceRenum;
 
-    /** Number of pixels used by a slice/volume. */
+    /** Number of pixels used by a slice/volume, includes colorFactor. */
     private int sliceSize;
 
     /** Slices that have been examined in recursive structure for swapping slices. */
     private boolean[] sliceTouched;
 
     /** Internal sorting variable for sorting slices on images of greater than 3 dimensions */
-    private int extent = 0;
+    private int extentSrc = 0;
+
+    private int extentDest = 0;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -366,14 +368,15 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
                     int index = 1;
                     if(mode == SwapMode.ThreeD && srcImage.getNDims() > 3) {
                         index = srcImage.getExtents()[3];
-                        extent  = srcImage.getExtents()[2]*srcImage.getExtents()[1]*srcImage.getExtents()[0];
+                        extentSrc  = srcImage.getExtents()[2]*srcImage.getExtents()[1]*srcImage.getExtents()[0]*getColorFactor();
+                        extentDest   = destImage.getExtents()[2]*destImage.getExtents()[1]*destImage.getExtents()[0]*getColorFactor();
                     }
                     
                     for(int tDimLocal=0; tDimLocal<index; tDimLocal++) {
                         
                         Number[] bufferOut = new Number[sliceSize];
                         FileInfoBase[] fileOut = collectFileInfos(in, tDimLocal);
-                        srcImage.exportData(tDimLocal*extent + in*sliceSize, sliceSize, bufferOut);
+                        srcImage.exportData(tDimLocal*extentSrc + in*sliceSize, sliceSize, bufferOut);
                           
                         for(int i=0; i<sliceRenum[in].length; i++) {
                             transferIn(fileOut, bufferOut, sliceRenum[in][i], tDimLocal);
@@ -384,7 +387,7 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
             
             if(bufferIn != null) {
                 importFileInfos(destImage, fileIn, in, tDim);
-                destImage.importData(tDim*extent + in*sliceSize, bufferIn, false);
+                destImage.importData(tDim*extentDest + in*sliceSize, bufferIn, false);
             }
     
             return true;
