@@ -79,12 +79,18 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
     /** The visible JTable for slice/volume reordering */
     private JTable displayTable;
+    
+    /** Model to restore last model of JTable */
+    private DefaultTableModel undoModel = null;
 
     /** Radio buttons for alg output options. */
     private JRadioButton newImage, replaceImage;
     
     /** Whether to perform alg in place */
     private boolean inPlace;
+
+    /** Button for appending selected rows to end of JTable */
+    private JButton appendButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -121,12 +127,31 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             if (setVariables()) {
                 callAlgorithm();
             }
-        } else if (command.equals("Cancel")) {
-            dispose();
+        } else if (command.equals("Reset")) {
+            undoModel = buildUndoTableModel(false);
+            displayTable.setModel(buildTableModel());
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4051");
+            MipavUtil.showHelp(null);
         } else if (command.equals("Append")) {
-            
+            displayTable.clearSelection();
+            Action paste = TableTransferImporter.getPasteAction();
+            paste.actionPerformed(new ActionEvent(displayTable, ActionEvent.ACTION_PERFORMED, "Paste"));
+        } else if (command.equals("Undo")) {
+            if(undoModel != null) {
+                DefaultTableModel tempUndoModel = buildUndoTableModel(true);
+                displayTable.setModel(undoModel);
+                undoModel = tempUndoModel;
+            }
+            helpButton.setText("Redo");
+            helpButton.setMnemonic(KeyEvent.VK_R);
+        } else if(command.equals("Redo")) {
+            if(undoModel != null) {
+                DefaultTableModel tempUndoModel = buildUndoTableModel(false);
+                displayTable.setModel(undoModel);
+                undoModel = tempUndoModel;
+            }
+            helpButton.setText("Undo");
+            helpButton.setMnemonic(KeyEvent.VK_U);
         }
     }
 
@@ -142,10 +167,12 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (algorithm instanceof AlgorithmExtractSlicesVolumes) {
-            swapVolume = swapAlgo.getSwappedVolume();
-
-            new ViewJFrameImage(swapVolume);
+        if (algorithm instanceof AlgorithmSwapSlicesVolume) {
+            if(!inPlace) {
+                swapVolume = swapAlgo.getSwappedVolume();
+    
+                new ViewJFrameImage(swapVolume);
+            }
 
             if (algorithm.isCompleted()) {
                 insertScriptLine();
@@ -233,7 +260,9 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-
+        
+        setFocusable(true);
+        
         // make sure that this is a 3D image first
         // make sure this image, im, is not 2D, for removing an image's only slice makes no sense...
         if ((srcImage.getNDims() == 2) || (srcImage.getExtents()[2] == 1)) {
@@ -258,23 +287,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         mainPanel.add(dir, BorderLayout.NORTH);
         
-        String[] columnName = new String[]{"Index", mode.getTitle()};
-        
-        DefaultTableModel d = new DefaultTableModel() {
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        d.setColumnCount(2);
-        d.setColumnIdentifiers(columnName);
-        
-        for(int i=0; i<nSlices; i++) {
-            Vector<String> v = new Vector<String>();
-            v.add(String.valueOf("Position "+i));
-            v.add(mode.getTitle()+" "+i);
-            
-            d.addRow(v);
-        }
+        DefaultTableModel d = buildTableModel();
         
         displayTable = new JTable(d);
         
@@ -348,10 +361,19 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         mainPanel.add(algOptionPanel, BorderLayout.CENTER);
         JPanel buttonPanel = buildButtons();
         OKButton.setText("Swap");
-        JButton append = gui.buildButton("Append");
-        append.setToolTipText("Appends copied "+mode.getTitle().toLowerCase()+"s to end of image");
-        append.addActionListener(this);
-        buttonPanel.add(append);
+        OKButton.setMnemonic(KeyEvent.VK_S);
+        cancelButton.setText("Reset");
+        cancelButton.setMnemonic(KeyEvent.VK_R);
+        helpButton.setText("Undo");
+        helpButton.setMnemonic(KeyEvent.VK_U);
+        appendButton = gui.buildButton("Append");
+        appendButton.setMnemonic(KeyEvent.VK_A);
+        appendButton.setToolTipText("Appends copied "+mode.getTitle().toLowerCase()+"s to end of image");
+        appendButton.addActionListener(this);
+        buttonPanel.add(appendButton);
+        
+        ActionKeyListener key = new ActionKeyListener();
+        displayTable.addKeyListener(key);
 
         mainPanel.add(buttonPanel, BorderLayout.SOUTH);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -362,22 +384,113 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
     }
     
-    private void doDeleteRows(JTable parent) {
-        int oldRowCount = parent.getRowCount();
-        DefaultTableModel table = ((DefaultTableModel)parent.getModel());
-        int[] rows = parent.getSelectedRows();
+    private class ActionKeyListener implements KeyListener {
+
+        @Override
+        public void keyPressed(KeyEvent e) {
+            if(e.getKeyCode() == OKButton.getMnemonic()) {
+                OKButton.doClick();
+            } else if(e.getKeyCode() == cancelButton.getMnemonic()) {
+                cancelButton.doClick();
+            } else if(e.getKeyCode() == helpButton.getMnemonic()) {
+                helpButton.doClick();
+            } else if(e.getKeyCode() == appendButton.getMnemonic()) {
+                appendButton.doClick();
+            }
+            
+            System.out.println("Here1");
+        }
+
+        @Override
+        public void keyReleased(KeyEvent e) {
+            System.out.println("Here");
+            
+        }
+
+        @Override
+        public void keyTyped(KeyEvent e) {
+            System.out.println("Here2");
+        }
+        
+    }
+    
+    private DefaultTableModel buildBasicTableModel() {
+        String[] columnName = new String[]{"Index", mode.getTitle()};
+        
+        DefaultTableModel d = new DefaultTableModel() {
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        d.setColumnCount(2);
+        d.setColumnIdentifiers(columnName);
+        
+        return d;
+    }
+    
+    private DefaultTableModel buildTableModel() {
+        DefaultTableModel d = buildBasicTableModel();
+        
+        for(int i=0; i<nSlices; i++) {
+            Vector<String> v = new Vector<String>();
+            v.add(String.valueOf("Position "+i));
+            v.add(mode.getTitle()+" "+i);
+            
+            d.addRow(v);
+        }
+        
+        return d;
+    }
+
+    /**
+     * Removes the currently selected rows from table.
+     * 
+     * @param table the currently used JTable
+     */
+    private void doDeleteRows(JTable table) {
+        undoModel = buildUndoTableModel(false);
+        
+        DefaultTableModel model = ((DefaultTableModel)table.getModel());
+        int[] rows = table.getSelectedRows();
         
         if(rows.length > 0) {
-            for(int i=parent.getSelectedRow(); i<oldRowCount-rows.length; i++) {
-                parent.setValueAt(parent.getValueAt(i+rows.length, 1), i, 1);
+            
+            for(int i=0; i<rows.length; i++) {
+                if(rows[i] < table.getRowCount()-1) {
+                    table.setValueAt(table.getValueAt(rows[i]-i+1, 1), rows[i]-i, 1);
+
+                    for(int j=rows[i]-i+1; j<table.getRowCount()-1; j++) {
+                        table.setValueAt(table.getValueAt(j+1, 1), j, 1);
+                    }
+                }
             }
             
             for(int i=0; i<rows.length; i++) {
-                table.removeRow(parent.getRowCount()-1);
+                model.removeRow(table.getRowCount()-1);
             }
         }
         
-        parent.clearSelection();
+        table.clearSelection();
+    }
+    
+    private DefaultTableModel buildUndoTableModel(boolean undoSource) {
+        if(!undoSource) {
+            helpButton.setText("Undo");
+            helpButton.setMnemonic(KeyEvent.VK_U);
+        }
+        
+        DefaultTableModel undoModel = buildBasicTableModel();
+        
+        undoModel.setColumnCount(displayTable.getModel().getColumnCount());
+        undoModel.setRowCount(displayTable.getModel().getRowCount());
+        
+        for(int i=0; i<displayTable.getModel().getColumnCount(); i++) {
+            for(int j=0; j<displayTable.getModel().getRowCount(); j++) {
+                undoModel.setValueAt(displayTable.getValueAt(j, i), j, i);
+            }
+        }
+        
+        return undoModel;
     }
     
     /**
@@ -475,17 +588,28 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
                     
                     String[] insertSlices = insertSlicesStr.split(",");
                     
+                    if(insertSlices.length != -1) {
+                        undoModel = buildUndoTableModel(false);
+                    }
+                    
                     DefaultTableModel table = ((DefaultTableModel)parent.getModel());
 
+                    int insertLoc = parent.getSelectedRow();
+                    
+                    if(insertLoc == -1) {
+                        insertLoc = parent.getRowCount(); // append action
+                    }
+                    
                     for(int i=0; i<insertSlices.length; i++) {
                         table.addRow(new Object[]{"Position "+table.getRowCount(), ""});
                     }
-                    for(int i=table.getRowCount()-1; i>=insertSlices.length && i>parent.getSelectedRow(); i--) {
+                    
+                    for(int i=table.getRowCount()-1; i>=insertSlices.length && i>insertLoc; i--) {
                         parent.setValueAt(parent.getValueAt(i-insertSlices.length, 1), i, 1);
                     }  
                     
                     for(int i=0; i<insertSlices.length; i++) {
-                        parent.setValueAt(insertSlices[i], i+parent.getSelectedRow(), 1);
+                        parent.setValueAt(insertSlices[i], i+insertLoc, 1);
                     }
                     
 //                    parent.clearSelection();
@@ -535,13 +659,16 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
                 
                 if(bufferData.length() == 0) {
                     int[] rows =  parent.getSelectedRows();
+                    
                     StringBuffer buffer = new StringBuffer();
                     for(int i=0; i<rows.length; i++) {
                         buffer.append(parent.getValueAt(rows[i], 1)).append(',');
                     }
                     
-                    buffer.replace(buffer.length()-1, buffer.length(), "");
-
+                    if(buffer.length() > 0) {
+                        buffer.replace(buffer.length()-1, buffer.length(), "");
+                    }
+                        
                     if(action == TransferHandler.MOVE) {
                         doDeleteRows(parent);
                     }

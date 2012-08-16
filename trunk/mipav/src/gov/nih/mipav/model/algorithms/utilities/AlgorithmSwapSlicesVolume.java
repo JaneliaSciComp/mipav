@@ -6,6 +6,8 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 
+import ij.io.FileInfo;
+
 import java.io.*;
 
 import java.util.*;
@@ -23,19 +25,23 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Swap mode, either 3D or 4D */
+    /** Swap mode, either 3D or 4D. */
     private SwapMode mode;
     
-    /** Number of slices in mode */
-    private int nSlices; // number of slices in image
+    /** Number of slices in mode. */
+    private int nSlices; 
     
-    /** Reordering of slices/volumes */
+    /** Reordering of slices/volumes. */
     private int[][] sliceRenum;
 
-    /** Number of pixels used by a slice/volume */
+    /** Number of pixels used by a slice/volume. */
     private int sliceSize;
 
+    /** Slices that have been examined in recursive structure for swapping slices. */
     private boolean[] sliceTouched;
+
+    /** Internal sorting variable for sorting slices on images of greater than 3 dimensions */
+    private int extent = 0;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -201,63 +207,6 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     } // end getColorFactor()
 
-    private boolean transfer(Number[] bufferIn, Number[] bufferOut, int in, int out) {
-        try {
-            destImage.exportData(in*sliceSize, sliceSize, bufferIn);
-            
-            destImage.exportData(out*sliceSize, sliceSize, bufferOut);
-            
-            destImage.importData(out*sliceSize, bufferIn, false);
-            
-            return true;
-        } catch(IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
-    /**
-     * Transfers the given buffer into the given location. Also recursively transfers all
-     * the old data to the location(s) where the old data is used.
-     * 
-     * @param bufferIn relieves the symptoms of arthritis
-     * @param in location to import data
-     * @return whether import was successful
-     */
-    private boolean transferIn(Number[] bufferIn, int in) {
-        try {
-            if(sliceTouched.length > in && sliceRenum[in].length > 0 && //slice has nowhere to go 
-            (srcImage == destImage && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
-                sliceTouched[in] = true;
-                return true;
-            }
-            
-            if(sliceTouched.length > in && !sliceTouched[in]) { 
-                Number[] bufferOut = new Number[sliceSize];
-                
-                srcImage.exportData(in*sliceSize, sliceSize, bufferOut);
-                
-                sliceTouched[in] = true;        //TODO: setting this at 'in' index may be incorrect
-                for(int i=0; i<sliceRenum[in].length; i++) {
-                    transferIn(bufferOut, sliceRenum[in][i]);
-                }
-                
-                if(bufferIn != null) {
-                    destImage.importData(in*sliceSize, bufferIn, false);
-                }
-            } else {
-                if(bufferIn != null) {
-                    destImage.importData(in*sliceSize, bufferIn, false);
-                }
-            }
-
-            return true;
-        } catch(IOException e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
-    
     private boolean allSlicesTouched() {
         for(int i=0; i<sliceTouched.length; i++) {
             if(!sliceTouched[i]) {
@@ -267,15 +216,92 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         
         return true;
     }
-    
+
+    /**
+     * Gets the fileInfos from the specified position.
+     * 
+     * @tDim time point to get 3D file info
+     */
+    private FileInfoBase[] collectFileInfos(int in, int tDim) {
+        FileInfoBase[] fileOut;
+        switch(mode) {
+        case FourD:
+            fileOut = new FileInfoBase[srcImage.getExtents()[2]];
+            for(int i=0; i<srcImage.getExtents()[2]; i++) {
+                if(srcImage == destImage && sliceRenum[in].length == 1) {
+                    fileOut[i] = srcImage.getFileInfo(in*srcImage.getExtents()[2]+i); //only transferring file info is necessary
+                } else {
+                    fileOut[i] = (FileInfoBase) srcImage.getFileInfo(in*srcImage.getExtents()[2]+i).clone(); //duplicates of this file info are necessary
+                }
+            }
+            break;
+        default:
+            int index = tDim*srcImage.getExtents()[2] + in; //allows 4D images to transfer single slice at given time dimension
+            fileOut = new FileInfoBase[1];
+            if(srcImage == destImage && sliceRenum[index].length == 1) {
+                fileOut[0] = srcImage.getFileInfo(index); //only transferring file info is necessary
+            } else {
+                fileOut[0] = (FileInfoBase) srcImage.getFileInfo(index).clone(); //duplicates of this file info are necessary
+            }
+        }
+        
+        return fileOut;
+    }
+
+    /**
+     * Inserts the fileInfos into the specified position.
+     * 
+     * @tDim time point to place 3D file info
+     */
+    private void importFileInfos(ModelImage destImage, FileInfoBase[] fileIn, int in, int tDim) {
+        switch(mode) {
+        case FourD:
+            for(int i=0; i<destImage.getExtents()[2]; i++) {
+                destImage.setFileInfo(fileIn[i], in*destImage.getExtents()[2]+i);
+            }
+            break;
+        default:
+            destImage.setFileInfo(fileIn[0], tDim*destImage.getExtents()[2]+in);
+        }
+    }
+
+    /**
+     * Reallocate destImage so that fileInfo and buffer equal required length 
+     * 
+     * @param destImage destination image of algorithm
+     */
+    private void reallocate(ModelImage destImage) {
+        if(destImage.getExtents()[mode.getDim()] != nSlices) {
+            Number[] bufferOut = new Number[destImage.getDataSize()];
+            try {
+                destImage.exportData(0, destImage.getDataSize(), bufferOut);
+                int[] extents = Arrays.copyOf(srcImage.getExtents(), srcImage.getExtents().length);
+                extents[mode.getDim()] = nSlices;
+                destImage.reallocate(extents);
+                
+                destImage.importData(0, bufferOut, false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            FileInfoBase[] fileInfo = destImage.getFileInfo();
+            int nInfos = 1;
+            for(int i=2; i<destImage.getExtents().length; i++) {
+                nInfos *= destImage.getExtents()[i];
+            }
+            FileInfoBase[] newFileInfo = new FileInfoBase[nInfos];
+            for(int i=0; i<fileInfo.length && i<newFileInfo.length; i++) {
+                newFileInfo[i] = fileInfo[i];
+            }
+            destImage.setFileInfo(newFileInfo);
+        }
+    }
+
     /**
      * Calculates the final output and stores it in the source image.
      */
     private void swapSlices() {
-        if(destImage.getExtents()[mode.getDim()] != nSlices) {
-            //reallocate destImage so that fileInfo and buffer equal required length
-            
-        }
+
+        reallocate(destImage);
         
         sliceTouched = new boolean[sliceRenum.length];
         for(int i=0; i<sliceTouched.length; i++) {
@@ -284,12 +310,18 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
         
         int index = 0;
         while(!allSlicesTouched()) {
-            transferIn(null, index);
+            transferIn(index);
             for(int i=index; i<sliceTouched.length; i++) {
                 if(!sliceTouched[i]) {
                     index = i;
                     break;
                 }
+            }
+        }
+        
+        if(srcImage != destImage) {
+            for(int i=0; i<destImage.getFileInfo().length; i++) {
+                destImage.getFileInfo()[i].setFileName(srcImage.getImageFileName()+"_swap"+i);
             }
         }
         
@@ -300,5 +332,66 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
         setCompleted(true);
     } // swapSlices
+
+    /**
+     * Starts method of file/image transferring
+     * 
+     * @param in location to import data
+     * @return whether import was successful
+     */
+    private boolean transferIn(int in) {
+        return transferIn(null, null, in, 0);
+    }
+    
+    /**
+     * Transfers the given buffer into the given location. Also recursively transfers all
+     * the old data to the location(s) where the old data is used.
+     * 
+     * @param bufferIn relieves the symptoms of arthritis
+     * @param in location to import data
+     * @return whether import was successful
+     */
+    private boolean transferIn(FileInfoBase[] fileIn, Number[] bufferIn, int in, int tDim) {
+        try {
+            if((sliceTouched.length > in && sliceRenum[in].length == 0 && bufferIn == null) || //slice has nowhere to go 
+            (srcImage == destImage && sliceRenum[in].length == 1 && sliceRenum[in][0] == in)) { //slice is only going to where it already exists
+                sliceTouched[in] = true;
+                return true;
+            }
+            
+            if(sliceTouched.length > in && !sliceTouched[in]) { 
+                sliceTouched[in] = true; 
+                
+                if(sliceRenum[in].length > 0) {
+                    int index = 1;
+                    if(mode == SwapMode.ThreeD && srcImage.getNDims() > 3) {
+                        index = srcImage.getExtents()[3];
+                        extent  = srcImage.getExtents()[2]*srcImage.getExtents()[1]*srcImage.getExtents()[0];
+                    }
+                    
+                    for(int tDimLocal=0; tDimLocal<index; tDimLocal++) {
+                        
+                        Number[] bufferOut = new Number[sliceSize];
+                        FileInfoBase[] fileOut = collectFileInfos(in, tDimLocal);
+                        srcImage.exportData(tDimLocal*extent + in*sliceSize, sliceSize, bufferOut);
+                          
+                        for(int i=0; i<sliceRenum[in].length; i++) {
+                            transferIn(fileOut, bufferOut, sliceRenum[in][i], tDimLocal);
+                        }
+                    }
+                }
+            } 
+            
+            if(bufferIn != null) {
+                importFileInfos(destImage, fileIn, in, tDim);
+                destImage.importData(tDim*extent + in*sliceSize, bufferIn, false);
+            }
+    
+            return true;
+        } catch(IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
 
 }
