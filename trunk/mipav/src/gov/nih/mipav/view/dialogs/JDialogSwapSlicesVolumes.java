@@ -168,10 +168,17 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmSwapSlicesVolume) {
-            if(!inPlace) {
                 swapVolume = swapAlgo.getSwappedVolume();
     
-                new ViewJFrameImage(swapVolume);
+            if(inPlace) {
+                ViewUserInterface.getReference().unRegisterImage(swapVolume);
+                swapVolume.getParentFrame().dispose();
+            }
+            
+            new ViewJFrameImage(swapVolume);
+            
+            if(inPlace) {
+                ViewUserInterface.getReference().registerImage(swapVolume);
             }
 
             if (algorithm.isCompleted()) {
