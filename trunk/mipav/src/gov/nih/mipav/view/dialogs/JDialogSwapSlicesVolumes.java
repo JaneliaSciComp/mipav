@@ -540,24 +540,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         }
 
         /* (non-Javadoc)
-         * @see javax.swing.TransferHandler#exportAsDrag(javax.swing.JComponent, java.awt.event.InputEvent, int)
-         */
-        @Override
-        public void exportAsDrag(JComponent comp, InputEvent e, int action) {
-            // TODO Auto-generated method stub
-            super.exportAsDrag(comp, e, action);
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.TransferHandler#exportDone(javax.swing.JComponent, java.awt.datatransfer.Transferable, int)
-         */
-        @Override
-        protected void exportDone(JComponent source, Transferable data, int action) {
-            // TODO Auto-generated method stub
-            super.exportDone(source, data, action);
-        }
-
-        /* (non-Javadoc)
          * @see javax.swing.TransferHandler#exportToClipboard(javax.swing.JComponent, java.awt.datatransfer.Clipboard, int)
          */
         @Override
@@ -570,15 +552,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             } catch(Exception e) {
                 e.printStackTrace();
             }
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.TransferHandler#getSourceActions(javax.swing.JComponent)
-         */
-        @Override
-        public int getSourceActions(JComponent c) {
-            // TODO Auto-generated method stub
-            return super.getSourceActions(c);
         }
 
         /* (non-Javadoc)
@@ -629,15 +602,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
                 
                 return false;
             }
-        }
-
-        /* (non-Javadoc)
-         * @see javax.swing.TransferHandler#importData(javax.swing.TransferHandler.TransferSupport)
-         */
-        @Override
-        public boolean importData(TransferSupport support) {
-            // TODO Auto-generated method stub
-            return super.importData(support);
         }
         
         @Override
