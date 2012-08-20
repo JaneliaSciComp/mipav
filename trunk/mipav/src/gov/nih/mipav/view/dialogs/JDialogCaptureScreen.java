@@ -6,7 +6,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.reportbug.ReportBugBuilder;
-import gov.nih.mipav.view.dialogs.reportbug.ImageCopier.ImageConverter;
 
 import java.awt.*;
 import java.awt.event.*;
