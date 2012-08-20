@@ -259,36 +259,79 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         try {
             String sliceRenumString = scriptParameters.getParams().getString("sliceRenumString");
             String[] srcSlices = sliceRenumString.split(";");
-            ArrayList<int[]> sliceRenumAr = new ArrayList<int[]>();
+            HashMap<Integer, int[]> sliceRenumAr = new HashMap<Integer, int[]>();
             for(int i=0; i<srcSlices.length; i++) {
                 if(srcSlices[i].contains(":"))  {
                     String[] setupLoc = srcSlices[i].split(":");
                     String[] sliceLoc = setupLoc[1].split(",");
                     int index = Integer.valueOf(setupLoc[0].trim());
-                    sliceRenumAr.add(index, new int[sliceLoc.length]);
+                    sliceRenumAr.put(index, new int[sliceLoc.length]);
                     try {
                         for(int j=0; j<sliceRenumAr.get(index).length; j++) {
                             sliceRenumAr.get(index)[j] = Integer.valueOf(sliceLoc[j].trim());
                         }
                     } catch(NumberFormatException e) {
-                        sliceRenumAr.remove(index);
-                        sliceRenumAr.add(index, new int[0]);
+                        sliceRenumAr.put(index, new int[0]);
                     }
                 }
             }
             
-            sliceRenum = new int[sliceRenumAr.size()][];
+            int extent = srcImage.getExtents()[mode.getDim()];
             
-            for(int i=0; i<sliceRenum.length; i++) {
-                sliceRenum[i] = sliceRenumAr.get(i);
+            //deal with image larger than used for script
+            for(int i=0; i<extent; i++) {
+                if(sliceRenumAr.get(i) == null) {
+                    if(!containsSliceEntry(sliceRenumAr, i)) {
+                        sliceRenumAr.put(i, new int[]{i}); //put slice in current location
+                    } else {
+                        sliceRenumAr.put(i, new int[0]); //leave slice out (another slice is inserted in its place)
+                    }
+                }
+            }
+            
+            int arMax = 0;
+            
+            //deal with image smaller  than used for script
+            for(Integer i : sliceRenumAr.keySet()) {
+                if(i > extent-1) {
+                    sliceRenumAr.remove(i);
+                } else {
+                    if(arMax < i) {
+                        arMax = i;
+                    }
+                }
+            }
+            
+            arMax++;
+            
+            sliceRenum = new int[arMax][];
+            
+            for(int i=0; i<arMax; i++) {
+                if(sliceRenumAr.get(i) != null) {
+                    sliceRenum[i] = sliceRenumAr.get(i);
+                } else {
+                    sliceRenum[i] = new int[0];
+                }
             }
             
         } catch(Exception e) {
             throw new ParameterException(scriptParameters.getParams().getString("sliceRenumString"), "Malformed string");
         }
+    }
+    
+    /**
+     * Whether the slice is assigned to another slice elsewhere in the map
+     */
+    private boolean containsSliceEntry(HashMap<Integer, int[]> sliceRenumMap, int slice) {
+        for(int[] ar : sliceRenumMap.values()) {
+            for(int i=0; i<ar.length; i++) {
+                if(ar[i] == slice) {
+                    return true;
+                }
+            }
+        }
         
-        
-        
+        return false;
     }
 
     /**
