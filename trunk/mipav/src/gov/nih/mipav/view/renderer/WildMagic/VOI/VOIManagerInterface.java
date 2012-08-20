@@ -2568,8 +2568,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Called from the VOIManager.
      * Displays the Intensity Graph for the input VOIBase.
      * @param kVOI VOIBase to graph.
+     * @param m_iPlane the plane on which to show intensity info
      */
-    public void showIntensityInfo( VOIBase kVOI, boolean showGraph) {
+    public void showIntensityInfo( VOIBase kVOI, int m_iPlane, boolean showGraph) {
         ViewJFrameGraph lineGraph;
 
         ModelImage kImage = m_kParent.getActiveImage();
@@ -2581,7 +2582,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
         
         
         String lineName = kVOI.getName();
-        int sliceNum = kVOI.slice();
+        int sliceNum = kVOI.slice(m_iPlane);
         int curveNum = kVOI.getContourID();
         
         Vector<Vector3f> positions = new Vector<Vector3f>();
@@ -2723,11 +2724,11 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
      * Called from the VOIManager when the VOIBase that is currently being graphed has changed.
      * @param kVOI the modified VOIBase.
      */
-    public void updateGraph( VOIBase kVOI )
+    public void updateGraph( VOIBase kVOI, int m_iPlane)
     {
         if ( kVOI.getType() == VOI.LINE )
         {
-            showIntensityInfo(kVOI, true);
+            showIntensityInfo(kVOI, m_iPlane, true);
         }
         else if ( kVOI.getType() == VOI.POINT )
         {
@@ -3494,7 +3495,7 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
                 VOIBase kCurrentVOI = kCurrentGroup.getCurves().get(j);
                 if ( kCurrentVOI.isActive() )
                 {
-                    showIntensityInfo( kCurrentVOI, true );
+                    showIntensityInfo( kCurrentVOI, kCurrentVOI.getPlane(), true );
                 }
             }
         }
