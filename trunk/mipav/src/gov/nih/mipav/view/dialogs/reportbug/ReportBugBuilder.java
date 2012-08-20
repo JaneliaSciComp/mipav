@@ -77,7 +77,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	private JTextArea attachedImages = new JTextArea();
 	
 	/** Text area for user inputed bug description */
-	private JTextArea descriptionField = new JTextArea();
+	private JTextPane descriptionField = new JTextPane();
 	
 	/** Text area for user inputed bug summary */
 	private JTextArea summaryField = new JTextArea();
@@ -119,6 +119,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	private File bugReport;
 
 	private JDialogCaptureScreen screenCapture;
+
+	private ImageCopier imageCopier;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -184,6 +186,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			frame.setVisible(false);
 		} else if (command.equals("Create New Image")){
 			screenCapture = new JDialogCaptureScreen(null, true);
+			imageCopier = new ImageCopier(descriptionField);
 			screenCapture.addWindowListener(this);
 		} else if (command.equals("Browse")) {
 			browser = new JFileChooser();
@@ -395,7 +398,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			JOptionPane.showMessageDialog(null, "Message sent successfully");
 			bugReport.delete();
 			for (int x = 0; x < fileNames.size(); x++) {
-				new File(filePaths.get(x)).delete();
+				if (!filePaths.get(x).contains("hs_err_pid")) { 
+					new File(filePaths.get(x)).delete();
+				}
 			}
 			frame.dispose();
 		} catch (MessagingException e) {
@@ -437,8 +442,8 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
         summaryInstructions.setForeground(Color.black);
         
     	JLabel descInstructions = new JLabel("Please give a detailed description of the bug encountered");
-    	descriptionField.setLineWrap(true);
-    	descriptionField.setWrapStyleWord(true);
+//    	descriptionField.setLineWrap(true);
+//    	descriptionField.setWrapStyleWord(true);
         JScrollPane descriptionScroll = new JScrollPane(descriptionField);
         descriptionScroll.setPreferredSize(new Dimension(400,100));
     	descInstructions.setFont(MipavUtil.font12);
@@ -599,7 +604,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	}
 	
 	public void windowClosed(WindowEvent event){
-		if(event.getSource().equals(screenCapture) && !screenCapture.cancel){
+		if(event.getSource().equals(screenCapture.ok)){
 			attachmentName = JDialogCaptureScreen.fileName + ".png";
 			try {
 				if (JDialogCaptureScreen.currImage == null)
