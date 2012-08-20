@@ -76,8 +76,6 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     /** Reordering of slices/volumes */
     private int[][] sliceRenum;
 
-    private TableTransferImporter importer;
-
     /** The visible JTable for slice/volume reordering */
     private JTable displayTable;
     
@@ -193,7 +191,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
     }
 
     /**
-     * Once all the necessary variables are set, call the Remove Slices algorithm based on what type of image this is
+     * Once all the necessary variables are set, call the Swap Slices algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
@@ -278,7 +276,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             
             int extent = srcImage.getExtents()[mode.getDim()];
             
-            //deal with image larger than used for script
+            //deal with image larger than used for script recording
             for(int i=0; i<extent; i++) {
                 if(sliceRenumAr.get(i) == null) {
                     if(!containsSliceEntry(sliceRenumAr, i)) {
@@ -291,7 +289,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             
             int arMax = 0;
             
-            //deal with image smaller  than used for script
+            //deal with image smaller than used for script recording
             for(Integer i : sliceRenumAr.keySet()) {
                 if(i > extent-1) {
                     sliceRenumAr.remove(i);
@@ -416,7 +414,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         displayTable.setFocusable(true);
         displayTable.setDragEnabled(true);
         displayTable.setDropMode(DropMode.INSERT_ROWS);
-        importer = new TableTransferImporter(displayTable);
+        TableTransferImporter importer = new TableTransferImporter(displayTable);
         displayTable.setTransferHandler(importer);
         
         JPanel algOptionPanel = new JPanel();
@@ -838,7 +836,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             }
 
             public String getLabel() {
-                return new String("Swa[ Slice/Volume");
+                return new String("Swap Slice/Volume");
             }
 
             public String getName() {
