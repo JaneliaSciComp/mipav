@@ -259,15 +259,30 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         try {
             String sliceRenumString = scriptParameters.getParams().getString("sliceRenumString");
             String[] srcSlices = sliceRenumString.split(";");
-            sliceRenum = new int[srcSlices.length][];
-            for(int i=0; i<sliceRenum.length; i++) {
-                String[] setupLoc = srcSlices[i].split(":");
-                String[] sliceLoc = setupLoc[1].split(",");
-                sliceRenum[i] = new int[sliceLoc.length];
-                for(int j=0; j<sliceRenum[i].length; j++) {
-                    sliceRenum[i][j] = Integer.valueOf(sliceLoc[j]);
+            ArrayList<int[]> sliceRenumAr = new ArrayList<int[]>();
+            for(int i=0; i<srcSlices.length; i++) {
+                if(srcSlices[i].contains(":"))  {
+                    String[] setupLoc = srcSlices[i].split(":");
+                    String[] sliceLoc = setupLoc[1].split(",");
+                    int index = Integer.valueOf(setupLoc[0].trim());
+                    sliceRenumAr.add(index, new int[sliceLoc.length]);
+                    try {
+                        for(int j=0; j<sliceRenumAr.get(index).length; j++) {
+                            sliceRenumAr.get(index)[j] = Integer.valueOf(sliceLoc[j].trim());
+                        }
+                    } catch(NumberFormatException e) {
+                        sliceRenumAr.remove(index);
+                        sliceRenumAr.add(index, new int[0]);
+                    }
                 }
             }
+            
+            sliceRenum = new int[sliceRenumAr.size()][];
+            
+            for(int i=0; i<sliceRenum.length; i++) {
+                sliceRenum[i] = sliceRenumAr.get(i);
+            }
+            
         } catch(Exception e) {
             throw new ParameterException(scriptParameters.getParams().getString("sliceRenumString"), "Malformed string");
         }
