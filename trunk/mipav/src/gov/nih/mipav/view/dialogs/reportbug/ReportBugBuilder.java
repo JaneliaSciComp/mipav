@@ -120,7 +120,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
 	private JDialogCaptureScreen screenCapture;
 
-	private ImageCopier imageCopier;
+	//private ImageCopier imageCopier;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -186,7 +186,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			frame.setVisible(false);
 		} else if (command.equals("Create New Image")){
 			screenCapture = new JDialogCaptureScreen(null, true);
-			imageCopier = new ImageCopier(descriptionField);
+			//imageCopier = new ImageCopier(descriptionField);
 			screenCapture.addWindowListener(this);
 		} else if (command.equals("Browse")) {
 			browser = new JFileChooser();
