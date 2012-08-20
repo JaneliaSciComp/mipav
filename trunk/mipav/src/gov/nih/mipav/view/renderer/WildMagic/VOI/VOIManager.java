@@ -516,7 +516,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		else if (command.equals(SHOW_INTENSITY_GRAPH)) // handling the popup menu for the VOI intensity line
 		{
-			m_kParent.showIntensityInfo( m_kCurrentVOI, true );
+			m_kParent.showIntensityInfo( m_kCurrentVOI, m_iPlane, true );
 		}else if(command.equals("VOIProperties")) {
 			m_kParent.showVOIProperties();
 		}
@@ -711,7 +711,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	public void draw( VOIBase kVOI, float[] resolutions, int[] unitsOfMeasure, 
 			int slice, Graphics g, boolean bShowAllPoints ) 
 	{
-		if (g == null) {
+	    if (g == null) {
 			MipavUtil.displayError("Draw VOI: grapics = null");
 			return;
 		}
@@ -954,7 +954,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		            if(v.isActive()) {
     		            for(int j=0; j<v.getCurves().size(); j++) {
     		                if(vec.get(i).getCurves().get(j).isActive()) {
-    		                    m_kParent.showIntensityInfo(vec.get(i).getCurves().get(j), false);
+    		                    m_kParent.showIntensityInfo(vec.get(i).getCurves().get(j), m_iPlane, false);
     		                }
     		            }
 		            }
@@ -1523,7 +1523,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 
 			if ( kVOI.getGroup().getContourGraph() != null )
 			{
-				m_kParent.updateGraph(kVOI);
+				m_kParent.updateGraph(kVOI, m_iPlane);
 			}
 		}
 	}
@@ -4493,7 +4493,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kParent.updateDisplay();
 		if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
 		{
-			m_kParent.updateGraph(m_kCurrentVOI);
+			m_kParent.updateGraph(m_kCurrentVOI, m_iPlane);
 		}
 	}
 
@@ -5107,7 +5107,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kParent.updateDisplay();
 		if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
 		{
-			m_kParent.updateGraph(m_kCurrentVOI);
+			m_kParent.updateGraph(m_kCurrentVOI, m_iPlane);
 		}
 	}
 	/**

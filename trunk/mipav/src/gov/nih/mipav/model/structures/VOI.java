@@ -1881,7 +1881,7 @@ public class VOI extends ModelSerialCloneable {
 		Vector<VOIBase> sliceCurves = new Vector<VOIBase>();      
 		for ( int i = 0; i < curves.size(); i++ )
 		{
-			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice(iPlane) == iSlice )
 			{
 				sliceCurves.add( curves.elementAt(i) );
 			}
@@ -1910,7 +1910,7 @@ public class VOI extends ModelSerialCloneable {
 		int sliceSize = 0;
 		for ( int i = 0; i < curves.size(); i++ )
 		{
-			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice() == iSlice )
+			if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane && curves.elementAt(i).slice(iPlane) == iSlice )
 			{
 				sliceSize++;
 			}
@@ -1960,7 +1960,7 @@ public class VOI extends ModelSerialCloneable {
 			}
 			else if ( (curves.elementAt(i).getPlane() & iPlane) == iPlane )
 			{
-				int slice = curves.elementAt(i).slice();
+				int slice = curves.elementAt(i).slice(iPlane);
 				kTemp[slice].add( curves.elementAt(i) );
 			}
 		}
@@ -2191,7 +2191,7 @@ public class VOI extends ModelSerialCloneable {
 			if ( curves.elementAt(i).isActive() )
 			{
 				if ( (curves.elementAt(i).getPlane() & VOIBase.ZPLANE) == VOIBase.ZPLANE && 
-					  curves.elementAt(i).slice() == iSlice )
+					  curves.elementAt(i).slice(VOIBase.ZPLANE) == iSlice )
 				{
 
 					polygons.add( ((VOIContour)curves.elementAt(i)).exportPolygon() );

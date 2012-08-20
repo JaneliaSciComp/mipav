@@ -2076,15 +2076,23 @@ public abstract class VOIBase extends Vector<Vector3f> {
 	}
 
     /**
-     * If the points of this contour all exist on either the x,y,z plane, 
-     * then the value of that plane is returned.  If the points are not on a plane,
+     * Returns the slice value of the contour on every plane.  If the contour does not exist
+     * on the x-plane, returns its value on the y-plane.  If the contour does not exist on the
+     * y-plane, returns its value on the z-plane.  Use <code>slice(int iPlane)</code> for 
+     * a more reliable value. 
+     * @return
+     */
+    public int slice() {
+        return slice(m_iPlane);
+    }
+    
+    /**
+     * Returns the point value the contour has in common if it lies in the given plane.  
+     * If the contour does not exist on the given plane,
      * -1 is returned.
      * @return
      */
-    public int slice()
-    {
-        int iPlane = getPlane();
-
+    public int slice(int iPlane) {
         if ( (iPlane&XPLANE) == XPLANE )
         {
             return (int)get(0).X;
