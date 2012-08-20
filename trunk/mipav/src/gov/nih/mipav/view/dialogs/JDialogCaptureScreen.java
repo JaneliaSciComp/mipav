@@ -6,6 +6,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.reportbug.ReportBugBuilder;
+import gov.nih.mipav.view.dialogs.reportbug.ImageCopier.ImageConverter;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -16,6 +17,7 @@ import java.io.*;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
+import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.event.*;
 
 
@@ -26,7 +28,7 @@ import javax.swing.event.*;
  * created by MIPAV is fair game to draw upon, but clicking elsewhere on the screen will make MIPAV inactive and the
  * rectangle drawn invalid.
  */
-public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener, KeyListener{
+public class JDialogCaptureScreen extends JDialogBase implements MouseListener, ComponentListener{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -102,7 +104,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     /** JTextField for the name of the file being attached */
     private JTextField fileField = new JTextField(25);
     
-    public boolean cancel = false;
+    public boolean ok = false;
 
 	public static String fileName;
 
@@ -111,6 +113,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	public static int test;
 	
 	private int tester;
+
+	private JLabel instructions3;
 
 	public static BufferedImage currImage;
 
@@ -217,6 +221,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
                     dispose();
                     System.gc();
                 }
+            	ok = true;
             		
             		
                 	//commented the code below out in order to leave dialog up so that you can 
@@ -247,7 +252,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
                 myGlassPanes[i] = null;
             }
             
-            cancel = true;
             myGlassPanes = null;
             dispose();
             System.gc();
@@ -534,6 +538,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         instructions2 = new JLabel("region you want to save.  Then press OK.");
         instructions2.setFont(MipavUtil.font12);
         instructions2.setForeground(Color.black);
+        instructions3 = new JLabel("(Regions must originate within a MIPAV window.)");
+        instructions3.setFont(MipavUtil.font12);
+        instructions3.setForeground(Color.black);
 
         OKButton = buildOKButton();
         cancelButton = buildCancelButton();
@@ -548,6 +555,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         instruction.setLayout(new BoxLayout(instruction, BoxLayout.Y_AXIS));
         instruction.add(instructions);
         instruction.add(instructions2);
+        instruction.add(instructions3);
 
         JPanel panel = new JPanel();
         panel.setLayout(new GridBagLayout());
@@ -575,15 +583,15 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         gbc.gridy = 0;
         gbc.weighty = 1;
         gbc.gridy = 2;
-        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. Press ctrl+c");
+        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. Copy the image and ");
         attachmentInstruction.setFont(MipavUtil.font12);
         attachmentInstruction.setForeground(Color.black);
         
-        JLabel attachmentInstruction2 = new JLabel("to copy the image to clipboard or enter a file name below");
+        JLabel attachmentInstruction2 = new JLabel("paste the image to the description area, or enter a file name");
         attachmentInstruction2.setFont(MipavUtil.font12);
         attachmentInstruction2.setForeground(Color.black);
         
-        JLabel attachmentInstruction3 = new JLabel("and press the OK button to attach the image as a file. \n");
+        JLabel attachmentInstruction3 = new JLabel("below and press the OK button to attach the image as a file. \n");
         attachmentInstruction3.setFont(MipavUtil.font12);
         attachmentInstruction3.setForeground(Color.black);
         
@@ -631,7 +639,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         Robot robot;
         String imageName;
         Image imagePix;
-
 
         try {
             robot = new Robot();
@@ -1048,27 +1055,85 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 
 	@Override
 	public void componentShown(ComponentEvent e) {}
-
-	@Override
-	public void keyPressed(KeyEvent event) {
-		save = false;
-		display = false;
-		copy = true;
-		writeImage();
-		
-	}
-
-	@Override
-	public void keyReleased(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void keyTyped(KeyEvent arg0) {
-		// TODO Auto-generated method stub
-		
-	}
-
-
+	
+//	public class ImageCopier extends TransferHandler implements ClipboardOwner{
+//		
+//		private JTextPane parent;
+//		
+//		public void lostOwnership(Clipboard clipboard, Transferable contents) {}
+//		
+//		public ImageCopier(JTextPane parent) {
+//	        this.parent = parent;
+//	    }
+//		
+//		public boolean canImport(JComponent description, DataFlavor[] transferFlavors) {
+//			if(description.equals(parent)) {
+//				for(int i=0; i<transferFlavors.length; i++) {
+//	                if(!transferFlavors[i].equals(DataFlavor.imageFlavor)) {
+//	                    return false;
+//	                }
+//	            }
+//	            return true;
+//			}
+//			return false;
+//			
+//		}
+//		
+//		protected Transferable createTransferable(JComponent c) {
+//			if(c.equals(parent)) {
+//				return new ImageConverter();
+//			}
+//		}
+//		
+//		public void exportAsDrag(JComponent comp, InputEvent e, int action) {
+//	         // TODO Auto-generated method stub
+//	         super.exportAsDrag(comp, e, action);
+//	    }
+//		
+//		 protected void exportDone(JComponent source, Transferable data, int action) {
+//	         // TODO Auto-generated method stub
+//	         super.exportDone(source, data, action);
+//	     }
+//
+//	     /* (non-Javadoc)
+//	      * @see javax.swing.TransferHandler#exportToClipboard(javax.swing.JComponent, java.awt.datatransfer.Clipboard, int)
+//	      */
+//	     public void exportToClipboard(JComponent comp, Clipboard clip, Image imagePix) throws IllegalStateException {
+//	         try {
+//	             if(comp.equals(parent)) {
+//	            	 Transferable pic = new ImageConverter(imagePix);
+//	                 clip.setContents(pic, null);
+//	             }
+//	         } catch(Exception e) {
+//	             e.printStackTrace();
+//	         }
+//	     }
+//
+//	     /* (non-Javadoc)
+//	      * @see javax.swing.TransferHandler#getSourceActions(javax.swing.JComponent)
+//	      */
+//	     @Override
+//	     public int getSourceActions(JComponent c) {
+//	         // TODO Auto-generated method stub
+//	         return super.getSourceActions(c);
+//	     }
+//
+//	     /* (non-Javadoc)
+//	      * @see javax.swing.TransferHandler#importData(javax.swing.JComponent, java.awt.datatransfer.Transferable)
+//	      */
+//	     @Override
+//	     public boolean importData(JComponent comp, Transferable t) {
+//			return false;
+//
+//	     }
+//
+//	     /* (non-Javadoc)
+//	      * @see javax.swing.TransferHandler#importData(javax.swing.TransferHandler.TransferSupport)
+//	      */
+//	     @Override
+//	     public boolean importData(TransferSupport support) {
+//	         // TODO Auto-generated method stub
+//	         return super.importData(support);
+//	     }
+//	}
 }
