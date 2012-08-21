@@ -72,34 +72,20 @@ public abstract class AlgorithmTProcess extends AlgorithmBase {
     }
 
     /**
-     * This method gives <code>clo</code> most of the image attributes of <code>orig</code> besides
-     * data type to minimize rounding errors.
+     * This method gives <code>clo</code> the file info of <code>orig</code>.
      * 
      * @param orig Original image
      * @param clo Near clone image
      */
-    public ModelImage nearCloneImage(ModelImage orig, ModelImage clo) {
-        FileInfoBase[] oArr = orig.getFileInfo();
-        FileInfoBase[] cArr = clo.getFileInfo();
-        if(cArr.length != oArr.length) {
-            MipavUtil.displayError("Images are not same length");
-            return clo;
-        }
-        for(int i=0; i<cArr.length; i++) {
-            if(cArr == null) {
-                return clo;
-            }
-            cArr[i].setOffset(oArr[i].getOffset());
-            cArr[i].setEndianess(oArr[i].getEndianess());
-            cArr[i].setResolutions(oArr[i].getResolutions().clone());
-            cArr[i].setUnitsOfMeasure(oArr[i].getUnitsOfMeasure().clone());
-            cArr[i].setOrigin(oArr[i].getOrigin().clone());
-            cArr[i].setImageOrientation(cArr[i].getImageOrientation());
-            cArr[i].setAxisOrientation(oArr[i].getAxisOrientation().clone());
-            cArr[i].setDataType(ModelImage.DOUBLE);
+    public void cloneFileInfo(ModelImage orig, ModelImage clo) {
+        FileInfoBase[] oArr = orig.getFileInfo();  
+        FileInfoBase[] cArr = new FileInfoBase[oArr.length];
+        for(int i=0; i<oArr.length; i++) {
+            cArr[i] = (FileInfoBase) oArr[i].clone();
         }
         
-        return clo;
+        clo.setFileInfo(cArr);
+
     }
 
     protected abstract void computeProcessors();
