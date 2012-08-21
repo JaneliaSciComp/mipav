@@ -5073,7 +5073,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Gets the number of pixels in a volume of the image.
      */
     public int getVolumeSize() {
-        return getSliceSize() * (getNDims() > 3 ? getExtents()[3] : 1);
+        return getSliceSize() * (getNDims() > 2 ? getExtents()[2] : 1);
     }
 
     /**
