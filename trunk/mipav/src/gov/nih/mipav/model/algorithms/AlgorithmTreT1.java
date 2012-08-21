@@ -1253,6 +1253,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                     image = ViewUserInterface.getReference().getRegisteredImageByName(wList[spgrImageIndex[angle]]);
                     
                     pixelIndex = 0;
+
+                    
                     for (y=0; y<height; y++) {
                         for (x=0; x<width; x++) {
                             if(image.getNDims() < 4) {
@@ -1271,6 +1273,8 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
                         }
                     }
                 }
+                
+
             
                 for (pixelIndex=0; pixelIndex<width*height; pixelIndex++) {
                     if (pixelValues[0][pixelIndex] > (threshold)) {
