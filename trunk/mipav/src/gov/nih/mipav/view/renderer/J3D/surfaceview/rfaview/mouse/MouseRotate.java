@@ -162,7 +162,7 @@ public class MouseRotate extends MouseBehavior {
         int iCallback = -1; /* set to -1 to indicate neither left or right
                              * mouse rotation occurred, so no need to call the
                              * user-defined callback */
-
+        System.err.println("process stimulus MouseRotate");
         while (criteria.hasMoreElements()) {
             wakeup = (WakeupCriterion) criteria.nextElement();
 
@@ -182,7 +182,8 @@ public class MouseRotate extends MouseBehavior {
                                      !((MouseEvent) event[i]).isAltDown()) ||
 
                                 /* LeftMouse Rotation: */
-                                ((id == MouseEvent.MOUSE_DRAGGED) && !((MouseEvent) event[i]).isMetaDown() &&
+                                ((id == MouseEvent.MOUSE_DRAGGED) && !((MouseEvent) event[i]).isMetaDown() && 
+                                		((MouseEvent) event[i]).isControlDown() &&
                                      !((MouseEvent) event[i]).isAltDown())) {
                             x = ((MouseEvent) event[i]).getX();
                             y = ((MouseEvent) event[i]).getY();
