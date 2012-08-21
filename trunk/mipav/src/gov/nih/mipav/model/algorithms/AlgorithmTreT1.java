@@ -28,9 +28,7 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private ModelImage largestImage = null;
     
     private double treTR = 5.00;
-    @SuppressWarnings("unused")
     private double irspgrTR = 5.00;
-    @SuppressWarnings("unused")
     private double irspgrKy = 96.00;
     private double irspgrFA = 5.00;
     private double maxT1 = 5000;
@@ -41,45 +39,30 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     
     private double[] spgrData;
     private double[] irspgrData;
-    @SuppressWarnings("unused")
     private double scale;
-    @SuppressWarnings("unused")
     private double pointScale;
-    @SuppressWarnings("unused")
     private double scaleIncrement;
-    @SuppressWarnings("unused")
     private double[] estimates;
-    @SuppressWarnings("unused")
     private double[] residuals;
-    @SuppressWarnings("unused")
     private int[] direction;
     
     private int[] spgrImageIndex;
     private int[] irspgrImageIndex;
     private int b1ImageIndex;
-    @SuppressWarnings("unused")
     private double angleIncrement;
     private int Nsa = 2;
     private int Nti = 1;
-    @SuppressWarnings("unused")
     private double maxAngle = 20;
     
     private boolean smoothB1Field = true;
-    @SuppressWarnings("unused")
     private boolean performStraightTreT1 = true;
     private boolean performTreT1withPreCalculatedB1Map = false;
     private boolean performTreT1HIFI = false;
-    @SuppressWarnings("unused")
     private boolean doubleInversion = true;
-    @SuppressWarnings("unused")
     private boolean singleInversion = false;
-    @SuppressWarnings("unused")
     private boolean geScanner = true;
-    @SuppressWarnings("unused")
     private boolean siemensScanner = false;
-    @SuppressWarnings("unused")
     private boolean threeTField = true;
-    @SuppressWarnings("unused")
     private boolean onefiveTField = false;
     
     private boolean calculateT1 = true;
@@ -88,13 +71,11 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
     private boolean invertT1toR1 = false;
     
     private boolean useWeights = true;
-    @SuppressWarnings("unused")
     private boolean uniformAngleSpacing = true;
     
     
     
     private String[] wList;
-    @SuppressWarnings("unused")
     private String[] titles;
     private boolean completed;
     
@@ -646,22 +627,22 @@ public class AlgorithmTreT1 extends AlgorithmTProcess {
 	private void initializeDisplayImages(ModelImage image) {
 	    if(calculateT1) {
             t1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "t1_results");
-            t1ResultStack = nearCloneImage(image, t1ResultStack);
+            cloneFileInfo(image, t1ResultStack);
         }
         
         if(calculateM0) {
             m0ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "m0_results");
-            m0ResultStack = nearCloneImage(image, m0ResultStack);
+            cloneFileInfo(image, m0ResultStack);
         }
          
         if(invertT1toR1) {
             r1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "r1_results");
-            r1ResultStack = nearCloneImage(image, r1ResultStack);
+            cloneFileInfo(image, r1ResultStack);
         }
          
         if(performTreT1HIFI && showB1Map) {
             b1ResultStack = new ModelImage(ModelImage.DOUBLE, image.getExtents(), "b1_results");
-            b1ResultStack = nearCloneImage(image, b1ResultStack);
+            cloneFileInfo(image, b1ResultStack);
         }
 	}
 
