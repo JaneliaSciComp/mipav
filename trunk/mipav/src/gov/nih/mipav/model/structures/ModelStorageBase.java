@@ -5068,6 +5068,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
     public int[] getVolumeIterationFactors() {
         return new int[] {1, dimExtents[0], dimExtents[0] * dimExtents[1]};
     }
+    
+    /**
+     * Gets the number of pixels in a volume of the image.
+     */
+    public int getVolumeSize() {
+        return getSliceSize() * (getNDims() > 3 ? getExtents()[3] : 1);
+    }
 
     /**
      * Returns the image width, based on the Patient Coordinates orientation from which the data will be viewed:
