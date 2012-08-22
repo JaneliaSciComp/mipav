@@ -16432,7 +16432,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            distribution, in batches of up to 128 using vectorizable code. The Box-Muller method is used to
      *            transform numbers from a uniform to a normal distribution.
      */
-    private void dlarnv(final int idist, final int[] iseed, final int n, final double[] x) {
+    public void dlarnv(final int idist, final int[] iseed, final int n, final double[] x) {
         final int lv = 128;
         int i;
         int il;
