@@ -127,11 +127,11 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
      */
     private TransMatrix fileTransMatrix;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** source image */
+    private ModelImage image; 
 
-    /** DOCUMENT ME! */
-    private int interp = 0;
+    /** Interpolation method */
+    private int interp = AlgorithmTransform.TRILINEAR;
 
     private float fillValue = 0.0f;
 
