@@ -179,7 +179,8 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         }  else if (command.equals("Help")) {
-            MipavUtil.showHelp("19074");
+            //MipavUtil.showHelp("19074");
+            MipavUtil.showWebHelp("Threshold");
         }
     }
 

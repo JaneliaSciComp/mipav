@@ -162,9 +162,11 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         } else if (command.equals("Help")) {
 
             if (firstImage.isColorImage()) {
-                MipavUtil.showHelp("19054");
+                //MipavUtil.showHelp("19054");
+                MipavUtil.showWebHelp("2D_Histogram#Applying_the_2D_Histogram_algorithm_to_color_images");
             } else {
-                MipavUtil.showHelp("19052");
+                //MipavUtil.showHelp("19052");
+                MipavUtil.showWebHelp("2D_Histogram#Applying_the_2D_Histogram_algorithm_to_grayscale_images");
             }
         }
     }

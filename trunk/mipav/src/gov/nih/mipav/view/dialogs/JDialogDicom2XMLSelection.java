@@ -79,7 +79,8 @@ public class JDialogDicom2XMLSelection extends JDialogListSaveSelection {
                 .equalsIgnoreCase("sortKeyRev")) {} else if (ae.getActionCommand().equalsIgnoreCase("sortName")) {} else if (ae
                 .getActionCommand().equalsIgnoreCase("sortNameRev")) {} else if (ae.getActionCommand()
                 .equalsIgnoreCase("help")) {
-            MipavUtil.showHelp("U4018");
+            //MipavUtil.showHelp("U4018");
+            MipavUtil.showWebHelp("Correcting_image_spacing#To_save_DICOM_images_as_XML_files");
         } else {
             super.actionPerformed(ae);
         }

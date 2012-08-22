@@ -101,7 +101,8 @@ public class JDialogHistogramMatch extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19010");
+            //MipavUtil.showHelp("19010");
+            MipavUtil.showWebHelp("Histogram_Matching#Applying_the_Histogram_Matching_algorithm");
         }
     }
 

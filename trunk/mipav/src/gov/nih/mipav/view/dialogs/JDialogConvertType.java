@@ -210,7 +210,8 @@ public class JDialogConvertType extends JDialogScriptableBase
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4013");
+            //MipavUtil.showHelp("U4013");
+            MipavUtil.showWebHelp("Converting_image_datasets_to_different_data_types");
         } else if (command.equals("FullRange")) {
 
             // if using full range, then reset the

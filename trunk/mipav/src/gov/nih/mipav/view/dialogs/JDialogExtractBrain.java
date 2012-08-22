@@ -476,7 +476,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10045");
+            //MipavUtil.showHelp("10045");
+            MipavUtil.showWebHelp("Extract_Brain:_Extract_Brain_Surface_(BET)");
         } else if (source == secondStageCheckBox) {
 
             if (secondStageCheckBox.isSelected()) {

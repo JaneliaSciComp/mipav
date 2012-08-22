@@ -104,7 +104,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
-			MipavUtil.showHelp("Edge022");
+			//MipavUtil.showHelp("Edge022");
+		    MipavUtil.showWebHelp("Edge_Detection:_Zero_X_Non-Maximum_Suppression#Applying_the_Zero_X_Non-Maximum_Suppression_algorithm");
 		}
 	}
 

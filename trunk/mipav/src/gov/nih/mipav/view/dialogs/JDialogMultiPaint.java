@@ -327,7 +327,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
             dispose();
         } else if (command.equals("AdvancedPaint:Help")) {
-            MipavUtil.showHelp("PT0003");
+            //MipavUtil.showHelp("PT0003");
+            MipavUtil.showWebHelp("Segmenting_Images_Using_Contours_and_Masks:_Advanced_paint_and_Power_Paint_tools#Multiple_Paint_Tools_dialog_box_options");
         } else if (command.startsWith("AdvancedPaint:PaintMask")) {
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
             newSelection = num;

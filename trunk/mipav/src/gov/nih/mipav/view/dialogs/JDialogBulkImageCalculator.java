@@ -131,106 +131,113 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
 	}
 	
 	/**
-	 *  action performed
-	 */
-	public void actionPerformed(ActionEvent event) {
-		String command = event.getActionCommand();
-		 if (command.equals("OK")) {
-			 callAlgorithm();
+     * action performed
+     */
+    public void actionPerformed(ActionEvent event) {
+        String command = event.getActionCommand();
+        if (command.equals("OK")) {
+            callAlgorithm();
 
-	     } else if (command.equals("Cancel")) {
-	    	 if(additionalImagesList.size() > 0) {
-	         	for(int i=0;i<additionalImagesList.size();i++) {
-	     			ModelImage addImage = ((ModelImage)additionalImagesList.get(i));
-	     			addImage.disposeLocal();
-	     			addImage = null;
-	     		}
-	         }
-	         dispose();
-	     } else if (command.equals("Help")) {
-	            MipavUtil.showHelp("U4070");
-	     } else if (command.equals("addImageBrowse")) {
-	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-	         JFileChooser chooser = fileChooser.getFileChooser();
-	         if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-                 chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-             } else {
-                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-             }
-	         chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
-	         chooser.setDialogTitle("Choose image");
-	         int returnValue = chooser.showOpenDialog(this);
-	         if (returnValue == JFileChooser.APPROVE_OPTION) { 	
-	         	FileIO fileIO = new FileIO();
-	         	isMultifile = fileChooser.isMulti();
-	         	ModelImage addImage = fileIO.readImage(chooser.getSelectedFile().getName(),chooser.getCurrentDirectory() + File.separator, isMultifile, null);
-	         	if(addImage.getNDims() != imageA.getNDims()) {
-	         		MipavUtil.displayError("Image does not have proper dimensions");
-	         		addImage.disposeLocal();
-	         		addImage = null;
-	 				return;
-	         	}
-	         	if(imageA.getNDims() == 2) {
-	         		if(!(imageA.getExtents()[0] == addImage.getExtents()[0] && imageA.getExtents()[1] == addImage.getExtents()[1])) {
-	         			MipavUtil.displayError("Image does not have proper extents");
-	         			addImage.disposeLocal();
-		         		addImage = null;
-		         		return;
-	         		}
-	         	}
-	         	if(imageA.getNDims() == 3) {
-	         		if(!(imageA.getExtents()[0] == addImage.getExtents()[0] && imageA.getExtents()[1] == addImage.getExtents()[1] && imageA.getExtents()[2] == addImage.getExtents()[2])) {
-	         			MipavUtil.displayError("Image does not have proper extents");
-	         			addImage.disposeLocal();
-		         		addImage = null;
-		         		return;
-	         		}
-	         	}
-	         	if(imageA.getNDims() == 4) {
-	         		if(!(imageA.getExtents()[0] == addImage.getExtents()[0] && imageA.getExtents()[1] == addImage.getExtents()[1] && imageA.getExtents()[2] == addImage.getExtents()[2] && imageA.getExtents()[3] == addImage.getExtents()[3])) {
-	         			MipavUtil.displayError("Image does not have proper extents");
-	         			addImage.disposeLocal();
-		         		addImage = null;
-		         		return;
-	         		}
-	         	}
-	         	if(isColor != addImage.isColorImage()) {
-	         		MipavUtil.displayError("Image color properties are not correct");
-	         		if(addImage != null) {
-	         			addImage.disposeLocal();
-	         		}
-	         		addImage = null;
-	 				return;
-	         	}
-	         	Vector<String> rowData = new Vector<String>();
+        } else if (command.equals("Cancel")) {
+            if (additionalImagesList.size() > 0) {
+                for (int i = 0; i < additionalImagesList.size(); i++) {
+                    ModelImage addImage = ((ModelImage) additionalImagesList.get(i));
+                    addImage.disposeLocal();
+                    addImage = null;
+                }
+            }
+            dispose();
+        } else if (command.equals("Help")) {
+            //MipavUtil.showHelp("U4070");
+            MipavUtil.showWebHelp("Image_Calculator:_Advanced_image_calculator_options#Image_Calculator-Bulk_Images");
+        } else if (command.equals("addImageBrowse")) {
+            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            JFileChooser chooser = fileChooser.getFileChooser();
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
+            chooser.setDialogTitle("Choose image");
+            int returnValue = chooser.showOpenDialog(this);
+            if (returnValue == JFileChooser.APPROVE_OPTION) {
+                FileIO fileIO = new FileIO();
+                isMultifile = fileChooser.isMulti();
+                ModelImage addImage = fileIO.readImage(chooser.getSelectedFile().getName(), chooser
+                        .getCurrentDirectory()
+                        + File.separator, isMultifile, null);
+                if (addImage.getNDims() != imageA.getNDims()) {
+                    MipavUtil.displayError("Image does not have proper dimensions");
+                    addImage.disposeLocal();
+                    addImage = null;
+                    return;
+                }
+                if (imageA.getNDims() == 2) {
+                    if ( ! (imageA.getExtents()[0] == addImage.getExtents()[0] && imageA.getExtents()[1] == addImage
+                            .getExtents()[1])) {
+                        MipavUtil.displayError("Image does not have proper extents");
+                        addImage.disposeLocal();
+                        addImage = null;
+                        return;
+                    }
+                }
+                if (imageA.getNDims() == 3) {
+                    if ( ! (imageA.getExtents()[0] == addImage.getExtents()[0]
+                            && imageA.getExtents()[1] == addImage.getExtents()[1] && imageA.getExtents()[2] == addImage
+                            .getExtents()[2])) {
+                        MipavUtil.displayError("Image does not have proper extents");
+                        addImage.disposeLocal();
+                        addImage = null;
+                        return;
+                    }
+                }
+                if (imageA.getNDims() == 4) {
+                    if ( ! (imageA.getExtents()[0] == addImage.getExtents()[0]
+                            && imageA.getExtents()[1] == addImage.getExtents()[1]
+                            && imageA.getExtents()[2] == addImage.getExtents()[2] && imageA.getExtents()[3] == addImage
+                            .getExtents()[3])) {
+                        MipavUtil.displayError("Image does not have proper extents");
+                        addImage.disposeLocal();
+                        addImage = null;
+                        return;
+                    }
+                }
+                if (isColor != addImage.isColorImage()) {
+                    MipavUtil.displayError("Image color properties are not correct");
+                    if (addImage != null) {
+                        addImage.disposeLocal();
+                    }
+                    addImage = null;
+                    return;
+                }
+                Vector<String> rowData = new Vector<String>();
                 rowData.add(addImage.getImageName());
                 srcTableModel.addRow(rowData);
                 additionalImagesList.add(addImage);
-	         	srcImagesList.add(addImage);
-	         } 
-	     }else if(command.equals("removeSelected")) {
-	    	 // cannot remove first entry..since this is imageA
-	    	 if(srcImagesTable.getSelectedRow() == 0) {
-	    		 MipavUtil.displayError("Can not remove the first entry since this is the image in which the dialog was opened on");
-	    		 return;
-	    	 }
-	    	 selectedRows = srcImagesTable.getSelectedRows();
-	    	 //need at least 2 images for algorithm to work
-	    	 if((srcImagesTable.getRowCount() - selectedRows.length) < 2) {
-	    		 MipavUtil.displayError("At least 2 images need to be present for algorithm to operate");
-	    		 return; 
-	    	 }
-	    	 for(int i=(selectedRows.length-1);i>=0;i--) {
-	    		 //need to remove from the table
-	             srcTableModel.removeRow(selectedRows[i]);
-	             // need to remove that entry from the List
-	             srcImagesList.remove(selectedRows[i]); 
-	    	 }
-	    	 
-	    	
-	     }
-
-	}
+                srcImagesList.add(addImage);
+            }
+        } else if (command.equals("removeSelected")) {
+            // cannot remove first entry..since this is imageA
+            if (srcImagesTable.getSelectedRow() == 0) {
+                MipavUtil
+                        .displayError("Can not remove the first entry since this is the image in which the dialog was opened on");
+                return;
+            }
+            selectedRows = srcImagesTable.getSelectedRows();
+            //need at least 2 images for algorithm to work
+            if ( (srcImagesTable.getRowCount() - selectedRows.length) < 2) {
+                MipavUtil.displayError("At least 2 images need to be present for algorithm to operate");
+                return;
+            }
+            for (int i = (selectedRows.length - 1); i >= 0; i--) {
+                //need to remove from the table
+                srcTableModel.removeRow(selectedRows[i]);
+                // need to remove that entry from the List
+                srcImagesList.remove(selectedRows[i]);
+            }
+        }
+    }
 	
 	/**
 	 *  call algorithm

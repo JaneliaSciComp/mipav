@@ -141,7 +141,8 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("A3001");
+        	//MipavUtil.showHelp("A3001");
+        	MipavUtil.showWebHelp("Histogram_summary");
         } else if ((source == redButton) || (source == greenButton) || (source == blueButton)) {
 
             switch (image.getType()) {

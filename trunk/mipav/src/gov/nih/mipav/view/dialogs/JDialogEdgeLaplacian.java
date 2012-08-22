@@ -104,7 +104,8 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Edge020");
+        	//MipavUtil.showHelp("Edge020");
+        	MipavUtil.showWebHelp("Edge_Detection:_Zero_X_Laplacian");
         }
     }
 

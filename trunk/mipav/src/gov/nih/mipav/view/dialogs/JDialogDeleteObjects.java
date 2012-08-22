@@ -119,7 +119,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor006Del");
+        	//MipavUtil.showHelp("Mor006Del");
+            MipavUtil.showWebHelp("Morphology#Applying_the_Delete_algorithm");
         }
     }
 

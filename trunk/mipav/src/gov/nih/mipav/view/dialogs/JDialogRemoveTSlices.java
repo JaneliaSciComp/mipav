@@ -130,7 +130,8 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
         } else if (source == cancelButton) {
             dispose();
         } else if (source == helpButton) {
-        	MipavUtil.showHelp("U4005");
+        	//MipavUtil.showHelp("U4005");
+        	MipavUtil.showWebHelp("4_D_tools#Removing_time_volumes");
         }
     }
 

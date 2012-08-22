@@ -114,7 +114,8 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10025");
+            //MipavUtil.showHelp("10025");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Unsharp_Mask");
         }
     }
 

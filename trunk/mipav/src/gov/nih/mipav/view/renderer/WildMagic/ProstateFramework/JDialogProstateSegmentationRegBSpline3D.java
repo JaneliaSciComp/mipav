@@ -272,7 +272,8 @@ public class JDialogProstateSegmentationRegBSpline3D extends JDialogBase
 		} else if (command.equals("Cancel")) {
 			dispose();
 		} else if (command.equals("Help")) {
-			MipavUtil.showHelp("Haral1001");
+			//MipavUtil.showHelp("Haral1001");
+			MipavUtil.showWebHelp("Filters_(Spatial):_Haralick_Texture");
 		}
 
 	}

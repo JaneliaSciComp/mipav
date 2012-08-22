@@ -88,8 +88,8 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     *
-     * @param  event  Event that triggers function.
+     * 
+     * @param event Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -102,7 +102,8 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-             MipavUtil.showHelp("CMSR001");
+            // MipavUtil.showHelp("CMSR001");
+            MipavUtil.showWebHelp("Transform:_Conformal_Mapping_Algorithms#Applying_the_Circular_Sector_to_Rectangle_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
         }

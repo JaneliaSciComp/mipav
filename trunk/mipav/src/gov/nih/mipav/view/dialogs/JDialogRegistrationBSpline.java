@@ -270,23 +270,29 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             if (kStringDimension.equals("3")) {
 
                 if (m_kCheckMultiPass.isSelected()) {
-                    MipavUtil.showHelp("19018");
+                    //MipavUtil.showHelp("19018");
+                    MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Two_-_Pass_Automatic_Registration_2.5D_dialog_box");
                 } else {
-                    MipavUtil.showHelp("19016");
+                    //MipavUtil.showHelp("19016");
+                    MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Single_-_Pass_Automatic_Registration_2D.2F3D_dialog_box");
                 }
             } else if (kStringDimension.equals("2.5")) {
 
                 if (m_kCheckMultiPass.isSelected()) {
-                    MipavUtil.showHelp("19022");
+                    //MipavUtil.showHelp("19022");
+                    MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Two_-_Pass_Automatic_Registration_2.5D_dialog_box");
                 } else {
-                    MipavUtil.showHelp("19020");
+                    //MipavUtil.showHelp("19020");
+                    MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Single_-_Pass_Automatic_Registration_2.5D_dialog_box");
                 }
             } else if (kStringDimension.equals("2")) {
 
                 if (m_kCheckMultiPass.isSelected()) {
-                    MipavUtil.showHelp("19018");
+                    //MipavUtil.showHelp("19018");
+                    MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Two_-_Pass_Automatic_Registration_2.5D_dialog_box");
                 } else {
-                    MipavUtil.showHelp("19016");
+                    //MipavUtil.showHelp("19016");
+                    MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Single_-_Pass_Automatic_Registration_2D.2F3D_dialog_box");
                 }
             }
         }

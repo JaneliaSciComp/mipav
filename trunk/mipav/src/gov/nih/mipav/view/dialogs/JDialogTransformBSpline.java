@@ -175,7 +175,8 @@ public class JDialogTransformBSpline extends JDialogScriptableBase implements Al
             dispose();
         }
         else if (command.equals("Help")) {
-            MipavUtil.showHelp("TransNon10");
+            //MipavUtil.showHelp("TransNon10");
+            MipavUtil.showWebHelp("Transform_nonlinear");
         }
     }
 

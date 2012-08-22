@@ -115,9 +115,9 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
             cancelFlag = true;
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("U4035");
+        	//MipavUtil.showHelp("U4035");
+            MipavUtil.showWebHelp("Inverting_the_image");
         }
-
     } // end actionPerformed()
 
     // ************************************************************************

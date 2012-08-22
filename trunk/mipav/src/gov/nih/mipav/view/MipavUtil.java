@@ -1180,11 +1180,34 @@ public class MipavUtil extends JComponent {
     public static final void setForceQuiet(final boolean force) {
         MipavUtil.forceQuiet = force;
     }
+    
+    /**
+     * Pops up the MIPAV help for a given wiki help page.
+     * 
+     * @param wikiPage The name of the wiki help topic to open.
+     */
+    public static void showWebHelp(final String wikiPage) {
+        String wikiBase = "http://mipav.cit.nih.gov/pubwiki/index.php/";
+        try {
+            URI wikiURI = new URI(wikiBase + wikiPage);
+            Desktop.getDesktop().browse(wikiURI);
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to display MIPAV wiki help: " + wikiPage);
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            MipavUtil.displayError("Unable to display MIPAV wiki help: " + wikiPage);
+            return;
+        }
+    }
 
     /**
      * Pops up the MIPAV help for a given help ID.
      * 
      * @param ID The ID of the help topic to open.
+     * 
+     * @deprecated Use the showWebHelp(String) method to bring up the new wiki-based help.
      */
     public static void showHelp(final String ID) {
 

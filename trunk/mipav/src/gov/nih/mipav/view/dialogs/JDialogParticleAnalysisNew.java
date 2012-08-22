@@ -182,7 +182,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor012PA");
+        	//MipavUtil.showHelp("Mor012PA");
+        	MipavUtil.showWebHelp("Morphology#Applying_particle_analysis");
         }
     }
 

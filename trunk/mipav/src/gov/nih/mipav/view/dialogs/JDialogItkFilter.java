@@ -123,7 +123,8 @@ public class JDialogItkFilter extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             // TODO correct help item.
-            MipavUtil.showHelp("10009");
+            //MipavUtil.showHelp("10009");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Gaussian_Blur#Applying_the_Gaussian_Blur_algorithm");
         }
     }
 

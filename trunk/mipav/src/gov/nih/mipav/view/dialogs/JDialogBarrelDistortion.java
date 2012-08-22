@@ -111,7 +111,8 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("Barr010");
+            //MipavUtil.showHelp("Barr010");
+            MipavUtil.showWebHelp("Barrel_Distortion_Correction");
         }
         else if (source == noScalingDCheckBox) {
             if (noScalingDCheckBox.isSelected()) {

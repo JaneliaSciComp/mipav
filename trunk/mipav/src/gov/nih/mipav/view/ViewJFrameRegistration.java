@@ -860,7 +860,8 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             image.notifyImageDisplayListeners(null, true);
             close();
         } else if (command.equals("help")) {
-            MipavUtil.showHelp("10046");
+            //MipavUtil.showHelp("10046");
+            MipavUtil.showWebHelp("Registration:_Manual_2D_Series");
         }else if(command.equals("costFunction")) {
         	calculateCostFunctionValues();
         }

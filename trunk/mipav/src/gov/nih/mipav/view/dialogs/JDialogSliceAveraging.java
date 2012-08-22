@@ -147,7 +147,8 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                 }
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10023");
+            //MipavUtil.showHelp("10023");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Slice_Averaging");
         }
     }
 

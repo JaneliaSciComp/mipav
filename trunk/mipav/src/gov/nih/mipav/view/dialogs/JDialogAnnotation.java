@@ -164,7 +164,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         } else if (command.equals("Cancel")) {
             windowClosing(null);
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("102572");
+            //MipavUtil.showHelp("102572");
+            MipavUtil.showWebHelp(" Creating_new_images#Annotating_images_with_text");
         }
     }
 

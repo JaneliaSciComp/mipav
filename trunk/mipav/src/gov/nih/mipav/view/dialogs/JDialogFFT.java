@@ -394,7 +394,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             textF2.setEnabled(true);
             labelF2.setEnabled(true);
         } else if (source == helpButton) {
-            MipavUtil.showHelp("10003");
+            //MipavUtil.showHelp("10003");
+            MipavUtil.showWebHelp("Fast_Fourier_Transformation_(FFT)#Applying_the_FFT_algorithm");
         } else if (source == cancelButton) {
             dispose();
         } else if (source == image25DCheckbox ) {

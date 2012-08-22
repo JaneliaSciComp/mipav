@@ -562,7 +562,8 @@ public class JDialogDTICreateListFile extends JDialogBase implements AlgorithmIn
 			regOptions.dispose();
 			dispose();
 		}else if (command.equalsIgnoreCase("help")) {
-			MipavUtil.showHelp("DTI00010");
+			//MipavUtil.showHelp("DTI00010");
+		    MipavUtil.showWebHelp("DTI:_Create_List_File");
 		}
 	}
 	

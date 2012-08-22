@@ -195,7 +195,8 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
             buildKernelSizeComboBox(true);
             comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10015");
+            //MipavUtil.showHelp("10015");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Mean#Applying_the_Mean_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
         } else if ((source == separateButton) || (source == adaptiveVectorButton) || (source == parallelVectorButton)) {

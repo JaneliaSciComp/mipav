@@ -233,7 +233,7 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	    	 }
 	         dispose();
 	     } else if (command.equals("Help")) {
-	            MipavUtil.showHelp("");
+	            //MipavUtil.showHelp("");
 	     } else if ((source == kMeansAlgo) || (source == globalAlgo) || (source == fastGlobalAlgo)) {
 	    	 if (kMeansAlgo.isSelected()) {
 	    		 initLabel.setEnabled(true);

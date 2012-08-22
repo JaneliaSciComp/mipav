@@ -365,8 +365,8 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
             dispose();
         }
         else if (source == helpButton) {
-            MipavUtil.showHelp("10506");
-            
+            //MipavUtil.showHelp("10506");
+            MipavUtil.showWebHelp("Segmenting_Images_Using_Contours_and_Masks:_Using_contours_to_segment_a_VOI");
         }
     }
 

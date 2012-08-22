@@ -213,7 +213,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
             }
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19001");
+            //MipavUtil.showHelp("19001");
+            MipavUtil.showWebHelp("Extract_Surface_(Marching_Cubes)#Applying_the_Extract_Surface_Algorithm");
         }else if (command.equals("chooseType")) {
             int pos = fileTypeList.getSelectedIndex();
 

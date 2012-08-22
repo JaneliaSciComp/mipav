@@ -117,7 +117,8 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4001");
+            //MipavUtil.showHelp("U4001");
+            MipavUtil.showWebHelp("4_D_tools#Converting_3D_to_4D_images_and_vise_versa");
         }
     }
 

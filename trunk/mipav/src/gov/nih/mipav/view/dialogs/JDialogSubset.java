@@ -122,7 +122,8 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4003");
+            //MipavUtil.showHelp("U4003");
+            MipavUtil.showWebHelp("4_D_tools#Extracting_3D_subset_from_4D");
         } else if (command.equals("XAxis")) {
             labelSlice.setText("Select index from 0 to " + (xSlices - 1));
         } else if (command.equals("YAxis")) {

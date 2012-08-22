@@ -173,7 +173,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor014Skel");
+        	//MipavUtil.showHelp("Mor014Skel");
+            MipavUtil.showWebHelp("Morphology#Applying_the_algorithm");
         }
     }
 

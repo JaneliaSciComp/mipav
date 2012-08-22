@@ -377,7 +377,8 @@ public class JDialogSaveSlices extends JDialogBase {
                 }
             }
         } else if (command.equalsIgnoreCase("help")) {
-            MipavUtil.showHelp("U4019");
+            //MipavUtil.showHelp("U4019");
+            MipavUtil.showWebHelp("Converting_non-DICOM_image_files_to_DICOM_format#Save_Range_of_Slices_dialog_box");
         }
     }
 

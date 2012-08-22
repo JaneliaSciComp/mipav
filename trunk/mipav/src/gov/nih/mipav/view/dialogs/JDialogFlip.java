@@ -124,7 +124,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4027");
+            //MipavUtil.showHelp("U4027");
+            MipavUtil.showWebHelp("Flipping_images");
         }
     }
 

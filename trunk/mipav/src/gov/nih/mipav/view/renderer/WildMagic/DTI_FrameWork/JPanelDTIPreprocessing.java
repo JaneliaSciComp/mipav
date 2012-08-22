@@ -297,7 +297,8 @@ public class JPanelDTIPreprocessing extends JPanel implements AlgorithmInterface
 		}
 		// Show help:
 		else if (command.equals("Help")) {
-			MipavUtil.showHelp("OAR19076");
+			//MipavUtil.showHelp("OAR19076");
+		    MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Optimized_Automatic_Registration_dialog_box_options");
 		}
 
 	}

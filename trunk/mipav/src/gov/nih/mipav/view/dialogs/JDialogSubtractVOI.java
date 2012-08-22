@@ -132,7 +132,8 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("U4063");
+        	//MipavUtil.showHelp("U4063");
+        	MipavUtil.showWebHelp("Subtract_VOI_Background");
         }
     }
 

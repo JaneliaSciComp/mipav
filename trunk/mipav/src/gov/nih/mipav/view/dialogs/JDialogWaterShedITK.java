@@ -109,7 +109,8 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
             dispose();
         } 
         else if (command.equals("Help")) {
-            MipavUtil.showHelp("WShed10");
+            //MipavUtil.showHelp("WShed10");
+            MipavUtil.showWebHelp("Watershed");
         }
     }
 

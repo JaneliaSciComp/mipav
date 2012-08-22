@@ -244,8 +244,8 @@ public class JDialogBSmooth extends JDialogBase implements AlgorithmInterface {
             dispose();
         }
         else if (source == helpButton) {
-            MipavUtil.showHelp("Smooth01");
-            
+            //MipavUtil.showHelp("Smooth01");
+            MipavUtil.showWebHelp("Modifying_Contours#Smooth_VOI");
         }
     }
 

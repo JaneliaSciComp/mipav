@@ -130,7 +130,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             undoModel = buildUndoTableModel(false);
             displayTable.setModel(buildTableModel());
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp(null);
+            //MipavUtil.showHelp(null);
         } else if (command.equals("Append")) {
             displayTable.clearSelection();
             Action paste = TableTransferImporter.getPasteAction();

@@ -767,7 +767,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 logFileButton.setEnabled(false);
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10247");
+            //MipavUtil.showHelp("10247");
+            MipavUtil.showWebHelp("Customizing_MIPAV");
         } else if (command.equals("fileTempDirBrowse")) {
             final JFileChooser chooser = new JFileChooser();
             if (Preferences.getFileTempDir() != null) {

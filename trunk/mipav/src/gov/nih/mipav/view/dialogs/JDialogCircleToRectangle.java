@@ -101,7 +101,8 @@ public class JDialogCircleToRectangle extends JDialogBase implements AlgorithmIn
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("CMCR001");
+            //MipavUtil.showHelp("CMCR001");
+            MipavUtil.showWebHelp("Transform:_Conformal_Mapping_Algorithms#Applying_the_Circle_to_Rectangle_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
         }
