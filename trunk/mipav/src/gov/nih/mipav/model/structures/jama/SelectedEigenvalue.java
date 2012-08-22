@@ -104,8 +104,8 @@ public class SelectedEigenvalue implements java.io.Serializable {
  int lwkopt;
  int iscale;
  double abstll;
- double vll;
- double vuu;
+ double vll = 0.0;
+ double vuu = 0.0;
  double smlnum;
  double bignum;
  double eps;
@@ -119,6 +119,9 @@ public class SelectedEigenvalue implements java.io.Serializable {
  double vec3[];
  double vec4[];
  double vec5[];
+ int ivec1[];
+ int ivec2[];
+ int ivec3[];
  int indtau;
  int inde;
  int indd;
@@ -132,6 +135,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
  int indibl;
  int indisp;
  int indiwo;
+ int nsplit[] = new int[1];
 
  //     Test the input parameters.
  lower =  ( (uplo == 'L') || (uplo == 'l'));
@@ -363,13 +367,27 @@ public class SelectedEigenvalue implements java.io.Serializable {
      indibl = 1;
      indisp = indibl + n;
      indiwo = indisp + n;
-     /*CALL DSTEBZ( RANGE, ORDER, N, VLL, VUU, IL, IU, ABSTLL,
-    $             WORK( INDD ), WORK( INDE ), M, NSPLIT, W,
-    $             IWORK( INDIBL ), IWORK( INDISP ), WORK( INDWRK ),
-    $             IWORK( INDIWO ), INFO )
- *
-     IF( WANTZ ) THEN
-        CALL DSTEIN( N, WORK( INDD ), WORK( INDE ), M, W,
+     for (i = 0; i < n; i++) {
+         vec1[i] = work[indd-1+i];
+     }
+     for (i = 0; i < n-1; i++) {
+         vec2[i] = work[inde-1+i];
+     }
+     ivec1 = new int[n];
+     ivec2 = new int[n];
+     vec3 = new double[4*n];
+     ivec3 = new int[3*n];
+     dstebz(range, order, n, vll, vuu, il, iu, abstll,
+            vec1, vec2, m, nsplit, w,
+            ivec1, ivec2, vec3, ivec3, info);
+     for (i = 0; i < n; i++) {
+         iwork[indibl-1+i] = ivec1[i];
+     }
+     for (i = 0; i < n; i++) {
+         iwork[indisp-1+i] = ivec2[i];
+     }
+     if (wantz) {
+        /*CALL DSTEIN( N, WORK( INDD ), WORK( INDE ), M, W,
     $                IWORK( INDIBL ), IWORK( INDISP ), Z, LDZ,
     $                WORK( INDWRK ), IWORK( INDIWO ), IFAIL, INFO )
  *
@@ -379,8 +397,8 @@ public class SelectedEigenvalue implements java.io.Serializable {
         INDWKN = INDE
         LLWRKN = LWORK - INDWKN + 1
         CALL DORMTR( 'L', UPLO, 'N', N, M, A, LDA, WORK( INDTAU ), Z,
-    $                LDZ, WORK( INDWKN ), LLWRKN, IINFO )
-     END IF*/
+    $                LDZ, WORK( INDWKN ), LLWRKN, IINFO )*/
+     } // if (wantz)
  } // if (doHere)
 
  // If matrix was scaled, then rescale eigenvalues appropriately.
@@ -1658,6 +1676,847 @@ public class SelectedEigenvalue implements java.io.Serializable {
 
   return;
   } // dlaebz
+  
+  /** This is a port of version 3.2 LAPACK routine DSTEIN.  The original DSTEIN is created by by Univ. of Tennessee,
+  Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. on November, 2006.
+  
+   dstein computes the eigenvectors of a real symmetric tridiagonal
+*  matrix T corresponding to specified eigenvalues, using inverse
+*  iteration.
+*
+*  The maximum number of iterations allowed for each eigenvector is
+*  specified by an internal parameter maxits (currently set to 5).
+*  @param n input int The order of the matrix.  n >= 0.
+*  @param d input double[] of dimension n.   The n diagonal elements of the tridiagonal matrix T.
+*  @param e input double[] of dimension n-1. The (n-1) subdiagonal elements of the tridiagonal matrix
+*          T, in elements 1 to N-1.
+*  @param m input int The number of eigenvectors to be found.  0 <= m <= n.
+*  @param w input double[] of dimension n. The first m elements of w contain the eigenvalues for
+*          which eigenvectors are to be computed.  The eigenvalues should be grouped by split-off block and ordered from
+*          smallest to largest within the block.  ( The output array w from dstebz with order = 'B' is expected here. )
+*  @param iblock input int[] of dimension n  The submatrix indices associated with the corresponding
+*          eigenvalues in w; iblock(i)=1 if eigenvalue w(i) belongs to
+*          the first submatrix from the top, =2 if w(i) belongs to
+*          the second submatrix, etc.  ( The output array iblock
+*          from dstebz is expected here. 
+*  @param isplit input int[] of dimension n The splitting points, at which T breaks up into submatrices.
+*          The first submatrix consists of rows/columns 1 to
+*          isplit( 1 ), the second of rows/columns isplit( 1 )+1
+*          through isplit( 2 ), etc.
+*          ( The output array isplit from dstebz is expected here. )
+*  @param Z output double[][] of dimension (ldz, m)  The computed eigenvectors.  The eigenvector associated
+*          with the eigenvalue w(i) is stored in the i-th column of
+*          Z.  Any vector which fails to converge is set to its current
+*          iterate after maxits iterations.
+*  @param ldz input int The leading dimension of the array Z.  ldz >= max(1,n).
+*  @param work workspace double[] of dimension (5*n).
+*  @param iwork workspace int[] of dimension n.
+*  @param ifail output int[] of dimension m  On normal exit, all elements of ifail are zero.
+*          If one or more eigenvectors fail to converge after
+*          maxits iterations, then their indices are stored in array ifail.
+*  @param info output int[] of dimension 1.
+*          = 0: successful exit.
+*          < 0: if INFO = -i, the i-th argument had an illegal value
+*          > 0: if INFO = i, then i eigenvectors failed to converge
+*               in MAXITS iterations.  Their indices are stored in
+*               array IFAIL.
+  */
+  private void dstein(int n, double d[], double e[], int m, double w[], int iblock[], int isplit[], double Z[][], 
+                      int ldz, double work[], int iwork[], int ifail[], int info[]) {
+
+/*  Internal Parameters
+*  ===================
+*
+*  MAXITS  INTEGER, default = 5
+*          The maximum number of iterations performed.
+*
+*  EXTRA   INTEGER, default = 2
+*          The number of iterations performed after norm growth
+*          criterion is satisfied, should be at least 1.
+*/
+  int maxits = 5;
+  int extra = 2;
+  int i;
+  int j;
+  double eps;
+  int iseed[] = new int[4];
+  int indrv1;
+  int indrv2;
+  int indrv3;
+  int indrv4;
+  int indrv5;
+  int j1;
+  int nblk;
+  int b1;
+  int bn;
+  int gpind;
+  int blksiz;
+  double onenrm;
+  double ortol;
+  double dtpcrt;
+  int jblk;
+  double xj;
+  double xjm = 0.0;
+  double eps1;
+  double pertol;
+  double sep;
+  int its;
+  int nrmchk;
+  double tol;
+  double vec1[];
+  double vec2[];
+  double vec3[];
+  double vec4[];
+  int ivec1[];
+  int iinfo[] = new int[1];
+  boolean doSeg = true;
+  double absSum;
+  double scl;
+ 
+  // Test the input parameters.
+
+  info[0] = 0;
+  for (i = 1; i <= m; i++) {
+     ifail[i-1] = 0;
+  }
+
+  if (n < 0) {
+     info[0] = -1;
+  }
+  else if (m < 0 || m > n) {
+     info[0] = -4;
+  }
+  else if (ldz < Math.max(1, n)) {
+     info[0] = -9;
+  }
+  else {
+     for (j = 2; j <= m; j++) {
+        if (iblock[j-1] < iblock[j-2]) {
+           info[0] = -6;
+           break;
+        }
+        if (iblock[j-1] == iblock[j-2] && w[j-1] < w[j-2]) {
+           info[0] = -5;
+           break;
+        }
+     } // for (j = 2; j <= m; j++)
+  } // else
+
+  if (info[0] != 0) {
+     MipavUtil.displayError("Error dstein had info[0] = " + info[0]);
+     return;
+  }
+
+  // Quick return if possible
+
+  if (n == 0 || m == 0) {
+     return;
+  }
+  else if (n == 1) {
+     Z[0][0] = 1.0;
+     return;
+  }
+
+  // Get machine constants.
+
+  eps = ge.dlamch('P');
+
+  // Initialize seed for random number generator DLARNV.
+
+  for (i = 1; i <= 4; i++) {
+     iseed[i-1] = 1;
+  }
+
+  // Initialize pointers.
+
+  indrv1 = 0;
+  indrv2 = indrv1 + n;
+  indrv3 = indrv2 + n;
+  indrv4 = indrv3 + n;
+  indrv5 = indrv4 + n;
+
+  // Compute eigenvectors of matrix blocks.
+
+  j1 = 1;
+  for (nblk = 1; nblk <= iblock[m-1]; nblk++) {
+
+     // Find starting and ending indices of block nblk.
+
+     if (nblk == 1) {
+        b1 = 1;
+     }
+     else {
+        b1 = isplit[nblk-2] + 1;
+     }
+     bn = isplit[nblk-1];
+     blksiz = bn - b1 + 1;
+     if (blksiz != 1) {
+         gpind = b1;
+
+         // Compute reorthogonalization criterion and stopping criterion.
+
+         onenrm = Math.abs(d[b1-1]) + Math.abs(e[b1-1]);
+         onenrm = Math.max(onenrm, Math.abs(d[bn-1])+Math.abs(e[bn-2]) );
+         for (i = b1+1; i <= bn-1; i++) {
+             onenrm = Math.max(onenrm, Math.abs(d[i-1])+Math.abs(e[i-2])+Math.abs(e[i-1]) );
+         } // for (i = b1+1; i <= bn-1; i++)
+         ortol = 1.0E-3 * onenrm;
+
+         dtpcrt = Math.sqrt(1.0E-1/blksiz);
+     } // if (blksiz != 1)
+
+     // Loop through eigenvalues of block nblk.
+
+     jblk = 0;
+     for (j = j1; j <= m; j++) {
+        if (iblock[j-1] != nblk) {
+           j1 = j;
+           break;
+        }
+        jblk = jblk + 1;
+        xj = w[j-1];
+
+        // Skip all the work if the block size is one.
+
+        if (blksiz == 1) {
+           work[indrv1] = 1.0;
+           for (i = 1; i <= n; i++) {
+               Z[i-1][j-1] = 0.0;
+           }
+           for (i = 1; i <= blksiz; i++) { 
+               Z[b1+i-2][j-1] = work[indrv1-1+i];
+           }
+           
+           // Save the shift to check eigenvalue spacing at next generation
+           
+           xjm = xj;
+           
+           continue;
+        }
+
+        // If eigenvalues j and j-1 are too close, add a relatively small perturbation.
+
+        if (jblk > 1) {
+           eps1 = Math.abs(eps * xj);
+           pertol = 10.0 * eps1;
+           sep = xj - xjm;
+           if (sep < pertol) {
+              xj = xjm + pertol;
+           }
+        } // if (jblk > 1)
+
+        its = 0;
+        nrmchk = 0;
+
+        // Get random starting vector.
+
+        ge.dlarnv( 2, iseed, blksiz, work);
+
+        // Copy the matrix T so it won't be destroyed in factorization.
+
+        for (i = 0; i < blksiz; i++) {
+            work[indrv4+i] = d[b1-1+i];
+        }
+        for (i = 0; i < blksiz-1; i++) {
+            work[indrv2+1+i] = e[b1-1+i];
+            work[indrv3+i] = e[b1-1+i];
+        }
+        
+
+        // Compute LU factors with partial pivoting  ( PT = LU )
+
+        tol = 0.0;
+        vec1 = new double[blksiz];
+        for (i = 0; i < blksiz; i++) {
+            vec1[i] = work[indrv4+i];
+        }
+        vec2 = new double[blksiz-1];
+        for (i = 0; i < blksiz-1; i++) {
+            vec2[i] = work[indrv2+1+i];
+        }
+        vec3 = new double[blksiz-1];
+        for (i = 0; i < blksiz-1; i++) {
+            vec3[i] = work[indrv3+i];
+        }
+        vec4 = new double[blksiz-2];
+        dlagtf(blksiz, vec1, xj, vec2, vec3, tol, vec4, iwork, iinfo);
+        for (i = 0; i < blksiz; i++) {
+            work[indrv4+i] = vec1[i];
+        }
+        for (i = 0; i < blksiz-1; i++) {
+            work[indrv2+1+i] = vec2[i];
+        }
+        for (i = 0; i < blksiz-1; i++) {
+            work[indrv3+i] = vec3[i];
+        }
+        for (i = 0; i < blksiz-2; i++) {
+            work[indrv5+i] = vec4[i];
+        }
+        
+        // Update iteration count.
+        
+        its++;
+        /*for (; its <= maxits; its++) {
+          
+            // Normalize and scale the righthand side vector Pb.
+    
+            absSum = 0.0;
+            for (i = 0; i < blksiz; i++) {
+                absSum += Math.abs(work[indrv1+i]);
+            }
+            scl = blksiz*onenrm*Math.max(eps, Math.abs(work[indrv4+blksiz-1] ) ) / absSum;
+            for (i = 0; i < blksiz; i++) {
+                work[indrv1+i] *= scl;
+            }
+   
+            // Solve the system LU = Pb.
+    
+            CALL DLAGTS( -1, BLKSIZ, WORK( INDRV4+1 ), WORK( INDRV2+2 ),
+     $                   WORK( INDRV3+1 ), WORK( INDRV5+1 ), IWORK,
+     $                   WORK( INDRV1+1 ), TOL, IINFO )
+    *
+    *           Reorthogonalize by modified Gram-Schmidt if eigenvalues are
+    *           close enough.
+    *
+            IF( JBLK.EQ.1 )
+     $         GO TO 90
+            IF( ABS( XJ-XJM ).GT.ORTOL )
+     $         GPIND = J
+            IF( GPIND.NE.J ) THEN
+               DO 80 I = GPIND, J - 1
+                  ZTR = -DDOT( BLKSIZ, WORK( INDRV1+1 ), 1, Z( B1, I ),
+     $                  1 )
+                  CALL DAXPY( BLKSIZ, ZTR, Z( B1, I ), 1,
+     $                        WORK( INDRV1+1 ), 1 )
+    80          CONTINUE
+            END IF
+    *
+    *           Check the infinity norm of the iterate.
+    *
+    90       CONTINUE
+            JMAX = IDAMAX( BLKSIZ, WORK( INDRV1+1 ), 1 )
+            NRM = ABS( WORK( INDRV1+JMAX ) )
+    *
+    *           Continue for additional iterations after norm reaches
+    *           stopping criterion.
+    *
+            if (nrm < dtpcrt) {
+                continue;
+            }
+            nrmchk = nrmchk + 1;
+            if (nrmchk < extra+1) {
+                continue;
+            }
+    
+            doSeg = false;
+            break;
+        } // for (; its <= maxits; its++)
+        
+        if (doSeg) {
+*
+*           If stopping criterion was not satisfied, update info and
+*           store eigenvector number in array ifail.
+*
+100       CONTINUE
+        INFO = INFO + 1
+        IFAIL( INFO ) = J
+        } // if (doSeg)
+*
+*           Accept iterate as jth eigenvector.
+*
+110       CONTINUE
+        SCL = ONE / DNRM2( BLKSIZ, WORK( INDRV1+1 ), 1 )
+        JMAX = IDAMAX( BLKSIZ, WORK( INDRV1+1 ), 1 )
+        IF( WORK( INDRV1+JMAX ).LT.ZERO )
+ $         SCL = -SCL
+        CALL DSCAL( BLKSIZ, SCL, WORK( INDRV1+1 ), 1 )
+120       CONTINUE
+        DO 130 I = 1, N
+           Z( I, J ) = ZERO
+130       CONTINUE
+        DO 140 I = 1, BLKSIZ
+           Z( B1+I-1, J ) = WORK( INDRV1+I )
+140       CONTINUE
+*
+*           Save the shift to check eigenvalue spacing at next
+*           iteration.
+*
+        XJM = XJ
+*/
+     } // for (j = j1; j <= m; j++)
+  } // for (nblk = 1; nblk <= iblk[m-1]; nblk++)
+
+  return;
+
+  } // dstein
+  
+  /** This is a port of version 3.2 LAPACK routine DLAGTF.  The original DLAGTF is created by by Univ. of Tennessee,
+  Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. on November, 2006.
+  
+   dlagtf factorizes the matrix (T - lambda*I), where T is an n by n
+*  tridiagonal matrix and lambda is a scalar, as
+*
+*     T - lambda*I = PLU,
+*
+*  where P is a permutation matrix, L is a unit lower tridiagonal matrix
+*  with at most one non-zero sub-diagonal elements per column and U is
+*  an upper triangular matrix with at most two non-zero super-diagonal
+*  elements per column.
+*
+*  The factorization is obtained by Gaussian elimination with partial
+*  pivoting and implicit row scaling.
+*
+*  The parameter LAMBDA is included in the routine so that DLAGTF may
+*  be used, in conjunction with DLAGTS, to obtain eigenvectors of T by
+*  inverse iteration.
+*  @param n input int The order of the matrix T.
+*  @param a (input/output) double[] of dimension n.   On entry, a must contain the diagonal elements of T.
+*          On exit, a is overwritten by the n diagonal elements of the
+*          upper triangular matrix U of the factorization of T.
+*  @param lambda input double
+   @param b (input/output) double[] of dimension n-1.
+           On entry, B must contain the (n-1) super-diagonal elements of
+*          T.
+*
+*          On exit, B is overwritten by the (n-1) super-diagonal
+*          elements of the matrix U of the factorization of T.
+*  @param c (input/output) of dimension (n-1).
+*          On entry, C must contain the (n-1) sub-diagonal elements of
+*          T.
+*
+*          On exit, C is overwritten by the (n-1) sub-diagonal elements
+*          of the matrix L of the factorization of T.
+*  @param tol input double   On entry, a relative tolerance used to indicate whether or
+*          not the matrix (T - lambda*I) is nearly singular. tol should
+*          normally be chose as approximately the largest relative error
+*          in the elements of T. For example, if the elements of T are
+*          correct to about 4 significant figures, then tol should be
+*          set to about 5*10**(-4). If TOL is supplied as less than eps,
+*          where eps is the relative machine precision, then the value
+*          eps is used in place of tol.
+*  @param d output double[] of dimension (n-2).  
+*          On exit, d is overwritten by the (n-2) second super-diagonal
+*          elements of the matrix U of the factorization of T.
+*  @param in output int[] of dimension n.
+*          On exit, in contains details of the permutation matrix P. If
+*          an interchange occurred at the kth step of the elimination,
+*          then in(k) = 1, otherwise in(k) = 0. The element in(n)
+*          returns the smallest positive integer j such that
+*
+*             abs( u(j,j) ).le. norm( (T - lambda*I)(j) )*TOL,
+*
+*          where norm( A(j) ) denotes the sum of the absolute values of
+*          the jth row of the matrix A. If no such j exists then in(n)
+*          is returned as zero. If in(n) is returned as positive, then a
+*          diagonal element of U is small, indicating that
+*          (T - lambda*I) is singular or nearly singular.
+*  @param info output int[] of dimension 1.
+*           = 0   : successful exit
+*           < 0: if info[0] = -k, the kth argument had an illegal value
+  */
+  private void dlagtf(int n, double a[], double lambda, double b[], double c[],
+                      double tol, double d[], int in[], int info[]) {
+  double eps;
+  double tl;
+  double scale1;
+  int k;
+  double scale2;
+  double piv1;
+  double piv2;
+  double mult;
+  double temp;
+
+  info[0] = 0;
+  if (n < 0) {
+     info[0] = -1;
+     MipavUtil.displayError("Error dlagtf had info[0] = " + info[0]);
+     return;
+  }
+
+  if (n == 0) {
+     return;
+  }
+
+  a[0] = a[0] - lambda;
+  in[n-1] = 0;
+  if (n == 1) {
+     if (a[0] == 0.0) {
+        in[0] = 1;
+     }
+     return;
+  }
+
+  eps = ge.dlamch('E');
+
+  tl = Math.max(tol, eps);
+  scale1 = Math.abs(a[0] ) + Math.abs(b[0]);
+  for (k = 1; k <= n-1; k++) {
+     a[k] = a[k] - lambda;
+     scale2 = Math.abs(c[k-1]) + Math.abs(a[k]);
+     if (k < (n-1)) {
+        scale2 = scale2 + Math.abs(b[k]);
+     }
+     if (a[k-1] == 0.0) {
+        piv1 = 0.0;
+     }
+     else {
+        piv1 = Math.abs(a[k-1]) /scale1;
+     }
+     if (c[k-1] == 0.0) {
+        in[k-1] = 0;
+        piv2 = 0.0;
+        scale1 = scale2;
+        if (k < (n-1)) {
+           d[k-1] = 0.0;
+        }
+     }
+     else {
+        piv2 = Math.abs(c[k-1]) / scale2;
+        if (piv2 <= piv1) {
+           in[k-1] = 0;
+           scale1 = scale2;
+           c[k-1] = c[k-1] / a[k-1];
+           a[k] = a[k] - c[k-1]*b[k-1];
+           if (k < (n-1)) {
+              d[k-1] = 0.0;
+           }
+        }
+        else {
+           in[k-1] = 1;
+           mult = a[k-1] / c[k-1];
+           a[k-1] = c[k-1];
+           temp = a[k];
+           a[k] = b[k-1] - mult * temp;
+           if (k < (n-1)) {
+              d[k-1] = b[k];
+              b[k] = -mult * d[k-1];
+           }
+           b[k-1] = temp;
+           c[k-1] = mult;
+        }
+     }
+     if ( (Math.max(piv1, piv2) <= tl) && (in[n-1] == 0 ) ) {
+        in[n-1] = k;
+     }
+  } // for (k = 1; k <= n-1; k++) 
+  if ( (Math.abs(a[n-1]) <= scale1*tl) && (in[n-1] == 0 ) ) {
+     in[n-1] = n;
+  }
+
+  return;
+
+  } // dlagtf
+  
+  /** This is a port of version 3.3.1 LAPACK routine DLAGTS.  The original DLAGTS is created by by Univ. of Tennessee,
+  Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. on April, 2011.
+  
+  dlagts may be used to solve one of the systems of equations
+*
+*     (T - lambda*I)*x = y   or   (T - lambda*I)**T*x = y,
+*
+*  where T is an n by n tridiagonal matrix, for x, following the
+*  factorization of (T - lambda*I) as
+*
+*     (T - lambda*I) = P*L*U ,
+*
+*  by routine dlagtf. The choice of equation to be solved is
+*  controlled by the argument job, and in each case there is an option
+*  to perturb zero or very small diagonal elements of U, this option
+*  being intended for use in applications such as inverse iteration.
+*  
+*  @param job input int  Specifies the job to be performed by dlagts as follows:
+*          =  1: The equations  (T - lambda*I)x = y  are to be solved,
+*                but diagonal elements of U are not to be perturbed.
+*          = -1: The equations  (T - lambda*I)x = y  are to be solved
+*                and, if overflow would otherwise occur, the diagonal
+*                elements of U are to be perturbed. See argument TOL
+*                below.
+*          =  2: The equations  (T - lambda*I)**Tx = y  are to be solved,
+*                but diagonal elements of U are not to be perturbed.
+*          = -2: The equations  (T - lambda*I)**Tx = y  are to be solved
+*                and, if overflow would otherwise occur, the diagonal
+*                elements of U are to be perturbed. See argument TOL
+*                below.
+*  @param n input n The order of the matrix T.
+*  @param a input double[] of dimension n.  On entry, a must contain the diagonal elements of U as
+*          returned from dlagtf.
+*  @param b input double[] of dimension (n-1). On entry, b must contain the first super-diagonal elements of
+*          U as returned from dlagtf. 
+*  @param c input double[] of dimension (n-1). On entry, c must contain the sub-diagonal elements of L as
+*          returned from dlagtf. 
+*  @param d input double[] of dimension (n-2). On entry, d must contain the second super-diagonal elements
+*          of U as returned from dlagtf.
+*  @param in input int[] of dimension n.  On entry, in must contain details of the matrix P as returned
+*          from dlagtf.
+*  @param y (input/output) double[] of dimension n.
+*          On entry, the right hand side vector y.
+*          On exit, y is overwritten by the solution vector x.  
+   @param tol (input/out) double[] of dimension 1. On entry, with  job < 0, tol should be the minimum
+*          perturbation to be made to very small diagonal elements of U.
+*          tol should normally be chosen as about eps*norm(U), where eps
+*          is the relative machine precision, but if tol is supplied as
+*          non-positive, then it is reset to eps*max( abs( u(i,j) ) ).
+*          If  job > 0  then tol is not referenced.
+*
+*          On exit, TOL is changed as described above, only if TOL is
+*          non-positive on entry. Otherwise TOL is unchanged.
+*  @param info output int[] of dimension 1.
+*         = 0   : successful exit
+*         < 0: if info[0] = -i, the i-th argument had an illegal value
+*         > 0: overflow would occur when computing the INFO(th)
+*                  element of the solution vector x. This can only occur
+*                  when JOB is supplied as positive and either means
+*                  that a diagonal element of U is very small, or that
+*                  the elements of the right-hand side vector y are very
+*                  large. 
+  */
+  private void dlagts(int job, int n, double a[], double b[], double c[], double d[],
+                      int in[], double y[], double tol[], int info[]) {
+  double eps;
+  double sfmin;
+  double bignum;
+  int k;
+  double temp;
+  double ak;
+  double absak;
+  double pert;
+
+  info[0] = 0;
+  if ( (Math.abs(job) > 2 ) || (job == 0) ) {
+     info[0] = -1;
+  }
+  else if (n < 0) {
+     info[0] = -2;
+  }
+  if (info[0] != 0) {
+     MipavUtil.displayError("Error dlagts had info[0] = " + info[0]);
+     return;
+  }
+
+  if (n == 0) {
+      return;
+  }
+
+  eps = ge.dlamch('E');
+  sfmin = ge.dlamch('S');
+  bignum = 1.0 / sfmin;
+
+  if (job < 0) {
+     if (tol[0] <= 0.0) {
+        tol[0] = Math.abs(a[0]);
+        if (n > 1) {
+           tol[0] = Math.max(tol[0], Math.max(Math.abs(a[1]), Math.abs(b[0])) );
+        }
+        for (k = 3; k <= n; k++) {
+           tol[0] = Math.max(tol[0],Math.max(Math.abs(a[k-1]), Math.max(Math.abs(b[k-2]),
+                 Math.abs(d[k-3]))) );
+        } // for (k = 3; k <= n; k++)
+        tol[0] = tol[0]*eps;
+        if (tol[0] == 0.0) {
+           tol[0] = eps;
+        }
+     } // if (tol[0] <= 0.0) 
+  } // if (job < 0)
+
+  if (Math.abs(job) == 1 ) {
+     for (k = 2; k <= n; k++) {
+        if (in[k-2] == 0) {
+           y[k-1] = y[k-1] - c[k-2]*y[k-2];
+        }
+        else {
+           temp = y[k-2];
+           y[k-2] = y[k-1];
+           y[k-1] = temp - c[k-2]*y[k-1];
+        }
+     } // for (k = 2; k <= n; k++) 
+     if (job == 1) {
+        for (k = n; k >= 1; k--) {
+           if (k <= n-2) {
+              temp = y[k-1] - b[k-1]*y[k] - d[k-1]*y[k+1];
+           }
+           else if (k == n-1) {
+              temp = y[k-1] - b[k-1]*y[k];
+           }
+           else {
+              temp = y[k-1];
+           }
+           ak = a[k-1];
+           absak = Math.abs(ak);
+           if (absak < 1.0) {
+              if (absak < sfmin) {
+                 if (absak == 0.0 || Math.abs(temp)*sfmin > absak) {
+                    info[0] = k;
+                    return;
+                 }
+                 else {
+                    temp = temp * bignum;
+                    ak = ak * bignum;
+                 }
+              } // if (absak < sfmin)
+              else if (Math.abs(temp) > absak*bignum) {
+                 info[0] = k;
+                 return;
+              } // else if (Math.abs(temp) > absak*bignum)
+           } // if (absak < 1.0)
+           y[k-1] = temp / ak;
+        } // for (k = n; k >= 1; k--)
+     } // if (job == 1)
+     else { // job == -1
+        for (k = n; k >= 1; k--) {
+           if (k <= n-2) {
+              temp = y[k-1] - b[k-1]*y[k] - d[k-1]*y[k+1];
+           }
+           else if (k == n-1) {
+              temp = y[k-1] - b[k-1]*y[k];
+           }
+           else {
+              temp = y[k-1];
+           }
+           ak = a[k-1];
+           if (ak >= 0.0) {
+               pert = Math.abs(tol[0]);
+           }
+           else {
+               pert = -Math.abs(tol[0]);
+           }
+           
+           while (true) {
+               absak = Math.abs(ak);
+               if (absak < 1.0) {
+                  if (absak < sfmin) {
+                     if (absak == 0.0 || Math.abs(temp)*sfmin > absak) {
+                        ak = ak + pert;
+                        pert = 2.0 * pert;
+                        continue;
+                     } // if (absak == 0.0 || Math.abs(temp)*sfmin > absak)
+                     else {
+                        temp = temp * bignum;
+                        ak = ak * bignum;
+                        break;
+                     }
+                  } // if (absak < sfmin)
+                  else if (Math.abs(temp) > absak * bignum) {
+                     ak = ak + pert;
+                     pert = 2.0 * pert;
+                     continue;
+                  } // else if (Math.abs(temp) > absak * bignum)
+                  else {
+                      break;
+                  }
+               } // if (absak < 1.0)
+               else {
+                   break;
+               }
+           } // while (true)
+           y[k-1] = temp/ak;
+        } // for (k = n; k >= 1; k--)
+     } // else job == -1
+  } // if (Math.abs(job) == 1 )
+  else { // job = 2 or -2
+
+     // Come to here if  JOB = 2 or -2
+
+     if (job == 2) {
+        for (k = 1; k <= n; k++) {
+           if (k >= 3) {
+              temp = y[k-1] - b[k-2]*y[k-2] - d[k-3]*y[k-3];
+           }
+           else if (k == 2) {
+              temp = y[k-1] - b[k-2]*y[k-2];
+           }
+           else {
+              temp = y[k-1];
+           }
+           ak = a[k-1];
+           absak = Math.abs(ak);
+           if (absak < 1.0) {
+              if (absak < sfmin) {
+                 if (absak == 0.0 || Math.abs(temp)*sfmin > absak) {
+                    info[0] = k;
+                    return;
+                 }
+                 else {
+                    temp = temp*bignum;
+                    ak = ak*bignum;
+                 }
+              }
+              else if (Math.abs(temp) > absak*bignum) {
+                 info[0] = k;
+                 return;
+              }
+           } // if (absak < 1.0)
+           y[k-1] = temp / ak;
+        } // for (k = 1; k <= n; k++)
+     } // if (job == 2)
+     else { // job == -2
+        for (k = 1; k <= n; k++) {
+           if (k >= 3) {
+              temp = y[k-1] - b[k-2]*y[k-2] - d[k-3]*y[k-3];
+           }
+           else if (k == 2) {
+              temp = y[k-1] - b[k-2]*y[k-2];
+           }
+           else {
+              temp = y[k-1];
+           }
+           ak = a[k-1];
+           if (ak >= 0.0) {
+               pert = Math.abs(tol[0]);
+           }
+           else {
+               pert = -Math.abs(tol[0]);
+           }
+           while (true) {
+               absak = Math.abs(ak);
+               if (absak < 1.0) {
+                   if (absak < sfmin) {
+                     if (absak == 0.0 || Math.abs(temp)*sfmin > absak) {
+                        ak = ak + pert;
+                        pert = 2.0 * pert;
+                        continue;
+                     } // if (absak == 0.0 || Math.abs(temp)*sfmin > absak) 
+                     else {
+                        temp = temp*bignum;
+                        ak = ak*bignum;
+                        break;
+                     }
+                   } // if (absak < sfmin)
+                   else if (Math.abs(temp) > absak*bignum) {
+                     ak = ak + pert;
+                     pert = 2.0*pert;
+                     continue;
+                   } // else if (Math.abs(temp) > absak*bignum)
+                   else {
+                       break;
+                   }
+               } // if (absak < 1.0)
+               else {
+                   break;
+               }
+           } // while (true)
+           y[k-1] = temp/ak;
+        } // for (k = 1; k <= n; k++)
+     } // else job == -2
+
+     for (k = n; k >= 2; k--) {
+        if (in[k-2] == 0 ) {
+           y[k-2] = y[k-2] - c[k-2]*y[k-1];
+        }
+        else {
+           temp = y[k-2];
+           y[k-2] = y[k-1];
+           y[k-1] = temp - c[k-2]*y[k-1];
+        }
+     } // for (k = n; k >= 2; k--)
+  } // else job = 2 or -2
+  return;
+  } // dlagts
+
+
+
+
+
+
 
 
 }
