@@ -15,6 +15,9 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
+import javax.swing.table.TableModel;
+import javax.swing.text.JTextComponent;
+
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 /**
@@ -372,6 +375,7 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setPixelPadValue(info.getPixelPadValue());
                 fileInfo[i].setPhotometric(info.getPhotometric());
                 
+                
                 fileInfo[i].setUnitsOfMeasure(units);
                 fileInfo[i].setResolutions(res);
                 
@@ -422,6 +426,125 @@ public abstract class JDialogBase extends JDialog
      * @param  event  ItemEvent
      */
     public void itemStateChanged(ItemEvent event) { }
+    
+    /**
+     * Loads default values for gui components in the dialog.
+     * 
+     * @return whether loading defaults was successful
+     */
+    public void loadDefaults() {
+        String nameStart = new String();
+        Object obj = Preferences.getProperty(getClass().getName()+String.valueOf(0));
+        if(obj == null || obj.toString().length() == 0) {
+            MipavUtil.displayInfo("No defaults available for this dialog");
+        } else {
+            nameStart = getClass().getName()+String.valueOf(0);
+        }
+        
+        boolean success = loadComponenets(this, nameStart);
+        if(!success) {
+            Preferences.debug("Preferences loading not successful for "+this.getName(), Preferences.DEBUG_MINOR);
+        }
+    }
+    
+    private boolean loadComponenets(Component comp, String name) {
+        
+        String prop = null;
+        if(!(comp instanceof JTable)) {    //jtable uses custom naming scheme
+            prop = Preferences.getProperty(name);
+        }
+        
+        boolean load = true;        
+        
+        if(prop == null && comp instanceof Container) {
+            Component[] compAr = ((Container)comp).getComponents();
+            for(int i=0; i<compAr.length; i++) {
+                String subName = compAr[i].getName();
+                try {
+                    if(subName == null || subName.length() == 0) {
+                        subName = String.valueOf(i);
+                    }
+                    load &= loadComponenets(compAr[i], name+"."+subName);
+                
+                } catch (Exception e) {
+                    Preferences.debug(name+"."+subName+" property could not be loaded", Preferences.DEBUG_MINOR);
+                    e.printStackTrace();
+                    
+                    return false;
+                }
+            }
+        } else if(comp instanceof JToggleButton) { //checkbox and radio buttons
+            JToggleButton button = (JToggleButton)comp;
+            boolean b = Boolean.valueOf(prop);
+            button.setSelected(b);
+        } else if(comp instanceof JTextComponent) { //textfield, editorpane, textarea, textpane, and passwordfield
+            JTextComponent text = (JTextComponent)comp;
+            text.setText(prop);
+        } else if(comp instanceof JSlider) {
+            JSlider slider = (JSlider)comp;
+            slider.setValue(Integer.valueOf(prop));
+        } else if(comp instanceof JSpinner) {
+            JSpinner spinner = (JSpinner)comp;
+            spinner.setValue(prop);
+        } else if(comp instanceof JComboBox) {
+            JComboBox combo = (JComboBox)comp;
+            String[] itemSplit = prop.split(",");
+            if(prop.contains(":")) {
+                for(int i=0; i<itemSplit.length; i++) {
+                    String[] objSplit = itemSplit[i].split(":");
+                    boolean found = false;
+                    for(int j=0; j<combo.getItemCount(); j++) {
+                        if(combo.getItemAt(j).toString().equals(objSplit[1].trim())) {
+                            combo.setSelectedIndex(j);
+                            found = true;
+                        }
+                    }
+                    if(!found) {
+                        int index = Integer.valueOf(objSplit[0].trim());
+                        if(index < combo.getItemCount()) {
+                            combo.setSelectedIndex(index);
+                        }
+                    }
+                }
+            }
+        } else if(comp instanceof JColorChooser) {
+            JColorChooser color = (JColorChooser)comp;
+            Color c = new Color(Integer.valueOf(prop));
+            color.setColor(c);
+        } else if(comp instanceof JTable) {
+            JTable table = (JTable) comp;
+            TableModel model = table.getModel();
+            for(int i=0; i<table.getRowCount(); i++) {
+                for(int j=0; j<table.getColumnCount(); j++) {
+                    if(model.isCellEditable(i, j)) {
+                        Object obj = Preferences.getProperty(name+":"+i+","+j);
+                        if(obj != null) {
+                            table.setValueAt(obj, i, j);
+                        }
+                    }
+                }
+            }
+        } else if(comp instanceof JTree) {
+            JTree tree = (JTree) comp;
+            String[] split = prop.split(",");
+            int[] rows = new int[split.length];
+            for(int i=0; i<rows.length; i++) {
+                rows[i] = Integer.valueOf(split[i].trim());
+            }
+            tree.setSelectionRows(rows);
+        } else if(comp instanceof JList) {
+            JList list = (JList)comp;
+            String[] split = prop.split(",");
+            int[] rows = new int[split.length];
+            for(int i=0; i<rows.length; i++) {
+                rows[i] = Integer.valueOf(split[i].trim());
+            }
+            list.setSelectedIndices(rows);
+        } 
+        
+        
+        return load;
+    }
 
     /**
      * Makes a string of a floating point number with a specific number of decimal points.
@@ -445,6 +568,102 @@ public abstract class JDialogBase extends JDialog
         } else {
             return (String.valueOf(number));
         }
+    }
+    
+    /**
+     * Saves the defaults of the dialog base to the mipav preferences file.
+     */
+    public void saveDefaults() {
+        Preferences.setProperty(getClass().getName(), String.valueOf(0));
+        
+        saveComponents(this, getClass().getName()+String.valueOf(0));
+    }
+    
+    private void saveComponents(Component comp, String name) {
+        if(!comp.isEnabled() || !comp.isVisible()) {
+            return;
+        }
+        
+        
+        if(comp instanceof JToggleButton) { //checkbox and radio buttons
+            JToggleButton button = (JToggleButton)comp;
+            Preferences.setProperty(name, String.valueOf(button.isSelected()));
+        } else if(comp instanceof JTextComponent) { //textfield, editorpane, textarea, textpane, and passwordfield
+            JTextComponent text = (JTextComponent)comp;
+            if(text.getText().trim().length() > 0) {
+                Preferences.setProperty(name, text.getText());
+            }
+        } else if(comp instanceof JSlider) {
+            JSlider slider = (JSlider)comp;
+            Preferences.setProperty(name, String.valueOf(slider.getValue()));
+        } else if(comp instanceof JSpinner) {
+            JSpinner spinner = (JSpinner)comp;
+            Preferences.setProperty(name, String.valueOf(spinner.getValue()));
+        } else if(comp instanceof JComboBox) {
+            JComboBox combo = (JComboBox)comp;
+            StringBuffer buffer = new StringBuffer();
+            Object[] obj = combo.getSelectedObjects();
+            
+            if(obj != null) {
+                for(int i=0; i<obj.length; i++) {
+                    buffer.append(i).append(":").append(obj[i]).append(",");
+                }
+                buffer.deleteCharAt(buffer.length()-1);
+                Preferences.setProperty(name, buffer.toString());    
+            }
+        } else if(comp instanceof JColorChooser) {
+            JColorChooser color = (JColorChooser)comp;
+            if(color.getColor() != null) {
+                Preferences.setProperty(name, String.valueOf(color.getColor().getRGB()));
+            }
+        } else if(comp instanceof JTable) {
+            JTable table = (JTable) comp;
+            TableModel model = table.getModel();
+            for(int i=0; i<table.getRowCount(); i++) {
+                for(int j=0; j<table.getColumnCount(); j++) {
+                    if(model.isCellEditable(i, j) && table.getValueAt(i, j) != null) {
+                        Preferences.setProperty(name+":"+i+","+j, String.valueOf(table.getValueAt(i, j)));
+                    }
+                }
+            }
+        } else if(comp instanceof JTree) {
+            JTree tree = (JTree) comp;
+            int[] rows = tree.getSelectionRows();
+            StringBuffer buffer = new StringBuffer();
+            if(rows != null) {
+                for(int i=0; i<rows.length; i++) {
+                    buffer.append(i).append(",");
+                }
+                buffer.deleteCharAt(buffer.length()-1);
+            }
+            Preferences.setProperty(name, buffer.toString());
+        } else if(comp instanceof JList) {
+            JList list = (JList)comp;
+            int[] rows = list.getSelectedIndices();
+            StringBuffer buffer = new StringBuffer();
+            if(rows != null) {
+                for(int i=0; i<rows.length; i++) {
+                    buffer.append(i).append(",");
+                }
+                buffer.deleteCharAt(buffer.length()-1);
+            }
+            Preferences.setProperty(name, buffer.toString());
+        } else if(comp instanceof Container) {
+            Component[] compAr = ((Container)comp).getComponents();
+            for(int i=0; i<compAr.length; i++) {
+                String subName = compAr[i].getName();
+                if(subName == null || subName.length() == 0) {
+                    subName = String.valueOf(i);
+                }
+                try {
+                    saveComponents(compAr[i], name+"."+subName);
+                } catch (Exception e) {
+                    Preferences.debug(name+"."+subName+" property could not be saved", Preferences.DEBUG_MINOR);
+                    e.printStackTrace();
+                }
+            }
+        }
+        
     }
 
     /**
