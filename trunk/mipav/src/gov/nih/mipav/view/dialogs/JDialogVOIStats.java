@@ -258,7 +258,8 @@ public class JDialogVOIStats extends JDialogBase
         } else if (source == followVOISelectionBox) {
             frameFollowsSelection = followVOISelectionBox.isSelected();
         } else if (source == helpButton) {
-        	MipavUtil.showHelp("10231");
+        	//MipavUtil.showHelp("10231");
+        	MipavUtil.showWebHelp("Calculating_statistics_on_VOI_groups");
         } else if (source == applyButton) {
             ViewVOIVector vectorVOI = image.getVOIs();
             if (vectorVOI.size() == 0) {

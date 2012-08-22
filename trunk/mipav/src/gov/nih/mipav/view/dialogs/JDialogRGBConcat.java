@@ -156,7 +156,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("U4015");
+            //MipavUtil.showHelp("U4015");
+            MipavUtil.showWebHelp("Converting_image_datasets_to_different_data_types#Concatenate-RGB");
         } else if (source == cBoxRemap) {
             if (cBoxRemap.isSelected()) {
                 textRemap.setEnabled(true);

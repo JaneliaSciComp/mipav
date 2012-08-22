@@ -128,7 +128,7 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 	         }
 	         dispose();
 	     } else if (command.equals("Help")) {
-	            MipavUtil.showHelp("");
+	         //MipavUtil.showHelp("");
 	     } else if (command.equals("addImageBrowse")) {
 	    	 ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
 	         JFileChooser chooser = fileChooser.getFileChooser();

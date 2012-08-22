@@ -1793,7 +1793,8 @@ public class ViewJFrameGraph extends JFrame
         } else if (command.equals("CancelModifyGraph")) {
             modifyDialog.dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19050");
+            //MipavUtil.showHelp("19050");
+            MipavUtil.showWebHelp("2D_Historam");
         } else if (command.equals("Normalize")) {
             // System.err.println("running median, then gaussian on function1");
 

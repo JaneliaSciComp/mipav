@@ -84,7 +84,8 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10034");
+            //MipavUtil.showHelp("10034");
+            MipavUtil.showWebHelp("Reslice-Isotropic_Voxels");
         }
     }
 

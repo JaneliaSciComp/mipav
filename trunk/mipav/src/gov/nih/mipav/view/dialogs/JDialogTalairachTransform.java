@@ -750,7 +750,8 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 		if (command.equals("Close")) {
  			dispose();
 		}  else if (command.equals("Help")) {
-            MipavUtil.showHelp("13010");
+            //MipavUtil.showHelp("13010");
+            MipavUtil.showWebHelp("Mapping_Brains_in_Talairach_Space");
         } else if (command.equals("ACPC")) {
 			transformToACPC();
 		} else if (command.equals("TLRC")) {

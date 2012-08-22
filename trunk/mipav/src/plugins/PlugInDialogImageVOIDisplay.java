@@ -80,7 +80,8 @@ public class PlugInDialogImageVOIDisplay extends ViewJFrameImage implements Mous
         } else if (command.equals("DataProvenance")) {
         	ViewUserInterface.getReference().aboutDataProvenance();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp(null);
+            //MipavUtil.showHelp(null);
+            MipavUtil.showWebHelp("MIPAV_Help");
         } else if (command.equals("MemoryUsage")) {
         	ViewUserInterface.getReference().memoryFrame();
         } else if (command.equals("MemoryAdjust")) {

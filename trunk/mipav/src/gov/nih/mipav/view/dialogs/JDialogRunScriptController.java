@@ -198,7 +198,8 @@ public class JDialogRunScriptController implements ActionListener {
         } else if (command.equalsIgnoreCase("Close")) {
             view.getFrame().dispose();
         } else if (command.equalsIgnoreCase("Scripting help")) {
-            MipavUtil.showHelp("10715");
+            //MipavUtil.showHelp("10715");
+            MipavUtil.showWebHelp("Running_scripts");
         } else if (command.equals("RawInfo")) {
         	
         	JList imageList = view.getImageList();

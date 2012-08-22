@@ -347,7 +347,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("Transform010");
+            //MipavUtil.showHelp("Transform010");
+            MipavUtil.showWebHelp("Transform");
         }
     }
 

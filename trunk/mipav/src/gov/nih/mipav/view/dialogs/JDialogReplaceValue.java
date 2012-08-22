@@ -116,7 +116,8 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         } else if (cmd.equals("Cancel")) {
             dispose();
         } else if (cmd.equals("Help")) {
-            MipavUtil.showHelp("U4045");
+            //MipavUtil.showHelp("U4045");
+            MipavUtil.showWebHelp("Replacing_pixel/voxel_value_in_images");
         }
     }
 

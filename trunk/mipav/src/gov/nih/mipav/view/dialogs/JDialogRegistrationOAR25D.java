@@ -254,7 +254,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("OAR19076");
+        	//MipavUtil.showHelp("OAR19076");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Optimized_Automatic_Registration_dialog_box_options");
         } else if (command.equals("AdvancedSettings")) {
             maxIterations_def = maxIterations;
             numMinima_def = numMinima;
@@ -330,7 +331,8 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
         } else if (command.equals("AdvancedHelp")) {
-        	MipavUtil.showHelp("OAR19078");
+        	//MipavUtil.showHelp("OAR19078");
+            MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Advanced_OAR_settings_for_Constrained_Optimized_Automatic_Registration_3D");
         }
     }
 

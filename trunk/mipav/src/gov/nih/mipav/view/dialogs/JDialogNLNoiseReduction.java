@@ -156,7 +156,8 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10019");
+            //MipavUtil.showHelp("10019");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Nonlinear_Noise_Reduction#Applying_the_algorithm");
         }
     }
 

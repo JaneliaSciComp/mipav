@@ -126,7 +126,9 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10009");
+            // TODO: testing wiki help
+            //MipavUtil.showHelp("10009");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Gaussian_Blur#Applying_the_Gaussian_Blur_algorithm");
         }
     }
 

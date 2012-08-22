@@ -206,7 +206,8 @@ public class JDialogDilate extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor002Dil");
+        	//MipavUtil.showHelp("Mor002Dil");
+            MipavUtil.showWebHelp("Morphology#Dilate");
         }
     }
 

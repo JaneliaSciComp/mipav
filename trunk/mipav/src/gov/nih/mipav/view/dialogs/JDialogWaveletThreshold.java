@@ -150,7 +150,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("WThresh01");
+            //MipavUtil.showHelp("WThresh01");
+            MipavUtil.showWebHelp("Filters_(Wavelet):_Thresholding");
         } else if (command.equals("Cancel")) {
             dispose();
         }

@@ -904,7 +904,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         } else if (command.equals("DataProvenance")) {
             aboutDataProvenance();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp(null);
+            //MipavUtil.showHelp(null);
+            MipavUtil.showWebHelp("MIPAV_Help");
         } else if (command.equals("MemoryUsage")) {
             memoryFrame();
         } else if (command.equals("MemoryAdjust")) {

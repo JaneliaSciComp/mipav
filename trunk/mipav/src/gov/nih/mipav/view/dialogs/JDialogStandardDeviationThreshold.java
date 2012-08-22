@@ -647,9 +647,11 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
     	}
     	else if(command.equals("Help")) {
     		if(!isColorImage) {
-    			MipavUtil.showHelp("StDev001");
+    			//MipavUtil.showHelp("StDev001");
+    			MipavUtil.showWebHelp("Standard_Deviation_Threshold#Applying_the_algorithm_to_grayscale_images");
     		}else {
-    			MipavUtil.showHelp("StDev005");
+    			//MipavUtil.showHelp("StDev005");
+    		    MipavUtil.showWebHelp("Standard_Deviation_Threshold#Applying_the_algorithm_to_grayscale_images");
     		}
     	}else if(command.equals("paintDestination")) {
     		if(!isColorImage) {

@@ -173,7 +173,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             dispose();
         }
         else if (command.equals("Help")) {
-            MipavUtil.showHelp("19074");
+            //MipavUtil.showHelp("19074");
+            MipavUtil.showWebHelp("Threshold");
         }
     }
 

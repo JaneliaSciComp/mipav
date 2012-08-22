@@ -173,7 +173,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10067");
+            //MipavUtil.showHelp("10067");
+            MipavUtil.showWebHelp("Subsampling_images");
         } else if (command.equals("Subsample by 2")) {
         	denom = 2;
         	for(int i = 0; i < dim; i++) {

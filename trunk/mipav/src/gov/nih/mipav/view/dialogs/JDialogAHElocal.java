@@ -182,7 +182,8 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10051");
+            //MipavUtil.showHelp("10051");
+            MipavUtil.showWebHelp("Histogram_Equalization:_Neighborhood_Adaptive");
         }
     }
 

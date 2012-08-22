@@ -151,8 +151,8 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-
-            MipavUtil.showHelp("10011");
+            //MipavUtil.showHelp("10011");
+            MipavUtil.showWebHelp("Filters_(Spatial):_Gradient_Magnitude#Applying_the_Gradient_Magnitude_algorithm");
         }
     }
 

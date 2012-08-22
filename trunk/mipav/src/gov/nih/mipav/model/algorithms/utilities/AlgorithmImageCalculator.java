@@ -264,7 +264,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
         int len;
 
         if (event.getActionCommand().equals("Help")) {
-            MipavUtil.showHelp("U4031");
+            //MipavUtil.showHelp("U4031");
+            MipavUtil.showWebHelp("Image_Calculator:_Advanced_image_calculator_options#Enter_Advanced_Operator_dialog_box");
         } else if (source == OKButton) {
         	this.getProgressChangeListener().setVisible(true);
             adOpString = textOperator.getText();

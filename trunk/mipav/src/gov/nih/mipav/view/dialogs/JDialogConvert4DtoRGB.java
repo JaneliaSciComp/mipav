@@ -495,7 +495,8 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
 			dispose();
 		}
 		else if (command.equalsIgnoreCase("help")) {
-			MipavUtil.showHelp("U4008");
+			//MipavUtil.showHelp("U4008");
+		    MipavUtil.showWebHelp("4_D_tools#Convert_4D_to_RGB");
 		}
         else if (source == remapCheckBox) {
             if (remapCheckBox.isSelected()) {

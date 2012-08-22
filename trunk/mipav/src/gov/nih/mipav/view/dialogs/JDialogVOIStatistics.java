@@ -239,7 +239,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase implements Algor
         } else if (source == cancelButton) {
             cleanUpAndDispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("GroupStat001");
+            //MipavUtil.showHelp("GroupStat001");
+            MipavUtil.showWebHelp("Calculating_statistics_on_VOI_groups");
         }
     }
 

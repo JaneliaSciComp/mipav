@@ -2268,7 +2268,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp(null);
+            //MipavUtil.showHelp(null);
+            MipavUtil.showWebHelp("MIPAV_Help");
         } else if (command.equals("MemoryAdjust")) {
             userInterface.memoryAllocation();
         } else if (command.equals("About")) {

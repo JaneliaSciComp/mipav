@@ -3975,6 +3975,7 @@ public class PlugInDialogNDAR extends JDialogStandalonePlugin implements ActionL
                 dataTypes = new ArrayList<XmlDataType>();
                 dataTypes.add(XmlDataType.IMAGING);
 
+                // TODO: filter out any data structures with 'Submission' flag set to no
                 iDataStructures = dataDictionaryProvider.getPublicDataStructureList(dataTypes);
                 iDataStructures = dataDictionaryProvider.getDataDictionary(iDataStructures).getDataStructure();
 

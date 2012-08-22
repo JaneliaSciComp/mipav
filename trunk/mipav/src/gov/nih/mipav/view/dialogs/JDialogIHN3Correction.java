@@ -201,7 +201,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase
                 VOIRegions.setEnabled(true);
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("19006");
+            //MipavUtil.showHelp("19006");
+            MipavUtil.showWebHelp("Shading_Correction:_Inhomogeneity_N3_Correction#Applying_the_Inhomogeneity_N3_algorithm");
         }
     }
 

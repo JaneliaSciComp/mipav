@@ -85,7 +85,8 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("CMNCC001");
+            //MipavUtil.showHelp("CMNCC001");
+            MipavUtil.showWebHelp("Transform:_Conformal_Mapping_Algorithms#Applying_the_Nearly_Circle_to_Circle_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
         }

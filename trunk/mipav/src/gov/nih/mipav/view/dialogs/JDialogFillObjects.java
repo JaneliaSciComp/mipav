@@ -138,7 +138,8 @@ public class JDialogFillObjects extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-        	MipavUtil.showHelp("Mor009FH");
+        	//MipavUtil.showHelp("Mor009FH");
+        	MipavUtil.showWebHelp("Morphology#Applying_fill_holes");
         }
     }
     
