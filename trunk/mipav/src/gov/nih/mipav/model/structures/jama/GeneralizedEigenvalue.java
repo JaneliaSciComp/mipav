@@ -3981,7 +3981,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param dy input/output double[]
      * @param incy input int
      */
-    private void daxpy(final int n, final double da, final double[] dx, final int incx, final double[] dy,
+    public void daxpy(final int n, final double da, final double[] dx, final int incx, final double[] dy,
             final int incy) {
         int i;
         int ix;
@@ -5828,7 +5828,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double answer
      */
-    private double ddot(final int n, final double[] dx, final int incx, final double[] dy, final int incy) {
+    public double ddot(final int n, final double[] dx, final int incx, final double[] dy, final int incy) {
         double answer;
         int ix;
         int iy;
@@ -15185,7 +15185,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldwork input int The leading dimension of the array work. If side = 'L', ldwork >= max(1,n). If side =
      *            'R', ldwork >= max(1,m).
      */
-    private void dlarfb(final char side, final char trans, final char direct, final char storev, final int m,
+    public void dlarfb(final char side, final char trans, final char direct, final char storev, final int m,
             final int n, final int k, final double[][] V, final int ldv, final double[][] T, final int ldt,
             final double[][] C, final int ldc, final double[][] work, final int ldwork) {
         char transt;
@@ -16079,7 +16079,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            ) ( v2 v2 v2 1 ) ( v3 v3 v3 v3 1 )
      *            </p>
      */
-    private void dlarft(final char direct, final char storev, final int n, final int k, final double[][] V,
+    public void dlarft(final char direct, final char storev, final int n, final int k, final double[][] V,
             final int ldv, final double[] tau, final double[][] T, final int ldt) {
         int i;
         int j;
@@ -22571,7 +22571,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dnrm2(final int n, final double[] x, final int incx) {
+    public double dnrm2(final int n, final double[] x, final int incx) {
         int ix;
         double absxi;
         double norm;
@@ -23479,7 +23479,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param work (workspace) double[] of dimension (n) if side == 'L', (m) if side == 'R'.
      * @param info (output) int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value.
      */
-    private void dorm2l(final char side, final char trans, final int m, final int n, final int k, final double[][] A,
+    public void dorm2l(final char side, final char trans, final int m, final int n, final int k, final double[][] A,
             final int lda, final double[] tau, final double[][] C, final int ldc, final double[] work, final int[] info) {
         boolean left;
         boolean notran;
@@ -23881,7 +23881,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            error message related to lwork is output.
      * @param info output int[] = 0: successful exit < 0: If info[0] = -i, the i-th argument had an illegal value
      */
-    private void dormqr(final char side, final char trans, final int m, final int n, final int k, final double[][] A,
+    public void dormqr(final char side, final char trans, final int m, final int n, final int k, final double[][] A,
             final int lda, final double[] tau, final double[][] C, final int ldc, final double[] work, final int lwork,
             final int[] info) {
         final int nbmax = 64;
