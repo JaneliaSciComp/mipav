@@ -9,6 +9,11 @@ public class SelectedEigenvalue implements java.io.Serializable {
     // ---------------------------------------------------------------------------------------------------
 
     /**
+     * 
+     */
+    //private static final long serialVersionUID;
+
+    /**
      * Creates a new SelectedEigenvalue object.
      */
     public SelectedEigenvalue() {}
@@ -101,7 +106,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
  int nb;
  final char[] ch = new char[1];
  String opts;
- int lwkopt;
+ int lwkopt = 0;
  int iscale;
  double abstll;
  double vll = 0.0;
@@ -113,7 +118,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
  double rmax;
  double anrm;
  double sigma = 0.0;
- int i, j;
+ int i, j, k;
  double vec1[];
  double vec2[];
  double vec3[];
@@ -129,13 +134,17 @@ public class SelectedEigenvalue implements java.io.Serializable {
  int iinfo[] = new int[1];
  boolean test;
  int indwrk;
- int indee;
  boolean doHere = true;
  char order;
- int indibl;
  int indisp;
- int indiwo;
  int nsplit[] = new int[1];
+ int indwkn;
+ int llwrkn;
+ int imax;
+ int jj;
+ double tmp1;
+ int itmp1;
+ double temp;
 
  //     Test the input parameters.
  lower =  ( (uplo == 'L') || (uplo == 'l'));
@@ -322,7 +331,6 @@ public class SelectedEigenvalue implements java.io.Serializable {
      for (i = 0; i < n; i++) {
          w[i] = vec1[i];
      }
-    indee = indwrk + 2*n;
     if (!wantz) {
        vec5 = new double[n-1];
        for (i = 0; i < n-1; i++) {
@@ -364,9 +372,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
      else {
         order = 'E';
      }
-     indibl = 1;
-     indisp = indibl + n;
-     indiwo = indisp + n;
+     indisp = 1 + n;
      for (i = 0; i < n; i++) {
          vec1[i] = work[indd-1+i];
      }
@@ -381,72 +387,84 @@ public class SelectedEigenvalue implements java.io.Serializable {
             vec1, vec2, m, nsplit, w,
             ivec1, ivec2, vec3, ivec3, info);
      for (i = 0; i < n; i++) {
-         iwork[indibl-1+i] = ivec1[i];
+         iwork[i] = ivec1[i];
      }
      for (i = 0; i < n; i++) {
          iwork[indisp-1+i] = ivec2[i];
      }
      if (wantz) {
-        /*CALL DSTEIN( N, WORK( INDD ), WORK( INDE ), M, W,
-    $                IWORK( INDIBL ), IWORK( INDISP ), Z, LDZ,
-    $                WORK( INDWRK ), IWORK( INDIWO ), IFAIL, INFO )
- *
- *        Apply orthogonal matrix used in reduction to tridiagonal
- *        form to eigenvectors returned by DSTEIN.
- *
-        INDWKN = INDE
-        LLWRKN = LWORK - INDWKN + 1
-        CALL DORMTR( 'L', UPLO, 'N', N, M, A, LDA, WORK( INDTAU ), Z,
-    $                LDZ, WORK( INDWKN ), LLWRKN, IINFO )*/
+         vec3 = new double[5*n];
+         ivec3 = new int[n];
+         dstein(n, vec1, vec2, m[0], w, ivec1, ivec2, Z, ldz,
+               vec3, ivec3, ifail, info);
+ 
+         // Apply orthogonal matrix used in reduction to tridiagonal
+         // form to eigenvectors returned by DSTEIN.
+ 
+        indwkn = inde;
+        llwrkn = lwork - indwkn + 1;
+        vec1 = new double[n-1];
+        for (i = 0; i < n-1; i++) {
+            vec1[i] = work[indtau-1+i];
+        }
+        vec2 = new double[Math.max(1,llwrkn)];
+        dormtr( 'L', uplo, 'N', n, m[0], A, lda, vec1, Z, ldz, vec2, llwrkn, iinfo);
+        for (i = 0; i < Math.max(1, llwrkn); i++) {
+            work[indwkn-1+i] = vec2[i];
+        }
      } // if (wantz)
  } // if (doHere)
 
  // If matrix was scaled, then rescale eigenvalues appropriately.
 
-/*40 CONTINUE
- IF( ISCALE.EQ.1 ) THEN
-    IF( INFO.EQ.0 ) THEN
-       IMAX = M
-    ELSE
-       IMAX = INFO - 1
-    END IF
-    CALL DSCAL( IMAX, ONE / SIGMA, W, 1 )
- END IF
-*
-*     If eigenvalues are not in order, then sort them, along with
-*     eigenvectors.
-*
- IF( WANTZ ) THEN
-    DO 60 J = 1, M - 1
-       I = 0
-       TMP1 = W( J )
-       DO 50 JJ = J + 1, M
-          IF( W( JJ ).LT.TMP1 ) THEN
-             I = JJ
-             TMP1 = W( JJ )
-          END IF
-50       CONTINUE
-*
-       IF( I.NE.0 ) THEN
-          ITMP1 = IWORK( INDIBL+I-1 )
-          W( I ) = W( J )
-          IWORK( INDIBL+I-1 ) = IWORK( INDIBL+J-1 )
-          W( J ) = TMP1
-          IWORK( INDIBL+J-1 ) = ITMP1
-          CALL DSWAP( N, Z( 1, I ), 1, Z( 1, J ), 1 )
-          IF( INFO.NE.0 ) THEN
-             ITMP1 = IFAIL( I )
-             IFAIL( I ) = IFAIL( J )
-             IFAIL( J ) = ITMP1
-          END IF
-       END IF
-60    CONTINUE
- END IF
-*
-*     Set WORK(1) to optimal workspace size.
-*
- WORK( 1 ) = LWKOPT
-*/
+ if (iscale == 1) {
+    if (info[0] == 0) {
+       imax = m[0];
+    }
+    else {
+       imax = info[0] - 1;
+    }
+    for (i = 0; i < imax; i++) {
+        w[i] *= 1.0/sigma;
+    }
+ } // if (iscale == 1)
+
+ // If eigenvalues are not in order, then sort them, along with eigenvectors.
+
+ if (wantz) {
+    for (j = 1; j <= m[0] - 1; j++) {
+       i = 0;
+       tmp1 = w[j-1];
+       for (jj = j + 1; jj <= m[0]; jj++) {
+          if (w[jj-1] < tmp1) {
+             i = jj;
+             tmp1 = w[jj-1];
+          }
+       } // for (jj = j + 1; jj <= m[0]; jj++)
+
+       if (i != 0) {
+          itmp1 = iwork[i-1];
+          w[i-1] = w[j-1];
+          iwork[i-1] = iwork[j-1];
+          w[j-1] = tmp1;
+          iwork[j-1] = itmp1;
+          for (k = 0; k < n; k++) {
+              temp = Z[k][i-1];
+              Z[k][i-1] = Z[k][j-1];
+              Z[k][j-1] = temp;
+          }
+          if (info[0] != 0) {
+             itmp1 = ifail[i-1];
+             ifail[i-1] = ifail[j-1];
+             ifail[j-1] = itmp1;
+          } // if (info[0] != 0)
+       } // if (i != 0)
+    } // for (j = 1; j <= m[0] - 1; j++)
+ } // if (wantz)
+
+ // Set work[0] to optimal workspace size.
+
+ work[0] = lwkopt;
  return;
  } // dsyevx
  
@@ -1738,9 +1756,9 @@ public class SelectedEigenvalue implements java.io.Serializable {
   int extra = 2;
   int i;
   int j;
+  int k;
   double eps;
   int iseed[] = new int[4];
-  int indrv1;
   int indrv2;
   int indrv3;
   int indrv4;
@@ -1749,11 +1767,11 @@ public class SelectedEigenvalue implements java.io.Serializable {
   int nblk;
   int b1;
   int bn;
-  int gpind;
+  int gpind = 0;
   int blksiz;
-  double onenrm;
-  double ortol;
-  double dtpcrt;
+  double onenrm = 0.0;
+  double ortol = 0.0;
+  double dtpcrt = 0.0;
   int jblk;
   double xj;
   double xjm = 0.0;
@@ -1762,16 +1780,18 @@ public class SelectedEigenvalue implements java.io.Serializable {
   double sep;
   int its;
   int nrmchk;
-  double tol;
+  double tol[] = new double[1];
   double vec1[];
   double vec2[];
   double vec3[];
   double vec4[];
-  int ivec1[];
   int iinfo[] = new int[1];
   boolean doSeg = true;
   double absSum;
   double scl;
+  double ztr;
+  int jmax;
+  double nrm;
  
   // Test the input parameters.
 
@@ -1829,8 +1849,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
 
   // Initialize pointers.
 
-  indrv1 = 0;
-  indrv2 = indrv1 + n;
+  indrv2 = n;
   indrv3 = indrv2 + n;
   indrv4 = indrv3 + n;
   indrv5 = indrv4 + n;
@@ -1879,12 +1898,12 @@ public class SelectedEigenvalue implements java.io.Serializable {
         // Skip all the work if the block size is one.
 
         if (blksiz == 1) {
-           work[indrv1] = 1.0;
+           work[0] = 1.0;
            for (i = 1; i <= n; i++) {
                Z[i-1][j-1] = 0.0;
            }
            for (i = 1; i <= blksiz; i++) { 
-               Z[b1+i-2][j-1] = work[indrv1-1+i];
+               Z[b1+i-2][j-1] = work[i-1];
            }
            
            // Save the shift to check eigenvalue spacing at next generation
@@ -1925,7 +1944,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
 
         // Compute LU factors with partial pivoting  ( PT = LU )
 
-        tol = 0.0;
+        tol[0] = 0.0;
         vec1 = new double[blksiz];
         for (i = 0; i < blksiz; i++) {
             vec1[i] = work[indrv4+i];
@@ -1939,7 +1958,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
             vec3[i] = work[indrv3+i];
         }
         vec4 = new double[blksiz-2];
-        dlagtf(blksiz, vec1, xj, vec2, vec3, tol, vec4, iwork, iinfo);
+        dlagtf(blksiz, vec1, xj, vec2, vec3, tol[0], vec4, iwork, iinfo);
         for (i = 0; i < blksiz; i++) {
             work[indrv4+i] = vec1[i];
         }
@@ -1956,50 +1975,70 @@ public class SelectedEigenvalue implements java.io.Serializable {
         // Update iteration count.
         
         its++;
-        /*for (; its <= maxits; its++) {
+        for (; its <= maxits; its++) {
           
             // Normalize and scale the righthand side vector Pb.
     
             absSum = 0.0;
             for (i = 0; i < blksiz; i++) {
-                absSum += Math.abs(work[indrv1+i]);
+                absSum += Math.abs(work[i]);
             }
             scl = blksiz*onenrm*Math.max(eps, Math.abs(work[indrv4+blksiz-1] ) ) / absSum;
             for (i = 0; i < blksiz; i++) {
-                work[indrv1+i] *= scl;
+                work[i] *= scl;
             }
    
             // Solve the system LU = Pb.
     
-            CALL DLAGTS( -1, BLKSIZ, WORK( INDRV4+1 ), WORK( INDRV2+2 ),
-     $                   WORK( INDRV3+1 ), WORK( INDRV5+1 ), IWORK,
-     $                   WORK( INDRV1+1 ), TOL, IINFO )
-    *
-    *           Reorthogonalize by modified Gram-Schmidt if eigenvalues are
-    *           close enough.
-    *
-            IF( JBLK.EQ.1 )
-     $         GO TO 90
-            IF( ABS( XJ-XJM ).GT.ORTOL )
-     $         GPIND = J
-            IF( GPIND.NE.J ) THEN
-               DO 80 I = GPIND, J - 1
-                  ZTR = -DDOT( BLKSIZ, WORK( INDRV1+1 ), 1, Z( B1, I ),
-     $                  1 )
-                  CALL DAXPY( BLKSIZ, ZTR, Z( B1, I ), 1,
-     $                        WORK( INDRV1+1 ), 1 )
-    80          CONTINUE
-            END IF
-    *
-    *           Check the infinity norm of the iterate.
-    *
-    90       CONTINUE
-            JMAX = IDAMAX( BLKSIZ, WORK( INDRV1+1 ), 1 )
-            NRM = ABS( WORK( INDRV1+JMAX ) )
-    *
-    *           Continue for additional iterations after norm reaches
-    *           stopping criterion.
-    *
+            vec1 = new double[blksiz];
+            for (i = 0; i < blksiz; i++) {
+                vec1[i] = work[indrv4 + i];
+            }
+            vec2 = new double[blksiz-1];
+            for (i = 0; i < blksiz-1; i++) {
+                vec2[i] = work[indrv2+1+i];
+            }
+            vec3 = new double[blksiz-1];
+            for (i = 0; i < blksiz-1; i++) {
+                vec3[i] = work[indrv3 + i];
+            }
+            vec4 = new double[blksiz-2];
+            for (i = 0; i < blksiz-2; i++) {
+                vec4[i] = work[indrv5+i];
+            }
+
+            dlagts( -1, blksiz, vec1, vec2, vec3, vec4, iwork, work, tol, iinfo);
+    
+            // Reorthogonalize by modified Gram-Schmidt if eigenvalues are close enough.
+    
+            if (jblk != 1) {
+                if (Math.abs(xj - xjm) > ortol) {
+                   gpind = j;
+                }
+                if (gpind != j) {
+                   for (i = gpind; i <= j-1; i++) {
+                      for (k = 0; k < blksiz; k++) {
+                          vec1[k] = Z[b1-1+k][i-1];
+                      }
+                      ztr = -ge.ddot(blksiz, work, 1, vec1, 1);
+                      ge.daxpy(blksiz, ztr, vec1, 1, work, 1 );
+                   } // for (i = gpind; i <= j-1; i++)
+                } // if (gpind != j)
+            } // if (jblk != 1)
+    
+            // Check the infinity norm of the iterate.
+    
+            jmax = 0;
+            nrm = Math.abs(work[0]);
+            for (i = 1; i < blksiz; i++) {
+                if (Math.abs(work[i]) > nrm) {
+                    nrm = Math.abs(work[i]);
+                    jmax = i;
+                }
+            }
+   
+            // Continue for additional iterations after norm reaches stopping criterion.
+    
             if (nrm < dtpcrt) {
                 continue;
             }
@@ -2013,36 +2052,42 @@ public class SelectedEigenvalue implements java.io.Serializable {
         } // for (; its <= maxits; its++)
         
         if (doSeg) {
-*
-*           If stopping criterion was not satisfied, update info and
-*           store eigenvector number in array ifail.
-*
-100       CONTINUE
-        INFO = INFO + 1
-        IFAIL( INFO ) = J
+
+            // If stopping criterion was not satisfied, update info and
+            // store eigenvector number in array ifail.
+
+            info[0] = info[0] + 1;
+            ifail[info[0]-1] = j;
         } // if (doSeg)
-*
-*           Accept iterate as jth eigenvector.
-*
-110       CONTINUE
-        SCL = ONE / DNRM2( BLKSIZ, WORK( INDRV1+1 ), 1 )
-        JMAX = IDAMAX( BLKSIZ, WORK( INDRV1+1 ), 1 )
-        IF( WORK( INDRV1+JMAX ).LT.ZERO )
- $         SCL = -SCL
-        CALL DSCAL( BLKSIZ, SCL, WORK( INDRV1+1 ), 1 )
-120       CONTINUE
-        DO 130 I = 1, N
-           Z( I, J ) = ZERO
-130       CONTINUE
-        DO 140 I = 1, BLKSIZ
-           Z( B1+I-1, J ) = WORK( INDRV1+I )
-140       CONTINUE
-*
-*           Save the shift to check eigenvalue spacing at next
-*           iteration.
-*
-        XJM = XJ
-*/
+
+        // Accept iterate as jth eigenvector.
+
+        scl = 1.0 / ge.dnrm2(blksiz, work, 1);
+        jmax = 0;
+        nrm = Math.abs(work[0]);
+        for (i = 1; i < blksiz; i++) {
+            if (Math.abs(work[i]) > nrm) {
+                nrm = Math.abs(work[i]);
+                jmax = i;
+            }
+        }
+        if (work[jmax] < 0.0) {
+           scl = -scl;
+        }
+        for (i = 0; i < blksiz; i++) {
+            work[i] *= scl;
+        }
+        for (i = 1; i <= n; i++) {
+            Z[i-1][j-1] = 0.0;
+        }
+        for (i = 1; i <= blksiz; i++) {
+            Z[b1+i-2][j-1] = work[i-1];
+        }
+
+        // Save the shift to check eigenvalue spacing at next iteration.
+
+        xjm = xj;
+
      } // for (j = j1; j <= m; j++)
   } // for (nblk = 1; nblk <= iblk[m-1]; nblk++)
 
@@ -2511,6 +2556,489 @@ public class SelectedEigenvalue implements java.io.Serializable {
   } // else job = 2 or -2
   return;
   } // dlagts
+  
+  /** This is a port of version 3.2 LAPACK routine DORMTR.  The original DORMTR is created by by Univ. of Tennessee,
+  Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. on November, 2006.
+  
+   DORMTR overwrites the general real M-by-N matrix C with
+*
+*                  SIDE = 'L'     SIDE = 'R'
+*  TRANS = 'N':      Q * C          C * Q
+*  TRANS = 'T':      Q**T * C       C * Q**T
+*
+*  where Q is a real orthogonal matrix of order nq, with nq = m if
+*  SIDE = 'L' and nq = n if SIDE = 'R'. Q is defined as the product of
+*  nq-1 elementary reflectors, as returned by DSYTRD:
+*
+*  if UPLO = 'U', Q = H(nq-1) . . . H(2) H(1);
+*
+*  if UPLO = 'L', Q = H(1) H(2) . . . H(nq-1).
+*  
+*  @param side input char
+*          = 'L': apply Q or Q**T from the Left;
+*          = 'R': apply Q or Q**T from the Right.
+*  @param uplo input char
+*         = 'U': Upper triangle of A contains elementary reflectors from dsytrd;
+*         = 'L': Lower triangle of A contains elementary reflectors from dsytrd.
+   @param trans input char
+          = 'N':  No transpose, apply Q;
+          = 'T':  Transpose, apply Q**T.
+   @param m input int  The number of rows of the matrix C. m >= 0. 
+   @param n input int  The number of columns of the matrix C. n >= 0.
+   @param A input double[][] of dimension
+             (lda,m) if side = 'L'
+*            (lda,n) if side = 'R'
+*            The vectors which define the elementary reflectors, as
+*            returned by dsytrd.
+*  @param lda input int The leading dimension of the array A.
+*          lda >= max(1,m) if side = 'L'; lda >= max(1,n) if side = 'R'.
+*  @param tau input double[] of dimension
+*          (m-1) if side = 'L'
+*          (n-1) if side = 'R'
+*          tau[i] must contain the scalar factor of the elementary
+*          reflector H(i), as returned by dsytrd.
+*  @param C (input/output) double of dimension (ldc,n).
+*          On entry, the m-by-n matrix C.
+*          On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
+*  @param ldc input int The leading dimension of the array C. ldc >= max(1,m). 
+*  @param work (workspace/output) of dimension max(1, lwork)
+*          On exit, if info[0] = 0, work[0] returns the optimal lwork.
+*  @param lwork input int
+*          The dimension of the array work.
+*          If side = 'L', lwork >= max(1,n);
+*          if side = 'R', lwork >= max(1,m).
+*          For optimum performance lwork >= n*nb if side = 'L', and
+*          lwork >= m*nb if side = 'R', where nb is the optimal blocksize.
+*          
+*          If lwork = -1, then a workspace query is assumed; the routine
+*          only calculates the optimal size of the work array, returns
+*          this value as the first entry of the work array, and no error
+*          message related to lwork is issued.
+* @param info output int[] of dimension 1.
+*           = 0:  successful exit
+*           < 0:  if info[0] = -i, the i-th argument had an illegal value
+  */
+  private void dormtr(char side, char uplo, char trans, int m, int n, double A[][],
+                      int lda, double tau[], double C[][], int ldc, double work[], 
+                      int lwork, int info[]) {
+  boolean left;
+  boolean upper;
+  boolean lquery;
+  int nq;
+  int nw;
+  char optsC[] = new char[2];
+  String opts;
+  int nb;
+  int lwkopt = 0;
+  int mi;
+  int ni;
+  int i1;
+  int i2;
+  double array1[][];
+  double array2[][];
+  int i;
+  int j;
+  int iinfo[] = new int[1];
+
+  // Test the input arguments
+
+  info[0] = 0;
+  left = ((side == 'L' ) || (side == 'l'));
+  upper = ((uplo == 'U' ) || (uplo == 'u'));
+  lquery = (lwork == -1);
+
+  // nq is the order of Q and nw is the minimum dimension of WORK
+
+  if (left) {
+     nq = m;
+     nw = n;
+  }
+  else {
+     nq = n;
+     nw = m;
+  }
+  if (!left && !((side == 'R') || (side == 'r')) ) {
+     info[0] = -1;
+  }
+  else if (!upper && !((uplo == 'L') || (uplo == 'l'))) {
+     info[0] = -2;
+  }
+  else if (!((trans == 'N') || (trans == 'n')) && !((trans == 'T') || (trans == 't'))) {
+     info[0] = -3;
+  }
+  else if (m < 0) {
+     info[0] = -4;
+  }
+  else if (n < 0) {
+     info[0] = -5;
+  }
+  else if (lda < Math.max(1, nq)) {
+     info[0] = -7;
+  }
+  else if (ldc < Math.max(1, m)) {
+     info[0] = -10;
+  }
+  else if (lwork < Math.max(1, nw) && !lquery) {
+     info[0] = -12;
+  }
+
+  
+  if (info[0] == 0) {
+      optsC[0] = side;
+      optsC[1] = trans;
+      opts = new String(optsC);
+     if (upper) {
+        if (left) {
+           nb = ge.ilaenv(1, "DORMQL", opts, m-1, n, m-1, -1 );
+        }
+        else {
+           nb = ge.ilaenv(1, "DORMQL", opts, m, n-1, n-1, -1 );
+        }
+     } // if (upper)
+     else {
+        if (left) {
+           nb = ge.ilaenv(1, "DORMQR", opts, m-1, n, m-1, -1 );
+        }
+        else {
+           nb = ge.ilaenv(1, "DORMQR", opts, m, n-1, n-1, -1 );
+        }
+     } // else
+     lwkopt = Math.max(1, nw)*nb;
+     work[0] = lwkopt;
+  } // if (info[0] == 0)
+
+  if (info[0] != 0) {
+     MipavUtil.displayError("Error DORMTR had info[0] = " + info[0]);
+     return;
+  }
+  else if (lquery) {
+     return;
+  }
+
+  // Quick return if possible
+
+  if (m == 0 || n == 0 || nq == 1) {
+     work[0] = 1;
+     return;
+  }
+
+  if (left) {
+     mi = m - 1;
+     ni = n;
+  }
+  else {
+     mi = m;
+     ni = n - 1;
+  }
+
+  if (upper) {
+
+     // Q was determined by a call to dsytrd with uplo = 'U'
+
+     array1 = new double[lda][nq-1];
+     for (i = 0; i < lda; i++) {
+         for (j = 0; j < nq-1; j++) {
+             array1[i][j] = A[i][j+1];
+         }
+     }
+     dormql(side,  trans, mi, ni, nq-1, array1, lda, tau, C,
+                  ldc, work, lwork, iinfo);
+  }
+  else {
+
+     // Q was determined by a call to dsytrd with uplo = 'L'
+
+     if (left) {
+        i1 = 2;
+        i2 = 1;
+     }
+     else {
+        i1 = 1;
+        i2 = 2;
+     }
+     array1 = new double[lda][nq-1];
+     for (i = 0; i < lda; i++) {
+         for (j = 0; j < nq-1; j++) {
+             array1[i][j] = A[i+1][j];
+         }
+     }
+     array2 = new double[ldc][ni];
+     for (i = 0; i < ldc; i++) {
+         for (j = 0; j < ni; j++) {
+             array2[i][j] = C[i1-1+i][i2-1+j];
+         }
+     }
+     ge.dormqr(side, trans, mi, ni, nq-1, array1, lda, tau,
+                  array2, ldc, work, lwork, iinfo);
+     for (i = 0; i < ldc; i++) {
+         for (j = 0; j < ni; j++) {
+             C[i1-1+i][i2-1+j] = array2[i][j];
+         }
+     }
+  }
+  work[0] = lwkopt;
+  return;
+
+  } // dormtr
+  
+  /** This is a port of version 3.3.1 LAPACK routine DORMQL.  The original DORMQL is created by by Univ. of Tennessee,
+  Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. on April, 2011.
+  
+  dormql overwrites the general real M-by-N matrix C with
+*
+*                  SIDE = 'L'     SIDE = 'R'
+*  TRANS = 'N':      Q * C          C * Q
+*  TRANS = 'T':      Q**T * C       C * Q**T
+*
+*  where Q is a real orthogonal matrix defined as the product of k
+*  elementary reflectors
+*
+*        Q = H(k) . . . H(2) H(1)
+*
+*  as returned by DGEQLF. Q is of order M if SIDE = 'L' and of order N
+*  if SIDE = 'R'.
+*  
+*  @param side input char
+*         = 'L': apply Q or Q**T from the Left;
+*         = 'R': apply Q or Q**T from the Right.
+*  @param trans input char
+*         = 'N':  No transpose, apply Q;
+*         = 'T':  Transpose, apply Q**T.
+*  @param m input int  The number of rows of the matrix C. m >= 0.
+*  @param n input int  The number of columns of the matrix C. n >= 0.
+*  @param k input int  The number of elementary reflectors whose product defines the matrix Q.
+*          If side = 'L', m >= k >= 0;
+*          if side = 'R', n >= k >= 0.
+*  @param A input double[][] of dimension (lda, k)
+*         The i-th column must contain the vector which defines the
+*          elementary reflector H(i), for i = 1,2,...,k, as returned by
+*          dgeqlf in the last k columns of its array argument A.
+*          A is modified by the routine but restored on exit
+*  @param lda input int  The leading dimension of the array A.
+*          If side = 'L', lda >= max(1,m);
+*          if side = 'R', lda >= max(1,n).
+*  @param tau[] input double[] of dimension k
+*          tau[i] must contain the scalar factor of the elementary
+*          reflector H(i), as returned by dgeqlf.
+*  @param C (input/output) double[][] of dimension (ldc, n)
+*          On entry, the m-by-n matrix C.
+*          On exit, C is overwritten by Q*C or Q**T*C or C*Q**T or C*Q.
+*  @param ldc input int The leading dimension of the array C. ldc >= max(1,m).
+*  @param work (workspace/output) of dimension max(1, lwork).
+*          On exit, if info[0] = 0, work[0] returns the optimal lwork.
+*  @param lwork input int The dimension of the array work.
+*          If side = 'L', lwork >= max(1,n);
+*          if side = 'R', lwork >= max(1,m).
+*          For optimum performance lwork >= n*nb if side = 'L', and
+*          lwork >= m*nb if side = 'R', where nb is the optimal
+*          blocksize.
+*
+*          If lwork = -1, then a workspace query is assumed; the routine
+*          only calculates the optimal size of the work array, returns
+*          this value as the first entry of the work array, and no error
+*          message related to lwork is issued.
+*  @param info output int[] of dimension 1.
+*         = 0:  successful exit
+*         < 0:  if info[0] = -i, the i-th argument had an illegal value
+  */
+  private void dormql(char side, char trans, int m, int n, int k, double A[][], int lda, double tau[],
+          double C[][], int ldc, double work[], int lwork, int info[]) {
+  int nbmax = 64;
+  int ldt = nbmax + 1;
+  boolean left;
+  boolean notran;
+  boolean lquery;
+  int nq;
+  int nw;
+  int lwkopt = 0;
+  int nb = 0;
+  char optsC[] = new char[2];
+  String opts;
+  int nbmin;
+  int ldwork;
+  int iws;
+  int iinfo[] = new int[1];
+  int i1;
+  int i2;
+  int i3;
+  int mi = 0;
+  int ni = 0;
+  int i;
+  int ib;
+  double array1[][];
+  double array2[][];
+  double vec1[];
+  int j;
+  int p;
+  double T[][] = new double[ldt][nbmax];
+
+  // Test the input arguments
+
+  info[0] = 0;
+  left = ((side == 'L') || (side == 'l'));
+  notran = ((trans == 'N') || (trans == 'n'));
+  lquery = (lwork == -1);
+
+  // nq is the order of Q and nw is the minimum dimension of work
+
+  if (left) {
+     nq = m;
+     nw = Math.max(1, n);
+  }
+  else {
+     nq = n;
+     nw = Math.max(1, m);
+  }
+  if (!left && !((side == 'R') || (side == 'r'))) {
+     info[0] = -1;
+  }
+  else if (!notran && !((trans == 'T') || (trans == 't'))) {
+     info[0] = -2;
+  }
+  else if (m < 0) {
+     info[0] = -3;
+  }
+  else if (n < 0) {
+     info[0] = -4;
+  }
+  else if (k < 0 || k > nq) {
+     info[0] = -5;
+  }
+  else if (lda < Math.max(1, nq)) {
+     info[0] = -7;
+  }
+  else if (ldc < Math.max(1, m)) {
+     info[0] = -10;
+  }
+
+  optsC[0] = side;
+  optsC[1] = trans;
+  opts = new String(optsC);
+  
+  if (info[0] == 0) {
+     if (m == 0 || n == 0) {
+        lwkopt = 1;
+     }
+     else {
+
+        // Determine the block size.  nb may be at most nbmax, where
+        // nbmax is used to define the local array T.
+
+        nb = Math.min(nbmax, ge.ilaenv(1, "DORMQL", opts, m, n, k, -1 ) );
+        lwkopt = nw*nb;
+     } // else
+     work[0] = lwkopt;
+
+     if (lwork < nw && !lquery) {
+        info[0] = -12;
+     }
+  } // if (info[0] == 0)
+
+  if (info[0] != 0) {
+     MipavUtil.displayError("Error dormql had info[0] = " + info[0]);
+     return;
+  }
+  else if (lquery) {
+     return;
+  }
+
+  // Quick return if possible
+
+  if (m == 0 || n == 0) {
+     return;
+  }
+
+  nbmin = 2;
+  ldwork = nw;
+  if (nb > 1 && nb < k) {
+     iws = nw*nb;
+     if (lwork < iws) {
+        nb = lwork / ldwork;
+        nbmin = Math.max( 2, ge.ilaenv(2, "DORMQL", opts, m, n, k, -1 ) );
+     }
+  }
+  else {
+     iws = nw;
+  }
+
+  if (nb < nbmin || nb >= k) {
+
+     // Use unblocked code
+
+     ge.dorm2l(side, trans, m, n, k, A, lda, tau, C, ldc, work, iinfo);
+  }
+  else {
+
+     // Use blocked code
+
+     if ( (left && notran) || (!left && !notran) ) {
+        i1 = 1;
+        i2 = k;
+        i3 = nb;
+     }
+     else {
+        i1 = ( ( k-1 ) / nb )*nb + 1;
+        i2 = 1;
+        i3 = -nb;
+     }
+
+     if (left) {
+        ni = n;
+     }
+     else {
+        mi = m;
+     }
+
+     for (i = i1; i <= i2; i += i3) {
+        ib = Math.min(nb, k-i+1);
+
+        // Form the triangular factor of the block reflector
+        // H = H(i+ib-1) . . . H(i+1) H(i)
+        array1 = new double[lda][ib];
+        for (j = 0; j < lda; j++) {
+            for (p = 0; p < ib; p++) {
+                array1[j][p] = A[j][i-1+p];
+            }
+        }
+        vec1 = new double[k];
+        for (j = 0; j < k; j++) {
+            vec1[j] = tau[i-1+j];
+        }
+        ge.dlarft('B', 'C', nq-k+i+ib-1, ib, array1, lda, vec1, T, ldt);
+        
+        if (left) {
+
+          // H or H**T is applied to C(1:m-k+i+ib-1,1:n)
+
+           mi = m - k + i + ib - 1;
+        }
+        else {
+
+           // H or H**T is applied to C(1:m,1:n-k+i+ib-1)
+
+           ni = n - k + i + ib - 1;
+        }
+
+        // Apply H or H**T
+
+        array2 = new double[ldwork][ib];
+        ge.dlarfb(side, trans, 'B', 'C', mi, ni, ib, array1, lda,
+                  T, ldt, C, ldc, array2, ldwork);
+        for (j = 0; j < lda; j++) {
+            for (p = 0; p < ib; p++) {
+                A[j][i-1+p] = array1[j][p];
+            }
+        }
+     } // for (i = i1; i <= i2; i += i3)
+  }
+  work[0] = lwkopt;
+  return;
+
+  } // dormql
+
+
+
+
 
 
 
