@@ -71,7 +71,7 @@ import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
  * @see http://mipav.cit.nih.gov
  */
 
-public class PlugInAlgorithmGenerateFusion544a extends AlgorithmBase {
+public class PlugInAlgorithmGenerateFusion544b extends AlgorithmBase {
 
     public enum SampleMode {
         DownsampleToBase("Downsample transformed image to base"),
@@ -162,7 +162,7 @@ public class PlugInAlgorithmGenerateFusion544a extends AlgorithmBase {
      * @param baseGeoWeight 
      * @param maxAlgo can be null if no MIP is supposed to take place
      */
-    public PlugInAlgorithmGenerateFusion544a(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
+    public PlugInAlgorithmGenerateFusion544b(boolean doShowPrefusion, boolean doInterImages, boolean doGeoMean, boolean doAriMean, boolean showMaxProj, 
                                                     boolean doThreshold, double resX, double resY, double resZ, int concurrentNum, double thresholdIntensity, String mtxFileLoc, 
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
@@ -782,7 +782,7 @@ public class PlugInAlgorithmGenerateFusion544a extends AlgorithmBase {
         
         private void doMaxProj(ModelImage image, boolean parentShow, boolean parentSave, File parentDir, FileWriteOptions options, FileIO io) {
             if(showMaxProj || saveMaxProj) {
-                AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion544a.generateMaxProjAlg(maxAlgo);
+                AlgorithmMaximumIntensityProjection[] maxAlgoClone = PlugInAlgorithmGenerateFusion544b.generateMaxProjAlg(maxAlgo);
                 
                 for(int i=0; i<maxAlgoClone.length; i++) {
                     maxAlgoClone[i].setSrcImage(image);
@@ -822,15 +822,15 @@ public class PlugInAlgorithmGenerateFusion544a extends AlgorithmBase {
                     
                     switch(maxAlgoClone[i].getProjectionDirection()) {
                     case AlgorithmMaximumIntensityProjection.X_PROJECTION:
-                        projFolder = PlugInDialogGenerateFusion544a.XPROJ;
+                        projFolder = PlugInDialogGenerateFusion544b.XPROJ;
                         break;
                         
                     case AlgorithmMaximumIntensityProjection.Y_PROJECTION:
-                        projFolder = PlugInDialogGenerateFusion544a.YPROJ;
+                        projFolder = PlugInDialogGenerateFusion544b.YPROJ;
                         break;
                         
                     case AlgorithmMaximumIntensityProjection.Z_PROJECTION:
-                        projFolder = PlugInDialogGenerateFusion544a.ZPROJ;
+                        projFolder = PlugInDialogGenerateFusion544b.ZPROJ;
                         break;
                     }
                     

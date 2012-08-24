@@ -55,7 +55,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.JTextComponent;
 
-import nibib.spim.PlugInAlgorithmGenerateFusion544a.SampleMode;
+import nibib.spim.PlugInAlgorithmGenerateFusion544b.SampleMode;
 
 
 /**
@@ -68,7 +68,7 @@ import nibib.spim.PlugInAlgorithmGenerateFusion544a.SampleMode;
  * @author Justin Senseney (SenseneyJ@mail.nih.gov)
  * @see http://mipav.cit.nih.gov
  */
-public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implements AlgorithmInterface {
+public class PlugInDialogGenerateFusion544b extends JDialogScriptableBase implements AlgorithmInterface {
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -91,7 +91,7 @@ public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implem
     private ModelImage image; // 
     
     /** This is your algorithm */
-    private PlugInAlgorithmGenerateFusion544a generateFusionAlgo = null;
+    private PlugInAlgorithmGenerateFusion544b generateFusionAlgo = null;
 
     private JTextField mtxFileLocText, transformFileLocText, baseFileLocText;
 
@@ -197,7 +197,7 @@ public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implem
     /**
      * Constructor used for instantiation during script execution (required for dynamic loading).
      */
-    public PlugInDialogGenerateFusion544a() { }
+    public PlugInDialogGenerateFusion544b() { }
 
     /**
      * Creates new dialog for kidney segmentation from an abdominal cavity image using a plugin.
@@ -205,7 +205,7 @@ public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implem
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      */
-    public PlugInDialogGenerateFusion544a(boolean modal) {
+    public PlugInDialogGenerateFusion544b(boolean modal) {
         super(modal);
         
         init();
@@ -244,7 +244,7 @@ public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implem
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof PlugInAlgorithmGenerateFusion544a) {
+        if (algorithm instanceof PlugInAlgorithmGenerateFusion544b) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
             if ((generateFusionAlgo.isCompleted() == true)) {
@@ -276,7 +276,7 @@ public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implem
 
         try {
             
-            generateFusionAlgo = new PlugInAlgorithmGenerateFusion544a(doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
+            generateFusionAlgo = new PlugInAlgorithmGenerateFusion544b(doShowPreFusion, doInterImages, showGeoMean, showAriMean, showMaxProj, doThreshold, 
                                                                          resX, resY, resZ, concurrentNum, thresholdIntensity,
                                                                                 mtxFileLoc, baseImageAr, transformImageAr, 
                                                                                 xMovement, yMovement, zMovement, mode, 
@@ -374,7 +374,7 @@ public class PlugInDialogGenerateFusion544a extends JDialogScriptableBase implem
     private void init() {
         setResizable(true);
         setForeground(Color.black);
-        setTitle("Generate fusion 544a");
+        setTitle("Generate fusion 544b");
         try {
             setIconImage(MipavUtil.getIconImage("divinci.gif"));
         } catch (FileNotFoundException e) {
