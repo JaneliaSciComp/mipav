@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.event.*;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
-import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.GuiBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 import gov.nih.mipav.view.dialogs.JDialogCaptureScreen;
@@ -16,15 +15,13 @@ import java.util.Date;
 import java.util.Properties;
 
 import javax.swing.*;
+
 import java.util.*;
 
 import javax.imageio.ImageIO;
 import javax.mail.*;
 import javax.mail.internet.*;
 import javax.activation.*;
-
-import sun.dc.pr.PathDasher;
-import sun.misc.Unsafe;
 
 public class ReportBugBuilder extends JDialogBase implements WindowListener{
 
@@ -51,7 +48,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
     private String os;
     
     /** String to indicate the urgency with which the user needs the bug fixed */
-    private String urgency; //u
+    private String urgency;
         
     /** Email of the person submitting the request */
     private String email;
@@ -76,10 +73,10 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	/** Text are for displaying the attached images*/
 	private JTextArea attachedImages = new JTextArea();
 	
-	/** Text area for user inputed bug description */
+	/** Text pane for user inputed bug description */
 	private JTextPane descriptionField = new JTextPane();
 	
-	/** Text area for user inputed bug summary */
+	/** Text area for user inputed bug title */
 	private JTextArea summaryField = new JTextArea();
 	
 	/** Text field for user inputed name */
@@ -99,28 +96,36 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	
     /** Text field for the user inputed urgency of the bug */
     private JTextField standardUrgency = new JTextField(25);
-     
+    
+    /** Name of the image being attached. */
     private String attachmentName;
     
+    /** ArrayList of all file names of report attachments */
     private ArrayList<String> fileNames = new ArrayList<String>();
 
+    /** Text field for the directory of a file being attached from the user's computer */
 	private JTextField directory;
 	
+	/** File chooser for the user to select an existing file for attachment */
 	private JFileChooser browser;
 	
-	public static String capturedImageName;
-
+	/** ArrayList of all file paths of report attachments */
 	private ArrayList<String> filePaths = new ArrayList<String>();
 
+	/** Button to launch the create new image dialog */
 	public JButton screenCap;
 
+	/** Image file used to store images created through the screen capture function */
 	private File image;
 
+	/** Text file used to store the user inputed bug report and system specifications */
 	private File bugReport;
 
+	/** Dialog used for taking screen captures */
 	private JDialogCaptureScreen screenCapture;
 
-	//private ImageCopier imageCopier;
+	/** Icon used to insert images into the bug description */
+	private Icon icon;
     
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -142,10 +147,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
      */
     private void init(){
     	displayReportForm();
-    }
-    
-    public static void setCapturedImageName(String name){
-    	capturedImageName = name;
     }
 
     /**
@@ -186,7 +187,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			frame.setVisible(false);
 		} else if (command.equals("Create New Image")){
 			screenCapture = new JDialogCaptureScreen(null, true);
-			//imageCopier = new ImageCopier(descriptionField);
 			screenCapture.addWindowListener(this);
 		} else if (command.equals("Browse")) {
 			browser = new JFileChooser();
@@ -322,6 +322,11 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		} 	
 	}
 	
+    /**
+     * Searches the user's file directory for any fatal error files that have been generated on
+     * the day of the report and attaches them to the email.
+     * 
+     */
 	private void findError(){
 		File directory = new File(System.getProperty("user.dir"));
 		String[] files = directory.list();
@@ -344,14 +349,15 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	}
 
 	/**
-     * Grabs console error messages if applicable, sends them through the report lesson. the
+     * Sends an email to bug@mipav.cit.nih.gov with body pulled from the title and description fields
+     * of the report form, and all attached files and images.
      *
      */
 	private void sendReport(){
 		compileReport();
 		findError();
 		try {
-			Address to = new InternetAddress("shens2@mail.nih.gov");
+			Address to = new InternetAddress("bug@mipav.cit.nih.gov");
 			final Address from = new InternetAddress("bug@mipav.cit.nih.gov", "MIPAV Bug Report");
 			String host = "mailfwd.nih.gov";
 			Properties properties = System.getProperties();
@@ -413,10 +419,9 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 	}
 	
 	/**
-     * Initializes GUI depending on which user type is selected. Contains two sections, one for information on the system and the user, 
+     * Initializes GUI. Contains two sections, one for information on the system and the user, 
      * the other containing fields for describing the bug itself.
      *
-     * @param  user  Int number describing whether the user is a developer or a standard user.
      */
 	private void displayReportForm(){
 		GuiBuilder ref = new GuiBuilder(this);
@@ -442,8 +447,6 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
         summaryInstructions.setForeground(Color.black);
         
     	JLabel descInstructions = new JLabel("Please give a detailed description of the bug encountered");
-//    	descriptionField.setLineWrap(true);
-//    	descriptionField.setWrapStyleWord(true);
         JScrollPane descriptionScroll = new JScrollPane(descriptionField);
         descriptionScroll.setPreferredSize(new Dimension(400,100));
     	descInstructions.setFont(MipavUtil.font12);
@@ -603,31 +606,64 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 		frame.setVisible(true);
 	}
 	
+    /**
+     * Performs the following actions based on the command:<br>
+     *
+     * <ul>
+     *   <li>OK - creates a file using the currently selected image and the given file name and then attaches it to email</li>
+     *   <li>Insert - inserts the image into the description area and if a name is provided, attaches the image as a file as well</li>
+     * </ul>
+     *
+     * @param  event  Event that triggered this function.
+     */
 	public void windowClosed(WindowEvent event){
-		if(event.getSource().equals(screenCapture.ok)){
-			attachmentName = JDialogCaptureScreen.fileName + ".png";
-			try {
-				if (JDialogCaptureScreen.currImage == null)
-					MipavUtil.displayError("You must select a region to save.");
-//				else if (used == true)
-//					MipavUtil.displayError("An attachment with that name already exists. Please select another name.");
-//				else if (attachmentName.length() < 7)
-//					JOptionPane.showMessageDialog(null, "File Name must be at least three characters long.", "Error", JOptionPane.ERROR_MESSAGE);
-				else {
-					image = new File(Preferences.getPreferencesDir() + File.separator + attachmentName);
-					ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
-					fileNames.add(attachmentName);
-					filePaths.add(Preferences.getPreferencesDir() + File.separator + attachmentName);
-					attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
-					
-					image.deleteOnExit();
+		if(event.getSource().equals(screenCapture)){
+			if(screenCapture.ok) {
+				try {
+					if (JDialogCaptureScreen.currImage == null)
+						MipavUtil.displayError("You must select a region to save.");
+					else if (screenCapture.fileName.length() > 0) {
+						attachmentName = screenCapture.fileName + ".png";
+						image = new File(Preferences.getPreferencesDir() + File.separator + attachmentName);
+						ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
+						fileNames.add(attachmentName);
+						filePaths.add(Preferences.getPreferencesDir() + File.separator + attachmentName);
+						attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
+						
+						image.deleteOnExit();
+					}
+					else {
+						MipavUtil.displayError("You must name your image.");
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
-			
-		}
+			else if(screenCapture.insert){
+				try {
+					if (JDialogCaptureScreen.currImage == null)
+						MipavUtil.displayError("You must select a region to insert.");
+					else {
+						icon = new ImageIcon(JDialogCaptureScreen.currImage);
+						descriptionField.insertIcon(icon);
+						attachmentName = screenCapture.fileName + ".png";
+						
+						if(screenCapture.fileName.length() > 0) {
+							image = new File(Preferences.getPreferencesDir() + File.separator + attachmentName);
+							ImageIO.write(JDialogCaptureScreen.currImage, "png", image);
+							fileNames.add(attachmentName);
+							filePaths.add(Preferences.getPreferencesDir() + File.separator + attachmentName);
+							attachedImages.append(fileNames.get(fileNames.size() - 1) + "\n");
+							image.deleteOnExit();
+						}
+					}
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}		
 	}
 
 }
