@@ -5,7 +5,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.reportbug.ReportBugBuilder;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -14,9 +13,7 @@ import java.awt.datatransfer.*;
 
 import java.io.*;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
-import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.event.*;
 
 
@@ -51,6 +48,9 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 
     /** Instructions on how to use screen capture, line 2. */
     private JLabel instructions2;
+    
+    /** Instructions on how to use screen capture, line 3. */
+	private JLabel instructions3;
 
     /** Mode - region or window */
     private WindowProperties mode;
@@ -97,25 +97,29 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     /** Active frame **/
     public ViewJFrameImage activeFrame;
     
-    /** Boolean to indicate whether or not this class is being used by the ImageAttacher class */
-    private boolean imageAttacher;
-    
     /** JTextField for the name of the file being attached */
     private JTextField fileField = new JTextField(25);
     
+    /** Boolean indicating if the OK button has been pressed when JDialogCaptureScreen is launched through the report bug form */
     public boolean ok = false;
 
-	public static String fileName;
+    /** String to house the user inputed file name */
+	public String fileName;
 
-	private File attachment;
-	
-	public static int test;
-	
-	private int tester;
-
-	private JLabel instructions3;
-
+	/** The buffered image selected by the user */
 	public static BufferedImage currImage;
+	
+	/** The image selected by the user */
+	private Image imagePix;
+
+	/** Button for inserting the image into the body of a bug report */
+	private JButton insertButton;
+
+	/** Boolean indicating if the Insert button has been pressed */
+	public boolean insert;
+
+	/** Boolean indicating if JDialogCaptureScreen has been initialized through ReportBugBuilder */
+	private boolean imageAttacher;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -201,10 +205,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        if (command.equals("OK")) {
+        if (command.equals("OK") ||  command.equals("Insert")) {
 
             if ((currentRectangle != null) && !currentRectangle.isEmpty() &&
                     (currentRectangle.x > -1) && (currentRectangle.y > -1)) {
+            	
             	
             	writeImage();
             	if(imageAttacher) {
@@ -220,8 +225,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
                     dispose();
                     System.gc();
                 }
-            	ok = true;
-            		
+            	if (command.equals("Insert")) {
+            		insert = true;
+            	} else {
+            		ok = true;
+            	}
             		
                 	//commented the code below out in order to leave dialog up so that you can 
                 	//select multiple regions one after the other
@@ -509,6 +517,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         setVisible(true);
     }
     
+    
+    /**
+     * Initialize GUI for the bug report form. This form includes an instruction section, field for a file name, and
+     * Insert, Ok, and Cancel buttons.
+     */
     public void init(boolean imageAttacher) {
     	
     	
@@ -541,6 +554,12 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         instructions3.setFont(MipavUtil.font12);
         instructions3.setForeground(Color.black);
 
+        insertButton = new JButton("Insert");
+        insertButton.addActionListener(this);
+        insertButton.setMinimumSize(MipavUtil.defaultButtonSize);
+        insertButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        insertButton.setFont(serif12B);
+        
         OKButton = buildOKButton();
         cancelButton = buildCancelButton();
 
@@ -573,6 +592,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         regionButton.setSelected(true);
 
         JPanel buttonPanel = new JPanel();
+        buttonPanel.add(insertButton);
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
@@ -582,24 +602,36 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         gbc.gridy = 0;
         gbc.weighty = 1;
         gbc.gridy = 2;
-        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. Copy the image and ");
+        JLabel attachmentInstruction = new JLabel("Select the region you would like to attach. To attach the image");
         attachmentInstruction.setFont(MipavUtil.font12);
         attachmentInstruction.setForeground(Color.black);
         
-        JLabel attachmentInstruction2 = new JLabel("paste the image to the description area, or enter a file name");
+        JLabel attachmentInstruction2 = new JLabel("as a file, fill in the field below with a name and press the OK");
         attachmentInstruction2.setFont(MipavUtil.font12);
         attachmentInstruction2.setForeground(Color.black);
         
-        JLabel attachmentInstruction3 = new JLabel("below and press the OK button to attach the image as a file. \n");
+        JLabel attachmentInstruction3 = new JLabel("button. To copy theimage to your clipboard and insert it into");
         attachmentInstruction3.setFont(MipavUtil.font12);
         attachmentInstruction3.setForeground(Color.black);
+        
+        JLabel attachmentInstruction4 = new JLabel("your description, press the Insert button. To do both, fill in");
+        attachmentInstruction4.setFont(MipavUtil.font12);
+        attachmentInstruction4.setForeground(Color.black);
+        
+        JLabel attachmentInstruction5 = new JLabel("a file name and press the Insert button.");
+        attachmentInstruction5.setFont(MipavUtil.font12);
+        attachmentInstruction5.setForeground(Color.black);
         
         attachmentOptions.add(attachmentInstruction, gbc);
         gbc.gridy = 3;
         attachmentOptions.add(attachmentInstruction2, gbc);
         gbc.gridy = 4;
         attachmentOptions.add(attachmentInstruction3, gbc);
+        gbc.gridy = 5;
+        attachmentOptions.add(attachmentInstruction4, gbc);
         gbc.gridy = 6;
+        attachmentOptions.add(attachmentInstruction5, gbc);
+        gbc.gridy = 7;
         fileField.setPreferredSize(new Dimension(320, 20));
         attachmentOptions.add(fileField, gbc);
         attachmentOptions.setBorder(buildTitledBorder("Image Selection"));
@@ -637,7 +669,6 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
         ModelImage testImage = null;
         Robot robot;
         String imageName;
-        Image imagePix;
 
         try {
             robot = new Robot();
@@ -761,7 +792,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
     }
     
     /** changes an image to a Transferable*/
-	public static class ImageConverter implements Transferable{
+	private class ImageConverter implements Transferable{
 		private Image temp;
 		public ImageConverter(Image image){
 			temp = image;
@@ -1055,84 +1086,5 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
 	@Override
 	public void componentShown(ComponentEvent e) {}
 	
-//	public class ImageCopier extends TransferHandler implements ClipboardOwner{
-//		
-//		private JTextPane parent;
-//		
-//		public void lostOwnership(Clipboard clipboard, Transferable contents) {}
-//		
-//		public ImageCopier(JTextPane parent) {
-//	        this.parent = parent;
-//	    }
-//		
-//		public boolean canImport(JComponent description, DataFlavor[] transferFlavors) {
-//			if(description.equals(parent)) {
-//				for(int i=0; i<transferFlavors.length; i++) {
-//	                if(!transferFlavors[i].equals(DataFlavor.imageFlavor)) {
-//	                    return false;
-//	                }
-//	            }
-//	            return true;
-//			}
-//			return false;
-//			
-//		}
-//		
-//		protected Transferable createTransferable(JComponent c) {
-//			if(c.equals(parent)) {
-//				return new ImageConverter();
-//			}
-//		}
-//		
-//		public void exportAsDrag(JComponent comp, InputEvent e, int action) {
-//	         // TODO Auto-generated method stub
-//	         super.exportAsDrag(comp, e, action);
-//	    }
-//		
-//		 protected void exportDone(JComponent source, Transferable data, int action) {
-//	         // TODO Auto-generated method stub
-//	         super.exportDone(source, data, action);
-//	     }
-//
-//	     /* (non-Javadoc)
-//	      * @see javax.swing.TransferHandler#exportToClipboard(javax.swing.JComponent, java.awt.datatransfer.Clipboard, int)
-//	      */
-//	     public void exportToClipboard(JComponent comp, Clipboard clip, Image imagePix) throws IllegalStateException {
-//	         try {
-//	             if(comp.equals(parent)) {
-//	            	 Transferable pic = new ImageConverter(imagePix);
-//	                 clip.setContents(pic, null);
-//	             }
-//	         } catch(Exception e) {
-//	             e.printStackTrace();
-//	         }
-//	     }
-//
-//	     /* (non-Javadoc)
-//	      * @see javax.swing.TransferHandler#getSourceActions(javax.swing.JComponent)
-//	      */
-//	     @Override
-//	     public int getSourceActions(JComponent c) {
-//	         // TODO Auto-generated method stub
-//	         return super.getSourceActions(c);
-//	     }
-//
-//	     /* (non-Javadoc)
-//	      * @see javax.swing.TransferHandler#importData(javax.swing.JComponent, java.awt.datatransfer.Transferable)
-//	      */
-//	     @Override
-//	     public boolean importData(JComponent comp, Transferable t) {
-//			return false;
-//
-//	     }
-//
-//	     /* (non-Javadoc)
-//	      * @see javax.swing.TransferHandler#importData(javax.swing.TransferHandler.TransferSupport)
-//	      */
-//	     @Override
-//	     public boolean importData(TransferSupport support) {
-//	         // TODO Auto-generated method stub
-//	         return super.importData(support);
-//	     }
-//	}
+
 }
