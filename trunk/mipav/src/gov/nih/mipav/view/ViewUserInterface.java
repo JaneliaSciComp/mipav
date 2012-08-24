@@ -3975,9 +3975,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             ProvenanceRecorder.getReference().startRecording();
         }
-        
+
         if(Preferences.is(Preferences.PREF_LOGGING_ENABLED)) {
             exceptions = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
+            
+            if (exceptions.exists()) {
+            	exceptions.delete();
+            	exceptions = new File(Preferences.getProperty(Preferences.PREF_LOG_FILENAME));
+            }
+
     		LogStdStreams.initializeErrorLogging(exceptions.getAbsolutePath(), "\n" + "Mipav Log: " + new Date() + "\n\n", true, true);
         }
 
