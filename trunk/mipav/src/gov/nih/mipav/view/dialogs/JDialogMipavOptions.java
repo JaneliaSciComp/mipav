@@ -14,7 +14,12 @@ import gov.nih.mipav.view.Preferences.DefaultDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 
 import javax.swing.*;
@@ -249,6 +254,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     
     /** border size for active image color **/
     private JComboBox activeImageColorBorderSize;
+
+	private File exceptions;
 
     /** Whether images are updated in real-time based on histogram changes. */
     private JCheckBox displayHistogram;
@@ -1568,8 +1575,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param gbl the layout used in the globablChangesPanel
      */
     protected void makeLoggingOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        final boolean loggingOn = Preferences.is(Preferences.PREF_DATA_PROVENANCE);
-
+        final boolean loggingOn = true;
+        
+        
         enableLoggingBox = new JCheckBox("Log errors to:", loggingOn);
         enableLoggingBox.setFont(MipavUtil.font12);
         enableLoggingBox.setForeground(Color.black);
@@ -1578,16 +1586,29 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.NORTHWEST;
         otherPanel.add(enableLoggingBox, gbc);
         enableLoggingBox.addActionListener(this);
-
-        logFilename = Preferences.getProperty(Preferences.PREF_LOG_FILENAME);
-
-        String shortName = logFilename;
+        
+        logFilename = exceptions.getAbsolutePath();
+        
+        try {
+			BufferedWriter out = new BufferedWriter(new FileWriter("logFilename"));
+			out.write("");
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        String shortName = "exceptions.txt";
 
         if (logFilename.length() > 24) {
             shortName = ".." + logFilename.substring(logFilename.length() - 22, logFilename.length());
         }
+        
 
         logFileButton = new JButton(shortName);
+        logFileButton.setEnabled(true);
         logFileButton.setToolTipText(logFilename);
         logFileButton.setFont(MipavUtil.font12);
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -1595,9 +1616,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         gbc.anchor = GridBagConstraints.WEST;
         logFileButton.setEnabled(loggingOn);
         logFileButton.addActionListener(this);
-        logFileButton.setActionCommand("ChooseLog");
+        logFileButton.setActionCommand("ChooseLog");      
+
 
         otherPanel.add(logFileButton, gbc);
+        
+        exceptions.deleteOnExit();
     }
 
     /**
