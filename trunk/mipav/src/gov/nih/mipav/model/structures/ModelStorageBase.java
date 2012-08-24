@@ -3005,6 +3005,30 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return extentsReturn;
     }
 
+
+    /**
+     * Returns the image extents translated into the Patient-Coordinate system:
+     * 
+     * @param aiAxisOrder the Patient-Coordinate order of the original data for which the extents are needed:
+     * 
+     * @return Extents for the image in Patient Coordinates
+     */
+    public final int[] getExtents(final int[] aiAxisOrder) {
+
+        /* Do not reorder the extents if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return dimExtents;
+        }
+
+        final int[] extentsReturn = new int[3];
+
+        for (int i = 0; i < 3; i++) {
+            extentsReturn[i] = dimExtents[aiAxisOrder[i]];
+        }
+
+        return extentsReturn;
+    }
+
     public final int[] getExtentsSize(final int orientation) {
 
         final int[] aiSizes = new int[] {1, dimExtents[0], dimExtents[0] * dimExtents[1]};
@@ -4174,6 +4198,36 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         final float[] resReturn = new float[3];
         final int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(this, orientation);
+
+        for (int i = 0; i < 3; i++) {
+            resReturn[i] = resTemp[aiAxisOrder[i]];
+        }
+
+        return resReturn;
+    }
+
+    /**
+     * Returns the resolutions for the image translated into the Patient-Coordinate systsm:
+     * 
+     * @param index the fileInfo index
+     * @param aiAxisOrder the Patient-Coordinate order of the original data for which the resolutions are needed:
+     * 
+     * @return the resolutions for the image in Patient Coordinates
+     */
+    public float[] getResolutions(final int index, final int[] aiAxisOrder) {
+
+        if (fileInfo == null) {
+            return null;
+        }
+
+        final float[] resTemp = fileInfo[index].getResolutions();
+
+        /* Do not reorder the resolutions if this is less than a 3D image: */
+        if (dimExtents.length < 3) {
+            return resTemp;
+        }
+
+        final float[] resReturn = new float[3];
 
         for (int i = 0; i < 3; i++) {
             resReturn[i] = resTemp[aiAxisOrder[i]];
