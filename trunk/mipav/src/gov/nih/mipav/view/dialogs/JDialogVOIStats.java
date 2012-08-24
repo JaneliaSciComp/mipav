@@ -330,32 +330,8 @@ public class JDialogVOIStats extends JDialogBase
                 Preferences.setProperty(Preferences.PREF_VOI_THICKNESS, Integer.toString(thickChange));
             }
 
-
-            if (checkboxBoundingBox.isSelected() == true) {
-                voi.setBoundingBoxFlag(true);
-            } else {
-                voi.setBoundingBoxFlag(false);
-            }
-
-            /*if (checkboxAdditiveOrSubtractive.isSelected() == true) {
-                voi.setPolarity(VOI.ADDITIVE);
-            } else {
-                voi.setPolarity(VOI.SUBTRACTIVE);
-            }*/
-            
+          
             voi.setPolarity(VOI.ADDITIVE);
-
-            if (checkboxIncludeForProcessing.isSelected() == true) {
-                voi.setProcess(true);
-            } else {
-                voi.setProcess(false);
-            }
-
-            if (checkboxBoundary.isSelected() == true) {
-                voi.setDisplayMode(VOI.SOLID);
-            } else {
-                voi.setDisplayMode(VOI.BOUNDARY);
-            }
 
             voi.setColor(colorVOI);
 
@@ -765,21 +741,38 @@ public class JDialogVOIStats extends JDialogBase
     // *******************************************************************
 
     /**
-     * Sets opacity slider to enabled or disabled depending on boundary checkbox.
+     * Updates the VOI when the checkboxes for title, boundary, processing, and opacity are changed
      *
      * @param  event  Event that cause the method to fire
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
 
-        if (source == checkboxBoundary) {
+        if (source.equals(checkboxBoundary)) {
 
             if (checkboxBoundary.isSelected()) {
                 opacitySlider.setEnabled(true);
+                voi.setDisplayMode(VOI.SOLID);
+                voi.setOpacity(opacitySlider.getValue() / (float) 100);
             } else {
                 opacitySlider.setEnabled(false);
+                voi.setDisplayMode(VOI.BOUNDARY);
             }
+        } else if (source.equals(checkboxBoundingBox)) {
+	        if (checkboxBoundingBox.isSelected() == true) {
+	            voi.setBoundingBoxFlag(true);
+	        } else {
+	            voi.setBoundingBoxFlag(false);
+	        }
+        } else if (source.equals(checkboxIncludeForProcessing)) {
+	        if (checkboxIncludeForProcessing.isSelected() == true) {
+	            voi.setProcess(true);
+	        } else {
+	            voi.setProcess(false);
+	        }
         }
+        
+        ViewUserInterface.getReference().setUseVOIName(checkboxVOIName.isSelected());
     }
 
     /**
@@ -842,7 +835,7 @@ public class JDialogVOIStats extends JDialogBase
     // *******************************************************************
 
     /**
-     * Sets values based on knob along slider.
+     * Sets values based on knob along slider. Changes the opacity of the VOI
      *
      * @param  e  Event that triggered this function
      */
@@ -856,6 +849,8 @@ public class JDialogVOIStats extends JDialogBase
                 voi.setOpacity(opacitySlider.getValue() / (float) 100);
             }
         }
+        
+        updateVOIPanel(voi, image);
     }
 
     /**
@@ -1095,7 +1090,7 @@ public class JDialogVOIStats extends JDialogBase
         colorButton = new JButton();
         colorButton.setPreferredSize(new Dimension(25, 25));
         colorButton.setToolTipText("Change VOI color");
-        colorButton.addActionListener(this);
+        colorButton.addItemListener(this);
 
         VOIName = new JTextField(15);
         VOIName.setFont(serif12);
@@ -1165,12 +1160,14 @@ public class JDialogVOIStats extends JDialogBase
 
         checkboxBoundingBox = new JCheckBox("Show contour bounding box");
         checkboxBoundingBox.setFont(serif12);
+        checkboxBoundingBox.addItemListener(this);
 
         //checkboxAdditiveOrSubtractive = new JCheckBox("Use additive polarity for VOI");
         //checkboxAdditiveOrSubtractive.setFont(serif12);
 
         checkboxIncludeForProcessing = new JCheckBox("Include for processing");
         checkboxIncludeForProcessing.setFont(serif12);
+        checkboxIncludeForProcessing.addItemListener(this);
 
         checkboxBoundary = new JCheckBox("Display VOI shading");
         checkboxBoundary.setFont(serif12);
@@ -1178,6 +1175,7 @@ public class JDialogVOIStats extends JDialogBase
 
         checkboxVOIName = new JCheckBox("Show VOI name");
         checkboxVOIName.setFont(serif12);
+        checkboxVOIName.addItemListener(this);
         checkboxVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
 
         JPanel checkboxPanel = new JPanel();
@@ -1189,6 +1187,7 @@ public class JDialogVOIStats extends JDialogBase
         checkboxPanel.add(checkboxBoundary);
 
         opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
+        opacitySlider.addChangeListener(this);
 
         opacitySlider.setMajorTickSpacing(20);
         opacitySlider.setValue(30);
