@@ -20,6 +20,1084 @@ public class SelectedEigenvalue implements java.io.Serializable {
     
     GeneralizedEigenvalue ge = new GeneralizedEigenvalue();
     
+    /** Common variables in testing routines. */
+    private ViewUserInterface UI = ViewUserInterface.getReference();
+    
+    /**
+     * This is a port of the part of version 3.4.0 LAPACK test routine DDRVST used to test dsyevx. Original DDRVST created
+     * by Univ. of Tennessee, Univ. of California Berkeley, University of Colorado Denver, and NAG Ltd., November, 2011.
+     * ddrvst checks the symmetric eigenvalue problem driver dsyevx. dsyevx computes selected eigenvalues and, optionally,
+     * eigenvectors of a real symmetric matrix.
+     * 
+     * <p>
+     * When ddrvst is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified. For each
+     * size ("n") and each type of matrix, one matrix will be generated and used to test the dsyevx driver. For each
+     * matrix, the following tests will be performed: (1) | A - Z D Z' | / ( |A| n ulp ) (2) | I - Z Z' | / ( n ulp )
+     * (3) | D1 - D2 | / ( |D1| ulp ) where Z is the matrix of eigenvectors returned when the eigenvector option is
+     * given and D1 and D2 are the eigenvalues returned with and without the eigenvector option.
+     * </p>
+     * 
+     * <p>
+     * The "sizes" are specified by an array nn(0:nsizes-1); the value of each element nn[j] specifies one size. The
+     * "types" are specified by a boolean array dotype(0:ntypes-1); if dotype[j] is true, then matrix type "j" will be
+     * generated. Currently, the list of possible types is: (1) The zero matrix. (2) The identity matrix. (3) A diagonal
+     * matrix with evenly spaced eigenvalues 1, ..., ulp and random signs. (ulp = (first number larger than 1) - 1) (4)
+     * A diagonal matrix with geometrically spaced eigenvalues 1, ..., ulp and random signs. (5) A diagonal matrix with
+     * "clustered" eigenvalues 1, ulp, ..., ulp and random signs. (6) Same as (4), but multiplied by sqrt(overflow
+     * threshold) (7) Same as (4), but multiplied by sqrt(underflow threshold) (8) A matrix of the form U' D U, where U
+     * is orthogonal and D has evenly spaced entries 1, ..., ulp with random signs on the diagonal. (9) A matrix of the
+     * form U' D U, where U is orthogonal and D has geometrically spaced entries 1, ..., ulp with random signs on the
+     * diagonal. (10) A matrix of the form U' D U, where U is orthogonal and D has "clustered" entries 1, ulp, ..., ulp
+     * with random signs on the diagonal. (11) Same as (8), but multiplied by sqrt( overflow threshold) (12) Same as
+     * (8), but multiplied by sqrt( underflow threshold) (13) Symmetric matrix with random entries chosen from (-1,1).
+     * (14) Same as (13), but multiplied by sqrt( overflow threshold) (15) Same as (13), but multiplied by
+     * sqrt(underflow threshold) (16) A band matrix with half bandwidth randomly chosen between 0 and n-1, with evenly
+     * spaced eigenvalues 1, ..., ulp with random signs. (17) Same as (16), but multiplied by sqrt(overflow threshold)
+     * (18) Same as (16), but multiplied by sqrt(underflow threshold)
+     * </p>
+     * 
+     * <p>
+     * The tests performed are: 
+     * (1) | A - U S U' | / ( |A| n ulp ) dsyevx(jobz = 'V', range = 'A' uplo = 'L',... )
+     * (2) | I - U U' | / ( n ulp ) dsyevx(jobz = 'V', range = 'A' uplo = 'L',... ) 
+     * (3) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyevx(jobz = 'N', range = 'A' uplo = 'L',... )
+     * (4) | A - U S U' | / ( |A| n ulp ) dsyevx(jobz = 'V', range = 'I' uplo = 'L',... )
+     * (5) | I - U U' | / ( n ulp ) dsyevx(jobz = 'V', range = 'I' uplo = 'L',... ) 
+     * (6) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyevx(jobz = 'N', range = 'I' uplo = 'L',... )
+     * (7) | A - U S U' | / ( |A| n ulp ) dsyevx(jobz = 'V', range = 'V' uplo = 'L',... )
+     * (8) | I - U U' | / ( n ulp ) dsyevx(jobz = 'V', range = 'V' uplo = 'L',... ) 
+     * (9) |D(with Z) - D(w/o Z)| / (|D| ulp) dsyevx(jobz = 'N', range = 'V' uplo = 'L',... )
+     *  Tests 1 through 9 are repeated with uplo = 'U'
+     * </p>
+     * 
+     * @param nsizes (input) int The number of sizes of matrices to use. If it is zero, ddrvst does nothing. It must be
+     *            at least zero.
+     * @param nn (input) int[] of dimension (nsizes) An array containing the sizes to be used for the matrices. Zero
+     *            values will be skipped. The values must be at least zero.
+     * @param ntypes (input) int The number of elements in dotype. If it is zero, ddrvst does nothing. It must be at
+     *            least zero. If it is maxtyp+1 and nsizes is 1, then an additional type, maxtyp+1 is defined, which is
+     *            to use whatever matrix is in A. This is only useful if dotype(0:maxtyp-1) is false and dotype[maxtyp]
+     *            is true.
+     * @param dotype (input) boolean[] of dimension (ntypes) If dotype[j] is true, then for each size in nn a matrix of
+     *            that size and of type j will be generated. If ntypes is smaller than the maximum number of types
+     *            defined (parameter maxtyp), then types ntypes+1 through maxtyp will not be generated. If ntypes is
+     *            larger than maxtyp, dotype[maxtyp] through dotype[ntypes-1] will be ignored.
+     * @param iseed (input/output) int[] of dimension (4) On entry iseed specifies the seed of the random number
+     *            generator. The array elements should be between 0 and 4095; if not they will be reduced mod 4096.
+     *            Also, iseed[3] must be odd. The random number generator uses a linear congruential sequence limited
+     *            to small integers, and so should produce machine independent random numbers. The values of iseed are
+     *            changed on exit, and can be used in the next call to ddrvst to continue the same random number
+     *            sequence.
+     * @param thresh (input) double A test will count as "failed" if the "error", computed as described above, exceeds
+     *            thresh. Note that the error is scaled to be O(1), so thresh should be a reasonably small multiple of
+     *            1, e.g., 10 or 100. In particular, it should not depend on the precision (single vs. double) or the
+     *            size of the matrix. It must be at least zero.
+     * @param A (input/workspace/output) double[][] of dimension (lda, max(nn)) Used to hold the matrix whose
+     *            eigenvalues are to be computed. On exit, A contains the last matrix actually used.
+     * @param lda (input) int The leading dimension of A. It must be at least 1 and at least max(nn).
+     * @param D1 (workspace/output) double[] of dimension (max(nn)) The eigenvalues of A, as computed by dsteqr
+     *            simultaneously with Z. On exit, the eigenvalues in D1 correspond with the matrix in A.
+     * @param D2 (workspace/output) double[] of dimension (max(nn)) The eigenvalues of A, as computed by dsteqr if Z is
+     *            not computed. On exit, the eigenvalues in D2 correspond with the matrix in A.
+     * @param D3 (workspace/output) double[] of dimension max(nn)) The eigenvalues of A, as computed by dsterf. On exit,
+     *            the eigenvalues in D3 correspond with the matrix in A.
+     * @param D4 double[] of dimension (max(nn))
+     * @param eveigs double[] of dimension (max(nn)) The eigenvalues as computed by dstev('N', ... )
+     * @param WA1 double[]
+     * @param WA2 double[]
+     * @param WA3 double[]
+     * @param U (workspace/output) double[][] of dimension (ldu, max(nn)) The orthogonal matrix computed by dsytrd +
+     *            dorgtr.
+     * @param ldu (input) int The leading dimension of U, Z and V. It must be at least 1 and at least max(nn).
+     * @param V (workspace/output) double[][] of dimension (ldu, max(nn)) The Householder vectors computed by dsytrd in
+     *            reducing A to tridiagonal form.
+     * @param tau (workspace/output) double[] of dimension max(nn) The Householder factors computed by dsytrd in
+     *            reducing A to tridiagonal form.
+     * @param Z (workspace/output) double[][] of dimension (ldu, max(nn)) The orthogonal matrix of eigenvectors computed
+     *            by dsteqr, dpteqr, and dstein.
+     * @param work (workspace/output) double[] of dimension (lwork)
+     * @param lwork (input) int The number of entries in work. This must be at least 1 + 4*nmax + 2 * nmax * lg nmax + 4
+     *            * nmax**2 where nmax = max(nn[j], 2) and lg = log base 2.
+     * @param iwork workspace int[] of dim (6 + 6*nmax + 5* nmax * lg nmax) where nmax = max(nn[j], 2) and lg = log base
+     *            2.
+     * @param liwork (input) int length of iwork
+     * @param result (output) double[] of dimension (105) The values computed by the tests described above. The values
+     *            are currently limited to 1/ulp, to avoid overflow.
+     * @param info (output) int[] If 0, then everything ran OK. -1: nsizes < 0 -2: Some nn[j] < 0 -3: ntypes < 0 -5:
+     *            thresh < 0 -9: lda < 1 or lda < nmax, where nmax is max(nn[j]) -16: ldu < 1 or ldu < nmax -21: lwork
+     *            too small. If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, dsterf, or dormtr returns an error code, the
+     *            absolute value of it is returned.
+     */
+    private void ddrvst(final int nsizes, final int[] nn, final int ntypes, final boolean[] dotype, final int[] iseed,
+            final double thresh, final double[][] A, final int lda, final double[] D1, final double[] D2,
+            final double[] D3, final double[] D4, final double[] eveigs, final double[] WA1, final double[] WA2,
+            final double[] WA3, final double[][] U, final int ldu, final double[][] V, final double[] tau,
+            final double[][] Z, final double[] work, final int lwork, final int[] iwork, final int liwork,
+            final double[] result, final int[] info) {
+        final int maxtyp = 18; // The number of types defined
+        boolean badnn;
+        char uplo;
+        int i;
+        int idiag;
+        int ihbw;
+        final int[] iinfo = new int[1];
+        int iL;
+        int imode; // Value to be passed to the matrix generators
+        int irow;
+        int itemp;
+        int itype;
+        int iu;
+        int iuplo;
+        int j;
+        int j1;
+        int j2;
+        int jcol;
+        int jsize;
+        int jtype;
+        int lgn;
+        int mtypes;
+        int m[] = new int[1]; // Store number of eigenvalues found in dsyevx
+        int m2[] = new int[1]; // Store number of eigenvalues found in dsyevx
+        int m3[] = new int[1]; // Store number of eigenvalues found in dsyevx
+        int n;
+        final int[] nerrs = new int[1]; // The number of tests which have exceeded thresh
+        // so far (computed by dlafts).
+        int nmats; // The number of matrices generated so far.
+        int nmax; // Largest value in nn.
+        int ntest; // The number of tests performed, or which can
+        // be performed so far, for the current matrix
+        int ntestt; // The total number of tests performed so far.
+        double abstol;
+        double aninv;
+        double anorm; // Norm of A; passed to the matrix generators.
+        double cond; // Value to be passed to the matrix generators.
+        final double[] ovfl = new double[1]; // Overflow threshold
+        double rtovfl; // Square root of overflow threshold
+        double rtunfl; // Square root of underflow threshold
+        double temp1;
+        double temp2;
+        double temp3;
+        double ulp; // Finest relative precision
+        double ulpinv; // Inverse of finest relative precision
+        double vl;
+        double vu;
+        final double[] unfl = new double[1]; // Underflow threshold
+        final int[] idumma = new int[1];
+        final int[] ioldsd = new int[4];
+        final int[] iseed2 = new int[4];
+        final int[] iseed3 = new int[4];
+
+        // The order of magnitude (O(1), O(overflow^(1/2)), O(underflow^(1/2))
+        final int[] kmagn = new int[] {1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+
+        // The mode value to be passed to the matrix generator for type "j".
+        final int[] kmode = new int[] {0, 0, 4, 3, 1, 4, 4, 4, 3, 1, 4, 4, 0, 0, 0, 4, 4, 4};
+
+        // The general type (1-10) for type "j".
+        final int[] ktype = new int[] {1, 2, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 8, 8, 8, 9, 9, 9};
+        int[] iwork2;
+        double[] work2;
+        double[] work3;
+        final double[] res = new double[2];
+        String typeString;
+        
+        vl = 0.0;
+        vu = 0.0;
+
+        // Check for errors
+        ntestt = 0;
+        info[0] = 0;
+
+        badnn = false;
+        nmax = 1;
+
+        for (j = 0; j < nsizes; j++) {
+            nmax = Math.max(nmax, nn[j]);
+
+            if (nn[j] < 0) {
+                badnn = true;
+            }
+        } // for (j = 0; j < nsizes; j++)
+
+        work2 = new double[3 * nmax];
+        work3 = new double[nmax];
+
+        if (nsizes < 0) {
+            info[0] = -1;
+        } else if (badnn) {
+            info[0] = -2;
+        } else if (ntypes < 0) {
+            info[0] = -3;
+        } else if (lda < nmax) {
+            info[0] = -9;
+        } else if (ldu < nmax) {
+            info[0] = -16;
+        } else if ( (2 * Math.max(2, nmax) * Math.max(2, nmax)) > lwork) {
+            info[0] = -21;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error ddrvst had info[0] = " + info[0]);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ( (nsizes == 0) || (ntypes == 0)) {
+            return;
+        }
+
+        unfl[0] = ge.dlamch('S');
+        ovfl[0] = ge.dlamch('O');
+        ge.dlabad(unfl, ovfl);
+        ulp = ge.dlamch('E') * ge.dlamch('B');
+        ulpinv = 1.0 / ulp;
+        rtunfl = Math.sqrt(unfl[0]);
+        rtovfl = Math.sqrt(ovfl[0]);
+
+        // Loop over sizes, types
+        for (i = 0; i < 4; i++) {
+            iseed2[i] = iseed[i];
+            iseed3[i] = iseed[i];
+        }
+
+        nerrs[0] = 0;
+        nmats = 0;
+
+        for (jsize = 1; j <= nsizes; jsize++) {
+            n = nn[jsize - 1];
+
+            if (n > 0) {
+                lgn = (int) (Math.log((double) n) / Math.log(2.0));
+
+                if (Math.pow(2.0, lgn) < n) {
+                    lgn = lgn + 1;
+                }
+
+                if (Math.pow(2.0, lgn) < n) {
+                    lgn = lgn + 1;
+                }
+            } // if (n > 0)
+
+            aninv = 1.0 / (double) Math.max(1, n);
+
+            if (nsizes != 1) {
+                mtypes = Math.min(maxtyp, ntypes);
+            } else {
+                mtypes = Math.min(maxtyp + 1, ntypes);
+            }
+
+            for (jtype = 1; jtype <= mtypes; jtype++) {
+
+                if ( !dotype[jtype - 1]) {
+                    continue;
+                }
+
+                nmats = nmats + 1;
+                ntest = 0;
+
+                for (j = 0; j < 4; j++) {
+                    ioldsd[j] = iseed[j];
+                }
+
+                // Compute "A"
+                // Control parameters:
+                /*
+                 * kmagn kmode       ktype 
+           = 1     O(1)  clustered 1 zero 
+           = 2     large clustered 2 identity 
+           = 3     small exponential (none) 
+           = 4           arithmetic  diagonal, (w/ eigenvalues) 
+           = 5           random log  symmetric, w/ eigenvalues 
+           = 6           random      (none) 
+           = 7                       random diagonal 
+           = 8                       random symmetric 
+           = 9                       band symmetric, w/ eigenvalues
+                 */
+
+                if (mtypes <= maxtyp) {
+                    itype = ktype[jtype - 1];
+                    imode = kmode[jtype - 1];
+
+                    // Compute norm
+
+                    if (kmagn[jtype - 1] == 1) {
+                        anorm = 1.0;
+                    } else if (kmagn[jtype - 1] == 2) {
+                        anorm = (rtovfl * ulp) * aninv;
+                    } else {
+                        anorm = rtunfl * n * ulpinv;
+                    }
+
+                    ge.dlaset('F', lda, n, 0.0, 0.0, A, lda);
+                    iinfo[0] = 0;
+                    cond = ulpinv;
+
+                    // Special Matrices -- Identity & Jordan block
+
+                    // Zero
+                    if (itype == 1) {
+                        iinfo[0] = 0;
+                    } else if (itype == 2) {
+
+                        // Identity
+                        for (jcol = 0; jcol < n; jcol++) {
+                            A[jcol][jcol] = anorm;
+                        }
+                    } else if (itype == 4) {
+
+                        // Diagonal Matrix, [Eigen]values, Specified
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, 0, 0, 'N', A, lda, work2, iinfo);
+                    } else if (itype == 5) {
+
+                        // Symmetric, eigenvalues specified
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, n, n, 'N', A, lda, work2, iinfo);
+                    } else if (itype == 7) {
+
+                        // Diagonal, random eigenvalues
+                        idumma[0] = 1;
+                        ge.dlatmr(n, n, 'S', iseed, 'S', work, 6, 1.0, 1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N',
+                                idumma, 0, 0, 0.0, anorm, 'N', A, lda, iwork, iinfo);
+                    } // else if (itype == 7)
+                    else if (itype == 8) {
+
+                        // Symmetric, random eigenvalues
+                        idumma[0] = 1;
+                        ge.dlatmr(n, n, 'S', iseed, 'S', work, 6, 1.0, 1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N',
+                                idumma, n, n, 0.0, anorm, 'N', A, lda, iwork, iinfo);
+                    } // else if (itype == 8)
+                    else if (itype == 9) {
+
+                        // Symmetric banded, eigenvalues specified
+                        ihbw = (int) ( (n - 1) * ge.dlarnd(1, iseed3));
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, ihbw, ihbw, 'Z', U, ldu, work2, iinfo);
+
+                        // Store as dense matrix for most routines
+                        ge.dlaset('F', lda, n, 0.0, 0.0, A, lda);
+
+                        for (idiag = -ihbw; idiag <= ihbw; idiag++) {
+                            irow = ihbw - idiag + 1;
+                            j1 = Math.max(1, idiag + 1);
+                            j2 = Math.min(n, n + idiag);
+
+                            for (j = j1; j <= j2; j++) {
+                                i = j - idiag;
+                                A[i - 1][j - 1] = U[irow - 1][j - 1];
+                            }
+                        } // for (idiag = -ihbw; idiag <= ihbw; idiag++)
+                    } // else if (itype == 9)
+                    else {
+                        iinfo[0] = 1;
+                    } // else
+
+                    if (iinfo[0] != 0) {
+                        UI.setDataText("Generator iinfo[0] = " + iinfo[0] + "\n");
+                        UI.setDataText("n = " + n + "\n");
+                        UI.setDataText("jtype = " + jtype + "\n");
+                        UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                        UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                        UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                        UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                        info[0] = Math.abs(iinfo[0]);
+
+                        return;
+                    } // if (iinfo[0] != 0)
+
+                } // if (mtypes <= maxtyp)
+
+                abstol = unfl[0] + unfl[0];
+                if (n <= 1) {
+                    iL = 1;
+                    iu = n;
+                } else { // n > 1
+                    iL = 1 + ( (n - 1) * (int) (ge.dlarnd(1, iseed2)));
+                    iu = 1 + ( (n - 1) * (int) (ge.dlarnd(1, iseed2)));
+
+                    if (iL > iu) {
+                        itemp = iL;
+                        iL = iu;
+                        iu = itemp;
+                    }
+                } // else n > 1
+
+                // Test storing upper or lower triangular part of matrix.
+                for (iuplo = 0; iuplo <= 1; iuplo++) {
+
+                    if (iuplo == 0) {
+                        uplo = 'L';
+                    } else {
+                        uplo = 'U';
+                    }
+
+                    loop1: {
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        ntest = ntest + 1;
+                        
+                        if (n > 0) {
+                            temp3 = Math.max(Math.abs(D1[0]), Math.abs(D1[n-1])); 
+                            if (iL != 1) {
+                                vl = D1[iL-1] - Math.max(0.5*(D1[iL-1] - D1[iL-2]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));    
+                            }
+                            else {
+                                vl = D1[0] - Math.max(0.5*(D1[n-1] - D1[0]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));
+                            }
+                            if (iu != n) {
+                                vu = D1[iu-1] + Math.max(0.5*(D1[iu] - D1[iu-1]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));
+                            }
+                            else {
+                                vu = D1[n-1] + Math.max(0.5*(D1[n-1] - D1[0]),
+                                     Math.max(10.0*ulp*temp3, 10.0*rtunfl));
+                            }
+                        } // if (n > 0)
+                        else { 
+                            temp3 = 0.0;
+                            vl = 0.0;
+                            vu = 0.0;
+                        } // else 
+                        iwork2 = new int[n];
+                        dsyevx('V', 'A', uplo, n, A, ldu, vl, vu, iL, iu,
+                               abstol, m, WA1, Z, ldu, work, lwork, iwork, iwork2, iinfo);
+                        if (iinfo[0] != 0) {
+                            UI.setDataText("dsyevx(V, A, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                            UI.setDataText("n = " + n + "\n");
+                            UI.setDataText("jtype = " + jtype + "\n");
+                            UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                            UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                            UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                            UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                            info[0] = Math.abs(iinfo[0]);
+
+                            if (iinfo[0] < 0) {
+                                return;
+                            } else {
+                                result[ntest - 1] = ulpinv;
+                                result[ntest] = ulpinv;
+                                result[ntest + 1] = ulpinv;
+
+                                break loop1;
+                            }
+                        } // if (iinfo[0] != 0)
+
+                         // Do tests 1 and 2 or 10 and 11
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        ge.dsyt21(1, uplo, n, 0, A, ldu, D1, D2, Z, ldu, V, ldu, tau, work, res);
+                        result[ntest-1] = res[0];
+                        result[ntest] = res[1];
+                        ntest = ntest + 2;
+                        dsyevx('N', 'A', uplo, n, A, ldu, vl, vu, iL, iu,
+                                abstol, m2, WA2, Z, ldu, work, lwork, iwork, iwork2, iinfo);
+                        if (iinfo[0] != 0) {
+                            UI.setDataText("dsyevx(N, A, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                            UI.setDataText("n = " + n + "\n");
+                            UI.setDataText("jtype = " + jtype + "\n");
+                            UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                            UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                            UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                            UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                            info[0] = Math.abs(iinfo[0]);
+
+                            if (iinfo[0] < 0) {
+                                return;
+                            } else {
+                                result[ntest - 1] = ulpinv;
+
+                                break loop1;
+                            }
+                        } // if (iinfo[0] != 0)
+                        
+                        // Do test 3 or 12
+                        temp1 = 0.0;
+                        temp2 = 0.0;
+                        for (j = 0; j < n; j++) {
+                            temp1 = Math.max(temp1, Math.max(Math.abs(WA1[j]), Math.abs(WA2[j])));
+                            temp2 = Math.max(temp2, Math.abs(WA1[j] - WA2[j]));
+                        }
+                        result[ntest-1] = temp2/Math.max(unfl[0], ulp * Math.max(temp1, temp2));
+                    } // loop1
+                    
+                    loop2: {
+                        ntest = ntest + 1;
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        dsyevx('V', 'I', uplo, n, A, ldu, vl, vu, iL, iu,
+                                abstol, m2, WA2, Z, ldu, work, lwork, iwork, iwork2, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevx(V, I, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+                                 result[ntest] = ulpinv;
+                                 result[ntest + 1] = ulpinv;
+
+                                 break loop2;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         // Do tests 4 and 5 or 13 and 14
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         dsyt22(1, uplo, n, m2[0], 0, A, ldu, WA2, D2, Z, ldu, V, ldu, tau, work, res);
+                         result[ntest-1] = res[0];
+                         result[ntest] = res[1];
+                         ntest = ntest + 2;
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         dsyevx('N', 'I', uplo, n, A, ldu, vl, vu, iL, iu,
+                                 abstol, m3, WA3, Z, ldu, work, lwork, iwork, iwork2, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevx(N, I, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+
+                                 break loop2;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         // Do test 6 or 15
+
+                         temp1 = dsxt1(1, WA2, m2[0], WA3, m3[0], abstol, ulp, unfl[0]);
+                         temp2 = dsxt1(1, WA3, m3[0], WA2, m2[0], abstol, ulp, unfl[0]);
+                         result[ntest-1] = (temp1 + temp2)/Math.max(unfl[0], ulp * temp3);
+                    } // loop2
+                    
+                    loop3: {
+                        ntest = ntest + 1;
+                        ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                        dsyevx('V', 'V', uplo, n, A, ldu, vl, vu, iL, iu,
+                                abstol, m2, WA2, Z, ldu, work, lwork, iwork, iwork2, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevx(V, V, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+                                 result[ntest] = ulpinv;
+                                 result[ntest + 1] = ulpinv;
+
+                                 break loop3;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         // Do tests 7 and 8 or 16 and 17
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         dsyt22(1, uplo, n, m2[0], 0, A, ldu, WA2, D2, Z, ldu, V, ldu, tau, work, res);
+                         result[ntest-1] = res[0];
+                         result[ntest] = res[1];
+                         ntest = ntest + 2;
+                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
+                         dsyevx('N', 'V', uplo, n, A, ldu, vl, vu, iL, iu,
+                                 abstol, m3, WA3, Z, ldu, work, lwork, iwork, iwork2, iinfo);
+                         if (iinfo[0] != 0) {
+                             UI.setDataText("dsyevx(N, V, " + uplo + " ) iinfo[0] = " + iinfo[0] + "\n");
+                             UI.setDataText("n = " + n + "\n");
+                             UI.setDataText("jtype = " + jtype + "\n");
+                             UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                             UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                             UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                             UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                             info[0] = Math.abs(iinfo[0]);
+
+                             if (iinfo[0] < 0) {
+                                 return;
+                             } else {
+                                 result[ntest - 1] = ulpinv;
+
+                                 break loop3;
+                             }
+                         } // if (iinfo[0] != 0)
+                         
+                         if (m3[0] == 0 && n > 0) {
+                             result[ntest-1] = ulpinv;
+                             break loop3;
+                         }
+                         
+                         // Do test 9 or 18
+
+                         temp1 = dsxt1(1, WA2, m2[0], WA3, m3[0], abstol, ulp, unfl[0]);
+                         temp2 = dsxt1(1, WA3, m3[0], WA2, m2[0], abstol, ulp, unfl[0]);
+                         if (n > 0) {
+                             temp3 = Math.max(Math.abs(WA1[0]), Math.abs(WA1[n-1]));
+                         }
+                         else {
+                             temp3 = 0.0;
+                         }
+                         result[ntest-1] = (temp1 + temp2)/Math.max(unfl[0], temp3 * ulp);    
+                    } // loop3
+                } // for (iuplo = 0; iuplo <= 1; iuplo++)
+
+                // End of Loop -- Check for result[j] > thresh
+                ntestt = ntestt + ntest;
+                typeString = new String("DST");
+                ge.dlafts(typeString, n, n, jtype, ntest, result, ioldsd, thresh, nerrs);
+            } // for (jtype = 1; jtype <= mtypes; jtype++)
+        } // for (jsize = 1; j <= nsizes; jsize++)
+
+        // Summary
+        if (nerrs[0] > 0) {
+            UI.setDataText("ddrvst " + nerrs[0] + " out of " + ntestt + " tests failed to pass the threshold\n");
+        } else {
+            UI.setDataText("All " + ntestt + " tests for ddrvst passed the threshold\n");
+        }
+
+        return;
+
+    } // ddrvst
+    
+    /** This is the port of version 3.1 LAPACK test routine DORT01.
+     *  Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+     *  November 2006
+     *     
+        DSYT22  generally checks a decomposition of the form
+   *
+   *            A U = U S
+   *
+   *    where A is symmetric, the columns of U are orthonormal, and S
+   *    is diagonal (if KBAND=0) or symmetric tridiagonal (if
+   *    KBAND=1).  If ITYPE=1, then U is represented as a dense matrix,
+   *    otherwise the U is expressed as a product of Householder
+   *    transformations, whose vectors are stored in the array "V" and
+   *    whose scaling constants are in "TAU"; we shall use the letter
+   *    "V" to refer to the product of Householder transformations
+   *    (which should be equal to U).
+   *
+   *    Specifically, if ITYPE=1, then:
+   *
+   *            RESULT(1) = | U' A U - S | / ( |A| m ulp ) *and*
+   *            RESULT(2) = | I - U'U | / ( m ulp )
+   *            
+        @param itype input int Specifies the type of tests to be performed.
+       *          1: U expressed as a dense orthogonal matrix:
+       *             result[0] = | A - U S U' | / ( |A| n ulp )   *and*
+       *             result[1] = | I - UU' | / ( n ulp )  
+       *@param uplo input char  If UPLO='U', the upper triangle of A will be used and the
+       *          (strictly) lower triangle will not be referenced.  If
+       *          UPLO='L', the lower triangle of A will be used and the
+       *          (strictly) upper triangle will not be referenced.
+       *          Not modified.
+       *@param n  input int The size of the matrix.  If it is zero, dsyt22 does nothing.
+       *          It must be at least zero.
+       *          Not modified.
+       *@param m  input int The number of columns of U.  If it is zero, dsyt22 does
+       *          nothing.  It must be at least zero.
+       *          Not modified.
+       *@param kband input int The bandwidth of the matrix.  It may only be zero or one.
+       *          If zero, then S is diagonal, and E is not referenced.  If
+       *          one, then S is symmetric tri-diagonal.
+       *          Not modified.
+       *@param A input double[][] of dimension (lda, n).
+       *         The original (unfactored) matrix.  It is assumed to be
+       *          symmetric, and only the upper (uplo='U') or only the lower
+       *          (uplo='L') will be referenced.
+       *          Not modified.
+       *@param lda input int The leading dimension of A.  It must be at least 1
+       *          and at least n.
+       *          Not modified.
+       *@param d input double[] of dimension n.  The diagonal of the (symmetric tri-) diagonal matrix.
+       *          Not modified.
+       *@param e input double[] of dimension n.  The off-diagonal of the (symmetric tri-) diagonal matrix.
+       *          e[0] is ignored, e[1] is the (0,1) and (1,0) element, etc.
+       *          Not referenced if kband=0.
+       *          Not modified.
+       *@param U input double[][] of dimension (ldu, n).
+       *          If itype=1 or 3, this contains the orthogonal matrix in
+       *          the decomposition, expressed as a dense matrix.  If itype=2,
+       *          then it is not referenced.
+       *          Not modified.
+       *@param ldu input int The leading dimension of U.  ldu must be at least n and
+       *          at least 1.
+       *          Not modified.
+       *@param V input double[][] of dimension (ldv, n).
+       *          If itype=2 or 3, the lower triangle of this array contains
+       *          the Householder vectors used to describe the orthogonal
+       *          matrix in the decomposition.  If itype=1, then it is not
+       *          referenced.
+       *          Not modified.
+       *@param ldv input int The leading dimension of V.  ldv must be at least n and
+       *          at least 1.
+       *          Not modified.
+       *@param tau input double[] of dimension n.
+       *          If itype >= 2, then tau(j) is the scalar factor of
+       *          v(j) v(j)' in the Householder transformation H(j) of
+       *          the product  U = H(1)...H(n-2)
+       *          If itype < 2, then tau is not referenced.
+       *          Not modified.
+       *@param work workspace double[] of dimension (2*n**2) Modified
+       *@param result output double[] of dimension 2.
+       *          The values computed by the two tests described above.  The
+       *          values are currently limited to 1/ulp, to avoid overflow.
+       *          result[0] is always modified.  result[1] is modified only
+       *          if ldu is at least n.
+       *          Modified.
+     */     
+    private void dsyt22(int itype, char uplo, int n, int m, int kband, double A[][],
+                        int lda, double d[], double e[], double U[][], int ldu,
+                        double V[][], int ldv, double tau[], double work[], double result[]) {
+             double unfl;
+             double ulp;
+             double anorm;
+             double wnorm;
+             int i;
+             int j;
+             int jj;
+             int jj1;
+             int jj2;
+             int nn;
+             int nnp1;
+             double array1[][];
+             double array2[][];
+             int index;
+             double temp[] = new double[1];
+      
+             result[0] = 0.0;
+             result[1] = 0.0;
+             if (n <= 0 || m <= 0) {
+                 return;
+             }
+       
+             unfl = ge.dlamch('S');
+             ulp = ge.dlamch('P');
+       
+             // Do Test 1
+       
+             // Norm of A:
+       
+             anorm = Math.max(ge.dlansy('1', uplo, n, A, lda, work), unfl);
+             
+       
+             // Compute error matrix:
+       
+             // ITYPE=1: error = U' A U - S
+       
+             array1 = new double[n][m];
+             index = 0;
+             for (j = 0; j < m; j++) {
+                 for (i = 0; i < n; i++) {
+                     array1[i][j] = work[index++];
+                 }
+             }
+             ge.dsymm('L', uplo, n, m, 1.0, A, lda, U, ldu, 0.0, array1, n);
+             index = 0;
+             for (j = 0; j < m; j++) {
+                 for (i = 0; i < n; i++) {
+                     work[index++] = array1[i][j];
+                 }
+             }
+             nn = n*n;
+             nnp1 = nn + 1;
+             array2 = new double[n][m];
+             index = 0;
+             for (j = 0; j < m; j++) {
+                 for (i = 0; i < n; i++) {
+                     array1[i][j] = work[index];
+                     array2[i][j] = work[nnp1-1+index];
+                     index++;
+                 }
+             }
+             ge.dgemm('T', 'N', m, m, n, 1.0, U, ldu, array1, n, 0.0, array2, n);
+             index = 0;
+             for (j = 0; j < m; j++) {
+                 for (i = 0; i < n; i++) {
+                     work[index] = array1[i][j];
+                     work[nnp1-1+index] = array2[i][j];
+                     index++;
+                 }
+             }
+             for (j = 1; j <= m; j++) {
+                jj = nn + (j-1)*n + j;
+                work[jj-1] = work[jj-1] - d[j-1];
+             } // for (j = 1; j <= m; j++)
+             if (kband == 1 && n > 1) {
+                for (j = 2; j <= m; j++) {
+                   jj1 = nn + (j-1)*n + j - 1;
+                   jj2 = nn + (j-2)*n + j;
+                   work[jj1-1] = work[jj1-1] - e[j-2];
+                   work[jj2-1] = work[jj2-1] - e[j-2];
+                } // for (j = 2; j <= m; j++)
+             } // if (kband == 1 && n > 1)
+             index = 0;
+             for (j = 0; j < m; j++) {
+                 for (i = 0; i < n; i++) {
+                     array1[i][j] = work[nnp1-1+index];
+                     index++;
+                 }
+             }
+             wnorm = ge.dlansy( '1', uplo, m, array1, n, work);
+       
+             if (anorm > wnorm) {
+                result[0] = (wnorm / anorm ) / ( m*ulp );
+             }
+             else {
+                if (anorm < 1.0) {
+                   result[0] = ( Math.min(wnorm, m*anorm) / anorm) / (m*ulp);
+                }
+                else {
+                   result[0] = Math.min( wnorm / anorm, (double)(m) ) / ( m*ulp );
+                }
+             }
+       
+             // Do Test 2
+       
+             // Compute  U'U - I
+       
+             if (itype == 1) {
+                array1 = new double[Math.min(m,n)][Math.min(m,n)];
+                dort01('C', n, m, U, ldu, array1, 2*n*n, temp);
+                result[1] = temp[0];
+             }
+       
+             return;
+       
+    } // dsyt22
+             
+ /** This is the port of version 3.1 LAPACK test routine DORT01.
+  *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+  *     November 2006
+  *
+  *     .. Scalar Arguments ..
+        CHARACTER          ROWCOL
+        INTEGER            LDU, LWORK, M, N
+        DOUBLE PRECISION   RESID
+  *     ..
+  *     .. Array Arguments ..
+        DOUBLE PRECISION   U( LDU, * ), WORK( * )
+  *     ..
+  *
+  *  Purpose
+  *  =======
+  *
+  *  DORT01 checks that the matrix U is orthogonal by computing the ratio
+  *
+  *     RESID = norm( I - U*U' ) / ( n * EPS ), if ROWCOL = 'R',
+  *  or
+  *     RESID = norm( I - U'*U ) / ( m * EPS ), if ROWCOL = 'C'.
+  *
+  *  Alternatively, if there isn't sufficient workspace to form
+  *  I - U*U' or I - U'*U, the ratio is computed as
+  *
+  *     RESID = abs( I - U*U' ) / ( n * EPS ), if ROWCOL = 'R',
+  *  or
+  *     RESID = abs( I - U'*U ) / ( m * EPS ), if ROWCOL = 'C'.
+  *
+  *  where EPS is the machine precision.  ROWCOL is used only if m = n;
+  *  if m > n, ROWCOL is assumed to be 'C', and if m < n, ROWCOL is
+  *  assumed to be 'R'.
+  *
+  *  Arguments
+  *  =========
+  *
+  *  ROWCOL  (input) CHARACTER
+  *          Specifies whether the rows or columns of U should be checked
+  *          for orthogonality.  Used only if M = N.
+  *          = 'R':  Check for orthogonal rows of U
+  *          = 'C':  Check for orthogonal columns of U
+  *
+  *  M       (input) INTEGER
+  *          The number of rows of the matrix U.
+  *
+  *  N       (input) INTEGER
+  *          The number of columns of the matrix U.
+  *
+  *  U       (input) DOUBLE PRECISION array, dimension (LDU,N)
+  *          The orthogonal matrix U.  U is checked for orthogonal columns
+  *          if m > n or if m = n and ROWCOL = 'C'.  U is checked for
+  *          orthogonal rows if m < n or if m = n and ROWCOL = 'R'.
+  *
+  *  LDU     (input) INTEGER
+  *          The leading dimension of the array U.  LDU >= max(1,M).
+  *
+  *  WORK    (workspace) DOUBLE PRECISION array, dimension (min(m,n),min(m,n))
+  *          In dlaset, dsyrk, and dlansy work must be 2D array.
+  *
+  *  LWORK   (input) INTEGER
+  *          The length of the array WORK.  For best performance, LWORK
+  *          should be at least N*(N+1) if ROWCOL = 'C' or M*(M+1) if
+  *          ROWCOL = 'R', but the test will be done even if LWORK is 0.
+  *
+  *  RESID   (output) DOUBLE PRECISION
+  *          RESID = norm( I - U * U' ) / ( n * EPS ), if ROWCOL = 'R', or
+  *          RESID = norm( I - U' * U ) / ( m * EPS ), if ROWCOL = 'C'.
+  */
+  private void dort01(char rowcol, int m, int n, double[][] U, int ldu,
+                      double[][] work, int lwork, double[] resid) {
+      char transu;
+      int i;
+      int j;
+      int k;
+      int ldwork;
+      int mnmin;
+      double eps;
+      double tmp;
+      double work2[];
+      double v1[];
+      double v2[];
+      int p;
+      
+      resid[0] = 0.0;
+      
+      // Quick return if possible.
+      if ((m <= 0) || (n <= 0)) {
+          return;
+      }
+      
+      eps = ge.dlamch('P'); // Precision
+      if ((m < n) || ((m == n) && ((rowcol == 'R') || (rowcol == 'r')))) {
+          transu = 'N';
+          k = n;
+      }
+      else {
+          transu = 'T';
+          k = m;
+      }
+      mnmin = Math.min(m, n);
+      
+      if ((mnmin + 1)*mnmin <= lwork) {
+          ldwork = mnmin;
+      }
+      else {
+          ldwork = 0;
+      }
+      if (ldwork > 0) {
+          // Compute I - U*U' or I - U'*U
+          ge.dlaset('U', mnmin, mnmin, 0.0, 1.0, work, ldwork);
+          ge.dsyrk('U', transu, mnmin, k, -1.0, U, ldu, 1.0, work, ldwork);
+          
+          // Compute norm(I - U*U') /(k * eps).
+          work2 = new double[Math.max(1, mnmin)];
+          resid[0] = ge.dlansy('1', 'U', mnmin, work, ldwork, work2);
+          resid[0] = (resid[0]/(double)k)/eps;
+      } // if (ldwork > 0)
+      else if (transu == 'T') {
+          // Find the maximum element in abs(I - U'*U)/(m * eps)
+          for (j = 1; j <= n; j++) {
+              for (i = 1; i <= j; i++) {
+                  if (i != j) {
+                      tmp = 0.0;
+                  }
+                  else {
+                      tmp = 1.0;
+                  }
+                  v1 = new double[m];
+                  v2 = new double[m];
+                  for (p = 0; p < m; p++) {
+                      v1[p] = U[p][i-1];
+                      v2[p] = U[p][j-1];
+                  }
+                  tmp = tmp - ge.ddot(m, v1, 1, v2, 1);
+                  resid[0] = Math.max(resid[0], Math.abs(tmp));
+              } // for (i = 1; i <= j; i++)
+          } // for (j = 1; j <= n; j++)
+          resid[0] = (resid[0]/(double)m)/eps;
+      } // else if (transu == 'T')
+      else {
+          // Find the maximum element in abs(I - U*U')/(n * eps)
+          for (j = 1; j <= m; j++) {
+              for (i = 1; i <= j; i++) {
+                  if (i != j) {
+                      tmp = 0.0;
+                  }
+                  else {
+                      tmp = 1.0;
+                  }
+                  v1 = new double[n];
+                  v2 = new double[n];
+                  for (p = 0; p < n; p++) {
+                      v1[p] = U[j-1][p];
+                      v2[p] = U[i-1][p];
+                  }
+                  tmp = tmp - ge.ddot(n, v1, 1, v2, 1);
+                  resid[0] = Math.max(resid[0], Math.abs(tmp));
+              } // for (i = 1; i <= j; i++)
+          } // for (j = 1; j <= m; j++)
+          resid[0] = (resid[0]/(double)n)/eps;
+      } // else
+      return;
+  } // dort01
+  
+  /** This is the port of version 3.1 LAPACK test routine DSXT1.
+   *     Univ. of Tennessee, Univ. of California Berkeley and NAG Ltd..
+   *     November, 2006
+   *     
+   *    DSXT1  computes the difference between a set of eigenvalues.
+     *  The result is returned as the function value.
+     *
+     *  IJOB = 1:   Computes   max { min | D1(i)-D2(j) | }
+     *                          i     j
+     *
+     *  IJOB = 2:   Computes   max { min | D1(i)-D2(j) | /
+     *                          i     j
+     *                               ( ABSTOL + |D1(i)|*ULP ) }
+     *                               
+     *  @param ijob input int Specifies the type of tests to be performed.
+     *  @param d1 input double[] of dimension n1  The first array.  d1 should be in increasing order, i.e.,
+     *          d1[j] <= d1[j+1].
+     *  @param n1 input int The length of d1.
+     *  @param d2 input double[] of dimension n2.  The second array.  d2 should be in increasing order, i.e.,
+     *          d2[j] <= d2[j+1].
+     *  @param n2 input int The length of d2.
+     *  @param abstol input double  The absolute tolerance, used as a measure of the error.
+     *  @param ulp input double Machine precision.
+     *  @param unfl input double The smallest positive number whose reciprocal does not overflow.     
+   */     
+    private double dsxt1(int ijob, double d1[], int n1, double d2[], int n2, double abstol,
+                         double ulp, double unfl) {
+           double temp1;
+           double temp2;
+           int i;
+           int j;
+           
+           temp1 = 0.0;
+     
+           j = 1;
+           for (i = 1; i <= n1; i++) {
+              while (d2[j-1] < d1[i-1] && j < n2 ) {
+                 j = j + 1;
+              }
+              if (j == 1) {
+                 temp2 = Math.abs(d2[j-1]- d1[i-1]);
+                 if (ijob == 2) {
+                    temp2 = temp2 / Math.max(unfl, abstol +ulp*Math.abs(d1[i-1] ) );
+                 }
+              }
+              else {
+                 temp2 = Math.min(Math.abs(d2[j-1]-d1[i-1]), Math.abs(d1[i-1]-d2[j-2] ) );
+                 if (ijob == 2) {
+                    temp2 = temp2 /Math.max(unfl, abstol+ulp*Math.abs(d1[i-1]) );
+                 }
+              }
+              temp1 = Math.max(temp1, temp2);
+           } // for (i = 1; i <= n1; i++)
+     
+           return temp1;
+     
+    } // dsxt1
+    
     /** This is a port of the version 3.2 LAPACK DSYEVX routine.  Original DSYEVX created by created by Univ. of Tennessee, Univ. of
     California Berkeley, and NAG Ltd., November, 2006  *  DSYEVX computes selected eigenvalues and, optionally, eigenvectors
     of a real symmetric matrix A.  Eigenvalues and eigenvectors can be selected by specifying either a range of values
