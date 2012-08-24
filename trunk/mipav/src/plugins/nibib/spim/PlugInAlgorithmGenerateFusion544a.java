@@ -962,6 +962,7 @@ public class PlugInAlgorithmGenerateFusion544a extends AlgorithmBase {
             TransMatrix mat = new TransMatrix(4);
             mat.MakeIdentity();
             mat.set(0, 0, baseImage.getResolutions(0)[0] / transformImage.getResolutions(0)[0]);
+            
             mat.set(2, 2, baseImage.getResolutions(0)[2] / transformImage.getResolutions(0)[2]);
             
             baseImage = subTransform(baseImage, mat, baseImage.getExtents(), baseImage.getResolutions(0));
@@ -989,7 +990,7 @@ public class PlugInAlgorithmGenerateFusion544a extends AlgorithmBase {
             for(int i=0; i<baseImage.getResolutions(0).length; i++) {
                 finalRes[i] = transformImage.getResolutions(0)[i];
             }
-            for(int i=0; i<baseImage.getFileInfo().length; i++) {
+            for(int i=0; i<baseImage.getFileInfo().length && i<transformImage.getFileInfo().length; i++) {
                 baseImage.getFileInfo(i).setSliceThickness(transformImage.getResolutions(i)[2]);
             }
             if(doInterImages) {
