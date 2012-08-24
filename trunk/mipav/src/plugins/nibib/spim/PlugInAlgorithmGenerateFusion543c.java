@@ -115,7 +115,7 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
     private volatile ExecutorService exec = null;
     private boolean saveAriMean, saveGeoMean;
     private File ariMeanDir, geoMeanDir;
-    private boolean savePrefusion;
+    private boolean doSavePrefusion;
     private File prefusionBaseDir, prefusionTransformDir;
     /**Weights to use for calculating arithmetic image means */
     private double baseAriWeight, transformAriWeight;
@@ -155,7 +155,7 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
      * @param saveGeoMean 
      * @param prefusionTranformDir 
      * @param prefusionBaseDir 
-     * @param savePrefusion 
+     * @param doSavePrefusion 
      * @param transformAriWeight 
      * @param baseAriWeight 
      * @param transformGeoWeight 
@@ -167,7 +167,7 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
                                                     File[] baseImageAr, File[] transformImageAr, Integer xMovement, Integer yMovement, Integer zMovement, SampleMode mode,
                                                     int minX, int minY, int minZ, int maxX, int maxY, int maxZ, int stepSize, 
                                                     boolean saveMaxProj, boolean saveGeoMean, File geoMeanDir, boolean saveAriMean, File ariMeanDir, 
-                                                    boolean savePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
+                                                    boolean doSavePrefusion, File prefusionBaseDir, File prefusionTransformDir, 
                                                     double baseAriWeight, double transformAriWeight, double baseGeoWeight, double transformGeoWeight, AlgorithmMaximumIntensityProjection[] maxAlgo) {
         this.showAriMean = doAriMean;
         this.doShowPrefusion = doShowPrefusion;
@@ -211,7 +211,7 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
         this.saveMaxProj = saveMaxProj;
         
         
-        this.savePrefusion = savePrefusion;
+        this.doSavePrefusion = doSavePrefusion;
         this.prefusionBaseDir = prefusionBaseDir;
         this.prefusionTransformDir = prefusionTransformDir;
         
@@ -653,7 +653,7 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
                 threshold(transformImage, thresholdIntensity); //all transformations are complete
             }
             
-            if(doShowPrefusion || savePrefusion) {
+            if(doShowPrefusion || doSavePrefusion) {
                 fireProgressStateChanged(15, "Transform", "Creating prefusion images");
                 
                 ModelImage prefusionTransformImage = ViewUserInterface.getReference().createBlankImage((FileInfoBase) resultImageInfoBase.clone(), false);
@@ -686,7 +686,7 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
                 prefusionBaseImage.calcMinMax();
                 prefusionBaseImage.setImageName("Prefusion_"+baseImageName);
                 
-                if(savePrefusion) {
+                if(doSavePrefusion) {
                     options.setFileDirectory(prefusionBaseDir.getAbsolutePath()+File.separator);
                     options.setFileName(prefusionBaseImage.getImageFileName());
                     options.setBeginSlice(0);
@@ -699,6 +699,9 @@ public class PlugInAlgorithmGenerateFusion543c extends AlgorithmBase {
                     options.setEndSlice(prefusionTransformImage.getExtents()[2]-1);
                     io.writeImage(prefusionTransformImage, options, false);
                 }
+                
+                doMaxProj(prefusionBaseImage, doShowPrefusion, doSavePrefusion, prefusionBaseDir, options, io);
+                doMaxProj(prefusionTransformImage, doShowPrefusion, doSavePrefusion, prefusionTransformDir, options, io);
                 
                 if(doShowPrefusion) {
                     resultImageList.add(prefusionTransformImage);
