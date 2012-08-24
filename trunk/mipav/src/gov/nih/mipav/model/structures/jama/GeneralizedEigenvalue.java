@@ -7196,7 +7196,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            larger than maxtyp, dotype[maxtyp] through dotype[ntypes-1] will be ignored.
      * @param iseed (input/output) int[] of dimension (4) On entry iseed specifies the seed of the random number
      *            generator. The array elements should be between 0 and 4095; if not they will be reduced mod 4096.
-     *            Also, iseed[3] must be odd. The random number generator uses an linear congruential sequence limited
+     *            Also, iseed[3] must be odd. The random number generator uses a linear congruential sequence limited
      *            to small integers, and so should produce machine independent random numbers. The values of iseed are
      *            changed on exit, and can be used in the next call to ddrvst to continue the same random number
      *            sequence.
@@ -7358,8 +7358,8 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
 
         // Loop over sizes, types
         for (i = 0; i < 4; i++) {
-            iseed[2] = iseed[i];
-            iseed[3] = iseed[i];
+            iseed2[i] = iseed[i];
+            iseed3[i] = iseed[i];
         }
 
         nerrs[0] = 0;
@@ -7401,12 +7401,19 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
                     ioldsd[j] = iseed[j];
                 }
 
-                // Compute "A"
+             // Compute "A"
                 // Control parameters:
                 /*
-                 * kmagn kmode ktype = 1 O(1) clustered 1 zero = 2 large clustered 2 identity = 3 small exponential
-                 * (none) = 4 arithmetic diagonal, (w/ eigenvalues) = 5 random log symmetric, w/ eigenvalues = 6 random
-                 * (none) = 7 random diagonal = 8 random symmetric = 9 band symmetric, w/ eigenvalues
+                 * kmagn kmode       ktype 
+           = 1     O(1)  clustered 1 zero 
+           = 2     large clustered 2 identity 
+           = 3     small exponential (none) 
+           = 4           arithmetic  diagonal, (w/ eigenvalues) 
+           = 5           random log  symmetric, w/ eigenvalues 
+           = 6           random      (none) 
+           = 7                       random diagonal 
+           = 8                       random symmetric 
+           = 9                       band symmetric, w/ eigenvalues
                  */
 
                 if (mtypes <= maxtyp) {
@@ -7645,7 +7652,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldc input int On entry, ldc specifies the first dimension of C as declared in the calling (sub) program.
      *            ldc must be at least max(1,m).
      */
-    private void dgemm(final char transa, final char transb, final int m, final int n, final int k, final double alpha,
+    public void dgemm(final char transa, final char transb, final int m, final int n, final int k, final double alpha,
             final double[][] A, final int lda, final double[][] B, final int ldb, final double beta,
             final double[][] C, final int ldc) {
         boolean nota;
@@ -11580,7 +11587,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param large input/output double[] On entry, the overflow threshold as computed by dlamch. On exit, if
      *            log10(large) is sufficiently large, the square root of large, otherwise unchanged.
      */
-    private void dlabad(final double[] small, final double[] large) {
+    public void dlabad(final double[] small, final double[] large) {
 
         // If it looks like we're on a Cray, take the square root of small and
         // large to avoid overflow and underflow problems.
@@ -11883,7 +11890,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ie input/output int[] On entry, ie contains the number of tests which have failed to pass the threshold so
      *            far. Updated on exit if any of the ratios in result also fail.
      */
-    private void dlafts(final String type, final int m, final int n, final int imat, final int ntests,
+    public void dlafts(final String type, final int m, final int n, final int imat, final int ntests,
             final double[] result, final int[] iseed, final double thresh, final int[] ie) {
         int k;
 
@@ -16390,7 +16397,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return DOCUMENT ME!
      */
-    private double dlarnd(final int idist, final int[] iseed) {
+    public double dlarnd(final int idist, final int[] iseed) {
         double t1;
         double t2;
         double result = 0.0;
@@ -17611,7 +17618,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            for all uplo, A(i,i) = beta, 0 <= i <= min(m-1,n-1).
      * @param lda input int The leading dimension of the array A. lda >= max(1,m).
      */
-    private void dlaset(final char uplo, final int m, final int n, final double alpha, final double beta,
+    public void dlaset(final char uplo, final int m, final int n, final double alpha, final double beta,
             final double[][] A, final int lda) {
         int i;
         int j;
@@ -19757,7 +19764,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            dlatm1 (computing dr) 5 => anorm is positive, but matrix, constructed prior to attempting to scale it
      *            to have norm anorm, is zero.
      */
-    private void dlatmr(final int m, final int n, final char dist, final int[] iseed, final char sym, final double[] D,
+    public void dlatmr(final int m, final int n, final char dist, final int[] iseed, final char sym, final double[] D,
             final int mode, final double cond, final double dmax, final char rsign, final char grade,
             final double[] dl, final int model, final double condl, final double[] dr, final int moder,
             final double condr, final char pivtng, final int[] ipivot, final int kl, final int ku, final double sparse,
@@ -20723,7 +20730,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            + min(kl,m-1) + 1. 1 => Error return from dlatm1 2 => Cannot scale to dmax (maximum singular value is
      *            0) 3 => Error return from dlagge or dlagsy
      */
-    private void dlatms(final int m, final int n, final char dist, final int[] iseed, final char sym, final double[] D,
+    public void dlatms(final int m, final int n, final char dist, final int[] iseed, final char sym, final double[] D,
             final int mode, final double cond, final double dmax, final int kl, final int ku, final char pack,
             final double[][] A, final int lda, final double[] work, final int[] info) {
         boolean givens;
@@ -27905,7 +27912,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldc input int On entry, ldc specifies the first dimension of C as declared in the calling (sub) program.
      *            ldc must be at least max(1,m).
      */
-    private void dsymm(final char side, final char uplo, final int m, final int n, final double alpha,
+    public void dsymm(final char side, final char uplo, final int m, final int n, final double alpha,
             final double[][] A, final int lda, final double[][] B, final int ldb, final double beta,
             final double[][] C, final int ldc) {
         boolean upper;
@@ -28896,7 +28903,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param ldc input int On entry, ldc specifies the first dimension of C as declared in the calling (sub) program.
      *            ldc must be at least max(1,n).
      */
-    private void dsyrk(final char uplo, final char trans, final int n, final int k, final double alpha,
+    public void dsyrk(final char uplo, final char trans, final int n, final int k, final double alpha,
             final double[][] A, final int lda, final double beta, final double[][] C, final int ldc) {
         int nrowa;
         boolean upper;
@@ -29167,7 +29174,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            values are currently limited to 1/ulp, to avoid overflow. result[0] is always modified. result[1] is
      *            modified only if itype == 1.
      */
-    private void dsyt21(final int itype, final char uplo, final int n, final int kband, final double[][] A,
+    public void dsyt21(final int itype, final char uplo, final int n, final int kband, final double[][] A,
             final int lda, final double[] D, final double[] E, final double[][] U, final int ldu, final double[][] V,
             final int ldv, final double[] tau, final double[] work, final double[] result) {
         boolean lower;
