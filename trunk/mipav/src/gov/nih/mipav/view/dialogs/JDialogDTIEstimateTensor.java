@@ -504,7 +504,9 @@ public class JDialogDTIEstimateTensor extends JDialogBase implements AlgorithmIn
                 maskImage.disposeLocal();
                 maskImage = null;
             }
-            dispose();
+            dispose(); 
+        } else {
+            super.actionPerformed(e);
         }
 
     }

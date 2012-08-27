@@ -143,6 +143,8 @@ public class JDialogHoughHyperbola extends JDialogBase implements AlgorithmInter
             //MipavUtil.showHelp("HoughHyperbola001");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

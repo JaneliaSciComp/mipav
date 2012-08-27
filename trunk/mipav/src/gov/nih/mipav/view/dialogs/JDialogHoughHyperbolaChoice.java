@@ -112,7 +112,9 @@ public class JDialogHoughHyperbolaChoice extends JDialogBase {
                 }
             } // for (i = 0; i < numHyperbolasFound; i++)
             okayPressed = true;
-        } // if (event.getSource() == OKButton)
+        } else { // if (event.getSource() == OKButton)
+            super.actionPerformed(event);
+        }
 
         selectedArray = null;
         dispose();

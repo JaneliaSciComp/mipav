@@ -82,6 +82,8 @@ public class JDialogSelectChannelSequence extends JDialogBase {
 
             comboBoxes = null;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

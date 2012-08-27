@@ -113,7 +113,9 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
             }
         } else if (command.equals("Close")) {
             dispose();
-        } // end if()-else if
+        } else {
+            super.actionPerformed(event);
+        }
     } // end actionPerformed(...)
 
     // ************************************************************************

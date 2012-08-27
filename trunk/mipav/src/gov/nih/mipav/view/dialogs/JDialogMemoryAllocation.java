@@ -473,6 +473,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
         } else if (ae.getActionCommand().equals("Help")) {
             //MipavUtil.showHelp("10091");
             MipavUtil.showWebHelp("Allocating_Memory_in_MIPAV");
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

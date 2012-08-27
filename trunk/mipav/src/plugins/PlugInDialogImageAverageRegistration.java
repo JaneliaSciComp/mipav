@@ -333,6 +333,8 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
                 saveAsTextField.setText("");
                 saveAsTextField.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(e);
         }
 
 

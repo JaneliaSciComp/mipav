@@ -186,7 +186,8 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
         } else if (source == cancelButton) {
             cancelFlag = true;
             dispose();
-
+        } else {
+            super.actionPerformed(event);
         }
     }
 

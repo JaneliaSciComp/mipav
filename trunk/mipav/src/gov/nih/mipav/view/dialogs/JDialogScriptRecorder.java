@@ -135,6 +135,8 @@ public class JDialogScriptRecorder extends JDialogBase implements ScriptRecordin
             MipavUtil.showWebHelp("Using_Scripts_(Macros)_in_MIPAV");
         } else if (command.equals("Clear")) {
             scriptRecorder.resetScript();
+        }  else {
+            super.actionPerformed(event);
         }
     }
 

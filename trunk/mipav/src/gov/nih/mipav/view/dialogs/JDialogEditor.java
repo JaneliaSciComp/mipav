@@ -246,6 +246,8 @@ public class JDialogEditor extends JDialogBase {
             dispose();
         } else if (command.equalsIgnoreCase("cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

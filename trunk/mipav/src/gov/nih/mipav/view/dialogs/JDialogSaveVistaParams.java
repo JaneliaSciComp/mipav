@@ -787,6 +787,8 @@ public class JDialogSaveVistaParams extends JDialogBase {
 		}else if (command.equals("Cancel")) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(e);
         }
 
 	}

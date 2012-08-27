@@ -227,6 +227,8 @@ public class JDialogSphereGeneration extends JDialogBase implements AlgorithmInt
                 maxRadiusLabel.setEnabled(true);
                 maxRadiusText.setEnabled(true);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

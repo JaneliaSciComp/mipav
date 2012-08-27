@@ -184,6 +184,8 @@ public class JDialogPaintVasculature extends JDialogBase
                 dispose();
                 ((ViewJFramePaintVasculature) parentFrame).close();
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

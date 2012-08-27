@@ -556,6 +556,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         } else if (command.equals("PasteMatrix")) {
             updateMatrixFields(ViewUserInterface.getReference().getClippedMatrix());
+        } else {
+            super.actionPerformed(event);
         }
 
     }

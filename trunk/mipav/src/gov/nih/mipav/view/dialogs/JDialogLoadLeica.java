@@ -93,6 +93,8 @@ public class JDialogLoadLeica extends JDialogBase {
         } else if (command.equals("Details")) {
             // MipavUtil.showHelp("10079");
             //MipavUtil.showWebHelp("Inserting_slices_into_image_datasets#Removing_images_.28slices.29_from_datasets");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -385,8 +385,10 @@ public class JDialogVolViewResample extends JDialogBase {
         } else if (command.equals("Cancel")) {
             disposeLocal();
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     /**
      * Builds the Cancel button. Sets it internally as well return the just-built button.

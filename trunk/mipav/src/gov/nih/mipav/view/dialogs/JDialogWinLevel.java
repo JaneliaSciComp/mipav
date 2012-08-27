@@ -382,6 +382,8 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
                     MipavUtil.displayError("There are no min and max preference values saved");
                 }
             }
+        } else {
+            super.actionPerformed(event);
         }
 
     }

@@ -503,8 +503,10 @@ public class ViewJFrameCreatePaint extends JFrame implements ActionListener, Mou
             } else if (e.getActionCommand().equalsIgnoreCase("Cancel")) {
                 setVisible(false);
                 wasCancelled = true;
+            } else {
+                super.actionPerformed(e);
             }
-
+ 
         }
 
         public boolean wasCancelled() {

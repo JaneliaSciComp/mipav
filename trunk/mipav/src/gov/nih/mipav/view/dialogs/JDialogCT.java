@@ -427,6 +427,8 @@ public class JDialogCT extends JDialogBase implements ItemListener {
                 ((ViewJFrameHistoLUT) (parentFrame)).setCTMode(levelTemp, windowTemp);
             }
 
+        } else {
+            super.actionPerformed(event);
         }
     }
 

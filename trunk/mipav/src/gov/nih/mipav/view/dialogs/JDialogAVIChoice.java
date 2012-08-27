@@ -77,6 +77,8 @@ public class JDialogAVIChoice extends JDialogBase {
 
         if (event.getSource() == OKButton) {
             okayPressed = true;
+        } else {
+            super.actionPerformed(event);
         }
 
         dispose();

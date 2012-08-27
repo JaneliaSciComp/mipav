@@ -110,6 +110,8 @@ public class JDialogIntensityThreshold extends JDialogBase {
         } else if (source == cancelButton) {
             setVisible(false);
             this.dispose();
+        } else {
+            super.actionPerformed(e);
         }
     }
 

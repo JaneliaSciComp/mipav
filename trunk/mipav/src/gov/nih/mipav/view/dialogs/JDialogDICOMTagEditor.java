@@ -193,6 +193,8 @@ public class JDialogDICOMTagEditor extends JDialogBase {
             struckOkayButton = true;
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -169,6 +169,8 @@ public class JDialogUnknownIO extends JDialogBase {
         } else if (source == cancelButton) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

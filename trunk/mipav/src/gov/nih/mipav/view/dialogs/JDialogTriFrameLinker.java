@@ -95,6 +95,8 @@ public class JDialogTriFrameLinker extends JDialogBase {
         } else if (command.equals("Cancel")) {
             ((ViewJFrameBase) (parentFrame)).setLinkedTriFrame(null);
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

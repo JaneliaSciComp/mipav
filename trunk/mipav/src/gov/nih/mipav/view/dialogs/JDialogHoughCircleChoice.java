@@ -97,7 +97,9 @@ public class JDialogHoughCircleChoice extends JDialogBase {
                 }
             } // for (i = 0; i < numCirclesFound; i++)
             okayPressed = true;
-        } // if (event.getSource() == OKButton)
+        } else {
+            super.actionPerformed(event);
+        }
 
         selectedArray = null;
         dispose();

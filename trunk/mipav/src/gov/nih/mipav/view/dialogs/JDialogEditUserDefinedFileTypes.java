@@ -243,7 +243,9 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
             // set the cancel button text to 'close' since the changes were accepted
             cancelButton.setText("Close");
         } else if (command.equalsIgnoreCase("close")) { // close box
-            dispose();
+            dispose();   
+        } else {
+            super.actionPerformed(event);
         }
 
     }

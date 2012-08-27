@@ -488,6 +488,8 @@ public class JDialogTLRC extends JDialogBase {
 			frame.setVisible(false);
             setVisible(false);
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
     

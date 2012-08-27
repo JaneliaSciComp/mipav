@@ -510,6 +510,8 @@ public class PlugInDialogDrosophilaRetinalRegistration extends JDialogBase imple
                 callAlgorithm();
             }
 
+        } else {
+            super.actionPerformed(e);
         }
     }
 

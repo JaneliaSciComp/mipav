@@ -114,6 +114,8 @@ public class JDialogBlankImage extends JDialogBase {
         } else if (source.equals(cancelButton)) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

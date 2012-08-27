@@ -172,6 +172,8 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
                 //componentImage.setCursorMode(ViewJComponentEditImage.NEW_VOI);
                 //componentImage.getVOIHandler().setPresetHue(1.0f / 3.0f); // green
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

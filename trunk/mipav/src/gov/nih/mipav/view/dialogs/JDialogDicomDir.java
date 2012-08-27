@@ -238,6 +238,8 @@ TreeSelectionListener, ChangeListener, PreviewImageContainer {
         	openImage();
         } else if (event.getActionCommand().equals("Open DICOMDIR")) {
         	open();
+        } else {
+            super.actionPerformed(event);
         }
     }
     

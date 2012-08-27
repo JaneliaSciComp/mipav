@@ -220,6 +220,8 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
 
     }

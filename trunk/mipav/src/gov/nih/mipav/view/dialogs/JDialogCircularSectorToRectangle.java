@@ -106,6 +106,8 @@ public class JDialogCircularSectorToRectangle extends JDialogBase
             MipavUtil.showWebHelp("Transform:_Conformal_Mapping_Algorithms#Applying_the_Circular_Sector_to_Rectangle_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

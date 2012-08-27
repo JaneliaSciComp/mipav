@@ -119,6 +119,8 @@ public class JDialogSimpleText extends JDialogBase {
         } else if (command.equals("Cancel")) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -162,6 +162,8 @@ public class JDialogTriImageTransformation extends JDialogBase {
 
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

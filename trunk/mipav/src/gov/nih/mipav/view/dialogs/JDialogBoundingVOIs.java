@@ -227,6 +227,8 @@ public class JDialogBoundingVOIs extends JDialogBase {
         }
         else if (source == helpButton) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

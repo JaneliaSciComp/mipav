@@ -130,6 +130,8 @@ public class JDialogHoughParabola extends JDialogBase implements AlgorithmInterf
             MipavUtil.showWebHelp("Hough_Transform#Running_the_Hough_Transform_for_Parabola_Detection_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

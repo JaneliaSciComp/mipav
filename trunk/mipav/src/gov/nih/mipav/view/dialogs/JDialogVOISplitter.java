@@ -106,6 +106,8 @@ public class JDialogVOISplitter extends JDialogBase implements ActionListener {
                 splitVOI();
                 dispose();
             }
+        } else {
+            super.actionPerformed(e);
         }
     }
     

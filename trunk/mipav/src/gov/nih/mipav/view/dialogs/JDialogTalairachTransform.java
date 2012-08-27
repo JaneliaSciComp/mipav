@@ -779,7 +779,9 @@ public class JDialogTalairachTransform extends JDialogBase implements AlgorithmI
 				acpcResLabel.setEnabled(true);
 				acpcResText.setEnabled(true);
 			}
-		}
+		} else {
+            super.actionPerformed(event);
+        }
     }
 	
 	public void loadFileActionPerformed(ActionEvent evt) {

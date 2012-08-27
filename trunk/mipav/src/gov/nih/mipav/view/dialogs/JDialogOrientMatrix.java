@@ -130,6 +130,8 @@ public class JDialogOrientMatrix extends JDialogBase {
             pFrame.setWCSystem(false);
             pFrame.setLeftHandSystem(false);
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

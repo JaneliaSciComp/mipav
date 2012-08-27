@@ -199,6 +199,7 @@ public class ReportBugBuilder extends JDialogBase implements WindowListener{
 			}
 		} else {
 			comboBoxActions(event);
+		    super.actionPerformed(event);
 		}
 		
 	}

@@ -176,6 +176,8 @@ public class JDialogSaveMinc extends JDialogBase {
         } else if (event.getActionCommand().equals("Cancel")) {
             cancelFlag = true;
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 
