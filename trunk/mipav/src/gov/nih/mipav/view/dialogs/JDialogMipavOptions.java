@@ -1808,7 +1808,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      */
     protected void makeSaveDefaultsOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
 
-        saveDefaultsCheckBox = new JCheckBox("Save dialog settings");
+        saveDefaultsCheckBox = new JCheckBox("Allow saving of dialog defaults");
         saveDefaultsCheckBox.setFont(MipavUtil.font12);
         saveDefaultsCheckBox.setForeground(Color.black);
         saveDefaultsCheckBox.addActionListener(this);
