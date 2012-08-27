@@ -619,7 +619,9 @@ public class JDialogConcatMult3Dto4D extends JDialogScriptableBase implements Al
 	     }else if(command.equals("Cancel")) {
 	    	 cleanup();
 	    	 dispose();
-	     }
+	     } else {
+	            super.actionPerformed(e);
+	        }
 
 	}
 	

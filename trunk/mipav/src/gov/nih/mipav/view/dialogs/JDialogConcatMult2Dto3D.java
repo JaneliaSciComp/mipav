@@ -611,7 +611,9 @@ public class JDialogConcatMult2Dto3D extends JDialogScriptableBase implements
 	     }else if(command.equals("Cancel")) {
 	    	 cleanup();
 	    	 dispose();
-	     }
+	     } else {
+	            super.actionPerformed(e);
+	        }
 
 	}
 	

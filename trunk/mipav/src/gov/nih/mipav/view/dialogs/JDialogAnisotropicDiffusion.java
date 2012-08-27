@@ -121,8 +121,10 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10007");
             MipavUtil.showWebHelp("Filters_(Spatial)_Anisotropic_Diffusion#Applying_the_Anisotropic_Diffusion_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
      
     /**
      * Record the parameters just used to run this algorithm in a script.

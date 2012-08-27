@@ -82,8 +82,10 @@ public class JDialogLightboxGen extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("U4037");
             MipavUtil.showWebHelp("Matching_images");
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************

@@ -177,6 +177,8 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             MipavUtil.displayError("Browse files...  Not Yet Supported.");
         } else if (command.equalsIgnoreCase("cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

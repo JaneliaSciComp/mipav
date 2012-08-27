@@ -197,6 +197,8 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
             }
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

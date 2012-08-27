@@ -126,6 +126,8 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
             MipavUtil.showWebHelp("Pad");
         } else if (command.equals("Script")) {
             callAlgorithm();
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 

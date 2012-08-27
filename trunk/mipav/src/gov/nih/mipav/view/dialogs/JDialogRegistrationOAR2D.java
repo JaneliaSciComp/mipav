@@ -589,6 +589,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         else if (command.equals("BruteForceCancel")) {
             bruteForceDialog.setVisible(false);
             bruteForceDialog.dispose();
+        } else {
+            super.actionPerformed(event);
         }
 
     }

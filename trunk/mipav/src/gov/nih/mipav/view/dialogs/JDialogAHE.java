@@ -168,6 +168,8 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10029");
             MipavUtil.showWebHelp("Histogram_Equalization:_Regional_Adaptive");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

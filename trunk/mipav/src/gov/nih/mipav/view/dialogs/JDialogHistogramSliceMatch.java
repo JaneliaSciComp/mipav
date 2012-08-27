@@ -98,6 +98,8 @@ public class JDialogHistogramSliceMatch extends JDialogScriptableBase implements
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

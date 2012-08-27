@@ -233,6 +233,8 @@ public class PlugInDialogGenerateFusion544b extends JDialogScriptableBase implem
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
         System.out.print(this.getSize());
     } // end actionPerformed()

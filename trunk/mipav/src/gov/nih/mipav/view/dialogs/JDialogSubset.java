@@ -132,6 +132,8 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
             labelSlice.setText("Select index from 0 to " + (zSlices - 1));
         } else if (command.equals("TAxis")) {
             labelSlice.setText("Select index from 0 to " + (tSlices - 1));
+        } else {
+            super.actionPerformed(event);
         }
     }
 

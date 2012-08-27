@@ -643,7 +643,9 @@ public class JDialogKMeans extends JDialogScriptableBase implements AlgorithmInt
 	            	return;
 	            }
 
-	    }
+	    } else {
+            super.actionPerformed(event);
+        }
 	     
 
 	}

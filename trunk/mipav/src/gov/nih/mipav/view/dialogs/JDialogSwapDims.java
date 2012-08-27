@@ -82,15 +82,6 @@ public class JDialogSwapDims extends JDialogScriptableBase
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Calls run on the algorithm from the script parser.
-     *
-     * @param  event  Event that triggers function
-     */
-    public void actionPerformed(ActionEvent event) {
-        
-    }
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

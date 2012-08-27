@@ -128,7 +128,9 @@ public class JDialogProstateFeaturesClassification extends JDialogScriptableBase
 				textOutputFileName.setText(outputFileDirAbs);
 
 			}
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	

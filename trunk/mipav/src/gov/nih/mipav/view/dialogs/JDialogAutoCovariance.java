@@ -110,6 +110,8 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("Autocovar01");
             MipavUtil.showWebHelp("Autocovariance_Coefficients");
+        } else {
+            super.actionPerformed(event);
         }
     }
     

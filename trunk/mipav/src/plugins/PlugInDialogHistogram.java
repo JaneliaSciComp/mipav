@@ -155,6 +155,8 @@ public class PlugInDialogHistogram extends JDialogScriptableBase implements Algo
                     break;
             }
 
+        } else {
+            super.actionPerformed(event);
         }
     }
 

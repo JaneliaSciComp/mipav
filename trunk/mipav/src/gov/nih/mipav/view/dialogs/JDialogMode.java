@@ -151,6 +151,8 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10093");
             MipavUtil.showWebHelp("Filters_(Spatial):_Mode#Applying_the_Mode_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

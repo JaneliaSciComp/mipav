@@ -191,6 +191,8 @@ public class JDialogTamuraTexture extends JDialogScriptableBase
                 labelHistogramThreshold.setEnabled(false);
                 textHistogramThreshold.setEnabled(false);    
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -99,7 +99,9 @@ public class PlugInDialogAxonExtraction extends JDialogScriptableBase implements
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
-        } 
+        }  else {
+            super.actionPerformed(event);
+        }
     }
 
     // ************************************************************************

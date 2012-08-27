@@ -838,7 +838,9 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 				 clonedImage = null;
 			 }
 			cleanUpAndDispose();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	

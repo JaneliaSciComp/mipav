@@ -154,6 +154,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
             MipavUtil.showWebHelp("Filters_(Wavelet):_Thresholding");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

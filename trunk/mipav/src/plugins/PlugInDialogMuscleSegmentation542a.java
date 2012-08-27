@@ -130,6 +130,8 @@ public class PlugInDialogMuscleSegmentation542a extends JDialogScriptableBase im
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -212,6 +212,8 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
             }
         } else if (command.equals("Script")) {
             callAlgorithm();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

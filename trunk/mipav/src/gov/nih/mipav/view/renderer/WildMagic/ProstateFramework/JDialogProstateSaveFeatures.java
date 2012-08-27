@@ -539,7 +539,9 @@ public class JDialogProstateSaveFeatures extends JDialogScriptableBase
 				textSavedFileName.setText(savedFileDirAbs);
 
 			}
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	// ************************************************************************

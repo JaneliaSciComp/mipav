@@ -186,7 +186,10 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 			textObjectiveNumericalAperature.setEnabled(useMicroscopeSettings);
 			textWavelength.setEnabled(useMicroscopeSettings);
 			textRefractiveIndex.setEnabled(useMicroscopeSettings);
-		} // else if (command.equals("MicroscopeOptions") )
+		} else { // else if (command.equals("MicroscopeOptions") )
+            super.actionPerformed(event);
+        }
+		
 	} // actionPerformed(...)
 
 	/**

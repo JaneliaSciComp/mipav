@@ -318,6 +318,8 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10026");
             MipavUtil.showWebHelp("Fuzzy_C-Means:_Multispectral_and_Single_Channel_Algorithms");
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 

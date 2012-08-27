@@ -146,6 +146,8 @@ public class PlugInDialogTre4D extends JDialogScriptableBase implements Algorith
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

@@ -129,6 +129,8 @@ public class PlugInDialogDicomStitch extends JDialogScriptableBase implements Al
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

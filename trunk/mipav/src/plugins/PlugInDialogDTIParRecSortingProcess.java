@@ -295,7 +295,9 @@ public class PlugInDialogDTIParRecSortingProcess extends JDialogScriptableBase
 			OKButton.setEnabled(false);
 			parRecFilePathBrowseButton.setEnabled(false);
 			callAlgorithm();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 

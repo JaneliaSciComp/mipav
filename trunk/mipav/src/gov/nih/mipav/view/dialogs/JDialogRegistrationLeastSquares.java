@@ -168,6 +168,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10040");
             MipavUtil.showWebHelp("Registration:_Landmark-Least_Squares");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -190,7 +190,9 @@ public class JDialogEditCircleDiameter extends JDialogScriptableBase {
 			if(editCircleDiameter()) {
 				this.dispose();
 			}
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 	}
 	
 	private boolean editCircleDiameter() {

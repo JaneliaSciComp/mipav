@@ -117,13 +117,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Have to define actionPerformed b/c this dialog extends JDialogBase.
-     *
-     * @param  event  Event that triggered this function.
-     */
-    public void actionPerformed(ActionEvent event) { }
-
-    /**
      * This method is required if the AlgorithmInterface is implemented.
      *
      * @param  algorithm  Algorithm that caused the event.

@@ -180,7 +180,9 @@ public class JDialog4DImageCalculator extends JDialogScriptableBase implements A
 			callAlgorithm();
 		}else if(command.equalsIgnoreCase("cancel")) {
 			dispose();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	

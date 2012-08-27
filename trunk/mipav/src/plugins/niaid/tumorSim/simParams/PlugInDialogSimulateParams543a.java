@@ -130,6 +130,8 @@ public class PlugInDialogSimulateParams543a extends JDialogScriptableBase implem
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

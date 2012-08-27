@@ -156,11 +156,11 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
             if(setVariables()) {
                 callAlgorithm();
             }
-        }
-        
-        if (command.equals("Cancel")) {
+        } else if (command.equals("Cancel")) {
             cAlgo.interrupt();
-        } 
+        } else {
+            super.actionPerformed(event);
+        }
     }
     
     private boolean setVariables() {

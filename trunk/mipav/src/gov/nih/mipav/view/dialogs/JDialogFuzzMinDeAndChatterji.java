@@ -180,6 +180,8 @@ public class JDialogFuzzMinDeAndChatterji extends JDialogScriptableBase implemen
         		labelSrcThreshold.setEnabled(true);
         		textSrcThreshold.setEnabled(true);	
         	}
+        } else {
+            super.actionPerformed(event);
         }
     }
 

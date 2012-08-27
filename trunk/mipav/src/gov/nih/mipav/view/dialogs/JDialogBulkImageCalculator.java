@@ -236,6 +236,8 @@ public class JDialogBulkImageCalculator extends JDialogScriptableBase implements
                 // need to remove that entry from the List
                 srcImagesList.remove(selectedRows[i]);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 	

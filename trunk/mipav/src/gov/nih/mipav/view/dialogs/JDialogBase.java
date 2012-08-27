@@ -285,6 +285,10 @@ public abstract class JDialogBase extends JDialog
         bar.add(save);
         bar.add(help);
         
+        load.addActionListener(this);
+        save.addActionListener(this);
+        help.addActionListener(this);
+        
         if(Preferences.is(Preferences.PREF_SAVE_DEFAULTS)) {
             Window w = SwingUtilities.getWindowAncestor(getContentPane());
             if(w instanceof JFrame) {
@@ -534,18 +538,26 @@ public abstract class JDialogBase extends JDialog
      */
     public void itemStateChanged(ItemEvent event) { }
     
+    
+    /**
+     * Loads the defaults of profile 0.
+     */
+    public void loadDefaults() {
+        loadDefaults(0);
+    }
+    
     /**
      * Loads default values for gui components in the dialog.
      * 
-     * @return whether loading defaults was successful
      */
-    public void loadDefaults() {
+    public void loadDefaults(int profileNum) {
         String nameStart = new String();
-        Object obj = Preferences.getProperty(getClass().getName()+String.valueOf(0));
+        Object obj = Preferences.getProperty(getClass().getName()+String.valueOf(profileNum));
         if(obj == null || obj.toString().length() == 0) {
             MipavUtil.displayInfo("No defaults available for this dialog");
+            return;
         } else {
-            nameStart = getClass().getName()+String.valueOf(0);
+            nameStart = getClass().getName()+String.valueOf(profileNum);
         }
         
         boolean success = loadComponenets(this, nameStart);
@@ -678,12 +690,19 @@ public abstract class JDialogBase extends JDialog
     }
     
     /**
-     * Saves the defaults of the dialog base to the mipav preferences file.
+     * Saves the defaults of profile 0.
      */
     public void saveDefaults() {
-        Preferences.setProperty(getClass().getName(), String.valueOf(0));
+        saveDefaults(0);
+    }
+    
+    /**
+     * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile number.
+     */
+    public void saveDefaults(int profileNum) {
+        Preferences.setProperty(getClass().getName()+String.valueOf(profileNum), String.valueOf(profileNum));
         
-        saveComponents(this, getClass().getName()+String.valueOf(0));
+        saveComponents(this, getClass().getName()+String.valueOf(profileNum));
     }
     
     private void saveComponents(Component comp, String name) {

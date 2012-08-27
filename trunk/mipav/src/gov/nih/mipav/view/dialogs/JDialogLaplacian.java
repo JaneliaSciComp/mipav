@@ -132,6 +132,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10013");
             MipavUtil.showWebHelp("Filters_(Spatial)_Laplacian#Applying_the_Laplacian_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
 
     }

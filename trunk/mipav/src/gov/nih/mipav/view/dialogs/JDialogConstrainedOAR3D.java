@@ -528,6 +528,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
             numMinima = numMinima_def;
             advancedDialog.setVisible(false);
             advancedDialog.dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

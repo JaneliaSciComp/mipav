@@ -80,6 +80,8 @@ public class JDialogMidsagittal extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp( "10009" );
+        } else {
+            super.actionPerformed(event);
         }
     }
 

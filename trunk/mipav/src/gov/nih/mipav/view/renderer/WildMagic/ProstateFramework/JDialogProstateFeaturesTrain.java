@@ -104,7 +104,9 @@ public class JDialogProstateFeaturesTrain extends JDialogScriptableBase {
 				textTrainFileName.setText(trainFileDirAbs);
 
 			}
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	

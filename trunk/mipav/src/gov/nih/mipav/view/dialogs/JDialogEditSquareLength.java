@@ -190,7 +190,9 @@ public class JDialogEditSquareLength extends JDialogScriptableBase {
 			if(editSquareLength()) {
 				this.dispose();
 			}
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 	}
 	
 	private boolean editSquareLength() {

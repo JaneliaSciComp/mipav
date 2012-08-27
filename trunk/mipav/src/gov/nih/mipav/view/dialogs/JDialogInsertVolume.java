@@ -140,6 +140,8 @@ public class JDialogInsertVolume extends JDialogScriptableBase implements Algori
         } else if ((source == insertedImgButton) || (source == average) || (source == blank) ) {
 
             
+        } else {
+            super.actionPerformed(event);
         }
     }
 

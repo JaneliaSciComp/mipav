@@ -287,7 +287,9 @@ public class PlugInDialogIMFAR extends JDialogScriptableBase implements Algorith
 
 				dispose();
 
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 
 	}
 	

@@ -162,6 +162,8 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
                 labelDegree.setEnabled(false);
                 textDegree.setEnabled(false);
             }
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 

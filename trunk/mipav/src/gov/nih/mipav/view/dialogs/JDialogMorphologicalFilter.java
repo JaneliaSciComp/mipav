@@ -132,6 +132,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase
             dispose();
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp( "" );
+        } else {
+            super.actionPerformed(event);
         }
     }
 

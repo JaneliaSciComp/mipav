@@ -66,13 +66,6 @@ public class JDialogRotate extends JDialogScriptableBase
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Only called by the script parser; runs the algorithm.
-     *
-     * @param  event  Event that triggers function.
-     */
-    public void actionPerformed(ActionEvent event) { }
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

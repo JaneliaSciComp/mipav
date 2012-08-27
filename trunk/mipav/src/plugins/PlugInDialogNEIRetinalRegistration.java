@@ -869,7 +869,10 @@ public class PlugInDialogNEIRetinalRegistration extends JDialogScriptableBase im
         
             callAlgorithm();
          
-    }
+        } else {
+            super.actionPerformed(e);
+        }
+        
         
     }
     

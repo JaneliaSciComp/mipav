@@ -107,7 +107,10 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10086");
             MipavUtil.showWebHelp("Filters_(Spatial):_Coherence-Enhancing_Diffusion#Applying_the_Coherence-Enhancing_Diffusion_algorithm");
-        } // end if()-else
+        } else { // end if()-else
+            super.actionPerformed(event);
+        }
+        
     } // end actionPerformed(...)
 
     /**

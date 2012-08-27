@@ -83,6 +83,8 @@ public class PlugInDialogRemoveBlinks
         }
         else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -509,6 +509,8 @@ public class JDialogConvert4DtoRGB extends JDialogScriptableBase implements Algo
                 radioCommon.setEnabled(false);
                 radioSeparate.setEnabled(false);    
             }
+        } else {
+            super.actionPerformed(e);
         }
 	}
 	
