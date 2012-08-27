@@ -426,38 +426,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
     }
     
     /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-        String defaultsString = min_constr[0] + delim;
-        defaultsString += max_constr[0] + delim;
-        defaultsString += min_constr[1] + delim;
-        defaultsString += max_constr[1] + delim;
-        defaultsString += min_constr[2] + delim;
-        defaultsString += max_constr[2] + delim;
-        defaultsString += r1 + delim;
-        defaultsString += userSpecifiedBlood + delim;
-        if (userSpecifiedBlood) {
-            defaultsString += rib + delim;
-        }
-        defaultsString += tissueSource + delim;
-        if (tissueSource == CONSTANT_TISSUE) {
-            defaultsString += rit + delim;
-        }
-        else if (tissueSource == SEPARATE_VOLUME_TISSUE){
-        	defaultsString += tissueImage.getImageFileName();
-        }
-        defaultsString += theta + delim;
-        defaultsString += tr + delim;
-        defaultsString += perMin + delim;
-        defaultsString += nFirst + delim;
-        defaultsString += useVe;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-    
-    /**
      * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
      */
     protected void setGUIFromParams() {

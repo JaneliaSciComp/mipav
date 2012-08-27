@@ -10,7 +10,6 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -49,7 +48,7 @@ import javax.swing.JCheckBox;
  * @author   William Gandler
  * @see      AlgorithmBilateralFilter
  */
-public class JDialogBilateralFilter extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogBilateralFilter extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -245,53 +244,6 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (outputOptionsPanel != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-                intensityFraction = MipavUtil.getFloat(st);
-                intensityText.setText(String.valueOf(intensityFraction));
-                
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-        String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
-        defaultsString += outputOptionsPanel.isOutputNewImageSet() + delim;
-        defaultsString += image25D + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
-        defaultsString += intensityFraction;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

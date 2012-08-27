@@ -14,7 +14,6 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -51,7 +50,7 @@ import javax.swing.JCheckBox;
  * @see      AlgorithmGradientMagnitude
  */
 public class JDialogGradientMagnitude extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -432,43 +431,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());    
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (outputOptionsPanel != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-                colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
-                colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
-                colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
-                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + outputOptionsPanel.isOutputNewImageSet());
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

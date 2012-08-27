@@ -33,7 +33,7 @@ import javax.swing.JCheckBox;
  * @author Matthew J. McAuliffe, Ph.D.
  * @see AlgorithmGaussianBlur
  */
-public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface,
+public class JDialogGaussianBlur extends JDialogScriptableBase implements AlgorithmInterface, 
         ActionDiscovery {
 
     // ~ Static fields/initializers
@@ -377,59 +377,6 @@ public class JDialogGaussianBlur extends JDialogScriptableBase implements Algori
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents( !image25DCheckbox.isSelected());
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        final String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ( (defaultsString != null) && (outputOptionsPanel != null)) {
-
-            try {
-                final StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-
-                colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
-                colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
-                colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
-            } catch (final Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        final String delim = ",";
-
-        String defaultsString = outputOptionsPanel.isProcessWholeImageSet() + delim;
-        defaultsString += outputOptionsPanel.isOutputNewImageSet() + delim;
-        defaultsString += separable + delim;
-        defaultsString += image25D + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
-        defaultsString += colorChannelPanel.isRedProcessingRequested() + delim;
-        defaultsString += colorChannelPanel.isGreenProcessingRequested() + delim;
-        defaultsString += colorChannelPanel.isBlueProcessingRequested();
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

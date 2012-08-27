@@ -18,7 +18,6 @@ import gov.nih.mipav.model.structures.MatrixHolder;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.util.MipavCoordinateSystems;
-import gov.nih.mipav.view.DialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -35,7 +34,6 @@ import java.awt.event.ItemEvent;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.StringTokenizer;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -54,7 +52,7 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 *
 */  
 public class JDialogReorient extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
+	implements AlgorithmInterface, ActionDiscovery  {
     
     private     AlgorithmTransform 		algoTrans = null;
     private     ModelImage              image;                // source image
@@ -465,43 +463,6 @@ public class JDialogReorient extends JDialogScriptableBase
         str += interpType;
 
         return str;
-    }
-	
- 	/**
-     *  Loads the default settings from Preferences to set up the dialog
-     */
-	public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                //System.out.println(defaultsString);
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-				newOr[0] = new Integer(st.nextToken()).intValue();
-                newOr[1] = new Integer(st.nextToken()).intValue();
-                newOr[2] = new Integer(st.nextToken()).intValue();
-				resolutionIndex = new Integer(st.nextToken()).intValue();
-				interpType = st.nextToken();
-			}
-            catch (Exception ex) {
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                //System.out.println( "Resetting defaults for dialog: " + getDialogName() );
-                Preferences.removeProperty( getDialogName() );
-            }
-        } else {
-			System.out.println( "no saved dialogs for "+getDialogName() );
-		}
-    }
-		
-    /**
-     * Saves the default settings into the Preferences file
-     */
-	
-    public void saveDefaults() {
-        String defaultsString = new String( getParameterString(",") );
-        //System.out.println(defaultsString);
-        Preferences.saveDialogDefaults(getDialogName(),defaultsString);
     }
 	 
     //************************************************************************

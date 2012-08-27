@@ -27,7 +27,7 @@ import javax.swing.*;
  * @see      AlgorithmMRIShadingCorrection
  */
 public class JDialogMRIShadingCorrection extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface {
+        implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -255,65 +255,6 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                System.err.println(defaultsString);
-
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                textNorm.setText("" + MipavUtil.getFloat(st));
-                textGaussX.setText("" + MipavUtil.getFloat(st));
-                textGaussY.setText("" + MipavUtil.getFloat(st));
-                textIters.setText("" + MipavUtil.getInt(st));
-
-                if (MipavUtil.getBoolean(st)) {
-                    thresholdCheckbox.setSelected(true);
-                } else {
-                    thresholdCheckbox.setSelected(false);
-                }
-
-                thresholdText.setText("" + MipavUtil.getFloat(st));
-
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                //System.out.println("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-
-        String defaultsString = norm + delim;
-        defaultsString += scaleX + delim;
-        defaultsString += scaleY + delim;
-        defaultsString += iters + delim;
-        defaultsString += thresholdSelected + delim;
-        defaultsString += thresholdLevel;
-        defaultsString += newImage.isSelected();
-
-        // System.err.println(defaultsString);
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

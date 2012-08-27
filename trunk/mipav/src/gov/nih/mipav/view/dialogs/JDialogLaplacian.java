@@ -33,7 +33,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmLaplacian
  */
-public class JDialogLaplacian extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogLaplacian extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -283,58 +283,6 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
         	sepCheckbox.addItemListener(this);
         	useOCLCheckbox.addItemListener(this);
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (outputPanel != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-
-                sigmasPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmasPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmasPanel.setSigmaZ(MipavUtil.getFloat(st));
-                sigmasPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-
-                textAmpFact.setText(st.nextToken());
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-
-        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
-        defaultsString += outputPanel.isOutputNewImageSet() + delim;
-        defaultsString += image25D + delim;
-        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[0] + delim;
-        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[1] + delim;
-        defaultsString += sigmasPanel.getUnnormalized3DSigmas()[2] + delim;
-        defaultsString += sigmasPanel.isResolutionCorrectionEnabled() + delim;
-        defaultsString += ampFactor;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

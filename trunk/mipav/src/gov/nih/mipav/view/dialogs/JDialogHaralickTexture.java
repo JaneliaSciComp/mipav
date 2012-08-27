@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmHaralickTexture
  */
 public class JDialogHaralickTexture extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -395,57 +395,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
      */
     public ModelImage[] getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                textWindowSize.setText("" + MipavUtil.getInt(st));
-                textOffsetDistance.setText("" + MipavUtil.getInt(st));
-                textRescaling.setText("" + MipavUtil.getInt(st));
-                nsCheckBox.setSelected(MipavUtil.getBoolean(st));
-                neswCheckBox.setSelected(MipavUtil.getBoolean(st));
-                ewCheckBox.setSelected(MipavUtil.getBoolean(st));
-                senwCheckBox.setSelected(MipavUtil.getBoolean(st));
-                invariantCheckBox.setSelected(MipavUtil.getBoolean(st));
-                contrastCheckBox.setSelected(MipavUtil.getBoolean(st));
-                dissimilarityCheckBox.setSelected(MipavUtil.getBoolean(st));
-                homogeneityCheckBox.setSelected(MipavUtil.getBoolean(st));
-                inverseOrder1CheckBox.setSelected(MipavUtil.getBoolean(st));
-                asmCheckBox.setSelected(MipavUtil.getBoolean(st));
-                energyCheckBox.setSelected(MipavUtil.getBoolean(st));
-                maxProbabilityCheckBox.setSelected(MipavUtil.getBoolean(st));
-                entropyCheckBox.setSelected(MipavUtil.getBoolean(st));
-                meanCheckBox.setSelected(MipavUtil.getBoolean(st));
-                varianceCheckBox.setSelected(MipavUtil.getBoolean(st));
-                standardDeviationCheckBox.setSelected(MipavUtil.getBoolean(st));
-                correlationCheckBox.setSelected(MipavUtil.getBoolean(st));
-                shadeCheckBox.setSelected(MipavUtil.getBoolean(st));
-                promenanceCheckBox.setSelected(MipavUtil.getBoolean(st));
-                concatenateCheckBox.setSelected(MipavUtil.getBoolean(st));
-                zscoreCheckBox.setSelected(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

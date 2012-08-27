@@ -29,7 +29,7 @@ import javax.swing.*;
 *
 */  
 public class JDialogDemonsLite extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery, DialogDefaultsInterface  {
+	implements AlgorithmInterface, ActionDiscovery  {
     
     private     AlgorithmDemonsLite 	algo = null;
     private     ModelImage              image;                // source image
@@ -342,44 +342,6 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 		str += outputType;
 
         return str;
-    }
-	
- 	/**
-     *  Loads the default settings from Preferences to set up the dialog
-     */
-	public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                //System.out.println(defaultsString);
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-				levels = MipavUtil.getInt(st);
-				iter = MipavUtil.getInt(st);
-				smoothing = MipavUtil.getFloat(st);
-				scale = MipavUtil.getFloat(st);
-				regType = st.nextToken();
-				outputType = st.nextToken();
-            }
-            catch (Exception ex) {
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                System.out.println( "Resetting defaults for dialog: " + getDialogName() );
-                Preferences.removeProperty( getDialogName() );
-            }
-        } else {
-			System.out.println( "no saved dialogs for "+getDialogName() );
-		}
-    }
-		
-    /**
-     * Saves the default settings into the Preferences file
-     */
-	
-    public void saveDefaults() {
-        String defaultsString = new String( getParameterString(",") );
-        //System.out.println(defaultsString);
-        Preferences.saveDialogDefaults(getDialogName(),defaultsString);
     }
 	 
     //************************************************************************
