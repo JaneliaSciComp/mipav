@@ -1270,7 +1270,7 @@ public class ViewMenuBuilder {
                         System.out.println("Invalid menu item count");
                     }
                 
-                    int height = (upIndex - downIndex)*35;
+                    int height = (upIndex - downIndex)*35 + 15;
                     
                     compPanel.setPreferredSize(new Dimension(150, height));
                     compPanel.add(bar);
@@ -1320,6 +1320,9 @@ public class ViewMenuBuilder {
                         }
                     }
                     newMenu = build.makeMenu(newMenu, false, newMenuAr.toArray(new JComponent[newMenuAr.size()]));
+                    for(ActionListener l : menu.getActionListeners()) {
+                        newMenu.addActionListener(l);
+                    }
                     return newMenu;
                 } else {
                     String name = tempItem.getName();
@@ -1335,9 +1338,12 @@ public class ViewMenuBuilder {
                     }
                     JMenuItem newItem = build.buildMenuItem(name, tempItem.getActionCommand(), tempItem.getMnemonic(), iconName, usePadding);
                     newItem.setEnabled(tempItem.isEnabled());
-                    newItem.setMinimumSize(new Dimension(150, 30));
-                    newItem.setPreferredSize(new Dimension(150, 30));
-                    newItem.setMaximumSize(new Dimension(150, 30));
+                    newItem.setMinimumSize(new Dimension(150, 27));
+                    newItem.setPreferredSize(new Dimension(150, 27));
+                    newItem.setMaximumSize(new Dimension(150, 27));
+                    for(ActionListener l : tempItem.getActionListeners()) {
+                        newItem.addActionListener(l);
+                    }
                     
                     return newItem;
                 }
