@@ -201,21 +201,6 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
     // *******************************************************************
 
     /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-
-        String defaultsString = noScalingD + delim;
-        defaultsString += a + delim;
-        defaultsString += b + delim;
-        defaultsString += c + delim;
-        defaultsString += d;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
      * Accessor that sets whether or not d is read in from the text or
      * calculated from d = 1 - a - b - c.  Calculation is used if it
      * is desired that no image scaling occurs.

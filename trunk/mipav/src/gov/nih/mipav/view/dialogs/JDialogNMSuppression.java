@@ -209,56 +209,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
     }
 
     /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-
-                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-
-                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-            } catch (NoSuchElementException nsee) {
-                return;
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                //System.out.println("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-
-        String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
-        defaultsString += outputPanel.isOutputNewImageSet() + delim;
-        defaultsString += outputPanel.isProcessWholeImageSet() + delim;
-        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
-        defaultsString += image25DCheckbox.isSelected();
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
      * Accessor that sets the slicing flag.
      *
      * @param  flag  <code>true</code> indicates slices should be blurred independently.

@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * GUI for entering parameters for the Color Edge algorithm and making it scriptable.
  */
-public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -242,40 +242,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (red1Text != null)) {
-            StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-            try {
-                red1Text.setText("" + MipavUtil.getInt(st));
-                green1Text.setText("" + MipavUtil.getInt(st));
-                blue1Text.setText("" + MipavUtil.getInt(st));
-                red2Text.setText("" + MipavUtil.getInt(st));
-                green2Text.setText("" + MipavUtil.getInt(st));
-                blue2Text.setText("" + MipavUtil.getInt(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

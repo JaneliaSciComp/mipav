@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  mccreedy
  */
 public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -217,37 +217,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         str += stiffnessBET;
 
         return str;
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                faceOrientation = MipavUtil.getInt(st);
-                extraMMsToPad = MipavUtil.getInt(st);
-                estimateWithSphereBET = MipavUtil.getBoolean(st);
-                imageInfluenceBET = MipavUtil.getFloat(st);
-                stiffnessBET = MipavUtil.getFloat(st);
-            } catch (Exception ex) {
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

@@ -25,7 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  */
 public class JDialogConvertType extends JDialogScriptableBase
-        implements AlgorithmInterface, ItemListener, DialogDefaultsInterface {
+        implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -722,108 +722,6 @@ public class JDialogConvertType extends JDialogScriptableBase
                 outMax = Double.MAX_VALUE;
             }
         } // else black and white image
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (newImage != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                dataType = MipavUtil.getInt(st);
-                endianess = MipavUtil.getBoolean(st);
-                useDefaultRanges = MipavUtil.getBoolean(st);
-
-                if (!useDefaultRanges) {
-                    inTempMin = MipavUtil.getFloat(st);
-                    inTempMax = MipavUtil.getFloat(st);
-                }
-
-                outTempMin = MipavUtil.getFloat(st);
-                outTempMax = MipavUtil.getFloat(st);
-
-                if (endianess) {
-                    bigEnd.setSelected(true);
-                } else {
-                    littleEnd.setSelected(true);
-                }
-
-                if (useDefaultRanges) {
-                    fullRangeRadio.setSelected(true);
-                } else {
-                    actionPerformed(new ActionEvent(userRangeRadio, 0, "UserRange"));
-                    userRangeRadio.setSelected(true);
-                }
-
-                if (new Boolean(st.nextToken()).booleanValue()) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
-
-                // check to see if image type goes with grayscale or color
-                // only sets defaults when last was color->color
-                // and las was gray->gray align
-                if (image.isColorImage()) {
-
-                    if (dataType == ModelStorageBase.ARGB) {
-                        radioARGB.setSelected(true);
-                    } else if (dataType == ModelStorageBase.ARGB_FLOAT) {
-                        radioARGB_FLOAT.setSelected(true);
-                    } else if (dataType == ModelStorageBase.ARGB_USHORT) {
-                        radioARGB_USHORT.setSelected(true);
-                    }
-                } else if (image.isComplexImage()) {
-                	if (dataType == ModelStorageBase.COMPLEX) {
-                		radioComplex.setSelected(true);
-                	} else if (dataType == ModelStorageBase.DCOMPLEX) {
-                		radioDComplex.setSelected(true);
-                	}
-                } else {
-
-                    if (dataType == ModelStorageBase.BOOLEAN) {
-                        radioBool.setSelected(true);
-                    } else if (dataType == ModelStorageBase.BYTE) {
-                        radioByte.setSelected(true);
-                    } else if (dataType == ModelStorageBase.UBYTE) {
-                        radioUByte.setSelected(true);
-                    } else if (dataType == ModelStorageBase.SHORT) {
-                        radioShort.setSelected(true);
-                    } else if (dataType == ModelStorageBase.USHORT) {
-                        radioUShort.setSelected(true);
-                    } else if (dataType == ModelStorageBase.INTEGER) {
-                        radioInt.setSelected(true);
-                    } else if (dataType == ModelStorageBase.UINTEGER) {
-                        radioUInt.setSelected(true);
-                    } else if (dataType == ModelStorageBase.LONG) {
-                        radioLong.setSelected(true);
-                    } else if (dataType == ModelStorageBase.FLOAT) {
-                        radioFloat.setSelected(true);
-                    } else if (dataType == ModelStorageBase.DOUBLE) {
-                        radioDouble.setSelected(true);
-                    }
-                }
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
 

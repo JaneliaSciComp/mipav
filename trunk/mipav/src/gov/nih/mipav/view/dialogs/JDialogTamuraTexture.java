@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmTamuraTexture
  */
 public class JDialogTamuraTexture extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface
+        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -297,41 +297,6 @@ public class JDialogTamuraTexture extends JDialogScriptableBase
     public ModelImage[] getResultImage() {
         return resultImage;
     }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-                coarsenessCheckBox.setSelected(MipavUtil.getBoolean(st));
-                textCoarsenessThreshold.setText("" + MipavUtil.getDouble(st));
-                contrastCheckBox.setSelected(MipavUtil.getBoolean(st));
-                textCSize.setText("" + MipavUtil.getInt(st));
-                directionalityCheckBox.setSelected(MipavUtil.getBoolean(st));
-                textHistogramBins.setText("" + MipavUtil.getInt(st));
-                textHistogramThreshold.setText("" + MipavUtil.getDouble(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = new String(getParameterString(","));
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-    
    
     /**
      * Accessor that sets if coarseness is calculated

@@ -171,17 +171,6 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
     // *******************************************************************
 
     /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-
-        String defaultsString = String.valueOf(a);
-        
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
      * Accessor that sets a.
      *
      * @param  a.

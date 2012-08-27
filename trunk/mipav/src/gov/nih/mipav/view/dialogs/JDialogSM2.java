@@ -611,27 +611,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     }
     
     /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-        String defaultsString = tissueImage.getImageFileName() + delim;
-        defaultsString = min_constr[0] + delim;
-        defaultsString += max_constr[0] + delim;
-        defaultsString += initial[0] + delim;
-        defaultsString += min_constr[1] + delim;
-        defaultsString += max_constr[1] + delim;
-        defaultsString += initial[1] + delim;
-        defaultsString += min_constr[2] + delim;
-        defaultsString += max_constr[2] + delim;
-        defaultsString += initial[2] + delim;
-        defaultsString += hematocrit;
-        
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-    
-    /**
      * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
      */
     protected void setGUIFromParams() {

@@ -218,56 +218,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
     }
 
     /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if (defaultsString != null) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, DELIMITER);
-
-                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
-                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                textWeight.setText(st.nextToken());
-
-                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-
-                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-
-                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-            } catch (NoSuchElementException nsee) {
-                return;
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                System.out.println("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + DELIMITER;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + DELIMITER;
-        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + DELIMITER;
-        defaultsString += weight + DELIMITER;
-        defaultsString += outputPanel.isOutputNewImageSet() + DELIMITER;
-        defaultsString += outputPanel.isProcessWholeImageSet() + DELIMITER;
-        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + DELIMITER;
-        defaultsString += image25D;
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
      * Accessor that sets the slicing flag.
      *
      * @param  flag  <code>true</code> indicates slices should be blurred independently.

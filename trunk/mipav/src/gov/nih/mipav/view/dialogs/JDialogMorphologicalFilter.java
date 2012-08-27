@@ -28,7 +28,7 @@ import javax.swing.*;
  * @see      AlgorithmMorphologicalFilter
  */
 public class JDialogMorphologicalFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ActionDiscovery {
+        implements AlgorithmInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -240,53 +240,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase
                 textSizeZ.setEnabled(true);
             }
         }
-    }
-
-    /**
-     * Loads the default settings from Preferences to set up the dialog.
-     */
-    public void loadDefaults() {
-        String defaultsString = Preferences.getDialogDefaults(getDialogName());
-
-        if ((defaultsString != null) && (outputPanel != null)) {
-
-            try {
-                StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-
-                textSizeX.setText("" + MipavUtil.getInt(st));
-                textSizeY.setText("" + MipavUtil.getInt(st));
-                textSizeZ.setText("" + MipavUtil.getInt(st));
-
-                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
-            } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
-                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
-                Preferences.removeProperty(getDialogName());
-                ex.printStackTrace();
-            }
-        }
-
-    }
-
-    /**
-     * Saves the default settings into the Preferences file.
-     */
-    public void saveDefaults() {
-        String delim = ",";
-
-        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
-        defaultsString += image25D + delim;
-        defaultsString += sizeX + delim;
-        defaultsString += sizeY + delim;
-        defaultsString += sizeZ + delim;
-        defaultsString += outputPanel.isOutputNewImageSet();
-
-        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**
