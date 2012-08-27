@@ -494,9 +494,6 @@ public abstract class JDialogBase extends JDialog
                 profiles = new ArrayList<String>();
                 for(Entry<Object, Object> objSet  : Preferences.getMipavProps().entrySet()) {
                     if(objSet.getValue().equals(SAVE_DEFAULT)) {
-                        String str = objSet.getKey().toString();
-                        String str2 = getClass().getName();
-                        str.substring(getClass().getName().length());
                         
                         profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
                     }
