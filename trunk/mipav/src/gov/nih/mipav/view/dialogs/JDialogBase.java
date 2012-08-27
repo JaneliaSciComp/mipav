@@ -249,11 +249,13 @@ public abstract class JDialogBase extends JDialog
         bar.add(save);
         bar.add(help);
         
-        Window w = SwingUtilities.getWindowAncestor(getContentPane());
-        if(w instanceof JFrame) {
-            ((JFrame) w).setJMenuBar(bar);
-        } else {
-            getContentPane().add(bar, BorderLayout.NORTH);
+        if(Preferences.is(Preferences.PREF_SAVE_DEFAULTS)) {
+            Window w = SwingUtilities.getWindowAncestor(getContentPane());
+            if(w instanceof JFrame) {
+                ((JFrame) w).setJMenuBar(bar);
+            } else {
+                getContentPane().add(bar, BorderLayout.NORTH);
+            }
         }
     }
 
