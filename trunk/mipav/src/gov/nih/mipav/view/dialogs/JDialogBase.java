@@ -114,6 +114,9 @@ public abstract class JDialogBase extends JDialog
     protected ViewJProgressBar progressBar;
     
     protected VOIManagerInterface voiManager;
+
+    /** JMenuBar for loading/saving defaults */
+    protected JMenuBar bar;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -266,7 +269,7 @@ public abstract class JDialogBase extends JDialog
     }   
     
     private void createMenu() {
-        JMenuBar bar = new JMenuBar();
+        bar = new JMenuBar();
         ViewMenuBuilder builder = new ViewMenuBuilder(this);
         JMenu load = builder.makeMenu("Load", false, new JMenuItem[] {
                 builder.buildMenuItem("Load default", LOAD_DEFAULT, 0, null, false),
@@ -784,6 +787,13 @@ public abstract class JDialogBase extends JDialog
      */
     public void setSeparateThread(boolean flag) {
         runInSeparateThread = flag;
+    }
+
+    /**
+     * @param bar whether the menu bar is visible
+     */
+    public void setVisibleMenuBar(boolean visible) {
+        bar.setVisible(visible);
     }
 
     /**
