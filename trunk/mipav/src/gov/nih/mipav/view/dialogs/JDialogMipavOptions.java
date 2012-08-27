@@ -276,7 +276,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * </p>
      */
     public JDialogMipavOptions() {
-        super(ViewUserInterface.getReference().getMainFrame(), false);
+        super(ViewUserInterface.getReference().getMainFrame(), false, false);
 
         userInterface = ViewUserInterface.getReference();
 
