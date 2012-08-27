@@ -489,7 +489,19 @@ public abstract class JDialogBase extends JDialog
         } else if(e.getActionCommand().equals(LOAD_DEFAULT)) {
             loadDefaults();
         } else if(e.getActionCommand().equals(SAVE_PROFILE)) {
-            
+            int doSave = JOptionPane.NO_OPTION;
+            String str = String.valueOf(0);
+            while(doSave == JOptionPane.NO_OPTION) {
+                str = JOptionPane.showInputDialog(this, "Name the profile");
+                if(Preferences.getProperty(getClass().getName()+str) != null) {
+                    doSave = JOptionPane.showConfirmDialog(this, "Profile "+str+" already exists.  Overwrite?", "Overwrite?", JOptionPane.YES_NO_CANCEL_OPTION);
+                } else {
+                    doSave = JOptionPane.YES_OPTION;
+                }
+            }
+            if(doSave == JOptionPane.YES_OPTION && str != null) {
+                saveDefaults(str);
+            }
         } else if(e.getActionCommand().equals(SAVE_DEFAULT)) {
             saveDefaults();
         } 
@@ -539,21 +551,21 @@ public abstract class JDialogBase extends JDialog
      * Loads the defaults of profile 0.
      */
     public void loadDefaults() {
-        loadDefaults(0);
+        loadDefaults(String.valueOf(0));
     }
     
     /**
      * Loads default values for gui components in the dialog.
      * 
      */
-    public void loadDefaults(int profileNum) {
+    public void loadDefaults(String profileStr) {
         String nameStart = new String();
-        Object obj = Preferences.getProperty(getClass().getName()+String.valueOf(profileNum));
+        Object obj = Preferences.getProperty(getClass().getName()+profileStr);
         if(obj == null || obj.toString().length() == 0) {
             MipavUtil.displayInfo("No defaults available for this dialog");
             return;
         } else {
-            nameStart = getClass().getName()+String.valueOf(profileNum);
+            nameStart = getClass().getName()+profileStr;
         }
         
         boolean success = loadComponenets(this, nameStart);
@@ -689,16 +701,16 @@ public abstract class JDialogBase extends JDialog
      * Saves the defaults of profile 0.
      */
     public void saveDefaults() {
-        saveDefaults(0);
+        saveDefaults(String.valueOf(0));
     }
     
     /**
      * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile number.
      */
-    public void saveDefaults(int profileNum) {
-        Preferences.setProperty(getClass().getName()+String.valueOf(profileNum), SAVE_DEFAULT);
+    public void saveDefaults(String str) {
+        Preferences.setProperty(getClass().getName()+str, SAVE_DEFAULT);
         
-        saveComponents(this, getClass().getName()+String.valueOf(profileNum));
+        saveComponents(this, getClass().getName()+str);
     }
     
     private void saveComponents(Component comp, String name) {
