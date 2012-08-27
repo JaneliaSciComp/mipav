@@ -1350,6 +1350,8 @@ public class JPanelMouse extends JPanelRendererJ3D
             } else if (source == cancelButton) {
                 textChanged = nameChangeVector.getName();
                 this.setVisible(false);
+            } else {
+                super.actionPerformed(event);
             }
         }
 

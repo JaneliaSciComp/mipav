@@ -320,8 +320,10 @@ public class DTIPipeline extends JDialogBase implements ActionListener, ChangeLi
 	            tabbedPane.setSelectedIndex(2);
 	            nextButton.setEnabled(true);
 	            goBackButton.setEnabled(false);
+	        } else {
+	            super.actionPerformed(event);
 	        }
-			
+			 
 			
 
 		       

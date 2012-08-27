@@ -115,6 +115,8 @@ public class JDialogAddNode extends JDialogBase implements ActionListener {
 			
 			}
          
+        } else {
+            super.actionPerformed(event);
         }
     }
 	
