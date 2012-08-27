@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -117,6 +118,9 @@ public abstract class JDialogBase extends JDialog
 
     /** JMenuBar for loading/saving defaults */
     protected JMenuBar bar;
+
+    /** List of existing default profiles for this dialog */
+    private ArrayList<String> profiles;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -485,9 +489,37 @@ public abstract class JDialogBase extends JDialog
         if(e.getActionCommand().equals(ABOUT_MIPAV)) {
             
         } else if(e.getActionCommand().equals(LOAD_PROFILE)) {
+            boolean success = false;
+            if(profiles == null) {
+                profiles = new ArrayList<String>();
+                for(Entry<Object, Object> objSet  : Preferences.getMipavProps().entrySet()) {
+                    if(objSet.getValue().equals(SAVE_DEFAULT)) {
+                        String str = objSet.getKey().toString();
+                        String str2 = getClass().getName();
+                        str.substring(getClass().getName().length());
+                        
+                        profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
+                    }
+                }
+            }
+            
+            if(profiles.size() > 0) {
+                Object select = JOptionPane.showInputDialog(this, "Choose the profile to load", "Load profile", JOptionPane.INFORMATION_MESSAGE, null, profiles.toArray(), profiles.toArray()[0]);
+                if(select != null) {
+                    success = loadDefaults(select.toString());
+                }
+                if(!success) {
+                    JOptionPane.showMessageDialog(this, "Profile loading not successful.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "No available profiles");
+            }
             
         } else if(e.getActionCommand().equals(LOAD_DEFAULT)) {
-            loadDefaults();
+            boolean success = loadDefaults();
+            if(!success) {
+                JOptionPane.showMessageDialog(this, "Profile loading not successful.");
+            }
         } else if(e.getActionCommand().equals(SAVE_PROFILE)) {
             int doSave = JOptionPane.NO_OPTION;
             String str = String.valueOf(0);
@@ -501,6 +533,9 @@ public abstract class JDialogBase extends JDialog
             }
             if(doSave == JOptionPane.YES_OPTION && str != null) {
                 saveDefaults(str);
+                if(profiles != null) {
+                    profiles.add(str);
+                }
             }
         } else if(e.getActionCommand().equals(SAVE_DEFAULT)) {
             saveDefaults();
@@ -550,20 +585,20 @@ public abstract class JDialogBase extends JDialog
     /**
      * Loads the defaults of profile 0.
      */
-    public void loadDefaults() {
-        loadDefaults(String.valueOf(0));
+    public boolean loadDefaults() {
+        return loadDefaults(String.valueOf(0));
     }
     
     /**
      * Loads default values for gui components in the dialog.
      * 
      */
-    public void loadDefaults(String profileStr) {
+    public boolean loadDefaults(String profileStr) {
         String nameStart = new String();
         Object obj = Preferences.getProperty(getClass().getName()+profileStr);
         if(obj == null || obj.toString().length() == 0) {
             MipavUtil.displayInfo("No defaults available for this dialog");
-            return;
+            return false;
         } else {
             nameStart = getClass().getName()+profileStr;
         }
@@ -572,6 +607,7 @@ public abstract class JDialogBase extends JDialog
         if(!success) {
             Preferences.debug("Preferences loading not successful for "+this.getName(), Preferences.DEBUG_MINOR);
         }
+        return success;
     }
     
     private boolean loadComponenets(Component comp, String name) {
