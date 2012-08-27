@@ -144,6 +144,8 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             } else {
                 comboBoxImage.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

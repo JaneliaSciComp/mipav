@@ -175,6 +175,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         else if (command.equals("Help")) {
             //MipavUtil.showHelp("19074");
             MipavUtil.showWebHelp("Threshold");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -115,6 +115,8 @@ public class PlugInDialogNewGeneric542 extends JDialogScriptableBase implements 
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

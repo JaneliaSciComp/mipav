@@ -551,7 +551,9 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
     }   else if (command.equals("Cancel")) {
     	    componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
-        } 
+        } else {
+            super.actionPerformed(event);
+        }
     }
 
 

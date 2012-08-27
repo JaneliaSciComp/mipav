@@ -44,18 +44,6 @@ public class JDialogConvert4DtoMultiple3D extends JDialogScriptableBase implemen
         userInterface = ViewUserInterface.getReference();
     }
 	
-	
-	
-
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-
-	}
-	
-	
-	
-	
-	
 	public void callAlgorithm() {
 		int[] destExtents = new int[3];
         destExtents[0] = image.getExtents()[0];

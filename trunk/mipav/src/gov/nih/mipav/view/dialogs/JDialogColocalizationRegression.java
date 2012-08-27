@@ -346,7 +346,10 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
 
                 return;
             }
-        } // else if (command.equals("Mask"))
+        } else { // else if (command.equals("Mask"))
+            super.actionPerformed(event);
+        }
+        
     }
 
     // ************************************************************************

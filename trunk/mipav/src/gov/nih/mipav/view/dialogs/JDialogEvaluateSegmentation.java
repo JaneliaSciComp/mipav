@@ -163,6 +163,8 @@ public class JDialogEvaluateSegmentation extends JDialogScriptableBase implement
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("Mor008ES");
             MipavUtil.showWebHelp("Morphology#Applying_evaluate_segmentation");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

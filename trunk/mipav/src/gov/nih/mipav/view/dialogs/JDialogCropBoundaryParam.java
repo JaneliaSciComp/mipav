@@ -154,6 +154,8 @@ public class JDialogCropBoundaryParam extends JDialogScriptableBase implements A
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("U4023");
             MipavUtil.showWebHelp("Cropping_images#Crop_Boundary_Pixels");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -106,6 +106,8 @@ public class JDialogMosaicToSlices extends JDialogScriptableBase implements Algo
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

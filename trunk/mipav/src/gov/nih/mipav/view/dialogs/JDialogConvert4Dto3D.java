@@ -147,13 +147,6 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
         copyAllInfo = scriptParameters.getParams().getBoolean("copy_all_image_info");
     }
 
-    /**
-     * Calls run on the algorithm from the script parser.
-     * 
-     * @param event Event that triggers function
-     */
-    public void actionPerformed(final ActionEvent event) {}
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

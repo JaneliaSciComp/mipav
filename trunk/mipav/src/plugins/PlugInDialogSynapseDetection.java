@@ -181,7 +181,9 @@ public class PlugInDialogSynapseDetection extends JDialogScriptableBase implemen
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
-        } 
+        } else {
+            super.actionPerformed(event);
+        }
     }
 
     // ************************************************************************

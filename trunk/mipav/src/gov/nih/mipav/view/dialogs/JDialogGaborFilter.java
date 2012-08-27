@@ -171,6 +171,8 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
             dispose();
         } else if (source == helpButton) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

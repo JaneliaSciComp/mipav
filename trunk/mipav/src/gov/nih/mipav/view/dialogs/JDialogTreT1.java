@@ -246,14 +246,15 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     			MipavUtil.displayError(userError);
     			this.setVisible(true);
     		}
-        }
-        if (command.equals("Cancel")) {
+        } else if (command.equals("Cancel")) {
            if(cAlgo != null) {
         	   cAlgo.interrupt();
            } else {
         	   this.dispose();
            }
-        } 
+        }  else {
+            super.actionPerformed(event);
+        }
     }
 
     protected JPanel buildHIFIPanel() {

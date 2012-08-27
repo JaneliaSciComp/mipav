@@ -181,6 +181,8 @@ public class PlugInDialogCenterDistance2 extends JDialogScriptableBase implement
                 interpolationLabel.setEnabled(false);
                 interpolationText.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

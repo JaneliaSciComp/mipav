@@ -268,7 +268,9 @@ public class JDialogLogSlopeMapping extends JDialogScriptableBase implements Alg
 	    	 }
 	    	 
 	    	
-	     }
+	     } else {
+	            super.actionPerformed(event);
+	        }
 
 	}
 	

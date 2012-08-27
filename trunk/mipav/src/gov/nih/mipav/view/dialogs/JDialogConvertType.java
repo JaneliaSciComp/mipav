@@ -251,8 +251,10 @@ public class JDialogConvertType extends JDialogScriptableBase
             } else {
                 textInEnd.requestFocus();
                 textInEnd.selectAll();
-            }
-
+            } 
+ 
+        } else {
+            super.actionPerformed(event);
         }
 
     } // end actionPerformed()

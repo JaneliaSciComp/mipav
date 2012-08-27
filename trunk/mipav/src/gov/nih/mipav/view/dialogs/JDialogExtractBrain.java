@@ -487,6 +487,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                 erosionLabel.setEnabled(false);
                 erosionTF.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

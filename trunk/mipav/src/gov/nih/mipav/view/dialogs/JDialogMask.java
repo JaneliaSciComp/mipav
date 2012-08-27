@@ -172,6 +172,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("U4025");
             MipavUtil.showWebHelp("Masking_(filling)_images");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

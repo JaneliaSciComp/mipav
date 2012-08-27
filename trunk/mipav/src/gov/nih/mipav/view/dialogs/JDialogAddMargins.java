@@ -174,6 +174,8 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("U4009");
             MipavUtil.showWebHelp("Adding_image_margins");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -107,6 +107,8 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("Mor001");
             MipavUtil.showWebHelp("Morphology#Background_Distance_map");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

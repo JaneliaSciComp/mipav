@@ -112,6 +112,8 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("U4049");
             MipavUtil.showWebHelp("Slice_tools#Concatenating_images");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

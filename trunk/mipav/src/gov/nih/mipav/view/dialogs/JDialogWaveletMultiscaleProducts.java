@@ -131,8 +131,10 @@ public class JDialogWaveletMultiscaleProducts extends JDialogScriptableBase impl
             else {
                 textLevels.setEnabled(true);
             }
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************

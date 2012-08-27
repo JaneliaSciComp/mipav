@@ -127,6 +127,8 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
             }
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

@@ -167,8 +167,10 @@ public class JDialogWatershed extends JDialogScriptableBase implements Algorithm
          else if (source == helpButton) {
             //MipavUtil.showHelp("WShed10");
             MipavUtil.showWebHelp("Watershed");
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************

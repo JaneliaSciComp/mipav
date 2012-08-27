@@ -1632,7 +1632,7 @@ public class JDialogFileInfoDICOM extends JDialogScriptableBase implements Actio
                 }
             }
         } else {
-            Preferences.debug("eventsource was: " + e.getSource().toString());
+            super.actionPerformed(e);
         }
     }
 

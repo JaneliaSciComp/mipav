@@ -140,6 +140,8 @@ public class JDialogFillObjects extends JDialogScriptableBase
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("Mor009FH");
         	MipavUtil.showWebHelp("Morphology#Applying_fill_holes");
+        } else {
+            super.actionPerformed(event);
         }
     }
     

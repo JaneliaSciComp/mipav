@@ -111,6 +111,8 @@ public class JDialogWaterShedITK extends JDialogScriptableBase
         else if (command.equals("Help")) {
             //MipavUtil.showHelp("WShed10");
             MipavUtil.showWebHelp("Watershed");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

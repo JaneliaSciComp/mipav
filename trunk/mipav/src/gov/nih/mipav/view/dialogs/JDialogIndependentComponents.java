@@ -289,6 +289,8 @@ public class JDialogIndependentComponents extends JDialogScriptableBase implemen
         		labelICNumber.setEnabled(true);
         		textICNumber.setEnabled(true);
         	}
+        } else {
+            super.actionPerformed(event);
         }
     }
 

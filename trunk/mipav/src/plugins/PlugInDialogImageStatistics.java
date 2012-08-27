@@ -79,6 +79,8 @@ public class PlugInDialogImageStatistics extends JDialogScriptableBase implement
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed(...)
 

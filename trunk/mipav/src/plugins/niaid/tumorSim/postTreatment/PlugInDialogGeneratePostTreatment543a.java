@@ -189,6 +189,8 @@ public class PlugInDialogGeneratePostTreatment543a extends JDialogScriptableBase
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     } // end actionPerformed()
 

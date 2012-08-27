@@ -140,6 +140,8 @@ public class JDialogFindEdges extends JDialogScriptableBase
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("Mor010FE");
             MipavUtil.showWebHelp("Morphology#Find_Edges");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

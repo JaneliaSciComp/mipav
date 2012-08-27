@@ -241,6 +241,8 @@ public class JDialogGenerateGrid extends JDialogScriptableBase implements Action
             }, new ActionListener() { // CANCEL listener
                 public void actionPerformed(ActionEvent a) { }
             });
+        } else {
+            super.actionPerformed(e);
         }
 
 	}

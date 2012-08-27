@@ -176,6 +176,8 @@ public class JDialogHistogramSummary extends JDialogScriptableBase
             }
 
             binText.setText(String.valueOf(bins));
+        } else {
+            super.actionPerformed(event);
         }
     }
 

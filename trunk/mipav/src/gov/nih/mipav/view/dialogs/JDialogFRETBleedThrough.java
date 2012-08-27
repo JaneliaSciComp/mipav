@@ -290,6 +290,8 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10096");
             MipavUtil.showWebHelp("Microscopy:_Fluorescent_Resonance_Energy_Transfer_(FRET)_Bleed_Through_and_Efficiency#Applying_the_FRET_Bleed_Through_algorithm");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

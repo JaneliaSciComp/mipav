@@ -106,6 +106,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("10021");
             MipavUtil.showWebHelp("Filters_(Spatial):_Nonmaximum_Suppression#Applying_the_Nonmaximum_Suppression_algorithm");
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 

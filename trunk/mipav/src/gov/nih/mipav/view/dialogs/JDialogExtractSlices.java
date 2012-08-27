@@ -69,13 +69,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Does nothing.
-     *
-     * @param  event  event that triggers function
-     */
-    public void actionPerformed(ActionEvent event) { }
-
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************

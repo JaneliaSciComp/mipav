@@ -132,6 +132,8 @@ public class JDialogBilateralFilter extends JDialogScriptableBase implements Alg
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

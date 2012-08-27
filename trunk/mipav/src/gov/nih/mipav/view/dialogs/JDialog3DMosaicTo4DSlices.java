@@ -111,6 +111,8 @@ public class JDialog3DMosaicTo4DSlices extends JDialogScriptableBase implements 
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

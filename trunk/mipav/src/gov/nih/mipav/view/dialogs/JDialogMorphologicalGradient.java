@@ -204,6 +204,8 @@ public class JDialogMorphologicalGradient extends JDialogScriptableBase
         } else if (command.equals("Help")) {
         	//MipavUtil.showHelp("Mor003Er1");
             MipavUtil.showWebHelp("Morphology#Applying_the_erosion");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -268,6 +268,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
 
             fileLocation += fileName;
             fileTF.setToolTipText(fileLocation);
+        } else {
+            super.actionPerformed(event);
         }
     }
 

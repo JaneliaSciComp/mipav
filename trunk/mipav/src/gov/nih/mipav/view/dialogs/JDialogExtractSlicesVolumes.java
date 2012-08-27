@@ -148,6 +148,8 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
             for (i = 1; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

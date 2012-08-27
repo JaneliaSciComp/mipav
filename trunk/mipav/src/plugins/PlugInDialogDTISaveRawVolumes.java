@@ -244,7 +244,9 @@ public class PlugInDialogDTISaveRawVolumes extends JDialogScriptableBase impleme
 				isNIFTI = false;
 			}
 			callAlgorithm();
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 
 	}
 	

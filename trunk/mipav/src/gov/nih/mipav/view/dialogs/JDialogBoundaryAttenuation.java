@@ -113,6 +113,8 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -142,6 +142,8 @@ public class JDialogFuzzyMinimization extends JDialogScriptableBase implements A
             dispose();
         } else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

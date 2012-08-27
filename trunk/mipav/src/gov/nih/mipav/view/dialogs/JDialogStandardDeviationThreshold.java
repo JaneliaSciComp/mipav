@@ -695,7 +695,9 @@ public class JDialogStandardDeviationThreshold extends JDialogScriptableBase imp
     		}else {
     			inverseThreshold = false;
     		}
-    	}
+    	} else {
+            super.actionPerformed(event);
+        }
         	
     }
     

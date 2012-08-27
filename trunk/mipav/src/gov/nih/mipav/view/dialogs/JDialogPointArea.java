@@ -181,6 +181,8 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
             } else {
                 thresholdField.setEnabled(false);
             }
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
         }
     }
 

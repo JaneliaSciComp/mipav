@@ -123,6 +123,8 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
                 dLabel.setEnabled(true);
                 dText.setEnabled(true);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

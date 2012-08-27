@@ -232,6 +232,8 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                 blueLabel.setEnabled(true);
                 blueText.setEnabled(true);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

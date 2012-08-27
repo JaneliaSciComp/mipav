@@ -95,6 +95,8 @@ public class JDialogRegPatientPos extends JDialogScriptableBase
             }
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

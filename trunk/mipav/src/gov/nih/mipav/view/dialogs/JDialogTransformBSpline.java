@@ -177,6 +177,8 @@ public class JDialogTransformBSpline extends JDialogScriptableBase implements Al
         else if (command.equals("Help")) {
             //MipavUtil.showHelp("TransNon10");
             MipavUtil.showWebHelp("Transform_nonlinear");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

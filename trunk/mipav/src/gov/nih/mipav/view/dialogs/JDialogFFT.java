@@ -409,6 +409,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
             		useOCLCheckbox.setSelected(false);
             	}
             }
+        } else {
+            super.actionPerformed(event);
         }
 
     }

@@ -172,7 +172,9 @@ implements ActionDiscovery, AlgorithmInterface, ChangeListener, KeyListener {
 			dispose();
 		} else if (command.equals("Help")) {
 
-		}
+		} else {
+            super.actionPerformed(event);
+        }
 	}
 
 	// ************************************************************************

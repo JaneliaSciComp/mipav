@@ -116,6 +116,8 @@ public class JDialogCenterOfMass extends JDialogScriptableBase implements Algori
         }
         else if (command.equals("Help")) {
             //MipavUtil.showHelp("");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

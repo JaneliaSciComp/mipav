@@ -171,6 +171,8 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         } else if (eventSource == helpButton) {
             //MipavUtil.showHelp("10090");
             MipavUtil.showWebHelp("Extract_Brain:_Extract_Brain_Surface_(BSE)");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

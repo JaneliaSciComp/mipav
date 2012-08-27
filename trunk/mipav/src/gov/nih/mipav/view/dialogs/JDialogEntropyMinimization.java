@@ -188,7 +188,10 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase
                 thresholdLabel.setEnabled(false);
                 thresholdText.setEnabled(false);
             }
-        } // else if (source == thresholdCheckbox)
+        } else { // else if (source == thresholdCheckbox)
+            super.actionPerformed(event);
+        }
+        
     }
 
     // ************************************************************************

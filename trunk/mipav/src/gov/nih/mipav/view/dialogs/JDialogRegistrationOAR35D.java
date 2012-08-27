@@ -321,6 +321,8 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         } else if (command.equals("AdvancedHelp")) {
         	//MipavUtil.showHelp("OAR19078");
             MipavUtil.showWebHelp("Optimized_automatic_registration_3D#Advanced_OAR_settings_for_Constrained_Optimized_Automatic_Registration_3D");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

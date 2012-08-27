@@ -210,6 +210,8 @@ public class JDialogFastMarching extends JDialogScriptableBase implements Action
 
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

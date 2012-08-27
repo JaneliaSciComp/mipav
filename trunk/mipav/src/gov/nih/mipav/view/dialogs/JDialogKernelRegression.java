@@ -452,6 +452,8 @@ public class JDialogKernelRegression extends JDialogScriptableBase
             else {
                 textLesserEqual.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

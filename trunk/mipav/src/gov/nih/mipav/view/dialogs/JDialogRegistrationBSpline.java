@@ -295,6 +295,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                     MipavUtil.showWebHelp("User_Dialogs_in_MIPAV#B-Spline_Single_-_Pass_Automatic_Registration_2D.2F3D_dialog_box");
                 }
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

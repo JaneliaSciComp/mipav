@@ -160,6 +160,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         } if (command.equals("Help")) {
             //MipavUtil.showHelp("U4033");
             MipavUtil.showWebHelp("Image_Math");
+        } else {
+            super.actionPerformed(event);
         }
     }
 

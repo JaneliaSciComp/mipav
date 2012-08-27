@@ -236,7 +236,9 @@ public class PlugInDialogDTIOverlay extends JDialogScriptableBase implements Alg
 				alg.setThreadStopped(true);
 			}
 			dispose();
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 	}
 
 	

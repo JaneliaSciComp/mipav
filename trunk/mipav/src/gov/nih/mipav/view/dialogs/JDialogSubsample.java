@@ -317,6 +317,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 labelPaddedExtentZ.setEnabled(false);
             }
         	        	
+        } else {
+            super.actionPerformed(e);
         }
     }
 

@@ -169,6 +169,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 radioCommon.setEnabled(false);
                 radioSeparate.setEnabled(false);    
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
