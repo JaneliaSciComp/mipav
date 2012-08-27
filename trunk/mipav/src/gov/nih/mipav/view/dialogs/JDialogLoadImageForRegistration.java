@@ -335,6 +335,8 @@ public class JDialogLoadImageForRegistration extends JDialogBase {
             }
         } else if (command.equalsIgnoreCase("cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

@@ -171,9 +171,11 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
             if ( voiManager != null )
             {
                 voiManager.setOpacity( opacity );
-            }
+            } 
 
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

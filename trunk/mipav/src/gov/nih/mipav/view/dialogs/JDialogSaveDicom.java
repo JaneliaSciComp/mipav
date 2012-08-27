@@ -981,6 +981,8 @@ public class JDialogSaveDicom extends JDialogBase {
             fillDataFromFile();
         } else if (event.getActionCommand().equals("Autofill required tags")) {
             autofillRequiredFields();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

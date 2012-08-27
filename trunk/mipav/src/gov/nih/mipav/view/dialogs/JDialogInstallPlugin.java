@@ -173,8 +173,10 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             installPlugins();
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     private void installPlugins() {
         ArrayList<File> files = moveFiles();

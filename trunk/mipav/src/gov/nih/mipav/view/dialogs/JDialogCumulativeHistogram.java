@@ -57,18 +57,6 @@ public class JDialogCumulativeHistogram extends JDialogBase implements Algorithm
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * DOCUMENT ME!
-     *
-     * @param    e  DOCUMENT ME!
-     *
-     * @overide  DOCUMENT ME!
-     */
-    public void actionPerformed(ActionEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
 
     /**
      * method that is called after algorithm is finished.

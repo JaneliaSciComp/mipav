@@ -204,6 +204,8 @@ public class JDialogEllipseGeneration extends JDialogBase implements AlgorithmIn
                 highestRegenerationLabel.setEnabled(true);
                 highestRegenerationText.setEnabled(true);   
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

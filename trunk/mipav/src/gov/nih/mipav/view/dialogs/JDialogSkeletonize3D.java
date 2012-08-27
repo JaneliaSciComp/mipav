@@ -231,6 +231,8 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
             callAlgorithm();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
 
     }

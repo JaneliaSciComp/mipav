@@ -107,8 +107,10 @@ public class JDialogHoughLineChoice extends JDialogBase {
                 }
             } // for (i = 0; i < numLinesFound; i++)
             okayPressed = true;
-        } // if (event.getSource() == OKButton)
-
+        } else { // if (event.getSource() == OKButton)
+            super.actionPerformed(event);
+        }
+        
         selectedArray = null;
         distanceArray = null;
         dispose();

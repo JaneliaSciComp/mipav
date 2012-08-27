@@ -147,6 +147,8 @@ public class JDialogText extends JDialogBase {
 
         if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

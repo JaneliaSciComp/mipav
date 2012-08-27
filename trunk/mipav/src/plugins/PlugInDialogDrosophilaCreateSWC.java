@@ -259,6 +259,8 @@ public class PlugInDialogDrosophilaCreateSWC extends JDialogBase implements Algo
 			 if(setVariables()) {
 				 callAlgorithm();
 			 }
+		 } else {
+		     super.actionPerformed(e);
 		 }
 
 	}

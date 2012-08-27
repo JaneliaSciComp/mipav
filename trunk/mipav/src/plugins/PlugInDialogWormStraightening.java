@@ -437,6 +437,8 @@ public class PlugInDialogWormStraightening extends JDialogBase implements Algori
         }else if(command.equals("ok")) {
         	callAlgorithm();
         	
+        } else {
+            super.actionPerformed(e);
         }
 
 	}

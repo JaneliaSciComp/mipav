@@ -106,6 +106,8 @@ public class JDialogSelectDICOMColumnHeaders extends JDialogBase implements Acti
                 MipavUtil.displayInfo("Configuration saved.");
             }
             // Preferences class will display error message in case of error
+        } else {
+            super.actionPerformed(event);
         }
     }
 

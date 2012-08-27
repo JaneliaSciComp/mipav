@@ -85,6 +85,8 @@ public class JDialogBurnParameter extends JDialogBase {
             probePanel.startBurn();
         } else if (command.equals("Cancel")) {
             setVisible(false);
+        } else {
+            super.actionPerformed(event);
         }
     }
 

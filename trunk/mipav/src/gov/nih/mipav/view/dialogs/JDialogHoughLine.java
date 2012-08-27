@@ -92,6 +92,8 @@ public class JDialogHoughLine extends JDialogBase implements AlgorithmInterface,
             MipavUtil.showWebHelp("Hough_Transform#Running_the_Hough_Transform_for_Line_Filing_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

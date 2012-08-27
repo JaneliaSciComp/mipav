@@ -267,7 +267,9 @@ public class JDialogFileInfo extends JDialogBase implements ActionListener {
                         });
                         primaryEditorHolder.put(named, editor);
                     }
-                } else {}
+                } else {
+                    super.actionPerformed(e);
+                }
             }
 
             // go through secondary table, editing highlighted (selected) rows

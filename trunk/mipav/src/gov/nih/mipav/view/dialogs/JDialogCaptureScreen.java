@@ -282,6 +282,8 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener, 
             instructions.setText("Select the window you want to save.");
             instructions2.setText("Then press OK.");
             mode = WindowProperties.WINDOW;
+        } else {
+            super.actionPerformed(event);
         }
             
 

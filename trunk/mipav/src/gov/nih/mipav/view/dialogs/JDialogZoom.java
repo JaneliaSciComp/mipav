@@ -103,9 +103,11 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         if(command.equals("nearest")) {
         	componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
         	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST);
-        }else if(command.equals("bilinear")) {
+        } else if(command.equals("bilinear")) {
         	componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
         	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.BILINEAR);
+        } else {
+            super.actionPerformed(event);
         }
     }
 

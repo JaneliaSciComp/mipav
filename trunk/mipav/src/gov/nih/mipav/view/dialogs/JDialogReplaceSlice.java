@@ -97,6 +97,8 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
 
     }

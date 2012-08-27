@@ -327,6 +327,8 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 labelDiffusion.setEnabled(false);
                 textDiffusion.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

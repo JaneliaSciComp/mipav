@@ -254,6 +254,8 @@ public class JDialogLightBox extends JDialogBase implements ChangeListener {
         } else if (command.equalsIgnoreCase("close")) {
             setVisible(false);
             resetValues();
+        } else {
+            super.actionPerformed(event);
         }
 
     } // end actionPerformed()

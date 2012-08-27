@@ -78,6 +78,8 @@ public class JDialogCaptureScreens extends JDialogBase {
             if (writeImage()) {
                 // System.err.println("successful");
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

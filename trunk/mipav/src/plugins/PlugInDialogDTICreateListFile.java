@@ -451,7 +451,9 @@ public class PlugInDialogDTICreateListFile extends JDialogBase implements Algori
 		}else if (command.equalsIgnoreCase("help")) {
 			//MipavUtil.showHelp("DTI00010");
 			MipavUtil.showWebHelp("DTI:_Create_List_File");
-		}
+		} else {
+            super.actionPerformed(e);
+        }
 	}
 	
 	

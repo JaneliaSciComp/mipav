@@ -181,7 +181,7 @@ public class JDialogFileInfoMincHDF extends JDialogBase implements ActionListene
         if (e.getActionCommand().equals("Close")) { // close
             dispose(); // remove self
         } else {
-            Preferences.debug("eventsource was: " + e.getSource().toString());
+            super.actionPerformed(e);
         }
     }
 

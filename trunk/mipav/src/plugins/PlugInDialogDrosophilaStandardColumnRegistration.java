@@ -548,7 +548,9 @@ public class PlugInDialogDrosophilaStandardColumnRegistration extends JDialogBas
 				 neuronImage = null;
 			 }
 			 dispose();
-		 }
+		 } else {
+             super.actionPerformed(e);
+         }
 	}
 	
 	

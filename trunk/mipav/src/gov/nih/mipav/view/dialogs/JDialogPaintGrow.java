@@ -918,7 +918,10 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                     lowerMid.setText("     " + mid);
                 }
             }
-        } // else if ((maximumValueButton != null) && (source == maximumValueButton))
+        } else { // else if ((maximumValueButton != null) && (source == maximumValueButton))
+            super.actionPerformed(event);
+        }
+        
     }
 
     /**

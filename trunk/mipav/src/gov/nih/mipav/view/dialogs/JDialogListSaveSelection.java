@@ -100,6 +100,8 @@ public class JDialogListSaveSelection extends JDialogBase implements ActionListe
             okAction();
         } else if (e.getActionCommand().equalsIgnoreCase("Cancel")) {
             cancelAction();
+        } else {
+            super.actionPerformed(e);
         }
     }
 

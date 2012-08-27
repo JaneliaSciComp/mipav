@@ -1185,6 +1185,8 @@ public class JDialogFileInfoXML extends JDialogBase implements ActionListener {
                     }
                 });
             }
+        } else {
+            super.actionPerformed(e);
         }
 
     }

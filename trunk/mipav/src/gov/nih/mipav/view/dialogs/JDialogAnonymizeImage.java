@@ -120,6 +120,8 @@ public class JDialogAnonymizeImage extends JDialogBase {
             }
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

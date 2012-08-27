@@ -151,7 +151,10 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             }
             helpButton.setText("Undo");
             helpButton.setMnemonic(KeyEvent.VK_U);
+        } else {
+            super.actionPerformed(event);
         }
+        
     }
 
     // ************************************************************************

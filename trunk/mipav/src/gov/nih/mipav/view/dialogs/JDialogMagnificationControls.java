@@ -247,6 +247,8 @@ public class JDialogMagnificationControls extends JDialogBase
             paint(getGraphics());
         } else if (source == cancelButton) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

@@ -350,6 +350,8 @@ public class JDialogCircleGeneration extends JDialogBase implements AlgorithmInt
                 ratioLabel.setEnabled(false);
                 ratioText.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

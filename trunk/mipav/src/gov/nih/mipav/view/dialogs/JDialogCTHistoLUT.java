@@ -430,6 +430,8 @@ public class JDialogCTHistoLUT extends JDialogBase implements ItemListener {
                 componentHistogram.ctMode(levelTemp, windowTemp);
             }
 
+        } else {
+            super.actionPerformed(event);
         }
     }
 

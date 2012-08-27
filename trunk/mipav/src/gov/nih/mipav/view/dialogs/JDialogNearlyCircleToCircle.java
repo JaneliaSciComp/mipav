@@ -89,6 +89,8 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
             MipavUtil.showWebHelp("Transform:_Conformal_Mapping_Algorithms#Applying_the_Nearly_Circle_to_Circle_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 
@@ -136,7 +138,7 @@ public class JDialogNearlyCircleToCircle extends JDialogBase implements Algorith
         if (ncAlgo != null) {
             ncAlgo.finalize();
             ncAlgo = null;
-        }
+        } 
 
         dispose();
     }

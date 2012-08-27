@@ -161,9 +161,11 @@ public class JDialogStandalonePlugin extends JDialogBase implements WindowListen
     public void windowDeiconified(final WindowEvent event) {}
 
     /**
-     * Do nothing. Gives subclasses the option to not include an actionPerformed method implementation.
+     * Do super.actionPerformed(). Gives subclasses the option to not include an actionPerformed method implementation.
      * 
      * @param event The action event.
      */
-    public void actionPerformed(final ActionEvent event) {}
+    public void actionPerformed(final ActionEvent event) {
+        super.actionPerformed(event);
+    }
 }

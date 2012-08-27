@@ -225,6 +225,8 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
                 }
 
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 

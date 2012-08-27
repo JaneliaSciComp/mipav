@@ -496,6 +496,8 @@ public class JDialogCTPreset extends JDialogBase implements ItemListener {
                 maxText.setText("" + windowTemp + "");
                 ctMode(vertebraeMin, vertebraeMax);
             }
+        } else {
+            super.actionPerformed(event);
         }
 
     }

@@ -794,8 +794,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         } else if (command.equals("GPU Info")) {
         	OpenCLInfo.main(null);
         } else {
-            // any other button on the dialog: allow user to select "apply"
-            // OKButton.setEnabled(true); // doesn't act correctly when open and then new image frame is added.
+            super.actionPerformed(event);
         }
 
     }

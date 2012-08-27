@@ -417,6 +417,8 @@ public class JDialogVOIStats extends JDialogBase
         } else if (source == cancelButton) {
             cancelFlag = true;
             setVisible(false);
+        } else {
+            super.actionPerformed(event);
         }
     }
     

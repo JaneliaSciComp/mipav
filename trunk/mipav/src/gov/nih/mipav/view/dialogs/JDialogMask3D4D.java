@@ -64,6 +64,8 @@ public class JDialogMask3D4D extends JDialogBase {
             dispose();
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

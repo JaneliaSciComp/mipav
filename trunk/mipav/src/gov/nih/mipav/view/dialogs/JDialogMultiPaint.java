@@ -636,6 +636,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         	saveMasksAs4D = false;
         }else if (command.equals("AdvancedPaint:saveMasksAs4D")) {
         	saveMasksAs4D = true;
+        } else {
+            super.actionPerformed(event);
         }
 
     }

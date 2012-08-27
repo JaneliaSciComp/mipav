@@ -360,6 +360,8 @@ public class PlugInDialogAnonymizeGE_Genesis extends JDialogBase {
                 xlatDestDirectory = chuseDest.getSelectedFile();
                 xlatDestDirText.setText(xlatDestDirectory.getAbsolutePath() + File.separator);
             }
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

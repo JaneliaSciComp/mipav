@@ -3387,6 +3387,8 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 }
             } else if (command.equals("Cancel")) {
                 dispose();
+            } else {
+                super.actionPerformed(e);
             }
         }
 

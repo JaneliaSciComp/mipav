@@ -404,6 +404,8 @@ public class JDialogTalairach extends JDialogBase {
             convertToTalairach();
         } else if (command.equals("cancelTalairach")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

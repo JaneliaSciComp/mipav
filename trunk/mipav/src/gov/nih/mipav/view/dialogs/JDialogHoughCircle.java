@@ -101,6 +101,8 @@ public class JDialogHoughCircle extends JDialogBase implements AlgorithmInterfac
             MipavUtil.showWebHelp("Hough_Transform#Running_the_Hough_Transform_for_Circle_Detection_algorithm");
         } else if (command.equals("Cancel")) {
             dispose();
+        } else {
+            super.actionPerformed(event);
         }
     }
 

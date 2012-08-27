@@ -86,9 +86,12 @@ public class JDialogSaveMincVersionChoice extends JDialogBase {
             }
 
             okayPressed = true;
+            dispose();
+        } else {
+            super.actionPerformed(event);
         }
 
-        dispose();
+        
     }
 
     /**

@@ -485,8 +485,10 @@ public class JDialogPowerPaint extends JDialogBase
                     image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_AB).removeMouseListener(this);
                 }
             }
+        } else {
+            super.actionPerformed(event);
         }
-    }
+    } 
 
     /**
      * Accessor that returns the image.

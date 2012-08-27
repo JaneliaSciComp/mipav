@@ -355,6 +355,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
                 xlatDestDirectory = chuseDest.getSelectedFile();
                 xlatDestDirText.setText(xlatDestDirectory.getAbsolutePath() + File.separator);
             }
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

@@ -143,6 +143,8 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
             if (componentImageColEM != null) {
                 ((ViewJFrameColocalizationEM) parentFrame).setBrightness(brightness, contrast);
             }
+        } else {
+            super.actionPerformed(evt);
         }
     }
 

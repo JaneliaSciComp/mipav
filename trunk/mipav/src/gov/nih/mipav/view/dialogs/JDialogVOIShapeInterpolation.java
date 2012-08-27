@@ -53,12 +53,6 @@ public class JDialogVOIShapeInterpolation extends JDialogBase implements Algorit
 		dispose();
 
 	}
-
-	/** action perf **/
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-
-	}
 	
 	/** call algorithm **/
 	protected void callAlgorithm() {

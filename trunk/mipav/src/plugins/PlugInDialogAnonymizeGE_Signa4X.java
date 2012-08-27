@@ -360,6 +360,8 @@ public class PlugInDialogAnonymizeGE_Signa4X extends JDialogBase {
                 xlatDestDirectory = chuseDest.getSelectedFile();
                 xlatDestDirText.setText(xlatDestDirectory.getAbsolutePath() + File.separator);
             }
+        } else {
+            super.actionPerformed(ae);
         }
     }
 

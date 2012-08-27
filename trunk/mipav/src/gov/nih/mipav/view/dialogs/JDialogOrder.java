@@ -49,6 +49,7 @@ public class JDialogOrder extends JDialogBase {
      */
     public void actionPerformed(ActionEvent event) {
         dispose();
+        super.actionPerformed(event);
     }
 
 

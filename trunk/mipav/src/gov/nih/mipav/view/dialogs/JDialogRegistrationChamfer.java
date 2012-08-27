@@ -131,6 +131,8 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
                 original.setEnabled(false);
                 edge.setEnabled(false);
             }
+        } else {
+            super.actionPerformed(event);
         }
     }
 
