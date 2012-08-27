@@ -42,6 +42,24 @@ public abstract class JDialogBase extends JDialog
     /** NEW indicates a new image is created after the algorithm is run. */
     protected static final int NEW = 1;
 
+    /** Loads default for this dialog */
+    private static final String LOAD_DEFAULT = "LoadDefault";
+
+    /** Loads profile for this dialog */
+    private static final String LOAD_PROFILE = "LoadProfile";
+
+    /** Saves default for this dialog */
+    private static final String SAVE_DEFAULT = "SaveDefault";
+
+    /** Saves profile for this dialog */
+    private static final String SAVE_PROFILE = "SaveProfile";
+
+    /** Displays help this dialog */
+    protected static final String HELP = "Help";
+
+    /** Access about mipav panel */
+    private static final String ABOUT_MIPAV = "AboutMIPAV";
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Flag indicating if the dialog had been cancelled or not. */
@@ -127,6 +145,8 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("OK", okAction);
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
+        
+        createMenu();
     }
 
     /**
@@ -172,6 +192,8 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("OK", okAction);
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
+        
+        createMenu();
     }
 
     /**
@@ -206,6 +228,33 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("OK", okAction);
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
+        
+        createMenu();
+    }
+    
+    private void createMenu() {
+        JMenuBar bar = new JMenuBar();
+        ViewMenuBuilder builder = new ViewMenuBuilder(this);
+        JMenu load = builder.makeMenu("Load", false, new JMenuItem[] {
+                builder.buildMenuItem("Load default", LOAD_DEFAULT, 0, null, false),
+                builder.buildMenuItem("Load profile...", LOAD_PROFILE, 0, null, false)});
+        JMenu save = builder.makeMenu("Save", false, new JMenuItem[] {
+                builder.buildMenuItem("Save default", SAVE_DEFAULT, 0, null, false),
+                builder.buildMenuItem("Save profile...", SAVE_PROFILE, 0, null, false)});
+        JMenu help =  builder.makeMenu("Help", false, new JMenuItem[] {
+                builder.buildMenuItem("Help...", HELP, 0, null, false),
+                builder.buildMenuItem("About MIPAV", ABOUT_MIPAV, 0, null, false)});
+        
+        bar.add(load);
+        bar.add(save);
+        bar.add(help);
+        
+        Window w = SwingUtilities.getWindowAncestor(getContentPane());
+        if(w instanceof JFrame) {
+            ((JFrame) w).setJMenuBar(bar);
+        } else {
+            getContentPane().add(bar, BorderLayout.NORTH);
+        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -386,6 +435,26 @@ public abstract class JDialogBase extends JDialog
                 fileInfo[i].setMin(resultImage.getMin());
             }
         }
+    }
+
+    /* (non-Javadoc)
+     * @see java.awt.event.ActionListener#actionPerformed(java.awt.event.ActionEvent)
+     */
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        System.out.println("Made it "+e.getActionCommand());
+        
+        if(e.getActionCommand().equals(ABOUT_MIPAV)) {
+            
+        } else if(e.getActionCommand().equals(LOAD_PROFILE)) {
+            
+        } else if(e.getActionCommand().equals(LOAD_DEFAULT)) {
+            loadDefaults();
+        } else if(e.getActionCommand().equals(SAVE_PROFILE)) {
+            
+        } else if(e.getActionCommand().equals(SAVE_DEFAULT)) {
+            saveDefaults();
+        } 
     }
 
     /**
