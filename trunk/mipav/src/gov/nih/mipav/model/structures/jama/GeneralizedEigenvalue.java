@@ -26787,7 +26787,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * @param result (output) double[] of dimension (2) The values computed by the two tests described above. The values
      *            are currently limited to 1/ulp, to avoid overflow. result[0] is always modified.
      */
-    private void dstt21(final int n, final int kband, final double[] AD, final double[] AE, final double[] SD,
+    public void dstt21(final int n, final int kband, final double[] AD, final double[] AE, final double[] SD,
             final double[] SE, final double[][] U, final int ldu, final double[] work, final double[] result) {
         int j;
         double anorm;
