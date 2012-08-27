@@ -272,22 +272,18 @@ public abstract class JDialogBase extends JDialog
         bar = new JMenuBar();
         ViewMenuBuilder builder = new ViewMenuBuilder(this);
         JMenu load = builder.makeMenu("Load", false, new JMenuItem[] {
-                builder.buildMenuItem("Load default", LOAD_DEFAULT, 0, null, false),
-                builder.buildMenuItem("Load profile...", LOAD_PROFILE, 0, null, false)});
+                builder.buildMenuItem("Load default", LOAD_DEFAULT, 0, this, null, false),
+                builder.buildMenuItem("Load profile...", LOAD_PROFILE, 0, this, null, false)});
         JMenu save = builder.makeMenu("Save", false, new JMenuItem[] {
-                builder.buildMenuItem("Save default", SAVE_DEFAULT, 0, null, false),
-                builder.buildMenuItem("Save profile...", SAVE_PROFILE, 0, null, false)});
+                builder.buildMenuItem("Save default", SAVE_DEFAULT, 0, this, null, false),
+                builder.buildMenuItem("Save profile...", SAVE_PROFILE, 0, this, null, false)});
         JMenu help =  builder.makeMenu("Help", false, new JMenuItem[] {
-                builder.buildMenuItem("Help...", HELP, 0, null, false),
-                builder.buildMenuItem("About MIPAV", ABOUT_MIPAV, 0, null, false)});
+                builder.buildMenuItem("Help...", HELP, 0, this, null, false),
+                builder.buildMenuItem("About MIPAV", ABOUT_MIPAV, 0, this, null, false)});
         
         bar.add(load);
         bar.add(save);
         bar.add(help);
-        
-        load.addActionListener(this);
-        save.addActionListener(this);
-        help.addActionListener(this);
         
         if(Preferences.is(Preferences.PREF_SAVE_DEFAULTS)) {
             Window w = SwingUtilities.getWindowAncestor(getContentPane());
@@ -575,7 +571,7 @@ public abstract class JDialogBase extends JDialog
         
         boolean load = true;        
         
-        if(prop == null && comp instanceof Container) {
+        if((prop == null || prop.toString().equals(SAVE_DEFAULT)) && comp instanceof Container) {
             Component[] compAr = ((Container)comp).getComponents();
             for(int i=0; i<compAr.length; i++) {
                 String subName = compAr[i].getName();
@@ -700,7 +696,7 @@ public abstract class JDialogBase extends JDialog
      * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile number.
      */
     public void saveDefaults(int profileNum) {
-        Preferences.setProperty(getClass().getName()+String.valueOf(profileNum), String.valueOf(profileNum));
+        Preferences.setProperty(getClass().getName()+String.valueOf(profileNum), SAVE_DEFAULT);
         
         saveComponents(this, getClass().getName()+String.valueOf(profileNum));
     }
