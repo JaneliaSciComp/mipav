@@ -255,8 +255,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** border size for active image color **/
     private JComboBox activeImageColorBorderSize;
 
-	private File exceptions;
-
     /** Whether images are updated in real-time based on histogram changes. */
     private JCheckBox displayHistogram;
 
@@ -1586,7 +1584,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         otherPanel.add(enableLoggingBox, gbc);
         enableLoggingBox.addActionListener(this);
         
-        logFilename = exceptions.getAbsolutePath();
+        logFilename = Preferences.getProperty(Preferences.PREF_LOG_FILENAME);
         
         try {
 			BufferedWriter out = new BufferedWriter(new FileWriter("logFilename"));
@@ -1620,7 +1618,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         otherPanel.add(logFileButton, gbc);
         
-        exceptions.deleteOnExit();
+        if(ViewUserInterface.getExceptions() != null) {
+            ViewUserInterface.getExceptions().deleteOnExit();
+        }
+        
     }
 
     /**
