@@ -5,6 +5,8 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewUserInterface;
 
 public class SelectedEigenvalue implements java.io.Serializable {
+    
+    // dchkst_test repeats 5 times: All 630 tests for dchkst passed the threshold.  This indicates the dstebz and dstein are working.
  // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -22,6 +24,148 @@ public class SelectedEigenvalue implements java.io.Serializable {
     
     /** Common variables in testing routines. */
     private ViewUserInterface UI = ViewUserInterface.getReference();
+    
+    /**
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive ddrvst,
+     * that tests symmetric generalized eigenvalue drivers. The driver tested is dsyevx. Numerical values were obtained
+     * from the sep.in datafile. Original DCHKEE created by Univ. of Tennessee, Univ. of California Berkeley, and NAG
+     * Ltd., January, 2007
+     */
+    public void ddrvst_test() {
+
+        // Number of values of n
+        final int nn = 6;
+
+        // Values of matrix dimension n
+        final int[] nval = new int[] {0, 1, 2, 3, 5, 20};
+
+        // Number of values of NB, NBMIN, and NX
+        final int nparms = 5;
+
+        // Values of blocksize NB
+        final int[] nbval = new int[] {1, 3, 3, 3, 10};
+
+        // Values of minimum blocksize NBMIN
+        final int[] nbmin = new int[] {2, 2, 2, 2, 2};
+
+        // Values of crossover point NX
+        final int[] nxval = new int[] {1, 0, 5, 9, 1};
+
+        // Threshold value for the test ratios. Information will be printed
+        // about each test for which the test ratio is greater than or equal
+        // to threshold.
+        final double thresh = 50.0;
+
+        // Test the driver routines
+        final boolean tstdrv = true;
+
+        // Code describing how to set the random number seed.
+        // = 0: Set the seed to a default number before each run.
+        // = 1: Initialize the seed to a default value only before the first
+        // run.
+        // = 2: Like 1, but use the seed values in the 4 integer array
+        // ioldsd
+        int newsd = 1;
+        final int maxt = 30;
+        final boolean[] dotype = new boolean[maxt];
+        final int[] ioldsd = new int[] {0, 0, 0, 1};
+        final int[] iseed = new int[] {0, 0, 0, 1};
+        final int nmax = 132;
+        final int lwork = (nmax * ( (5 * nmax) + 5)) + 1;
+        final int liwork = nmax * ( (5 * nmax) + 20);
+        final int[] iwork = new int[liwork];
+        final double[] work = new double[lwork];
+        final double[] result = new double[500];
+        final int[] info = new int[1];
+        double[][] A;
+        double[] D1;
+        double[] D2;
+        double[] D3;
+        double[] D4;
+        double[] eveigs;
+        double[] WA1;
+        double[] WA2;
+        double[] WA3;
+        double[][] U;
+        double[][] V;
+        double[] tau;
+        double[][] Z;
+
+        final int maxtyp = 21;
+        int i;
+        int k;
+        int maxnval;
+        int[] iparms;
+        UI.setDataText("Tests of the Symmetric Eigenvalue Problem routines\n");
+
+        for (i = 0; i < maxtyp; i++) {
+            dotype[i] = true;
+        }
+
+        maxnval = 0;
+
+        for (i = 0; i < nn; i++) {
+
+            if (nval[i] > maxnval) {
+                maxnval = nval[i];
+            }
+        }
+
+        iparms = new int[100];
+
+        // 9 = maximum size of the subproblems at the bottom of the computation
+        // tree in the divide-and-conquer algorithm (used by xgelsd and xgesdd)
+        iparms[9 - 1] = 25;
+        A = new double[nmax][maxnval];
+        D1 = new double[maxnval];
+        D2 = new double[maxnval];
+        D3 = new double[maxnval];
+        D4 = new double[maxnval];
+        eveigs = new double[maxnval];
+        WA1 = new double[maxnval];
+        WA2 = new double[maxnval];
+        WA3 = new double[maxnval];
+        U = new double[nmax][maxnval];
+        V = new double[nmax][maxnval];
+        tau = new double[maxnval];
+        Z = new double[nmax][maxnval];
+
+        for (i = 1; i <= nparms; i++) {
+
+            // 1 = The optimal blocksize; if this value is 1, an unblocked
+            // algorithm will give the best performance
+            iparms[1 - 1] = nbval[i - 1];
+
+            // 2 = The minimum blocksize for which the block routine should be
+            // used; if the usable block size is less than this value, an
+            // unblocked routine should be used.
+            iparms[2 - 1] = nbmin[i - 1];
+
+            // 3 = The crossover point (in a block routine, for n less than this
+            // value, an unblocked routine should be used).
+            iparms[3 - 1] = nxval[i - 1];
+
+            if (newsd == 0) {
+
+                for (k = 0; k < 4; k++) {
+                    iseed[k] = ioldsd[k];
+                }
+            } // if (newsd == 0)
+
+            UI.setDataText("Optimal blocksize = " + nbval[i - 1] + "\n");
+            UI.setDataText("Minimum blocksize = " + nbmin[i - 1] + "\n");
+            UI.setDataText("Crossover point = " + nxval[i - 1] + "\n");
+
+            if (tstdrv) {
+                ddrvst(nn, nval, 18, dotype, iseed, thresh, A, nmax, D1, D2, D3, D4, eveigs, WA1, WA2, WA3, U, nmax, V,
+                        tau, Z, work, lwork, iwork, liwork, result, info);
+
+                if (info[0] != 0) {
+                    MipavUtil.displayError("ddrvst had info = " + info[0]);
+                }
+            } // if (tstchk)
+        } // for (i = 1; i <= nparms; i++)
+    } // ddrvst_test
     
     /**
      * This is a port of the part of version 3.4.0 LAPACK test routine DDRVST used to test dsyevx. Original DDRVST created
@@ -425,13 +569,14 @@ public class SelectedEigenvalue implements java.io.Serializable {
 
                     if (iuplo == 0) {
                         uplo = 'L';
+                        ntest = 1;
                     } else {
                         uplo = 'U';
+                        ntest = 10;
                     }
 
                     loop1: {
                         ge.dlacpy(' ', n, n, V, ldu, A, lda);
-                        ntest = ntest + 1;
                         
                         if (n > 0) {
                             temp3 = Math.max(Math.abs(D1[0]), Math.abs(D1[n-1])); 
@@ -1097,6 +1242,879 @@ public class SelectedEigenvalue implements java.io.Serializable {
            return temp1;
      
     } // dsxt1
+    
+    /**
+     * This routine is an extraction from the FORTRAN program version 3.1.1 DCHKEE of the code needed to drive dchkst,
+     * that tests routines used in symmetric generalized eigenvalue problem. The routines tested are dstebz and
+     * dstein.  Numerical values were obtained from the sep.in datafile. Original DCHKEE created by Univ. of
+     * Tennessee, Univ. of California Berkeley, and NAG Ltd., January, 2007
+     */
+    public void dchkst_test() {
+
+        // Number of values of n
+        final int nn = 6;
+
+        // Values of matrix dimension n
+        final int[] nval = new int[] {0, 1, 2, 3, 5, 20};
+
+        // Number of values of NB, NBMIN, and NX
+        final int nparms = 5;
+
+        // Values of blocksize NB
+        final int[] nbval = new int[] {1, 3, 3, 3, 10};
+
+        // Values of minimum blocksize NBMIN
+        final int[] nbmin = new int[] {2, 2, 2, 2, 2};
+
+        // Values of crossover point NX
+        final int[] nxval = new int[] {1, 0, 5, 9, 1};
+
+        // Threshold value for the test ratios. Information will be printed
+        // about each test for which the test ratio is greater than or equal
+        // to threshold.
+        final double thresh = 50.0;
+
+        // Test the LAPACK routines
+        final boolean tstchk = true;
+
+        // Code describing how to set the random number seed.
+        // = 0: Set the seed to a default number before each run.
+        // = 1: Initialize the seed to a default value only before the first
+        // run.
+        // = 2: Like 1, but use the seed values in the 4 integer array
+        // ioldsd
+        int newsd = 1;
+        final int maxt = 30;
+        final boolean[] dotype = new boolean[maxt];
+        final int[] ioldsd = new int[] {0, 0, 0, 1};
+        final int[] iseed = new int[] {0, 0, 0, 1};
+        final int nmax = 132;
+        final int lwork = (nmax * ( (5 * nmax) + 5)) + 1;
+        final int liwork = nmax * ( (5 * nmax) + 20);
+        final int[] iwork = new int[liwork];
+        final double[] work = new double[lwork];
+        final double[] result = new double[500];
+        final int[] info = new int[1];
+        int iparms[];
+        double[][] A;
+        double[] AP;
+        double[] SD;
+        double[] SE;
+        double[] D1;
+        double[] D2;
+        double[] D3;
+        double[] D4;
+        double[] D5;
+        double[] WA1;
+        double[] WA2;
+        double[] WA3;
+        double[] WR;
+        double[][] U;
+        double[][] V;
+        double[] VP;
+        double[] TAU;
+        double[][] Z;
+
+        final int maxtyp = 21;
+        int i;
+        int k;
+        int maxnval;
+        UI.setDataText("Tests of the Symmetric Eigenvalue Problem routines\n");
+
+        for (i = 0; i < maxtyp; i++) {
+            dotype[i] = true;
+        }
+
+        maxnval = 0;
+
+        for (i = 0; i < nn; i++) {
+
+            if (nval[i] > maxnval) {
+                maxnval = nval[i];
+            }
+        }
+
+        iparms = new int[100];
+
+        // 9 = maximum size of the subproblems at the bottom of the computation
+        // tree in the divide-and-conquer algorithm (used by xgelsd and xgesdd)
+        iparms[9 - 1] = 25;
+        A = new double[nmax][maxnval];
+        AP = new double[maxnval * (maxnval + 1) / 2];
+        SD = new double[maxnval];
+        SE = new double[maxnval];
+        D1 = new double[maxnval];
+        D2 = new double[maxnval];
+        D3 = new double[maxnval];
+        D4 = new double[maxnval];
+        D5 = new double[maxnval];
+        WA1 = new double[maxnval];
+        WA2 = new double[maxnval];
+        WA3 = new double[maxnval];
+        WR = new double[maxnval];
+        U = new double[nmax][maxnval];
+        V = new double[nmax][maxnval];
+        VP = new double[maxnval * (maxnval + 1) / 2];
+        TAU = new double[maxnval];
+        Z = new double[nmax][maxnval];
+
+        for (i = 1; i <= nparms; i++) {
+
+            // 1 = The optimal blocksize; if this value is 1, an unblocked
+            // algorithm will give the best performance
+            iparms[1 - 1] = nbval[i - 1];
+
+            // 2 = The minimum blocksize for which the block routine should be
+            // used; if the usable block size is less than this value, an
+            // unblocked routine should be used.
+            iparms[2 - 1] = nbmin[i - 1];
+
+            // 3 = The crossover point (in a block routine, for n less than this
+            // value, an unblocked routine should be used).
+            iparms[3 - 1] = nxval[i - 1];
+
+            if (newsd == 0) {
+
+                for (k = 0; k < 4; k++) {
+                    iseed[k] = ioldsd[k];
+                }
+            } // if (newsd == 0)
+
+            UI.setDataText("Optimal blocksize = " + nbval[i - 1] + "\n");
+            UI.setDataText("Minimum blocksize = " + nbmin[i - 1] + "\n");
+            UI.setDataText("Crossover point = " + nxval[i - 1] + "\n");
+
+            if (tstchk) {
+                dchkst(nn, nval, maxtyp, dotype, iseed, thresh, A, nmax, AP, SD, SE, D1, D2, D3, D4, D5, WA1, WA2, WA3,
+                        WR, U, nmax, V, VP, TAU, Z, work, lwork, iwork, liwork, result, info);
+
+                if (info[0] != 0) {
+                    MipavUtil.displayError("dckkst had info = " + info[0]);
+                }
+            } // if (tstchk)
+        } // for (i = 1; i <= nparms; i++)
+    } // dckkst_test
+    
+    /**
+     * This is a port of the porions of LAPACK version 3.4.0 test routine DCHKST used to test the symmetric eigenvalue
+     * routines dstebz and dstein. Original DCHKST created by Univ. of Tennessee, Univ. of California Berkeley,
+     * University of Colorado Denver, and NAG Ltd., November, 2011.
+     * 
+     * <p>
+     * dstebz computes selected eigenvalues.  WA1, WA2, and WA3 will denote eigenvalues computed to high absolute
+     * accuracy, with different range options.  WR will denote eigenvalues computed to high relative accuracy.
+     * </p>
+     * 
+     * <p>
+     * dstein computes Y, the eigenvectors of S, given the eigenvalues.
+     * </p>
+     * 
+     * <p>
+     * When dchkst is called, a number of matrix "sizes" ("n's") and a number of matrix "types" are specified. For each
+     * size ("n") and each type of matrix, one matrix will be generated and used to test the symmetric eigenroutines.
+     * For each matrix, a number of tests will be performed:
+     * 1.) When S is also diagonally dominant by the factor gamma < 1,
+     *   max | D4(i) - WR(i) | / ( |D4(i)| omega ) ,
+         i
+         omega = 2 (2n-1) ULP (1 + 8 gamma**2) / (1 - gamma)**4
+         dstebz( 'A', 'E', ...)
+
+         (2) | WA1 - D3 | / ( |D3| ulp ) dstebz( 'A', 'E', ...)
+
+         (3) ( max { min | WA2(i)-WA3(j) | } +
+                 i     j
+             max { min | WA3(i)-WA2(j) | } ) / ( |D3| ulp )
+                    i     j                                   dstebz( 'I', 'E', ...)
+
+         (4) | S - Y WA1 Y' | / ( |S| n ulp ) dstebz, dstein
+
+         (25) | I - Y Y' | / ( n ulp ) dstebz, dstein
+     * The "sizes" are specified by an array nn(0:nsizes-1); the value
+     * of each element nn[j] specifies one size. The "types" are specified by a boolean array dotype(0:ntypes-1); if
+     * dotype[j] is true, then the matrix type "j" will be generated. Currently, the list of possible types is: (1) The
+     * zero matrix. (2) The identity matrix. (3) A diagonal matrix with evenly spaced entries 1, ..., ulp and random
+     * signs. (ulp = (first number larger than 1) - 1 ) (4) A diagonal matrix with geomtrically spaced entries 1, ...,
+     * ulp and random signs. (5) A diagonal matrix with "clustered" entries 1, ulp, ..., ulp and random signs. (6) Same
+     * as (4), but multiplied by sqrt( overflow threshold ) (7) Same as (4), but multiplied by sqrt( underflow threshold
+     * ) (8) A matrix of the form U' D U, where U is orthogonal and D has evenly spaced entries 1, ..., ulp with random
+     * signs on the diagonal. (9) A matrix of the form U' D U, where U is orthogonal and D has geometrically spaced
+     * entries 1, ..., ulp with random signs on the diagonal. (10) A matrix of the form U' D U, where U is orthogonal
+     * and D has "clustered" entries 1, ulp, ..., ulp with random signs on the diagonal. (11) Same as (8), but
+     * multiplied by sqrt( overflow threshold) (12) Same as (8), but multiplied by sqrt( underflow threshold) (13)
+     * Symmetric matrix with random entries chosen from (-1,1). (14) Same as (13), but multiplied by sqrt( overflow
+     * threshold) (15) Same as (13), but multiplied by sqrt( underflow threshold) (16) Same as (8), but diagonal
+     * elements are all positive. (17) Same as (9), but diagonal elements are all positive. (18) Same as (10), but
+     * diagonal elements are all positive. (19) Same as (16), but multiplied by sqrt( overflow threshold) (20) Same as
+     * (16), but multiplied by sqrt( underflow threshold) (21) A diagonally dominant tridiagonal matrix with
+     * geometrically spaced diagonal entries 1, ..., ulp.
+     * </p>
+     * 
+     * @param nsizes (input) int The number of sizes of matrices to use. If it is zero, dchkst does nothing. It must be
+     *            at least zero.
+     * @param nn (input) int[] of dimension (nsizes) An array containing the sizes to be used for the matrices. Zero
+     *            values will be skipped. The values must be at least zero.
+     * @param ntypes (input) int The number of elements in dotype. If it is zero, dchkst does nothing. It must be at
+     *            least zero. If it is maxtyp+1 and nsizes is 1, then an additional type, maxtyp+1 is defined, which is
+     *            to use whatever matrix is in A. This is only useful if dotype(0:maxtyp-1) is false and dotype[maxtyp]
+     *            is true.
+     * @param dotype (input) boolean[] of dimension (ntypes) If dotype[j] is true, then for each size in nn a matrix of
+     *            that size and of type j will be generated. If ntypes is smaller than the maximum number of types
+     *            defined (parameter maxtyp), then types ntypes+1 through maxtyp will not be generated. If ntypes is
+     *            larger than maxtyp, dotype[maxtyp] through dotype[ntypes-1] will be ignored.
+     * @param iseed (input/output) int[] of dimension (4) On entry iseed specifies the seed of the random number
+     *            generator. The array elements should be between 0 and 4095; if not they will be reduced mod 4096.
+     *            Also, iseed[3] must be odd. The random number generator uses an linear congruential sequence limited
+     *            to small integers, and so should produce machine independent random numbers. The values of iseed are
+     *            changed on exit, and can be used in the next call to dchkst to continue the same random number
+     *            sequence.
+     * @param thresh (input) double A test will count as "failed" if the "error", computed as described above, exceeds
+     *            thresh. Note that the error is scaled to be O(1), so thresh should be a reasonably small multiple of
+     *            1, e.g., 10 or 100. In particular, it should not depend on the precision (single vs. double) or the
+     *            size of the matrix. It must be at least zero.
+     * @param A (input/workspace/output) double[][] of dimension (lda, max(nn)) Used to hold the matrix whose
+     *            eigenvalues are to be computed. On exit, A contains the last matrix actually used.
+     * @param lda (input) int The leading dimension of A. It must be at least 1 and at least max(nn).
+     * @param AP (workspace) double[] of dimension (max(nn)*max(nn+1)/2) The matrix A stored in packed format.
+     * @param SD (workspace/output) double[] of dimension (max(nn)) The diagonal of the tridiagonal matrix computed by
+     *            dsytrd. On exit, SD and SE contain the tridiagonal form of the matrix in A.
+     * @param SE (workspace/output) double[] of dimension (max(nn)) The off-diagonal of the tridiagonal matrix computed
+     *            by dsytrd. On exit, SD and SE contain the tridiagonal form of the matrix in A.
+     * @param D1 (workspace/output) double[] of dimension (max(nn)) The eigenvalues of A, as computed by dsteqr
+     *            simultaneously with Z. On exit, the eigenvalues in D1 correspond with the matrix in A.
+     * @param D2 (workspace/output) double[] of dimension (max(nn)) The eigenvalues of A, as computed by dsteqr if Z is
+     *            not computed. On exit, the eigenvalues in D2 correspond with the matrix in A.
+     * @param D3 (workspace/output) double[] of dimension max(nn)) The eigenvalues of A, as computed by dsterf. On exit,
+     *            the eigenvalues in D3 correspond with the matrix in A.
+     * @param D4 double[] (out) of dimension max(nn).
+     * @param D5 double[]
+     * @param WA1 double[] (output) of dimension max(nn).  All eigenvalues of A, computed to high absolute accuracy,
+     *             with different range options as computed by dstebz.
+     * @param WA2 double[] (output) of dimension max(nn).  Selected eigenvalues of A, computed to high absolute
+     *             accuracy, with different range options as computed by dstebz.  Choose random values for il and iu,
+     *             and ask fo rthe il-th through iu-th eigenvalues.
+     * @param WA3 double[] (output) of dimension max(nn).  Selected eigenvalues of A, computed to high absolute 
+     *             accuracy, with different range options as computed by dstebz.  Determine the values of vl and vu
+     *             of the il-th and iu-th eigenvalues and ask for all eigenvalues in thsi range.
+     * @param WR double[] (output) of dimension max(nn).  ALl eigenvalues of A, computed to high absolute accuracy,
+     *             with different options, as computed by dstebz.
+     * @param U (workspace/output) double[][] of dimension (ldu, max(nn)) The orthogonal matrix computed by dsytrd +
+     *            dorgtr.
+     * @param ldu (input) int The leading dimension of U, Z and V. It must be at least 1 and at least max(nn).
+     * @param V (workspace/output) double[][] of dimension (ldu, max(nn)) The Householder vectors computed by dsytrd in
+     *            reducing A to tridiagonal form. The vectors computed with uplo = 'U' are in the upper triangle, and
+     *            the vectors computed with uplo = 'L' are in the lower triangle. (As described in dsytrd, the sub- and
+     *            superdiagonal are not set to 1, although the true Householder vector has a 1 in that position. The
+     *            routines that use V, such as dorgtr, set those entries to 1 before using them, and then restore them
+     *            later.)
+     * @param VP (workspace) double[] of dimension(max(nn)*max(nn+1)/2) The matrix V stored in packed format.
+     * @param tau (workspace/output) double[] of dimension max(nn) The Householder factors computed by dsytrd in
+     *            reducing A to tridiagonal form.
+     * @param Z (workspace/output) double[][] of dimension (ldu, max(nn)) The orthogonal matrix of eigenvectors computed
+     *            by dsteqr and dstein.
+     * @param work (workspace/output) double[] of dimension (lwork)
+     * @param lwork (input) int The number of entries in work. This must be at least 1 + 4*nmax + 2 * nmax * lg nmax + 3
+     *            * nmax**2 where nmax = max(nn[j], 2) and lg = log base 2.
+     * @param iwork (workspace/output) int[] dimension liwork
+     * @param liwork (input) int length of iwork  This must be at least (6+ 6*nmax + 5 * nmax * lg nmax) 
+     *            where nmax = max(nn[j], 2) and lg = log base 2
+     * @param result (output) double[] of dimension (26) The values computed by the tests described above. The values
+     *            are currently limited to 1/ulp, to avoid overflow.
+     * @param info (output) int[] If 0, then everything ran OK. -1: nsizes < 0 -2: Some nn[j] < 0 -3: ntypes < 0 -5:
+     *            thresh < 0 -9: lda < 1 or lda < nmax, where nmax is max(nn[j]) -23: ldu < 1 or ldu < nmax -29: lwork
+     *            too small. If dlatmr, dlatms, dsytrd, dorgtr, dsteqr, dsterf, or dormc2 returns an error code, the
+     *            absolute value of it is returned.
+     */
+    private void dchkst(final int nsizes, final int[] nn, final int ntypes, final boolean[] dotype, final int[] iseed,
+            final double thresh, final double[][] A, final int lda, final double[] AP, final double[] SD,
+            final double[] SE, final double[] D1, final double[] D2, final double[] D3, final double[] D4,
+            final double[] D5, final double[] WA1, final double[] WA2, final double[] WA3, final double[] WR,
+            final double[][] U, final int ldu, final double[][] V, final double[] VP, final double[] tau,
+            final double[][] Z, final double[] work, final int lwork, final int[] iwork, final int liwork,
+            final double[] result, final int[] info) {
+        final int maxtyp = 21; // The number of types defined.
+        boolean badnn;
+        int i;
+        final int[] iinfo = new int[1];
+        int il;
+        int imode; // Values to be passed to the matrix generators
+        int itemp;
+        int itype;
+        int iu;
+        int j;
+        int jc;
+        int jr;
+        int jsize;
+        int jtype;
+        int lgn;
+        int m[] = new int[1]; // The actual number of eigenvalues found
+        int m2[] = new int[1]; // The actual number of eigenvalues found
+        int m3[] = new int[1]; // The actual number of eigenvalues found
+        int mtypes;
+        int n;
+        int nblock; // Blocksize as returned by envir.
+        int nerrs; // The number of tests which have exceeded thresh so far
+        int nmats; // The number of matrices generated so far.
+        int nmax; // Largest value in nn.
+        int nsplit[] = new int[1]; // The number of diagonal blocks in the matrix T
+        int ntest; // The number of tests performed, or which can be performed
+        // so far, for the current matrix.
+        int ntestt; // The total number of tests performed so far.
+        double abstol;
+        double aninv;
+        double anorm = 0.0; // Norm of A; passed to matrix generators.
+        double cond; // Values to be passed to the matrix generators.
+        final double[] ovfl = new double[1]; // Overflow threshold.
+        double rtovfl; // Square root of ovfl;
+        double rtunfl; // Square root of unfl
+        double temp1;
+        double temp2;
+        double temp3;
+        double ulp; // Finest relative precision
+        double ulpinv; // Inverse of finest relative precision
+        final double[] unfl = new double[1]; // Underflow threshold
+        double vl;
+        double vu;
+        final int[] idumma = new int[1];
+        final int[] ioldsd = new int[4];
+        final int[] iseed2 = new int[4];
+
+        // The general type (1-10) for type "j".
+        final int[] ktype = new int[] {1, 2, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 8, 8, 8, 9, 9, 9, 9, 9, 10};
+
+        // The order of magnitude ( O(1), O(overflow^(1/2), O(underflow^(1/2) )
+        final int[] kmagn = new int[] {1, 1, 1, 1, 1, 2, 3, 1, 1, 1, 2, 3, 1, 2, 3, 1, 1, 1, 2, 3, 1};
+
+        // The mode value to be passed to the matrix generator for type "j".
+        final int[] kmode = new int[] {0, 0, 4, 3, 1, 4, 4, 4, 3, 1, 4, 4, 0, 0, 0, 4, 3, 1, 4, 4, 3};
+        final double[] dumma = new double[1];
+        String name;
+        String opts;
+        int[] iwork2;
+        int[] iwork3;
+        int[] iwork4;
+        double[] work2;
+        double[] work3;
+        final double[] res = new double[2];
+
+        idumma[0] = 1;
+        ntestt = 0;
+        info[0] = 0;
+
+        badnn = false;
+        nmax = 1;
+
+        for (j = 0; j < nsizes; j++) {
+            nmax = Math.max(nmax, nn[j]);
+
+            if (nn[j] < 0) {
+                badnn = true;
+            }
+        } // for (j = 0; j < nsizes; j++)
+
+        iwork2 = new int[nmax];
+        iwork3 = new int[3 * nmax];
+        iwork4 = new int[nmax];
+        work2 = new double[3 * nmax];
+        work3 = new double[nmax];
+
+        name = new String("DSYTRD");
+        opts = new String("L");
+        nblock =ge.ilaenv(1, name, opts, nmax, -1, -1, -1);
+        nblock = Math.min(nmax, Math.max(1, nblock));
+
+        // Check for errors
+        if (nsizes < 0) {
+            info[0] = -1;
+        } else if (badnn) {
+            info[0] = -2;
+        } else if (ntypes < 0) {
+            info[0] = -3;
+        } else if (lda < nmax) {
+            info[0] = -9;
+        } else if (ldu < nmax) {
+            info[0] = -23;
+        } else if ( (2 * Math.max(2, nmax) * Math.max(2, nmax)) > lwork) {
+            info[0] = -29;
+        }
+
+        if (info[0] != 0) {
+            MipavUtil.displayError("Error dchkst had info[0] = " + info[0]);
+
+            return;
+        }
+
+        // Quick return if possible
+        if ( (nsizes == 0) || (ntypes == 0)) {
+            return;
+        }
+
+        unfl[0] = ge.dlamch('S');
+        ovfl[0] = 1.0 / unfl[0];
+        ge.dlabad(unfl, ovfl);
+        ulp = ge.dlamch('E') * ge.dlamch('B');
+        ulpinv = 1.0 / ulp;
+        rtunfl = Math.sqrt(unfl[0]);
+        rtovfl = Math.sqrt(ovfl[0]);
+
+        // Loop over sizes, types
+
+        for (i = 0; i < 4; i++) {
+            iseed2[i] = iseed[i];
+        }
+
+        nerrs = 0;
+        nmats = 0;
+
+        for (jsize = 1; jsize <= nsizes; jsize++) {
+            n = nn[jsize - 1];
+
+            if (n > 0) {
+                lgn = (int) (Math.log((double) n) / Math.log(2.0));
+
+                if (Math.pow(2.0, lgn) < n) {
+                    lgn = lgn + 1;
+                }
+
+                if (Math.pow(2.0, lgn) < n) {
+                    lgn = lgn + 1;
+                }
+            } // if (n > 0)
+
+            aninv = 1.0 / (double) (Math.max(1, n));
+
+            if (nsizes != 1) {
+                mtypes = Math.min(maxtyp, ntypes);
+            } else {
+                mtypes = Math.min(maxtyp + 1, ntypes);
+            }
+
+            for (jtype = 1; jtype <= mtypes; jtype++) {
+
+                if ( !dotype[jtype - 1]) {
+                    continue;
+                }
+
+                nmats = nmats + 1;
+                ntest = 0;
+
+                for (j = 0; j < 4; j++) {
+                    ioldsd[j] = iseed[j];
+                }
+
+                // Compute "A"
+                // Control parameters:
+                /*
+                 * kmagn kmode       ktype 
+               = 1 O(1)  clustered 1 zero 
+               = 2 large clustered 2 identity 
+               = 3 small exponential (none) 
+               = 4       arithmetic  diagonal, (w/ eigenvalues) 
+               = 5       random log  symmetric, w/ eigenvalues 
+               = 6       random      (none) 
+               = 7                   random diagonal 
+               = 8                   random symmetric 
+               = 9                   positive definite 
+               = 10                  diagonally dominant tridiagonal
+                 */
+
+                if (mtypes <= maxtyp) {
+                    itype = ktype[jtype - 1];
+                    imode = kmode[jtype - 1];
+
+                    // Compute norm
+
+                    if (kmagn[jtype - 1] == 1) {
+                        anorm = 1.0;
+                    } else if (kmagn[jtype - 1] == 2) {
+                        anorm = (rtovfl * ulp) * aninv;
+                    } else {
+                        anorm = rtunfl * n * ulpinv;
+                    }
+
+                    ge.dlaset('F', lda, n, 0.0, 0.0, A, lda);
+                    iinfo[0] = 0;
+
+                    if (jtype <= 15) {
+                        cond = ulpinv;
+                    } else {
+                        cond = ulpinv * aninv / 10.0;
+                    }
+
+                    // Special Matrices -- Identity & Jordan block
+
+                    // Zero
+                    if (itype == 1) {
+                        iinfo[0] = 0;
+                    } // if (itype == 1)
+                    else if (itype == 2) {
+
+                        // Identity
+                        for (jc = 0; jc < n; jc++) {
+                            A[jc][jc] = anorm;
+                        }
+                    } // else if (itype == 2)
+                    else if (itype == 4) {
+
+                        // Diagonal Matrix, [Eigen]values, Specified
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, 0, 0, 'N', A, lda, work2, iinfo);
+                    } // else if (itype == 4)
+                    else if (itype == 5) {
+
+                        // Symmetric, eigenvalues specified
+                        ge.dlatms(n, n, 'S', iseed, 'S', work, imode, cond, anorm, n, n, 'N', A, lda, work2, iinfo);
+                    } // else if (itype == 5)
+                    else if (itype == 7) {
+
+                        // Diagonal, random eigenvalues
+                        ge.dlatmr(n, n, 'S', iseed, 'S', work, 6, 1.0, 1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N',
+                                idumma, 0, 0, 0.0, anorm, 'N', A, lda, iwork, iinfo);
+                    } // else if (itype == 7)
+                    else if (itype == 8) {
+
+                        // Symmetric, random eigenvalues
+                        ge.dlatmr(n, n, 'S', iseed, 'S', work, 6, 1.0, 1.0, 'T', 'N', work2, 1, 1.0, work3, 1, 1.0, 'N',
+                                idumma, n, n, 0.0, anorm, 'N', A, lda, iwork, iinfo);
+                    } // else if (itype == 8)
+                    else if (itype == 9) {
+
+                        // Positive definite, eigenvalues specified
+                        ge.dlatms(n, n, 'S', iseed, 'P', work, imode, cond, anorm, n, n, 'N', A, lda, work2, iinfo);
+                    } // else if (itype == 9)
+                    else if (itype == 10) {
+
+                        // Positive definite tridiagonal, eigenvalues specified
+                        ge.dlatms(n, n, 'S', iseed, 'P', work, imode, cond, anorm, 1, 1, 'N', A, lda, work2, iinfo);
+
+                        for (i = 1; i < n; i++) {
+                            temp1 = Math.abs(A[i - 1][i]) / Math.sqrt(Math.abs(A[i - 1][i - 1] * A[i][i]));
+
+                            if (temp1 > 0.5) {
+                                A[i - 1][i] = 0.5 * Math.sqrt(Math.abs(A[i - 1][i - 1] * A[i][i]));
+                                A[i][i - 1] = A[i - 1][i];
+                            } // if (temp1 > 0.5)
+                        } // for (i = 1; i < n; i++)
+                    } // else if (itype == 10)
+                    else {
+                        iinfo[0] = 1;
+                    } // else
+
+                    if (iinfo[0] != 0) {
+                        UI.setDataText("Generator iinfo[0] = " + iinfo[0] + "\n");
+                        UI.setDataText("n = " + n + "\n");
+                        UI.setDataText("jtype = " + jtype + "\n");
+                        UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                        UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                        UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                        UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                        info[0] = Math.abs(iinfo[0]);
+
+                        return;
+                    } // if (iinfo[0] != 0)
+                } // if (mtypes <= maxtyp)
+
+                loop1: {
+                    // Call dstebz with different options and do tests 1-2
+                    
+                    // If S is positive definite and diagonally dominant,
+                    // ask for all eigenvalues with high relative accuracy.
+                    vl = 0.0;
+                    vu = 0.0;
+                    il = 0;
+                    iu = 0;
+                    if (jtype == 21) {
+                        ntest = 1;
+                        abstol = unfl[0] + unfl[0];
+                        dstebz('A', 'E', n , vl, vu, il, iu, abstol, SD, SE, m, nsplit, WR, iwork, iwork2,
+                               work, iwork3, iinfo);
+                        if (iinfo[0] != 0) {
+                            UI.setDataText("dstebz(A, rel) iinfo[0] = " + iinfo[0] + "\n");
+                            UI.setDataText("n = " + n + "\n");
+                            UI.setDataText("jtype = " + jtype + "\n");
+                            UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                            UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                            UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                            UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                            info[0] = Math.abs(iinfo[0]);
+
+                            if (iinfo[0] < 0) {
+                                return;
+                            } else {
+                                result[0] = ulpinv;
+
+                                break loop1;
+                            }
+                        } // if (iinfo[0] != 0)
+                        
+                        // Do test 1
+                        
+                        temp2 = 96.0 *(2.0*n - 1.0) * ulp;
+                        temp1 = 0.0;
+                        for (j = 1; j <= n; j++) {
+                            temp1 = Math.max(temp1, Math.abs(D4[j-1] -WR[n-j])/ 
+                                    (abstol+ Math.abs(D4[j-1])));
+                            result[0] = temp1/temp2;
+                        } // for (j = 1; j <= n; j++)
+                    } // if (jtype == 21)
+                    else {
+                        result[0] = 0.0;
+                    }
+                    
+                    // Now ask fo rall eigenvalues with high absolute accuracy.
+                    ntest = 2;
+                    abstol = unfl[0] + unfl[0];
+                    dstebz('A', 'E', n , vl, vu, il, iu, abstol, SD, SE, m, nsplit, WA1, iwork, iwork2,
+                            work, iwork3, iinfo);
+                     if (iinfo[0] != 0) {
+                         UI.setDataText("dstebz(A) iinfo[0] = " + iinfo[0] + "\n");
+                         UI.setDataText("n = " + n + "\n");
+                         UI.setDataText("jtype = " + jtype + "\n");
+                         UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                         UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                         UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                         UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                         info[0] = Math.abs(iinfo[0]);
+
+                         if (iinfo[0] < 0) {
+                             return;
+                         } else {
+                             result[1] = ulpinv;
+
+                             break loop1;
+                         }
+                     } // if (iinfo[0] != 0)
+                     
+                     // Do test 18
+                     
+                     temp1 = 0.0;
+                     temp2 = 0.0;
+                     for (j = 0; j < n; j++) {
+                         temp1 = Math.max(temp1,  Math.max(Math.abs(D3[j]), Math.abs(WA1[j])));  
+                         temp2 = Math.max(temp2, Math.abs(D3[j] - WA1[j]));
+                     } // for (j = 0; j < n; j++)
+                     
+                     result[1] = temp2/Math.max(unfl[0], ulp*Math.max(temp1, temp2));
+                     
+                     // Choose random values for il and iu, and ask for the
+                     // il-th through iu-th eigenvalues.
+                     
+                     ntest = 3;
+                     if (n <= 1) {
+                         il = 1;
+                         iu = n;
+                     }
+                     else {
+                         il = 1 + (n-1)*(int)ge.dlarnd(1, iseed2);
+                         iu = 1 + (n-1)*(int)ge.dlarnd(1, iseed2);
+                         if (iu < il) {
+                             itemp = iu;
+                             iu = il;
+                             il = itemp;
+                         }
+                     }
+                     dstebz('I', 'E', n , vl, vu, il, iu, abstol, SD, SE, m2, nsplit, WA2, iwork, iwork2,
+                             work, iwork3, iinfo);
+                     if (iinfo[0] != 0) {
+                          UI.setDataText("dstebz(I) iinfo[0] = " + iinfo[0] + "\n");
+                          UI.setDataText("n = " + n + "\n");
+                          UI.setDataText("jtype = " + jtype + "\n");
+                          UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                          UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                          UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                          UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                          info[0] = Math.abs(iinfo[0]);
+
+                          if (iinfo[0] < 0) {
+                              return;
+                          } else {
+                              result[2] = ulpinv;
+
+                              break loop1;
+                          }
+                     } // if (iinfo[0] != 0)
+                      
+                      // Determine the values vl and vu of the il-th and iu-th
+                      // eigenvalues and ask for all eigenvalues in this range.
+                      
+                      if (n > 0) {
+                          if (il != 1) {
+                              vl = WA1[il-1] - Math.max(0.5*(WA1[il-1] - WA1[il-2]), 
+                                   Math.max(ulp*anorm, 2.0*rtunfl));
+                          }
+                          else {
+                              vl = WA1[0] - Math.max(0.5*(WA1[n-1] - WA1[0]), 
+                                      Math.max(ulp*anorm, 2.0*rtunfl));    
+                          }
+                          if (iu != n) {
+                              vu = WA1[iu-1] + Math.max(0.5*(WA1[iu] - WA1[iu-1]), 
+                                      Math.max(ulp*anorm, 2.0*rtunfl));    
+                          }
+                          else {
+                              vu = WA1[n-1] + Math.max(0.5*(WA1[n-1] - WA1[0]), 
+                                      Math.max(ulp*anorm, 2.0*rtunfl));     
+                          }
+                      } // if (n > 0)
+                      else {
+                          vl = 0.0;
+                          vu = 1.0;
+                      }
+                      dstebz('V', 'E', n , vl, vu, il, iu, abstol, SD, SE, m3, nsplit, WA3, iwork, iwork2,
+                              work, iwork3, iinfo);
+                      if (iinfo[0] != 0) {
+                           UI.setDataText("dstebz(V) iinfo[0] = " + iinfo[0] + "\n");
+                           UI.setDataText("n = " + n + "\n");
+                           UI.setDataText("jtype = " + jtype + "\n");
+                           UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                           UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                           UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                           UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                           info[0] = Math.abs(iinfo[0]);
+
+                           if (iinfo[0] < 0) {
+                               return;
+                           } else {
+                               result[2] = ulpinv;
+
+                               break loop1;
+                           }
+                      } // if (iinfo[0] != 0)
+                      
+                      if (m3[0] == 0 && n != 0) {
+                          result[2] = ulpinv;
+                          break loop1;
+                      }
+                      
+                      // Do test 3
+                      
+                      temp1 = dsxt1(1, WA2, m2[0], WA3, m3[0], abstol, ulp, unfl[0]);
+                      temp2 = dsxt1(1, WA3, m3[0], WA2, m2[0], abstol, ulp, unfl[0]);
+                      if (n > 0) {
+                          temp3 = Math.max(Math.abs(WA1[n-1]), Math.abs(WA1[0]));
+                      }
+                      else {
+                          temp3 = 0.0;
+                      }
+                      
+                      result[2] = (temp1 + temp2)/Math.max(unfl[0], temp3 * ulp);
+                      
+                      // Call dstein to compute eigenvectors corresponding to
+                      // eigenvalues in WA1.  (First call dstebz again, to make sure
+                      // it returns these eigenvalues in the correct order.
+                      
+                      ntest = 5;
+                      dstebz('A', 'B', n , vl, vu, il, iu, abstol, SD, SE, m, nsplit, WA1, iwork, iwork2,
+                              work, iwork3, iinfo);
+                      if (iinfo[0] != 0) {
+                           UI.setDataText("dstebz(A,B) iinfo[0] = " + iinfo[0] + "\n");
+                           UI.setDataText("n = " + n + "\n");
+                           UI.setDataText("jtype = " + jtype + "\n");
+                           UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                           UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                           UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                           UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                           info[0] = Math.abs(iinfo[0]);
+
+                           if (iinfo[0] < 0) {
+                               return;
+                           } else {
+                               result[3] = ulpinv;
+                               result[4] = ulpinv;
+
+                               break loop1;
+                           }
+                      } // if (iinfo[0] != 0)
+                      
+                      dstein(n, SD, SE, m[0], WA1, iwork, iwork2, Z, ldu, work, iwork3, iwork4, iinfo);
+                      if (iinfo[0] != 0) {
+                          UI.setDataText("dstein iinfo[0] = " + iinfo[0] + "\n");
+                          UI.setDataText("n = " + n + "\n");
+                          UI.setDataText("jtype = " + jtype + "\n");
+                          UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                          UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                          UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                          UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                          info[0] = Math.abs(iinfo[0]);
+
+                          if (iinfo[0] < 0) {
+                              return;
+                          } else {
+                              result[3] = ulpinv;
+                              result[4] = ulpinv;
+
+                              break loop1;
+                          }
+                      } // if (iinfo[0] != 0)
+                      
+                      // Do tests 4 and 5
+                      
+                      ge.dstt21(n, 0, SD, SE, WA1, dumma, Z, ldu, work, res);
+                      result[4] = res[0];
+                      result[5] = res[1];
+                } // loop1
+
+                ntestt = ntestt + ntest;
+
+                // End of loop -- Check for result[j] > thresh
+
+                for (jr = 0; jr < ntest; jr++) {
+
+                    if (result[jr] >= thresh) {
+
+                        // If this is the first data to fail,
+                        // print a header to the data file.
+                        if (nerrs == 0) {
+                            UI.setDataText("DST -- Real Symmetric eigenvalue problem\n");
+                            UI.setDataText("Matrix types (see dchkst for details):\n");
+                            UI.setDataText("Special matrices:\n");
+                            UI.setDataText("1 = Zero matrix\n");
+                            UI.setDataText("2 = Identity matrix\n");
+                            UI.setDataText("3 = Diagonal: evenly spaced entries\n");
+                            UI.setDataText("4 = Diagonal: geometrically spaced entries\n");
+                            UI.setDataText("5 = Diagonal: clustered entries\n");
+                            UI.setDataText("6 = Diagonal: large, evenly spaced\n");
+                            UI.setDataText("7 = Diagonal: small, evenly spaced\n");
+                            UI.setDataText("Dense Symmetric Matrices\n");
+                            UI.setDataText("8 = Evenly spaced eigenvalues\n");
+                            UI.setDataText("9 = Geometrically spaced eigenvalues\n");
+                            UI.setDataText("10 = Clustered eigenvalues\n");
+                            UI.setDataText("11 = Large, evenly spaced eigenvalues\n");
+                            UI.setDataText("12 = Small, evenly spaced eigenvalues\n");
+                            UI.setDataText("13 = Matrix with random O(1) entries\n");
+                            UI.setDataText("14 = Matrix with large random entries\n");
+                            UI.setDataText("15 = Matrix with small random entries\n");
+                            UI.setDataText("16 = Positive definite, evenly spaced eigenvalues\n");
+                            UI.setDataText("17 = Positive definite, geometrically spaced eigenvalues\n");
+                            UI.setDataText("18 = Positive definite, clustered eigenvalues\n");
+                            UI.setDataText("19 = Positive definite, small evenly spaced eigenvalues\n");
+                            UI.setDataText("20 = Positive definite, large evenly spaced eigenvalues\n");
+                            UI.setDataText("21 = Diagonally dominant tridiagonal,\n");
+                            UI.setDataText("     geometrically, spaced eigenvalues\n");
+
+                            // Tests performed
+                            UI.setDataText("Tests performed: see dchkst for details\n");
+                        } // if (nerrs == 0)
+
+                        nerrs = nerrs + 1;
+                        UI.setDataText("n = " + n + "\n");
+                        UI.setDataText("ioldsd[0] = " + ioldsd[0] + "\n");
+                        UI.setDataText("ioldsd[1] = " + ioldsd[1] + "\n");
+                        UI.setDataText("ioldsd[2] = " + ioldsd[2] + "\n");
+                        UI.setDataText("ioldsd[3] = " + ioldsd[3] + "\n");
+                        UI.setDataText("jtype = " + jtype + "\n");
+                        UI.setDataText("result[" + jr + "] = " + result[jr] + "\n");
+                    } // if (result[jr] >= thresh)
+                } // for (jr = 0; jr < ntest; jr++)
+            } // for (jtype = 1; jtype <= mtypes; jtype++)
+        } // for (jsize = 1; jsize <= nsizes; jsize++)
+
+        // Summary
+        if (nerrs > 0) {
+            UI.setDataText("dchkst " + nerrs + " out of " + ntestt + " tests failed to pass the threshold\n");
+        } else {
+            UI.setDataText("All " + ntestt + " tests for dchkst passed the threshold\n");
+        }
+
+        return;
+    } // dchkst
     
     /** This is a port of the version 3.2 LAPACK DSYEVX routine.  Original DSYEVX created by created by Univ. of Tennessee, Univ. of
     California Berkeley, and NAG Ltd., November, 2006  *  DSYEVX computes selected eigenvalues and, optionally, eigenvectors
@@ -1833,7 +2851,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
         pivmin = Math.max(pivmin, tmp1);
      }
   } // for (j = 2; j <= n; j++)
-  isplit[nsplit[0]] = n;
+  isplit[nsplit[0]-1] = n;
   pivmin = pivmin*safemn;
   
 
