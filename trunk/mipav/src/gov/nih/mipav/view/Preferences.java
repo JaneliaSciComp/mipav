@@ -1641,6 +1641,13 @@ public class Preferences {
     }
 
     /**
+     * @return the mipavProps
+     */
+    public static Properties getMipavProps() {
+        return mipavProps;
+    }
+
+    /**
      * Returns the next host key.
      * 
      * @return The next host key.
@@ -2480,16 +2487,6 @@ public class Preferences {
         }
 
         return true;
-    }
-
-    /**
-     * Saves the last used parameters for the given dialog.
-     * 
-     * @param dialogName String the name of the dialog
-     * @param defaultsString String the String to save for this dialog
-     */
-    public static final void saveDialogDefaults(final String dialogName, final String defaultsString) {
-        Preferences.setProperty(dialogName, defaultsString);
     }
 
     /**
