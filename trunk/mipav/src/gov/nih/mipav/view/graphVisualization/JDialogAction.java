@@ -178,6 +178,8 @@ public class JDialogAction extends JDialogBase implements ActionListener {
 			if(parent.getPropertiesDialog() != null) {
 	    		parent.getPropertiesDialog() .dispose();
 			}
+		} else {
+		    super.actionPerformed(e);
 		}
 	}
 

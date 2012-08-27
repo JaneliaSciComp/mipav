@@ -3882,6 +3882,8 @@ public class PlugInMuscleImageDisplay542a extends ViewJFrameImage implements Alg
 				} else if(e.getSource().equals(browseText)) {
 					textFileDir = setDirLoc(textFileDir);
 					textDirField.setText(textFileDir);
+				} else {
+				    super.actionPerformed(e);
 				}
 			}
 			
