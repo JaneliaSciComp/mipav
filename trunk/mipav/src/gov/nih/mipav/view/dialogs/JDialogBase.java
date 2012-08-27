@@ -171,6 +171,19 @@ public abstract class JDialogBase extends JDialog
      *                 diposed of.
      */
     public JDialogBase(Frame parent, boolean modal) {
+        this(parent, modal, true);
+    }
+    
+    /**
+     * Constructor that sets the parent frame of the dialog and whether or not the dialog is modal. Also adds this as a
+     * window listener to all dialogs.
+     *
+     * @param  parent  Parent frame.
+     * @param  modal   Modality of the dialog; <code>true</code> means the user can't do anything until this dialog is
+     *                 diposed of.
+     * @param displayMenu Whether menu should be displayed to user for loading/saving defaults
+     */
+    public JDialogBase(Frame parent, boolean modal, boolean displayMenu) {
         super(parent, modal);
         parentFrame = parent;
         serif12 = MipavUtil.font12;
@@ -193,7 +206,9 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
         
-        createMenu();
+        if(displayMenu) {
+            createMenu();
+        }
     }
 
     /**
@@ -207,7 +222,23 @@ public abstract class JDialogBase extends JDialog
      *                 diposed of.
      */
     public JDialogBase(Dialog parent, boolean modal) {
+        this(parent, modal, true);
+    }
+    
+    /**
+     * Constructor that forwards the parent dialog whether or not the dialog is modal. Also adds this as a window
+     * listener to all dialogs.
+     *
+     * @param  parent  Parent Dialog. Unlike the <code>JDialog(Frame, boolean)</code> constructor, this method merely
+     *                 forwards the parent/owner to the super-class, and not store a reference locally. a higher level,
+     *                 but does not store the
+     * @param  modal   Modality of the dialog; <code>true</code> means the user can't do anything until this dialog is
+     *                 diposed of.
+     * @param displayMenu Whether menu should be displayed to user for loading/saving defaults
+     */
+    public JDialogBase(Dialog parent, boolean modal, boolean displayMenu) {
         super(parent, modal);
+        
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
         addWindowListener(this);
@@ -229,8 +260,10 @@ public abstract class JDialogBase extends JDialog
         mainDialogPanel.getActionMap().put("Cancel", cancelAction);
         // mainDialogPanel.getActionMap().put( "Help", helpAction );
         
-        createMenu();
-    }
+        if(displayMenu) {
+            createMenu();
+        }
+    }   
     
     private void createMenu() {
         JMenuBar bar = new JMenuBar();
