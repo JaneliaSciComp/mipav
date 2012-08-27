@@ -628,7 +628,9 @@ public class ViewMenuBuilder {
 
         menuName.setText(text);
         menuName.setFont(MipavUtil.defaultMenuFont);
-
+        
+        menuEntry.setName(text);
+        
         int paddingX = 8;
 
         if (useIconPadding) {
