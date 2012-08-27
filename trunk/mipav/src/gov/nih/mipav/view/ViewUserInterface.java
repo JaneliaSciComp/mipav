@@ -4298,6 +4298,13 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return actionList;
     }
 
+    /**
+     * @return the exceptions
+     */
+    public static File getExceptions() {
+        return exceptions;
+    }
+
     public static String getOutputDir() {
         return outputDir;
     }
