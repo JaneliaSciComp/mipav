@@ -594,7 +594,7 @@ public abstract class JDialogBase extends JDialog
         String nameStart = new String();
         Object obj = Preferences.getProperty(getClass().getName()+profileStr);
         if(obj == null || obj.toString().length() == 0) {
-            MipavUtil.displayInfo("No defaults available for this dialog");
+            Preferences.debug("No defaults available for this dialog: "+this.getName(), Preferences.DEBUG_MINOR);
             return false;
         } else {
             nameStart = getClass().getName()+profileStr;
