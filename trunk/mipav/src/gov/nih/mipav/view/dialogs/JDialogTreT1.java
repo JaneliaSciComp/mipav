@@ -51,7 +51,7 @@ import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameMessage;
 import gov.nih.mipav.view.ViewUserInterface;
 
-public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, AlgorithmTreParams {
+public class JDialogTreT1 extends JDialogTreMethod implements AlgorithmInterface, ActionDiscovery, AlgorithmTreParams {
 
     private static String title = "TRE T1 Mapper";
     
@@ -85,7 +85,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     /**The following GUI choices change algorithm operation using enums*/
     private FieldStrength mriStrength;
 	private ScannerType scannerType;
-	private Threshold thresholdMethod;
 	private InversionType inversionType;
     
     /**The list of possible maps that can be calculated*/
@@ -98,14 +97,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     
     private boolean uniformAngleSpacing = true;
     
-    /**Whether, during "smart-thresholding", noise should be calculated from a given corner */
-    private boolean upperLeftCorner = true;
-    private boolean upperRightCorner = false;
-    private boolean lowerLeftCorner = false;
-    private boolean lowerRightCorner = false;
     
-    private float noiseScale = (float) 4.00;
-    private float hardNoiseThreshold = (float) 0.00;
     
     /**The ordered list of images that the algorithm is dependent on. */
     private String[] wList;
@@ -116,7 +108,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
     private AlgorithmTreT1 cAlgo;
 	private JRadioButton doConvTre;
 	private JRadioButton doHifiTre;
-	private GuiBuilder guiBuilder;
+	
 	private JPanel hifiPanel;
 	private JPanel straightPanel;
 	private JScrollPane spgrPanel;
@@ -152,23 +144,12 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private JCheckBox showT1Map;
 	private JCheckBox showM0Map;
 	private JCheckBox showR1Map;
-	private JRadioButton smartCheckBox;
-	private JRadioButton hardCheckBox;
+	
 	private JCheckBox showB1Check;
-	private JTextField hardNoiseField;
-	private JTextField smartNoiseField;
-	private JCheckBox topLeftBox;
-	private JCheckBox topRightBox;
-	private JCheckBox bottomLeftBox;
-	private JCheckBox bottomRightBox;
-	private ButtonGroup thresholdGroup;
-	private JPanel totalThreshold;
-	private JPanel generalThresholdPanel;
+	
+	
 	private JTabbedPane tab;
 	private JPanel irspgrGeneralPanel;
-	//private JButton ok;
-	//private JButton cancel;
-	private JRadioButton noCheckBox;
 	
 	private JScrollPane irspgrPanel;
 
@@ -179,7 +160,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	private boolean performTreT1HIFI;
 
 	private JCheckBox useB1Map;
-	private static final String SUCCESS = "Successful";
+	
 	
     /**
      * Blank constructor needed for dynamic instantiation.
@@ -795,78 +776,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    return panel;
 	}
 
-	protected JPanel buildThresholdPanel() {
-		//System.out.println("The selected state: "+thresholdMethod);
-		
-		JPanel panel = new JPanel();
-		panel.setName("Threshold total");
-	    LayoutManager panelLayout = new GridBagLayout();
-	    panel.setLayout(panelLayout);
-	    GridBagConstraints gbc = new GridBagConstraints();
-	    panel.setBorder(MipavUtil.buildTitledBorder("Thresholding"));
-	    
-	    JPanel methodPanel = new JPanel();
-	    LayoutManager methodLayout = new BoxLayout(methodPanel, BoxLayout.Y_AXIS);
-	    methodPanel.setLayout(methodLayout);
-	    methodPanel.setBorder(MipavUtil.buildTitledBorder("Thresholding method"));
-	    
-	    smartCheckBox = guiBuilder.buildRadioButton("Use Smart Thresholding", thresholdMethod.equals(Threshold.SMART));
-	    hardCheckBox = guiBuilder.buildRadioButton("Use Hard Thresholding", thresholdMethod.equals(Threshold.HARD));
-	    noCheckBox = guiBuilder.buildRadioButton("No Thresholding", thresholdMethod.equals(Threshold.NONE));
-	    
-	    thresholdGroup = new ButtonGroup();
-	    thresholdGroup.add(smartCheckBox);
-	    thresholdGroup.add(hardCheckBox);
-	    thresholdGroup.add(noCheckBox);
-	    
-	    if(thresholdMethod == null) {
-	    	smartCheckBox.setSelected(true);
-	    	thresholdMethod = Threshold.SMART;
-	    }
-	    
-	    ActionListener c = new ThresholdChoiceListener();
-	    smartCheckBox.addActionListener(c);
-	    hardCheckBox.addActionListener(c);
-	    noCheckBox.addActionListener(c);
-	
-	    methodPanel.add(smartCheckBox, methodLayout);
-	    methodPanel.add(hardCheckBox, methodLayout);
-	    methodPanel.add(noCheckBox, methodLayout);
-	    
-	    gbc.gridx = 0;
-	    gbc.gridy = 0;
-	    gbc.weightx = 1;
-	    gbc.fill = GridBagConstraints.NONE;
-	    gbc.anchor = GridBagConstraints.WEST;
-	    panel.add(methodPanel, gbc);
-	    
-	    generalThresholdPanel = new JPanel();
-	    
-	    JPanel innerPanel = null;
-	    
-	    if(thresholdMethod.equals(Threshold.SMART)) {
-	    	innerPanel = buildSmartThresholdPanel();
-	    } else if(thresholdMethod.equals(Threshold.HARD)) {
-	    	innerPanel = buildHardThresholdPanel();
-	    } else {
-	    	innerPanel = buildNoThresholdPanel();
-	    	thresholdMethod = Threshold.NONE;
-	    }
-	    generalThresholdPanel.add(innerPanel);
-	    
-	    gbc.gridy = 1;
-	    gbc.weighty = 0;
-	    gbc.insets = new Insets(20, 0, 0, 0);
-	    panel.add(generalThresholdPanel, gbc);
-	    
-	    gbc.gridy++;
-	    gbc.weighty = 1;
-	    gbc.insets = new Insets(0, 0, 0, 0);
-	    panel.add(new JLabel(""), gbc);
-	    
-	    return panel;
-	}
-
 	protected JPanel buildTreT1HIFISpecificsPanel() {
 	    JPanel panel = new JPanel();
 	    LayoutManager panelLayout = new BorderLayout();
@@ -927,46 +836,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    return panel;
 	}
 
-	/**
-	 * No border
-	 * @return
-	 */
-	protected JPanel buildHardThresholdPanel() {
-	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-	    panel.setLayout(panelLayout);
-	    
-	    hardNoiseField = guiBuilder.buildDecimalField("Hard Noise Level", hardNoiseThreshold);
-	    
-	    panel.add(hardNoiseField.getParent(), panelLayout);
-	    
-	    return panel;
-	}
-
-	protected JPanel buildSmartThresholdPanel() {
-	    JPanel panel = new JPanel();
-	    LayoutManager panelLayout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-	    panel.setLayout(panelLayout);
-	    
-	    smartNoiseField = guiBuilder.buildDecimalField("Noise Level Scale", noiseScale);
-	    topLeftBox = guiBuilder.buildCheckBox("Calculate Noise from TOP LEFT Corner?", upperLeftCorner);
-	    topRightBox = guiBuilder.buildCheckBox("Calculate Noise from TOP RIGHT Corner?", upperRightCorner);
-	    bottomLeftBox = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM LEFT Corner?", lowerLeftCorner);
-	    bottomRightBox = guiBuilder.buildCheckBox("Calculate Noise from BOTTOM RIGHT Corner?", lowerRightCorner);
-	    
-	    panel.add(smartNoiseField.getParent(), panelLayout);
-	    panel.add(topLeftBox.getParent(), panelLayout);
-	    panel.add(topRightBox.getParent(), panelLayout);
-	    panel.add(bottomLeftBox.getParent(), panelLayout);
-	    panel.add(bottomRightBox.getParent(), panelLayout);
 	
-	    return panel;
-	}
-	
-	protected JPanel buildNoThresholdPanel() {
-		JPanel panel = new JPanel();
-		return panel;
-	}
 
 	protected void callAlgorithm() {
         // Make algorithm
@@ -1794,40 +1664,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    return SUCCESS;
 	}
 
-	private String setHardThresholdUI(boolean process) {
-		try {
-			//hard threshold
-		    hardNoiseThreshold = Float.valueOf(hardNoiseField.getText()).floatValue();
-		    ViewUserInterface.getReference().getMessageFrame().append("hardNoiseThreshold: "+hardNoiseThreshold+"\n", ViewJFrameMessage.DEBUG);
-		} catch(Exception e) {
-			if(process) {
-				return "Invalid hard threshold noise entered";
-			}
-		}
-		return SUCCESS;
-	}
-
-	private String setSmartThresholdUI(boolean process) {
-		try {
-			//smart noise threshold
-		    noiseScale = Float.valueOf(smartNoiseField.getText()).floatValue();
-		    upperLeftCorner = topLeftBox.isSelected();
-		    upperRightCorner = topRightBox.isSelected();
-		    lowerLeftCorner = bottomLeftBox.isSelected();
-		    lowerRightCorner = bottomRightBox.isSelected();
-		    
-		    ViewUserInterface.getReference().getMessageFrame().append("noiseScale: "+noiseScale+"\n", ViewJFrameMessage.DEBUG);
-		    ViewUserInterface.getReference().getMessageFrame().append("upperLeftCorner: "+upperLeftCorner+"\n", ViewJFrameMessage.DEBUG);
-		    ViewUserInterface.getReference().getMessageFrame().append("upperRightCorner: "+upperRightCorner+"\n", ViewJFrameMessage.DEBUG);
-		    ViewUserInterface.getReference().getMessageFrame().append("lowerLeftCorner: "+lowerLeftCorner+"\n", ViewJFrameMessage.DEBUG);
-		    ViewUserInterface.getReference().getMessageFrame().append("lowerRightCorner: "+lowerRightCorner+"\n", ViewJFrameMessage.DEBUG);
-		} catch(Exception e) {
-			if(process) {
-				return "Invalid smart thresholding noise entered";
-			}
-		}
-		return SUCCESS;
-	}
+	
 
 	private boolean validateUI() {
 	
@@ -1918,45 +1755,7 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 		}
     }
     
-	/**
-	 * This listener focuses on the user's choice of hard or smart thresholding.
-	 * A change will prompt a different panel to be displayed.
-	 *
-	 * @author senseneyj
-	 *
-	 */
-    private class ThresholdChoiceListener implements ActionListener {
-    	private void varSet() {
-    		if(thresholdMethod.equals(Threshold.HARD)) {
-    			setHardThresholdUI(false);
-    		} else if(thresholdMethod.equals(Threshold.SMART)) {
-    			setSmartThresholdUI(false);
-    		} else {
-    			hardNoiseThreshold = 0.0f;
-    		}
-    		
-    		generalThresholdPanel.removeAll();
-    		JPanel genericPanel = null;
-    		
-			if (hardCheckBox.isSelected()) {
-				thresholdMethod = Threshold.HARD;
-				genericPanel = buildHardThresholdPanel();
-	        } else if (smartCheckBox.isSelected()) {
-	        	thresholdMethod = Threshold.SMART;
-				genericPanel = buildSmartThresholdPanel();
-	        } else if(noCheckBox.isSelected()) {
-	        	thresholdMethod = Threshold.NONE;
-	        	genericPanel = buildNoThresholdPanel();
-	        }
-			generalThresholdPanel.add(genericPanel);
-        	generalThresholdPanel.updateUI();
-		}
-
-		public void actionPerformed(ActionEvent e) {
-			varSet();
-			//System.out.println("Action: "+e.getActionCommand()+"\t "+e.getSource());
-		}
-    }
+	
     
     /**
      * This listener focuses on the type of scanner used to acquire the images.
