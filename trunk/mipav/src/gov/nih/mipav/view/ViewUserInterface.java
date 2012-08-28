@@ -203,7 +203,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     private JMenu pluginsMenu = null;
     
     /** Stores all stand-alone menus that have been created by the user. */
-    protected Vector<JMenu> aloneMenu = new Vector<JMenu>();
+    protected Vector<JMenuBar> aloneMenu = new Vector<JMenuBar>();
 
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = ViewUserInterface.OPENING_STR;
@@ -430,7 +430,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * @param menu the standalone JMenu
      * @return whether addition to the vector was successful
      */
-    public boolean addAloneMenu(JMenu menu) {
+    public boolean addAloneMenu(JMenuBar menu) {
         return aloneMenu.add(menu);
     }
 
@@ -2760,11 +2760,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if(frame instanceof ActionListener) {
             for(int i=0; i<aloneMenu.size(); i++) {
-                JMenu menu = aloneMenu.get(i);
-                for(ActionListener al : menu.getActionListeners()) {
-                    menu.removeActionListener(al);
-                }
-                menu.addActionListener((ActionListener)frame);
+                setMenuActionListeners(aloneMenu.get(i), (ActionListener) frame);
             }
         }
         
@@ -2775,6 +2771,33 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         setTitle(frame.getTitle());
         // mainFrame.setTitle("MIPAV: " + frame.getTitle());
+    }
+    
+    private void setMenuActionListeners(Component comp, ActionListener frame) {
+        if(comp instanceof JMenu) {
+            JMenu menu = (JMenu)comp;
+            for(int i=0; i<menu.getMenuComponentCount(); i++) {
+                if(menu.getMenuComponent(i) instanceof JMenuItem) {
+                    setMenuActionListeners((JMenuItem)menu.getMenuComponent(i), frame);
+                }
+            }
+        } else if(comp instanceof JMenuBar) {
+            JMenuBar bar = (JMenuBar)comp;
+            for(int i=0; i<bar.getMenuCount(); i++) {
+                setMenuActionListeners(bar.getMenu(i), frame);
+            }
+        }
+        
+        if(comp instanceof JMenuItem) {
+            JMenuItem menuItem = (JMenuItem) comp;
+            for(ActionListener al : menuItem.getActionListeners()) {
+                if(al instanceof Frame) {
+                    menuItem.removeActionListener(al);
+                }
+            }
+            menuItem.addActionListener(frame);
+        }
+       
     }
 
     /**
@@ -2847,7 +2870,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * 
      * @param menu the menu to be removed.
      */
-    public boolean removeAloneMenu(JMenu menu) {
+    public boolean removeAloneMenu(JMenuBar menu) {
         return aloneMenu.remove(menu);
     }
 
@@ -2874,11 +2897,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         
         if(frame instanceof ActionListener) {
             for(int i=0; i<aloneMenu.size(); i++) {
-                JMenu menu = aloneMenu.get(i);
-                for(ActionListener al : menu.getActionListeners()) {
-                    menu.removeActionListener(al);
-                }
-                menu.addActionListener((ActionListener)frame);
+                setMenuActionListeners(aloneMenu.get(i), (ActionListener) frame);
             }
         }
 
