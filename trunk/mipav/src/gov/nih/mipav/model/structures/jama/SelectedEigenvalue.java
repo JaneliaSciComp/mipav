@@ -7,6 +7,7 @@ import gov.nih.mipav.view.ViewUserInterface;
 public class SelectedEigenvalue implements java.io.Serializable {
     
     // dchkst_test repeats 5 times: All 630 tests for dchkst passed the threshold.  This indicates the dstebz and dstein are working.
+    // ddrvst_test repeats 5 times: All 1944 tests for ddrvst passed the threshold.
  // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
@@ -2216,11 +2217,11 @@ public class SelectedEigenvalue implements java.io.Serializable {
  double sigma = 0.0;
  int i, j, k;
  double vec1[];
- double vec2[];
  double vec3[];
- double vec4[];
- double vec5[];
- int ivec1[];
+ double vecindd[];
+ double vecinde[];
+ double vecindwrk[];
+ double vecindee[];
  int ivec2[];
  int ivec3[];
  int indtau;
@@ -2230,6 +2231,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
  int iinfo[] = new int[1];
  boolean test;
  int indwrk;
+ int indee;
  boolean doHere = true;
  char order;
  int indisp;
@@ -2288,7 +2290,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
  }
 
  if (info[0] == 0 ) {
-    if (n != 1 ) {
+    if (n <= 1 ) {
        lwkmin = 1;
        work[0] = lwkmin;
     }
@@ -2382,11 +2384,11 @@ public class SelectedEigenvalue implements java.io.Serializable {
        for (j = 1; j <= n; j++) {
           vec1 = new double[j];
           for (i = 0; i < j; i++) {
-              vec1[i] = A[i][j];
+              vec1[i] = A[i][j-1];
           }
           ge.dscal(j, sigma, vec1, 1 );
           for (i = 0; i < j; i++) {
-              A[i][j] = vec1[i];
+              A[i][j-1] = vec1[i];
           }
        }
     }
@@ -2405,13 +2407,13 @@ public class SelectedEigenvalue implements java.io.Serializable {
  inde = indtau + n;
  indd = inde + n;
  indwrk = indd + n;
+ indee = indwrk + 2*n;
  llwork = lwork - indwrk + 1;
- vec1 = new double[n];
- vec2 = new double[n-1];
- vec3 = new double[n-1];
- vec4 = new double[Math.max(1, llwork)];
- iinfo[0] = 0;
- ge.dsytrd(uplo, n, A, lda, vec1, vec2, vec3, vec4, llwork, iinfo);
+ vecindd = new double[n];
+ vecinde = new double[n];
+ vecindwrk = new double[2*n];
+ vecindee = new double[n-1];
+ ge.dsytrd(uplo, n, A, lda, vecindd, vecinde, work, vecindwrk, llwork, iinfo);
 
 // If all eigenvalues are desired and abstol is less than or equal to
 // zero, then call dsterf or dorgtr and dsteqr.  If this fails for
@@ -2425,25 +2427,21 @@ public class SelectedEigenvalue implements java.io.Serializable {
  } // if (indeig)
  if ( (alleig || test) && (abstol <= 0.0) ) {
      for (i = 0; i < n; i++) {
-         w[i] = vec1[i];
+         w[i] = vecindd[i];
      }
     if (!wantz) {
-       vec5 = new double[n-1];
        for (i = 0; i < n-1; i++) {
-           vec5[i] = vec2[i];
+           vecindee[i] = vecinde[i];
        }
-       ge.dsterf( n, w, vec5, info);
+       ge.dsterf( n, w, vecindee, info);
     }
     else {
        ge.dlacpy( 'A', n, n, A, lda, Z, ldz);
-       iinfo[0] = 0;
-       ge.dorgtr(uplo, n, Z, ldz, vec3, vec4, llwork, iinfo);
-       vec5 = new double[n-1];
+       ge.dorgtr(uplo, n, Z, ldz, work, vecindwrk, llwork, iinfo);
        for (i = 0; i < n-1; i++) {
-           vec5[i] = vec2[i];
+           vecindee[i] = vecinde[i];
        }
-       vec4 = new double[Math.max(1,2*n-2)];
-       ge.dsteqr(jobz, n, w, vec5, Z, ldz, vec4, info);
+       ge.dsteqr(jobz, n, w, vecindee, Z, ldz, vecindwrk, info);
        if (info[0] == 0 ) {
           for (i = 0; i < n; i++) {
              ifail[i] = 0;
@@ -2469,29 +2467,19 @@ public class SelectedEigenvalue implements java.io.Serializable {
         order = 'E';
      }
      indisp = 1 + n;
-     for (i = 0; i < n; i++) {
-         vec1[i] = work[indd-1+i];
-     }
-     for (i = 0; i < n-1; i++) {
-         vec2[i] = work[inde-1+i];
-     }
-     ivec1 = new int[n];
      ivec2 = new int[n];
      vec3 = new double[4*n];
      ivec3 = new int[3*n];
      dstebz(range, order, n, vll, vuu, il, iu, abstll,
-            vec1, vec2, m, nsplit, w,
-            ivec1, ivec2, vec3, ivec3, info);
-     for (i = 0; i < n; i++) {
-         iwork[i] = ivec1[i];
-     }
+            vecindd, vecinde, m, nsplit, w,
+            iwork, ivec2, vec3, ivec3, info);
      for (i = 0; i < n; i++) {
          iwork[indisp-1+i] = ivec2[i];
      }
      if (wantz) {
          vec3 = new double[5*n];
          ivec3 = new int[n];
-         dstein(n, vec1, vec2, m[0], w, ivec1, ivec2, Z, ldz,
+         dstein(n, vecindd, vecinde, m[0], w, iwork, ivec2, Z, ldz,
                vec3, ivec3, ifail, info);
  
          // Apply orthogonal matrix used in reduction to tridiagonal
@@ -2499,17 +2487,19 @@ public class SelectedEigenvalue implements java.io.Serializable {
  
         indwkn = inde;
         llwrkn = lwork - indwkn + 1;
-        vec1 = new double[n-1];
-        for (i = 0; i < n-1; i++) {
-            vec1[i] = work[indtau-1+i];
-        }
-        vec2 = new double[Math.max(1,llwrkn)];
-        dormtr( 'L', uplo, 'N', n, m[0], A, lda, vec1, Z, ldz, vec2, llwrkn, iinfo);
-        for (i = 0; i < Math.max(1, llwrkn); i++) {
-            work[indwkn-1+i] = vec2[i];
-        }
+        dormtr( 'L', uplo, 'N', n, m[0], A, lda, work, Z, ldz, vecinde, llwrkn, iinfo);
      } // if (wantz)
  } // if (doHere)
+ for (i = 0; i < n; i++) {
+     work[inde-1+i] = vecinde[i];
+     work[indd-1+i] = vecindd[i];
+ }
+ for (i = 0; i < 2*n; i++) {
+     work[indwrk-1+i] = vecindwrk[i];
+ }
+ for (i = 0; i < n-1; i++) {
+     work[indee-1+i] = vecindee[i];
+ }
 
  // If matrix was scaled, then rescale eigenvalues appropriately.
 
