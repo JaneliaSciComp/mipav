@@ -2783,8 +2783,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if(comp instanceof JMenuBar) {
             JMenuBar bar = (JMenuBar)comp;
-            for(int i=0; i<bar.getMenuCount(); i++) {
-                setMenuActionListeners(bar.getMenu(i), frame);
+            for(int i=0; i<bar.getComponentCount(); i++) {
+                setMenuActionListeners(bar.getComponent(i), frame);
             }
         }
         

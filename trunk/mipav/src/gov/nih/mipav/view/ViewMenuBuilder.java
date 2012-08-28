@@ -1025,8 +1025,8 @@ public class ViewMenuBuilder {
             }
          } else if(comp instanceof JMenuBar) {
              JMenuBar bar = (JMenuBar)comp;
-             for(int i=0; i<bar.getMenuCount(); i++) {
-                 addMenuDragListener(bar.getMenu(i), op);
+             for(int i=0; i<bar.getComponentCount(); i++) {
+                 addMenuDragListener(bar.getComponent(i), op);
              }
          }
     }
