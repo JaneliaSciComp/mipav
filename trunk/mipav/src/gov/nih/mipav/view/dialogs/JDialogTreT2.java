@@ -587,7 +587,6 @@ public class JDialogTreT2 extends JDialogScriptableBase implements AlgorithmInte
         getContentPane().add(mainPanel);
         
         pack();
-        setModal(true);
         setVisible(true);
         
     }
