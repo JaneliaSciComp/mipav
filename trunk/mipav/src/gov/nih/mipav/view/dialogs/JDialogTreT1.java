@@ -1121,7 +1121,6 @@ public class JDialogTreT1 extends JDialogScriptableBase implements AlgorithmInte
 	    //cancel.addActionListener(this);
 	    setLocationRelativeTo(null);
 	    pack();
-	    setModal(true);
 	    setVisible(true);
 	}
 
