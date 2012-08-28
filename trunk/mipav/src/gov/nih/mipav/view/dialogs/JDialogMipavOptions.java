@@ -1573,7 +1573,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param gbl the layout used in the globablChangesPanel
      */
     protected void makeLoggingOptions(final GridBagConstraints gbc, final GridBagLayout gbl) {
-        final boolean loggingOn = true;
+        final boolean loggingOn = Preferences.is(Preferences.PREF_LOGGING_ENABLED);
         
         
         enableLoggingBox = new JCheckBox("Log errors to:", loggingOn);
