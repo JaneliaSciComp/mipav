@@ -640,7 +640,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 }
             }
 
-            if (Preferences.is(Preferences.PREF_DATA_PROVENANCE) && !enableLoggingBox.isSelected()) {
+            if (!enableLoggingBox.isSelected()) {
                 Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "false");
                 LogStdStreams.turnOffLogging();
                 Preferences.debug("Turned off logging");
@@ -649,6 +649,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 LogStdStreams.turnOffLogging();
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
                 Preferences.setProperty(Preferences.PREF_LOG_FILENAME, logFilename);
+                Preferences.setProperty(Preferences.PREF_LOGGING_ENABLED, "true");
             } else if ( !Preferences.is(Preferences.PREF_DATA_PROVENANCE) && enableLoggingBox.isSelected()) {
                 Preferences.debug("Turning on logging");
                 LogStdStreams.initializeErrorLogging(logFilename, "\n" + "Mipav Log: " + new Date(), true, true);
