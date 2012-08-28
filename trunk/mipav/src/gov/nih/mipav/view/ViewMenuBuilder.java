@@ -37,7 +37,7 @@ public class ViewMenuBuilder {
     private int quicklistIndex = 0;
     
     /** Menu dragging listener */
-    private MenuDragOp op;
+    private final MenuDragOp op;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1023,6 +1023,11 @@ public class ViewMenuBuilder {
                     addMenuDragListener(compSub.getMenuComponent(i), op);
                 }
             }
+         } else if(comp instanceof JMenuBar) {
+             JMenuBar bar = (JMenuBar)comp;
+             for(int i=0; i<bar.getMenuCount(); i++) {
+                 addMenuDragListener(bar.getMenu(i), op);
+             }
          }
     }
 
@@ -1253,11 +1258,11 @@ public class ViewMenuBuilder {
                     JPanel compPanel = new JPanel();
                     BoxLayout y = new BoxLayout(compPanel, BoxLayout.Y_AXIS);
                     compPanel.setLayout(y);
-                    JMenuBar bar = new JMenuBar();
+                    final JMenuBar bar = new JMenuBar();
                     y = new BoxLayout(bar, BoxLayout.Y_AXIS);
                     bar.setLayout(y);
                     bar.setFocusable(true);
-                    final JMenu menu = new JMenu();
+                    JMenu menu = new JMenu();
                     
                     try {
                         for(int i=downIndex; i<upIndex; i++) {
@@ -1269,8 +1274,10 @@ public class ViewMenuBuilder {
                         ex.printStackTrace();
                         System.out.println("Invalid menu item count");
                     }
+                    
+                    addMenuDragListener(bar, op);
                 
-                    int height = (upIndex - downIndex)*35 + 15;
+                    int height = (upIndex - downIndex)*35 + 20;
                     
                     compPanel.setPreferredSize(new Dimension(150, height));
                     compPanel.add(bar);
@@ -1301,7 +1308,7 @@ public class ViewMenuBuilder {
 
                         @Override
                         public void windowClosed(WindowEvent arg0) {
-                            ViewUserInterface.getReference().removeAloneMenu(menu);
+                            ViewUserInterface.getReference().removeAloneMenu(bar);
                         }
                         public void windowClosing(WindowEvent arg0) {}
                         public void windowDeactivated(WindowEvent arg0) {}
@@ -1311,7 +1318,7 @@ public class ViewMenuBuilder {
                         
                     });
                     
-                    ViewUserInterface.getReference().addAloneMenu(menu);
+                    ViewUserInterface.getReference().addAloneMenu(bar);
                 }
                 dispose();
             }
