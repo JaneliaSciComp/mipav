@@ -201,6 +201,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
     /** Stores the plugins menu so that it can be removed/updated when plugins are installed. */
     private JMenu pluginsMenu = null;
+    
+    /** Stores all stand-alone menus that have been created by the user. */
+    protected Vector<JMenu> aloneMenu = new Vector<JMenu>();
 
     /** The current progress bar prefix to use. */
     private String progressBarPrefix = ViewUserInterface.OPENING_STR;
@@ -419,6 +422,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             aboutJavaDialog.setLocation(100, 50);
             aboutJavaDialog.setVisible(true);
         }
+    }
+    
+    /**
+     * Adds a standalone menu to the user interface.
+     * 
+     * @param menu the standalone JMenu
+     * @return whether addition to the vector was successful
+     */
+    public boolean addAloneMenu(JMenu menu) {
+        return aloneMenu.add(menu);
     }
 
     // ************************************************************************
@@ -2745,6 +2758,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         imageFrameVector.insertElementAt(frame, 0);
 
+        if(frame instanceof ActionListener) {
+            for(int i=0; i<aloneMenu.size(); i++) {
+                JMenu menu = aloneMenu.get(i);
+                for(ActionListener al : menu.getActionListeners()) {
+                    menu.removeActionListener(al);
+                }
+                menu.addActionListener((ActionListener)frame);
+            }
+        }
+        
         if (frame instanceof ViewJFrameBase) {
             ((ViewJFrameBase) frame).setControls();
             // ((ViewJFrameBase) frame).addKeyListener(this);
@@ -2818,6 +2841,15 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         return newName;
     }
+    
+    /**
+     * Removes the stand-alone menu from the user interface.
+     * 
+     * @param menu the menu to be removed.
+     */
+    public boolean removeAloneMenu(JMenu menu) {
+        return aloneMenu.remove(menu);
+    }
 
     /**
      * Method sets the parameter frame to top and active.
@@ -2838,6 +2870,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         if (index < 0) {
             return;
+        }
+        
+        if(frame instanceof ActionListener) {
+            for(int i=0; i<aloneMenu.size(); i++) {
+                JMenu menu = aloneMenu.get(i);
+                for(ActionListener al : menu.getActionListeners()) {
+                    menu.removeActionListener(al);
+                }
+                menu.addActionListener((ActionListener)frame);
+            }
         }
 
         registerFrame(frame); // Put it at the top
