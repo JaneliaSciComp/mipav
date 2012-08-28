@@ -1257,7 +1257,7 @@ public class ViewMenuBuilder {
                     y = new BoxLayout(bar, BoxLayout.Y_AXIS);
                     bar.setLayout(y);
                     bar.setFocusable(true);
-                    JMenu menu = new JMenu();
+                    final JMenu menu = new JMenu();
                     
                     try {
                         for(int i=downIndex; i<upIndex; i++) {
@@ -1295,6 +1295,23 @@ public class ViewMenuBuilder {
                     frame.pack();
                     frame.setLocation(e.getLocationOnScreen());
                     frame.setVisible(true);
+                    frame.addWindowListener(new WindowListener() {
+                        
+                        public void windowActivated(WindowEvent arg0) {}
+
+                        @Override
+                        public void windowClosed(WindowEvent arg0) {
+                            ViewUserInterface.getReference().removeAloneMenu(menu);
+                        }
+                        public void windowClosing(WindowEvent arg0) {}
+                        public void windowDeactivated(WindowEvent arg0) {}
+                        public void windowDeiconified(WindowEvent arg0) {}
+                        public void windowIconified(WindowEvent arg0) {}
+                        public void windowOpened(WindowEvent arg0) {}
+                        
+                    });
+                    
+                    ViewUserInterface.getReference().addAloneMenu(menu);
                 }
                 dispose();
             }
