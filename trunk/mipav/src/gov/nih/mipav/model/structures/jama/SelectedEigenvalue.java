@@ -4735,6 +4735,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
   int i;
   int j;
   int iinfo[] = new int[1];
+  int firstDim;
 
   // Test the input arguments
 
@@ -4852,21 +4853,27 @@ public class SelectedEigenvalue implements java.io.Serializable {
         i1 = 1;
         i2 = 2;
      }
-     array1 = new double[lda][nq-1];
-     for (i = 0; i < lda; i++) {
+     if (left) {
+         firstDim = Math.max(1,mi);
+     }
+     else {
+         firstDim = Math.max(1,ni);
+     }
+     array1 = new double[firstDim][nq-1];
+     for (i = 0; i < firstDim; i++) {
          for (j = 0; j < nq-1; j++) {
              array1[i][j] = A[i+1][j];
          }
      }
-     array2 = new double[ldc][ni];
-     for (i = 0; i < ldc; i++) {
+     array2 = new double[Math.max(1,mi)][ni];
+     for (i = 0; i < Math.max(1, mi); i++) {
          for (j = 0; j < ni; j++) {
              array2[i][j] = C[i1-1+i][i2-1+j];
          }
      }
-     ge.dormqr(side, trans, mi, ni, nq-1, array1, lda, tau,
-                  array2, ldc, work, lwork, iinfo);
-     for (i = 0; i < ldc; i++) {
+     ge.dormqr(side, trans, mi, ni, nq-1, array1, firstDim, tau,
+                  array2, Math.max(1,mi), work, lwork, iinfo);
+     for (i = 0; i < Math.max(1, mi); i++) {
          for (j = 0; j < ni; j++) {
              C[i1-1+i][i2-1+j] = array2[i][j];
          }
@@ -5085,47 +5092,92 @@ public class SelectedEigenvalue implements java.io.Serializable {
         mi = m;
      }
 
-     for (i = i1; i <= i2; i += i3) {
-        ib = Math.min(nb, k-i+1);
-
-        // Form the triangular factor of the block reflector
-        // H = H(i+ib-1) . . . H(i+1) H(i)
-        array1 = new double[lda][ib];
-        for (j = 0; j < lda; j++) {
-            for (p = 0; p < ib; p++) {
-                array1[j][p] = A[j][i-1+p];
+     if (i3 == nb) {
+         for (i = i1; i <= i2; i += nb) {
+            ib = Math.min(nb, k-i+1);
+    
+            // Form the triangular factor of the block reflector
+            // H = H(i+ib-1) . . . H(i+1) H(i)
+            array1 = new double[lda][ib];
+            for (j = 0; j < lda; j++) {
+                for (p = 0; p < ib; p++) {
+                    array1[j][p] = A[j][i-1+p];
+                }
             }
-        }
-        vec1 = new double[k];
-        for (j = 0; j < k; j++) {
-            vec1[j] = tau[i-1+j];
-        }
-        ge.dlarft('B', 'C', nq-k+i+ib-1, ib, array1, lda, vec1, T, ldt);
-        
-        if (left) {
-
-          // H or H**T is applied to C(1:m-k+i+ib-1,1:n)
-
-           mi = m - k + i + ib - 1;
-        }
-        else {
-
-           // H or H**T is applied to C(1:m,1:n-k+i+ib-1)
-
-           ni = n - k + i + ib - 1;
-        }
-
-        // Apply H or H**T
-
-        array2 = new double[ldwork][ib];
-        ge.dlarfb(side, trans, 'B', 'C', mi, ni, ib, array1, lda,
-                  T, ldt, C, ldc, array2, ldwork);
-        for (j = 0; j < lda; j++) {
-            for (p = 0; p < ib; p++) {
-                A[j][i-1+p] = array1[j][p];
+            vec1 = new double[ib];
+            for (j = 0; j < ib; j++) {
+                vec1[j] = tau[i-1+j];
             }
-        }
-     } // for (i = i1; i <= i2; i += i3)
+            ge.dlarft('B', 'C', nq-k+i+ib-1, ib, array1, lda, vec1, T, ldt);
+            
+            if (left) {
+    
+              // H or H**T is applied to C(1:m-k+i+ib-1,1:n)
+    
+               mi = m - k + i + ib - 1;
+            }
+            else {
+    
+               // H or H**T is applied to C(1:m,1:n-k+i+ib-1)
+    
+               ni = n - k + i + ib - 1;
+            }
+    
+            // Apply H or H**T
+    
+            array2 = new double[ldwork][ib];
+            ge.dlarfb(side, trans, 'B', 'C', mi, ni, ib, array1, lda,
+                      T, ldt, C, ldc, array2, ldwork);
+            for (j = 0; j < lda; j++) {
+                for (p = 0; p < ib; p++) {
+                    A[j][i-1+p] = array1[j][p];
+                }
+            }
+         } // for (i = i1; i <= i2; i += nb)
+     } // if (i3 == nb)
+     else { // i3 == -nb
+         for (i = i1; i >= i2; i -= nb) {
+             ib = Math.min(nb, k-i+1);
+     
+             // Form the triangular factor of the block reflector
+             // H = H(i+ib-1) . . . H(i+1) H(i)
+             array1 = new double[lda][ib];
+             for (j = 0; j < lda; j++) {
+                 for (p = 0; p < ib; p++) {
+                     array1[j][p] = A[j][i-1+p];
+                 }
+             }
+             vec1 = new double[ib];
+             for (j = 0; j < ib; j++) {
+                 vec1[j] = tau[i-1+j];
+             }
+             ge.dlarft('B', 'C', nq-k+i+ib-1, ib, array1, lda, vec1, T, ldt);
+             
+             if (left) {
+     
+               // H or H**T is applied to C(1:m-k+i+ib-1,1:n)
+     
+                mi = m - k + i + ib - 1;
+             }
+             else {
+     
+                // H or H**T is applied to C(1:m,1:n-k+i+ib-1)
+     
+                ni = n - k + i + ib - 1;
+             }
+     
+             // Apply H or H**T
+     
+             array2 = new double[ldwork][ib];
+             ge.dlarfb(side, trans, 'B', 'C', mi, ni, ib, array1, lda,
+                       T, ldt, C, ldc, array2, ldwork);
+             for (j = 0; j < lda; j++) {
+                 for (p = 0; p < ib; p++) {
+                     A[j][i-1+p] = array1[j][p];
+                 }
+             }
+          } // for (i = i1; i >= i2; i -= nb)    
+     } // else i3 == -nb
   }
   work[0] = lwkopt;
   return;
