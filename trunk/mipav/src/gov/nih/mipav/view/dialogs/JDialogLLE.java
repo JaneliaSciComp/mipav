@@ -172,8 +172,12 @@ public class JDialogLLE extends JDialogScriptableBase implements AlgorithmInterf
     protected void callAlgorithm() {
 
             try {
+                int destExtents[] = new int[2];
+                destExtents[0] = 256;
+                destExtents[1] = 256;
+                destImage = new ModelImage(ModelStorageBase.INTEGER, destExtents, image.getImageName() + "_LLE");
                 // Make algorithm
-                lleAlgo = new AlgorithmLLE(null, image, embeddedDimensions, numberOfNeighbors, tol);
+                lleAlgo = new AlgorithmLLE(destImage, image, embeddedDimensions, numberOfNeighbors, tol);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
