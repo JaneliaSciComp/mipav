@@ -31,6 +31,9 @@ public abstract class ViewJComponentBase extends JComponent {
 
     /** Bilinear interpolation */
     public static final int BILINEAR = 1;
+    
+    /** Bicubic interpolation */
+    public static final int BICUBIC = 3;
 
     /** DOCUMENT ME! */
     public static final int SMOOTH = 2;
@@ -186,7 +189,7 @@ public abstract class ViewJComponentBase extends JComponent {
     /** DOCUMENT ME! */
     protected Image imgB;
 
-    /** DOCUMENT ME! */
+    /** Interpolation mode for image display */
     protected int interpMode = NEAREST;
 
     /** DOCUMENT ME! */
