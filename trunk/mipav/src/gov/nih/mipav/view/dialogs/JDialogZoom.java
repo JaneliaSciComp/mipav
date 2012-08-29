@@ -85,12 +85,11 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         if (source == OKButton) {
 
             if (nearest.isSelected()) {
-                componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
-                
+                componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);  
             } else if (bilinear.isSelected()) {
                 componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
-                
-
+            } else if (cubic.isSelected()) {
+                componentImage.setInterpolationMode(ViewJComponentBase.BICUBIC);
             }
 
             int zoom = magSlider.getValue();
@@ -106,6 +105,9 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         } else if(command.equals("bilinear")) {
         	componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
         	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.BILINEAR);
+        } else if(command.equals("cubic")) {
+            componentImage.setInterpolationMode(ViewJComponentBase.BICUBIC);
+            componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.BICUBIC);
         } else {
             super.actionPerformed(event);
         }
@@ -125,11 +127,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             
             if (nearest.isSelected()) {
                 componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
-                
             } else if (bilinear.isSelected()) {
                 componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
-                
-
+            } else if (cubic.isSelected()) {
+                componentImage.setInterpolationMode(ViewJComponentBase.BICUBIC);
             }
 
             //int zoom = magSlider.getValue();
@@ -297,7 +298,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         nearest.setActionCommand("nearest");
         radioGroup.add(nearest);
 
-        bilinear = new JRadioButton("BiLinear          ");
+        bilinear = new JRadioButton("Bilinear          ");
         bilinear.setFont(serif12);
         bilinear.addActionListener(this);
         bilinear.setActionCommand("bilinear");
@@ -305,7 +306,8 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
         cubic = new JRadioButton("Cubic");
         cubic.setFont(serif12);
-        cubic.setEnabled(false);
+        cubic.setEnabled(true);
+        cubic.setActionCommand("cubic");
         radioGroup.add(cubic);
 
         switch (componentImage.getInterpMode()) {
@@ -316,6 +318,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
         case ViewJComponentBase.BILINEAR:
             bilinear.setSelected(true);
+            break;
+            
+        case ViewJComponentBase.BICUBIC:
+            cubic.setSelected(true);
             break;
         }
 
@@ -379,11 +385,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             
             if (nearest.isSelected()) {
                 componentImage.setInterpolationMode(ViewJComponentBase.NEAREST);
-                
             } else if (bilinear.isSelected()) {
                 componentImage.setInterpolationMode(ViewJComponentBase.BILINEAR);
-                
-
+            } else if (cubic.isSelected()) {
+                componentImage.setInterpolationMode(ViewJComponentBase.BICUBIC);
             }
 
             int zoom = magSlider.getValue();
