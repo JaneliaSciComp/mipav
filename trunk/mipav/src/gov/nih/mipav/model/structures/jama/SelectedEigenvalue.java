@@ -2189,7 +2189,7 @@ public class SelectedEigenvalue implements java.io.Serializable {
                                              Their indices are stored in array ifail.
    */
     
- private void dsyevx(final char jobz, final char range, final char uplo, final int n, final double[][]A, final int lda, 
+ public void dsyevx(final char jobz, final char range, final char uplo, final int n, final double[][]A, final int lda, 
                      final double vl, final double vu, final int il, final int iu, final double abstol, final int[] m,
                      final double[] w, final double[][] Z, final int ldz, final double[] work, final int lwork,
                      final int[] iwork, final int[] ifail, final int[] info ) {
