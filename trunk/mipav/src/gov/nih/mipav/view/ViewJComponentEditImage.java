@@ -14,6 +14,7 @@ import gov.nih.mipav.model.structures.*;
 
 
 import gov.nih.mipav.view.Preferences.ComplexDisplay;
+import gov.nih.mipav.view.Preferences.InterpolateDisplay;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.dialogs.JDialogCheckerBoard.Animate;
 import gov.nih.mipav.view.icons.PlaceHolder;
@@ -71,18 +72,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     /** Used to indicte linear zoom steps (2x, 3x, 4x, 5x ...). */
     public static final int LINEAR_ZOOM = 1;
-    
-    /** Bicubic interpolation image component rendering mode. */
-    public static final RenderingHints renderBicubic = new RenderingHints(RenderingHints.KEY_INTERPOLATION, 
-            RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-
-    /** Bilinear interpolation image component rendering mode. */
-    public static final RenderingHints renderBilinear = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-            RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-
-    /** Nearest neighbor interpolation image component rendering mode. */
-    public static final RenderingHints renderNearestNeighbor = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
-            RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -3139,7 +3128,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
                     || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                offscreenGraphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
             }
 
             // draw image A
@@ -3150,9 +3139,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
                         || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                    offscreenGraphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
                 } else {
-                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+                    offscreenGraphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
                 }
 
                 // if checkerboarding is OFF, this means blending should be enabled
@@ -3196,9 +3185,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             Image paintImage = createImage(memImageA); // the image representing the paint mask
 
-            // change rendering hint back from BILINEAR to nearest neighbor so that
+            // change rendering hint back from preference set interpolation mode to nearest neighbor so that
             // all other painting will not be in interpolated mode
-            offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+            offscreenGraphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
 
             offscreenGraphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
 
@@ -3237,7 +3226,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
                         || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    offscreenGraphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                    offscreenGraphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
                 }
 
                 if ( (lastWinRegionSlice != slice) || (cleanImageB == null)) {
@@ -3450,9 +3439,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
                     || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                graphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                graphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
             } else {
-                graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+                graphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
             }
 
             graphics2d.drawImage(img, x1, y1, xw1, yh1, x2, y2, sX + (sIWidth / 2), sY + (sIHeight / 2), this);
@@ -3461,9 +3450,9 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
                 if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
                         || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    graphics2d.setRenderingHints(ViewJComponentEditImage.renderBilinear);
+                    graphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
                 } else {
-                    graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+                    graphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
                 }
 
                 if ( !isCheckerboarded()) {
@@ -3475,7 +3464,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
             }
 
-            graphics2d.setRenderingHints(ViewJComponentEditImage.renderNearestNeighbor);
+            graphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
 
             graphics2d.setColor(Color.red.darker());
             graphics2d.drawRect(xNewO, yNewO, width - 1, height - 1);
