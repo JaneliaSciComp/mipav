@@ -484,7 +484,6 @@ public abstract class JDialogBase extends JDialog
      */
     @Override
     public void actionPerformed(ActionEvent e) {
-        System.out.println("Made it "+e.getActionCommand());
         
         if(e.getActionCommand().equals(ABOUT_MIPAV)) {
             

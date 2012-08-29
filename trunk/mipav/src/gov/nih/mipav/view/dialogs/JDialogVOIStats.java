@@ -363,6 +363,20 @@ public class JDialogVOIStats extends JDialogBase
             	return;
             }
         	
+        	boolean anyStats = false;
+        	boolean[] statList = listPanel.getSelectedList();
+        	for(int i=0; i<statList.length; i++) {
+        	    if(statList[i]) {
+        	        anyStats = true;
+        	        break;
+        	    }
+        	}
+        	
+        	if(!anyStats) {
+        	    MipavUtil.displayInfo("No statistics have been selected for calculation.");
+        	    return;
+        	}
+        	
         	if(voi == null) {
         		MipavUtil.displayError("Please select a VOI.");
         		return;
