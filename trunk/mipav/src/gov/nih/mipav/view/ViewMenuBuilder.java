@@ -6,6 +6,8 @@ import gov.nih.mipav.view.Preferences.OperatingSystem;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 
 import javax.swing.*;
@@ -1265,12 +1267,16 @@ public class ViewMenuBuilder {
                     JMenu menu = new JMenu();
                     
                     int height = 4;
+                    int width = parent.getWidth()+5;
                     
                     try {
                         for(int i=downIndex; i<upIndex; i++) {
                             JMenuItem tempItem = getComponent(parent, i);
                             height += tempItem.getHeight();
                             JMenuItem newItem = buildItem(tempItem, menu);
+                            if(newItem instanceof JMenu) {
+                                newItem.setText(newItem.getText()+"  \u21b4"); //down arrow
+                            }
                             bar.add(newItem);
                         }
                     } catch(Exception ex) {
@@ -1280,22 +1286,19 @@ public class ViewMenuBuilder {
                     
                     addMenuDragListener(bar, op);
                     
-                    compPanel.setPreferredSize(new Dimension(parent.getWidth(), height));
+                    compPanel.setPreferredSize(new Dimension(width, height));
                     compPanel.add(bar);
-                    String title = null;
+                    String title = "MIPAV: ";
                     if(parent instanceof JMenuItem) {
-                        title = ((JMenuItem) parent).getText();
+                        title += ((JMenuItem) parent).getText();
                     } else if(parent instanceof JPopupMenu) {
-                        title = ((JPopupMenu) parent).getLabel();
+                        title += ((JPopupMenu) parent).getInvoker().getName();
                     } 
-                    if(title == null) {
-                        title = "MIPAV menu";
-                    }
                     compPanel.setBorder(MipavUtil.buildTitledBorder(title));
                     compPanel.setFocusable(true);
                     
                     JPanel outerPanel = new JPanel();
-                    outerPanel.setPreferredSize(new Dimension(parent.getWidth(), height));
+                    outerPanel.setPreferredSize(new Dimension(width, height));
                     outerPanel.add(compPanel);
                     
                     frame.setTitle(title);
@@ -1303,6 +1306,10 @@ public class ViewMenuBuilder {
                     frame.pack();
                     frame.setLocation(e.getLocationOnScreen());
                     frame.setVisible(true);
+                    frame.setResizable(false);
+                    try {
+                        frame.setIconImage(MipavUtil.getIconImage("divinci.gif"));
+                    } catch (FileNotFoundException e1) {}
                     frame.addWindowListener(new WindowListener() {
                         
                         public void windowActivated(WindowEvent arg0) {}
@@ -1337,7 +1344,8 @@ public class ViewMenuBuilder {
                     JMenu menu = (JMenu)tempItem;
                     newMenu.setName(menu.getName());
                     newMenu.setText(menu.getText());
-                    newMenu.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
+                    newMenu.setFont(menu.getFont());
+                    //newMenu.setComponentOrientation(ComponentOrientation.LEFT_TO_RIGHT);
                     ArrayList<JComponent> newMenuAr = new ArrayList<JComponent>();
                     for(int i=0; i<menu.getMenuComponentCount(); i++) {
                         if(menu.getMenuComponent(i) instanceof JMenuItem) {
@@ -1345,6 +1353,7 @@ public class ViewMenuBuilder {
                         }
                     }
                     newMenu = build.makeMenu(newMenu, false, newMenuAr.toArray(new JComponent[newMenuAr.size()]));
+                    newMenu.setAlignmentX(Component.RIGHT_ALIGNMENT);
                     for(ActionListener l : menu.getActionListeners()) {
                         newMenu.addActionListener(l);
                     }
@@ -1359,13 +1368,19 @@ public class ViewMenuBuilder {
                     String iconName = null;
                     if(icon != null) {
                         usePadding = true;
-                        iconName = icon.toString();
+                        try {
+                            iconName = icon.toString().substring(icon.toString().lastIndexOf('/')+1);
+                        } catch(Exception e) {
+                            iconName = icon.toString();
+                        }
                     }
                     JMenuItem newItem = build.buildMenuItem(name, tempItem.getActionCommand(), tempItem.getMnemonic(), iconName, usePadding);
                     newItem.setEnabled(tempItem.isEnabled());
+                    newItem.setFont(tempItem.getFont());
                     newItem.setMinimumSize(tempItem.getMinimumSize());
                     newItem.setPreferredSize(tempItem.getPreferredSize());
                     newItem.setMaximumSize(tempItem.getMaximumSize());
+                    newItem.setAlignmentX(Component.RIGHT_ALIGNMENT);
                     for(ActionListener l : tempItem.getActionListeners()) {
                         newItem.addActionListener(l);
                     }
