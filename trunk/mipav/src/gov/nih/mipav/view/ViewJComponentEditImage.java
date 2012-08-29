@@ -71,6 +71,10 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
     /** Used to indicte linear zoom steps (2x, 3x, 4x, 5x ...). */
     public static final int LINEAR_ZOOM = 1;
+    
+    /** Bicubic interpolation image component rendering mode. */
+    public static final RenderingHints renderBicubic = new RenderingHints(RenderingHints.KEY_INTERPOLATION, 
+            RenderingHints.VALUE_INTERPOLATION_BICUBIC);
 
     /** Bilinear interpolation image component rendering mode. */
     public static final RenderingHints renderBilinear = new RenderingHints(RenderingHints.KEY_INTERPOLATION,
