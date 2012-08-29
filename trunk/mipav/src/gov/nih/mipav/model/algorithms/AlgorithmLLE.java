@@ -76,8 +76,6 @@ public class AlgorithmLLE extends AlgorithmBase {
         int yDim;
         int zDim;
         int sliceSize;
-        int newXDim;
-        int newYDim;
         double X[][];
         int z;
         double sliceBuffer[];
@@ -124,6 +122,23 @@ public class AlgorithmLLE extends AlgorithmBase {
         int ifail[];
         int info[] = new int[1];
         SelectedEigenvalue se;
+        double minX;
+        double maxX;
+        double minY;
+        double maxY;
+        int minXIndex;
+        int maxXIndex;
+        int minYIndex;
+        int maxYIndex;
+        double xs;
+        double xo;
+        double ys;
+        double yo;
+        int destBuf[] = new int[256*256];
+        int xInt[] = new int[1];
+        int yInt[] = new int[1];
+        int zInt[] = new int[1];
+        VOI ptVOI[];
 
         if (srcImage == null) {
             displayError("LLE: Source Image is null");
@@ -138,9 +153,7 @@ public class AlgorithmLLE extends AlgorithmBase {
         sliceSize = xDim * yDim;
         sliceBuffer = new double[sliceSize];
         
-        newXDim = zDim;
-        newYDim = xDim * yDim;
-        X = new double[newYDim][zDim];
+        X = new double[sliceSize][zDim];
         
         for (z = 0; z < zDim; z++) {
             try {
@@ -161,12 +174,12 @@ public class AlgorithmLLE extends AlgorithmBase {
         // PAIRWISE DISTANCES
         X2 = new double[zDim];
         for (i = 0; i < zDim; i++) {
-            for (j = 0; j < newYDim; j++) {
+            for (j = 0; j < sliceSize; j++) {
                 X2[i] += X[j][i]*X[j][i];    
             }
         }
         
-        repmat1 = new double[newXDim][newXDim];
+        repmat1 = new double[zDim][zDim];
         for (i = 0; i < zDim; i++) {
             for (j = 0; j < zDim; j++) {
                 // Each value is placed into zDim rows
@@ -174,7 +187,7 @@ public class AlgorithmLLE extends AlgorithmBase {
             }
         }
         
-        repmat2 = new double[newXDim][newXDim];
+        repmat2 = new double[zDim][zDim];
         for (i = 0; i < zDim; i++) {
             for (j = 0; j < zDim; j++) {
                 // Each value is placed into zDim columns
@@ -229,10 +242,10 @@ public class AlgorithmLLE extends AlgorithmBase {
         
         // RECONSTRUCTION WEIGHTS
         W = new double[numberOfNeighbors][zDim];
-        zd = new double[newYDim][numberOfNeighbors];
+        zd = new double[sliceSize][numberOfNeighbors];
         sumInvC = new double[numberOfNeighbors];
         for (i = 0; i < zDim; i++) {
-            for (j = 0; j < newYDim; j++) {
+            for (j = 0; j < sliceSize; j++) {
                 for (k = 0; k < numberOfNeighbors; k++) {
                   zd[j][k] =  X[j][neighbors[k][i]] - X[j][i];     
                 }
@@ -311,7 +324,7 @@ public class AlgorithmLLE extends AlgorithmBase {
         ge = null;
         // numEigenvaluesFound[0] should return d;
         eigenvalues = new double[zDim];// will return the found eigenvalues in the first d elements in ascending order
-        eigenvectors = new double[zDim][d];
+        //eigenvectors = new double[zDim][d];
         // Use zDim for ldz
         work = new double[8 * zDim]; //  double workspace
         lwork = 8 * zDim; // length of work 
@@ -323,6 +336,10 @@ public class AlgorithmLLE extends AlgorithmBase {
         //        > 0:  if info[0] = i, then i eigenvectors failed to converge.
         //        Their indices are stored in array ifail.
         se = new SelectedEigenvalue();
+        // Needs abstol = 0.0 and range = 'A' to work correctly.
+        abstol = 0.0;
+        range = 'A';
+        eigenvectors = new double[zDim][zDim];
         se.dsyevx(jobz, range, uplo, zDim, M, zDim, 0.0, 0.0, il, iu, abstol, numEigenvaluesFound,
                   eigenvalues, eigenvectors, zDim, work, lwork, iwork, ifail, info);
         if (info[0] < 0) {
@@ -345,17 +362,77 @@ public class AlgorithmLLE extends AlgorithmBase {
             Preferences.debug("info[0] = 0 indicating a successful exit\n", Preferences.DEBUG_ALGORITHM);
         }
         
-        if (numEigenvaluesFound[0] == d) {
-            System.out.println("The number of eigenvalues found equals the number of embedded dimensions = " + d + " as expected");
-            Preferences.debug("The number of eigenvalues found equals the number of embedded dimensions = " + d + " as expected\n",
+        if (numEigenvaluesFound[0] == zDim) {
+            System.out.println("The number of eigenvalues found equals zDim = " + zDim + " as expected");
+            Preferences.debug("The number of eigenvalues found equals zDim = " + zDim + " as expected\n",
                              Preferences.DEBUG_ALGORITHM);
         }
         else {
             System.out.println("The number of eigenvalues found = " + numEigenvaluesFound[0]);
-            System.out.println("This is less than the number of embedded dimensions = " + d);
+            System.out.println("This is less than zDim = " + zDim);
             Preferences.debug("The number of eigenvalues found = " + numEigenvaluesFound[0] + "\n", Preferences.DEBUG_ALGORITHM);
-            Preferences.debug("This is less than the number of embedded dimensions = " + d + "\n", Preferences.DEBUG_ALGORITHM);
+            Preferences.debug("This is less than zDim = " + zDim + "\n", Preferences.DEBUG_ALGORITHM);
         }
+        
+        for (i = 1; i <= d; i++) {
+            System.out.println("Eigenvalues["+i+"] = " + eigenvalues[i]);
+            Preferences.debug("Eigenvalues["+i+"] = " + eigenvalues[i] + "\n", Preferences.DEBUG_ALGORITHM);
+        }
+        
+        minX = eigenvectors[0][1];
+        maxX = eigenvectors[0][1];
+        minY = eigenvectors[0][2];
+        maxY = eigenvectors[0][2];
+        minXIndex = 0;
+        maxXIndex = 0;
+        minYIndex = 0;
+        maxYIndex = 0;
+        for (i = 1; i < zDim; i++) {
+            if (eigenvectors[i][1] < minX) {
+                minX = eigenvectors[i][1];
+                minXIndex = i;
+            }
+            if (eigenvectors[i][1] > maxX) {
+                maxX = eigenvectors[i][1];
+                maxXIndex = i;
+            }
+            if (eigenvectors[i][2] < minY) {
+                minY = eigenvectors[i][2];
+                minYIndex = i;
+            }
+            if (eigenvectors[i][2] > maxY) {
+                maxY = eigenvectors[i][2];
+                maxYIndex = i;
+            }
+        }
+        // xs * minX + xo = 10
+        // xs * maxX + xo = 245;
+        // xs*(maxX - minX) = 235
+        xs = 235/(maxX - minX);
+        xo = 10 - xs * minX;
+        ys = 235/(maxY - minY);
+        yo = 10 - ys * minY;
+        ptVOI = new VOI[zDim];
+        for (i = 0; i < zDim; i++) {
+           xInt[0] = (int)Math.round(eigenvectors[i][1] * xs + xo); 
+           yInt[0] = (int)Math.round(eigenvectors[i][2] * ys + yo);
+           destBuf[xInt[0] + 256 * yInt[0]] = 100;
+           ptVOI[i] = new VOI((short)i, String.valueOf(i), VOI.POINT, -1.0f);
+           ptVOI[i].importCurve(xInt, yInt, zInt);
+           destImage.registerVOI(ptVOI[i]);
+        }
+        
+        try {
+            destImage.importData(0, destBuf, true);
+        }
+        catch (IOException e) {
+            MipavUtil.displayError("IOException on destImage.importData");
+            setCompleted(false);
+            return;
+        }
+        
+        setCompleted(true);
+        return;
     } // runAlgorithm
     
     private class distanceIndexComparator implements Comparator<distanceIndexItem> {
