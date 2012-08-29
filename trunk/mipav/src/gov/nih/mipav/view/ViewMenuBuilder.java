@@ -1264,9 +1264,12 @@ public class ViewMenuBuilder {
                     bar.setFocusable(true);
                     JMenu menu = new JMenu();
                     
+                    int height = 4;
+                    
                     try {
                         for(int i=downIndex; i<upIndex; i++) {
                             JMenuItem tempItem = getComponent(parent, i);
+                            height += tempItem.getHeight();
                             JMenuItem newItem = buildItem(tempItem, menu);
                             bar.add(newItem);
                         }
@@ -1276,10 +1279,8 @@ public class ViewMenuBuilder {
                     }
                     
                     addMenuDragListener(bar, op);
-                
-                    int height = (upIndex - downIndex)*35 + 20;
                     
-                    compPanel.setPreferredSize(new Dimension(150, height));
+                    compPanel.setPreferredSize(new Dimension(parent.getWidth(), height));
                     compPanel.add(bar);
                     String title = null;
                     if(parent instanceof JMenuItem) {
@@ -1294,7 +1295,7 @@ public class ViewMenuBuilder {
                     compPanel.setFocusable(true);
                     
                     JPanel outerPanel = new JPanel();
-                    outerPanel.setPreferredSize(new Dimension(150, height));
+                    outerPanel.setPreferredSize(new Dimension(parent.getWidth(), height));
                     outerPanel.add(compPanel);
                     
                     frame.setTitle(title);
@@ -1362,9 +1363,9 @@ public class ViewMenuBuilder {
                     }
                     JMenuItem newItem = build.buildMenuItem(name, tempItem.getActionCommand(), tempItem.getMnemonic(), iconName, usePadding);
                     newItem.setEnabled(tempItem.isEnabled());
-                    newItem.setMinimumSize(new Dimension(150, 27));
-                    newItem.setPreferredSize(new Dimension(150, 27));
-                    newItem.setMaximumSize(new Dimension(150, 27));
+                    newItem.setMinimumSize(tempItem.getMinimumSize());
+                    newItem.setPreferredSize(tempItem.getPreferredSize());
+                    newItem.setMaximumSize(tempItem.getMaximumSize());
                     for(ActionListener l : tempItem.getActionListeners()) {
                         newItem.addActionListener(l);
                     }
