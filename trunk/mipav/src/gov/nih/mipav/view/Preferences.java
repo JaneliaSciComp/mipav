@@ -23,6 +23,56 @@ public class Preferences {
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
+    /**
+     * Defines options for interpolating displayed image slices.
+     * 
+     * @author senseneyj
+     *
+     */
+    public enum InterpolateDisplay {
+        /** Displays using nearest-neighbor */
+        NEAREST(RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 0),
+        /** Bilinear interpolation */
+        BILINEAR(RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 1),
+        /** Bicubic interpolation */
+        BICUBIC(RenderingHints.VALUE_INTERPOLATION_BICUBIC, 3);
+        
+        private RenderingHints renderingHint;
+        private int legacyNum;
+
+        InterpolateDisplay(Object renderingHintObj, int legacyNum) {
+            this.renderingHint = new RenderingHints(RenderingHints.KEY_INTERPOLATION, renderingHintObj);
+            this.legacyNum = legacyNum;
+        }
+        
+        /**
+         * @return the renderingHint
+         */
+        public RenderingHints getRenderingHint() {
+            return renderingHint;
+        }
+
+        /**
+         * @return the legacyNum
+         */
+        public int getLegacyNum() {
+            return legacyNum;
+        }
+        
+        /**
+         * Returns the InterpolateDisplay associated with the given legacy number.
+         */
+        public InterpolateDisplay getInterpolateDisplayFromLegacyNum(int legacyNum) {
+            for(InterpolateDisplay i : InterpolateDisplay.values()) {
+                if(i.getLegacyNum() == legacyNum) {
+                    return i;
+                }
+            }
+            
+            return null;
+        }
+    }
+    
 	/**
 	 * Defines options for displaying pixel values of complex images.
 	 * 
@@ -422,8 +472,8 @@ public class Preferences {
     /** Constant that indicates whether the log of the magnitude of an image is used for image display */
     public static final String PREF_LOGMAG_DISPLAY = "LogMagDisplay";
     
-    /** Constant that indicates whether or not an image is interpolated on display */
-    public static final String PREF_INTERPOLATE_DISPLAY = "InterpolateDisplay";
+    /** Constant that indicates the mode of image interpolation used for display */
+    public static final String PREF_INTERPOLATE_MODE = "InterpolateMode";
     
     /** Constant that indicates whether image is updated in real-time on histogram changes */
     public static final String PREF_HISTOGRAM_DISPLAY = "HistogramDisplay";
@@ -729,7 +779,7 @@ public class Preferences {
         Preferences.defaultProps.setProperty(Preferences.PREF_DEFAULT_DISPLAY, DefaultDisplay.MinMax.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ComplexDisplay.MAGNITUDE.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_LOGMAG_DISPLAY, "false");
-        Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, "false");
+        Preferences.defaultProps.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
         Preferences.defaultProps.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, "true");
         
         Preferences.defaultProps.setProperty(Preferences.PREF_MENU_FONT, "Serif");
@@ -1082,6 +1132,21 @@ public class Preferences {
             complexDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_COMPLEX_DISPLAY);
         }
         return ComplexDisplay.valueOf(complexDisplay); 
+    }
+    
+    /** 
+     * Returns how pixel values are interpolated for displayed slices.  Default is nearest neighbor.
+     */
+    public static InterpolateDisplay getInterpolateDisplay() {
+        if (Preferences.mipavProps == null) {
+            Preferences.read();
+        }
+        String interpolateDisplay = Preferences.mipavProps.getProperty(Preferences.PREF_INTERPOLATE_MODE);
+        if(interpolateDisplay == null) {
+            interpolateDisplay = Preferences.defaultProps.getProperty(Preferences.PREF_INTERPOLATE_MODE);
+        }
+        
+        return InterpolateDisplay.valueOf(interpolateDisplay);
     }
 
     /**
@@ -2265,6 +2330,21 @@ public class Preferences {
     }
 
     /**
+     * Maintained for backwards compatibility.  If interpolation mode is equal to nearest neighbor,
+     * then returns false, otherwise returns true.
+     * 
+     * @return
+     */
+    public static boolean isInterpolateDisplay() {
+        InterpolateDisplay interp = Preferences.getInterpolateDisplay();
+        if(interp.equals(InterpolateDisplay.NEAREST)) {
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    /**
      * Indicates whether multi-threading should be enabled for algorithms.  Most algorithms check this before
      * launching highly-parallel processes (such as FFT).
      * 
@@ -2279,25 +2359,6 @@ public class Preferences {
             mtEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_MULTI_THREADING_ENABLED);
         }
         if (Boolean.valueOf(mtEnabled)) {
-            return true;
-        }
-        return false;
-    }
-    
-    /**
-     * Indicates whether image displays should be interpolated
-     * 
-     * @return true if image interpolation is enabled
-     */
-    public static boolean isInterpolateDisplay() {
-        if (Preferences.mipavProps == null) {
-            Preferences.read();
-        }
-        String inEnabled = Preferences.mipavProps.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY);
-        if (inEnabled == null) {
-            inEnabled = Preferences.defaultProps.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY);
-        }
-        if (Boolean.valueOf(inEnabled)) {
             return true;
         }
         return false;

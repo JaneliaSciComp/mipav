@@ -11,6 +11,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.Preferences.ComplexDisplay;
 import gov.nih.mipav.view.Preferences.DefaultDisplay;
+import gov.nih.mipav.view.Preferences.InterpolateDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -249,14 +250,14 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** The check box to indicate whether images are displayed using the log of their magnitude */
     private JCheckBox displayLogMag;
     
-    /** The check box to indicate whether images are displayed with interpolation. */
-    private JCheckBox displayInterpolate;
-    
     /** border size for active image color **/
     private JComboBox activeImageColorBorderSize;
 
     /** Whether images are updated in real-time based on histogram changes. */
     private JCheckBox displayHistogram;
+
+    /** Available options for image interpolation */
+    private JComboBox interpolateDisplayChoices;
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -510,7 +511,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty(Preferences.PREF_DEFAULT_DISPLAY, ((DefaultDisplay)defaultDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_COMPLEX_DISPLAY, ((ComplexDisplay)complexDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_LOGMAG_DISPLAY, String.valueOf(displayLogMag.isSelected()));
-            Preferences.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, String.valueOf(displayInterpolate.isSelected()));
+            Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, ((InterpolateDisplay)interpolateDisplayChoices.getSelectedItem()).name());
             Preferences.setProperty(Preferences.PREF_HISTOGRAM_DISPLAY, String.valueOf(displayHistogram.isSelected()));
             
             // check to see if provenance should be turned on (if it was off)
@@ -1143,19 +1144,32 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
       */
       protected void makeInterpolateImageOptions(final GridBagConstraints gbc2, final GridBagLayout gbl) {
       
-          displayInterpolate = new JCheckBox("Interpolate image display");
-          displayInterpolate.setFont(MipavUtil.font12);
-          displayInterpolate.setForeground(Color.black);
-          displayInterpolate.addActionListener(this);
+          final JLabel l1 = new JLabel("Interpolate images using:");
+          l1.setFont(MipavUtil.font12);
+          l1.setForeground(Color.black);
+          gbc2.insets = new Insets(0, 0, 0, 5);
+          gbc2.gridwidth = 1;
+          gbc2.anchor = GridBagConstraints.WEST;
+          displayImagePanel.add(l1, gbc2);
+          
+          interpolateDisplayChoices = new JComboBox(InterpolateDisplay.values());
+          interpolateDisplayChoices.setFont(MipavUtil.font12);
+          
           gbc2.insets = new Insets(0, 0, 0, 0);
           gbc2.gridwidth = GridBagConstraints.REMAINDER;
           gbc2.anchor = GridBagConstraints.WEST;
-          displayImagePanel.add(displayInterpolate, gbc2);
+          displayImagePanel.add(interpolateDisplayChoices, gbc2);
           
-          if(Preferences.getProperty(Preferences.PREF_INTERPOLATE_DISPLAY) == null) {
-              Preferences.setProperty(Preferences.PREF_INTERPOLATE_DISPLAY, Boolean.valueOf(false).toString());
+          InterpolateDisplay defaultChoice = InterpolateDisplay.NEAREST;
+          // preset the choices.
+          if (Preferences.getProperty(Preferences.PREF_INTERPOLATE_MODE) == null) {
+              Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, InterpolateDisplay.NEAREST.name());
           } else {
-              displayInterpolate.setSelected(Preferences.is(Preferences.PREF_INTERPOLATE_DISPLAY));
+              defaultChoice = InterpolateDisplay.valueOf(Preferences.getProperty(Preferences.PREF_INTERPOLATE_MODE));
+          }
+
+          if(defaultChoice != null) {
+              interpolateDisplayChoices.setSelectedItem(defaultChoice);
           }
       }
       
