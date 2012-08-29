@@ -33,11 +33,11 @@ public class Preferences {
         /** Displays using nearest-neighbor */
         NEAREST(RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 0),
         /** Bilinear interpolation */
-        BILINEAR(RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 1),
+        BILINEAR(RenderingHints.VALUE_INTERPOLATION_BILINEAR, 1),
         /** Bicubic interpolation */
         BICUBIC(RenderingHints.VALUE_INTERPOLATION_BICUBIC, 3);
         
-        private RenderingHints renderingHint;
+        private final RenderingHints renderingHint;
         private int legacyNum;
 
         InterpolateDisplay(Object renderingHintObj, int legacyNum) {
