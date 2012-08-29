@@ -220,6 +220,7 @@ public class ViewMenuBar {
                         menuBuilder.buildMenuItem("Line filling", "HoughLine", 0, null, false),
                         menuBuilder.buildMenuItem("Parabola detection", "HoughParabola", 0, null, false)}),
                 menuBuilder.buildMenuItem("Independent component", "Independent components", 0, null, false),
+                menuBuilder.buildMenuItem("Locally linear embedding", "LLE", 0, null, false),
                 //menuBuilder.makeMenu("Insight toolkit (auto ITK)", false, new JMenuItem[] {}),
                 menuBuilder.makeMenu("Microscopy", false,
                         new JMenuItem[] {
@@ -973,6 +974,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Anisotropic diffusion", false);
             menuBuilder.setMenuItemEnabled("Boundary attenuation", false);
             menuBuilder.setMenuItemEnabled("Laplacian", false);
+            menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Mean", false);
             menuBuilder.setMenuItemEnabled("Median", false);
@@ -1093,6 +1095,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Extract surface (marching cubes)", false);
             menuBuilder.setMenuItemEnabled("FRAP", false);
             menuBuilder.setMenuItemEnabled("Light box", false);
+            menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Mosaic to 4D volume", false);
             menuBuilder.setMenuItemEnabled("Maximum intensity projection (MIP)", false);
             menuBuilder.setMenuItemEnabled("Propagate", false);
@@ -1160,6 +1163,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
             menuBuilder.setMenuItemEnabled("Local normalization", false);
+            menuBuilder.setMenuItemEnabled("Locally linear embedding", false);
             menuBuilder.setMenuItemEnabled("Mode", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
