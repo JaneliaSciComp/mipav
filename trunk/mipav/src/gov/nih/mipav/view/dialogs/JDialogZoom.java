@@ -28,6 +28,15 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
     /** DOCUMENT ME! */
     private static final long MAX_MAGNIFICATION = 64000000;
+    
+    /** Action command for nearest neighbor interpolation. */
+    public static final String NEAREST = "NEAREST";
+    
+    /** Action command for bilinear interpolation. */
+    public static final String BILINEAR = "BILINEAR";
+    
+    /** Action command for cubic interpolation. */
+    public static final String CUBIC = "CUBIC";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -103,13 +112,13 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             dispose();
         }
         
-        if(command.equals("nearest")) {
+        if(command.equals(NEAREST)) {
             Preferences.setInterpolationMode(InterpolateDisplay.NEAREST);
         	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
-        } else if(command.equals("bilinear")) {
+        } else if(command.equals(BILINEAR)) {
             Preferences.setInterpolationMode(InterpolateDisplay.BILINEAR);
         	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
-        } else if(command.equals("cubic")) {
+        } else if(command.equals(CUBIC)) {
             Preferences.setInterpolationMode(InterpolateDisplay.BICUBIC);
             componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
         } else {
@@ -302,19 +311,20 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         nearest = new JRadioButton("Nearest");
         nearest.setFont(serif12);
         nearest.addActionListener(this);
-        nearest.setActionCommand("nearest");
+        nearest.setActionCommand(NEAREST);
         radioGroup.add(nearest);
 
         bilinear = new JRadioButton("Bilinear          ");
         bilinear.setFont(serif12);
         bilinear.addActionListener(this);
-        bilinear.setActionCommand("bilinear");
+        bilinear.setActionCommand(BILINEAR);
         radioGroup.add(bilinear);
 
         cubic = new JRadioButton("Cubic");
         cubic.setFont(serif12);
         cubic.setEnabled(true);
-        cubic.setActionCommand("cubic");
+        cubic.setActionCommand(CUBIC);
+        cubic.addActionListener(this);
         radioGroup.add(cubic);
 
         switch (Preferences.getInterpolateDisplay()) {
