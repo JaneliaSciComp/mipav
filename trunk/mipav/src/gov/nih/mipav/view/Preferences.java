@@ -2767,6 +2767,14 @@ public class Preferences {
         }
     }
 
+    public static void setInterpolationMode(InterpolateDisplay interp) {
+        if(interp == null) {
+            return;
+        }
+        
+        Preferences.setProperty(Preferences.PREF_INTERPOLATE_MODE, interp.name());
+    }
+
     /**
      * Sets the last image loaded in the Preferences file. If it is a duplicate, moves it up on the list.
      * 
