@@ -26,15 +26,6 @@ public abstract class ViewJComponentBase extends JComponent {
 	/** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1024094346997939797L;
 
-    /** Nearest neighbor interpolation */
-    public static final int NEAREST = 0;
-
-    /** Bilinear interpolation */
-    public static final int BILINEAR = 1;
-    
-    /** Bicubic interpolation */
-    public static final int BICUBIC = 3;
-
     /** DOCUMENT ME! */
     public static final int SMOOTH = 2;
 
@@ -190,7 +181,7 @@ public abstract class ViewJComponentBase extends JComponent {
     protected Image imgB;
 
     /** Interpolation mode for image display */
-    protected int interpMode = NEAREST;
+    protected int interpMode = NEAREST_BOTH;
 
     /** DOCUMENT ME! */
     protected MemoryImageSource memImageA = null;
