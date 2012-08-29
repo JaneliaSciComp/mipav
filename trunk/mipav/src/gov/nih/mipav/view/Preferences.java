@@ -31,18 +31,21 @@ public class Preferences {
      */
     public enum InterpolateDisplay {
         /** Displays using nearest-neighbor */
-        NEAREST(RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR, 0),
+        NEAREST("Nearest neighbor", RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR),
         /** Bilinear interpolation */
-        BILINEAR(RenderingHints.VALUE_INTERPOLATION_BILINEAR, 1),
+        BILINEAR("Bilinear", RenderingHints.VALUE_INTERPOLATION_BILINEAR),
         /** Bicubic interpolation */
-        BICUBIC(RenderingHints.VALUE_INTERPOLATION_BICUBIC, 3);
+        BICUBIC("Bicubic", RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         
+        /** The rendering hint provided to Graphics2D in creating this interpolation. */
         private final RenderingHints renderingHint;
-        private int legacyNum;
+        
+        /** The format of complex display */
+        private String str;
 
-        InterpolateDisplay(Object renderingHintObj, int legacyNum) {
+        InterpolateDisplay(String str, Object renderingHintObj) {
             this.renderingHint = new RenderingHints(RenderingHints.KEY_INTERPOLATION, renderingHintObj);
-            this.legacyNum = legacyNum;
+            this.str = str;
         }
         
         /**
@@ -51,25 +54,9 @@ public class Preferences {
         public RenderingHints getRenderingHint() {
             return renderingHint;
         }
-
-        /**
-         * @return the legacyNum
-         */
-        public int getLegacyNum() {
-            return legacyNum;
-        }
         
-        /**
-         * Returns the InterpolateDisplay associated with the given legacy number.
-         */
-        public InterpolateDisplay getInterpolateDisplayFromLegacyNum(int legacyNum) {
-            for(InterpolateDisplay i : InterpolateDisplay.values()) {
-                if(i.getLegacyNum() == legacyNum) {
-                    return i;
-                }
-            }
-            
-            return null;
+        public String toString() {
+            return str;
         }
     }
     
