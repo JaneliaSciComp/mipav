@@ -289,14 +289,14 @@ public abstract class JDialogBase extends JDialog
         bar.add(save);
         bar.add(help);
         
-        if(Preferences.is(Preferences.PREF_SAVE_DEFAULTS)) {
-            Window w = SwingUtilities.getWindowAncestor(getContentPane());
-            if(w instanceof JFrame) {
-                ((JFrame) w).setJMenuBar(bar);
-            } else {
-                getContentPane().add(bar, BorderLayout.NORTH);
-            }
+        Window w = SwingUtilities.getWindowAncestor(getContentPane());
+        if(w instanceof JFrame) {
+            ((JFrame) w).setJMenuBar(bar);
+        } else {
+            getContentPane().add(bar, BorderLayout.NORTH);
         }
+        
+        bar.setVisible(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -878,6 +878,10 @@ public abstract class JDialogBase extends JDialog
             // center of the screen. its not noticable if the dialog is already
             // centered, but if the user has moved the dialog, it is annoying to see.
             MipavUtil.centerOnScreen(this);
+        }
+        
+        if(bar != null) {
+            bar.setVisible(Preferences.is(Preferences.PREF_SAVE_DEFAULTS));
         }
 
         super.setVisible(status);
