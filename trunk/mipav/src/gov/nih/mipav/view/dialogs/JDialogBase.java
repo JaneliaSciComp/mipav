@@ -276,14 +276,14 @@ public abstract class JDialogBase extends JDialog
         bar = new JMenuBar();
         ViewMenuBuilder builder = new ViewMenuBuilder(this);
         JMenu load = builder.makeMenu("Load", false, new JMenuItem[] {
-                builder.buildMenuItem("Load default", LOAD_DEFAULT, 0, this, null, false),
-                builder.buildMenuItem("Load profile...", LOAD_PROFILE, 0, this, null, false)});
+                ViewMenuBuilder.buildMenuItem("Load default", LOAD_DEFAULT, 0, this, null, false),
+                ViewMenuBuilder.buildMenuItem("Load profile...", LOAD_PROFILE, 0, this, null, false)});
         JMenu save = builder.makeMenu("Save", false, new JMenuItem[] {
-                builder.buildMenuItem("Save default", SAVE_DEFAULT, 0, this, null, false),
-                builder.buildMenuItem("Save profile...", SAVE_PROFILE, 0, this, null, false)});
+                ViewMenuBuilder.buildMenuItem("Save default", SAVE_DEFAULT, 0, this, null, false),
+                ViewMenuBuilder.buildMenuItem("Save profile...", SAVE_PROFILE, 0, this, null, false)});
         JMenu help =  builder.makeMenu("Help", false, new JMenuItem[] {
-                builder.buildMenuItem("Help...", HELP, 0, this, null, false),
-                builder.buildMenuItem("About MIPAV", ABOUT_MIPAV, 0, this, null, false)});
+                ViewMenuBuilder.buildMenuItem("Help...", HELP, 0, this, null, false),
+                ViewMenuBuilder.buildMenuItem("About MIPAV", ABOUT_MIPAV, 0, this, null, false)});
         
         bar.add(load);
         bar.add(save);
