@@ -20,7 +20,7 @@ import javax.swing.event.*;
  * @author   Matthew McAuliffe, Ph.D.
  */
 
-public class JDialogZoom extends JDialogBase implements ChangeListener, WindowListener, MouseListener {
+public class JDialogZoom extends JDialogBase implements ChangeListener, WindowListener, MouseListener, KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -110,6 +110,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             dispose();
         } else if (source.equals(maximumValueButton)) {
             try {
+                String str = currentLabel.getText();
                 int i = (int) (Double.valueOf(maximumValueField.getText())*100.0);
                 if(i < 0 || i < magSlider.getMinimum()) {
                     throw new NumberFormatException();
@@ -121,12 +122,14 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
                     OKButton.doClick();
                 }
                 magSlider.setMaximum(i);
+                currentLabel.setText(str); //needed for switching levels of precision
                 
             } catch(NumberFormatException nfe) {
                 MipavUtil.displayError(maximumValueField.getText()+" is not a valid zoom value.");
             }
         } else if(source.equals(minimumValueButton)) {
             try {
+                String str = currentLabel.getText();
                 int i = (int) (Double.valueOf(minimumValueField.getText())*100.0);
                 if(i < 0 || i > magSlider.getMaximum()) {
                     throw new NumberFormatException();
@@ -138,6 +141,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
                     OKButton.doClick();
                 }
                 magSlider.setMinimum(i);
+                currentLabel.setText(str); //needed for switching levels of precision
                 
                 
             } catch(NumberFormatException nfe) {
@@ -166,22 +170,17 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         Object source = e.getSource();
 
         if (source == magSlider) {
-            currentLabel.setText(String.valueOf(magSlider.getValue() / (float) 100));
-            magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
+            double precision = 10;
+            double offset = 10;
             
-            if (nearest.isSelected()) {
-                Preferences.setInterpolationMode(InterpolateDisplay.NEAREST);
-                componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
-            } else if (bilinear.isSelected()) {
-                Preferences.setInterpolationMode(InterpolateDisplay.BILINEAR);
-                componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
-            } else if (cubic.isSelected()) {
-                Preferences.setInterpolationMode(InterpolateDisplay.BICUBIC);
-                componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
-            }
-
-            //int zoom = magSlider.getValue();
-            //((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f);
+            if(magSlider.getMaximum() - magSlider.getMinimum() < 101) {
+                precision = 1;
+                offset = 100;
+            } 
+            
+            double displayValue  = Math.round(magSlider.getValue()/precision)/offset;
+            
+            currentLabel.setText(String.valueOf(displayValue));
             
         }
     }
@@ -273,6 +272,24 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      */
     private void init(float initZoom) {
         setTitle(((ViewJFrameImage) parentFrame).getTitle());
+        
+        JPanel buttonPanel = new JPanel();
+        buildOKButton();
+        OKButton.setText("Apply");
+        buildCancelButton();
+        cancelButton.setText("Close");
+        //buttonPanel.add(OKButton);
+        buttonPanel.add(cancelButton);
+
+        getContentPane().add(buildMainPanel(initZoom));
+        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+
+        pack();
+        setVisible(true);
+        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+    }
+    
+    protected JPanel buildMainPanel(float initZoom) {
         int max = 3200;
         int min = 25;
 
@@ -288,6 +305,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         magSlider.setValue(Math.round(100 * initZoom));
         magSlider.addChangeListener(this);
         magSlider.addMouseListener(this);
+        magSlider.addKeyListener(this);
 
         maximumLabel = new JLabel(String.valueOf(max / 100f));
         maximumLabel.setForeground(Color.black);
@@ -392,25 +410,14 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         gbc.gridy = 2;
         radioPanel.add(cubic, gbc);
 
-        JPanel buttonPanel = new JPanel();
-        buildOKButton();
-        OKButton.setText("Apply");
-        buildCancelButton();
-        cancelButton.setText("Close");
-        //buttonPanel.add(OKButton);
-        buttonPanel.add(cancelButton);
+        
 
         JPanel mainPanel = new JPanel(new BorderLayout());
         mainPanel.add(sliderPanel);
         mainPanel.add(radioPanel, BorderLayout.EAST);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-        getContentPane().add(mainPanel);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
-        pack();
-        setVisible(true);
-        setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        
+        return mainPanel;
     }
 
 	private JPanel buildSettingsPanel(float min, float max) {
@@ -457,6 +464,16 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         
 	    return maxMinPanel;
     }
+	
+	private void inputEvent(InputEvent e) {
+	    Object source = e.getSource();
+        
+        if (source == magSlider) {
+
+            float zoom = Float.valueOf(currentLabel.getText());
+            ((ViewJFrameImage) parentFrame).updateFrame(zoom, zoom); 
+        }
+	}
 
     public void mouseClicked(MouseEvent e) {}
 
@@ -466,15 +483,17 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
 	public void mousePressed(MouseEvent e) {}
 
+	@Override
 	public void mouseReleased(MouseEvent e) {
-		Object source = e.getSource();
-		
-		if (source == magSlider) {
-            currentLabel.setText(String.valueOf(magSlider.getValue() / (float) 100));
-            magSlider.setValue((int) ((magSlider.getValue() / (float) 100) + 0.5) * 100);
-
-            int zoom = magSlider.getValue();
-            ((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f); 
-        }
+	    inputEvent(e);
 	}
+
+    public void keyPressed(KeyEvent e) {}
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        inputEvent(e);
+    }
+
+    public void keyTyped(KeyEvent e) {}
 }
