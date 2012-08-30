@@ -2520,7 +2520,9 @@ public class ModelImage extends ModelStorageBase {
                     } else if (this == imgL) {
                     	frameList.elementAt(i).updateImages(null, LUT, forceShow, -1);
                     }
-                } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) {
+                } else if ( (frameList.elementAt(i) instanceof gov.nih.mipav.model.algorithms.DiffusionTensorImaging.AlgorithmDWI2DTI)) { 
+                    frameList.elementAt(i).updateImages();
+                } else { 
                     frameList.elementAt(i).updateImages();
                 }
 
