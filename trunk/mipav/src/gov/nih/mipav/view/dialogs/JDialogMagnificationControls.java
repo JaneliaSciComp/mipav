@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.Preferences.InterpolateDisplay;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -50,6 +51,7 @@ public class JDialogMagnificationControls extends JDialogZoom {
     public JDialogMagnificationControls(Frame theParentFrame, ViewJComponentEditImage im, float initZoom, String title) {
         super(theParentFrame, im, initZoom);
         mode = ZoomMode.SQUARE;
+        interpType = InterpolateDisplay.NEAREST;
         nearest.setSelected(true);  //default to nearest neighbor interpolation
     }
     
