@@ -192,9 +192,6 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             }
             
             intensityCheckbox.setEnabled(componentImage.getShowMagIntensityEnabled(width, height, mag));
-            if(!intensityCheckbox.isEnabled()) {
-                intensityCheckbox.setSelected(false);
-            }
         }
     }
 
@@ -446,6 +443,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 	    
 	    intensityCheckbox = gui.buildCheckBox("Display intensity values", false);
 	    intensityCheckbox.setEnabled(false);
+	    intensityCheckbox.addActionListener(this);
 	    maxMinPanel.add(intensityCheckbox, gbc);
 	    
 	    gbc.gridx = 0;
