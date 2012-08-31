@@ -71,6 +71,9 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
     /** Mode of operation for the dialog */
     protected ZoomMode mode;
+    
+    /** Method of interpolation */
+    protected InterpolateDisplay interpType;
 
     /** Checkbox for displaying intensity values. */
     private JCheckBox intensityCheckbox;
@@ -90,6 +93,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         parentFrame = parent;
         componentImage = im;
         mode = ZoomMode.IMAGE;
+        interpType = Preferences.getInterpolateDisplay();
         init(initZoom);
     }
 
@@ -149,16 +153,25 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
                 MipavUtil.displayError(minimumValueField.getText()+" is not a valid zoom value.");
             }
         } else if(command.equals(NEAREST)) {
-            Preferences.setInterpolationMode(InterpolateDisplay.NEAREST);
-        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
+            interpType = InterpolateDisplay.NEAREST;
         } else if(command.equals(BILINEAR)) {
-            Preferences.setInterpolationMode(InterpolateDisplay.BILINEAR);
-        	componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
+            interpType = InterpolateDisplay.BILINEAR;
         } else if(command.equals(CUBIC)) {
-            Preferences.setInterpolationMode(InterpolateDisplay.BICUBIC);
-            componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
+            interpType = InterpolateDisplay.BICUBIC;
         } else {
             super.actionPerformed(event);
+        }
+        
+        if(mode.equals(ZoomMode.IMAGE)) {
+            Preferences.setInterpolationMode(interpType);
+        }
+        
+        if(command.equals(NEAREST)) {
+            componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
+        } else if(command.equals(BILINEAR)) {
+            componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
+        } else if(command.equals(CUBIC)) {
+            componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
         }
     }
 
@@ -484,7 +497,14 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 	    return button;
 	}
 	
-	private void inputEvent(InputEvent e) {
+	/**
+     * @return the interpType
+     */
+    public InterpolateDisplay getInterpType() {
+        return interpType;
+    }
+
+    private void inputEvent(InputEvent e) {
 	    Object source = e.getSource();
         
         if (source == magSlider) {
