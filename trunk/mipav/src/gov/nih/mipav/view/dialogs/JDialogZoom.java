@@ -22,6 +22,13 @@ import javax.swing.event.*;
 
 public class JDialogZoom extends JDialogBase implements ChangeListener, WindowListener, MouseListener, KeyListener {
 
+    
+    public enum ZoomMode {
+        IMAGE,
+        SQUARE,
+        CIRCLE;
+    }
+    
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
@@ -42,10 +49,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Radio buttons for interpolation methods. */
-    private JRadioButton bilinear, cubic, nearest;
+    protected JRadioButton bilinear, cubic, nearest;
 
     /** Component image which this dialog belongs to. */
-    private ViewJComponentEditImage componentImage;
+    protected ViewJComponentEditImage componentImage;
 
     /** Value of current slider number. */
     private JLabel currentLabel;
@@ -62,6 +69,9 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
     /** Labels to display max/min slider values. */
     private JLabel maximumLabel, minimumLabel;
 
+    /** Mode of operation for the dialog */
+    protected ZoomMode mode;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -76,6 +86,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
         parentFrame = parent;
         componentImage = im;
+        mode = ZoomMode.IMAGE;
         init(initZoom);
     }
 
@@ -93,15 +104,10 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         if (source.equals(OKButton)) {
 
             if (nearest.isSelected()) {
-                Preferences.setInterpolationMode(InterpolateDisplay.NEAREST);  
                 componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
-            } else if (bilinear.isSelected()) {
-                Preferences.setInterpolationMode(InterpolateDisplay.BILINEAR);
+            } else {
                 componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
-            } else if (cubic.isSelected()) {
-                Preferences.setInterpolationMode(InterpolateDisplay.BICUBIC);
-                componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
-            }
+            } 
 
             int zoom = magSlider.getValue();
             ((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f);
@@ -270,7 +276,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      *
      * @param  initZoom  DOCUMENT ME!
      */
-    private void init(float initZoom) {
+    protected void init(float initZoom) {
         setTitle(((ViewJFrameImage) parentFrame).getTitle());
         
         JPanel buttonPanel = new JPanel();
@@ -281,7 +287,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         //buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
 
-        getContentPane().add(buildMainPanel(initZoom));
+        getContentPane().add(buildMainPanel(initZoom), BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
 
         pack();
@@ -435,13 +441,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 	    minimumValueField = gui.buildDecimalField("Slider minimum value: ", min);
         maxMinPanel.add(minimumValueField.getParent(), gbc);
        
-        minimumValueButton = gui.buildButton("Set");
-        minimumValueButton.addActionListener(this);
-        minimumValueButton.setMinimumSize(new Dimension(40, 20));
-        minimumValueButton.setPreferredSize(new Dimension(40, 20));
-        minimumValueButton.setMaximumSize(new Dimension(40, 20));
-        minimumValueButton.setMargin(new Insets(2, 7, 2, 7));
-        minimumValueButton.setToolTipText("Change slider minimum value.");
+        minimumValueButton = buildSetButton(gui, "Change slider minimum value.");
         gbc.gridx++;
         gbc.weightx = .1;
         maxMinPanel.add(minimumValueButton, gbc);
@@ -451,19 +451,25 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 	    maximumValueField = gui.buildDecimalField("Slider maximum value:", max);
 	    maxMinPanel.add(maximumValueField.getParent(), gbc);
 	   
-	    maximumValueButton = gui.buildButton("Set");
-	    maximumValueButton.addActionListener(this);
-	    maximumValueButton.setMinimumSize(new Dimension(40, 20));
-	    maximumValueButton.setPreferredSize(new Dimension(40, 20));
-	    maximumValueButton.setMaximumSize(new Dimension(40, 20));
-        maximumValueButton.setMargin(new Insets(2, 7, 2, 7));
-	    maximumValueButton.setToolTipText("Change slider maximum value.");
+	    maximumValueButton = buildSetButton(gui, "Change slider maximum value.");
 	    gbc.gridx++;
 	    gbc.weightx = .2;
 	    maxMinPanel.add(maximumValueButton, gbc);
         
 	    return maxMinPanel;
     }
+	
+	protected JButton buildSetButton(GuiBuilder gui, String toolTip) {
+	    JButton button = gui.buildButton("Set");
+	    button.addActionListener(this);
+	    button.setMinimumSize(new Dimension(40, 20));
+	    button.setPreferredSize(new Dimension(40, 20));
+	    button.setMaximumSize(new Dimension(40, 20));
+	    button.setMargin(new Insets(2, 7, 2, 7));
+	    button.setToolTipText(toolTip);
+	    
+	    return button;
+	}
 	
 	private void inputEvent(InputEvent e) {
 	    Object source = e.getSource();
