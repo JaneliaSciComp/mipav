@@ -2233,7 +2233,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
      * 
      * @return whether to enable showIntensity checkbox
      */
-    public boolean getShowMagIntensityEnabled() {
+    public boolean getShowMagIntensityEnabled(int width, int height, float mag) {
         final Graphics g = getGraphics();
 
         if (g == null) {
@@ -2242,7 +2242,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
         g.setFont(MipavUtil.font10);
 
-        return super.getShowMagIntensityEnabled(g, MAGR_WIDTH, MAGR_HEIGHT, MAGR_MAG, imageActive.getType(),
+        return super.getShowMagIntensityEnabled(g, width, height, mag, imageActive.getType(),
                 getActiveImage().getMin(), getActiveImage().getMax());
 
     }
@@ -5420,6 +5420,7 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 
             if ( (magSettings != null) && !magSettings.isVisible()) {
                 magSettings.setWidthText((int) (frame.getSize().width * 0.25));
+                magSettings.setHeightText((int) (frame.getSize().height * 0.25));
                 magSettings.setVisible(true);
             }
         }
