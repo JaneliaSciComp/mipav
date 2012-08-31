@@ -91,6 +91,16 @@ public class JDialogMagnificationControls extends JDialogZoom {
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.NONE;
 
+        heightText = gui.buildIntegerField("Height: ", componentImage.MAGR_HEIGHT);
+        dimPanel.add(heightText.getParent(), gbc);
+        
+        heightButton = buildSetButton(gui, "Change zoom height");
+        gbc.gridx++;
+        gbc.weightx = .1;
+        dimPanel.add(heightButton, gbc);
+        gbc.gridy++;
+        gbc.gridx = 0;
+        
         widthText = gui.buildIntegerField("Width: ", componentImage.MAGR_WIDTH);
         dimPanel.add(widthText.getParent(), gbc);
         
@@ -98,16 +108,8 @@ public class JDialogMagnificationControls extends JDialogZoom {
         gbc.gridx++;
         gbc.weightx = .1;
         dimPanel.add(widthButton, gbc);
-        gbc.gridy++;
-        gbc.gridx = 0;
         
-        heightText = gui.buildIntegerField("Height: ", componentImage.MAGR_HEIGHT);
-        dimPanel.add(heightText.getParent(), gbc);
         
-        heightButton = buildSetButton(gui, "Change zoom height");
-        gbc.gridx++;
-        gbc.weightx = .2;
-        dimPanel.add(heightButton, gbc);
         
         return dimPanel;
     }
