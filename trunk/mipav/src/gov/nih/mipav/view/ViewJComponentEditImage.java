@@ -3512,15 +3512,15 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
                 nf.setMaximumFractionDigits(1);
             }
 
-            if ( ( ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE) || (imageType == ModelStorageBase.DCOMPLEX) 
-                    || (imageType == ModelStorageBase.COMPLEX) || (imageType == ModelStorageBase.ARGB) 
-                    || (imageType == ModelStorageBase.ARGB_FLOAT) || (imageType == ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
-                        || ( ( (imageType != ModelStorageBase.FLOAT) && (imageType != ModelStorageBase.DOUBLE) && (imageType != ModelStorageBase.DCOMPLEX)
-                            && (imageType != ModelStorageBase.COMPLEX) && (imageType != ModelStorageBase.ARGB) && (imageType != ModelStorageBase.ARGB_FLOAT) 
-                            && (imageType != ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
-
-                if (showMagIntensity) {
-
+            if (showMagIntensity) {
+            
+                if ( ( ( (imageType == ModelStorageBase.FLOAT) || (imageType == ModelStorageBase.DOUBLE) || (imageType == ModelStorageBase.DCOMPLEX) 
+                        || (imageType == ModelStorageBase.COMPLEX) || (imageType == ModelStorageBase.ARGB) 
+                        || (imageType == ModelStorageBase.ARGB_FLOAT) || (imageType == ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1 - (2 * maxCharWidth))) && (fontHeight < (yheight - 1))))
+                            || ( ( (imageType != ModelStorageBase.FLOAT) && (imageType != ModelStorageBase.DOUBLE) && (imageType != ModelStorageBase.DCOMPLEX)
+                                && (imageType != ModelStorageBase.COMPLEX) && (imageType != ModelStorageBase.ARGB) && (imageType != ModelStorageBase.ARGB_FLOAT) 
+                                && (imageType != ModelStorageBase.ARGB_USHORT)) && ( (maxStrWidth < (xwidth - 1)) && (fontHeight < (yheight - 1))))) {
+                    
                     for (int y = startY; y < endY; y++) {
                         float offsetX = 0;
 
