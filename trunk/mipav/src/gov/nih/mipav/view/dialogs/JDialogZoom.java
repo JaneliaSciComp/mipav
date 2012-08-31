@@ -515,7 +515,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
                 ((ViewJFrameImage) parentFrame).updateFrame(zoom, zoom); 
                 break;
             case SQUARE:
-                componentImage.MAGR_MAG = zoom;
+                componentImage.MAGR_MAG = zoom*componentImage.getZoomX();
                 break;
             }
         }
