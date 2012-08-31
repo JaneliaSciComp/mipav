@@ -38,6 +38,18 @@ public class JDialogMagnificationControls extends JDialogZoom {
     /** Text fields for zoom box */
     private JTextField widthText, heightText;
 
+    /** Text fields for zoom circle. */
+    private JTextField radiusText;
+
+    /** Button for setting radius value. */
+    private JButton radiusButton;
+
+    /** Buttons for selecting magnifying shape. */
+    private JRadioButton circleButton, squareButton;
+
+    /** Radius of zoom circle */
+    private int radius;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -53,6 +65,7 @@ public class JDialogMagnificationControls extends JDialogZoom {
         mode = ZoomMode.SQUARE;
         interpType = InterpolateDisplay.NEAREST;
         nearest.setSelected(true);  //default to nearest neighbor interpolation
+        magSlider.setValue(400);
     }
     
     protected void init(float initZoom) {
@@ -84,9 +97,63 @@ public class JDialogMagnificationControls extends JDialogZoom {
         GuiBuilder gui = new GuiBuilder(this);
         
         JPanel dimPanel = new JPanel();
+        BoxLayout y = new BoxLayout(dimPanel, BoxLayout.Y_AXIS);
+        dimPanel.setLayout(y);
+        dimPanel.setBorder(buildTitledBorder("Size options"));
+
+        JPanel shapePanel = new JPanel();
+        BoxLayout x = new BoxLayout(shapePanel, BoxLayout.X_AXIS);
+        shapePanel.setLayout(x);
+        
+        circleButton = gui.buildRadioButton("Circle", false);
+        shapePanel.add(circleButton, x);
+        circleButton.setEnabled(false); //TODO: implement circle shape for magnification
+        
+        squareButton = gui.buildRadioButton("Square", true);
+        shapePanel.add(squareButton, x);
+        
+        dimPanel.add(shapePanel, y);
+        
+        ButtonGroup shape = new ButtonGroup();
+        shape.add(circleButton);
+        shape.add(squareButton);
+        
+        final JPanel circlePanel = buildCirclePanel();
+        dimPanel.add(circlePanel, y);
+        circlePanel.setVisible(false);
+        
+        final JPanel squarePanel = buildSquarePanel();
+        dimPanel.add(squarePanel, y);
+        
+        circleButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(circleButton.isSelected()) {
+                    circlePanel.setVisible(true);
+                    squarePanel.setVisible(false);
+                    mode = ZoomMode.CIRCLE;
+                }
+            }
+        });
+        
+        squareButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                if(squareButton.isSelected()) {
+                    circlePanel.setVisible(false);
+                    squarePanel.setVisible(true);
+                    mode = ZoomMode.SQUARE;
+                }
+            }
+        });
+        
+        return dimPanel;
+    }
+    
+    private JPanel buildSquarePanel() {
+        GuiBuilder gui = new GuiBuilder(this);
+        
+        JPanel dimPanel = new JPanel();
         dimPanel.setLayout(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
-        dimPanel.setBorder(buildTitledBorder("Size options"));
 
         gbc.gridx = 0;
         gbc.weightx = .9;
@@ -110,9 +177,30 @@ public class JDialogMagnificationControls extends JDialogZoom {
         gbc.gridx++;
         gbc.weightx = .1;
         dimPanel.add(widthButton, gbc);
+
+        return dimPanel;
+    }
+    
+    private JPanel buildCirclePanel() {
+        GuiBuilder gui = new GuiBuilder(this);
         
+        JPanel dimPanel = new JPanel();
+        dimPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        gbc.gridx = 0;
+        gbc.weightx = .9;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.NONE;
+
+        radiusText = gui.buildIntegerField("Radius: ", componentImage.MAGR_HEIGHT/2);
+        dimPanel.add(radiusText.getParent(), gbc);
         
-        
+        radiusButton = buildSetButton(gui, "Change radius");
+        gbc.gridx++;
+        gbc.weightx = .1;
+        dimPanel.add(radiusButton, gbc);
+
         return dimPanel;
     }
 
@@ -150,6 +238,17 @@ public class JDialogMagnificationControls extends JDialogZoom {
                 componentImage.MAGR_HEIGHT = boxHeight;
             } catch(NumberFormatException nfe) {
                 MipavUtil.displayError("Height is not a valid value.");
+                return;
+            }
+        } else if(source.equals(radiusButton)) {
+            try {
+                radius = Integer.valueOf(radiusText.getText());
+                if(radius > (int)componentImage.getActiveImage().getExtents()[0]*2) {
+                    throw new NumberFormatException();
+                }
+                componentImage.MAGR_WIDTH = radius*2;
+            } catch(NumberFormatException nfe) {
+                MipavUtil.displayError("Radius is not a valid value.");
                 return;
             }
         }
