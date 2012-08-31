@@ -3420,8 +3420,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             }
         }
 
-        height = width;
-
         xNew = (int) ( ((int) (xNew / zoomX) * zoomX) + 0.5);
         yNew = (int) ( ((int) (yNew / zoomY) * zoomY) + 0.5);
 

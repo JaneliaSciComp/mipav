@@ -143,7 +143,7 @@ public class JDialogMagnificationControls extends JDialogZoom {
             }
         } else if(source.equals(heightButton)) {
             try {
-                boxHeight = Integer.valueOf(widthText.getText());
+                boxHeight = Integer.valueOf(heightText.getText());
                 if(boxHeight > (int)(componentImage.getActiveImage().getExtents()[1]*.98)) {
                     throw new NumberFormatException();
                 }
