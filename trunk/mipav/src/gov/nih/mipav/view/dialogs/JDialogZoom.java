@@ -273,7 +273,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      * @param  initZoom  DOCUMENT ME!
      */
     protected void init(float initZoom) {
-        setTitle(((ViewJFrameImage) parentFrame).getTitle());
+        setTitle(((ViewJFrameBase) parentFrame).getTitle());
         
         JPanel buttonPanel = new JPanel();
         buildOKButton();
