@@ -71,6 +71,9 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
     /** Mode of operation for the dialog */
     protected ZoomMode mode;
+
+    /** Checkbox for displaying intensity values. */
+    private JCheckBox intensityCheckbox;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -101,7 +104,9 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         Object source = event.getSource();
         String command = event.getActionCommand();
 
-        if (source.equals(OKButton)) {
+        if(source.equals(intensityCheckbox)) {
+            componentImage.setShowMagIntensity(intensityCheckbox.isSelected());
+        } else if (source.equals(OKButton)) {
 
             if (nearest.isSelected()) {
                 componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
@@ -188,6 +193,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
             
             currentLabel.setText(String.valueOf(displayValue));
             
+            intensityCheckbox.setEnabled(componentImage.getShowMagIntensityEnabled());
         }
     }
 
@@ -434,8 +440,16 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 	    GridBagConstraints gbc = new GridBagConstraints();
 	    
 	    gbc.gridx = 0;
-	    gbc.weightx = .9;
 	    gbc.gridy = 0;
+	    gbc.fill = GridBagConstraints.BOTH;
+	    
+	    intensityCheckbox = gui.buildCheckBox("Display intensity values", false);
+	    intensityCheckbox.setEnabled(false);
+	    maxMinPanel.add(intensityCheckbox, gbc);
+	    
+	    gbc.gridx = 0;
+	    gbc.weightx = .9;
+	    gbc.gridy++;
 	    gbc.fill = GridBagConstraints.NONE;
 	    
 	    minimumValueField = gui.buildDecimalField("Slider minimum value: ", min);
