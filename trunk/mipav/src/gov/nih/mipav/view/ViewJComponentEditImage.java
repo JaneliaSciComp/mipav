@@ -3398,6 +3398,20 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
         int x1, y1, xw1, yh1;
         int x2, y2;
 
+        RenderingHints hintImageA = InterpolateDisplay.NEAREST.getRenderingHint();
+        RenderingHints hintImageB = InterpolateDisplay.NEAREST.getRenderingHint();
+        if(magSettings != null) {
+            hintImageA = magSettings.getInterpType().getRenderingHint();
+            hintImageB = magSettings.getInterpType().getRenderingHint();
+        } else if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)) {
+            hintImageA = Preferences.getInterpolateDisplay().getRenderingHint();
+        } else if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)) {
+            hintImageB = Preferences.getInterpolateDisplay().getRenderingHint();
+        } else if ( (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
+            hintImageA = Preferences.getInterpolateDisplay().getRenderingHint();
+            hintImageB = Preferences.getInterpolateDisplay().getRenderingHint();
+        }
+        
         if (zoomX >= 2) {
 
             while ( ( (Math.round(width / zoomX) - (width / zoomX)) != 0)
@@ -3437,23 +3451,13 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
             y1 = yNewO;
             yh1 = height + yNewO;
 
-            if ( (interpMode == ViewJComponentBase.INTERPOLATE_A)
-                    || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                graphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
-            } else {
-                graphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
-            }
+            graphics2d.setRenderingHints(hintImageA);
 
             graphics2d.drawImage(img, x1, y1, xw1, yh1, x2, y2, sX + (sIWidth / 2), sY + (sIHeight / 2), this);
 
             if ( (imageB != null) && (imgB != null)) {
 
-                if ( (interpMode == ViewJComponentBase.INTERPOLATE_B)
-                        || (interpMode == ViewJComponentBase.INTERPOLATE_BOTH)) {
-                    graphics2d.setRenderingHints(Preferences.getInterpolateDisplay().getRenderingHint());
-                } else {
-                    graphics2d.setRenderingHints(InterpolateDisplay.NEAREST.getRenderingHint());
-                }
+                graphics2d.setRenderingHints(hintImageB);
 
                 if ( !isCheckerboarded()) {
                     graphics2d.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1 - alphaBlend));
