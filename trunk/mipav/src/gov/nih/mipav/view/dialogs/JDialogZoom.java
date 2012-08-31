@@ -58,7 +58,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
     private JLabel currentLabel;
 
     /** Slider used for zooming. */
-    private JSlider magSlider;
+    protected JSlider magSlider;
 
     /** Text fields for user to enter max/min slider values. */
     private JTextField maximumValueField, minimumValueField;
@@ -502,6 +502,13 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
      */
     public InterpolateDisplay getInterpType() {
         return interpType;
+    }
+
+    /**
+     * @return the mode
+     */
+    public ZoomMode getMode() {
+        return mode;
     }
 
     private void inputEvent(InputEvent e) {
