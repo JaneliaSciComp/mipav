@@ -106,16 +106,6 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
         if(source.equals(intensityCheckbox)) {
             componentImage.setShowMagIntensity(intensityCheckbox.isSelected());
-        } else if (source.equals(OKButton)) {
-
-            if (nearest.isSelected()) {
-                componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.NEAREST_BOTH);
-            } else {
-                componentImage.getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), true, -50, ViewJComponentBase.INTERPOLATE_BOTH);
-            } 
-
-            int zoom = magSlider.getValue();
-            ((ViewJFrameImage) parentFrame).updateFrame(zoom / 100.0f, zoom / 100.0f);
         } else if (source.equals(cancelButton)) {
             ((ViewJFrameImage) parentFrame).setZoomDialogNull();
             dispose();
@@ -489,9 +479,16 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 	    Object source = e.getSource();
         
         if (source == magSlider) {
-
             float zoom = Float.valueOf(currentLabel.getText());
-            ((ViewJFrameImage) parentFrame).updateFrame(zoom, zoom); 
+            switch(mode) {
+            
+            case IMAGE:
+                ((ViewJFrameImage) parentFrame).updateFrame(zoom, zoom); 
+                break;
+            case SQUARE:
+                componentImage.MAGR_MAG = zoom;
+                break;
+            }
         }
 	}
 
