@@ -1999,13 +1999,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
          */
         @Override
         public boolean canImport(TransferSupport transfer) {
-            DataFlavor[] d = transfer.getDataFlavors();
-            System.out.println(d.length);
             if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
-                
                 return true;
-            }
-            
+            }          
             return false;
         }
 
@@ -2022,17 +2018,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             try {
                 List<File> list = (List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
+                
+                List<File> revList = resolveFileList(list.toArray(new File[list.size()]));
 
-                for (File f : list) {
-                    if(f.isDirectory()) {
-                       for(File subF : f.listFiles()) {
-                           openImageFrame(subF.getAbsolutePath(), true);
-                       }
-                    } else {
-                        openImageFrame(f.getAbsolutePath(), true);
-                    }
-                    
-                    System.out.println("Oh you want to import "+f);
+                for (File f : revList) {
+                    boolean multiFile = getLastStackFlag();
+                    openImageFrame(f.getAbsolutePath(), multiFile);
                 }
             } catch (UnsupportedFlavorException e) {
                 return false;
@@ -2042,6 +2033,25 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
             return true;
         
+        }
+        
+        private List<File> resolveFileList(File[] fileAr) {
+            ArrayList<File> newList = new ArrayList<File>();
+            boolean addSlice = false;
+            for(File f : fileAr) {
+                if(f.isDirectory()) {
+                    newList.addAll(resolveFileList(f.listFiles()));
+                } else {
+                    if(getLastStackFlag() && !addSlice) {
+                        newList.add(f);
+                        addSlice = true;
+                    } else if (!getLastStackFlag()) {
+                        newList.add(f);
+                    }
+                }
+            }
+            
+            return newList;
         }
         
     }
