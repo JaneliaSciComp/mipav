@@ -236,20 +236,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      * class is allowed to be instantiated in a single VM.
      */
     protected ViewUserInterface() {
-        imageFrameVector = new Vector<Frame>();
-        imageHashtable = new CustomHashtable<ModelImage>();
-        initPrefsFile();
-
-        // Read preference file
-        initUsingPreferences();
-        if ( !GraphicsEnvironment.isHeadless()) {
-            mainFrame = new JFrame();
-            initializeGui();
-        }
-
-        // listen to the script recorder so that we can pass along changes in the script recorder status to the script
-        // toolbars of individual images
-        ScriptRecorder.getReference().addScriptRecordingListener(this);
+        this(false);
     }
 
     /**
