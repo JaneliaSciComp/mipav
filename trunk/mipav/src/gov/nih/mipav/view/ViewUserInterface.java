@@ -1992,6 +1992,12 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         mainFrame.addKeyListener(this);
     }
     
+    /**
+     * Handles drag and drop events to the main mipav gui.
+     * 
+     * @author senseneyj
+     *
+     */
     private class ImageTransferHandler extends TransferHandler {
         
         /* (non-Javadoc)
