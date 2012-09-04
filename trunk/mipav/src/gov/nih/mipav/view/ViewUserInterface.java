@@ -28,15 +28,18 @@ import ij.ImageStack;
 import ij.process.ImageProcessor;
 
 import java.awt.*;
+import java.awt.datatransfer.*;
 import java.awt.event.*;
 import java.io.*;
 import java.lang.management.*;
 import java.lang.reflect.Field;
 import java.net.URL;
 import java.util.*;
+import java.util.List;
 import java.util.regex.Matcher;
 
 import javax.swing.*;
+import javax.swing.TransferHandler.TransferSupport;
 import javax.swing.border.EmptyBorder;
 
 import WildMagic.LibFoundation.Mathematics.Vector3f;
@@ -1093,6 +1096,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         openingMenuBar.add(pluginsMenu);
         openingMenuBar.add(menuBar.makeScriptingMenu());
         openingMenuBar.add(menuBar.makeHelpMenu());
+       
     }
 
     /**
@@ -1979,9 +1983,67 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         mainFrame.pack();
         mainFrame.toFront();
-
+        
+        ImageTransferHandler transfer = new ImageTransferHandler();
+        
+        mainFrame.setTransferHandler(transfer);
+        
         mainFrame.setFocusable(true);
         mainFrame.addKeyListener(this);
+    }
+    
+    private class ImageTransferHandler extends TransferHandler {
+        
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#canImport(javax.swing.TransferHandler.TransferSupport)
+         */
+        @Override
+        public boolean canImport(TransferSupport transfer) {
+            DataFlavor[] d = transfer.getDataFlavors();
+            System.out.println(d.length);
+            if (transfer.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                
+                return true;
+            }
+            
+            return false;
+        }
+
+        /* (non-Javadoc)
+         * @see javax.swing.TransferHandler#importData(javax.swing.TransferHandler.TransferSupport)
+         */
+        @Override
+        public boolean importData(TransferSupport transfer) {
+            if (!canImport(transfer)) {
+                return false;
+            }
+            
+            Transferable t = transfer.getTransferable();
+
+            try {
+                List<File> list = (List<File>)t.getTransferData(DataFlavor.javaFileListFlavor);
+
+                for (File f : list) {
+                    if(f.isDirectory()) {
+                       for(File subF : f.listFiles()) {
+                           openImageFrame(subF.getAbsolutePath(), true);
+                       }
+                    } else {
+                        openImageFrame(f.getAbsolutePath(), true);
+                    }
+                    
+                    System.out.println("Oh you want to import "+f);
+                }
+            } catch (UnsupportedFlavorException e) {
+                return false;
+            } catch (IOException e) {
+                return false;
+            }
+
+            return true;
+        
+        }
+        
     }
 
     /**
@@ -3728,6 +3790,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         messageField.setBackground(new Color(215, 215, 215));
         messageField.setText(title);
         messageField.setPreferredSize(new Dimension(500, messageField.getPreferredSize().height));
+        messageField.setTransferHandler(new ImageTransferHandler());
 
         return messageField;
     }
