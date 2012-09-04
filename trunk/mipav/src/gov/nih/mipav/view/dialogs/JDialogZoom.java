@@ -204,7 +204,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
                 height = componentImage.getParent().getHeight();
             }
             
-            intensityCheckbox.setEnabled(componentImage.getShowMagIntensityEnabled(width, height, mag));
+            intensityCheckbox.setEnabled(componentImage.getShowMagIntensityEnabled(width, height, mag) && mode != ZoomMode.IMAGE);
         }
     }
 
