@@ -763,7 +763,9 @@ public class FileDicom extends FileDicomBase {
                 Preferences.debug("Unrecognized vr: "+new String(vrBytes)+" for tag "+key, Preferences.DEBUG_FILEIO);
             } finally {
                 if(key.toString().matches(FileDicom.IMAGE_TAG)) {
-                    vr = VR.OB;
+                    if(!key.getGroup().equals("7FDF")) { //defunct scanner companies use this as another private group sometimes
+                        vr = VR.OB;
+                    }
                 } else if((vr == VR.UN || vr == VR.XX || vr == null) && DicomDictionary.containsTag(key)) {
                     vr = DicomDictionary.getType(key);
                 } else if(vr == null) {
