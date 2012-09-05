@@ -441,12 +441,12 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         destinationPanel.setBorder(buildTitledBorder("Destination"));
 
         ButtonGroup destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", false);
+        newImage = new JRadioButton("New image", true);
         newImage.setFont(serif12);
         destinationGroup.add(newImage); // add the button to the grouping
         destinationPanel.add(newImage); // add the button to the component
 
-        replaceImage = new JRadioButton("Replace image", true);
+        replaceImage = new JRadioButton("Replace image", false);
         replaceImage.setFont(serif12);
         if(srcImage.getNDims() > 3 && mode.equals(SwapMode.ThreeD)) {
             replaceImage.setEnabled(false);
@@ -466,6 +466,10 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
             replaceImage.setEnabled(true);
         } else {
             replaceImage.setEnabled(false);
+        }
+        
+        if(replaceImage != null) {
+            replaceImage.setEnabled(false); //TODO: Need to test and debug replace slice/volume execution
         }
         
         mainPanel.add(algOptionPanel, BorderLayout.CENTER);
