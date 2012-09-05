@@ -47,14 +47,16 @@ import WildMagic.LibFoundation.Mathematics.Vector3f;
 
 /**
  * This class is the _glue_ keeps a record of the present structure of the application. It keeps a list of all the image
- * frames presently being displayed and keeps a hash table of all the images (ModelImage) open in the applicaiton. In
+ * frames presently being displayed and keeps a hash table of all the images (ModelImage) open in the application. In
  * addition, this class keeps a reference to the main MIPAV frame and the message frame with much of the imaging results
  * are output.
  * 
- * @version 1.0 June 1, 2005
+ * @version 1.1 June 1, 2012
+ * @author   Justin Senseney
+ * @author   Matthew McAuliffe, Ph.D.
  */
-public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, ScriptRecordingListener,
-        CommandLineParser {
+public class ViewUserInterface implements ActionListener, WindowListener, KeyListener, 
+                                            ScriptRecordingListener, CommandLineParser {
 
     // ~ Static fields/initializers ------------------------------------------------------------------
 
@@ -2031,9 +2033,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     boolean multiFile = getLastStackFlag();
                     openImageFrame(f.getAbsolutePath(), multiFile);
                 }
-            } catch (UnsupportedFlavorException e) {
-                return false;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 return false;
             }
 
