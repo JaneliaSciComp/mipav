@@ -2729,22 +2729,32 @@ public class SelectedEigenvalue implements java.io.Serializable {
                     int iwork[], int liwork, int info[]) {
  int i,j;
  int ieeeok;
+ int ifail[];
+ int iinfo[] = new int[1];
+ int imax;
  int indtau;
  int indd;
  int inde;
  int inddd;
  int indee;
  int indwk;
+ int indwkn;
  int indibl;
  int indisp;
  int indifl;
  int indiwo;
  int iscale;
+ int ivec2[];
+ int ivec3[];
+ int jj;
+ int k;
  int lwmin;
  int liwmin;
  int llwork;
- int lwkopt;
+ int llwrkn;
+ int lwkopt = 0;
  int nb;
+ int nsplit[] = new int[1];
  double abstll;
  double anrm;
  double eps;
@@ -2753,15 +2763,26 @@ public class SelectedEigenvalue implements java.io.Serializable {
  double rmin;
  double rmax;
  double sigma = 0.0;
+ double tmp1;
+ double tmp2;
  double vec1[];
- double vll;
- double vuu;
+ double vec3[];
+ double vecindd[];
+ double vecinde[];
+ double vecinddd[];
+ double vecindwk[];
+ double vecindee[];
+ double vll = 0.0;
+ double vuu = 0.0;
+ boolean doHere = true;
  boolean lower;
  boolean wantz;
  boolean alleig;
  boolean valeig;
  boolean indeig;
  boolean lquery;
+ boolean tryac;
+ char order;
  char ch[] = new char[1];
  String opts;
  
@@ -2967,127 +2988,143 @@ if (iscale == 1 ) {
 
 
 //     Call DSYTRD to reduce symmetric matrix to tridiagonal form.
-/*
- CALL DSYTRD( UPLO, N, A, LDA, WORK( INDD ), WORK( INDE ),
-$             WORK( INDTAU ), WORK( INDWK ), LLWORK, IINFO )
-*
-*     If all eigenvalues are desired
-*     then call DSTERF or DSTEMR and DORMTR.
-*
- IF( ( ALLEIG .OR. ( INDEIG .AND. IL.EQ.1 .AND. IU.EQ.N ) ) .AND.
-$    IEEEOK.EQ.1 ) THEN
-    IF( .NOT.WANTZ ) THEN
-       CALL DCOPY( N, WORK( INDD ), 1, W, 1 )
-       CALL DCOPY( N-1, WORK( INDE ), 1, WORK( INDEE ), 1 )
-       CALL DSTERF( N, W, WORK( INDEE ), INFO )
-    ELSE
-       CALL DCOPY( N-1, WORK( INDE ), 1, WORK( INDEE ), 1 )
-       CALL DCOPY( N, WORK( INDD ), 1, WORK( INDDD ), 1 )
-*
-       IF (ABSTOL .LE. TWO*N*EPS) THEN
-          TRYRAC = .TRUE.
-       ELSE
-          TRYRAC = .FALSE.
-       END IF
-       CALL DSTEMR( JOBZ, 'A', N, WORK( INDDD ), WORK( INDEE ),
+
+ vecindd = new double[n];
+ vecinde = new double[n];
+ vecinddd = new double[n];
+ vecindwk = new double[2*n];
+ vecindee = new double[n];
+ ge.dsytrd(uplo, n, A, lda, vecindd, vecinde, work, vecindwk, llwork, iinfo);
+
+// If all eigenvalues are desired then call dsterf or dstemr and dormtr.
+
+ if((alleig || (indeig && il == 1 && iu == n)) && ieeeok == 1) {
+    if (!wantz) {
+       for (i = 0; i < n; i++) {
+           w[i] = vecindd[i];
+       }
+       for (i = 0; i < n-1; i++) {
+           vecindee[i] = vecinde[i];
+       }
+       ge.dsterf( n, w, vecindee, info); 
+    }
+    else {
+       for (i = 0; i < n-1; i++) {
+           vecindee[i] = vecinde[i];
+       }
+       for ( i = 0; i < n; i++) {
+           vecinddd[i] = vecindd[i];
+       }
+       
+       if (abstol <= 2.0*n*eps) {
+          tryac = true;
+       }
+       else {
+          tryac = false;
+       }
+       /*CALL DSTEMR( JOBZ, 'A', N, WORK( INDDD ), WORK( INDEE ),
 $                   VL, VU, IL, IU, M, W, Z, LDZ, N, ISUPPZ,
 $                   TRYRAC, WORK( INDWK ), LWORK, IWORK, LIWORK,
-$                   INFO )
-*
-*
-*
-*        Apply orthogonal matrix used in reduction to tridiagonal
-*        form to eigenvectors returned by DSTEIN.
-*
-       IF( WANTZ .AND. INFO.EQ.0 ) THEN
-          INDWKN = INDE
-          LLWRKN = LWORK - INDWKN + 1
-          CALL DORMTR( 'L', UPLO, 'N', N, M, A, LDA,
-$                      WORK( INDTAU ), Z, LDZ, WORK( INDWKN ),
-$                      LLWRKN, IINFO )
-       END IF
-    END IF
-*
-*
-    IF( INFO.EQ.0 ) THEN
-*           Everything worked.  Skip DSTEBZ/DSTEIN.  IWORK(:) are
-*           undefined.
-       M = N
-       GO TO 30
-    END IF
-    INFO = 0
- END IF
-*
-*     Otherwise, call DSTEBZ and, if eigenvectors are desired, DSTEIN.
-*     Also call DSTEBZ and DSTEIN if DSTEMR fails.
-*
- IF( WANTZ ) THEN
-    ORDER = 'B'
- ELSE
-    ORDER = 'E'
- END IF
+$                   INFO )*/
 
- CALL DSTEBZ( RANGE, ORDER, N, VLL, VUU, IL, IU, ABSTLL,
-$             WORK( INDD ), WORK( INDE ), M, NSPLIT, W,
-$             IWORK( INDIBL ), IWORK( INDISP ), WORK( INDWK ),
-$             IWORK( INDIWO ), INFO )
-*
- IF( WANTZ ) THEN
-    CALL DSTEIN( N, WORK( INDD ), WORK( INDE ), M, W,
-$                IWORK( INDIBL ), IWORK( INDISP ), Z, LDZ,
-$                WORK( INDWK ), IWORK( INDIWO ), IWORK( INDIFL ),
-$                INFO )
-*
-*        Apply orthogonal matrix used in reduction to tridiagonal
-*        form to eigenvectors returned by DSTEIN.
-*
-    INDWKN = INDE
-    LLWRKN = LWORK - INDWKN + 1
-    CALL DORMTR( 'L', UPLO, 'N', N, M, A, LDA, WORK( INDTAU ), Z,
-$                LDZ, WORK( INDWKN ), LLWRKN, IINFO )
- END IF
-*
-*     If matrix was scaled, then rescale eigenvalues appropriately.
-*
-*  Jump here if DSTEMR/DSTEIN succeeded.
-30 CONTINUE
- IF( ISCALE.EQ.1 ) THEN
-    IF( INFO.EQ.0 ) THEN
-       IMAX = M
-    ELSE
-       IMAX = INFO - 1
-    END IF
-    CALL DSCAL( IMAX, ONE / SIGMA, W, 1 )
- END IF
-*
-*     If eigenvalues are not in order, then sort them, along with
-*     eigenvectors.  Note: We do not sort the IFAIL portion of IWORK.
-*     It may not be initialized (if DSTEMR/DSTEIN succeeded), and we do
-*     not return this detailed information to the user.
-*
- IF( WANTZ ) THEN
-    DO 50 J = 1, M - 1
-       I = 0
-       TMP1 = W( J )
-       DO 40 JJ = J + 1, M
-          IF( W( JJ ).LT.TMP1 ) THEN
-             I = JJ
-             TMP1 = W( JJ )
-          END IF
-40       CONTINUE
-*
-       IF( I.NE.0 ) THEN
-          W( I ) = W( J )
-          W( J ) = TMP1
-          CALL DSWAP( N, Z( 1, I ), 1, Z( 1, J ), 1 )
-       END IF
-50    CONTINUE
- END IF
-*
-*     Set WORK(1) to optimal workspace size.
-*
- WORK( 1 ) = LWKOPT
- IWORK( 1 ) = LIWMIN*/
+
+
+       // Apply orthogonal matrix used in reduction to tridiagonal form to eigenvectors returned by dstein.
+
+       if (wantz && info[0] == 0) {
+          indwkn = inde;
+          llwrkn = lwork - indwkn + 1;
+          dormtr( 'L', uplo, 'N', n, m[0], A, lda, work, Z, ldz, vecinde, llwrkn, iinfo);
+       }
+    }
+
+
+    if (info[0] == 0) {
+           //Everything worked.  Skip dstebz/dstein.  iwork(:) are undefined.
+       m[0] = n;
+       doHere = false;
+    }
+    info[0] = 0;
+ } // if((alleig || (indeig && il == 1 && iu == n)) && ieeeok == 1)
+
+ if (doHere) {
+          // Otherwise, call dstebz and, if eigenvectors are desired, dstein.
+          // Also call dstebz and dstein if dstemr fails.
+    
+     if (wantz) {
+        order = 'B';
+     }
+     else {
+        order = 'E';
+     }
+     
+     ivec2 = new int[n];
+     vec3 = new double[5*n];
+     ivec3 = new int[3*n];
+     dstebz(range, order, n, vll, vuu, il, iu, abstll,
+            vecindd, vecinde, m, nsplit, w,
+            iwork, ivec2, vec3, ivec3, info);
+     if (wantz) {
+         ifail = new int[m[0]];
+         dstein(n, vecindd, vecinde, m[0], w, iwork, ivec2, Z, ldz,
+               vec3, ivec3, ifail, info);
+ 
+         // Apply orthogonal matrix used in reduction to tridiagonal
+         // form to eigenvectors returned by DSTEIN.
+ 
+        indwkn = inde;
+        llwrkn = lwork - indwkn + 1;
+        dormtr( 'L', uplo, 'N', n, m[0], A, lda, work, Z, ldz, vecinde, llwrkn, iinfo);
+     } // if (wantz)
+ } // if (doHere)
+
+   // If matrix was scaled, then rescale eigenvalues appropriately.
+
+   // Jump here if dstemr/dstein succeeded.
+ if (iscale == 1) {
+    if (info[0] == 0) {
+       imax = m[0];
+    }
+    else {
+       imax = info[0] - 1;
+    }
+    for (i = 0; i < imax; i++) {
+        w[i] *= 1.0/sigma;
+    }
+ } // if (iscale == 1)
+
+      // If eigenvalues are not in order, then sort them, along with
+      // eigenvectors.  Note: We do not sort the ifail portion of iwork.
+      // It may not be initialized (if dstemr/dstein succeeded), and we do
+      // not return this detailed information to the user.
+ 
+ if (wantz) {
+    for (j = 1; j <= m[0] - 1; j++) {
+       i = 0;
+       tmp1 = w[j-1];
+       for (jj = j + 1; jj <= m[0]; jj++) {
+          if (w[jj-1] < tmp1) {
+             i = jj;
+             tmp1 = w[jj-1];
+          }
+       } // for (jj = j + 1; jj <= m[0]; jj++)
+
+       if (i != 0) {
+          w[i-1] = w[j-1];
+          w[j-1] = tmp1;
+          for (k = 0; k < n; k++) {
+              tmp2 = Z[k][i-1];
+              Z[k][i-1] = Z[k][j-1];
+              Z[k][j-1] = tmp2;
+          }
+       }
+    } // for (j = 1; j <= m[0] - 1; j++)
+ } // if (wantz)
+
+     // Set WORK(1) to optimal workspace size.
+
+ work[0] = lwkopt;
+ iwork[0] = liwmin;
 
  return;
 } // dsyevr
@@ -5713,8 +5750,861 @@ $                LDZ, WORK( INDWKN ), LLWRKN, IINFO )
   return;
 
   } // dormql
+  
+  /** This is a port of version 3.4.0 LAPACK routine dstemr.   LAPACK is a software package provided by Univ. of Tennessee,    --
+     -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd.  November 2011
+     Contributors:
+  
+     Beresford Parlett, University of California, Berkeley, USA \n
+     Jim Demmel, University of California, Berkeley, USA \n
+     Inderjit Dhillon, University of Texas, Austin, USA \n
+     Osni Marques, LBNL/NERSC, USA \n
+     Christof Voemel, University of California, Berkeley, USA
+  
+     dstemr computes selected eigenvalues and, optionally, eigenvectors
+     of a real symmetric tridiagonal matrix T. Any such unreduced matrix has
+     a well defined set of pairwise different real eigenvalues, the corresponding
+     real eigenvectors are pairwise orthogonal.
+    
+     The spectrum may be computed either completely or partially by specifying
+     either an interval (vl,vu] or a range of indices il:iu for the desired
+     eigenvalues.
+    
+     Depending on the number of desired eigenvalues, these are computed either
+     by bisection or the dqds algorithm. Numerically orthogonal eigenvectors are
+     computed by the use of various suitable L D L^T factorizations near clusters
+     of close eigenvalues (referred to as RRRs, Relatively Robust
+     Representations). An informal sketch of the algorithm follows.
+    
+     For each unreduced block (submatrix) of T,
+        (a) Compute T - sigma I  = L D L^T, so that L and D
+            define all the wanted eigenvalues to high relative accuracy.
+            This means that small relative changes in the entries of D and L
+            cause only small relative changes in the eigenvalues and
+            eigenvectors. The standard (unfactored) representation of the
+            tridiagonal matrix T does not have this property in general.
+        (b) Compute the eigenvalues to suitable accuracy.
+            If the eigenvectors are desired, the algorithm attains full
+            accuracy of the computed eigenvalues only right before
+            the corresponding vectors have to be computed, see steps c) and d).
+        (c) For each cluster of close eigenvalues, select a new
+            shift close to the cluster, find a new factorization, and refine
+            the shifted eigenvalues to suitable accuracy.
+        (d) For each eigenvalue with a large enough relative separation compute
+            the corresponding eigenvector by forming a rank revealing twisted
+            factorization. Go back to (c) for any clusters that remain.
+    
+     For more details, see:
+     - Inderjit S. Dhillon and Beresford N. Parlett: "Multiple representations
+       to compute orthogonal eigenvectors of symmetric tridiagonal matrices,"
+       Linear Algebra and its Applications, 387(1), pp. 1-28, August 2004.
+     - Inderjit Dhillon and Beresford Parlett: "Orthogonal Eigenvectors and
+       Relative Gaps," SIAM Journal on Matrix Analysis and Applications, Vol. 25,
+       2004.  Also LAPACK Working Note 154.
+     - Inderjit Dhillon: "A new O(n^2) algorithm for the symmetric
+       tridiagonal eigenvalue/eigenvector problem",
+       Computer Science Division Technical Report No. UCB/CSD-97-971,
+       UC Berkeley, May 1997.
+    
+     Further Details
+     1.dstemr works only on machines which follow IEEE-754
+     floating-point standard in their handling of infinities and NaNs.
+     This permits the use of efficient inner loops avoiding a check for
+     zero divisors.
+  @param jobz input char
+         = 'N':  Compute eigenvalues only;
+         = 'V':  Compute eigenvalues and eigenvectors. 
+  @param range input char
+         = 'A': all eigenvalues will be found.
+         = 'V': all eigenvalues in the half-open interval (vl,vu] will be found.
+         = 'I': the il-th through iu-th eigenvalues will be found.
+  @param n input int  The order of the matrix.  n >= 0.
+  @param d input double[] of dimension n.
+         On entry, the n diagonal elements of the tridiagonal matrix T. On exit, d is overwritten.
+  @param e input/workspace double[] of dimension n.
+          On entry, the (n-1) subdiagonal elements of the tridiagonal
+          matrix T in elements 0 to n-2 of e. e[n-1] need not be set on input, but is used internally as workspace.
+          On exit, e is overwritten.
+  @param vl input double
+  @param vu input double
+         If range = 'V', the lower and upper bounds of the interval to be searched for eigenvalues. vl < vu.
+         Not referenced if RANGE = 'A' or 'I'.
+  @param il input int
+  @param iu input int
+         If range = 'I', the indices (in ascending order) of the smallest and largest eigenvalues to be returned.
+         1 <= il <= iu <= n, if n > 0.
+         Not referenced if range = 'A' or 'V'.
+  @param m output int[] of dimension 1.
+         The total number of eigenvalues found.  0 <= m[0] <= n.
+         If range = 'A', m[0] = n, and if range = 'I', m[0] = iu-il+1. 
+  @param w output double[] of dimension n
+         The first m[0] elements contain the selected eigenvalues in ascending order.
+  @param Z[][] output double[][] of dimension (ldz, max(1, m[0])
+         If jobz = 'V', and if info[0] = 0, then the first m[0] columns of Z
+         contain the orthonormal eigenvectors of the matrix T
+         corresponding to the selected eigenvalues, with the i-th
+         column of Z holding the eigenvector associated with w[i].
+         If jobz = 'N', then Z is not referenced.
+         Note: the user must ensure that at least max(1,m[0]) columns are
+         supplied in the array Z; if range = 'V', the exact value of m[0]
+         is not known in advance and can be computed with a workspace
+         query by setting nzc = -1, see below.
+   @param ldz input int  The leading dimension of the array Z.  ldz >= 1, and if
+         jobz = 'V', then ldz >= max(1,n).
+   @param nzc input int  The number of eigenvectors to be held in the array Z.
+         If range = 'A', then nzc >= max(1,n).
+         If range = 'V', then nzc >= the number of eigenvalues in (vl,vu].
+         If range = 'I', then nzc >= iu-il+1.
+         If nzc = -1, then a workspace query is assumed; the routine calculates the number of columns
+         of the array Z that are needed to hold the eigenvectors.
+         This value is returned as the first entry of the Z array, and no error message related to nzc is issued.
+   @param isuppz output int[] of dimension (2*max(1,m[0]))
+         The support of the eigenvectors in Z, i.e., the indices indicating the nonzero elements in Z.
+         The i-th computed eigenvector is nonzero only in elements isuppz[2*i-2] through
+         isuppz[2*i-1]. This is relevant in the case when the matrix  is split. isuppz is only accessed
+         when jobz is 'V' and n > 0.
+   @param tryac (input/output) boolean[] of dimension 1.
+         If tryac[0] == true, indicates that the code should check whether  the tridiagonal matrix defines
+         its eigenvalues to high relative accuracy.  If so, the code uses relative-accuracy preserving
+         algorithms that might be (a bit) slower depending on the matrix.  If the matrix does not define its
+         eigenvalues to high relative accuracy, the code can uses possibly faster algorithms.
+         If tryac[0] == false, the code is not required to guarantee relatively accurate eigenvalues and can
+         use the fastest possible techniques.
+         On exit, a true tryac[0] will be set to false if the matrix does not define its eigenvalues to
+         high relative accuracy.
+   @param work (workspace/output) double[] of dimension lwork.
+         On exit, if info[0] = 0, work[0] returns the optimal (and minimal) lwork.
+   @param lwork input int  The dimension of the array work. 
+          lwork >= max(1,18*n) if jobz = 'V', 
+          and lwork >= max(1,12*n) if jobz = 'N'.
+          If lwork = -1, then a workspace query is assumed; the routine only calculates the optimal size of
+          the work array, returns this value as the first entry of the work array, and no error message
+          related to lwork is issued.
+   @param iwork (workspace/output) int[] of dimension liwork.
+          On exit, if info[0] = 0, iwork[0] returns the optimal liwork.
+   @param liwork input int  The dimension of the array iwork.  
+          liwork >= max(1,10*n) if the eigenvectors are desired, 
+          and liwork >= max(1,8*n) if only the eigenvalues are to be computed.
+          If liwork = -1, then a workspace query is assumed; the routine only calculates the optimal
+          size of the iwork array returns this value as the first entry of the iwork array, and
+          no error message related to liwork is issued.
+   @param info output int of dimension 1.
+           = 0:  successful exit
+           < 0:  if info[0] = -i, the i-th argument had an illegal value
+           > 0:  if info[0] = 1X, internal error in dlarre,
+                 if info[0] = 2X, internal error in dlarrv.
+                 Here, the digit X = abs(iinfo[0]) < 10, where iinfo[0] is the nonzero error code
+                 returned by dlarre or dlarrv, respectively.
+   */
+  private void dstemr(char jobz, char range, int n, double d[], double e[], double vl, double vu, int il, int iu,
+                      int m[], double w[], double Z[][], int ldz, int nzc, int isuppz[], boolean tryac[],
+                      double work[], int lwork, int iwork[], int liwork, int info[]) {
+  
+  double minrgp = 1.0E-3;
+  double wl;
+  double wu;
+  double safmin;
+  double eps;
+  double smlnum;
+  double bignum;
+  double rmin;
+  double rmax;
+  double r1[] = new double[1];
+  double r2[] = new double[1];
+  double cs[] = new double[1];
+  double sn[] = new double[1];
+  double scale;
+  double tnrm;
+  double thresh;
+  double workindd[] = new double[n];
+  double workinde2[] = new double[n];
+  double rtol1;
+  double rtol2;
+  boolean wantz;
+  boolean alleig;
+  boolean valeig;
+  boolean indeig;
+  boolean lquery;
+  boolean zquery;
+  int i;
+  int j;
+  int iil;
+  int iiu;
+  int itmp[] = new int[1];
+  int itmp2[] = new int[1];
+  int lwmin;
+  int liwmin;
+  int nzcmin[] = new int[1];
+  int indgrs;
+  int inderr;
+  int indgp;
+  int indd;
+  int inde2;
+  int indwrk;
+  int iinspl;
+  int iindbl;
+  int iindw;
+  int iindwk;
+  int iinfo[] = new int[1];
+       // Test the input parameters.
+  
+        wantz = ((jobz == 'V') || (jobz == 'v'));
+        alleig = ((range == 'A') || (range == 'a'));
+        valeig = ((range == 'V') || (range == 'v'));
+        indeig = ((range == 'I') || (range == 'i'));
+  
+        lquery = ((lwork == -1 ) || (liwork == -1 ));
+        zquery = (nzc == -1);
+
+        // dstemr needs work of size 6*n, iwork of size 3*n.
+        // In addition, dlarre needs work of size 6*n, iwork of size 5*n.
+        // Furthermore, dlarrv needs work of size 12*n, iwork of size 7*n.
+        if (wantz) {
+           lwmin = 18*n;
+           liwmin = 10*n;
+        }
+        else {
+           // need less workspace if only the eigenvalues are wanted
+           lwmin = 12*n;
+           liwmin = 8*n;
+        }
+
+        wl = 0.0;
+        wu = 0.0;
+        iil = 0;
+        iiu = 0;
+
+        if (valeig) {
+           // We do not reference vl, vu in the cases range = 'I','A'
+           // The interval (wl, wu] contains all the wanted eigenvalues.
+           // It is either given by the user or computed in dlarre.
+           wl = vl;
+           wu = vu;
+        }
+        else if (indeig) {
+           // We do not reference il, iu in the cases range = 'V','A'
+           iil = il;
+           iiu = iu;
+        }
+  
+        info[0] = 0;
+        if (!(wantz || ((jobz == 'N') || (jobz == 'n')))) {
+           info[0] = -1;
+        }
+        else if (!(alleig || valeig || indeig)) {
+           info[0] = -2;
+        }
+        else if (n < 0) {
+           info[0] = -3;
+        }
+        else if (valeig && n > 0 && wu <= wl) {
+           info[0] = -7;
+        }
+        else if (indeig && (iil < 1 || iil > n)) {
+           info[0] = -8;
+        }
+        else if (indeig && (iiu < iil || iiu > n)) {
+           info[0] = -9;
+        }
+        else if (ldz < 1 || (wantz && ldz < n)) {
+           info[0] = -13;
+        }
+        else if (lwork < lwmin && !lquery) {
+           info[0] = -17;
+        }
+        else if (liwork < liwmin && !lquery) {
+           info[0] = -19;
+        }
+  
+        // Get machine constants.
+  
+        safmin = ge.dlamch('S');
+        eps = ge.dlamch('P');
+        smlnum = safmin/eps;
+        bignum = 1.0/ smlnum;
+        rmin = Math.sqrt(smlnum);
+        rmax = Math.min(Math.sqrt(bignum), 1.0/Math.sqrt(Math.sqrt(safmin)));
+  
+        if (info[0] == 0 ) {
+           work[0] = lwmin;
+           iwork[0] = liwmin;
+  
+           if (wantz && alleig) {
+              nzcmin[0] = n;
+           }
+           else if (wantz && valeig) {
+              dlarrc( 'T', n, vl, vu, d, e, safmin, nzcmin, itmp, itmp2, info);
+           }
+           else if (wantz && indeig) {
+              nzcmin[0] = iiu-iil+1;
+           }
+           else {
+             // wantz == false;
+              nzcmin[0] = 0;
+           }
+           if (zquery && info[0] == 0) {
+              Z[0][0] = nzcmin[0];
+           }
+           else if (nzc < nzcmin[0] && !zquery) {
+              info[0] = -14;
+           }
+        } // if (info[0] == 0)
+
+        if (info[0] != 0) {
+  
+           MipavUtil.displayError("dstemr had info[0] = " + info[0]);
+  
+           return;
+        }
+        else if (lquery || zquery) {
+           return;
+        }
+  
+        // Handle n = 0, 1, and 2 cases immediately
+  
+        m[0] = 0;
+        if (n == 0) {
+            return;
+        }
+        
+        if (n == 1) {
+           if (alleig || indeig) {
+              m[0] = 1;
+              w[0] = d[0];
+           }
+           else {
+              if (wl < d[0] && wu >= d[0]) {
+                 m[0] = 1;
+                 w[0] = d[0];
+              }
+           }
+           if (wantz && (!zquery)) {
+              Z[0][0] = 1.0;
+              isuppz[0] = 1;
+              isuppz[1] = 1;
+           }
+           return;
+        } // if (n == 1)
+  
+        if (n == 2) {
+           if (!wantz) {
+              ge.dlae2(d[0], e[0], d[1], r1, r2);
+           }
+           else if (wantz && (!zquery)) {
+              ge.dlaev2(d[0], e[0], d[1], r1, r2, cs, sn);
+           }
+           if (alleig ||
+              (valeig && (r2[0] > wl) &&
+                         (r2[0] <= wu)) ||
+              (indeig && (iil == 1)) ) {
+              m[0] = m[0]+1;
+              w[m[0]-1] = r2[0];
+              if (wantz && (!zquery)) {
+                 Z[0][m[0]-1] = -sn[0];
+                 Z[1][m[0]-1] = cs[0];
+                 // Note: At most one of SN and CS can be zero.
+                 if (sn[0] != 0.0) {
+                    if (cs[0] != 0.0) {
+                       isuppz[2*m[0]-2] = 1;
+                       isuppz[2*m[0]-1] = 2;
+                    }
+                    else {
+                       isuppz[2*m[0]-2] = 1;
+                       isuppz[2*m[0]-1] = 1;
+                    }
+                 } // if (sn[0] != 0.0)
+                 else {
+                    isuppz[2*m[0]-2] = 2;
+                    isuppz[2*m[0]-1] = 2;
+                 }
+              } // if (wantz && (!zquery))
+           } // if (alleig ||
+           if (alleig ||
+              (valeig && (r1[0] > wl) &&
+                         (r1[0] <= wu)) ||
+              (indeig && (iiu == 2))) {
+              m[0] = m[0]+1;
+              w[m[0]-1] = r1[0];
+              if (wantz && (!zquery)) {
+                 Z[0][m[0]-1] = cs[0];
+                 Z[1][m[0]-1] = sn[0];
+                 // Note: At most one of sn[0] and cs[0] can be zero.
+                 if (sn[0] != 0.0) {
+                    if (cs[0] != 0.0) {
+                       isuppz[2*m[0]-2] = 1;
+                       isuppz[2*m[0]-1] = 2;
+                    }
+                    else {
+                       isuppz[2*m[0]-2] = 1;
+                       isuppz[2*m[0]-1] = 1;
+                    }
+                 } //  if (sn[0] != 0.0)
+                 else {
+                    isuppz[2*m[0]-2] = 2;
+                    isuppz[2*m[0]-1] = 2;
+                 }
+              } // if (wantz && (!zquery)) 
+           } // if (alleig ||
+           return;
+        } // if (n == 2)
+
+        // Continue with general n
+
+        indgrs = 1;
+        inderr = 2*n + 1;
+        indgp = 3*n + 1;
+        indd = 4*n + 1;
+        inde2 = 5*n + 1;
+        indwrk = 6*n + 1;
+  
+        iinspl = 1;
+        iindbl = n + 1;
+        iindw = 2*n + 1;
+        iindwk = 3*n + 1;
+  
+        //  Scale matrix to allowable range, if necessary.
+        // The allowable range is related to the pivmin parameter; see the
+        // comments in dlarrd.  The preference for scaling small values
+        // up is heuristic; we expect users' matrices not to be close to the
+        // rmax threshold.
+   
+        scale = 1.0;
+        tnrm = ge.dlanst('M', n, d, e);
+        if (tnrm > 0.0 && tnrm < rmin) {
+           scale = rmin / tnrm;
+        }
+        else if (tnrm > rmax) {
+           scale = rmax / tnrm;
+        }
+        if (scale != 1.0) {
+           for (i = 0; i < n; i++) {
+               d[i] *= scale;
+           }
+           for (i = 0; i < n-1; i++) {
+               e[i] *= scale;
+           }
+           tnrm = tnrm*scale;
+           if (valeig) {
+              // If eigenvalues in interval have to be found,
+              // scale (wl, wu] accordingly
+              wl = wl*scale;
+              wu = wu*scale;
+           } // if (valeig)
+        } // if (scale != 1.0)
+  
+        // Compute the desired eigenvalues of the tridiagonal after splitting
+        // into smaller subblocks if the corresponding off-diagonal elements
+        // are small
+        // thresh is the splitting parameter for dlarre
+        // A negative thresh forces the old splitting criterion based on the
+        // size of the off-diagonal. A positive thresh switches to splitting
+        // which preserves relative accuracy.
+   
+        if (tryac[0]) {
+           // Test whether the matrix warrants the more expensive relative approach.
+           dlarrr(n, d, e, iinfo);
+        }
+        else {
+           // The user does not care about relative accurately eigenvalues
+           iinfo[0] = -1;
+        }
+        // Set the splitting criterion
+        if (iinfo[0] == 0) {
+           thresh = eps;
+        }
+        else {
+           thresh = -eps;
+           //  relative accuracy is desired but T does not guarantee it
+           tryac[0] = false;
+        }
+  
+        if (tryac[0]) {
+           // Copy original diagonal, needed to guarantee relative accuracy
+           for (i = 0; i < n; i++) {
+               workindd[i] = d[i];
+           }
+        }
+        // Store the squares of the offdiagonal values of T
+        for (j = 1; j <= n-1; j++) {
+           workinde2[j-1] = e[j-1]*e[j-1];
+        }
+
+        // Set the tolerance parameters for bisection
+        if (!wantz) {
+           // DLARRE computes the eigenvalues to full precision.
+           rtol1 = 4.0 * eps;
+           rtol2 = 4.0 * eps;
+        }
+        else {
+           // dlarre computes the eigenvalues to less than full precision.
+           // dlarrv will refine the eigenvalue approximations, and we can
+           // need less accurate initial bisection in dlarre.
+           // Note: these settings do only affect the subset case and DLARRE
+           rtol1 = Math.sqrt(eps);
+           rtol2 = Math.max(Math.sqrt(eps)*5.0E-3, 4.0 * eps);
+        }
+        /*CALL DLARRE( RANGE, N, WL, WU, IIL, IIU, D, E,
+       $             WORK(INDE2), RTOL1, RTOL2, THRESH, NSPLIT,
+       $             IWORK( IINSPL ), M, W, WORK( INDERR ),
+       $             WORK( INDGP ), IWORK( IINDBL ),
+       $             IWORK( IINDW ), WORK( INDGRS ), PIVMIN,
+       $             WORK( INDWRK ), IWORK( IINDWK ), IINFO )
+        IF( IINFO.NE.0 ) THEN
+           INFO = 10 + ABS( IINFO )
+           RETURN
+        END IF
+  *     Note that if RANGE .NE. 'V', DLARRE computes bounds on the desired
+  *     part of the spectrum. All desired eigenvalues are contained in
+  *     (WL,WU]
 
 
+        IF( WANTZ ) THEN
+  *
+  *        Compute the desired eigenvectors corresponding to the computed
+  *        eigenvalues
+  *
+           CALL DLARRV( N, WL, WU, D, E,
+       $                PIVMIN, IWORK( IINSPL ), M,
+       $                1, M, MINRGP, RTOL1, RTOL2,
+       $                W, WORK( INDERR ), WORK( INDGP ), IWORK( IINDBL ),
+       $                IWORK( IINDW ), WORK( INDGRS ), Z, LDZ,
+       $                ISUPPZ, WORK( INDWRK ), IWORK( IINDWK ), IINFO )
+           IF( IINFO.NE.0 ) THEN
+              INFO = 20 + ABS( IINFO )
+              RETURN
+           END IF
+        ELSE
+  *        DLARRE computes eigenvalues of the (shifted) root representation
+  *        DLARRV returns the eigenvalues of the unshifted matrix.
+  *        However, if the eigenvectors are not desired by the user, we need
+  *        to apply the corresponding shifts from DLARRE to obtain the
+  *        eigenvalues of the original matrix.
+           DO 20 J = 1, M
+              ITMP = IWORK( IINDBL+J-1 )
+              W( J ) = W( J ) + E( IWORK( IINSPL+ITMP-1 ) )
+   20      CONTINUE
+        END IF
+  *
+
+        IF ( TRYRAC ) THEN
+  *        Refine computed eigenvalues so that they are relatively accurate
+  *        with respect to the original matrix T.
+           IBEGIN = 1
+           WBEGIN = 1
+           DO 39  JBLK = 1, IWORK( IINDBL+M-1 )
+              IEND = IWORK( IINSPL+JBLK-1 )
+              IN = IEND - IBEGIN + 1
+              WEND = WBEGIN - 1
+  *           check if any eigenvalues have to be refined in this block
+   36         CONTINUE
+              IF( WEND.LT.M ) THEN
+                 IF( IWORK( IINDBL+WEND ).EQ.JBLK ) THEN
+                    WEND = WEND + 1
+                    GO TO 36
+                 END IF
+              END IF
+              IF( WEND.LT.WBEGIN ) THEN
+                 IBEGIN = IEND + 1
+                 GO TO 39
+              END IF
+
+              OFFSET = IWORK(IINDW+WBEGIN-1)-1
+              IFIRST = IWORK(IINDW+WBEGIN-1)
+              ILAST = IWORK(IINDW+WEND-1)
+              RTOL2 = FOUR * EPS
+              CALL DLARRJ( IN,
+       $                   WORK(INDD+IBEGIN-1), WORK(INDE2+IBEGIN-1),
+       $                   IFIRST, ILAST, RTOL2, OFFSET, W(WBEGIN),
+       $                   WORK( INDERR+WBEGIN-1 ),
+       $                   WORK( INDWRK ), IWORK( IINDWK ), PIVMIN,
+       $                   TNRM, IINFO )
+              IBEGIN = IEND + 1
+              WBEGIN = WEND + 1
+   39      CONTINUE
+        ENDIF
+  *
+  *     If matrix was scaled, then rescale eigenvalues appropriately.
+  *
+        IF( SCALE.NE.ONE ) THEN
+           CALL DSCAL( M, ONE / SCALE, W, 1 )
+        END IF
+  *
+  *     If eigenvalues are not in increasing order, then sort them,
+  *     possibly along with eigenvectors.
+  *
+        IF( NSPLIT.GT.1 ) THEN
+           IF( .NOT. WANTZ ) THEN
+              CALL DLASRT( 'I', M, W, IINFO )
+              IF( IINFO.NE.0 ) THEN
+                 INFO = 3
+                 RETURN
+              END IF
+           ELSE
+              DO 60 J = 1, M - 1
+                 I = 0
+                 TMP = W( J )
+                 DO 50 JJ = J + 1, M
+                    IF( W( JJ ).LT.TMP ) THEN
+                       I = JJ
+                       TMP = W( JJ )
+                    END IF
+   50            CONTINUE
+                 IF( I.NE.0 ) THEN
+                    W( I ) = W( J )
+                    W( J ) = TMP
+                    IF( WANTZ ) THEN
+                       CALL DSWAP( N, Z( 1, I ), 1, Z( 1, J ), 1 )
+                       ITMP = ISUPPZ( 2*I-1 )
+                       ISUPPZ( 2*I-1 ) = ISUPPZ( 2*J-1 )
+                       ISUPPZ( 2*J-1 ) = ITMP
+                       ITMP = ISUPPZ( 2*I )
+                       ISUPPZ( 2*I ) = ISUPPZ( 2*J )
+                       ISUPPZ( 2*J ) = ITMP
+                    END IF
+                 END IF
+   60         CONTINUE
+           END IF
+        ENDIF
+  *
+  *
+        WORK( 1 ) = LWMIN
+        IWORK( 1 ) = LIWMIN*/
+        return;
+  } // dstemr
+
+
+  /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrc.  LAPACK is a software package provided by Univ. of Tennessee,    --
+   -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
+  Contributors:
+  
+   Beresford Parlett, University of California, Berkeley, USA
+   Jim Demmel, University of California, Berkeley, USA
+   Inderjit Dhillon, University of Texas, Austin, USA
+   Osni Marques, LBNL/NERSC, USA
+   Christof Voemel, University of California, Berkeley, USA
+   
+   Find the number of eigenvalues of the symmetric tridiagonal matrix T
+   that are in the interval (vl,vu] if jobt = 'T', and of L D L^T if jobt = 'L'.
+   @param jobt input char
+          = 'T':  Compute Sturm count for matrix T.
+          = 'L':  Compute Sturm count for matrix L D L^T.
+   @param n input int  The order of the matrix.  n > 0.
+   @param vl input double The lower bound for the eigenvalues
+   @param vu input double The upper bound for the eigenvalues
+   @param d input double[] of dimension n
+          jobt = 'T': The n diagonal elements of the tridiagonal matrix T.
+          jobt = 'L': The n diagonal elements of the diagonal matrix D.
+   @param e input double[] of dimension n
+          jobt = 'T': The n-1 offdiagonal elements of the matrix T.
+          jobt = 'L': The n-1 offdiagonal elements of the matrix L.
+   @param pivmin input double  The minimum pivot in the Sturm sequence for T.
+   @param eigcnt output int[] of dimension 1.
+          The number of eigenvalues of the symmetric tridiagonal matrix T
+          that are in the interval (vl,vu]
+   @param lcnt output int[] of dimension  The left negcount of the interval
+   @param rcnt output int[] of dimension  The right negcount of the interval
+   @param info output int[] of dimension 1.
+   */
+  private void dlarrc(char jobt, int n, double vl, double vu, double d[], double e[], double pivmin,
+                      int eigcnt[], int lcnt[], int rcnt[], int info[]) {
+        int i;
+        boolean matt;
+        double lpivot;
+        double rpivot;
+        double sl;
+        double su;
+        double tmp;
+        double tmp2;
+        
+        info[0] = 0;
+        lcnt[0] = 0;
+        rcnt[0] = 0;
+        eigcnt[0] = 0;
+        matt = ((jobt == 'T') || (jobt == 't'));
+
+
+        if (matt) {
+           // Sturm sequence count on T
+           lpivot = d[0] - vl;
+           rpivot = d[0] - vu;
+           if (lpivot <= 0.0) {
+              lcnt[0] = lcnt[0] + 1;
+           }
+           if (rpivot <= 0.0) {
+              rcnt[0] = rcnt[0] + 1;
+           }
+           for (i = 0; i < n-1; i++) {
+              tmp = e[i] * e[i];
+              lpivot =  (d[ i+1 ]-vl ) - tmp/lpivot;
+              rpivot = (d[i+1]-vu) - tmp/rpivot;
+              if (lpivot <= 0.0) {
+                 lcnt[0] = lcnt[0] + 1;
+              }
+              if (rpivot <= 0.0) {
+                 rcnt[0] = rcnt[0] + 1;
+              }
+           } // for (i = 0; i < n-1; i++)
+        } // if (matt)   
+        else { // !matt
+           // Sturm sequence count on L D L^T
+           sl = -vl;
+           su = -vu;
+           for (i = 0; i < n-1; i++) {
+              lpivot = d[i] + sl;
+              rpivot = d[i] + su;
+              if (lpivot <= 0.0) {
+                 lcnt[0] = lcnt[0] + 1;
+              }
+              if (rpivot <= 0.0) {
+                 rcnt[0] = rcnt[0] + 1;
+              }
+              tmp = e[i] * d[i] * e[i];
+  
+              tmp2 = tmp / lpivot;
+              if (tmp2 == 0.0) {
+                 sl =  tmp - vl;
+              }
+              else {
+                 sl = sl * tmp2 - vl;
+              }
+  
+              tmp2 = tmp / rpivot;
+              if (tmp2 == 0.0) {
+                 su = tmp - vu;
+              }
+              else {
+                 su = su * tmp2 - vu;
+              }
+           } // for (i = 0; i < n-1; i++)
+           lpivot = d[n-1] + sl;
+           rpivot = d[n-1] + su;
+           if (lpivot <= 0.0) {
+              lcnt[0] = lcnt[0] + 1;
+           }
+           if (rpivot <= 0.0) {
+              rcnt[0] = rcnt[0] + 1;
+           }
+        } // else !matt
+        eigcnt[0] = rcnt[0] - lcnt[0];
+
+        return;
+  } // dlarrc
+
+  /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrr.  LAPACK is a software package provided by Univ. of Tennessee,    --
+  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
+ Contributors:
+ 
+  Beresford Parlett, University of California, Berkeley, USA
+  Jim Demmel, University of California, Berkeley, USA
+  Inderjit Dhillon, University of Texas, Austin, USA
+  Osni Marques, LBNL/NERSC, USA
+  Christof Voemel, University of California, Berkeley, USA
+  
+  Perform tests to decide whether the symmetric tridiagonal matrix T
+  warrants expensive computations which guarantee high relative accuracy
+  in the eigenvalues.
+  
+  @param n input int  The order of the matrix.  n > 0
+  @param d input double[] of dimension n.
+         The n diagonal elements of the tridiagonal matrix T.
+  @param e (input/output) double[] of dimension n.
+         On entry, the first (n-1) entries contain the subdiagonal elements of the tridiagonal matrix T;
+         e[n-1] is set to zero.
+  @param info output int[] of dimension 1.
+         info[0] = 0 : The matrix warrants computations preserving relative accuracy.
+         info[0] = 1 (default) : The matrix warrants computations guaranteeing only absolute accuracy.
+  */
+  private void dlarrr(int n, double d[], double e[], int info[]) {
+        double relcond = 0.999;
+        int i;
+        boolean yesrel;
+        double eps;
+        double safmin;
+        double smlnum;
+        double rmin;
+        double tmp;
+        double tmp2;
+        double offdig;
+        double offdig2;
+        
+        // As a default, do NOT go for relative-accuracy preserving computations.
+        info[0] = 1;
+
+        safmin = ge.dlamch('S');
+        eps = ge.dlamch('P');
+        smlnum = safmin / eps;
+        rmin = Math.sqrt(smlnum);
+
+        // Tests for relative accuracy
+  
+        // Test for scaled diagonal dominance
+        // Scale the diagonal entries to one and check whether the sum of the
+        // off-diagonals is less than one
+   
+        // The sdd relative error bounds have a 1/(1- 2*x) factor in them,
+        // x = max(offdig, offdig2), so when x is close to 1/2, no relative
+        // accuracy is promised.  In the notation of the code fragment below,
+        // 1/(1 - (offdig + offdig2)) is the condition number.
+        // We don't think it is worth going into "sdd mode" unless the relative
+        // condition number is reasonable, not 1/macheps.
+        // The threshold should be compatible with other thresholds used in the
+        // code. We set  offdig + offdig2 <= .999 =: relcond, it corresponds
+        // to losing at most 3 decimal digits: 1 / (1 - (offdig + offdig2)) <= 1000
+        // instead of the current offdig + offdig2 < 1
+  
+        yesrel = true;
+        offdig = 0.0;
+        tmp = Math.sqrt(Math.abs(d[0]));
+        if (tmp < rmin) {
+            yesrel = false;
+        }
+        if (yesrel) {
+            for (i = 1; i < n; i++) {
+               tmp2 = Math.sqrt(Math.abs(d[i]));
+               if (tmp2 < rmin) {
+                   yesrel = false;
+               }
+               if (!yesrel) {
+                   break;
+               }
+               offdig2 = Math.abs(e[i-1])/(tmp*tmp2);
+               if (offdig+offdig2 >= relcond) {
+                   yesrel = false;
+               }
+               if (!yesrel) {
+                   break;
+               }
+               tmp = tmp2;
+               offdig = offdig2;
+            } // if (i = 1; i < n; i++)
+        } // if (yesrel)
+
+        if (yesrel) {
+           info[0] = 0;
+           return;
+        }
+  
+
+  
+  //      *** MORE TO BE IMPLEMENTED ***
+  
+
+  
+  //    Test if the lower bidiagonal matrix L from T = L D L^T
+  //    (zero shift facto) is well conditioned
+  
+
+  
+  //    Test if the upper bidiagonal matrix U from T = U D U^T
+  //    (zero shift facto) is well conditioned.
+  //    In this case, the matrix needs to be flipped and, at the end
+  //    of the eigenvector computation, the flip needs to be applied
+  //    to the computed eigenvectors (and the support)
+  
+
+  
+        return;
+  } // dlarrr
 
 
 
