@@ -380,7 +380,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
 
         JPanel mainPanel = new JPanel(new BorderLayout()); // everything gets placed on this panel
         
-        setTitle("Swap "+mode.getTitle());
+        setTitle("Swap "+mode.getTitle()+"s");
         setForeground(Color.black);
         
         GuiBuilder gui = new GuiBuilder(this);
