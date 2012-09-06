@@ -11698,7 +11698,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            of 5 of overflow. Underflow is harmless if the input data is 0 or exceeds underflow_threshold /
      *            macheps.
      */
-    private void dlae2(final double a, final double b, final double c, final double[] rt1, final double[] rt2) {
+    public void dlae2(final double a, final double b, final double c, final double[] rt1, final double[] rt2) {
         double ab;
         double acmn;
         double acmx;
@@ -11772,7 +11772,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            accurate to a few ulps barring over/underflow. Overflow if possible only if rt1[0] is within a factor
      *            of 5 of overflow. Underflow is harmless if the input data is 0 or exceeds underflow_threshold/macheps.
      */
-    private void dlaev2(final double a, final double b, final double c, final double[] rt1, final double[] rt2,
+    public void dlaev2(final double a, final double b, final double c, final double[] rt1, final double[] rt2,
             final double[] cs1, final double[] sn1) {
         int sgn1;
         int sgn2;
@@ -14680,7 +14680,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * 
      * @return double
      */
-    private double dlanst(final char norm, final int n, final double[] d, final double[] e) {
+    public double dlanst(final char norm, final int n, final double[] d, final double[] e) {
         int i;
         double anorm = 0.0;
         final double[] scale = new double[1];
@@ -17978,7 +17978,7 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *            on id.
      * @param info output int[] = 0: successful exit < 0: If info = -i, the i-th argument had an illegal value
      */
-    private void dlasrt(final char id, final int n, final double[] d, final int[] info) {
+    public void dlasrt(final char id, final int n, final double[] d, final int[] info) {
         final int select = 20;
         int dir;
         int endd;
