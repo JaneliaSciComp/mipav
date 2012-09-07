@@ -29,7 +29,7 @@ import javax.swing.table.DefaultTableModel;
  * Creates the dialog for swapping slices/volumes. Allows 3D or 4D images.
  *
  * @author   Justin Senseney
- * @version  v1 2012
+ * @version  v0.9 2012
  */
 public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery {
 

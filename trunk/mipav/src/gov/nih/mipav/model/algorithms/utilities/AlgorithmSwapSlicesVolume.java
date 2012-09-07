@@ -6,20 +6,19 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.JDialogSwapSlicesVolumes.SwapMode;
 
-import ij.io.FileInfo;
-
 import java.io.*;
 
 import java.util.*;
 
 
 /**
- * <p>Title: AlgorithmExtractIndividualSlices</p>
+ * <p>Title: AlgorithmSwapSlicesVolume</p>
  *
- * <p>Description: Extracts individual slices from 3D or 4D images and opens each slice in its own Frame</p>
+ * <p>Description: Allows user to re-slice/re-volume and associates fileInfo.  This allows for slice/volume duplication,
+ * deletion, or insertion. </p>
  *
  * @author   Justin Senseney
- * @version  1.0
+ * @version  0.9
  */
 public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
@@ -53,10 +52,10 @@ public class AlgorithmSwapSlicesVolume extends AlgorithmBase {
 
     /**
      * Import source and destination images into the class.
-     * @param destImage 
-     *
-     * @param  srcImage      source image (image to extract from)
-     * @param  removeSlices  list of booleans for slices that should be extracted
+     * @param destImage     destination image
+     * @param srcImage      source image (image to extract from)
+     * @param sliceRenum    list of locations for slices that should be extracted/moved
+     * @param mode          type of swapping operation
      */
     public AlgorithmSwapSlicesVolume(ModelImage destImage, SwapMode mode, int[][] sliceRenum, ModelImage srcImage) {
         super(destImage, srcImage);
