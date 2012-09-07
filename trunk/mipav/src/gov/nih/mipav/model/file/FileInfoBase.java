@@ -7,6 +7,7 @@ import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.dialogs.*;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 
 
@@ -22,7 +23,7 @@ import java.util.ArrayList;
  * </p>
  * 
  * <p>
- * 1. fixing (making consistance what to do when null pointers encountered. see getStartLocation and getUnitsOfMeasure
+ * 1. fixing (making consistent what to do when null pointers encountered. see getStartLocation and getUnitsOfMeasure
  * </p>
  * 
  * @version 0.9 June 30, 1998
@@ -914,6 +915,23 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         fileFormat = format;
         fileSuffix = FileUtility.getExtension(name);
+    }
+    
+    /**
+     * Internal constructor for clone usage.
+     */
+    protected FileInfoBase(FileInfoBase copy) {
+       Class c = copy.getClass();
+       Field[] f = c.getDeclaredFields();
+       for(int i=0; i<f.length; i++) {
+           try {
+            f[i].set(this, f[i].get(copy));
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        }
+       }
     }
 
     // ~ Methods
