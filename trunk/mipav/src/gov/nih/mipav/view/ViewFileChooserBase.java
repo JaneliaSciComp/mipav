@@ -18,7 +18,7 @@ import javax.swing.event.*;
 
 
 /**
- * DOCUMENT ME!
+ * Encapsulates a JFileChooser with MIPAV related components.
  */
 public class ViewFileChooserBase {
 
@@ -38,11 +38,8 @@ public class ViewFileChooserBase {
     /** DOCUMENT ME! */
     protected FileDialog dialog = null;
 
-    /** DOCUMENT ME! */
-    protected String directory;
-
-    /** DOCUMENT ME! */
-    protected String fileName;
+    /** String locations */
+    protected String directory, fileName;
 
     /** DOCUMENT ME! */
     protected File openedFile;
@@ -54,11 +51,8 @@ public class ViewFileChooserBase {
     /** DOCUMENT ME! */
     private JPanel accessoryPanel = new JPanel();
 
-    /** DOCUMENT ME! */
-    private JButton addButton;
-
-    /** DOCUMENT ME! */
-    private JButton aliasButton;
+    /** Selection buttons */
+    private JButton addButton, aliasButton;
 
     /** DOCUMENT ME! */
     private JTextField aliasField;
@@ -84,11 +78,8 @@ public class ViewFileChooserBase {
     /** DOCUMENT ME! */
     private JCheckBox multiBox = null;
 
-    /** DOCUMENT ME! */
-    private int originalDismissDelay;
-
-    /** DOCUMENT ME! */
-    private int originalInitialDelay;
+    /** Delay types */
+    private int originalDismissDelay, originalInitialDelay;
 
     /** DOCUMENT ME! */
     private JPanel panel = new JPanel();

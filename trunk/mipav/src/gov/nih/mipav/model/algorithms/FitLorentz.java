@@ -12,7 +12,7 @@ import gov.nih.mipav.view.*;
  *
  * @author   senseneyj
  * @see      NLConstrainedEngine
- * @version  0.1
+ * @version  1.0
  */
 public class FitLorentz extends NLFittedFunction {	
 	
@@ -33,6 +33,7 @@ public class FitLorentz extends NLFittedFunction {
     /**Gamma parameter*/
     private double gamma;
     
+    /** Iterations performed */
     private int iters;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -57,8 +58,6 @@ public class FitLorentz extends NLFittedFunction {
         // internalScaling = true;
         // Suppress diagnostic messages
         outputMes = false;
-        
-        testData();
     }
 
     /**
@@ -81,11 +80,7 @@ public class FitLorentz extends NLFittedFunction {
         // all parameters
         // bounds = 2 means different lower and upper bounds
         // for all parameters
-        
-        // The default is internalScaling = false
-        // To make internalScaling = true and have the columns of the
-        // Jacobian scaled to have unit length include the following line.
-        // internalScaling = true;
+
         // Suppress diagnostic messages
         outputMes = false;    
         
@@ -141,7 +136,6 @@ public class FitLorentz extends NLFittedFunction {
     /**
      * Apply small Gaussian kernel to smooth out data.  Note should not be called if doing data comparison.
      */
-    @SuppressWarnings("unused")
     private double[] applyKernel() {
     	
         int size = 7;
@@ -388,17 +382,11 @@ public class FitLorentz extends NLFittedFunction {
     }
     
     public void fitToFunction(final double[] a, final double[] residuals, final double[][] covarMat) {
-    	// not used
-    }
-
-    /**
-     * Test data to test fitting of gaussian.
-     */
-    private void testData() {
+    	// not used since explicit derivs are calculated, see driver()
     }
     
     /**
-     * Gaussian evaluated at a point with given parameters
+     * Lorentz distribution evaluated at a point with given parameters
      */
     private double lorentz(double x) {
     	double exp = -Math.pow(x-xInit, .5) / (Math.pow(gamma, 3));
@@ -423,7 +411,7 @@ public class FitLorentz extends NLFittedFunction {
     /**
      * Partial derivative of Lorentz distribution with respect to x.
      */
-    private double dLdxInit(double x) {
+    private double dLdx(double x) {
     	double exp = -.5*Math.pow(x-xInit, -.5) / (Math.pow(gamma, 3));
     	
     	double coeff = (amp * (x-xInit))/(Math.pow(gamma, 2));
@@ -453,7 +441,7 @@ public class FitLorentz extends NLFittedFunction {
     	Matrix jacobian = new Matrix(dataEnd - dataStart, 3);
     	for(int i=dataStart; i<dataEnd; i++) {
     		jacobian.set(i-dataStart, 0, dLdA(xSeries[i]));
-    		jacobian.set(i-dataStart, 1, dLdxInit(xSeries[i]));
+    		jacobian.set(i-dataStart, 1, dLdx(xSeries[i]));
     		jacobian.set(i-dataStart, 2, dLdgamma(xSeries[i]));
     	}
     	
