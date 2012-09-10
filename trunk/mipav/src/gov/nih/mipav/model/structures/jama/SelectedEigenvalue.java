@@ -6748,7 +6748,7 @@ $                   INFO )*/
       int ib;
       int idiscl;
       int idiscu;
-      int im;
+      int im[] = new int[1];
       int jee;
       int j;
       int ie;
@@ -6758,8 +6758,17 @@ $                   INFO )*/
       int iinfo[] = new int[1];
       int nval[];
       int NAB[][];
+      int index;
+      int iworkaux[];
+      int iwoff;
+      int jdisc;
+      int iw;
       double AB[][];
       double c[];
+      double daux[];
+      double eaux[];
+      double e2aux[];
+      double workaux[];
       boolean ncnvrg;
       boolean toofew;
       double eps;
@@ -6769,8 +6778,8 @@ $                   INFO )*/
       double spdiam;
       double rtoli;
       double atoli;
-      double wlu;
-      double wul;
+      double wlu = 0.0;
+      double wul = 0.0;
       double disc;
       double tmp1;
       double L1;
@@ -6893,7 +6902,7 @@ $                   INFO )*/
         // eigenvalues.
         atoli = fudge*2.0*uflow + fudge*2.0*pivmin;
 
-        /*if (irange == indrng) {
+        if (irange == indrng) {
 
            // range ='I': Compute an interval containing eigenvalues
            //il through iu. The initial interval [gl,gu] from the global
@@ -6944,355 +6953,416 @@ $                   INFO )*/
            work[n+4] = c[0];
            work[n+5] = c[1];
            if (iinfo[0] != 0) {
-              info[0] = IINFO
-              RETURN
-           END IF
-  *        On exit, output intervals may not be ordered by ascending negcount
-           IF( IWORK( 6 ).EQ.IU ) THEN
-              WL = WORK( N+1 )
-              WLU = WORK( N+3 )
-              NWL = IWORK( 1 )
-              WU = WORK( N+4 )
-              WUL = WORK( N+2 )
-              NWU = IWORK( 4 )
-           ELSE
-              WL = WORK( N+2 )
-              WLU = WORK( N+4 )
-              NWL = IWORK( 2 )
-              WU = WORK( N+3 )
-              WUL = WORK( N+1 )
-              NWU = IWORK( 3 )
-           END IF
-  *        On exit, the interval [WL, WLU] contains a value with negcount NWL,
-  *        and [WUL, WU] contains a value with negcount NWU.
-           IF( NWL.LT.0 .OR. NWL.GE.N .OR. NWU.LT.1 .OR. NWU.GT.N ) THEN
-              INFO = 4
-              RETURN
-           END IF
+              info[0] = iinfo[0];
+              return;
+           }
+          //  On exit, output intervals may not be ordered by ascending negcount
+           if (iwork[5] == iu) {
+              wl[0] = work[n];
+              wlu = work[n+2];
+              nwl = iwork[0];
+              wu[0] = work[n+3];
+              wul = work[n+1];
+              nwu = iwork[3];
+           }
+           else {
+              wl[0] = work[n+1];
+              wlu = work[n+3];
+              nwl = iwork[1];
+              wu[0] = work[n+2];
+              wul = work[n];
+              nwu = iwork[2];
+           }
+           // On exit, the interval [wl, wlu] contains a value with negcount nwl,
+           // and [wul, wu] contains a value with negcount NWUnwu.
+           if (nwl < 0 || nwl >= n || nwu < 1 || nwu > n) {
+              info[0] = 4;
+              return;
+           }
         } // if (irange == indrng)
         else if (irange == valrng) {
-           WL = VL
-           WU = VU
+           wl[0] = vl;
+           wu[0] = vu;
         }
         else if (irange == allrng) {
-           WL = GL
-           WU = GU
+           wl[0] = gl;
+           wu[0] = gu;
         }
 
 
 
-  *     Find Eigenvalues -- Loop Over blocks and recompute NWL and NWU.
-  *     NWL accumulates the number of eigenvalues .le. WL,
-  *     NWU accumulates the number of eigenvalues .le. WU
-        M = 0
-        IEND = 0
-        INFO = 0
-        NWL = 0
-        NWU = 0
-  *
-        DO 70 JBLK = 1, NSPLIT
-           IOFF = IEND
-           IBEGIN = IOFF + 1
-           IEND = ISPLIT( JBLK )
-           IN = IEND - IOFF
-  *
-           IF( IN.EQ.1 ) THEN
-  *           1x1 block
-              IF( WL.GE.D( IBEGIN )-PIVMIN )
-       $         NWL = NWL + 1
-              IF( WU.GE.D( IBEGIN )-PIVMIN )
-       $         NWU = NWU + 1
-              IF( IRANGE.EQ.ALLRNG .OR.
-       $           ( WL.LT.D( IBEGIN )-PIVMIN
-       $             .AND. WU.GE. D( IBEGIN )-PIVMIN ) ) THEN
-                 M = M + 1
-                 W( M ) = D( IBEGIN )
-                 WERR(M) = ZERO
-  *              The gap for a single block doesn't matter for the later
-  *              algorithm and is assigned an arbitrary large value
-                 IBLOCK( M ) = JBLK
-                 INDEXW( M ) = 1
-              END IF
+        // Find Eigenvalues -- Loop Over blocks and recompute nwl and nwu.
+        // nwl accumulates the number of eigenvalues <= wl
+        // nwu accumulates the number of eigenvalues <= wu
+        m[0] = 0;
+        iend = 0;
+        info[0] = 0;
+        nwl = 0;
+        nwu = 0;
+  
+        for (jblk = 1; jblk <= nsplit; jblk++) {
+           ioff = iend;
+           ibegin = ioff + 1;
+           iend = isplit[jblk-1];
+           in = iend - ioff;
+ 
+           if (in == 1) {
+              // 1x1 block
+              if (wl[0] >= d[ibegin-1]-pivmin) {
+                 nwl = nwl + 1;
+              }
+              if (wu[0] >= d[ibegin-1]-pivmin) {
+                 nwu = nwu + 1;
+              }
+              if (irange == allrng ||
+                   (wl[0] < d[ibegin-1]-pivmin
+                     && wu[0] >= d[ibegin-1]-pivmin ) ) {
+                 m[0] = m[0] + 1;
+                 w[m[0]-1] = d[ibegin-1];
+                 werr[m[0]-1] = 0.0;
+                 // The gap for a single block doesn't matter for the later
+                 // algorithm and is assigned an arbitrary large value
+                 iblock[m[0]-1] = jblk;
+                 indexw[m[0]-1] = 1;
+              }
 
-  *        Disabled 2x2 case because of a failure on the following matrix
-  *        RANGE = 'I', IL = IU = 4
-  *          Original Tridiagonal, d = [
-  *           -0.150102010615740E+00
-  *           -0.849897989384260E+00
-  *           -0.128208148052635E-15
-  *            0.128257718286320E-15
-  *          ];
-  *          e = [
-  *           -0.357171383266986E+00
-  *           -0.180411241501588E-15
-  *           -0.175152352710251E-15
-  *          ];
-  *
-  *         ELSE IF( IN.EQ.2 ) THEN
-  **           2x2 block
-  *            DISC = SQRT( (HALF*(D(IBEGIN)-D(IEND)))**2 + E(IBEGIN)**2 )
-  *            TMP1 = HALF*(D(IBEGIN)+D(IEND))
-  *            L1 = TMP1 - DISC
-  *            IF( WL.GE. L1-PIVMIN )
-  *     $         NWL = NWL + 1
-  *            IF( WU.GE. L1-PIVMIN )
-  *     $         NWU = NWU + 1
-  *            IF( IRANGE.EQ.ALLRNG .OR. ( WL.LT.L1-PIVMIN .AND. WU.GE.
-  *     $          L1-PIVMIN ) ) THEN
-  *               M = M + 1
-  *               W( M ) = L1
-  **              The uncertainty of eigenvalues of a 2x2 matrix is very small
-  *               WERR( M ) = EPS * ABS( W( M ) ) * TWO
-  *               IBLOCK( M ) = JBLK
-  *               INDEXW( M ) = 1
-  *            ENDIF
-  *            L2 = TMP1 + DISC
-  *            IF( WL.GE. L2-PIVMIN )
-  *     $         NWL = NWL + 1
-  *            IF( WU.GE. L2-PIVMIN )
-  *     $         NWU = NWU + 1
-  *            IF( IRANGE.EQ.ALLRNG .OR. ( WL.LT.L2-PIVMIN .AND. WU.GE.
-  *     $          L2-PIVMIN ) ) THEN
-  *               M = M + 1
-  *               W( M ) = L2
-  **              The uncertainty of eigenvalues of a 2x2 matrix is very small
-  *               WERR( M ) = EPS * ABS( W( M ) ) * TWO
-  *               IBLOCK( M ) = JBLK
-  *               INDEXW( M ) = 2
-  *            ENDIF
-           ELSE
-  *           General Case - block of size IN >= 2
-  *           Compute local Gerschgorin interval and use it as the initial
-  *           interval for DLAEBZ
-              GU = D( IBEGIN )
-              GL = D( IBEGIN )
-              TMP1 = ZERO
+           // Disabled 2x2 case because of a failure on the following matrix
+           // range = 'I', il = iu = 4
+             // Original Tridiagonal, d = [
+             //  -0.150102010615740E+00
+             //  -0.849897989384260E+00
+             //  -0.128208148052635E-15
+             //  0.128257718286320E-15
+            // ];
+             // e = [
+             // -0.357171383266986E+00
+             //  -0.180411241501588E-15
+             // -0.175152352710251E-15
+            // ];
+           //  } // if (in == 1)
+           // else if (in == 2) {
+             // 2x2 block
+             //  DISC = SQRT( (HALF*(D(IBEGIN)-D(IEND)))**2 + E(IBEGIN)**2 )
+             //  TMP1 = HALF*(D(IBEGIN)+D(IEND))
+             //   L1 = TMP1 - DISC
+             //  IF( WL.GE. L1-PIVMIN )
+                 //  NWL = NWL + 1
+              //  IF( WU.GE. L1-PIVMIN )
+                 // NWU = NWU + 1
+              // IF( IRANGE.EQ.ALLRNG .OR. ( WL.LT.L1-PIVMIN .AND. WU.GE.
+                  // L1-PIVMIN ) ) THEN
+                 // M = M + 1
+                 // W( M ) = L1
+                  // The uncertainty of eigenvalues of a 2x2 matrix is very small
+                 // WERR( M ) = EPS * ABS( W( M ) ) * TWO
+                 // IBLOCK( M ) = JBLK
+                 // INDEXW( M ) = 1
+              // ENDIF
+              // L2 = TMP1 + DISC
+              // IF( WL.GE. L2-PIVMIN )
+                 // NWL = NWL + 1
+              // IF( WU.GE. L2-PIVMIN )
+                 // NWU = NWU + 1
+              // IF( IRANGE.EQ.ALLRNG .OR. ( WL.LT.L2-PIVMIN .AND. WU.GE.
+                  // L2-PIVMIN ) ) THEN
+                 // M = M + 1
+                //  W( M ) = L2
+                 // The uncertainty of eigenvalues of a 2x2 matrix is very small
+                 // WERR( M ) = EPS * ABS( W( M ) ) * TWO
+                 // IBLOCK( M ) = JBLK
+                 // INDEXW( M ) = 2
+               // ENDIF
+           } // if (in == 1)
+           else {
+              // General Case - block of size IN >= 2
+              // Compute local Gerschgorin interval and use it as the initial
+              // interval for dlaebz
+              gu = d[ibegin-1];
+              gl = d[ibegin-1];
+              tmp1 = 0.0;
 
-              DO 40 J = IBEGIN, IEND
-                 GL =  MIN( GL, GERS( 2*J - 1))
-                 GU = MAX( GU, GERS(2*J) )
-     40       CONTINUE
-  *           [JAN/28/2009]
-  *           change SPDIAM by TNORM in lines 2 and 3 thereafter
-  *           line 1: remove computation of SPDIAM (not useful anymore)
-  *           SPDIAM = GU - GL
-  *           GL = GL - FUDGE*SPDIAM*EPS*IN - FUDGE*PIVMIN
-  *           GU = GU + FUDGE*SPDIAM*EPS*IN + FUDGE*PIVMIN
-              GL = GL - FUDGE*TNORM*EPS*IN - FUDGE*PIVMIN
-              GU = GU + FUDGE*TNORM*EPS*IN + FUDGE*PIVMIN
-  *
-              IF( IRANGE.GT.1 ) THEN
-                 IF( GU.LT.WL ) THEN
-  *                 the local block contains none of the wanted eigenvalues
-                    NWL = NWL + IN
-                    NWU = NWU + IN
-                    GO TO 70
-                 END IF
-  *              refine search interval if possible, only range (WL,WU] matters
-                 GL = MAX( GL, WL )
-                 GU = MIN( GU, WU )
-                 IF( GL.GE.GU )
-       $            GO TO 70
-              END IF
+              for (j = ibegin; j <= iend; j++) {
+                 gl =  Math.min(gl, gers[2*j-2]);
+                 gu = Math.max(gu, gers[2*j-1]);
+              } // for (j = ibegin; j <= iend; j++)
+              // [JAN/28/2009]
+              // change spdiam by tnorm in lines 2 and 3 thereafter
+              // line 1: remove computation of SPDIAM (not useful anymore)
+              // SPDIAM = GU - GL
+              // GL = GL - FUDGE*SPDIAM*EPS*IN - FUDGE*PIVMIN
+              // GU = GU + FUDGE*SPDIAM*EPS*IN + FUDGE*PIVMIN
+              gl = gl - fudge*tnorm*eps*in - fudge*pivmin;
+              gu = gu + fudge*tnorm*eps*in + fudge*pivmin;
+   
+              if (irange > 1) {
+                 if (gu < wl[0]) {
+                    // the local block contains none of the wanted eigenvalues
+                    nwl = nwl + in;
+                    nwu = nwu + in;
+                    continue;
+                 } // if (gu < wl[0])
+                 // refine search interval if possible, only range (wl[0],wu[0]] matters
+                 gl = Math.max(gl, wl[0]);
+                 gu = Math.min(gu, wu[0]);
+                 if (gl >= gu) {
+                    continue;
+                 }
+              } // if (irange > 1)
 
-  *           Find negcount of initial interval boundaries GL and GU
-              WORK( N+1 ) = GL
-              WORK( N+IN+1 ) = GU
-              CALL DLAEBZ( 1, 0, IN, IN, 1, NB, ATOLI, RTOLI, PIVMIN,
-       $                   D( IBEGIN ), E( IBEGIN ), E2( IBEGIN ),
-       $                   IDUMMA, WORK( N+1 ), WORK( N+2*IN+1 ), IM,
-       $                   IWORK, W( M+1 ), IBLOCK( M+1 ), IINFO )
-              IF( IINFO .NE. 0 ) THEN
-                 INFO = IINFO
-                 RETURN
-              END IF
-  *
-              NWL = NWL + IWORK( 1 )
-              NWU = NWU + IWORK( IN+1 )
-              IWOFF = M - IWORK( 1 )
+              // Find negcount of initial interval boundaries gl and gu
+              work[n] = gl;
+              work[n+in] = gu;
+              daux = new double[in];
+              for (i = 0; i < in; i++) {
+                  daux[i] = d[ibegin-1+i];
+              }
+              eaux = new double[in];
+              for (i = 0; i < in; i++) {
+                  eaux[i] = e[ibegin-1+i];
+              }
+              e2aux = new double[in];
+              for (i = 0; i < in; i++) {
+                  e2aux[i] = e2[ibegin-1+i];
+              }
+              AB = new double[in][2];
+              index = 0;
+              for (j = 0; j < 2; j++) {
+                  for (i = 0; i < in; i++) {
+                      AB[i][j] = work[n+index];
+                      index++;
+                  }
+              }
+              c = new double[in];
+              for (i = 0; i < in; i++) {
+                  c[i] = work[n+2*in+i];
+              }
+              NAB = new int[in][2];
+              index = 0;
+              for (j = 0; j < 2; j++) {
+                  for (i = 0; i < in; i++) {
+                      NAB[i][j] = iwork[index++];
+                  }
+              }
+              workaux = new double[in];
+              iworkaux = new int[in];
+              dlaebz( 1, 0, in, in, 1, nb, atoli, rtoli, pivmin,
+                           daux, eaux, e2aux, idumma, AB, c, im,
+                           NAB, workaux, iworkaux, iinfo);
+              index = 0;
+              for (j = 0; j < 2; j++) {
+                  for (i = 0; i < in; i++) {
+                      iwork[index++] = NAB[i][j];
+                  }
+              }
+              if (iinfo[0] != 0) {
+                 info[0] = iinfo[0];
+                 return;
+              }
+   
+              nwl = nwl + iwork[0];
+              nwu = nwu + iwork[in];
+              iwoff = m[0] - iwork[0];
 
-  *           Compute Eigenvalues
-              ITMAX = INT( ( LOG( GU-GL+PIVMIN )-LOG( PIVMIN ) ) /
-       $              LOG( TWO ) ) + 2
-              CALL DLAEBZ( 2, ITMAX, IN, IN, 1, NB, ATOLI, RTOLI, PIVMIN,
-       $                   D( IBEGIN ), E( IBEGIN ), E2( IBEGIN ),
-       $                   IDUMMA, WORK( N+1 ), WORK( N+2*IN+1 ), IOUT,
-       $                   IWORK, W( M+1 ), IBLOCK( M+1 ), IINFO )
-              IF( IINFO .NE. 0 ) THEN
-                 INFO = IINFO
-                 RETURN
-              END IF
-  *
-  *           Copy eigenvalues into W and IBLOCK
-  *           Use -JBLK for block number for unconverged eigenvalues.
-  *           Loop over the number of output intervals from DLAEBZ
-              DO 60 J = 1, IOUT
-  *              eigenvalue approximation is middle point of interval
-                 TMP1 = HALF*( WORK( J+N )+WORK( J+IN+N ) )
-  *              semi length of error interval
-                 TMP2 = HALF*ABS( WORK( J+N )-WORK( J+IN+N ) )
-                 IF( J.GT.IOUT-IINFO ) THEN
-  *                 Flag non-convergence.
-                    NCNVRG = .TRUE.
-                    IB = -JBLK
-                 ELSE
-                    IB = JBLK
-                 END IF
-                 DO 50 JE = IWORK( J ) + 1 + IWOFF,
-       $                 IWORK( J+IN ) + IWOFF
-                    W( JE ) = TMP1
-                    WERR( JE ) = TMP2
-                    INDEXW( JE ) = JE - IWOFF
-                    IBLOCK( JE ) = IB
-     50          CONTINUE
-     60       CONTINUE
-  *
-              M = M + IM
-           END IF
-     70 CONTINUE
+              // Compute Eigenvalues
+              itmax = (int)( (Math.log(gu-gl+pivmin)-Math.log(pivmin) ) /
+                      Math.log(2.0) ) + 2;
+              dlaebz( 2, itmax, in, in, 1, nb, atoli, rtoli, pivmin,
+                      daux, eaux, e2aux, idumma, AB, c, iout,
+                      NAB, workaux, iworkaux, iinfo);
+              index = 0;
+              for (j = 0; j < 2; j++) {
+                  for (i = 0; i < in; i++) {
+                      work[n+index] = AB[i][j];
+                      index++;
+                  }
+              }
+              for (i = 0; i < in; i++) {
+                  work[n+2*in+i] = c[i];
+              }
+              index = 0;
+              for (j = 0; j < 2; j++) {
+                  for (i = 0; i < in; i++) {
+                      iwork[index++] = NAB[i][j];
+                  }
+              }
+              if (iinfo[0] != 0) {
+                 info[0] = iinfo[0];
+                 return;
+              }
+   
+              // Copy eigenvalues into w and iblock
+              // Use -jblk for block number for unconverged eigenvalues.
+              // Loop over the number of output intervals from dlaebz
+              for (j = 1; j <= iout[0]; j++) {
+                 // eigenvalue approximation is middle point of interval
+                 tmp1 = 0.5*(work[j+n-1]+work[j+in+n-1]);
+                 // semi length of error interval
+                 tmp2 = 0.5*Math.abs(work[j+n-1]-work[j+in+n-1]);
+                 if (j > iout[0] - iinfo[0]) {
+                    // Flag non-convergence.
+                    ncnvrg = true;
+                    ib = -jblk;
+                 }
+                 else {
+                    ib = jblk;
+                 }
+                 for (je = iwork[j-1] + 1 + iwoff; je <= iwork[j+in-1] + iwoff; je++) {
+                    w[je-1] = tmp1;
+                    werr[je-1] = tmp2;
+                    indexw[je-1] = je - iwoff;
+                    iblock[je-1] = ib;
+                 } // for (je = iwork[j-1] + 1 + iwoff; je <= iwork[j+in-1] + iwoff; je++)
+              } // for (j = 1; j <= iout[0]; j++)
+   
+              m[0] = m[0] + im[0];
+           } // else in >= 2
+        } // for (jblk = 1; jblk <= nsplit; jblk++)
 
-  *     If RANGE='I', then (WL,WU) contains eigenvalues NWL+1,...,NWU
-  *     If NWL+1 < IL or NWU > IU, discard extra eigenvalues.
-        IF( IRANGE.EQ.INDRNG ) THEN
-           IDISCL = IL - 1 - NWL
-           IDISCU = NWU - IU
-  *
-           IF( IDISCL.GT.0 ) THEN
-              IM = 0
-              DO 80 JE = 1, M
-  *              Remove some of the smallest eigenvalues from the left so that
-  *              at the end IDISCL =0. Move all eigenvalues up to the left.
-                 IF( W( JE ).LE.WLU .AND. IDISCL.GT.0 ) THEN
-                    IDISCL = IDISCL - 1
-                 ELSE
-                    IM = IM + 1
-                    W( IM ) = W( JE )
-                    WERR( IM ) = WERR( JE )
-                    INDEXW( IM ) = INDEXW( JE )
-                    IBLOCK( IM ) = IBLOCK( JE )
-                 END IF
-   80         CONTINUE
-              M = IM
-           END IF
-           IF( IDISCU.GT.0 ) THEN
-  *           Remove some of the largest eigenvalues from the right so that
-  *           at the end IDISCU =0. Move all eigenvalues up to the left.
-              IM=M+1
-              DO 81 JE = M, 1, -1
-                 IF( W( JE ).GE.WUL .AND. IDISCU.GT.0 ) THEN
-                    IDISCU = IDISCU - 1
-                 ELSE
-                    IM = IM - 1
-                    W( IM ) = W( JE )
-                    WERR( IM ) = WERR( JE )
-                    INDEXW( IM ) = INDEXW( JE )
-                    IBLOCK( IM ) = IBLOCK( JE )
-                 END IF
-   81         CONTINUE
-              JEE = 0
-              DO 82 JE = IM, M
-                 JEE = JEE + 1
-                 W( JEE ) = W( JE )
-                 WERR( JEE ) = WERR( JE )
-                 INDEXW( JEE ) = INDEXW( JE )
-                 IBLOCK( JEE ) = IBLOCK( JE )
-   82         CONTINUE
-              M = M-IM+1
-           END IF
+        // If range ='I', then (wl[0],wu[0]) contains eigenvalues nwl+1,...,nwu
+        // If nwl+1 < il or nwu > iu, discard extra eigenvalues.
+        if (irange == indrng) {
+           idiscl = il - 1 - nwl;
+           idiscu = nwu - iu;
+  
+           if (idiscl > 0) {
+              im[0] = 0;
+              for (je = 1; je <= m[0]; je++) {
+                 // Remove some of the smallest eigenvalues from the left so that
+                 // at the end idiscl =0. Move all eigenvalues up to the left.
+                 if (w[je-1] <= wlu && idiscl > 0) {
+                    idiscl = idiscl - 1;
+                 }
+                 else {
+                    im[0] = im[0] + 1;
+                    w[im[0]-1] = w[je-1];
+                    werr[im[0]-1] = werr[je-1];
+                    indexw[im[0]-1] = indexw[je-1];
+                    iblock[im[0]-1] = iblock[je-1];
+                 }
+              } // for (je = 1; je <= m[0]; je++)
+              m[0] = im[0];
+           } // if (idiscl > 0)
+           if (idiscu > 0) {
+              // Remove some of the largest eigenvalues from the right so that
+              // at the end idiscu =0. Move all eigenvalues up to the left.
+              im[0]=m[0]+1;
+              for (je = m[0]; je >= 1; je--) {
+                 if (w[je-1] >= wul && idiscu > 0) {
+                    idiscu = idiscu - 1;
+                 }
+                 else {
+                    im[0] = im[0] - 1;
+                    w[im[0]-1] = w[je-1];
+                    werr[im[0]-1] = werr[je-1];
+                    indexw[im[0]-1] = indexw[je-1];
+                    iblock[im[0]-1] = iblock[je-1];
+                 }
+              } // for (je = m[0]; je >= 1; je--) 
+              jee = 0;
+              for (je = im[0]; je <= m[0]; je++) {
+                 jee = jee + 1;
+                 w[jee-1] = w[je-1];
+                 werr[jee-1] = werr[je-1];
+                 indexw[jee-1] = indexw[je-1];
+                 iblock[jee-1] = iblock[je-1];
+              } // for (je = im[0]; je <= m[0]; je++)
+              m[0] = m[0]-im[0]+1;
+           } // if (idiscu > 0)
 
-           IF( IDISCL.GT.0 .OR. IDISCU.GT.0 ) THEN
-  *           Code to deal with effects of bad arithmetic. (If N(w) is
-  *           monotone non-decreasing, this should never happen.)
-  *           Some low eigenvalues to be discarded are not in (WL,WLU],
-  *           or high eigenvalues to be discarded are not in (WUL,WU]
-  *           so just kill off the smallest IDISCL/largest IDISCU
-  *           eigenvalues, by marking the corresponding IBLOCK = 0
-              IF( IDISCL.GT.0 ) THEN
-                 WKILL = WU
-                 DO 100 JDISC = 1, IDISCL
-                    IW = 0
-                    DO 90 JE = 1, M
-                       IF( IBLOCK( JE ).NE.0 .AND.
-       $                    ( W( JE ).LT.WKILL .OR. IW.EQ.0 ) ) THEN
-                          IW = JE
-                          WKILL = W( JE )
-                       END IF
-   90               CONTINUE
-                    IBLOCK( IW ) = 0
-   100           CONTINUE
-              END IF
-              IF( IDISCU.GT.0 ) THEN
-                 WKILL = WL
-                 DO 120 JDISC = 1, IDISCU
-                    IW = 0
-                    DO 110 JE = 1, M
-                       IF( IBLOCK( JE ).NE.0 .AND.
-       $                    ( W( JE ).GE.WKILL .OR. IW.EQ.0 ) ) THEN
-                          IW = JE
-                          WKILL = W( JE )
-                       END IF
-   110              CONTINUE
-                    IBLOCK( IW ) = 0
-   120           CONTINUE
-              END IF
-  *           Now erase all eigenvalues with IBLOCK set to zero
-              IM = 0
-              DO 130 JE = 1, M
-                 IF( IBLOCK( JE ).NE.0 ) THEN
-                    IM = IM + 1
-                    W( IM ) = W( JE )
-                    WERR( IM ) = WERR( JE )
-                    INDEXW( IM ) = INDEXW( JE )
-                    IBLOCK( IM ) = IBLOCK( JE )
-                 END IF
-   130        CONTINUE
-              M = IM
-           END IF
-           IF( IDISCL.LT.0 .OR. IDISCU.LT.0 ) THEN
-              TOOFEW = .TRUE.
-           END IF
-        END IF
-  *
-        IF(( IRANGE.EQ.ALLRNG .AND. M.NE.N ).OR.
-       $   ( IRANGE.EQ.INDRNG .AND. M.NE.IU-IL+1 ) ) THEN
-           TOOFEW = .TRUE.
-        END IF
+           if (idiscl > 0 || idiscu > 0) {
+              // Code to deal with effects of bad arithmetic. (If N(w) is
+              // monotone non-decreasing, this should never happen.)
+              // Some low eigenvalues to be discarded are not in (wl[0],wlu],
+              // or high eigenvalues to be discarded are not in (wul,wu[0]]
+              // so just kill off the smallest idiscl/largest idiscu
+              // eigenvalues, by marking the corresponding iblock = 0
+              if (idiscl > 0) {
+                 wkill = wu[0];
+                 for (jdisc = 1; jdisc <= idiscl; jdisc++) {
+                    iw = 0;
+                    for (je = 1; je <= m[0]; je++) {
+                       if (iblock[je-1] != 0 &&
+                            (w[je-1] < wkill || iw == 0)) {
+                          iw = je;
+                          wkill = w[je-1];
+                       }
+                    } // for (je = 1; je <= m[0]; je++)
+                    iblock[iw-1] = 0;
+                 } // for (jdisc = 1; jdisc <= idiscl; jdisc++)
+              } // if (idiscl > 0)
+              if (idiscu > 0) {
+                 wkill = wl[0];
+                 for (jdisc = 1; jdisc <= idiscu; jdisc++) {
+                    iw = 0;
+                    for (je = 1; je <= m[0]; je++) {
+                       if (iblock[je-1] != 0 &&
+                            (w[je-1] >= wkill || iw == 0)) {
+                          iw = je;
+                          wkill = w[je-1];
+                       }
+                    } // for (je = 1; je <= m[0]; je++)
+                    iblock[iw-1] = 0;
+                 } // for (jdisc = 1; jdisc <= idiscu; jdisc++)
+              } // if (idiscu > 0)
+              // Now erase all eigenvalues with iblock set to zero
+              im[0] = 0;
+              for (je = 1; je <= m[0]; je++) {
+                 if (iblock[je-1] != 0) {
+                    im[0] = im[0] + 1;
+                    w[im[0]-1] = w[je-1];
+                    werr[im[0]-1] = werr[je-1];
+                    indexw[im[0]-1] = indexw[je-1];
+                    iblock[im[0]-1] = iblock[je-1];
+                 }
+              } // for (je = 1; je <= m[0]; je++)
+              m[0] = im[0];
+           } // if (idiscl > 0 || idiscu > 0)
+           if (idiscl < 0 || idiscu < 0) {
+              toofew = true;
+           }
+        } // if (irange == indrng) 
+   
+        if ((irange == allrng && m[0] != n) ||
+           (irange == indrng && m[0] != iu-il+1) ) {
+           toofew = true;
+        }
 
-  *     If ORDER='B', do nothing the eigenvalues are already sorted by
-  *        block.
-  *     If ORDER='E', sort the eigenvalues from smallest to largest
+        // If order = 'B', do nothing the eigenvalues are already sorted by block.
+        // If order = 'E', sort the eigenvalues from smallest to largest
 
-        IF( LSAME(ORDER,'E') .AND. NSPLIT.GT.1 ) THEN
-           DO 150 JE = 1, M - 1
-              IE = 0
-              TMP1 = W( JE )
-              DO 140 J = JE + 1, M
-                 IF( W( J ).LT.TMP1 ) THEN
-                    IE = J
-                    TMP1 = W( J )
-                 END IF
-    140       CONTINUE
-              IF( IE.NE.0 ) THEN
-                 TMP2 = WERR( IE )
-                 ITMP1 = IBLOCK( IE )
-                 ITMP2 = INDEXW( IE )
-                 W( IE ) = W( JE )
-                 WERR( IE ) = WERR( JE )
-                 IBLOCK( IE ) = IBLOCK( JE )
-                 INDEXW( IE ) = INDEXW( JE )
-                 W( JE ) = TMP1
-                 WERR( JE ) = TMP2
-                 IBLOCK( JE ) = ITMP1
-                 INDEXW( JE ) = ITMP2
-              END IF
-    150    CONTINUE
-        END IF
-  *
-        INFO = 0
-        IF( NCNVRG )
-       $   INFO = INFO + 1
-        IF( TOOFEW )
-       $   INFO = INFO + 2*/
+        if(((order == 'E') || (order == 'e')) && nsplit > 1) {
+           for (je = 1; je <= m[0] - 1; je++) {
+              ie = 0;
+              tmp1 = w[je-1];
+              for (j = je + 1; j <= m[0]; j++) {
+                 if (w[j-1] < tmp1) {
+                    ie = j;
+                    tmp1 = w[j-1];
+                 }
+              } // for (j = je + 1; j <= m[0]; j++)
+              if (ie != 0) {
+                 tmp2 = werr[ie-1];
+                 itmp1 = iblock[ie-1];
+                 itmp2 = indexw[ie-1];
+                 w[ie-1] = w[je-1];
+                 werr[ie-1] = werr[je-1];
+                 iblock[ie-1] = iblock[je-1];
+                 indexw[ie-1] = indexw[je-1];
+                 w[je-1] = tmp1;
+                 werr[je-1] = tmp2;
+                 iblock[je-1] = itmp1;
+                 indexw[je-1] = itmp2;
+              } // if (ie != 0)
+           } // for (je = 1; je <= m[0] - 1; je++)
+        } // if(((order == 'E') || (order == 'e')) && nsplit > 1)
+  
+        info[0] = 0;
+        if (ncnvrg) {
+           info[0] = info[0] + 1;
+        }
+        if (toofew) {
+           info[0] = info[0] + 2;
+        }
         return;
   } // dlarrd
 
@@ -7447,6 +7517,10 @@ $                   INFO )*/
         int indu;
         int idum;
         int j;
+        int cnt[] = new int[1];
+        int cnt1[] = new int[1];
+        int cnt2[] = new int[1];
+        int mm[] = new int[1];
         double safmin;
         double eps;
         double rtl;
@@ -7456,23 +7530,26 @@ $                   INFO )*/
         double eold;
         double emax;
         double eabs;
-        double tmp1;
+        double tmp1[] = new double[1];
         double spdiam;
         boolean forceb;
         boolean usedqd;
         boolean norep;
         double sigma;
         double isleft;
-        double isright;
+        double isrght;
         double s1;
         double s2;
-        double tmp;
+        double tmp[] = new double[1];
         double sgndef;
         double tau;
         double clwdth;
         double avgap;
         double dpivot;
         double dmax;
+        double daux[];
+        double eaux[];
+        double e2aux[];
 
         info[0] = 0;
 
@@ -7535,10 +7612,10 @@ $                   INFO )*/
            if (eabs >= emax) {
               emax = eabs;
            }
-           tmp1 = eabs + eold;
-           gers[2*i-2] = d[i-1] - tmp1;
+           tmp1[0] = eabs + eold;
+           gers[2*i-2] = d[i-1] - tmp1[0];
            gl =  Math.min(gl, gers[2*i-2]);
-           gers[2*i-1] = d[i-1] + tmp1;
+           gers[2*i-1] = d[i-1] + tmp1[0];
            gu = Math.max(gu, gers[2*i-1]);
            eold  = eabs;
         } // for (i= 1; i <= n; i++)
@@ -7559,7 +7636,7 @@ $                   INFO )*/
         // explicitly wants bisection.
         usedqd = ((irange == allrng) && (!forceb));
 
-        /*if (usedqd) {
+        if (usedqd) {
           //  Set interval [vl[0],vu[0]] that contains all eigenvalues
            vl[0] = gl;
            vu[0] = gu;
@@ -7571,177 +7648,186 @@ $                   INFO )*/
            // An interval [LEFT,RIGHT] has converged if
            // RIGHT-LEFT < rtol*MAX(ABS(LEFT),ABS(RIGHT))
            // dlarrd needs a work of size 4*n, iwork of size 3*n
-           CALL DLARRD( RANGE, 'B', N, VL, VU, IL, IU, GERS,
-       $                    BSRTOL, D, E, E2, PIVMIN, NSPLIT, ISPLIT,
-       $                    MM, W, WERR, VL, VU, IBLOCK, INDEXW,
-       $                    WORK, IWORK, IINFO )
-           IF( IINFO.NE.0 ) THEN
-              INFO = -1
-              RETURN
-           ENDIF
-  *        Make sure that the entries M+1 to N in W, WERR, IBLOCK, INDEXW are 0
-           DO 14 I = MM+1,N
-              W( I ) = ZERO
-              WERR( I ) = ZERO
-              IBLOCK( I ) = 0
-              INDEXW( I ) = 0
-   14      CONTINUE
+           dlarrd(range, 'B', n, vl[0], vu[0], il, iu, gers,
+                            bsrtol, d, e, e2, pivmin[0], nsplit[0], isplit,
+                            mm, w, werr, vl, vu, iblock, indexw,
+                            work, iwork, iinfo);
+           if(iinfo[0] != 0) {
+              info[0] = -1;
+              return;
+           }
+           // Make sure that the entries M+1 to N in W, WERR, IBLOCK, INDEXW are 0
+           for (i = mm[0]; i < n; i++) {
+              w[i] = 0.0;
+              werr[i] = 0.0;
+              iblock[i] = 0;
+              indexw[i] = 0;
+           }
         }
 
 
-  ***
-  *     Loop over unreduced blocks
-        IBEGIN = 1
-        WBEGIN = 1
-        DO 170 JBLK = 1, NSPLIT
-           IEND = ISPLIT( JBLK )
-           IN = IEND - IBEGIN + 1
+  
+        // Loop over unreduced blocks
+        ibegin = 1;
+        wbegin = 1;
+        /*for (jblk = 1; jblk <= nsplit[0]; jblk++) {
+           iend = isplit[jblk-1];
+           in = iend - ibegin + 1;
 
-  *        1 X 1 block
-           IF( IN.EQ.1 ) THEN
-              IF( (IRANGE.EQ.ALLRNG).OR.( (IRANGE.EQ.VALRNG).AND.
-       $         ( D( IBEGIN ).GT.VL ).AND.( D( IBEGIN ).LE.VU ) )
-       $        .OR. ( (IRANGE.EQ.INDRNG).AND.(IBLOCK(WBEGIN).EQ.JBLK))
-       $        ) THEN
-                 M = M + 1
-                 W( M ) = D( IBEGIN )
-                 WERR(M) = ZERO
-  *              The gap for a single block doesn't matter for the later
-  *              algorithm and is assigned an arbitrary large value
-                 WGAP(M) = ZERO
-                 IBLOCK( M ) = JBLK
-                 INDEXW( M ) = 1
-                 WBEGIN = WBEGIN + 1
-              ENDIF
-  *           E( IEND ) holds the shift for the initial RRR
-              E( IEND ) = ZERO
-              IBEGIN = IEND + 1
-              GO TO 170
-           END IF
-  *
-  *        Blocks of size larger than 1x1
-  *
-  *        E( IEND ) will hold the shift for the initial RRR, for now set it =0
-           E( IEND ) = ZERO
-  *
-  *        Find local outer bounds GL,GU for the block
-           GL = D(IBEGIN)
-           GU = D(IBEGIN)
-           DO 15 I = IBEGIN , IEND
-              GL = MIN( GERS( 2*I-1 ), GL )
-              GU = MAX( GERS( 2*I ), GU )
-   15      CONTINUE
-           SPDIAM = GU - GL
+           // 1 X 1 block
+           if (in == 1) {
+              if ( (irange == allrng) || ( (irange == valrng) &&
+                 ( d[ibegin-1] > vl[0]) && (d[ibegin] <= vu[0]) )
+                 || ( (irange == indrng) && (iblock[wbegin-1] == jblk))) {
+                 m[0] = m[0] + 1;
+                 w[m[0]-1] = d[ibegin-1];
+                 werr[m[0]-1] = 0.0;
+                 // The gap for a single block doesn't matter for the later
+                 // algorithm and is assigned an arbitrary large value
+                 wgap[m[0]-1] = 0.0;
+                 iblock[m[0]-1] = jblk;
+                 indexw[m[0]-1] = 1;
+                 wbegin = wbegin + 1;
+              } // if ( (irange == allrng) || ( (irange == valrng) &&
+              // e[iend-1] holds the shift for the initial RRR
+              e[iend-1] = 0.0;
+              ibegin = iend + 1;
+              continue;
+           } // if (in == 1)
+   
+           // Blocks of size larger than 1x1
+   
+           // e[iend-1] will hold the shift for the initial RRR, for now set it =0
+           e[iend-1] = 0.0;
+   
+           // Find local outer bounds gl,gu for the block
+           gl = d[ibegin-1];
+           gu = d[ibegin-1];
+           for (i = ibegin; i <= iend; i++) {
+              gl = Math.min(gers[2*i-2], gl);
+              gu = Math.max(gers[2*i-1], gu);
+           }
+           spdiam = gu - gl;
 
-           IF(.NOT. ((IRANGE.EQ.ALLRNG).AND.(.NOT.FORCEB)) ) THEN
-  *           Count the number of eigenvalues in the current block.
-              MB = 0
-              DO 20 I = WBEGIN,MM
-                 IF( IBLOCK(I).EQ.JBLK ) THEN
-                    MB = MB+1
-                 ELSE
-                    GOTO 21
-                 ENDIF
-   20         CONTINUE
-   21         CONTINUE
+           if (!((irange == allrng) && (!forceb))) {
+              // Count the number of eigenvalues in the current block.
+              mb = 0;
+              for (i = wbegin; i <= mm[0]; i++) {
+                 if (iblock[i-1] == jblk) {
+                    mb = mb + 1;
+                 }
+                 else {
+                    break;
+                 }
+              } // for (i = wbegin; i <= mm[0]; i++)
 
-              IF( MB.EQ.0) THEN
-  *              No eigenvalue in the current block lies in the desired range
-  *              E( IEND ) holds the shift for the initial RRR
-                 E( IEND ) = ZERO
-                 IBEGIN = IEND + 1
-                 GO TO 170
-              ELSE
+              if (mb == 0) {
+                 // No eigenvalue in the current block lies in the desired range
+                 // e[iend-1] holds the shift for the initial RRR
+                 e[iend-1] = 0.0;
+                 ibegin = iend + 1;
+                 continue;
+              } // if (mb == 0)
+              else {
 
-  *              Decide whether dqds or bisection is more efficient
-                 USEDQD = ( (MB .GT. FAC*IN) .AND. (.NOT.FORCEB) )
-                 WEND = WBEGIN + MB - 1
-  *              Calculate gaps for the current block
-  *              In later stages, when representations for individual
-  *              eigenvalues are different, we use SIGMA = E( IEND ).
-                 SIGMA = ZERO
-                 DO 30 I = WBEGIN, WEND - 1
-                    WGAP( I ) = MAX( ZERO,
-       $                        W(I+1)-WERR(I+1) - (W(I)+WERR(I)) )
-   30            CONTINUE
-                 WGAP( WEND ) = MAX( ZERO,
-       $                     VU - SIGMA - (W( WEND )+WERR( WEND )))
-  *              Find local index of the first and last desired evalue.
-                 INDL = INDEXW(WBEGIN)
-                 INDU = INDEXW( WEND )
-              ENDIF
-           ENDIF
-           IF(( (IRANGE.EQ.ALLRNG) .AND. (.NOT. FORCEB) ).OR.USEDQD) THEN
-  *           Case of DQDS
-  *           Find approximations to the extremal eigenvalues of the block
-              CALL DLARRK( IN, 1, GL, GU, D(IBEGIN),
-       $               E2(IBEGIN), PIVMIN, RTL, TMP, TMP1, IINFO )
-              IF( IINFO.NE.0 ) THEN
-                 INFO = -1
-                 RETURN
-              ENDIF
-              ISLEFT = MAX(GL, TMP - TMP1
-       $               - HNDRD * EPS* ABS(TMP - TMP1))
+                 // Decide whether dqds or bisection is more efficient
+                 usedqd = ((mb > fac*in) && (!forceb));
+                 wend = wbegin + mb - 1;
+                 // Calculate gaps for the current block
+                 // In later stages, when representations for individual
+                 // eigenvalues are different, we use sigma = e[iend-1].
+                 sigma = 0.0;
+                 for (i = wbegin; i <= wend-1; i++) {
+                    wgap[i-1] = Math.max(0.0, w[i]-werr[i] - (w[i-1]+werr[i-1]) );
+                 } // for (i = wbegin; i <= wend-1; i++)
+                 wgap[wend-1] = Math.max(0.0, vu[0] - sigma - (w[wend-1]+werr[wend-1]));
+                 // Find local index of the first and last desired evalue.
+                 indl = indexw[wbegin-1];
+                 indu = indexw[wend-1];
+              } // else
+           } // if (!((irange == allrng) && (!forceb)))
+           if (( (irange == allrng) && (!forceb)) || usedqd) {
+              // Case of DQDS
+              // Find approximations to the extremal eigenvalues of the block
+              daux = new double[in];
+              for (i = 0; i < in; i++) {
+                  daux[i] = d[ibegin-1+i];
+              }
+              e2aux = new double[in-1];
+              for (i = 0; i < in-1; i++) {
+                  e2aux[i] = e2[ibegin-1+i];
+              }
+              dlarrk(in, 1, gl, gu, daux, e2aux, pivmin[0], rtl, tmp, tmp1, iinfo);
+              if (iinfo[0] != 0) {
+                 info[0] = -1;
+                 return;
+              }
+              isleft = Math.max(gl, tmp[0] - tmp1[0] - 100.0 * eps * Math.abs(tmp[0] - tmp1[0]));
 
-              CALL DLARRK( IN, IN, GL, GU, D(IBEGIN),
-       $               E2(IBEGIN), PIVMIN, RTL, TMP, TMP1, IINFO )
-              IF( IINFO.NE.0 ) THEN
-                 INFO = -1
-                 RETURN
-              ENDIF
-              ISRGHT = MIN(GU, TMP + TMP1
-       $                 + HNDRD * EPS * ABS(TMP + TMP1))
-  *           Improve the estimate of the spectral diameter
-              SPDIAM = ISRGHT - ISLEFT
-           ELSE
-  *           Case of bisection
-  *           Find approximations to the wanted extremal eigenvalues
-              ISLEFT = MAX(GL, W(WBEGIN) - WERR(WBEGIN)
-       $                  - HNDRD * EPS*ABS(W(WBEGIN)- WERR(WBEGIN) ))
-              ISRGHT = MIN(GU,W(WEND) + WERR(WEND)
-       $                  + HNDRD * EPS * ABS(W(WEND)+ WERR(WEND)))
-           ENDIF
+              dlarrk(in, in, gl, gu, daux, e2aux, pivmin[0], rtl, tmp, tmp1, iinfo);
+              if (iinfo[0] != 0) {
+                 info[0] = -1;
+                 return;
+              }
+              isrght = Math.min(gu, tmp[0] + tmp1[0] + 100.0 * eps * Math.abs(tmp[0] + tmp1[0]));
+              // Improve the estimate of the spectral diameter
+              spdiam = isrght - isleft;
+           } // if (( (irange == allrng) && (!forceb)) || usedqd)
+           else {
+              // Case of bisection
+              // Find approximations to the wanted extremal eigenvalues
+              isleft = Math.max(gl, w[wbegin-1] - werr[wbegin-1]
+                          - 100.0 * eps * Math.abs(w[wbegin-1]- werr[wbegin-1] ));
+              isrght = Math.min(gu, w[wend-1] + werr[wend-1]
+                          + 100.0 * eps * Math.abs(w[wend-1]+ werr[wend-1]));
+           }
 
 
-  *        Decide whether the base representation for the current block
-  *        L_JBLK D_JBLK L_JBLK^T = T_JBLK - sigma_JBLK I
-  *        should be on the left or the right end of the current block.
-  *        The strategy is to shift to the end which is "more populated"
-  *        Furthermore, decide whether to use DQDS for the computation of
-  *        the eigenvalue approximations at the end of DLARRE or bisection.
-  *        dqds is chosen if all eigenvalues are desired or the number of
-  *        eigenvalues to be computed is large compared to the blocksize.
-           IF( ( IRANGE.EQ.ALLRNG ) .AND. (.NOT.FORCEB) ) THEN
-  *           If all the eigenvalues have to be computed, we use dqd
-              USEDQD = .TRUE.
-  *           INDL is the local index of the first eigenvalue to compute
-              INDL = 1
-              INDU = IN
-  *           MB =  number of eigenvalues to compute
-              MB = IN
-              WEND = WBEGIN + MB - 1
-  *           Define 1/4 and 3/4 points of the spectrum
-              S1 = ISLEFT + FOURTH * SPDIAM
-              S2 = ISRGHT - FOURTH * SPDIAM
-           ELSE
-  *           DLARRD has computed IBLOCK and INDEXW for each eigenvalue
-  *           approximation.
-  *           choose sigma
-              IF( USEDQD ) THEN
-                 S1 = ISLEFT + FOURTH * SPDIAM
-                 S2 = ISRGHT - FOURTH * SPDIAM
-              ELSE
-                 TMP = MIN(ISRGHT,VU) -  MAX(ISLEFT,VL)
-                 S1 =  MAX(ISLEFT,VL) + FOURTH * TMP
-                 S2 =  MIN(ISRGHT,VU) - FOURTH * TMP
-              ENDIF
-           ENDIF
+           // Decide whether the base representation for the current block
+           // L_JBLK D_JBLK L_JBLK^T = T_JBLK - sigma_JBLK I
+           // should be on the left or the right end of the current block.
+           // The strategy is to shift to the end which is "more populated"
+           //  Furthermore, decide whether to use DQDS for the computation of
+           // the eigenvalue approximations at the end of dlarre or bisection.
+           // dqds is chosen if all eigenvalues are desired or the number of
+           // eigenvalues to be computed is large compared to the blocksize.
+           if ( (irange == allrng) && (!forceb)) {
+              // If all the eigenvalues have to be computed, we use dqd
+              usedqd = true;
+              // indl is the local index of the first eigenvalue to compute
+              indl = 1;
+              indu = in;
+              // mb =  number of eigenvalues to compute
+              mb = in;
+              wend = wbegin + mb - 1;
+              // Define 1/4 and 3/4 points of the spectrum
+              s1 = isleft + 0.25 * spdiam;
+              s2 = isrght - 0.25 * spdiam;
+           } // if ( (irange == allrng) && (!forceb))
+           else {
+              // dlarrd has computed iblock and indexw for each eigenvalue approximation.
+              // choose sigma
+              if (usedqd) {
+                 s1 = isleft + 0.25 * spdiam;
+                 s2 = isrght - 0.25 * spdiam;
+              }
+              else {
+                 tmp[0] = Math.min(isrght,vu[0]) -  Math.max(isleft,vl[0]);
+                 s1 =  Math.max(isleft,vl[0]) + 0.25 * tmp[0];
+                 s2 =  Math.min(isrght,vu[0]) - 0.25 * tmp[0];
+              }
+           }
 
-  *        Compute the negcount at the 1/4 and 3/4 points
-           IF(MB.GT.1) THEN
-              CALL DLARRC( 'T', IN, S1, S2, D(IBEGIN),
-       $                    E(IBEGIN), PIVMIN, CNT, CNT1, CNT2, IINFO)
-           ENDIF
+           // Compute the negcount at the 1/4 and 3/4 points
+           if (mb > 1) {
+               daux = new double[in];
+               eaux = new double[in];
+               for (i = 0; i < in; i++) {
+                   daux[i] = d[ibegin-1+i];
+                   eaux[i] = e[ibegin-1+i];
+               }
+               dlarrc( 'T', in, s1, s2, daux, eaux, pivmin[0], cnt, cnt1, cnt2, iinfo);
+           }
 
            IF(MB.EQ.1) THEN
               SIGMA = GL
@@ -7996,11 +8082,133 @@ $                   INFO )*/
   *        proceed with next block
            IBEGIN = IEND + 1
            WBEGIN = WEND + 1
-   170  CONTINUE*/
+        } // for (jblk = 1; jblk <= nsplit[0]; jblk++)*/
   
 
         return;
   } // dlarre
+  
+  /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrk.  LAPACK is a software package provided by Univ. of Tennessee,    --
+  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
+  dlarrk computes one eigenvalue of a symmetric tridiagonal
+  matrix T to suitable accuracy. This is an auxiliary code to be
+  called from dstemr.
+  
+  To avoid overflow, the matrix must be scaled so that its
+  largest element is no greater than overflow**(1/2) * underflow**(1/4) in absolute value, and for greatest
+  accuracy, it should not be much smaller than that.
+  
+  See W. Kahan "Accurate Eigenvalues of a Symmetric Tridiagonal
+  Matrix", Report CS41, Computer Science Dept., Stanford
+  University, July 21, 1966.
+  
+  @param n input int  The order of the tridiagonal matrix T.  n >= 0.
+  @param iw input int The index of the eigenvalue to be returned.'
+  @param gl input double A lower bound on the eigenvalue.
+  @param gu input double An upper bound on the eigenvalue.
+  @param d input double[] of dimension n. The n diagonal elements of the tridiagonal matrix T.
+  @param e2 input double[] of dimension (n-1). The (n-1) squared off-diagonal elements of the tridiagonal matrix T.
+  @param pivmin input double The minimum pivot allowed in the Sturm sequence for T.
+  @param reltol input double The minimum relative width of an interval.  When an interval
+         is narrower than reltol times the larger (in magnitude) endpoint, then it is considered to be
+         sufficiently small, i.e., converged.  Note: this should always be at least radix*machine epsilon.
+  @param w output double[] of dimension 1.  Output eigevvalue.
+  @param werr output double[] of dimension 1.  The error bound on the corrsponding eigenvalue 
+         approximation in w[0].
+  @param info output int[] of dimension 1.
+         = 0:       Eigenvalue converged
+         = -1:      Eigenvalue did NOT converge
+ */
+  
+  private void dlarrk(int n, int iw, double gl, double gu, double d[], double e2[], double pivmin,
+                      double reltol, double w[], double werr[], int info[]) {
+      
+      // A "fudge factor" to widen the Gershgorgin intervals.  
+      final double fudge = 2.0;
+      int i;
+      int it;
+      int itmax;
+      int negcnt;
+      double atoli;
+      double eps;
+      double left;
+      double mid;
+      double right;
+      double rtoli;
+      double tmp1;
+      double tmp2;
+      double tnorm;
+      
+        // Get machine constants
+        eps = ge.dlamch('P');
+
+        tnorm = Math.max(Math.abs(gl), Math.abs(gu));
+        rtoli = reltol;
+        atoli = fudge*2.0*pivmin;
+
+        itmax = (int)( (Math.log(tnorm+pivmin)-Math.log(pivmin) ) /
+                   Math.log(2.0) ) + 2;
+
+        info[0] = -1;
+
+        left = gl - fudge*tnorm*eps*n - fudge*2.0*pivmin;
+        right = gu + fudge*tnorm*eps*n + fudge*2.0*pivmin;
+        it = 0;
+
+        while (true) {
+     
+            // Check if interval converged or maximum number of iterations reached
+      
+            tmp1 = Math.abs(right - left);
+            tmp2 = Math.max(Math.abs(right), Math.abs(left));
+            if (tmp1 < Math.max(atoli, Math.max(pivmin, rtoli * tmp2) ) ) {
+               info[0] = 0;
+               break;
+            }
+            if (it > itmax) {
+               break;
+            }
+    
+      
+            // Count number of negative pivots for mid-point
+      
+            it = it + 1;
+            mid = 0.5 * (left + right);
+            negcnt = 0;
+            tmp1 = d[0] - mid;
+            if (Math.abs(tmp1) < pivmin) {
+               tmp1 = -pivmin;
+            }
+            if (tmp1 <= 0.0) {
+               negcnt = negcnt + 1;
+            }
+      
+            for (i = 2; i <= n; i++) {
+               tmp1 = d[i-1] - e2[i-2] / tmp1 -mid;
+               if (Math.abs(tmp1) < pivmin) {
+                  tmp1 = -pivmin;
+               } // if (Math.abs(tmp1) < pivmin)
+               if (tmp1 <= 0.0) {
+                  negcnt = negcnt + 1;
+               }
+            } // for (i = 2; i <= n; i++)
+    
+            if(negcnt >= iw) {
+               right = mid;
+            }
+            else {
+               left = mid;
+            }
+        } // while (true) 
+   
+        // Converged or maximum number of iterations reached
+   
+        w[0] = 0.5 * (left + right);
+        werr[0] = 0.5 * Math.abs(right - left);
+
+        return;
+  } // dlarrk
+
 
 
   /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrr.  LAPACK is a software package provided by Univ. of Tennessee,    --
