@@ -2003,13 +2003,22 @@ public class ModelImage extends ModelStorageBase {
 
         VOIBase tempBase = null;
         nVOIs = tempVOIs.size();
+        
+        final short id = (short) (voiVector.lastElement().getID()+1);
+        short index = 0;
+        final String joinedStr = "joined";
+        for(int j=0; j<voiVector.size(); j++) {
+            if(voiVector.get(j).getName().contains("joined")) {
+                index++;
+            }
+        }
 
         for (i = nVOIs - 1; i >= 0; i--) {
 
             if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newVOI == null) {
-                    newVOI = new VOI((short) 0, "joinedContour", VOI.CONTOUR, -1.0f);
+                    newVOI = new VOI(id, joinedStr+"Contour"+index, VOI.CONTOUR, -1.0f);
                     newVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -2030,7 +2039,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newPLineVOI == null) {
-                    newPLineVOI = new VOI((short) 0, "polyLine" + nameExt, VOI.POLYLINE, -1.0f);
+                    newPLineVOI = new VOI(id, joinedStr+"polyLine"+index+nameExt, VOI.POLYLINE, -1.0f);
                     newPLineVOI.setAllActive(true);
                 }
 
@@ -2053,7 +2062,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newLineVOI == null) {
-                    newLineVOI = new VOI((short) 0, "line" + nameExt, VOI.LINE, -1.0f);
+                    newLineVOI = new VOI(id, joinedStr+"line"+index+nameExt, VOI.LINE, -1.0f);
                     newLineVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -2076,7 +2085,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newPtVOI == null) {
-                    newPtVOI = new VOI((short) 0, "point" + nameExt, VOI.POINT, -1.0f);
+                    newPtVOI = new VOI(id, joinedStr+"point"+index+nameExt, VOI.POINT, -1.0f);
                     newPtVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
@@ -2096,7 +2105,7 @@ public class ModelImage extends ModelStorageBase {
             } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) && tempVOIs.VOIAt(i).isActive()) {
 
                 if (newProtractorVOI == null) {
-                    newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, VOI.PROTRACTOR, -1.0f);
+                    newProtractorVOI = new VOI(id, joinedStr+"protractor"+index+nameExt, VOI.PROTRACTOR, -1.0f);
                     newProtractorVOI.setAllActive(true);
                 }
                 contours = tempVOIs.VOIAt(i).getCurves();
