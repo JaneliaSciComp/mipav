@@ -392,11 +392,14 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     titles = new String[imageFrames.size()];
 
                     for (i = 0; i < imageFrames.size(); i++) {
-                        titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                        ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                        ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
-                                                                                          (imageFrames.elementAt(i)));
+                    	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+                    	{
+                    		titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
+                    		((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    		((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
+                    		((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                    				(imageFrames.elementAt(i)));
+                    	}
                     }
 
                     if (isRunInSeparateThread()) {
@@ -466,7 +469,6 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                 } // if (resultImage != null)
 
                 // Update frame
-                ((ViewJFrameBase) parentFrame).updateImages(true);
                 if ( voiManager != null )
                 {
                     voiManager.algorithmPerformed();
@@ -484,9 +486,12 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
             Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
-                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
-                ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+            	if ( imageFrames.elementAt(i) instanceof ViewJFrameBase )
+            	{
+            		((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
+            		((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+            		((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+            	}
             }
         }
         dispose();

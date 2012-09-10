@@ -178,7 +178,8 @@ VOIVectorListener, TreeSelectionListener, ActionDiscovery {
 	public JDialogVOILogicalOperations(VOIHandlerInterface voiHandler,VOIVector voiList) {
         super(ViewUserInterface.getReference().getMainFrame(), false);
 
-        image = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();
+        // VOIHandlerInterface getActiveImage returns the correct image. 
+        image = voiHandler.getActiveImage();
         this.voiHandler = voiHandler;
 
         

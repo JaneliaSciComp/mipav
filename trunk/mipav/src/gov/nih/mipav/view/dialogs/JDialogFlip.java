@@ -155,12 +155,15 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             Vector<ViewImageUpdateInterface> imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
-                ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+            	if ( imageFrames.elementAt(i) instanceof Frame )
+            	{
+            		((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+            		((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
-                if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
-                    userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                }
+            		if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
+            			userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+            		}
+            	}
             }
 
             if (parentFrame != null) {
@@ -209,10 +212,13 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 	            titles = new String[imageFrames.size()];
 	
 	            for (int i = 0; i < imageFrames.size(); i++) {
-	                titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-	                ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-	                ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-	                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	            	if ( imageFrames.elementAt(i) instanceof Frame )
+	            	{
+	            		titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+	            		((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+	            		((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+	            		userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+	            	}
 	            }
             }
 
