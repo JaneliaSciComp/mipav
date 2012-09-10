@@ -198,7 +198,6 @@ public class JDialogBoundingVOIs extends JDialogBase {
             }
 
             // Update frame
-            ((ViewJFrameBase) parentFrame).updateImages(true);
             if ( voiManager != null )
             {
                 voiManager.algorithmPerformed();

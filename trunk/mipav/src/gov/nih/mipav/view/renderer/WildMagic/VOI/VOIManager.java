@@ -408,7 +408,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** Last/current mouse position. */
 	private float m_fMouseX, m_fMouseY;
 	/** Local orientation of the displayed image, used in the volume renderer and tri-planar views. */
-	private int m_iPlaneOrientation;
+	private int[] m_aiAxisOrder;
+	private boolean[] m_abAxisFlip;
 	/** ImageA and ImageB */
 	private ModelImage[] m_akImages = new ModelImage[2];
 	/** Current active image. */
@@ -814,13 +815,13 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 */
 	public ModelImage getLocalImage()
 	{
-		if ( m_iPlaneOrientation == FileInfoBase.UNKNOWN_ORIENT )
+		if ( defaultOrientation() )
 		{
 			m_kLocalImage = m_kImageActive;
 			return m_kLocalImage;
 		}
-		int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder(m_kImageActive, m_iPlaneOrientation);
-		boolean[] abAxisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
+		int[] aiAxisOrder = m_aiAxisOrder;
+		boolean[] abAxisFlip = m_abAxisFlip;
 
 		if ( m_kLocalImage != null )
 		{
@@ -911,6 +912,48 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 
 	/**
+	 * Initialize the VOIManager.
+	 * @param kImageA imageA.
+	 * @param kImageB imageB.
+	 * @param kComponent ViewJComponentEditImage this VOIManager is attached to.
+	 * @param kContext ScreenCoordinateListener for converting between screen coordinates and image file coordinates.
+	 * @param iOrientation orientation of the ViewJComponentEditImage.
+	 */
+	public void init( JFrame kFrame, ModelImage kImageA, ModelImage kImageB, Component kComponent, 
+			ScreenCoordinateListener kContext, int[] aiAxisOrder, boolean[] abAxisFlip )
+	{
+		if ( kFrame != null )
+		{
+			kFrame.addKeyListener(this);
+		}
+		m_akImages[0] = kImageA;
+		m_akImages[1] = kImageB;
+		if ( kImageA != null )
+		{
+			m_kImageActive = kImageA;
+		}
+		else
+		{
+			m_kImageActive = kImageB;
+		}
+		setCanvas(kComponent);
+		setDrawingContext(kContext);
+
+		m_aiAxisOrder = aiAxisOrder;
+		m_abAxisFlip = abAxisFlip;
+		m_aiLocalImageExtents = m_kImageActive.getExtents( m_aiAxisOrder );
+		map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
+		
+		int iPlane = m_aiAxisOrder[2];
+		switch ( iPlane )
+		{
+		case 0: m_iPlane = VOIBase.XPLANE; break;
+		case 1: m_iPlane = VOIBase.YPLANE; break;
+		case 2: m_iPlane = VOIBase.ZPLANE; break;
+		}
+	}
+
+	/**
 	 * Returns true if the VOIManager is currently drawing a VOI, or if the defaultPointer button in the
 	 * VOIManagerInterface is selected.
 	 * @return
@@ -983,7 +1026,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		KeyStroke ks = KeyStroke.getKeyStrokeForEvent(e);
 		String command = Preferences.getShortcutCommand(ks);
 		if (command != null) {
-			//m_kParent.doVOI( command );
 			m_kParent.actionPerformed(new ActionEvent(ks, 0, command));
 		}
 	}
@@ -1024,7 +1066,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/* (non-Javadoc)
 	 * @see java.awt.event.KeyListener#keyTyped(java.awt.event.KeyEvent)
 	 */
-	public void keyTyped(KeyEvent e){}
+	public void keyTyped(KeyEvent e) {}
 
 	/**
 	 * Called from VOIManagerInterface. Initializes the livewire.
@@ -2195,7 +2237,6 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			{            
 				int iSlice = m_kDrawingContext.getSlice();
 
-
 				Vector<Vector3f> kPositions = new Vector<Vector3f>();
 				kPositions.add( new Vector3f (m_fMouseX, fYStart, iSlice));
 				kPositions.add( new Vector3f (iX, fYStart, iSlice));
@@ -2413,6 +2454,17 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
+	/**
+	 * Checks the axisOrder and axisFlip data members. If they do not change the volume orientation
+	 * then the default orientation is true, otherwise the default orientation is false.
+	 * @return true if this orientation matches the default image orientation, false if it changes the image orientation.
+	 */
+	private boolean defaultOrientation()
+	{
+		return ( (m_aiAxisOrder[0] == 0) && (m_aiAxisOrder[1] == 1) && (m_aiAxisOrder[2] == 2) &&
+				 (m_abAxisFlip[0] == false) && (m_abAxisFlip[1] == false) && (m_abAxisFlip[2] == false) );
+	}
+	
 	/** Draw the VOIText arror on screen.
 	 * @param kVOI
 	 * @param g2d
@@ -3961,12 +4013,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	private Vector3f fileCoordinatesToPatient( Vector3f volumePt )
 	{       
 		Vector3f kPatient = new Vector3f();
-		MipavCoordinateSystems.fileToPatient( volumePt, kPatient, m_kImageActive, m_iPlaneOrientation );
+		MipavCoordinateSystems.fileToPatient( volumePt, kPatient, m_kImageActive, true, m_aiAxisOrder, m_abAxisFlip );
 		// axisFlip represents whether to invert the axes after they are reordered
-		final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
-		if ( axisFlip[0] ) kPatient.X += 1;
-		if ( axisFlip[1] ) kPatient.Y += 1;
-		//if ( axisFlip[2] ) kPatient.Z += 1;
+		if ( m_abAxisFlip[0] ) kPatient.X += 1;
+		if ( m_abAxisFlip[1] ) kPatient.Y += 1;
 		return kPatient;
 	}
 
@@ -4705,11 +4755,9 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	{       
 		Vector3f volumePt = new Vector3f();
 		// axisFlip represents whether to invert the axes after they are reordered
-		final boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip(m_kImageActive, m_iPlaneOrientation);
-		if ( axisFlip[0] ) patientPt.X -= 1;
-		if ( axisFlip[1] ) patientPt.Y -= 1;
-		//if ( axisFlip[2] ) patientPt.Z -= 1;
-		MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageActive, m_iPlaneOrientation );
+		if ( m_abAxisFlip[0] ) patientPt.X -= 1;
+		if ( m_abAxisFlip[1] ) patientPt.Y -= 1;
+		MipavCoordinateSystems.patientToFile( patientPt, volumePt, m_kImageActive, true, m_aiAxisOrder, m_abAxisFlip );
 		return volumePt;
 	}
 
@@ -5406,6 +5454,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		return m_kCurrentVOI;
 	}
+	
 	private void setCanvas (Component kComponent)
 	{
 		m_kComponent = kComponent;
@@ -5413,16 +5462,21 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		m_kComponent.addMouseListener( this );
 		m_kComponent.addMouseMotionListener( this );
 	}
+	
 	private void setDrawingContext( ScreenCoordinateListener kContext )
 	{
 		m_kDrawingContext = kContext;
 	}
+	
 	private void setOrientation( int iOrientation )
 	{
-		m_iPlaneOrientation = iOrientation;
-		m_aiLocalImageExtents = m_kImageActive.getExtents( m_iPlaneOrientation );
+		m_aiAxisOrder = MipavCoordinateSystems.getAxisOrder( m_kImageActive, iOrientation );
+		m_abAxisFlip = MipavCoordinateSystems.getAxisFlip( m_kImageActive, iOrientation );
+		m_aiLocalImageExtents = m_kImageActive.getExtents( m_aiAxisOrder );
 		map = new BitSet(m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]);
 	}
+	
+	
 	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
 	{
 		setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
@@ -5584,7 +5638,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		Vector3f kVolumePt = new Vector3f();
 		m_kDrawingContext.screenToFileVOI( (int)startPtX, (int)startPtY, m_kDrawingContext.getSlice(), kVolumePt );
 		Vector3f kPatientPt = new Vector3f();
-		MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, m_iPlaneOrientation );
+		MipavCoordinateSystems.fileToPatient( kVolumePt, kPatientPt, m_kImageActive, true, m_aiAxisOrder, m_abAxisFlip );
 
 		startPtX = kPatientPt.X;
 		startPtY = kPatientPt.Y;        
