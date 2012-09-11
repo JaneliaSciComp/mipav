@@ -889,7 +889,7 @@ public class JDialogSwapSlicesVolumes extends JDialogScriptableBase implements A
         try {
             table.put(new ParameterImage(AlgorithmParameters.RESULT_IMAGE));
         } catch (final ParserException e) {
-            // this shouldn't really happen since there isn't any real parsing going on...
+            // this shouldn't really happen since there isn't any real parsing going on
             e.printStackTrace();
         }
 
