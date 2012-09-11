@@ -492,13 +492,7 @@ public abstract class JDialogBase extends JDialog
         } else if(e.getActionCommand().equals(LOAD_PROFILE)) {
             boolean success = false;
             if(profiles == null) {
-                profiles = new ArrayList<String>();
-                for(Entry<Object, Object> objSet  : Preferences.getMipavProps().entrySet()) {
-                    if(objSet.getValue().equals(SAVE_DEFAULT)) {
-                        
-                        profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
-                    }
-                }
+                profiles = loadProfiles();
             }
             
             if(profiles.size() > 0) {
@@ -614,34 +608,6 @@ public abstract class JDialogBase extends JDialog
     public void itemStateChanged(ItemEvent event) { }
     
     
-    /**
-     * Loads the defaults of profile 0.
-     */
-    public boolean loadDefaults() {
-        return loadDefaults(String.valueOf(0));
-    }
-    
-    /**
-     * Loads default values for gui components in the dialog.
-     * 
-     */
-    public boolean loadDefaults(String profileStr) {
-        String nameStart = new String();
-        Object obj = Preferences.getProperty(getClass().getName()+profileStr);
-        if(obj == null || obj.toString().length() == 0) {
-            Preferences.debug("No defaults available for this dialog: "+this.getName(), Preferences.DEBUG_MINOR);
-            return false;
-        } else {
-            nameStart = getClass().getName()+profileStr;
-        }
-        
-        boolean success = loadComponents(this, nameStart, profileStr);
-        if(!success) {
-            Preferences.debug("Preferences loading not successful for "+this.getName(), Preferences.DEBUG_MINOR);
-        }
-        return success;
-    }
-    
     private boolean loadComponents(Component comp, String name, String profile) {
         
         String prop = null;
@@ -742,6 +708,51 @@ public abstract class JDialogBase extends JDialog
     }
 
     /**
+     * Loads the defaults of profile 0.
+     */
+    public boolean loadDefaults() {
+        return loadDefaults(String.valueOf(0));
+    }
+    
+    /**
+     * Loads default values for gui components in the dialog.
+     * 
+     */
+    public boolean loadDefaults(String profileStr) {
+        String nameStart = new String();
+        Object obj = Preferences.getProperty(getClass().getName()+profileStr);
+        if(obj == null || obj.toString().length() == 0) {
+            Preferences.debug("No defaults available for this dialog: "+this.getName(), Preferences.DEBUG_MINOR);
+            return false;
+        } else {
+            nameStart = getClass().getName()+profileStr;
+        }
+        
+        boolean success = loadComponents(this, nameStart, profileStr);
+        if(!success) {
+            Preferences.debug("Preferences loading not successful for "+this.getName(), Preferences.DEBUG_MINOR);
+        }
+        return success;
+    }
+    
+    /**
+     * Loads profile names that are available for the dialog
+     * 
+     * @return
+     */
+    private ArrayList<String> loadProfiles() {
+        ArrayList<String> profiles = new ArrayList<String>();
+        for(Entry<Object, Object> objSet  : Preferences.getMipavProps().entrySet()) {
+            if(objSet.getValue().equals(SAVE_DEFAULT)) {
+                
+                profiles.add(objSet.getKey().toString().substring(getClass().getName().length()));
+            }
+        }
+        
+        return profiles;
+    }
+
+    /**
      * Makes a string of a floating point number with a specific number of decimal points.
      *
      * @param   number  Number to be converted to a string.
@@ -763,22 +774,6 @@ public abstract class JDialogBase extends JDialog
         } else {
             return (String.valueOf(number));
         }
-    }
-    
-    /**
-     * Saves the defaults of profile 0.
-     */
-    public void saveDefaults() {
-        saveDefaults(String.valueOf(0));
-    }
-    
-    /**
-     * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile number.
-     */
-    public void saveDefaults(String profile) {
-        Preferences.setProperty(getClass().getName()+profile, SAVE_DEFAULT);
-        
-        saveComponents(this, getClass().getName()+profile, profile);
     }
     
     private void saveComponents(Component comp, String name, String profile) {
@@ -865,6 +860,22 @@ public abstract class JDialogBase extends JDialog
         
     }
 
+    /**
+     * Saves the defaults of profile 0.
+     */
+    public void saveDefaults() {
+        saveDefaults(String.valueOf(0));
+    }
+    
+    /**
+     * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile name.
+     */
+    public void saveDefaults(String profile) {
+        Preferences.setProperty(getClass().getName()+profile, SAVE_DEFAULT);
+        
+        saveComponents(this, getClass().getName()+profile, profile);
+    }
+    
     /**
      * Sets the left-hand coordinate flag. If true, change matrix to the left-hand coordinate system.
      *
