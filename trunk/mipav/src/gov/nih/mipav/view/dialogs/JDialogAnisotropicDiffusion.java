@@ -31,7 +31,7 @@ import javax.swing.*;
  * @see      AlgorithmGaussianBlur
  */
 public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
-        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -95,7 +95,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -183,9 +182,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmAnisotropicDiffusion) {
             image.clearMask();
@@ -263,6 +259,59 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null && outputPanel != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+                
+                textIters.setText("" + MipavUtil.getInt(st));
+                textK.setText("" + MipavUtil.getFloat(st));
+
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
+
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+        
+        String defaultsString = outputPanel.isProcessWholeImageSet() + delim;
+        defaultsString += image25D + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
+        defaultsString += iters + delim;
+        defaultsString += konst + delim;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += outputPanel.isOutputNewImageSet();
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

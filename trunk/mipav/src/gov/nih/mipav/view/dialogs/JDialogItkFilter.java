@@ -30,7 +30,7 @@ import javax.swing.*;
  * @see  AlgorithmItkFiler
  */
 public class JDialogItkFilter extends JDialogScriptableBase
-        implements AlgorithmInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers --------------------------------------------------------------
 
@@ -94,7 +94,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
         m_srcImage = im;
         m_userInterface = ViewUserInterface.getReference();
         if (init(fr)) {
-            loadDefaults();
             setVisible(true);
         }
     }
@@ -143,10 +142,6 @@ public class JDialogItkFilter extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         m_srcImage.clearMask();
 
@@ -242,6 +237,45 @@ public class JDialogItkFilter extends JDialogScriptableBase
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (m_outputOptionsPanel != null)) {
+
+            try {
+                // Preferences.debug(defaultsString);
+
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                m_outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+
+                m_colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
+                m_colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
+                m_colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
+
+                m_outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(",") + "," 
+                                           + m_outputOptionsPanel.isOutputNewImageSet());
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
+    }
 
     /**
      * Accessor that sets the slicing flag.

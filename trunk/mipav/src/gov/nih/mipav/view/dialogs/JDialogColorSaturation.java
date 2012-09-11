@@ -112,10 +112,6 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
-
         if (algorithm instanceof AlgorithmColorSaturation) {
             Preferences.debug("Color saturation: " + algorithm.getElapsedTime());
             image.clearMask();
@@ -169,6 +165,17 @@ public class JDialogColorSaturation extends JDialogScriptableBase implements Alg
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+
+        String defaultsString = String.valueOf(a);
+        
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
+    }
 
     /**
      * Accessor that sets a.

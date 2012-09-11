@@ -24,7 +24,7 @@ import javax.swing.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
+public class JDialogExtractBrain extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -176,7 +176,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
 
         centerOfMass = computeCenter(image, orientation, useSphere);
         setVariables();
@@ -504,10 +503,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
-
         if (algorithm instanceof AlgorithmBrainExtractor) {
 
             // These next lines set the titles in all frames where the source image is displayed to
@@ -657,6 +652,71 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
             centerOfMass = point;
         }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                
+                
+                orientCheckbox.setSelected(MipavUtil.getInt(st) == FileInfoBase.AXIAL);
+                justInitEllipsoidCheckbox.setSelected(MipavUtil.getBoolean(st));
+                nIterationsTF.setText("" + MipavUtil.getInt(st));
+                depthTF.setText("" + MipavUtil.getInt(st));
+                imageRatioTF.setText("" + MipavUtil.getFloat(st));
+                stiffnessTF.setText("" + MipavUtil.getFloat(st));
+                useSphereCheckbox.setSelected(MipavUtil.getBoolean(st));
+                secondStageCheckBox.setSelected(MipavUtil.getBoolean(st));
+                erosionTF.setText("" + MipavUtil.getFloat(st));
+                useCenterOfMassCheckBox.setSelected(MipavUtil.getBoolean(st));
+                extractToPaintCheckBox.setSelected(MipavUtil.getBoolean(st));
+                
+                float val = MipavUtil.getFloat(st);
+
+                if (val >= image.getExtents()[0]) {
+                    val = image.getExtents()[0] / 2;
+                }
+
+                initCenterXTF.setText("" + val);
+
+                val = MipavUtil.getFloat(st);
+
+                if (val >= image.getExtents()[1]) {
+                    val = image.getExtents()[1] / 2;
+                }
+
+                initCenterYTF.setText("" + val);
+
+                val = MipavUtil.getFloat(st);
+
+                if (val >= image.getExtents()[2]) {
+                    val = image.getExtents()[2] / 2;
+                }
+
+                initCenterZTF.setText("" + val);
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(","));
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
 

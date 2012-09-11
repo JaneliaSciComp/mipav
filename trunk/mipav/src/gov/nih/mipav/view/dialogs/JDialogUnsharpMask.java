@@ -93,7 +93,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -182,7 +181,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
             }
         }
 
-        saveDefaults();
      // save the completion status for later
         setComplete(algorithm.isCompleted());
 
@@ -215,6 +213,56 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, DELIMITER);
+
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+                textWeight.setText(st.nextToken());
+
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
+                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
+            } catch (NoSuchElementException nsee) {
+                return;
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                System.out.println("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + DELIMITER;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + DELIMITER;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + DELIMITER;
+        defaultsString += weight + DELIMITER;
+        defaultsString += outputPanel.isOutputNewImageSet() + DELIMITER;
+        defaultsString += outputPanel.isProcessWholeImageSet() + DELIMITER;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + DELIMITER;
+        defaultsString += image25D;
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

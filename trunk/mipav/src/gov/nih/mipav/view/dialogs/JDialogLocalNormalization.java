@@ -49,7 +49,7 @@ import javax.swing.*;
  * @see  AlgorithmLocalNormalization
  */
 public class JDialogLocalNormalization extends JDialogScriptableBase
-        implements AlgorithmInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -165,7 +165,6 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
         getContentPane().add(buildOkayCancelPanel(), BorderLayout.SOUTH);
 
         pack();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -213,10 +212,6 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmLocalNormalization) {
             sourceImage.clearMask();
@@ -288,6 +283,52 @@ public class JDialogLocalNormalization extends JDialogScriptableBase
      */
     public ModelImage getResultImage() {
         return resultImage;
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (unsharpXtext != null)) {
+            StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+            try {
+                unsharpXtext.setText("" + MipavUtil.getFloat(st));
+                unsharpYtext.setText("" + MipavUtil.getFloat(st));
+                unsharpWeightText.setText("" + MipavUtil.getFloat(st));
+                blurringFreqText.setText("" + MipavUtil.getFloat(st));
+                blurringDiameterText.setText("" + MipavUtil.getInt(st));
+                colorPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
+                colorPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
+                colorPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+
+        String defaultsString = unsharp[0] + delim;
+        defaultsString += unsharp[1] + delim;
+        defaultsString += unsharpWeight + delim;
+        defaultsString += blurringFreq + delim;
+        defaultsString += blurringDiameter + delim;
+        defaultsString += colorPanel.isRedProcessingRequested() + delim;
+        defaultsString += colorPanel.isGreenProcessingRequested() + delim;
+        defaultsString += colorPanel.isBlueProcessingRequested();
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

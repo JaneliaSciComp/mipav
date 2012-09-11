@@ -27,7 +27,7 @@ import javax.swing.*;
  * @version  0.1 Dec 21, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogImageMath extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogImageMath extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -134,7 +134,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -176,10 +175,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmImageMath) {
             image.clearMask();
@@ -421,6 +416,70 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 radioFloat.setSelected(true);
             } 
         }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (comboBoxOperator != null)) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                // System.err.println("defaultsSTring is: "+ defaultsString);
+
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+
+                textValue.setText(st.nextToken());
+
+                String iString = st.nextToken();
+
+                if (useComplex || image.isColorImage()) {
+                    textValueI.setText(iString);
+                }
+                
+                String blueString = st.nextToken();
+                if (image.isColorImage()) {
+                    textValueB.setText(blueString);
+                }
+
+                int selection = MipavUtil.getInt(st);
+
+                if (comboBoxOperator.getItemCount() > selection) {
+                    comboBoxOperator.setSelectedIndex(selection);
+                }
+
+                int mode = MipavUtil.getInt(st);
+
+                if (mode == AlgorithmImageMath.CLIP) {
+                    radioClip.setSelected(true);
+                } else if (mode == AlgorithmImageMath.CONVERT_FLOAT) {
+                	radioFloat.setSelected(true);
+                } else {
+                	radioPromote.setSelected(true);
+                }
+
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(",") + "," + outputPanel.isOutputNewImageSet());
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

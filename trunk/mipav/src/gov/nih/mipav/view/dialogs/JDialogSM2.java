@@ -569,9 +569,6 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
     	int i;
-    	if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmSM2) {
             Preferences.debug("SM2 elapsed: " + algorithm.getElapsedTime());
@@ -608,6 +605,27 @@ public class JDialogSM2 extends JDialogScriptableBase implements AlgorithmInterf
                 insertScriptLine();
             }
         }
+    }
+    
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+        String defaultsString = tissueImage.getImageFileName() + delim;
+        defaultsString = min_constr[0] + delim;
+        defaultsString += max_constr[0] + delim;
+        defaultsString += initial[0] + delim;
+        defaultsString += min_constr[1] + delim;
+        defaultsString += max_constr[1] + delim;
+        defaultsString += initial[1] + delim;
+        defaultsString += min_constr[2] + delim;
+        defaultsString += max_constr[2] + delim;
+        defaultsString += initial[2] + delim;
+        defaultsString += hematocrit;
+        
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
     
     /**

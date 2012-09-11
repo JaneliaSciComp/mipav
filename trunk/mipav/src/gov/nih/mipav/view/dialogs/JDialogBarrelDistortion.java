@@ -140,10 +140,6 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
-
         if (algorithm instanceof AlgorithmBarrelDistortion) {
             Preferences.debug("Barrel distortion: " + algorithm.getElapsedTime());
             image.clearMask();
@@ -199,6 +195,21 @@ public class JDialogBarrelDistortion extends JDialogScriptableBase implements Al
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+
+        String defaultsString = noScalingD + delim;
+        defaultsString += a + delim;
+        defaultsString += b + delim;
+        defaultsString += c + delim;
+        defaultsString += d;
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
+    }
 
     /**
      * Accessor that sets whether or not d is read in from the text or

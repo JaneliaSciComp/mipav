@@ -24,7 +24,7 @@ import javax.swing.*;
  * @see  AlgorithmNonlocalMeansFilter
  */
 public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, ScriptableActionInterface, ActionDiscovery {
+        implements AlgorithmInterface, ScriptableActionInterface, LegacyDialogDefaultsInterface, ActionDiscovery {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -129,7 +129,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -178,10 +177,6 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmNonlocalMeansFilter) {
             image.clearMask();
@@ -268,6 +263,51 @@ public class JDialogNonlocalMeansFilter extends JDialogScriptableBase
      */
     public ModelImage getResultImage() {
         return resultImage;
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (newImage != null)) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                textSearchWindowSide.setText("" + MipavUtil.getInt(st));
+                textSimilarityWindowSide.setText("" + MipavUtil.getInt(st));
+                textNoiseStandardDeviation.setText("" +  MipavUtil.getFloat(st));
+                textDegree.setText("" + MipavUtil.getFloat(st));
+                doRician = MipavUtil.getBoolean(st);
+                doRicianCheckBox.setSelected(doRician);
+                textDegree.setEnabled(doRician);
+                labelDegree.setEnabled(doRician);
+                image25DCheckBox.setSelected(MipavUtil.getBoolean(st));
+
+                if (MipavUtil.getBoolean(st)) {
+                    newImage.setSelected(true);
+                } else {
+                    replaceImage.setSelected(true);
+                }
+
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
 
