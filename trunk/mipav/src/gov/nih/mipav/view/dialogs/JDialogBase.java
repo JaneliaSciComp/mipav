@@ -600,18 +600,18 @@ public abstract class JDialogBase extends JDialog
             nameStart = getClass().getName()+profileStr;
         }
         
-        boolean success = loadComponenets(this, nameStart);
+        boolean success = loadComponenets(this, nameStart, profileStr);
         if(!success) {
             Preferences.debug("Preferences loading not successful for "+this.getName(), Preferences.DEBUG_MINOR);
         }
         return success;
     }
     
-    private boolean loadComponenets(Component comp, String name) {
+    private boolean loadComponenets(Component comp, String name, String profile) {
         
         String prop = null;
         if(!(comp instanceof JTable)) {    //jtable uses custom naming scheme
-            prop = Preferences.getProperty(name);
+            prop = Preferences.getProperty(getComponentName(comp, name, profile));
         }
         
         boolean load = true;        
@@ -624,7 +624,7 @@ public abstract class JDialogBase extends JDialog
                     if(subName == null || subName.length() == 0) {
                         subName = String.valueOf(i);
                     }
-                    load &= loadComponenets(compAr[i], name+"."+subName);
+                    load &= loadComponenets(compAr[i], name+"."+subName, profile);
                 
                 } catch (Exception e) {
                     Preferences.debug(name+"."+subName+" property could not be loaded", Preferences.DEBUG_MINOR);
@@ -677,7 +677,7 @@ public abstract class JDialogBase extends JDialog
             for(int i=0; i<table.getRowCount(); i++) {
                 for(int j=0; j<table.getColumnCount(); j++) {
                     if(model.isCellEditable(i, j)) {
-                        Object obj = Preferences.getProperty(name+":"+i+","+j);
+                        Object obj = Preferences.getProperty(getComponentName(comp, name, profile)+":"+i+","+j);
                         if(obj != null) {
                             table.setValueAt(obj, i, j);
                         }
