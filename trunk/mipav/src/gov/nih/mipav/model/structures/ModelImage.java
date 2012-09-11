@@ -1981,15 +1981,8 @@ public class ModelImage extends ModelStorageBase {
      * Forms a single VOI structure from all the active VOIs presently loaded in the imageModel.
      */
     public void groupVOIs() {
-        int i, k;
         int nVOIs;
-        int nContours;
-        Vector<VOIBase> contours;
         VOI newVOI = null;
-        VOI newPtVOI = null;
-        VOI newPLineVOI = null;
-        VOI newLineVOI = null;
-        VOI newProtractorVOI = null;
 
         String nameExt = null;
 
@@ -1999,12 +1992,9 @@ public class ModelImage extends ModelStorageBase {
             nameExt = new String("2D");
         }
 
-        VOIVector tempVOIs = new VOIVector(voiVector);
-
-        VOIBase tempBase = null;
-        nVOIs = tempVOIs.size();
+        nVOIs = voiVector.size();
         
-        final short id = (short) (voiVector.lastElement().getID()+1);
+        short id = (short) (voiVector.lastElement().getID()+1);
         short index = 0;
         final String joinedStr = "joined";
         for(int j=0; j<voiVector.size(); j++) {
@@ -2013,283 +2003,54 @@ public class ModelImage extends ModelStorageBase {
             }
         }
 
-        for (i = nVOIs - 1; i >= 0; i--) {
-
-            if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) && tempVOIs.VOIAt(i).isActive()) {
-
-                if (newVOI == null) {
-                    newVOI = new VOI(id, joinedStr+"Contour"+index, VOI.CONTOUR, -1.0f);
-                    newVOI.setAllActive(true);
-                }
-                contours = tempVOIs.VOIAt(i).getCurves();
-                nContours = contours.size();
-                for (k = nContours - 1; k >= 0; k--) {
-                    if (((VOIBase) contours.elementAt(k)).isActive()) {
-                        tempBase = (VOIContour) contours.elementAt(k);
-                        contours.removeElementAt(k);
-                        newVOI.getCurves().addElement(tempBase);
-                    }
-                }
-
-                // if the old contour is now empty, remove it
-                if (tempVOIs.VOIAt(i).isEmpty()) {
-                    tempVOIs.removeElementAt(i);
-                }
-
-            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POLYLINE) && tempVOIs.VOIAt(i).isActive()) {
-
-                if (newPLineVOI == null) {
-                    newPLineVOI = new VOI(id, joinedStr+"polyLine"+index+nameExt, VOI.POLYLINE, -1.0f);
-                    newPLineVOI.setAllActive(true);
-                }
-
-                contours = tempVOIs.VOIAt(i).getCurves();
-                nContours = contours.size();
-
-                for (k = nContours - 1; k >= 0; k--) {
-
-                    if (((VOIBase) contours.elementAt(k)).isActive()) {
-                        tempBase = (VOIContour) contours.elementAt(k);
-                        contours.removeElementAt(k);
-                        newPLineVOI.getCurves().addElement(tempBase);
-                    }
-                }
-                // if the old contour is now empty, remove it
-                if (tempVOIs.VOIAt(i).isEmpty()) {
-                    tempVOIs.removeElementAt(i);
-                }
-
-            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.LINE) && tempVOIs.VOIAt(i).isActive()) {
-
-                if (newLineVOI == null) {
-                    newLineVOI = new VOI(id, joinedStr+"line"+index+nameExt, VOI.LINE, -1.0f);
-                    newLineVOI.setAllActive(true);
-                }
-                contours = tempVOIs.VOIAt(i).getCurves();
-                nContours = contours.size();
-
-                for (k = nContours - 1; k >= 0; k--) {
-
-                    if (((VOIBase) contours.elementAt(k)).isActive()) {
-                        tempBase = (VOILine) contours.elementAt(k);
-                        contours.removeElementAt(k);
-                        newLineVOI.getCurves().addElement(tempBase);
-                    }
-                }
-
-                // if the old contour is now empty, remove it
-                if (tempVOIs.VOIAt(i).isEmpty()) {
-                    tempVOIs.removeElementAt(i);
-                }
-
-            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.POINT) && tempVOIs.VOIAt(i).isActive()) {
-
-                if (newPtVOI == null) {
-                    newPtVOI = new VOI(id, joinedStr+"point"+index+nameExt, VOI.POINT, -1.0f);
-                    newPtVOI.setAllActive(true);
-                }
-                contours = tempVOIs.VOIAt(i).getCurves();
-                nContours = contours.size();
-                for (k = nContours - 1; k >= 0; k--) {
-
-                    if (tempVOIs.VOIAt(i).getCurves().elementAt(k).isActive()) {
-                        tempBase = (VOIPoint) contours.elementAt(k);
-                        contours.removeElementAt(k);
-                        newProtractorVOI.getCurves().addElement(tempBase);
-                    }
-                }
-                // if the old contour is now empty, remove it
-                if (tempVOIs.VOIAt(i).isEmpty()) {
-                    tempVOIs.removeElementAt(i);
-                }
-            } else if ( (tempVOIs.VOIAt(i).getCurveType() == VOI.PROTRACTOR) && tempVOIs.VOIAt(i).isActive()) {
-
-                if (newProtractorVOI == null) {
-                    newProtractorVOI = new VOI(id, joinedStr+"protractor"+index+nameExt, VOI.PROTRACTOR, -1.0f);
-                    newProtractorVOI.setAllActive(true);
-                }
-                contours = tempVOIs.VOIAt(i).getCurves();
-                nContours = contours.size();
-
-                for (k = nContours - 1; k >= 0; k--) {
-
-                    if (tempVOIs.VOIAt(i).getCurves().elementAt(k).isActive()) {
-                        tempBase = (VOIProtractor) contours.elementAt(k);
-                        contours.removeElementAt(k);
-                        newProtractorVOI.getCurves().addElement(tempBase);
-                    }
-                }
-                // if the old contour is now empty, remove it
-                if (tempVOIs.VOIAt(i).isEmpty()) {
-                    tempVOIs.removeElementAt(i);
-                }
+        int type = -1;
+        int existingIndex = -1;
+        String name = null;
+        for(int i=nVOIs-1; i>=0; i--) {
+            if(type == -1 && voiVector.get(i).isActive()) {
+                type = voiVector.get(i).getCurveType();
+            }
+            if(voiVector.get(i).isAllActive()) {
+                existingIndex = i;
+                name = voiVector.get(i).getName();
             }
         }
-        if (newVOI != null) {
-            tempVOIs.addElement(newVOI);
-        }
-
-        if (newPtVOI != null) {
-            tempVOIs.addElement(newPtVOI);
-        }
-
-        if (newPLineVOI != null) {
-            tempVOIs.addElement(newPLineVOI);
-        }
-
-        if (newLineVOI != null) {
-            tempVOIs.addElement(newLineVOI);
-        }
-
-        if (newProtractorVOI != null) {
-            tempVOIs.addElement(newProtractorVOI);
-        }
-
-        voiVector.removeAllElements();
-        setVOIs(tempVOIs);
-        tempVOIs = null;
-
-        /**
-         * System.err.println("\n\nGrouping DEBUG INFO:"); VOI tempVOI = null; Vector [] tempCurves = null; //temp stuff
-         * for debugging purposes for (i = 0; i < voiVector.size(); i++) { tempVOI = voiVector.VOIAt(i);
-         * System.err.println( i + ": VOI name: " + tempVOI.getName()); tempCurves = tempVOI.getCurves(); for (j = 0; j <
-         * tempCurves.length; j++) { System.err.println("\tSize: " + tempCurves[j].size()); System.err.println("\t" +
-         * tempCurves[j].toString()); } }
-         */
-        for (i = 0; i < voiVector.size(); i++) {
-            (voiVector.elementAt(i)).setID((short) i);
-        }
-
-        notifyImageDisplayListeners();
-
-    }
-
-    /**
-     * Forms a single VOI structure from all of the VOIs presently loaded in the imageModel.
-     * 
-     * @param newVOIVector a new ViewVOIVector to hold the grouped VOIs
-     * @param where int array telling where to sort
-     * @param name the name of the VOI
-     */
-    public void groupVOIs(final ViewVOIVector newVOIVector, final int[] where, final String name) {
-        // System.err.println("calling group VOIs, passing in new vector");
-
-        int i, j, k;
-        int nVOIs;
-        int nContours;
-        Vector<VOIBase> contours;
-        VOI newVOI = null;
-        VOI newPtVOI = null;
-        VOI newPLineVOI = null;
-        VOI newLineVOI = null;
-        VOI newProtractorVOI = null;
-
-        String nameExt = null;
-
-        if (getNDims() > 2) {
-            nameExt = new String("3D");
+        
+        if(existingIndex == -1) {
+            name = joinedStr+index;
+            if(type == VOI.POLYLINE || type == VOI.LINE || type == VOI.PROTRACTOR || type == VOI.POINT) {
+                name += nameExt;
+            }
+            newVOI = new VOI(id, name, type, -1.0f);
         } else {
-            nameExt = new String("2D");
+            newVOI = voiVector.get(existingIndex);
         }
-
-        nVOIs = newVOIVector.size();
-
-        for (i = 0; i < nVOIs; i++) {
-
-            if (newVOIVector.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-
-                if (newVOI == null) {
-                    newVOI = new VOI((short) 0, "polygon", VOI.CONTOUR, -1.0f);
-                }
-                contours = newVOIVector.VOIAt(i).getCurves();
-                nContours = contours.size();
-                for (k = 0; k < nContours; k++) {
-                    newVOI.getCurves().addElement(contours.elementAt(k));
-                }
-            } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.POLYLINE) {
-
-                if (newPLineVOI == null) {
-                    newPLineVOI = new VOI((short) 0, "polyline" + nameExt, VOI.POLYLINE, -1.0f);
-                }
-                contours = voiVector.VOIAt(i).getCurves();
-                nContours = contours.size();
-                for (k = 0; k < nContours; k++) {
-                    newPLineVOI.getCurves().addElement(contours.elementAt(k));
-                }
-            } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.LINE) {
-
-                if (newLineVOI == null) {
-                    newLineVOI = new VOI((short) 0, "line" + nameExt, VOI.LINE, -1.0f);
-                }
-                contours = voiVector.VOIAt(i).getCurves();
-                nContours = contours.size();
-
-                for (k = 0; k < nContours; k++) {
-                    newLineVOI.getCurves().addElement(contours.elementAt(k));
-                }
-            } else if (newVOIVector.VOIAt(i).getCurveType() == VOI.POINT) {
-
-                if (newPtVOI == null) {
-                    newPtVOI = new VOI((short) 0, "point" + nameExt, VOI.POINT, -1.0f);
-                }
-                contours = newVOIVector.VOIAt(i).getCurves();
-                nContours = contours.size();
-                for (k = 0; k < nContours; k++) {
-                    newVOI.getCurves().addElement(contours.elementAt(k));
-                }
-            } else if (voiVector.VOIAt(i).getCurveType() == VOI.PROTRACTOR) {
-
-                if (newProtractorVOI == null) {
-                    newProtractorVOI = new VOI((short) 0, "protractor" + nameExt, VOI.PROTRACTOR, -1.0f);
-                }
-                contours = voiVector.VOIAt(i).getCurves();
-                nContours = contours.size();
-
-                for (k = 0; k < nContours; k++) {
-                    newProtractorVOI.getCurves().addElement(contours.elementAt(k));
+        
+        for (int i = nVOIs - 1; i >= 0; i--) {
+            VOI subVOI = voiVector.get(i);
+            if(subVOI != newVOI && subVOI.getCurveType() == type) {
+                VOIBaseVector subBase = subVOI.getCurves();
+                int nCurves = subBase.size();
+                for(int j = nCurves-1; j >= 0; j--) {
+                    VOIBase subBaseInst = subBase.get(j);
+                    if(subBaseInst.isActive()) {
+                        subBase.removeElementAt(j);
+                        newVOI.getCurves().addElement(subBaseInst);
+                    }
                 }
             }
-        }
-
-        // Sort where so that the length of the vector won't get screwed up
-        for (i = 1; i < where.length; i++) {
-            final int tmp = where[i];
-
-            for (j = i; (j > 0) && (tmp < where[j - 1]); j--) {
-                where[j] = where[j - 1];
+            if(subVOI.getCurves().isEmpty()) {
+                voiVector.remove(i);
             }
-
-            where[j] = tmp;
+        }
+        
+        newVOI.setAllActive(true);
+        if(!voiVector.contains(newVOI)) {
+            voiVector.add(newVOI);
         }
 
-        for (i = where.length - 1; i >= 0; i--) {
-            voiVector.removeElementAt(where[i]);
-        }
-
-        if (newVOI != null) {
-            voiVector.addElement(newVOI);
-        }
-
-        if (newPtVOI != null) {
-            voiVector.addElement(newPtVOI);
-        }
-
-        if (newPLineVOI != null) {
-            voiVector.addElement(newPLineVOI);
-        }
-
-        if (newLineVOI != null) {
-            voiVector.addElement(newLineVOI);
-        }
-
-        if (newProtractorVOI != null) {
-            voiVector.addElement(newProtractorVOI);
-        }
-
-        for (i = 0; i < voiVector.size(); i++) {
-            voiVector.elementAt(i).setID((short) i);
-        }
         notifyImageDisplayListeners();
+
     }
 
     /**
