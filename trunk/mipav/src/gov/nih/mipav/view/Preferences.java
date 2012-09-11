@@ -2538,6 +2538,17 @@ public class Preferences {
     }
 
     /**
+     * Saves the last used parameters for the given dialog.
+     * 
+     * @deprecated This string should be created using JDialogBase.saveDefaults();
+     * @param dialogName String the name of the dialog
+     * @param defaultsString String the String to save for this dialog
+     */
+    public static final void saveDialogDefaults(final String dialogName, final String defaultsString) {
+        Preferences.setProperty(dialogName, defaultsString);
+    }
+
+    /**
      * Sets the property for shortcuts by building string from ViewUserInterface's Shortcut Hashtable.
      */
     public static final void saveShortcuts() {
