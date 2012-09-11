@@ -83,7 +83,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         userInterface = ViewUserInterface.getReference();
         image = im;
         init();
-        loadDefaults();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -172,7 +171,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         }
 
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
+            legacySaveDefaults();
         }
      // save the completion status for later
         setComplete(algorithm.isCompleted());
@@ -206,6 +205,56 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
+                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
+            } catch (NoSuchElementException nsee) {
+                return;
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                //System.out.println("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+
+        String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
+        defaultsString += outputPanel.isOutputNewImageSet() + delim;
+        defaultsString += outputPanel.isProcessWholeImageSet() + delim;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        defaultsString += image25DCheckbox.isSelected();
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

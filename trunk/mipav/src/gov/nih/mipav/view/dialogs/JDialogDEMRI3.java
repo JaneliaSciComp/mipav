@@ -391,9 +391,6 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-    	if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmDEMRI3) {
             Preferences.debug("DEMRI3 elapsed: " + algorithm.getElapsedTime());
@@ -423,6 +420,38 @@ public class JDialogDEMRI3 extends JDialogScriptableBase implements AlgorithmInt
                 insertScriptLine();
             }
         }
+    }
+    
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+        String defaultsString = min_constr[0] + delim;
+        defaultsString += max_constr[0] + delim;
+        defaultsString += min_constr[1] + delim;
+        defaultsString += max_constr[1] + delim;
+        defaultsString += min_constr[2] + delim;
+        defaultsString += max_constr[2] + delim;
+        defaultsString += r1 + delim;
+        defaultsString += userSpecifiedBlood + delim;
+        if (userSpecifiedBlood) {
+            defaultsString += rib + delim;
+        }
+        defaultsString += tissueSource + delim;
+        if (tissueSource == CONSTANT_TISSUE) {
+            defaultsString += rit + delim;
+        }
+        else if (tissueSource == SEPARATE_VOLUME_TISSUE){
+        	defaultsString += tissueImage.getImageFileName();
+        }
+        defaultsString += theta + delim;
+        defaultsString += tr + delim;
+        defaultsString += perMin + delim;
+        defaultsString += nFirst + delim;
+        defaultsString += useVe;
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
     
     /**

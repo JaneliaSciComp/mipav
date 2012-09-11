@@ -29,7 +29,7 @@ import javax.swing.*;
 *
 */  
 public class JDialogDemonsLite extends JDialogScriptableBase 
-	implements AlgorithmInterface, ActionDiscovery  {
+	implements AlgorithmInterface, ActionDiscovery, LegacyDialogDefaultsInterface  {
     
     private     AlgorithmDemonsLite 	algo = null;
     private     ModelImage              image;                // source image
@@ -87,7 +87,6 @@ public class JDialogDemonsLite extends JDialogScriptableBase
         }
         image = im;
 		userInterface = ((ViewJFrameBase)(parentFrame)).getUserInterface();	    
-		loadDefaults();
         init();
 	}
 	
@@ -343,6 +342,44 @@ public class JDialogDemonsLite extends JDialogScriptableBase
 
         return str;
     }
+	
+ 	/**
+     *  Loads the default settings from Preferences to set up the dialog
+     */
+	public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                //System.out.println(defaultsString);
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+				levels = MipavUtil.getInt(st);
+				iter = MipavUtil.getInt(st);
+				smoothing = MipavUtil.getFloat(st);
+				scale = MipavUtil.getFloat(st);
+				regType = st.nextToken();
+				outputType = st.nextToken();
+            }
+            catch (Exception ex) {
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                System.out.println( "Resetting defaults for dialog: " + getDialogName() );
+                Preferences.removeProperty( getDialogName() );
+            }
+        } else {
+			System.out.println( "no saved dialogs for "+getDialogName() );
+		}
+    }
+		
+    /**
+     * Saves the default settings into the Preferences file
+     */
+	
+    public void legacySaveDefaults() {
+        String defaultsString = new String( getParameterString(",") );
+        //System.out.println(defaultsString);
+        Preferences.saveDialogDefaults(getDialogName(),defaultsString);
+    }
 	 
     //************************************************************************
     //************************** Event Processing ****************************
@@ -380,10 +417,6 @@ public class JDialogDemonsLite extends JDialogScriptableBase
     *   @param algorithm   Algorithm that caused the event.
     */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-                
-		if (Preferences.isPreference(Preferences.PREF_SAVE_DEFAULTS) && this.getOwner() != null && !isScriptRunning()) {
-			saveDefaults();
-		}
 	           
 		if ( algorithm instanceof AlgorithmDemonsLite) {
             image.clearMask();

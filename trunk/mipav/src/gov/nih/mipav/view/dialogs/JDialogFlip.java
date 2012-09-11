@@ -100,7 +100,6 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         if(flipObject == AlgorithmFlip.IMAGE || flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
             init();
             loadAxisDefaults = false;
-            loadDefaults();
             setVariables();
         }
         setForeground(Color.black);
@@ -144,10 +143,6 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmFlip) {
-            
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-                saveDefaults();
-            }
 
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
@@ -270,6 +265,18 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     }
     
     /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String delim = ",";
+        String defaultsString = flipAxis + delim;
+        defaultsString += flipObject + delim;
+        defaultsString += changeOrientationOrigin;
+
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
+    }
+    
+    /**
      * {@inheritDoc}
      */
     protected void setGUIFromParams() {
@@ -306,6 +313,49 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             }
             if (axisn.equals("preserve")) {
                 changeOrientationOrigin = false;
+            }
+        }
+    }
+    
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (optionsPanel != null)) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                flipAxis = MipavUtil.getInt(st);
+                if (loadAxisDefaults) {
+                    if (flipAxis == AlgorithmFlip.X_AXIS) {
+                        flipAxisXRadioButton.setSelected(true);
+                    }  
+                    else if (flipAxis == AlgorithmFlip.Y_AXIS) {
+                        flipAxisYRadioButton.setSelected(true);
+                    }
+                    else if((image.getNDims() > 2)&&(flipAxis == AlgorithmFlip.Z_AXIS)) {
+                        flipAxisZRadioButton.setSelected(true);
+                    }
+                } // if (loadAxisDefaults)
+                
+                flipObject = MipavUtil.getInt(st);
+                VOIVector vec = image.getVOIs();
+                if((flipObject == AlgorithmFlip.IMAGE_AND_VOI) && (vec.size() > 0)) {
+                    flipVoiCheckbox.setSelected(true);
+                }
+                else {
+                    flipVoiCheckbox.setSelected(false);
+                }
+
+                orientationOriginCheckBox.setSelected(MipavUtil.getBoolean(st));
+                
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
             }
         }
     }

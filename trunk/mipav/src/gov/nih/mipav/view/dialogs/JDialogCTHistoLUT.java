@@ -145,8 +145,6 @@ public class JDialogCTHistoLUT extends JDialogBase implements ItemListener {
         vertebraeMin = -620;
         vertebraeMax = 1680;
 
-        loadDefaults();
-
         radioAbdomen = new JRadioButton("Abdomen ", false);
         radioAbdomen.setFont(serif12);
         radioAbdomen.addItemListener(this);
@@ -297,10 +295,6 @@ public class JDialogCTHistoLUT extends JDialogBase implements ItemListener {
     public void actionPerformed(ActionEvent event) {
         int levelTemp, windowTemp;
         String command = event.getActionCommand();
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
 
         if (command.equals("Close")) {
@@ -529,6 +523,51 @@ public class JDialogCTHistoLUT extends JDialogBase implements ItemListener {
 
         }
 
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+
+                // System.err.println(defaultsString);
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                abdomenMin = MipavUtil.getInt(st);
+                abdomenMax = MipavUtil.getInt(st);
+                headMin = MipavUtil.getInt(st);
+                headMax = MipavUtil.getInt(st);
+                lungMin = MipavUtil.getInt(st);
+                lungMax = MipavUtil.getInt(st);
+                mediastinumMin = MipavUtil.getInt(st);
+                mediastinumMax = MipavUtil.getInt(st);
+                spineMin = MipavUtil.getInt(st);
+                spineMax = MipavUtil.getInt(st);
+                vertebraeMin = MipavUtil.getInt(st);
+                vertebraeMax = MipavUtil.getInt(st);
+
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                System.out.println("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(","));
+
+        // System.err.println(defaultsString);
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

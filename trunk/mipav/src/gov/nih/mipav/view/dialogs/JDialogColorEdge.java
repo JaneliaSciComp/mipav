@@ -20,7 +20,7 @@ import javax.swing.*;
 /**
  * GUI for entering parameters for the Color Edge algorithm and making it scriptable.
  */
-public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface {
+public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -96,7 +96,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
         getContentPane().add(buildOkayCancelPanel(), BorderLayout.SOUTH);
 
         pack();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -143,10 +142,6 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
 
         if (algorithm instanceof AlgorithmColorEdge) {
             sourceImage.clearMask();
@@ -242,6 +237,40 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (red1Text != null)) {
+            StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+            try {
+                red1Text.setText("" + MipavUtil.getInt(st));
+                green1Text.setText("" + MipavUtil.getInt(st));
+                blue1Text.setText("" + MipavUtil.getInt(st));
+                red2Text.setText("" + MipavUtil.getInt(st));
+                green2Text.setText("" + MipavUtil.getInt(st));
+                blue2Text.setText("" + MipavUtil.getInt(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(","));
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

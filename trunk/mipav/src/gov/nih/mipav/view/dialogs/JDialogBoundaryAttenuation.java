@@ -23,7 +23,7 @@ import javax.swing.*;
  * @author  Evan McCreedy
  */
 public class JDialogBoundaryAttenuation extends JDialogScriptableBase
-        implements AlgorithmInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -92,7 +92,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
 
         init();
 
-        loadDefaults();
         setVisible(true);
     }
 
@@ -127,10 +126,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
 
         if (algo.isCompleted()) {
 
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-                saveDefaults();
-            }
-
             // show dest image
             destImage = attenuationAlgo.getResultImage();
             new ViewJFrameImage(destImage, null, userInterface.getNewFrameLocation(destImage.getExtents()[0], destImage.getExtents()[1]));
@@ -160,6 +155,36 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase
         str += maxAttenuation;
 
         return str;
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                numErosionsTF.setText("" + MipavUtil.getInt(st));
+                maxAttenuationTF.setText("" + MipavUtil.getFloat(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(","));
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

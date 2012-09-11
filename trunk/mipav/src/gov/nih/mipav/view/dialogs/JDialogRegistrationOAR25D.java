@@ -35,7 +35,7 @@ import javax.swing.*;
  * @see     AlgorithmRegOAR25D2
  */
 public class JDialogRegistrationOAR25D extends JDialogScriptableBase
-        implements AlgorithmInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -231,7 +231,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
         UI = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -356,11 +355,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         float[][] posT = null;
 
         if (algorithm instanceof AlgorithmRegOAR25D2) {
-
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && !isScriptRunning()) {
-                saveDefaults();
-            }
-
+            
             if (algorithm.isCompleted()) {
                 matchImage.clearMask();
 
@@ -446,10 +441,6 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         }
         
         if (algorithm instanceof AlgorithmRegELSUNCOAR25D) {
-
-            if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && !isScriptRunning()) {
-                saveDefaults();
-            }
 
             if (algorithm.isCompleted()) {
                 matchImage.clearMask();
@@ -638,6 +629,190 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
                 graphCheckBox.setEnabled(false);
                 graphCheckBox.setSelected(false);
             }
+        }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((weightRadio != null) && (defaultsString != null)) {
+            System.err.println("Defaults string: " + defaultsString);
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                weightRadio.setSelected(MipavUtil.getBoolean(st));
+
+                int tempInt = MipavUtil.getInt(st);
+
+                switch (tempInt) {
+
+                    case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_COLOR:
+                    case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT_COLOR:
+                    case AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED:
+                    case AlgorithmCostFunctions.CORRELATION_RATIO_SMOOTHED_WGT:
+                        comboBoxCostFunct.setSelectedIndex(0);
+                        break;
+
+                    case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED:
+                    case AlgorithmCostFunctions.LEAST_SQUARES_SMOOTHED_WGT:
+                        comboBoxCostFunct.setSelectedIndex(1);
+                        break;
+
+                    case AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED:
+                    case AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SMOOTHED_WGT:
+                        comboBoxCostFunct.setSelectedIndex(2);
+                        break;
+
+                    case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED:
+                    case AlgorithmCostFunctions.NORMALIZED_MUTUAL_INFORMATION_SMOOTHED_WGT:
+                        comboBoxCostFunct.setSelectedIndex(3);
+                        break;
+
+                    default:
+                        comboBoxCostFunct.setSelectedIndex(0);
+                }
+
+                tempInt = MipavUtil.getInt(st);
+
+                switch (tempInt) {
+
+                    case 2:
+                        comboBoxDOF.setSelectedIndex(0);
+                        break;
+
+                    case 3:
+                        comboBoxDOF.setSelectedIndex(1);
+                        break;
+
+                    case 4:
+                        comboBoxDOF.setSelectedIndex(2);
+                        break;
+
+                    case 5:
+                        comboBoxDOF.setSelectedIndex(3);
+                        break;
+
+                    case 6:
+                        comboBoxDOF.setSelectedIndex(4);
+                        break;
+
+                    default:
+                        comboBoxDOF.setSelectedIndex(4);
+                        break;
+                }
+
+                tempInt = MipavUtil.getInt(st);
+
+                switch (comboBoxInterp.getSelectedIndex()) {
+
+                    case AlgorithmTransform.BILINEAR:
+                        comboBoxInterp.setSelectedIndex(0);
+                        break;
+
+                    case AlgorithmTransform.BSPLINE3:
+                        comboBoxInterp.setSelectedIndex(1);
+                        break;
+
+                    case AlgorithmTransform.BSPLINE4:
+                        comboBoxInterp.setSelectedIndex(2);
+                        break;
+
+                    case AlgorithmTransform.CUBIC_LAGRANGIAN:
+                        comboBoxInterp.setSelectedIndex(3);
+                        break;
+
+                    case AlgorithmTransform.QUINTIC_LAGRANGIAN:
+                        comboBoxInterp.setSelectedIndex(4);
+                        break;
+
+                    case AlgorithmTransform.HEPTIC_LAGRANGIAN:
+                        comboBoxInterp.setSelectedIndex(5);
+                        break;
+
+                    case AlgorithmTransform.WSINC:
+                        comboBoxInterp.setSelectedIndex(6);
+                        break;
+
+                    default:
+                        comboBoxInterp.setSelectedIndex(0);
+                        break;
+                }
+
+                tempInt = MipavUtil.getInt(st);
+
+                switch (comboBoxInterp2.getSelectedIndex()) {
+
+                    case AlgorithmTransform.BILINEAR:
+                        comboBoxInterp2.setSelectedIndex(0);
+                        break;
+
+                    case AlgorithmTransform.BSPLINE3:
+                        comboBoxInterp2.setSelectedIndex(1);
+                        break;
+
+                    case AlgorithmTransform.BSPLINE4:
+                        comboBoxInterp2.setSelectedIndex(2);
+                        break;
+
+                    case AlgorithmTransform.CUBIC_LAGRANGIAN:
+                        comboBoxInterp2.setSelectedIndex(3);
+                        break;
+
+                    case AlgorithmTransform.QUINTIC_LAGRANGIAN:
+                        comboBoxInterp2.setSelectedIndex(4);
+                        break;
+
+                    case AlgorithmTransform.HEPTIC_LAGRANGIAN:
+                        comboBoxInterp2.setSelectedIndex(5);
+                        break;
+
+                    case AlgorithmTransform.WSINC:
+                        comboBoxInterp2.setSelectedIndex(6);
+                        break;
+
+                    default:
+                        comboBoxInterp2.setSelectedIndex(0);
+                        break;
+                }
+
+                adjacentImageRButton.setSelected(MipavUtil.getBoolean(st));
+                refImageNumText.setText("" + MipavUtil.getInt(st));
+                rotateBeginText.setText("" + MipavUtil.getFloat(st));
+                rotateEndText.setText("" + MipavUtil.getFloat(st));
+                coarseRateText.setText("" + MipavUtil.getFloat(st));
+                fineRateText.setText("" + MipavUtil.getFloat(st));
+                graphCheckBox.setSelected(MipavUtil.getBoolean(st));
+                sampleCheckBox.setSelected(MipavUtil.getBoolean(st));
+
+                boolean doTV = MipavUtil.getBoolean(st);
+
+                if (transformVOIsBox.isEnabled()) {
+                    transformVOIsBox.setSelected(doTV);
+                }
+
+                setMaxIterations(MipavUtil.getInt(st));
+                setNumMinima(MipavUtil.getInt(st));
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                //System.out.println("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+
+        if (weightRadio != null) {
+            String defaultsString = new String(weighted + "," + getParameterString(","));
+            Preferences.saveDialogDefaults(getDialogName(), defaultsString);
         }
     }
 

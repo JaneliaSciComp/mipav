@@ -14,6 +14,7 @@ import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.scripting.ScriptableActionInterface;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.view.LegacyDialogDefaultsInterface;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewImageUpdateInterface;
@@ -50,7 +51,7 @@ import javax.swing.JCheckBox;
  * @see      AlgorithmGradientMagnitude
  */
 public class JDialogGradientMagnitude extends JDialogScriptableBase
-        implements AlgorithmInterface, ActionDiscovery, ScriptableActionInterface {
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ActionDiscovery, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -126,7 +127,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         outputImageType = image.getType();
         userInterface = ViewUserInterface.getReference();
         init();
-        loadDefaults();
         // setVisible(true);
     }
 
@@ -169,9 +169,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
-            saveDefaults();
-        }
         String name = makeImageName(image.getImageName(), "_gmag");
 
 
@@ -431,6 +428,43 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         if (source == image25DCheckbox) {
             sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());    
         }
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if ((defaultsString != null) && (outputOptionsPanel != null)) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+
+                outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+                sepCheckbox.setSelected(MipavUtil.getBoolean(st));
+                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
+                colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
+                colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
+                colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
+                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
+
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(",") + "," + outputOptionsPanel.isOutputNewImageSet());
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
     /**

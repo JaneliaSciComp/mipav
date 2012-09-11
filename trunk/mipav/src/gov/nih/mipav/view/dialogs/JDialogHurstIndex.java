@@ -25,7 +25,7 @@ import javax.swing.*;
  * @see      AlgorithmHurstIndex
  */
 public class JDialogHurstIndex extends JDialogScriptableBase
-        implements AlgorithmInterface, ScriptableActionInterface
+        implements AlgorithmInterface, LegacyDialogDefaultsInterface, ScriptableActionInterface
      {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -128,7 +128,6 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         super(theParentFrame, false);
         image = im;
         init();
-        loadDefaults();
         setVisible(true);
     }
 
@@ -240,6 +239,40 @@ public class JDialogHurstIndex extends JDialogScriptableBase
         str += grouping;
 
         return str;
+    }
+
+    /**
+     * Loads the default settings from Preferences to set up the dialog.
+     */
+    public void legacyLoadDefaults() {
+        String defaultsString = Preferences.getDialogDefaults(getDialogName());
+
+        if (defaultsString != null) {
+
+            try {
+                StringTokenizer st = new StringTokenizer(defaultsString, ",");
+                textMinDistance.setText("" + MipavUtil.getDouble(st));
+                textMaxDistance.setText("" + MipavUtil.getDouble(st));
+                integerDistanceRoundCheckBox.setSelected(MipavUtil.getBoolean(st));
+                grouping = (MipavUtil.getInt(st));
+                pixelButton.setSelected(grouping == PIXEL_GROUPING);
+                voiButton.setSelected(grouping == VOI_GROUPING);
+                sliceButton.setSelected(grouping == SLICE_GROUPING);
+            } catch (Exception ex) {
+
+                // since there was a problem parsing the defaults string, start over with the original defaults
+                Preferences.debug("Resetting defaults for dialog: " + getDialogName());
+                Preferences.removeProperty(getDialogName());
+            }
+        }
+    }
+
+    /**
+     * Saves the default settings into the Preferences file.
+     */
+    public void legacySaveDefaults() {
+        String defaultsString = new String(getParameterString(","));
+        Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
     
     /**
