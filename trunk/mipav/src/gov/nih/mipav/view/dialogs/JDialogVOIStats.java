@@ -348,7 +348,12 @@ public class JDialogVOIStats extends JDialogBase
                     where[i] = temp[i];
                 }
 
-                image.groupVOIs(newVOIVector, where, name);
+                int size = image.getVOIs().size();
+                for(int i=0; i<size; i++) {
+                    image.getVOIs().get(i).setAllActive(true);
+                }
+                
+                image.groupVOIs();
 
                 Vector<VOI> VOIs = image.getVOIs();
                 updateVOIPanel((VOIs.elementAt(VOIs.size() - 1)), image);
