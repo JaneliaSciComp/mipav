@@ -11,6 +11,7 @@ import gov.nih.mipav.view.renderer.WildMagic.VOI.VOIManagerInterface;
 import java.awt.*;
 import java.awt.event.*;
 
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -739,13 +740,47 @@ public abstract class JDialogBase extends JDialog
     /**
      * Saves the defaults of the dialog base to the mipav preferences file, assigning it to the given profile number.
      */
-    public void saveDefaults(String str) {
-        Preferences.setProperty(getClass().getName()+str, SAVE_DEFAULT);
+    public void saveDefaults(String profile) {
+        Preferences.setProperty(getClass().getName()+profile, SAVE_DEFAULT);
         
-        saveComponents(this, getClass().getName()+str);
+        saveComponents(this, getClass().getName()+profile, profile);
     }
     
-    private void saveComponents(Component comp, String name) {
+    private String getComponentName(Component comp, String longName, String profile) {
+        String name = null;
+        
+        try {
+        
+            Field[] f = this.getClass().getDeclaredFields();
+            
+            Class c = comp.getClass();
+            
+            for(int i=0; i<f.length; i++) {
+                
+                java.lang.reflect.Type t = f[i].getType();
+                if(t instanceof Class && c.equals(((Class)t))) {  
+                    if(!f[i].isAccessible()) {
+                        f[i].setAccessible(true);
+                    }
+                    Object obj = f[i].get(this);
+                    if(obj.equals(comp)) {
+                        name = f[i].getName();
+                        break;
+                    }
+                }
+            }
+        } catch(Exception e) {
+            //likely security manager issue
+        }
+        
+        if(name != null) {
+            return getClass().getName()+profile+"."+name;
+        } else {
+            return longName;
+        }
+    }
+    
+    private void saveComponents(Component comp, String name, String profile) {
         if(!comp.isEnabled() || !comp.isVisible()) {
             return;
         }
@@ -753,18 +788,18 @@ public abstract class JDialogBase extends JDialog
         
         if(comp instanceof JToggleButton) { //checkbox and radio buttons
             JToggleButton button = (JToggleButton)comp;
-            Preferences.setProperty(name, String.valueOf(button.isSelected()));
+            Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(button.isSelected()));
         } else if(comp instanceof JTextComponent) { //textfield, editorpane, textarea, textpane, and passwordfield
             JTextComponent text = (JTextComponent)comp;
             if(text.getText().trim().length() > 0) {
-                Preferences.setProperty(name, text.getText());
+                Preferences.setProperty(getComponentName(comp, name, profile), text.getText());
             }
         } else if(comp instanceof JSlider) {
             JSlider slider = (JSlider)comp;
-            Preferences.setProperty(name, String.valueOf(slider.getValue()));
+            Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(slider.getValue()));
         } else if(comp instanceof JSpinner) {
             JSpinner spinner = (JSpinner)comp;
-            Preferences.setProperty(name, String.valueOf(spinner.getValue()));
+            Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(spinner.getValue()));
         } else if(comp instanceof JComboBox) {
             JComboBox combo = (JComboBox)comp;
             StringBuffer buffer = new StringBuffer();
@@ -775,20 +810,21 @@ public abstract class JDialogBase extends JDialog
                     buffer.append(i).append(":").append(obj[i]).append(",");
                 }
                 buffer.deleteCharAt(buffer.length()-1);
-                Preferences.setProperty(name, buffer.toString());    
+                Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());    
             }
         } else if(comp instanceof JColorChooser) {
             JColorChooser color = (JColorChooser)comp;
             if(color.getColor() != null) {
-                Preferences.setProperty(name, String.valueOf(color.getColor().getRGB()));
+                Preferences.setProperty(getComponentName(comp, name, profile), String.valueOf(color.getColor().getRGB()));
             }
         } else if(comp instanceof JTable) {
             JTable table = (JTable) comp;
             TableModel model = table.getModel();
+            String subName = getComponentName(comp, name, profile);
             for(int i=0; i<table.getRowCount(); i++) {
                 for(int j=0; j<table.getColumnCount(); j++) {
                     if(model.isCellEditable(i, j) && table.getValueAt(i, j) != null) {
-                        Preferences.setProperty(name+":"+i+","+j, String.valueOf(table.getValueAt(i, j)));
+                        Preferences.setProperty(subName+":"+i+","+j, String.valueOf(table.getValueAt(i, j)));
                     }
                 }
             }
@@ -802,7 +838,7 @@ public abstract class JDialogBase extends JDialog
                 }
                 buffer.deleteCharAt(buffer.length()-1);
             }
-            Preferences.setProperty(name, buffer.toString());
+            Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());
         } else if(comp instanceof JList) {
             JList list = (JList)comp;
             int[] rows = list.getSelectedIndices();
@@ -813,18 +849,14 @@ public abstract class JDialogBase extends JDialog
                 }
                 buffer.deleteCharAt(buffer.length()-1);
             }
-            Preferences.setProperty(name, buffer.toString());
+            Preferences.setProperty(getComponentName(comp, name, profile), buffer.toString());
         } else if(comp instanceof Container) {
             Component[] compAr = ((Container)comp).getComponents();
             for(int i=0; i<compAr.length; i++) {
-                String subName = compAr[i].getName();
-                if(subName == null || subName.length() == 0) {
-                    subName = String.valueOf(i);
-                }
                 try {
-                    saveComponents(compAr[i], name+"."+subName);
+                    saveComponents(compAr[i], name, profile);
                 } catch (Exception e) {
-                    Preferences.debug(name+"."+subName+" property could not be saved", Preferences.DEBUG_MINOR);
+                    Preferences.debug(name+"."+compAr[i]+" property could not be saved", Preferences.DEBUG_MINOR);
                     e.printStackTrace();
                 }
             }
