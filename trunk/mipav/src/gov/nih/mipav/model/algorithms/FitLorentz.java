@@ -64,8 +64,8 @@ public class FitLorentz extends NLFittedFunction {
      * FitLorentz.
      *
      * @param  nPoints  number of points in the function
-     * @param  xData    DOCUMENT ME!
-     * @param  yData    DOCUMENT ME!
+     * @param  xData    values along x-axis
+     * @param  yData    values along y-axis
      */
     public FitLorentz(int nPoints, double[] xData, double[] yData) {
 
@@ -94,8 +94,8 @@ public class FitLorentz extends NLFittedFunction {
      * Constructs new fit lorentz distribution.
      *
      * @param  nPoints  Number of points in the function
-     * @param  xData    DOCUMENT ME!
-     * @param  yData    DOCUMENT ME!
+     * @param  xData    values along x-axis
+     * @param  yData    values along y-axis
      */
     public FitLorentz(int nPoints, float[] xData, float[] yData) {
     	
@@ -274,8 +274,7 @@ public class FitLorentz extends NLFittedFunction {
     }
     
     /**
-     * Starts the analysis. For some reason a guess with the wrong sign for a2 will not converge. Therefore, try both
-     * sign and take the one with the lowest chi-squared value.
+     * Starts the analysis. 
      */
     public void driver() {
         
