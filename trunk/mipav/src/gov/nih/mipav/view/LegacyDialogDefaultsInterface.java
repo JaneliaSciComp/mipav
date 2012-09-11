@@ -12,7 +12,7 @@ package gov.nih.mipav.view;
  * <p>Copyright: Copyright (c) 2012</p>
  *
  * <p>Company:The National Institutes of Health</p>
- *
+ * @deprecated
  * @author   ben link
  * @author   Justin Senseney
  * @version  1.0
