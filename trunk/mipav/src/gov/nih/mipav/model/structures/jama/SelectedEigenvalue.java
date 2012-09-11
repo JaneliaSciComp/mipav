@@ -6458,6 +6458,256 @@ $                   INFO )*/
           return;
   } // dlarra
   
+  
+  /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrb.  LAPACK is a software package provided by Univ. of Tennessee,    --
+  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
+  Contributors:
+ 
+  Beresford Parlett, University of California, Berkeley, USA
+  Jim Demmel, University of California, Berkeley, USA
+  Inderjit Dhillon, University of Texas, Austin, USA
+  Osni Marques, LBNL/NERSC, USA
+  Christof Voemel, University of California, Berkeley, USA
+  
+  Given the relatively robust representation(RRR) L D L^T, dlarrb
+  does "limited" bisection to refine the eigenvalues of L D L^T,
+  W( IFIRST-OFFSET ) through W( ILAST-OFFSET ), to more accuracy. Initial
+  guesses for these eigenvalues are input in W, the corresponding estimate
+  of the error in these guesses and their gaps are input in WERR
+  and WGAP, respectively. During bisection, intervals
+  [left, right] are maintained by storing their mid-points and
+  semi-widths in the arrays W and WERR respectively.
+  
+  @param n input int The order of the matrix
+  @param d input double[] of dimension n.  The n diagonal elements of the diagonal matrix D.
+  @param lld input double[] of dimension (n-1).   The (n-1) elements L(i)*L(i)*D(i).
+  @param ifirst input int  The index of the first eigenvalue to be computed.
+  @param ilast input int The index of the last eigenvalue to be computed.
+  @param rtol1 input double
+  @param rtol2 input double
+         Tolerance for the convergence of the bisection intervals.
+         An interval [LEFT,RIGHT] has converged if
+         RIGHT-LEFT.LT.MAX(rtol1*GAP, rtol2*MAX(|LEFT|,|RIGHT|) )
+         where GAP is the (estimated) distance to the nearest
+         eigenvalue.
+  @param offset input int   Offset for the arrays w, wgap and werr, i.e., the ifirst-offset-1
+         through ilast-offset-1 elements of these arrays are to be used.
+  @param w (input/output) double[] of dimension n.
+         On input, w[ifirst-offset-1] through w[ilast-offset-1] are
+         estimates of the eigenvalues of L D L^T indexed ifirst through ilast.
+         On output, these estimates are refined.
+  @param wgap (input/output) double[] of dimension (n-1).
+         On input, the (estimated) gaps between consecutive
+         eigenvalues of L D L^T, i.e., wgap[i-offset-1] is the gap between
+         eigenvalues I and I+1. Note that if ifirst == ilast
+         then wgap[ifirst-offset-1] must be set to ZERO.
+         On output, these gaps are refined.
+  @param werr (input/output) double[] of dimension n.
+         On input, werr[ifirst-offset-1] through werr[ilast-offset-1] are
+         the errors in the estimates of the corresponding elements in w.
+         On output, these errors are refined.
+  @param work workspace double[] of dimension (2*n)
+  @param iwork workspace int[] of dimension (2*n)
+  @param pivmin input double  The minimum pivot in the Sturm sequence.
+  @param spdiam input double The spectral diameter of the matrix.
+  @param twist input int
+         The twist index for the twisted factorization that is used for the negcount.
+         twist = N: Compute negcount from L D L^T - LAMBDA I = L+ D+ L+^T
+         twist = 1: Compute negcount from L D L^T - LAMBDA I = U- D- U-^T
+         twist = R: Compute negcount from L D L^T - LAMBDA I = N(r) D(r) N(r)
+  @param info output int[] of dimension 1.  Error flag.
+  */
+  /*private void dlarrb(int n, double d[], double lld[], int ifirst, int ilast, double rtol1, double rtol2,
+                      int offset, double w[], double wgap[], double werr[], double work[], int iwork[],
+                      double pivmin, double spdiam, int twist, int info[]) {
+      int maxitr;
+      int i;
+      int i1;
+      int ii;
+      int iter;
+      int k;
+      int negcnt;
+      int next;
+      int nint;
+      int olnint;
+      int prev;
+      int r;
+      double back;
+      double cvrgd;
+      double gap;
+      double left;
+      double lgap;
+      double mid;
+      double mnwdth;
+      double rgap;
+      double right;
+      double tmp;
+      double width;
+  
+        info[0] = 0;
+   
+        maxitr = (int)( (Math.log(spdiam+pivmin)-Math.log(pivmin) ) / Math.log(2.0) ) + 2;
+        mnwdth = 2.0 * pivmin;
+  
+        r = twist;
+        if ((r < 1) || (r > n)) {
+            r = n;
+        }
+  
+        // Initialize unconverged intervals in [work[2*i-2], work[2*i-1] ].
+        // The Sturm Count, Count[work[2*i-2]-1 ] is arranged to be I-1, while
+        // Count[work[2*i-1]-1 ] is stored in iwork[2*i-1]. The integer iwork[2*i-2]
+        // for an unconverged interval is set to the index of the next unconverged
+        // interval, and is -1 or 0 for a converged interval. Thus a linked
+        // list of unconverged intervals is set up.
+   
+        i1 = ifirst;
+        // The number of unconverged intervals
+        nint = 0;
+        // The last unconverged interval found
+        prev = 0;
+
+        rgap = wgap[i1-offset-1];
+        for (i = i1; i <= ilast; i++) {
+           k = 2*i;
+           ii = i - offset;
+           left = w[ii-1] - werr[ii-1];
+           right = w[ii-1] + werr[ii-1];
+           lgap = rgap;
+           rgap = wgap[ii-1];
+           gap = Math.min(lgap, rgap);
+
+           // Make sure that [LEFT,RIGHT] contains the desired eigenvalue
+           // Compute negcount from dstqds facto L+D+L+^T = L D L^T - LEFT
+   
+           // Do while( NEGCNT(LEFT).GT.I-1 )
+   
+           back = werr[ii-1];
+   20      CONTINUE
+           NEGCNT = DLANEG( N, D, LLD, LEFT, PIVMIN, R )
+           IF( NEGCNT.GT.I-1 ) THEN
+              LEFT = LEFT - BACK
+              BACK = TWO*BACK
+              GO TO 20
+           END IF
+  *
+  *        Do while( NEGCNT(RIGHT).LT.I )
+  *        Compute negcount from dstqds facto L+D+L+^T = L D L^T - RIGHT
+  *
+           BACK = WERR( II )
+   50      CONTINUE
+
+           NEGCNT = DLANEG( N, D, LLD, RIGHT, PIVMIN, R )
+            IF( NEGCNT.LT.I ) THEN
+               RIGHT = RIGHT + BACK
+               BACK = TWO*BACK
+               GO TO 50
+            END IF
+           WIDTH = HALF*ABS( LEFT - RIGHT )
+           TMP = MAX( ABS( LEFT ), ABS( RIGHT ) )
+           CVRGD = MAX(RTOL1*GAP,RTOL2*TMP)
+           IF( WIDTH.LE.CVRGD .OR. WIDTH.LE.MNWDTH ) THEN
+  *           This interval has already converged and does not need refinement.
+  *           (Note that the gaps might change through refining the
+  *            eigenvalues, however, they can only get bigger.)
+  *           Remove it from the list.
+              IWORK( K-1 ) = -1
+  *           Make sure that I1 always points to the first unconverged interval
+              IF((I.EQ.I1).AND.(I.LT.ILAST)) I1 = I + 1
+              IF((PREV.GE.I1).AND.(I.LE.ILAST)) IWORK( 2*PREV-1 ) = I + 1
+           ELSE
+  *           unconverged interval found
+              PREV = I
+              NINT = NINT + 1
+              IWORK( K-1 ) = I + 1
+              IWORK( K ) = NEGCNT
+           END IF
+           WORK( K-1 ) = LEFT
+           WORK( K ) = RIGHT
+        } // for (i = i1; i <= ilast; i++)
+
+  *
+  *     Do while( NINT.GT.0 ), i.e. there are still unconverged intervals
+  *     and while (ITER.LT.MAXITR)
+  *
+        ITER = 0
+   80   CONTINUE
+        PREV = I1 - 1
+        I = I1
+        OLNINT = NINT
+
+        DO 100 IP = 1, OLNINT
+           K = 2*I
+           II = I - OFFSET
+           RGAP = WGAP( II )
+           LGAP = RGAP
+           IF(II.GT.1) LGAP = WGAP( II-1 )
+           GAP = MIN( LGAP, RGAP )
+           NEXT = IWORK( K-1 )
+           LEFT = WORK( K-1 )
+           RIGHT = WORK( K )
+           MID = HALF*( LEFT + RIGHT )
+
+  *        semiwidth of interval
+           WIDTH = RIGHT - MID
+           TMP = MAX( ABS( LEFT ), ABS( RIGHT ) )
+           CVRGD = MAX(RTOL1*GAP,RTOL2*TMP)
+           IF( ( WIDTH.LE.CVRGD ) .OR. ( WIDTH.LE.MNWDTH ).OR.
+       $       ( ITER.EQ.MAXITR ) )THEN
+  *           reduce number of unconverged intervals
+              NINT = NINT - 1
+  *           Mark interval as converged.
+              IWORK( K-1 ) = 0
+              IF( I1.EQ.I ) THEN
+                 I1 = NEXT
+              ELSE
+  *              Prev holds the last unconverged interval previously examined
+                 IF(PREV.GE.I1) IWORK( 2*PREV-1 ) = NEXT
+              END IF
+              I = NEXT
+              GO TO 100
+           END IF
+           PREV = I
+  *
+  *        Perform one bisection step
+  *
+           NEGCNT = DLANEG( N, D, LLD, MID, PIVMIN, R )
+           IF( NEGCNT.LE.I-1 ) THEN
+              WORK( K-1 ) = MID
+           ELSE
+              WORK( K ) = MID
+           END IF
+           I = NEXT
+   100  CONTINUE
+        ITER = ITER + 1
+  *     do another loop if there are still unconverged intervals
+  *     However, in the last iteration, all intervals are accepted
+  *     since this is the best we can do.
+        IF( ( NINT.GT.0 ).AND.(ITER.LE.MAXITR) ) GO TO 80
+  *
+  *
+  *     At this point, all the intervals have converged
+        DO 110 I = IFIRST, ILAST
+           K = 2*I
+           II = I - OFFSET
+  *        All intervals marked by '0' have been refined.
+           IF( IWORK( K-1 ).EQ.0 ) THEN
+              W( II ) = HALF*( WORK( K-1 )+WORK( K ) )
+              WERR( II ) = WORK( K ) - W( II )
+           END IF
+   110  CONTINUE
+  *
+        DO 111 I = IFIRST+1, ILAST
+           K = 2*I
+           II = I - OFFSET
+           WGAP( II-1 ) = MAX( ZERO,
+       $                     W(II) - WERR (II) - W( II-1 ) - WERR( II-1 ))
+   111  CONTINUE
+
+        return;
+  } // dlarrb*/
+
+  
   /** This is a port of version 3.4.0 LAPACK auxiliary routine dlarrc.  LAPACK is a software package provided by Univ. of Tennessee,    --
    -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
    Contributors:
@@ -7511,10 +7761,10 @@ $                   INFO )*/
         int jblk;
         int iend;
         int in;
-        int mb;
-        int wend;
-        int indl;
-        int indu;
+        int mb = 0;
+        int wend = 0;
+        int indl = 0;
+        int indu = 0;
         int idum;
         int j;
         int cnt[] = new int[1];
@@ -7535,6 +7785,7 @@ $                   INFO )*/
         boolean forceb;
         boolean usedqd;
         boolean norep;
+        boolean leave = true;
         double sigma;
         double isleft;
         double isrght;
@@ -7670,7 +7921,7 @@ $                   INFO )*/
         // Loop over unreduced blocks
         ibegin = 1;
         wbegin = 1;
-        /*for (jblk = 1; jblk <= nsplit[0]; jblk++) {
+        for (jblk = 1; jblk <= nsplit[0]; jblk++) {
            iend = isplit[jblk-1];
            in = iend - ibegin + 1;
 
@@ -7829,174 +8080,189 @@ $                   INFO )*/
                dlarrc( 'T', in, s1, s2, daux, eaux, pivmin[0], cnt, cnt1, cnt2, iinfo);
            }
 
-           IF(MB.EQ.1) THEN
-              SIGMA = GL
-              SGNDEF = ONE
-           ELSEIF( CNT1 - INDL .GE. INDU - CNT2 ) THEN
-              IF( ( IRANGE.EQ.ALLRNG ) .AND. (.NOT.FORCEB) ) THEN
-                 SIGMA = MAX(ISLEFT,GL)
-              ELSEIF( USEDQD ) THEN
-  *              use Gerschgorin bound as shift to get pos def matrix
-  *              for dqds
-                 SIGMA = ISLEFT
-              ELSE
-  *              use approximation of the first desired eigenvalue of the
-  *              block as shift
-                 SIGMA = MAX(ISLEFT,VL)
-              ENDIF
-              SGNDEF = ONE
-           ELSE
-              IF( ( IRANGE.EQ.ALLRNG ) .AND. (.NOT.FORCEB) ) THEN
-                 SIGMA = MIN(ISRGHT,GU)
-              ELSEIF( USEDQD ) THEN
-  *              use Gerschgorin bound as shift to get neg def matrix
-  *              for dqds
-                 SIGMA = ISRGHT
-              ELSE
-  *              use approximation of the first desired eigenvalue of the
-  *              block as shift
-                 SIGMA = MIN(ISRGHT,VU)
-              ENDIF
-              SGNDEF = -ONE
-           ENDIF
+           if (mb == 1) {
+              sigma = gl;
+              sgndef = 1.0;
+           }
+           else if (cnt1[0] - indl >= indu - cnt2[0]) {
+              if ( (irange == allrng) && (!forceb) ) {
+                 sigma = Math.max(isleft,gl);
+              }
+              else if (usedqd) {
+                 // use Gerschgorin bound as shift to get pos def matrix for dqds
+                 sigma = isleft;
+              }
+              else {
+                 // use approximation of the first desired eigenvalue of the block as shift
+                 sigma = Math.max(isleft, vl[0]);
+              }
+              sgndef = 1.0;
+           } // else if (cnt1[0] - indl >= indu - cnt2[0])
+           else {
+              if ( (irange == allrng) && (!forceb) ) {
+                 sigma = Math.min(isrght, gu);
+              }
+              else if (usedqd) {
+                 // use Gerschgorin bound as shift to get neg def matrix for dqds
+                 sigma = isrght;
+              }
+              else {
+                 // use approximation of the first desired eigenvalue of the block as shift
+                 sigma = Math.min(isrght, vu[0]);
+              }
+              sgndef = -1.0;
+           }
 
 
-  *        An initial SIGMA has been chosen that will be used for computing
-  *        T - SIGMA I = L D L^T
-  *        Define the increment TAU of the shift in case the initial shift
-  *        needs to be refined to obtain a factorization with not too much
-  *        element growth.
-           IF( USEDQD ) THEN
-  *           The initial SIGMA was to the outer end of the spectrum
-  *           the matrix is definite and we need not retreat.
-              TAU = SPDIAM*EPS*N + TWO*PIVMIN
-              TAU = MAX( TAU,TWO*EPS*ABS(SIGMA) )
-           ELSE
-              IF(MB.GT.1) THEN
-                 CLWDTH = W(WEND) + WERR(WEND) - W(WBEGIN) - WERR(WBEGIN)
-                 AVGAP = ABS(CLWDTH / DBLE(WEND-WBEGIN))
-                 IF( SGNDEF.EQ.ONE ) THEN
-                    TAU = HALF*MAX(WGAP(WBEGIN),AVGAP)
-                    TAU = MAX(TAU,WERR(WBEGIN))
-                 ELSE
-                    TAU = HALF*MAX(WGAP(WEND-1),AVGAP)
-                    TAU = MAX(TAU,WERR(WEND))
-                 ENDIF
-              ELSE
-                 TAU = WERR(WBEGIN)
-              ENDIF
-           ENDIF
-  *
-           DO 80 IDUM = 1, MAXTRY
-  *           Compute L D L^T factorization of tridiagonal matrix T - sigma I.
-  *           Store D in WORK(1:IN), L in WORK(IN+1:2*IN), and reciprocals of
-  *           pivots in WORK(2*IN+1:3*IN)
-              DPIVOT = D( IBEGIN ) - SIGMA
-              WORK( 1 ) = DPIVOT
-              DMAX = ABS( WORK(1) )
-              J = IBEGIN
-              DO 70 I = 1, IN - 1
-                 WORK( 2*IN+I ) = ONE / WORK( I )
-                 TMP = E( J )*WORK( 2*IN+I )
-                 WORK( IN+I ) = TMP
-                 DPIVOT = ( D( J+1 )-SIGMA ) - TMP*E( J )
-                 WORK( I+1 ) = DPIVOT
-                 DMAX = MAX( DMAX, ABS(DPIVOT) )
-                 J = J + 1
-   70         CONTINUE
-  *           check for element growth
-              IF( DMAX .GT. MAXGROWTH*SPDIAM ) THEN
-                 NOREP = .TRUE.
-              ELSE
-                 NOREP = .FALSE.
-              ENDIF
-              IF( USEDQD .AND. .NOT.NOREP ) THEN
-  *              Ensure the definiteness of the representation
-  *              All entries of D (of L D L^T) must have the same sign
-                 DO 71 I = 1, IN
-                    TMP = SGNDEF*WORK( I )
-                    IF( TMP.LT.ZERO ) NOREP = .TRUE.
-   71            CONTINUE
-              ENDIF
-              IF(NOREP) THEN
-  *              Note that in the case of IRANGE=ALLRNG, we use the Gerschgorin
-  *              shift which makes the matrix definite. So we should end up
-  *              here really only in the case of IRANGE = VALRNG or INDRNG.
-                 IF( IDUM.EQ.MAXTRY-1 ) THEN
-                    IF( SGNDEF.EQ.ONE ) THEN
-  *                    The fudged Gerschgorin shift should succeed
-                       SIGMA =
-       $                    GL - FUDGE*SPDIAM*EPS*N - FUDGE*TWO*PIVMIN
-                    ELSE
-                       SIGMA =
-       $                    GU + FUDGE*SPDIAM*EPS*N + FUDGE*TWO*PIVMIN
-                    END IF
-                 ELSE
-                    SIGMA = SIGMA - SGNDEF * TAU
-                    TAU = TWO * TAU
-                 END IF
-              ELSE
-  *              an initial RRR is found
-                 GO TO 83
-              END IF
-   80      CONTINUE
-  *        if the program reaches this point, no base representation could be
-  *        found in MAXTRY iterations.
-           INFO = 2
-           RETURN
+           // An initial sigma has been chosen that will be used for computing
+           // T - sigma I = L D L^T
+           // Define the increment tau of the shift in case the initial shift
+           // needs to be refined to obtain a factorization with not too much
+           // element growth.
+           if (usedqd) {
+              // The initial sigma was to the outer end of the spectrum
+              // the matrix is definite and we need not retreat.
+              tau = spdiam*eps*n + 2.0*pivmin[0];
+              tau = Math.max(tau, 2.0*eps*Math.abs(sigma));
+           }
+           else {
+              if (mb > 1) {
+                 clwdth = w[wend-1] + werr[wend-1] - w[wbegin-1] - werr[wbegin-1];
+                 avgap = Math.abs(clwdth /(double)(wend-wbegin));
+                 if(sgndef == 1.0) {
+                    tau = 0.5*Math.max(wgap[wbegin-1], avgap);
+                    tau = Math.max(tau,werr[wbegin-1]);
+                 }
+                 else {
+                    tau = 0.5*Math.max(wgap[wend-2], avgap);
+                    tau = Math.max(tau,werr[wend-1]);
+                 }
+              }
+              else {
+                 tau = werr[wbegin-1];
+              }
+           }
+   
+           for (idum = 1; idum <= maxtry; idum++) {
+              // Compute L d L^T factorization of tridiagonal matrix T - sigma I.
+              // Store d in work[0:in-1], L in work[in:2*in-1], and reciprocals of
+              // pivots in work[2*in:3*in-1]
+              dpivot = d[ibegin-1] - sigma;
+              work[0] = dpivot;
+              dmax = Math.abs(work[0]);
+              j = ibegin;
+              for (i = 1; i <= in-1; i++) {
+                 work[2*in+i-1] = 1.0 / work[i-1];
+                 tmp[0] = e[j-1]*work[2*in+i-1];
+                 work[in+i-1] = tmp[0];
+                 dpivot = ( d[j]-sigma) - tmp[0]*e[j-1];
+                 work[i] = dpivot;
+                 dmax = Math.max(dmax, Math.abs(dpivot));
+                 j = j + 1;
+              } // for (i = 1; i <= in-1; i++)
+              // check for element growth
+              if (dmax > maxgrowth*spdiam) {
+                 norep = true;
+              }
+              else {
+                 norep = false;
+              }
+              if (usedqd && !norep) {
+                 // Ensure the definiteness of the representation
+                 // All entries of d (of L d L^T) must have the same sign
+                 for (i = 0; i < in; i++) {
+                    tmp[0] = sgndef * work[i];
+                    if (tmp[0] < 0.0) {
+                        norep = true;
+                    }
+                 } // for (i = 0; i < in; i++)
+              } // if (usedqd && !norep)
+              if (norep) {
+                 // Note that in the case of irange = allrng, we use the Gerschgorin
+                 // shift which makes the matrix definite. So we should end up
+                 // here really only in the case of irange = valrng or indrng.
+                 if (idum == maxtry-1) {
+                    if (sgndef == 1.0) {
+                       // The fudged Gerschgorin shift should succeed
+                       sigma = gl - fudge*spdiam*eps*n - fudge*2.0*pivmin[0];
+                    } // if (sgndef == 1.0)
+                    else {
+                       sigma = gu + fudge*spdiam*eps*n + fudge*2.0*pivmin[0];
+                    }
+                 } // if (idum == maxtry-1)
+                 else {
+                    sigma = sigma - sgndef * tau;
+                    tau = 2.0 * tau;
+                 }
+              } // if (norep)
+              else {
+                 // an initial RRR is found
+                 leave = false;
+                 break;
+              }
+           } // for (idum = 1; idum <= maxtry; idum++)
+           // if the program reaches this point, no base representation could be
+           // found in maxtry iterations.
+           if (leave) {
+               info[0] = 2;
+               return;
+           }
 
-   83      CONTINUE
-  *        At this point, we have found an initial base representation
-  *        T - SIGMA I = L D L^T with not too much element growth.
-  *        Store the shift.
-           E( IEND ) = SIGMA
-  *        Store D and L.
-           CALL DCOPY( IN, WORK, 1, D( IBEGIN ), 1 )
-           CALL DCOPY( IN-1, WORK( IN+1 ), 1, E( IBEGIN ), 1 )
+           // At this point, we have found an initial base representation
+           // T - sigma I = L d L^T with not too much element growth.
+           // Store the shift.
+           e[iend-1] = sigma;
+           // Store d and L.
+           for (i = 0; i < in; i++) {
+               d[ibegin-1+i] = work[i];
+           }
+           for (i = 0; i < in-1; i++) {
+               e[ibegin-1+i] = work[in+i];
+           }
 
 
-           IF(MB.GT.1 ) THEN
-  *
-  *           Perturb each entry of the base representation by a small
-  *           (but random) relative amount to overcome difficulties with
-  *           glued matrices.
-  *
-              DO 122 I = 1, 4
-                 ISEED( I ) = 1
-   122        CONTINUE
+           if (mb > 1) {
+   
+              // Perturb each entry of the base representation by a small
+              // (but random) relative amount to overcome difficulties with
+              // glued matrices.
+   
+              for (i = 0; i < 4; i++) {
+                 iseed[i] = 1;
+              }
 
-              CALL DLARNV(2, ISEED, 2*IN-1, WORK(1))
-              DO 125 I = 1,IN-1
-                 D(IBEGIN+I-1) = D(IBEGIN+I-1)*(ONE+EPS*PERT*WORK(I))
-                 E(IBEGIN+I-1) = E(IBEGIN+I-1)*(ONE+EPS*PERT*WORK(IN+I))
-   125        CONTINUE
-              D(IEND) = D(IEND)*(ONE+EPS*FOUR*WORK(IN))
-  *
-           ENDIF
-  *
-  *        Don't update the Gerschgorin intervals because keeping track
-  *        of the updates would be too much work in DLARRV.
-  *        We update W instead and use it to locate the proper Gerschgorin
-  *        intervals.
+              ge.dlarnv(2, iseed, 2*in-1, work);
+              for (i = 0; i < in-1; i++) {
+                 d[ibegin+i-1] = d[ibegin+i-1]*(1.0+eps*pert*work[i]);
+                 e[ibegin+i-1] = e[ibegin+i-1]*(1.0+eps*pert*work[in+i]);
+              } // for (i = 0; i < in-1; i++)
+              d[iend-1] = d[iend-1]*(1.0+eps*4.0*work[in-1]);
+   
+           } // if (mb > 1)
+   
+           // Don't update the Gerschgorin intervals because keeping track
+           // of the updates would be too much work in dlarrv.
+           // We update w instead and use it to locate the proper Gerschgorin
+           // intervals.
 
-  *        Compute the required eigenvalues of L D L' by bisection or dqds
-           IF ( .NOT.USEDQD ) THEN
-  *           If DLARRD has been used, shift the eigenvalue approximations
-  *           according to their representation. This is necessary for
-  *           a uniform DLARRV since dqds computes eigenvalues of the
-  *           shifted representation. In DLARRV, W will always hold the
-  *           UNshifted eigenvalue approximation.
-              DO 134 J=WBEGIN,WEND
-                 W(J) = W(J) - SIGMA
-                 WERR(J) = WERR(J) + ABS(W(J)) * EPS
-   134        CONTINUE
-  *           call DLARRB to reduce eigenvalue error of the approximations
-  *           from DLARRD
-              DO 135 I = IBEGIN, IEND-1
-                 WORK( I ) = D( I ) * E( I )**2
-   135        CONTINUE
-  *           use bisection to find EV from INDL to INDU
-              CALL DLARRB(IN, D(IBEGIN), WORK(IBEGIN),
+           // Compute the required eigenvalues of L D L' by bisection or dqds
+           if (!usedqd) {
+              // If dlarrd has been used, shift the eigenvalue approximations
+              // according to their representation. This is necessary for
+              // a uniform DLARRV since dqds computes eigenvalues of the
+              // shifted representation. In dlarrv, w will always hold the
+              // UNshifted eigenvalue approximation.
+              for (j = wbegin; j <= wend; j++) {
+                 w[j-1] = w[j-1] - sigma;
+                 werr[j-1] = werr[j-1] + Math.abs(w[j-1]) * eps;
+              } // for (j = wbegin; j <= wend; j++)
+              // call dlarrb to reduce eigenvalue error of the approximations
+              // from dlarrd
+              for (i = ibegin; i <= iend-1; i++) {
+                 work[i-1] = d[i-1] * e[i-1] * e[i-1];
+              }
+              // use bisection to find EV from indl to indu
+              /*CALL DLARRB(IN, D(IBEGIN), WORK(IBEGIN),
        $                  INDL, INDU, RTOL1, RTOL2, INDL-1,
        $                  W(WBEGIN), WGAP(WBEGIN), WERR(WBEGIN),
        $                  WORK( 2*N+1 ), IWORK, PIVMIN, SPDIAM,
@@ -8014,7 +8280,8 @@ $                   INFO )*/
                  IBLOCK(M) = JBLK
                  INDEXW(M) = I
    138        CONTINUE
-           ELSE
+           }
+           else {
   *           Call dqds to get all eigs (and then possibly delete unwanted
   *           eigenvalues).
   *           Note that dqds finds the eigenvalues of the L D L^T representation
@@ -8077,12 +8344,12 @@ $                   INFO )*/
        $                          W(I+1)-WERR(I+1) - (W(I)+WERR(I)) )
    166        CONTINUE
               WGAP( M ) = MAX( ZERO,
-       $           ( VU-SIGMA ) - ( W( M ) + WERR( M ) ) )
-           END IF
-  *        proceed with next block
-           IBEGIN = IEND + 1
-           WBEGIN = WEND + 1
-        } // for (jblk = 1; jblk <= nsplit[0]; jblk++)*/
+       $           ( VU-SIGMA ) - ( W( M ) + WERR( M ) ) )*/
+           }
+           // proceed with next block
+           ibegin = iend + 1;
+           wbegin = wend + 1;
+        } // for (jblk = 1; jblk <= nsplit[0]; jblk++)
   
 
         return;
@@ -8326,6 +8593,135 @@ $                   INFO )*/
   
         return;
   } // dlarrr
+  
+  /** This is a port of version 3.4.0 LAPACK auxiliary routine dlaneg.  LAPACK is a software package provided by Univ. of Tennessee,    --
+  -- Univ. of California Berkeley, Univ. of Colorado Denver and NAG Ltd. November 2011
+  
+  Contributors:
+  Osni Marques, LBNL/NERSC, USA
+  Christof Voemel, University of California, Berkeley, USA
+  Jason Riedy, University of California, Berkeley, USA
+  
+  dlaneg computes the Sturm count, the number of negative pivots
+  encountered while factoring tridiagonal T - sigma I = L D L^T.
+  This implementation works directly on the factors without forming
+  the tridiagonal matrix T.  The Sturm count is also the number of
+  eigenvalues of T less than sigma.
+  
+  This routine is called from dlarrb.
+  
+  The current routine does not use the PIVMIN parameter but rather
+  requires IEEE-754 propagation of Infinities and NaNs.  This
+  routine also has no input range restrictions but does require
+  default exception handling such that x/0 produces Inf when x is
+  non-zero, and Inf/Inf produces NaN.  For more information, see:
+ 
+  Marques, Riedy, and Voemel, "Benefits of IEEE-754 Features in
+  Modern Symmetric Tridiagonal Eigensolvers," SIAM Journal on
+  Scientific Computing, v28, n5, 2006.  DOI 10.1137/050641624
+  (Tech report version in LAWN 172 with the same title.)
+  
+  @param n input int  The order of the matrix
+  @param d input double[] of dimension n.   The n diagonal elements of the diagonal matrix D.
+  @param lld input double[] of dimension (n-1).  The (n-1) elements L(i)*L(i)*D(i).
+  @param sigma input double  Shift amount in T - sigma I = L D L^T.
+  @param pivmin input double  The minimum pivot in the Sturm sequence.  May be used
+         when zero pivots are encountered on non-IEEE-754 architectures.
+  @param r input int  The twist index for the twisted factorization that is used
+         for the negcount.
+  */
+  /*private int dlaneg(int n, double d[], double lld[], double sigma, double pivmin, int r) {
+ 
+        // Some architectures propagate Infinities and NaNs very slowly, so
+        // the code computes counts in blklen chunks.  Then a NaN can
+        // propagate at most blklen columns before being detected.  This is
+        // not a general tuning parameter; it needs only to be just large
+        // enough that the overhead is tiny in common cases.
+        final int blklen = 128;
+        
+        int bj;
+        int j;
+        int neg1;
+        int neg2;
+        int negcnt;
+        
+        double bsav;
+        double dminus;
+        double dplus;
+        double gamma;
+        double p;
+        double t;
+        double tmp;
+
+        negcnt = 0;
+
+        // I) upper part: L D L^T - SIGMA I = L+ D+ L+^T
+        t = -sigma;
+        for (bj = 1; bj <= r-1; bj += blklen) {
+           neg1 = 0;
+           bsav = t;
+           DO 21 J = BJ, MIN(BJ+BLKLEN-1, R-1)
+              DPLUS = D( J ) + T
+              IF( DPLUS.LT.ZERO ) NEG1 = NEG1 + 1
+              TMP = T / DPLUS
+              T = TMP * LLD( J ) - SIGMA
+   21      CONTINUE
+           SAWNAN = DISNAN( T )
+  *     Run a slower version of the above loop if a NaN is detected.
+  *     A NaN should occur only with a zero pivot after an infinite
+  *     pivot.  In that case, substituting 1 for T/DPLUS is the
+  *     correct limit.
+           IF( SAWNAN ) THEN
+              NEG1 = 0
+              T = BSAV
+              DO 22 J = BJ, MIN(BJ+BLKLEN-1, R-1)
+                 DPLUS = D( J ) + T
+                 IF( DPLUS.LT.ZERO ) NEG1 = NEG1 + 1
+                 TMP = T / DPLUS
+                 IF (DISNAN(TMP)) TMP = ONE
+                 T = TMP * LLD(J) - SIGMA
+   22         CONTINUE
+           END IF
+           NEGCNT = NEGCNT + NEG1
+        
+        } // for (bj = 1; bj <= r-1; bj += blklen)
+  *
+  *     II) lower part: L D L^T - SIGMA I = U- D- U-^T
+        P = D( N ) - SIGMA
+        DO 230 BJ = N-1, R, -BLKLEN
+           NEG2 = 0
+           BSAV = P
+           DO 23 J = BJ, MAX(BJ-BLKLEN+1, R), -1
+              DMINUS = LLD( J ) + P
+              IF( DMINUS.LT.ZERO ) NEG2 = NEG2 + 1
+              TMP = P / DMINUS
+              P = TMP * D( J ) - SIGMA
+   23      CONTINUE
+           SAWNAN = DISNAN( P )
+  *     As above, run a slower version that substitutes 1 for Inf/Inf.
+  *
+           IF( SAWNAN ) THEN
+              NEG2 = 0
+              P = BSAV
+              DO 24 J = BJ, MAX(BJ-BLKLEN+1, R), -1
+                 DMINUS = LLD( J ) + P
+                 IF( DMINUS.LT.ZERO ) NEG2 = NEG2 + 1
+                 TMP = P / DMINUS
+                 IF (DISNAN(TMP)) TMP = ONE
+                 P = TMP * D(J) - SIGMA
+   24         CONTINUE
+           END IF
+           NEGCNT = NEGCNT + NEG2
+   230  CONTINUE
+  *
+  *     III) Twist index
+  *       T was shifted by SIGMA initially.
+        GAMMA = (T + SIGMA) + P
+        IF( GAMMA.LT.ZERO ) NEGCNT = NEGCNT+1
+
+        DLANEG = NEGCNT
+        END*/
+  }
 
   
 }
