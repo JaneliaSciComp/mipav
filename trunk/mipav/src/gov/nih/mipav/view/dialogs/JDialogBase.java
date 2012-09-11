@@ -120,7 +120,7 @@ public abstract class JDialogBase extends JDialog
 
     /** JMenuBar for loading/saving defaults */
     protected JMenuBar bar;
-
+ 
     /** List of existing default profiles for this dialog */
     private ArrayList<String> profiles;
     
@@ -508,10 +508,11 @@ public abstract class JDialogBase extends JDialog
             }
             
         } else if(e.getActionCommand().equals(LOAD_DEFAULT)) {
-            boolean success = loadDefaults();
-            if(!success) {
-                JOptionPane.showMessageDialog(this, "Profile loading not successful.");
-            }
+            loadDefaults();
+//            boolean success = loadDefaults();
+//            if(!success) {
+//                JOptionPane.showMessageDialog(this, "Profile loading not successful.");
+//            }
         } else if(e.getActionCommand().equals(SAVE_PROFILE)) {
             int doSave = JOptionPane.NO_OPTION;
             String str = String.valueOf(0);
@@ -710,8 +711,8 @@ public abstract class JDialogBase extends JDialog
     /**
      * Loads the defaults of profile 0.
      */
-    public boolean loadDefaults() {
-        return loadDefaults(String.valueOf(0));
+    public void loadDefaults() {
+        loadDefaults(String.valueOf(0));
     }
     
     /**
