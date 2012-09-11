@@ -26,7 +26,8 @@ import gov.nih.mipav.model.algorithms.AlgorithmBase;
  * This class is the base for all the other dialogs. It has two important functions that are used by almost all the
  * dialogs. It also implements all the listeners except for the action listener.
  *
- * @version  1.0 Aug 1, 1998
+ * @version  2.0 Aug 1, 2012
+ * @author   Justin Senseney
  * @author   Neva Cherniavsky
  * @author   Matthew J. McAuliffe, Ph.D.
  */
@@ -553,6 +554,40 @@ public abstract class JDialogBase extends JDialog
      */
     public void focusLost(FocusEvent event) { }
 
+    private String getComponentName(Component comp, String longName, String profile) {
+        String name = null;
+        
+        try {
+        
+            Field[] f = this.getClass().getDeclaredFields();
+            
+            Class c = comp.getClass();
+            
+            for(int i=0; i<f.length; i++) {
+                
+                java.lang.reflect.Type t = f[i].getType();
+                if(t instanceof Class && c.equals(((Class)t))) {  
+                    if(!f[i].isAccessible()) {
+                        f[i].setAccessible(true);
+                    }
+                    Object obj = f[i].get(this);
+                    if(obj.equals(comp)) {
+                        name = f[i].getName();
+                        break;
+                    }
+                }
+            }
+        } catch(Exception e) {
+            //likely security manager issue
+        }
+        
+        if(name != null) {
+            return getClass().getName()+profile+"."+name;
+        } else {
+            return longName;
+        }
+    }
+
     /**
      * Accessor that returns whether or not the dialog has been cancelled.
      *
@@ -744,40 +779,6 @@ public abstract class JDialogBase extends JDialog
         Preferences.setProperty(getClass().getName()+profile, SAVE_DEFAULT);
         
         saveComponents(this, getClass().getName()+profile, profile);
-    }
-    
-    private String getComponentName(Component comp, String longName, String profile) {
-        String name = null;
-        
-        try {
-        
-            Field[] f = this.getClass().getDeclaredFields();
-            
-            Class c = comp.getClass();
-            
-            for(int i=0; i<f.length; i++) {
-                
-                java.lang.reflect.Type t = f[i].getType();
-                if(t instanceof Class && c.equals(((Class)t))) {  
-                    if(!f[i].isAccessible()) {
-                        f[i].setAccessible(true);
-                    }
-                    Object obj = f[i].get(this);
-                    if(obj.equals(comp)) {
-                        name = f[i].getName();
-                        break;
-                    }
-                }
-            }
-        } catch(Exception e) {
-            //likely security manager issue
-        }
-        
-        if(name != null) {
-            return getClass().getName()+profile+"."+name;
-        } else {
-            return longName;
-        }
     }
     
     private void saveComponents(Component comp, String name, String profile) {
