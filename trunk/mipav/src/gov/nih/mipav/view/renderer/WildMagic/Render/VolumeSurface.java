@@ -370,8 +370,7 @@ public class VolumeSurface extends VolumeObject
      */
     public float ComputeVolume()
     {
-    	//ComputeCenter();
-        float fSum = 0.0f;        
+        float fSum = 0.0f; 
         int iTriangleQuantity = m_kMesh.GetTriangleQuantity();
         int[] aiConnect = m_kMesh.IBuffer.GetData();
         Vector3f kPos0 = new Vector3f();
@@ -389,10 +388,10 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetPosition3(iV1, kPos1);
             m_kMesh.VBuffer.GetPosition3(iV2, kPos2);
             
-            meshToScannerCoords( kPos0 );
-            meshToScannerCoords( kPos1 );
-            meshToScannerCoords( kPos2 );
-
+            meshToVolumeCoords( kPos0 );
+            meshToVolumeCoords( kPos1 );
+            meshToVolumeCoords( kPos2 );
+            
             // compute triple scalar product
             // The scalar triple product of three vectors A, B, and C is denoted
             // [A,B,C] and defined by
@@ -414,7 +413,8 @@ public class VolumeSurface extends VolumeObject
 
             fSum += fProd;
         }
-        return Math.abs(fSum / 6.0f);
+        fSum = (Math.abs(fSum / 6.0f) * m_kResolutions.X * m_kResolutions.Y * m_kResolutions.Z);
+        return fSum;
     }
 
     /** Delete local memory. */
@@ -694,7 +694,9 @@ public class VolumeSurface extends VolumeObject
         {
             m_fSurfaceArea = ComputeSurfaceArea();
         }
-        return (m_fVolume + m_fSurfaceArea);
+        System.err.println( "GetVolume " + m_fVolume );
+        return m_fVolume;
+        //return (m_fVolume + m_fSurfaceArea);
     } 
     
     /**
@@ -711,7 +713,9 @@ public class VolumeSurface extends VolumeObject
         {
             m_fSurfaceArea = ComputeSurfaceArea();
         }
-        return new String ( (m_fVolume + m_fSurfaceArea) + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] + " x " + m_akUnitsLabel[2] );
+        System.err.println( "GetVolumeString " + m_fVolume );
+        //return new String ( (m_fVolume + m_fSurfaceArea) + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] + " x " + m_akUnitsLabel[2] );
+        return new String ( (m_fVolume) + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] + " x " + m_akUnitsLabel[2] );
     } 
 
     /* (non-Javadoc)
@@ -1606,6 +1610,18 @@ public class VolumeSurface extends VolumeObject
     	kVolume.Mult( m_kVolumeScale );
     	kVolume.Sub( m_kVolumeTrans );	
     	kVolume.Scale( m_fVolumeDiv );			
+    }
+
+    /**
+     * Converts the input point from local mesh coordinates used to display the surface in the volume renderer into volume-index coordinates.
+     * The input position is overwritten in the process.
+     * @param kVolume the input position.
+     */
+    private void meshToVolumeCoordsA(Vector3f kMesh)
+    {
+    	kMesh.Scale( m_fVolumeMult );	
+    	kMesh.Add( m_kVolumeTrans );			
+    	kMesh.Scale( .5f );
     }
 
     /**

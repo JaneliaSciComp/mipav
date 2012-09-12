@@ -158,6 +158,8 @@ public class JPanelSurface extends JPanelRendererJ3D
 
     /** ModelImage max dimension: (Extents * resolutions). */
     private float maxBox;
+    private float[] resolutions;
+    private int[] extents;
 
     /** Surface mask. */
     private SurfaceMask mSurfaceMask = new SurfaceMask();
@@ -375,9 +377,9 @@ public class JPanelSurface extends JPanelRendererJ3D
         parentScene = parent;
 
         ModelImage imageA = parentScene.getImageA();
-        int[] extents = imageA.getExtents();
-        float[] resols = imageA.getFileInfo()[0].getResolutions();
-        maxBox = Math.max(extents[0] * resols[0], Math.max(extents[1] * resols[1], extents[2] * resols[2]));
+        extents = imageA.getExtents();
+        resolutions = imageA.getFileInfo()[0].getResolutions();
+        maxBox = Math.max(extents[0] * resolutions[0], Math.max(extents[1] * resolutions[1], extents[2] * resolutions[2]));
 
 
         surfaceRootTG = surfaceRoot;
@@ -664,7 +666,9 @@ public class JPanelSurface extends JPanelRendererJ3D
 
             surfaceVector.add(surface);
             triangleText.setText(String.valueOf(surface.getNumberTriangles()));
-            volumeText.setText(String.valueOf((surface.getVolume() * maxBox * maxBox * maxBox / 8.0f)));
+            float volume = calcVolume(parentScene.getImageA(),kSurface);
+            volumeText.setText("" + volume);
+            //volumeText.setText(String.valueOf((surface.getVolume() * maxBox * maxBox * maxBox / 8.0f)));
             areaText.setText(String.valueOf((surface.getArea() * maxBox * maxBox)));
 
             /* Add to the surfaceList: */
@@ -1864,7 +1868,9 @@ public class JPanelSurface extends JPanelRendererJ3D
 
                 // One length across the extracted surface changes from -1 to 1
                 // while one length across the actual volume changes by ((dim-1)*res)max
-                volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
+                volume = calcVolume(parentScene.getImageA(),akMeshes);
+                volumeText.setText("" + volume);
+                //volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
                 areaText.setText(String.valueOf(area * maxBox * maxBox));
                 surfaces[i].setNumberTriangles(numTriangles);
                 surfaces[i].setVolume(volume);
@@ -2012,12 +2018,14 @@ public class JPanelSurface extends JPanelRendererJ3D
 
                 area += surfaces[i].getArea();
                 numberTriangles += surfaces[i].getNumberTriangles();
-                volume += surfaces[i].getVolume();
+                //volume += surfaces[i].getVolume();
+                volume += calcVolume(parentScene.getImageA(),surfaces[i].getMesh());
             }
 
             areaText.setText("" + (area * maxBox * maxBox));
             triangleText.setText("" + numberTriangles);
-            volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
+            volumeText.setText("" + volume);
+            //volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
 
             detailSlider.setEnabled(enableLevelOfDetail);
             detailLabel.setEnabled(enableLevelOfDetail);
@@ -3263,7 +3271,9 @@ public class JPanelSurface extends JPanelRendererJ3D
 
             // One length across the extracted surface changes from -1 to 1
             // while one length across the actual volume changes by ((dim-1)*res)max
-            volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
+            volume = calcVolume(parentScene.getImageA(),meshes);
+            volumeText.setText("" + volume);
+            //volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
             areaText.setText(String.valueOf(area * maxBox * maxBox));
         }
     }
@@ -3340,4 +3350,135 @@ public class JPanelSurface extends JPanelRendererJ3D
             parentScene.getParentFrame().setFlythruColor(color);
         }
     }
+
+    // Converts the mesh positions from the normalized coordinates back to FileCoordinates
+    // then calculates the volume and multiplies by the resolutions.
+    public float calcVolume( ModelImage imageA, ModelTriangleMesh[] kMesh )
+    {
+    	int[] extents = imageA.getExtents();
+    	int xDim = extents[0];
+    	int yDim = extents[1];
+    	int zDim = extents[2];
+
+    	float[] resols = imageA.getFileInfo()[0].getResolutions();
+    	
+    	float xB, yB, zB, maxB;
+    	xB = (xDim - 1) * resols[0];
+    	yB = (yDim - 1) * resols[1];
+    	zB = (zDim - 1) * resols[2];
+    	maxB = xB;
+    	if (yB > maxB) {
+    		maxB = yB;
+    	}
+    	if (zB > maxB) {
+    		maxB = zB;
+    	}
+    	// Normalize the size
+    	// xBox range between 0 - 1.
+    	xB = xB / maxB;
+    	yB = yB / maxB;
+    	zB = zB / maxB;
+
+    	float fX0 = -xB;
+    	float fY0 = -yB;
+    	float fX1 = xB;
+    	float fY1 = yB;
+    	float fZ0 = -zB;
+    	float fZ1 = zB;
+
+    	maxB = xB;
+
+    	if (yB > maxB) {
+    		maxB = yB;
+    	}
+
+    	if (zB > maxB) {
+    		maxB = zB;
+    	}
+
+    	if (zB > maxB) {
+    		fZ0 = -1f;
+    		fZ1 = 1f;
+    	}
+
+    	float volTotal = 0;
+    	for ( int mIndex = 0; mIndex < kMesh.length; mIndex++ ) {
+    		// Get the non-resampled surface volume voxels.
+    		Point3f[] akVertex = kMesh[mIndex].getVertexCopy();
+    		int[] aiConnect = kMesh[mIndex].getIndexCopy();
+    		int iTQuantity = (int) (aiConnect.length / 3);
+
+    		Point3f tV0 = new Point3f();
+    		Point3f tV1 = new Point3f();
+    		Point3f tV2 = new Point3f();
+
+    		Point3f kV0 = new Point3f();
+    		Point3f kV1 = new Point3f();
+    		Point3f kV2 = new Point3f();
+
+    		float fSum = 0;
+    		for (int iT = 0; iT < iTQuantity; iT++) {
+
+    			// get the vertices of the triangle
+    			tV0 = akVertex[aiConnect[3 * iT]];
+    			tV1 = akVertex[aiConnect[ (3 * iT) + 1]];
+    			tV2 = akVertex[aiConnect[ (3 * iT) + 2]];
+
+    			kV0.x = tV0.x;
+    			kV0.y = tV0.y;
+    			kV0.z = tV0.z;
+    			kV1.x = tV1.x;
+    			kV1.y = tV1.y;
+    			kV1.z = tV1.z;
+    			kV2.x = tV2.x;
+    			kV2.y = tV2.y;
+    			kV2.z = tV2.z;
+
+    			kV0.x = ( (kV0.x - fX0) / (fX1 - fX0)) * (xDim - 1);
+    			kV0.y = ( (kV0.y - fY0) / (fY1 - fY0)) * (yDim - 1);
+    			kV0.z = ( (kV0.z - fZ0) / (fZ1 - fZ0)) * (zDim - 1);
+
+    			kV1.x = ( (kV1.x - fX0) / (fX1 - fX0)) * (xDim - 1);
+    			kV1.y = ( (kV1.y - fY0) / (fY1 - fY0)) * (yDim - 1);
+    			kV1.z = ( (kV1.z - fZ0) / (fZ1 - fZ0)) * (zDim - 1);
+
+    			kV2.x = ( (kV2.x - fX0) / (fX1 - fX0)) * (xDim - 1);
+    			kV2.y = ( (kV2.y - fY0) / (fY1 - fY0)) * (yDim - 1);
+    			kV2.z = ( (kV2.z - fZ0) / (fZ1 - fZ0)) * (zDim - 1);
+
+    			kV0.z = zDim - 1 - kV0.z;
+    			kV1.z = zDim - 1 - kV1.z;
+    			kV2.z = zDim - 1 - kV2.z;
+    			
+    			kV0.y = yDim - 1 - kV0.y;
+    			kV1.y = yDim - 1 - kV1.y;
+    			kV2.y = yDim - 1 - kV2.y;
+
+                // compute triple scalar product
+                // The scalar triple product of three vectors A, B, and C is denoted
+                // [A,B,C] and defined by
+                // [A,B,C] = A dot ( B x C)
+                // = B dot ( C x A)
+                // = C dot ( A x B)
+                // = det (A (B C) )
+                // = | A1 A2 A3 |
+                // | B1 B2 B3 |
+                // | C1 C2 C3 |
+                // V = 1/6 (Sum from j=0 to n-1 of {P0 dot P1 cross P2})
+                // P0 = y0, P1 = y1, P2 = y2
+                // fProd = P0 dot (P1 x P2)
+                // fSum = sum of fProds
+                // volume returned = 1/6 fSum
+                float fProd = (kV0.x * ((kV1.y * kV2.z) - (kV1.z * kV2.y))) +
+                              (kV0.y * ((kV1.z * kV2.x) - (kV1.x * kV2.z))) +
+                              (kV0.z * ((kV1.x * kV2.y) - (kV1.y * kV2.x)));
+
+                fSum += fProd;
+            }
+
+            volTotal += (Math.abs(fSum / 6.0f) * resols[0] * resols[1] * resols[2]);
+    	}
+    	return volTotal;
+    }
+
 }

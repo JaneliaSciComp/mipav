@@ -1123,10 +1123,6 @@ public class JPanelSlices_WM extends JInterfaceBase
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
         if (source == sliderX) {
-            if ( xSlice == sliderX.getValue() )
-            {
-                return;
-            }
             // Change the currently displayed x slice
             xSlice = sliderX.getValue();
             textX.setText(String.valueOf(xSlice + 1));
@@ -1135,10 +1131,6 @@ public class JPanelSlices_WM extends JInterfaceBase
                 m_kVolumeViewer.setSliceFromSurface( getCenter() );
             }
         } else if (source == sliderY) {
-            if ( ySlice == sliderY.getValue() )
-            {
-                return;
-            }
             // Change the currently displayed y slice
             ySlice = sliderY.getValue();
             textY.setText(String.valueOf(ySlice + 1));
@@ -1147,11 +1139,6 @@ public class JPanelSlices_WM extends JInterfaceBase
                 m_kVolumeViewer.setSliceFromSurface( getCenter() );
             }
         } else if (source == sliderZ) {
-            if ( zSlice == sliderZ.getValue() )
-            {
-                return;
-            }
-
             // Change the currently displayed z slice
             zSlice = sliderZ.getValue();
             textZ.setText(String.valueOf(zSlice + 1));
