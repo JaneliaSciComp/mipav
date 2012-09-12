@@ -446,6 +446,11 @@ public class FileTiff extends FileBase {
     // Used by the GDAL library, holds an XML list of name=value 'metadata' values
     // about the image as a whole, and about specific samples.
     public static final int GDAL_METADATA = 42112;
+    
+    /** Adobe Tiff Tags */
+    public static final int META_DATA_BYTE_COUNTS = 50838;
+    
+    public static final int META_DATA = 50839;
 
     /** EchoTech Tiff TAGS. */
     public static final int ZRESOLUTION = 65000;
@@ -455,6 +460,14 @@ public class FileTiff extends FileBase {
 
     /** DOCUMENT ME! */
     public static final int MAX_IFD_LENGTH = 100000;
+    
+    public static final int MAGIC_NUMBER = 0x494a494a; // "IJIJ" used as first 4 bytes of metaDataHeader
+    public static final int INFO = 0x696e666f; // "info" (Info image property)
+    public static final int LABELS = 0x6c61626c; // "labl" (slice labels)
+    public static final int RANGES = 0x72616e67; // "rang" (display ranges)
+    public static final int LUTS = 0x6c757473; // "luts" (channel LUTs)
+    public static final int ROI = 0x726f6920; // "roi " (ROI)
+    public static final int OVERLAY = 0x6f766572; // "over" (overlay)
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -825,6 +838,8 @@ public class FileTiff extends FileBase {
     private AlgorithmRotate rotateAlgo;
     
     private boolean isRGBA = false;
+    
+    private int metaDataCounts[] = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -6039,7 +6054,7 @@ public class FileTiff extends FileBase {
     private boolean openIFD(FileInfoTiff fileInfo) throws IOException {
         int i;
         int iExifStart = 0;
-        int i1;
+        int i1, i2;
         int tag;
         Type type;
         int count;
@@ -6073,6 +6088,22 @@ public class FileTiff extends FileBase {
         int quality;
         int format;
         int progressiveScans;
+        int totalMetaDataCounts = 0;
+        int metaDataHeaderSize;
+        byte byteBuffer[] = null;
+        int magicNumber;
+        int maxMetaTypes;
+        int nMetaTypes;
+        int metaTypes[] = null;
+        int metaCounts[] = null;
+        int valueIndex;
+        int extraMetaDataEntries = 0;
+        int metaDataTypes[] = null;
+        byte metaData[] = null;
+        int start;
+        int eMDindex;
+        int len;
+        int last;
 
         if (nDirEntries <= 0) {
             throw new IOException("First 2 IFD bytes are an illegal " + nDirEntries);
@@ -6414,10 +6445,10 @@ public class FileTiff extends FileBase {
                         }
 
                         if ((valueArray[0] & 0x04) == 0x04) {
-                            Preferences.debug("Images defines a transparency mask for another image " +
+                            Preferences.debug("Image defines a transparency mask for another image " +
                                               "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                         } else {
-                            Preferences.debug("Images does not define a transparency mask for another image " +
+                            Preferences.debug("Image does not define a transparency mask for another image " +
                                               "in this TIFF file\n", Preferences.DEBUG_FILEIO);
                         }
                     }
@@ -9999,6 +10030,148 @@ public class FileTiff extends FileBase {
                     }
                     
                     break;
+                    
+                case META_DATA_BYTE_COUNTS:
+                    if (type != Type.LONG) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("META_DATA_BYTE_COUNTS has illegal type = " + type + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    if (count < 2) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("META_DATA_BYTE_COUNTS has illegal count = " + count + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    metaDataCounts = new int[count];
+                    if (debuggingFileIO) {
+                        Preferences.debug("FileTiff.openIFD: META_DATA_BYTE_COUNTS has:\n", Preferences.DEBUG_FILEIO);    
+                    }
+                    totalMetaDataCounts = 0;
+                    for (i1 = 0; i1 < count; i1++) {
+                        metaDataCounts[i1] = (int)valueArray[i1];
+                        if (debuggingFileIO) {
+                            Preferences.debug("metaDataCounts[" + i1 + "] = " + metaDataCounts[i1] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                        totalMetaDataCounts += metaDataCounts[i1];
+                    }
+                    
+                    
+                    break;
+                    
+                case META_DATA:
+                    if (type != Type.BYTE) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("META_DATA_BYTE_COUNTS has illegal type = " + type + "\n", Preferences.DEBUG_FILEIO); 
+                        }
+                        break;
+                    }
+                    
+                    if (count != totalMetaDataCounts) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("Count = " + count + " != total of metaDataCounts = " + totalMetaDataCounts + "\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    metaDataHeaderSize = metaDataCounts[0];
+                    if (debuggingFileIO) {
+                        Preferences.debug("metaDataHeaderSize = " + metaDataHeaderSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    
+                    if (metaDataHeaderSize < 12 || metaDataHeaderSize > 804) {
+                        break;
+                    }
+                    
+                    // Look for "IJIJ" magic number.
+                    byteBuffer = new byte[4];
+                    for (i1 = 0; i1 < 4; i1++) {
+                        byteBuffer[i1] = (byte)valueArray[i1];
+                    }
+                    magicNumber = getBufferInt(byteBuffer, 0, endianess);
+                    valueIndex = 4;
+                    if (magicNumber != MAGIC_NUMBER) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("magicNumber = " + magicNumber + " is not the required value = " + MAGIC_NUMBER + "\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        break;
+                    }
+                    
+                    maxMetaTypes = 10;
+                    nMetaTypes = (metaDataHeaderSize - 4)/8;
+                    metaTypes = new int[nMetaTypes];
+                    metaCounts = new int[nMetaTypes];
+                    extraMetaDataEntries = 0;
+                    for (i1 = 0; i1 < nMetaTypes; i1++) {
+                        for (i2 = 0; i2 < 4; i2++) {
+                            byteBuffer[i2] = (byte)valueArray[valueIndex+i2];
+                        }
+                        valueIndex += 4;
+                        metaTypes[i1] = getBufferInt(byteBuffer, 0, endianess);
+                        for (i2 = 0; i2 < 4; i2++) {
+                            byteBuffer[i2] = (byte)valueArray[valueIndex+i2];
+                        }
+                        valueIndex += 4;
+                        metaCounts[i1] = getBufferInt(byteBuffer, 0, endianess);
+                        if (metaTypes[i1] < 0xffffff) {
+                            extraMetaDataEntries += metaCounts[i1];
+                        }
+                        if (debuggingFileIO) {
+                            if (metaTypes[i1] == INFO) {
+                                Preferences.debug("Info property ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == LABELS) {
+                                Preferences.debug("Slice labels ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == RANGES) {
+                                Preferences.debug("Display ranges ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == LUTS) {
+                                Preferences.debug("LUTs ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1]  == ROI) {
+                                Preferences.debug("ROI ", Preferences.DEBUG_FILEIO);
+                            }
+                            else if (metaTypes[i1] == OVERLAY) {
+                                Preferences.debug("OVERLAY ", Preferences.DEBUG_FILEIO);
+                            }
+                            else {
+                                Preferences.debug("metaTypes["+i1+"] is an unknown " + metaTypes[i1], Preferences.DEBUG_FILEIO);
+                            }
+                            Preferences.debug("counts = " + metaCounts[i1] + "\n", Preferences.DEBUG_FILEIO);
+                        }
+                    } // for (i1 = 0; i1 < nMetaTypes; i1++)
+                    if (extraMetaDataEntries > 0) {
+                        metaDataTypes = new int[extraMetaDataEntries];
+                        metaData = new byte[extraMetaDataEntries];
+                    }
+                    start = 1;
+                    eMDindex = 0;
+                    for (i1 = 0; i1 < nMetaTypes; i1++) {
+                        if (metaTypes[i1] == ROI) {
+                            len = metaDataCounts[start];  
+                            byteBuffer = new byte[len];
+                            for (i2 = 0; i2 < len; i2++) {
+                                byteBuffer[i2] = (byte)valueArray[valueIndex+i2];    
+                            }
+                            valueIndex += len;
+                            decodeROI(byteBuffer);
+                        }
+                        else { // skip unknown type
+                            last = start + metaCounts[i1] - 1;
+                            for (i2 = start; i2 <= last; i2++) {
+                                len = metaDataCounts[i2];
+                                valueIndex += len;
+                            }
+                        }
+                        start += metaCounts[i1];
+                    } // for (i1 = 0; i1 < nMetaTypes; i1++)
+                    break;
                 
                 default:
                     
@@ -10245,6 +10418,225 @@ public class FileTiff extends FileBase {
         raFile.seek(saveLocus);
         return true; // Read more IFDs (ie. images)
     }
+    
+    
+    private void decodeROI(byte buffer[]) {
+        // offsets
+        final int VERSION_OFFSET = 4;
+        final int TYPE = 6;
+        final int TOP = 8;
+        final int LEFT = 10;
+        final int BOTTOM = 12;
+        final int RIGHT = 14;
+        final int N_COORDINATES = 16;
+        final int XD = 18;
+        final int YD = 22;
+        final int WIDTHD = 26;
+        final int HEIGHTD = 30;
+        final int SHAPE_ROI_SIZE = 36;
+        final int SUBTYPE = 48;
+        final int OPTIONS = 50;
+        final int POSITION = 56;
+        final int HEADER2_OFFSET = 60;
+        // header2 offsets
+        final int C_POSITION = 4;
+        final int Z_POSITION = 8;
+        final int T_POSITION = 12;
+        final int NAME_OFFSET = 16;
+        final int NAME_LENGTH = 20;
+        final int OVERLAY_LABEL_COLOR = 24;
+        final int OVERLAY_FONT_SIZE = 28; // short
+        final int AVAILABLE_BYTE1 = 30; // byte
+        final int IMAGE_OPACITY = 31; // byte
+        final int IMAGE_SIZE = 32; // int
+        final int FLOAT_STROKE_WIDTH = 36; // float
+        // types
+        final int polygon = 0;
+        final int rect = 1;
+        final int oval = 2;
+        final int line = 3;
+        final int freeline = 4;
+        final int polyline = 5;
+        final int noRoi = 6;
+        final int freehand = 7;
+        final int traced = 8;
+        final int angle = 9;
+        final int point = 10;
+        // subtypes
+        final int TEXT = 1;
+        final int ARROW = 2;
+        final int ELLIPSE = 3;
+        final int IMAGE = 4;
+        // options
+        final int SPLINE_FIT = 1;
+        final int DOUBLE_HEADED = 2;
+        final int OUTLINE = 4;
+        final int OVERLAY_LABELS = 8;
+        final int OVERLAY_NAMES = 16;
+        final int OVERLAY_BACKGROUNDS = 32;
+        final int OVERLAY_BOLD = 64;
+        final int SUB_PIXEL_RESOLUTION = 128;
+        final int DRAW_OFFSET = 256;
+        boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
+        int version;
+        int type;
+        int subtype;
+        int top;
+        int left;
+        int bottom;
+        int right;
+        int width;
+        int height;
+        int n;
+        int options;
+        int position;
+        int hdr2Offset;
+        int channel = 0;
+        int slice = 0;
+        int frame = 0;
+        int overlayLabelColor = 0;
+        int overlayFontSize = 0;
+        int imageOpacity = 0;
+        int imageSize = 0;
+        boolean subPixelResolution;
+        boolean drawOffset;
+        boolean subPixelRect;
+        double xd = 0.0;
+        double yd = 0.0;
+        double widthd = 0.0;
+        double heightd = 0.0;
+        boolean isComposite;
+        // ImageJ ROIs have "Iout" in the first 4 bytes
+        if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
+            if (debuggingFileIO) {
+                Preferences.debug("First 4 bytes do not have Iout of ImageJ ROI\n", Preferences.DEBUG_FILEIO);
+            }
+            return;
+        }
+        else {
+            if (debuggingFileIO) {
+                Preferences.debug("First 4 bytes have Iout of ImageJ ROI\n", Preferences.DEBUG_FILEIO);
+            }
+        }
+        version = getBufferUShort(buffer, VERSION_OFFSET, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("ROI version = " + version + "\n", Preferences.DEBUG_FILEIO);
+        }
+        type = buffer[TYPE];
+        if (debuggingFileIO) {
+            switch(type) {
+                case polygon:
+                    Preferences.debug("ROI type = polygon\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case rect:
+                    Preferences.debug("ROI type = rect\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case oval:
+                    Preferences.debug("ROI type = oval\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case line:
+                    Preferences.debug("ROI type = line\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case freeline:
+                    Preferences.debug("ROI type = freeline\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case polyline:
+                    Preferences.debug("ROI type = polyline\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case noRoi:
+                    Preferences.debug("ROI type = noRoi\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case freehand:
+                    Preferences.debug("ROI type = freehand\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case traced:
+                    Preferences.debug("ROI type = traced\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case angle:
+                    Preferences.debug("ROI type = angle\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case point:
+                    Preferences.debug("ROI type = point\n", Preferences.DEBUG_FILEIO);
+                    break;
+                default:
+                    Preferences.debug("ROI type is an unrecognized = " + type + "\n", Preferences.DEBUG_FILEIO);
+            }
+        }
+        if ((type < 0) || (type > 10)) {
+            return;
+        }
+        subtype = getBufferUShort(buffer, SUBTYPE, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            switch(subtype) {
+                case TEXT:
+                    Preferences.debug("ROI subtype = TEXT\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case ARROW:
+                    Preferences.debug("ROI subtype = ARROW\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case ELLIPSE:
+                    Preferences.debug("ROI subtype = ELLIPSE\n", Preferences.DEBUG_FILEIO);
+                    break;
+                case IMAGE:
+                    Preferences.debug("ROI subtype = IMAGE\n", Preferences.DEBUG_FILEIO);
+                    break;
+            }
+        }
+        top = getBufferUShort(buffer, TOP, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("top = " + top + "\n", Preferences.DEBUG_FILEIO);
+        }
+        left = getBufferUShort(buffer, LEFT, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("left = " + left + "\n", Preferences.DEBUG_FILEIO);
+        }
+        bottom = getBufferUShort(buffer, BOTTOM, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("bottom = " + bottom + "\n", Preferences.DEBUG_FILEIO);
+        }
+        right = getBufferUShort(buffer, RIGHT, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("right = " + right + "\n", Preferences.DEBUG_FILEIO);
+        }
+        width = right - left;
+        height = bottom - top;
+        n = getBufferUShort(buffer, N_COORDINATES, FileBase.BIG_ENDIAN);
+        if (debuggingFileIO) {
+            Preferences.debug("Number of coordinates = " + n + "\n", Preferences.DEBUG_FILEIO);
+        }
+        options = getBufferUShort(buffer, OPTIONS, FileBase.BIG_ENDIAN);
+        position = getBufferInt(buffer, POSITION, FileBase.BIG_ENDIAN);
+        hdr2Offset = getBufferInt(buffer, HEADER2_OFFSET, FileBase.BIG_ENDIAN);
+        subPixelResolution = (options & SUB_PIXEL_RESOLUTION) != 0 && version >= 222;
+        if (debuggingFileIO && subPixelResolution) {
+            Preferences.debug("subPixelResolution is present\n", Preferences.DEBUG_FILEIO);
+        }
+        drawOffset = subPixelResolution && (options & DRAW_OFFSET) != 0;
+        if (debuggingFileIO && drawOffset) {
+            Preferences.debug("drawOffset is present\n", Preferences.DEBUG_FILEIO);
+        }
+        subPixelRect = version >= 223 && subPixelResolution && (type == rect || type == oval);
+        if (debuggingFileIO && subPixelRect) {
+            Preferences.debug("subPixelRect is present\n", Preferences.DEBUG_FILEIO);
+        }
+        if (subPixelRect) {
+            xd = getBufferFloat(buffer, XD, FileBase.BIG_ENDIAN);
+            yd = getBufferFloat(buffer, YD, FileBase.BIG_ENDIAN);
+            widthd = getBufferFloat(buffer, WIDTHD, FileBase.BIG_ENDIAN);
+            heightd = getBufferFloat(buffer, HEIGHTD, FileBase.BIG_ENDIAN);
+        }
+        if (hdr2Offset > 0 && hdr2Offset + IMAGE_SIZE+4 <= buffer.length) {
+            channel = getBufferInt(buffer, hdr2Offset+C_POSITION, FileBase.BIG_ENDIAN);
+            slice = getBufferInt(buffer, hdr2Offset+Z_POSITION, FileBase.BIG_ENDIAN);
+            frame = getBufferInt(buffer, hdr2Offset+T_POSITION, FileBase.BIG_ENDIAN);
+            overlayLabelColor = getBufferInt(buffer, hdr2Offset+OVERLAY_LABEL_COLOR, FileBase.BIG_ENDIAN);
+            overlayFontSize = getBufferUShort(buffer, hdr2Offset+OVERLAY_FONT_SIZE, FileBase.BIG_ENDIAN);
+            imageOpacity = 0xff & buffer[hdr2Offset+IMAGE_OPACITY];
+            imageSize = getBufferInt(buffer, hdr2Offset+IMAGE_SIZE, FileBase.BIG_ENDIAN);
+        }
+        
+        isComposite = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN) > 0;
+    } // decodeROI;
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
