@@ -370,6 +370,10 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	/** used in the popup menu when the user right-clicks over a voi intensity line. */
 	public static final String SHOW_INTENSITY_GRAPH = "show_intensity_graph";
 
+	/** Used for angle searches in line VOI creation */
+    private static final double[] PI_SEARCH = {Math.tan(Math.PI/24), Math.tan((3*Math.PI)/24), Math.tan((5*Math.PI)/24), Math.tan((7*Math.PI)/24), Math.tan((9*Math.PI)/24), Math.tan((11*Math.PI)/24)};
+    private static final double[] PI_MULT = {0, Math.tan((2*Math.PI)/24), Math.tan((4*Math.PI)/24), Math.tan((6*Math.PI)/24), Math.tan((8*Math.PI)/24), Math.tan((10*Math.PI)/24)};
+	
 	private static final int NONE = -1;
 	private static final int TEXT = 0;
 	private static final int POINT = 1;
@@ -2387,6 +2391,29 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 			else
 			{
+			    if(mouseEvent.isShiftDown()) {
+    			    int i=0;
+    			    float subY = Math.abs(fY-kOld.elementAt(0).Y);
+    			    float subX = Math.abs(iX-kOld.elementAt(0).X);
+    			    double comp = subY / subX;
+    			    
+    			    for(;i<PI_SEARCH.length; i++) {
+    			        if(comp < PI_SEARCH[i]) {
+    			            break;
+    			        }
+    			    }
+    			    
+    			    if(i < PI_SEARCH.length) {
+    			        if(fY > kOld.elementAt(0).Y) {
+    			            fY = kOld.elementAt(0).Y + (float) (subX*PI_MULT[i]);
+    			        } else {
+    			            fY = kOld.elementAt(0).Y - (float) (subX*PI_MULT[i]);
+    			        }
+    			    } else {
+    			        iX = (int) kOld.elementAt(0).X;
+    			    }
+			    }
+			    
 				Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
 				setPosition( m_kCurrentVOI, 1, kNewPoint );
 			}
