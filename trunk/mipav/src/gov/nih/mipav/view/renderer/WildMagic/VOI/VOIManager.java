@@ -36,13 +36,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Polygon;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.BitSet;
@@ -2391,31 +2385,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 			}
 			else
 			{
-			    if(mouseEvent.isShiftDown()) {
-    			    int i=0;
-    			    float subY = Math.abs(fY-kOld.elementAt(0).Y);
-    			    float subX = Math.abs(iX-kOld.elementAt(0).X);
-    			    double comp = subY / subX;
-    			    
-    			    for(;i<PI_SEARCH.length; i++) {
-    			        if(comp < PI_SEARCH[i]) {
-    			            break;
-    			        }
-    			    }
-    			    
-    			    if(i < PI_SEARCH.length) {
-    			        if(fY > kOld.elementAt(0).Y) {
-    			            fY = kOld.elementAt(0).Y + (float) (subX*PI_MULT[i]);
-    			        } else {
-    			            fY = kOld.elementAt(0).Y - (float) (subX*PI_MULT[i]);
-    			        }
-    			    } else {
-    			        iX = (int) kOld.elementAt(0).X;
-    			    }
-			    }
-			    
-				Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
-				setPosition( m_kCurrentVOI, 1, kNewPoint );
+			    Vector3f kNewPoint = new Vector3f( iX, fY, m_kDrawingContext.getSlice() ) ;
+				setPosition( m_kCurrentVOI, 1, kNewPoint, mouseEvent.isControlDown());
 			}
 
 			m_fMouseX = iX;
@@ -2481,7 +2452,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 	}
 
-	/**
+    /**
 	 * Checks the axisOrder and axisFlip data members. If they do not change the volume orientation
 	 * then the default orientation is true, otherwise the default orientation is false.
 	 * @return true if this orientation matches the default image orientation, false if it changes the image orientation.
@@ -4565,7 +4536,7 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		}
 		int iX = kEvent.getX();
 		int iY = kEvent.getY();
-		setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice() ); 
+		setPosition( m_kCurrentVOI, m_kCurrentVOI.getNearPoint(), iX, iY, m_kDrawingContext.getSlice(), kEvent.isControlDown()); 
 		m_kParent.setCursor(MipavUtil.crosshairCursor); 
 		m_kParent.updateDisplay();
 		if ( m_kCurrentVOI.getGroup().getContourGraph() != null )
@@ -5504,18 +5475,36 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	}
 	
 	
-	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ )
+	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ) 
 	{
-		setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ) );
+	    setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ), false);
+	}
+	
+	private void setPosition( VOIBase kVOI, int iPos, float fX, float fY, float fZ, boolean isCtrlDown )
+	{
+		setPosition( kVOI, iPos, new Vector3f( fX, fY, fZ ), isCtrlDown);
 	}
 
 
-	private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos )
+	private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos) 
+	{
+	    setPosition( kVOI, iPos, kPos, false);
+	}
+	
+	private void setPosition( VOIBase kVOI, int iPos, Vector3f kPos, boolean isCtrlDown)
 	{
 		if ( kVOI.isFixed() )
 		{
 			return;
 		}       
+		
+		if(isCtrlDown) //opp to control drawing method using shift key
+		{
+		    if(kVOI.getType() == VOI.LINE) 
+		    {
+		        kPos = straightenLineVOI(kPos, kVOI);
+		    }
+		}
 
 		Vector3f kVolumePt = new Vector3f();
 		if ( iPos < kVOI.size() )
@@ -5538,7 +5527,8 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 						kVOI.elementAt(0).Y = kVolumePt.Y;
 						kVOI.elementAt(0).Z = kVolumePt.Z;
 					}
-				}                
+				} 
+				
 				kVOI.set( iPos, kVolumePt );
 
 				kVOI.setSelectedPoint( iPos );
@@ -6015,7 +6005,34 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 		kSplitVOI = null;
 	}
 
-
+	/**
+     * Modifies <code>kPos</code> to form an angle with its origin point that is a multiple of 15 degrees. 
+     */
+    private Vector3f straightenLineVOI(Vector3f kPos, VOIBase kOld) {
+        int i=0;
+        float subY = Math.abs(kPos.Y-kOld.elementAt(0).Y);
+        float subX = Math.abs(kPos.X-kOld.elementAt(0).X);
+        double comp = subY / subX;
+        
+        for(;i<PI_SEARCH.length; i++) {
+            if(comp < PI_SEARCH[i]) {
+                break;
+            }
+        }
+        
+        if(i < PI_SEARCH.length) {
+            if(kPos.Y > kOld.elementAt(0).Y) {
+                kPos.Y = kOld.elementAt(0).Y + (float) (subX*PI_MULT[i]);
+            } else {
+                kPos.Y = kOld.elementAt(0).Y - (float) (subX*PI_MULT[i]);
+            }
+        } else {
+            kPos.X = (int) kOld.elementAt(0).X;
+        }
+        
+        return kPos;
+    }
+	
 	private void updateRectangle( int iX, int iMouseX, int iY, int iYStart )
 	{
 		Vector3f kVolumePt0 = new Vector3f();
