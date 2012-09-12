@@ -464,6 +464,25 @@ public abstract class FileBase {
             return (short) ( ( (buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
         }
     }
+    
+    /**
+     * Converts byte data to int data.
+     * 
+     * @param buffer Array of byte data.
+     * @param index Index into array data.
+     * @param bigEndian <code>true</code> indicates big endian byte order, <code>false</code> indicates little
+     *            endian.
+     * 
+     * @return int value extracted from byte array.
+     */
+    public final int getBufferUShort(final byte[] buffer, final int index, final boolean bigEndian) {
+
+        if (bigEndian) {
+            return ( ( (buffer[index] & 0xff) << 8) | (buffer[index + 1] & 0xff));
+        } else {
+            return ( ( (buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+        }
+    }
 
     /**
      * Gets datatype
