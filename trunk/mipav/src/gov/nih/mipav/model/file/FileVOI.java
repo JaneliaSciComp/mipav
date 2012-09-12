@@ -1174,8 +1174,8 @@ public class FileVOI extends FileXML {
 
                                 ((VOIBase) (contours.elementAt(j))).exportArrays(x, y, z);
 
-                                // save old format if image dim is 2
-                                if (image.getNDims() == 2) {
+                                // save old format if image dim is 2 or !saveAsLPS
+                                if (image.getNDims() == 2 || !saveAsLPS) {
                                     closedTag("Slice-number", Integer.toString((int)z[0]));
                                 }
 
@@ -1188,7 +1188,13 @@ public class FileVOI extends FileXML {
                                         ptIn.X = x[m];
                                         ptIn.Y = y[m];
                                         ptIn.Z = z[m];
-                                        MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
+                                        if(saveAsLPS) {
+                                            MipavCoordinateSystems.fileToScanner(ptIn, ptOut, image);
+                                        } else {
+                                            ptOut.X = ptIn.X;
+                                            ptOut.Y = ptIn.Y;
+                                            ptOut.Z = ptIn.Z;
+                                        }
                                         closedTag("Pt", Float.toString(ptOut.X) + "," + Float.toString(ptOut.Y) + ","
                                                 + Float.toString(ptOut.Z));
                                     }
