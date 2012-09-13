@@ -10,6 +10,8 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.io.*;
 
 import java.util.*;
@@ -840,7 +842,8 @@ public class FileTiff extends FileBase {
     private boolean isRGBA = false;
     
     private int metaDataCounts[] = null;
-
+   
+    private VOIVector VOIs = new VOIVector();
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -1430,6 +1433,9 @@ public class FileTiff extends FileBase {
             throw error;
         }
 
+        if (VOIs.size() > 0) {
+            image.setVOIs(VOIs);
+        }
         return image;
     }
     
@@ -10433,11 +10439,15 @@ public class FileTiff extends FileBase {
         final int YD = 22;
         final int WIDTHD = 26;
         final int HEIGHTD = 30;
+        final int STROKE_WIDTH = 34;
         final int SHAPE_ROI_SIZE = 36;
+        final int STROKE_COLOR = 40;
+        final int FILL_COLOR = 44;
         final int SUBTYPE = 48;
         final int OPTIONS = 50;
         final int POSITION = 56;
         final int HEADER2_OFFSET = 60;
+        final int textROIOffset = 64; // = RoiEncoder.HEADER_SIZE;
         // header2 offsets
         final int C_POSITION = 4;
         final int Z_POSITION = 8;
@@ -10506,6 +10516,30 @@ public class FileTiff extends FileBase {
         double widthd = 0.0;
         double heightd = 0.0;
         boolean isComposite;
+        VOI annotationVOI;
+        float x[];
+        float y[];
+        float z[];
+        int fontSize;
+        int fontStyle;
+        int nameLength;
+        int textLength;
+        char name[];
+        String fontName;
+        char text[];
+        int i;
+        String textStr;
+        Font font;
+        double strokeWidth;
+        double strokeWidthD;
+        int strokeColorInt;
+        int fillColorInt;
+        int alpha;
+        Color strokeColor = Color.BLACK;
+        Color fillColor = Color.WHITE;
+        int nameOffset;
+        String roiName = null;
+        
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -10633,9 +10667,103 @@ public class FileTiff extends FileBase {
             overlayFontSize = getBufferUShort(buffer, hdr2Offset+OVERLAY_FONT_SIZE, FileBase.BIG_ENDIAN);
             imageOpacity = 0xff & buffer[hdr2Offset+IMAGE_OPACITY];
             imageSize = getBufferInt(buffer, hdr2Offset+IMAGE_SIZE, FileBase.BIG_ENDIAN);
+            nameOffset = getBufferInt(buffer, hdr2Offset + NAME_OFFSET, FileBase.BIG_ENDIAN);
+            nameLength = getBufferInt(buffer, hdr2Offset + NAME_LENGTH, FileBase.BIG_ENDIAN);
+            if ((nameOffset != 0) && (nameLength != 0) && (nameOffset + 2*nameLength <= buffer.length)) {
+                name = new char[nameLength];
+                for (i = 0; i < nameLength; i++) {
+                    name[i] = (char)getBufferShort(buffer, nameOffset+i*2, FileBase.BIG_ENDIAN);
+                }
+                roiName = new String(name);
+                if (debuggingFileIO) {
+                    Preferences.debug("ROI name = " + roiName + "\n", Preferences.DEBUG_FILEIO);
+                }
+            }
         }
         
         isComposite = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN) > 0;
+        if (debuggingFileIO && isComposite) {
+            Preferences.debug("ROI is a composite\n", Preferences.DEBUG_FILEIO);
+        }
+        
+        // read stroke width, stroke color, and fill color (1.43i or later)
+        if (version >= 218) {
+            strokeWidth = (double)getBufferUShort(buffer, STROKE_WIDTH, FileBase.BIG_ENDIAN);
+            if (hdr2Offset > 0) {
+                strokeWidthD = (double)getBufferFloat(buffer, hdr2Offset + FLOAT_STROKE_WIDTH, FileBase.BIG_ENDIAN);
+                if (strokeWidthD > 0) {
+                    strokeWidth = strokeWidthD;
+                }
+            }
+            if (debuggingFileIO) {
+                Preferences.debug("strokeWidth = " + strokeWidth + "\n", Preferences.DEBUG_FILEIO);
+            }
+            strokeColorInt = getBufferInt(buffer, STROKE_COLOR, FileBase.BIG_ENDIAN);
+            if (strokeColorInt != 0) {
+                alpha = (strokeColorInt >> 24) & 0xff;
+                strokeColor = new Color(strokeColorInt, alpha != 255);
+            }
+            fillColorInt = getBufferInt(buffer, FILL_COLOR, FileBase.BIG_ENDIAN);
+            if (fillColorInt != 0) {
+                alpha = (fillColorInt >> 24) & 0xff;
+                fillColor = new Color(fillColorInt, alpha != 255);
+            }
+        }
+        
+        switch (type) {
+            case rect:
+                if (version >= 218 && subtype == TEXT) {
+                    annotationVOI = new VOI((short)VOIs.size(), "annotation.VOI", VOI.ANNOTATION, -1.0f);
+                    x = new float[1];
+                    y = new float[1];
+                    z = new float[1];
+                    x[0] = left;
+                    y[0] = bottom;
+                    z[0] = imageSlice;
+                    annotationVOI.importCurve(x, y, z);
+                    // Don't draw the arrow
+                    ((VOIText)annotationVOI.getCurves().lastElement()).setUseMarker(false);
+                    fontSize = getBufferInt(buffer, textROIOffset, FileBase.BIG_ENDIAN);
+                    if (debuggingFileIO) {
+                        Preferences.debug("Font size = " + fontSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    fontStyle = getBufferInt(buffer, textROIOffset+4, FileBase.BIG_ENDIAN);
+                    if (debuggingFileIO) {
+                        Preferences.debug("Font style = " + fontStyle + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    nameLength = getBufferInt(buffer, textROIOffset+8, FileBase.BIG_ENDIAN);
+                    textLength = getBufferInt(buffer, textROIOffset+12, FileBase.BIG_ENDIAN);
+                    name = new char[nameLength];
+                    text = new char[textLength];
+                    for (i = 0; i < nameLength; i++) {
+                        name[i] = (char)getBufferShort(buffer, textROIOffset+16+2*i, FileBase.BIG_ENDIAN);
+                    }
+                    fontName = new String(name);
+                    if (debuggingFileIO) {
+                        Preferences.debug("Font name = " + fontName + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    font = new Font(fontName, fontStyle, fontSize);
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setTextFont(font);
+                    for (i = 0; i < textLength; i++) {
+                        text[i] = (char)getBufferShort(buffer, textROIOffset+16+2*nameLength+2*i, FileBase.BIG_ENDIAN);
+                    }
+                    textStr = new String(text);
+                    if (debuggingFileIO) {
+                        Preferences.debug("ROI text = " + textStr + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setText(textStr);
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setColor(strokeColor);
+                    ((VOIText) annotationVOI.getCurves().lastElement()).setBackgroundColor(fillColor);
+                    if (roiName != null) {
+                        annotationVOI.setName(roiName);
+                    }
+                    VOIs.addElement(annotationVOI);
+                }
+                else {
+                    
+                }
+                break;
+        } // switch (type)
     } // decodeROI;
 
     /**
