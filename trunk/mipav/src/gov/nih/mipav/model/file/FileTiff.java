@@ -17,6 +17,8 @@ import java.io.*;
 import java.util.*;
 import java.util.zip.*;
 
+import WildMagic.LibFoundation.Mathematics.Vector3f;
+
 
 /**
  * Tagged Image File Format (TIFF 6.0) reader/ writer. Note that
@@ -1436,6 +1438,7 @@ public class FileTiff extends FileBase {
         if (VOIs.size() > 0) {
             image.setVOIs(VOIs);
         }
+     
         return image;
     }
     
@@ -10535,10 +10538,22 @@ public class FileTiff extends FileBase {
         int strokeColorInt;
         int fillColorInt;
         int alpha;
-        Color strokeColor = Color.BLACK;
-        Color fillColor = Color.WHITE;
+        Color strokeColor = null;
+        Color fillColor = null;
         int nameOffset;
         String roiName = null;
+        double xCenter;
+        double yCenter;
+        byte mask[];
+        VOI ovalVOI;
+        int theta;
+        double ang;
+        int xPos;
+        int yPos;
+        double semiMajorAxis;
+        double semiMinorAxis;
+        Vector<Vector3f> boundaryV;
+        Color ovalColor;
         
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
@@ -10752,7 +10767,13 @@ public class FileTiff extends FileBase {
                         Preferences.debug("ROI text = " + textStr + "\n", Preferences.DEBUG_FILEIO);
                     }
                     ((VOIText) annotationVOI.getCurves().lastElement()).setText(textStr);
+                    if (strokeColor == null) {
+                        strokeColor = Color.BLACK;
+                    }
                     ((VOIText) annotationVOI.getCurves().lastElement()).setColor(strokeColor);
+                    if (fillColor == null) {
+                        fillColor = Color.WHITE;
+                    }
                     ((VOIText) annotationVOI.getCurves().lastElement()).setBackgroundColor(fillColor);
                     if (roiName != null) {
                         annotationVOI.setName(roiName);
@@ -10762,6 +10783,39 @@ public class FileTiff extends FileBase {
                 else {
                     
                 }
+                break;
+                
+            case oval:
+                semiMajorAxis = width/2.0;
+                semiMinorAxis = height/2.0;
+                xCenter = left + width/2.0;
+                yCenter = top + height/2.0;
+                mask = new byte[xDim * yDim];
+                ovalVOI = new VOI((short)VOIs.size(), "ovalVOI", VOI.CONTOUR, -1 );
+                boundaryV = new Vector<Vector3f>();
+                for (theta = 0; theta < 3600; theta++) {
+                    ang = theta * Math.PI/1800;
+                    xPos = (int)Math.round(xCenter + semiMajorAxis*Math.cos(ang)); 
+                    yPos = (int)Math.round(yCenter + semiMinorAxis*Math.sin(ang));
+                    if (mask[xPos + yPos * xDim] == 0) {
+                        mask[xPos + yPos * xDim] = 1;
+                        boundaryV.add(new Vector3f(xPos, yPos, imageSlice));
+                    }
+                }
+                Vector3f pt[] = new Vector3f[boundaryV.size()];
+                for (i = 0; i < boundaryV.size(); i++) {
+                    pt[i] = boundaryV.elementAt(i);
+                }
+                ovalVOI.importCurve(pt);
+                if (strokeColor == null) {
+                    strokeColor = Color.RED;
+                }
+                ovalColor = strokeColor;
+                if (fillColor != null) {
+                    ovalColor = fillColor;
+                }
+                ovalVOI.setColor(ovalColor);
+                VOIs.addElement(ovalVOI);
                 break;
         } // switch (type)
     } // decodeROI;
