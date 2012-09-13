@@ -10554,7 +10554,8 @@ public class FileTiff extends FileBase {
         double semiMinorAxis;
         Vector<Vector3f> boundaryV;
         Color ovalColor;
-        
+        VOI rectVOI;
+        Color rectColor;
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -10781,7 +10782,34 @@ public class FileTiff extends FileBase {
                     VOIs.addElement(annotationVOI);
                 }
                 else {
-                    
+                    rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
+                    boundaryV = new Vector<Vector3f>();
+                    for (xPos = left; xPos <= right; xPos++) {
+                        boundaryV.add(new Vector3f(xPos, top, imageSlice));
+                    }
+                    for (yPos = top + 1; yPos <= bottom; yPos++) {
+                        boundaryV.add(new Vector3f(right, yPos, imageSlice));
+                    }
+                    for (xPos = right-1; xPos >= left; xPos--) {
+                        boundaryV.add(new Vector3f(xPos, bottom, imageSlice));
+                    }
+                    for (yPos = bottom - 1; yPos >= top+1; yPos--) {
+                        boundaryV.add(new Vector3f(left, yPos, imageSlice));
+                    }
+                    Vector3f pt[] = new Vector3f[boundaryV.size()];
+                    for (i = 0; i < boundaryV.size(); i++) {
+                        pt[i] = boundaryV.elementAt(i);
+                    }
+                    rectVOI.importCurve(pt);
+                    if (strokeColor == null) {
+                        strokeColor = Color.RED;
+                    }
+                    rectColor = strokeColor;
+                    if (fillColor != null) {
+                        rectColor = fillColor;
+                    }
+                    rectVOI.setColor(rectColor);
+                    VOIs.addElement(rectVOI);
                 }
                 break;
                 
