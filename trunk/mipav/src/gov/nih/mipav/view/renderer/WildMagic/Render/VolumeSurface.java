@@ -249,10 +249,10 @@ public class VolumeSurface extends VolumeObject
             m_kMesh.VBuffer.GetPosition3(iV0, kPos0);
             m_kMesh.VBuffer.GetPosition3(iV1, kPos1);
             m_kMesh.VBuffer.GetPosition3(iV2, kPos2);
-
-            meshToScannerCoords( kPos0 );
-            meshToScannerCoords( kPos1 );
-            meshToScannerCoords( kPos2 );
+            
+            meshToVolumeCoords( kPos0 );
+            meshToVolumeCoords( kPos1 );
+            meshToVolumeCoords( kPos2 );            
             
             // Area of a triangle = || P0 X P1 + P1 X P2 + P2 X P0 ||/2
             // Area = 0.5* (det1 + det2 + det3), where
@@ -297,7 +297,7 @@ public class VolumeSurface extends VolumeObject
              *fSum += fProd;*/
         }
 
-        return fSum;
+        return (fSum * m_kResolutions.X * m_kResolutions.Y * m_kResolutions.Z);
     }     
     
     /**
@@ -690,13 +690,8 @@ public class VolumeSurface extends VolumeObject
         {
             m_fVolume = ComputeVolume();
         }
-        if ( m_fSurfaceArea == 0 )
-        {
-            m_fSurfaceArea = ComputeSurfaceArea();
-        }
-        System.err.println( "GetVolume " + m_fVolume );
+        
         return m_fVolume;
-        //return (m_fVolume + m_fSurfaceArea);
     } 
     
     /**
@@ -709,12 +704,6 @@ public class VolumeSurface extends VolumeObject
         {
             m_fVolume = ComputeVolume();
         }
-        if ( m_fSurfaceArea == 0 )
-        {
-            m_fSurfaceArea = ComputeSurfaceArea();
-        }
-        System.err.println( "GetVolumeString " + m_fVolume );
-        //return new String ( (m_fVolume + m_fSurfaceArea) + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] + " x " + m_akUnitsLabel[2] );
         return new String ( (m_fVolume) + " " + m_akUnitsLabel[0] + " x " + m_akUnitsLabel[1] + " x " + m_akUnitsLabel[2] );
     } 
 
