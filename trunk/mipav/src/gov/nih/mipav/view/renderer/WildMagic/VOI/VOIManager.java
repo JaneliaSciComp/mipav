@@ -3912,14 +3912,18 @@ public class VOIManager implements ActionListener, KeyListener, MouseListener, M
 	 * @param g Graphics.
 	 */
 	private void drawVOIText( VOIText kVOI, Graphics g) {
+	    int xS2 = 0;
+	    int yS2 = 0;
 
 		Vector3f kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(0) );
 		int xS = Math.round(kScreen.X);
 		int yS = Math.round(kScreen.Y);
 
-		kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
-		int xS2 = Math.round(kScreen.X);
-		int yS2 = Math.round(kScreen.Y);
+		if (kVOI.size() > 1) {
+    		kScreen = m_kDrawingContext.fileToScreenVOI( kVOI.get(1) );
+    		xS2 = Math.round(kScreen.X);
+    		yS2 = Math.round(kScreen.Y);
+		}
 
 		int width = (g.getFontMetrics(kVOI.getTextFont()).stringWidth( kVOI.getText()));
 		
