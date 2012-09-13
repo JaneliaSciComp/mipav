@@ -1,6 +1,5 @@
 package gov.nih.mipav.view;
 
-
 import gov.nih.mipav.plugins.*;
 import gov.nih.mipav.util.ThreadUtil;
 
@@ -13,6 +12,8 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.Argument.InstanceArgument;
+import gov.nih.mipav.view.Argument.StaticArgument;
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.graphVisualization.JDialogHyperGraph;
 import gov.nih.mipav.view.renderer.WildMagic.DTI_FrameWork.DTIColorDisplay;
@@ -4553,6 +4554,147 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
          */
         public void setRawImageInfo(final RawImageInfo rI) {
             this.rawInfo = rI;
+        }
+    }
+    
+    /**
+     * Required by the CommandLineParser interface. Processes MIPAV command line arguments that DO NOT require
+     * MIPAV to have already been initialized. In cases like the plugins directory, it is specifically
+     * required that MIPAV has not been initialized yet. Returns the next argument to be processed (finished 
+     * if returns args.length)
+     */
+    public static int parseStaticArguments(String[] args, int initArg) {
+        int i = 0;
+        String arg;
+        boolean prefDirCommandDone = false;
+        
+        ViewUserInterface.setProvidedUserDefaultDir(false);
+
+        ViewUserInterface.setUserDefaultDir("");
+        
+        if (args.length == 0) {
+            return args.length;
+        }
+        
+parse:  while (i < args.length) {
+            arg = args[i];
+
+            if (arg.startsWith("-")) {
+                
+              //parse commands which do not require an initialized mipav
+                StaticArgument c = StaticArgument.getArgument(arg);
+                if(c == null) {
+                    i++;
+                    continue parse;
+                }
+                
+                switch(c) {
+                
+                case Help:
+                    ViewUserInterface.printUsageAndExit();
+                    break;
+                
+                case InputDir:
+                    ViewUserInterface.setProvidedUserDefaultDir(true);
+                    ViewUserInterface.setUserDefaultDir(args[ ++i]);
+                    
+                    if (ViewUserInterface.getUserDefaultDir() == null || ViewUserInterface.getUserDefaultDir().trim().equals("")) {
+                        Preferences.debug("In argument -"+c+", "+"directory is null");
+                        ViewUserInterface.printUsageAndExit(c);
+                    } else {
+                        // check that there is a trailng slash at the end of the defaultDir...if not, add one
+                        if ( ! (ViewUserInterface.getUserDefaultDir().charAt(ViewUserInterface.getUserDefaultDir().length() - 1) == File.separatorChar)) {
+                            ViewUserInterface.setUserDefaultDir(ViewUserInterface.getUserDefaultDir() + File.separator);
+                        }
+                        // now check if this is a valid path
+                        final File checkDefaultDir = new File(ViewUserInterface.getUserDefaultDir());
+                        if ( !checkDefaultDir.exists()) {
+                            Preferences.debug("In argument -"+c+", "+ViewUserInterface.getUserDefaultDir()+" does not exist");
+                            ViewUserInterface.printUsageAndExit(c);
+                        }
+                    }
+                    break;
+                    
+                case OutputDir:
+                    ViewUserInterface.setProvidedOutputDir(true);
+                    ViewUserInterface.setOutputDir(args[ ++i]);            
+                    
+                    if (ViewUserInterface.getOutputDir() == null || ViewUserInterface.getOutputDir().trim().equals("")) {
+                        ViewUserInterface.setProvidedOutputDir(false);
+                        ViewUserInterface.printUsageAndExit(c);
+                    } else {
+                        // check that there is a trailng slash at the end of the defaultDir...if not, add one
+                        if ( ! (ViewUserInterface.getOutputDir().charAt(ViewUserInterface.getOutputDir().length() - 1) == File.separatorChar)) {
+                            ViewUserInterface.setOutputDir(ViewUserInterface.getOutputDir() + File.separator);
+                        }
+                        // now check if this is a valid path
+                        final File checkOutputDir = new File(ViewUserInterface.getOutputDir());
+                        if ( !checkOutputDir.exists()) {
+                            ViewUserInterface.setProvidedOutputDir(false);
+                            Preferences.debug("In argument -"+c+", "+ViewUserInterface.getOutputDir()+" does not exist");
+                            ViewUserInterface.printUsageAndExit();
+                        }
+                    }
+                    break;
+                
+                
+                case PluginDir:
+                    String secPluginsDir = args[ ++i];
+                    File f = new File(secPluginsDir);
+                    if(f.exists() && f.isDirectory() && f.canRead()) {
+                        ViewUserInterface.setSecondaryPluginsDir(f);
+                    }else {
+                        Preferences.debug("In argument -"+c+", "+secPluginsDir+" is not a valid readable directory", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
+                    }
+                    break;
+                
+                case HomeDir:
+                    Preferences.debug("HomeDir command is not currently usable, is only System.getProperty(\"user.home\")");
+                    break;
+                
+                case PreferencesDir:
+                    prefDirCommandDone = true;
+                    String prefDir = args[++i];
+                    f = new File(prefDir);
+                    if(f.exists() && f.isDirectory() && f.canRead() && f.canWrite()) {
+                        Preferences.setPreferencesFileDirectory(prefDir);
+                    } else {
+                        Preferences.debug("In argument -"+c+", "+prefDir+" is not a writable existing directory.", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
+                    }
+                    break;
+                    
+                case PreferencesName:
+                    if(!prefDirCommandDone) {
+                        checkPrefDirCommand(args, initArg);
+                    }
+                    String prefName = args[++i];
+                    f = new File(prefName);
+                    if(!f.exists() || (f.canRead() && f.canWrite())) {
+                        Preferences.setPreferencesFileName(prefName);
+                    } else {
+                        Preferences.debug("In argument -"+c+", "+prefName+" is not in a readable and/or writable location.", Preferences.DEBUG_MINOR);
+                        ViewUserInterface.printUsageAndExit(c);
+                    }
+                    break;
+                }
+            }
+            i++;
+        }
+        return 0;
+    }
+
+    /**
+     * If the preferences name command is about to be performed before an existing preferences directory command,
+     * this guarantees that the directory command will be executed first.
+     */
+    public static void checkPrefDirCommand(String[] args, int initArg) {
+        for(int i=0; i<args.length; i++) {
+            if(StaticArgument.getArgument(args[i], true) == StaticArgument.PreferencesDir) {
+                String[] argSub = new String[]{args[i], args[i+1]};
+                parseStaticArguments(argSub, 0);
+            }
         }
     }
 
