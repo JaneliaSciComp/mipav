@@ -10580,6 +10580,10 @@ public class FileTiff extends FileBase {
         int xtmp;
         int ytmp;
         VOI ptVOI;
+        VOIProtractor voiProtractor;
+        Vector3f firstEndPt;
+        Vector3f middlePt;
+        Vector3f secondEndPt;
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -10969,6 +10973,40 @@ public class FileTiff extends FileBase {
                         VOIs.addElement(ptVOI);
                     }
                 } // if (type == point)
+                else if (type == angle) {
+                    if (n != 3) {
+                        if (debuggingFileIO) {
+                            Preferences.debug("Number of points = " + n + " rather than the expected 3 for angle\n",
+                                    Preferences.DEBUG_FILEIO);
+                        }
+                        return;
+                    } // if (n != 3)
+                    voiProtractor = new VOIProtractor();
+                    if (subPixelResolution) {
+                        firstEndPt = new Vector3f(xf[0], yf[0], imageSlice);
+                        middlePt = new Vector3f(xf[1], yf[1], imageSlice);
+                        secondEndPt = new Vector3f(xf[2], yf[2], imageSlice);
+                    }
+                    else {
+                        firstEndPt = new Vector3f(xi[0], yi[0], imageSlice);
+                        middlePt = new Vector3f(xi[1], yi[1], imageSlice);
+                        secondEndPt = new Vector3f(xi[2], yi[2], imageSlice);
+                    }
+                    voiProtractor.add(firstEndPt);
+                    voiProtractor.add(middlePt);
+                    voiProtractor.add(secondEndPt);
+                    voi = new VOI((short)VOIs.size(), "protractorVOI", VOI.PROTRACTOR, -1);
+                    voi.importCurve(voiProtractor);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                } // else if (type == angle)
+                
                 break;
         } // switch (type)
     } // decodeROI;
