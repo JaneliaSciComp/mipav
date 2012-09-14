@@ -10954,7 +10954,7 @@ public class FileTiff extends FileBase {
                         strokeColor = Color.red;
                     }
                     for (i = 0; i < n; i++) {
-                        ptVOI = new VOI((short) (VOIs.size()), "p" + (i+1), VOI.POINT, -1.0f);
+                        ptVOI = new VOI((short) (VOIs.size()), String.valueOf(i+1), VOI.POINT, -1.0f);
                         ptVOI.setColor(strokeColor);
                         if (subPixelResolution) {
                             x[0] = xf[i];
