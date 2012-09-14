@@ -10438,6 +10438,10 @@ public class FileTiff extends FileBase {
         final int BOTTOM = 12;
         final int RIGHT = 14;
         final int N_COORDINATES = 16;
+        final int X1 = 18;
+        final int Y1 = 22;
+        final int X2 = 26;
+        final int Y2 = 30;
         final int XD = 18;
         final int YD = 22;
         final int WIDTHD = 26;
@@ -10450,6 +10454,7 @@ public class FileTiff extends FileBase {
         final int OPTIONS = 50;
         final int POSITION = 56;
         final int HEADER2_OFFSET = 60;
+        final int COORDINATES = 64;
         final int textROIOffset = 64; // = RoiEncoder.HEADER_SIZE;
         // header2 offsets
         final int C_POSITION = 4;
@@ -10556,6 +10561,25 @@ public class FileTiff extends FileBase {
         Color ovalColor;
         VOI rectVOI;
         Color rectColor;
+        float x1;
+        float y1;
+        float x2;
+        float y2;
+        VOILine lineVOI;
+        Vector3f linePos1;
+        Vector3f linePos2;
+        VOI voi;
+        float shapeArray[];
+        int base;
+        int xi[];
+        int yi[];
+        float xf[] = null;
+        float yf[] = null;
+        int base1;
+        int base2;
+        int xtmp;
+        int ytmp;
+        VOI ptVOI;
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -10697,11 +10721,6 @@ public class FileTiff extends FileBase {
             }
         }
         
-        isComposite = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN) > 0;
-        if (debuggingFileIO && isComposite) {
-            Preferences.debug("ROI is a composite\n", Preferences.DEBUG_FILEIO);
-        }
-        
         // read stroke width, stroke color, and fill color (1.43i or later)
         if (version >= 218) {
             strokeWidth = (double)getBufferUShort(buffer, STROKE_WIDTH, FileBase.BIG_ENDIAN);
@@ -10725,6 +10744,26 @@ public class FileTiff extends FileBase {
                 fillColor = new Color(fillColorInt, alpha != 255);
             }
         }
+        
+        isComposite = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN) > 0;
+        if (isComposite) {
+            if (debuggingFileIO) {
+                Preferences.debug("ROI is a composite\n", Preferences.DEBUG_FILEIO);
+            }
+            if (type != rect) {
+                Preferences.debug("Composite ROI does not have the required rect type\n", Preferences.DEBUG_FILEIO);
+                return;
+            }
+            n = getBufferInt(buffer, SHAPE_ROI_SIZE, FileBase.BIG_ENDIAN);
+            
+            shapeArray = new float[n];
+            base = COORDINATES;
+            for (i = 0; i < n; i++) {
+                shapeArray[i] = getBufferFloat(buffer, base, FileBase.BIG_ENDIAN);
+                base += 4;
+            }
+            return;
+        } // if (isComposite)
         
         switch (type) {
             case rect:
@@ -10809,6 +10848,9 @@ public class FileTiff extends FileBase {
                         rectColor = fillColor;
                     }
                     rectVOI.setColor(rectColor);
+                    if (roiName != null) {
+                        rectVOI.setName(roiName);
+                    }
                     VOIs.addElement(rectVOI);
                 }
                 break;
@@ -10843,7 +10885,90 @@ public class FileTiff extends FileBase {
                     ovalColor = fillColor;
                 }
                 ovalVOI.setColor(ovalColor);
+                if (roiName != null) {
+                    ovalVOI.setName(roiName);
+                }
                 VOIs.addElement(ovalVOI);
+                break;
+            case line:
+                x1 = getBufferFloat(buffer, X1, FileBase.BIG_ENDIAN);
+                y1 = getBufferFloat(buffer, Y1, FileBase.BIG_ENDIAN);
+                x2 = getBufferFloat(buffer, X2, FileBase.BIG_ENDIAN);
+                y2 = getBufferFloat(buffer, Y2, FileBase.BIG_ENDIAN);
+                lineVOI = new VOILine();
+                linePos1 = new Vector3f(x1, y1, imageSlice);
+                linePos2 = new Vector3f(x2, y2, imageSlice);
+                lineVOI.add(linePos1);
+                lineVOI.add(linePos2);
+                voi = new VOI((short)VOIs.size(), "lineVOI", VOI.LINE, -1);
+                voi.importCurve(lineVOI);
+                if (strokeColor == null) {
+                    strokeColor = Color.red;
+                }
+                voi.setColor(strokeColor);
+                if (roiName != null) {
+                    voi.setName(roiName);
+                }
+                VOIs.addElement(voi);
+                break;
+            case freehand:
+            case traced:
+            case polyline:
+            case freeline:
+            case angle:
+            case point:
+                if (n == 0) {
+                    return;
+                }
+                xi = new int[n];
+                yi = new int[n];
+                base1 = COORDINATES;
+                base2 = base1 + 2*n;
+                for (i = 0; i < n; i++) {
+                    xtmp = getBufferShort(buffer, base1 + 2*i, FileBase.BIG_ENDIAN);
+                    if (xtmp < 0) {
+                        xtmp = 0;
+                    }
+                    ytmp = getBufferShort(buffer, base2 + 2*i, FileBase.BIG_ENDIAN);
+                    if (ytmp < 0) {
+                        ytmp = 0;
+                    }
+                    xi[i] = left + xtmp;
+                    yi[i] = top + ytmp;
+                 }
+                if (subPixelResolution) {
+                    xf = new float[n];
+                    yf = new float[n];
+                    base1 = COORDINATES + 4*n;
+                    base2 = base1 + 4*n;
+                    for (i = 0; i < n; i++) {
+                        xf[i] = getBufferFloat(buffer, base1 + 4*i, FileBase.BIG_ENDIAN);
+                        yf[i] = getBufferFloat(buffer, base2 + 4*i, FileBase.BIG_ENDIAN);
+                    }
+                }
+                if (type == point) {
+                    x = new float[1];
+                    y = new float[1];
+                    z = new float[1];
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    for (i = 0; i < n; i++) {
+                        ptVOI = new VOI((short) (VOIs.size()), "p" + (i+1), VOI.POINT, -1.0f);
+                        ptVOI.setColor(strokeColor);
+                        if (subPixelResolution) {
+                            x[0] = xf[i];
+                            y[0] = yf[i];
+                        }
+                        else {
+                            x[0] = xi[i];
+                            y[0] = yi[i];
+                        }
+                        z[0] = imageSlice;
+                        ptVOI.importCurve(x, y, z);
+                        VOIs.addElement(ptVOI);
+                    }
+                } // if (type == point)
                 break;
         } // switch (type)
     } // decodeROI;
