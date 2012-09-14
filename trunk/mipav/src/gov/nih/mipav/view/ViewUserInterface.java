@@ -2627,7 +2627,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         setDefaultDirectory(System.getProperty("user.dir"));
                                     } else {
                                         Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                        System.out.println("Can not find " + imgName);
+                                        System.out.println("Can not find1 " + imgName);
                                         printUsageAndExit(c);
                                     }
                                 }
@@ -2637,7 +2637,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     setDefaultDirectory(System.getProperty("user.dir"));
                                 } else {
                                     Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                    System.out.println("Can not find " + imgName);
+                                    System.out.println("Can not find2 " + imgName);
                                     printUsageAndExit(c);
                                 }
                             }
@@ -2652,7 +2652,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     imageList.add(new OpenFileInfo(dir, name, isMulti));
                                 } else {
                                     Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                    System.out.println("Can not find " + imgName);
+                                    System.out.println("Can not find3 " + imgName);
                                     printUsageAndExit(c);
                                 }
                             } else {
@@ -2668,7 +2668,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                             imageList.add(new OpenFileInfo(dir, name, isMulti));
                                         } else {
                                             Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                            System.out.println("Can not find " + imgName);
+                                            System.out.println("Can not find4 " + imgName);
                                             printUsageAndExit(c);
                                         }
                                     }
@@ -2678,7 +2678,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         imageList.add(new OpenFileInfo(dir, name, isMulti));
                                     } else {
                                         Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                        System.out.println("Can not find " + imgName);
+                                        System.out.println("Can not find5 " + imgName);
                                         printUsageAndExit(c);
                                     }
                                 }

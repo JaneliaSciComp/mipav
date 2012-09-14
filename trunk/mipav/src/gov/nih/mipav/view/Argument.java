@@ -48,7 +48,7 @@ public interface Argument {
         
         public String generateCmdUsageInfo() {
             StringBuilder b = new StringBuilder();
-            b.append("Invalid use of argument ").append(getArgument()).append("\n");
+            b.append("Invalid static use of static argument ").append(getArgument()).append("\n");
             b.append("-"+getArgument()).append("\t").append(getHelp()).append("\n");
             if(altCommand != null && altCommand.length > 0) {
                 b.append("Alternate command forms:\n");
@@ -149,10 +149,10 @@ public interface Argument {
         
         public String generateCmdUsageInfo() {
             StringBuilder b = new StringBuilder();
-            b.append("Invalid use of argument ").append(getArgument()).append("\n");
+            b.append("Invalid use of instance argument ").append(getArgument()).append("\n");
             b.append("-"+getArgument()).append("\t").append(getHelp()).append("\n");
             if(altCommand != null && altCommand.length > 0) {
-                b.append("Alternate command forms:\n");
+                b.append("Alternate instance command forms:\n");
                 for(int i=0; i<altCommand.length; i++) {
                     b.append("-").append(altCommand[i]).append("\n");
                 }

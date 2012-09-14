@@ -7,15 +7,13 @@
  * @author Matthew J. McAuliffe
  */
 
-import java.io.File;
-
 import gov.nih.mipav.view.*;
 
 
 /**
  * The class which starts up the Mipav application. Also passes along the command line arguments to the UI.
  */
-public class MipavMain {//implements CommandLineParser { //TODO: Test effectiveness in nightly build
+public class MipavMain {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -27,7 +25,6 @@ public class MipavMain {//implements CommandLineParser { //TODO: Test effectiven
     public static void main(String[] args) {
         System.setProperty("sun.awt.noerasebackground", "true");
 
-        //MipavMain mipav = new MipavMain();
         int initArg = ViewUserInterface.parseStaticArguments(args, 0); //process static command line arguments
         
         ViewUserInterface ui = ViewUserInterface.create();
