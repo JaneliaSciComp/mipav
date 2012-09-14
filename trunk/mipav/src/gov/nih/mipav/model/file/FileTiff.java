@@ -846,6 +846,7 @@ public class FileTiff extends FileBase {
     private int metaDataCounts[] = null;
    
     private VOIVector VOIs = new VOIVector();
+    private ViewUserInterface UI = ViewUserInterface.getReference();
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -6062,8 +6063,10 @@ public class FileTiff extends FileBase {
      */
     private boolean openIFD(FileInfoTiff fileInfo) throws IOException {
         int i;
+        int j;
+        int k;
         int iExifStart = 0;
-        int i1, i2;
+        int i1, i2, i3;
         int tag;
         Type type;
         int count;
@@ -6113,6 +6116,10 @@ public class FileTiff extends FileBase {
         int eMDindex;
         int len;
         int last;
+        char[] chars;
+        String infoString;
+        byte overlay[][];
+        int index;
 
         if (nDirEntries <= 0) {
             throw new IOException("First 2 IFD bytes are an illegal " + nDirEntries);
@@ -10162,7 +10169,29 @@ public class FileTiff extends FileBase {
                     start = 1;
                     eMDindex = 0;
                     for (i1 = 0; i1 < nMetaTypes; i1++) {
-                        if (metaTypes[i1] == ROI) {
+                        if (metaTypes[i1] == INFO) {
+                            len = metaDataCounts[start];
+                            byteBuffer = new byte[len];
+                            for (i2 = 0; i2 < len; i2++) {
+                                byteBuffer[i2] = (byte)valueArray[valueIndex+i2];    
+                            }
+                            valueIndex += len;
+                            len /= 2;
+                            chars = new char[len];
+                            if (!endianess) {
+                                for (j = 0, k = 0; j < len; j++) {
+                                    chars[j] = (char)(byteBuffer[k++]&0xff + ((byteBuffer[k++&0xff])<<8));
+                                }
+                            }
+                            else {
+                                for (j = 0, k = 0;  j < len; j++) {
+                                    chars[j] = (char)(((byteBuffer[k++]&0xff)<<8)+byteBuffer[k++]&0xff);
+                                }
+                            }
+                            infoString = new String(chars);
+                            UI.setDataText(infoString);
+                        }
+                        else if (metaTypes[i1] == ROI) {
                             len = metaDataCounts[start];  
                             byteBuffer = new byte[len];
                             for (i2 = 0; i2 < len; i2++) {
@@ -10170,6 +10199,20 @@ public class FileTiff extends FileBase {
                             }
                             valueIndex += len;
                             decodeROI(byteBuffer);
+                        }
+                        else if (metaTypes[i1] == OVERLAY) {
+                            last = start + metaCounts[i1]-1;
+                            overlay = new byte[last-start+1][];
+                            index = 0;
+                            for (i2 = start; i2 <= last; i2++) {
+                                len = metaDataCounts[i2];
+                                overlay[index] = new byte[len];
+                                for (i3 = 0; i3 < len; i3++) {
+                                    overlay[index][i3] = (byte)valueArray[valueIndex+i3];
+                                }
+                                valueIndex += len;
+                                index++;
+                            }
                         }
                         else { // skip unknown type
                             last = start + metaCounts[i1] - 1;
@@ -10584,6 +10627,7 @@ public class FileTiff extends FileBase {
         Vector3f firstEndPt;
         Vector3f middlePt;
         Vector3f secondEndPt;
+        int voiSliceNumber;
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -10725,6 +10769,17 @@ public class FileTiff extends FileBase {
             }
         }
         
+        if (position < 0) {
+            position = 0;
+        }
+        voiSliceNumber = position;
+        if (slice > 0) {
+            voiSliceNumber = slice;
+        }
+        if (debuggingFileIO) {
+            Preferences.debug("VOI slice number = " + voiSliceNumber + "\n", Preferences.DEBUG_FILEIO);
+        }
+        
         // read stroke width, stroke color, and fill color (1.43i or later)
         if (version >= 218) {
             strokeWidth = (double)getBufferUShort(buffer, STROKE_WIDTH, FileBase.BIG_ENDIAN);
@@ -10778,7 +10833,7 @@ public class FileTiff extends FileBase {
                     z = new float[1];
                     x[0] = left;
                     y[0] = bottom;
-                    z[0] = imageSlice;
+                    z[0] = voiSliceNumber;
                     annotationVOI.importCurve(x, y, z);
                     // Don't draw the arrow
                     ((VOIText)annotationVOI.getCurves().lastElement()).setUseMarker(false);
@@ -10828,16 +10883,16 @@ public class FileTiff extends FileBase {
                     rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
                     boundaryV = new Vector<Vector3f>();
                     for (xPos = left; xPos <= right; xPos++) {
-                        boundaryV.add(new Vector3f(xPos, top, imageSlice));
+                        boundaryV.add(new Vector3f(xPos, top, voiSliceNumber));
                     }
                     for (yPos = top + 1; yPos <= bottom; yPos++) {
-                        boundaryV.add(new Vector3f(right, yPos, imageSlice));
+                        boundaryV.add(new Vector3f(right, yPos, voiSliceNumber));
                     }
                     for (xPos = right-1; xPos >= left; xPos--) {
-                        boundaryV.add(new Vector3f(xPos, bottom, imageSlice));
+                        boundaryV.add(new Vector3f(xPos, bottom, voiSliceNumber));
                     }
                     for (yPos = bottom - 1; yPos >= top+1; yPos--) {
-                        boundaryV.add(new Vector3f(left, yPos, imageSlice));
+                        boundaryV.add(new Vector3f(left, yPos, voiSliceNumber));
                     }
                     Vector3f pt[] = new Vector3f[boundaryV.size()];
                     for (i = 0; i < boundaryV.size(); i++) {
@@ -10873,7 +10928,7 @@ public class FileTiff extends FileBase {
                     yPos = (int)Math.round(yCenter + semiMinorAxis*Math.sin(ang));
                     if (mask[xPos + yPos * xDim] == 0) {
                         mask[xPos + yPos * xDim] = 1;
-                        boundaryV.add(new Vector3f(xPos, yPos, imageSlice));
+                        boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
                     }
                 }
                 Vector3f pt[] = new Vector3f[boundaryV.size()];
@@ -10900,8 +10955,8 @@ public class FileTiff extends FileBase {
                 x2 = getBufferFloat(buffer, X2, FileBase.BIG_ENDIAN);
                 y2 = getBufferFloat(buffer, Y2, FileBase.BIG_ENDIAN);
                 lineVOI = new VOILine();
-                linePos1 = new Vector3f(x1, y1, imageSlice);
-                linePos2 = new Vector3f(x2, y2, imageSlice);
+                linePos1 = new Vector3f(x1, y1, voiSliceNumber);
+                linePos2 = new Vector3f(x2, y2, voiSliceNumber);
                 lineVOI.add(linePos1);
                 lineVOI.add(linePos2);
                 voi = new VOI((short)VOIs.size(), "lineVOI", VOI.LINE, -1);
@@ -10968,7 +11023,7 @@ public class FileTiff extends FileBase {
                             x[0] = xi[i];
                             y[0] = yi[i];
                         }
-                        z[0] = imageSlice;
+                        z[0] = voiSliceNumber;
                         ptVOI.importCurve(x, y, z);
                         VOIs.addElement(ptVOI);
                     }
@@ -10983,14 +11038,14 @@ public class FileTiff extends FileBase {
                     } // if (n != 3)
                     voiProtractor = new VOIProtractor();
                     if (subPixelResolution) {
-                        firstEndPt = new Vector3f(xf[0], yf[0], imageSlice);
-                        middlePt = new Vector3f(xf[1], yf[1], imageSlice);
-                        secondEndPt = new Vector3f(xf[2], yf[2], imageSlice);
+                        firstEndPt = new Vector3f(xf[0], yf[0], voiSliceNumber);
+                        middlePt = new Vector3f(xf[1], yf[1], voiSliceNumber);
+                        secondEndPt = new Vector3f(xf[2], yf[2], voiSliceNumber);
                     }
                     else {
-                        firstEndPt = new Vector3f(xi[0], yi[0], imageSlice);
-                        middlePt = new Vector3f(xi[1], yi[1], imageSlice);
-                        secondEndPt = new Vector3f(xi[2], yi[2], imageSlice);
+                        firstEndPt = new Vector3f(xi[0], yi[0], voiSliceNumber);
+                        middlePt = new Vector3f(xi[1], yi[1], voiSliceNumber);
+                        secondEndPt = new Vector3f(xi[2], yi[2], voiSliceNumber);
                     }
                     voiProtractor.add(firstEndPt);
                     voiProtractor.add(middlePt);
