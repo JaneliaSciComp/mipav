@@ -2,6 +2,7 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.model.algorithms.AlgorithmTransform;
+import gov.nih.mipav.model.algorithms.AlgorithmVOIExtraction;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmFlip;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmRotate;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
@@ -12,6 +13,11 @@ import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.PathIterator;
 import java.io.*;
 
 import java.util.*;
@@ -10579,6 +10585,8 @@ public class FileTiff extends FileBase {
         String fontName;
         char text[];
         int i;
+        int j;
+        int k;
         String textStr;
         Font font;
         double strokeWidth;
@@ -10628,6 +10636,22 @@ public class FileTiff extends FileBase {
         Vector3f middlePt;
         Vector3f secondEndPt;
         int voiSliceNumber;
+        Shape s;
+        int index;
+        int pathType;
+        float seg[];
+        int len;
+        Rectangle r;
+        AffineTransform at;
+        ModelImage maskImage;
+        int extents2D[];
+        AlgorithmVOIExtraction VOIExtAlgo;
+        int nVOI;
+        VOI compositeVOI[] = null; 
+        Vector<VOIBase> curves;
+        int nCurves;
+        VOIBase vb;
+        int nPts;
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -10821,6 +10845,112 @@ public class FileTiff extends FileBase {
                 shapeArray[i] = getBufferFloat(buffer, base, FileBase.BIG_ENDIAN);
                 base += 4;
             }
+            /* Construct a Shape from shapeArray[] */
+            s = new GeneralPath(GeneralPath.WIND_EVEN_ODD);
+            index = 0;
+            seg = new float[7];
+            while (true) {
+                len = getSegment(shapeArray, seg, index);
+                if (len < 0) {
+                    break;
+                }
+                index += len;
+                pathType = (int)seg[0];
+                switch(pathType) {
+                    case PathIterator.SEG_MOVETO:
+                        ((GeneralPath)s).moveTo(seg[1], seg[2]);
+                        break;
+                        case PathIterator.SEG_LINETO:
+                        ((GeneralPath)s).lineTo(seg[1], seg[2]);
+                        break;
+                        case PathIterator.SEG_QUADTO:
+                        ((GeneralPath)s).quadTo(seg[1], seg[2],seg[3], seg[4]);
+                        break;
+                        case PathIterator.SEG_CUBICTO:
+                        ((GeneralPath)s).curveTo(seg[1], seg[2], seg[3], seg[4], seg[5], seg[6]);
+                        break;
+                        case PathIterator.SEG_CLOSE:
+                        ((GeneralPath)s).closePath();
+                        break;
+                        default: break;    
+                } // switch(pathType)
+            } // while (true)
+            r = s.getBounds();
+            at = new AffineTransform();
+            at.translate(-r.x, -r.y);
+            s = new GeneralPath(at.createTransformedShape(s));
+            mask = new byte[xDim*yDim];
+            for (yPos = 0; yPos < yDim; yPos++) {
+                for (xPos = 0; xPos < xDim; xPos++) {
+                    if (s.contains(xPos, yPos)) {
+                        mask[xPos + xDim * yPos] = 1;
+                    }
+                }
+            } // for (yPos = 0; yPos < yDim; yPos++)
+            extents2D = new int[2];
+            extents2D[0] = xDim;
+            extents2D[1] = yDim;
+            maskImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "maskImage");
+            try {
+                maskImage.importData(0, mask, true);
+            }
+            catch(IOException e) {
+                MipavUtil.displayError("IOException on maskImage.importData");
+                return;
+            }
+            VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
+            VOIExtAlgo.run();
+            VOIs = maskImage.getVOIs();
+            nVOI = VOIs.size();
+            compositeVOI = new VOI[nVOI];
+            for (i = 0; i < nVOI; i++) {
+                compositeVOI[i] = VOIs.get(i);
+            }
+            VOIs.clear();
+            if (roiName != null) {
+                if (nVOI == 1) {
+                    compositeVOI[0].setName(roiName);
+                }
+                else {
+                    for (i = 0; i < nVOI; i++) {
+                        compositeVOI[i].setName(roiName + (i+1));
+                    }
+                }
+            } // if (roiName != null)
+            else {
+                if (nVOI == 1) {
+                    compositeVOI[0].setName("contourVOI");
+                }
+                else {
+                    for (i = 0; i < nVOI; i++) {
+                        compositeVOI[i].setName("contourVOI" + (i+1));
+                    }
+                }
+            }
+            if (strokeColor == null) {
+                strokeColor = Color.red;
+            }
+            for (i = 0; i < nVOI; i++) {
+                curves = compositeVOI[i].getCurves();  
+                nCurves = curves.size();
+                for (j = 0; j < nCurves; j++) {
+                    vb = curves.get(j);
+                    if (vb instanceof VOIContour) {
+                        nPts = vb.size();
+                        x = new float[nPts];
+                        y = new float[nPts];
+                        z = new float[nPts];
+                        vb.exportArrays(x, y, z);
+                        for (k = 0; k < nPts; k++) {
+                            z[k] = voiSliceNumber;
+                        }
+                        vb.clear();
+                        vb.importArrays(x, y, z, nPts);
+                    }
+                } // for (j = 0; j < nCurves; j++)
+                compositeVOI[i].setColor(strokeColor);
+                VOIs.add(compositeVOI[i]);
+            } // for (i = 0; i < nVOI; i++)
             return;
         } // if (isComposite)
         
@@ -11065,6 +11195,23 @@ public class FileTiff extends FileBase {
                 break;
         } // switch (type)
     } // decodeROI;
+    
+    private int getSegment(float[] array, float[] seg, int index) {
+        int len = array.length;
+        if (index>=len) return -1; seg[0]=array[index++];
+        int type = (int)seg[0];
+        if (type==PathIterator.SEG_CLOSE) return 1;
+        if (index>=len) return -1; seg[1]=array[index++];
+        if (index>=len) return -1; seg[2]=array[index++];
+        if (type==PathIterator.SEG_MOVETO||type==PathIterator.SEG_LINETO) return 3;
+        if (index>=len) return -1; seg[3]=array[index++];
+        if (index>=len) return -1; seg[4]=array[index++];
+        if (type==PathIterator.SEG_QUADTO) return 5;
+        if (index>=len) return -1; seg[5]=array[index++];
+        if (index>=len) return -1; seg[6]=array[index++];
+        if (type==PathIterator.SEG_CUBICTO) return 7;
+        return -1;
+        }
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
