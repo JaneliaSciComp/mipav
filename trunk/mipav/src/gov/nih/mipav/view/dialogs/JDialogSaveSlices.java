@@ -416,7 +416,12 @@ public class JDialogSaveSlices extends JDialogBase {
      */
     private void init() {
 
-        setTitle("Save range of slices");
+        if (timeEnabled)  {
+            setTitle("Save range of volumes");
+        }
+        else {
+            setTitle("Save range of slices");
+        }
         setResizable(false);
         cancelFlag = false;
 
@@ -572,7 +577,12 @@ public class JDialogSaveSlices extends JDialogBase {
         generalPanel.setBorder(buildTitledBorder("General Options"));
         generalPanel.setLayout(new BorderLayout());
 
-        multiFileCheckbox = new JCheckBox("Save image slices to separate files");
+        if (timeEnabled) {
+            multiFileCheckbox = new JCheckBox("Save image volumes to separate files");    
+        }
+        else {
+            multiFileCheckbox = new JCheckBox("Save image slices to separate files");
+        }
         multiFileCheckbox.setFont(serif12);
 
         if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
