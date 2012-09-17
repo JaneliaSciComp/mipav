@@ -2962,7 +2962,7 @@ public class FileRaw extends FileBase {
         this.nTimePeriods = endTimePeriod - beginTimePeriod + 1;
 
         this.nImages = extents[2];
-        dataFileName = new String[extents[2]];
+        dataFileName = new String[nTimePeriods];
 
 
         String fileName = options.getFileName();
