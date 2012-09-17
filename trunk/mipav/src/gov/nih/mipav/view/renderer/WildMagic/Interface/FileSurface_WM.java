@@ -784,6 +784,17 @@ public class FileSurface_WM {
      * @return array of TriMesh objects.
      */
     public static TriMesh[] openSurfaces(ModelImage kImage) {
+        return openSurfaces(kImage, false);
+    }
+
+
+    /**
+     * The action taken when the Add button is clicked in the JPanelSurface class. A file dialog is launched that allows
+     * the user to select new surfaces to load from disk.
+     * @param kImage ModelImage for location/orientation and scale information.
+     * @return array of TriMesh objects.
+     */
+    public static TriMesh[] openSurfaces(ModelImage kImage, boolean toFileCoords ) {
         File[] akFiles = openFiles(true);
 
         if (akFiles == null) {
@@ -798,12 +809,12 @@ public class FileSurface_WM {
             	(kName.indexOf(".stl")!= -1) || 
             	(kName.indexOf(".ply") != -1) || (kName.indexOf(".txt") != -1) || 
             	(kName.indexOf(".gii") != -1)) {
-                kSurface[i] = readSurface(kImage, akFiles[i], null);
+                kSurface[i] = readSurface(kImage, akFiles[i], null, toFileCoords);
             } else if (kName.indexOf(".xml") != -1) {
                 FileSurfaceRefXML_WM kSurfaceXML = new FileSurfaceRefXML_WM(kName, akFiles[i].getParent());
                 FileInfoSurfaceRefXML_WM kFileInfo = kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
                 akFiles[i] = new File(akFiles[i].getParent()+ File.separatorChar + kFileInfo.getSurfaceFileName());
-                kSurface[i] = readSurface(kImage, akFiles[i], kFileInfo.getMaterial());
+                kSurface[i] = readSurface(kImage, akFiles[i], kFileInfo.getMaterial(), toFileCoords);
             } 
         }
 
@@ -2599,6 +2610,18 @@ public class FileSurface_WM {
      */
     public static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial )
     {
+    	return readSurface(kImage, file, kMaterial, false);
+    }
+
+    /**
+     * Load a triangle mesh from the specified file and assign to it the MaterialState.
+     * @param   kImage  ModelImage displayed in the SurfaceRender class
+     * @param   file    The triangle mesh file to load.
+     * @param   kMaterial The Material for the surface.
+     * @return  TriMesh
+     */
+    public static TriMesh readSurface(ModelImage kImage, File file, MaterialState kMaterial, boolean toFileCoords )
+    {
         int iType = 0, iQuantity = 0;
         boolean isSur = true;
         int[] extents = kImage.getExtents();
@@ -2751,18 +2774,31 @@ public class FileSurface_WM {
                 {
                     for (int j = 0; j < akComponent[i].VBuffer.GetVertexQuantity(); j++) {
 
-                    	//System.err.println( akComponent[i].VBuffer.GetPosition3( j ) ); 
-                        // The mesh files save the verticies as
-                        // pt.x*resX*direction[0] + startLocation
-                        // The loaded vertices go from -1 to 1
-                        // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
-                        akComponent[i].VBuffer.SetPosition3( j, 
-                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0]) -
-                                        xBox) / (2.0f*maxBox),
-                                        ((2.0f * (akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1]) -
-                                                yBox) / (2.0f*maxBox),
-                                                ((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2]) -
-                                                        zBox) / (2.0f*maxBox) );
+                    	if ( toFileCoords )
+                    	{
+                    		// The mesh files save the vertex positions as
+                    		// pt.x*resX*direction[0] + startLocation
+                    		// Return the loaded positions in file index coordinates:
+                    		akComponent[i].VBuffer.SetPosition3( j, 
+                    				(akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / (direction[0] * resols[0]),
+                    				(akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / (direction[1] * resols[1]),
+                    				(akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / (direction[2] * resols[2]));
+                    	}
+                    	else
+                    	{
+                    		//System.err.println( akComponent[i].VBuffer.GetPosition3( j ) ); 
+                    		// The mesh files save the verticies as
+                    		// pt.x*resX*direction[0] + startLocation
+                    		// The loaded vertices go from -1 to 1
+                    		// The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
+                    		akComponent[i].VBuffer.SetPosition3( j, 
+                    				((2.0f * (akComponent[i].VBuffer.GetPosition3fX(j) - startLocation[0]) / direction[0]) -
+                    						xBox) / (2.0f*maxBox),
+                    						((2.0f * (akComponent[i].VBuffer.GetPosition3fY(j) - startLocation[1]) / direction[1]) -
+                    								yBox) / (2.0f*maxBox),
+                    								((2.0f * (akComponent[i].VBuffer.GetPosition3fZ(j) - startLocation[2]) / direction[2]) -
+                    										zBox) / (2.0f*maxBox) );
+                    	}
                     }
                     akComponent[i].SetName( file.getName() );
                 }

@@ -10,6 +10,7 @@ import gov.nih.mipav.model.file.FileInfoBase.UnitType;
 import gov.nih.mipav.model.provenance.*;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 import gov.nih.mipav.model.scripting.actions.ActionChangeName;
+import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -5006,6 +5007,19 @@ public class ModelImage extends ModelStorageBase {
         }
 
         throw new IOException("Export data error - bounds incorrect");
+    }
+
+    public final synchronized void exportDiagonal(final int tSlice, final int slice, final int[] extents,
+    		final Vector3f[] verts, final float[] values, final boolean bInterpolate, final boolean bUseMask,
+    		Vector<BitSet> surfaceMask, boolean[] surfaceValues	) throws IOException {
+    	if ( bUseMask && useMask && (mask != null ) )
+    	{
+    		exportDiagonal( tSlice, slice, extents, verts, values, bInterpolate, mask, surfaceMask, surfaceValues );
+    	}
+    	else
+    	{
+    		exportDiagonal( tSlice, slice, extents, verts, values, bInterpolate, null, surfaceMask, surfaceValues );
+    	}
     }
 
 }

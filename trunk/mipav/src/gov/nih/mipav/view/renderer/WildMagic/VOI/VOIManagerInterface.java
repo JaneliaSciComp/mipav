@@ -2993,9 +2993,9 @@ public class VOIManagerInterface implements ActionListener, VOIHandlerInterface,
             iSize /= 4;
         }
         kActive.createMask(iSize);
-        boolean bMask = true;
+        boolean bMask = false;
         for (int i = 0; i < m_kVOIManagers.size(); i++) {
-            bMask &= make3DVOI( false, kActive, kActive, kActive.getMask(), 
+            bMask |= make3DVOI( false, kActive, kActive, kActive.getMask(), 
             		m_kVOIManagers.elementAt(i), i);
         }
         if ( !bMask )
