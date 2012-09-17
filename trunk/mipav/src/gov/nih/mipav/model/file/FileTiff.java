@@ -13,6 +13,7 @@ import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
@@ -10216,6 +10217,7 @@ public class FileTiff extends FileBase {
                                 for (i3 = 0; i3 < len; i3++) {
                                     overlay[index][i3] = (byte)valueArray[valueIndex+i3];
                                 }
+                                decodeROI(overlay[index]);
                                 valueIndex += len;
                                 index++;
                             }
@@ -11191,7 +11193,32 @@ public class FileTiff extends FileBase {
                     }
                     VOIs.addElement(voi);
                 } // else if (type == angle)
-                
+                else if (type == freehand) {
+                    voi = new VOI((short)VOIs.size(), "freehandVOI", VOI.CONTOUR, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber;    
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                } // else if (type == freehand)
                 break;
         } // switch (type)
     } // decodeROI;
