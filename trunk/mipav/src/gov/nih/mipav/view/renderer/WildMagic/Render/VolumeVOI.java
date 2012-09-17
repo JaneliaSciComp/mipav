@@ -66,6 +66,7 @@ public class VolumeVOI extends VolumeObject
 		scaleVOI();
 		m_bDisplay = true;
 		update(kColor);
+		m_bUpdateDisplay = true;
 	}
 
 	/** Delete local memory. */
@@ -136,6 +137,12 @@ public class VolumeVOI extends VolumeObject
 	public boolean needsUpdate()
 	{
 		return m_bUpdateDisplay;
+	}
+
+	
+	public void needsUpdate(boolean update)
+	{
+		m_bUpdateDisplay = update;
 	}
 
 
@@ -314,6 +321,7 @@ public class VolumeVOI extends VolumeObject
 			{
 				Vector3f kPos = new Vector3f( m_kVOI.get(i) );
 				kPos.Mult(m_kVolumeScale);
+				Vector3f kPos2 = m_kVOILine.VBuffer.GetPosition3(i);
 				m_kVOILine.VBuffer.SetPosition3(i, kPos );
 			}
 			m_kVOILine.VBuffer.Release();
@@ -755,8 +763,6 @@ public class VolumeVOI extends VolumeObject
 				m_kVolumeImageA.GetScaleY()/(kImageA.getExtents()[1] - 1), 
 				m_kVolumeImageA.GetScaleZ()/(kImageA.getExtents()[2] - 1)  );
 		
-
-        Vector3f kVolumeScale = new Vector3f(m_kVolumeImageA.GetScaleX(), m_kVolumeImageA.GetScaleY(), m_kVolumeImageA.GetScaleZ()  );
         Vector3f kExtentsScale = new Vector3f(1f/(kImageA.getExtents()[0] - 1), 
                 1f/(kImageA.getExtents()[1] - 1), 
                 1f/(kImageA.getExtents()[2] - 1)  );
@@ -794,13 +800,16 @@ public class VolumeVOI extends VolumeObject
 		}
 		else
 		{
+			Vector3f kPos = new Vector3f();
 			kVBuffer = new VertexBuffer(kAttributes, m_kVOI.size() );
 			for ( int i = 0; i < kVBuffer.GetVertexQuantity(); i++ )
 			{
-				Vector3f kPos = new Vector3f( m_kVOI.get(i) );
+				kPos.Copy( m_kVOI.get(i) );
 	            kPos.Mult(kExtentsScale);
 	            kVBuffer.SetTCoord3(0, i, kPos);
-	            kPos.Mult(kVolumeScale);
+
+				kPos.Copy( m_kVOI.get(i) );
+	            kPos.Mult(m_kVolumeScale);
 	            
 				kVBuffer.SetPosition3(i, kPos );
 				kVBuffer.SetColor3(0, i, m_kColor );
@@ -823,6 +832,7 @@ public class VolumeVOI extends VolumeObject
 			m_kBillboardPos = new Vector3f(m_kVOILine.VBuffer.GetPosition3(1));
 		}
 
+		m_bUpdateDisplay = true;
 	}
 
 	/**

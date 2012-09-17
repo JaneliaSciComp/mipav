@@ -434,6 +434,7 @@ public class PlaneRender_WM extends GPURenderBase
                 kVolumeVOI.SetDisplay(true);                
                 kVolumeVOI.showTextBox(false);
                 kVolumeVOI.setZCompare(false);
+                boolean bUpdateSave = kVolumeVOI.needsUpdate();
 
                 //System.err.println( aiAxisOrder[2] + " " + kCenter.Y );
                 //
@@ -455,6 +456,7 @@ public class PlaneRender_WM extends GPURenderBase
                 //m_kVolumeVOI.setSlice(true, aiAxisOrder[2], kCenter.Z);
                 //m_kVolumeVOI.Render( kRenderer, kCuller, false, true );
 
+                kVolumeVOI.needsUpdate(bUpdateSave);
                 kVolumeVOI.setZCompare(true);
                 kVolumeVOI.showTextBox(true);
                 kVolumeVOI.GetScene().Local.SetRotateCopy(kSave);
