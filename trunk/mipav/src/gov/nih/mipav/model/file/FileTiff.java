@@ -10503,6 +10503,7 @@ public class FileTiff extends FileBase {
         final int FILL_COLOR = 44;
         final int SUBTYPE = 48;
         final int OPTIONS = 50;
+        final int ELLIPSE_ASPECT_RATIO = 52;
         final int POSITION = 56;
         final int HEADER2_OFFSET = 60;
         final int COORDINATES = 64;
@@ -10654,6 +10655,29 @@ public class FileTiff extends FileBase {
         int nCurves;
         VOIBase vb;
         int nPts;
+        double ex1;
+        double ey1;
+        double ex2;
+        double ey2;
+        double aspectRatio;
+        final int ellipseVertices = 72;
+        double centerX;
+        double centerY;
+        double dx;
+        double dy;
+        double major;
+        double minor;
+        double phiB;
+        double alphaEllipse;
+        double degrees;
+        double beta1;
+        double beta2;
+        double rad;
+        double beta3;
+        double dx2;
+        double dy2;
+        Vector3f pt[];
+        
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
             if (debuggingFileIO) {
@@ -11013,7 +11037,7 @@ public class FileTiff extends FileBase {
                 }
                 else {
                     rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
-                    Vector3f pt[] = new Vector3f[4];
+                    pt = new Vector3f[4];
                     pt[0] = new Vector3f(left, top, voiSliceNumber);
                     pt[1] = new Vector3f(right, top, voiSliceNumber);
                     pt[2] = new Vector3f(right, bottom, voiSliceNumber);
@@ -11051,7 +11075,7 @@ public class FileTiff extends FileBase {
                         boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
                     }
                 }
-                Vector3f pt[] = new Vector3f[boundaryV.size()];
+                pt = new Vector3f[boundaryV.size()];
                 for (i = 0; i < boundaryV.size(); i++) {
                     pt[i] = boundaryV.elementAt(i);
                 }
@@ -11181,6 +11205,50 @@ public class FileTiff extends FileBase {
                     }
                     VOIs.addElement(voi);
                 } // else if (type == angle)
+                else if ((type == freehand) && (subtype == ELLIPSE)) {
+                    voi = new VOI((short)VOIs.size(), "ellipseVOI", VOI.CONTOUR, -1);  
+                    pt = new Vector3f[ellipseVertices];
+                    ex1 = getBufferFloat(buffer, X1, FileBase.BIG_ENDIAN);
+                    ey1 = getBufferFloat(buffer, Y1, FileBase.BIG_ENDIAN);
+                    ex2 = getBufferFloat(buffer, X2, FileBase.BIG_ENDIAN);
+                    ey2 = getBufferFloat(buffer, Y2, FileBase.BIG_ENDIAN);
+                    aspectRatio = getBufferFloat(buffer, ELLIPSE_ASPECT_RATIO, FileBase.BIG_ENDIAN);
+                    if (aspectRatio < 0.0) {
+                        aspectRatio = 0.0;
+                    }
+                    if (aspectRatio > 1.0) {
+                        aspectRatio = 1.0;
+                    }
+                    centerX = (ex1 + ex2)/2.0;
+                    centerY = (ey1 + ey2)/2.0;
+                    dx = ex2 - ex1;
+                    dy = ey2 - ey1;
+                    major = Math.sqrt(dx*dx + dy*dy);
+                    minor = major*aspectRatio;
+                    phiB = Math.atan2(dy, dx);
+                    alphaEllipse = phiB * 180.0/Math.PI;
+                    for (i = 0; i < ellipseVertices; i++) {
+                        degrees = i * 360.0/ellipseVertices;
+                        beta1 = degrees/180.0*Math.PI;
+                        dx = Math.cos(beta1)*major/2.0;
+                        dy = Math.sin(beta1)*minor/2.0;
+                        beta2 = Math.atan2(dy, dx);
+                        rad = Math.sqrt(dx*dx + dy*dy);
+                        beta3 = beta2 + alphaEllipse/180.0*Math.PI;
+                        dx2 = Math.cos(beta3)*rad;
+                        dy2 = Math.sin(beta3)*rad;
+                        pt[i] = new Vector3f((float)(centerX+dx2), (float)(centerY+dy2), (float)(voiSliceNumber));
+                    } // for (i = 0; i < ellipseVertices; i++)
+                    voi.importCurve(pt);
+                    if (strokeColor == null) {
+                        strokeColor = Color.RED;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
+                } // else if ((type == freehand) && (subtype == ELLIPSE))
                 else if (type == freehand) {
                     voi = new VOI((short)VOIs.size(), "freehandVOI", VOI.CONTOUR, -1);  
                     x = new float[n];
