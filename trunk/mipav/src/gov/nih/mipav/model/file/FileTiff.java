@@ -10504,6 +10504,7 @@ public class FileTiff extends FileBase {
         final int SUBTYPE = 48;
         final int OPTIONS = 50;
         final int ELLIPSE_ASPECT_RATIO = 52;
+        final int BOUNDED_RECT_ARC_SIZE = 54;
         final int POSITION = 56;
         final int HEADER2_OFFSET = 60;
         final int COORDINATES = 64;
@@ -10677,6 +10678,7 @@ public class FileTiff extends FileBase {
         double dx2;
         double dy2;
         Vector3f pt[];
+        int arcSize;
         
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
@@ -11036,6 +11038,10 @@ public class FileTiff extends FileBase {
                     VOIs.addElement(annotationVOI);
                 }
                 else {
+                    arcSize = getBufferShort(buffer, BOUNDED_RECT_ARC_SIZE, FileBase.BIG_ENDIAN);
+                    if (debuggingFileIO) {
+                        Preferences.debug("arcSize = " + arcSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
                     rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
                     pt = new Vector3f[4];
                     pt[0] = new Vector3f(left, top, voiSliceNumber);
@@ -11114,6 +11120,7 @@ public class FileTiff extends FileBase {
                 }
                 VOIs.addElement(voi);
                 break;
+            case polygon:
             case freehand:
             case traced:
             case polyline:
@@ -11275,6 +11282,84 @@ public class FileTiff extends FileBase {
                     }
                     VOIs.addElement(voi);
                 } // else if (type == freehand)
+                else if (type == polygon) {
+                    voi = new VOI((short)VOIs.size(), "polygonVOI", VOI.CONTOUR, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber; 
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);    
+                } // else if (type == polygon)
+                else if (type == freeline) {
+                    voi = new VOI((short)VOIs.size(), "freelineVOI", VOI.POLYLINE, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber;    
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);    
+                } // else if (type == freeline)
+                else if (type == polyline) {
+                    voi = new VOI((short)VOIs.size(), "polylineVOI", VOI.POLYLINE, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber;    
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);        
+                } // else if (type == polyline)
                 break;
         } // switch (type)
     } // decodeROI;
