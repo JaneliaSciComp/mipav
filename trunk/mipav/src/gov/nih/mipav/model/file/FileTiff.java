@@ -11013,23 +11013,11 @@ public class FileTiff extends FileBase {
                 }
                 else {
                     rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
-                    boundaryV = new Vector<Vector3f>();
-                    for (xPos = left; xPos <= right; xPos++) {
-                        boundaryV.add(new Vector3f(xPos, top, voiSliceNumber));
-                    }
-                    for (yPos = top + 1; yPos <= bottom; yPos++) {
-                        boundaryV.add(new Vector3f(right, yPos, voiSliceNumber));
-                    }
-                    for (xPos = right-1; xPos >= left; xPos--) {
-                        boundaryV.add(new Vector3f(xPos, bottom, voiSliceNumber));
-                    }
-                    for (yPos = bottom - 1; yPos >= top+1; yPos--) {
-                        boundaryV.add(new Vector3f(left, yPos, voiSliceNumber));
-                    }
-                    Vector3f pt[] = new Vector3f[boundaryV.size()];
-                    for (i = 0; i < boundaryV.size(); i++) {
-                        pt[i] = boundaryV.elementAt(i);
-                    }
+                    Vector3f pt[] = new Vector3f[4];
+                    pt[0] = new Vector3f(left, top, voiSliceNumber);
+                    pt[1] = new Vector3f(right, top, voiSliceNumber);
+                    pt[2] = new Vector3f(right, bottom, voiSliceNumber);
+                    pt[3] = new Vector3f(left, bottom, voiSliceNumber);
                     rectVOI.importCurve(pt);
                     if (strokeColor == null) {
                         strokeColor = Color.RED;
