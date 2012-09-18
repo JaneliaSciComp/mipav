@@ -2635,10 +2635,22 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 checkFile = new File(System.getProperty("user.dir") + File.separator + imgName);
                                 if (checkFile.exists()) {
                                     setDefaultDirectory(System.getProperty("user.dir"));
-                                } else {
-                                    Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                    System.out.println("Can not find2 " + imgName);
-                                    printUsageAndExit(c);
+                                } else { //try current working directory
+                                    System.out.println("user.dir is "+System.getProperty("user.dir"));
+                                    try {
+                                        checkFile = new File(new File(".").getCanonicalPath() + imgName);
+                                        if(checkFile.exists()) {
+                                            setDefaultDirectory(new File(".").getCanonicalPath());
+                                        } else {
+                                            Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                            System.out.println("Can not find2A " + imgName);
+                                            printUsageAndExit(c);
+                                        }
+                                    } catch (IOException e) {
+                                        Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                        System.out.println("Can not find2B " + imgName);
+                                        printUsageAndExit(c);
+                                    }
                                 }
                             }
                             imageList.add(new OpenFileInfo(getDefaultDirectory(), imgName, isMulti));
@@ -2676,10 +2688,21 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                     checkFile = new File(imgName);
                                     if (checkFile.exists()) {
                                         imageList.add(new OpenFileInfo(dir, name, isMulti));
-                                    } else {
-                                        Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
-                                        System.out.println("Can not find5 " + imgName);
-                                        printUsageAndExit(c);
+                                    } else { //try current directory
+                                        try {
+                                            checkFile = new File(new File(".").getCanonicalPath() + imgName);
+                                            if(checkFile.exists()) {
+                                                setDefaultDirectory(new File(".").getCanonicalPath());
+                                            } else {
+                                                Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                                System.out.println("Can not find5A " + imgName);
+                                                printUsageAndExit(c);
+                                            }
+                                        } catch (IOException e) {
+                                            Preferences.debug("Can not find " + imgName, Preferences.DEBUG_MINOR);
+                                            System.out.println("Can not find5B " + imgName);
+                                            printUsageAndExit(c);
+                                        }
                                     }
                                 }
 
