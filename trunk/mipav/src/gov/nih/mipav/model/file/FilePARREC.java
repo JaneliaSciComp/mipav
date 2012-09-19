@@ -6,14 +6,18 @@ import gov.nih.mipav.model.file.FileInfoBase.Unit;
 
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.view.Preferences;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Vector;
 
 import java.lang.*;
+
+import WildMagic.LibFoundation.Mathematics.Matrix4f;
 /**
  * The class reads and writes PAR/REC files.
  *
@@ -399,6 +403,7 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // clones the file info
         updateUnitsOfMeasure(fileInfo, image);
+        updateTransformMatrix(fileInfo, image);
         //updateStartLocations(image.getFileInfo());
 
 
@@ -427,6 +432,88 @@ public class FilePARREC extends FileBase {
         return image;
     }
 
+
+    private void updateTransformMatrix(FileInfoPARREC fileInfo, ModelImage image) {
+        TransMatrix toScanner = new TransMatrix(4);
+        
+        double[] sliceAng = fileInfo.getSliceAngulation();
+        double[] offCentre = fileInfo.getOffCentre();
+        TransMatrix trans = makeTranslationMatrix(offCentre);
+        TransMatrix rot = makeRotationMatrix(image.getExtents(), sliceAng);
+        rot.Mult(trans);
+        
+        image.setMatrix(rot);
+    }
+    
+    private TransMatrix ConvertToMIPAVConvention(TransMatrix mat){
+        float[] vals = {0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1}; 
+        TransMatrix mipavMat = new TransMatrix(4);
+        mipavMat.Set(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+        mat.Transpose();
+        mipavMat.Mult(mat);
+        mipavMat.Mult(mipavMat);
+        
+        return mipavMat;
+    }
+    
+    private TransMatrix makeTranslationMatrix(double[] translations){
+        TransMatrix finalTrans = new TransMatrix(4);
+        for(int i = 0; i < 3; i++){
+            finalTrans.set(i,i,1);
+            finalTrans.set(3,i,translations[i]);
+        }
+        finalTrans.set(3,3,1);      
+        
+        return finalTrans;
+    }
+    
+    private TransMatrix makeRotationMatrix(int[] size, double[] rotations){
+        float[] center = new float[3];
+        for( int i=0; i<3; i++){
+            center[i] = (size[i]+1.0f)/2;
+        }
+        TransMatrix transCenter = new TransMatrix(4);
+        for(int i = 0; i < 3; i++){
+            transCenter.set(i,i,1);
+            transCenter.set(3,i,-1*center[i]);
+        }
+        transCenter.set(3,3,1);
+        
+        TransMatrix transHome = new TransMatrix(4,4);
+        for(int i = 0; i < 3; i++){
+            transHome.set(i,i,1);
+            transHome.set(3,i,center[i]);
+        }
+        transHome.set(3,3,1);
+        
+        double[] thetas = new double[3];
+        for(int i = 0; i < 3; i++){ 
+            thetas[i] = Math.toRadians(rotations[i]);
+        }
+        
+        TransMatrix rotX = new TransMatrix(4), rotY = new TransMatrix(4), rotZ = new TransMatrix(4);
+        rotX.set(0,0,1);    rotX.set(0,1,0);                    rotX.set(0,2,0);                        rotX.set(0,3,0);
+        rotX.set(1,0,0);    rotX.set(1,1,Math.cos(thetas[0]));  rotX.set(1,2,-1*Math.sin(thetas[0]));   rotX.set(1,3,0);
+        rotX.set(2,0,0);    rotX.set(2,1,Math.sin(thetas[0]));  rotX.set(2,2,Math.cos(thetas[0]));      rotX.set(2,3,0);
+        rotX.set(3,0,0);    rotX.set(3,1,0);                    rotX.set(3,2,0);                        rotX.set(3,3,1);
+
+        rotY.set(0,0,Math.cos(thetas[1]));  rotY.set(0,1,0);    rotY.set(0,2,-1*(Math.sin(thetas[1]))); rotY.set(0,3,0);
+        rotY.set(1,0,0);                    rotY.set(1,1,1);    rotY.set(1,2,0);                        rotY.set(1,3,0);
+        rotY.set(2,0,Math.sin(thetas[1]));  rotY.set(2,1,0);    rotY.set(2,2,Math.cos(thetas[1]));      rotY.set(2,3,0);
+        rotY.set(3,0,0);                    rotY.set(3,1,0);    rotY.set(3,2,0);                        rotY.set(3,3,1);
+        
+        rotZ.set(0,0,Math.cos(thetas[2]));      rotZ.set(0,1,Math.sin(thetas[2]));  rotZ.set(0,2,0);    rotZ.set(0,3,0);
+        rotZ.set(1,0,-1*Math.sin(thetas[2]));   rotZ.set(1,1,Math.cos(thetas[2]));  rotZ.set(1,2,0);    rotZ.set(1,3,0);
+        rotZ.set(2,0,0);                        rotZ.set(2,1,0);                    rotZ.set(2,2,1);    rotZ.set(2,3,0);
+        rotZ.set(3,0,0);                        rotZ.set(3,1,0);                    rotZ.set(3,2,0);    rotZ.set(3,3,1);
+
+        transCenter.Mult(rotX);
+        transCenter.Mult(rotY);
+        transCenter.Mult(rotZ);
+        transCenter.Mult(transHome);
+        
+        return transCenter;
+    }
 
     /**
      * Returns the FileInfoAnalyze read from the file.
@@ -1197,6 +1284,7 @@ public class FilePARREC extends FileBase {
         // if vox units defines the units of measure, then use that instead
         // clones the file info
         updateUnitsOfMeasure(fileInfo, image);
+        updateTransformMatrix(fileInfo, image);
 //        updateStartLocations(image.getFileInfo());	
 
 
@@ -1457,6 +1545,8 @@ public class FilePARREC extends FileBase {
             fileInfo.setUnitsOfMeasure(units, 0);
             fileInfo.setUnitsOfMeasure(units, 1);
         }
+        
+        updateTransformMatrix(fileInfo, image);
 
 
         try { // Construct a FileRaw to actually read the image.
