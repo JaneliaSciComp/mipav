@@ -10503,7 +10503,9 @@ public class FileTiff extends FileBase {
         final int FILL_COLOR = 44;
         final int SUBTYPE = 48;
         final int OPTIONS = 50;
+        final int ARROW_STYLE = 52;
         final int ELLIPSE_ASPECT_RATIO = 52;
+        final int ARROW_HEAD_SIZE = 53;
         final int BOUNDED_RECT_ARC_SIZE = 54;
         final int POSITION = 56;
         final int HEADER2_OFFSET = 60;
@@ -10548,6 +10550,13 @@ public class FileTiff extends FileBase {
         final int OVERLAY_BOLD = 64;
         final int SUB_PIXEL_RESOLUTION = 128;
         final int DRAW_OFFSET = 256;
+        
+        // Arrow styles
+        final int FILLED = 0;
+        final int NOTCHED = 1;
+        final int OPEN = 2;
+        final int HEADLESS = 3;
+        
         boolean debuggingFileIO = Preferences.debugLevel(Preferences.DEBUG_FILEIO);
         int version;
         int type;
@@ -10680,6 +10689,34 @@ public class FileTiff extends FileBase {
         Vector3f pt[];
         int arcSize;
         double radius;
+        boolean doubleHeaded;
+        boolean outline;
+        int style;
+        double headSize;
+        // The line using subpixel coordinates
+        double x1d;
+        double y1d;
+        double x2d;
+        double y2d;
+        // The line relative to the base of the bounding rect
+        double x1R;
+        double y1R;
+        double x2R;
+        double y2R;
+        int x1i;
+        int y1i;
+        int x2i;
+        int y2i;
+        int xmin;
+        int ymin;
+        double tip;
+        double arrowBase;
+        double shaftWidth;
+        double length;
+        double arrowLength;
+        double factor;
+        double arrowAlpha;
+        double SL;
         
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
@@ -11181,21 +11218,102 @@ public class FileTiff extends FileBase {
                 y1 = getBufferFloat(buffer, Y1, FileBase.BIG_ENDIAN);
                 x2 = getBufferFloat(buffer, X2, FileBase.BIG_ENDIAN);
                 y2 = getBufferFloat(buffer, Y2, FileBase.BIG_ENDIAN);
-                lineVOI = new VOILine();
-                linePos1 = new Vector3f(x1, y1, voiSliceNumber);
-                linePos2 = new Vector3f(x2, y2, voiSliceNumber);
-                lineVOI.add(linePos1);
-                lineVOI.add(linePos2);
-                voi = new VOI((short)VOIs.size(), "lineVOI", VOI.LINE, -1);
-                voi.importCurve(lineVOI);
-                if (strokeColor == null) {
-                    strokeColor = Color.red;
+                if (subtype == ARROW) {
+                    doubleHeaded = (options & DOUBLE_HEADED) != 0;
+                    if (debuggingFileIO && doubleHeaded) {
+                        Preferences.debug("Arrow is double headed\n", Preferences.DEBUG_FILEIO);
+                    }
+                    outline = (options & OUTLINE) != 0;
+                    if (debuggingFileIO && outline) {
+                        Preferences.debug("Arrow outline feature is present\n", Preferences.DEBUG_FILEIO);
+                    }
+                    style = buffer[ARROW_STYLE];
+                    if (debuggingFileIO) {
+                        switch(style) {
+                            case FILLED:
+                                Preferences.debug("Arrow style = FILLED\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case NOTCHED:
+                                Preferences.debug("Arrow style = NOTCHED\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case OPEN:
+                                Preferences.debug("Arrow style = OPEN\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            case HEADLESS:
+                                Preferences.debug("Arrow style = HEADLESS\n", Preferences.DEBUG_FILEIO);
+                                break;
+                            default:
+                               Preferences.debug("Arrow style has an illegal value = " + style + "\n", Preferences.DEBUG_FILEIO); 
+                        }
+                    } // if (debuggingFileIO)
+                    headSize = (double)buffer[ARROW_HEAD_SIZE];
+                    if (debuggingFileIO) {
+                        Preferences.debug("Arrow head size = " + headSize + "\n", Preferences.DEBUG_FILEIO);
+                    }
+                    x1d=x1; 
+                    y1d=y1;
+                    x2d=x2; 
+                    y2d=y2; 
+                    x1i=(int)x1d; 
+                    y1i=(int)y1d; 
+                    x2i=(int)x2d; 
+                    y2i=(int)y2d;
+                    xmin=(int)Math.min(x1d,x2d); 
+                    ymin=(int)Math.min(y1d,y2d);
+                    x1R=x1d-xmin; 
+                    y1R=y1d-ymin;
+                    x2R=x2d-xmin; 
+                    y2R=y2d-ymin;
+                    width=(int)Math.abs(x2R-x1R); 
+                    height=(int)Math.abs(y2R-y1R);
+                    strokeWidth = 2.0;
+                    tip = 0.0;
+                    shaftWidth = strokeWidth;
+                    length = 8 + 5.0*shaftWidth;
+                    length = length*(headSize/10.0);
+                    length -= shaftWidth*1.42;
+                    if (style == NOTCHED) {
+                        length *= 0.74;
+                    }
+                    if (style == OPEN) {
+                        length *= 1.32;
+                    }
+                    if (length < 0.0 || style == HEADLESS) {
+                        length = 0.0;
+                    }
+                    dx = x2d - x1d;
+                    dy = y2d - y1d;
+                    arrowLength = Math.sqrt(dx*dx + dy*dy);
+                    dx = dx/arrowLength;
+                    dy = dy/arrowLength;
+                    pt = new Vector3f[5];
+                    if (doubleHeaded && style != HEADLESS) {
+                        pt[0] = new Vector3f((float)(x1d+2.0*dx*shaftWidth), 
+                                             (float)(y1d+2.0*dy*shaftWidth),
+                                             voiSliceNumber);
+                    }
+                    else {
+                        pt[0] = new Vector3f((float)x1d, (float)y1d, voiSliceNumber);
+                    }
+                } // if (subtype == ARROW)
+                else {
+                    lineVOI = new VOILine();
+                    linePos1 = new Vector3f(x1, y1, voiSliceNumber);
+                    linePos2 = new Vector3f(x2, y2, voiSliceNumber);
+                    lineVOI.add(linePos1);
+                    lineVOI.add(linePos2);
+                    
+                    voi = new VOI((short)VOIs.size(), "lineVOI", VOI.LINE, -1);
+                    voi.importCurve(lineVOI);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);
                 }
-                voi.setColor(strokeColor);
-                if (roiName != null) {
-                    voi.setName(roiName);
-                }
-                VOIs.addElement(voi);
                 break;
             case polygon:
             case freehand:
