@@ -618,94 +618,79 @@ public class FilePARREC extends FileBase {
              
                     break;
                 case '.' : // scan file variable
-                        if(nextLine.contains("Examination name")){
-                            String examNameLine = nextLine.trim();
-                            int examNameInd = examNameLine.indexOf(":");
-                            int examNameLineLength = examNameLine.length();
-                            
-                            for (int i = 0 ; i < examNameLineLength-(examNameInd+1); i++) {
-                                int examIndex = (examNameInd+1)+i;
-                                char examLetter= examNameLine.charAt(examIndex);
-                                examName =examName + examLetter;
-                                examName = examName.trim();
-                              
-                            }
-                            fileInfo.setExamName(examName);
+                    if(nextLine.contains("Examination name")) {
+                        String examNameLine = nextLine.trim();
+                        int examNameInd = examNameLine.indexOf(":");
+                        int examNameLineLength = examNameLine.length();
+                        
+                        for (int i = 0 ; i < examNameLineLength-(examNameInd+1); i++) {
+                            int examIndex = (examNameInd+1)+i;
+                            char examLetter= examNameLine.charAt(examIndex);
+                            examName =examName + examLetter;
+                            examName = examName.trim();
+                          
                         }
-                   
-                       if(nextLine.contains("Protocol name")){
-                           String protocolNameLine = nextLine.trim();
-                           int protocolNameInd = protocolNameLine.indexOf(":");
-                           int protocolNameLineLength = protocolNameLine.length();
-                           for (int i = 0 ; i < protocolNameLineLength-(protocolNameInd+1); i++) {
-                               int protocolIndex = (protocolNameInd+1)+i;
-                               char protocolLetter= protocolNameLine.charAt(protocolIndex);
-                               protocolName =protocolName + protocolLetter;
-                               protocolName = protocolName.trim();                            
-                          }
-                           fileInfo.setProtocolName(protocolName);
-                           
+                        fileInfo.setExamName(examName);
+                    } else if(nextLine.contains("Protocol name")) {
+                       String protocolNameLine = nextLine.trim();
+                       int protocolNameInd = protocolNameLine.indexOf(":");
+                       int protocolNameLineLength = protocolNameLine.length();
+                       for (int i = 0 ; i < protocolNameLineLength-(protocolNameInd+1); i++) {
+                           int protocolIndex = (protocolNameInd+1)+i;
+                           char protocolLetter= protocolNameLine.charAt(protocolIndex);
+                           protocolName =protocolName + protocolLetter;
+                           protocolName = protocolName.trim();                            
                        }
-                                                  
-                        //Determine date of exam
-                        if(nextLine.contains("Examination date/time")){
+                       fileInfo.setProtocolName(protocolName);
+                       
+                   } else if(nextLine.contains("Examination date/time")){ //Determine date of exam
                         int ind = nextLine.indexOf(":");
                         String date = nextLine.substring(ind+1,nextLine.indexOf("/",ind));
                         date = date.trim();
                         fileInfo.setDate(date);
+                   } else if(nextLine.contains("Patient position")){
+                        String patientPositionLine = nextLine.trim();
+                        int patientPositionInd = patientPositionLine.indexOf(":");
+                        int patientPositionLineLength = patientPositionLine.length();
+                        for (int i = 0 ; i < patientPositionLineLength-(patientPositionInd+1); i++) {
+                            int positionIndex = (patientPositionInd+1)+i;
+                            char positionLetter= patientPositionLine.charAt(positionIndex);
+                            patientPosition =patientPosition + positionLetter;
+                            patientPosition = patientPosition.trim();                            
+                       }
+                        fileInfo.setPatientPosition(patientPosition);
+                    } else if(nextLine.contains("Preparation direction")){
+                        String foldoverLine = nextLine.trim();
+                        int foldoverInd = foldoverLine.indexOf(":");
+                        int foldoverLineLength = foldoverLine.length();
+                        for (int i = 0 ; i < foldoverLineLength-(foldoverInd+1); i++) {
+                            int foldoverIndex = (foldoverInd+1)+i;
+                            char foldoverLetter= foldoverLine.charAt(foldoverIndex);
+                            foldover = foldover + foldoverLetter;
+                            foldover = foldover.trim();                            
+                       }
+                        fileInfo.setPreparationDirection(foldover);
+                    } else if(nextLine.contains("Angulation midslice")){
+                        String info = nextLine.substring(nextLine.indexOf(":")+1);
+                        info=info.trim();
+                        double [] sliceAng = new double[3];
+                        sliceAng[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        info = info.substring(info.indexOf(' ')+1, info.length()).trim();
+                        sliceAng[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        sliceAng[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                        fileInfo.setSliceAngulation(sliceAng);
+    
+                    } else if(nextLine.contains("Off Centre midslice")){
+                        String info = nextLine.substring(nextLine.indexOf(":")+1);
+                        info=info.trim();
+                        double [] offCentre = new double[3];
+                        offCentre[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        info = info.substring(info.indexOf(' ')+1, info.length()).trim();                          
+                        offCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
+                        offCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
+                        fileInfo.setOffCentre(offCentre);   
                     }
-                        if(nextLine.contains("Patient position")){
-                            String patientPositionLine = nextLine.trim();
-                            int patientPositionInd = patientPositionLine.indexOf(":");
-                            int patientPositionLineLength = patientPositionLine.length();
-                            for (int i = 0 ; i < patientPositionLineLength-(patientPositionInd+1); i++) {
-                                int positionIndex = (patientPositionInd+1)+i;
-                                char positionLetter= patientPositionLine.charAt(positionIndex);
-                                patientPosition =patientPosition + positionLetter;
-                                patientPosition = patientPosition.trim();                            
-                           }
-                            fileInfo.setPatientPosition(patientPosition);
-                        }
-                        
-                        if(nextLine.contains("Preparation direction")){
-                            String foldoverLine = nextLine.trim();
-                            int foldoverInd = foldoverLine.indexOf(":");
-                            int foldoverLineLength = foldoverLine.length();
-                            for (int i = 0 ; i < foldoverLineLength-(foldoverInd+1); i++) {
-                                int foldoverIndex = (foldoverInd+1)+i;
-                                char foldoverLetter= foldoverLine.charAt(foldoverIndex);
-                                foldover = foldover + foldoverLetter;
-                                foldover = foldover.trim();                            
-                           }
-                            fileInfo.setPreparationDirection(foldover);
-                        }
-                        
-                        
-                        //Checks to see if examination is DTI to extract angulation and off centre to determine gradients
-                        if ((examName.toUpperCase()).contains("DTI")|| (protocolName.toUpperCase()).contains("DTI")){ 
-                            if(nextLine.contains("Angulation midslice")){
-                            String info = nextLine.substring(nextLine.indexOf(":")+1);
-                            info=info.trim();
-                            double [] sliceAng = new double[3];
-                            sliceAng[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            info = info.substring(info.indexOf(' ')+1, info.length()).trim();
-                            sliceAng[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            sliceAng[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
-                            fileInfo.setSliceAngulation(sliceAng);
-
-                        }
-                        
-                        if(nextLine.contains("Off Centre midslice")){
-                            String info = nextLine.substring(nextLine.indexOf(":")+1);
-                            info=info.trim();
-                            double [] offCentre = new double[3];
-                            offCentre[0] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            info = info.substring(info.indexOf(' ')+1, info.length()).trim();                          
-                            offCentre[1] = Double.parseDouble(info.substring(0, info.indexOf(' ')));
-                            offCentre[2] = Double.parseDouble(info.substring(info.indexOf(' ')+1, info.length()));
-                            fileInfo.setOffCentre(offCentre);   
-                        }
-                    }  
+                    
 
                 	fileInfo.setGeneralInfoList(nextLine);
                     String []tags = nextLine.split(":");
@@ -713,7 +698,7 @@ public class FilePARREC extends FileBase {
                     String key;
                     if(tags.length < 2) {
                     	key = "";
-                    }else {
+                    } else {
                     	key = tags[1].trim();
                     }
                     String stgTag = (String)VolMap.get(tag);
@@ -898,9 +883,7 @@ public class FilePARREC extends FileBase {
         }       
 
 
-        @SuppressWarnings("unused")
         float slicethk=0;
-        @SuppressWarnings("unused")
         float slicegap =0;
         int ori=0;
         int dim1=0, dim2=0;
@@ -1146,8 +1129,8 @@ public class FilePARREC extends FileBase {
             o = new float[3];
             for(int j=0;j<3;j++) o[j]=0;
         }
+        
         fileInfo.setOrigin(o);
-
         
         
 
