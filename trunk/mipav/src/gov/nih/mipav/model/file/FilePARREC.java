@@ -1173,7 +1173,7 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 2);
                 fileInfo.setResolutions(fovRL/dim1,0);
                 fileInfo.setResolutions(fovAP/dim2,1);
-                fileInfo.setResolutions(fovIS/numSlices,2);
+                fileInfo.setResolutions(fovIS/numSlices,2);                
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
 //                fileInfo.setSliceThickness(fov2/numSlices);
@@ -1208,6 +1208,33 @@ public class FilePARREC extends FileBase {
                 return false;
 
         }
+        
+        double[] sliceAngle = fileInfo.getSliceAngulation();
+        double[] offCentre = fileInfo.getOffCentre();
+        
+        if(sliceAngle != null && offCentre != null) {
+            switch(fileInfo.getImageOrientation()) {
+            
+            case FileInfoBase.AXIAL:
+                sliceAngle = new double[]{sliceAngle[2], sliceAngle[0], sliceAngle[1]};
+                offCentre = new double[]{offCentre[2], offCentre[0], offCentre[1]};
+                break;
+                
+            case FileInfoBase.SAGITTAL:
+                sliceAngle = new double[]{sliceAngle[0], -sliceAngle[1], sliceAngle[2]};
+                offCentre = new double[]{offCentre[0], -offCentre[1], offCentre[2]};
+                break;
+                
+            case FileInfoBase.CORONAL:
+                sliceAngle = new double[]{sliceAngle[2], -sliceAngle[1], sliceAngle[0]};
+                offCentre = new double[]{offCentre[2], -offCentre[1], offCentre[0]};
+                break;       
+            }
+            
+            fileInfo.setSliceAngulation(sliceAngle);
+            fileInfo.setOffCentre(offCentre);
+        }
+        
         float []o;
         if(numVolumes>1) {
             o = new float[4];
