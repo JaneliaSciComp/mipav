@@ -10679,6 +10679,7 @@ public class FileTiff extends FileBase {
         double dy2;
         Vector3f pt[];
         int arcSize;
+        double radius;
         
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
@@ -11042,25 +11043,101 @@ public class FileTiff extends FileBase {
                     if (debuggingFileIO) {
                         Preferences.debug("arcSize = " + arcSize + "\n", Preferences.DEBUG_FILEIO);
                     }
-                    rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
-                    pt = new Vector3f[4];
-                    pt[0] = new Vector3f(left, top, voiSliceNumber);
-                    pt[1] = new Vector3f(right, top, voiSliceNumber);
-                    pt[2] = new Vector3f(right, bottom, voiSliceNumber);
-                    pt[3] = new Vector3f(left, bottom, voiSliceNumber);
-                    rectVOI.importCurve(pt);
-                    if (strokeColor == null) {
-                        strokeColor = Color.RED;
+                    if (arcSize > 0) {
+                        rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
+                        // Start with 90 degree arc in the upper left corner going from (left, top + arcSize/2) to (left + arcSize/2, top)
+                        // In this quadrant all (x, y) values are <= (xCenter, yCenter), so angle must go from 180 to 270 degrees.
+                        radius = arcSize/2.0;
+                        xCenter = left + radius;
+                        yCenter = top + radius;
+                        mask = new byte[xDim*yDim];
+                        boundaryV = new Vector<Vector3f>();
+                        for (theta = 1800; theta <= 2700; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        // Next the 90 degree arc in the upper right corner going from (right - arcSize/2, top) to
+                        // (right, top + arcSize/2).  In this quadrant all x values are >= xCenter and all y
+                        // values are <= yCenter, so the angle must be going from 270 to 360 degrees.
+                        xCenter = right - radius;
+                        yCenter = top + radius;
+                        for (theta = 2700; theta <= 3600; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        // Next the 90 degree arc in the bottom right corner going from (right, bottom - arcSize/2) to
+                        // (right - arcSize/2, bottom).  In this quadrant all (x, y) values are >= 
+                        // (xCenter, yCenter) so the angle must go from 0 to 90 degrees.
+                        xCenter = right - radius;
+                        yCenter = bottom - radius;
+                        for (theta = 0; theta <= 900; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        // Finally the 90 degree arc in the bottom left corner going from (left + arcSize/2, bottom) to
+                        // (left, bottom - arcSize/2).  In this quadrant all x values are <= xCenter and all y values are >=
+                        // yCenter, so the angle must go from 90 degrees to 180 degrees.
+                        xCenter = left + radius;
+                        yCenter = bottom - radius;
+                        for (theta = 900; theta <= 1800; theta++) {
+                            ang = theta * Math.PI/1800;
+                            xPos = (int)Math.round(xCenter + radius*Math.cos(ang));
+                            yPos = (int)Math.round(yCenter + radius*Math.sin(ang));
+                            if (mask[xPos + yPos * xDim] == 0) {
+                                mask[xPos + yPos * xDim] = 1;
+                                boundaryV.add(new Vector3f(xPos, yPos, voiSliceNumber));
+                            }
+                        }
+                        pt = new Vector3f[boundaryV.size()];
+                        for (i = 0; i < boundaryV.size(); i++) {
+                            pt[i] = boundaryV.elementAt(i);
+                        }
+                        rectVOI.importCurve(pt);
+                        if (strokeColor == null) {
+                            strokeColor = Color.RED;
+                        }
+                        rectVOI.setColor(strokeColor);
+                        if (roiName != null) {
+                            rectVOI.setName(roiName);
+                        }
+                        VOIs.addElement(rectVOI);
+                    } // if (arcSize > 0)
+                    else {
+                        rectVOI = new VOI((short)VOIs.size(), "rectVOI", VOI.CONTOUR, -1);
+                        pt = new Vector3f[4];
+                        pt[0] = new Vector3f(left, top, voiSliceNumber);
+                        pt[1] = new Vector3f(right, top, voiSliceNumber);
+                        pt[2] = new Vector3f(right, bottom, voiSliceNumber);
+                        pt[3] = new Vector3f(left, bottom, voiSliceNumber);
+                        rectVOI.importCurve(pt);
+                        if (strokeColor == null) {
+                            strokeColor = Color.RED;
+                        }
+                        rectColor = strokeColor;
+                        if (fillColor != null) {
+                            rectColor = fillColor;
+                        }
+                        rectVOI.setColor(rectColor);
+                        if (roiName != null) {
+                            rectVOI.setName(roiName);
+                        }
+                        VOIs.addElement(rectVOI);
                     }
-                    rectColor = strokeColor;
-                    if (fillColor != null) {
-                        rectColor = fillColor;
-                    }
-                    rectVOI.setColor(rectColor);
-                    if (roiName != null) {
-                        rectVOI.setName(roiName);
-                    }
-                    VOIs.addElement(rectVOI);
                 }
                 break;
                 
