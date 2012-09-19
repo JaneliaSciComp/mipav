@@ -2638,7 +2638,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                 } else { //try current working directory
                                     System.out.println("user.dir is "+System.getProperty("user.dir"));
                                     try {
-                                        checkFile = new File(new File(".").getCanonicalPath() + imgName);
+                                        System.out.println("File(\".\") is "+new File(".").getCanonicalPath());
+                                        checkFile = new File(new File(".").getCanonicalPath() + File.separator + imgName);
                                         if(checkFile.exists()) {
                                             setDefaultDirectory(new File(".").getCanonicalPath());
                                         } else {
@@ -2690,7 +2691,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                                         imageList.add(new OpenFileInfo(dir, name, isMulti));
                                     } else { //try current directory
                                         try {
-                                            checkFile = new File(new File(".").getCanonicalPath() + imgName);
+                                            checkFile = new File(new File(".").getCanonicalPath() + File.separator + imgName);
                                             if(checkFile.exists()) {
                                                 setDefaultDirectory(new File(".").getCanonicalPath());
                                             } else {
