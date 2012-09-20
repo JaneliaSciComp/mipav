@@ -2590,6 +2590,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
                 case FileUtility.VISTA:
                     image = readVista(fileName, fileDir, one);
                     break;
+                    
+                case FileUtility.SPAR:
+                    image = readSpar(fileInfo, fileName, fileDir, one);
+                    break;
 
                 default:
                     return null;
@@ -9793,6 +9797,59 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
         return image;
 
+    }
+    
+    /**
+     * Reads a Spar file by calling the read method of the file. 
+     * @param fileInfo 
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * @param one Indicates that only the named file should be read, as opposed to reading the matching files in the
+     *            directory, as defined by the filetype. <code>true</code> if only want to read one image from 3D
+     *            dataset.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readSpar(FileInfoBase fileInfo, final String fileName, final String fileDir, final boolean one) {
+        ModelImage image = null;
+        FileSpar imageFile;
+        
+        try {
+            imageFile = new FileSpar(fileInfo, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FileIO.FILE_READ);
+            image = imageFile.readImage(one);
+        } catch (final IOException error) {
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        } catch (final OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+        imageFile.finalize();
+        imageFile = null;
+        return image;
     }
 
     /**
