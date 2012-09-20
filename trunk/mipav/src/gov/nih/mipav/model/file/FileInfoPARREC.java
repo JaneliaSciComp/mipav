@@ -46,7 +46,7 @@ public class FileInfoPARREC extends FileInfoBase {
     /** par/rec slice Angulation **/
     private double[] sliceAng;
 
-    /** DOCUMENT ME **/
+    /** Off-centre translations **/
     private double[] offCentre;
 
     /** par/rec Bvalues **/
