@@ -4721,13 +4721,6 @@ MouseListener, PaintGrowListener, ScreenCoordinateListener {
 		this.doCheckerboardAnimate = doCheckerboardAnimate;
 	}
 	
-	
-	
-	
-	
-
-	
-	
 	public synchronized boolean isMakingCheckerboard() {
 		return makingCheckerboard;
 	}
