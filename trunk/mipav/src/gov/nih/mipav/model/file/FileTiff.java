@@ -10699,7 +10699,7 @@ public class FileTiff extends FileBase {
         double x2d;
         double y2d;
         double tip;
-        double arrowBase;
+        double arrowBase = 0.0;
         double shaftWidth;
         double length;
         double arrowLength;
@@ -11262,9 +11262,16 @@ public class FileTiff extends FileBase {
                     arrowLength = Math.sqrt(dx*dx + dy*dy);
                     dx = dx/arrowLength;
                     dy = dy/arrowLength;
-                    x = new float[6];
-                    y = new float[6];
-                    z = new float[6];
+                    if (doubleHeaded && style != HEADLESS) {
+                        x = new float[12];
+                        y = new float[12];
+                        z = new float[12];
+                    }
+                    else {
+                        x = new float[6];
+                        y = new float[6];
+                        z = new float[6];
+                    }
                     if (doubleHeaded && style != HEADLESS) {
                         x[0] = (float)(x1d+2.0*dx*shaftWidth);
                         y[0] = (float)(y1d+2.0*dy*shaftWidth);   
@@ -11286,7 +11293,7 @@ public class FileTiff extends FileBase {
                     z[3] = voiSliceNumber;
                     arrowAlpha = Math.atan2(y[3]-y[0], x[3]-x[0]);
                     SL = 0.0;
-                    switch(style) {
+                     switch(style) {
                         case FILLED:
                         case HEADLESS:
                             tip = Math.toRadians(20.0);
@@ -11319,10 +11326,57 @@ public class FileTiff extends FileBase {
                     y[4] = (float)(y[3] - SL*Math.sin(arrowAlpha-tip));
                     z[4] = voiSliceNumber;
                     // Close off triangle head on shaft
-                    // Was needed for style == FILLED.
                     x[5] = x[1];
                     y[5] = y[1];
                     z[5] = z[1];
+                    if (doubleHeaded && style != HEADLESS) {
+                        dx = -dx;
+                        dy = -dy;
+                        x[6] = (float)(x2d+2.0*dx*shaftWidth);
+                        y[6] = (float)(y2d+2.0*dy*shaftWidth); 
+                        z[6] = voiSliceNumber;
+                        if (length > 0) {
+                            factor = style == OPEN?1.3:1.42;
+                            x[9] = (float)(x1d-dx*shaftWidth*factor);
+                            y[9] = (float)(y1d-dy*shaftWidth*factor);
+                        }
+                        else {
+                            x[9] = (float)x1d;
+                            y[9] = (float)y1d;
+                        }
+                        z[9] = voiSliceNumber;
+                        arrowAlpha = Math.atan2(y[9]-y[6], x[9]-x[6]);
+                         switch(style) {
+                            case FILLED:
+                                x[7] = (float)(x[9] - length*Math.cos(arrowAlpha));
+                                y[7] = (float)(y[9] - length*Math.sin(arrowAlpha));
+                                SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                                break;
+                            case NOTCHED:
+                                x[7] = (float)(x[9] - length*Math.cos(arrowAlpha));
+                                y[7] = (float)(y[9] - length*Math.sin(arrowAlpha));
+                                SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                                break;
+                            case OPEN:
+                                x[7] = x[9];
+                                y[7] = y[9];
+                                SL = length;
+                                break;
+                        } // switch(style)
+                        z[7] = voiSliceNumber;
+                        // P2 = P3 - SL*alpha+tip
+                        x[8] = (float)(x[9] - SL*Math.cos(arrowAlpha+tip));
+                        y[8] = (float)(y[9] - SL*Math.sin(arrowAlpha+tip));
+                        z[8] = voiSliceNumber;
+                        // P4 = P3 -SL*alpha-tip
+                        x[10] = (float)(x[9] - SL*Math.cos(arrowAlpha-tip));
+                        y[10] = (float)(y[9] - SL*Math.sin(arrowAlpha-tip));
+                        z[10] = voiSliceNumber;
+                        // Close off triangle head on shaft
+                        x[11] = x[7];
+                        y[11] = y[7];
+                        z[11] = z[7];
+                    } // if (doubleHeaded && style != HEADLESS)
                     voi = new VOI((short)VOIs.size(), "arrow", VOI.POLYLINE, -1); 
                     voi.importCurve(x, y, z);
                     if (strokeColor == null) {
@@ -11542,6 +11596,32 @@ public class FileTiff extends FileBase {
                     }
                     VOIs.addElement(voi);    
                 } // else if (type == polygon)
+                else if (type == traced) {
+                    voi = new VOI((short)VOIs.size(), "tracedVOI", VOI.CONTOUR, -1);  
+                    x = new float[n];
+                    y = new float[n];
+                    z = new float[n];
+                    for (i = 0; i < n; i++) {
+                        if (subPixelResolution) {
+                            x[i] = xf[i];
+                            y[i] = yf[i];
+                        }
+                        else {
+                            x[i] = xi[i];
+                            y[i] = yi[i];
+                        }
+                        z[i] = voiSliceNumber; 
+                    }
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);    
+                } // else if (type == traced)
                 else if (type == freeline) {
                     voi = new VOI((short)VOIs.size(), "freelineVOI", VOI.POLYLINE, -1);  
                     x = new float[n];
