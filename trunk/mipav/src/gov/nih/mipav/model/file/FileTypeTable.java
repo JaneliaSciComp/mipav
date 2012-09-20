@@ -266,6 +266,8 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".REC", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".FREC", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".fREC", FileUtility.PARREC);
+        FileTypeTable.FILE_EXT_TABLE.put(".SPAR", FileUtility.SPAR);
+        FileTypeTable.FILE_EXT_TABLE.put(".SDAT", FileUtility.SPAR);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.SURFACEREF_XML, new FileTypeInfo("Surface Reference XML", ""));
 
