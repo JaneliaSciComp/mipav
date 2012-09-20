@@ -74,30 +74,26 @@ public class FilePARREC extends FileBase {
     /** slices **/
     private Vector<String> Slices;
     
-  /**version**/
+    /**version**/
     private String version;
     
     /**exam name**/
-    
     private String examName = "";
     
     /**protocol name**/
-    
     private String protocolName = "";
     
     /**patient position **/
-    
     private String patientPosition = "";
-    
     
     private String foldover = "";
     
     private int sliceOrientPos;
+    
     /**bFactorIndex**/
-    
     private int bValuePos;
- /**bFactorIndex**/
     
+    /**bFactorIndex**/
     private int gradPos;
     
     private int sliceOrientIndex;
@@ -105,21 +101,9 @@ public class FilePARREC extends FileBase {
     private int bValueIndex;
     
     private int gradIndex;
-    
-    
-/**counter**/
-    
-    private int counter = 0;
-    
-    
 
-    /**bvalues**/
-    //private String [] stringBvalueArray = new String[Slices.size()/numSlices];
-    
-    /**gradients**/
-   // private String [] stringGradientArray = new String[Slices.size()/numSlices];
-    
-  
+    /**counter**/   
+    private int counter = 0;
     
     /** floating point value = raw value/scaleSlope + rescaleIntercept/(rescaleSlope*scaleSlope) **/
     private float rescaleIntercept[];
@@ -139,10 +123,7 @@ public class FilePARREC extends FileBase {
     
     /** num vols in 4d dataset **/
     private int numVolumes;
-    
-    
 
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
