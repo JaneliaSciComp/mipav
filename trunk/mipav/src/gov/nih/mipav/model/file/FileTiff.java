@@ -11,12 +11,14 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.PathIterator;
 import java.io.*;
@@ -10706,6 +10708,12 @@ public class FileTiff extends FileBase {
         double factor;
         double arrowAlpha;
         double SL;
+        GeneralPath path;
+        Shape arrow;
+        BasicStroke stroke;
+        Shape outlineShape;
+        Area a1;
+        Area a2;
         
         // ImageJ ROIs have "Iout" in the first 4 bytes
         if ((buffer[0] != 73) || (buffer[1] != 111) || (buffer[2] != 117) || (buffer[3] != 116)) {
@@ -11244,6 +11252,7 @@ public class FileTiff extends FileBase {
                     x2d=x2; 
                     y2d=y2; 
                     tip = 0.0;
+                    strokeWidth = 2.0;
                     shaftWidth = 2.0;
                     length = 8 + 5.0*shaftWidth;
                     length = length*(headSize/10.0);
@@ -11377,17 +11386,138 @@ public class FileTiff extends FileBase {
                         y[11] = y[7];
                         z[11] = z[7];
                     } // if (doubleHeaded && style != HEADLESS)
-                    voi = new VOI((short)VOIs.size(), "arrow", VOI.POLYLINE, -1); 
-                    voi.importCurve(x, y, z);
-                    if (strokeColor == null) {
-                        strokeColor = Color.red;
+                    if (outline) {
+                        path = new GeneralPath();
+                        path.moveTo(x[0], y[0]); // tail
+                        path.lineTo(x[1], y[1]); // head back
+                        path.moveTo(x[1], y[1]); // head back
+                        if (style == OPEN) {
+                            path.moveTo(x[2], y[2]);
+                        }
+                        else {
+                            path.lineTo(x[2], y[2]); // left point
+                        }
+                        path.lineTo(x[3], y[3]); // head tip
+                        path.lineTo(x[4], y[4]); // right point
+                        path.lineTo(x[1], y[1]); // back to the head back
+                        if (doubleHeaded && style != HEADLESS) {
+                            if (style == OPEN) {
+                                path.moveTo(x[6], y[6]);
+                            }
+                            else {
+                                path.lineTo(x[6], y[6]); // tail
+                            }
+                            path.lineTo(x[7], y[7]); // head back
+                            path.moveTo(x[7], y[7]); // head back
+                            if (style == OPEN) {
+                                path.moveTo(x[8], y[8]);
+                            }
+                            else {
+                                path.lineTo(x[8], y[8]); // left point
+                            }
+                            path.lineTo(x[9], y[9]); // head tip
+                            path.lineTo(x[10], y[10]); // right point
+                            path.lineTo(x[7], y[7]); // back to the head back    
+                        } // if (doubleHeaded && style != HEADLESS)
+                        arrow = path;
+                        stroke = new BasicStroke((float)strokeWidth, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+                        outlineShape = stroke.createStrokedShape(arrow);
+                        a1 = new Area(arrow);
+                        a2 = new Area(outlineShape);
+                        try {
+                            a1.add(a2);
+                        }
+                        catch (Exception e) {
+                            
+                        }
+                        s = (Shape)a1;
+                        mask = new byte[xDim*yDim];
+                        for (yPos = 0; yPos < yDim; yPos++) {
+                            for (xPos = 0; xPos < xDim; xPos++) {
+                                if (s.contains(xPos, yPos)) {
+                                    mask[xPos + xDim * yPos] = 1;
+                                }
+                            }
+                        } // for (yPos = 0; yPos < yDim; yPos++)
+                        extents2D = new int[2];
+                        extents2D[0] = xDim;
+                        extents2D[1] = yDim;
+                        maskImage = new ModelImage(ModelStorageBase.BYTE, extents2D, "maskImage");
+                        try {
+                            maskImage.importData(0, mask, true);
+                        }
+                        catch(IOException e) {
+                            MipavUtil.displayError("IOException on maskImage.importData");
+                            return;
+                        }
+                        VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
+                        VOIExtAlgo.run();
+                        VOIs = maskImage.getVOIs();
+                        nVOI = VOIs.size();
+                        compositeVOI = new VOI[nVOI];
+                        for (i = 0; i < nVOI; i++) {
+                            compositeVOI[i] = VOIs.get(i);
+                        }
+                        VOIs.clear();
+                        if (roiName != null) {
+                            if (nVOI == 1) {
+                                compositeVOI[0].setName(roiName);
+                            }
+                            else {
+                                for (i = 0; i < nVOI; i++) {
+                                    compositeVOI[i].setName(roiName + (i+1));
+                                }
+                            }
+                        } // if (roiName != null)
+                        else {
+                            if (nVOI == 1) {
+                                compositeVOI[0].setName("arrowVOI");
+                            }
+                            else {
+                                for (i = 0; i < nVOI; i++) {
+                                    compositeVOI[i].setName("arrowVOI" + (i+1));
+                                }
+                            }
+                        }
+                        if (strokeColor == null) {
+                            strokeColor = Color.red;
+                        }
+                        for (i = 0; i < nVOI; i++) {
+                            curves = compositeVOI[i].getCurves();  
+                            nCurves = curves.size();
+                            for (j = 0; j < nCurves; j++) {
+                                vb = curves.get(j);
+                                if (vb instanceof VOIContour) {
+                                    nPts = vb.size();
+                                    x = new float[nPts];
+                                    y = new float[nPts];
+                                    z = new float[nPts];
+                                    vb.exportArrays(x, y, z);
+                                    for (k = 0; k < nPts; k++) {
+                                        z[k] = voiSliceNumber;
+                                    }
+                                    vb.clear();
+                                    vb.importArrays(x, y, z, nPts);
+                                }
+                            } // for (j = 0; j < nCurves; j++)
+                            compositeVOI[i].setColor(strokeColor);
+                            VOIs.add(compositeVOI[i]);
+                        } // for (i = 0; i < nVOI; i++)
+                        return;
+                    } // if (outline)
+                    else {
+                        voi = new VOI((short)VOIs.size(), "arrow", VOI.POLYLINE, -1); 
+                        voi.importCurve(x, y, z);
+                        if (strokeColor == null) {
+                            strokeColor = Color.red;
+                        }
+                        //strokeColor = Color.red;
+                        voi.setColor(strokeColor);
+                        if (roiName != null) {
+                            voi.setName(roiName);
+                        }
+                        VOIs.addElement(voi); 
                     }
-                    //strokeColor = Color.red;
-                    voi.setColor(strokeColor);
-                    if (roiName != null) {
-                        voi.setName(roiName);
-                    }
-                    VOIs.addElement(voi);        
                 } // if (subtype == ARROW)
                 else {
                     lineVOI = new VOILine();
