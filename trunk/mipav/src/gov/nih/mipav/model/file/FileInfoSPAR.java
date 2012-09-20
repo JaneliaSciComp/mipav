@@ -45,16 +45,28 @@ public class FileInfoSPAR extends FileInfoBase {
     
             dialog.appendPrimaryData("Type", ModelStorageBase.getBufferTypeStr(getDataType()));
             
+            String ori0, ori1, ori2;
+            
+            ori0 = FileInfoBase.axisOrientationStr[getAxisOrientation(0)];
+            ori1 = FileInfoBase.axisOrientationStr[getAxisOrientation(1)];
+            ori2 = FileInfoBase.axisOrientationStr[getAxisOrientation(2)];
+            
             if(sliceAng != null) {
-                dialog.appendPrimaryData("AP angulation: ", Double.toString(sliceAng[0]));
-                dialog.appendPrimaryData("LR angulation: ", Double.toString(sliceAng[1]));
-                dialog.appendPrimaryData("CC angulation: ", Double.toString(sliceAng[2]));
+                dialog.appendPrimaryData(ori0+" angulation: ", Double.toString(sliceAng[0]));
+                dialog.appendPrimaryData(ori1+" angulation: ", Double.toString(sliceAng[1]));
+                dialog.appendPrimaryData(ori2+" angulation: ", Double.toString(sliceAng[2]));
             }
             
             if(offCentre != null) {
-                dialog.appendPrimaryData("AP off centre: ", Double.toString(offCentre[0]));
-                dialog.appendPrimaryData("LR off centre: ", Double.toString(offCentre[1]));
-                dialog.appendPrimaryData("CC off centre: ", Double.toString(offCentre[2]));
+                dialog.appendPrimaryData(ori0+" off centre: ", Double.toString(offCentre[0]));
+                dialog.appendPrimaryData(ori1+" off centre: ", Double.toString(offCentre[1]));
+                dialog.appendPrimaryData(ori2+" off centre: ", Double.toString(offCentre[2]));
+            }
+            
+            if(maskExtents != null) {
+                dialog.appendPrimaryData(ori0+" extents: ", Double.toString(maskExtents[0]));
+                dialog.appendPrimaryData(ori1+" extents: ", Double.toString(maskExtents[1]));
+                dialog.appendPrimaryData(ori2+" extents: ", Double.toString(maskExtents[2]));
             }
             
             if (matrix != null) {
