@@ -10698,17 +10698,6 @@ public class FileTiff extends FileBase {
         double y1d;
         double x2d;
         double y2d;
-        // The line relative to the base of the bounding rect
-        double x1R;
-        double y1R;
-        double x2R;
-        double y2R;
-        int x1i;
-        int y1i;
-        int x2i;
-        int y2i;
-        int xmin;
-        int ymin;
         double tip;
         double arrowBase;
         double shaftWidth;
@@ -11254,21 +11243,8 @@ public class FileTiff extends FileBase {
                     y1d=y1;
                     x2d=x2; 
                     y2d=y2; 
-                    x1i=(int)x1d; 
-                    y1i=(int)y1d; 
-                    x2i=(int)x2d; 
-                    y2i=(int)y2d;
-                    xmin=(int)Math.min(x1d,x2d); 
-                    ymin=(int)Math.min(y1d,y2d);
-                    x1R=x1d-xmin; 
-                    y1R=y1d-ymin;
-                    x2R=x2d-xmin; 
-                    y2R=y2d-ymin;
-                    width=(int)Math.abs(x2R-x1R); 
-                    height=(int)Math.abs(y2R-y1R);
-                    strokeWidth = 2.0;
                     tip = 0.0;
-                    shaftWidth = strokeWidth;
+                    shaftWidth = 2.0;
                     length = 8 + 5.0*shaftWidth;
                     length = length*(headSize/10.0);
                     length -= shaftWidth*1.42;
@@ -11286,15 +11262,78 @@ public class FileTiff extends FileBase {
                     arrowLength = Math.sqrt(dx*dx + dy*dy);
                     dx = dx/arrowLength;
                     dy = dy/arrowLength;
-                    pt = new Vector3f[5];
+                    x = new float[6];
+                    y = new float[6];
+                    z = new float[6];
                     if (doubleHeaded && style != HEADLESS) {
-                        pt[0] = new Vector3f((float)(x1d+2.0*dx*shaftWidth), 
-                                             (float)(y1d+2.0*dy*shaftWidth),
-                                             voiSliceNumber);
+                        x[0] = (float)(x1d+2.0*dx*shaftWidth);
+                        y[0] = (float)(y1d+2.0*dy*shaftWidth);   
                     }
                     else {
-                        pt[0] = new Vector3f((float)x1d, (float)y1d, voiSliceNumber);
+                        x[0] = (float)x1d;
+                        y[0] = (float)y1d;
                     }
+                    z[0] = voiSliceNumber;
+                    if (length > 0) {
+                        factor = style == OPEN?1.3:1.42;
+                        x[3] = (float)(x2d-dx*shaftWidth*factor);
+                        y[3] = (float)(y2d-dy*shaftWidth*factor);
+                    }
+                    else {
+                        x[3] = (float)x2d;
+                        y[3] = (float)y2d;
+                    }
+                    z[3] = voiSliceNumber;
+                    arrowAlpha = Math.atan2(y[3]-y[0], x[3]-x[0]);
+                    SL = 0.0;
+                    switch(style) {
+                        case FILLED:
+                        case HEADLESS:
+                            tip = Math.toRadians(20.0);
+                            arrowBase = Math.toRadians(90.0);
+                            x[1] = (float)(x[3] - length*Math.cos(arrowAlpha));
+                            y[1] = (float)(y[3] - length*Math.sin(arrowAlpha));
+                            SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                            break;
+                        case NOTCHED:
+                            tip = Math.toRadians(20.0);
+                            arrowBase = Math.toRadians(120.0);
+                            x[1] = (float)(x[3] - length*Math.cos(arrowAlpha));
+                            y[1] = (float)(y[3] - length*Math.sin(arrowAlpha));
+                            SL = length*Math.sin(arrowBase)/Math.sin(arrowBase+tip);
+                            break;
+                        case OPEN:
+                            tip = Math.toRadians(25.0); // 30
+                            x[1] = x[3];
+                            y[1] = y[3];
+                            SL = length;
+                            break;
+                    } // switch(style)
+                    z[1] = voiSliceNumber;
+                    // P2 = P3 - SL*alpha+tip
+                    x[2] = (float)(x[3] - SL*Math.cos(arrowAlpha+tip));
+                    y[2] = (float)(y[3] - SL*Math.sin(arrowAlpha+tip));
+                    z[2] = voiSliceNumber;
+                    // P4 = P3 -SL*alpha-tip
+                    x[4] = (float)(x[3] - SL*Math.cos(arrowAlpha-tip));
+                    y[4] = (float)(y[3] - SL*Math.sin(arrowAlpha-tip));
+                    z[4] = voiSliceNumber;
+                    // Close off triangle head on shaft
+                    // Was needed for style == FILLED.
+                    x[5] = x[1];
+                    y[5] = y[1];
+                    z[5] = z[1];
+                    voi = new VOI((short)VOIs.size(), "arrow", VOI.POLYLINE, -1); 
+                    voi.importCurve(x, y, z);
+                    if (strokeColor == null) {
+                        strokeColor = Color.red;
+                    }
+                    //strokeColor = Color.red;
+                    voi.setColor(strokeColor);
+                    if (roiName != null) {
+                        voi.setName(roiName);
+                    }
+                    VOIs.addElement(voi);        
                 } // if (subtype == ARROW)
                 else {
                     lineVOI = new VOILine();
