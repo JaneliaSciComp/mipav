@@ -58,7 +58,6 @@ public class FilePARREC extends FileBase {
     /** file info **/
     private FileInfoPARREC outInfo;
     
-    
     /** vol map **/
     private HashMap<String,String> VolMap;
     

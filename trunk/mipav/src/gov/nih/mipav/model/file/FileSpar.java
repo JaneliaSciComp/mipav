@@ -121,7 +121,7 @@ public class FileSpar extends FileBase {
         while(nextLine != null) {
             nextLine = nextLine.trim();
             if(nextLine.length()<1) { // Blank line = comment
-                nextLine = raFile.readLine().trim();
+                nextLine = raFile.readLine();
                 continue;
             }
             
@@ -160,10 +160,10 @@ public class FileSpar extends FileBase {
         
         if(imageAInfo != null) {
             ori = imageAInfo.getImageOrientation();
+            fileInfo.setResolutions(Arrays.copyOf(imageAInfo.getResolutions(), imageAInfo.getResolutions().length));
         }
 
         fileInfo.setImageOrientation(ori);
-        fileInfo.setResolutions(Arrays.copyOf(fileInfo.getResolutions(), fileInfo.getResolutions().length));
 
         double[] imageOffCentre = new double[3];
         double[] imageAngulation = new double[3];
@@ -290,7 +290,9 @@ public class FileSpar extends FileBase {
             throw (error);
         }
         
-        int[] maskExtents = fileInfo.getMaskExtents();
+        for(int i=0; i<image.getFileInfo().length; i++) {
+            image.setFileInfo(fileInfo, i);
+        }
         
         int lowerX = setLowerExtents(0);
         int lowerY = setLowerExtents(1);
