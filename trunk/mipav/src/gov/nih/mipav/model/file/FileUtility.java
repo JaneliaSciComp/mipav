@@ -258,13 +258,16 @@ public class FileUtility {
      *  combined .mha header and image data file
      */
     public static final int METAIMAGE = 72;
+    
+    /** SPAR file format for use with PARREC images */
+    public static final int SPAR = 73;
 
     private static final String[] fileTypeStr = {"error", "undefined", "afni", "analyze", "analyze multifile", "avi",
             "biorad", "bmp", "bruker", "cheshire", "cheshire overlay", "cor", "cur", "dib", "dicom", "dm3", "fits",
             "GE genesis", "GE genisis multifile", "GE signa4x", "GE Signa4x multifile", "gif", "ico", "ics",
             "interfile", "jimi", "jpeg", "lsm", "lsm multifile", "magnetom vision", "Megnatom vision multifile", "map",
             "medivision", "mgh", "micro cat", "minc", "mipav", "mrc", "nifti", "nifti multifile", "nrrd", "osm", "pcx",
-            "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spm", "stk", "surface xml", "tga", "tiff",
+            "pic", "pict", "png", "psd", "qt", "raw", "raw multifile", "spar", "spm", "stk", "surface xml", "tga", "tiff",
             "tiff multifile", "tmg", "voi file", "xbm", "xml", "xml multifile", "xpm", "parrec", "surfaceref xml",
             "minc hdf", "liff", "bfloat", "siemens text", "zvi", "jp2", "mat", "v", "bmp multifile", "MetaImage"};
 
