@@ -14,6 +14,7 @@ import javax.swing.*;
 /**
  * Simple dialog to indicate which slices should be saved. There are different constructors based on whether a 3D or 4D
  * image is to be saved, and also if it's a TIFF file. The information entered is saved as a FileWriteOptions object.
+ * There is no provision for storing 4D TIFF images, so if TIFF is 4D always save as a set of 3D volumes.
  *
  * @version  1.0 Feburary 8, 1999
  * @author   Matthew McAuliffe
@@ -197,7 +198,8 @@ public class JDialogSaveSlices extends JDialogBase {
                               (options.getFileType() == FileUtility.PARREC) || // Modified to support PAR/REC
                               (options.getFileType() == FileUtility.NRRD)||
                               (options.getFileType() == FileUtility.MINC_HDF) ||
-                              (options.getFileType() == FileUtility.DICOM));  //will only write 4D dicom in enhanced format 
+                              (options.getFileType() == FileUtility.DICOM) ||  //will only write 4D dicom in enhanced format 
+                              (options.getFileType() == FileUtility.TIFF)); // TIFF must be stored as a set of 3D volumes
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
         init();
@@ -289,7 +291,7 @@ public class JDialogSaveSlices extends JDialogBase {
                 }
             }
 
-            if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (multiFileCheckbox.isEnabled() &&
+            if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (tiffEnabled && timeEnabled) ||(multiFileCheckbox.isEnabled() &&
             	multiFileCheckbox.isSelected())) {
                 options.setMultiFile(true);
                 tmpStr = textStartNumber.getText();
@@ -448,7 +450,7 @@ public class JDialogSaveSlices extends JDialogBase {
         labelFirstSlice = new JLabel("First Slice");
         labelFirstSlice.setFont(serif12);
         labelFirstSlice.setForeground(Color.black);
-        if(maxValue == 0) {
+        if((maxValue == 0) || (tiffEnabled && timeEnabled)) {
         	labelFirstSlice.setEnabled(false);
         }
         slicePanel.add(labelFirstSlice);
@@ -458,7 +460,7 @@ public class JDialogSaveSlices extends JDialogBase {
         textFirstSlice.setText(String.valueOf(minValue));
         textFirstSlice.setFont(serif12);
         textFirstSlice.addFocusListener(this);
-        if(maxValue == 0) {
+        if((maxValue == 0) || (tiffEnabled && timeEnabled)) {
         	textFirstSlice.setEnabled(false);
         }
         gbc.gridx = 1;
@@ -472,7 +474,7 @@ public class JDialogSaveSlices extends JDialogBase {
         gbc.anchor = GridBagConstraints.WEST;
         labelLastSlice.setFont(serif12);
         labelLastSlice.setForeground(Color.black);
-        if(maxValue == 0) {
+        if((maxValue == 0) || (tiffEnabled && timeEnabled)) {
         	labelLastSlice.setEnabled(false);
         }
         slicePanel.add(labelLastSlice);
@@ -484,7 +486,7 @@ public class JDialogSaveSlices extends JDialogBase {
         textLastSlice.setText(String.valueOf(maxValue));
         textLastSlice.setFont(serif12);
         textLastSlice.addFocusListener(this);
-        if(maxValue == 0) {
+        if((maxValue == 0) || (tiffEnabled && timeEnabled)) {
         	textLastSlice.setEnabled(false);
         }
         textLastPanel.add(textLastSlice);
@@ -585,7 +587,8 @@ public class JDialogSaveSlices extends JDialogBase {
         }
         multiFileCheckbox.setFont(serif12);
 
-        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (tiffEnabled && timeEnabled)) {
+            // No provision for storing 4D tiff files
             multiFileCheckbox.setSelected(true);
             multiFileCheckbox.setEnabled(false);
         } else {
@@ -606,7 +609,7 @@ public class JDialogSaveSlices extends JDialogBase {
         labelStartNumber = new JLabel("First File Starting Number");
         labelStartNumber.setFont(serif12);
 
-        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (tiffEnabled && timeEnabled)) {
             labelStartNumber.setEnabled(true);
         } else {
             labelStartNumber.setEnabled(false);
@@ -620,7 +623,7 @@ public class JDialogSaveSlices extends JDialogBase {
         textStartNumber.setText(String.valueOf(1));
         textStartNumber.setFont(serif12);
 
-        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (tiffEnabled && timeEnabled)) {
             textStartNumber.setEnabled(true);
         } else {
             textStartNumber.setEnabled(false);
@@ -633,7 +636,7 @@ public class JDialogSaveSlices extends JDialogBase {
         labelDigitNumber = new JLabel("File Name Number of Digits");
         labelDigitNumber.setFont(serif12);
 
-        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (tiffEnabled && timeEnabled)) {
             labelDigitNumber.setEnabled(true);
         } else {
             labelDigitNumber.setEnabled(false);
@@ -647,7 +650,7 @@ public class JDialogSaveSlices extends JDialogBase {
         textDigitNumber.setText(String.valueOf(3));
         textDigitNumber.setFont(serif12);
 
-        if (corEnabled || geSigna4XEnabled || geGenesisEnabled) {
+        if (corEnabled || geSigna4XEnabled || geGenesisEnabled || (tiffEnabled && timeEnabled)) {
             textDigitNumber.setEnabled(true);
         } else {
             textDigitNumber.setEnabled(false);
