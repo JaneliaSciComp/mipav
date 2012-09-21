@@ -26,24 +26,23 @@ public class FileInfoSPAR extends FileInfoBase {
     @Override
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
 
-        if(dlog instanceof JDialogFileInfo) {
+        if(dlog instanceof JDialogText) {
 
-            JDialogFileInfo dialog = (JDialogFileInfo)dlog;
+            JDialogText dialog = (JDialogText)dlog;
+            displayPrimaryInfo((JDialogText) dlog, matrix);
             
             int[] extents;
             int i;
             int[] editorChoice = new int[1];
             editorChoice[0] = JDialogEditor.STRING;
-    
-            dialog.displayAboutInfo(this); // setup layout in the dialog
             
             extents = super.getExtents();
     
             for (i = 0; i < extents.length; i++) {
-                dialog.appendPrimaryData("Dimension " + i, Integer.toString(extents[i]));
+                dialog.append("Dimension "+ i+": "+ Integer.toString(extents[i]));
             }
     
-            dialog.appendPrimaryData("Type", ModelStorageBase.getBufferTypeStr(getDataType()));
+            dialog.append("Type: "+ModelStorageBase.getBufferTypeStr(getDataType()));
             
             String ori0, ori1, ori2;
             
@@ -52,28 +51,28 @@ public class FileInfoSPAR extends FileInfoBase {
             ori2 = FileInfoBase.axisOrientationStr[getAxisOrientation(2)];
             
             if(sliceAng != null) {
-                dialog.appendPrimaryData(ori0+" angulation: ", Double.toString(sliceAng[0]));
-                dialog.appendPrimaryData(ori1+" angulation: ", Double.toString(sliceAng[1]));
-                dialog.appendPrimaryData(ori2+" angulation: ", Double.toString(sliceAng[2]));
+                dialog.append(ori0+" angulation: "+ Double.toString(sliceAng[0]));
+                dialog.append(ori1+" angulation: "+ Double.toString(sliceAng[1]));
+                dialog.append(ori2+" angulation: "+ Double.toString(sliceAng[2]));
             }
             
             if(offCentre != null) {
-                dialog.appendPrimaryData(ori0+" off centre: ", Double.toString(offCentre[0]));
-                dialog.appendPrimaryData(ori1+" off centre: ", Double.toString(offCentre[1]));
-                dialog.appendPrimaryData(ori2+" off centre: ", Double.toString(offCentre[2]));
+                dialog.append(ori0+" off centre: "+ Double.toString(offCentre[0]));
+                dialog.append(ori1+" off centre: "+ Double.toString(offCentre[1]));
+                dialog.append(ori2+" off centre: "+ Double.toString(offCentre[2]));
             }
             
             if(maskExtents != null) {
-                dialog.appendPrimaryData(ori0+" extents: ", Double.toString(maskExtents[0]));
-                dialog.appendPrimaryData(ori1+" extents: ", Double.toString(maskExtents[1]));
-                dialog.appendPrimaryData(ori2+" extents: ", Double.toString(maskExtents[2]));
+                dialog.append(ori0+" extents: "+ Double.toString(maskExtents[0]));
+                dialog.append(ori1+" extents: "+ Double.toString(maskExtents[1]));
+                dialog.append(ori2+" extents: "+ Double.toString(maskExtents[2]));
             }
             
             if (matrix != null) {
 
                 // when using displayAboutInfo(dialog) this doesn't appear
                 // calling prg might use an editing panel to adjust this matrix
-                dialog.appendPrimaryData("Matrix", matrix.matrixToString(10, 4));
+                dialog.append("Matrix"+ matrix.matrixToString(10, 4));
             }
         }
     }
