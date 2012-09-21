@@ -341,7 +341,7 @@ public class FileSpar extends FileBase {
             //imageBMat.Inverse();
             aTrans.Inverse();
             aTrans.Mult(imageBMat);
-            //aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
+            aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
             
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
             transform.setPadFlag(false);
