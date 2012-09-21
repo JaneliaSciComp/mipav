@@ -689,7 +689,7 @@ public class FileMincHDF extends FileBase {
                 image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
 
                 final long[] dims = imageData.getDims();
-                final int[] selectedIndex = imageData.getSelectedIndex();
+                int[] selectedIndex = imageData.getSelectedIndex();
 
                 // set of the size of the slice of data we want to read in each time
                 final long[] selected = imageData.getSelectedDims();
@@ -711,7 +711,18 @@ public class FileMincHDF extends FileBase {
 
                     for (int di = 0; di < dims.length; di++) {
                         final int mipavOrder = getMipavOrderFromDimNode(dimStrings[di]);
-                        selectedIndex[mipavOrder] = di;
+                        try {
+                            selectedIndex[mipavOrder] = di;
+                        }
+                        catch(ArrayIndexOutOfBoundsException e) {
+                            int len = selectedIndex.length;
+                            int itemp[] = new int[len];
+                            for (int j = 0; j < len; j++) {
+                                itemp[j] = selectedIndex[j];
+                            }
+                            selectedIndex = new int[len+1];
+                            selectedIndex[mipavOrder] = di;
+                        }
                         selected[mipavOrder] = dims[mipavOrder];
 
                         selected[selectedIndex[3]] = 1;
@@ -722,13 +733,21 @@ public class FileMincHDF extends FileBase {
 
                 final long[] start = imageData.getStartDims(); // the starting dims - should be 0,0,0,... to start
 
-                final int sliceSize = imageData.getWidth() * imageData.getHeight();
+                int sliceSize = imageData.getWidth() * imageData.getHeight();
 
                 int sliceCounter = 0;
                 int volCounter = 0;
                 int counter = 0;
+                int numParts;
+                if (is4D) {
+                    numParts = numVols;
+                    sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
+                }
+                else {
+                    numParts = numImages;
+                }
 
-                for (int j = 0; j < numImages; j++) {
+                for (int j = 0; j < numParts; j++) {
                     if (is4D) {
                         if (j != 0 && j % fileInfo.getExtents()[3] == 0) {
                             start[1] = sliceCounter;
@@ -742,22 +761,27 @@ public class FileMincHDF extends FileBase {
 
                         if (fileInfo.getDataType() == ModelStorageBase.SHORT
                                 || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (short[]) data, false);
+                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                   // + (sliceSize * counter), (short[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (short[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
                                 || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (int[]) data, false);
+                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                   // + (sliceSize * counter), (int[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (int[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
                                 || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (byte[]) data, false);
+                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                   // + (sliceSize * counter), (byte[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (byte[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (float[]) data, false);
+                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    //+ (sliceSize * counter), (float[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (float[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-                            image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    + (sliceSize * counter), (double[]) data, false);
+                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
+                                    //+ (sliceSize * counter), (double[]) data, false);
+                            image.importData((fileInfo.getExtents()[2] * sliceSize *j), (double[])data, false);
                         }
                         volCounter++;
                         if (j != 0 && j % numVols == 0) {
