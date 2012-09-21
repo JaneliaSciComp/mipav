@@ -46,7 +46,7 @@ public class FileInfoPARREC extends FileInfoBase {
     /** par/rec slice Angulation **/
     private double[] sliceAng;
 
-    /** Off-centre translations **/
+    /** Off-centre translation **/
     private double[] offCentre;
 
     /** par/rec Bvalues **/
@@ -149,6 +149,24 @@ public class FileInfoPARREC extends FileInfoBase {
             dialog.appendPrimaryData("Endianess", "Little Endian");
         } else {
             dialog.appendPrimaryData("Endianess", "Big Endian");
+        }
+        
+        String ori0, ori1, ori2;
+        
+        ori0 = FileInfoBase.axisOrientationStr[getAxisOrientation(0)];
+        ori1 = FileInfoBase.axisOrientationStr[getAxisOrientation(1)];
+        ori2 = FileInfoBase.axisOrientationStr[getAxisOrientation(2)];
+        
+        if(sliceAng != null) {
+            dialog.appendPrimaryData(ori0+" angulation: ", Double.toString(sliceAng[0]));
+            dialog.appendPrimaryData(ori1+" angulation: ", Double.toString(sliceAng[1]));
+            dialog.appendPrimaryData(ori2+" angulation: ", Double.toString(sliceAng[2]));
+        }
+        
+        if(offCentre != null) {
+            dialog.appendPrimaryData(ori0+" off centre: ", Double.toString(offCentre[0]));
+            dialog.appendPrimaryData(ori1+" off centre: ", Double.toString(offCentre[1]));
+            dialog.appendPrimaryData(ori2+" off centre: ", Double.toString(offCentre[2]));
         }
 
         if (matrix != null) {
