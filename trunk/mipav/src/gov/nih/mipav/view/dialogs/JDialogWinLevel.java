@@ -25,6 +25,8 @@ import javax.swing.event.*;
  * <p>
  * Image intensity
  * </p>
+ * 
+ * @author senseneyj
  */
 public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyListener, MouseListener {
 
@@ -899,7 +901,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(sliderMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
-        min = .25f * (maxImage - minImage);
+        min = .25f * (maxImage - minImage); //TODO: Change this to a useful value based on image statistics
         minSlider = new JSlider(0, 11999, 3000);
 
         // set slider attributes
@@ -990,7 +992,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener, KeyL
         spanel.add(sliderMax, gbc);
 
         // current setting of the slider (x[1] is the min and x[2] is the max of the image slice.
-        max = .75f * (maxImage - minImage);
+        max = .75f * (maxImage - minImage); //TODO: Change this to a useful value based on image statistics
         maxSlider = new JSlider(0, 11999, 9000);
 
         // set slider attributes
