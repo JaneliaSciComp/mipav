@@ -51,21 +51,21 @@ public class FileInfoSPAR extends FileInfoBase {
             ori2 = FileInfoBase.axisOrientationStr[getAxisOrientation(2)];
             
             if(sliceAng != null) {
-                dialog.append(ori0+" angulation: "+ Double.toString(sliceAng[0]));
-                dialog.append(ori1+" angulation: "+ Double.toString(sliceAng[1]));
-                dialog.append(ori2+" angulation: "+ Double.toString(sliceAng[2]));
+                dialog.append(ori0+" angulation: "+ Double.toString(sliceAng[0])+ "\n");
+                dialog.append(ori1+" angulation: "+ Double.toString(sliceAng[1])+ "\n");
+                dialog.append(ori2+" angulation: "+ Double.toString(sliceAng[2])+ "\n");
             }
             
             if(offCentre != null) {
-                dialog.append(ori0+" off centre: "+ Double.toString(offCentre[0]));
-                dialog.append(ori1+" off centre: "+ Double.toString(offCentre[1]));
-                dialog.append(ori2+" off centre: "+ Double.toString(offCentre[2]));
+                dialog.append(ori0+" off centre: "+ Double.toString(offCentre[0])+ "\n");
+                dialog.append(ori1+" off centre: "+ Double.toString(offCentre[1])+ "\n");
+                dialog.append(ori2+" off centre: "+ Double.toString(offCentre[2])+ "\n");
             }
             
             if(maskExtents != null) {
-                dialog.append(ori0+" extents: "+ Double.toString(maskExtents[0]));
-                dialog.append(ori1+" extents: "+ Double.toString(maskExtents[1]));
-                dialog.append(ori2+" extents: "+ Double.toString(maskExtents[2]));
+                dialog.append(ori0+" extents: "+ Double.toString(maskExtents[0])+ "\n");
+                dialog.append(ori1+" extents: "+ Double.toString(maskExtents[1])+ "\n");
+                dialog.append(ori2+" extents: "+ Double.toString(maskExtents[2])+ "\n");
             }
             
             if (matrix != null) {
