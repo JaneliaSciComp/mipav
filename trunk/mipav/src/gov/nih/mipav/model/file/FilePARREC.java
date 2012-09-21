@@ -422,7 +422,7 @@ public class FilePARREC extends FileBase {
         TransMatrix rot = makeRotationMatrix(image.getExtents(), sliceAng);
         rot.Mult(trans);
         
-        image.setMatrix(rot);
+        image.setMatrix(ConvertToMIPAVConvention(rot));
     }
     
     /**
@@ -432,10 +432,10 @@ public class FilePARREC extends FileBase {
         //float[] vals = {0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1}; 
         TransMatrix mipavMat = new TransMatrix(4);
         mipavMat.Set(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
-        mat.Transpose();
+        //mat.Transpose();
         mipavMat.Mult(mat);
         mipavMat.Mult(mipavMat);
-        
+        System.out.println("Test2");
         return mipavMat;
     }
     

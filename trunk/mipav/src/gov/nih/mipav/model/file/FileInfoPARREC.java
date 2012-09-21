@@ -71,7 +71,6 @@ public class FileInfoPARREC extends FileInfoBase {
     // default constructor
     public FileInfoPARREC(String name, String directory, int format) {
         super(name, directory, format);
-
     }
 
     public void displayDTIInfo_JDialogText(JDialogText dlg) {
