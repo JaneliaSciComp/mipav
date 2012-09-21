@@ -581,23 +581,6 @@ public class JDialogSaveSlices extends JDialogBase {
 
         if (timeEnabled) {
             multiFileCheckbox = new JCheckBox("Save image volumes to separate files");    
-            
-            multiFileCheckbox.addActionListener(new ActionListener() {
-
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                    boolean enable = !multiFileCheckbox.isSelected();
-                    
-                    labelFirstSlice.setEnabled(enable);
-                    textFirstSlice.setEnabled(enable);
-                    labelLastSlice.setEnabled(enable);
-                    textLastSlice.setEnabled(enable);
-                }
-                
-            });
-            
-            multiFileCheckbox.setSelected(false);
-            multiFileCheckbox.doClick();
         }
         else {
             multiFileCheckbox = new JCheckBox("Save image slices to separate files");
