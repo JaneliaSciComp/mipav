@@ -82,15 +82,15 @@ public class FileInfoPARREC extends FileInfoBase {
         ori2 = FileInfoBase.axisOrientationStr[getAxisOrientation(2)];
         
         if(sliceAng != null) {
-            dlg.append(ori0+" angulation: "+ Double.toString(sliceAng[0]));
-            dlg.append(ori1+" angulation: "+ Double.toString(sliceAng[1]));
-            dlg.append(ori2+" angulation: "+ Double.toString(sliceAng[2]));
+            dlg.append(ori0+" angulation: "+ Double.toString(sliceAng[0])+ "\n");
+            dlg.append(ori1+" angulation: "+ Double.toString(sliceAng[1])+ "\n");
+            dlg.append(ori2+" angulation: "+ Double.toString(sliceAng[2])+ "\n");
         }
         
         if(offCentre != null) {
-            dlg.append(ori0+" off centre: "+ Double.toString(offCentre[0]));
-            dlg.append(ori1+" off centre: "+ Double.toString(offCentre[1]));
-            dlg.append(ori2+" off centre: "+ Double.toString(offCentre[2]));
+            dlg.append(ori0+" off centre: "+ Double.toString(offCentre[0])+ "\n");
+            dlg.append(ori1+" off centre: "+ Double.toString(offCentre[1])+ "\n");
+            dlg.append(ori2+" off centre: "+ Double.toString(offCentre[2])+ "\n");
         }
         
         dlg.append("PAR/REC Version: " + getVersion() + "\n");

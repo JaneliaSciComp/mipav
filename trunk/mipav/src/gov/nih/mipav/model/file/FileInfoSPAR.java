@@ -67,13 +67,6 @@ public class FileInfoSPAR extends FileInfoBase {
                 dialog.append(ori1+" extents: "+ Double.toString(maskExtents[1])+ "\n");
                 dialog.append(ori2+" extents: "+ Double.toString(maskExtents[2])+ "\n");
             }
-            
-            if (matrix != null) {
-
-                // when using displayAboutInfo(dialog) this doesn't appear
-                // calling prg might use an editing panel to adjust this matrix
-                dialog.append("Matrix"+ matrix.matrixToString(10, 4));
-            }
         }
     }
     
