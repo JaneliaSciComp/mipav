@@ -5637,7 +5637,9 @@ public class FileTiff extends FileBase {
      * @exception  IOException  if there is an error writing the file.
      */
     public void writeImage(ModelImage image, ModelLUT LUT, FileWriteOptions options) throws IOException {
-        int k, s, sEnd = 1, sBegin = 0;
+        int k, s;
+        int begin = 0;
+        int end = 1;
         ModelImage tmpImage = null;
         int seq;
         int imgOffset;
@@ -5690,21 +5692,23 @@ public class FileTiff extends FileBase {
 
             bufferSize = extents[0] * extents[1];
 
-            if (image.getNDims() >= 3) {
+            if (image.getNDims() == 3) {
 
                 if (options.isMultiFile()) {
                     oneFile = false;
-                    sBegin = options.getBeginSlice();
-                    sEnd = options.getEndSlice() + 1;
+                    begin = options.getBeginSlice();
+                    end = options.getEndSlice() + 1;
                 } else {
-                    sBegin = 0;
-                    sEnd = 1;
+                    begin = 0;
+                    end = 1;
                     oneFile = true;
                 }
-
-                if (image.getNDims() == 4) {
-                    timeOffset = options.getTimeSlice() * image.getExtents()[2] * bufferSize;
-                }
+            }
+            else if (image.getNDims() == 4) {
+                // Must be multifile, tiff has no 4D provision
+                oneFile = false;
+                begin = options.getBeginTime();
+                end = options.getEndTime() + 1;
             }
 
             index = fileName.indexOf(".");
@@ -5745,7 +5749,11 @@ public class FileTiff extends FileBase {
                 ztEntries++;
             }
 
-            for (s = sBegin, seq = options.getStartNumber(); s < sEnd; s++, seq++) {
+            for (s = begin, seq = options.getStartNumber(); s < end; s++, seq++) {
+                if (image.getNDims() == 4) {
+                    timeOffset = s * image.getExtents()[2] * bufferSize;
+                    fireProgressStateChanged(Math.round((float) (s - begin) / (end - begin) * 100));
+                }
 
                 if (oneFile) {
                     file = new File(fileDir + fileName);
@@ -5830,7 +5838,7 @@ public class FileTiff extends FileBase {
                             // Only one color map for all the images at the end of the file
                             // Only used if color map is saved with image. Pointer to the
                             // color map at the end of the file.
-                            if (oneFile == true) {
+                            if ((oneFile == true) || (image.getNDims() == 4)) {
                                 LUTOffset = 8 +
                                             ((2 + (nDirEntries * 12) + resolutionCount + 4 + intAlign + zResCount +
                                               tResCount) * (options.getEndSlice() - options.getBeginSlice() + 1)) +
@@ -5917,12 +5925,14 @@ public class FileTiff extends FileBase {
                 totStripCount = 0;
                 imgOffset = 0;
 
-                if (oneFile == true) { // one file with one or more images
+                if ((oneFile == true) || (image.getNDims() == 4)) { // one or more 3D files
 
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
-                        fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
+                        if (!(image.getNDims() == 4)) {
+                            fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                 (options.getEndSlice() - options.getBeginSlice() + 1) *
                                                                 100));
+                        }
 
                         if (options.isWritePackBit()) {
                             stripCount = filePB.getStripSize(image, timeOffset + (k * bufferSize),
