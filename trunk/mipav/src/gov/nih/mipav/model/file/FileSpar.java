@@ -211,7 +211,7 @@ public class FileSpar extends FileBase {
                 imageAngulation[0] = angulation[0];
                 imageAngulation[1] = -angulation[2];
                 imageAngulation[2] = -angulation[1];
-                
+                System.out.println("Test2");
                 break;
             case 3: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
@@ -314,7 +314,7 @@ public class FileSpar extends FileBase {
             }
         }
         
-        updateTransformMatrix(image);
+        image = updateTransformMatrix(image);
 
         if (image != null) {
             image.calcMinMax();
@@ -323,7 +323,7 @@ public class FileSpar extends FileBase {
         return image;
     }
     
-    private void updateTransformMatrix(ModelImage image) {
+    private ModelImage updateTransformMatrix(ModelImage image) {
         TransMatrix toScanner = new TransMatrix(4);
         
         double[] sliceAng = fileInfo.getSliceAngulation();
@@ -338,8 +338,10 @@ public class FileSpar extends FileBase {
         
         if(image != imageA) {
             TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
+            //imageBMat.Inverse();
             aTrans.Inverse();
-            aTrans.Mult(imageBMat);
+            imageBMat.Mult(aTrans);
+            //aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
             
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
             transform.setPadFlag(false);
@@ -354,11 +356,16 @@ public class FileSpar extends FileBase {
             transform.setOutResolutions(imageA.getResolutions(0));
             transform.actionPerformed(new ActionEvent(this, 0, "Script"));
             
-            ViewJFrameImage view = new ViewJFrameImage(transform.getResultImage());
-            view.setVisible(true);
+            //ViewJFrameImage view = new ViewJFrameImage(transform.getResultImage());
+            //view.setVisible(true);
             
-            image.setMatrix(imageBMat);
+            ModelImage resultImage = transform.getResultImage();
+            //resultImage.setMatrix(imageBMat);
+           
+            return resultImage;
         }
+        
+        return image; //no transformation is possible
     }
     
     /**
