@@ -425,8 +425,11 @@ public class FilePARREC extends FileBase {
         image.setMatrix(rot);
     }
     
-    private TransMatrix ConvertToMIPAVConvention(TransMatrix mat){
-        float[] vals = {0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1}; 
+    /**
+     * Converts translation matrix to mipav specific format
+     */
+    public static TransMatrix ConvertToMIPAVConvention(TransMatrix mat){
+        //float[] vals = {0,1,0,0,1,0,0,0,0,0,1,0,0,0,0,1}; 
         TransMatrix mipavMat = new TransMatrix(4);
         mipavMat.Set(0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
         mat.Transpose();
@@ -436,7 +439,10 @@ public class FilePARREC extends FileBase {
         return mipavMat;
     }
     
-    private TransMatrix makeTranslationMatrix(double[] translations){
+    /**
+     * Makes rotation matrix based on image off-centres that were stored in header and converted to orientation-specific values.
+     */
+    public static TransMatrix makeTranslationMatrix(double[] translations){
         TransMatrix finalTrans = new TransMatrix(4);
         for(int i = 0; i < 3; i++){
             finalTrans.set(i,i,1);
@@ -447,7 +453,10 @@ public class FilePARREC extends FileBase {
         return finalTrans;
     }
     
-    private TransMatrix makeRotationMatrix(int[] size, double[] rotations){
+    /**
+     * Makes rotation matrix based on image angulations that were stored in header and converted to orientation-specific values.
+     */
+    public static TransMatrix makeRotationMatrix(int[] size, double[] rotations){
         float[] center = new float[3];
         for( int i=0; i<3; i++){
             center[i] = (size[i]+1.0f)/2;
