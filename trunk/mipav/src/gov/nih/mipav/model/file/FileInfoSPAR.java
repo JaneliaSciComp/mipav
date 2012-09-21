@@ -39,10 +39,10 @@ public class FileInfoSPAR extends FileInfoBase {
             extents = super.getExtents();
     
             for (i = 0; i < extents.length; i++) {
-                dialog.append("Dimension "+ i+": "+ Integer.toString(extents[i]));
+                dialog.append("Dimension "+ i+": "+ Integer.toString(extents[i])+"\n");
             }
     
-            dialog.append("Type: "+ModelStorageBase.getBufferTypeStr(getDataType()));
+            dialog.append("Type: "+ModelStorageBase.getBufferTypeStr(getDataType())+"\n");
             
             String ori0, ori1, ori2;
             
