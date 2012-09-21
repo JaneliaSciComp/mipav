@@ -340,7 +340,7 @@ public class FileSpar extends FileBase {
             TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
             //imageBMat.Inverse();
             aTrans.Inverse();
-            imageBMat.Mult(aTrans);
+            aTrans.Mult(imageBMat);
             //aTrans = FilePARREC.ConvertToMIPAVConvention(aTrans);
             
             JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
