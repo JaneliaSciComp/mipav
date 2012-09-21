@@ -1,5 +1,6 @@
 package gov.nih.mipav.model.file;
 
+import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -11,9 +12,13 @@ import java.util.Vector;
 import gov.nih.mipav.model.file.FileInfoBase.Unit;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.model.structures.ModelStorageBase;
+import gov.nih.mipav.model.structures.TransMatrix;
 import gov.nih.mipav.model.structures.ModelStorageBase.DataType;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
+import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.dialogs.JDialogScriptableTransform;
 
 /**
  * Reads a spar/sdat file.  MIPAV only uses the spar information since the sdat is spectroscopy data.
@@ -308,12 +313,52 @@ public class FileSpar extends FileBase {
                 }
             }
         }
+        
+        updateTransformMatrix(image);
 
         if (image != null) {
             image.calcMinMax();
         }
 
         return image;
+    }
+    
+    private void updateTransformMatrix(ModelImage image) {
+        TransMatrix toScanner = new TransMatrix(4);
+        
+        double[] sliceAng = fileInfo.getSliceAngulation();
+        double[] offCentre = fileInfo.getOffCentre();
+        TransMatrix trans = FilePARREC.makeTranslationMatrix(offCentre);
+        TransMatrix rot = FilePARREC.makeRotationMatrix(image.getExtents(), sliceAng);
+        rot.Mult(trans);
+        
+        TransMatrix imageBMat = rot;
+        
+        ModelImage imageA = ViewUserInterface.getReference().getRegisteredImageByName(imageAInfo.getFileName().substring(0, imageAInfo.getFileName().lastIndexOf(".")));
+        
+        if(image != imageA) {
+            TransMatrix aTrans = new TransMatrix(imageA.getMatrix());
+            aTrans.Inverse();
+            aTrans.Mult(imageBMat);
+            
+            JDialogScriptableTransform transform = new JDialogScriptableTransform(null, image);
+            transform.setPadFlag(false);
+            transform.setMatrix(aTrans);
+            transform.setImage25D(false);
+            transform.setSeparateThread(false);
+            transform.setClipFlag(true);
+            transform.setDimAndResXYZ();
+            transform.setUnits(imageA.getUnitsOfMeasure());
+            transform.setQuietRunning(true);
+            transform.setOutDimensions(imageA.getExtents());
+            transform.setOutResolutions(imageA.getResolutions(0));
+            transform.actionPerformed(new ActionEvent(this, 0, "Script"));
+            
+            ViewJFrameImage view = new ViewJFrameImage(transform.getResultImage());
+            view.setVisible(true);
+            
+            image.setMatrix(imageBMat);
+        }
     }
     
     /**
