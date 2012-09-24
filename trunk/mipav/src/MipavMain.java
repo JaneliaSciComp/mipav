@@ -31,7 +31,7 @@ public class MipavMain {
         ui.parseArguments(args, initArg); //process command line arguments that require mipav objects
 
 
-        if (ui.isAppFrameVisible() && Preferences.is(Preferences.PREF_SHOW_SPLASH)) {
+        if (ui.isAppFrameVisible() && gov.nih.mipav.view.Preferences.is(gov.nih.mipav.view.Preferences.PREF_SHOW_SPLASH)) {
             ui.showSplashGraphics();
         }
 
