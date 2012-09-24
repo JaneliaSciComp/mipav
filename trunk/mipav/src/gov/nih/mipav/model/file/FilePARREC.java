@@ -197,6 +197,14 @@ public class FilePARREC extends FileBase {
         } catch (Throwable er) { }
     }
     
+    /**
+     * 
+     * @param image
+     */
+    public void setImage(ModelImage image) {
+        this.image = image;
+    }
+    
     
     /**
      * Returns the complete list of file names according to given file name.
@@ -435,7 +443,6 @@ public class FilePARREC extends FileBase {
         //mat.Transpose();
         mipavMat.Mult(mat);
         mipavMat.Mult(mipavMat);
-        System.out.println("Test2");
         return mipavMat;
     }
     
@@ -1602,7 +1609,9 @@ public class FilePARREC extends FileBase {
             fileInfo.setUnitsOfMeasure(units, 1);
         }
         
-        updateTransformMatrix(fileInfo, image);
+        if (image != null) {
+            updateTransformMatrix(fileInfo, image);
+        }
 
 
         try { // Construct a FileRaw to actually read the image.
