@@ -552,6 +552,7 @@ public class FileMincHDF extends FileBase {
         double[] imageMin = null;
         int numImages = 1;
         int numVols = 1;
+        int sliceSize;
         // some minc2 images will only have 1 image min and 1 image max....in this case the minMaxDimOrder is not
         // set..so it is false
         // TODO: make this work for 4D images
@@ -731,13 +732,6 @@ public class FileMincHDF extends FileBase {
 
                 Object data = null;
 
-                final long[] start = imageData.getStartDims(); // the starting dims - should be 0,0,0,... to start
-
-                int sliceSize = imageData.getWidth() * imageData.getHeight();
-
-                int sliceCounter = 0;
-                int volCounter = 0;
-                int counter = 0;
                 int numParts;
                 if (is4D) {
                     numParts = numVols;
@@ -745,50 +739,28 @@ public class FileMincHDF extends FileBase {
                 }
                 else {
                     numParts = numImages;
+                    sliceSize = imageData.getWidth() * imageData.getHeight();
                 }
 
                 for (int j = 0; j < numParts; j++) {
                     if (is4D) {
-                        if (j != 0 && j % fileInfo.getExtents()[3] == 0) {
-                            start[1] = sliceCounter;
-                            sliceCounter++;
-                        }
-                        if (volCounter >= numVols) {
-                            volCounter = 0;
-                        }
-                        start[0] = volCounter;
                         data = imageData.read();
 
                         if (fileInfo.getDataType() == ModelStorageBase.SHORT
                                 || fileInfo.getDataType() == ModelStorageBase.USHORT) {
-                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                   // + (sliceSize * counter), (short[]) data, false);
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (short[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.INTEGER
                                 || fileInfo.getDataType() == ModelStorageBase.UINTEGER) {
-                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                   // + (sliceSize * counter), (int[]) data, false);
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (int[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.BYTE
                                 || fileInfo.getDataType() == ModelStorageBase.UBYTE) {
-                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                   // + (sliceSize * counter), (byte[]) data, false);
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (byte[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.FLOAT) {
-                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    //+ (sliceSize * counter), (float[]) data, false);
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (float[])data, false);
                         } else if (fileInfo.getDataType() == ModelStorageBase.DOUBLE) {
-                            //image.importData( (fileInfo.getExtents()[2] * sliceSize * volCounter)
-                                    //+ (sliceSize * counter), (double[]) data, false);
                             image.importData((fileInfo.getExtents()[2] * sliceSize *j), (double[])data, false);
                         }
-                        volCounter++;
-                        if (j != 0 && j % numVols == 0) {
-                            counter++;
-                        }
                     } else {
-                        start[0] = j;
                         data = imageData.read();
                         if (fileInfo.getDataType() == ModelStorageBase.SHORT
                                 || fileInfo.getDataType() == ModelStorageBase.USHORT) {
@@ -806,7 +778,7 @@ public class FileMincHDF extends FileBase {
                         }
                     }
 
-                    fireProgressStateChanged(Math.round(5 + ((float) j / numImages) * 95));
+                    fireProgressStateChanged(Math.round(5 + ((float) j / numParts) * 95));
                 }
             }
 
