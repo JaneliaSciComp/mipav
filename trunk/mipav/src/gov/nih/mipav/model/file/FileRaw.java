@@ -2827,6 +2827,106 @@ public class FileRaw extends FileBase {
             throw error;
         }
     }
+    
+    /**
+     * This method writes a raw image file.
+     *
+     * @param      image    image model where the data is stored.
+     * @param      beginSlice
+     * @param      endSlice
+     * @param      beginTimePeriod
+     * @param      endTimePeriod
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public void writeImage(ModelImage image, int beginSlice, int endSlice, int beginTimePeriod, int endTimePeriod) throws IOException {
+        int i, k;
+        int[] extents;
+        @SuppressWarnings("unused")
+        int nBuffers;
+        int bufferSize;
+        int offset = 0;
+
+        // System.err.println("Compression type set to: " + compressionType);
+
+        try {
+            extents = new int[image.getNDims()];
+
+            for (i = 0; i < image.getNDims(); i++) {
+                extents[i] = image.getExtents()[i];
+            }
+
+            if (image.getNDims() > 1) {
+                bufferSize = extents[0] * extents[1];
+            } else {
+                bufferSize = extents[0];
+            }
+
+            // Right now, because we don't use nBuffers, this code doesn't do
+            // anything.  However, it will be needed in the future.
+            if (image.getNDims() == 5) {
+                nBuffers = extents[4] * extents[3] * extents[2];
+                offset = extents[3] * extents[2] * extents[1] * extents[0];
+            } else if (image.getNDims() == 4) {
+                nBuffers = extents[3] * extents[2];
+                offset = extents[2] * extents[1] * extents[0];
+            } else if (image.getNDims() == 3) {
+                nBuffers = extents[2];
+                offset = extents[1] * extents[0];
+            } else {
+                nBuffers = 1;
+            }
+
+            nImages = endSlice - beginSlice + 1; // nImages to be written
+            nTimePeriods = endTimePeriod - beginTimePeriod + 1;
+
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                if(zeroLengthFlag) {
+                    raFile.setLength(0);
+                }
+                raFile.seek(startPosition);
+            }
+
+            fireProgressStateChanged(0);
+
+            for (int t = beginTimePeriod; t <= endTimePeriod; t++) {
+
+                for (k = beginSlice; k <= endSlice; k++) {
+                    fireProgressStateChanged(MipavMath.round((float) ((t * (endSlice - beginSlice)) + k) / (nImages) * 100));
+
+                    try {
+                        
+                        fileRW.writeImage(image, (t * offset) + (k * bufferSize),
+                                          (t * offset) + (k * bufferSize) + bufferSize, 0);
+                        
+                        
+                    } catch (IOException error) {
+
+                        if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                            raFile.close();
+                        }
+
+                        throw error;
+                    }
+                }
+            }
+
+            fireProgressStateChanged(100);
+            
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                raFile.close();
+            }
+
+            return;
+        } catch (OutOfMemoryError error) {
+
+            if (compressionType == FileInfoBase.COMPRESSION_NONE) {
+                raFile.close();
+            }
+
+            throw error;
+        }
+    }
 
     /**
      * Method to save 3D images to an array of 2D images. Images will be name sequentially with the given start # and #
