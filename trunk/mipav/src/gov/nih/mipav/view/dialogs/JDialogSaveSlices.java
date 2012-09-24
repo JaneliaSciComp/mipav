@@ -361,23 +361,11 @@ public class JDialogSaveSlices extends JDialogBase {
                 textDigitNumber.setEnabled(true);
                 labelStartNumber.setEnabled(true);
                 labelDigitNumber.setEnabled(true);
-
-                if (fourDimEnabled) {
-                    textFirstSlice.setText(new Integer(minValue).toString());
-                    textLastSlice.setText(new Integer(maxValue).toString());
-                    textFirstSlice.setEnabled(false);
-                    textLastSlice.setEnabled(false);
-                }
             } else {
                 textStartNumber.setEnabled(false);
                 textDigitNumber.setEnabled(false);
                 labelStartNumber.setEnabled(false);
                 labelDigitNumber.setEnabled(false);
-
-                if (fourDimEnabled) {
-                    textFirstSlice.setEnabled(true);
-                    textLastSlice.setEnabled(true);
-                }
             }
         } else if (command.equalsIgnoreCase("help")) {
             //MipavUtil.showHelp("U4019");
