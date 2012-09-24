@@ -959,8 +959,7 @@ public class FilePARREC extends FileBase {
         }       
 
 
-        float slicethk=0;
-        float slicegap =0;
+        float slicethk=0, slicegap=0;
         int ori=0;
         int dim1=0, dim2=0;
 
@@ -999,10 +998,15 @@ public class FilePARREC extends FileBase {
         rescaleIntercept = new float[Slices.size()];
         rescaleSlope = new float[Slices.size()];
         scaleSlope = new float[Slices.size()];
+        float resInit = 0.0f;
+        float[] res1 = new float[Slices.size()];
+        float[] res2 = new float[Slices.size()];
         for (int j = 0; j < Slices.size(); j++) {
             rescaleIntercept[j] = 0.0f;
             rescaleSlope[j] = 1.0f;
             scaleSlope[j] = 1.0f;
+            res1[j] = resInit;
+            res2[j] = resInit;
         }
         for(int j=0;j<SliceParameters.size();j++) {
             String tag = (String)SliceParameters.get(j);
@@ -1023,8 +1027,11 @@ public class FilePARREC extends FileBase {
                 rescaleSlope[0] = Float.valueOf(values[idx]);
             } else if(tag.compareToIgnoreCase("#  scale slope                              (float)")==0) {
                 scaleSlope[0] = Float.valueOf(values[idx]);
+            } else if(tag.compareToIgnoreCase("#  pixel spacing (x,y) (in mm)              (2*float)")==0) {
+                res1[0] = Float.valueOf(values[idx]);
+                res2[0] = Float.valueOf(values[idx+1]);
             }
-            
+       
             Integer I = (Integer)SliceMap.get(tag);
             if(I==null) {
                 Preferences.debug("FilePARREC:readHeader. Bad slice tag;"+tag + "\n", Preferences.DEBUG_FILEIO);
@@ -1046,7 +1053,7 @@ public class FilePARREC extends FileBase {
         }
         
         
-        // Let's parse the other slices for rescaleIntercept, rescaleSlope, and scaleSlope:
+        // Let's parse the other slices for rescaleIntercept, rescaleSlope, scaleSlope, and resolutions:
         for (int i = 1; i < Slices.size(); i++) {
             sl = (String)Slices.get(i);
             values = sl.split("\\s+");
@@ -1059,6 +1066,9 @@ public class FilePARREC extends FileBase {
                     rescaleSlope[i] = Float.valueOf(values[idx]);
                 } else if(tag.compareToIgnoreCase("#  scale slope                              (float)")==0) {
                     scaleSlope[i] = Float.valueOf(values[idx]);
+                } else if(tag.compareToIgnoreCase("#  pixel spacing (x,y) (in mm)              (2*float)")==0) {
+                    res1[i] = Float.valueOf(values[idx]);
+                    res2[i] = Float.valueOf(values[idx+1]);
                 }
                 
                 Integer I = (Integer)SliceMap.get(tag);
@@ -1152,7 +1162,22 @@ public class FilePARREC extends FileBase {
         fileInfo.setExtents(Extents);
         fileInfo.setVolParameters(VolParameters);
         
-
+        boolean res1Cons = res1[0] != resInit, res2Cons = res2[0] != resInit;
+        float res1Val = res1[0];
+        for(int i=0; i<res1.length; i++) {
+            if(res1[i] != res1Val) {
+                res1Cons = false;
+                break;
+            }
+        }
+        
+        float res2Val = res2[0];
+        for(int i=0; i<res2.length; i++) {
+            if(res2[i] != res2Val) {
+                res2Cons = false;
+                break;
+            }
+        }
 
         switch(ori) {
             case 1: //TRA
@@ -1160,8 +1185,13 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_I2S_TYPE, 2);
-                fileInfo.setResolutions(fovRL/dim1,0);
-                fileInfo.setResolutions(fovAP/dim2,1);
+                if(res1Cons && res2Cons) {
+                    fileInfo.setResolutions(res1Val, 0);
+                    fileInfo.setResolutions(res2Val, 1);
+                } else {
+                    fileInfo.setResolutions(fovRL/dim1,0);
+                    fileInfo.setResolutions(fovAP/dim2,1);
+                }
                 fileInfo.setResolutions(fovIS/numSlices,2);                
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
@@ -1172,8 +1202,13 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 2);
-                fileInfo.setResolutions(fovAP/dim1,0);
-                fileInfo.setResolutions(fovIS/dim2,1);
+                if(res1Cons && res2Cons) {
+                    fileInfo.setResolutions(res1Val, 0);
+                    fileInfo.setResolutions(res2Val, 1);
+                } else {
+                    fileInfo.setResolutions(fovAP/dim1,0);
+                    fileInfo.setResolutions(fovIS/dim2,1);
+                }
                 fileInfo.setResolutions(fovRL/numSlices,2);
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
@@ -1184,8 +1219,13 @@ public class FilePARREC extends FileBase {
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 2);
-                fileInfo.setResolutions(fovRL/dim1,0);
-                fileInfo.setResolutions(fovIS/dim2,1);
+                if(res1Cons && res2Cons) {
+                    fileInfo.setResolutions(res1Val, 0);
+                    fileInfo.setResolutions(res2Val, 1);
+                } else {
+                    fileInfo.setResolutions(fovRL/dim1,0);
+                    fileInfo.setResolutions(fovIS/dim2,1);
+                }
                 fileInfo.setResolutions(fovAP/numSlices,2);
                 if(numVolumes>1)
                     fileInfo.setResolutions(1,3);
