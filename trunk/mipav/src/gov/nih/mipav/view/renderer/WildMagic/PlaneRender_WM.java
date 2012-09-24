@@ -69,6 +69,8 @@ import com.jogamp.opengl.util.Animator;
 public class PlaneRender_WM extends GPURenderBase
     implements GLEventListener, ScreenCoordinateListener
 {
+	/** Parent user-interface and display frame. */
+    protected VolumeTriPlanarInterface m_kParent = null;
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2025132936439496099L;
@@ -395,6 +397,7 @@ public class PlaneRender_WM extends GPURenderBase
 
         // Shared context will delete the slices:
         m_kDisplayList.clear();
+        m_kParent = null;
         super.dispose(arg0);
     }
     

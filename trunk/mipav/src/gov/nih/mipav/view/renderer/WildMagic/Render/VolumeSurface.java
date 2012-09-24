@@ -178,6 +178,101 @@ public class VolumeSurface extends VolumeObject
     		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
     	}
     }
+
+    public VolumeSurface ( VolumeImage kImageA, VolumeImage kImageB, Vector3f kTranslate, 
+            float fX, float fY, float fZ, SurfaceState kSurface, boolean isFileCoords )
+    {
+        super(kImageA,kImageB,kTranslate,fX,fY,fZ);
+        m_kSurfaceState = kSurface;
+        CreateScene();
+        m_kMesh = kSurface.Surface;
+        m_kMesh.SetName( new String( kSurface.Name ) );
+        
+        boolean bHasMaterial = true;
+        m_kMaterial = (MaterialState)m_kMesh.GetGlobalState( GlobalState.StateType.MATERIAL );
+        if ( m_kMaterial == null )
+        {
+            bHasMaterial = false;
+            m_kMaterial = new MaterialState();
+            m_kMaterial.Emissive = new ColorRGB(ColorRGB.BLACK);
+            m_kMaterial.Ambient = new ColorRGB(0.2f,0.2f,0.2f);
+            m_kMaterial.Diffuse = new ColorRGB(ColorRGB.WHITE);
+            m_kMaterial.Specular = new ColorRGB(ColorRGB.WHITE);
+            m_kMaterial.Shininess = 32f;
+        }
+        m_kSurfaceState.Material = m_kMaterial;
+        m_akBackupColor = new ColorRGBA[m_kMesh.VBuffer.GetVertexQuantity()];
+
+
+    	int iDimX = m_kVolumeImageA.GetImage().getExtents()[0];
+    	int iDimY = m_kVolumeImageA.GetImage().getExtents()[1];
+    	int iDimZ = m_kVolumeImageA.GetImage().getExtents()[2];
+        float[] afResolutions = m_kVolumeImageA.GetImage().getResolutions(0);
+        m_kResolutions = new Vector3f( afResolutions[0], afResolutions[1], afResolutions[2] );
+        //System.err.println( m_kResolutions );
+
+		float xBox = (iDimX - 1) * afResolutions[0];
+		float yBox = (iDimY - 1) * afResolutions[1];
+		float zBox = (iDimZ - 1) * afResolutions[2];
+		float maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        for ( int i = 0; i < m_kMesh.VBuffer.GetVertexQuantity(); i++ )
+        {
+            if ( m_kMesh.VBuffer.GetAttributes().HasTCoord(0) )
+            {
+            	if ( isFileCoords )
+            	{
+                m_kMesh.VBuffer.SetPosition3( i, 
+                        (m_kResolutions.X * m_kMesh.VBuffer.GetPosition3fX(i))/maxBox  - m_fX/2f,
+                        (m_kResolutions.Y * m_kMesh.VBuffer.GetPosition3fY(i))/maxBox  - m_fY/2f,
+                        (m_kResolutions.Z * m_kMesh.VBuffer.GetPosition3fZ(i))/maxBox  - m_fZ/2f);
+            	}
+                m_kMesh.VBuffer.SetTCoord3( 0, i, 
+                        (m_kMesh.VBuffer.GetPosition3fX(i)  - kTranslate.X) * 1.0f/m_fX,
+                        (m_kMesh.VBuffer.GetPosition3fY(i)  - kTranslate.Y) * 1.0f/m_fY,
+                        (m_kMesh.VBuffer.GetPosition3fZ(i)  - kTranslate.Z) * 1.0f/m_fZ);
+                //System.err.println( "Set TexCoord: " + m_kMesh.VBuffer.GetTCoord3(0, i).ToString() );
+            }
+            m_akBackupColor[i] = new ColorRGBA();
+            m_kMesh.VBuffer.GetColor4( 0, i, m_akBackupColor[i]);
+        }
+        m_kMesh.UpdateMS();
+
+        m_kLightShader = new SurfaceLightingEffect( kImageA, false );
+        m_kLightShaderTransparent = new SurfaceLightingEffect( kImageA, true );
+
+        if ( !bHasMaterial )
+        {
+            m_kMesh.AttachGlobalState(m_kMaterial);
+        }
+        m_kMesh.AttachEffect(m_kLightShader);
+        m_kMesh.UpdateRS();
+        
+        m_kScene.AttachChild(m_kMesh);
+        m_kScene.UpdateGS();
+        m_kScene.UpdateRS();
+        
+//         Date kDate = new Date();
+//         long lStart = kDate.getTime();
+//         System.err.println("Start build tree " );
+//         BoxBVTree kBoxBV = new BoxBVTree(m_kMesh, 4000, true);
+//         m_kMesh.SetBoundingVolumeTree(kBoxBV);
+//         kDate = new Date();
+//         long lEnd = kDate.getTime();
+//         System.err.println("End build tree " + (float)(lEnd - lStart)/1000.0f);
+        
+        
+		m_kVolumeScale = new Vector3f ( 2f * afResolutions[0], 2f * afResolutions[1], 2f * afResolutions[2] );
+		m_kMeshScale = new Vector3f ( 1f/(2f * afResolutions[0]), 1f/(2f * afResolutions[1]), 1f/(2f * afResolutions[2]) );
+    	m_kVolumeTrans = new Vector3f(xBox, yBox, zBox);
+    	m_fVolumeDiv = 1f/(2.0f*maxBox);
+    	m_fVolumeMult = (2.0f*maxBox);
+    	
+    	m_akUnitsLabel = new String[3];
+    	for ( int i = 0; i < 3; i++ )
+    	{
+    		m_akUnitsLabel[i] = new String( Unit.getUnitFromLegacyNum(m_kVolumeImageA.GetImage().getUnitsOfMeasure()[i]).getAbbrev() );
+    	}
+    }
     
     private String[] m_akUnitsLabel;
     private Vector3f m_kVolumeScale, m_kVolumeTrans, m_kMeshScale, m_kResolutions;

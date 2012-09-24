@@ -413,10 +413,10 @@ implements ViewImageUpdateInterface, ActionListener, WindowListener, ComponentLi
         progressBar.updateValueImmed(0);
 
         final int iProgress = (_imageB == null) ? 10 : 5;
-        m_kVolumeImageA = new VolumeImage(_imageA, "A", progressBar, iProgress);
+        m_kVolumeImageA = new VolumeImage( true, _imageA, "A", progressBar, iProgress);
         progressBar.updateValueImmed(progressBar.getValue() + iProgress);
         if (_imageB != null) {
-            m_kVolumeImageB = new VolumeImage(_imageB, "B", progressBar,
+            m_kVolumeImageB = new VolumeImage( true, _imageB, "B", progressBar,
                     iProgress);
             progressBar.updateValueImmed(progressBar.getValue() + iProgress);
         } else {

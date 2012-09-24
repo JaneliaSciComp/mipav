@@ -274,8 +274,6 @@ public class SurfaceExtractorCubes extends ExtractSurfaceCubes {
 		// image is the same as the selected level surface value.  Since
 		// the image contains integer values, then apply a small adjustment
 		// to the input level surface value in order to avoid this.
-		float[] coord = new float[3];
-		float[] tCoord = new float[3];
 		float fLevel = iLevel + 0.5f;
 		Vector<Vector3f> vertices = new Vector<Vector3f>();
 		Vector<TriangleKey> triangles = new Vector<TriangleKey>();

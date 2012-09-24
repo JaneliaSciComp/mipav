@@ -48,8 +48,6 @@ public abstract class GPURenderBase extends JavaApplication3D
 implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 {
 	private static final long serialVersionUID = 9069227710441839806L;
-	/** Parent user-interface and display frame. */
-    protected VolumeTriPlanarInterface m_kParent = null;
     /** VolumeImage for ModelImageA, contains data and textures. */
     protected VolumeImage m_kVolumeImageA;
     /** VolumeImage for ModelImageB, contains data and textures. */
@@ -107,8 +105,9 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     /** Set to true when recording. */
     protected boolean m_bSnapshot = false;
     protected int m_iCaptureFPS;
-    
+
     protected boolean m_bShared = false;
+    protected boolean m_bStandAlone = false;
 
     protected Vector<VolumeObject> m_kDeleteList = new Vector<VolumeObject>();
     
@@ -142,7 +141,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
         m_kAnimator = kAnimator;
         m_kVolumeImageA = kVolumeImageA;
         m_kVolumeImageB = kVolumeImageB;
-        m_kParent = kParent;
         
         
         //TODO: Try rotations here
@@ -176,7 +174,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 	public void dispose(GLAutoDrawable kDrawable)
     {
 		// System.err.println( "dispose(GLAutoDrawable) called" );
-        m_kParent = null;
         m_kVolumeImageA = null;
         m_kVolumeImageB = null;
         if ( m_kAnimator != null ) {
@@ -251,6 +248,14 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
     public ModelImage getImage()
     {
         return m_kVolumeImageA.GetImage();
+    }
+
+    /**
+     * @return ModelImage A.
+     */
+    public VolumeImage getVolumeImage()
+    {
+        return m_kVolumeImageA;
     }
 
 

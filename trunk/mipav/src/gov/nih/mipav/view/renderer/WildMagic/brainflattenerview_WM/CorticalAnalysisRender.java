@@ -52,6 +52,9 @@ public class CorticalAnalysisRender extends GPURenderBase implements GLEventList
 
 	//~ Instance fields ------------------------------------------------------------------------------------------------
 
+	/** Parent user-interface and display frame. */
+    protected VolumeTriPlanarInterface m_kParent = null;
+    
 	/** Point indices of the puncture triangle. */
 	private int[] m_aiTriIndex = null;
 	/** puncture triangle color */
