@@ -141,12 +141,13 @@ public class VolumeImage implements Serializable {
 	 * later use. The directory is created if it does not already exist, with the ModelImage name + "_RenderFiles" as
 	 * the directory name.
 	 * 
+	 * @param bClone, when true clone the input ModelImage, when false reference the ModelImage
 	 * @param kImage input ModelImage
 	 * @param kPostfix Postfix for images 'A' or 'B'
 	 * @param kProgress progress bar
 	 * @param iProgress progress bar increment
 	 */
-	public VolumeImage(final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress) {
+	public VolumeImage(boolean bClone, final ModelImage kImage, final String kPostfix, final ViewJProgressBar kProgress, final int iProgress) {
 		m_kPostfix = new String(kPostfix);
 
 		// See if the render files directory exists for this image, if not create it.
@@ -164,7 +165,14 @@ public class VolumeImage implements Serializable {
 			} catch (final SecurityException e) {}
 		}
 		// clone the input image, in the future this might be a reference.
-		m_kImage = (ModelImage)kImage.clone();
+		if ( bClone )
+		{
+			m_kImage = (ModelImage)kImage.clone();
+		}
+		else
+		{
+			m_kImage = kImage;
+		}
 		// Initialize the Texture maps.
 		init(kProgress, iProgress);
 	}

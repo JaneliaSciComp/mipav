@@ -32,8 +32,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.media.opengl.*;
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
 import com.jogamp.opengl.util.Animator;
 
@@ -191,6 +189,8 @@ public class PlaneRenderProstate extends GPURenderBase implements GLEventListene
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = 2025132936439496099L;
+	/** Parent user-interface and display frame. */
+    protected VolumeTriPlanarInterface m_kParent = null;
 
     /** Camera Locations, for rendering the different Axial, Sagittal and Coronal views. */
     Vector3f[] m_akCLoc = {new Vector3f( -1.0f, 0.0f, 0.0f), new Vector3f(0.0f, -1.0f, 0.0f),

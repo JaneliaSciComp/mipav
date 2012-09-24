@@ -71,6 +71,10 @@ public class FlyThroughRender extends GPURenderBase implements FlyThroughRenderI
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -6130870790192175575L;
+
+	/** Parent user-interface and display frame. */
+    protected VolumeTriPlanarInterface m_kParent = null;
+    
     /** 3D Layout of the ModelImage. */
     private ModelImage3DLayout m_kVolumeLayout = null;
     /** 3D Skeleton of the ModelImage. */
