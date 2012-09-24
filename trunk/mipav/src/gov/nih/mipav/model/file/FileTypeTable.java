@@ -256,6 +256,8 @@ public class FileTypeTable {
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PARREC, new FileTypeInfo("Philips PARREC",
                 ".par,.rec,.parv2,.frec"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.PARREC_MULTIFILE, new FileTypeInfo("PARREC multifile",
+                ".par,.rec,.parv2,.frec"));
         FileTypeTable.FILE_EXT_TABLE.put(".par", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".parv2", FileUtility.PARREC);
         FileTypeTable.FILE_EXT_TABLE.put(".rec", FileUtility.PARREC);
