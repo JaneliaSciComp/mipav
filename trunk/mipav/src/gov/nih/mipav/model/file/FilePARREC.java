@@ -1643,14 +1643,89 @@ public class FilePARREC extends FileBase {
      * @see        gov.nih.mipav.model.file.FileRaw
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+        int k, seq;
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
+        int beginTime = options.getBeginTime();
+        int endTime = options.getEndTime();
+        String headerFileName = fileNames[0];
+        int headerIndex = fileNames[0].lastIndexOf(".");
+        String baseHeaderName = fileNames[0].substring(0, headerIndex);
+        String headerSuffix = fileNames[0].substring(headerIndex);
+        int dataIndex = fileNames[1].lastIndexOf(".");
+        String dataFileName = fileNames[1];
+        String baseDataName = fileNames[1].substring(0, dataIndex);
+        String dataSuffix = fileNames[1].substring(dataIndex);
+        int optionsFileNameIndex;
+        String optionsFileName;
+        if (options.isMultiFile() && image.getNDims() == 4) {
+            for (k = beginTime, seq = options.getStartNumber(); k <= endTime; k++, seq++) {
 
-    	writeHeader(image, options);
+                if (options.getDigitNumber() == 1) {
+                    headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                    dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                } else if (options.getDigitNumber() == 2) {
+
+                    if (seq < 10) {
+                       headerFileName = baseHeaderName + "0" + Integer.toString(seq) + headerSuffix;
+                       dataFileName = baseDataName + "0" + Integer.toString(seq) + dataSuffix;
+                    } else {
+                        headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                    }
+                } else if (options.getDigitNumber() == 3) {
+
+                    if (seq < 10) {
+                        headerFileName = baseHeaderName + "00" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "00" + Integer.toString(seq) + dataSuffix;
+                    } else if (seq < 100) {
+                        headerFileName = baseHeaderName + "0" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "0" + Integer.toString(seq) + dataSuffix;
+                    } else {
+                        headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                    }
+                } else if (options.getDigitNumber() == 4) {
+
+                    if (seq < 10) {
+                        headerFileName = baseHeaderName + "000" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "000" + Integer.toString(seq) + dataSuffix;
+                    } else if (seq < 100) {
+                        headerFileName = baseHeaderName + "00" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "00" + Integer.toString(seq) + dataSuffix;
+                    } else if (seq < 1000) {
+                        headerFileName = baseHeaderName + "0" + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + "0" + Integer.toString(seq) + dataSuffix;
+                    } else {
+                        headerFileName = baseHeaderName + Integer.toString(seq) + headerSuffix;
+                        dataFileName = baseDataName + Integer.toString(seq) + dataSuffix;
+                    }
+                }
+                // write header with image, # of images per, and 1 time slice
+
+                writeHeader(image, headerFileName, beginSlice, endSlice, k, k);
+                optionsFileNameIndex = dataFileName.lastIndexOf("\\");
+                optionsFileName = dataFileName.substring(optionsFileNameIndex+1);
+                FileInfoXML tempInfo = new FileInfoImageXML(optionsFileName, options.getFileDirectory(), FileUtility.RAW);
+                tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
+                FileRaw rawFile = new FileRaw(dataFileName, "", tempInfo, FileBase.READ_WRITE);
+                linkProgress(rawFile);
+                rawFile.writeImage(image, beginSlice, endSlice, k, k);
+
+            } // end for loop
+
+            
+        }
+        else {
+    	    writeHeader(image, fileNames[0], beginSlice, endSlice, beginTime, endTime);
+    	    FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
+            tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
+            FileRaw rawFile = new FileRaw(fileNames[1], "", tempInfo, FileBase.READ_WRITE);
+            linkProgress(rawFile);
+            rawFile.writeImage(image, options);
+        }
     	
-    	FileInfoXML tempInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
-    	tempInfo.setEndianess(FileBase.LITTLE_ENDIAN); //FORCE LITTLE ENDIAN for rec/frec files!!!
-        FileRaw rawFile = new FileRaw(fileNames[1], "", tempInfo, FileBase.READ_WRITE);
-        linkProgress(rawFile);
-        rawFile.writeImage(image, options);
+    	
     }
 
 
@@ -1908,7 +1983,19 @@ public class FilePARREC extends FileBase {
 
 
     //todo: monitor options for cropped data
-    public void writeHeader(ModelImage writeImage, FileWriteOptions options) throws IOException {
+    /**
+     * 
+     * @param writeImage
+     * @param headerFileName
+     * @param beginSlice
+     * @param endSlice
+     * @param beginTime
+     * @param endTime
+     * @throws IOException
+     */
+    public void writeHeader(ModelImage writeImage, String headerFileName, int beginSlice, int endSlice,
+                            int beginTime, int endTime) throws IOException {
+        int loc;
     	@SuppressWarnings("unused")
         int bpp=0;
     	@SuppressWarnings("unused")
@@ -1941,9 +2028,8 @@ public class FilePARREC extends FileBase {
         int []extents = outInfo.getExtents();
         String version = outInfo.getVersion();
         //Set the number of slices
-        extents[2] = options.getEndSlice()-options.getBeginSlice()+1;
         
-        PrintStream fp = new PrintStream(new File(fileNames[0]));
+        PrintStream fp = new PrintStream(new File(headerFileName));
         fp.println("# === DATA DESCRIPTION FILE ======================================================");
         fp.println("#");
         fp.println("# CAUTION - Investigational device.");
@@ -1979,7 +2065,7 @@ public class FilePARREC extends FileBase {
         for(int i=0;i<generalInfoList.size();i++) {
         	String info = generalInfoList.get(i);
         	if (info.indexOf("Max. number of slices/locations") >= 0) {
-        		info = ".    Max. number of slices/locations    :   " + String.valueOf(extents[2]);
+        		info = ".    Max. number of slices/locations    :   " + String.valueOf(endSlice - beginSlice + 1);
         	}
         	fp.println(info);
         }
@@ -2470,7 +2556,7 @@ public class FilePARREC extends FileBase {
         	}
         	Integer I = (Integer)SliceMap.get(info);
             if(I==null) {
-                Preferences.debug("FilePARREC:wirteHeader. Bad slice info;"+info + "\n", Preferences.DEBUG_FILEIO);
+                Preferences.debug("FilePARREC:writeHeader. Bad slice info;"+info + "\n", Preferences.DEBUG_FILEIO);
                 return;
             }
             idx += I.intValue();
@@ -2544,37 +2630,37 @@ public class FilePARREC extends FileBase {
         //Vector SliceParameters = outInfo.getSliceParameters();
         //following info is slice specific....so can not get it only from outInfo
         
-        int totalSlices = extents[2];
-        if (extents.length > 3) {
-        	totalSlices = totalSlices * extents[3];
-        }
-        for (int i = 0; i < totalSlices; i++) {
-            FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(i);
-            String tag = fileInfoPR.getSliceInfo();
-            if ((xyIndex >= 0) || (orIndex >= 0)) {
-            	String[] values = tag.split("\\s+");
-            	if (xyIndex >= 0) {
-            	    values[xyIndex] = String.valueOf(extents[0]);
-            	    values[xyIndex+1] = String.valueOf(extents[1]);
-            	}
-            	if (orIndex >= 0) {
-            		if (writeImage.getImageOrientation() == FileInfoBase.AXIAL) {
-            			values[orIndex] = String.valueOf(1);
-            		}
-            		else if (writeImage.getImageOrientation() == FileInfoBase.SAGITTAL) {
-            			values[orIndex] = String.valueOf(2);
-            		}
-            		else if (writeImage.getImageOrientation() == FileInfoBase.CORONAL) {
-            			values[orIndex] = String.valueOf(3);
-            		}
-            	}
-            	tag = values[0] + "  ";
-            	for (int j = 1; j < values.length-1; j++) {
-            	    tag += values[j] + "  ";	
-            	}
-            	tag = tag + values[values.length-1];
-            }   
-            fp.println(tag);
+        
+        for (int i = beginTime; i <= endTime; i++) {
+            for (int j = beginSlice; j <= endSlice; j++) {
+                loc = j + i*extents[2];
+                FileInfoPARREC fileInfoPR = (FileInfoPARREC)writeImage.getFileInfo(loc);
+                String tag = fileInfoPR.getSliceInfo();
+                if ((xyIndex >= 0) || (orIndex >= 0)) {
+                	String[] values = tag.split("\\s+");
+                	if (xyIndex >= 0) {
+                	    values[xyIndex] = String.valueOf(extents[0]);
+                	    values[xyIndex+1] = String.valueOf(extents[1]);
+                	}
+                	if (orIndex >= 0) {
+                		if (writeImage.getImageOrientation() == FileInfoBase.AXIAL) {
+                			values[orIndex] = String.valueOf(1);
+                		}
+                		else if (writeImage.getImageOrientation() == FileInfoBase.SAGITTAL) {
+                			values[orIndex] = String.valueOf(2);
+                		}
+                		else if (writeImage.getImageOrientation() == FileInfoBase.CORONAL) {
+                			values[orIndex] = String.valueOf(3);
+                		}
+                	}
+                	tag = values[0] + "  ";
+                	for (int k = 1; k < values.length-1; k++) {
+                	    tag += values[k] + "  ";	
+                	}
+                	tag = tag + values[values.length-1];
+                }   
+                fp.println(tag);
+            }
         }
         
         
