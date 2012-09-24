@@ -187,6 +187,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".MHA", FileUtility.METAIMAGE);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.NRRD, new FileTypeInfo("NRRD", ".nrrd,.nhdr"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.NRRD_MULTIFILE, new FileTypeInfo("NRRD multifile", ".nrrd,.nhdr"));
         FileTypeTable.FILE_EXT_TABLE.put(".nrrd", FileUtility.NRRD);
         FileTypeTable.FILE_EXT_TABLE.put(".nhdr", FileUtility.NRRD);
         FileTypeTable.FILE_EXT_TABLE.put(".NRRD", FileUtility.NRRD);
