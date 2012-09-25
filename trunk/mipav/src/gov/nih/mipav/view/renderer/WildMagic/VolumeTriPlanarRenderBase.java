@@ -13,7 +13,7 @@ import gov.nih.mipav.model.structures.VOIContour;
 import gov.nih.mipav.model.structures.VOIVector;
 import gov.nih.mipav.view.CustomUIBuilder;
 import gov.nih.mipav.view.dialogs.JDialogBase;
-import gov.nih.mipav.view.renderer.OncoNav.VolumeSliceView;
+
 import gov.nih.mipav.view.renderer.WildMagic.Interface.SurfaceState;
 import gov.nih.mipav.view.renderer.WildMagic.Render.OrderIndpTransparencyEffect;
 import gov.nih.mipav.view.renderer.WildMagic.Render.Sculptor_WM;
