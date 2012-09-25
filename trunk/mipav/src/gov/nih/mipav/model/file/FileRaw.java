@@ -3051,13 +3051,17 @@ public class FileRaw extends FileBase {
 
         int[] extents;
         int volSize = 0;
+        int sliceSize;
 
         int beginTimePeriod = options.getBeginTime();
         int endTimePeriod = options.getEndTime();
+        int beginSlice = options.getBeginSlice();
+        int endSlice = options.getEndSlice();
 
         extents = image.getExtents();
 
         volSize = extents[2] * extents[1] * extents[0];
+        sliceSize = extents[1] * extents[0];
 
         this.nTimePeriods = endTimePeriod - beginTimePeriod + 1;
 
@@ -3133,7 +3137,7 @@ public class FileRaw extends FileBase {
 
             // write the given start/end point in the image to a file
             try {
-                fileRW.writeImage(image, t * volSize, (t * volSize) + volSize, 0);
+                fileRW.writeImage(image, t * volSize + beginSlice * sliceSize, (t * volSize) + (endSlice + 1) * sliceSize, 0);
 
                 if (compressionType == FileInfoBase.COMPRESSION_NONE) {
                     raFile.close();
