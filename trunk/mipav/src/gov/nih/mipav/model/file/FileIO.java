@@ -185,6 +185,8 @@ public class FileIO {
                 fType = FileUtility.BMP_MULTIFILE;
             } else if (fileType == FileUtility.PARREC) {
                 fType = FileUtility.PARREC_MULTIFILE;
+            } else if (fileType == FileUtility.NRRD) {
+                fType = FileUtility.NRRD_MULTIFILE;
             }
         }
 
@@ -2459,6 +2461,10 @@ nList:      for (int i = 0; i < nListImages; i++) {
 
                 case FileUtility.NRRD:
                     image = readNRRD(fileName, fileDir, one);
+                    break;
+                    
+                case FileUtility.NRRD_MULTIFILE:;
+                    image = readNRRDMulti(fileName, fileDir);
                     break;
 
                 case FileUtility.SPM:
@@ -9078,11 +9084,12 @@ nList:      for (int i = 0; i < nListImages; i++) {
     private ModelImage readNRRD(final String fileName, final String fileDir, final boolean one) {
         ModelImage image = null;
         FileNRRD imageFile;
+        boolean doHeader = true;
 
         try {
             imageFile = new FileNRRD(fileName, fileDir);
             createProgressBar(imageFile, fileName, FileIO.FILE_READ);
-            image = imageFile.readImage(one);
+            image = imageFile.readImage(one, doHeader);
         } catch (final IOException error) {
 
             if (image != null) {
@@ -9121,6 +9128,648 @@ nList:      for (int i = 0; i < nListImages; i++) {
         imageFile = null;
         return image;
     }
+    
+    /**
+     * Reads a multi NRRD file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+    private ModelImage readNRRDMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FileNRRD imageFile = null;
+        FileInfoBase fileInfo;
+        FileInfoBase fileInfoMulti;
+        ModelImage tempImage;
+        FileInfoNRRD fileInfoNRRD;
+        boolean doHeader = false;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readNRRD(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        // if one of the images has the wrong extents, the following must be changed.
+        // (ei., too many images!)
+        // for simplicity of setup, read in the first file hdr
+        imageFile = new FileNRRD(fileList[0], fileDir);
+        fileInfoNRRD = new FileInfoNRRD(fileList[0], fileDir, FileUtility.NRRD);
+        imageFile.setFileInfo(fileInfoNRRD);
+
+        try {
+
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
+                throw (new IOException(" NRRD header file error"));
+            }
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = (imageFile).getFileInfo();
+        fileInfoMulti = (FileInfoBase)fileInfo.clone();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FileNRRD(fileList[i], fileDir);
+                fileInfoNRRD = new FileInfoNRRD(fileList[0], fileDir, FileUtility.NRRD);
+                imageFile.setFileInfo(fileInfoNRRD);
+
+                if ( ! (imageFile).readHeader(fileList[i], fileDir)) {
+                    throw (new IOException(" NRRD header file error"));
+                }
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = (imageFile).getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent NRRD image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent NRRD image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent NRRD image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent NRRD image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfoMulti.setExtents(imgExtents); // set image extents to proper value!
+                fileInfoMulti.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                imageFile.setFileInfo((FileInfoNRRD)fileInfo);
+                tempImage = (imageFile).readImage(false, doHeader);
+               
+                try {
+                    tempImage.exportData(0, length, buffer);
+                }
+                catch (IOException e) {
+                    if (!quiet) {
+                        MipavUtil.displayError("IOException on tempImage.exportData");
+                    }
+                    e.printStackTrace();
+
+                    if (image != null) {
+                        image.disposeLocal();
+                        image = null;
+                    }
+
+                    System.gc();
+
+                    return null;
+                    
+                }
+                tempImage.disposeLocal();
+                tempImage = null;
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfoMulti, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfoMulti, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
+    }
+    
+    /**
+     * Reads a multi NRRD file. Gets a list of the images from the file directory and reads them each in.
+     * 
+     * @param fileName Name of the image file to read.
+     * @param fileDir Directory of the image file to read.
+     * 
+     * @return The image that was read in, or null if failure.
+     */
+   /* private ModelImage readNRRDMulti(final String fileName, final String fileDir) {
+        ModelImage image = null;
+        FileNRRD imageFile = null;
+        FileInfoBase fileInfo;
+
+        int length = 0;
+        float[] buffer;
+        String[] fileList;
+        int[] extents;
+        float[] resolutions;
+        int nImages;
+        // of proper extents (in case there is a file with the consistent filename but
+        // inconsistent extents.) we do assume the 1st header is correct
+
+        int i = 0;
+
+        try {
+            fileList = FileUtility.getFileList(fileDir, fileName, quiet);
+
+            for (final String element : fileList) {
+
+                if (element != null) {
+
+                    // System.out.println(" Name = " + fileList[m]);
+                    i++;
+                }
+            }
+        } catch (final OutOfMemoryError error) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            error.printStackTrace();
+
+            return null;
+        }
+
+        nImages = i; // total number of suspected files to import into an image
+
+        if (nImages == 1) {
+            return readAnalyze(fileName, fileDir, false);
+        }
+
+        createProgressBar(null, fileName, FileIO.FILE_READ);
+
+        // if one of the images has the wrong extents, the following must be changed.
+        // (ei., too many images!)
+        // for simplicity of setup, read in the first file hdr
+        imageFile = new FileNRRD(fileList[0], fileDir);
+
+        try {
+
+            if ( !imageFile.readHeader(fileList[0], fileDir)) {
+                throw (new IOException(" NRRD header file error"));
+            }
+        } catch (final IOException ioe) {
+
+            if ( !quiet) {
+                MipavUtil.displayError("Error reading header file.");
+            }
+
+            ioe.printStackTrace();
+        }
+
+        fileInfo = (imageFile).getFileInfo();
+        extents = fileInfo.getExtents();
+        resolutions = fileInfo.getResolutions();
+
+        if (extents.length == 2) {
+            length = extents[0] * extents[1];
+        } else if (extents.length == 3) {
+            length = extents[0] * extents[1] * extents[2];
+        } else if (extents.length == 4) {
+            length = extents[0] * extents[1] * extents[2] * extents[3];
+        }
+
+        buffer = new float[length];
+
+        final int[] imgExtents = new int[extents.length + 1];
+        final float[] imgResolutions = new float[resolutions.length + 1]; // should be same size as extents.
+
+        // copy proper values into img extents, assuming that the 1st (numerically indexed) images
+        // is correct to begin with
+        for (i = 0; i < extents.length; i++) {
+            imgExtents[i] = extents[i];
+            imgResolutions[i] = resolutions[i];
+            // set the number of slices in the image later.
+        }
+
+        imgExtents[i] = nImages; // may not be right, but we'll find out after we go through all images.
+        imgResolutions[i] = 1; // resolution in the created axis is not physically defined; is generated.
+
+        image = new ModelImage(fileInfo.getDataType(), imgExtents, fileInfo.getFileName());
+        imageFile.finalize();
+        imageFile = null;
+
+        int imageCount = 0;
+        int fInfoCount = 0;
+
+        // loop through image and store data in image model
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                imageFile = new FileNRRD(fileList[i], fileDir);
+
+                if ( ! (imageFile).readHeader(fileList[i], fileDir)) {
+                    throw (new IOException(" NRRD header file error"));
+                }
+
+                // chk the extents of the image to verify it is consistent
+                // (this doesn't ensure there won't be null exceptions@)
+                fileInfo = (imageFile).getFileInfo();
+
+                if (extents.length != fileInfo.getExtents().length) {
+
+                    if ( !quiet) {
+                        MipavUtil
+                                .displayError("Inconsistent analyze image file found.  This File will be skipped.  The number of dimensions does not match.");
+                    }
+
+                    continue;
+                } else { // the prototype image and the read-in image are of the same dimension....
+
+                    switch (extents.length) { // check that they extend as far in all dimensions:
+
+                        case 2:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 3:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        case 4:
+                            if ( (extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])
+                                    || (extents[2] != fileInfo.getExtents()[2])
+                                    || (extents[3] != fileInfo.getExtents()[3])) {
+
+                                if ( !quiet) {
+                                    MipavUtil
+                                            .displayError("Inconsistent analyze image file found.  This File will be skipped.  One or more of the X-Y-Z-T dimensions do not match.");
+                                }
+
+                                continue;
+                            }
+
+                            break;
+
+                        default:
+                            break;
+                    }
+                }
+
+                fileInfo.setExtents(imgExtents); // set image extents to proper value!
+                fileInfo.setResolutions(imgResolutions);
+
+                if (nImages > 1) {
+                    fileInfo.setMultiFile(true);
+                }
+
+                (imageFile).readImage(buffer);
+                image.importData(imageCount * length, buffer, false);
+
+                if (image.getExtents().length > 3) {
+
+                    for (int j = 0; j < image.getExtents()[2]; j++) {
+                        image.setFileInfo(fileInfo, fInfoCount);
+                        fInfoCount++;
+                    }
+                } else {
+                    image.setFileInfo(fileInfo, imageCount);
+                }
+
+                // image.setFileInfo(fileInfo, imageCount);
+                imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
+            } catch (final IOException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final ArrayIndexOutOfBoundsException error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("Unable to read images: the image\nnumber in the file "
+                            + fileInfo.getFileName() + " is corrupted.");
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (final OutOfMemoryError error) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                error.printStackTrace();
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+            imageFile.finalize();
+            imageFile = null;
+        }
+
+        // i goes 1 too far anyway, but if we skipped files, be sure to account for it,
+        // because our basic model was that all prperly named files were good analyze images.
+        // only we found one or more didn't fit. We must now take that into account.
+        // ie., we read in imageCount # of images, we expected nImages.
+        if (imageCount < nImages) {
+            final FileInfoBase[] fileInfoArr = image.getFileInfo();
+
+            imgExtents[image.getNDims() - 1] = imageCount; // last dimension available should be the num images read
+
+            final int sliceSize = buffer.length;
+
+            buffer = new float[sliceSize * imageCount];
+
+            try {
+                image.exportData(0, buffer.length, buffer); // copy all buffer
+                image.reallocate(fileInfo.getDataType(), imgExtents);
+                image.importData(0, buffer, true); // remake the model image with the right number of slices.
+
+                for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                    fileInfoArr[i].setExtents(imgExtents); // update extents
+                    image.setFileInfo(fileInfoArr[i], i); // copying...
+                }
+            } catch (final IOException ioe) {
+
+                if ( !quiet) {
+                    MipavUtil.displayError("FileIO reports: " + ioe.getMessage());
+                }
+
+                return null;
+            }
+
+            final FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
+            for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
+                fileInfoArr[i].setExtents(imgExtents); // update extents
+                fileInfoArrCopy[i] = fileInfoArr[i];
+            }
+
+            image.setFileInfo(fileInfoArrCopy);
+        }
+
+        return image;
+
+    }*/
 
     /**
      * Reads in a single GE Genesis type file.
