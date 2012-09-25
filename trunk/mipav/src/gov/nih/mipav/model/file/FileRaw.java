@@ -314,7 +314,7 @@ public class FileRaw extends FileBase {
                 case ModelStorageBase.BOOLEAN:
                     try {
                         fileRW.readImage(ModelStorageBase.BOOLEAN,
-                                        (k * 8 * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
+                                        (k * ((bufferSize + minimumBitsMinus1) >> shiftToDivide)) + offset,
                                          bufferSize);
 
                         image.importData(k * bufferSize, fileRW.getBitSetBuffer(), false);
