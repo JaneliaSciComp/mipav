@@ -1161,11 +1161,7 @@ public class FilePARREC extends FileBase {
             Extents = new int[] { dim1, dim2, numSlices};
 
         }
-        //Extents[0] = 4;
-        /*fileInfo.setExtents(dim1,0);
-        fileInfo.setExtents(dim2,1);
-        fileInfo.setExtents(numSlices,2);
-        fileInfo.setExtents(numVolumes,3);*/
+
         fileInfo.setExtents(Extents);
         fileInfo.setVolParameters(VolParameters);
         
