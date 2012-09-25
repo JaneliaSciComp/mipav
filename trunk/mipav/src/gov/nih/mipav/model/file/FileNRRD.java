@@ -3397,32 +3397,19 @@ public class FileNRRD extends FileBase {
     		sizesString = extents[0] + " " + extents[1];
     		spacingsString = res[0] + " " + res[1];
     	} else if(dimension == 3) {
-    		if(endSlice > beginSlice) {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
-    			kindsString = "space space space";
-    			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
-    			spacingsString = res[0] + " " + res[1] + " " + res[2];
-    		}else {
-    			kindsString = "space space";
-    			sizesString = extents[0] + " " + extents[1];
-    			spacingsString = res[0] + " " + res[1];
-    		}
+			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
+			kindsString = "space space space";
+			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
+			spacingsString = res[0] + " " + res[1] + " " + res[2];
     	} else if(dimension == 4) {
-    		if(endTime > beginTime) {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
-    			if(isTime) {
-    				kindsString = "space space space time";
-    			}else {
-    				kindsString = "space space space domain";
-    			}
-    			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
-    			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
-    		}else {
-    			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness());
-    			kindsString = "space space space";
-    			sizesString = extents[0] + " " + extents[1] + " " + extents[2];
-    			spacingsString = res[0] + " " + res[1] + " " + res[2];
-    		}
+			thicknessString = "NaN NaN " + String.valueOf(image.getFileInfo(0).getSliceThickness()) + " NaN";
+			if(isTime) {
+				kindsString = "space space space time";
+			}else {
+				kindsString = "space space space domain";
+			}
+			sizesString = extents[0] + " " + extents[1] + " " + extents[2] + " " + extents[3];
+			spacingsString = res[0] + " " + res[1] + " " + res[2] + " " + res[3];
     	}
     	
     	//space units of measure
