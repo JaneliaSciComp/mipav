@@ -53,6 +53,8 @@ import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.SwingConstants;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 import org.jocl.CL;
 
@@ -87,7 +89,7 @@ import com.jogamp.opengl.util.Animator;
 
 
 public class VolumeTriPlanarRenderBase extends GPURenderBase
-implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
+implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, ChangeListener
 {
 
 	private static final long serialVersionUID = -8415814666722429687L;
@@ -3429,8 +3431,29 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener
 		{
 			container = new JPanelGPU(new BorderLayout());
 			container.add(canvas, BorderLayout.CENTER );
+			
+			JPanel sliderPanel = new JPanel( new BorderLayout() );
+			opacitySlider = new JSlider( SwingConstants.HORIZONTAL, 0, 100, 100 );
+			opacityLabel = new JLabel( new Float( 1 ).toString() );
+			sliderPanel.add( new JLabel( "[mm]" ), BorderLayout.WEST );
+			sliderPanel.add( opacitySlider, BorderLayout.CENTER );
+			sliderPanel.add( opacityLabel, BorderLayout.EAST );
+			container.add(sliderPanel, BorderLayout.SOUTH);
+			opacitySlider.addChangeListener(this);
 		}
 		
+		/** Opacity sliders for when this renderer is displayed as a stand-alone app. */
+		private JSlider opacitySlider;
+		private JLabel opacityLabel;
 
+		/* (non-Javadoc)
+		 * @see javax.swing.event.ChangeListener#stateChanged(javax.swing.event.ChangeEvent)
+		 */
+		public void stateChanged(ChangeEvent arg0) {
+			if ( arg0.getSource() == opacitySlider )
+			{
+				setVolumeBlend( opacitySlider.getValue() / 100f );
+			}
+		}
 
 }
