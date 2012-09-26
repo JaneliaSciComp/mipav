@@ -1376,12 +1376,12 @@ import javax.swing.table.DefaultTableModel;
                         fatShiftLabel = new JLabel("Fatshift");
                         fatshiftBox = new JComboBox();
                         fatshiftBox.setBackground(Color.white);
-                        fatshiftBox.addItem("R"); //Right
-                        fatshiftBox.addItem("L"); //Left
-                        fatshiftBox.addItem("A"); //Anterior
-                        fatshiftBox.addItem("P"); //Posterior
-                        fatshiftBox.addItem("H"); //Head/Superior
-                        fatshiftBox.addItem("F"); //Feet/Inferior
+                        fatshiftBox.addItem("RL"); //Right
+                        fatshiftBox.addItem("LR"); //Left
+                        fatshiftBox.addItem("AP"); //Anterior
+                        fatshiftBox.addItem("PA"); //Posterior
+                        fatshiftBox.addItem("HI"); //Head/Superior
+                        fatshiftBox.addItem("FS"); //Feet/Inferior
                         gbc.gridy = 0;
                         gbc.gridx = 0;
                         GradCreatorPanel.add(fatShiftLabel,gbc);
