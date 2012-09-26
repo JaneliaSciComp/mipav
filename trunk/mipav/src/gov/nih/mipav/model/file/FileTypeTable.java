@@ -96,6 +96,7 @@ public class FileTypeTable {
         FileTypeTable.FILE_EXT_TABLE.put(".IDS", FileUtility.ICS);
 
         FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.INTERFILE, new FileTypeInfo("Interfile", ".hdr"));
+        FileTypeTable.FILE_TYPE_TABLE.put(FileUtility.INTERFILE_MULTIFILE, new FileTypeInfo("Interfile multifile", ".hdr"));
         // .hdr used by analyze, interfile  and nifti
         FileTypeTable.FILE_EXT_TABLE.put(".hdr", FileUtility.UNDEFINED);
         FileTypeTable.FILE_EXT_TABLE.put(".HDR", FileUtility.UNDEFINED);
