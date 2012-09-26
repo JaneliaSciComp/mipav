@@ -1183,7 +1183,7 @@ public class FilePARREC extends FileBase {
         }
 
         switch(ori) {
-            case 1: //TRA
+            case FileInfoBase.AXIAL: //TRA
                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
@@ -1200,7 +1200,7 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(1,3);
 //                fileInfo.setSliceThickness(fov2/numSlices);
                 break;
-            case 2: //SAG
+            case FileInfoBase.SAGITTAL: //SAG
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
@@ -1217,7 +1217,7 @@ public class FilePARREC extends FileBase {
                     fileInfo.setResolutions(1,3);
                 //fileInfo.setSliceThickness(fov3/numSlices);
                 break;
-            case 3: //COR
+            case FileInfoBase.CORONAL: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
