@@ -175,7 +175,7 @@ public class FileSpar extends FileBase {
         int[] maskExtents = new int[3];
         
         switch(ori) {
-            case 1: //TRA
+            case FileInfoBase.AXIAL: //TRA
                 fileInfo.setImageOrientation(FileInfoBase.AXIAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 1);
@@ -194,7 +194,7 @@ public class FileSpar extends FileBase {
                 imageAngulation[2] = -angulation[2];
                 
                 break;
-            case 2: //SAG
+            case FileInfoBase.SAGITTAL: //SAG
                 fileInfo.setImageOrientation(FileInfoBase.SAGITTAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_A2P_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
@@ -213,7 +213,7 @@ public class FileSpar extends FileBase {
                 imageAngulation[2] = -angulation[1];
                 System.out.println("Test2");
                 break;
-            case 3: //COR
+            case FileInfoBase.CORONAL: //COR
                 fileInfo.setImageOrientation(FileInfoBase.CORONAL);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_R2L_TYPE, 0);
                 fileInfo.setAxisOrientation(FileInfoBase.ORI_S2I_TYPE, 1);
