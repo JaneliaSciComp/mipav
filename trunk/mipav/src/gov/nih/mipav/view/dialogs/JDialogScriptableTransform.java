@@ -285,6 +285,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
     private int outOfBoundsIndex = 0;
 
     private AlgorithmTPSpline spline = null;
+    
+    private int fileInterp[] = new int[1];
+    private float fileXres[] = new float[1];
+    private float fileYres[] = new float[1];
+    private float fileZres[] = new float[1];
+    private int fileXdim[] = new int[1];
+    private int fileYdim[] = new int[1];
+    private int fileZdim[] = new int[1];
+    private boolean filetVOI[] = new boolean[1];
+    private boolean fileClip[] = new boolean[1];
+    private boolean filePad[] = new boolean[1];
 
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
@@ -1111,7 +1122,8 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
                 raFile.close();
             } else {
                 spline = null;
-                matrix.readMatrix(raFile, false);
+                matrix.readMatrix(raFile, fileInterp, fileXres, fileYres, fileZres, fileXdim, fileYdim, fileZdim, 
+                                  filetVOI, fileClip, filePad, false);
                 raFile.close();
                 fileTransMatrix = matrix;
             }
@@ -1415,11 +1427,17 @@ public class JDialogScriptableTransform extends JDialogScriptableBase implements
             algoTrans.setFillValue(fillValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
         } else { // ((image.getNDims() >= 3) && (!do25D))
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
-                    doVOI, doClip, doPad, doRotateCenter, center);
-            algoTrans.setFillValue(fillValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-            algoTrans.setUseScannerAnatomical(isSATransform);
+            if (fileXdim[0] != 0) {
+                algoTrans = new AlgorithmTransform(image, xfrm, fileInterp[0], fileXres[0], fileYres[0], fileZres[0], fileXdim[0],
+                                  fileYdim[0], fileZdim[0], filetVOI[0], fileClip[0], filePad[0]);
+            }
+            else {
+                algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, units,
+                        doVOI, doClip, doPad, doRotateCenter, center);
+                algoTrans.setFillValue(fillValue);
+                algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+                algoTrans.setUseScannerAnatomical(isSATransform);
+            }
         }
 
         // This is very important. Adding this object as a listener allows
