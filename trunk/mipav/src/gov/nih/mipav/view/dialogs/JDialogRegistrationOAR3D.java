@@ -641,6 +641,12 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         }
         
         if (algorithm instanceof AlgorithmRegELSUNCOAR3D) {
+            final int xdimA = refImage.getExtents()[0];
+            final int ydimA = refImage.getExtents()[1];
+            final int zdimA = refImage.getExtents()[2];
+            final float xresA = refImage.getFileInfo(0).getResolutions()[0];
+            final float yresA = refImage.getFileInfo(0).getResolutions()[1];
+            final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 
             if (reg3E.isCompleted()) {
                 final TransMatrix finalMatrix = reg3E.getTransform();
@@ -655,12 +661,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 }
 
                 if (displayTransform) {
-                    final int xdimA = refImage.getExtents()[0];
-                    final int ydimA = refImage.getExtents()[1];
-                    final int zdimA = refImage.getExtents()[2];
-                    final float xresA = refImage.getFileInfo(0).getResolutions()[0];
-                    final float yresA = refImage.getFileInfo(0).getResolutions()[1];
-                    final float zresA = refImage.getFileInfo(0).getResolutions()[2];
 
                     final String name = JDialogBase.makeImageName(matchImage.getImageName(), "_register");
 
@@ -741,7 +741,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 message += "Z Rotations from " + rotateBeginZ + " to " + rotateEndZ + ", ";
                 message += "with a Z coarse rate of " + coarseRateZ + " and Z fine rate of " + fineRateZ + ".\n";
                 finalMatrix.saveMatrix(matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
-                        + refImage.getImageName() + ".mtx", message);
+                        + refImage.getImageName() + ".mtx", interp2, xresA, yresA, zresA, xdimA, ydimA, zdimA, true, false, pad, message);
                 Preferences.debug("Saved " + matrixDirectory + File.separator + matchImage.getImageName() + "_To_"
                         + refImage.getImageName() + ".mtx\n",Preferences.DEBUG_FILEIO);
 
