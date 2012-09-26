@@ -98,6 +98,7 @@ public class ViewMenuBuilder {
         gbc.insets = new Insets(0, paddingX, 5, 0);
 
         menuEntry.add(menuName, gbc);
+        menuEntry.setName(text);
 
         if ( (cmd != null) && !cmd.equals("")) {
             menuEntry.setActionCommand(cmd);
