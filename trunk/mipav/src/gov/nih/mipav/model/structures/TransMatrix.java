@@ -597,6 +597,146 @@ public class TransMatrix extends Matrix4f
         }
         // this.print(4, 4);
     }
+    
+    /**
+     * Reads transformation matrix to a text file.
+     *
+     * <p>This method reads two formats MIPAV format</p>
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * <optional message goes here>
+     * </pre>
+     *
+     * <p>Note the above is a homogenous transformation matrix</p>
+     *
+     * <p>FSL or alternate format supported </p>
+     * <pre>
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces 
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces 
+     * 0.234  0.33  0.22  5.0 // matrix info separated by 2 spaces
+     * 0  0  0  1             // matrix info separated by 2 spaces
+     * </pre>
+     * <p>also note integer values</p>
+     *
+     * @param  raFile     random access file pointer
+     * @param composite if true make a composite matrix of the by multipling
+     * this matrix with the one to be read from the file. If false replace
+     * this object matrix with a new matrix read from the file.
+     */
+    public void readMatrix(RandomAccessFile raFile, int interp[], float oXres[], float oYres[], float oZres[], 
+                           int oXdim[], int oYdim[], int oZdim[], boolean tVOI[], boolean clip[], boolean pad[], boolean composite) {
+        int i, r = 4, c = 4;
+        String str;
+        // is MNI transformation matrix, leaves out last row.
+        boolean isXFM = false;
+
+        if (raFile == null) return;
+
+        try {
+            str = raFile.readLine().trim();
+            if(str.equalsIgnoreCase("MNI Transform File")) {
+                isXFM = true;
+                //make sure that this is a linear transform type file
+                boolean isLinearTransform = false;
+                str = raFile.readLine().trim();
+                while(str != null) {
+                    if(str.equalsIgnoreCase("Transform_Type = Linear;")) {
+                        isLinearTransform = true;
+                        //read next line in which should be 
+                        // "Linear_Transform =" to set the file pointer to the next line
+                        raFile.readLine();
+                        break;
+                    }
+                    str = raFile.readLine().trim();
+                }
+                if(!isLinearTransform) {
+                    MipavUtil.displayError("Matrix file must be a linear transform type");
+                    return;
+                }
+                r = 4;
+                c = 4;
+            } else {
+                if (str.length() > 1) { // assume FSL matrix file and 4 x 4
+                    r = 4;
+                    c = 4;
+                    raFile.seek(0);
+                } else {
+                    raFile.seek(0);
+                    r = Integer.valueOf(raFile.readLine().trim()).intValue();
+                    c = Integer.valueOf(raFile.readLine().trim()).intValue();
+                }
+            }
+            if ( r != c || ! (r == 3 || r == 4) ) {
+                MipavUtil.displayError("Matrix file must be a linear transform type, dimensions incompatible, must be 3 or 4.");
+                return;
+            }
+            
+            Matrix4f mat = null;
+            if (!composite) {
+                mat = this;
+            } else {
+                mat = new Matrix4f();
+            }
+            if(isXFM) {
+                for (i = 0; i < 3; i++) {
+                    decodeLine(raFile, i, mat);
+                }
+                //Third row is already zero
+                mat.M33 = 1.0f;
+            } else {
+                for (i = 0; i < r; i++) {
+                    decodeLine(raFile, i, mat);
+                }
+            }
+
+            if (composite) {
+                Mult(mat);
+            }
+            str = raFile.readLine();
+            str = raFile.readLine();
+            if (str == null) {
+                return;
+            }
+            str = str.trim();
+            if (str.equals("Have transform parameters")) {
+                interp[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                oXres[0] =  Float.valueOf(raFile.readLine().trim()).floatValue();
+                oYres[0] =  Float.valueOf(raFile.readLine().trim()).floatValue();
+                oZres[0] =  Float.valueOf(raFile.readLine().trim()).floatValue();
+                oXdim[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                oYdim[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                oZdim[0] = Integer.valueOf(raFile.readLine().trim()).intValue();
+                if (raFile.readLine().trim().equalsIgnoreCase("true")) {
+                    tVOI[0] = true;
+                }
+                else {
+                    tVOI[0] = false;
+                }
+                if (raFile.readLine().trim().equalsIgnoreCase("true")) {
+                    clip[0] = true;
+                }
+                else {
+                    clip[0] = false;
+                }
+                if (raFile.readLine().trim().equalsIgnoreCase("true")) {
+                    pad[0] = true;
+                }
+                else {
+                    pad[0] = false;
+                }
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
+        }
+        // this.print(4, 4);
+    }
 
     /**
      * Reads a file containing a list of multiple TransMatrix values. Returns the new TransMatrix array.
@@ -674,6 +814,27 @@ public class TransMatrix extends Matrix4f
             return;
         }
     }
+    
+    /**
+     * Saves transformation matrix to a text file MIPAV format 
+     * @see saveMatrix(RandomAccessFile raFile, String message)
+     * @param  fileName  - file name, including the path
+     * @param  message   String, may be null for no message.
+     */
+    public void saveMatrix(String fileName, int interp, float oXres, float oYres, float oZres, int oXdim, 
+            int oYdim, int oZdim, boolean tVOI, boolean clip, boolean pad, String message) {
+
+        try {
+            File file = new File(fileName);
+            RandomAccessFile raFile = new RandomAccessFile(file, "rw");
+            saveMatrix(raFile, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, tVOI, clip, pad, message);
+            raFile.close();
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+
+            return;
+        }
+    }
 
     /**
      * Saves transformation matrix to a text file MIPAV format
@@ -726,6 +887,76 @@ public class TransMatrix extends Matrix4f
                 raFile.writeBytes("\n");
             }
             raFile.writeBytes("\n");
+            if (message != null) {
+                raFile.writeBytes(message);
+            }
+        } catch (IOException error) {
+            MipavUtil.displayError("Matrix save error " + error);
+            
+            return;
+        }
+    }
+    
+    /**
+     * Saves transformation matrix to a text file MIPAV format
+     * <pre>
+     * 4                    // number of rows in matrix 
+     * 4                    // number of cols in matrix 
+     * 0.234 0.33 0.22 5.0  // matrix info separated by a space 
+     * 0.234 0.33 0.22 10.0 // matrix info separated by a space 
+     * 0.234 0.33 0.22 12.0 // matrix info separated by a space 
+     * 0.0 0.0 0.0 1.0      // matrix info separated by a space.
+     * <optional message goes here>
+     * </pre>
+     *
+     *
+     * @param  raFile  random access file pointer
+     * @param  message  String, may be null for no message.
+     */
+    public void saveMatrix(RandomAccessFile raFile, int interp, float oXres, float oYres, float oZres, int oXdim, 
+                           int oYdim, int oZdim, boolean tVOI, boolean clip, boolean pad, String message) {
+        int r, c;
+
+        if (raFile == null) return;
+
+        try {
+            raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of rows
+            raFile.writeBytes(Integer.toString(getDim()) + "\n"); // write number of columns
+            int dim = getDim();
+            for (r = 0; r < dim; r++) {
+                for (c = 0; c < dim; c++) {
+                    raFile.writeBytes(Float.toString(Get(r, c)) + " ");
+                }
+                    
+                raFile.writeBytes("\n");
+            }
+            raFile.writeBytes("\n");
+            raFile.writeBytes("Have transform parameters\n");
+            raFile.writeBytes(Integer.toString(interp) + "\n");
+            raFile.writeBytes(Float.toString(oXres) + "\n");
+            raFile.writeBytes(Float.toString(oYres) + "\n");
+            raFile.writeBytes(Float.toString(oZres) + "\n");
+            raFile.writeBytes(Integer.toString(oXdim) + "\n");
+            raFile.writeBytes(Integer.toString(oYdim) + "\n");
+            raFile.writeBytes(Integer.toString(oZdim) + "\n");
+            if (tVOI) {
+                raFile.writeBytes("true\n");
+            }
+            else {
+                raFile.writeBytes("false\n");
+            }
+            if (clip) {
+                raFile.writeBytes("true\n");
+            }
+            else {
+                raFile.writeBytes("false\n");
+            }
+            if (pad) {
+                raFile.writeBytes("true\n");
+            }
+            else {
+                raFile.writeBytes("false\n");
+            }
             if (message != null) {
                 raFile.writeBytes(message);
             }
