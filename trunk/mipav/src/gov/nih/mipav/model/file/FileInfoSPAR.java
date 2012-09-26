@@ -70,18 +70,30 @@ public class FileInfoSPAR extends FileInfoBase {
         }
     }
     
+    /**
+     * Sets slice angulation field.
+     */
     public void setAngulation(double[] sliceAng) {
         this.sliceAng = sliceAng;
     }
 
+    /**
+     * @return the slice angulation
+     */
     public double[] getSliceAngulation() {
         return sliceAng;
     }
 
+    /**
+     * Sets off-centre field.
+     */
     public void setOffCentre(double[] offCentre) {
         this.offCentre = offCentre;
     }
 
+    /**
+     * @return the off-centre transformations
+     */
     public double[] getOffCentre() {
         return offCentre;
     }
