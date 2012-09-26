@@ -3257,10 +3257,6 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 
 	  protected void updateVOIs( VOIVector kVOIs )
 	  {
-		  if ( kVOIs.size() == 0 )
-		  {
-			  return;
-		  }
 		  boolean bUpdateVOIs = false;
 		  for ( int i = 0; i < m_kDisplayList.size(); i++ )
 		  {
@@ -3453,6 +3449,7 @@ implements GLEventListener, KeyListener, MouseMotionListener,  MouseListener, Ch
 			if ( arg0.getSource() == opacitySlider )
 			{
 				setVolumeBlend( opacitySlider.getValue() / 100f );
+				opacityLabel.setText( new Float( opacitySlider.getValue() / 100f ).toString() );
 			}
 		}
 
