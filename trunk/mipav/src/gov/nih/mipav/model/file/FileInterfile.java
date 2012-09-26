@@ -451,12 +451,13 @@ public class FileInterfile extends FileBase {
      * Reads the image.
      *
      * @param      one  Flag for only reading one image of dataset.
+     * @param      readData
      *
      * @return     returns the image
      *
      * @exception  IOException  if there is an error reading the file
      */
-    public ModelImage readImage(boolean one) throws IOException {
+    public ModelImage readImage(boolean one, boolean readData) throws IOException {
 
         int i;
         String lineString;
@@ -1217,11 +1218,13 @@ public class FileInterfile extends FileBase {
 
             fileInfo.setDataType(type);
 
-            if (one) {
-                image = new ModelImage(type, new int[] { xDim, yDim }, fileName);
-            } else {
-                image = new ModelImage(type, imgExtents, fileName);
-            }
+            if (readData) {
+                if (one) {
+                    image = new ModelImage(type, new int[] { xDim, yDim }, fileName);
+                } else {
+                    image = new ModelImage(type, imgExtents, fileName);
+                }
+            } // if (readData)
 
             if (!haveOrientation) {
 
@@ -1314,6 +1317,10 @@ public class FileInterfile extends FileBase {
 
             if (haveDataStartingBlock) {
                 dataByteOffset = 2048L * dataStartingBlock;
+            }
+            
+            if (!readData) {
+                return null;
             }
 
             file = new File(fileDir + fileName);
@@ -1436,10 +1443,16 @@ public class FileInterfile extends FileBase {
      * @exception  IOException  if there is an error writing the file
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
-        int zBegin; // first z slice to write
-        int zEnd; // last z slice to write
-        int tBegin; // first t time to write
-        int tEnd; // last t time to write
+        int zBeginOriginal; // first z slice to write
+        int zEndOriginal; // last z slice to write
+        int tBeginOriginal; // first t time to write
+        int tEndOriginal; // last t time to write
+        int zBegin = 0;
+        int zEnd = 0;
+        int tBegin = 0;
+        int tEnd = 0;
+        int seq = 0;
+        String modifiedFileName = null;
         byte[] lineBytes = new byte[255];
         FileInfoBase baseInfo;
         FileInfoInterfile fileInfo;
@@ -1558,1365 +1571,1456 @@ public class FileInterfile extends FileBase {
         String windowC = null;
 
         if (image.getNDims() >= 3) {
-            zBegin = options.getBeginSlice();
-            zEnd = options.getEndSlice();
+            zBeginOriginal = options.getBeginSlice();
+            zEndOriginal = options.getEndSlice();
         } else {
-            zBegin = 0;
-            zEnd = 0;
+            zBeginOriginal = 0;
+            zEndOriginal = 0;
         }
 
         if (image.getNDims() == 4) {
-            tBegin = options.getBeginTime();
-            tEnd = options.getEndTime();
+            tBeginOriginal = options.getBeginTime();
+            tEndOriginal = options.getEndTime();
         } else {
+            tBeginOriginal = 0;
+            tEndOriginal = 0;
+        }
+        
+        if (!options.isMultiFile()) {
+            zBegin = zBeginOriginal;
+            zEnd = zEndOriginal;
+            tBegin = tBeginOriginal;
+            tEnd = tEndOriginal;
+        }
+        else if (image.getNDims() == 4) {
+            zBegin = zBeginOriginal;
+            zEnd = zEndOriginal;
+            tBegin = tBeginOriginal;
+            tEnd = tBeginOriginal;
+        }
+        else if (image.getNDims() == 3) {
+            zBegin = zBeginOriginal;
+            zEnd = zBeginOriginal;
             tBegin = 0;
             tEnd = 0;
         }
-
-        index = originalFileName.indexOf(".");
-
-        if (index != -1) {
-
-            if (originalFileName.length() > (index + 1))  {
-                dataFileName = originalFileName.substring(0, index + 1) + "img";
-                headerFileName = originalFileName.substring(0, index + 1) + "hdr";
-            }
-        } else {
-            dataFileName = originalFileName + ".img";
-            headerFileName = originalFileName + ".hdr";
-        }
-        file = new File(fileDir + headerFileName);
-        raFile = new RandomAccessFile(file, "rw");
-        // Necessary so that if this is an overwritten file there isn't any
-        // junk at the end
-        raFile.setLength(0);
-
-        try { // In this case, the file must be Interfile
-            fileInfo = (FileInfoInterfile) image.getFileInfo(0);
-        } catch (ClassCastException e) { // If it isn't, catch the exception
-                                         // and make a new fileInfo
-            fileInfo = new FileInfoInterfile(fileName, fileDir, FileUtility.INTERFILE);
-            simple = true; // Write the header without all the Interfile info
-        }
-
-        baseInfo = image.getFileInfo()[0];
-
-        lineBytes = new String("!INTERFILE := \r\n").getBytes();
-        raFile.write(lineBytes);
-
-        if (!simple) {
-            imagingModality = fileInfo.getImagingModality();
-
-            if (imagingModality != null) {
-                imagingModality = new String("!imaging Modality := " + imagingModality + "\r\n");
-                lineBytes = imagingModality.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            originatingSystem = fileInfo.getOriginatingSystem();
-
-            if (originatingSystem != null) {
-                originatingSystem = new String("!originating system := " + originatingSystem + "\r\n");
-                lineBytes = originatingSystem.getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        lineBytes = new String("!version of keys := 4.0\r\n").getBytes();
-        raFile.write(lineBytes);
-
-        if (!simple) {
-            keysDate = fileInfo.getKeysDate();
-
-            if (keysDate != null) {
-                keysDate = new String("date of keys := " + keysDate + "\r\n");
-                lineBytes = keysDate.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            conversionProgram = fileInfo.getConversionProgram();
-
-            if (conversionProgram != null) {
-                conversionProgram = new String("conversion program := " + conversionProgram + "\r\n");
-                lineBytes = conversionProgram.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            programAuthor = fileInfo.getProgramAuthor();
-
-            if (programAuthor != null) {
-                programAuthor = new String("program author := " + programAuthor + "\r\n");
-                lineBytes = programAuthor.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            programVersion = fileInfo.getProgramVersion();
-
-            if (programVersion != null) {
-                programVersion = new String("program version := " + programVersion + "\r\n");
-                lineBytes = programVersion.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            programDate = fileInfo.getProgramDate();
-
-            if (programDate != null) {
-                programDate = new String("program date := " + programDate + "\r\n");
-                lineBytes = programDate.getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        lineBytes = new String("GENERAL DATA :=\r\n").getBytes();
-        raFile.write(lineBytes);
-
-        if (!simple) {
-            originalInstitution = fileInfo.getOriginalInstitution();
-
-            if (originalInstitution != null) {
-                originalInstitution = new String("original institution := " + originalInstitution + "\r\n");
-                lineBytes = originalInstitution.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            contactPerson = fileInfo.getContactPerson();
-
-            if (contactPerson != null) {
-                contactPerson = new String("contact person := " + contactPerson + "\r\n");
-                lineBytes = contactPerson.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            dataDescription = fileInfo.getDataDescription();
-
-            if (dataDescription != null) {
-                dataDescription = new String("data description := " + dataDescription + "\r\n");
-                lineBytes = dataDescription.getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        lineBytes = new String("data offset in bytes := 0\r\n").getBytes();
-        raFile.write(lineBytes);
         
-
-        dataFile = new File(fileDir + dataFileName);
-
-        if (dataFile.exists()) {
-
-            // MipavUtil.displayError(dataFile + " already exists - use another name");
-            int response = JOptionPane.showConfirmDialog(ViewUserInterface.getReference().getMainFrame(),
-                                                         new String(fileDir + dataFileName +
-                                                                    "\nalready exists.  Do you want to replace it?"),
-                                                         "Save As", JOptionPane.YES_NO_OPTION,
-                                                         JOptionPane.QUESTION_MESSAGE);
-
-            if (response == JOptionPane.NO_OPTION) {
-                raFile.close();
-
-                // throw new IOException();
-                return;
-            }
-        }
-
-        lineBytes = new String("name of data file := " + dataFileName + "\r\n").getBytes();
-        raFile.write(lineBytes);
-
-        if (!simple) {
-            patientName = fileInfo.getPatientName();
-
-            if (patientName != null) {
-                patientName = new String("patient name := " + patientName + "\r\n");
-                lineBytes = patientName.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            patientID = fileInfo.getPatientID();
-
-            if (patientID != null) {
-                patientID = new String("patient ID := " + patientID + "\r\n");
-                lineBytes = patientID.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            patientDOB = fileInfo.getPatientDOB();
-
-            if (patientDOB != null) {
-                patientDOB = new String("patient DOB := " + patientDOB + "\r\n");
-                lineBytes = patientDOB.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            patientSex = fileInfo.getPatientSex();
-
-            if (patientSex != null) {
-                patientSex = new String("patient sex := " + patientSex + "\r\n");
-                lineBytes = patientSex.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            studyID = fileInfo.getStudyID();
-
-            if (studyID != null) {
-                studyID = new String("study id := " + studyID + "\r\n");
-                lineBytes = studyID.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            examType = fileInfo.getExamType();
-
-            if (examType != null) {
-                examType = new String("exam type := " + examType + "\r\n");
-                lineBytes = examType.getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        lineBytes = new String("data compression := none\r\n").getBytes();
-        raFile.write(lineBytes);
-        lineBytes = new String("data encode := none\r\n").getBytes();
-        raFile.write(lineBytes);
+        seq = options.getStartNumber();
         
-        if (!simple) {
-            organ = fileInfo.getOrgan();
-            
-            if (organ != null) {
-                lineBytes = new String("organ := " + organ + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-        }
-        lineBytes = new String("!GENERAL IMAGE DATA :=\r\n").getBytes();
-        raFile.write(lineBytes);
+        while (true) {
 
-        if (!simple) {
-            interfileDataType = fileInfo.getInterfileDataType();
-
-            if (interfileDataType != null) {
-                lineBytes = new String("!type of data := " + interfileDataType + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        tDim = tEnd - tBegin + 1;
-        zDim = zEnd - zBegin + 1;
-        lineBytes = new String("total number of images := " + (zDim * tDim) + "\r\n").getBytes();
-        raFile.write(lineBytes);
-
-        if (!simple) {
-            studyDate = fileInfo.getStudyDate();
-
-            if (studyDate != null) {
-                studyDate = new String("study date := " + studyDate + "\r\n");
-                lineBytes = studyDate.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            studyTime = fileInfo.getStudyTime();
-
-            if (studyTime != null) {
-                studyTime = new String("study time := " + studyTime + "\r\n");
-                lineBytes = studyTime.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            isotopeNumber = fileInfo.getIsotopeNumber();
-
-            if (isotopeNumber != null) {
-                isoNumber = Integer.valueOf(isotopeNumber).intValue();
-                isotopeNumber = new String("Number of isotopes = " + isotopeNumber + "\r\n");
-                lineBytes = isotopeNumber.getBytes();
-                raFile.write(lineBytes);
-            }
-
-            isotopeName = fileInfo.getIsotopeName();
-            betaHalflife = fileInfo.getBetaHalflife();
-            gammaHalflife = fileInfo.getGammaHalflife();
-            branchingFactor = fileInfo.getBranchingFactor();
-
-            for (i = 0; i < isoNumber; i++) {
-
-                if (isoNumber == 1) {
-
-                    if (isotopeName != null) {
-
-                        if (isotopeName[i] != null) {
-                            isotopeName[i] = new String("isotope name := " + isotopeName[i] + "\r\n");
-                            lineBytes = isotopeName[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
+            index = originalFileName.indexOf(".");
+    
+            if (!options.isMultiFile()) {
+                if (index != -1) {
+        
+                    if (originalFileName.length() > (index + 1))  {
+                        dataFileName = originalFileName.substring(0, index + 1) + "img";
+                        headerFileName = originalFileName.substring(0, index + 1) + "hdr";
                     }
-
-                    if (betaHalflife != null) {
-
-                        if (betaHalflife[i] != null) {
-                            betaHalflife[i] = new String("isotope beta halflife (sec) := " + betaHalflife[i] + "\r\n");
-                            lineBytes = betaHalflife[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (gammaHalflife != null) {
-
-                        if (gammaHalflife[i] != null) {
-                            gammaHalflife[i] = new String("isotope gamma halflife (sec) := " + gammaHalflife[i] +
-                                                          "\r\n");
-                            lineBytes = gammaHalflife[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (branchingFactor != null) {
-
-                        if (branchingFactor[i] != null) {
-                            branchingFactor[i] = new String("isotope branching factor := " + branchingFactor[i] +
-                                                            "\r\n");
-                            lineBytes = branchingFactor[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-                } // if (isoNumber == 1)
-                else {
-
-                    if (isotopeName != null) {
-
-                        if (isotopeName[i] != null) {
-                            isotopeName[i] = new String("isotope name [" + (i + 1) + "] := " + isotopeName[i] + "\r\n");
-                            lineBytes = isotopeName[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (betaHalflife != null) {
-
-                        if (betaHalflife[i] != null) {
-                            betaHalflife[i] = new String("isotope beta halflife (sec) [" + (i + 1) + "] := " +
-                                                         betaHalflife[i] + "\r\n");
-                            lineBytes = betaHalflife[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (gammaHalflife != null) {
-
-                        if (gammaHalflife[i] != null) {
-                            gammaHalflife[i] = new String("isotope gamma halflife (sec) [" + (i + 1) + "] := " +
-                                                          gammaHalflife[i] + "\r\n");
-                            lineBytes = gammaHalflife[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (branchingFactor != null) {
-
-                        if (branchingFactor[i] != null) {
-                            branchingFactor[i] = new String("isotope branching factor [" + (i + 1) + "] := " +
-                                                            branchingFactor[i] + "\r\n");
-                            lineBytes = branchingFactor[i].getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-                } // isoNumber > 1
-            } // for (i = 0; i < isoNumber; i++)
-
-            radiopharmaceutical = fileInfo.getRadiopharmaceutical();
-
-            if (radiopharmaceutical != null) {
-                radiopharmaceutical = new String("radiopharmaceutical := " + radiopharmaceutical + "\r\n");
-                lineBytes = radiopharmaceutical.getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        endianess = baseInfo.getEndianess();
-
-        if (endianess) {
-            lineBytes = new String("imagedata byte order := bigendian\r\n").getBytes();
-        } else {
-            lineBytes = new String("imagedata byte order := littleendian\r\n").getBytes();
-        }
-
-        raFile.write(lineBytes);
-
-        if (!simple) {
-            energyWindowsNumber = fileInfo.getEnergyWindowsNumber();
-
-            if (energyWindowsNumber != null) {
-                energyNumber = Integer.valueOf(energyWindowsNumber).intValue();
-                energyWindowsNumber = new String("!number of energy windows := " + energyWindowsNumber + "\r\n");
-                lineBytes = energyWindowsNumber.getBytes();
-                raFile.write(lineBytes);
-            }
-            
-            windowA = fileInfo.getWindowA();
-            
-            if (windowA != null) {
-                lineBytes = new String("Window A := " + windowA + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-            
-            windowB = fileInfo.getWindowB();
-            
-            if (windowB != null) {
-                lineBytes = new String("Window B := " + windowB + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-            
-            windowC = fileInfo.getWindowC();
-            
-            if (windowC != null) {
-                lineBytes = new String("Window C := " + windowC + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-
-            energyWindowName = fileInfo.getEnergyWindow();
-            lowerLevel = fileInfo.getEnergyWindowLowerLevel();
-            upperLevel = fileInfo.getEnergyWindowUpperLevel();
-
-            for (i = 0; i < energyNumber; i++) {
-
-                if (energyWindowName != null) {
-
-                    if (energyWindowName[i] != null) {
-                        energyWindowName[i] = new String("energy window [" + (i + 1) + "] := " + energyWindowName[i] +
-                                                         "\r\n");
-                        lineBytes = energyWindowName[i].getBytes();
-                        raFile.write(lineBytes);
-                    }
+                } else {
+                    dataFileName = originalFileName + ".img";
+                    headerFileName = originalFileName + ".hdr";
                 }
-
-                if (lowerLevel != null) {
-
-                    if (lowerLevel[i] != null) {
-                        lowerLevel[i] = new String("energy window lower level [" + (i + 1) + "] := " + lowerLevel[i] +
-                                                   "\r\n");
-                        lineBytes = lowerLevel[i].getBytes();
-                        raFile.write(lineBytes);
+            } // if (!options.isMultiFile())
+            else { // isMultiFile
+                if (index != -1) {
+                    
+                    if (originalFileName.length() > (index + 1))  {
+                        modifiedFileName = originalFileName.substring(0, index);
                     }
+                } else {
+                    modifiedFileName = new String(originalFileName);
                 }
+                if (options.getDigitNumber() == 1) {
+                    modifiedFileName += Integer.toString(seq);
+                } else if (options.getDigitNumber() == 2) {
 
-                if (upperLevel != null) {
-
-                    if (upperLevel[i] != null) {
-                        upperLevel[i] = new String("energy window upper level [" + (i + 1) + "] := " + upperLevel[i] +
-                                                   "\r\n");
-                        lineBytes = upperLevel[i].getBytes();
-                        raFile.write(lineBytes);
+                    if (seq < 10) {
+                        modifiedFileName += "0" + Integer.toString(seq);
+                    } else {
+                        modifiedFileName += Integer.toString(seq);
                     }
-                }
-            } // for (i = 0; i < energyNumber; i++)
+                } else if (options.getDigitNumber() == 3) {
 
-            floodCorrected = fileInfo.getFloodCorrected();
+                    if (seq < 10) {
+                        modifiedFileName += "00" + Integer.toString(seq);
+                    } else if (seq < 100) {
+                        modifiedFileName += "0" + Integer.toString(seq);
+                    } else {
+                        modifiedFileName += Integer.toString(seq);
+                    }
+                } else if (options.getDigitNumber() == 4) {
 
-            if (floodCorrected != null) {
-                floodCorrected = new String("flood corrected := " + floodCorrected + "\r\n");
-                lineBytes = floodCorrected.getBytes();
-                raFile.write(lineBytes);
+                    if (seq < 10) {
+                        modifiedFileName += "000" + Integer.toString(seq);
+                    } else if (seq < 100) {
+                        modifiedFileName += "00" + Integer.toString(seq);
+                    } else if (seq < 1000) {
+                        modifiedFileName += "0" + Integer.toString(seq);
+                    } else {
+                        modifiedFileName += Integer.toString(seq);
+                    }
+                } 
+                dataFileName = modifiedFileName + ".img";
+                headerFileName = modifiedFileName + ".hdr";
+            } // isMultiFile
+            file = new File(fileDir + headerFileName);
+            raFile = new RandomAccessFile(file, "rw");
+            // Necessary so that if this is an overwritten file there isn't any
+            // junk at the end
+            raFile.setLength(0);
+    
+            try { // In this case, the file must be Interfile
+                fileInfo = (FileInfoInterfile) image.getFileInfo(0);
+            } catch (ClassCastException e) { // If it isn't, catch the exception
+                                             // and make a new fileInfo
+                fileInfo = new FileInfoInterfile(fileName, fileDir, FileUtility.INTERFILE);
+                simple = true; // Write the header without all the Interfile info
             }
-
-            decayCorrected = fileInfo.getDecayCorrected();
-
-            if (decayCorrected != null) {
-                decayCorrected = new String("decay corrected := " + decayCorrected + "\r\n");
-                lineBytes = decayCorrected.getBytes();
-                raFile.write(lineBytes);
-            }
-        } // if (!simple)
-
-        if (interfileDataType == null) {
-            lineBytes = new String("!STATIC STUDY (General) :=\r\n").getBytes();
-        } else if ((interfileDataType.equalsIgnoreCase("STATIC")) || (interfileDataType.equalsIgnoreCase("ROI"))) {
-            lineBytes = new String("!STATIC STUDY (General) :=\r\n").getBytes();
+    
+            baseInfo = image.getFileInfo()[0];
+    
+            lineBytes = new String("!INTERFILE := \r\n").getBytes();
             raFile.write(lineBytes);
-            haveStaticStudy = true;
-            imagesPerEWindow = fileInfo.getImagesPerEWindow();
-
-            if (imagesPerEWindow != null) {
-                lineBytes = new String("number of images/energy window := " + imagesPerEWindow + "\r\n").getBytes();
-                raFile.write(lineBytes);
-                numberImagesPerEWindow = Integer.valueOf(imagesPerEWindow).intValue();
-            }
-
-            matrixSize1 = fileInfo.getMatrixSize1();
-            matrixSize2 = fileInfo.getMatrixSize2();
-            numberFormatString = fileInfo.getNumberFormat();
-            bytesPerPixelString = fileInfo.getBytesPerPixel();
-            scalingFactor1String = fileInfo.getScalingFactor1();
-            scalingFactor2String = fileInfo.getScalingFactor2();
-            imageDuration = fileInfo.getImageDuration();
-            imageStartTime = fileInfo.getImageStartTime();
-            label = fileInfo.getLabel();
-            maximumPixelCount = fileInfo.getMaximumPixelCount();
-            totalCounts = fileInfo.getTotalCounts();
-
-            for (i = 0; i < numberImagesPerEWindow; i++) {
-                lineBytes = new String("!Static Study (each frame) :=\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!image number :=" + (i + 1) + "\r\n").getBytes();
-                raFile.write(lineBytes);
-
-                if (matrixSize1 != null) {
-
-                    if (matrixSize1[i] != null) {
-                        lineBytes = new String("!matrix size [1] :=" + matrixSize1[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (matrixSize2 != null) {
-
-                    if (matrixSize2[i] != null) {
-                        lineBytes = new String("!matrix size [2] :=" + matrixSize2[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (numberFormatString != null) {
-
-                    if (numberFormatString[i] != null) {
-                        lineBytes = new String("!number format :=" + numberFormatString[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (bytesPerPixelString != null) {
-
-                    if (bytesPerPixelString[i] != null) {
-                        lineBytes = new String("!number of bytes per pixel :=" + bytesPerPixelString[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (scalingFactor1String != null) {
-
-                    if (scalingFactor1String[i] != null) {
-                        lineBytes = new String("scaling factor (mm/pixel) [1] :=" + scalingFactor1String[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (scalingFactor2String != null) {
-
-                    if (scalingFactor2String[i] != null) {
-                        lineBytes = new String("scaling factor (mm/pixel) [2] :=" + scalingFactor2String[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (imageDuration != null) {
-
-                    if (imageDuration[i] != null) {
-                        lineBytes = new String("!image duration (sec) :=" + imageDuration[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (imageStartTime != null) {
-
-                    if (imageStartTime[i] != null) {
-                        lineBytes = new String("image start time :=" + imageStartTime[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (label != null) {
-
-                    if (label[i] != null) {
-                        lineBytes = new String("label := " + label[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (maximumPixelCount != null) {
-
-                    if (maximumPixelCount[i] != null) {
-                        lineBytes = new String("maximum pixel count :=" + maximumPixelCount[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (totalCounts != null) {
-
-                    if (totalCounts[i] != null) {
-                        lineBytes = new String("total counts :=" + totalCounts[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-            }
-        } // else if ((interfileDataType.equalsIgnoreCase("STATIC")) ||
-          // (interfileDataType.equalsIgnoreCase("ROI")))
-        else if (interfileDataType.equalsIgnoreCase("TOMOGRAPHIC")) {
-            lineBytes = new String("!SPECT STUDY (General) :=\r\n").getBytes();
-        } else if (interfileDataType.equalsIgnoreCase("PET")) {
-            lineBytes = new String("!PET STUDY (General) :=\r\n").getBytes();
-        } else if (interfileDataType.equalsIgnoreCase("DYNAMIC")) {
-            lineBytes = new String("!DYNAMIC STUDY (General) :=\r\n").getBytes();
-            raFile.write(lineBytes);
-            haveDynamicStudy = true;
-            frameGroupNumber = fileInfo.getFrameGroupNumber();
-            fGroupNumber = Integer.valueOf(frameGroupNumber).intValue();
-            lineBytes = new String("!number of frame groups := " + frameGroupNumber + "\r\n").getBytes();
-            raFile.write(lineBytes);
-            matrixSize1 = fileInfo.getMatrixSize1();
-            matrixSize2 = fileInfo.getMatrixSize2();
-            numberFormatString = fileInfo.getNumberFormat();
-            bytesPerPixelString = fileInfo.getBytesPerPixel();
-            scalingFactor1String = fileInfo.getScalingFactor1();
-            scalingFactor2String = fileInfo.getScalingFactor2();
-            frameGroupImages = fileInfo.getFrameGroupImages();
-            imageDuration = fileInfo.getImageDuration();
-            pauseBetweenImages = fileInfo.getPauseBetweenImages();
-            pauseBetweenFrameGroups = fileInfo.getPauseBetweenFrameGroups();
-            maximumPixelCountInGroup = fileInfo.getMaximumPixelCountInGroup();
-
-            for (i = 0; i < fGroupNumber; i++) {
-                lineBytes = new String("!Dynamic Study (each frame group) :=\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!frame group number := " + (i + 1) + "\r\n").getBytes();
-                raFile.write(lineBytes);
-
-                if (matrixSize1 != null) {
-
-                    if (matrixSize1[i] != null) {
-                        lineBytes = new String("!matrix size [1] := " + matrixSize1[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (matrixSize2 != null) {
-
-                    if (matrixSize2[i] != null) {
-                        lineBytes = new String("!matrix size [2] := " + matrixSize2[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (numberFormatString != null) {
-
-                    if (numberFormatString[i] != null) {
-                        lineBytes = new String("!number format := " + numberFormatString[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (bytesPerPixelString != null) {
-
-                    if (bytesPerPixelString[i] != null) {
-                        lineBytes = new String("!number of bytes per pixel := " + bytesPerPixelString[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (scalingFactor1String != null) {
-
-                    if (scalingFactor1String[i] != null) {
-                        lineBytes = new String("scaling factor (mm/pixel) [1] := " + scalingFactor1String[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (scalingFactor2String != null) {
-
-                    if (scalingFactor2String[i] != null) {
-                        lineBytes = new String("scaling factor (mm/pixel) [2] := " + scalingFactor2String[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (frameGroupImages != null) {
-
-                    if (frameGroupImages[i] != null) {
-                        lineBytes = new String("!number of images this frame group := " + frameGroupImages[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (imageDuration != null) {
-
-                    if (imageDuration[i] != null) {
-                        lineBytes = new String("!image duration (sec) := " + imageDuration[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (pauseBetweenImages != null) {
-
-                    if (pauseBetweenImages[i] != null) {
-                        lineBytes = new String("pause between images (sec) := " + pauseBetweenImages[i] + "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (pauseBetweenFrameGroups != null) {
-
-                    if (pauseBetweenFrameGroups[i] != null) {
-                        lineBytes = new String("pause between frame groups (sec) := " + pauseBetweenFrameGroups[i] +
-                                               "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-
-                if (maximumPixelCountInGroup != null) {
-
-                    if (maximumPixelCountInGroup[i] != null) {
-                        lineBytes = new String("!maximum pixel count in group := " + maximumPixelCountInGroup[i] +
-                                               "\r\n").getBytes();
-                        raFile.write(lineBytes);
-                    }
-                }
-            } // for (i = 0; i < fGroupNumber; i++)
-        } // else if (interfileDataType.equalsIgnoreCase("DYNAMIC"))
-        else if (interfileDataType.equalsIgnoreCase("GATED")) {
-            lineBytes = new String("!GATED STUDY (General) :=\r\n").getBytes();
-            haveGatedStudy = true;
-        } else if (interfileDataType.equalsIgnoreCase("CURVE")) {
-            lineBytes = new String("!CURVE DATA := \r\n").getBytes();
-        }
-
-        if ((!haveStaticStudy) && (!haveDynamicStudy)) {
-            raFile.write(lineBytes);
-
+    
             if (!simple) {
-                detectorHeadNumber = fileInfo.getDetectorHeadNumber();
-
-                if (detectorHeadNumber != null) {
-                    lineBytes = new String("number of detector heads := " + detectorHeadNumber + "\r\n").getBytes();
+                imagingModality = fileInfo.getImagingModality();
+    
+                if (imagingModality != null) {
+                    imagingModality = new String("!imaging Modality := " + imagingModality + "\r\n");
+                    lineBytes = imagingModality.getBytes();
                     raFile.write(lineBytes);
                 }
-
-                imagesPerEWindow = fileInfo.getImagesPerEWindow();
-
-                if (imagesPerEWindow != null) {
-                    lineBytes = new String("number of images/energy window := " + imagesPerEWindow + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                scannerQuantificationFactor = fileInfo.getScannerQuantificationFactor();
-
-                if (scannerQuantificationFactor != null) {
-                    lineBytes = new String("scanner quantification factor := " + scannerQuantificationFactor + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                quantificationUnits = fileInfo.getQuantificationUnits();
-
-                if (quantificationUnits != null) {
-                    lineBytes = new String("quantification units := " + quantificationUnits + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                PETDataType = fileInfo.getPETDataType();
-
-                if (PETDataType != null) {
-                    lineBytes = new String("PET data type := " + PETDataType + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                processStatus = fileInfo.getProcessStatus();
-
-                if (processStatus != null) {
-                    lineBytes = new String("!process status := " + processStatus + "\r\n").getBytes();
+    
+                originatingSystem = fileInfo.getOriginatingSystem();
+    
+                if (originatingSystem != null) {
+                    originatingSystem = new String("!originating system := " + originatingSystem + "\r\n");
+                    lineBytes = originatingSystem.getBytes();
                     raFile.write(lineBytes);
                 }
             } // if (!simple)
-
-            if (image.getType() == ModelStorageBase.BOOLEAN) {
-                lineBytes = new String("!number format := bit\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel :=\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.BYTE) {
-                lineBytes = new String("!number format := signed integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 1\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.UBYTE) {
-                lineBytes = new String("!number format := unsigned integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 1\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.SHORT) {
-                lineBytes = new String("!number format := signed integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 2\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.USHORT) {
-                lineBytes = new String("!number format := unsigned integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 2\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.INTEGER) {
-                lineBytes = new String("!number format := signed integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 4\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.UINTEGER) {
-                lineBytes = new String("!number format := unsigned integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 4\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.LONG) {
-                lineBytes = new String("!number format := signed integer\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 8\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.FLOAT) {
-                lineBytes = new String("!number format := short float\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 4\r\n").getBytes();
-                raFile.write(lineBytes);
-            } else if (image.getType() == ModelStorageBase.DOUBLE) {
-                lineBytes = new String("!number format := long float\r\n").getBytes();
-                raFile.write(lineBytes);
-                lineBytes = new String("!number of bytes per pixel := 8\r\n").getBytes();
-                raFile.write(lineBytes);
+    
+            lineBytes = new String("!version of keys := 4.0\r\n").getBytes();
+            raFile.write(lineBytes);
+    
+            if (!simple) {
+                keysDate = fileInfo.getKeysDate();
+    
+                if (keysDate != null) {
+                    keysDate = new String("date of keys := " + keysDate + "\r\n");
+                    lineBytes = keysDate.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                conversionProgram = fileInfo.getConversionProgram();
+    
+                if (conversionProgram != null) {
+                    conversionProgram = new String("conversion program := " + conversionProgram + "\r\n");
+                    lineBytes = conversionProgram.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                programAuthor = fileInfo.getProgramAuthor();
+    
+                if (programAuthor != null) {
+                    programAuthor = new String("program author := " + programAuthor + "\r\n");
+                    lineBytes = programAuthor.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                programVersion = fileInfo.getProgramVersion();
+    
+                if (programVersion != null) {
+                    programVersion = new String("program version := " + programVersion + "\r\n");
+                    lineBytes = programVersion.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                programDate = fileInfo.getProgramDate();
+    
+                if (programDate != null) {
+                    programDate = new String("program date := " + programDate + "\r\n");
+                    lineBytes = programDate.getBytes();
+                    raFile.write(lineBytes);
+                }
+            } // if (!simple)
+    
+            lineBytes = new String("GENERAL DATA :=\r\n").getBytes();
+            raFile.write(lineBytes);
+    
+            if (!simple) {
+                originalInstitution = fileInfo.getOriginalInstitution();
+    
+                if (originalInstitution != null) {
+                    originalInstitution = new String("original institution := " + originalInstitution + "\r\n");
+                    lineBytes = originalInstitution.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                contactPerson = fileInfo.getContactPerson();
+    
+                if (contactPerson != null) {
+                    contactPerson = new String("contact person := " + contactPerson + "\r\n");
+                    lineBytes = contactPerson.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                dataDescription = fileInfo.getDataDescription();
+    
+                if (dataDescription != null) {
+                    dataDescription = new String("data description := " + dataDescription + "\r\n");
+                    lineBytes = dataDescription.getBytes();
+                    raFile.write(lineBytes);
+                }
+            } // if (!simple)
+    
+            lineBytes = new String("data offset in bytes := 0\r\n").getBytes();
+            raFile.write(lineBytes);
+            
+    
+            dataFile = new File(fileDir + dataFileName);
+    
+            if (dataFile.exists()) {
+    
+                // MipavUtil.displayError(dataFile + " already exists - use another name");
+                int response = JOptionPane.showConfirmDialog(ViewUserInterface.getReference().getMainFrame(),
+                                                             new String(fileDir + dataFileName +
+                                                                        "\nalready exists.  Do you want to replace it?"),
+                                                             "Save As", JOptionPane.YES_NO_OPTION,
+                                                             JOptionPane.QUESTION_MESSAGE);
+    
+                if (response == JOptionPane.NO_OPTION) {
+                    raFile.close();
+    
+                    // throw new IOException();
+                    return;
+                }
             }
-
-            if (zDim > 1) {
-                lineBytes = new String("!number of dimensions := 3\r\n").getBytes();
+    
+            lineBytes = new String("name of data file := " + dataFileName + "\r\n").getBytes();
+            raFile.write(lineBytes);
+    
+            if (!simple) {
+                patientName = fileInfo.getPatientName();
+    
+                if (patientName != null) {
+                    patientName = new String("patient name := " + patientName + "\r\n");
+                    lineBytes = patientName.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                patientID = fileInfo.getPatientID();
+    
+                if (patientID != null) {
+                    patientID = new String("patient ID := " + patientID + "\r\n");
+                    lineBytes = patientID.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                patientDOB = fileInfo.getPatientDOB();
+    
+                if (patientDOB != null) {
+                    patientDOB = new String("patient DOB := " + patientDOB + "\r\n");
+                    lineBytes = patientDOB.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                patientSex = fileInfo.getPatientSex();
+    
+                if (patientSex != null) {
+                    patientSex = new String("patient sex := " + patientSex + "\r\n");
+                    lineBytes = patientSex.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                studyID = fileInfo.getStudyID();
+    
+                if (studyID != null) {
+                    studyID = new String("study id := " + studyID + "\r\n");
+                    lineBytes = studyID.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                examType = fileInfo.getExamType();
+    
+                if (examType != null) {
+                    examType = new String("exam type := " + examType + "\r\n");
+                    lineBytes = examType.getBytes();
+                    raFile.write(lineBytes);
+                }
+            } // if (!simple)
+    
+            lineBytes = new String("data compression := none\r\n").getBytes();
+            raFile.write(lineBytes);
+            lineBytes = new String("data encode := none\r\n").getBytes();
+            raFile.write(lineBytes);
+            
+            if (!simple) {
+                organ = fileInfo.getOrgan();
+                
+                if (organ != null) {
+                    lineBytes = new String("organ := " + organ + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                }
+            }
+            lineBytes = new String("!GENERAL IMAGE DATA :=\r\n").getBytes();
+            raFile.write(lineBytes);
+    
+            if (!simple) {
+                interfileDataType = fileInfo.getInterfileDataType();
+    
+                if (interfileDataType != null) {
+                    lineBytes = new String("!type of data := " + interfileDataType + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                }
+            } // if (!simple)
+    
+            tDim = tEnd - tBegin + 1;
+            zDim = zEnd - zBegin + 1;
+            lineBytes = new String("total number of images := " + (zDim * tDim) + "\r\n").getBytes();
+            raFile.write(lineBytes);
+    
+            if (!simple) {
+                studyDate = fileInfo.getStudyDate();
+    
+                if (studyDate != null) {
+                    studyDate = new String("study date := " + studyDate + "\r\n");
+                    lineBytes = studyDate.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                studyTime = fileInfo.getStudyTime();
+    
+                if (studyTime != null) {
+                    studyTime = new String("study time := " + studyTime + "\r\n");
+                    lineBytes = studyTime.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                isotopeNumber = fileInfo.getIsotopeNumber();
+    
+                if (isotopeNumber != null) {
+                    isoNumber = Integer.valueOf(isotopeNumber).intValue();
+                    isotopeNumber = new String("Number of isotopes = " + isotopeNumber + "\r\n");
+                    lineBytes = isotopeNumber.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                isotopeName = fileInfo.getIsotopeName();
+                betaHalflife = fileInfo.getBetaHalflife();
+                gammaHalflife = fileInfo.getGammaHalflife();
+                branchingFactor = fileInfo.getBranchingFactor();
+    
+                for (i = 0; i < isoNumber; i++) {
+    
+                    if (isoNumber == 1) {
+    
+                        if (isotopeName != null) {
+    
+                            if (isotopeName[i] != null) {
+                                isotopeName[i] = new String("isotope name := " + isotopeName[i] + "\r\n");
+                                lineBytes = isotopeName[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (betaHalflife != null) {
+    
+                            if (betaHalflife[i] != null) {
+                                betaHalflife[i] = new String("isotope beta halflife (sec) := " + betaHalflife[i] + "\r\n");
+                                lineBytes = betaHalflife[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (gammaHalflife != null) {
+    
+                            if (gammaHalflife[i] != null) {
+                                gammaHalflife[i] = new String("isotope gamma halflife (sec) := " + gammaHalflife[i] +
+                                                              "\r\n");
+                                lineBytes = gammaHalflife[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (branchingFactor != null) {
+    
+                            if (branchingFactor[i] != null) {
+                                branchingFactor[i] = new String("isotope branching factor := " + branchingFactor[i] +
+                                                                "\r\n");
+                                lineBytes = branchingFactor[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+                    } // if (isoNumber == 1)
+                    else {
+    
+                        if (isotopeName != null) {
+    
+                            if (isotopeName[i] != null) {
+                                isotopeName[i] = new String("isotope name [" + (i + 1) + "] := " + isotopeName[i] + "\r\n");
+                                lineBytes = isotopeName[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (betaHalflife != null) {
+    
+                            if (betaHalflife[i] != null) {
+                                betaHalflife[i] = new String("isotope beta halflife (sec) [" + (i + 1) + "] := " +
+                                                             betaHalflife[i] + "\r\n");
+                                lineBytes = betaHalflife[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (gammaHalflife != null) {
+    
+                            if (gammaHalflife[i] != null) {
+                                gammaHalflife[i] = new String("isotope gamma halflife (sec) [" + (i + 1) + "] := " +
+                                                              gammaHalflife[i] + "\r\n");
+                                lineBytes = gammaHalflife[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (branchingFactor != null) {
+    
+                            if (branchingFactor[i] != null) {
+                                branchingFactor[i] = new String("isotope branching factor [" + (i + 1) + "] := " +
+                                                                branchingFactor[i] + "\r\n");
+                                lineBytes = branchingFactor[i].getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+                    } // isoNumber > 1
+                } // for (i = 0; i < isoNumber; i++)
+    
+                radiopharmaceutical = fileInfo.getRadiopharmaceutical();
+    
+                if (radiopharmaceutical != null) {
+                    radiopharmaceutical = new String("radiopharmaceutical := " + radiopharmaceutical + "\r\n");
+                    lineBytes = radiopharmaceutical.getBytes();
+                    raFile.write(lineBytes);
+                }
+            } // if (!simple)
+    
+            endianess = baseInfo.getEndianess();
+    
+            if (endianess) {
+                lineBytes = new String("imagedata byte order := bigendian\r\n").getBytes();
             } else {
-                lineBytes = new String("!number of dimensions := 2\r\n").getBytes();
+                lineBytes = new String("imagedata byte order := littleendian\r\n").getBytes();
             }
-
+    
             raFile.write(lineBytes);
-            lineBytes = new String("!matrix size [1] := " + image.getExtents()[0] + "\r\n").getBytes();
-            raFile.write(lineBytes);
-            lineBytes = new String("!matrix size [2] := " + image.getExtents()[1] + "\r\n").getBytes();
-            raFile.write(lineBytes);
-
-            if (zDim > 1) {
-                lineBytes = new String("!matrix size [3] := " + zDim + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-
-            resXUnit = baseInfo.getUnitsOfMeasure(0);
-
-            if ((resXUnit == Unit.INCHES.getLegacyNum()) || (resXUnit == Unit.MILS.getLegacyNum()) ||
-                    (resXUnit == Unit.CENTIMETERS.getLegacyNum()) ||
-                    (resXUnit == Unit.ANGSTROMS.getLegacyNum()) || (resXUnit == Unit.NANOMETERS.getLegacyNum()) ||
-                    (resXUnit == Unit.MICROMETERS.getLegacyNum()) || (resXUnit == Unit.MILLIMETERS.getLegacyNum()) ||
-                    (resXUnit == Unit.METERS.getLegacyNum()) || (resXUnit == Unit.KILOMETERS.getLegacyNum()) ||
-                    (resXUnit == Unit.MILES.getLegacyNum())) {
-
-                // convert to millimeters
-                xResol = baseInfo.getResolutions()[0];
-
-                if (resXUnit == Unit.INCHES.getLegacyNum()) {
-                    xResol = 25.4f * xResol;
-                } else if (resXUnit == Unit.MILS.getLegacyNum()) {
-                    xResol = 2.54e-2f * xResol;
-                } else if (resXUnit == Unit.CENTIMETERS.getLegacyNum()) {
-                    xResol = 10.0f * xResol;
-                } else if (resXUnit == Unit.ANGSTROMS.getLegacyNum()) {
-                    xResol = 1.0e-7f * xResol;
-                } else if (resXUnit == Unit.NANOMETERS.getLegacyNum()) {
-                    xResol = 1.0e-6f * xResol;
-                } else if (resXUnit == Unit.MICROMETERS.getLegacyNum()) {
-                    xResol = 1.0e-3f * xResol;
-                } else if (resXUnit == Unit.METERS.getLegacyNum()) {
-                    xResol = 1.0e3f * xResol;
-                } else if (resXUnit == Unit.KILOMETERS.getLegacyNum()) {
-                    xResol = 1.0e6f * xResol;
-                } else if (resXUnit == Unit.MILES.getLegacyNum()) {
-                    xResol = 1.6093e6f * xResol;
-                }
-
-                lineBytes = new String("scaling factor (mm/pixel) [1] := " + xResol + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-
-            resYUnit = baseInfo.getUnitsOfMeasure(1);
-
-            if ((resYUnit == Unit.INCHES.getLegacyNum()) || (resYUnit == Unit.MILS.getLegacyNum()) ||
-                    (resYUnit == Unit.CENTIMETERS.getLegacyNum()) ||
-                    (resYUnit == Unit.ANGSTROMS.getLegacyNum()) || (resYUnit == Unit.NANOMETERS.getLegacyNum()) ||
-                    (resYUnit == Unit.MICROMETERS.getLegacyNum()) || (resYUnit == Unit.MILLIMETERS.getLegacyNum()) ||
-                    (resYUnit == Unit.METERS.getLegacyNum()) || (resYUnit == Unit.KILOMETERS.getLegacyNum()) ||
-                    (resYUnit == Unit.MILES.getLegacyNum())) {
-
-                // convert to millimeters
-                yResol = baseInfo.getResolutions()[1];
-
-                if (resYUnit == Unit.INCHES.getLegacyNum()) {
-                    yResol = 25.4f * yResol;
-                } else if (resYUnit == Unit.MILS.getLegacyNum()) {
-                    yResol = 2.54e-2f * yResol;
-                } else if (resYUnit == Unit.CENTIMETERS.getLegacyNum()) {
-                    yResol = 10.0f * yResol;
-                } else if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
-                    yResol = 1.0e-7f * yResol;
-                } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
-                    yResol = 1.0e-6f * yResol;
-                } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
-                    yResol = 1.0e-3f * yResol;
-                } else if (resYUnit == Unit.METERS.getLegacyNum()) {
-                    yResol = 1.0e3f * yResol;
-                } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
-                    yResol = 1.0e6f * yResol;
-                } else if (resYUnit == Unit.MILES.getLegacyNum()) {
-                    yResol = 1.6093e6f * yResol;
-                }
-
-                lineBytes = new String("scaling factor (mm/pixel) [2] := " + yResol + "\r\n").getBytes();
-                raFile.write(lineBytes);
-            }
-
-            if (haveGatedStudy) {
-                elapsedStudyDuration = fileInfo.getElapsedStudyDuration();
-
-                if (elapsedStudyDuration != null) {
-                    lineBytes = new String("study duration (elapsed) sec := " + elapsedStudyDuration + "\r\n").getBytes();
+    
+            if (!simple) {
+                energyWindowsNumber = fileInfo.getEnergyWindowsNumber();
+    
+                if (energyWindowsNumber != null) {
+                    energyNumber = Integer.valueOf(energyWindowsNumber).intValue();
+                    energyWindowsNumber = new String("!number of energy windows := " + energyWindowsNumber + "\r\n");
+                    lineBytes = energyWindowsNumber.getBytes();
                     raFile.write(lineBytes);
                 }
-
-                observedCardiacCycles = fileInfo.getObservedCardiacCycles();
-
-                if (observedCardiacCycles != null) {
-                    lineBytes = new String("number of cardiac cycles (observed) := " + observedCardiacCycles + "\r\n").getBytes();
+                
+                windowA = fileInfo.getWindowA();
+                
+                if (windowA != null) {
+                    lineBytes = new String("Window A := " + windowA + "\r\n").getBytes();
                     raFile.write(lineBytes);
                 }
-
-                timeWindows = fileInfo.getTimeWindows();
-
-                if (timeWindows != null) {
-                    timeWindowsNumber = Integer.valueOf(timeWindows).intValue();
+                
+                windowB = fileInfo.getWindowB();
+                
+                if (windowB != null) {
+                    lineBytes = new String("Window B := " + windowB + "\r\n").getBytes();
+                    raFile.write(lineBytes);
                 }
-
-                lineBytes = new String("number of time windows := " + timeWindowsNumber + "\r\n").getBytes();
-                raFile.write(lineBytes);
-                timeWindowImages = fileInfo.getTimeWindowImages();
-                imageDuration = fileInfo.getImageDuration();
-                gatedFrameMode = fileInfo.getGatedFrameMode();
-                framingMethod = fileInfo.getFramingMethod();
-                maximumPixelCount = fileInfo.getMaximumPixelCount();
-                timeWindowLowerLimit = fileInfo.getTimeWindowLowerLimit();
-                timeWindowUpperLimit = fileInfo.getTimeWindowUpperLimit();
-                RRCycles = fileInfo.getRRCycles();
-                acquiredCardiacCycles = fileInfo.getAcquiredCardiacCycles();
-                acquiredStudyDuration = fileInfo.getAcquiredStudyDuration();
-                RRHistogram = fileInfo.getRRHistogram();
-
-                for (i = 0; i < timeWindowsNumber; i++) {
-                    lineBytes = new String("!Gated Study (each time window) :=\r\n").getBytes();
+                
+                windowC = fileInfo.getWindowC();
+                
+                if (windowC != null) {
+                    lineBytes = new String("Window C := " + windowC + "\r\n").getBytes();
                     raFile.write(lineBytes);
-                    lineBytes = new String("!time window number := " + (i + 1) + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-
-                    if (timeWindowImages != null) {
-
-                        if (timeWindowImages[i] != null) {
-                            lineBytes = new String("!number of images in time window := " + timeWindowImages[i] +
-                                                   "\r\n").getBytes();
+                }
+    
+                energyWindowName = fileInfo.getEnergyWindow();
+                lowerLevel = fileInfo.getEnergyWindowLowerLevel();
+                upperLevel = fileInfo.getEnergyWindowUpperLevel();
+    
+                for (i = 0; i < energyNumber; i++) {
+    
+                    if (energyWindowName != null) {
+    
+                        if (energyWindowName[i] != null) {
+                            energyWindowName[i] = new String("energy window [" + (i + 1) + "] := " + energyWindowName[i] +
+                                                             "\r\n");
+                            lineBytes = energyWindowName[i].getBytes();
                             raFile.write(lineBytes);
                         }
                     }
-
+    
+                    if (lowerLevel != null) {
+    
+                        if (lowerLevel[i] != null) {
+                            lowerLevel[i] = new String("energy window lower level [" + (i + 1) + "] := " + lowerLevel[i] +
+                                                       "\r\n");
+                            lineBytes = lowerLevel[i].getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (upperLevel != null) {
+    
+                        if (upperLevel[i] != null) {
+                            upperLevel[i] = new String("energy window upper level [" + (i + 1) + "] := " + upperLevel[i] +
+                                                       "\r\n");
+                            lineBytes = upperLevel[i].getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+                } // for (i = 0; i < energyNumber; i++)
+    
+                floodCorrected = fileInfo.getFloodCorrected();
+    
+                if (floodCorrected != null) {
+                    floodCorrected = new String("flood corrected := " + floodCorrected + "\r\n");
+                    lineBytes = floodCorrected.getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                decayCorrected = fileInfo.getDecayCorrected();
+    
+                if (decayCorrected != null) {
+                    decayCorrected = new String("decay corrected := " + decayCorrected + "\r\n");
+                    lineBytes = decayCorrected.getBytes();
+                    raFile.write(lineBytes);
+                }
+            } // if (!simple)
+    
+            if (interfileDataType == null) {
+                lineBytes = new String("!STATIC STUDY (General) :=\r\n").getBytes();
+            } else if ((interfileDataType.equalsIgnoreCase("STATIC")) || (interfileDataType.equalsIgnoreCase("ROI"))) {
+                lineBytes = new String("!STATIC STUDY (General) :=\r\n").getBytes();
+                raFile.write(lineBytes);
+                haveStaticStudy = true;
+                imagesPerEWindow = fileInfo.getImagesPerEWindow();
+    
+                if (imagesPerEWindow != null) {
+                    lineBytes = new String("number of images/energy window := " + imagesPerEWindow + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    numberImagesPerEWindow = Integer.valueOf(imagesPerEWindow).intValue();
+                }
+    
+                matrixSize1 = fileInfo.getMatrixSize1();
+                matrixSize2 = fileInfo.getMatrixSize2();
+                numberFormatString = fileInfo.getNumberFormat();
+                bytesPerPixelString = fileInfo.getBytesPerPixel();
+                scalingFactor1String = fileInfo.getScalingFactor1();
+                scalingFactor2String = fileInfo.getScalingFactor2();
+                imageDuration = fileInfo.getImageDuration();
+                imageStartTime = fileInfo.getImageStartTime();
+                label = fileInfo.getLabel();
+                maximumPixelCount = fileInfo.getMaximumPixelCount();
+                totalCounts = fileInfo.getTotalCounts();
+    
+                for (i = 0; i < numberImagesPerEWindow; i++) {
+                    lineBytes = new String("!Static Study (each frame) :=\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!image number :=" + (i + 1) + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+    
+                    if (matrixSize1 != null) {
+    
+                        if (matrixSize1[i] != null) {
+                            lineBytes = new String("!matrix size [1] :=" + matrixSize1[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (matrixSize2 != null) {
+    
+                        if (matrixSize2[i] != null) {
+                            lineBytes = new String("!matrix size [2] :=" + matrixSize2[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (numberFormatString != null) {
+    
+                        if (numberFormatString[i] != null) {
+                            lineBytes = new String("!number format :=" + numberFormatString[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (bytesPerPixelString != null) {
+    
+                        if (bytesPerPixelString[i] != null) {
+                            lineBytes = new String("!number of bytes per pixel :=" + bytesPerPixelString[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (scalingFactor1String != null) {
+    
+                        if (scalingFactor1String[i] != null) {
+                            lineBytes = new String("scaling factor (mm/pixel) [1] :=" + scalingFactor1String[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (scalingFactor2String != null) {
+    
+                        if (scalingFactor2String[i] != null) {
+                            lineBytes = new String("scaling factor (mm/pixel) [2] :=" + scalingFactor2String[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
                     if (imageDuration != null) {
-
+    
+                        if (imageDuration[i] != null) {
+                            lineBytes = new String("!image duration (sec) :=" + imageDuration[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (imageStartTime != null) {
+    
+                        if (imageStartTime[i] != null) {
+                            lineBytes = new String("image start time :=" + imageStartTime[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (label != null) {
+    
+                        if (label[i] != null) {
+                            lineBytes = new String("label := " + label[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (maximumPixelCount != null) {
+    
+                        if (maximumPixelCount[i] != null) {
+                            lineBytes = new String("maximum pixel count :=" + maximumPixelCount[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (totalCounts != null) {
+    
+                        if (totalCounts[i] != null) {
+                            lineBytes = new String("total counts :=" + totalCounts[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+                }
+            } // else if ((interfileDataType.equalsIgnoreCase("STATIC")) ||
+              // (interfileDataType.equalsIgnoreCase("ROI")))
+            else if (interfileDataType.equalsIgnoreCase("TOMOGRAPHIC")) {
+                lineBytes = new String("!SPECT STUDY (General) :=\r\n").getBytes();
+            } else if (interfileDataType.equalsIgnoreCase("PET")) {
+                lineBytes = new String("!PET STUDY (General) :=\r\n").getBytes();
+            } else if (interfileDataType.equalsIgnoreCase("DYNAMIC")) {
+                lineBytes = new String("!DYNAMIC STUDY (General) :=\r\n").getBytes();
+                raFile.write(lineBytes);
+                haveDynamicStudy = true;
+                frameGroupNumber = fileInfo.getFrameGroupNumber();
+                fGroupNumber = Integer.valueOf(frameGroupNumber).intValue();
+                lineBytes = new String("!number of frame groups := " + frameGroupNumber + "\r\n").getBytes();
+                raFile.write(lineBytes);
+                matrixSize1 = fileInfo.getMatrixSize1();
+                matrixSize2 = fileInfo.getMatrixSize2();
+                numberFormatString = fileInfo.getNumberFormat();
+                bytesPerPixelString = fileInfo.getBytesPerPixel();
+                scalingFactor1String = fileInfo.getScalingFactor1();
+                scalingFactor2String = fileInfo.getScalingFactor2();
+                frameGroupImages = fileInfo.getFrameGroupImages();
+                imageDuration = fileInfo.getImageDuration();
+                pauseBetweenImages = fileInfo.getPauseBetweenImages();
+                pauseBetweenFrameGroups = fileInfo.getPauseBetweenFrameGroups();
+                maximumPixelCountInGroup = fileInfo.getMaximumPixelCountInGroup();
+    
+                for (i = 0; i < fGroupNumber; i++) {
+                    lineBytes = new String("!Dynamic Study (each frame group) :=\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!frame group number := " + (i + 1) + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+    
+                    if (matrixSize1 != null) {
+    
+                        if (matrixSize1[i] != null) {
+                            lineBytes = new String("!matrix size [1] := " + matrixSize1[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (matrixSize2 != null) {
+    
+                        if (matrixSize2[i] != null) {
+                            lineBytes = new String("!matrix size [2] := " + matrixSize2[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (numberFormatString != null) {
+    
+                        if (numberFormatString[i] != null) {
+                            lineBytes = new String("!number format := " + numberFormatString[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (bytesPerPixelString != null) {
+    
+                        if (bytesPerPixelString[i] != null) {
+                            lineBytes = new String("!number of bytes per pixel := " + bytesPerPixelString[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (scalingFactor1String != null) {
+    
+                        if (scalingFactor1String[i] != null) {
+                            lineBytes = new String("scaling factor (mm/pixel) [1] := " + scalingFactor1String[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (scalingFactor2String != null) {
+    
+                        if (scalingFactor2String[i] != null) {
+                            lineBytes = new String("scaling factor (mm/pixel) [2] := " + scalingFactor2String[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (frameGroupImages != null) {
+    
+                        if (frameGroupImages[i] != null) {
+                            lineBytes = new String("!number of images this frame group := " + frameGroupImages[i] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    if (imageDuration != null) {
+    
                         if (imageDuration[i] != null) {
                             lineBytes = new String("!image duration (sec) := " + imageDuration[i] + "\r\n").getBytes();
                             raFile.write(lineBytes);
                         }
                     }
-                    
-                    if (gatedFrameMode != null) {
-
-                        if (gatedFrameMode[i] != null) {
-                            lineBytes = new String("!gated frame mode := " + gatedFrameMode[i] + "\r\n").getBytes();
+    
+                    if (pauseBetweenImages != null) {
+    
+                        if (pauseBetweenImages[i] != null) {
+                            lineBytes = new String("pause between images (sec) := " + pauseBetweenImages[i] + "\r\n").getBytes();
                             raFile.write(lineBytes);
                         }
                     }
-
-                    if (framingMethod != null) {
-
-                        if (framingMethod[i] != null) {
-                            lineBytes = new String("framing method := " + framingMethod[i] + "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (timeWindowLowerLimit != null) {
-
-                        if (timeWindowLowerLimit[i] != null) {
-                            lineBytes = new String("time window lower limit (sec) := " + timeWindowLowerLimit[i] +
+    
+                    if (pauseBetweenFrameGroups != null) {
+    
+                        if (pauseBetweenFrameGroups[i] != null) {
+                            lineBytes = new String("pause between frame groups (sec) := " + pauseBetweenFrameGroups[i] +
                                                    "\r\n").getBytes();
                             raFile.write(lineBytes);
                         }
                     }
-
-                    if (timeWindowUpperLimit != null) {
-
-                        if (timeWindowUpperLimit[i] != null) {
-                            lineBytes = new String("time window upper limit (sec) := " + timeWindowUpperLimit[i] +
+    
+                    if (maximumPixelCountInGroup != null) {
+    
+                        if (maximumPixelCountInGroup[i] != null) {
+                            lineBytes = new String("!maximum pixel count in group := " + maximumPixelCountInGroup[i] +
                                                    "\r\n").getBytes();
                             raFile.write(lineBytes);
                         }
                     }
-
-                    if (RRCycles != null) {
-
-                        if (RRCycles[i] != null) {
-                            lineBytes = new String("% R-R cycles acquired this window := " + RRCycles[i] + "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (acquiredCardiacCycles != null) {
-
-                        if (acquiredCardiacCycles[i] != null) {
-                            lineBytes = new String("number of cardiac cycles (acquired) := " +
-                                                   acquiredCardiacCycles[i] + "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (acquiredStudyDuration != null) {
-
-                        if (acquiredStudyDuration[i] != null) {
-                            lineBytes = new String("study duration acquired (sec) := " + acquiredStudyDuration[i] +
-                                                   "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (maximumPixelCount != null) {
-
-                        if (maximumPixelCount[i] != null) {
-                            lineBytes = new String("!maximum pixel count := " + maximumPixelCount[i] + "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-
-                    if (RRHistogram != null) {
-
-                        if (RRHistogram[i] != null) {
-                            lineBytes = new String("R-R histogram := " + RRHistogram[i] + "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
-                    }
-                } // for (i = 0; i < timeWindowsNumber; i++)
-            } // if (haveGatedStudy)
-
-            resZUnit = baseInfo.getUnitsOfMeasure(2);
-
-            if ((zDim > 1) &&
-                    ((resZUnit == Unit.INCHES.getLegacyNum()) || (resZUnit == Unit.MILS.getLegacyNum()) ||
-                         (resZUnit == Unit.CENTIMETERS.getLegacyNum()) ||
-                         (resZUnit == Unit.ANGSTROMS.getLegacyNum()) || (resZUnit == Unit.NANOMETERS.getLegacyNum()) ||
-                         (resZUnit == Unit.MICROMETERS.getLegacyNum()) || (resZUnit == Unit.MILLIMETERS.getLegacyNum()) ||
-                         (resZUnit == Unit.METERS.getLegacyNum()) || (resZUnit == Unit.KILOMETERS.getLegacyNum()) ||
-                         (resZUnit == Unit.MILES.getLegacyNum()))) {
-
-                // convert to millimeters
-                zResol = baseInfo.getResolutions()[2];
-
-                if (resZUnit == Unit.INCHES.getLegacyNum()) {
-                    zResol = 25.4f * zResol;
-                } else if (resZUnit == Unit.MILS.getLegacyNum()) {
-                    zResol = 2.54e-2f * zResol;
-                } else if (resZUnit == Unit.CENTIMETERS.getLegacyNum()) {
-                    zResol = 10.0f * zResol;
-                } else if (resZUnit == Unit.ANGSTROMS.getLegacyNum()) {
-                    zResol = 1.0e-7f * zResol;
-                } else if (resZUnit == Unit.NANOMETERS.getLegacyNum()) {
-                    zResol = 1.0e-6f * zResol;
-                } else if (resZUnit == Unit.MICROMETERS.getLegacyNum()) {
-                    zResol = 1.0e-3f * zResol;
-                } else if (resZUnit == Unit.METERS.getLegacyNum()) {
-                    zResol = 1.0e3f * zResol;
-                } else if (resZUnit == Unit.KILOMETERS.getLegacyNum()) {
-                    zResol = 1.0e6f * zResol;
-                } else if (resZUnit == Unit.MILES.getLegacyNum()) {
-                    zResol = 1.6093e6f * zResol;
-                }
-
-                lineBytes = new String("scaling factor (mm/pixel) [3] := " + zResol + "\r\n").getBytes();
-                raFile.write(lineBytes);
+                } // for (i = 0; i < fGroupNumber; i++)
+            } // else if (interfileDataType.equalsIgnoreCase("DYNAMIC"))
+            else if (interfileDataType.equalsIgnoreCase("GATED")) {
+                lineBytes = new String("!GATED STUDY (General) :=\r\n").getBytes();
+                haveGatedStudy = true;
+            } else if (interfileDataType.equalsIgnoreCase("CURVE")) {
+                lineBytes = new String("!CURVE DATA := \r\n").getBytes();
             }
-
-            if ((!simple) && (!haveGatedStudy)) {
-                startHorizontalBedPosition = fileInfo.getStartHorizontalBedPosition();
-
-                if (startHorizontalBedPosition != null) {
-                    lineBytes = new String("start horizontal bed position (mm) := " + startHorizontalBedPosition +
-                                           "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                lineBytes = new String("number of time frames := " + tDim + "\r\n").getBytes();
+    
+            if ((!haveStaticStudy) && (!haveDynamicStudy)) {
                 raFile.write(lineBytes);
-                projectionNumber = fileInfo.getProjectionNumber();
-
-                if (projectionNumber != null) {
-                    lineBytes = new String("!number of projections := " + projectionNumber + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                rotationExtent = fileInfo.getRotationExtent();
-
-                if (rotationExtent != null) {
-                    lineBytes = new String("!extent of rotation := " + rotationExtent + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                projectionTime = fileInfo.getProjectionTime();
-
-                if (projectionTime != null) {
-                    lineBytes = new String("!time per projection (sec) := " + projectionTime + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                studyDuration = fileInfo.getStudyDuration();
-
-                if (studyDuration != null) {
-                    lineBytes = new String("study duration (sec) := " + studyDuration + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                maximumPixelCount = fileInfo.getMaximumPixelCount();
-
-                if (maximumPixelCount != null) {
-
-                    if (maximumPixelCount[maximumPixelCountIndex] != null) {
-                        lineBytes = new String("!maximum pixel count := " +
-                                               maximumPixelCount[maximumPixelCountIndex++] + "\r\n").getBytes();
+    
+                if (!simple) {
+                    detectorHeadNumber = fileInfo.getDetectorHeadNumber();
+    
+                    if (detectorHeadNumber != null) {
+                        lineBytes = new String("number of detector heads := " + detectorHeadNumber + "\r\n").getBytes();
                         raFile.write(lineBytes);
                     }
-                }
-
-                patientOrientation = fileInfo.getPatientOrientation();
-
-                if (patientOrientation != null) {
-                    lineBytes = new String("patient orientation := " + patientOrientation + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                patientRotation = fileInfo.getPatientRotation();
-
-                if (patientRotation != null) {
-                    lineBytes = new String("patient rotation := " + patientRotation + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                PETStudyImageData = fileInfo.getPETStudyImageData();
-
-                if (PETStudyImageData) {
-                    lineBytes = new String("!PET STUDY (Image data) :=\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                spectStudyReconstructedData = fileInfo.getSpectStudyReconstructedData();
-
-                if (spectStudyReconstructedData) {
-                    lineBytes = new String("!SPECT STUDY (reconstructed data) :=\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                reconstructionMethod = fileInfo.getReconstructionMethod();
-
-                if (reconstructionMethod != null) {
-                    lineBytes = new String("method of reconstruction := " + reconstructionMethod + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                sliceNumber = fileInfo.getSliceNumber();
-
-                if (sliceNumber != null) {
-                    lineBytes = new String("!number of slices := " + sliceNumber + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                referenceFrameNumber = fileInfo.getReferenceFrameNumber();
-
-                if (referenceFrameNumber != null) {
-                    lineBytes = new String("number of reference frame := " + referenceFrameNumber + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                imageOrientation = baseInfo.getImageOrientation();
-
-                if (imageOrientation == FileInfoBase.AXIAL) {
-                    lineBytes = new String("slice orientation := Transverse\r\n").getBytes();
-                    raFile.write(lineBytes);
-                } else if (imageOrientation == FileInfoBase.CORONAL) {
-                    lineBytes = new String("slice orientation := Coronal\r\n").getBytes();
-                    raFile.write(lineBytes);
-                } else if (imageOrientation == FileInfoBase.SAGITTAL) {
-                    lineBytes = new String("slice orientation := Sagittal\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                sliceThickness = String.valueOf(fileInfo.getSliceThickness());
-
-                if (sliceThickness != null) {
-                    lineBytes = new String("slice thickness (pixels) := " + sliceThickness + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                centerCenter = fileInfo.getCenterCenter();
-
-                if (centerCenter != null) {
-                    lineBytes = new String("centre-centre slice separation (pixels) := " + centerCenter + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                filterName = fileInfo.getFilterName();
-
-                if (filterName != null) {
-                    lineBytes = new String("filter name := " + filterName + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                zAxisFilter = fileInfo.getZAxisFilter();
-
-                if (zAxisFilter != null) {
-                    lineBytes = new String("z-axis filter := " + zAxisFilter + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                appliedCorrections = fileInfo.getAppliedCorrections();
-
-                if (appliedCorrections != null) {
-                    lineBytes = new String("applied corrections := " + appliedCorrections + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                attenuationCorrection = fileInfo.getAttenuationCorrection();
-
-                if (attenuationCorrection != null) {
-                    lineBytes = new String("method of attenuation correction := " + attenuationCorrection + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                scatterCorrected = fileInfo.getScatterCorrected();
-
-                if (scatterCorrected != null) {
-                    lineBytes = new String("scatter corrected := " + scatterCorrected + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                scatterCorrectionMethod = fileInfo.getScatterCorrectionMethod();
-
-                if (scatterCorrectionMethod != null) {
-                    lineBytes = new String("method of scatter correction := " + scatterCorrectionMethod + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                obliqueReconstruction = fileInfo.getObliqueReconstruction();
-
-                if (obliqueReconstruction != null) {
-                    lineBytes = new String("oblique reconstruction := " + obliqueReconstruction + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                imageDataDescription = fileInfo.getImageDataDescription();
-
-                if (imageDataDescription) {
-                    lineBytes = new String("!IMAGE DATA DESCRIPTION := \r\n").getBytes();
-                    raFile.write(lineBytes);
-                }
-
-                indexNestingLevel = fileInfo.getIndexNestingLevel();
-
-                if (indexNestingLevel != null) {
-                    lineBytes = new String("index nesting level := " + indexNestingLevel + "\r\n").getBytes();
-                    raFile.write(lineBytes);
-
-                    if (removeChars(indexNestingLevel).equalsIgnoreCase("{TIMEFRAME}")) {
-                        iLevel = tEnd - tBegin + 1;
+    
+                    imagesPerEWindow = fileInfo.getImagesPerEWindow();
+    
+                    if (imagesPerEWindow != null) {
+                        lineBytes = new String("number of images/energy window := " + imagesPerEWindow + "\r\n").getBytes();
+                        raFile.write(lineBytes);
                     }
-                }
-
-                imageDuration = fileInfo.getImageDuration();
-                imageRelativeStartTime = fileInfo.getImageRelativeStartTime();
-
-                for (i = 0; i < iLevel; i++) {
-
-                    if (imageDuration != null) {
-
-                        if (imageDuration[i] != null) {
-                            lineBytes = new String("image duration (sec) [" + (i + 1) + "] := " + imageDuration[i] +
-                                                   "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
+    
+                    scannerQuantificationFactor = fileInfo.getScannerQuantificationFactor();
+    
+                    if (scannerQuantificationFactor != null) {
+                        lineBytes = new String("scanner quantification factor := " + scannerQuantificationFactor + "\r\n").getBytes();
+                        raFile.write(lineBytes);
                     }
-
-                    if (imageRelativeStartTime != null) {
-
-                        if (imageRelativeStartTime[i] != null) {
-                            lineBytes = new String("image relative start time (sec) [" + (i + 1) + "] := " +
-                                                   imageRelativeStartTime[i] + "\r\n").getBytes();
-                            raFile.write(lineBytes);
-                        }
+    
+                    quantificationUnits = fileInfo.getQuantificationUnits();
+    
+                    if (quantificationUnits != null) {
+                        lineBytes = new String("quantification units := " + quantificationUnits + "\r\n").getBytes();
+                        raFile.write(lineBytes);
                     }
+    
+                    PETDataType = fileInfo.getPETDataType();
+    
+                    if (PETDataType != null) {
+                        lineBytes = new String("PET data type := " + PETDataType + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    processStatus = fileInfo.getProcessStatus();
+    
+                    if (processStatus != null) {
+                        lineBytes = new String("!process status := " + processStatus + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+                } // if (!simple)
+    
+                if (image.getType() == ModelStorageBase.BOOLEAN) {
+                    lineBytes = new String("!number format := bit\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel :=\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.BYTE) {
+                    lineBytes = new String("!number format := signed integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 1\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.UBYTE) {
+                    lineBytes = new String("!number format := unsigned integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 1\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.SHORT) {
+                    lineBytes = new String("!number format := signed integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 2\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.USHORT) {
+                    lineBytes = new String("!number format := unsigned integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 2\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.INTEGER) {
+                    lineBytes = new String("!number format := signed integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 4\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.UINTEGER) {
+                    lineBytes = new String("!number format := unsigned integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 4\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.LONG) {
+                    lineBytes = new String("!number format := signed integer\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 8\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.FLOAT) {
+                    lineBytes = new String("!number format := short float\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 4\r\n").getBytes();
+                    raFile.write(lineBytes);
+                } else if (image.getType() == ModelStorageBase.DOUBLE) {
+                    lineBytes = new String("!number format := long float\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    lineBytes = new String("!number of bytes per pixel := 8\r\n").getBytes();
+                    raFile.write(lineBytes);
                 }
-            } // if ((!simple) && (!haveGatedStudy))
-        } // if ((!haveStaticStudy) && (!haveDynamicStudy)
-
-        lineBytes = new String("!END OF INTERFILE :=\r\n\r\n").getBytes();
-        raFile.write(lineBytes);
-        raFile.close();
-        raFile = new RandomAccessFile(dataFile, "rw");
-        raFile.setLength(0); // necessary so that if this is an overwritten file there isn't junk at the end
-        fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
-        bufferSize = image.getExtents()[0] * image.getExtents()[1];
-
-        if (image.getNDims() >= 3) {
-            volSize = bufferSize * image.getExtents()[2];
-        } else {
-            volSize = 0;
-        }
-
-        sliceNum = 1;
-        sliceTotal = zDim * tDim;
-
-        // BOOLEAN is saved in the Interfile BIT format where BIT(size) = new byte[(size+7)>>3]
-        // as opposed to the BitSet format where BitSet(size) = new long[(size+63)>>6].
-        if (image.getType() == ModelStorageBase.BOOLEAN) {
-            bufferBitSet = new BitSet(bufferSize);
-            bufferByte = new byte[(bufferSize + 7) >> 3];
-
-            for (t = tBegin; t <= tEnd; t++) {
-                timeOffset = t * volSize;
-
-                for (z = zBegin; z <= zEnd; z++, sliceNum++) {
-
-                    try {
-                        image.exportData(timeOffset + (z * bufferSize), bufferSize, bufferBitSet);
-
-                        for (i = 0; i < bufferByte.length; i++) {
-                            bufferByte[i] = 0;
-                        }
-
-                        for (i = 0; i < bufferSize; i++) {
-
-                            if (bufferBitSet.get(i)) {
-                                bufferByte[i >> 3] |= (1 << (7-(i % 8)));
+    
+                if (zDim > 1) {
+                    lineBytes = new String("!number of dimensions := 3\r\n").getBytes();
+                } else {
+                    lineBytes = new String("!number of dimensions := 2\r\n").getBytes();
+                }
+    
+                raFile.write(lineBytes);
+                lineBytes = new String("!matrix size [1] := " + image.getExtents()[0] + "\r\n").getBytes();
+                raFile.write(lineBytes);
+                lineBytes = new String("!matrix size [2] := " + image.getExtents()[1] + "\r\n").getBytes();
+                raFile.write(lineBytes);
+    
+                if (zDim > 1) {
+                    lineBytes = new String("!matrix size [3] := " + zDim + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                resXUnit = baseInfo.getUnitsOfMeasure(0);
+    
+                if ((resXUnit == Unit.INCHES.getLegacyNum()) || (resXUnit == Unit.MILS.getLegacyNum()) ||
+                        (resXUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                        (resXUnit == Unit.ANGSTROMS.getLegacyNum()) || (resXUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                        (resXUnit == Unit.MICROMETERS.getLegacyNum()) || (resXUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                        (resXUnit == Unit.METERS.getLegacyNum()) || (resXUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                        (resXUnit == Unit.MILES.getLegacyNum())) {
+    
+                    // convert to millimeters
+                    xResol = baseInfo.getResolutions()[0];
+    
+                    if (resXUnit == Unit.INCHES.getLegacyNum()) {
+                        xResol = 25.4f * xResol;
+                    } else if (resXUnit == Unit.MILS.getLegacyNum()) {
+                        xResol = 2.54e-2f * xResol;
+                    } else if (resXUnit == Unit.CENTIMETERS.getLegacyNum()) {
+                        xResol = 10.0f * xResol;
+                    } else if (resXUnit == Unit.ANGSTROMS.getLegacyNum()) {
+                        xResol = 1.0e-7f * xResol;
+                    } else if (resXUnit == Unit.NANOMETERS.getLegacyNum()) {
+                        xResol = 1.0e-6f * xResol;
+                    } else if (resXUnit == Unit.MICROMETERS.getLegacyNum()) {
+                        xResol = 1.0e-3f * xResol;
+                    } else if (resXUnit == Unit.METERS.getLegacyNum()) {
+                        xResol = 1.0e3f * xResol;
+                    } else if (resXUnit == Unit.KILOMETERS.getLegacyNum()) {
+                        xResol = 1.0e6f * xResol;
+                    } else if (resXUnit == Unit.MILES.getLegacyNum()) {
+                        xResol = 1.6093e6f * xResol;
+                    }
+    
+                    lineBytes = new String("scaling factor (mm/pixel) [1] := " + xResol + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                resYUnit = baseInfo.getUnitsOfMeasure(1);
+    
+                if ((resYUnit == Unit.INCHES.getLegacyNum()) || (resYUnit == Unit.MILS.getLegacyNum()) ||
+                        (resYUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                        (resYUnit == Unit.ANGSTROMS.getLegacyNum()) || (resYUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                        (resYUnit == Unit.MICROMETERS.getLegacyNum()) || (resYUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                        (resYUnit == Unit.METERS.getLegacyNum()) || (resYUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                        (resYUnit == Unit.MILES.getLegacyNum())) {
+    
+                    // convert to millimeters
+                    yResol = baseInfo.getResolutions()[1];
+    
+                    if (resYUnit == Unit.INCHES.getLegacyNum()) {
+                        yResol = 25.4f * yResol;
+                    } else if (resYUnit == Unit.MILS.getLegacyNum()) {
+                        yResol = 2.54e-2f * yResol;
+                    } else if (resYUnit == Unit.CENTIMETERS.getLegacyNum()) {
+                        yResol = 10.0f * yResol;
+                    } else if (resYUnit == Unit.ANGSTROMS.getLegacyNum()) {
+                        yResol = 1.0e-7f * yResol;
+                    } else if (resYUnit == Unit.NANOMETERS.getLegacyNum()) {
+                        yResol = 1.0e-6f * yResol;
+                    } else if (resYUnit == Unit.MICROMETERS.getLegacyNum()) {
+                        yResol = 1.0e-3f * yResol;
+                    } else if (resYUnit == Unit.METERS.getLegacyNum()) {
+                        yResol = 1.0e3f * yResol;
+                    } else if (resYUnit == Unit.KILOMETERS.getLegacyNum()) {
+                        yResol = 1.0e6f * yResol;
+                    } else if (resYUnit == Unit.MILES.getLegacyNum()) {
+                        yResol = 1.6093e6f * yResol;
+                    }
+    
+                    lineBytes = new String("scaling factor (mm/pixel) [2] := " + yResol + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                }
+    
+                if (haveGatedStudy) {
+                    elapsedStudyDuration = fileInfo.getElapsedStudyDuration();
+    
+                    if (elapsedStudyDuration != null) {
+                        lineBytes = new String("study duration (elapsed) sec := " + elapsedStudyDuration + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    observedCardiacCycles = fileInfo.getObservedCardiacCycles();
+    
+                    if (observedCardiacCycles != null) {
+                        lineBytes = new String("number of cardiac cycles (observed) := " + observedCardiacCycles + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    timeWindows = fileInfo.getTimeWindows();
+    
+                    if (timeWindows != null) {
+                        timeWindowsNumber = Integer.valueOf(timeWindows).intValue();
+                    }
+    
+                    lineBytes = new String("number of time windows := " + timeWindowsNumber + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    timeWindowImages = fileInfo.getTimeWindowImages();
+                    imageDuration = fileInfo.getImageDuration();
+                    gatedFrameMode = fileInfo.getGatedFrameMode();
+                    framingMethod = fileInfo.getFramingMethod();
+                    maximumPixelCount = fileInfo.getMaximumPixelCount();
+                    timeWindowLowerLimit = fileInfo.getTimeWindowLowerLimit();
+                    timeWindowUpperLimit = fileInfo.getTimeWindowUpperLimit();
+                    RRCycles = fileInfo.getRRCycles();
+                    acquiredCardiacCycles = fileInfo.getAcquiredCardiacCycles();
+                    acquiredStudyDuration = fileInfo.getAcquiredStudyDuration();
+                    RRHistogram = fileInfo.getRRHistogram();
+    
+                    for (i = 0; i < timeWindowsNumber; i++) {
+                        lineBytes = new String("!Gated Study (each time window) :=\r\n").getBytes();
+                        raFile.write(lineBytes);
+                        lineBytes = new String("!time window number := " + (i + 1) + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+    
+                        if (timeWindowImages != null) {
+    
+                            if (timeWindowImages[i] != null) {
+                                lineBytes = new String("!number of images in time window := " + timeWindowImages[i] +
+                                                       "\r\n").getBytes();
+                                raFile.write(lineBytes);
                             }
                         }
-
-                        raFile.write(bufferByte);
-                    } catch (IOException error) {
-                        throw error;
+    
+                        if (imageDuration != null) {
+    
+                            if (imageDuration[i] != null) {
+                                lineBytes = new String("!image duration (sec) := " + imageDuration[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+                        
+                        if (gatedFrameMode != null) {
+    
+                            if (gatedFrameMode[i] != null) {
+                                lineBytes = new String("!gated frame mode := " + gatedFrameMode[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (framingMethod != null) {
+    
+                            if (framingMethod[i] != null) {
+                                lineBytes = new String("framing method := " + framingMethod[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (timeWindowLowerLimit != null) {
+    
+                            if (timeWindowLowerLimit[i] != null) {
+                                lineBytes = new String("time window lower limit (sec) := " + timeWindowLowerLimit[i] +
+                                                       "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (timeWindowUpperLimit != null) {
+    
+                            if (timeWindowUpperLimit[i] != null) {
+                                lineBytes = new String("time window upper limit (sec) := " + timeWindowUpperLimit[i] +
+                                                       "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (RRCycles != null) {
+    
+                            if (RRCycles[i] != null) {
+                                lineBytes = new String("% R-R cycles acquired this window := " + RRCycles[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (acquiredCardiacCycles != null) {
+    
+                            if (acquiredCardiacCycles[i] != null) {
+                                lineBytes = new String("number of cardiac cycles (acquired) := " +
+                                                       acquiredCardiacCycles[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (acquiredStudyDuration != null) {
+    
+                            if (acquiredStudyDuration[i] != null) {
+                                lineBytes = new String("study duration acquired (sec) := " + acquiredStudyDuration[i] +
+                                                       "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (maximumPixelCount != null) {
+    
+                            if (maximumPixelCount[i] != null) {
+                                lineBytes = new String("!maximum pixel count := " + maximumPixelCount[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (RRHistogram != null) {
+    
+                            if (RRHistogram[i] != null) {
+                                lineBytes = new String("R-R histogram := " + RRHistogram[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+                    } // for (i = 0; i < timeWindowsNumber; i++)
+                } // if (haveGatedStudy)
+    
+                resZUnit = baseInfo.getUnitsOfMeasure(2);
+    
+                if ((zDim > 1) &&
+                        ((resZUnit == Unit.INCHES.getLegacyNum()) || (resZUnit == Unit.MILS.getLegacyNum()) ||
+                             (resZUnit == Unit.CENTIMETERS.getLegacyNum()) ||
+                             (resZUnit == Unit.ANGSTROMS.getLegacyNum()) || (resZUnit == Unit.NANOMETERS.getLegacyNum()) ||
+                             (resZUnit == Unit.MICROMETERS.getLegacyNum()) || (resZUnit == Unit.MILLIMETERS.getLegacyNum()) ||
+                             (resZUnit == Unit.METERS.getLegacyNum()) || (resZUnit == Unit.KILOMETERS.getLegacyNum()) ||
+                             (resZUnit == Unit.MILES.getLegacyNum()))) {
+    
+                    // convert to millimeters
+                    zResol = baseInfo.getResolutions()[2];
+    
+                    if (resZUnit == Unit.INCHES.getLegacyNum()) {
+                        zResol = 25.4f * zResol;
+                    } else if (resZUnit == Unit.MILS.getLegacyNum()) {
+                        zResol = 2.54e-2f * zResol;
+                    } else if (resZUnit == Unit.CENTIMETERS.getLegacyNum()) {
+                        zResol = 10.0f * zResol;
+                    } else if (resZUnit == Unit.ANGSTROMS.getLegacyNum()) {
+                        zResol = 1.0e-7f * zResol;
+                    } else if (resZUnit == Unit.NANOMETERS.getLegacyNum()) {
+                        zResol = 1.0e-6f * zResol;
+                    } else if (resZUnit == Unit.MICROMETERS.getLegacyNum()) {
+                        zResol = 1.0e-3f * zResol;
+                    } else if (resZUnit == Unit.METERS.getLegacyNum()) {
+                        zResol = 1.0e3f * zResol;
+                    } else if (resZUnit == Unit.KILOMETERS.getLegacyNum()) {
+                        zResol = 1.0e6f * zResol;
+                    } else if (resZUnit == Unit.MILES.getLegacyNum()) {
+                        zResol = 1.6093e6f * zResol;
                     }
-
-                    fireProgressStateChanged(100 * sliceNum / sliceTotal);
+    
+                    lineBytes = new String("scaling factor (mm/pixel) [3] := " + zResol + "\r\n").getBytes();
+                    raFile.write(lineBytes);
                 }
+    
+                if ((!simple) && (!haveGatedStudy)) {
+                    startHorizontalBedPosition = fileInfo.getStartHorizontalBedPosition();
+    
+                    if (startHorizontalBedPosition != null) {
+                        lineBytes = new String("start horizontal bed position (mm) := " + startHorizontalBedPosition +
+                                               "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    lineBytes = new String("number of time frames := " + tDim + "\r\n").getBytes();
+                    raFile.write(lineBytes);
+                    projectionNumber = fileInfo.getProjectionNumber();
+    
+                    if (projectionNumber != null) {
+                        lineBytes = new String("!number of projections := " + projectionNumber + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    rotationExtent = fileInfo.getRotationExtent();
+    
+                    if (rotationExtent != null) {
+                        lineBytes = new String("!extent of rotation := " + rotationExtent + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    projectionTime = fileInfo.getProjectionTime();
+    
+                    if (projectionTime != null) {
+                        lineBytes = new String("!time per projection (sec) := " + projectionTime + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    studyDuration = fileInfo.getStudyDuration();
+    
+                    if (studyDuration != null) {
+                        lineBytes = new String("study duration (sec) := " + studyDuration + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    maximumPixelCount = fileInfo.getMaximumPixelCount();
+    
+                    if (maximumPixelCount != null) {
+    
+                        if (maximumPixelCount[maximumPixelCountIndex] != null) {
+                            lineBytes = new String("!maximum pixel count := " +
+                                                   maximumPixelCount[maximumPixelCountIndex++] + "\r\n").getBytes();
+                            raFile.write(lineBytes);
+                        }
+                    }
+    
+                    patientOrientation = fileInfo.getPatientOrientation();
+    
+                    if (patientOrientation != null) {
+                        lineBytes = new String("patient orientation := " + patientOrientation + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    patientRotation = fileInfo.getPatientRotation();
+    
+                    if (patientRotation != null) {
+                        lineBytes = new String("patient rotation := " + patientRotation + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    PETStudyImageData = fileInfo.getPETStudyImageData();
+    
+                    if (PETStudyImageData) {
+                        lineBytes = new String("!PET STUDY (Image data) :=\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    spectStudyReconstructedData = fileInfo.getSpectStudyReconstructedData();
+    
+                    if (spectStudyReconstructedData) {
+                        lineBytes = new String("!SPECT STUDY (reconstructed data) :=\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    reconstructionMethod = fileInfo.getReconstructionMethod();
+    
+                    if (reconstructionMethod != null) {
+                        lineBytes = new String("method of reconstruction := " + reconstructionMethod + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    sliceNumber = fileInfo.getSliceNumber();
+    
+                    if (sliceNumber != null) {
+                        lineBytes = new String("!number of slices := " + sliceNumber + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    referenceFrameNumber = fileInfo.getReferenceFrameNumber();
+    
+                    if (referenceFrameNumber != null) {
+                        lineBytes = new String("number of reference frame := " + referenceFrameNumber + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    imageOrientation = baseInfo.getImageOrientation();
+    
+                    if (imageOrientation == FileInfoBase.AXIAL) {
+                        lineBytes = new String("slice orientation := Transverse\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    } else if (imageOrientation == FileInfoBase.CORONAL) {
+                        lineBytes = new String("slice orientation := Coronal\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    } else if (imageOrientation == FileInfoBase.SAGITTAL) {
+                        lineBytes = new String("slice orientation := Sagittal\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    sliceThickness = String.valueOf(fileInfo.getSliceThickness());
+    
+                    if (sliceThickness != null) {
+                        lineBytes = new String("slice thickness (pixels) := " + sliceThickness + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    centerCenter = fileInfo.getCenterCenter();
+    
+                    if (centerCenter != null) {
+                        lineBytes = new String("centre-centre slice separation (pixels) := " + centerCenter + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    filterName = fileInfo.getFilterName();
+    
+                    if (filterName != null) {
+                        lineBytes = new String("filter name := " + filterName + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    zAxisFilter = fileInfo.getZAxisFilter();
+    
+                    if (zAxisFilter != null) {
+                        lineBytes = new String("z-axis filter := " + zAxisFilter + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    appliedCorrections = fileInfo.getAppliedCorrections();
+    
+                    if (appliedCorrections != null) {
+                        lineBytes = new String("applied corrections := " + appliedCorrections + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    attenuationCorrection = fileInfo.getAttenuationCorrection();
+    
+                    if (attenuationCorrection != null) {
+                        lineBytes = new String("method of attenuation correction := " + attenuationCorrection + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    scatterCorrected = fileInfo.getScatterCorrected();
+    
+                    if (scatterCorrected != null) {
+                        lineBytes = new String("scatter corrected := " + scatterCorrected + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    scatterCorrectionMethod = fileInfo.getScatterCorrectionMethod();
+    
+                    if (scatterCorrectionMethod != null) {
+                        lineBytes = new String("method of scatter correction := " + scatterCorrectionMethod + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    obliqueReconstruction = fileInfo.getObliqueReconstruction();
+    
+                    if (obliqueReconstruction != null) {
+                        lineBytes = new String("oblique reconstruction := " + obliqueReconstruction + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    imageDataDescription = fileInfo.getImageDataDescription();
+    
+                    if (imageDataDescription) {
+                        lineBytes = new String("!IMAGE DATA DESCRIPTION := \r\n").getBytes();
+                        raFile.write(lineBytes);
+                    }
+    
+                    indexNestingLevel = fileInfo.getIndexNestingLevel();
+    
+                    if (indexNestingLevel != null) {
+                        lineBytes = new String("index nesting level := " + indexNestingLevel + "\r\n").getBytes();
+                        raFile.write(lineBytes);
+    
+                        if (removeChars(indexNestingLevel).equalsIgnoreCase("{TIMEFRAME}")) {
+                            iLevel = tEnd - tBegin + 1;
+                        }
+                    }
+    
+                    imageDuration = fileInfo.getImageDuration();
+                    imageRelativeStartTime = fileInfo.getImageRelativeStartTime();
+    
+                    for (i = 0; i < iLevel; i++) {
+    
+                        if (imageDuration != null) {
+    
+                            if (imageDuration[i] != null) {
+                                lineBytes = new String("image duration (sec) [" + (i + 1) + "] := " + imageDuration[i] +
+                                                       "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+    
+                        if (imageRelativeStartTime != null) {
+    
+                            if (imageRelativeStartTime[i] != null) {
+                                lineBytes = new String("image relative start time (sec) [" + (i + 1) + "] := " +
+                                                       imageRelativeStartTime[i] + "\r\n").getBytes();
+                                raFile.write(lineBytes);
+                            }
+                        }
+                    }
+                } // if ((!simple) && (!haveGatedStudy))
+            } // if ((!haveStaticStudy) && (!haveDynamicStudy)
+    
+            lineBytes = new String("!END OF INTERFILE :=\r\n\r\n").getBytes();
+            raFile.write(lineBytes);
+            raFile.close();
+            raFile = new RandomAccessFile(dataFile, "rw");
+            raFile.setLength(0); // necessary so that if this is an overwritten file there isn't junk at the end
+            fileRW = new FileRawChunk(raFile, image.getFileInfo(0));
+            bufferSize = image.getExtents()[0] * image.getExtents()[1];
+    
+            if (zDim > 1) {
+                volSize = bufferSize * image.getExtents()[2];
+            } else {
+                volSize = 0;
             }
-        } // if (image.getType() == ModelStorageBase.BOOLEAN)
-        else { // not ModelStorageBase.BOOLEAN
-
-            for (t = tBegin; t <= tEnd; t++) {
-                timeOffset = t * volSize;
-
-                for (z = zBegin; z <= zEnd; z++, sliceNum++) {
-                    fileRW.writeImage(image, timeOffset + (z * bufferSize), timeOffset + (z * bufferSize) + bufferSize,
-                                      0);
-                    fireProgressStateChanged(100 * sliceNum / sliceTotal);
+    
+            sliceNum = 1;
+            sliceTotal = zDim * tDim;
+    
+            // BOOLEAN is saved in the Interfile BIT format where BIT(size) = new byte[(size+7)>>3]
+            // as opposed to the BitSet format where BitSet(size) = new long[(size+63)>>6].
+            if (image.getType() == ModelStorageBase.BOOLEAN) {
+                bufferBitSet = new BitSet(bufferSize);
+                bufferByte = new byte[(bufferSize + 7) >> 3];
+    
+                for (t = tBegin; t <= tEnd; t++) {
+                    timeOffset = t * volSize;
+    
+                    for (z = zBegin; z <= zEnd; z++, sliceNum++) {
+    
+                        try {
+                            image.exportData(timeOffset + (z * bufferSize), bufferSize, bufferBitSet);
+    
+                            for (i = 0; i < bufferByte.length; i++) {
+                                bufferByte[i] = 0;
+                            }
+    
+                            for (i = 0; i < bufferSize; i++) {
+    
+                                if (bufferBitSet.get(i)) {
+                                    bufferByte[i >> 3] |= (1 << (7-(i % 8)));
+                                }
+                            }
+    
+                            raFile.write(bufferByte);
+                        } catch (IOException error) {
+                            throw error;
+                        }
+    
+                        fireProgressStateChanged(100 * sliceNum / sliceTotal);
+                    }
                 }
+            } // if (image.getType() == ModelStorageBase.BOOLEAN)
+            else { // not ModelStorageBase.BOOLEAN
+    
+                for (t = tBegin; t <= tEnd; t++) {
+                    timeOffset = t * volSize;
+    
+                    for (z = zBegin; z <= zEnd; z++, sliceNum++) {
+                        fileRW.writeImage(image, timeOffset + (z * bufferSize), timeOffset + (z * bufferSize) + bufferSize,
+                                          0);
+                        fireProgressStateChanged(100 * sliceNum / sliceTotal);
+                    }
+                }
+            } // not ModelStorageBase.BOOLEAN
+    
+            raFile.close();
+            if (!options.isMultiFile()) {
+                break;
             }
-        } // not ModelStorageBase.BOOLEAN
-
-        raFile.close();
+            else if (options.isMultiFile()) {
+                if (image.getNDims() == 4) {
+                    if (tEnd == tEndOriginal) {
+                        break;
+                    } // if (tEnd == tEndOriginal)
+                    else {
+                        tEnd++;
+                        seq++;
+                    }
+                } // if (image.getNDims() == 4)
+                else { // image.getNDims() == 3
+                    if (zEnd == zEndOriginal) {
+                        break;
+                    }
+                    else {
+                        zEnd++;
+                        seq++;
+                    }
+                } // else image.getNDims() == 3
+            } // else if (options.isMultiFile())
+        } // while True;
 
     }
 
