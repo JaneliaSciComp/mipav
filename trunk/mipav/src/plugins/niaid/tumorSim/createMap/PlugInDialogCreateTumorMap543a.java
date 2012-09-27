@@ -327,10 +327,6 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
             
             System.out.println("After: "+Runtime.getRuntime().freeMemory());
         }
-        
-        
-
-        super.dispose();
     }
     
     /**
