@@ -40,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.text.DecimalFormat;
+import java.util.Enumeration;
 
 import javax.swing.*;
 
@@ -234,7 +235,7 @@ public class PlugInDialogCreateTumorMap543a extends JDialogScriptableBase implem
        if (algorithm instanceof PlugInAlgorithmCreateTumorMap543a) {
             Preferences.debug("Elapsed: " + algorithm.getElapsedTime());
             
-            if ((tumorSimAlgo.isCompleted() == true)) {
+            if ((tumorSimAlgo.isCompleted()) && !isQuietRunning()) {
                 tumorSimAlgo.getImage1a().getParentFrame().setVisible(true);
                 tumorSimAlgo.getImage2a().getParentFrame().setVisible(true);
                 tumorSimAlgo.getImage1aTumor().getParentFrame().setVisible(true);
